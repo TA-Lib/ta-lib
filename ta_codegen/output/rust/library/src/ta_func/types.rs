@@ -16,6 +16,15 @@ pub enum RetCode {
     BadParam = 2,
     /// C parity only, never returned here: an allocation failure terminates the process (#178).
     AllocErr = 3,
+    /// Abstraction layer only: a setter was given a value of another kind than
+    /// the slot it names.
+    InvalidParamHolderType = 8,
+    /// Abstraction layer only: the call was refused because a required input
+    /// is not bound. The function did not run.
+    InputNotAllInitialize = 10,
+    /// Abstraction layer only: the call was refused because an output is not
+    /// bound. The function did not run.
+    OutputNotAllInitialize = 11,
     /// The start index is out of range.
     OutOfRangeStartIndex = 12,
     /// The end index is out of range or less than start index.
@@ -68,6 +77,9 @@ impl std::fmt::Display for RetCode {
         let s = match self {
             RetCode::Success => "success",
             RetCode::BadParam => "bad parameter",
+            RetCode::InvalidParamHolderType => "value of the wrong kind for this slot",
+            RetCode::InputNotAllInitialize => "input not bound",
+            RetCode::OutputNotAllInitialize => "output not bound",
             RetCode::OutOfRangeStartIndex => "start index out of range",
             RetCode::OutOfRangeEndIndex => "end index out of range",
             RetCode::AllocErr => "allocation error",
@@ -701,6 +713,9 @@ mod tests {
         // because nothing else in this crate compares the two vocabularies, and
         // the cross-language harness reads exactly this integer.
         assert_eq!(RetCode::InsufficientHistory.as_c_int(), 17);
+        assert_eq!(RetCode::InvalidParamHolderType.as_c_int(), 8);
+        assert_eq!(RetCode::InputNotAllInitialize.as_c_int(), 10);
+        assert_eq!(RetCode::OutputNotAllInitialize.as_c_int(), 11);
     }
 
     #[test]

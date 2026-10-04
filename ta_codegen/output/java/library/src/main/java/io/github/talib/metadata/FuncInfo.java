@@ -39,6 +39,8 @@
 package io.github.talib.metadata;
 
 import io.github.talib.Core;
+import io.github.talib.RetCode;
+import io.github.talib.TALibArgumentException;
 import java.util.List;
 
 /**
@@ -72,14 +74,20 @@ public record FuncInfo(
      * against {@link Core#DEFAULT}. See {@link ParamHolder}.
      */
     public ParamHolder newCall() {
-       return new ParamHolder(this, Core.DEFAULT);
+       return newCall(Core.DEFAULT);
     }
 
     /**
      * Begins a call to this function with arguments bound at run time,
      * against a specific {@link Core}. See {@link ParamHolder}.
+     *
+     * @throws TALibArgumentException carrying {@link RetCode#BAD_PARAM} if
+     *         {@code core} is null
      */
     public ParamHolder newCall(Core core) {
+       if (core == null) {
+          throw new TALibArgumentException(name + ": core is null", RetCode.BAD_PARAM);
+       }
        return new ParamHolder(this, core);
     }
 }

@@ -877,7 +877,7 @@ fn every_backend_retcode_member_carries_c_s_number() {
             }
         }
     }
-    for (backend, floor) in [("Rust", 7), ("C#", 9), ("Java", 7)] {
+    for (backend, floor) in [("Rust", 10), ("C#", 10), ("Java", 11)] {
         let n = members.iter().filter(|m| m.0 == backend).count();
         assert!(n >= floor, "parsed only {n} {backend} RetCode members");
     }

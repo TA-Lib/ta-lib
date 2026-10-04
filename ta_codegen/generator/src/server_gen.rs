@@ -2429,7 +2429,12 @@ pub fn generate_java_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
         int n = endIdx - startIdx + 1;
         if (n < 1) n = 1;
 
+        /* skipInput / skipOutput: the 1-based slot the driver wants left unbound. */
+        int skipInput = jsonInt(json, "skipInput");
+        int skipOutput = jsonInt(json, "skipOutput");
+
         for (int i = 0; i < f.inputs().size(); i++) {
+            if (i + 1 == skipInput) continue;
             io.github.talib.metadata.InputInfo in = f.inputs().get(i);
             switch (in.type()) {
                 case PRICE -> h.setPriceInput(i,
@@ -2462,11 +2467,11 @@ pub fn generate_java_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
                 if (f.outputs().get(k).type() == io.github.talib.metadata.OutputType.REAL) {
                     double[] a = new double[n];
                     outs[k] = a;
-                    h.setOutput(k, a);
+                    if (k + 1 != skipOutput) h.setOutput(k, a);
                 } else {
                     int[] a = new int[n];
                     outs[k] = a;
-                    h.setOutput(k, a);
+                    if (k + 1 != skipOutput) h.setOutput(k, a);
                 }
             }
         }
@@ -2503,10 +2508,10 @@ pub fn generate_java_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
             beg = r.begIdx();
             nb = r.count();
         } catch (RuntimeException e) {
-            /* The shipped binder signals a rejected call by throwing; C's
-               TA_CallFunc returns TA_BAD_PARAM for the same conditions. */
+            /* The shipped binder and the function both signal a rejection by
+               throwing, and the exception carries the code C returns. */
             lb = -1;
-            rc = 2;
+            rc = e instanceof io.github.talib.TALibFailure tf ? tf.retCode().asCInt() : 2;
         }
 
         StringBuilder b = new StringBuilder();
@@ -4518,8 +4523,15 @@ fn abs_call(core: &Core, params: &Value) -> String {
         let mut note = |r: Result<&mut abstract_api::ParamHolder<'_>, RetCode>| {
             if let Err(e) = r { if bind_err.is_none() { bind_err = Some(e); } }
         };
+        // skipInput / skipOutput: the 1-based slot the driver wants left unbound.
+        let skip_in = params["skipInput"].as_u64().unwrap_or(0) as usize;
+        let skip_out = params["skipOutput"].as_u64().unwrap_or(0) as usize;
         let mut gi = 0usize;
         for (slot, inp) in info.inputs.iter().enumerate() {
+            if slot + 1 == skip_in {
+                if inp.kind != InputType::Price { gi += 1; }
+                continue;
+            }
             match inp.kind {
                 InputType::Price => {
                     note(h.set_price_input(slot, abs_opt(&po), abs_opt(&ph), abs_opt(&pl),
@@ -4542,9 +4554,11 @@ fn abs_call(core: &Core, params: &Value) -> String {
             }
         }
         for (k, buf) in rbuf.iter_mut().enumerate() {
+            if k + 1 == skip_out { continue; }
             if info.outputs[k].kind == OutputType::Real { note(h.set_output(k, buf)); }
         }
         for (k, buf) in ibuf.iter_mut().enumerate() {
+            if k + 1 == skip_out { continue; }
             if info.outputs[k].kind == OutputType::Integer { note(h.set_int_output(k, buf)); }
         }
 
@@ -4935,8 +4949,13 @@ const CSHARP_ABSTRACT_HANDLERS: &str = r#"    static string AbsStr(string? v) {
         int n = endIdx - startIdx + 1;
         if (n < 1) n = 1;
 
+        // skipInput / skipOutput: the 1-based slot the driver wants left unbound.
+        int skipInput = GetInt(p, "skipInput", 0);
+        int skipOutput = GetInt(p, "skipOutput", 0);
+
         var call = f.CreateCall(core);
         for (int i = 0; i < f.Inputs.Length; i++) {
+            if (i + 1 == skipInput) continue;
             var info = f.Inputs[i];
             if (info.Kind == InputKind.Price) {
                 foreach (var comp in info.SignatureOrder) {
@@ -4970,10 +4989,10 @@ const CSHARP_ABSTRACT_HANDLERS: &str = r#"    static string AbsStr(string? v) {
         for (int k = 0; k < f.Outputs.Length; k++) {
             if (f.Outputs[k].Kind == OutputKind.Real) {
                 realOuts[k] = new double[n];
-                call.SetOutput(k, realOuts[k]);
+                if (k + 1 != skipOutput) call.SetOutput(k, realOuts[k]);
             } else {
                 intOuts[k] = new int[n];
-                call.SetOutput(k, intOuts[k]);
+                if (k + 1 != skipOutput) call.SetOutput(k, intOuts[k]);
             }
         }
 

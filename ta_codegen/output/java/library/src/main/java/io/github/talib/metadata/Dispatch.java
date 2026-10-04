@@ -40,6 +40,8 @@ package io.github.talib.metadata;
 
 import io.github.talib.Core;
 import io.github.talib.OutRange;
+import io.github.talib.RetCode;
+import io.github.talib.TALibArgumentException;
 
 /**
  * Routes a {@link ParamHolder} onto the typed method it names.
@@ -741,7 +743,7 @@ final class Dispatch {
             return core.zlema(
                startIdx, endIdx, h.realInput(0), h.intOpt(0), h.realOutput(0));
          default:
-            throw new IllegalArgumentException("no such function: " + h.info().name());
+            throw new TALibArgumentException("no such function: " + h.info().name(), RetCode.INVALID_HANDLE);
       }
    }
 
@@ -1208,7 +1210,7 @@ final class Dispatch {
          case "ZLEMA":
             return core.zlemaLookback(h.intOpt(0));
          default:
-            throw new IllegalArgumentException("no such function: " + h.info().name());
+            throw new TALibArgumentException("no such function: " + h.info().name(), RetCode.INVALID_HANDLE);
       }
    }
 
@@ -1672,7 +1674,7 @@ final class Dispatch {
          case "ZLEMA":
             return core.zlemaDisplayShift(h.intOpt(0), outputIdx);
          default:
-            throw new IllegalArgumentException("no such function: " + h.info().name());
+            throw new TALibArgumentException("no such function: " + h.info().name(), RetCode.INVALID_HANDLE);
       }
    }
 }

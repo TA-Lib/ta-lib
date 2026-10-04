@@ -1700,8 +1700,15 @@ fn abs_call(core: &Core, params: &Value) -> String {
         let mut note = |r: Result<&mut abstract_api::ParamHolder<'_>, RetCode>| {
             if let Err(e) = r { if bind_err.is_none() { bind_err = Some(e); } }
         };
+        // skipInput / skipOutput: the 1-based slot the driver wants left unbound.
+        let skip_in = params["skipInput"].as_u64().unwrap_or(0) as usize;
+        let skip_out = params["skipOutput"].as_u64().unwrap_or(0) as usize;
         let mut gi = 0usize;
         for (slot, inp) in info.inputs.iter().enumerate() {
+            if slot + 1 == skip_in {
+                if inp.kind != InputType::Price { gi += 1; }
+                continue;
+            }
             match inp.kind {
                 InputType::Price => {
                     note(h.set_price_input(slot, abs_opt(&po), abs_opt(&ph), abs_opt(&pl),
@@ -1724,9 +1731,11 @@ fn abs_call(core: &Core, params: &Value) -> String {
             }
         }
         for (k, buf) in rbuf.iter_mut().enumerate() {
+            if k + 1 == skip_out { continue; }
             if info.outputs[k].kind == OutputType::Real { note(h.set_output(k, buf)); }
         }
         for (k, buf) in ibuf.iter_mut().enumerate() {
+            if k + 1 == skip_out { continue; }
             if info.outputs[k].kind == OutputType::Integer { note(h.set_int_output(k, buf)); }
         }
 

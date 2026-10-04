@@ -63,6 +63,14 @@ public enum RetCode
     BAD_PARAM(2),
     /** C parity only: never returned or thrown here. */
     ALLOC_ERR(3),
+    /** Metadata layer only: the {@code FuncInfo} is not a row of {@code Functions}. */
+    INVALID_HANDLE(6),
+    /** Metadata layer only: a setter was given a value of another kind than its slot. */
+    INVALID_PARAM_HOLDER_TYPE(8),
+    /** Metadata layer only: the call was refused, an input is not bound. */
+    INPUT_NOT_ALL_INITIALIZE(10),
+    /** Metadata layer only: the call was refused, an output is not bound. */
+    OUTPUT_NOT_ALL_INITIALIZE(11),
     /** {@code startIdx} outside the addressable index domain. */
     OUT_OF_RANGE_START_INDEX(12),
     /** {@code endIdx} outside the domain, or below {@code startIdx}. */

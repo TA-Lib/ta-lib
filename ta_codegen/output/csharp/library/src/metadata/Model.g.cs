@@ -427,7 +427,11 @@ public sealed record FuncInfo
     /// <summary>Begins a call against a specific <see cref="Core"/>.</summary>
     /// <param name="core">The core whose settings the call should use.</param>
     /// <returns>A fresh, unbound call.</returns>
-    public ParamHolder CreateCall(Core core) => new(this, core);
+    /// <exception cref="TALibArgumentException">Carrying
+    /// <see cref="RetCode.BadParam"/>: <paramref name="core"/> is null.</exception>
+    public ParamHolder CreateCall(Core core) => core is null
+        ? throw new TALibArgumentException($"{Name}: core is null", nameof(core), RetCode.BadParam)
+        : new(this, core);
 
     /// <summary>The function's name.</summary>
     /// <returns><see cref="Name"/>.</returns>

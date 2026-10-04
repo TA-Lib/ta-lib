@@ -52,6 +52,11 @@ public enum RetCode
     /// <summary>An internal allocation failed (<c>TA_ALLOC_ERR</c> = 3). C parity only:
     /// never returned or thrown here.</summary>
     AllocErr = 3,
+    /// <summary>A <see cref="TALib.Metadata.ParamHolder"/> setter was given a
+    /// value of another kind than the slot it names
+    /// (<c>TA_INVALID_PARAM_HOLDER_TYPE</c> = 8). Reachable only from the dynamic
+    /// binder.</summary>
+    InvalidParamHolderType = 8,
     /// <summary>A <see cref="TALib.Metadata.ParamHolder"/> was invoked with an
     /// input left unbound (<c>TA_INPUT_NOT_ALL_INITIALIZE</c> = 10). Reachable only
     /// from the dynamic binder — the typed API takes its inputs as

@@ -41,6 +41,8 @@ package io.github.talib.metadata;
 import io.github.talib.Core;
 import io.github.talib.MAType;
 import io.github.talib.OutRange;
+import io.github.talib.RetCode;
+import io.github.talib.TALibArgumentException;
 
 /**
  * Binds arguments to a function chosen at run time, then calls it.
@@ -61,10 +63,10 @@ import io.github.talib.OutRange;
  *
  * <p>Everything is validated against the {@link FuncInfo} row: an index out
  * of bounds, a type that does not match the declared parameter, or an unbound
- * input or output at {@link #call} time throws {@link IllegalArgumentException}. The
- * call itself then behaves exactly like the typed method — including throwing
- * on misuse and returning an empty {@link OutRange} when the range is shorter
- * than the lookback.
+ * input or output at {@link #call} time throws a {@link TALibArgumentException}
+ * carrying the layer's {@link RetCode}. The call itself then behaves exactly
+ * like the typed method, including throwing on misuse and returning an empty
+ * {@link OutRange} when the range is shorter than the lookback.
  *
  * <p>Not thread-safe: confine one holder to one thread, or build one per call.
  */
@@ -110,14 +112,14 @@ public final class ParamHolder {
 
    private void checkInput(int idx, InputType expected) {
       if (idx < 0 || idx >= info.inputs().size()) {
-         throw new IllegalArgumentException(
-            info.name() + ": input index " + idx + " out of range [0, " + info.inputs().size() + ")");
+         throw new TALibArgumentException(
+            info.name() + ": input index " + idx + " out of range [0, " + info.inputs().size() + ")", RetCode.BAD_PARAM);
       }
       InputType actual = info.inputs().get(idx).type();
       if (actual != expected) {
-         throw new IllegalArgumentException(
+         throw new TALibArgumentException(
             info.name() + " input " + idx + " (" + info.inputs().get(idx).paramName()
-            + ") is " + actual + ", not " + expected);
+            + ") is " + actual + ", not " + expected, RetCode.INVALID_PARAM_HOLDER_TYPE);
       }
    }
 
@@ -150,8 +152,8 @@ public final class ParamHolder {
       String[] names = { "open", "high", "low", "close", "volume", "openInterest" };
       for (int k = 0; k < c.length; k++) {
          if ((flags & bits[k]) != 0 && c[k] == null) {
-            throw new IllegalArgumentException(
-               info.name() + " input " + idx + " requires " + names[k]);
+            throw new TALibArgumentException(
+               info.name() + " input " + idx + " requires " + names[k], RetCode.BAD_PARAM);
          }
       }
       priceInputs[idx] = c;
@@ -160,9 +162,9 @@ public final class ParamHolder {
 
    private void checkOpt(int idx, OptInputType... expected) {
       if (idx < 0 || idx >= info.optInputs().size()) {
-         throw new IllegalArgumentException(
+         throw new TALibArgumentException(
             info.name() + ": optInput index " + idx + " out of range [0, "
-            + info.optInputs().size() + ")");
+            + info.optInputs().size() + ")", RetCode.BAD_PARAM);
       }
       OptInputType actual = info.optInputs().get(idx).type();
       for (OptInputType e : expected) {
@@ -170,9 +172,9 @@ public final class ParamHolder {
             return;
          }
       }
-      throw new IllegalArgumentException(
+      throw new TALibArgumentException(
          info.name() + " optInput " + idx + " (" + info.optInputs().get(idx).paramName()
-         + ") is " + actual + ", not " + java.util.Arrays.toString(expected));
+         + ") is " + actual + ", not " + java.util.Arrays.toString(expected), RetCode.INVALID_PARAM_HOLDER_TYPE);
    }
 
    /** Binds an {@link OptInputType#INTEGER_RANGE} or {@link OptInputType#INTEGER_LIST} parameter. */
@@ -198,8 +200,8 @@ public final class ParamHolder {
                maTypeOpt(), never intOpt() -- but it broke the same rule
                setPriceInput breaks visibly: a rejected setter must leave the
                holder as it found it (issue #266). */
-            throw new IllegalArgumentException(
-               info.name() + " optInput " + idx + ": " + value + " is not a valid MAType ordinal");
+            throw new TALibArgumentException(
+               info.name() + " optInput " + idx + ": " + value + " is not a valid MAType ordinal", RetCode.BAD_PARAM);
          } else {
             maTypeOpts[idx] = all[value];
             intOpts[idx] = value;
@@ -230,15 +232,15 @@ public final class ParamHolder {
 
    private void checkOutput(int idx, OutputType expected) {
       if (idx < 0 || idx >= info.outputs().size()) {
-         throw new IllegalArgumentException(
+         throw new TALibArgumentException(
             info.name() + ": output index " + idx + " out of range [0, "
-            + info.outputs().size() + ")");
+            + info.outputs().size() + ")", RetCode.BAD_PARAM);
       }
       OutputType actual = info.outputs().get(idx).type();
       if (actual != expected) {
-         throw new IllegalArgumentException(
+         throw new TALibArgumentException(
             info.name() + " output " + idx + " (" + info.outputs().get(idx).paramName()
-            + ") is " + actual + ", not " + expected);
+            + ") is " + actual + ", not " + expected, RetCode.INVALID_PARAM_HOLDER_TYPE);
       }
    }
 
@@ -295,7 +297,9 @@ public final class ParamHolder {
     * <p>Unbound parameters that carry a documented default are filled in with it;
     * unbound inputs or outputs are an error.
     *
-    * @throws IllegalArgumentException if a required parameter was never bound
+    * @throws TALibArgumentException carrying {@link RetCode#INPUT_NOT_ALL_INITIALIZE}
+    *         or {@link RetCode#OUTPUT_NOT_ALL_INITIALIZE} if an input or output
+    *         was never bound
     */
    public OutRange call(int startIdx, int endIdx) {
       for (int i = 0; i < info.inputs().size(); i++) {
@@ -305,16 +309,16 @@ public final class ParamHolder {
             case PRICE -> priceInputs[i] != null;
          };
          if (!bound) {
-            throw new IllegalArgumentException(
-               info.name() + ": input " + i + " (" + info.inputs().get(i).paramName() + ") not set");
+            throw new TALibArgumentException(
+               info.name() + ": input " + i + " (" + info.inputs().get(i).paramName() + ") not set", RetCode.INPUT_NOT_ALL_INITIALIZE);
          }
       }
       for (int i = 0; i < info.outputs().size(); i++) {
          boolean bound = info.outputs().get(i).type() == OutputType.REAL
             ? realOutputs[i] != null : intOutputs[i] != null;
          if (!bound) {
-            throw new IllegalArgumentException(
-               info.name() + ": output " + i + " (" + info.outputs().get(i).paramName() + ") not set");
+            throw new TALibArgumentException(
+               info.name() + ": output " + i + " (" + info.outputs().get(i).paramName() + ") not set", RetCode.OUTPUT_NOT_ALL_INITIALIZE);
          }
       }
       resolveUnsetOptInputs();
@@ -349,7 +353,7 @@ public final class ParamHolder {
 
    private static <T> T require(T v, String what) {
       if (v == null) {
-         throw new IllegalArgumentException(info(what));
+         throw new TALibArgumentException(info(what), RetCode.BAD_PARAM);
       }
       return v;
    }

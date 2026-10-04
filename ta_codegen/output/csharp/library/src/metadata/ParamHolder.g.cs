@@ -136,22 +136,30 @@ public sealed class ParamHolder
         PriceComponents.Close => 3,
         PriceComponents.Volume => 4,
         PriceComponents.OpenInterest => 5,
-        _ => throw new ArgumentException($"{c} is not a single price component", nameof(c)),
+        _ => throw new TALibArgumentException($"{c} is not a single price component", nameof(c), RetCode.BadParam),
     };
+
+    private void RequireNotNull([System.Diagnostics.CodeAnalysis.NotNull] object? argument, string name)
+    {
+        if (argument is null)
+        {
+            throw new TALibArgumentException($"{_info.Name}: {name} is null", name, RetCode.BadParam);
+        }
+    }
 
     private InputInfo CheckInput(int slot, InputKind expected)
     {
         if (slot < 0 || slot >= _info.Inputs.Length)
         {
-            throw new ArgumentOutOfRangeException(nameof(slot),
-                $"{_info.Name}: input {slot} is outside [0, {_info.Inputs.Length})");
+            throw new TALibArgumentException(
+                $"{_info.Name}: input {slot} is outside [0, {_info.Inputs.Length})", nameof(slot), RetCode.BadParam);
         }
 
         InputInfo info = _info.Inputs[slot];
         if (info.Kind != expected)
         {
-            throw new ArgumentException(
-                $"{_info.Name} input {slot} ({info.ParamName}) is {info.Kind}, not {expected}", nameof(slot));
+            throw new TALibArgumentException(
+                $"{_info.Name} input {slot} ({info.ParamName}) is {info.Kind}, not {expected}", nameof(slot), RetCode.InvalidParamHolderType);
         }
 
         return info;
@@ -165,7 +173,7 @@ public sealed class ParamHolder
     public ParamHolder SetInput(int slot, double[] series)
     {
         CheckInput(slot, InputKind.Real);
-        ArgumentNullException.ThrowIfNull(series);
+        RequireNotNull(series, nameof(series));
         _series[slot] = series;
         return this;
     }
@@ -178,7 +186,7 @@ public sealed class ParamHolder
     public ParamHolder SetInput(int slot, int[] series)
     {
         CheckInput(slot, InputKind.Integer);
-        ArgumentNullException.ThrowIfNull(series);
+        RequireNotNull(series, nameof(series));
         _intSeries[slot] = series;
         return this;
     }
@@ -202,7 +210,7 @@ public sealed class ParamHolder
     public ParamHolder SetPriceInput(int slot, PriceComponents component, double[] series)
     {
         InputInfo info = CheckInput(slot, InputKind.Price);
-        ArgumentNullException.ThrowIfNull(series);
+        RequireNotNull(series, nameof(series));
         _price[slot][ComponentIndex(component)] = series;
         return this;
     }
@@ -240,8 +248,8 @@ public sealed class ParamHolder
         {
             if (info.Requires(all[i]) && given[i] is null)
             {
-                throw new ArgumentException(
-                    $"{_info.Name} input {slot} ({info.ParamName}) requires {all[i]}", nameof(slot));
+                throw new TALibArgumentException(
+                    $"{_info.Name} input {slot} ({info.ParamName}) requires {all[i]}", nameof(slot), RetCode.BadParam);
             }
         }
 
@@ -259,8 +267,8 @@ public sealed class ParamHolder
     {
         if (index < 0 || index >= _info.OptInputs.Length)
         {
-            throw new ArgumentOutOfRangeException(nameof(index),
-                $"{_info.Name}: optional parameter {index} is outside [0, {_info.OptInputs.Length})");
+            throw new TALibArgumentException(
+                $"{_info.Name}: optional parameter {index} is outside [0, {_info.OptInputs.Length})", nameof(index), RetCode.BadParam);
         }
 
         return _info.OptInputs[index];
@@ -276,9 +284,9 @@ public sealed class ParamHolder
         OptInputInfo p = CheckOpt(index);
         if (p.Domain is not (OptInputDomain.IntegerRange or OptInputDomain.IntegerList))
         {
-            throw new ArgumentException(
+            throw new TALibArgumentException(
                 $"{_info.Name} parameter {index} ({p.ParamName}) is {p.Domain.GetType().Name}, not integral",
-                nameof(index));
+                nameof(index), RetCode.InvalidParamHolderType);
         }
 
         _intOpts[index] = value;
@@ -295,9 +303,9 @@ public sealed class ParamHolder
         OptInputInfo p = CheckOpt(index);
         if (p.Domain is not (OptInputDomain.RealRange or OptInputDomain.RealList))
         {
-            throw new ArgumentException(
+            throw new TALibArgumentException(
                 $"{_info.Name} parameter {index} ({p.ParamName}) is {p.Domain.GetType().Name}, not real",
-                nameof(index));
+                nameof(index), RetCode.InvalidParamHolderType);
         }
 
         _realOpts[index] = value;
@@ -320,9 +328,9 @@ public sealed class ParamHolder
         OptInputInfo p = CheckOpt(index);
         if (p.Domain is not OptInputDomain.IntegerList)
         {
-            throw new ArgumentException(
+            throw new TALibArgumentException(
                 $"{_info.Name} parameter {index} ({p.ParamName}) is {p.Domain.GetType().Name}, not a choice list",
-                nameof(index));
+                nameof(index), RetCode.InvalidParamHolderType);
         }
 
         _intOpts[index] = (int)value;
@@ -336,12 +344,12 @@ public sealed class ParamHolder
     /// <exception cref="ArgumentException">The row does not belong to this function.</exception>
     public ParamHolder SetOptInput(OptInputInfo parameter, double value)
     {
-        ArgumentNullException.ThrowIfNull(parameter);
+        RequireNotNull(parameter, nameof(parameter));
         int index = _info.OptInputs.IndexOf(parameter);
         if (index < 0)
         {
-            throw new ArgumentException(
-                $"{parameter.ParamName} is not a parameter of {_info.Name}", nameof(parameter));
+            throw new TALibArgumentException(
+                $"{parameter.ParamName} is not a parameter of {_info.Name}", nameof(parameter), RetCode.BadParam);
         }
 
         return parameter.Domain switch
@@ -363,8 +371,8 @@ public sealed class ParamHolder
     {
         if (double.IsNaN(value) || value < int.MinValue || value > int.MaxValue)
         {
-            throw new ArgumentOutOfRangeException(nameof(value),
-                $"{parameter.ParamName}: {value} is outside the range an integer parameter can hold");
+            throw new TALibArgumentException(
+                $"{parameter.ParamName}: {value} is outside the range an integer parameter can hold", nameof(value), RetCode.BadParam);
         }
 
         return (int)value;
@@ -374,15 +382,15 @@ public sealed class ParamHolder
     {
         if (index < 0 || index >= _info.Outputs.Length)
         {
-            throw new ArgumentOutOfRangeException(nameof(index),
-                $"{_info.Name}: output {index} is outside [0, {_info.Outputs.Length})");
+            throw new TALibArgumentException(
+                $"{_info.Name}: output {index} is outside [0, {_info.Outputs.Length})", nameof(index), RetCode.BadParam);
         }
 
         OutputInfo info = _info.Outputs[index];
         if (info.Kind != expected)
         {
-            throw new ArgumentException(
-                $"{_info.Name} output {index} ({info.ParamName}) is {info.Kind}, not {expected}", nameof(index));
+            throw new TALibArgumentException(
+                $"{_info.Name} output {index} ({info.ParamName}) is {info.Kind}, not {expected}", nameof(index), RetCode.InvalidParamHolderType);
         }
 
         return info;
@@ -396,7 +404,7 @@ public sealed class ParamHolder
     public ParamHolder SetOutput(int index, double[] buffer)
     {
         CheckOutput(index, OutputKind.Real);
-        ArgumentNullException.ThrowIfNull(buffer);
+        RequireNotNull(buffer, nameof(buffer));
         _realOuts[index] = buffer;
         return this;
     }
@@ -409,7 +417,7 @@ public sealed class ParamHolder
     public ParamHolder SetOutput(int index, int[] buffer)
     {
         CheckOutput(index, OutputKind.Integer);
-        ArgumentNullException.ThrowIfNull(buffer);
+        RequireNotNull(buffer, nameof(buffer));
         _intOuts[index] = buffer;
         return this;
     }
@@ -496,15 +504,17 @@ public sealed class ParamHolder
     /// <param name="startIdx">First input bar to compute.</param>
     /// <param name="endIdx">Last input bar to compute.</param>
     /// <returns>Where the output starts and how much there is.</returns>
-    /// <exception cref="ArgumentException">A required input or output was never
-    /// bound, or an argument is invalid — the same failures the typed method
-    /// reports.</exception>
+    /// <exception cref="TALibArgumentException">Carrying
+    /// <see cref="RetCode.InputNotAllInitialize"/> or
+    /// <see cref="RetCode.OutputNotAllInitialize"/>: a required input or output was
+    /// never bound, and the function did not run. Any other failure is the typed
+    /// method's own.</exception>
     public OutRange Call(int startIdx, int endIdx)
     {
         RetCode bound = BoundState(out string which);
         if (bound != RetCode.Success)
         {
-            throw new ArgumentException($"{_info.Name}: {which} was not set");
+            throw new TALibArgumentException($"{_info.Name}: {which} was not set", bound);
         }
 
         // The function's OWN exception, not a relabelled code. Since #265 the

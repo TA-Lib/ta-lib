@@ -3658,8 +3658,9 @@ pub trait OptValue: sealed::Sealed {
     /// Bind `self` to optional parameter `index` of `holder`.
     ///
     /// # Errors
-    /// [`RetCode::BadParam`] if the index is out of range or the parameter's
-    /// domain does not take this type.
+    /// [`RetCode::BadParam`] if the index is out of range,
+    /// [`RetCode::InvalidParamHolderType`] if the parameter's domain does not
+    /// take this type.
     fn bind(self, holder: &mut ParamHolder<'_>, index: usize) -> Result<(), RetCode>;
 }
 
@@ -3671,7 +3672,7 @@ impl OptValue for i32 {
                 holder.int_opt[index] = self;
                 Ok(())
             }
-            _ => Err(RetCode::BadParam),
+            _ => Err(RetCode::InvalidParamHolderType),
         }
     }
 }
@@ -3684,7 +3685,7 @@ impl OptValue for f64 {
                 holder.real_opt[index] = self;
                 Ok(())
             }
-            _ => Err(RetCode::BadParam),
+            _ => Err(RetCode::InvalidParamHolderType),
         }
     }
 }
@@ -3751,13 +3752,14 @@ impl<'a> ParamHolder<'a> {
 
     fn check_input(&self, slot: usize, want: InputType) -> Result<(), RetCode> {
         let info = self.func.info().inputs.get(slot).ok_or(RetCode::BadParam)?;
-        if info.kind == want { Ok(()) } else { Err(RetCode::BadParam) }
+        if info.kind == want { Ok(()) } else { Err(RetCode::InvalidParamHolderType) }
     }
 
     /// Bind a real input series.
     ///
     /// # Errors
-    /// [`RetCode::BadParam`] if the slot is out of range or is not a real input.
+    /// [`RetCode::BadParam`] if the slot is out of range,
+    /// [`RetCode::InvalidParamHolderType`] if it is not a real input.
     pub fn set_input(&mut self, slot: usize, series: &'a [f64]) -> Result<&mut Self, RetCode> {
         self.check_input(slot, InputType::Real)?;
         self.real_in[slot] = Some(series);
@@ -3767,7 +3769,8 @@ impl<'a> ParamHolder<'a> {
     /// Bind an integer input series.
     ///
     /// # Errors
-    /// [`RetCode::BadParam`] if the slot is out of range or is not an integer input.
+    /// [`RetCode::BadParam`] if the slot is out of range,
+    /// [`RetCode::InvalidParamHolderType`] if it is not an integer input.
     pub fn set_int_input(&mut self, slot: usize, series: &'a [i32]) -> Result<&mut Self, RetCode> {
         self.check_input(slot, InputType::Integer)?;
         self.int_in[slot] = Some(series);
@@ -3784,8 +3787,9 @@ impl<'a> ParamHolder<'a> {
     /// -- the holder-reusability rule the `call` tier states for itself.
     ///
     /// # Errors
-    /// [`RetCode::BadParam`] if the slot is out of range, is not a price input, or
-    /// a component the function *does* consume was left `None`.
+    /// [`RetCode::BadParam`] if the slot is out of range or a component the
+    /// function *does* consume was left `None`,
+    /// [`RetCode::InvalidParamHolderType`] if it is not a price input.
     pub fn set_price_input(
         &mut self,
         slot: usize,
@@ -3811,8 +3815,9 @@ impl<'a> ParamHolder<'a> {
     /// Bind an optional parameter. Takes an `i32` or an `f64`; see [`OptValue`].
     ///
     /// # Errors
-    /// [`RetCode::BadParam`] if the index is out of range or the value's type does
-    /// not match the parameter's domain.
+    /// [`RetCode::BadParam`] if the index is out of range,
+    /// [`RetCode::InvalidParamHolderType`] if the value's type does not match the
+    /// parameter's domain.
     pub fn set_opt_input<V: OptValue>(&mut self, index: usize, value: V) -> Result<&mut Self, RetCode> {
         value.bind(self, index)?;
         Ok(self)
@@ -3821,10 +3826,11 @@ impl<'a> ParamHolder<'a> {
     /// Bind a real output buffer.
     ///
     /// # Errors
-    /// [`RetCode::BadParam`] if the index is out of range or is not a real output.
+    /// [`RetCode::BadParam`] if the index is out of range,
+    /// [`RetCode::InvalidParamHolderType`] if it is not a real output.
     pub fn set_output(&mut self, index: usize, out: &'a mut [f64]) -> Result<&mut Self, RetCode> {
         let info = self.func.info().outputs.get(index).ok_or(RetCode::BadParam)?;
-        if info.kind != OutputType::Real { return Err(RetCode::BadParam); }
+        if info.kind != OutputType::Real { return Err(RetCode::InvalidParamHolderType); }
         self.real_out[index] = Some(out);
         Ok(self)
     }
@@ -3832,10 +3838,11 @@ impl<'a> ParamHolder<'a> {
     /// Bind an integer output buffer.
     ///
     /// # Errors
-    /// [`RetCode::BadParam`] if the index is out of range or is not an integer output.
+    /// [`RetCode::BadParam`] if the index is out of range,
+    /// [`RetCode::InvalidParamHolderType`] if it is not an integer output.
     pub fn set_int_output(&mut self, index: usize, out: &'a mut [i32]) -> Result<&mut Self, RetCode> {
         let info = self.func.info().outputs.get(index).ok_or(RetCode::BadParam)?;
-        if info.kind != OutputType::Integer { return Err(RetCode::BadParam); }
+        if info.kind != OutputType::Integer { return Err(RetCode::InvalidParamHolderType); }
         self.int_out[index] = Some(out);
         Ok(self)
     }
@@ -4329,9 +4336,10 @@ impl<'a> ParamHolder<'a> {
     /// # Errors
     /// [`RetCode::OutOfRangeStartIndex`] if `start_idx` exceeds
     /// [`Core::INDEX_MAX`], [`RetCode::OutOfRangeEndIndex`] if `end_idx` exceeds
-    /// it or is below `start_idx`, and [`RetCode::BadParam`] if a required
-    /// input or output was never bound, if the function rejects its
-    /// parameters, or if a bound buffer is too short: every input must
+    /// it or is below `start_idx`, [`RetCode::InputNotAllInitialize`] or
+    /// [`RetCode::OutputNotAllInitialize`] if a required input or output
+    /// was never bound, and [`RetCode::BadParam`] if the function rejects
+    /// its parameters or a bound buffer is too short: every input must
     /// cover `end_idx`, and every output must hold the count actually
     /// produced, `end_idx - max(start_idx, lookback) + 1`.
     pub fn call(&mut self, start_idx: usize, end_idx: usize) -> Result<OutRange, RetCode> {
@@ -4352,9 +4360,9 @@ impl<'a> ParamHolder<'a> {
         let mut nb: usize = 0;
         let rc = match self.func {
             FuncId::AC => {
-                let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
-                let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                let i0_1 = self.price[0][1].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_2 = self.price[0][2].ok_or(RetCode::InputNotAllInitialize)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.ac(start_idx, end_idx, i0_1, i0_2, self.int_opt[0], self.int_opt[1], self.int_opt[2], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -4363,13 +4371,13 @@ impl<'a> ParamHolder<'a> {
                 }
             }
             FuncId::ACCBANDS => {
-                let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
-                let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
-                let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
-                if self.real_out[0].is_none() || self.real_out[1].is_none() || self.real_out[2].is_none() { return Err(RetCode::BadParam); }
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
-                let mut o1 = self.real_out[1].take().ok_or(RetCode::BadParam)?;
-                let mut o2 = self.real_out[2].take().ok_or(RetCode::BadParam)?;
+                let i0_1 = self.price[0][1].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_2 = self.price[0][2].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_3 = self.price[0][3].ok_or(RetCode::InputNotAllInitialize)?;
+                if self.real_out[0].is_none() || self.real_out[1].is_none() || self.real_out[2].is_none() { return Err(RetCode::OutputNotAllInitialize); }
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let mut o1 = self.real_out[1].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let mut o2 = self.real_out[2].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.accbands(start_idx, end_idx, i0_1, i0_2, i0_3, self.int_opt[0], &mut *o0, &mut *o1, &mut *o2);
                 self.real_out[0] = Some(o0);
                 self.real_out[1] = Some(o1);
@@ -4380,8 +4388,8 @@ impl<'a> ParamHolder<'a> {
                 }
             }
             FuncId::ACOS => {
-                let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                let i0 = self.real_in[0].ok_or(RetCode::InputNotAllInitialize)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.acos(start_idx, end_idx, i0, &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -4390,11 +4398,11 @@ impl<'a> ParamHolder<'a> {
                 }
             }
             FuncId::AD => {
-                let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
-                let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
-                let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
-                let i0_4 = self.price[0][4].ok_or(RetCode::BadParam)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                let i0_1 = self.price[0][1].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_2 = self.price[0][2].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_3 = self.price[0][3].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_4 = self.price[0][4].ok_or(RetCode::InputNotAllInitialize)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.ad(start_idx, end_idx, i0_1, i0_2, i0_3, i0_4, &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -4403,9 +4411,9 @@ impl<'a> ParamHolder<'a> {
                 }
             }
             FuncId::ADD => {
-                let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
-                let i1 = self.real_in[1].ok_or(RetCode::BadParam)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                let i0 = self.real_in[0].ok_or(RetCode::InputNotAllInitialize)?;
+                let i1 = self.real_in[1].ok_or(RetCode::InputNotAllInitialize)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.add(start_idx, end_idx, i0, i1, &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -4414,11 +4422,11 @@ impl<'a> ParamHolder<'a> {
                 }
             }
             FuncId::ADOSC => {
-                let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
-                let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
-                let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
-                let i0_4 = self.price[0][4].ok_or(RetCode::BadParam)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                let i0_1 = self.price[0][1].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_2 = self.price[0][2].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_3 = self.price[0][3].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_4 = self.price[0][4].ok_or(RetCode::InputNotAllInitialize)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.adosc(start_idx, end_idx, i0_1, i0_2, i0_3, i0_4, self.int_opt[0], self.int_opt[1], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -4427,9 +4435,9 @@ impl<'a> ParamHolder<'a> {
                 }
             }
             FuncId::ADR => {
-                let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
-                let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                let i0_1 = self.price[0][1].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_2 = self.price[0][2].ok_or(RetCode::InputNotAllInitialize)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.adr(start_idx, end_idx, i0_1, i0_2, self.int_opt[0], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -4438,10 +4446,10 @@ impl<'a> ParamHolder<'a> {
                 }
             }
             FuncId::ADX => {
-                let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
-                let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
-                let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                let i0_1 = self.price[0][1].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_2 = self.price[0][2].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_3 = self.price[0][3].ok_or(RetCode::InputNotAllInitialize)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.adx(start_idx, end_idx, i0_1, i0_2, i0_3, self.int_opt[0], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -4450,10 +4458,10 @@ impl<'a> ParamHolder<'a> {
                 }
             }
             FuncId::ADXR => {
-                let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
-                let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
-                let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                let i0_1 = self.price[0][1].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_2 = self.price[0][2].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_3 = self.price[0][3].ok_or(RetCode::InputNotAllInitialize)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.adxr(start_idx, end_idx, i0_1, i0_2, i0_3, self.int_opt[0], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -4462,8 +4470,8 @@ impl<'a> ParamHolder<'a> {
                 }
             }
             FuncId::ALMA => {
-                let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                let i0 = self.real_in[0].ok_or(RetCode::InputNotAllInitialize)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.alma(start_idx, end_idx, i0, self.int_opt[0], self.real_opt[1], self.real_opt[2], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -4472,9 +4480,9 @@ impl<'a> ParamHolder<'a> {
                 }
             }
             FuncId::AO => {
-                let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
-                let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                let i0_1 = self.price[0][1].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_2 = self.price[0][2].ok_or(RetCode::InputNotAllInitialize)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.ao(start_idx, end_idx, i0_1, i0_2, self.int_opt[0], self.int_opt[1], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -4484,8 +4492,8 @@ impl<'a> ParamHolder<'a> {
             }
             FuncId::APO => {
                 let e2 = MAType::try_from(self.int_opt[2])?;
-                let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                let i0 = self.real_in[0].ok_or(RetCode::InputNotAllInitialize)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.apo(start_idx, end_idx, i0, self.int_opt[0], self.int_opt[1], e2, &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -4494,11 +4502,11 @@ impl<'a> ParamHolder<'a> {
                 }
             }
             FuncId::AROON => {
-                let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
-                let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
-                if self.real_out[0].is_none() || self.real_out[1].is_none() { return Err(RetCode::BadParam); }
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
-                let mut o1 = self.real_out[1].take().ok_or(RetCode::BadParam)?;
+                let i0_1 = self.price[0][1].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_2 = self.price[0][2].ok_or(RetCode::InputNotAllInitialize)?;
+                if self.real_out[0].is_none() || self.real_out[1].is_none() { return Err(RetCode::OutputNotAllInitialize); }
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let mut o1 = self.real_out[1].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.aroon(start_idx, end_idx, i0_1, i0_2, self.int_opt[0], &mut *o0, &mut *o1);
                 self.real_out[0] = Some(o0);
                 self.real_out[1] = Some(o1);
@@ -4508,9 +4516,9 @@ impl<'a> ParamHolder<'a> {
                 }
             }
             FuncId::AROONOSC => {
-                let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
-                let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                let i0_1 = self.price[0][1].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_2 = self.price[0][2].ok_or(RetCode::InputNotAllInitialize)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.aroonosc(start_idx, end_idx, i0_1, i0_2, self.int_opt[0], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -4519,11 +4527,11 @@ impl<'a> ParamHolder<'a> {
                 }
             }
             FuncId::ASI => {
-                let i0_0 = self.price[0][0].ok_or(RetCode::BadParam)?;
-                let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
-                let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
-                let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                let i0_0 = self.price[0][0].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_1 = self.price[0][1].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_2 = self.price[0][2].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_3 = self.price[0][3].ok_or(RetCode::InputNotAllInitialize)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.asi(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, self.real_opt[0], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -4532,8 +4540,8 @@ impl<'a> ParamHolder<'a> {
                 }
             }
             FuncId::ASIN => {
-                let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                let i0 = self.real_in[0].ok_or(RetCode::InputNotAllInitialize)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.asin(start_idx, end_idx, i0, &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -4542,8 +4550,8 @@ impl<'a> ParamHolder<'a> {
                 }
             }
             FuncId::ATAN => {
-                let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                let i0 = self.real_in[0].ok_or(RetCode::InputNotAllInitialize)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.atan(start_idx, end_idx, i0, &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -4552,10 +4560,10 @@ impl<'a> ParamHolder<'a> {
                 }
             }
             FuncId::ATR => {
-                let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
-                let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
-                let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                let i0_1 = self.price[0][1].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_2 = self.price[0][2].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_3 = self.price[0][3].ok_or(RetCode::InputNotAllInitialize)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.atr(start_idx, end_idx, i0_1, i0_2, i0_3, self.int_opt[0], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -4564,8 +4572,8 @@ impl<'a> ParamHolder<'a> {
                 }
             }
             FuncId::AVGDEV => {
-                let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                let i0 = self.real_in[0].ok_or(RetCode::InputNotAllInitialize)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.avgdev(start_idx, end_idx, i0, self.int_opt[0], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -4574,11 +4582,11 @@ impl<'a> ParamHolder<'a> {
                 }
             }
             FuncId::AVGPRICE => {
-                let i0_0 = self.price[0][0].ok_or(RetCode::BadParam)?;
-                let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
-                let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
-                let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                let i0_0 = self.price[0][0].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_1 = self.price[0][1].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_2 = self.price[0][2].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_3 = self.price[0][3].ok_or(RetCode::InputNotAllInitialize)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.avgprice(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -4588,11 +4596,11 @@ impl<'a> ParamHolder<'a> {
             }
             FuncId::BBANDS => {
                 let e3 = MAType::try_from(self.int_opt[3])?;
-                let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
-                if self.real_out[0].is_none() || self.real_out[1].is_none() || self.real_out[2].is_none() { return Err(RetCode::BadParam); }
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
-                let mut o1 = self.real_out[1].take().ok_or(RetCode::BadParam)?;
-                let mut o2 = self.real_out[2].take().ok_or(RetCode::BadParam)?;
+                let i0 = self.real_in[0].ok_or(RetCode::InputNotAllInitialize)?;
+                if self.real_out[0].is_none() || self.real_out[1].is_none() || self.real_out[2].is_none() { return Err(RetCode::OutputNotAllInitialize); }
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let mut o1 = self.real_out[1].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let mut o2 = self.real_out[2].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.bbands(start_idx, end_idx, i0, self.int_opt[0], self.real_opt[1], self.real_opt[2], e3, &mut *o0, &mut *o1, &mut *o2);
                 self.real_out[0] = Some(o0);
                 self.real_out[1] = Some(o1);
@@ -4604,8 +4612,8 @@ impl<'a> ParamHolder<'a> {
             }
             FuncId::BBW => {
                 let e3 = MAType::try_from(self.int_opt[3])?;
-                let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                let i0 = self.real_in[0].ok_or(RetCode::InputNotAllInitialize)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.bbw(start_idx, end_idx, i0, self.int_opt[0], self.real_opt[1], self.real_opt[2], e3, &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -4614,9 +4622,9 @@ impl<'a> ParamHolder<'a> {
                 }
             }
             FuncId::BETA => {
-                let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
-                let i1 = self.real_in[1].ok_or(RetCode::BadParam)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                let i0 = self.real_in[0].ok_or(RetCode::InputNotAllInitialize)?;
+                let i1 = self.real_in[1].ok_or(RetCode::InputNotAllInitialize)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.beta(start_idx, end_idx, i0, i1, self.int_opt[0], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -4625,11 +4633,11 @@ impl<'a> ParamHolder<'a> {
                 }
             }
             FuncId::BOP => {
-                let i0_0 = self.price[0][0].ok_or(RetCode::BadParam)?;
-                let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
-                let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
-                let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                let i0_0 = self.price[0][0].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_1 = self.price[0][1].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_2 = self.price[0][2].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_3 = self.price[0][3].ok_or(RetCode::InputNotAllInitialize)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.bop(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -4638,10 +4646,10 @@ impl<'a> ParamHolder<'a> {
                 }
             }
             FuncId::CCI => {
-                let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
-                let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
-                let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                let i0_1 = self.price[0][1].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_2 = self.price[0][2].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_3 = self.price[0][3].ok_or(RetCode::InputNotAllInitialize)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.cci(start_idx, end_idx, i0_1, i0_2, i0_3, self.int_opt[0], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -4650,11 +4658,11 @@ impl<'a> ParamHolder<'a> {
                 }
             }
             FuncId::CDL2CROWS => {
-                let i0_0 = self.price[0][0].ok_or(RetCode::BadParam)?;
-                let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
-                let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
-                let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
-                let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
+                let i0_0 = self.price[0][0].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_1 = self.price[0][1].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_2 = self.price[0][2].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_3 = self.price[0][3].ok_or(RetCode::InputNotAllInitialize)?;
+                let mut o0 = self.int_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.cdl2crows(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut *o0);
                 self.int_out[0] = Some(o0);
                 match res {
@@ -4663,11 +4671,11 @@ impl<'a> ParamHolder<'a> {
                 }
             }
             FuncId::CDL3BLACKCROWS => {
-                let i0_0 = self.price[0][0].ok_or(RetCode::BadParam)?;
-                let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
-                let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
-                let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
-                let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
+                let i0_0 = self.price[0][0].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_1 = self.price[0][1].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_2 = self.price[0][2].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_3 = self.price[0][3].ok_or(RetCode::InputNotAllInitialize)?;
+                let mut o0 = self.int_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.cdl3blackcrows(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut *o0);
                 self.int_out[0] = Some(o0);
                 match res {
@@ -4676,11 +4684,11 @@ impl<'a> ParamHolder<'a> {
                 }
             }
             FuncId::CDL3INSIDE => {
-                let i0_0 = self.price[0][0].ok_or(RetCode::BadParam)?;
-                let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
-                let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
-                let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
-                let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
+                let i0_0 = self.price[0][0].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_1 = self.price[0][1].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_2 = self.price[0][2].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_3 = self.price[0][3].ok_or(RetCode::InputNotAllInitialize)?;
+                let mut o0 = self.int_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.cdl3inside(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut *o0);
                 self.int_out[0] = Some(o0);
                 match res {
@@ -4689,11 +4697,11 @@ impl<'a> ParamHolder<'a> {
                 }
             }
             FuncId::CDL3LINESTRIKE => {
-                let i0_0 = self.price[0][0].ok_or(RetCode::BadParam)?;
-                let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
-                let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
-                let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
-                let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
+                let i0_0 = self.price[0][0].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_1 = self.price[0][1].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_2 = self.price[0][2].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_3 = self.price[0][3].ok_or(RetCode::InputNotAllInitialize)?;
+                let mut o0 = self.int_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.cdl3linestrike(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut *o0);
                 self.int_out[0] = Some(o0);
                 match res {
@@ -4702,11 +4710,11 @@ impl<'a> ParamHolder<'a> {
                 }
             }
             FuncId::CDL3OUTSIDE => {
-                let i0_0 = self.price[0][0].ok_or(RetCode::BadParam)?;
-                let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
-                let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
-                let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
-                let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
+                let i0_0 = self.price[0][0].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_1 = self.price[0][1].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_2 = self.price[0][2].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_3 = self.price[0][3].ok_or(RetCode::InputNotAllInitialize)?;
+                let mut o0 = self.int_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.cdl3outside(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut *o0);
                 self.int_out[0] = Some(o0);
                 match res {
@@ -4715,11 +4723,11 @@ impl<'a> ParamHolder<'a> {
                 }
             }
             FuncId::CDL3STARSINSOUTH => {
-                let i0_0 = self.price[0][0].ok_or(RetCode::BadParam)?;
-                let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
-                let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
-                let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
-                let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
+                let i0_0 = self.price[0][0].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_1 = self.price[0][1].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_2 = self.price[0][2].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_3 = self.price[0][3].ok_or(RetCode::InputNotAllInitialize)?;
+                let mut o0 = self.int_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.cdl3starsinsouth(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut *o0);
                 self.int_out[0] = Some(o0);
                 match res {
@@ -4728,11 +4736,11 @@ impl<'a> ParamHolder<'a> {
                 }
             }
             FuncId::CDL3WHITESOLDIERS => {
-                let i0_0 = self.price[0][0].ok_or(RetCode::BadParam)?;
-                let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
-                let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
-                let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
-                let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
+                let i0_0 = self.price[0][0].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_1 = self.price[0][1].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_2 = self.price[0][2].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_3 = self.price[0][3].ok_or(RetCode::InputNotAllInitialize)?;
+                let mut o0 = self.int_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.cdl3whitesoldiers(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut *o0);
                 self.int_out[0] = Some(o0);
                 match res {
@@ -4741,11 +4749,11 @@ impl<'a> ParamHolder<'a> {
                 }
             }
             FuncId::CDLABANDONEDBABY => {
-                let i0_0 = self.price[0][0].ok_or(RetCode::BadParam)?;
-                let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
-                let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
-                let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
-                let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
+                let i0_0 = self.price[0][0].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_1 = self.price[0][1].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_2 = self.price[0][2].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_3 = self.price[0][3].ok_or(RetCode::InputNotAllInitialize)?;
+                let mut o0 = self.int_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.cdlabandonedbaby(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, self.real_opt[0], &mut *o0);
                 self.int_out[0] = Some(o0);
                 match res {
@@ -4754,11 +4762,11 @@ impl<'a> ParamHolder<'a> {
                 }
             }
             FuncId::CDLADVANCEBLOCK => {
-                let i0_0 = self.price[0][0].ok_or(RetCode::BadParam)?;
-                let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
-                let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
-                let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
-                let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
+                let i0_0 = self.price[0][0].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_1 = self.price[0][1].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_2 = self.price[0][2].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_3 = self.price[0][3].ok_or(RetCode::InputNotAllInitialize)?;
+                let mut o0 = self.int_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.cdladvanceblock(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut *o0);
                 self.int_out[0] = Some(o0);
                 match res {
@@ -4767,11 +4775,11 @@ impl<'a> ParamHolder<'a> {
                 }
             }
             FuncId::CDLBELTHOLD => {
-                let i0_0 = self.price[0][0].ok_or(RetCode::BadParam)?;
-                let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
-                let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
-                let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
-                let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
+                let i0_0 = self.price[0][0].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_1 = self.price[0][1].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_2 = self.price[0][2].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_3 = self.price[0][3].ok_or(RetCode::InputNotAllInitialize)?;
+                let mut o0 = self.int_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.cdlbelthold(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut *o0);
                 self.int_out[0] = Some(o0);
                 match res {
@@ -4780,11 +4788,11 @@ impl<'a> ParamHolder<'a> {
                 }
             }
             FuncId::CDLBREAKAWAY => {
-                let i0_0 = self.price[0][0].ok_or(RetCode::BadParam)?;
-                let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
-                let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
-                let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
-                let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
+                let i0_0 = self.price[0][0].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_1 = self.price[0][1].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_2 = self.price[0][2].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_3 = self.price[0][3].ok_or(RetCode::InputNotAllInitialize)?;
+                let mut o0 = self.int_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.cdlbreakaway(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut *o0);
                 self.int_out[0] = Some(o0);
                 match res {
@@ -4793,11 +4801,11 @@ impl<'a> ParamHolder<'a> {
                 }
             }
             FuncId::CDLCLOSINGMARUBOZU => {
-                let i0_0 = self.price[0][0].ok_or(RetCode::BadParam)?;
-                let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
-                let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
-                let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
-                let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
+                let i0_0 = self.price[0][0].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_1 = self.price[0][1].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_2 = self.price[0][2].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_3 = self.price[0][3].ok_or(RetCode::InputNotAllInitialize)?;
+                let mut o0 = self.int_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.cdlclosingmarubozu(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut *o0);
                 self.int_out[0] = Some(o0);
                 match res {
@@ -4806,11 +4814,11 @@ impl<'a> ParamHolder<'a> {
                 }
             }
             FuncId::CDLCONCEALBABYSWALL => {
-                let i0_0 = self.price[0][0].ok_or(RetCode::BadParam)?;
-                let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
-                let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
-                let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
-                let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
+                let i0_0 = self.price[0][0].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_1 = self.price[0][1].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_2 = self.price[0][2].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_3 = self.price[0][3].ok_or(RetCode::InputNotAllInitialize)?;
+                let mut o0 = self.int_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.cdlconcealbabyswall(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut *o0);
                 self.int_out[0] = Some(o0);
                 match res {
@@ -4819,11 +4827,11 @@ impl<'a> ParamHolder<'a> {
                 }
             }
             FuncId::CDLCOUNTERATTACK => {
-                let i0_0 = self.price[0][0].ok_or(RetCode::BadParam)?;
-                let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
-                let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
-                let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
-                let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
+                let i0_0 = self.price[0][0].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_1 = self.price[0][1].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_2 = self.price[0][2].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_3 = self.price[0][3].ok_or(RetCode::InputNotAllInitialize)?;
+                let mut o0 = self.int_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.cdlcounterattack(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut *o0);
                 self.int_out[0] = Some(o0);
                 match res {
@@ -4832,11 +4840,11 @@ impl<'a> ParamHolder<'a> {
                 }
             }
             FuncId::CDLDARKCLOUDCOVER => {
-                let i0_0 = self.price[0][0].ok_or(RetCode::BadParam)?;
-                let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
-                let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
-                let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
-                let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
+                let i0_0 = self.price[0][0].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_1 = self.price[0][1].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_2 = self.price[0][2].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_3 = self.price[0][3].ok_or(RetCode::InputNotAllInitialize)?;
+                let mut o0 = self.int_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.cdldarkcloudcover(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, self.real_opt[0], &mut *o0);
                 self.int_out[0] = Some(o0);
                 match res {
@@ -4845,11 +4853,11 @@ impl<'a> ParamHolder<'a> {
                 }
             }
             FuncId::CDLDOJI => {
-                let i0_0 = self.price[0][0].ok_or(RetCode::BadParam)?;
-                let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
-                let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
-                let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
-                let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
+                let i0_0 = self.price[0][0].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_1 = self.price[0][1].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_2 = self.price[0][2].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_3 = self.price[0][3].ok_or(RetCode::InputNotAllInitialize)?;
+                let mut o0 = self.int_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.cdldoji(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut *o0);
                 self.int_out[0] = Some(o0);
                 match res {
@@ -4858,11 +4866,11 @@ impl<'a> ParamHolder<'a> {
                 }
             }
             FuncId::CDLDOJISTAR => {
-                let i0_0 = self.price[0][0].ok_or(RetCode::BadParam)?;
-                let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
-                let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
-                let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
-                let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
+                let i0_0 = self.price[0][0].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_1 = self.price[0][1].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_2 = self.price[0][2].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_3 = self.price[0][3].ok_or(RetCode::InputNotAllInitialize)?;
+                let mut o0 = self.int_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.cdldojistar(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut *o0);
                 self.int_out[0] = Some(o0);
                 match res {
@@ -4871,11 +4879,11 @@ impl<'a> ParamHolder<'a> {
                 }
             }
             FuncId::CDLDRAGONFLYDOJI => {
-                let i0_0 = self.price[0][0].ok_or(RetCode::BadParam)?;
-                let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
-                let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
-                let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
-                let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
+                let i0_0 = self.price[0][0].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_1 = self.price[0][1].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_2 = self.price[0][2].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_3 = self.price[0][3].ok_or(RetCode::InputNotAllInitialize)?;
+                let mut o0 = self.int_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.cdldragonflydoji(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut *o0);
                 self.int_out[0] = Some(o0);
                 match res {
@@ -4884,11 +4892,11 @@ impl<'a> ParamHolder<'a> {
                 }
             }
             FuncId::CDLENGULFING => {
-                let i0_0 = self.price[0][0].ok_or(RetCode::BadParam)?;
-                let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
-                let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
-                let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
-                let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
+                let i0_0 = self.price[0][0].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_1 = self.price[0][1].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_2 = self.price[0][2].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_3 = self.price[0][3].ok_or(RetCode::InputNotAllInitialize)?;
+                let mut o0 = self.int_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.cdlengulfing(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut *o0);
                 self.int_out[0] = Some(o0);
                 match res {
@@ -4897,11 +4905,11 @@ impl<'a> ParamHolder<'a> {
                 }
             }
             FuncId::CDLEVENINGDOJISTAR => {
-                let i0_0 = self.price[0][0].ok_or(RetCode::BadParam)?;
-                let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
-                let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
-                let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
-                let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
+                let i0_0 = self.price[0][0].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_1 = self.price[0][1].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_2 = self.price[0][2].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_3 = self.price[0][3].ok_or(RetCode::InputNotAllInitialize)?;
+                let mut o0 = self.int_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.cdleveningdojistar(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, self.real_opt[0], &mut *o0);
                 self.int_out[0] = Some(o0);
                 match res {
@@ -4910,11 +4918,11 @@ impl<'a> ParamHolder<'a> {
                 }
             }
             FuncId::CDLEVENINGSTAR => {
-                let i0_0 = self.price[0][0].ok_or(RetCode::BadParam)?;
-                let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
-                let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
-                let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
-                let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
+                let i0_0 = self.price[0][0].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_1 = self.price[0][1].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_2 = self.price[0][2].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_3 = self.price[0][3].ok_or(RetCode::InputNotAllInitialize)?;
+                let mut o0 = self.int_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.cdleveningstar(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, self.real_opt[0], &mut *o0);
                 self.int_out[0] = Some(o0);
                 match res {
@@ -4923,11 +4931,11 @@ impl<'a> ParamHolder<'a> {
                 }
             }
             FuncId::CDLGAPSIDESIDEWHITE => {
-                let i0_0 = self.price[0][0].ok_or(RetCode::BadParam)?;
-                let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
-                let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
-                let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
-                let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
+                let i0_0 = self.price[0][0].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_1 = self.price[0][1].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_2 = self.price[0][2].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_3 = self.price[0][3].ok_or(RetCode::InputNotAllInitialize)?;
+                let mut o0 = self.int_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.cdlgapsidesidewhite(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut *o0);
                 self.int_out[0] = Some(o0);
                 match res {
@@ -4936,11 +4944,11 @@ impl<'a> ParamHolder<'a> {
                 }
             }
             FuncId::CDLGRAVESTONEDOJI => {
-                let i0_0 = self.price[0][0].ok_or(RetCode::BadParam)?;
-                let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
-                let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
-                let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
-                let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
+                let i0_0 = self.price[0][0].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_1 = self.price[0][1].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_2 = self.price[0][2].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_3 = self.price[0][3].ok_or(RetCode::InputNotAllInitialize)?;
+                let mut o0 = self.int_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.cdlgravestonedoji(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut *o0);
                 self.int_out[0] = Some(o0);
                 match res {
@@ -4949,11 +4957,11 @@ impl<'a> ParamHolder<'a> {
                 }
             }
             FuncId::CDLHAMMER => {
-                let i0_0 = self.price[0][0].ok_or(RetCode::BadParam)?;
-                let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
-                let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
-                let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
-                let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
+                let i0_0 = self.price[0][0].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_1 = self.price[0][1].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_2 = self.price[0][2].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_3 = self.price[0][3].ok_or(RetCode::InputNotAllInitialize)?;
+                let mut o0 = self.int_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.cdlhammer(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut *o0);
                 self.int_out[0] = Some(o0);
                 match res {
@@ -4962,11 +4970,11 @@ impl<'a> ParamHolder<'a> {
                 }
             }
             FuncId::CDLHANGINGMAN => {
-                let i0_0 = self.price[0][0].ok_or(RetCode::BadParam)?;
-                let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
-                let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
-                let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
-                let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
+                let i0_0 = self.price[0][0].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_1 = self.price[0][1].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_2 = self.price[0][2].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_3 = self.price[0][3].ok_or(RetCode::InputNotAllInitialize)?;
+                let mut o0 = self.int_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.cdlhangingman(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut *o0);
                 self.int_out[0] = Some(o0);
                 match res {
@@ -4975,11 +4983,11 @@ impl<'a> ParamHolder<'a> {
                 }
             }
             FuncId::CDLHARAMI => {
-                let i0_0 = self.price[0][0].ok_or(RetCode::BadParam)?;
-                let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
-                let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
-                let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
-                let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
+                let i0_0 = self.price[0][0].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_1 = self.price[0][1].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_2 = self.price[0][2].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_3 = self.price[0][3].ok_or(RetCode::InputNotAllInitialize)?;
+                let mut o0 = self.int_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.cdlharami(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut *o0);
                 self.int_out[0] = Some(o0);
                 match res {
@@ -4988,11 +4996,11 @@ impl<'a> ParamHolder<'a> {
                 }
             }
             FuncId::CDLHARAMICROSS => {
-                let i0_0 = self.price[0][0].ok_or(RetCode::BadParam)?;
-                let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
-                let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
-                let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
-                let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
+                let i0_0 = self.price[0][0].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_1 = self.price[0][1].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_2 = self.price[0][2].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_3 = self.price[0][3].ok_or(RetCode::InputNotAllInitialize)?;
+                let mut o0 = self.int_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.cdlharamicross(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut *o0);
                 self.int_out[0] = Some(o0);
                 match res {
@@ -5001,11 +5009,11 @@ impl<'a> ParamHolder<'a> {
                 }
             }
             FuncId::CDLHIGHWAVE => {
-                let i0_0 = self.price[0][0].ok_or(RetCode::BadParam)?;
-                let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
-                let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
-                let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
-                let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
+                let i0_0 = self.price[0][0].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_1 = self.price[0][1].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_2 = self.price[0][2].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_3 = self.price[0][3].ok_or(RetCode::InputNotAllInitialize)?;
+                let mut o0 = self.int_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.cdlhighwave(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut *o0);
                 self.int_out[0] = Some(o0);
                 match res {
@@ -5014,11 +5022,11 @@ impl<'a> ParamHolder<'a> {
                 }
             }
             FuncId::CDLHIKKAKE => {
-                let i0_0 = self.price[0][0].ok_or(RetCode::BadParam)?;
-                let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
-                let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
-                let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
-                let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
+                let i0_0 = self.price[0][0].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_1 = self.price[0][1].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_2 = self.price[0][2].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_3 = self.price[0][3].ok_or(RetCode::InputNotAllInitialize)?;
+                let mut o0 = self.int_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.cdlhikkake(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut *o0);
                 self.int_out[0] = Some(o0);
                 match res {
@@ -5027,11 +5035,11 @@ impl<'a> ParamHolder<'a> {
                 }
             }
             FuncId::CDLHIKKAKEMOD => {
-                let i0_0 = self.price[0][0].ok_or(RetCode::BadParam)?;
-                let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
-                let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
-                let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
-                let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
+                let i0_0 = self.price[0][0].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_1 = self.price[0][1].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_2 = self.price[0][2].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_3 = self.price[0][3].ok_or(RetCode::InputNotAllInitialize)?;
+                let mut o0 = self.int_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.cdlhikkakemod(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut *o0);
                 self.int_out[0] = Some(o0);
                 match res {
@@ -5040,11 +5048,11 @@ impl<'a> ParamHolder<'a> {
                 }
             }
             FuncId::CDLHOMINGPIGEON => {
-                let i0_0 = self.price[0][0].ok_or(RetCode::BadParam)?;
-                let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
-                let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
-                let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
-                let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
+                let i0_0 = self.price[0][0].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_1 = self.price[0][1].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_2 = self.price[0][2].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_3 = self.price[0][3].ok_or(RetCode::InputNotAllInitialize)?;
+                let mut o0 = self.int_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.cdlhomingpigeon(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut *o0);
                 self.int_out[0] = Some(o0);
                 match res {
@@ -5053,11 +5061,11 @@ impl<'a> ParamHolder<'a> {
                 }
             }
             FuncId::CDLIDENTICAL3CROWS => {
-                let i0_0 = self.price[0][0].ok_or(RetCode::BadParam)?;
-                let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
-                let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
-                let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
-                let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
+                let i0_0 = self.price[0][0].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_1 = self.price[0][1].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_2 = self.price[0][2].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_3 = self.price[0][3].ok_or(RetCode::InputNotAllInitialize)?;
+                let mut o0 = self.int_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.cdlidentical3crows(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut *o0);
                 self.int_out[0] = Some(o0);
                 match res {
@@ -5066,11 +5074,11 @@ impl<'a> ParamHolder<'a> {
                 }
             }
             FuncId::CDLINNECK => {
-                let i0_0 = self.price[0][0].ok_or(RetCode::BadParam)?;
-                let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
-                let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
-                let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
-                let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
+                let i0_0 = self.price[0][0].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_1 = self.price[0][1].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_2 = self.price[0][2].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_3 = self.price[0][3].ok_or(RetCode::InputNotAllInitialize)?;
+                let mut o0 = self.int_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.cdlinneck(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut *o0);
                 self.int_out[0] = Some(o0);
                 match res {
@@ -5079,11 +5087,11 @@ impl<'a> ParamHolder<'a> {
                 }
             }
             FuncId::CDLINVERTEDHAMMER => {
-                let i0_0 = self.price[0][0].ok_or(RetCode::BadParam)?;
-                let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
-                let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
-                let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
-                let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
+                let i0_0 = self.price[0][0].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_1 = self.price[0][1].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_2 = self.price[0][2].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_3 = self.price[0][3].ok_or(RetCode::InputNotAllInitialize)?;
+                let mut o0 = self.int_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.cdlinvertedhammer(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut *o0);
                 self.int_out[0] = Some(o0);
                 match res {
@@ -5092,11 +5100,11 @@ impl<'a> ParamHolder<'a> {
                 }
             }
             FuncId::CDLKICKING => {
-                let i0_0 = self.price[0][0].ok_or(RetCode::BadParam)?;
-                let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
-                let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
-                let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
-                let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
+                let i0_0 = self.price[0][0].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_1 = self.price[0][1].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_2 = self.price[0][2].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_3 = self.price[0][3].ok_or(RetCode::InputNotAllInitialize)?;
+                let mut o0 = self.int_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.cdlkicking(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut *o0);
                 self.int_out[0] = Some(o0);
                 match res {
@@ -5105,11 +5113,11 @@ impl<'a> ParamHolder<'a> {
                 }
             }
             FuncId::CDLKICKINGBYLENGTH => {
-                let i0_0 = self.price[0][0].ok_or(RetCode::BadParam)?;
-                let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
-                let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
-                let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
-                let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
+                let i0_0 = self.price[0][0].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_1 = self.price[0][1].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_2 = self.price[0][2].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_3 = self.price[0][3].ok_or(RetCode::InputNotAllInitialize)?;
+                let mut o0 = self.int_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.cdlkickingbylength(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut *o0);
                 self.int_out[0] = Some(o0);
                 match res {
@@ -5118,11 +5126,11 @@ impl<'a> ParamHolder<'a> {
                 }
             }
             FuncId::CDLLADDERBOTTOM => {
-                let i0_0 = self.price[0][0].ok_or(RetCode::BadParam)?;
-                let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
-                let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
-                let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
-                let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
+                let i0_0 = self.price[0][0].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_1 = self.price[0][1].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_2 = self.price[0][2].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_3 = self.price[0][3].ok_or(RetCode::InputNotAllInitialize)?;
+                let mut o0 = self.int_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.cdlladderbottom(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut *o0);
                 self.int_out[0] = Some(o0);
                 match res {
@@ -5131,11 +5139,11 @@ impl<'a> ParamHolder<'a> {
                 }
             }
             FuncId::CDLLONGLEGGEDDOJI => {
-                let i0_0 = self.price[0][0].ok_or(RetCode::BadParam)?;
-                let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
-                let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
-                let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
-                let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
+                let i0_0 = self.price[0][0].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_1 = self.price[0][1].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_2 = self.price[0][2].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_3 = self.price[0][3].ok_or(RetCode::InputNotAllInitialize)?;
+                let mut o0 = self.int_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.cdllongleggeddoji(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut *o0);
                 self.int_out[0] = Some(o0);
                 match res {
@@ -5144,11 +5152,11 @@ impl<'a> ParamHolder<'a> {
                 }
             }
             FuncId::CDLLONGLINE => {
-                let i0_0 = self.price[0][0].ok_or(RetCode::BadParam)?;
-                let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
-                let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
-                let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
-                let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
+                let i0_0 = self.price[0][0].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_1 = self.price[0][1].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_2 = self.price[0][2].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_3 = self.price[0][3].ok_or(RetCode::InputNotAllInitialize)?;
+                let mut o0 = self.int_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.cdllongline(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut *o0);
                 self.int_out[0] = Some(o0);
                 match res {
@@ -5157,11 +5165,11 @@ impl<'a> ParamHolder<'a> {
                 }
             }
             FuncId::CDLMARUBOZU => {
-                let i0_0 = self.price[0][0].ok_or(RetCode::BadParam)?;
-                let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
-                let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
-                let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
-                let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
+                let i0_0 = self.price[0][0].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_1 = self.price[0][1].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_2 = self.price[0][2].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_3 = self.price[0][3].ok_or(RetCode::InputNotAllInitialize)?;
+                let mut o0 = self.int_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.cdlmarubozu(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut *o0);
                 self.int_out[0] = Some(o0);
                 match res {
@@ -5170,11 +5178,11 @@ impl<'a> ParamHolder<'a> {
                 }
             }
             FuncId::CDLMATCHINGLOW => {
-                let i0_0 = self.price[0][0].ok_or(RetCode::BadParam)?;
-                let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
-                let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
-                let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
-                let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
+                let i0_0 = self.price[0][0].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_1 = self.price[0][1].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_2 = self.price[0][2].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_3 = self.price[0][3].ok_or(RetCode::InputNotAllInitialize)?;
+                let mut o0 = self.int_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.cdlmatchinglow(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut *o0);
                 self.int_out[0] = Some(o0);
                 match res {
@@ -5183,11 +5191,11 @@ impl<'a> ParamHolder<'a> {
                 }
             }
             FuncId::CDLMATHOLD => {
-                let i0_0 = self.price[0][0].ok_or(RetCode::BadParam)?;
-                let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
-                let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
-                let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
-                let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
+                let i0_0 = self.price[0][0].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_1 = self.price[0][1].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_2 = self.price[0][2].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_3 = self.price[0][3].ok_or(RetCode::InputNotAllInitialize)?;
+                let mut o0 = self.int_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.cdlmathold(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, self.real_opt[0], &mut *o0);
                 self.int_out[0] = Some(o0);
                 match res {
@@ -5196,11 +5204,11 @@ impl<'a> ParamHolder<'a> {
                 }
             }
             FuncId::CDLMORNINGDOJISTAR => {
-                let i0_0 = self.price[0][0].ok_or(RetCode::BadParam)?;
-                let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
-                let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
-                let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
-                let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
+                let i0_0 = self.price[0][0].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_1 = self.price[0][1].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_2 = self.price[0][2].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_3 = self.price[0][3].ok_or(RetCode::InputNotAllInitialize)?;
+                let mut o0 = self.int_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.cdlmorningdojistar(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, self.real_opt[0], &mut *o0);
                 self.int_out[0] = Some(o0);
                 match res {
@@ -5209,11 +5217,11 @@ impl<'a> ParamHolder<'a> {
                 }
             }
             FuncId::CDLMORNINGSTAR => {
-                let i0_0 = self.price[0][0].ok_or(RetCode::BadParam)?;
-                let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
-                let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
-                let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
-                let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
+                let i0_0 = self.price[0][0].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_1 = self.price[0][1].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_2 = self.price[0][2].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_3 = self.price[0][3].ok_or(RetCode::InputNotAllInitialize)?;
+                let mut o0 = self.int_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.cdlmorningstar(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, self.real_opt[0], &mut *o0);
                 self.int_out[0] = Some(o0);
                 match res {
@@ -5222,11 +5230,11 @@ impl<'a> ParamHolder<'a> {
                 }
             }
             FuncId::CDLONNECK => {
-                let i0_0 = self.price[0][0].ok_or(RetCode::BadParam)?;
-                let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
-                let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
-                let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
-                let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
+                let i0_0 = self.price[0][0].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_1 = self.price[0][1].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_2 = self.price[0][2].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_3 = self.price[0][3].ok_or(RetCode::InputNotAllInitialize)?;
+                let mut o0 = self.int_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.cdlonneck(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut *o0);
                 self.int_out[0] = Some(o0);
                 match res {
@@ -5235,11 +5243,11 @@ impl<'a> ParamHolder<'a> {
                 }
             }
             FuncId::CDLPIERCING => {
-                let i0_0 = self.price[0][0].ok_or(RetCode::BadParam)?;
-                let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
-                let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
-                let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
-                let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
+                let i0_0 = self.price[0][0].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_1 = self.price[0][1].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_2 = self.price[0][2].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_3 = self.price[0][3].ok_or(RetCode::InputNotAllInitialize)?;
+                let mut o0 = self.int_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.cdlpiercing(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut *o0);
                 self.int_out[0] = Some(o0);
                 match res {
@@ -5248,11 +5256,11 @@ impl<'a> ParamHolder<'a> {
                 }
             }
             FuncId::CDLRICKSHAWMAN => {
-                let i0_0 = self.price[0][0].ok_or(RetCode::BadParam)?;
-                let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
-                let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
-                let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
-                let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
+                let i0_0 = self.price[0][0].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_1 = self.price[0][1].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_2 = self.price[0][2].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_3 = self.price[0][3].ok_or(RetCode::InputNotAllInitialize)?;
+                let mut o0 = self.int_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.cdlrickshawman(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut *o0);
                 self.int_out[0] = Some(o0);
                 match res {
@@ -5261,11 +5269,11 @@ impl<'a> ParamHolder<'a> {
                 }
             }
             FuncId::CDLRISEFALL3METHODS => {
-                let i0_0 = self.price[0][0].ok_or(RetCode::BadParam)?;
-                let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
-                let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
-                let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
-                let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
+                let i0_0 = self.price[0][0].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_1 = self.price[0][1].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_2 = self.price[0][2].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_3 = self.price[0][3].ok_or(RetCode::InputNotAllInitialize)?;
+                let mut o0 = self.int_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.cdlrisefall3methods(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut *o0);
                 self.int_out[0] = Some(o0);
                 match res {
@@ -5274,11 +5282,11 @@ impl<'a> ParamHolder<'a> {
                 }
             }
             FuncId::CDLSEPARATINGLINES => {
-                let i0_0 = self.price[0][0].ok_or(RetCode::BadParam)?;
-                let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
-                let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
-                let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
-                let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
+                let i0_0 = self.price[0][0].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_1 = self.price[0][1].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_2 = self.price[0][2].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_3 = self.price[0][3].ok_or(RetCode::InputNotAllInitialize)?;
+                let mut o0 = self.int_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.cdlseparatinglines(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut *o0);
                 self.int_out[0] = Some(o0);
                 match res {
@@ -5287,11 +5295,11 @@ impl<'a> ParamHolder<'a> {
                 }
             }
             FuncId::CDLSHOOTINGSTAR => {
-                let i0_0 = self.price[0][0].ok_or(RetCode::BadParam)?;
-                let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
-                let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
-                let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
-                let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
+                let i0_0 = self.price[0][0].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_1 = self.price[0][1].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_2 = self.price[0][2].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_3 = self.price[0][3].ok_or(RetCode::InputNotAllInitialize)?;
+                let mut o0 = self.int_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.cdlshootingstar(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut *o0);
                 self.int_out[0] = Some(o0);
                 match res {
@@ -5300,11 +5308,11 @@ impl<'a> ParamHolder<'a> {
                 }
             }
             FuncId::CDLSHORTLINE => {
-                let i0_0 = self.price[0][0].ok_or(RetCode::BadParam)?;
-                let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
-                let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
-                let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
-                let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
+                let i0_0 = self.price[0][0].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_1 = self.price[0][1].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_2 = self.price[0][2].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_3 = self.price[0][3].ok_or(RetCode::InputNotAllInitialize)?;
+                let mut o0 = self.int_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.cdlshortline(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut *o0);
                 self.int_out[0] = Some(o0);
                 match res {
@@ -5313,11 +5321,11 @@ impl<'a> ParamHolder<'a> {
                 }
             }
             FuncId::CDLSPINNINGTOP => {
-                let i0_0 = self.price[0][0].ok_or(RetCode::BadParam)?;
-                let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
-                let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
-                let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
-                let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
+                let i0_0 = self.price[0][0].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_1 = self.price[0][1].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_2 = self.price[0][2].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_3 = self.price[0][3].ok_or(RetCode::InputNotAllInitialize)?;
+                let mut o0 = self.int_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.cdlspinningtop(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut *o0);
                 self.int_out[0] = Some(o0);
                 match res {
@@ -5326,11 +5334,11 @@ impl<'a> ParamHolder<'a> {
                 }
             }
             FuncId::CDLSTALLEDPATTERN => {
-                let i0_0 = self.price[0][0].ok_or(RetCode::BadParam)?;
-                let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
-                let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
-                let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
-                let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
+                let i0_0 = self.price[0][0].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_1 = self.price[0][1].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_2 = self.price[0][2].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_3 = self.price[0][3].ok_or(RetCode::InputNotAllInitialize)?;
+                let mut o0 = self.int_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.cdlstalledpattern(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut *o0);
                 self.int_out[0] = Some(o0);
                 match res {
@@ -5339,11 +5347,11 @@ impl<'a> ParamHolder<'a> {
                 }
             }
             FuncId::CDLSTICKSANDWICH => {
-                let i0_0 = self.price[0][0].ok_or(RetCode::BadParam)?;
-                let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
-                let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
-                let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
-                let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
+                let i0_0 = self.price[0][0].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_1 = self.price[0][1].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_2 = self.price[0][2].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_3 = self.price[0][3].ok_or(RetCode::InputNotAllInitialize)?;
+                let mut o0 = self.int_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.cdlsticksandwich(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut *o0);
                 self.int_out[0] = Some(o0);
                 match res {
@@ -5352,11 +5360,11 @@ impl<'a> ParamHolder<'a> {
                 }
             }
             FuncId::CDLTAKURI => {
-                let i0_0 = self.price[0][0].ok_or(RetCode::BadParam)?;
-                let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
-                let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
-                let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
-                let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
+                let i0_0 = self.price[0][0].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_1 = self.price[0][1].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_2 = self.price[0][2].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_3 = self.price[0][3].ok_or(RetCode::InputNotAllInitialize)?;
+                let mut o0 = self.int_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.cdltakuri(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut *o0);
                 self.int_out[0] = Some(o0);
                 match res {
@@ -5365,11 +5373,11 @@ impl<'a> ParamHolder<'a> {
                 }
             }
             FuncId::CDLTASUKIGAP => {
-                let i0_0 = self.price[0][0].ok_or(RetCode::BadParam)?;
-                let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
-                let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
-                let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
-                let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
+                let i0_0 = self.price[0][0].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_1 = self.price[0][1].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_2 = self.price[0][2].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_3 = self.price[0][3].ok_or(RetCode::InputNotAllInitialize)?;
+                let mut o0 = self.int_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.cdltasukigap(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut *o0);
                 self.int_out[0] = Some(o0);
                 match res {
@@ -5378,11 +5386,11 @@ impl<'a> ParamHolder<'a> {
                 }
             }
             FuncId::CDLTHRUSTING => {
-                let i0_0 = self.price[0][0].ok_or(RetCode::BadParam)?;
-                let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
-                let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
-                let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
-                let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
+                let i0_0 = self.price[0][0].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_1 = self.price[0][1].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_2 = self.price[0][2].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_3 = self.price[0][3].ok_or(RetCode::InputNotAllInitialize)?;
+                let mut o0 = self.int_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.cdlthrusting(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut *o0);
                 self.int_out[0] = Some(o0);
                 match res {
@@ -5391,11 +5399,11 @@ impl<'a> ParamHolder<'a> {
                 }
             }
             FuncId::CDLTRISTAR => {
-                let i0_0 = self.price[0][0].ok_or(RetCode::BadParam)?;
-                let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
-                let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
-                let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
-                let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
+                let i0_0 = self.price[0][0].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_1 = self.price[0][1].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_2 = self.price[0][2].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_3 = self.price[0][3].ok_or(RetCode::InputNotAllInitialize)?;
+                let mut o0 = self.int_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.cdltristar(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut *o0);
                 self.int_out[0] = Some(o0);
                 match res {
@@ -5404,11 +5412,11 @@ impl<'a> ParamHolder<'a> {
                 }
             }
             FuncId::CDLUNIQUE3RIVER => {
-                let i0_0 = self.price[0][0].ok_or(RetCode::BadParam)?;
-                let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
-                let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
-                let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
-                let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
+                let i0_0 = self.price[0][0].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_1 = self.price[0][1].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_2 = self.price[0][2].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_3 = self.price[0][3].ok_or(RetCode::InputNotAllInitialize)?;
+                let mut o0 = self.int_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.cdlunique3river(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut *o0);
                 self.int_out[0] = Some(o0);
                 match res {
@@ -5417,11 +5425,11 @@ impl<'a> ParamHolder<'a> {
                 }
             }
             FuncId::CDLUPSIDEGAP2CROWS => {
-                let i0_0 = self.price[0][0].ok_or(RetCode::BadParam)?;
-                let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
-                let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
-                let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
-                let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
+                let i0_0 = self.price[0][0].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_1 = self.price[0][1].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_2 = self.price[0][2].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_3 = self.price[0][3].ok_or(RetCode::InputNotAllInitialize)?;
+                let mut o0 = self.int_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.cdlupsidegap2crows(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut *o0);
                 self.int_out[0] = Some(o0);
                 match res {
@@ -5430,11 +5438,11 @@ impl<'a> ParamHolder<'a> {
                 }
             }
             FuncId::CDLXSIDEGAP3METHODS => {
-                let i0_0 = self.price[0][0].ok_or(RetCode::BadParam)?;
-                let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
-                let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
-                let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
-                let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
+                let i0_0 = self.price[0][0].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_1 = self.price[0][1].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_2 = self.price[0][2].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_3 = self.price[0][3].ok_or(RetCode::InputNotAllInitialize)?;
+                let mut o0 = self.int_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.cdlxsidegap3methods(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut *o0);
                 self.int_out[0] = Some(o0);
                 match res {
@@ -5443,8 +5451,8 @@ impl<'a> ParamHolder<'a> {
                 }
             }
             FuncId::CEIL => {
-                let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                let i0 = self.real_in[0].ok_or(RetCode::InputNotAllInitialize)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.ceil(start_idx, end_idx, i0, &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -5453,8 +5461,8 @@ impl<'a> ParamHolder<'a> {
                 }
             }
             FuncId::CG => {
-                let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                let i0 = self.real_in[0].ok_or(RetCode::InputNotAllInitialize)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.cg(start_idx, end_idx, i0, self.int_opt[0], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -5463,10 +5471,10 @@ impl<'a> ParamHolder<'a> {
                 }
             }
             FuncId::CHOP => {
-                let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
-                let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
-                let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                let i0_1 = self.price[0][1].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_2 = self.price[0][2].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_3 = self.price[0][3].ok_or(RetCode::InputNotAllInitialize)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.chop(start_idx, end_idx, i0_1, i0_2, i0_3, self.int_opt[0], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -5475,10 +5483,10 @@ impl<'a> ParamHolder<'a> {
                 }
             }
             FuncId::CHOPTR => {
-                let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
-                let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
-                let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                let i0_1 = self.price[0][1].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_2 = self.price[0][2].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_3 = self.price[0][3].ok_or(RetCode::InputNotAllInitialize)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.choptr(start_idx, end_idx, i0_1, i0_2, i0_3, self.int_opt[0], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -5487,12 +5495,12 @@ impl<'a> ParamHolder<'a> {
                 }
             }
             FuncId::CKSP => {
-                let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
-                let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
-                let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
-                if self.real_out[0].is_none() || self.real_out[1].is_none() { return Err(RetCode::BadParam); }
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
-                let mut o1 = self.real_out[1].take().ok_or(RetCode::BadParam)?;
+                let i0_1 = self.price[0][1].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_2 = self.price[0][2].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_3 = self.price[0][3].ok_or(RetCode::InputNotAllInitialize)?;
+                if self.real_out[0].is_none() || self.real_out[1].is_none() { return Err(RetCode::OutputNotAllInitialize); }
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let mut o1 = self.real_out[1].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.cksp(start_idx, end_idx, i0_1, i0_2, i0_3, self.int_opt[0], self.real_opt[1], self.int_opt[2], &mut *o0, &mut *o1);
                 self.real_out[0] = Some(o0);
                 self.real_out[1] = Some(o1);
@@ -5502,11 +5510,11 @@ impl<'a> ParamHolder<'a> {
                 }
             }
             FuncId::CMF => {
-                let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
-                let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
-                let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
-                let i0_4 = self.price[0][4].ok_or(RetCode::BadParam)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                let i0_1 = self.price[0][1].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_2 = self.price[0][2].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_3 = self.price[0][3].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_4 = self.price[0][4].ok_or(RetCode::InputNotAllInitialize)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.cmf(start_idx, end_idx, i0_1, i0_2, i0_3, i0_4, self.int_opt[0], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -5515,8 +5523,8 @@ impl<'a> ParamHolder<'a> {
                 }
             }
             FuncId::CMO => {
-                let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                let i0 = self.real_in[0].ok_or(RetCode::InputNotAllInitialize)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.cmo(start_idx, end_idx, i0, self.int_opt[0], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -5525,8 +5533,8 @@ impl<'a> ParamHolder<'a> {
                 }
             }
             FuncId::CMOU => {
-                let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                let i0 = self.real_in[0].ok_or(RetCode::InputNotAllInitialize)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.cmou(start_idx, end_idx, i0, self.int_opt[0], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -5535,8 +5543,8 @@ impl<'a> ParamHolder<'a> {
                 }
             }
             FuncId::COPPOCK => {
-                let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                let i0 = self.real_in[0].ok_or(RetCode::InputNotAllInitialize)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.coppock(start_idx, end_idx, i0, self.int_opt[0], self.int_opt[1], self.int_opt[2], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -5545,9 +5553,9 @@ impl<'a> ParamHolder<'a> {
                 }
             }
             FuncId::CORREL => {
-                let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
-                let i1 = self.real_in[1].ok_or(RetCode::BadParam)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                let i0 = self.real_in[0].ok_or(RetCode::InputNotAllInitialize)?;
+                let i1 = self.real_in[1].ok_or(RetCode::InputNotAllInitialize)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.correl(start_idx, end_idx, i0, i1, self.int_opt[0], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -5556,8 +5564,8 @@ impl<'a> ParamHolder<'a> {
                 }
             }
             FuncId::COS => {
-                let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                let i0 = self.real_in[0].ok_or(RetCode::InputNotAllInitialize)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.cos(start_idx, end_idx, i0, &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -5566,8 +5574,8 @@ impl<'a> ParamHolder<'a> {
                 }
             }
             FuncId::COSH => {
-                let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                let i0 = self.real_in[0].ok_or(RetCode::InputNotAllInitialize)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.cosh(start_idx, end_idx, i0, &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -5576,8 +5584,8 @@ impl<'a> ParamHolder<'a> {
                 }
             }
             FuncId::CRSI => {
-                let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                let i0 = self.real_in[0].ok_or(RetCode::InputNotAllInitialize)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.crsi(start_idx, end_idx, i0, self.int_opt[0], self.int_opt[1], self.int_opt[2], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -5586,8 +5594,8 @@ impl<'a> ParamHolder<'a> {
                 }
             }
             FuncId::CTI => {
-                let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                let i0 = self.real_in[0].ok_or(RetCode::InputNotAllInitialize)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.cti(start_idx, end_idx, i0, self.int_opt[0], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -5596,8 +5604,8 @@ impl<'a> ParamHolder<'a> {
                 }
             }
             FuncId::CUMSUM => {
-                let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                let i0 = self.real_in[0].ok_or(RetCode::InputNotAllInitialize)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.cumsum(start_idx, end_idx, i0, &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -5606,9 +5614,9 @@ impl<'a> ParamHolder<'a> {
                 }
             }
             FuncId::CVI => {
-                let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
-                let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                let i0_1 = self.price[0][1].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_2 = self.price[0][2].ok_or(RetCode::InputNotAllInitialize)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.cvi(start_idx, end_idx, i0_1, i0_2, self.int_opt[0], self.int_opt[1], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -5617,8 +5625,8 @@ impl<'a> ParamHolder<'a> {
                 }
             }
             FuncId::DEMA => {
-                let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                let i0 = self.real_in[0].ok_or(RetCode::InputNotAllInitialize)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.dema(start_idx, end_idx, i0, self.int_opt[0], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -5627,9 +5635,9 @@ impl<'a> ParamHolder<'a> {
                 }
             }
             FuncId::DIV => {
-                let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
-                let i1 = self.real_in[1].ok_or(RetCode::BadParam)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                let i0 = self.real_in[0].ok_or(RetCode::InputNotAllInitialize)?;
+                let i1 = self.real_in[1].ok_or(RetCode::InputNotAllInitialize)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.div(start_idx, end_idx, i0, i1, &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -5638,12 +5646,12 @@ impl<'a> ParamHolder<'a> {
                 }
             }
             FuncId::DONCHIAN => {
-                let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
-                let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
-                if self.real_out[0].is_none() || self.real_out[1].is_none() || self.real_out[2].is_none() { return Err(RetCode::BadParam); }
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
-                let mut o1 = self.real_out[1].take().ok_or(RetCode::BadParam)?;
-                let mut o2 = self.real_out[2].take().ok_or(RetCode::BadParam)?;
+                let i0_1 = self.price[0][1].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_2 = self.price[0][2].ok_or(RetCode::InputNotAllInitialize)?;
+                if self.real_out[0].is_none() || self.real_out[1].is_none() || self.real_out[2].is_none() { return Err(RetCode::OutputNotAllInitialize); }
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let mut o1 = self.real_out[1].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let mut o2 = self.real_out[2].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.donchian(start_idx, end_idx, i0_1, i0_2, self.int_opt[0], &mut *o0, &mut *o1, &mut *o2);
                 self.real_out[0] = Some(o0);
                 self.real_out[1] = Some(o1);
@@ -5654,8 +5662,8 @@ impl<'a> ParamHolder<'a> {
                 }
             }
             FuncId::DPO => {
-                let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                let i0 = self.real_in[0].ok_or(RetCode::InputNotAllInitialize)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.dpo(start_idx, end_idx, i0, self.int_opt[0], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -5664,10 +5672,10 @@ impl<'a> ParamHolder<'a> {
                 }
             }
             FuncId::DX => {
-                let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
-                let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
-                let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                let i0_1 = self.price[0][1].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_2 = self.price[0][2].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_3 = self.price[0][3].ok_or(RetCode::InputNotAllInitialize)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.dx(start_idx, end_idx, i0_1, i0_2, i0_3, self.int_opt[0], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -5676,9 +5684,9 @@ impl<'a> ParamHolder<'a> {
                 }
             }
             FuncId::EFI => {
-                let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
-                let i0_4 = self.price[0][4].ok_or(RetCode::BadParam)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                let i0_3 = self.price[0][3].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_4 = self.price[0][4].ok_or(RetCode::InputNotAllInitialize)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.efi(start_idx, end_idx, i0_3, i0_4, self.int_opt[0], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -5687,8 +5695,8 @@ impl<'a> ParamHolder<'a> {
                 }
             }
             FuncId::EMA => {
-                let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                let i0 = self.real_in[0].ok_or(RetCode::InputNotAllInitialize)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.ema(start_idx, end_idx, i0, self.int_opt[0], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -5697,10 +5705,10 @@ impl<'a> ParamHolder<'a> {
                 }
             }
             FuncId::EMV => {
-                let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
-                let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
-                let i0_4 = self.price[0][4].ok_or(RetCode::BadParam)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                let i0_1 = self.price[0][1].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_2 = self.price[0][2].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_4 = self.price[0][4].ok_or(RetCode::InputNotAllInitialize)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.emv(start_idx, end_idx, i0_1, i0_2, i0_4, self.int_opt[0], self.real_opt[1], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -5709,8 +5717,8 @@ impl<'a> ParamHolder<'a> {
                 }
             }
             FuncId::ER => {
-                let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                let i0 = self.real_in[0].ok_or(RetCode::InputNotAllInitialize)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.er(start_idx, end_idx, i0, self.int_opt[0], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -5719,12 +5727,12 @@ impl<'a> ParamHolder<'a> {
                 }
             }
             FuncId::ERI => {
-                let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
-                let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
-                let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
-                if self.real_out[0].is_none() || self.real_out[1].is_none() { return Err(RetCode::BadParam); }
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
-                let mut o1 = self.real_out[1].take().ok_or(RetCode::BadParam)?;
+                let i0_1 = self.price[0][1].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_2 = self.price[0][2].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_3 = self.price[0][3].ok_or(RetCode::InputNotAllInitialize)?;
+                if self.real_out[0].is_none() || self.real_out[1].is_none() { return Err(RetCode::OutputNotAllInitialize); }
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let mut o1 = self.real_out[1].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.eri(start_idx, end_idx, i0_1, i0_2, i0_3, self.int_opt[0], &mut *o0, &mut *o1);
                 self.real_out[0] = Some(o0);
                 self.real_out[1] = Some(o1);
@@ -5734,8 +5742,8 @@ impl<'a> ParamHolder<'a> {
                 }
             }
             FuncId::EXP => {
-                let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                let i0 = self.real_in[0].ok_or(RetCode::InputNotAllInitialize)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.exp(start_idx, end_idx, i0, &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -5744,8 +5752,8 @@ impl<'a> ParamHolder<'a> {
                 }
             }
             FuncId::FLOOR => {
-                let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                let i0 = self.real_in[0].ok_or(RetCode::InputNotAllInitialize)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.floor(start_idx, end_idx, i0, &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -5754,8 +5762,8 @@ impl<'a> ParamHolder<'a> {
                 }
             }
             FuncId::FOSC => {
-                let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                let i0 = self.real_in[0].ok_or(RetCode::InputNotAllInitialize)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.fosc(start_idx, end_idx, i0, self.int_opt[0], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -5764,11 +5772,11 @@ impl<'a> ParamHolder<'a> {
                 }
             }
             FuncId::FRACTAL => {
-                let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
-                let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
-                if self.int_out[0].is_none() || self.int_out[1].is_none() { return Err(RetCode::BadParam); }
-                let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
-                let mut o1 = self.int_out[1].take().ok_or(RetCode::BadParam)?;
+                let i0_1 = self.price[0][1].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_2 = self.price[0][2].ok_or(RetCode::InputNotAllInitialize)?;
+                if self.int_out[0].is_none() || self.int_out[1].is_none() { return Err(RetCode::OutputNotAllInitialize); }
+                let mut o0 = self.int_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let mut o1 = self.int_out[1].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.fractal(start_idx, end_idx, i0_1, i0_2, self.int_opt[0], self.int_opt[1], &mut *o0, &mut *o1);
                 self.int_out[0] = Some(o0);
                 self.int_out[1] = Some(o1);
@@ -5778,9 +5786,9 @@ impl<'a> ParamHolder<'a> {
                 }
             }
             FuncId::FRAMA => {
-                let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
-                let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                let i0_1 = self.price[0][1].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_2 = self.price[0][2].ok_or(RetCode::InputNotAllInitialize)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.frama(start_idx, end_idx, i0_1, i0_2, self.int_opt[0], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -5789,15 +5797,15 @@ impl<'a> ParamHolder<'a> {
                 }
             }
             FuncId::HA => {
-                let i0_0 = self.price[0][0].ok_or(RetCode::BadParam)?;
-                let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
-                let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
-                let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
-                if self.real_out[0].is_none() || self.real_out[1].is_none() || self.real_out[2].is_none() || self.real_out[3].is_none() { return Err(RetCode::BadParam); }
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
-                let mut o1 = self.real_out[1].take().ok_or(RetCode::BadParam)?;
-                let mut o2 = self.real_out[2].take().ok_or(RetCode::BadParam)?;
-                let mut o3 = self.real_out[3].take().ok_or(RetCode::BadParam)?;
+                let i0_0 = self.price[0][0].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_1 = self.price[0][1].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_2 = self.price[0][2].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_3 = self.price[0][3].ok_or(RetCode::InputNotAllInitialize)?;
+                if self.real_out[0].is_none() || self.real_out[1].is_none() || self.real_out[2].is_none() || self.real_out[3].is_none() { return Err(RetCode::OutputNotAllInitialize); }
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let mut o1 = self.real_out[1].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let mut o2 = self.real_out[2].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let mut o3 = self.real_out[3].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.ha(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut *o0, &mut *o1, &mut *o2, &mut *o3);
                 self.real_out[0] = Some(o0);
                 self.real_out[1] = Some(o1);
@@ -5809,8 +5817,8 @@ impl<'a> ParamHolder<'a> {
                 }
             }
             FuncId::HMA => {
-                let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                let i0 = self.real_in[0].ok_or(RetCode::InputNotAllInitialize)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.hma(start_idx, end_idx, i0, self.int_opt[0], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -5819,8 +5827,8 @@ impl<'a> ParamHolder<'a> {
                 }
             }
             FuncId::HT_DCPERIOD => {
-                let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                let i0 = self.real_in[0].ok_or(RetCode::InputNotAllInitialize)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.ht_dcperiod(start_idx, end_idx, i0, &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -5829,8 +5837,8 @@ impl<'a> ParamHolder<'a> {
                 }
             }
             FuncId::HT_DCPHASE => {
-                let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                let i0 = self.real_in[0].ok_or(RetCode::InputNotAllInitialize)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.ht_dcphase(start_idx, end_idx, i0, &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -5839,10 +5847,10 @@ impl<'a> ParamHolder<'a> {
                 }
             }
             FuncId::HT_PHASOR => {
-                let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
-                if self.real_out[0].is_none() || self.real_out[1].is_none() { return Err(RetCode::BadParam); }
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
-                let mut o1 = self.real_out[1].take().ok_or(RetCode::BadParam)?;
+                let i0 = self.real_in[0].ok_or(RetCode::InputNotAllInitialize)?;
+                if self.real_out[0].is_none() || self.real_out[1].is_none() { return Err(RetCode::OutputNotAllInitialize); }
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let mut o1 = self.real_out[1].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.ht_phasor(start_idx, end_idx, i0, &mut *o0, &mut *o1);
                 self.real_out[0] = Some(o0);
                 self.real_out[1] = Some(o1);
@@ -5852,10 +5860,10 @@ impl<'a> ParamHolder<'a> {
                 }
             }
             FuncId::HT_SINE => {
-                let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
-                if self.real_out[0].is_none() || self.real_out[1].is_none() { return Err(RetCode::BadParam); }
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
-                let mut o1 = self.real_out[1].take().ok_or(RetCode::BadParam)?;
+                let i0 = self.real_in[0].ok_or(RetCode::InputNotAllInitialize)?;
+                if self.real_out[0].is_none() || self.real_out[1].is_none() { return Err(RetCode::OutputNotAllInitialize); }
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let mut o1 = self.real_out[1].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.ht_sine(start_idx, end_idx, i0, &mut *o0, &mut *o1);
                 self.real_out[0] = Some(o0);
                 self.real_out[1] = Some(o1);
@@ -5865,8 +5873,8 @@ impl<'a> ParamHolder<'a> {
                 }
             }
             FuncId::HT_TRENDLINE => {
-                let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                let i0 = self.real_in[0].ok_or(RetCode::InputNotAllInitialize)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.ht_trendline(start_idx, end_idx, i0, &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -5875,8 +5883,8 @@ impl<'a> ParamHolder<'a> {
                 }
             }
             FuncId::HT_TRENDMODE => {
-                let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
-                let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
+                let i0 = self.real_in[0].ok_or(RetCode::InputNotAllInitialize)?;
+                let mut o0 = self.int_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.ht_trendmode(start_idx, end_idx, i0, &mut *o0);
                 self.int_out[0] = Some(o0);
                 match res {
@@ -5885,10 +5893,10 @@ impl<'a> ParamHolder<'a> {
                 }
             }
             FuncId::IBS => {
-                let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
-                let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
-                let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                let i0_1 = self.price[0][1].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_2 = self.price[0][2].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_3 = self.price[0][3].ok_or(RetCode::InputNotAllInitialize)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.ibs(start_idx, end_idx, i0_1, i0_2, i0_3, &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -5897,9 +5905,9 @@ impl<'a> ParamHolder<'a> {
                 }
             }
             FuncId::IMI => {
-                let i0_0 = self.price[0][0].ok_or(RetCode::BadParam)?;
-                let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                let i0_0 = self.price[0][0].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_3 = self.price[0][3].ok_or(RetCode::InputNotAllInitialize)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.imi(start_idx, end_idx, i0_0, i0_3, self.int_opt[0], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -5908,8 +5916,8 @@ impl<'a> ParamHolder<'a> {
                 }
             }
             FuncId::KAMA => {
-                let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                let i0 = self.real_in[0].ok_or(RetCode::InputNotAllInitialize)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.kama(start_idx, end_idx, i0, self.int_opt[0], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -5918,13 +5926,13 @@ impl<'a> ParamHolder<'a> {
                 }
             }
             FuncId::KC => {
-                let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
-                let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
-                let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
-                if self.real_out[0].is_none() || self.real_out[1].is_none() || self.real_out[2].is_none() { return Err(RetCode::BadParam); }
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
-                let mut o1 = self.real_out[1].take().ok_or(RetCode::BadParam)?;
-                let mut o2 = self.real_out[2].take().ok_or(RetCode::BadParam)?;
+                let i0_1 = self.price[0][1].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_2 = self.price[0][2].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_3 = self.price[0][3].ok_or(RetCode::InputNotAllInitialize)?;
+                if self.real_out[0].is_none() || self.real_out[1].is_none() || self.real_out[2].is_none() { return Err(RetCode::OutputNotAllInitialize); }
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let mut o1 = self.real_out[1].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let mut o2 = self.real_out[2].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.kc(start_idx, end_idx, i0_1, i0_2, i0_3, self.int_opt[0], self.int_opt[1], self.real_opt[2], &mut *o0, &mut *o1, &mut *o2);
                 self.real_out[0] = Some(o0);
                 self.real_out[1] = Some(o1);
@@ -5937,13 +5945,13 @@ impl<'a> ParamHolder<'a> {
             FuncId::KDJ => {
                 let e2 = MAType::try_from(self.int_opt[2])?;
                 let e4 = MAType::try_from(self.int_opt[4])?;
-                let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
-                let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
-                let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
-                if self.real_out[0].is_none() || self.real_out[1].is_none() || self.real_out[2].is_none() { return Err(RetCode::BadParam); }
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
-                let mut o1 = self.real_out[1].take().ok_or(RetCode::BadParam)?;
-                let mut o2 = self.real_out[2].take().ok_or(RetCode::BadParam)?;
+                let i0_1 = self.price[0][1].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_2 = self.price[0][2].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_3 = self.price[0][3].ok_or(RetCode::InputNotAllInitialize)?;
+                if self.real_out[0].is_none() || self.real_out[1].is_none() || self.real_out[2].is_none() { return Err(RetCode::OutputNotAllInitialize); }
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let mut o1 = self.real_out[1].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let mut o2 = self.real_out[2].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.kdj(start_idx, end_idx, i0_1, i0_2, i0_3, self.int_opt[0], self.int_opt[1], e2, self.int_opt[3], e4, &mut *o0, &mut *o1, &mut *o2);
                 self.real_out[0] = Some(o0);
                 self.real_out[1] = Some(o1);
@@ -5954,10 +5962,10 @@ impl<'a> ParamHolder<'a> {
                 }
             }
             FuncId::KST => {
-                let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
-                if self.real_out[0].is_none() || self.real_out[1].is_none() { return Err(RetCode::BadParam); }
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
-                let mut o1 = self.real_out[1].take().ok_or(RetCode::BadParam)?;
+                let i0 = self.real_in[0].ok_or(RetCode::InputNotAllInitialize)?;
+                if self.real_out[0].is_none() || self.real_out[1].is_none() { return Err(RetCode::OutputNotAllInitialize); }
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let mut o1 = self.real_out[1].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.kst(start_idx, end_idx, i0, self.int_opt[0], self.int_opt[1], self.int_opt[2], self.int_opt[3], self.int_opt[4], self.int_opt[5], self.int_opt[6], self.int_opt[7], self.int_opt[8], &mut *o0, &mut *o1);
                 self.real_out[0] = Some(o0);
                 self.real_out[1] = Some(o1);
@@ -5969,10 +5977,10 @@ impl<'a> ParamHolder<'a> {
             FuncId::KSTEXT => {
                 let e9 = MAType::try_from(self.int_opt[9])?;
                 let e10 = MAType::try_from(self.int_opt[10])?;
-                let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
-                if self.real_out[0].is_none() || self.real_out[1].is_none() { return Err(RetCode::BadParam); }
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
-                let mut o1 = self.real_out[1].take().ok_or(RetCode::BadParam)?;
+                let i0 = self.real_in[0].ok_or(RetCode::InputNotAllInitialize)?;
+                if self.real_out[0].is_none() || self.real_out[1].is_none() { return Err(RetCode::OutputNotAllInitialize); }
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let mut o1 = self.real_out[1].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.kstext(start_idx, end_idx, i0, self.int_opt[0], self.int_opt[1], self.int_opt[2], self.int_opt[3], self.int_opt[4], self.int_opt[5], self.int_opt[6], self.int_opt[7], self.int_opt[8], e9, e10, &mut *o0, &mut *o1);
                 self.real_out[0] = Some(o0);
                 self.real_out[1] = Some(o1);
@@ -5982,8 +5990,8 @@ impl<'a> ParamHolder<'a> {
                 }
             }
             FuncId::KURTOSIS => {
-                let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                let i0 = self.real_in[0].ok_or(RetCode::InputNotAllInitialize)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.kurtosis(start_idx, end_idx, i0, self.int_opt[0], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -5992,8 +6000,8 @@ impl<'a> ParamHolder<'a> {
                 }
             }
             FuncId::LINEARREG => {
-                let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                let i0 = self.real_in[0].ok_or(RetCode::InputNotAllInitialize)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.linearreg(start_idx, end_idx, i0, self.int_opt[0], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -6002,8 +6010,8 @@ impl<'a> ParamHolder<'a> {
                 }
             }
             FuncId::LINEARREG_ANGLE => {
-                let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                let i0 = self.real_in[0].ok_or(RetCode::InputNotAllInitialize)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.linearreg_angle(start_idx, end_idx, i0, self.int_opt[0], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -6012,8 +6020,8 @@ impl<'a> ParamHolder<'a> {
                 }
             }
             FuncId::LINEARREG_INTERCEPT => {
-                let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                let i0 = self.real_in[0].ok_or(RetCode::InputNotAllInitialize)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.linearreg_intercept(start_idx, end_idx, i0, self.int_opt[0], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -6022,8 +6030,8 @@ impl<'a> ParamHolder<'a> {
                 }
             }
             FuncId::LINEARREG_SLOPE => {
-                let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                let i0 = self.real_in[0].ok_or(RetCode::InputNotAllInitialize)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.linearreg_slope(start_idx, end_idx, i0, self.int_opt[0], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -6032,8 +6040,8 @@ impl<'a> ParamHolder<'a> {
                 }
             }
             FuncId::LN => {
-                let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                let i0 = self.real_in[0].ok_or(RetCode::InputNotAllInitialize)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.ln(start_idx, end_idx, i0, &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -6042,8 +6050,8 @@ impl<'a> ParamHolder<'a> {
                 }
             }
             FuncId::LOG10 => {
-                let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                let i0 = self.real_in[0].ok_or(RetCode::InputNotAllInitialize)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.log10(start_idx, end_idx, i0, &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -6053,8 +6061,8 @@ impl<'a> ParamHolder<'a> {
             }
             FuncId::MA => {
                 let e1 = MAType::try_from(self.int_opt[1])?;
-                let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                let i0 = self.real_in[0].ok_or(RetCode::InputNotAllInitialize)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.ma(start_idx, end_idx, i0, self.int_opt[0], e1, &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -6063,11 +6071,11 @@ impl<'a> ParamHolder<'a> {
                 }
             }
             FuncId::MACD => {
-                let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
-                if self.real_out[0].is_none() || self.real_out[1].is_none() || self.real_out[2].is_none() { return Err(RetCode::BadParam); }
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
-                let mut o1 = self.real_out[1].take().ok_or(RetCode::BadParam)?;
-                let mut o2 = self.real_out[2].take().ok_or(RetCode::BadParam)?;
+                let i0 = self.real_in[0].ok_or(RetCode::InputNotAllInitialize)?;
+                if self.real_out[0].is_none() || self.real_out[1].is_none() || self.real_out[2].is_none() { return Err(RetCode::OutputNotAllInitialize); }
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let mut o1 = self.real_out[1].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let mut o2 = self.real_out[2].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.macd(start_idx, end_idx, i0, self.int_opt[0], self.int_opt[1], self.int_opt[2], &mut *o0, &mut *o1, &mut *o2);
                 self.real_out[0] = Some(o0);
                 self.real_out[1] = Some(o1);
@@ -6081,11 +6089,11 @@ impl<'a> ParamHolder<'a> {
                 let e1 = MAType::try_from(self.int_opt[1])?;
                 let e3 = MAType::try_from(self.int_opt[3])?;
                 let e5 = MAType::try_from(self.int_opt[5])?;
-                let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
-                if self.real_out[0].is_none() || self.real_out[1].is_none() || self.real_out[2].is_none() { return Err(RetCode::BadParam); }
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
-                let mut o1 = self.real_out[1].take().ok_or(RetCode::BadParam)?;
-                let mut o2 = self.real_out[2].take().ok_or(RetCode::BadParam)?;
+                let i0 = self.real_in[0].ok_or(RetCode::InputNotAllInitialize)?;
+                if self.real_out[0].is_none() || self.real_out[1].is_none() || self.real_out[2].is_none() { return Err(RetCode::OutputNotAllInitialize); }
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let mut o1 = self.real_out[1].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let mut o2 = self.real_out[2].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.macdext(start_idx, end_idx, i0, self.int_opt[0], e1, self.int_opt[2], e3, self.int_opt[4], e5, &mut *o0, &mut *o1, &mut *o2);
                 self.real_out[0] = Some(o0);
                 self.real_out[1] = Some(o1);
@@ -6096,11 +6104,11 @@ impl<'a> ParamHolder<'a> {
                 }
             }
             FuncId::MACDFIX => {
-                let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
-                if self.real_out[0].is_none() || self.real_out[1].is_none() || self.real_out[2].is_none() { return Err(RetCode::BadParam); }
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
-                let mut o1 = self.real_out[1].take().ok_or(RetCode::BadParam)?;
-                let mut o2 = self.real_out[2].take().ok_or(RetCode::BadParam)?;
+                let i0 = self.real_in[0].ok_or(RetCode::InputNotAllInitialize)?;
+                if self.real_out[0].is_none() || self.real_out[1].is_none() || self.real_out[2].is_none() { return Err(RetCode::OutputNotAllInitialize); }
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let mut o1 = self.real_out[1].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let mut o2 = self.real_out[2].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.macdfix(start_idx, end_idx, i0, self.int_opt[0], &mut *o0, &mut *o1, &mut *o2);
                 self.real_out[0] = Some(o0);
                 self.real_out[1] = Some(o1);
@@ -6111,10 +6119,10 @@ impl<'a> ParamHolder<'a> {
                 }
             }
             FuncId::MAMA => {
-                let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
-                if self.real_out[0].is_none() || self.real_out[1].is_none() { return Err(RetCode::BadParam); }
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
-                let mut o1 = self.real_out[1].take().ok_or(RetCode::BadParam)?;
+                let i0 = self.real_in[0].ok_or(RetCode::InputNotAllInitialize)?;
+                if self.real_out[0].is_none() || self.real_out[1].is_none() { return Err(RetCode::OutputNotAllInitialize); }
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let mut o1 = self.real_out[1].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.mama(start_idx, end_idx, i0, self.real_opt[0], self.real_opt[1], &mut *o0, Some(&mut *o1));
                 self.real_out[0] = Some(o0);
                 self.real_out[1] = Some(o1);
@@ -6124,10 +6132,10 @@ impl<'a> ParamHolder<'a> {
                 }
             }
             FuncId::MARKETFI => {
-                let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
-                let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
-                let i0_4 = self.price[0][4].ok_or(RetCode::BadParam)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                let i0_1 = self.price[0][1].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_2 = self.price[0][2].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_4 = self.price[0][4].ok_or(RetCode::InputNotAllInitialize)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.marketfi(start_idx, end_idx, i0_1, i0_2, i0_4, &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -6136,9 +6144,9 @@ impl<'a> ParamHolder<'a> {
                 }
             }
             FuncId::MASSI => {
-                let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
-                let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                let i0_1 = self.price[0][1].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_2 = self.price[0][2].ok_or(RetCode::InputNotAllInitialize)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.massi(start_idx, end_idx, i0_1, i0_2, self.int_opt[0], self.int_opt[1], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -6148,9 +6156,9 @@ impl<'a> ParamHolder<'a> {
             }
             FuncId::MAVP => {
                 let e2 = MAType::try_from(self.int_opt[2])?;
-                let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
-                let i1 = self.real_in[1].ok_or(RetCode::BadParam)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                let i0 = self.real_in[0].ok_or(RetCode::InputNotAllInitialize)?;
+                let i1 = self.real_in[1].ok_or(RetCode::InputNotAllInitialize)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.mavp(start_idx, end_idx, i0, i1, self.int_opt[0], self.int_opt[1], e2, &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -6159,8 +6167,8 @@ impl<'a> ParamHolder<'a> {
                 }
             }
             FuncId::MAX => {
-                let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                let i0 = self.real_in[0].ok_or(RetCode::InputNotAllInitialize)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.max(start_idx, end_idx, i0, self.int_opt[0], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -6169,8 +6177,8 @@ impl<'a> ParamHolder<'a> {
                 }
             }
             FuncId::MAXINDEX => {
-                let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
-                let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
+                let i0 = self.real_in[0].ok_or(RetCode::InputNotAllInitialize)?;
+                let mut o0 = self.int_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.maxindex(start_idx, end_idx, i0, self.int_opt[0], &mut *o0);
                 self.int_out[0] = Some(o0);
                 match res {
@@ -6179,8 +6187,8 @@ impl<'a> ParamHolder<'a> {
                 }
             }
             FuncId::MCGD => {
-                let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                let i0 = self.real_in[0].ok_or(RetCode::InputNotAllInitialize)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.mcgd(start_idx, end_idx, i0, self.int_opt[0], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -6189,8 +6197,8 @@ impl<'a> ParamHolder<'a> {
                 }
             }
             FuncId::MEDIAN => {
-                let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                let i0 = self.real_in[0].ok_or(RetCode::InputNotAllInitialize)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.median(start_idx, end_idx, i0, self.int_opt[0], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -6199,9 +6207,9 @@ impl<'a> ParamHolder<'a> {
                 }
             }
             FuncId::MEDPRICE => {
-                let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
-                let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                let i0_1 = self.price[0][1].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_2 = self.price[0][2].ok_or(RetCode::InputNotAllInitialize)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.medprice(start_idx, end_idx, i0_1, i0_2, &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -6210,11 +6218,11 @@ impl<'a> ParamHolder<'a> {
                 }
             }
             FuncId::MFI => {
-                let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
-                let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
-                let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
-                let i0_4 = self.price[0][4].ok_or(RetCode::BadParam)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                let i0_1 = self.price[0][1].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_2 = self.price[0][2].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_3 = self.price[0][3].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_4 = self.price[0][4].ok_or(RetCode::InputNotAllInitialize)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.mfi(start_idx, end_idx, i0_1, i0_2, i0_3, i0_4, self.int_opt[0], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -6223,8 +6231,8 @@ impl<'a> ParamHolder<'a> {
                 }
             }
             FuncId::MIDPOINT => {
-                let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                let i0 = self.real_in[0].ok_or(RetCode::InputNotAllInitialize)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.midpoint(start_idx, end_idx, i0, self.int_opt[0], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -6233,9 +6241,9 @@ impl<'a> ParamHolder<'a> {
                 }
             }
             FuncId::MIDPRICE => {
-                let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
-                let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                let i0_1 = self.price[0][1].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_2 = self.price[0][2].ok_or(RetCode::InputNotAllInitialize)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.midprice(start_idx, end_idx, i0_1, i0_2, self.int_opt[0], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -6244,8 +6252,8 @@ impl<'a> ParamHolder<'a> {
                 }
             }
             FuncId::MIN => {
-                let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                let i0 = self.real_in[0].ok_or(RetCode::InputNotAllInitialize)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.min(start_idx, end_idx, i0, self.int_opt[0], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -6254,8 +6262,8 @@ impl<'a> ParamHolder<'a> {
                 }
             }
             FuncId::MININDEX => {
-                let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
-                let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
+                let i0 = self.real_in[0].ok_or(RetCode::InputNotAllInitialize)?;
+                let mut o0 = self.int_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.minindex(start_idx, end_idx, i0, self.int_opt[0], &mut *o0);
                 self.int_out[0] = Some(o0);
                 match res {
@@ -6264,10 +6272,10 @@ impl<'a> ParamHolder<'a> {
                 }
             }
             FuncId::MINMAX => {
-                let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
-                if self.real_out[0].is_none() || self.real_out[1].is_none() { return Err(RetCode::BadParam); }
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
-                let mut o1 = self.real_out[1].take().ok_or(RetCode::BadParam)?;
+                let i0 = self.real_in[0].ok_or(RetCode::InputNotAllInitialize)?;
+                if self.real_out[0].is_none() || self.real_out[1].is_none() { return Err(RetCode::OutputNotAllInitialize); }
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let mut o1 = self.real_out[1].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.minmax(start_idx, end_idx, i0, self.int_opt[0], &mut *o0, &mut *o1);
                 self.real_out[0] = Some(o0);
                 self.real_out[1] = Some(o1);
@@ -6277,10 +6285,10 @@ impl<'a> ParamHolder<'a> {
                 }
             }
             FuncId::MINMAXINDEX => {
-                let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
-                if self.int_out[0].is_none() || self.int_out[1].is_none() { return Err(RetCode::BadParam); }
-                let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
-                let mut o1 = self.int_out[1].take().ok_or(RetCode::BadParam)?;
+                let i0 = self.real_in[0].ok_or(RetCode::InputNotAllInitialize)?;
+                if self.int_out[0].is_none() || self.int_out[1].is_none() { return Err(RetCode::OutputNotAllInitialize); }
+                let mut o0 = self.int_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let mut o1 = self.int_out[1].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.minmaxindex(start_idx, end_idx, i0, self.int_opt[0], &mut *o0, &mut *o1);
                 self.int_out[0] = Some(o0);
                 self.int_out[1] = Some(o1);
@@ -6290,10 +6298,10 @@ impl<'a> ParamHolder<'a> {
                 }
             }
             FuncId::MINUS_DI => {
-                let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
-                let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
-                let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                let i0_1 = self.price[0][1].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_2 = self.price[0][2].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_3 = self.price[0][3].ok_or(RetCode::InputNotAllInitialize)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.minus_di(start_idx, end_idx, i0_1, i0_2, i0_3, self.int_opt[0], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -6302,9 +6310,9 @@ impl<'a> ParamHolder<'a> {
                 }
             }
             FuncId::MINUS_DM => {
-                let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
-                let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                let i0_1 = self.price[0][1].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_2 = self.price[0][2].ok_or(RetCode::InputNotAllInitialize)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.minus_dm(start_idx, end_idx, i0_1, i0_2, self.int_opt[0], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -6313,8 +6321,8 @@ impl<'a> ParamHolder<'a> {
                 }
             }
             FuncId::MOM => {
-                let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                let i0 = self.real_in[0].ok_or(RetCode::InputNotAllInitialize)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.mom(start_idx, end_idx, i0, self.int_opt[0], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -6323,9 +6331,9 @@ impl<'a> ParamHolder<'a> {
                 }
             }
             FuncId::MULT => {
-                let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
-                let i1 = self.real_in[1].ok_or(RetCode::BadParam)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                let i0 = self.real_in[0].ok_or(RetCode::InputNotAllInitialize)?;
+                let i1 = self.real_in[1].ok_or(RetCode::InputNotAllInitialize)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.mult(start_idx, end_idx, i0, i1, &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -6334,10 +6342,10 @@ impl<'a> ParamHolder<'a> {
                 }
             }
             FuncId::NATR => {
-                let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
-                let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
-                let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                let i0_1 = self.price[0][1].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_2 = self.price[0][2].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_3 = self.price[0][3].ok_or(RetCode::InputNotAllInitialize)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.natr(start_idx, end_idx, i0_1, i0_2, i0_3, self.int_opt[0], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -6346,9 +6354,9 @@ impl<'a> ParamHolder<'a> {
                 }
             }
             FuncId::NVI => {
-                let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
-                let i0_4 = self.price[0][4].ok_or(RetCode::BadParam)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                let i0_3 = self.price[0][3].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_4 = self.price[0][4].ok_or(RetCode::InputNotAllInitialize)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.nvi(start_idx, end_idx, i0_3, i0_4, &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -6357,9 +6365,9 @@ impl<'a> ParamHolder<'a> {
                 }
             }
             FuncId::OBV => {
-                let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
-                let i1_4 = self.price[1][4].ok_or(RetCode::BadParam)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                let i0 = self.real_in[0].ok_or(RetCode::InputNotAllInitialize)?;
+                let i1_4 = self.price[1][4].ok_or(RetCode::InputNotAllInitialize)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.obv(start_idx, end_idx, i0, i1_4, &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -6369,8 +6377,8 @@ impl<'a> ParamHolder<'a> {
             }
             FuncId::PERCENTB => {
                 let e3 = MAType::try_from(self.int_opt[3])?;
-                let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                let i0 = self.real_in[0].ok_or(RetCode::InputNotAllInitialize)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.percentb(start_idx, end_idx, i0, self.int_opt[0], self.real_opt[1], self.real_opt[2], e3, &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -6379,8 +6387,8 @@ impl<'a> ParamHolder<'a> {
                 }
             }
             FuncId::PERCENTILE => {
-                let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                let i0 = self.real_in[0].ok_or(RetCode::InputNotAllInitialize)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.percentile(start_idx, end_idx, i0, self.int_opt[0], self.real_opt[1], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -6389,8 +6397,8 @@ impl<'a> ParamHolder<'a> {
                 }
             }
             FuncId::PERCENTRANK => {
-                let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                let i0 = self.real_in[0].ok_or(RetCode::InputNotAllInitialize)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.percentrank(start_idx, end_idx, i0, self.int_opt[0], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -6399,10 +6407,10 @@ impl<'a> ParamHolder<'a> {
                 }
             }
             FuncId::PLUS_DI => {
-                let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
-                let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
-                let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                let i0_1 = self.price[0][1].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_2 = self.price[0][2].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_3 = self.price[0][3].ok_or(RetCode::InputNotAllInitialize)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.plus_di(start_idx, end_idx, i0_1, i0_2, i0_3, self.int_opt[0], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -6411,9 +6419,9 @@ impl<'a> ParamHolder<'a> {
                 }
             }
             FuncId::PLUS_DM => {
-                let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
-                let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                let i0_1 = self.price[0][1].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_2 = self.price[0][2].ok_or(RetCode::InputNotAllInitialize)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.plus_dm(start_idx, end_idx, i0_1, i0_2, self.int_opt[0], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -6423,8 +6431,8 @@ impl<'a> ParamHolder<'a> {
             }
             FuncId::PPO => {
                 let e2 = MAType::try_from(self.int_opt[2])?;
-                let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                let i0 = self.real_in[0].ok_or(RetCode::InputNotAllInitialize)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.ppo(start_idx, end_idx, i0, self.int_opt[0], self.int_opt[1], e2, &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -6433,9 +6441,9 @@ impl<'a> ParamHolder<'a> {
                 }
             }
             FuncId::PVI => {
-                let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
-                let i0_4 = self.price[0][4].ok_or(RetCode::BadParam)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                let i0_3 = self.price[0][3].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_4 = self.price[0][4].ok_or(RetCode::InputNotAllInitialize)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.pvi(start_idx, end_idx, i0_3, i0_4, &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -6445,8 +6453,8 @@ impl<'a> ParamHolder<'a> {
             }
             FuncId::PVO => {
                 let e2 = MAType::try_from(self.int_opt[2])?;
-                let i0_4 = self.price[0][4].ok_or(RetCode::BadParam)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                let i0_4 = self.price[0][4].ok_or(RetCode::InputNotAllInitialize)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.pvo(start_idx, end_idx, i0_4, self.int_opt[0], self.int_opt[1], e2, &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -6455,9 +6463,9 @@ impl<'a> ParamHolder<'a> {
                 }
             }
             FuncId::PVT => {
-                let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
-                let i0_4 = self.price[0][4].ok_or(RetCode::BadParam)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                let i0_3 = self.price[0][3].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_4 = self.price[0][4].ok_or(RetCode::InputNotAllInitialize)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.pvt(start_idx, end_idx, i0_3, i0_4, &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -6466,9 +6474,9 @@ impl<'a> ParamHolder<'a> {
                 }
             }
             FuncId::QSTICK => {
-                let i0_0 = self.price[0][0].ok_or(RetCode::BadParam)?;
-                let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                let i0_0 = self.price[0][0].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_3 = self.price[0][3].ok_or(RetCode::InputNotAllInitialize)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.qstick(start_idx, end_idx, i0_0, i0_3, self.int_opt[0], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -6477,8 +6485,8 @@ impl<'a> ParamHolder<'a> {
                 }
             }
             FuncId::RMA => {
-                let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                let i0 = self.real_in[0].ok_or(RetCode::InputNotAllInitialize)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.rma(start_idx, end_idx, i0, self.int_opt[0], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -6487,8 +6495,8 @@ impl<'a> ParamHolder<'a> {
                 }
             }
             FuncId::ROC => {
-                let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                let i0 = self.real_in[0].ok_or(RetCode::InputNotAllInitialize)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.roc(start_idx, end_idx, i0, self.int_opt[0], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -6497,8 +6505,8 @@ impl<'a> ParamHolder<'a> {
                 }
             }
             FuncId::ROCP => {
-                let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                let i0 = self.real_in[0].ok_or(RetCode::InputNotAllInitialize)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.rocp(start_idx, end_idx, i0, self.int_opt[0], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -6507,8 +6515,8 @@ impl<'a> ParamHolder<'a> {
                 }
             }
             FuncId::ROCR => {
-                let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                let i0 = self.real_in[0].ok_or(RetCode::InputNotAllInitialize)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.rocr(start_idx, end_idx, i0, self.int_opt[0], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -6517,8 +6525,8 @@ impl<'a> ParamHolder<'a> {
                 }
             }
             FuncId::ROCR100 => {
-                let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                let i0 = self.real_in[0].ok_or(RetCode::InputNotAllInitialize)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.rocr100(start_idx, end_idx, i0, self.int_opt[0], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -6527,8 +6535,8 @@ impl<'a> ParamHolder<'a> {
                 }
             }
             FuncId::RSI => {
-                let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                let i0 = self.real_in[0].ok_or(RetCode::InputNotAllInitialize)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.rsi(start_idx, end_idx, i0, self.int_opt[0], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -6537,8 +6545,8 @@ impl<'a> ParamHolder<'a> {
                 }
             }
             FuncId::RVI => {
-                let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                let i0 = self.real_in[0].ok_or(RetCode::InputNotAllInitialize)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.rvi(start_idx, end_idx, i0, self.int_opt[0], self.int_opt[1], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -6547,9 +6555,9 @@ impl<'a> ParamHolder<'a> {
                 }
             }
             FuncId::RVIR => {
-                let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
-                let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                let i0_1 = self.price[0][1].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_2 = self.price[0][2].ok_or(RetCode::InputNotAllInitialize)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.rvir(start_idx, end_idx, i0_1, i0_2, self.int_opt[0], self.int_opt[1], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -6558,8 +6566,8 @@ impl<'a> ParamHolder<'a> {
                 }
             }
             FuncId::RVOL => {
-                let i0_4 = self.price[0][4].ok_or(RetCode::BadParam)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                let i0_4 = self.price[0][4].ok_or(RetCode::InputNotAllInitialize)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.rvol(start_idx, end_idx, i0_4, self.int_opt[0], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -6568,9 +6576,9 @@ impl<'a> ParamHolder<'a> {
                 }
             }
             FuncId::SAR => {
-                let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
-                let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                let i0_1 = self.price[0][1].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_2 = self.price[0][2].ok_or(RetCode::InputNotAllInitialize)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.sar(start_idx, end_idx, i0_1, i0_2, self.real_opt[0], self.real_opt[1], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -6579,9 +6587,9 @@ impl<'a> ParamHolder<'a> {
                 }
             }
             FuncId::SAREXT => {
-                let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
-                let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                let i0_1 = self.price[0][1].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_2 = self.price[0][2].ok_or(RetCode::InputNotAllInitialize)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.sarext(start_idx, end_idx, i0_1, i0_2, self.real_opt[0], self.real_opt[1], self.real_opt[2], self.real_opt[3], self.real_opt[4], self.real_opt[5], self.real_opt[6], self.real_opt[7], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -6590,11 +6598,11 @@ impl<'a> ParamHolder<'a> {
                 }
             }
             FuncId::SI => {
-                let i0_0 = self.price[0][0].ok_or(RetCode::BadParam)?;
-                let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
-                let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
-                let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                let i0_0 = self.price[0][0].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_1 = self.price[0][1].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_2 = self.price[0][2].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_3 = self.price[0][3].ok_or(RetCode::InputNotAllInitialize)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.si(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, self.real_opt[0], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -6603,8 +6611,8 @@ impl<'a> ParamHolder<'a> {
                 }
             }
             FuncId::SIN => {
-                let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                let i0 = self.real_in[0].ok_or(RetCode::InputNotAllInitialize)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.sin(start_idx, end_idx, i0, &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -6613,8 +6621,8 @@ impl<'a> ParamHolder<'a> {
                 }
             }
             FuncId::SINH => {
-                let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                let i0 = self.real_in[0].ok_or(RetCode::InputNotAllInitialize)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.sinh(start_idx, end_idx, i0, &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -6623,8 +6631,8 @@ impl<'a> ParamHolder<'a> {
                 }
             }
             FuncId::SMA => {
-                let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                let i0 = self.real_in[0].ok_or(RetCode::InputNotAllInitialize)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.sma(start_idx, end_idx, i0, self.int_opt[0], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -6633,12 +6641,12 @@ impl<'a> ParamHolder<'a> {
                 }
             }
             FuncId::SMI => {
-                let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
-                let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
-                let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
-                if self.real_out[0].is_none() || self.real_out[1].is_none() { return Err(RetCode::BadParam); }
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
-                let mut o1 = self.real_out[1].take().ok_or(RetCode::BadParam)?;
+                let i0_1 = self.price[0][1].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_2 = self.price[0][2].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_3 = self.price[0][3].ok_or(RetCode::InputNotAllInitialize)?;
+                if self.real_out[0].is_none() || self.real_out[1].is_none() { return Err(RetCode::OutputNotAllInitialize); }
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let mut o1 = self.real_out[1].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.smi(start_idx, end_idx, i0_1, i0_2, i0_3, self.int_opt[0], self.int_opt[1], self.int_opt[2], self.int_opt[3], &mut *o0, &mut *o1);
                 self.real_out[0] = Some(o0);
                 self.real_out[1] = Some(o1);
@@ -6648,8 +6656,8 @@ impl<'a> ParamHolder<'a> {
                 }
             }
             FuncId::SQRT => {
-                let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                let i0 = self.real_in[0].ok_or(RetCode::InputNotAllInitialize)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.sqrt(start_idx, end_idx, i0, &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -6658,8 +6666,8 @@ impl<'a> ParamHolder<'a> {
                 }
             }
             FuncId::STC => {
-                let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                let i0 = self.real_in[0].ok_or(RetCode::InputNotAllInitialize)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.stc(start_idx, end_idx, i0, self.int_opt[0], self.int_opt[1], self.int_opt[2], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -6668,8 +6676,8 @@ impl<'a> ParamHolder<'a> {
                 }
             }
             FuncId::STDDEV => {
-                let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                let i0 = self.real_in[0].ok_or(RetCode::InputNotAllInitialize)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.stddev(start_idx, end_idx, i0, self.int_opt[0], self.real_opt[1], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -6680,12 +6688,12 @@ impl<'a> ParamHolder<'a> {
             FuncId::STOCH => {
                 let e2 = MAType::try_from(self.int_opt[2])?;
                 let e4 = MAType::try_from(self.int_opt[4])?;
-                let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
-                let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
-                let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
-                if self.real_out[0].is_none() || self.real_out[1].is_none() { return Err(RetCode::BadParam); }
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
-                let mut o1 = self.real_out[1].take().ok_or(RetCode::BadParam)?;
+                let i0_1 = self.price[0][1].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_2 = self.price[0][2].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_3 = self.price[0][3].ok_or(RetCode::InputNotAllInitialize)?;
+                if self.real_out[0].is_none() || self.real_out[1].is_none() { return Err(RetCode::OutputNotAllInitialize); }
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let mut o1 = self.real_out[1].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.stoch(start_idx, end_idx, i0_1, i0_2, i0_3, self.int_opt[0], self.int_opt[1], e2, self.int_opt[3], e4, &mut *o0, &mut *o1);
                 self.real_out[0] = Some(o0);
                 self.real_out[1] = Some(o1);
@@ -6696,12 +6704,12 @@ impl<'a> ParamHolder<'a> {
             }
             FuncId::STOCHF => {
                 let e2 = MAType::try_from(self.int_opt[2])?;
-                let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
-                let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
-                let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
-                if self.real_out[0].is_none() || self.real_out[1].is_none() { return Err(RetCode::BadParam); }
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
-                let mut o1 = self.real_out[1].take().ok_or(RetCode::BadParam)?;
+                let i0_1 = self.price[0][1].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_2 = self.price[0][2].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_3 = self.price[0][3].ok_or(RetCode::InputNotAllInitialize)?;
+                if self.real_out[0].is_none() || self.real_out[1].is_none() { return Err(RetCode::OutputNotAllInitialize); }
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let mut o1 = self.real_out[1].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.stochf(start_idx, end_idx, i0_1, i0_2, i0_3, self.int_opt[0], self.int_opt[1], e2, &mut *o0, &mut *o1);
                 self.real_out[0] = Some(o0);
                 self.real_out[1] = Some(o1);
@@ -6712,10 +6720,10 @@ impl<'a> ParamHolder<'a> {
             }
             FuncId::STOCHRSI => {
                 let e3 = MAType::try_from(self.int_opt[3])?;
-                let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
-                if self.real_out[0].is_none() || self.real_out[1].is_none() { return Err(RetCode::BadParam); }
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
-                let mut o1 = self.real_out[1].take().ok_or(RetCode::BadParam)?;
+                let i0 = self.real_in[0].ok_or(RetCode::InputNotAllInitialize)?;
+                if self.real_out[0].is_none() || self.real_out[1].is_none() { return Err(RetCode::OutputNotAllInitialize); }
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let mut o1 = self.real_out[1].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.stochrsi(start_idx, end_idx, i0, self.int_opt[0], self.int_opt[1], self.int_opt[2], e3, &mut *o0, &mut *o1);
                 self.real_out[0] = Some(o0);
                 self.real_out[1] = Some(o1);
@@ -6725,9 +6733,9 @@ impl<'a> ParamHolder<'a> {
                 }
             }
             FuncId::SUB => {
-                let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
-                let i1 = self.real_in[1].ok_or(RetCode::BadParam)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                let i0 = self.real_in[0].ok_or(RetCode::InputNotAllInitialize)?;
+                let i1 = self.real_in[1].ok_or(RetCode::InputNotAllInitialize)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.sub(start_idx, end_idx, i0, i1, &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -6736,8 +6744,8 @@ impl<'a> ParamHolder<'a> {
                 }
             }
             FuncId::SUM => {
-                let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                let i0 = self.real_in[0].ok_or(RetCode::InputNotAllInitialize)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.sum(start_idx, end_idx, i0, self.int_opt[0], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -6746,12 +6754,12 @@ impl<'a> ParamHolder<'a> {
                 }
             }
             FuncId::SUPERTREND => {
-                let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
-                let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
-                let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
-                if self.real_out[0].is_none() || self.int_out[1].is_none() { return Err(RetCode::BadParam); }
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
-                let mut o1 = self.int_out[1].take().ok_or(RetCode::BadParam)?;
+                let i0_1 = self.price[0][1].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_2 = self.price[0][2].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_3 = self.price[0][3].ok_or(RetCode::InputNotAllInitialize)?;
+                if self.real_out[0].is_none() || self.int_out[1].is_none() { return Err(RetCode::OutputNotAllInitialize); }
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let mut o1 = self.int_out[1].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.supertrend(start_idx, end_idx, i0_1, i0_2, i0_3, self.int_opt[0], self.real_opt[1], &mut *o0, &mut *o1);
                 self.real_out[0] = Some(o0);
                 self.int_out[1] = Some(o1);
@@ -6761,8 +6769,8 @@ impl<'a> ParamHolder<'a> {
                 }
             }
             FuncId::SWAK_2PHP => {
-                let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                let i0 = self.real_in[0].ok_or(RetCode::InputNotAllInitialize)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.swak_2php(start_idx, end_idx, i0, self.int_opt[0], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -6771,8 +6779,8 @@ impl<'a> ParamHolder<'a> {
                 }
             }
             FuncId::SWAK_BP => {
-                let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                let i0 = self.real_in[0].ok_or(RetCode::InputNotAllInitialize)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.swak_bp(start_idx, end_idx, i0, self.int_opt[0], self.real_opt[1], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -6781,8 +6789,8 @@ impl<'a> ParamHolder<'a> {
                 }
             }
             FuncId::SWAK_BUTTER => {
-                let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                let i0 = self.real_in[0].ok_or(RetCode::InputNotAllInitialize)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.swak_butter(start_idx, end_idx, i0, self.int_opt[0], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -6791,8 +6799,8 @@ impl<'a> ParamHolder<'a> {
                 }
             }
             FuncId::SWAK_GAUSS => {
-                let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                let i0 = self.real_in[0].ok_or(RetCode::InputNotAllInitialize)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.swak_gauss(start_idx, end_idx, i0, self.int_opt[0], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -6801,8 +6809,8 @@ impl<'a> ParamHolder<'a> {
                 }
             }
             FuncId::SWAK_HP => {
-                let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                let i0 = self.real_in[0].ok_or(RetCode::InputNotAllInitialize)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.swak_hp(start_idx, end_idx, i0, self.int_opt[0], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -6811,8 +6819,8 @@ impl<'a> ParamHolder<'a> {
                 }
             }
             FuncId::T3 => {
-                let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                let i0 = self.real_in[0].ok_or(RetCode::InputNotAllInitialize)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.t3(start_idx, end_idx, i0, self.int_opt[0], self.real_opt[1], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -6821,8 +6829,8 @@ impl<'a> ParamHolder<'a> {
                 }
             }
             FuncId::TAN => {
-                let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                let i0 = self.real_in[0].ok_or(RetCode::InputNotAllInitialize)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.tan(start_idx, end_idx, i0, &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -6831,8 +6839,8 @@ impl<'a> ParamHolder<'a> {
                 }
             }
             FuncId::TANH => {
-                let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                let i0 = self.real_in[0].ok_or(RetCode::InputNotAllInitialize)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.tanh(start_idx, end_idx, i0, &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -6841,8 +6849,8 @@ impl<'a> ParamHolder<'a> {
                 }
             }
             FuncId::TEMA => {
-                let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                let i0 = self.real_in[0].ok_or(RetCode::InputNotAllInitialize)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.tema(start_idx, end_idx, i0, self.int_opt[0], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -6851,10 +6859,10 @@ impl<'a> ParamHolder<'a> {
                 }
             }
             FuncId::TRANGE => {
-                let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
-                let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
-                let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                let i0_1 = self.price[0][1].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_2 = self.price[0][2].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_3 = self.price[0][3].ok_or(RetCode::InputNotAllInitialize)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.trange(start_idx, end_idx, i0_1, i0_2, i0_3, &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -6863,8 +6871,8 @@ impl<'a> ParamHolder<'a> {
                 }
             }
             FuncId::TRIMA => {
-                let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                let i0 = self.real_in[0].ok_or(RetCode::InputNotAllInitialize)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.trima(start_idx, end_idx, i0, self.int_opt[0], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -6873,8 +6881,8 @@ impl<'a> ParamHolder<'a> {
                 }
             }
             FuncId::TRIX => {
-                let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                let i0 = self.real_in[0].ok_or(RetCode::InputNotAllInitialize)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.trix(start_idx, end_idx, i0, self.int_opt[0], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -6883,8 +6891,8 @@ impl<'a> ParamHolder<'a> {
                 }
             }
             FuncId::TSF => {
-                let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                let i0 = self.real_in[0].ok_or(RetCode::InputNotAllInitialize)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.tsf(start_idx, end_idx, i0, self.int_opt[0], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -6893,8 +6901,8 @@ impl<'a> ParamHolder<'a> {
                 }
             }
             FuncId::TSI => {
-                let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                let i0 = self.real_in[0].ok_or(RetCode::InputNotAllInitialize)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.tsi(start_idx, end_idx, i0, self.int_opt[0], self.int_opt[1], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -6903,10 +6911,10 @@ impl<'a> ParamHolder<'a> {
                 }
             }
             FuncId::TYPPRICE => {
-                let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
-                let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
-                let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                let i0_1 = self.price[0][1].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_2 = self.price[0][2].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_3 = self.price[0][3].ok_or(RetCode::InputNotAllInitialize)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.typprice(start_idx, end_idx, i0_1, i0_2, i0_3, &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -6915,10 +6923,10 @@ impl<'a> ParamHolder<'a> {
                 }
             }
             FuncId::ULTOSC => {
-                let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
-                let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
-                let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                let i0_1 = self.price[0][1].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_2 = self.price[0][2].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_3 = self.price[0][3].ok_or(RetCode::InputNotAllInitialize)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.ultosc(start_idx, end_idx, i0_1, i0_2, i0_3, self.int_opt[0], self.int_opt[1], self.int_opt[2], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -6927,8 +6935,8 @@ impl<'a> ParamHolder<'a> {
                 }
             }
             FuncId::VAR => {
-                let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                let i0 = self.real_in[0].ok_or(RetCode::InputNotAllInitialize)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.var(start_idx, end_idx, i0, self.int_opt[0], self.real_opt[1], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -6937,8 +6945,8 @@ impl<'a> ParamHolder<'a> {
                 }
             }
             FuncId::VHF => {
-                let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                let i0 = self.real_in[0].ok_or(RetCode::InputNotAllInitialize)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.vhf(start_idx, end_idx, i0, self.int_opt[0], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -6947,8 +6955,8 @@ impl<'a> ParamHolder<'a> {
                 }
             }
             FuncId::VIDYA => {
-                let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                let i0 = self.real_in[0].ok_or(RetCode::InputNotAllInitialize)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.vidya(start_idx, end_idx, i0, self.int_opt[0], self.int_opt[1], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -6957,12 +6965,12 @@ impl<'a> ParamHolder<'a> {
                 }
             }
             FuncId::VORTEX => {
-                let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
-                let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
-                let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
-                if self.real_out[0].is_none() || self.real_out[1].is_none() { return Err(RetCode::BadParam); }
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
-                let mut o1 = self.real_out[1].take().ok_or(RetCode::BadParam)?;
+                let i0_1 = self.price[0][1].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_2 = self.price[0][2].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_3 = self.price[0][3].ok_or(RetCode::InputNotAllInitialize)?;
+                if self.real_out[0].is_none() || self.real_out[1].is_none() { return Err(RetCode::OutputNotAllInitialize); }
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let mut o1 = self.real_out[1].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.vortex(start_idx, end_idx, i0_1, i0_2, i0_3, self.int_opt[0], &mut *o0, &mut *o1);
                 self.real_out[0] = Some(o0);
                 self.real_out[1] = Some(o1);
@@ -6972,11 +6980,11 @@ impl<'a> ParamHolder<'a> {
                 }
             }
             FuncId::VWAP => {
-                let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
-                let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
-                let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
-                let i0_4 = self.price[0][4].ok_or(RetCode::BadParam)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                let i0_1 = self.price[0][1].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_2 = self.price[0][2].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_3 = self.price[0][3].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_4 = self.price[0][4].ok_or(RetCode::InputNotAllInitialize)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.vwap(start_idx, end_idx, i0_1, i0_2, i0_3, i0_4, &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -6985,9 +6993,9 @@ impl<'a> ParamHolder<'a> {
                 }
             }
             FuncId::VWMA => {
-                let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
-                let i1_4 = self.price[1][4].ok_or(RetCode::BadParam)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                let i0 = self.real_in[0].ok_or(RetCode::InputNotAllInitialize)?;
+                let i1_4 = self.price[1][4].ok_or(RetCode::InputNotAllInitialize)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.vwma(start_idx, end_idx, i0, i1_4, self.int_opt[0], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -6996,10 +7004,10 @@ impl<'a> ParamHolder<'a> {
                 }
             }
             FuncId::WAD => {
-                let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
-                let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
-                let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                let i0_1 = self.price[0][1].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_2 = self.price[0][2].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_3 = self.price[0][3].ok_or(RetCode::InputNotAllInitialize)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.wad(start_idx, end_idx, i0_1, i0_2, i0_3, &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -7008,10 +7016,10 @@ impl<'a> ParamHolder<'a> {
                 }
             }
             FuncId::WCLPRICE => {
-                let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
-                let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
-                let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                let i0_1 = self.price[0][1].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_2 = self.price[0][2].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_3 = self.price[0][3].ok_or(RetCode::InputNotAllInitialize)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.wclprice(start_idx, end_idx, i0_1, i0_2, i0_3, &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -7020,10 +7028,10 @@ impl<'a> ParamHolder<'a> {
                 }
             }
             FuncId::WILLR => {
-                let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
-                let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
-                let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                let i0_1 = self.price[0][1].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_2 = self.price[0][2].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_3 = self.price[0][3].ok_or(RetCode::InputNotAllInitialize)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.willr(start_idx, end_idx, i0_1, i0_2, i0_3, self.int_opt[0], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -7032,8 +7040,8 @@ impl<'a> ParamHolder<'a> {
                 }
             }
             FuncId::WMA => {
-                let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                let i0 = self.real_in[0].ok_or(RetCode::InputNotAllInitialize)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.wma(start_idx, end_idx, i0, self.int_opt[0], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -7042,8 +7050,8 @@ impl<'a> ParamHolder<'a> {
                 }
             }
             FuncId::ZLEMA => {
-                let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                let i0 = self.real_in[0].ok_or(RetCode::InputNotAllInitialize)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.zlema(start_idx, end_idx, i0, self.int_opt[0], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
@@ -7272,7 +7280,7 @@ mod binder_tests {
                           Some(&close), Some(&close), Some(&close)).unwrap();
         h.set_output(0, &mut a).unwrap();
         h.set_output(2, &mut c).unwrap();
-        assert_eq!(h.call(0, N - 1), Err(RetCode::BadParam), "output 1 is unbound");
+        assert_eq!(h.call(0, N - 1), Err(RetCode::OutputNotAllInitialize), "output 1 is unbound");
         h.set_output(1, &mut b).unwrap();
         assert!(h.call(0, N - 1).is_ok(), "the corrected holder still works");
     }
@@ -7281,7 +7289,7 @@ mod binder_tests {
     /// half of the rule the test above pins for a rejected call (#266).
     ///
     /// The sharp case is a RE-bind, not a first bind: on a fresh holder the
-    /// partial write is masked, because the arm's `.ok_or(BadParam)?` reports the
+    /// partial write is masked, because the call reports the
     /// component that was never set. Over a bundle that already works, an
     /// interleaved check-and-write committed the components ahead of the
     /// offending one and left the rest holding the previous bundle, so the next
@@ -7372,12 +7380,12 @@ mod binder_tests {
         let mut out = vec![0.0; N];
         let mut h = FuncId::SMA.new_call(&core);
         assert_eq!(h.set_input(9, &close).err(), Some(RetCode::BadParam));
-        assert_eq!(h.set_opt_input(0, 1.5_f64).err(), Some(RetCode::BadParam));
+        assert_eq!(h.set_opt_input(0, 1.5_f64).err(), Some(RetCode::InvalidParamHolderType));
         assert_eq!(h.set_opt_input(9, 30_i32).err(), Some(RetCode::BadParam));
         let mut wrong_kind = [0i32; 4];
-        assert_eq!(h.set_int_output(0, &mut wrong_kind).err(), Some(RetCode::BadParam));
+        assert_eq!(h.set_int_output(0, &mut wrong_kind).err(), Some(RetCode::InvalidParamHolderType));
         h.set_output(0, &mut out).unwrap();
-        assert_eq!(h.call(0, N - 1).err(), Some(RetCode::BadParam)); // input still unbound
+        assert_eq!(h.call(0, N - 1).err(), Some(RetCode::InputNotAllInitialize)); // input still unbound
     }
 }
 

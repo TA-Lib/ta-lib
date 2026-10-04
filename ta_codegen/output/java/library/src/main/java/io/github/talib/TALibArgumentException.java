@@ -53,7 +53,8 @@ public class TALibArgumentException extends IllegalArgumentException implements 
 
    private final RetCode retCode;
 
-   TALibArgumentException(String message, RetCode retCode) {
+   /** Public for the {@code io.github.talib.metadata} package, which throws it too. */
+   public TALibArgumentException(String message, RetCode retCode) {
       super(message);
       this.retCode = retCode;
    }

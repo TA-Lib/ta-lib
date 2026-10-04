@@ -713,7 +713,7 @@ fn rust_binder_calls_the_public_tier() {
     }
     // Multi-output arms take their buffers one at a time, so presence has to be
     // settled before the first take or a rejection leaves the holder with the
-    // earlier ones missing and every later call answers BadParam. Reconstructed
+    // earlier ones missing and every later call refuses a binding that is there. Reconstructed
     // from the row model, so the needle names the arm's own slots.
     for r in all_abstract_rows() {
         if r.outputs.len() < 2 {
@@ -738,7 +738,7 @@ fn rust_binder_calls_the_public_tier() {
             ta_codegen_lib::backends::abstract_rows::OutputKind::Real => "real_out",
         };
         let needle = format!(
-            "if {} {{ return Err(RetCode::BadParam); }}\n                let mut o0 = self.{arr0}[0].take()",
+            "if {} {{ return Err(RetCode::OutputNotAllInitialize); }}\n                let mut o0 = self.{arr0}[0].take()",
             slots.join(" || ")
         );
         assert!(
@@ -852,7 +852,7 @@ fn metadata_price_setter_validates_before_writing() {
     // Java was already correct; pin it so it stays the shape the other three copy.
     let java = backends::java_metadata::render_param_holder();
     let j_sec = extract_section(&java, "public ParamHolder setPriceInput(", "\n   /**");
-    let j_check = j_sec.find("throw new IllegalArgumentException(").expect("java: no validation");
+    let j_check = j_sec.find("throw new TALibArgumentException(").expect("java: no validation");
     let j_write = j_sec.find("priceInputs[idx] = c;").expect("java: no commit");
     assert!(j_check < j_write, "java: the bundle is committed before validation");
 }

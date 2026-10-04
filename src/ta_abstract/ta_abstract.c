@@ -164,7 +164,7 @@ TA_RetCode TA_GroupTableFree( TA_StringTable *table )
       stringTablePriv = (TA_StringTablePriv *)table->hiddenData;
       if( !stringTablePriv )
       {
-         return TA_INTERNAL_ERROR(1);
+         return TA_BAD_OBJECT;
       }
 
       if( stringTablePriv->magicNumber != TA_STRING_TABLE_GROUP_MAGIC_NB )
@@ -297,7 +297,7 @@ TA_RetCode TA_FuncTableFree( TA_StringTable *table )
       stringTablePriv = (TA_StringTablePriv *)table->hiddenData;
       if( !stringTablePriv )
       {
-         return TA_INTERNAL_ERROR(3);
+         return TA_BAD_OBJECT;
       }
 
       if( stringTablePriv->magicNumber != TA_STRING_TABLE_FUNC_MAGIC_NB )
@@ -732,7 +732,8 @@ TA_RetCode TA_SetInputParamIntegerPtr( TA_ParamHolder *param,
    }
 
    paramHolderPriv = (TA_ParamHolderPriv *)(param->hiddenData);
-   if( paramHolderPriv->magicNumber != TA_PARAM_HOLDER_PRIV_MAGIC_NB )
+   if( (paramHolderPriv == NULL) ||
+       (paramHolderPriv->magicNumber != TA_PARAM_HOLDER_PRIV_MAGIC_NB) )
    {
       return TA_INVALID_PARAM_HOLDER;
    }
@@ -773,7 +774,8 @@ TA_RetCode TA_SetInputParamRealPtr( TA_ParamHolder *param,
    }
 
    paramHolderPriv = (TA_ParamHolderPriv *)(param->hiddenData);
-   if( paramHolderPriv->magicNumber != TA_PARAM_HOLDER_PRIV_MAGIC_NB )
+   if( (paramHolderPriv == NULL) ||
+       (paramHolderPriv->magicNumber != TA_PARAM_HOLDER_PRIV_MAGIC_NB) )
    {
       return TA_INVALID_PARAM_HOLDER;
    }
@@ -820,7 +822,8 @@ TA_RetCode TA_SetInputParamPricePtr( TA_ParamHolder     *param,
    }
 
    paramHolderPriv = (TA_ParamHolderPriv *)(param->hiddenData);
-   if( paramHolderPriv->magicNumber != TA_PARAM_HOLDER_PRIV_MAGIC_NB )
+   if( (paramHolderPriv == NULL) ||
+       (paramHolderPriv->magicNumber != TA_PARAM_HOLDER_PRIV_MAGIC_NB) )
    {
       return TA_INVALID_PARAM_HOLDER;
    }
@@ -910,7 +913,8 @@ TA_RetCode TA_SetOptInputParamInteger( TA_ParamHolder *param,
    }
 
    paramHolderPriv = (TA_ParamHolderPriv *)(param->hiddenData);
-   if( paramHolderPriv->magicNumber != TA_PARAM_HOLDER_PRIV_MAGIC_NB )
+   if( (paramHolderPriv == NULL) ||
+       (paramHolderPriv->magicNumber != TA_PARAM_HOLDER_PRIV_MAGIC_NB) )
    {
       return TA_INVALID_PARAM_HOLDER;
    }
@@ -949,7 +953,8 @@ TA_RetCode TA_SetOptInputParamReal( TA_ParamHolder *param,
    }
 
    paramHolderPriv = (TA_ParamHolderPriv *)(param->hiddenData);
-   if( paramHolderPriv->magicNumber != TA_PARAM_HOLDER_PRIV_MAGIC_NB )
+   if( (paramHolderPriv == NULL) ||
+       (paramHolderPriv->magicNumber != TA_PARAM_HOLDER_PRIV_MAGIC_NB) )
    {
       return TA_INVALID_PARAM_HOLDER;
    }
@@ -989,7 +994,8 @@ TA_RetCode TA_SetOutputParamIntegerPtr( TA_ParamHolder *param,
    }
 
    paramHolderPriv = (TA_ParamHolderPriv *)(param->hiddenData);
-   if( paramHolderPriv->magicNumber != TA_PARAM_HOLDER_PRIV_MAGIC_NB )
+   if( (paramHolderPriv == NULL) ||
+       (paramHolderPriv->magicNumber != TA_PARAM_HOLDER_PRIV_MAGIC_NB) )
    {
       return TA_INVALID_PARAM_HOLDER;
    }
@@ -1030,7 +1036,8 @@ TA_RetCode TA_SetOutputParamRealPtr( TA_ParamHolder *param,
    }
 
    paramHolderPriv = (TA_ParamHolderPriv *)(param->hiddenData);
-   if( paramHolderPriv->magicNumber != TA_PARAM_HOLDER_PRIV_MAGIC_NB )
+   if( (paramHolderPriv == NULL) ||
+       (paramHolderPriv->magicNumber != TA_PARAM_HOLDER_PRIV_MAGIC_NB) )
    {
       return TA_INVALID_PARAM_HOLDER;
    }
@@ -1071,7 +1078,8 @@ TA_RetCode TA_GetLookback( const TA_ParamHolder *param, TA_Integer *lookback )
    }
 
    paramHolderPriv = (TA_ParamHolderPriv *)(param->hiddenData);
-   if( paramHolderPriv->magicNumber != TA_PARAM_HOLDER_PRIV_MAGIC_NB )
+   if( (paramHolderPriv == NULL) ||
+       (paramHolderPriv->magicNumber != TA_PARAM_HOLDER_PRIV_MAGIC_NB) )
    {
       return TA_INVALID_PARAM_HOLDER;
    }
@@ -1105,7 +1113,8 @@ TA_RetCode TA_GetDisplayShift( const TA_ParamHolder *param,
    }
 
    paramHolderPriv = (TA_ParamHolderPriv *)(param->hiddenData);
-   if( paramHolderPriv->magicNumber != TA_PARAM_HOLDER_PRIV_MAGIC_NB )
+   if( (paramHolderPriv == NULL) ||
+       (paramHolderPriv->magicNumber != TA_PARAM_HOLDER_PRIV_MAGIC_NB) )
    {
       return TA_INVALID_PARAM_HOLDER;
    }
@@ -1143,11 +1152,12 @@ TA_RetCode TA_CallFunc( const TA_ParamHolder *param,
        (outBegIdx == NULL) ||
        (outNbElement == NULL) )
    {
-      return TA_BAD_PARAM;
+      return TA_INVALID_PARAM_HOLDER;
    }
 
    paramHolderPriv = (TA_ParamHolderPriv *)(param->hiddenData);
-   if( paramHolderPriv->magicNumber != TA_PARAM_HOLDER_PRIV_MAGIC_NB )
+   if( (paramHolderPriv == NULL) ||
+       (paramHolderPriv->magicNumber != TA_PARAM_HOLDER_PRIV_MAGIC_NB) )
    {
       return TA_INVALID_PARAM_HOLDER;
    }

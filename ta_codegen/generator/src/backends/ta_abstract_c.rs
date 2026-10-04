@@ -1988,7 +1988,7 @@ fn gen_ta_abstract_c() -> String {
          \x20     stringTablePriv = (TA_StringTablePriv *)table->hiddenData;\n\
          \x20     if( !stringTablePriv )\n\
          \x20     {\n\
-         \x20        return TA_INTERNAL_ERROR(1);\n\
+         \x20        return TA_BAD_OBJECT;\n\
          \x20     }\n\n\
          \x20     if( stringTablePriv->magicNumber != TA_STRING_TABLE_GROUP_MAGIC_NB )\n\
          \x20     {\n\
@@ -2108,7 +2108,7 @@ fn gen_ta_abstract_c() -> String {
          \x20     stringTablePriv = (TA_StringTablePriv *)table->hiddenData;\n\
          \x20     if( !stringTablePriv )\n\
          \x20     {\n\
-         \x20        return TA_INTERNAL_ERROR(3);\n\
+         \x20        return TA_BAD_OBJECT;\n\
          \x20     }\n\n\
          \x20     if( stringTablePriv->magicNumber != TA_STRING_TABLE_FUNC_MAGIC_NB )\n\
          \x20     {\n\
@@ -2488,7 +2488,8 @@ fn gen_ta_abstract_c() -> String {
          \x20     return TA_BAD_PARAM;\n\
          \x20  }\n\n\
          \x20  paramHolderPriv = (TA_ParamHolderPriv *)(param->hiddenData);\n\
-         \x20  if( paramHolderPriv->magicNumber != TA_PARAM_HOLDER_PRIV_MAGIC_NB )\n\
+         \x20  if( (paramHolderPriv == NULL) ||\n\
+         \x20      (paramHolderPriv->magicNumber != TA_PARAM_HOLDER_PRIV_MAGIC_NB) )\n\
          \x20  {\n\
          \x20     return TA_INVALID_PARAM_HOLDER;\n\
          \x20  }\n\n\
@@ -2524,7 +2525,8 @@ fn gen_ta_abstract_c() -> String {
          \x20     return TA_BAD_PARAM;\n\
          \x20  }\n\n\
          \x20  paramHolderPriv = (TA_ParamHolderPriv *)(param->hiddenData);\n\
-         \x20  if( paramHolderPriv->magicNumber != TA_PARAM_HOLDER_PRIV_MAGIC_NB )\n\
+         \x20  if( (paramHolderPriv == NULL) ||\n\
+         \x20      (paramHolderPriv->magicNumber != TA_PARAM_HOLDER_PRIV_MAGIC_NB) )\n\
          \x20  {\n\
          \x20     return TA_INVALID_PARAM_HOLDER;\n\
          \x20  }\n\n\
@@ -2565,7 +2567,8 @@ fn gen_ta_abstract_c() -> String {
          \x20     return TA_BAD_PARAM;\n\
          \x20  }\n\n\
          \x20  paramHolderPriv = (TA_ParamHolderPriv *)(param->hiddenData);\n\
-         \x20  if( paramHolderPriv->magicNumber != TA_PARAM_HOLDER_PRIV_MAGIC_NB )\n\
+         \x20  if( (paramHolderPriv == NULL) ||\n\
+         \x20      (paramHolderPriv->magicNumber != TA_PARAM_HOLDER_PRIV_MAGIC_NB) )\n\
          \x20  {\n\
          \x20     return TA_INVALID_PARAM_HOLDER;\n\
          \x20  }\n\n\
@@ -2645,7 +2648,8 @@ fn gen_ta_abstract_c() -> String {
          \x20     return TA_BAD_PARAM;\n\
          \x20  }\n\n\
          \x20  paramHolderPriv = (TA_ParamHolderPriv *)(param->hiddenData);\n\
-         \x20  if( paramHolderPriv->magicNumber != TA_PARAM_HOLDER_PRIV_MAGIC_NB )\n\
+         \x20  if( (paramHolderPriv == NULL) ||\n\
+         \x20      (paramHolderPriv->magicNumber != TA_PARAM_HOLDER_PRIV_MAGIC_NB) )\n\
          \x20  {\n\
          \x20     return TA_INVALID_PARAM_HOLDER;\n\
          \x20  }\n\n\
@@ -2681,7 +2685,8 @@ fn gen_ta_abstract_c() -> String {
          \x20     return TA_BAD_PARAM;\n\
          \x20  }\n\n\
          \x20  paramHolderPriv = (TA_ParamHolderPriv *)(param->hiddenData);\n\
-         \x20  if( paramHolderPriv->magicNumber != TA_PARAM_HOLDER_PRIV_MAGIC_NB )\n\
+         \x20  if( (paramHolderPriv == NULL) ||\n\
+         \x20      (paramHolderPriv->magicNumber != TA_PARAM_HOLDER_PRIV_MAGIC_NB) )\n\
          \x20  {\n\
          \x20     return TA_INVALID_PARAM_HOLDER;\n\
          \x20  }\n\n\
@@ -2717,7 +2722,8 @@ fn gen_ta_abstract_c() -> String {
          \x20     return TA_BAD_PARAM;\n\
          \x20  }\n\n\
          \x20  paramHolderPriv = (TA_ParamHolderPriv *)(param->hiddenData);\n\
-         \x20  if( paramHolderPriv->magicNumber != TA_PARAM_HOLDER_PRIV_MAGIC_NB )\n\
+         \x20  if( (paramHolderPriv == NULL) ||\n\
+         \x20      (paramHolderPriv->magicNumber != TA_PARAM_HOLDER_PRIV_MAGIC_NB) )\n\
          \x20  {\n\
          \x20     return TA_INVALID_PARAM_HOLDER;\n\
          \x20  }\n\n\
@@ -2753,7 +2759,8 @@ fn gen_ta_abstract_c() -> String {
          \x20     return TA_BAD_PARAM;\n\
          \x20  }\n\n\
          \x20  paramHolderPriv = (TA_ParamHolderPriv *)(param->hiddenData);\n\
-         \x20  if( paramHolderPriv->magicNumber != TA_PARAM_HOLDER_PRIV_MAGIC_NB )\n\
+         \x20  if( (paramHolderPriv == NULL) ||\n\
+         \x20      (paramHolderPriv->magicNumber != TA_PARAM_HOLDER_PRIV_MAGIC_NB) )\n\
          \x20  {\n\
          \x20     return TA_INVALID_PARAM_HOLDER;\n\
          \x20  }\n\n\
@@ -2788,7 +2795,8 @@ fn gen_ta_abstract_c() -> String {
          \x20     return TA_BAD_PARAM;\n\
          \x20  }\n\n\
          \x20  paramHolderPriv = (TA_ParamHolderPriv *)(param->hiddenData);\n\
-         \x20  if( paramHolderPriv->magicNumber != TA_PARAM_HOLDER_PRIV_MAGIC_NB )\n\
+         \x20  if( (paramHolderPriv == NULL) ||\n\
+         \x20      (paramHolderPriv->magicNumber != TA_PARAM_HOLDER_PRIV_MAGIC_NB) )\n\
          \x20  {\n\
          \x20     return TA_INVALID_PARAM_HOLDER;\n\
          \x20  }\n\n\
@@ -2818,7 +2826,8 @@ fn gen_ta_abstract_c() -> String {
          \x20     return TA_BAD_PARAM;\n\
          \x20  }\n\n\
          \x20  paramHolderPriv = (TA_ParamHolderPriv *)(param->hiddenData);\n\
-         \x20  if( paramHolderPriv->magicNumber != TA_PARAM_HOLDER_PRIV_MAGIC_NB )\n\
+         \x20  if( (paramHolderPriv == NULL) ||\n\
+         \x20      (paramHolderPriv->magicNumber != TA_PARAM_HOLDER_PRIV_MAGIC_NB) )\n\
          \x20  {\n\
          \x20     return TA_INVALID_PARAM_HOLDER;\n\
          \x20  }\n\n\
@@ -2853,10 +2862,11 @@ fn gen_ta_abstract_c() -> String {
          \x20      (outBegIdx == NULL) ||\n\
          \x20      (outNbElement == NULL) )\n\
          \x20  {\n\
-         \x20     return TA_BAD_PARAM;\n\
+         \x20     return TA_INVALID_PARAM_HOLDER;\n\
          \x20  }\n\n\
          \x20  paramHolderPriv = (TA_ParamHolderPriv *)(param->hiddenData);\n\
-         \x20  if( paramHolderPriv->magicNumber != TA_PARAM_HOLDER_PRIV_MAGIC_NB )\n\
+         \x20  if( (paramHolderPriv == NULL) ||\n\
+         \x20      (paramHolderPriv->magicNumber != TA_PARAM_HOLDER_PRIV_MAGIC_NB) )\n\
          \x20  {\n\
          \x20     return TA_INVALID_PARAM_HOLDER;\n\
          \x20  }\n\n\

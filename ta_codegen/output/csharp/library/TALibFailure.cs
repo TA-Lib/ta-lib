@@ -53,9 +53,9 @@ namespace TALib;
 /// checks C cannot make (they report the catch-all, the code C uses for an
 /// argument it can detect) — and <b>lossless</b>: distinct codes never share one
 /// thrown representation.</para>
-/// <para>Outside it, deliberately: <see cref="CoreBuilder"/> and the
-/// <c>TALib.Metadata</c> binder still raise plain .NET types. Neither is an
-/// indicator call, so neither has a <see cref="TALib.RetCode"/> to carry.</para>
+/// <para>The <c>TALib.Metadata</c> binder reports through it too, with the
+/// layer's own codes. Outside it, deliberately: <see cref="CoreBuilder"/>, which
+/// is not an indicator call.</para>
 /// </remarks>
 public interface ITALibFailure
 {

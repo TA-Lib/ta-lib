@@ -218,10 +218,20 @@ static void handle_abstract_call(const char *json, char *resp, int resp_size) {
       if( ii->type == TA_Input_Real ) totalRealInputs++;
    }
 
+   /* skipInput / skipOutput: the 1-based slot to leave unbound, so the driver
+    * can ask every server's binder for its refusal. Absent reads as 0. */
+   int skipInput = json_find_int(json, "skipInput");
+   int skipOutput = json_find_int(json, "skipOutput");
+
    int realInputCount = 0;
    for( unsigned int i = 0; i < fi->nbInput; i++ ) {
       const TA_InputParameterInfo *ii;
       TA_GetInputParameterInfo(handle, i, &ii);
+
+      if( (int)i + 1 == skipInput ) {
+         if( ii->type == TA_Input_Real ) realInputCount++;
+         continue;
+      }
 
       switch( ii->type ) {
          case TA_Input_Price: {
@@ -317,12 +327,14 @@ static void handle_abstract_call(const char *json, char *resp, int resp_size) {
       TA_GetOutputParameterInfo(handle, i, &oi);
       if( oi->type == TA_Output_Integer ) {
          if( intOutIdx >= TA_SERVE_MAX_OUT_INT ) return;
-         TA_SetOutputParamIntegerPtr(params, i, g_outIntBufV[intOutIdx]);
+         if( (int)i + 1 != skipOutput )
+            TA_SetOutputParamIntegerPtr(params, i, g_outIntBufV[intOutIdx]);
          outputIsInteger[i] = 1;
          intOutIdx++;
       } else {
          if( realOutIdx >= TA_SERVE_MAX_OUT_REAL ) return;
-         TA_SetOutputParamRealPtr(params, i, g_outBufV[realOutIdx]);
+         if( (int)i + 1 != skipOutput )
+            TA_SetOutputParamRealPtr(params, i, g_outBufV[realOutIdx]);
          realOutIdx++;
       }
    }

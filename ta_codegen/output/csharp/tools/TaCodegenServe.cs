@@ -1066,8 +1066,13 @@ public class TaCodegenServe {
         int n = endIdx - startIdx + 1;
         if (n < 1) n = 1;
 
+        // skipInput / skipOutput: the 1-based slot the driver wants left unbound.
+        int skipInput = GetInt(p, "skipInput", 0);
+        int skipOutput = GetInt(p, "skipOutput", 0);
+
         var call = f.CreateCall(core);
         for (int i = 0; i < f.Inputs.Length; i++) {
+            if (i + 1 == skipInput) continue;
             var info = f.Inputs[i];
             if (info.Kind == InputKind.Price) {
                 foreach (var comp in info.SignatureOrder) {
@@ -1101,10 +1106,10 @@ public class TaCodegenServe {
         for (int k = 0; k < f.Outputs.Length; k++) {
             if (f.Outputs[k].Kind == OutputKind.Real) {
                 realOuts[k] = new double[n];
-                call.SetOutput(k, realOuts[k]);
+                if (k + 1 != skipOutput) call.SetOutput(k, realOuts[k]);
             } else {
                 intOuts[k] = new int[n];
-                call.SetOutput(k, intOuts[k]);
+                if (k + 1 != skipOutput) call.SetOutput(k, intOuts[k]);
             }
         }
 

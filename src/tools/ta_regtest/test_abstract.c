@@ -93,6 +93,11 @@ static long long g_d2Vectors = 0;
 static long long g_d2NonDefault = 0;
 static long long g_d2Sentinel = 0;
 static long long g_d2Reject = 0;
+/* An abstract_call with one input, then one output, left unbound: every
+ * server's binder must answer the code TA_CallFunc does. */
+static long long g_unboundInput = 0;
+static long long g_unboundOutput = 0;
+static const char *g_abstractExtraField = NULL;
 /* Pairs of integer slots driven at both orderings; see d2_param_vectors step 1b. */
 static long long g_d2Ordering = 0;
 /* Non-finite parameter probes; see d2_nonfinite_params. */
@@ -176,6 +181,7 @@ void test_abstract_set_server(CodegenPipe *cp, const char *lang)
    /* Per-server, so the summary line reports the server it names rather than a
       running total across every server tested so far. */
    g_d2Vectors = g_d2NonDefault = g_d2Sentinel = g_d2Reject = 0;
+   g_unboundInput = g_unboundOutput = 0;
    g_d2Ordering = 0;
    g_d2NonFinite = g_d2NonFiniteFuncs = 0;
    g_dsAnswered = g_dsRejected = g_dsParamRejected = g_dsBoundRejected = 0;
@@ -1199,6 +1205,8 @@ static ErrorNumber abstract_verify_server_call(
         }
     }
 
+    if( g_abstractExtraField )
+        pos = codegen_appendf(buf, bufSize, pos, ",%s", g_abstractExtraField);
     pos = codegen_appendf(buf, bufSize, pos, "}}");
 
     /* Send to server */
@@ -2594,12 +2602,13 @@ ErrorNumber test_abstract( void )
        * from 62 when KC landed, which is the class doing its job. Raise it when
        * a function gains an integer parameter -- that is the point. */
       if( g_d2Vectors == 0 || g_d2NonDefault == 0 || g_d2Sentinel == 0 || g_d2Reject == 0
-          || g_d2Ordering < 64 )
+          || g_d2Ordering < 64 || g_unboundInput == 0 || g_unboundOutput == 0 )
       {
          printf( "  ABSTRACT ERROR: the binder parameter-contract sweep produced no "
-                 "vectors of some class (%lld/%lld/%lld/%lld/%lld) — the binders are back "
-                 "to being tested only at their declared defaults\n",
-                 g_d2Vectors, g_d2NonDefault, g_d2Sentinel, g_d2Reject, g_d2Ordering );
+                 "vectors of some class (%lld/%lld/%lld/%lld/%lld, unbound %lld/%lld) — the "
+                 "binders are back to being tested only at their declared defaults\n",
+                 g_d2Vectors, g_d2NonDefault, g_d2Sentinel, g_d2Reject, g_d2Ordering,
+                 g_unboundInput, g_unboundOutput );
          return TA_ABSTRACT_CALL_MISMATCH;
       }
    }
@@ -3063,6 +3072,36 @@ static ErrorNumber callWithDefaults( const char *funcName, const double *input, 
       {
          TA_ParamHolderFree( paramHolder );
          return srvErr;
+      }
+
+      /* The same request with input 0, then output 0, left unbound. One dataset:
+       * the claim is about the binding, not the data. */
+      if( g_abstractPipe && datasetName && strcmp(datasetName, "inputRandomData") == 0 )
+      {
+         g_abstractExtraField = "\"skipInput\":1";
+         srvErr = abstract_verify_server_call(
+             funcName, handle, funcInfo, input, size, 0, size-1,
+             TA_INPUT_NOT_ALL_INITIALIZE, 0, 0, lookback,
+             output, output_int, relaxValues, NULL);
+         if( srvErr == TA_TEST_PASS )
+         {
+            g_unboundInput++;
+            g_abstractExtraField = "\"skipOutput\":1";
+            srvErr = abstract_verify_server_call(
+                funcName, handle, funcInfo, input, size, 0, size-1,
+                TA_OUTPUT_NOT_ALL_INITIALIZE, 0, 0, lookback,
+                output, output_int, relaxValues, NULL);
+            if( srvErr == TA_TEST_PASS )
+               g_unboundOutput++;
+         }
+         g_abstractExtraField = NULL;
+         if( srvErr != TA_TEST_PASS )
+         {
+            printf("  ABSTRACT ERROR [%s]: a call with a slot left unbound did not "
+                   "answer TA_CallFunc's code\n", funcName);
+            TA_ParamHolderFree( paramHolder );
+            return srvErr;
+         }
       }
 
       /* D2: the same binder, off its defaults. Bounded to ONE dataset on purpose
@@ -4000,6 +4039,9 @@ static long long g_holderNullErr = 0;   /* NULL value pointer            */
 static long long g_holderPriceNullErr = 0; /* NULL consumed price component */
 static long long g_holderInputErr = 0;  /* TA_INPUT_NOT_ALL_INITIALIZE   */
 static long long g_holderOutputErr = 0; /* TA_OUTPUT_NOT_ALL_INITIALIZE  */
+static long long g_holderFuncErr = 0;   /* the function's own index code */
+static long long g_holderFuncBadParam = 0; /* the function's own TA_BAD_PARAM */
+static long long g_holderForgedErr = 0; /* a holder the layer did not make */
 
 /* Report a wrong RetCode from a call that had to be refused. */
 static int holder_expect( const char *funcName, const char *what,
@@ -4343,7 +4385,8 @@ static ErrorNumber checkHolderErrorContract( const TA_FuncInfo *funcInfo )
             TA_OUTPUT_NOT_ALL_INITIALIZE );
    g_holderOutputErr++;
 
-   /* 6. Fully bound, but NULL out-params: still TA_BAD_PARAM. */
+   /* 6. Fully bound, but a NULL argument: TA_INVALID_PARAM_HOLDER, a code no
+    *    function returns, so this refusal cannot read as the function's own. */
    for( i = 0; i < funcInfo->nbOutput; i++ )
    {
       TA_GetOutputParameterInfo( handle, i, &outInfo );
@@ -4353,10 +4396,66 @@ static ErrorNumber checkHolderErrorContract( const TA_FuncInfo *funcInfo )
          TA_SetOutputParamIntegerPtr( paramHolder, i, dummyInt[i] );
    }
    ok &= holder_expect( funcInfo->name, "CallFunc(outBegIdx=NULL)",
-            TA_CallFunc( paramHolder, 0, 251, NULL, &outNbElement ), TA_BAD_PARAM );
+            TA_CallFunc( paramHolder, 0, 251, NULL, &outNbElement ), TA_INVALID_PARAM_HOLDER );
    ok &= holder_expect( funcInfo->name, "CallFunc(outNbElement=NULL)",
-            TA_CallFunc( paramHolder, 0, 251, &outBegIdx, NULL ), TA_BAD_PARAM );
-   g_holderNullErr += 2;
+            TA_CallFunc( paramHolder, 0, 251, &outBegIdx, NULL ), TA_INVALID_PARAM_HOLDER );
+   ok &= holder_expect( funcInfo->name, "CallFunc(param=NULL)",
+            TA_CallFunc( NULL, 0, 251, &outBegIdx, &outNbElement ), TA_INVALID_PARAM_HOLDER );
+   g_holderNullErr += 3;
+
+   /* 7. The other half of the code's meaning: on a holder TA_CallFunc accepts,
+    *    the function's own rejections come back as the function's codes. */
+   ok &= holder_expect( funcInfo->name, "CallFunc(startIdx=-1), fully bound",
+            TA_CallFunc( paramHolder, -1, 251, &outBegIdx, &outNbElement ),
+            TA_OUT_OF_RANGE_START_INDEX );
+   g_holderFuncErr++;
+   for( i = 0; i < funcInfo->nbOptInput; i++ )
+   {
+      TA_GetOptInputParameterInfo( handle, i, &optInfo );
+      if( optInfo->type != TA_OptInput_IntegerRange && optInfo->type != TA_OptInput_IntegerList )
+         continue;
+      if( TA_SetOptInputParamInteger( paramHolder, i, TA_INTEGER_MIN+1 ) != TA_SUCCESS )
+         ok = 0;
+      ok &= holder_expect( funcInfo->name, "CallFunc with an integer parameter out of range",
+               TA_CallFunc( paramHolder, 0, 251, &outBegIdx, &outNbElement ),
+               TA_BAD_PARAM );
+      g_holderFuncBadParam++;
+      break;
+   }
+
+   /* 8. A holder that TA_ParamHolderAlloc did not make. */
+   {
+      static const long long notAHolder[64];
+      TA_ParamHolder forged;
+
+      forged.hiddenData = NULL;
+      ok &= holder_expect( funcInfo->name, "CallFunc(hiddenData=NULL)",
+               TA_CallFunc( &forged, 0, 251, &outBegIdx, &outNbElement ),
+               TA_INVALID_PARAM_HOLDER );
+      ok &= holder_expect( funcInfo->name, "a setter with hiddenData=NULL",
+               TA_SetOptInputParamReal( &forged, 0, 1.0 ), TA_INVALID_PARAM_HOLDER );
+      ok &= holder_expect( funcInfo->name, "an input setter with hiddenData=NULL",
+               TA_SetInputParamRealPtr( &forged, 0, dummyReal[0] ), TA_INVALID_PARAM_HOLDER );
+      ok &= holder_expect( funcInfo->name, "an output setter with hiddenData=NULL",
+               TA_SetOutputParamRealPtr( &forged, 0, dummyReal[0] ), TA_INVALID_PARAM_HOLDER );
+      ok &= holder_expect( funcInfo->name, "GetLookback with hiddenData=NULL",
+               TA_GetLookback( &forged, &outBegIdx ), TA_INVALID_PARAM_HOLDER );
+      ok &= holder_expect( funcInfo->name, "GetDisplayShift with hiddenData=NULL",
+               TA_GetDisplayShift( &forged, 0, &outBegIdx ), TA_INVALID_PARAM_HOLDER );
+      ok &= holder_expect( funcInfo->name, "ParamHolderFree with hiddenData=NULL",
+               TA_ParamHolderFree( &forged ), TA_INVALID_PARAM_HOLDER );
+      forged.hiddenData = (void *)notAHolder;
+      ok &= holder_expect( funcInfo->name, "CallFunc on a forged holder",
+               TA_CallFunc( &forged, 0, 251, &outBegIdx, &outNbElement ),
+               TA_INVALID_PARAM_HOLDER );
+      ok &= holder_expect( funcInfo->name, "a setter on a forged holder",
+               TA_SetOptInputParamInteger( &forged, 0, 1 ), TA_INVALID_PARAM_HOLDER );
+      ok &= holder_expect( funcInfo->name, "GetLookback on a forged holder",
+               TA_GetLookback( &forged, &outBegIdx ), TA_INVALID_PARAM_HOLDER );
+      ok &= holder_expect( funcInfo->name, "ParamHolderFree on a forged holder",
+               TA_ParamHolderFree( &forged ), TA_INVALID_PARAM_HOLDER );
+      g_holderForgedErr += 5;
+   }
 
    TA_ParamHolderFree( paramHolder );
 
@@ -4514,6 +4613,7 @@ static ErrorNumber test_default_calls(void)
    {
       g_holderTypeErr = g_holderIndexErr = g_holderNullErr = 0;
       g_holderInputErr = g_holderOutputErr = g_holderPriceNullErr = 0;
+      g_holderFuncErr = g_holderFuncBadParam = g_holderForgedErr = 0;
       TA_ForEachFunc( testHolderErrorContract, &errNumber );
 
       /* Each class must have been reached. Every function contributes to every
@@ -4522,13 +4622,44 @@ static ErrorNumber test_default_calls(void)
       if( errNumber == TA_TEST_PASS &&
           ( g_holderTypeErr == 0 || g_holderIndexErr == 0 || g_holderNullErr == 0 ||
             g_holderInputErr == 0 || g_holderOutputErr == 0 ||
-            g_holderPriceNullErr == 0 ) )
+            g_holderPriceNullErr == 0 || g_holderFuncErr == 0 ||
+            g_holderFuncBadParam == 0 || g_holderForgedErr == 0 ) )
       {
          printf( "Failed: ParamHolder error-contract gate vacuous "
-                 "(type=%lld index=%lld null=%lld priceNull=%lld input=%lld output=%lld)\n",
+                 "(type=%lld index=%lld null=%lld priceNull=%lld input=%lld output=%lld "
+                 "func=%lld funcBadParam=%lld forged=%lld)\n",
                  g_holderTypeErr, g_holderIndexErr, g_holderNullErr,
-                 g_holderPriceNullErr, g_holderInputErr, g_holderOutputErr );
+                 g_holderPriceNullErr, g_holderInputErr, g_holderOutputErr,
+                 g_holderFuncErr, g_holderFuncBadParam, g_holderForgedErr );
          errNumber = TA_ABS_TST_FAIL_HOLDER_CONTRACT_VACUOUS;
+      }
+   }
+
+   /* The lookups and the tables, each misuse with its own code. */
+   if( errNumber == TA_TEST_PASS )
+   {
+      TA_StringTable *groups = NULL;
+      TA_StringTable *funcs = NULL;
+      const TA_FuncHandle *noHandle = NULL;
+      TA_StringTable notATable;
+
+      notATable.size = 0;
+      notATable.string = NULL;
+      notATable.hiddenData = NULL;
+
+      if( TA_GroupTableAlloc( &groups ) != TA_SUCCESS || groups->size == 0 ||
+          TA_FuncTableAlloc( "No Such Group", &funcs ) != TA_GROUP_NOT_FOUND ||
+          TA_GetFuncHandle( "NO_SUCH_FUNC", &noHandle ) != TA_FUNC_NOT_FOUND ||
+          TA_FuncTableAlloc( groups->string[0], &funcs ) != TA_SUCCESS ||
+          TA_FuncTableFree( &notATable ) != TA_BAD_OBJECT ||
+          TA_GroupTableFree( &notATable ) != TA_BAD_OBJECT ||
+          TA_FuncTableFree( groups ) != TA_BAD_OBJECT ||
+          TA_GroupTableFree( funcs ) != TA_BAD_OBJECT ||
+          TA_FuncTableFree( funcs ) != TA_SUCCESS ||
+          TA_GroupTableFree( groups ) != TA_SUCCESS )
+      {
+         printf( "Failed: a table or lookup misuse did not answer its code\n" );
+         errNumber = TA_ABS_TST_FAIL_HOLDER_CONTRACT;
       }
    }
 

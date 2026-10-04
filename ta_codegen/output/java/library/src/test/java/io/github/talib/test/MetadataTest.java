@@ -552,34 +552,37 @@ public class MetadataTest {
         FuncInfo sma = Functions.byName("SMA");
         double[] out = new double[N];
 
-        checkThrows(IllegalArgumentException.class,
-            () -> sma.newCall().setInput(5, CLOSE), "input index out of range -> IAE");
-        checkThrows(IllegalArgumentException.class,
-            () -> sma.newCall().setOptInput(9, 30), "optInput index out of range -> IAE");
-        checkThrows(IllegalArgumentException.class,
-            () -> sma.newCall().setOutput(9, out), "output index out of range -> IAE");
-        checkThrows(IllegalArgumentException.class,
-            () -> sma.newCall().setOutput(0, out).call(0, N - 1), "unset input -> IAE");
-        checkThrows(IllegalArgumentException.class,
-            () -> sma.newCall().setInput(0, CLOSE).call(0, N - 1), "unset output -> IAE");
-        checkThrows(IllegalArgumentException.class,
-            () -> sma.newCall().setOptInput(0, 1.5), "wrong optInput type -> IAE");
+        checkRetCode(RetCode.BAD_PARAM,
+            () -> sma.newCall().setInput(5, CLOSE), "input index out of range -> BAD_PARAM");
+        checkRetCode(RetCode.BAD_PARAM,
+            () -> sma.newCall().setOptInput(9, 30), "optInput index out of range -> BAD_PARAM");
+        checkRetCode(RetCode.BAD_PARAM,
+            () -> sma.newCall().setOutput(9, out), "output index out of range -> BAD_PARAM");
+        checkRetCode(RetCode.INPUT_NOT_ALL_INITIALIZE,
+            () -> sma.newCall().setOutput(0, out).call(0, N - 1), "unset input -> INPUT_NOT_ALL_INITIALIZE");
+        checkRetCode(RetCode.OUTPUT_NOT_ALL_INITIALIZE,
+            () -> sma.newCall().setInput(0, CLOSE).call(0, N - 1), "unset output -> OUTPUT_NOT_ALL_INITIALIZE");
+        checkRetCode(RetCode.INVALID_PARAM_HOLDER_TYPE,
+            () -> sma.newCall().setOptInput(0, 1.5), "wrong optInput type -> INVALID_PARAM_HOLDER_TYPE");
 
         // A price-typed input must not accept a bare real series, and vice versa.
         FuncInfo stoch = Functions.byName("STOCH");
-        checkThrows(IllegalArgumentException.class,
-            () -> stoch.newCall().setInput(0, CLOSE), "real setter on a PRICE input -> IAE");
-        checkThrows(IllegalArgumentException.class,
+        checkRetCode(RetCode.INVALID_PARAM_HOLDER_TYPE,
+            () -> stoch.newCall().setInput(0, CLOSE), "real setter on a PRICE input -> INVALID_PARAM_HOLDER_TYPE");
+        checkRetCode(RetCode.INVALID_PARAM_HOLDER_TYPE,
             () -> sma.newCall().setPriceInput(0, OPEN, HIGH, LOW, CLOSE, VOLUME, OPENINT),
-            "price setter on a REAL input -> IAE");
-        checkThrows(IllegalArgumentException.class,
+            "price setter on a REAL input -> INVALID_PARAM_HOLDER_TYPE");
+        checkRetCode(RetCode.BAD_PARAM,
             () -> stoch.newCall().setPriceInput(0, OPEN, null, LOW, CLOSE, VOLUME, OPENINT),
-            "missing a required price component -> IAE");
+            "missing a required price component -> BAD_PARAM");
 
         // An integer output cannot be bound with a double[] array.
         FuncInfo doji = Functions.byName("CDLDOJI");
-        checkThrows(IllegalArgumentException.class,
-            () -> doji.newCall().setOutput(0, out), "double[] on an INTEGER output -> IAE");
+        checkRetCode(RetCode.INVALID_PARAM_HOLDER_TYPE,
+            () -> doji.newCall().setOutput(0, out), "double[] on an INTEGER output -> INVALID_PARAM_HOLDER_TYPE");
+
+        checkRetCode(RetCode.BAD_PARAM, () -> sma.newCall(null), "a null Core -> BAD_PARAM");
+
 
         /* A leg bound to a buffer SHORTER than the requested range -- absent is
            covered above, too short was covered nowhere until #265. Java answers

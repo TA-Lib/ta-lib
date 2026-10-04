@@ -254048,7 +254048,12 @@ public class TaCodegenServe {
         int n = endIdx - startIdx + 1;
         if (n < 1) n = 1;
 
+        /* skipInput / skipOutput: the 1-based slot the driver wants left unbound. */
+        int skipInput = jsonInt(json, "skipInput");
+        int skipOutput = jsonInt(json, "skipOutput");
+
         for (int i = 0; i < f.inputs().size(); i++) {
+            if (i + 1 == skipInput) continue;
             io.github.talib.metadata.InputInfo in = f.inputs().get(i);
             switch (in.type()) {
                 case PRICE -> h.setPriceInput(i,
@@ -254081,11 +254086,11 @@ public class TaCodegenServe {
                 if (f.outputs().get(k).type() == io.github.talib.metadata.OutputType.REAL) {
                     double[] a = new double[n];
                     outs[k] = a;
-                    h.setOutput(k, a);
+                    if (k + 1 != skipOutput) h.setOutput(k, a);
                 } else {
                     int[] a = new int[n];
                     outs[k] = a;
-                    h.setOutput(k, a);
+                    if (k + 1 != skipOutput) h.setOutput(k, a);
                 }
             }
         }
@@ -254122,10 +254127,10 @@ public class TaCodegenServe {
             beg = r.begIdx();
             nb = r.count();
         } catch (RuntimeException e) {
-            /* The shipped binder signals a rejected call by throwing; C's
-               TA_CallFunc returns TA_BAD_PARAM for the same conditions. */
+            /* The shipped binder and the function both signal a rejection by
+               throwing, and the exception carries the code C returns. */
             lb = -1;
-            rc = 2;
+            rc = e instanceof io.github.talib.TALibFailure tf ? tf.retCode().asCInt() : 2;
         }
 
         StringBuilder b = new StringBuilder();

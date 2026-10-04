@@ -3134,6 +3134,7 @@ TALib.RetCode.BadParam = 2 -> TALib.RetCode
 TALib.RetCode.InputNotAllInitialize = 10 -> TALib.RetCode
 TALib.RetCode.InsufficientHistory = 17 -> TALib.RetCode
 TALib.RetCode.InternalError = 5000 -> TALib.RetCode
+TALib.RetCode.InvalidParamHolderType = 8 -> TALib.RetCode
 TALib.RetCode.OutOfRangeEndIndex = 13 -> TALib.RetCode
 TALib.RetCode.OutOfRangeStartIndex = 12 -> TALib.RetCode
 TALib.RetCode.OutputNotAllInitialize = 11 -> TALib.RetCode

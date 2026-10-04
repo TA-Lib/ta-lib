@@ -91,6 +91,25 @@ public static class MetadataTest
         }
     }
 
+    private static void CheckCode(RetCode expected, Action body, string what)
+    {
+        _checks++;
+        try
+        {
+            body();
+            _failures++;
+            Console.WriteLine($"  FAIL: {what} (nothing was thrown)");
+        }
+        catch (Exception e)
+        {
+            if (e is not ITALibFailure f || f.RetCode != expected)
+            {
+                _failures++;
+                Console.WriteLine($"  FAIL: {what} (threw {e.GetType().Name})");
+            }
+        }
+    }
+
     private static void CheckThrows<TException>(Action body, string what)
         where TException : Exception
     {
@@ -539,9 +558,9 @@ public static class MetadataTest
         FuncInfo doji = FunctionCatalog.Default["CDLDOJI"];
         var buf = new double[N];
 
-        CheckThrows<ArgumentOutOfRangeException>(() => sma.CreateCall().SetInput(5, Close), "input index out of range");
-        CheckThrows<ArgumentOutOfRangeException>(() => sma.CreateCall().SetOptInput(9, 30), "parameter index out of range");
-        CheckThrows<ArgumentOutOfRangeException>(() => sma.CreateCall().SetOutput(9, buf), "output index out of range");
+        CheckThrows<ArgumentException>(() => sma.CreateCall().SetInput(5, Close), "input index out of range");
+        CheckThrows<ArgumentException>(() => sma.CreateCall().SetOptInput(9, 30), "parameter index out of range");
+        CheckThrows<ArgumentException>(() => sma.CreateCall().SetOutput(9, buf), "output index out of range");
         CheckThrows<ArgumentException>(() => sma.CreateCall().SetOptInput(0, 1.5), "a real value on an integer parameter");
         // The mirror of the line above, and the one that was missing: SMA's
         // optInTimePeriod is an IntegerRange, so a MAType must not bind to it.
@@ -576,11 +595,26 @@ public static class MetadataTest
         CheckThrows<ArgumentException>(
             () => sma.CreateCall().SetInput(0, Close).Call(0, N - 1), "an unbound output");
 
+        /* Every refusal of this tier carries a code. */
+        CheckCode(RetCode.BadParam, () => sma.CreateCall().SetInput(5, Close), "input index -> BadParam");
+        CheckCode(RetCode.BadParam, () => sma.CreateCall().SetOptInput(9, 30), "parameter index -> BadParam");
+        CheckCode(RetCode.BadParam, () => sma.CreateCall().SetOutput(9, buf), "output index -> BadParam");
+        CheckCode(RetCode.InvalidParamHolderType, () => sma.CreateCall().SetOptInput(0, 1.5), "wrong parameter kind -> InvalidParamHolderType");
+        CheckCode(RetCode.BadParam, () => sma.CreateCall().SetInput(0, (double[])null!), "null series -> BadParam");
+        CheckCode(RetCode.BadParam, () => sma.CreateCall().SetOutput(0, (double[])null!), "null buffer -> BadParam");
+        CheckCode(RetCode.InvalidParamHolderType, () => doji.CreateCall().SetOutput(0, buf), "wrong output kind -> InvalidParamHolderType");
+        CheckCode(RetCode.BadParam, () => sma.CreateCall(null!), "a null Core -> BadParam");
+        CheckCode(RetCode.InputNotAllInitialize,
+            () => sma.CreateCall().SetOutput(0, buf).Call(0, N - 1), "an unbound input -> InputNotAllInitialize");
+        CheckCode(RetCode.OutputNotAllInitialize,
+            () => sma.CreateCall().SetInput(0, Close).Call(0, N - 1), "an unbound output -> OutputNotAllInitialize");
+
         /* TryCall advertises "failure as a code rather than an exception" and
            then threw from the binding it performs. It now reports the codes C
            returns for the same condition. This is load-bearing rather than
            cosmetic: the C# JSON-RPC server has no exception handling, so the first
            reject vector driven through the binder would terminate the process. */
+
         RetCode noInput = sma.CreateCall().SetOutput(0, new double[N]).TryCall(0, N - 1, out OutRange rNoIn);
         Check(noInput == RetCode.InputNotAllInitialize && rNoIn.Count == 0,
             $"TryCall reports an unbound input as a code ({noInput}), and does not throw");
@@ -623,13 +657,13 @@ public static class MetadataTest
            sentinel itself stays reachable: asking for the default is a legal
            request (issue #162). */
         OptInputInfo smaPeriod = sma.OptInputs[0];
-        CheckThrows<ArgumentOutOfRangeException>(
+        CheckThrows<ArgumentException>(
             () => sma.CreateCall().SetOptInput(smaPeriod, 1e18),
             "SetOptInput rejects a magnitude no integer parameter can hold");
-        CheckThrows<ArgumentOutOfRangeException>(
+        CheckThrows<ArgumentException>(
             () => sma.CreateCall().SetOptInput(smaPeriod, -1e18),
             "SetOptInput rejects the negative magnitude that saturates ONTO the sentinel");
-        CheckThrows<ArgumentOutOfRangeException>(
+        CheckThrows<ArgumentException>(
             () => sma.CreateCall().SetOptInput(smaPeriod, double.NaN), "SetOptInput rejects NaN");
         Check(sma.CreateCall().SetOptInput(smaPeriod, int.MinValue) is not null,
             "but the integer default sentinel is still a legal request");
