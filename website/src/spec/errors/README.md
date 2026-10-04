@@ -29,7 +29,20 @@ The codes a batch, lookback or stream call can answer:
 | 17 | `TA_INSUFFICIENT_HISTORY` | Stream openers only ([rS8](/spec/streaming/#rs8)). A batch call never returns it. |
 | 5000 to 5999 | `TA_INTERNAL_ERROR` + id | [rB9](/spec/errors/#rb9). |
 
-`TA_RetCode` has further members, declared in `ta_defs.h`. Only the abstraction layer returns them.
+<a id="layer-codes"></a>The abstraction layer can also answer the codes below. No batch, lookback or stream call returns one.
+
+| Code | `TA_RetCode` | Meaning |
+|---:|---|---|
+| 4 | `TA_GROUP_NOT_FOUND` | No group has that name. |
+| 5 | `TA_FUNC_NOT_FOUND` | No function has that name. |
+| 6 | `TA_INVALID_HANDLE` | Not a function handle the layer gave out. |
+| 7 | `TA_INVALID_PARAM_HOLDER` | Not a parameter holder the layer made, or an absent argument at the call. |
+| 8 | `TA_INVALID_PARAM_HOLDER_TYPE` | A setter given a value of another kind than the slot it names. |
+| 10 | `TA_INPUT_NOT_ALL_INITIALIZE` | A call with an input left unbound. |
+| 11 | `TA_OUTPUT_NOT_ALL_INITIALIZE` | A call with an output left unbound. |
+| 15 | `TA_BAD_OBJECT` | Not a table the layer made. |
+
+`TA_RetCode` has further members, declared in `ta_defs.h`. Nothing returns them.
 
 ## General rules
 
@@ -69,7 +82,7 @@ A batch call accepts `0 <= startIdx <= endIdx <= TA_INDEX_MAX` ([`TA_INDEX_MAX`]
 
 <a id="rm2"></a>**rM2** A rejected setter leaves the parameter holder as it found it, so a rejected re-bind cannot leave the next call to succeed, silently, over a mix of old and new arguments.
 
-How the layer answers a misuse of its own surface (an unknown name, an unbound or mistyped argument) is not specified.
+<a id="rm3"></a>**rM3** A misuse of the layer's own surface (an unknown name, an unbound or mistyped argument, a holder or table the layer did not make) answers `TA_BAD_PARAM` or a [layer code](#layer-codes). Which one is not specified, and a release may make it more specific. When the layer refuses a call for the state of its holder, the function did not run and the code is a layer code, so it cannot be mistaken for the function's own.
 
 ## Conditions on other pages
 

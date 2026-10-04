@@ -172,7 +172,7 @@ A batch call may allocate managed scratch, sized by a period (MFI, ULTOSC) or, f
 
 `TALib.Metadata.FunctionCatalog` describes every function at run time and calls it without naming it at compile time. A span cannot be boxed, so the API cannot be invoked through `MethodInfo.Invoke`: calling a function chosen at run time needs this typed path instead of reflection. See the [Abstraction Layer](/api/abstract/) page.
 
-`Core.Functions` implements `IReadOnlyList<FuncInfo>`, so it is enumerable, LINQ-able, and indexable by position or by name. A misused holder (an index out of range, a mismatched type, an unbound input or output at call time) throws `ArgumentException`.
+`Core.Functions` implements `IReadOnlyList<FuncInfo>`, so it is enumerable, LINQ-able, and indexable by position or by name. A misused holder (an index out of range, a mismatched type, an unbound input or output at call time) throws `TALibArgumentException`, an `ArgumentException` that carries a return code ([rM3](/spec/errors/#rm3)).
 
 ### 4.2 Numerical Stability {#numerical_stability}
 

@@ -387,6 +387,21 @@ demands the refusal, the code, and that nothing moved. The code is asserted
 twice because the type cannot stand in for it: Java renders rS1's code and rU4's
 as one exception class.
 
+### Abstraction layer rules
+
+rM3 in C: `checkHolderErrorContract` (`test_abstract.c`) drives, for every
+function, each setter with a wrong index, a wrong kind and a NULL, `TA_CallFunc`
+with the inputs, then the outputs, unbound, with each NULL argument and with a
+holder the layer did not make, and then a fully bound holder whose index or
+parameter the function refuses, which must come back as the function's code. The
+lookups and the two table frees are checked once, after the sweep. In the ports:
+`the_setters_refuse_what_does_not_belong` (Rust), `holderRejectsMisuse` (Java
+`MetadataTest`) and `BinderRejectsMisuse` (C# `MetadataTest`). Across languages:
+under `--codegen`, `test_abstract.c` sends every function's `abstract_call` with
+input 0, then output 0, left unbound (`skipInput`, `skipOutput`) and requires
+C's code from each server. These tests pin today's codes, which is more than rM3
+asks: a deliberate refinement changes them together.
+
 ### Settings rules
 
 rT4's C getter: `test_internals.c`. rT8's Rust latch: verified by probe
@@ -508,11 +523,11 @@ a buffer too short, which have no code of their own (and the second of which C
 cannot detect), answer `TA_BAD_PARAM`, which makes the mapping total over those
 two tiers.
 
-The settings builders and the abstraction layer raise plain platform types for
-their *own* refusals (an unbound slot, a wrong kind, a slot index out of range):
-neither is a function call, so neither has a `TA_RetCode` a caller would be
-recovering. The layer's *dispatch* calls the public entry point, so an
-indicator's rejection reaches the caller carrying its code in every backend.
+The settings builders raise plain platform types for their own refusals: they
+are not function calls, so they have no `TA_RetCode` a caller would be
+recovering. The abstraction layer's refusals carry a code (rM3), and its
+*dispatch* calls the public entry point, so an indicator's rejection reaches the
+caller carrying its own code in every backend.
 
 C#'s rU4 is a `TALibArgumentException`, not the
 `TALibArgumentOutOfRangeException` its index codes take in batch: `Update` and
@@ -521,7 +536,7 @@ history series, the argument a caller can change, since an opener has no
 `startIdx`.
 
 A backend enum carrying a member it never produces is harmless; one missing a
-member it needs is not. Re-check whenever the abstraction layer is specified.
+member it needs is not.
 
 Known gap: Java's and C#'s MA stream throw a plain `IllegalStateException` /
 `InvalidOperationException` ("unreachable: open rejects arms without a
@@ -853,13 +868,10 @@ committed and run.
 
 ## Appendix C: Not yet specified
 
-- **The abstraction layer's own surface**: handle lookup, unbound and mistyped
-  arguments. Two rules about the layer are settled and published,
-  [rM1](https://ta-lib.org/spec/errors/#rm1) and
-  [rM2](https://ta-lib.org/spec/errors/#rm2). The rest answers differently today
-  (C returns 10 or 11 for an unbound argument, C#'s `TryCall` the same codes,
-  C#'s `Call` and Java plain exceptions, Rust `BadParam`); the public page leaves
-  it unspecified.
+- **Which code the abstraction layer answers for a given misuse**:
+  [rM3](https://ta-lib.org/spec/errors/#rm3) names the set and leaves the choice
+  open, so a backend can become more specific. Today all four answer 10 for an
+  unbound input, 11 for an unbound output and 8 for a mistyped setter.
 - **JSON-RPC servers**: a test harness, not a shipped API. Their error behaviour
   is a property of the harness.
 

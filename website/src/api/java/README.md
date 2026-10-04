@@ -163,7 +163,7 @@ A `NaN` or `±Inf` inside an input series is not detected, and nothing is promis
 
 The `io.github.talib.metadata` package describes every function at run time and calls it without naming it at compile time. Useful for a UI, a scripting bridge, or anything that enumerates indicators. See the [Abstraction Layer](/api/abstract/) page.
 
-A misused holder (an index out of bounds, a type that does not match the declared parameter, an unbound input or output at `call()` time) throws `IllegalArgumentException`.
+A misused holder (an index out of bounds, a type that does not match the declared parameter, an unbound input or output at `call()` time) throws `TALibArgumentException`, an `IllegalArgumentException` that carries a return code ([rM3](/spec/errors/#rm3)).
 
 ### 4.2 Numerical Stability {#numerical_stability}
 
