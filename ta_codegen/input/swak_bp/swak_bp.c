@@ -48,7 +48,7 @@ TA_RetCode swak_bp(int startIdx, int endIdx,
    if( startIdx > endIdx )
       return TA_SUCCESS;
 
-   /* The band-pass row (Ehlers, Stocks & Commodities January 2006, Figure 5).
+   /* The band-pass row (Ehlers, "Swiss Army Knife Indicator", Figure 5).
     * The paper's 360/P is a full turn, so 2*pi/P; beta is the cosine of the
     * centre frequency and t is the half-bandwidth angle.
     */

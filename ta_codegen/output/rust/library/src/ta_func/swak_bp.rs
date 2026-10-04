@@ -220,7 +220,7 @@ impl Core {
             return RetCode::Success;
         }
         let inReal = &inReal[..=endIdx];
-        // The band-pass row (Ehlers, Stocks & Commodities January 2006, Figure 5).
+        // The band-pass row (Ehlers, "Swiss Army Knife Indicator", Figure 5).
         // The paper's 360/P is a full turn, so 2*pi/P; beta is the cosine of the
         // centre frequency and t is the half-bandwidth angle.
         w = 2.0 * 3.141592653589793 / (optInTimePeriod as f64);
@@ -293,11 +293,12 @@ impl Core {
     /// The band-pass row of John Ehlers' Swiss Army Knife filter: a cycle extractor that keeps a
     /// band of periods around a chosen centre and removes everything on both sides of it. Read it
     /// as an oscillator, not as price. It answers zero on a constant, zero on a bar-to-bar
-    /// alternation, and exactly the input — same amplitude, no phase shift — on a sine wave at
-    /// the centre period. Between those it tapers, with the half-power points near `P(1 ± delta)`:
-    /// at a centre of 20 bars and a delta of 0.1 the band is roughly 20 ± 2 bars. What separates
-    /// it from the high-pass rows is that it rejects the fast end too. A detrender keeps everything
-    /// above its cutoff, including the bar-to-bar noise; this keeps only the band asked for.
+    /// alternation, and exactly the input, with the same amplitude and no phase shift, on a sine
+    /// wave at the centre period. Between those it tapers, with the half-power points near `P(1 ±
+    /// delta)`: at a centre of 20 bars and a delta of 0.1 the band is roughly 20 ± 2 bars. What
+    /// separates it from the high-pass rows is that it rejects the fast end too. A detrender keeps
+    /// everything above its cutoff, including the bar-to-bar noise; this keeps only the band asked
+    /// for.
     ///
     /// Formula and more info at
     /// [ta-lib.org/functions/swak_bp](https://ta-lib.org/functions/swak_bp).
@@ -358,7 +359,8 @@ impl Core {
     ///
     /// # References
     ///
-    /// * Ehlers, John F. "The Swiss Army Knife Indicator." *Stocks & Commodities*, January 2006.
+    /// * Ehlers, John F. "Swiss Army Knife Indicator." *Technical Analysis of Stocks & Commodities*
+    ///   V.24:1 (January 2006), pp. 28-31, 50-53.
     #[doc(alias = "TA_SWAK_BP")]
     #[doc(alias = "SwissArmyKnifeBand-PassFilter")]
     #[doc(alias = "EhlersBand-PassFilter")]
@@ -516,7 +518,7 @@ impl Core {
         if startIdx > endIdx {
             return Err(RetCode::InsufficientHistory);
         }
-        // The band-pass row (Ehlers, Stocks & Commodities January 2006, Figure 5).
+        // The band-pass row (Ehlers, "Swiss Army Knife Indicator", Figure 5).
         // The paper's 360/P is a full turn, so 2*pi/P; beta is the cosine of the
         // centre frequency and t is the half-bandwidth angle.
         w = 2.0 * 3.141592653589793 / (optInTimePeriod as f64);

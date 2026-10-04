@@ -6869,21 +6869,6 @@ static const char *const CODEGEN_TRANSCENDENTAL[] = {
     "HT_DCPERIOD", "HT_DCPHASE", "HT_PHASOR", "HT_SINE", "HT_TRENDLINE",
     "HT_TRENDMODE", "LINEARREG_ANGLE", "LN", "LOG10", "MAMA",
     "SIN", "SINH",
-    /* The five Swiss Army Knife rows: every coefficient is built from
-     * cos() and sin() of the period, so Java/.NET may differ from the
-     * host libm by an ULP and must run in the tolerance lane.
-     *
-     * Measured, not assumed. Dropping these five rows from this list turns
-     * --xlang-hash red on all five against Java (412 of 5780 cases for BP) and
-     * green against C# on this host -- which is the stated reason the lane is
-     * per-language and not per-host: .NET does not guarantee Math.* reaches
-     * the platform libm. Driving both servers by hand over 400 bars at periods
-     * 5..1000, the worst divergence on codegen_compare_tol's own scale
-     * (relative above 1, absolute below) is 3.4e-15, on BP: six orders inside
-     * the 1e-9 lane, and no row needs a bound of its own. Raw ULP counts run
-     * to 6.6e4 for the three DC-gain-0 rows, which is the measure going
-     * meaningless as their output crosses zero, not a worse error -- the
-     * absolute-below-1 half of the rule is exactly what covers that. */
     "SWAK_2PHP", "SWAK_BP", "SWAK_BUTTER", "SWAK_GAUSS", "SWAK_HP",
     "TAN", "TANH",
 };

@@ -4,7 +4,7 @@
 
 The two-pole high-pass row of John Ehlers' Swiss Army Knife filter: the same double real pole the Gaussian and Butterworth rows use, with a detrending numerator instead of a smoothing one. It removes what is slower than the cutoff period and rolls off twice as steeply as the one-pole row.
 
-Read it as an oscillator, not as price. Its DC gain is 0, so a flat market returns zero and a trend returns its departure from itself. Against `TA_SWAK_HP` the difference is the slope of the transition: the second pole buys a sharper separation between what is kept and what is removed, at the cost of a longer settling transient.
+Read it as an oscillator, not as price. Its DC gain is 0, so a flat market returns zero and a trend returns its departure from itself. Against `TA_SWAK_HP` the difference is the slope of the transition: the second pole buys a sharper separation between what is kept and what is removed.
 
 ## Formula
 
@@ -26,7 +26,7 @@ The filter is seeded in the steady state of a constant input equal to its first 
 
 ## Notes
 
-Every term of the recurrence exists at the first bar, so there is no structural lookback. What the first bars carry is the seed, which decays rather than ending: set `TA_FUNC_UNST_SWAK_2PHP` to discard bars until that transient is below whatever matters for the caller. The pole is a repeated real root, so the transient decays as `k * (1 - a2p)^k` rather than as a plain geometric — it takes longer than the one-pole row at the same period.
+Every term of the recurrence exists at the first bar, so there is no structural lookback. What the first bars carry is the seed, which decays rather than ending: set `TA_FUNC_UNST_SWAK_2PHP` to discard bars until that transient is below whatever matters for the caller. The pole is a repeated real root, so the transient decays as `k * (1 - a2p)^k` rather than as a plain geometric.
 
 The output may alias the input. This row reads `x[i-1]` and `x[i-2]`, which an aliased write would already have overwritten, so both are carried in locals and never re-read from the input array.
 
@@ -52,4 +52,4 @@ SWAK_HP · SWAK_BP · MEDPRICE
 
 ## References
 
-- Ehlers, John F. "The Swiss Army Knife Indicator." *Stocks & Commodities*, January 2006.
+- Ehlers, John F. "Swiss Army Knife Indicator." *Technical Analysis of Stocks & Commodities* V.24:1 (January 2006), pp. 28-31, 50-53.

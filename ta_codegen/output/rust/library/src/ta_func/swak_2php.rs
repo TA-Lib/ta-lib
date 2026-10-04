@@ -201,10 +201,8 @@ impl Core {
             return RetCode::Success;
         }
         let inReal = &inReal[..=endIdx];
-        // The same two-pole alpha the Gaussian and Butterworth rows use (Ehlers,
-        // Stocks & Commodities January 2006, Figure 5); the paper's 360/P is a full
-        // turn, so 2*pi/P. a2p keeps the sqrt form rather than the algebraically
-        // equal subtraction, which cancels for large P.
+        // The two-pole alpha of Ehlers' "Swiss Army Knife Indicator", Figure 5. The
+        // paper's 360/P is a full turn, so 2*pi/P.
         w = 2.0 * 3.141592653589793 / (optInTimePeriod as f64);
         b2p = 2.415 * (1.0 - (w).cos());
         a2p = -b2p + ((b2p as f64).mul_add(b2p, 2.0 * b2p)).sqrt();
@@ -274,7 +272,7 @@ impl Core {
     /// steeply as the one-pole row. Read it as an oscillator, not as price. Its DC gain is 0, so a
     /// flat market returns zero and a trend returns its departure from itself. Against `TA_SWAK_HP`
     /// the difference is the slope of the transition: the second pole buys a sharper separation
-    /// between what is kept and what is removed, at the cost of a longer settling transient.
+    /// between what is kept and what is removed.
     ///
     /// Formula and more info at
     /// [ta-lib.org/functions/swak_2php](https://ta-lib.org/functions/swak_2php).
@@ -332,7 +330,8 @@ impl Core {
     ///
     /// # References
     ///
-    /// * Ehlers, John F. "The Swiss Army Knife Indicator." *Stocks & Commodities*, January 2006.
+    /// * Ehlers, John F. "Swiss Army Knife Indicator." *Technical Analysis of Stocks & Commodities*
+    ///   V.24:1 (January 2006), pp. 28-31, 50-53.
     #[doc(alias = "TA_SWAK_2PHP")]
     #[doc(alias = "SwissArmyKnifeTwo-PoleHigh-PassFilter")]
     #[doc(alias = "EhlersTwo-PoleHigh-PassFilter")]
@@ -482,10 +481,8 @@ impl Core {
         if startIdx > endIdx {
             return Err(RetCode::InsufficientHistory);
         }
-        // The same two-pole alpha the Gaussian and Butterworth rows use (Ehlers,
-        // Stocks & Commodities January 2006, Figure 5); the paper's 360/P is a full
-        // turn, so 2*pi/P. a2p keeps the sqrt form rather than the algebraically
-        // equal subtraction, which cancels for large P.
+        // The two-pole alpha of Ehlers' "Swiss Army Knife Indicator", Figure 5. The
+        // paper's 360/P is a full turn, so 2*pi/P.
         w = 2.0 * 3.141592653589793 / (optInTimePeriod as f64);
         b2p = 2.415 * (1.0 - (w).cos());
         a2p = -b2p + ((b2p as f64).mul_add(b2p, 2.0 * b2p)).sqrt();

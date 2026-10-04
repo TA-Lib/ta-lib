@@ -46,10 +46,8 @@ TA_RetCode swak_2php(int startIdx, int endIdx,
    if( startIdx > endIdx )
       return TA_SUCCESS;
 
-   /* The same two-pole alpha the Gaussian and Butterworth rows use (Ehlers,
-    * Stocks & Commodities January 2006, Figure 5); the paper's 360/P is a full
-    * turn, so 2*pi/P. a2p keeps the sqrt form rather than the algebraically
-    * equal subtraction, which cancels for large P.
+   /* The two-pole alpha of Ehlers' "Swiss Army Knife Indicator", Figure 5. The
+    * paper's 360/P is a full turn, so 2*pi/P.
     */
    w   = (2.0 * 3.14159265358979323846) / (double)optInTimePeriod;
    b2p = 2.415 * (1.0 - cos(w));

@@ -52,4 +52,4 @@ SWAK_2PHP · SWAK_BP · MEDPRICE
 
 ## References
 
-- Ehlers, John F. "The Swiss Army Knife Indicator." *Stocks & Commodities*, January 2006.
+- Ehlers, John F. "Swiss Army Knife Indicator." *Technical Analysis of Stocks & Commodities* V.24:1 (January 2006), pp. 28-31, 50-53.

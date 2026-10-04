@@ -7,7 +7,7 @@ description: "The band-pass row of John Ehlers' Swiss Army Knife filter: a cycle
 
 The band-pass row of John Ehlers' Swiss Army Knife filter: a cycle extractor that keeps a band of periods around a chosen centre and removes everything on both sides of it.
 
-Read it as an oscillator, not as price. It answers zero on a constant, zero on a bar-to-bar alternation, and exactly the input — same amplitude, no phase shift — on a sine wave at the centre period. Between those it tapers, with the half-power points near `P(1 ± delta)`: at a centre of 20 bars and a delta of 0.1 the band is roughly 20 ± 2 bars.
+Read it as an oscillator, not as price. It answers zero on a constant, zero on a bar-to-bar alternation, and exactly the input, with the same amplitude and no phase shift, on a sine wave at the centre period. Between those it tapers, with the half-power points near `P(1 ± delta)`: at a centre of 20 bars and a delta of 0.1 the band is roughly 20 ± 2 bars.
 
 What separates it from the high-pass rows is that it rejects the fast end too. A detrender keeps everything above its cutoff, including the bar-to-bar noise; this keeps only the band asked for.
 
@@ -34,7 +34,7 @@ The filter is seeded in the steady state of a constant input equal to its first 
 
 The period range starts at 5 so that `delta <= 0.5` keeps `t` below `pi/2`, where both forms agree and `abp` stays in `(0, 1)`. Below that the published form can return a value that makes the recurrence unstable.
 
-Every term of the recurrence exists at the first bar, so there is no structural lookback. What the first bars carry is the seed, which decays rather than ending: set `TA_FUNC_UNST_SWAK_BP` to discard bars until that transient is below whatever matters for the caller. This row settles more slowly than the others at the same period — its poles sit near the unit circle, which is what makes the band narrow.
+Every term of the recurrence exists at the first bar, so there is no structural lookback. What the first bars carry is the seed, which decays rather than ending: set `TA_FUNC_UNST_SWAK_BP` to discard bars until that transient is below whatever matters for the caller. This row settles more slowly than the others at the same period: its poles sit near the unit circle, which is what makes the band narrow.
 
 The output may alias the input. This row reads `x[i-2]`, which an aliased write would already have overwritten, so the input slots are carried in locals and never re-read from the input array.
 
@@ -93,4 +93,4 @@ Swiss Army Knife Band-Pass Filter, SWAK BP, Ehlers Band-Pass Filter
 
 ## References
 
-- Ehlers, John F. "The Swiss Army Knife Indicator." *Stocks & Commodities*, January 2006.
+- Ehlers, John F. "Swiss Army Knife Indicator." *Technical Analysis of Stocks & Commodities* V.24:1 (January 2006), pp. 28-31, 50-53.

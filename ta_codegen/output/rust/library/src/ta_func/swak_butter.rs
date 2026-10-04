@@ -202,10 +202,8 @@ impl Core {
             return RetCode::Success;
         }
         let inReal = &inReal[..=endIdx];
-        // The same two-pole alpha as the Gaussian row (Ehlers, Stocks & Commodities
-        // January 2006, Figure 5); the paper's 360/P is a full turn, so 2*pi/P.
-        // a2p keeps the sqrt form rather than the algebraically equal subtraction,
-        // which cancels for large P.
+        // The two-pole alpha of Ehlers' "Swiss Army Knife Indicator", Figure 5. The
+        // paper's 360/P is a full turn, so 2*pi/P.
         w = 2.0 * 3.141592653589793 / (optInTimePeriod as f64);
         b2p = 2.415 * (1.0 - (w).cos());
         a2p = -b2p + ((b2p as f64).mul_add(b2p, 2.0 * b2p)).sqrt();
@@ -273,11 +271,11 @@ impl Core {
     /// cycles harder than the Gaussian does while keeping the same pole placement. Read it as a
     /// smoothed price line. Its DC gain is 1, so a flat market returns the price itself and the
     /// line sits on the chart with price. The two Nyquist zeros are what separate it from
-    /// `TA_SWAK_GAUSS`: a bar-to-bar alternation — the fastest motion a sampled series can carry
-    /// — is removed outright rather than merely attenuated, which is why the numerator weights
-    /// three consecutive bars 1, 2, 1. The name keeps the `SWAK` prefix on purpose. This is the
-    /// Swiss Army Knife's Butterworth row, not the Butterworth filters of Ehlers' separate article,
-    /// and not the SuperSmoother, which is a third two-pole low-pass with complex poles.
+    /// `TA_SWAK_GAUSS`: a bar-to-bar alternation, the fastest motion a sampled series can carry, is
+    /// removed outright rather than merely attenuated, which is why the numerator weights three
+    /// consecutive bars 1, 2, 1. The name keeps the `SWAK` prefix on purpose. This is the Swiss
+    /// Army Knife's Butterworth row, not the Butterworth filters of Ehlers' separate article, and
+    /// not the SuperSmoother, which is a third two-pole low-pass with complex poles.
     ///
     /// Formula and more info at
     /// [ta-lib.org/functions/swak_butter](https://ta-lib.org/functions/swak_butter).
@@ -335,7 +333,8 @@ impl Core {
     ///
     /// # References
     ///
-    /// * Ehlers, John F. "The Swiss Army Knife Indicator." *Stocks & Commodities*, January 2006.
+    /// * Ehlers, John F. "Swiss Army Knife Indicator." *Technical Analysis of Stocks & Commodities*
+    ///   V.24:1 (January 2006), pp. 28-31, 50-53.
     #[doc(alias = "TA_SWAK_BUTTER")]
     #[doc(alias = "SwissArmyKnifeButterworthFilter")]
     #[doc(alias = "EhlersButterworthFilter")]
@@ -486,10 +485,8 @@ impl Core {
         if startIdx > endIdx {
             return Err(RetCode::InsufficientHistory);
         }
-        // The same two-pole alpha as the Gaussian row (Ehlers, Stocks & Commodities
-        // January 2006, Figure 5); the paper's 360/P is a full turn, so 2*pi/P.
-        // a2p keeps the sqrt form rather than the algebraically equal subtraction,
-        // which cancels for large P.
+        // The two-pole alpha of Ehlers' "Swiss Army Knife Indicator", Figure 5. The
+        // paper's 360/P is a full turn, so 2*pi/P.
         w = 2.0 * 3.141592653589793 / (optInTimePeriod as f64);
         b2p = 2.415 * (1.0 - (w).cos());
         a2p = -b2p + ((b2p as f64).mul_add(b2p, 2.0 * b2p)).sqrt();

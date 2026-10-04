@@ -109,13 +109,8 @@
       if( startIdx > endIdx ) {
          return RetCode.SUCCESS ;
       }
-      /* The Swiss Army Knife two-pole alpha (Ehlers, Stocks & Commodities January
-       * 2006, Figure 5). The paper writes the argument as 360/P degrees and says
-       * on p.3 to read it as a full turn, so it is 2*pi/P here.
-       *
-       * a2p is the root of the quadratic that places the double real pole; it is
-       * written as -b2p + sqrt(b2p^2 + 2*b2p) rather than the algebraically equal
-       * subtraction, which cancels for large P.
+      /* The two-pole alpha of Ehlers' "Swiss Army Knife Indicator", Figure 5. The
+       * paper's 360/P is a full turn, so 2*pi/P.
        */
       w = 2.0 * 3.141592653589793 / (double)optInTimePeriod;
       b2p = 2.415 * (1.0 - Math.cos(w));
@@ -597,13 +592,8 @@
       if( startIdx > endIdx ) {
          return RetCode.INSUFFICIENT_HISTORY ;
       }
-      /* The Swiss Army Knife two-pole alpha (Ehlers, Stocks & Commodities January
-       * 2006, Figure 5). The paper writes the argument as 360/P degrees and says
-       * on p.3 to read it as a full turn, so it is 2*pi/P here.
-       *
-       * a2p is the root of the quadratic that places the double real pole; it is
-       * written as -b2p + sqrt(b2p^2 + 2*b2p) rather than the algebraically equal
-       * subtraction, which cancels for large P.
+      /* The two-pole alpha of Ehlers' "Swiss Army Knife Indicator", Figure 5. The
+       * paper's 360/P is a full turn, so 2*pi/P.
        */
       w = 2.0 * 3.141592653589793 / (double)optInTimePeriod;
       b2p = 2.415 * (1.0 - Math.cos(w));

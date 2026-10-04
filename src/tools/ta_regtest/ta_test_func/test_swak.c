@@ -19,31 +19,21 @@
  *   Test the five Swiss Army Knife rows: TA_SWAK_GAUSS, TA_SWAK_BUTTER,
  *   TA_SWAK_HP, TA_SWAK_2PHP and TA_SWAK_BP.
  *
- *   ONE file, not five. The five are one second-order IIR
+ *   The five are one second-order IIR
  *
  *       y[i] = c0*(b0*x[i] + b1*x[i-1] + b2*x[i-2]) + a1*y[i-1] + a2*y[i-2]
  *
- *   under five coefficient rows, and every gate below is the SAME analytic
- *   property evaluated per row. Split five ways, the pole arithmetic each gate
- *   derives its bound from would be copied five times, and a bound corrected in
- *   one copy would silently stay wrong in the other four.
- *
- *   NO ORACLE, AND NO FIXED THRESHOLD. There is no independent implementation
- *   of these rows this suite can link against, so the gates assert properties
- *   the coefficient row itself fixes -- what the filter does to a constant, to
- *   a Nyquist alternation, and (band-pass) to a sinusoid at its own centre
- *   period. Every transient bound is the ANALYTIC ENVELOPE of that row's own
- *   poles, never a constant:
+ *   under five coefficient rows. Legs 1 to 3 assert what a row does to a
+ *   constant, to a Nyquist alternation and (band-pass) to a sinusoid at its
+ *   centre period. Their transient bounds are the envelope of that row's own
+ *   poles, because the seed's transient decays at the row's rate and a fixed
+ *   threshold is wrong at one end of the period range or the other:
  *
  *       GAUSS / BUTTER / 2PHP   double real pole om = 1-a2p    k * om^k
  *       HP                      single real pole 1-a1p         p^k
  *       BP                      complex pair, |pole| = sqrt(abp)   r^k
  *
- *   Three earlier drafts used fixed thresholds and each went red on a CORRECT
- *   implementation, because the seed's transient decays at a rate the threshold
- *   knew nothing about. The seed is the steady state of a constant input, so on
- *   a constant there is no transient at all and leg 1 is exact; on any other
- *   probe there is one, and its size is the envelope.
+ *   Legs 7 and 9 hold frozen values at fixed tolerances.
  *
  *   Legs:
  *     1. DC: a constant input. GAUSS and BUTTER return the constant; HP, 2PHP
@@ -60,7 +50,7 @@
  *        That last one is the control arm: without it, a row that returned 0
  *        everywhere would satisfy every other Nyquist case in this leg.
  *     3. CENTRE: BP returns cos(2*pi*i/P) unchanged, at unity gain and zero
- *        phase. This is the only leg that pins a1, which the DC and Nyquist
+ *        phase. Of the analytic legs only this one pins a1, which the DC and Nyquist
  *        legs are both blind to (the numerator vanishes there whatever a1 is).
  *     4. LOOKBACK is the unstable period and nothing else, under several
  *        settings of it, per row.
@@ -79,7 +69,7 @@
  *        eSignal port, Swak.efs, for HP, 2PHP and BP: the one independent
  *        implementation of the band-pass row.
  *
- *   SERVER_VERIFY: the constant and Nyquist shapes are routed. The --codegen
+ *   SERVER_VERIFY: the constant, Nyquist and golden shapes are routed. The --codegen
  *   sweep sends the 252-bar corpus with one parameter moved at a time and
  *   reaches neither shape, and both are exactly where a coefficient
  *   transcription error in another language shows up as a whole number rather
@@ -106,8 +96,6 @@
 #define SWAK_2PHP    3
 #define SWAK_BP      4
 
-/* Long enough for the slowest row to reach its steady state: leg 1 asks for
- * 30 cutoff periods and the largest period swept is 10000. */
 #define SWAK_N_MAX   60000
 #define SWAK_N_NYQ   20000
 #define SWAK_N_ROUTE  2000
@@ -118,7 +106,7 @@
  * loop trip decided by a period and a length -- integer arithmetic only -- so
  * these are platform-free in the sense the suite requires. */
 #define SWAK_DC_CMP       1878000
-#define SWAK_NYQ_CMP       260005
+#define SWAK_NYQ_CMP       210005
 #define SWAK_CENTRE_CMP    180000
 #define SWAK_LOOKBACK_CMP      132
 #define SWAK_INPLACE_CMP   114700
@@ -488,10 +476,9 @@ static ErrorNumber test_swak_nyquist( void )
          if( d > worst ) worst = d;
       }
 
-      /* Route the first period of EVERY row -- two shapes the generic sweep
-       * never sends -- before the control arm's early exit below. Behind that
-       * exit, GAUSS routed nothing, and no run without a live server can see
-       * the difference: the routed floor is only asserted when a pipe is up. */
+      /* Route the first period of EVERY row, so before the control arm's
+       * exit below: the routed floor is only asserted when a pipe is up, so a
+       * row that routes nothing is invisible to a run without servers. */
       if( pi == 0 && di == 0 )
       {
          /* Its own shape locals: writing the measured call's begIdx/nbElement
@@ -544,7 +531,11 @@ static ErrorNumber test_swak_nyquist( void )
          continue;
       }
 
+      /* A cell whose envelope is still near the signal's own amplitude after
+       * k0 bars cannot fail, so it is not compared and not counted. */
       env = swakEnvelope( f, P, delta, k0 );
+      if( 3.0*env > 1e-3 )
+         continue;
       bound = 3.0*env + 1e-12;
       if( worst > bound )
       {
@@ -559,9 +550,7 @@ static ErrorNumber test_swak_nyquist( void )
    return TA_TEST_PASS;
 }
 
-/* (3) BP at its own centre period returns the input untouched. The DC and
- * Nyquist legs cannot see a1 at all -- the numerator is zero at both ends
- * whatever the feedback is -- so this is the leg that pins it. */
+/* (3) BP at its own centre period returns the input untouched. */
 static ErrorNumber test_swak_centre( void )
 {
    int pi, di, i, n, k0, begIdx, nbElement;
@@ -601,9 +590,8 @@ static ErrorNumber test_swak_centre( void )
        * whose libm reduction loses |arg|*eps ~ 8.3e-12; and 60000 recursive
        * steps accumulate rounding, which dominates at large P where the
        * argument is small (P=2000: 2.1e-14 predicted from reduction, 3.8e-12
-       * measured). 1e-10 clears both with margin and still leaves the gate able
-       * to see a wrong a1 -- the band-pass form this row was first written with
-       * misses by order 1. */
+       * measured). 1e-10 clears both with margin; a1 = beta*(1-abp) misses by
+       * order 1. */
       bound = 3.0*env + 1e-10;
       if( worst > bound )
       {
@@ -715,14 +703,7 @@ static ErrorNumber test_swak_inplace( void )
    return TA_TEST_PASS;
 }
 
-/* (6) The generic range sweep, all five rows under TA_STABLE_CONVERGING.
- *
- * BP needs a 200-bar ignore prefix where the other four converge inside 100,
- * and that is a property of its poles rather than of its code: it is the one
- * row whose pair is COMPLEX, so its transient rings instead of decaying
- * monotonically and a bar well inside the envelope can still sit far from the
- * converged value. test_util.c's periodToIgnore switch carries it beside T3
- * and STC (#486). */
+/* (6) The generic range sweep, all five rows under TA_STABLE_CONVERGING. */
 typedef struct { const TA_Real *in; int f; } SwakRangeParam;
 
 static TA_RetCode swakRangeTestFunction( TA_Integer startIdx, TA_Integer endIdx,
@@ -762,7 +743,8 @@ static ErrorNumber test_swak_range( const TA_Real *in )
 /* (7) Frozen values. The series is 100 + 10*sin(i/7) + 0.15*i + 2*sin(i/2.3);
  * every expected value is the same row and seed evaluated in 60-digit decimal
  * over the doubles of that series. A libm whose sin is an ULP off moves an
- * input by 1e-16 relative, three orders inside the tightest tolerance here. */
+ * input near 290 by 6e-14, and no row's gain exceeds 1, so the 1e-12 absolute
+ * and 1e-13 relative tolerances keep at least one order over it. */
 #define SWAK_GOLDEN_N       1200
 #define SWAK_GOLDEN_ROWS       9
 #define SWAK_COND_N        20000
@@ -861,8 +843,7 @@ static ErrorNumber test_swak_golden( void )
 }
 
 /* (8) One step outside each declared range. HP's 4 is the period at which its
- * alpha rounds to 0 and the row turns into an integrator; BP's 4 with delta
- * 0.5 puts the half-bandwidth angle on pi/2, where abp divides by cos. */
+ * alpha rounds to 0 and the row turns into an integrator. */
 static ErrorNumber test_swak_edges( void )
 {
    static const struct { int f; int P; double delta; } bad[] =

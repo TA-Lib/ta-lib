@@ -193597,10 +193597,8 @@ public final class Core {
       if( startIdx > endIdx ) {
          return RetCode.SUCCESS ;
       }
-      /* The same two-pole alpha the Gaussian and Butterworth rows use (Ehlers,
-       * Stocks & Commodities January 2006, Figure 5); the paper's 360/P is a full
-       * turn, so 2*pi/P. a2p keeps the sqrt form rather than the algebraically
-       * equal subtraction, which cancels for large P.
+      /* The two-pole alpha of Ehlers' "Swiss Army Knife Indicator", Figure 5. The
+       * paper's 360/P is a full turn, so 2*pi/P.
        */
       w = 2.0 * 3.141592653589793 / (double)optInTimePeriod;
       b2p = 2.415 * (1.0 - Math.cos(w));
@@ -193752,7 +193750,7 @@ public final class Core {
     * returns zero and a trend returns its departure from itself. Against
     * {@code TA_SWAK_HP} the difference is the slope of the transition: the
     * second pole buys a sharper separation between what is kept and what is
-    * removed, at the cost of a longer settling transient.
+    * removed.
     * <p>Formula and more info at <a
     * href="https://ta-lib.org/functions/swak_2php">ta-lib.org/functions/swak_2php</a>.
     * <p>Values are written only where the indicator is defined. The returned
@@ -193818,7 +193816,7 @@ public final class Core {
     * returns zero and a trend returns its departure from itself. Against
     * {@code TA_SWAK_HP} the difference is the slope of the transition: the
     * second pole buys a sharper separation between what is kept and what is
-    * removed, at the cost of a longer settling transient.
+    * removed.
     * <p>Formula and more info at <a
     * href="https://ta-lib.org/functions/swak_2php">ta-lib.org/functions/swak_2php</a>.
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
@@ -194110,10 +194108,8 @@ public final class Core {
       if( startIdx > endIdx ) {
          return RetCode.INSUFFICIENT_HISTORY ;
       }
-      /* The same two-pole alpha the Gaussian and Butterworth rows use (Ehlers,
-       * Stocks & Commodities January 2006, Figure 5); the paper's 360/P is a full
-       * turn, so 2*pi/P. a2p keeps the sqrt form rather than the algebraically
-       * equal subtraction, which cancels for large P.
+      /* The two-pole alpha of Ehlers' "Swiss Army Knife Indicator", Figure 5. The
+       * paper's 360/P is a full turn, so 2*pi/P.
        */
       w = 2.0 * 3.141592653589793 / (double)optInTimePeriod;
       b2p = 2.415 * (1.0 - Math.cos(w));
@@ -194388,7 +194384,7 @@ public final class Core {
       if( startIdx > endIdx ) {
          return RetCode.SUCCESS ;
       }
-      /* The band-pass row (Ehlers, Stocks & Commodities January 2006, Figure 5).
+      /* The band-pass row (Ehlers, "Swiss Army Knife Indicator", Figure 5).
        * The paper's 360/P is a full turn, so 2*pi/P; beta is the cosine of the
        * centre frequency and t is the half-bandwidth angle.
        */
@@ -194549,11 +194545,11 @@ public final class Core {
     * extractor that keeps a band of periods around a chosen centre and removes
     * everything on both sides of it. Read it as an oscillator, not as price. It
     * answers zero on a constant, zero on a bar-to-bar alternation, and exactly
-    * the input — same amplitude, no phase shift — on a sine wave at the centre
-    * period. Between those it tapers, with the half-power points near
-    * {@code P(1 ± delta)}: at a centre of 20 bars and a delta of 0.1 the band
-    * is roughly 20 ± 2 bars. What separates it from the high-pass rows is that
-    * it rejects the fast end too. A detrender keeps everything above its
+    * the input, with the same amplitude and no phase shift, on a sine wave at
+    * the centre period. Between those it tapers, with the half-power points
+    * near {@code P(1 ± delta)}: at a centre of 20 bars and a delta of 0.1 the
+    * band is roughly 20 ± 2 bars. What separates it from the high-pass rows is
+    * that it rejects the fast end too. A detrender keeps everything above its
     * cutoff, including the bar-to-bar noise; this keeps only the band asked
     * for.
     * <p>Formula and more info at <a
@@ -194621,11 +194617,11 @@ public final class Core {
     * extractor that keeps a band of periods around a chosen centre and removes
     * everything on both sides of it. Read it as an oscillator, not as price. It
     * answers zero on a constant, zero on a bar-to-bar alternation, and exactly
-    * the input — same amplitude, no phase shift — on a sine wave at the centre
-    * period. Between those it tapers, with the half-power points near
-    * {@code P(1 ± delta)}: at a centre of 20 bars and a delta of 0.1 the band
-    * is roughly 20 ± 2 bars. What separates it from the high-pass rows is that
-    * it rejects the fast end too. A detrender keeps everything above its
+    * the input, with the same amplitude and no phase shift, on a sine wave at
+    * the centre period. Between those it tapers, with the half-power points
+    * near {@code P(1 ± delta)}: at a centre of 20 bars and a delta of 0.1 the
+    * band is roughly 20 ± 2 bars. What separates it from the high-pass rows is
+    * that it rejects the fast end too. A detrender keeps everything above its
     * cutoff, including the bar-to-bar noise; this keeps only the band asked
     * for.
     * <p>Formula and more info at <a
@@ -194930,7 +194926,7 @@ public final class Core {
       if( startIdx > endIdx ) {
          return RetCode.INSUFFICIENT_HISTORY ;
       }
-      /* The band-pass row (Ehlers, Stocks & Commodities January 2006, Figure 5).
+      /* The band-pass row (Ehlers, "Swiss Army Knife Indicator", Figure 5).
        * The paper's 360/P is a full turn, so 2*pi/P; beta is the cosine of the
        * centre frequency and t is the half-bandwidth angle.
        */
@@ -195197,10 +195193,8 @@ public final class Core {
       if( startIdx > endIdx ) {
          return RetCode.SUCCESS ;
       }
-      /* The same two-pole alpha as the Gaussian row (Ehlers, Stocks & Commodities
-       * January 2006, Figure 5); the paper's 360/P is a full turn, so 2*pi/P.
-       * a2p keeps the sqrt form rather than the algebraically equal subtraction,
-       * which cancels for large P.
+      /* The two-pole alpha of Ehlers' "Swiss Army Knife Indicator", Figure 5. The
+       * paper's 360/P is a full turn, so 2*pi/P.
        */
       w = 2.0 * 3.141592653589793 / (double)optInTimePeriod;
       b2p = 2.415 * (1.0 - Math.cos(w));
@@ -195350,8 +195344,8 @@ public final class Core {
     * keeping the same pole placement. Read it as a smoothed price line. Its DC
     * gain is 1, so a flat market returns the price itself and the line sits on
     * the chart with price. The two Nyquist zeros are what separate it from
-    * {@code TA_SWAK_GAUSS}: a bar-to-bar alternation — the fastest motion a
-    * sampled series can carry — is removed outright rather than merely
+    * {@code TA_SWAK_GAUSS}: a bar-to-bar alternation, the fastest motion a
+    * sampled series can carry, is removed outright rather than merely
     * attenuated, which is why the numerator weights three consecutive bars 1,
     * 2, 1. The name keeps the {@code SWAK} prefix on purpose. This is the Swiss
     * Army Knife's Butterworth row, not the Butterworth filters of Ehlers'
@@ -195420,8 +195414,8 @@ public final class Core {
     * keeping the same pole placement. Read it as a smoothed price line. Its DC
     * gain is 1, so a flat market returns the price itself and the line sits on
     * the chart with price. The two Nyquist zeros are what separate it from
-    * {@code TA_SWAK_GAUSS}: a bar-to-bar alternation — the fastest motion a
-    * sampled series can carry — is removed outright rather than merely
+    * {@code TA_SWAK_GAUSS}: a bar-to-bar alternation, the fastest motion a
+    * sampled series can carry, is removed outright rather than merely
     * attenuated, which is why the numerator weights three consecutive bars 1,
     * 2, 1. The name keeps the {@code SWAK} prefix on purpose. This is the Swiss
     * Army Knife's Butterworth row, not the Butterworth filters of Ehlers'
@@ -195718,10 +195712,8 @@ public final class Core {
       if( startIdx > endIdx ) {
          return RetCode.INSUFFICIENT_HISTORY ;
       }
-      /* The same two-pole alpha as the Gaussian row (Ehlers, Stocks & Commodities
-       * January 2006, Figure 5); the paper's 360/P is a full turn, so 2*pi/P.
-       * a2p keeps the sqrt form rather than the algebraically equal subtraction,
-       * which cancels for large P.
+      /* The two-pole alpha of Ehlers' "Swiss Army Knife Indicator", Figure 5. The
+       * paper's 360/P is a full turn, so 2*pi/P.
        */
       w = 2.0 * 3.141592653589793 / (double)optInTimePeriod;
       b2p = 2.415 * (1.0 - Math.cos(w));
@@ -195976,13 +195968,8 @@ public final class Core {
       if( startIdx > endIdx ) {
          return RetCode.SUCCESS ;
       }
-      /* The Swiss Army Knife two-pole alpha (Ehlers, Stocks & Commodities January
-       * 2006, Figure 5). The paper writes the argument as 360/P degrees and says
-       * on p.3 to read it as a full turn, so it is 2*pi/P here.
-       *
-       * a2p is the root of the quadratic that places the double real pole; it is
-       * written as -b2p + sqrt(b2p^2 + 2*b2p) rather than the algebraically equal
-       * subtraction, which cancels for large P.
+      /* The two-pole alpha of Ehlers' "Swiss Army Knife Indicator", Figure 5. The
+       * paper's 360/P is a full turn, so 2*pi/P.
        */
       w = 2.0 * 3.141592653589793 / (double)optInTimePeriod;
       b2p = 2.415 * (1.0 - Math.cos(w));
@@ -196464,13 +196451,8 @@ public final class Core {
       if( startIdx > endIdx ) {
          return RetCode.INSUFFICIENT_HISTORY ;
       }
-      /* The Swiss Army Knife two-pole alpha (Ehlers, Stocks & Commodities January
-       * 2006, Figure 5). The paper writes the argument as 360/P degrees and says
-       * on p.3 to read it as a full turn, so it is 2*pi/P here.
-       *
-       * a2p is the root of the quadratic that places the double real pole; it is
-       * written as -b2p + sqrt(b2p^2 + 2*b2p) rather than the algebraically equal
-       * subtraction, which cancels for large P.
+      /* The two-pole alpha of Ehlers' "Swiss Army Knife Indicator", Figure 5. The
+       * paper's 360/P is a full turn, so 2*pi/P.
        */
       w = 2.0 * 3.141592653589793 / (double)optInTimePeriod;
       b2p = 2.415 * (1.0 - Math.cos(w));
@@ -196710,9 +196692,9 @@ public final class Core {
       if( startIdx > endIdx ) {
          return RetCode.SUCCESS ;
       }
-      /* The one-pole alpha (Ehlers, Stocks & Commodities January 2006, Figure 5).
+      /* The one-pole alpha (Ehlers, "Swiss Army Knife Indicator", Figure 5).
        * The paper says this one "is computed exactly the same as it is for the
-       * EMA" (p.5) -- meaning the cutoff-period formula below, not TA_EMA's
+       * EMA" -- meaning the cutoff-period formula below, not TA_EMA's
        * 2/(n+1). The paper's 360/P is a full turn, so 2*pi/P.
        *
        * The period range starts at 5 because of what this expression does below
@@ -197191,9 +197173,9 @@ public final class Core {
       if( startIdx > endIdx ) {
          return RetCode.INSUFFICIENT_HISTORY ;
       }
-      /* The one-pole alpha (Ehlers, Stocks & Commodities January 2006, Figure 5).
+      /* The one-pole alpha (Ehlers, "Swiss Army Knife Indicator", Figure 5).
        * The paper says this one "is computed exactly the same as it is for the
-       * EMA" (p.5) -- meaning the cutoff-period formula below, not TA_EMA's
+       * EMA" -- meaning the cutoff-period formula below, not TA_EMA's
        * 2/(n+1). The paper's 360/P is a full turn, so 2*pi/P.
        *
        * The period range starts at 5 because of what this expression does below

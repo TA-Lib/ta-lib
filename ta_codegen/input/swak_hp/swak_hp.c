@@ -46,9 +46,9 @@ TA_RetCode swak_hp(int startIdx, int endIdx,
    if( startIdx > endIdx )
       return TA_SUCCESS;
 
-   /* The one-pole alpha (Ehlers, Stocks & Commodities January 2006, Figure 5).
+   /* The one-pole alpha (Ehlers, "Swiss Army Knife Indicator", Figure 5).
     * The paper says this one "is computed exactly the same as it is for the
-    * EMA" (p.5) -- meaning the cutoff-period formula below, not TA_EMA's
+    * EMA" -- meaning the cutoff-period formula below, not TA_EMA's
     * 2/(n+1). The paper's 360/P is a full turn, so 2*pi/P.
     *
     * The period range starts at 5 because of what this expression does below

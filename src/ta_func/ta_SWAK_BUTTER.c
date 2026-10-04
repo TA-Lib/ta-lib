@@ -135,10 +135,8 @@ TA_LIB_API TA_RetCode TA_SWAK_BUTTER( int    startIdx,
    {
       return TA_SUCCESS;
    }
-   /* The same two-pole alpha as the Gaussian row (Ehlers, Stocks & Commodities
-    * January 2006, Figure 5); the paper's 360/P is a full turn, so 2*pi/P.
-    * a2p keeps the sqrt form rather than the algebraically equal subtraction,
-    * which cancels for large P.
+   /* The two-pole alpha of Ehlers' "Swiss Army Knife Indicator", Figure 5. The
+    * paper's 360/P is a full turn, so 2*pi/P.
     */
    w = 2.0 * 3.141592653589793 / (double)optInTimePeriod;
    b2p = 2.415 * (1.0 - cos(w));
@@ -388,10 +386,8 @@ static TA_RetCode TA_SWAK_BUTTER_OpenImpl( struct TA_SWAK_BUTTER_Stream **stream
       {
          return TA_INSUFFICIENT_HISTORY;
       }
-      /* The same two-pole alpha as the Gaussian row (Ehlers, Stocks & Commodities
-       * January 2006, Figure 5); the paper's 360/P is a full turn, so 2*pi/P.
-       * a2p keeps the sqrt form rather than the algebraically equal subtraction,
-       * which cancels for large P.
+      /* The two-pole alpha of Ehlers' "Swiss Army Knife Indicator", Figure 5. The
+       * paper's 360/P is a full turn, so 2*pi/P.
        */
       w = 2.0 * 3.141592653589793 / (double)optInTimePeriod;
       b2p = 2.415 * (1.0 - cos(w));

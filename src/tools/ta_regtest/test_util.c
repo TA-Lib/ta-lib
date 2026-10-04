@@ -1330,10 +1330,8 @@ static int dataWithinReasonableRange( TA_Real val1, TA_Real val2,
    /* STC's two stochastic stages amplify the slow EMA's transient: at 150
     * the sweep fails on every seed. */
    case TA_FUNC_UNST_STC:
-   /* SWAK_BP is the one Swiss Army Knife row whose poles are a COMPLEX pair:
-    * its transient does not decay monotonically, it rings, so a bar inside
-    * the envelope can still sit far from the converged value. The other four
-    * rows have real poles and pass at 100 on every seed. (#486) */
+   /* SWAK_BP's pole radius is 0.97 at its defaults: the seed's transient is
+    * still 4% of its start at bar 100. */
    case TA_FUNC_UNST_SWAK_BP:
       periodToIgnore = 200;
       break;

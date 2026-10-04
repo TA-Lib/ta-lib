@@ -199,13 +199,8 @@ impl Core {
             return RetCode::Success;
         }
         let inReal = &inReal[..=endIdx];
-        // The Swiss Army Knife two-pole alpha (Ehlers, Stocks & Commodities January
-        // 2006, Figure 5). The paper writes the argument as 360/P degrees and says
-        // on p.3 to read it as a full turn, so it is 2*pi/P here.
-        //
-        // a2p is the root of the quadratic that places the double real pole; it is
-        // written as -b2p + sqrt(b2p^2 + 2*b2p) rather than the algebraically equal
-        // subtraction, which cancels for large P.
+        // The two-pole alpha of Ehlers' "Swiss Army Knife Indicator", Figure 5. The
+        // paper's 360/P is a full turn, so 2*pi/P.
         w = 2.0 * 3.141592653589793 / (optInTimePeriod as f64);
         b2p = 2.415 * (1.0 - (w).cos());
         a2p = -b2p + ((b2p as f64).mul_add(b2p, 2.0 * b2p)).sqrt();
@@ -326,7 +321,8 @@ impl Core {
     ///
     /// # References
     ///
-    /// * Ehlers, John F. "The Swiss Army Knife Indicator." *Stocks & Commodities*, January 2006.
+    /// * Ehlers, John F. "Swiss Army Knife Indicator." *Technical Analysis of Stocks & Commodities*
+    ///   V.24:1 (January 2006), pp. 28-31, 50-53.
     #[doc(alias = "TA_SWAK_GAUSS")]
     #[doc(alias = "SwissArmyKnifeGaussianFilter")]
     #[doc(alias = "EhlersGaussianFilter")]
@@ -467,13 +463,8 @@ impl Core {
         if startIdx > endIdx {
             return Err(RetCode::InsufficientHistory);
         }
-        // The Swiss Army Knife two-pole alpha (Ehlers, Stocks & Commodities January
-        // 2006, Figure 5). The paper writes the argument as 360/P degrees and says
-        // on p.3 to read it as a full turn, so it is 2*pi/P here.
-        //
-        // a2p is the root of the quadratic that places the double real pole; it is
-        // written as -b2p + sqrt(b2p^2 + 2*b2p) rather than the algebraically equal
-        // subtraction, which cancels for large P.
+        // The two-pole alpha of Ehlers' "Swiss Army Knife Indicator", Figure 5. The
+        // paper's 360/P is a full turn, so 2*pi/P.
         w = 2.0 * 3.141592653589793 / (optInTimePeriod as f64);
         b2p = 2.415 * (1.0 - (w).cos());
         a2p = -b2p + ((b2p as f64).mul_add(b2p, 2.0 * b2p)).sqrt();
