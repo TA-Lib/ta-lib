@@ -1043,6 +1043,13 @@ public class MetadataTest {
                         }
                         check(same, f.name() + ": output " + o + " placed on input " + slot
                             + " component " + c + " answers as on separate arrays");
+                        boolean tailKept = true;
+                        for (int i = N - IN_PLACE_TAIL; i < N; i++) {
+                            tailKept &= Double.doubleToRawLongBits(shared[i])
+                                == Double.doubleToRawLongBits(source[i]);
+                        }
+                        check(tailKept, f.name() + ": output " + o + " placed on input " + slot
+                            + " component " + c + " writes nothing past endIdx");
                         pairs++;
                         if (in.type() == InputType.PRICE) {
                             pricePairs++;
@@ -1057,7 +1064,7 @@ public class MetadataTest {
     }
 
     /**
-     * One call over the whole series. {@code shared}, when given, is both
+     * One call, ending {@code IN_PLACE_TAIL} bars before the series. {@code shared}, when given, is both
      * component {@code comp} of input {@code slot} and output {@code out}.
      */
     private static OutRange inPlaceCall(FuncInfo f, double[] spread, int slot, int comp,
@@ -1091,8 +1098,11 @@ public class MetadataTest {
                 h.setOutput(i, i == out ? shared : outs[i]);
             }
         }
-        return h.call(0, N - 1);
+        return h.call(0, N - 1 - IN_PLACE_TAIL);
     }
+
+    /** Bars past endIdx in the in-place sweep, which must keep their input. */
+    private static final int IN_PLACE_TAIL = 16;
 
     public static void main(String[] args) throws Exception {
         registryIsComplete();

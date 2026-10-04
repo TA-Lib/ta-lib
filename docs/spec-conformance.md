@@ -246,7 +246,8 @@ rW7: `checkInPlaceAliasCorrect` (`test_abstract.c`),
 `anOutputOnItsInputAnswersTheSame` (Java's `MetadataTest`) and
 `AnOutputOnItsInputAnswersTheSame` (C#'s `MetadataTest`) place each real output
 on each real input component of every function and require the answer of the
-separate-buffer call bit for bit.
+separate-buffer call bit for bit. The call ends 16 bars before the series does,
+and those bars must keep their input values.
 
 rP4: the float leg of regtest `--codegen` compares each server's float entry
 point with its own double one on the same widened inputs, bit for bit: C over
@@ -609,7 +610,9 @@ elsewhere.
 rW7 is supported, not tolerated: several bodies are written for it and elect
 their scratch by testing for exactly that case. That election is why STOCH,
 STOCHF and KDJ leave intermediate values past `count` when their first output is
-in place.
+in place (ruled 2026-10-03: accepted). The scratch spans the values the
+smoothing consumes and never reaches past `endIdx`, which is the limit the
+public rule states.
 
 ### rB8: allocation failure
 

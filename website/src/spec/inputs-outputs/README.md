@@ -52,7 +52,7 @@ An MA-type parameter accepts every `MAType` member, and a release may add member
 
 ## Computing in place {#aliasing}
 
-<a id="rw7"></a>**rW7** In a batch call, an output may be the very buffer of an input of the same element type: whole buffer, the same start, and in C# the same span. The outputs are bit-identical to a call with separate buffers, and afterwards the buffer holds the output in `[0, count)`. Past `count` it is not promised to keep the input. Two outputs must be different buffers ([rB6](/spec/errors/#rb6)), and `OpenAndFill` takes no output on an input or on another output ([rS6](/spec/streaming/#rs6)).
+<a id="rw7"></a>**rW7** In a batch call, an output may be the very buffer of an input of the same element type: whole buffer, the same start, and in C# the same span. The outputs are bit-identical to a call with separate buffers. Afterwards, in that buffer, the elements at `[0, count)` hold the output, the elements at `[count, endIdx]` may hold any value, because the call may use them as scratch space for intermediate results, and the elements after `endIdx` keep their input values. Two outputs must be different buffers ([rB6](/spec/errors/#rb6)), and `OpenAndFill` takes no output on an input or on another output ([rS6](/spec/streaming/#rs6)).
 
 | | C | Rust | Java | C# |
 |---|---|---|---|---|

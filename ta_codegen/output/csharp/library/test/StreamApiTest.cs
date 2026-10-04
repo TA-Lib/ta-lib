@@ -188,8 +188,6 @@ public static class StreamApiTest
         Check(Bits(peeked) == Bits(committed), "Peek returns exactly what the next Update returns");
         Check(Bits(s.Value) != Bits(before), "Update does move Value (the Peek check above is not vacuous)");
 
-        // Repeated peeks are idempotent, which is what makes the shared
-        // per-thread scratch safe to reuse.
         double p1 = s.Peek(closes[lookback + 2]);
         double p2 = s.Peek(closes[lookback + 2]);
         Check(Bits(p1) == Bits(p2), "Peek is idempotent");
