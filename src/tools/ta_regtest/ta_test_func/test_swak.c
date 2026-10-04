@@ -61,7 +61,7 @@
  *     7. GOLDEN: frozen values from a 60-digit evaluation of the same rows and
  *        seed. The early bars are the only ones that see the seed, and the
  *        BP rows at its period cap are the only gate that tells its abp from
- *        the paper's gamma - sqrt(gamma^2 - 1), whose output is 7e-9 off there.
+ *        the paper's gamma - sqrt(gamma^2 - 1).
  *     8. EDGES: the first period and delta outside each declared range are
  *        refused.
  *     9. ORACLE: frozen bars from two other implementations, each taken where
@@ -106,9 +106,7 @@
 #define NB_OF(a) ((int)(sizeof(a)/sizeof((a)[0])))
 
 /* Pinned coverage counts. Every input below is synthesized and every count is a
- * loop trip decided by a period and a length. The Nyquist count also depends on
- * which cells the envelope threshold keeps; the nearest cell on either side of
- * it is more than two orders away, so no libm moves one across. */
+ * loop trip decided by a period, a delta and a length in basic arithmetic. */
 #define SWAK_DC_CMP       1878000
 #define SWAK_NYQ_CMP       210004
 #define SWAK_CENTRE_CMP    180000
@@ -480,8 +478,9 @@ static ErrorNumber test_swak_nyquist( void )
          if( d > worst ) worst = d;
       }
 
-      /* Route the first period of EVERY row, so before the exits below: the routed floor is only asserted when a pipe is up, so a
-       * row that routes nothing is invisible to a run without servers. */
+      /* Route the first period of EVERY row, so before the exits below: the
+       * routed floor is only asserted when a pipe is up, so a row that routes
+       * nothing is invisible to a run without servers. */
       if( pi == 0 && di == 0 )
       {
          /* Its own shape locals: writing the measured call's begIdx/nbElement
@@ -518,13 +517,21 @@ static ErrorNumber test_swak_nyquist( void )
             swakIn[i] = (i & 1) ? -1.0 : 1.0;
       }
 
-      /* A cell whose envelope after k0 bars is still above what a wrong
-       * numerator would leave cannot fail, so it is not compared and not
-       * counted. That holds for the control arm too: its residue there is
-       * all transient. */
+      /* A cell whose transient outlasts the k0 settled bars cannot fail, so it
+       * is not compared and not counted; that holds for the control arm too,
+       * whose residue there is all transient. Kept when two periods fit in
+       * k0, over delta for BP, whose band narrows with it. Decided in basic
+       * arithmetic so that the pinned count is the same on every host; the
+       * envelope then proves each kept cell can fail. */
+      if( 2.0*(double)P > (double)k0 * ( (f == SWAK_BP) ? delta : 1.0 ) )
+         continue;
       env = swakEnvelope( f, P, delta, k0 );
       if( 3.0*env > 1e-3 )
-         continue;
+      {
+         printf( "%s Nyquist Fail [P=%d delta=%g]: kept a cell still in its transient\n",
+                 swakName[f], P, delta );
+         return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+      }
 
       if( swakNyquist[f] == -1 )
       {

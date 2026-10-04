@@ -141,11 +141,12 @@ TA_LIB_API TA_RetCode TA_SWAK_2PHP( int    startIdx,
    b2p = 2.415 * (1.0 - cos(w));
    a2p = -b2p + sqrt(fma(b2p, b2p, 2.0 * b2p));
    /* The two-pole high-pass row: the same double real pole as the Gaussian
-    * and Butterworth rows, with a (1, -2, 1) numerator instead. That numerator is zero on a constant, so
-    * the DC gain is 0 and the line is centred on zero; at Nyquist it weighs 4,
-    * and c0 is exactly what divides that back to unity -- ((2-a2p)/2)^2 times
-    * 4/(2-a2p)^2 is 1. Rolling off twice as steeply as the one-pole row is the
-    * whole reason to pay for the second pole.
+    * and Butterworth rows, with a (1, -2, 1) numerator instead. That
+    * numerator is zero on a constant, so the DC gain is 0 and the line is
+    * centred on zero; at Nyquist it weighs 4, and c0 is exactly what divides
+    * that back to unity -- ((2-a2p)/2)^2 times 4/(2-a2p)^2 is 1. Rolling off
+    * twice as steeply as the one-pole row is the whole reason to pay for the
+    * second pole.
     */
    om = 1.0 - a2p;
    c0 = (1.0 - a2p / 2.0) * (1.0 - a2p / 2.0);
@@ -392,11 +393,12 @@ static TA_RetCode TA_SWAK_2PHP_OpenImpl( struct TA_SWAK_2PHP_Stream **stream, co
       b2p = 2.415 * (1.0 - cos(w));
       a2p = -b2p + sqrt(fma(b2p, b2p, 2.0 * b2p));
       /* The two-pole high-pass row: the same double real pole as the Gaussian
-       * and Butterworth rows, with a (1, -2, 1) numerator instead. That numerator is zero on a constant, so
-       * the DC gain is 0 and the line is centred on zero; at Nyquist it weighs 4,
-       * and c0 is exactly what divides that back to unity -- ((2-a2p)/2)^2 times
-       * 4/(2-a2p)^2 is 1. Rolling off twice as steeply as the one-pole row is the
-       * whole reason to pay for the second pole.
+       * and Butterworth rows, with a (1, -2, 1) numerator instead. That
+       * numerator is zero on a constant, so the DC gain is 0 and the line is
+       * centred on zero; at Nyquist it weighs 4, and c0 is exactly what divides
+       * that back to unity -- ((2-a2p)/2)^2 times 4/(2-a2p)^2 is 1. Rolling off
+       * twice as steeply as the one-pole row is the whole reason to pay for the
+       * second pole.
        */
       om = 1.0 - a2p;
       c0 = (1.0 - a2p / 2.0) * (1.0 - a2p / 2.0);
