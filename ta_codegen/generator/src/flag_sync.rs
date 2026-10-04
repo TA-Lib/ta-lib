@@ -119,7 +119,7 @@ mod tests {
             // multi-token expressions) fails LOUDLY — a silently skipped
             // define is exactly the coverage hole this gate exists to close.
             let bare = val.trim_start_matches('(').trim_end_matches(')');
-            if bare.starts_with(prefix) {
+            if bare.starts_with(prefix) && it.next().is_none_or(|t| t.starts_with("/*")) {
                 aliases.push((name.to_string(), bare.to_string()));
                 continue;
             }

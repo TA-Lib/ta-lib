@@ -265,8 +265,8 @@
     * @param inClose Close price of each bar.
     * @param outInteger +100/+80 when the first candle is black (bullish),
     *        -100/-80 when the first candle is white (bearish), 0 otherwise. Magnitude
-    *        100 for strict containment inside the first body, 80 when one real-body
-    *        end matches. Must hold at least
+    *        100 for strict containment inside the first body, 80 when one or both
+    *        real-body ends match. Must hold at least
     *        {@code endIdx - max(startIdx, cdlharamicrossLookback(...)) + 1} values,
     *        and never be empty: an empty array is an absent output.
     * @return The range written: {@code begIdx} is the first bar with a value,
@@ -340,8 +340,8 @@
     * @param inClose Close price of each bar.
     * @param outInteger +100/+80 when the first candle is black (bullish),
     *        -100/-80 when the first candle is white (bearish), 0 otherwise. Magnitude
-    *        100 for strict containment inside the first body, 80 when one real-body
-    *        end matches. Must hold at least
+    *        100 for strict containment inside the first body, 80 when one or both
+    *        real-body ends match. Must hold at least
     *        {@code endIdx - max(startIdx, cdlharamicrossLookback(...)) + 1} values,
     *        and never be empty: an empty array is an absent output.
     * @return The range written: {@code begIdx} is the first bar with a value,

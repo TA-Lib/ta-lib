@@ -10,6 +10,7 @@ A four-candle pattern: two successively narrower inside bars, then a breakout ba
 ## Notes
 
 - Does not verify the prior trend (downtrend for bullish, uptrend for bearish) that this reversal pattern assumes.
+- A bar that is both a new setup and the confirmation of an earlier one reports the new setup; the earlier one ends unconfirmed.
 
 ## Inputs
 

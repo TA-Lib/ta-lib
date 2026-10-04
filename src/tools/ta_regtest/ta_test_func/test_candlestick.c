@@ -905,6 +905,32 @@ static ErrorNumber pb_check_totals( void )
  * "call the pattern function", which is the one thing that differs between a
  * parameterless candlestick and one of the seven that take optInPenetration.
  * `out` is read-only here: both callers own their own PB_N buffer. */
+/* Functions whose detects and controls fired exactly the values of level 100
+ * and 80 their output's flags declare. */
+static int pbFlagClassChecked;
+
+/* The values of level 100 and 80 the output of `name` declares (rule rW8); -1
+ * when it cannot be looked up. A 200 confirms on a later bar, outside the one
+ * decision these scenarios exercise. */
+static int pb_flag_classes( const char *name, int want[4] )
+{
+   const TA_FuncHandle *handle;
+   const TA_OutputParameterInfo *info;
+   int n = 0, l;
+   static const int levels[2] = { 100, 80 };
+   if( TA_GetFuncHandle( name, &handle ) != TA_SUCCESS ||
+       TA_GetOutputParameterInfo( handle, 0, &info ) != TA_SUCCESS )
+      return -1;
+   for( l = 0; l < 2; l++ )
+   {
+      if( l == 1 && !(info->flags & TA_OUT_PATTERN_WEAK) )
+         break;
+      if( info->flags & TA_OUT_POSITIVE ) want[n++] =  levels[l];
+      if( info->flags & TA_OUT_NEGATIVE ) want[n++] = -levels[l];
+   }
+   return n;
+}
+
 static ErrorNumber pb_check_mcdc_finish( const char *name, TA_RetCode rc,
                                           const int out[], int begIdx, int nb,
                                           PbCondFn conds )
@@ -1306,6 +1332,23 @@ static ErrorNumber pb_check_mcdc_finish( const char *name, TA_RetCode rc,
                 " -- a firing scenario is missing for one of its arms\n",
                 name, nCls, pbNbSigns);
          fails++;
+      }
+      else
+      {
+         int want[4], nWant = pb_flag_classes( name, want ), w, match = nWant == nCls;
+         for( w = 0; match && w < nWant; w++ )
+         {
+            for( j = 0; j < nCls && cls[j] != want[w]; j++ ) { }
+            match = j < nCls;
+         }
+         if( !match )
+         {
+            printf("  %s MC/DC: its scenarios fire %d value class(es), its output's flags "
+                   "declare %d of level 100 and 80\n", name, nCls, nWant);
+            fails++;
+         }
+         else
+            pbFlagClassChecked++;
       }
    }
 
@@ -11712,14 +11755,6 @@ static void cvs_one_function( const TA_FuncInfo *funcInfo, void *opaque )
    f = outInfo->flags;
    color = !(f & (TA_OUT_PATTERN_BOOL | TA_OUT_PATTERN_BULL_BEAR)) &&
            (f & TA_OUT_ZERO) && (f & TA_OUT_POSITIVE) && (f & TA_OUT_NEGATIVE);
-   if( !(f & (TA_OUT_PATTERN_BOOL | TA_OUT_PATTERN_BULL_BEAR)) && !color )
-   {
-      printf( "\nFail: TA_%s: its output's flags 0x%x make it no pattern output\n",
-              funcInfo->name, (unsigned int)f );
-      TA_ParamHolderFree( paramHolder );
-      ctx->error = TA_CDL_VALUE_SET_FAIL;
-      return;
-   }
    TA_SetInputParamPricePtr( paramHolder, 0, cvsOpen, cvsHigh, cvsLow, cvsClose, NULL, NULL );
    TA_SetOutputParamIntegerPtr( paramHolder, 0, cvsOut );
    retCode = TA_CallFunc( paramHolder, 0, CVS_NB_BAR - 1, &begIdx, &nbElement );
@@ -11811,6 +11846,12 @@ static ErrorNumber test_candle_value_set( void )
    {
       printf( "\nFail: only %d of %d candlestick function(s) wrote a non-zero value "
               "in the value-set sweep\n", nbFired, ctx.nbFunc );
+      return TA_CDL_VALUE_SET_VACUOUS;
+   }
+   if( pbFlagClassChecked != ctx.nbFunc )
+   {
+      printf( "\nFail: the MC/DC scenarios of %d of the %d candlestick functions fired "
+              "the values their flags declare\n", pbFlagClassChecked, ctx.nbFunc );
       return TA_CDL_VALUE_SET_VACUOUS;
    }
    if( ctx.confirmChecked == 0 )

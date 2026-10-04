@@ -329,9 +329,10 @@ public partial class Core
    /// <param name="inClose">Close price of each bar.</param>
    /// <param name="outInteger">+100/+80 when the first candle is black (bullish), -100/-80 when the first
    /// candle is white (bearish), 0 otherwise. Magnitude 100 for strict
-   /// containment inside the first body, 80 when one real-body end matches. Must
-   /// hold at least <c>endIdx - max(startIdx, CdlharamicrossLookback(...)) +
-   /// 1</c> values, and never be empty: an empty span is an absent output.</param>
+   /// containment inside the first body, 80 when one or both real-body ends
+   /// match. Must hold at least <c>endIdx - max(startIdx,
+   /// CdlharamicrossLookback(...)) + 1</c> values, and never be empty: an empty
+   /// span is an absent output.</param>
    /// <returns>The range written: <c>BegIdx</c> is the first bar with a value,
    /// <c>Count</c> how many were written.</returns>
    /// <exception cref="System.ArgumentOutOfRangeException"><c>startIdx</c> or <c>endIdx</c> is negative or above
@@ -421,9 +422,10 @@ public partial class Core
    /// <param name="inClose">Close price of each bar.</param>
    /// <param name="outInteger">+100/+80 when the first candle is black (bullish), -100/-80 when the first
    /// candle is white (bearish), 0 otherwise. Magnitude 100 for strict
-   /// containment inside the first body, 80 when one real-body end matches. Must
-   /// hold at least <c>endIdx - max(startIdx, CdlharamicrossLookback(...)) +
-   /// 1</c> values, and never be empty: an empty span is an absent output.</param>
+   /// containment inside the first body, 80 when one or both real-body ends
+   /// match. Must hold at least <c>endIdx - max(startIdx,
+   /// CdlharamicrossLookback(...)) + 1</c> values, and never be empty: an empty
+   /// span is an absent output.</param>
    /// <returns>The range written: <c>BegIdx</c> is the first bar with a value,
    /// <c>Count</c> how many were written.</returns>
    /// <exception cref="System.ArgumentOutOfRangeException"><c>startIdx</c> or <c>endIdx</c> is negative or above
@@ -971,8 +973,9 @@ public partial class Core
    /// <param name="inClose">Close price of each bar. The warm-up history, oldest bar first.</param>
    /// <param name="outInteger">+100/+80 when the first candle is black (bullish), -100/-80 when the first
    /// candle is white (bearish), 0 otherwise. Magnitude 100 for strict
-   /// containment inside the first body, 80 when one real-body end matches. Must
-   /// hold at least <c>historyLen - CdlharamicrossLookback(...)</c> values.</param>
+   /// containment inside the first body, 80 when one or both real-body ends
+   /// match. Must hold at least <c>historyLen - CdlharamicrossLookback(...)</c>
+   /// values.</param>
    /// <returns>The open stream handle, with its fill range set.</returns>
    /// <exception cref="InsufficientHistoryException">The history holds fewer than <c>CdlharamicrossLookback(...) + 1</c> bars.</exception>
    /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, the input series

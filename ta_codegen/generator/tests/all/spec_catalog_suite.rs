@@ -132,7 +132,8 @@ fn the_spec_flag_catalog_is_complete() {
                 continue;
             }
             let (Some(name), Some(value)) = (it.next(), it.next()) else { continue };
-            if name.starts_with(fam.c_prefix) && !value.starts_with(fam.c_prefix) {
+            let alias = value.starts_with(fam.c_prefix) && it.next().is_none_or(|t| t.starts_with("/*"));
+            if name.starts_with(fam.c_prefix) && !alias {
                 c.insert(name.to_string(), hex(value).unwrap_or_else(|| panic!("{name}: not a hex literal")));
             }
         }

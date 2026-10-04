@@ -400,7 +400,7 @@ fn func_flags_class() -> String {
             ("STREAMING", 0x0200_0000, "A streaming (one-bar-at-a-time) API exists."),
             ("VOLUME_USED", 0x0400_0000, "Output is over the volume data."),
             ("UNSTABLE_PERIOD", 0x0800_0000, "Owns an unstable-period id."),
-            ("CANDLESTICK", 0x1000_0000, "A candlestick pattern."),
+            ("CANDLESTICK", 0x1000_0000, "A candlestick pattern function: every integer output is a pattern output."),
             (
                 "PATH_DEPENDENT",
                 0x2000_0000,

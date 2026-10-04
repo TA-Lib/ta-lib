@@ -7,6 +7,7 @@ A 3-bar pattern: an inside bar followed by a false breakout, optionally later co
 ## Notes
 
 - The name comes from the Japanese word for a deceptive move or "trap" — fitting, since the pattern exists to catch traders acting on a false breakout. Bulkowski's testing of the confirmed pattern found the trap itself barely beats a coin flip: the bullish variant continues as expected only 52% of the time and the bearish variant exactly 50% ("random"), both ranking in the bottom fifth (83rd-84th of 105) for post-breakout performance. ([thepatternsite.com](https://thepatternsite.com/HikkakeBull.html))
+- A bar that is both a new setup and the confirmation of an earlier one reports the new setup; the earlier one ends unconfirmed.
 
 ## Inputs
 

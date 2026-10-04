@@ -340,7 +340,7 @@ const FUNC_FLAGS: &[(&str, &str, &str)] = &[
         "UnstablePeriod",
         "Owns an unstable-period id: <see cref=\"FuncInfo.UnstableId\"/>.",
     ),
-    ("candlestick", "Candlestick", "The function recognises a candlestick pattern."),
+    ("candlestick", "Candlestick", "A candlestick pattern function: every integer output is a pattern output."),
     (
         "path_dependent",
         "PathDependent",

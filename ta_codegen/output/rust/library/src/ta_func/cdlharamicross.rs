@@ -374,7 +374,7 @@ impl Core {
     /// * `inClose` — Close price of each bar.
     /// * `outInteger` — +100/+80 when the first candle is black (bullish), -100/-80 when the
     ///   first candle is white (bearish), 0 otherwise. Magnitude 100 for strict containment inside
-    ///   the first body, 80 when one real-body end matches.
+    ///   the first body, 80 when one or both real-body ends match.
     ///
     /// # Returns
     ///

@@ -363,6 +363,7 @@ public partial class Core
    /// </para>
    /// <list type="bullet">
    /// <item><description>Does not verify the prior trend (downtrend for bullish, uptrend for bearish) that this reversal pattern assumes.</description></item>
+   /// <item><description>A bar that is both a new setup and the confirmation of an earlier one reports the new setup; the earlier one ends unconfirmed.</description></item>
    /// </list>
    /// <para>
    /// Values are written only where the indicator is defined. The returned
@@ -447,6 +448,7 @@ public partial class Core
    /// </para>
    /// <list type="bullet">
    /// <item><description>Does not verify the prior trend (downtrend for bullish, uptrend for bearish) that this reversal pattern assumes.</description></item>
+   /// <item><description>A bar that is both a new setup and the confirmation of an earlier one reports the new setup; the earlier one ends unconfirmed.</description></item>
    /// </list>
    /// <para>
    /// This is the <c>float[]</c> overload: input elements are widened to

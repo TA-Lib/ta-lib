@@ -263,10 +263,14 @@ rW8: `check_flags` (`parser/yaml.rs`) fails `generate` on a pattern output
 whose flags break its rules, and `validate_output_values` (`docs_site.rs`) on an
 Output Values table that differs from the values the flags declare.
 `test_candle_value_set` (`test_candlestick.c`) holds every value a candlestick
-function writes on its series to the values its output's flags declare, and a
-color output's sign to its candle's color. It requires each of +-80, +-100 and
-+-200 to occur, a color output to fire, and most functions to fire. A pattern
-too rare to fire there is held to nothing.
+function writes on its series to the values its output's flags declare, a color
+output's sign to its candle's color, and each +-200 to a live pattern of its
+sign: one before it in the range that no 200 has confirmed. It requires each of
++-80, +-100 and +-200 to occur, a color output to fire, a 200 to be matched, and
+most functions to fire. That every declared value occurs is held per function
+by the MC/DC scenarios (`pb_check_mcdc`), whose firing cases must produce
+exactly the values of level 100 and 80 the output's flags declare, and by
+`test_hikkake_predicate_coverage` for the +-200 of CDLHIKKAKE and CDLHIKKAKEMOD.
 
 rE3 at a batch call: in C, `abstract_rejected_call_writes_nothing`
 (`test_abstract.c`) paints every output buffer, calls each parameter vector of

@@ -925,10 +925,17 @@ fn validate_output_values(body: &str, func: &FuncDef) -> Result<(), String> {
         blocks.remove(0);
     }
     for ((_, block), (out, declared)) in blocks.iter().zip(&patterns) {
-        let rows: Vec<&str> = block.iter().copied().filter(|l| l.starts_with('|')).collect();
+        // A table runs from its header to the first blank line, and a row needs no
+        // leading pipe to render.
+        let lines = || block.iter().map(|l| l.trim()).skip_while(|l| l.is_empty());
+        let rows: Vec<&str> = lines().take_while(|l| !l.is_empty()).collect();
         let cell = |row: &str| row.trim_start_matches('|').split('|').next().unwrap_or("").trim().to_string();
-        if rows.len() < 2 || cell(rows[0]) != "Value" {
-            return Err(format!("{page}: `{out}`: the table needs a `| Value | Meaning |` header"));
+        let separator = |row: &str| row.contains('-') && row.chars().all(|c| matches!(c, '|' | '-' | ':' | ' '));
+        if rows.len() < 2 || cell(rows[0]) != "Value" || !separator(rows[1]) {
+            return Err(format!("{page}: `{out}`: the table needs a `| Value | Meaning |` header and separator"));
+        }
+        if lines().skip(rows.len()).any(|l| l.contains('|')) {
+            return Err(format!("{page}: `{out}`: a table row is separated from the table by a blank line"));
         }
         let mut listed = Vec::new();
         for row in &rows[2..] {
@@ -1511,6 +1518,30 @@ mod tests {
         let body = format!("{VALUES_HEAD}| -100 | a |\n| 0 | b |\n| 100 | c |\n");
         let err = validate_output_values(&body, &f).unwrap_err();
         assert!(err.contains("extra [-100]"), "{err}");
+    }
+
+    /// A body row renders without a leading pipe, so it is read as one.
+    #[test]
+    fn output_values_read_a_row_without_a_leading_pipe() {
+        let f = pattern_func(&["pattern_bool", "zero", "positive"], true, &["outInteger"]);
+        let body = format!("{VALUES_HEAD}| 0 | a |\n| 100 | b |\n-100 | c\n");
+        let err = validate_output_values(&body, &f).unwrap_err();
+        assert!(err.contains("extra [-100]"), "{err}");
+    }
+
+    #[test]
+    fn output_values_reject_a_row_after_a_blank_line() {
+        let f = pattern_func(&["pattern_bool", "zero", "positive"], true, &["outInteger"]);
+        let body = format!("{VALUES_HEAD}| 0 | a |\n| 100 | b |\n\n| 200 | c |\n");
+        let err = validate_output_values(&body, &f).unwrap_err();
+        assert!(err.contains("separated from the table"), "{err}");
+    }
+
+    #[test]
+    fn output_values_need_a_separator_row() {
+        let f = pattern_func(&["pattern_bool", "zero", "positive"], true, &["outInteger"]);
+        let err = validate_output_values("## Output Values\n\n| Value | Meaning |\n| 0 | a |\n| 100 | b |\n", &f).unwrap_err();
+        assert!(err.contains("header and separator"), "{err}");
     }
 
     #[test]

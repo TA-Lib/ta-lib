@@ -24,9 +24,9 @@ A three-candle pattern of three consecutive doji where the middle doji is a star
 
 | Value | Meaning |
 |-------|---------|
-| -100 | Bearish Tristar: the middle doji ("star") gaps up from the first and the third ends lower; an exhaustion signal warning an uptrend may be topping out |
+| -100 | Bearish Tristar: the middle doji ("star") gaps up from the first, and the top of the third's body stays below the star's; an exhaustion signal warning an uptrend may be topping out |
 | 0 | No pattern (or a doji trio without a qualifying star gap) |
-| 100 | Bullish Tristar: the middle doji ("star") gaps down from the first and the third ends higher; an exhaustion signal warning a downtrend may be bottoming out |
+| 100 | Bullish Tristar: the middle doji ("star") gaps down from the first, and the bottom of the third's body stays above the star's; an exhaustion signal warning a downtrend may be bottoming out |
 
 ## Aliases
 

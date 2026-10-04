@@ -119,7 +119,7 @@ public enum FuncFlags : uint
     /// <summary>Owns an unstable-period id: <see cref="FuncInfo.UnstableId"/>.</summary>
     UnstablePeriod = 0x08000000,
 
-    /// <summary>The function recognises a candlestick pattern.</summary>
+    /// <summary>A candlestick pattern function: every integer output is a pattern output.</summary>
     Candlestick = 0x10000000,
 
     /// <summary>Output depends on where the caller started, so it never converges across ranges.</summary>

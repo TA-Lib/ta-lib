@@ -1579,7 +1579,7 @@ flag_newtype!(
     /// The function has an unstable initial period, settable through
     /// [`CoreBuilder::unstable_period`](crate::CoreBuilder::unstable_period).
     UNSTABLE_PERIOD = 0x0800_0000,
-    /// Output is a candlestick-pattern verdict.
+    /// A candlestick pattern function: every integer output is a pattern output.
     CANDLESTICK = 0x1000_0000,
     /// Output is path-dependent: built up from the first bar, so it depends on
     /// the requested `startIdx` and never converges across ranges — the same bar

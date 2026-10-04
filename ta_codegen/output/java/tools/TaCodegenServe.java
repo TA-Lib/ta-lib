@@ -35794,11 +35794,8 @@ class Core {
            * - first candle: long real body
            * - second candle: star (open gapping up in an uptrend or down in a downtrend) with a doji
            * The meaning of "doji" and "long" is specified with TA_SetCandleSettings
-           * outInteger is positive (1 to 100) when bullish or negative (-1 to -100) when bearish;
-           * it's defined bearish when the long candle is white and the star gaps up, bullish when the long candle
-           * is black and the star gaps down; the user should consider that a doji star is bullish when it appears
-           * in an uptrend and it's bearish when it appears in a downtrend, so to determine the bullishness or
-           * bearishness of the pattern the trend must be analyzed
+           * outInteger is -100 when the long candle is white and the star gaps up, +100 when it is black and
+           * the star gaps down; the trend the reading presumes is not checked
            */
           outIdx = 0;
           do {
@@ -36352,11 +36349,8 @@ class Core {
            * - first candle: long real body
            * - second candle: star (open gapping up in an uptrend or down in a downtrend) with a doji
            * The meaning of "doji" and "long" is specified with TA_SetCandleSettings
-           * outInteger is positive (1 to 100) when bullish or negative (-1 to -100) when bearish;
-           * it's defined bearish when the long candle is white and the star gaps up, bullish when the long candle
-           * is black and the star gaps down; the user should consider that a doji star is bullish when it appears
-           * in an uptrend and it's bearish when it appears in a downtrend, so to determine the bullishness or
-           * bearishness of the pattern the trend must be analyzed
+           * outInteger is -100 when the long candle is white and the star gaps up, +100 when it is black and
+           * the star gaps down; the trend the reading presumes is not checked
            */
           outIdx = 0;
           do {
@@ -44655,8 +44649,8 @@ class Core {
         * @param inClose Close price of each bar.
         * @param outInteger +100/+80 when the first candle is black (bullish),
         *        -100/-80 when the first candle is white (bearish), 0 otherwise. Magnitude
-        *        100 for strict containment inside the first body, 80 when one real-body
-        *        end matches. Must hold at least
+        *        100 for strict containment inside the first body, 80 when one or both
+        *        real-body ends match. Must hold at least
         *        {@code endIdx - max(startIdx, cdlharamicrossLookback(...)) + 1} values,
         *        and never be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
@@ -44730,8 +44724,8 @@ class Core {
         * @param inClose Close price of each bar.
         * @param outInteger +100/+80 when the first candle is black (bullish),
         *        -100/-80 when the first candle is white (bearish), 0 otherwise. Magnitude
-        *        100 for strict containment inside the first body, 80 when one real-body
-        *        end matches. Must hold at least
+        *        100 for strict containment inside the first body, 80 when one or both
+        *        real-body ends match. Must hold at least
         *        {@code endIdx - max(startIdx, cdlharamicrossLookback(...)) + 1} values,
         *        and never be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
@@ -46302,6 +46296,7 @@ class Core {
         * <p><b>Notes</b>
         * <ul>
         * <li>The name comes from the Japanese word for a deceptive move or "trap" — fitting, since the pattern exists to catch traders acting on a false breakout. Bulkowski's testing of the confirmed pattern found the trap itself barely beats a coin flip: the bullish variant continues as expected only 52% of the time and the bearish variant exactly 50% ("random"), both ranking in the bottom fifth (83rd-84th of 105) for post-breakout performance. (<a href="https://thepatternsite.com/HikkakeBull.html">thepatternsite.com</a>)</li>
+        * <li>A bar that is both a new setup and the confirmation of an earlier one reports the new setup; the earlier one ends unconfirmed.</li>
         * </ul>
         * <p>Values are written only where the indicator is defined. The returned
         * {@link OutRange} says where they start and how many there are, and the
@@ -46372,6 +46367,7 @@ class Core {
         * <p><b>Notes</b>
         * <ul>
         * <li>The name comes from the Japanese word for a deceptive move or "trap" — fitting, since the pattern exists to catch traders acting on a false breakout. Bulkowski's testing of the confirmed pattern found the trap itself barely beats a coin flip: the bullish variant continues as expected only 52% of the time and the bearish variant exactly 50% ("random"), both ranking in the bottom fifth (83rd-84th of 105) for post-breakout performance. (<a href="https://thepatternsite.com/HikkakeBull.html">thepatternsite.com</a>)</li>
+        * <li>A bar that is both a new setup and the confirmation of an earlier one reports the new setup; the earlier one ends unconfirmed.</li>
         * </ul>
         * <p>This is the {@code float[]} overload. The arithmetic is performed in
         * {@code double} before being written to the {@code double[]} output, so a
@@ -47173,6 +47169,7 @@ class Core {
         * <p><b>Notes</b>
         * <ul>
         * <li>Does not verify the prior trend (downtrend for bullish, uptrend for bearish) that this reversal pattern assumes.</li>
+        * <li>A bar that is both a new setup and the confirmation of an earlier one reports the new setup; the earlier one ends unconfirmed.</li>
         * </ul>
         * <p>Values are written only where the indicator is defined. The returned
         * {@link OutRange} says where they start and how many there are, and the
@@ -47243,6 +47240,7 @@ class Core {
         * <p><b>Notes</b>
         * <ul>
         * <li>Does not verify the prior trend (downtrend for bullish, uptrend for bearish) that this reversal pattern assumes.</li>
+        * <li>A bar that is both a new setup and the confirmation of an earlier one reports the new setup; the earlier one ends unconfirmed.</li>
         * </ul>
         * <p>This is the {@code float[]} overload. The arithmetic is performed in
         * {@code double} before being written to the {@code double[]} output, so a
@@ -217569,7 +217567,7 @@ class Core {
 
 public class TaCodegenServe {
     static Core core = new Core();
-    static final String SPLICED_GENCODE_DIGEST = "ce0bba85d1870475";
+    static final String SPLICED_GENCODE_DIGEST = "d0f9228905c0dfd1";
     static final int MAX_ARRAY_SIZE = 200000;
     static double[] refOpen = new double[MAX_ARRAY_SIZE];
     static double[] refHigh = new double[MAX_ARRAY_SIZE];

@@ -48,7 +48,7 @@ no doc edit at all** — the render just picks up the new number.
 name and order, so a parameter renamed on one side only cannot ship. Nothing checks a prose
 number against the YAML, and that check cannot be a blanket "no digits in a structured
 section" rule — roughly 80 bullets carry legitimate
-non-YAML numbers (output domains like WILLR's −100…0,
+non-YAML numbers (a `CDL*` output's values, output domains like WILLR's −100…0,
 MACDFIX's hard-coded 12/26 constants that live in `macdfix.c`). It has to compare a number
 against the specific YAML field it names. The one exception is a pattern output's
 `## Output Values` value column, which `generate` checks against the values the output's

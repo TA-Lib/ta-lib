@@ -737,7 +737,7 @@ fn example_doctest(
 /// The claim a generated example makes about the values of one integer output.
 ///
 /// A pattern output's values come from its flags. For any other integer output the
-/// metadata does not carry the domain, so those shapes are spelled out here — the
+/// metadata does not carry the domain, so those shapes are spelled out here, the
 /// same way [`unit_domain`] names the three functions whose example input has to
 /// live in `[-1, 1]`.
 ///

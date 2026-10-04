@@ -165,11 +165,8 @@ public partial class Core
        * - first candle: long real body
        * - second candle: star (open gapping up in an uptrend or down in a downtrend) with a doji
        * The meaning of "doji" and "long" is specified with TA_SetCandleSettings
-       * outInteger is positive (1 to 100) when bullish or negative (-1 to -100) when bearish;
-       * it's defined bearish when the long candle is white and the star gaps up, bullish when the long candle
-       * is black and the star gaps down; the user should consider that a doji star is bullish when it appears
-       * in an uptrend and it's bearish when it appears in a downtrend, so to determine the bullishness or
-       * bearishness of the pattern the trend must be analyzed
+       * outInteger is -100 when the long candle is white and the star gaps up, +100 when it is black and
+       * the star gaps down; the trend the reading presumes is not checked
        */
       outIdx = 0;
       do {
@@ -772,11 +769,8 @@ public partial class Core
        * - first candle: long real body
        * - second candle: star (open gapping up in an uptrend or down in a downtrend) with a doji
        * The meaning of "doji" and "long" is specified with TA_SetCandleSettings
-       * outInteger is positive (1 to 100) when bullish or negative (-1 to -100) when bearish;
-       * it's defined bearish when the long candle is white and the star gaps up, bullish when the long candle
-       * is black and the star gaps down; the user should consider that a doji star is bullish when it appears
-       * in an uptrend and it's bearish when it appears in a downtrend, so to determine the bullishness or
-       * bearishness of the pattern the trend must be analyzed
+       * outInteger is -100 when the long candle is white and the star gaps up, +100 when it is black and
+       * the star gaps down; the trend the reading presumes is not checked
        */
       outIdx = 0;
       do {

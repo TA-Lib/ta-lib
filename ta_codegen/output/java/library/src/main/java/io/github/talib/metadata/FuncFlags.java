@@ -57,7 +57,7 @@ public final class FuncFlags {
    /** Owns an unstable-period id. */
    public static final int UNSTABLE_PERIOD = 0x08000000;
 
-   /** A candlestick pattern. */
+   /** A candlestick pattern function: every integer output is a pattern output. */
    public static final int CANDLESTICK = 0x10000000;
 
    /** Output depends on where the caller started, so it never converges across ranges. */

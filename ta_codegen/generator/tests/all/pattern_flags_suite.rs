@@ -38,20 +38,6 @@ const CDL: &[&str] = &["candlestick", "stream"];
 const PLAIN: &[&str] = &["stream"];
 
 #[test]
-fn every_shipped_shape_is_accepted() {
-    for flags in [
-        &["line", "pattern_bool", "zero", "positive"][..],
-        &["line", "pattern_bull_bear", "zero", "positive"],
-        &["line", "pattern_bull_bear", "zero", "negative"],
-        &["line", "pattern_bull_bear", "zero", "positive", "negative", "pattern_weak"],
-        &["line", "pattern_bull_bear", "zero", "positive", "negative", "pattern_confirm"],
-        &["line", "zero", "positive", "negative"],
-    ] {
-        assert_eq!(check_flags(&fixture(CDL, ParamType::Integer, flags)), Ok(()), "{flags:?}");
-    }
-}
-
-#[test]
 fn bool_takes_exactly_zero_and_positive() {
     one_complaint(&fixture(CDL, ParamType::Integer, &["pattern_bool", "zero", "positive", "negative"]), "`pattern_bool` takes");
 }

@@ -18,7 +18,7 @@ A two-candle reversal pattern: a long real body followed by a doji whose real bo
 
 ## Outputs
 
-- `outInteger` — +100/+80 when the first candle is black (bullish), -100/-80 when the first candle is white (bearish), 0 otherwise. Magnitude 100 for strict containment inside the first body, 80 when one real-body end matches
+- `outInteger` — +100/+80 when the first candle is black (bullish), -100/-80 when the first candle is white (bearish), 0 otherwise. Magnitude 100 for strict containment inside the first body, 80 when one or both real-body ends match
 
 ## Output Values
 
