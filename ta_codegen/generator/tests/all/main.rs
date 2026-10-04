@@ -32,6 +32,7 @@ mod ride_along_suite;
 mod rust_doc_suite;
 mod rust_render_statement_suite;
 mod rust_stream_suite;
+mod spec_catalog_suite;
 mod stability_suite;
 mod streaming_dispatch_suite;
 mod streaming_suite;
