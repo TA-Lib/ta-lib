@@ -4,6 +4,8 @@ description: "io.github.talib: a native Java port with no JNI, indicators as met
 toc: false
 ---
 
+[![Maven Central](https://img.shields.io/maven-central/v/io.github.ta-lib/ta-lib)](https://central.sonatype.com/artifact/io.github.ta-lib/ta-lib)
+
 <p><a href="#intro">1.0 Introduction</a></p>
 
 <p><a href="#build">2.0 Add it to your project</a></p>

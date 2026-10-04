@@ -18,14 +18,14 @@ Both CMake and autotools build systems are included, enabling an optimized build
     - [Build from source](#windows-build-from-source)
 
 - [macOS](#macos)
-    - [Homebrew (recommended)](#macos-homebrew-recommended)
+    - [Homebrew (recommended)](#macos-homebrew-recommended) [![Homebrew](https://img.shields.io/homebrew/v/ta-lib)](https://formulae.brew.sh/formula/ta-lib)
     - [Build from source](#macos-build-from-source)
 
 - [Linux](#linux)
     - [Debian packages](#linux-debian-packages)
     - [Build from source](#linux-build-from-source)
 
-- [vcpkg](#vcpkg)
+- [vcpkg](#vcpkg) [![vcpkg](https://img.shields.io/vcpkg/v/talib)](https://vcpkg.io/en/package/talib)
 
 - [Use it from CMake](#use-it-from-cmake)
 
