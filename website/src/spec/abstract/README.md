@@ -69,7 +69,7 @@ A slot is one input, one optional parameter or one output. A setter names it by 
 
 <a id="ra3"></a>**rA3** A misuse of a parameter holder (an unbound or mistyped argument, a setter index that names no slot, a holder the Abstract API did not make) answers `TA_BAD_PARAM` or one of the [codes below](/spec/abstract/#codes), and so does a misuse of C's lookups and tables. Which one is not specified, and a release may make it more specific. When a call is refused for the state of its holder, the function did not run and the code is one of the codes below, so it cannot be mistaken for the function's own. In Java and C# the carrier is a `TALibArgumentException` ([failures](/spec/#failures)).
 
-<a id="ra4"></a>**rA4** A lookup of a function by name ignores the case of ASCII letters. An unknown name answers `TA_FUNC_NOT_FOUND` in C, `None` in Rust (`Err(RetCode::BadParam)` from `get_func_handle_rc`), `null` in Java, and in C# a `KeyNotFoundException` from the indexer and `false` from `TryGet`. In C an empty or absent name answers `TA_BAD_PARAM`.
+<a id="ra4"></a>**rA4** A lookup of a function by name ignores the case of ASCII letters. An unknown name answers `TA_FUNC_NOT_FOUND` in C and from Rust's `get_func_handle_rc`, `None` from Rust's `get_func_handle`, `null` in Java, and in C# a `KeyNotFoundException` from the indexer and `false` from `TryGet`. An empty name answers `TA_BAD_PARAM` in C and from `get_func_handle_rc`, as does an absent one in C.
 
 <a id="ra5"></a>**rA5** An optional parameter left unbound takes the function's documented default, as the default sentinel does in the typed call ([rP3](/spec/inputs-outputs/#rp3)).
 

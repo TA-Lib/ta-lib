@@ -290,9 +290,13 @@ fn emit_api(
     o.push_str("    if let Some(id) = get_func_handle_exact(name) {\n        return Some(id);\n    }\n");
     o.push_str("    FUNCS.iter().find(|f| f.name.eq_ignore_ascii_case(name)).map(|f| f.id)\n}\n\n");
 
-    o.push_str("/// C-style variant returning the familiar `RetCode` error channel.\n");
+    o.push_str(
+        "/// [`get_func_handle`] with C's codes: [`RetCode::FuncNotFound`] for an unknown\n\
+         /// name, [`RetCode::BadParam`] for an empty one.\n",
+    );
     o.push_str("pub fn get_func_handle_rc(name: &str) -> Result<FuncId, crate::RetCode> {\n");
-    o.push_str("    get_func_handle(name).ok_or(crate::RetCode::BadParam)\n}\n\n");
+    o.push_str("    if name.is_empty() {\n        return Err(crate::RetCode::BadParam);\n    }\n");
+    o.push_str("    get_func_handle(name).ok_or(crate::RetCode::FuncNotFound)\n}\n\n");
 
     o.push_str("/// Function metadata for a handle (infallible — `FuncId` cannot be invalid).\n");
     o.push_str("#[inline] pub fn get_func_info(handle: FuncId) -> &'static FuncInfo { handle.info() }\n");
@@ -1284,7 +1288,10 @@ mod registry_tests {
     #[test]
     fn unknown_name_is_none() {
         assert_eq!(get_func_handle("definitely_not_a_ta_func"), None);
-        assert_eq!(get_func_handle_rc("definitely_not_a_ta_func"), Err(crate::RetCode::BadParam));
+        assert_eq!(get_func_handle_rc("definitely_not_a_ta_func"), Err(crate::RetCode::FuncNotFound));
+        assert_eq!(get_func_handle_rc("1"), Err(crate::RetCode::FuncNotFound));
+        assert_eq!(get_func_handle_rc(""), Err(crate::RetCode::BadParam));
+        assert_eq!(get_func_handle_rc("sma"), Ok(FuncId::SMA));
     }
 
     /// #278: the lookup folds ASCII case, but every name it hands back

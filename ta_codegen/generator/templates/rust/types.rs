@@ -16,6 +16,8 @@ pub enum RetCode {
     BadParam = 2,
     /// C parity only, never returned here: an allocation failure terminates the process (#178).
     AllocErr = 3,
+    /// Abstract API only: no function has the name looked up.
+    FuncNotFound = 5,
     /// Abstract API only: a setter was given a value of another kind than
     /// the slot it names.
     InvalidParamHolderType = 8,
@@ -77,6 +79,7 @@ impl std::fmt::Display for RetCode {
         let s = match self {
             RetCode::Success => "success",
             RetCode::BadParam => "bad parameter",
+            RetCode::FuncNotFound => "no function has that name",
             RetCode::InvalidParamHolderType => "value of the wrong kind for this slot",
             RetCode::InputNotAllInitialize => "input not bound",
             RetCode::OutputNotAllInitialize => "output not bound",
