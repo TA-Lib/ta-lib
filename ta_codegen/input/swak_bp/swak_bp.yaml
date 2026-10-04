@@ -1,0 +1,27 @@
+name: SWAK_BP
+group: Cycle Indicators
+hint: Swiss Army Knife - Band-Pass Filter
+flags: [unstable_period, stream]
+inputs:
+  - name: inReal
+    type: real
+optional_inputs:
+  - name: optInTimePeriod
+    type: integer
+    display_name: Time Period
+    hint: Center period
+    range: [5, 2000]
+    default: 20
+    suggested: [5, 200, 1]
+  - name: optInDelta
+    type: real
+    display_name: Delta
+    hint: Half-bandwidth as a fraction of the center period
+    range: [0.05, 0.5]
+    default: 0.1
+    precision: 2
+    suggested: [0.05, 0.5, 0.05]
+outputs:
+  - name: outReal
+    type: real
+    flags: [line]

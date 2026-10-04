@@ -226,6 +226,11 @@
 #include "ta_SUB.c"
 #include "ta_SUM.c"
 #include "ta_SUPERTREND.c"
+#include "ta_SWAK_2PHP.c"
+#include "ta_SWAK_BP.c"
+#include "ta_SWAK_BUTTER.c"
+#include "ta_SWAK_GAUSS.c"
+#include "ta_SWAK_HP.c"
 #include "ta_T3.c"
 #include "ta_TAN.c"
 #include "ta_TANH.c"
@@ -3599,6 +3604,86 @@ static void bench_all(const char *filter, int iters) {
             g_sink += g_outIntBuf0[0];
         }
         printf("SUPERTREND %lld\n", best / iters);
+        fflush(stdout);
+    }
+    if( func_matches(filter, "SWAK_2PHP") ) {
+        long long best = 0;
+        for( int pass = 0; pass < 3; pass++ ) {
+            int outBegIdx, outNBElement;
+            long long t0 = get_nanotime();
+            for( int it = 0; it < iters; it++ ) {
+                TA_SWAK_2PHP(0, g_nPoints - 1, g_close, 20, &outBegIdx, &outNBElement, g_outBuf0);
+            }
+            long long elapsed = get_nanotime() - t0;
+            if( !best || elapsed < best ) best = elapsed;
+            g_sink += outNBElement;
+            g_sink += g_outBuf0[0];
+        }
+        printf("SWAK_2PHP %lld\n", best / iters);
+        fflush(stdout);
+    }
+    if( func_matches(filter, "SWAK_BP") ) {
+        long long best = 0;
+        for( int pass = 0; pass < 3; pass++ ) {
+            int outBegIdx, outNBElement;
+            long long t0 = get_nanotime();
+            for( int it = 0; it < iters; it++ ) {
+                TA_SWAK_BP(0, g_nPoints - 1, g_close, 20, 0.100000000000000, &outBegIdx, &outNBElement, g_outBuf0);
+            }
+            long long elapsed = get_nanotime() - t0;
+            if( !best || elapsed < best ) best = elapsed;
+            g_sink += outNBElement;
+            g_sink += g_outBuf0[0];
+        }
+        printf("SWAK_BP %lld\n", best / iters);
+        fflush(stdout);
+    }
+    if( func_matches(filter, "SWAK_BUTTER") ) {
+        long long best = 0;
+        for( int pass = 0; pass < 3; pass++ ) {
+            int outBegIdx, outNBElement;
+            long long t0 = get_nanotime();
+            for( int it = 0; it < iters; it++ ) {
+                TA_SWAK_BUTTER(0, g_nPoints - 1, g_close, 20, &outBegIdx, &outNBElement, g_outBuf0);
+            }
+            long long elapsed = get_nanotime() - t0;
+            if( !best || elapsed < best ) best = elapsed;
+            g_sink += outNBElement;
+            g_sink += g_outBuf0[0];
+        }
+        printf("SWAK_BUTTER %lld\n", best / iters);
+        fflush(stdout);
+    }
+    if( func_matches(filter, "SWAK_GAUSS") ) {
+        long long best = 0;
+        for( int pass = 0; pass < 3; pass++ ) {
+            int outBegIdx, outNBElement;
+            long long t0 = get_nanotime();
+            for( int it = 0; it < iters; it++ ) {
+                TA_SWAK_GAUSS(0, g_nPoints - 1, g_close, 20, &outBegIdx, &outNBElement, g_outBuf0);
+            }
+            long long elapsed = get_nanotime() - t0;
+            if( !best || elapsed < best ) best = elapsed;
+            g_sink += outNBElement;
+            g_sink += g_outBuf0[0];
+        }
+        printf("SWAK_GAUSS %lld\n", best / iters);
+        fflush(stdout);
+    }
+    if( func_matches(filter, "SWAK_HP") ) {
+        long long best = 0;
+        for( int pass = 0; pass < 3; pass++ ) {
+            int outBegIdx, outNBElement;
+            long long t0 = get_nanotime();
+            for( int it = 0; it < iters; it++ ) {
+                TA_SWAK_HP(0, g_nPoints - 1, g_close, 20, &outBegIdx, &outNBElement, g_outBuf0);
+            }
+            long long elapsed = get_nanotime() - t0;
+            if( !best || elapsed < best ) best = elapsed;
+            g_sink += outNBElement;
+            g_sink += g_outBuf0[0];
+        }
+        printf("SWAK_HP %lld\n", best / iters);
         fflush(stdout);
     }
     if( func_matches(filter, "T3") ) {

@@ -17291,6 +17291,292 @@ fn legs_SUPERTREND(r: &mut Report) {
     r.legs_done("SUPERTREND", 3);
 }
 
+const V_SWAK_2PHP: &[(&str, i32)] = &[
+    ("defaults", i32::MIN),
+    ("minimums", 2i32),
+];
+
+fn sub_SWAK_2PHP(r: &mut Report) {
+    let core = Core::new();
+    for &(label, optInTimePeriod) in V_SWAK_2PHP {
+        let Ok(lb) = core.swak_2php_lookback(optInTimePeriod) else { continue; };
+        r.control("SWAK_2PHP", label, run(|| {
+            let inReal: Vec<f64> = Vec::with_capacity(1);
+            let mut outReal: Vec<f64> = Vec::with_capacity(1);
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.swak_2php_impl(0, lb, &inReal, optInTimePeriod, &mut _b, &mut _n, &mut outReal);
+            (rc, _n)
+        }));
+        if lb < 1 { r.no_quiet_range("SWAK_2PHP", label); continue; }
+        r.quiet("SWAK_2PHP", label, lb, run(|| {
+            let inReal: Vec<f64> = Vec::with_capacity(1);
+            let mut outReal: Vec<f64> = Vec::with_capacity(1);
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.swak_2php_impl(0, lb - 1, &inReal, optInTimePeriod, &mut _b, &mut _n, &mut outReal);
+            (rc, _n)
+        }));
+    }
+}
+
+fn legs_SWAK_2PHP(r: &mut Report) {
+    let core = Core::new();
+    let optInTimePeriod = i32::MIN;
+    let Ok(lb) = core.swak_2php_lookback(optInTimePeriod) else { r.no_legs("SWAK_2PHP"); return; };
+    let (startIdx, endIdx) = (lb, lb + 4);
+    {
+        let inReal: Vec<f64> = series("real", endIdx + 1);
+        let mut outReal: Vec<f64> = vec![Default::default(); 5];
+        r.legs_control("SWAK_2PHP", run(|| {
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.swak_2php_impl(startIdx, endIdx, &inReal, optInTimePeriod, &mut _b, &mut _n, &mut outReal);
+            (rc, _n)
+        }));
+    }
+    {
+        let inReal: Vec<f64> = Vec::with_capacity(1);
+        let mut outReal: Vec<f64> = vec![Default::default(); 5];
+        r.leg("SWAK_2PHP", "inReal", 0, run(|| {
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.swak_2php_impl(startIdx, endIdx, &inReal, optInTimePeriod, &mut _b, &mut _n, &mut outReal);
+            (rc, _n)
+        }));
+    }
+    r.legs_done("SWAK_2PHP", 1);
+}
+
+const V_SWAK_BP: &[(&str, i32, f64)] = &[
+    ("defaults", i32::MIN, Core::REAL_DEFAULT),
+    ("minimums", 5i32, 0.05f64),
+];
+
+fn sub_SWAK_BP(r: &mut Report) {
+    let core = Core::new();
+    for &(label, optInTimePeriod, optInDelta) in V_SWAK_BP {
+        let Ok(lb) = core.swak_bp_lookback(optInTimePeriod, optInDelta) else { continue; };
+        r.control("SWAK_BP", label, run(|| {
+            let inReal: Vec<f64> = Vec::with_capacity(1);
+            let mut outReal: Vec<f64> = Vec::with_capacity(1);
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.swak_bp_impl(0, lb, &inReal, optInTimePeriod, optInDelta, &mut _b, &mut _n, &mut outReal);
+            (rc, _n)
+        }));
+        if lb < 1 { r.no_quiet_range("SWAK_BP", label); continue; }
+        r.quiet("SWAK_BP", label, lb, run(|| {
+            let inReal: Vec<f64> = Vec::with_capacity(1);
+            let mut outReal: Vec<f64> = Vec::with_capacity(1);
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.swak_bp_impl(0, lb - 1, &inReal, optInTimePeriod, optInDelta, &mut _b, &mut _n, &mut outReal);
+            (rc, _n)
+        }));
+    }
+}
+
+fn legs_SWAK_BP(r: &mut Report) {
+    let core = Core::new();
+    let optInTimePeriod = i32::MIN;
+    let optInDelta = Core::REAL_DEFAULT;
+    let Ok(lb) = core.swak_bp_lookback(optInTimePeriod, optInDelta) else { r.no_legs("SWAK_BP"); return; };
+    let (startIdx, endIdx) = (lb, lb + 4);
+    {
+        let inReal: Vec<f64> = series("real", endIdx + 1);
+        let mut outReal: Vec<f64> = vec![Default::default(); 5];
+        r.legs_control("SWAK_BP", run(|| {
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.swak_bp_impl(startIdx, endIdx, &inReal, optInTimePeriod, optInDelta, &mut _b, &mut _n, &mut outReal);
+            (rc, _n)
+        }));
+    }
+    {
+        let inReal: Vec<f64> = Vec::with_capacity(1);
+        let mut outReal: Vec<f64> = vec![Default::default(); 5];
+        r.leg("SWAK_BP", "inReal", 0, run(|| {
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.swak_bp_impl(startIdx, endIdx, &inReal, optInTimePeriod, optInDelta, &mut _b, &mut _n, &mut outReal);
+            (rc, _n)
+        }));
+    }
+    r.legs_done("SWAK_BP", 1);
+}
+
+const V_SWAK_BUTTER: &[(&str, i32)] = &[
+    ("defaults", i32::MIN),
+    ("minimums", 2i32),
+];
+
+fn sub_SWAK_BUTTER(r: &mut Report) {
+    let core = Core::new();
+    for &(label, optInTimePeriod) in V_SWAK_BUTTER {
+        let Ok(lb) = core.swak_butter_lookback(optInTimePeriod) else { continue; };
+        r.control("SWAK_BUTTER", label, run(|| {
+            let inReal: Vec<f64> = Vec::with_capacity(1);
+            let mut outReal: Vec<f64> = Vec::with_capacity(1);
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.swak_butter_impl(0, lb, &inReal, optInTimePeriod, &mut _b, &mut _n, &mut outReal);
+            (rc, _n)
+        }));
+        if lb < 1 { r.no_quiet_range("SWAK_BUTTER", label); continue; }
+        r.quiet("SWAK_BUTTER", label, lb, run(|| {
+            let inReal: Vec<f64> = Vec::with_capacity(1);
+            let mut outReal: Vec<f64> = Vec::with_capacity(1);
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.swak_butter_impl(0, lb - 1, &inReal, optInTimePeriod, &mut _b, &mut _n, &mut outReal);
+            (rc, _n)
+        }));
+    }
+}
+
+fn legs_SWAK_BUTTER(r: &mut Report) {
+    let core = Core::new();
+    let optInTimePeriod = i32::MIN;
+    let Ok(lb) = core.swak_butter_lookback(optInTimePeriod) else { r.no_legs("SWAK_BUTTER"); return; };
+    let (startIdx, endIdx) = (lb, lb + 4);
+    {
+        let inReal: Vec<f64> = series("real", endIdx + 1);
+        let mut outReal: Vec<f64> = vec![Default::default(); 5];
+        r.legs_control("SWAK_BUTTER", run(|| {
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.swak_butter_impl(startIdx, endIdx, &inReal, optInTimePeriod, &mut _b, &mut _n, &mut outReal);
+            (rc, _n)
+        }));
+    }
+    {
+        let inReal: Vec<f64> = Vec::with_capacity(1);
+        let mut outReal: Vec<f64> = vec![Default::default(); 5];
+        r.leg("SWAK_BUTTER", "inReal", 0, run(|| {
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.swak_butter_impl(startIdx, endIdx, &inReal, optInTimePeriod, &mut _b, &mut _n, &mut outReal);
+            (rc, _n)
+        }));
+    }
+    r.legs_done("SWAK_BUTTER", 1);
+}
+
+const V_SWAK_GAUSS: &[(&str, i32)] = &[
+    ("defaults", i32::MIN),
+    ("minimums", 2i32),
+];
+
+fn sub_SWAK_GAUSS(r: &mut Report) {
+    let core = Core::new();
+    for &(label, optInTimePeriod) in V_SWAK_GAUSS {
+        let Ok(lb) = core.swak_gauss_lookback(optInTimePeriod) else { continue; };
+        r.control("SWAK_GAUSS", label, run(|| {
+            let inReal: Vec<f64> = Vec::with_capacity(1);
+            let mut outReal: Vec<f64> = Vec::with_capacity(1);
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.swak_gauss_impl(0, lb, &inReal, optInTimePeriod, &mut _b, &mut _n, &mut outReal);
+            (rc, _n)
+        }));
+        if lb < 1 { r.no_quiet_range("SWAK_GAUSS", label); continue; }
+        r.quiet("SWAK_GAUSS", label, lb, run(|| {
+            let inReal: Vec<f64> = Vec::with_capacity(1);
+            let mut outReal: Vec<f64> = Vec::with_capacity(1);
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.swak_gauss_impl(0, lb - 1, &inReal, optInTimePeriod, &mut _b, &mut _n, &mut outReal);
+            (rc, _n)
+        }));
+    }
+}
+
+fn legs_SWAK_GAUSS(r: &mut Report) {
+    let core = Core::new();
+    let optInTimePeriod = i32::MIN;
+    let Ok(lb) = core.swak_gauss_lookback(optInTimePeriod) else { r.no_legs("SWAK_GAUSS"); return; };
+    let (startIdx, endIdx) = (lb, lb + 4);
+    {
+        let inReal: Vec<f64> = series("real", endIdx + 1);
+        let mut outReal: Vec<f64> = vec![Default::default(); 5];
+        r.legs_control("SWAK_GAUSS", run(|| {
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.swak_gauss_impl(startIdx, endIdx, &inReal, optInTimePeriod, &mut _b, &mut _n, &mut outReal);
+            (rc, _n)
+        }));
+    }
+    {
+        let inReal: Vec<f64> = Vec::with_capacity(1);
+        let mut outReal: Vec<f64> = vec![Default::default(); 5];
+        r.leg("SWAK_GAUSS", "inReal", 0, run(|| {
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.swak_gauss_impl(startIdx, endIdx, &inReal, optInTimePeriod, &mut _b, &mut _n, &mut outReal);
+            (rc, _n)
+        }));
+    }
+    r.legs_done("SWAK_GAUSS", 1);
+}
+
+const V_SWAK_HP: &[(&str, i32)] = &[
+    ("defaults", i32::MIN),
+    ("minimums", 5i32),
+];
+
+fn sub_SWAK_HP(r: &mut Report) {
+    let core = Core::new();
+    for &(label, optInTimePeriod) in V_SWAK_HP {
+        let Ok(lb) = core.swak_hp_lookback(optInTimePeriod) else { continue; };
+        r.control("SWAK_HP", label, run(|| {
+            let inReal: Vec<f64> = Vec::with_capacity(1);
+            let mut outReal: Vec<f64> = Vec::with_capacity(1);
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.swak_hp_impl(0, lb, &inReal, optInTimePeriod, &mut _b, &mut _n, &mut outReal);
+            (rc, _n)
+        }));
+        if lb < 1 { r.no_quiet_range("SWAK_HP", label); continue; }
+        r.quiet("SWAK_HP", label, lb, run(|| {
+            let inReal: Vec<f64> = Vec::with_capacity(1);
+            let mut outReal: Vec<f64> = Vec::with_capacity(1);
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.swak_hp_impl(0, lb - 1, &inReal, optInTimePeriod, &mut _b, &mut _n, &mut outReal);
+            (rc, _n)
+        }));
+    }
+}
+
+fn legs_SWAK_HP(r: &mut Report) {
+    let core = Core::new();
+    let optInTimePeriod = i32::MIN;
+    let Ok(lb) = core.swak_hp_lookback(optInTimePeriod) else { r.no_legs("SWAK_HP"); return; };
+    let (startIdx, endIdx) = (lb, lb + 4);
+    {
+        let inReal: Vec<f64> = series("real", endIdx + 1);
+        let mut outReal: Vec<f64> = vec![Default::default(); 5];
+        r.legs_control("SWAK_HP", run(|| {
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.swak_hp_impl(startIdx, endIdx, &inReal, optInTimePeriod, &mut _b, &mut _n, &mut outReal);
+            (rc, _n)
+        }));
+    }
+    {
+        let inReal: Vec<f64> = Vec::with_capacity(1);
+        let mut outReal: Vec<f64> = vec![Default::default(); 5];
+        r.leg("SWAK_HP", "inReal", 0, run(|| {
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.swak_hp_impl(startIdx, endIdx, &inReal, optInTimePeriod, &mut _b, &mut _n, &mut outReal);
+            (rc, _n)
+        }));
+    }
+    r.legs_done("SWAK_HP", 1);
+}
+
 const V_T3: &[(&str, i32, f64)] = &[
     ("defaults", i32::MIN, Core::REAL_DEFAULT),
     ("minimums", 1i32, 0.0f64),
@@ -19038,6 +19324,11 @@ const PROBES: &[(&str, Probe, Probe)] = &[
     ("SUB", sub_SUB, legs_SUB),
     ("SUM", sub_SUM, legs_SUM),
     ("SUPERTREND", sub_SUPERTREND, legs_SUPERTREND),
+    ("SWAK_2PHP", sub_SWAK_2PHP, legs_SWAK_2PHP),
+    ("SWAK_BP", sub_SWAK_BP, legs_SWAK_BP),
+    ("SWAK_BUTTER", sub_SWAK_BUTTER, legs_SWAK_BUTTER),
+    ("SWAK_GAUSS", sub_SWAK_GAUSS, legs_SWAK_GAUSS),
+    ("SWAK_HP", sub_SWAK_HP, legs_SWAK_HP),
     ("T3", sub_T3, legs_T3),
     ("TAN", sub_TAN, legs_TAN),
     ("TANH", sub_TANH, legs_TANH),
@@ -19098,7 +19389,7 @@ fn no_phantom_io() {
     // The corpus is the generator's, not a list kept by hand: a probe that
     // stopped being emitted is a shrinking sweep, which is the one way this
     // file can fail open.
-    assert_eq!(PROBES.len(), 223, "probe count");
+    assert_eq!(PROBES.len(), 228, "probe count");
     assert_eq!(
         PROBES.len(),
         crate::abstract_api::funcs().count(),

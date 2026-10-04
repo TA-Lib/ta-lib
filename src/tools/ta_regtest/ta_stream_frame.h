@@ -8143,6 +8143,188 @@ static TA_RetCode TA_SUPERTREND_SFrameClose( void *stream )
    return TA_SUPERTREND_Close( (TA_SUPERTREND_Stream *)stream );
 }
 
+static TA_RetCode TA_SWAK_2PHP_SFrameOpen( void **stream,
+                  const double *const in[], int historyLen,
+                  const double optIn[],
+                  double *const outReal[], int *const outInteger[] )
+{
+   (void)outInteger;
+   return TA_SWAK_2PHP_Open(
+               (TA_SWAK_2PHP_Stream **)stream,
+               in[0] /* inReal */,
+               historyLen,
+               (int)optIn[0] /* optInTimePeriod */,
+               outReal[0] /* outReal */
+               );
+}
+static TA_RetCode TA_SWAK_2PHP_SFrameFill( void **stream,
+                  const double *const in[], int historyLen,
+                  const double optIn[],
+                  int *outBegIdx, int *outNBElement,
+                  double *const outReal[], int *const outInteger[] )
+{
+   (void)outInteger;
+   return TA_SWAK_2PHP_OpenAndFill(
+               (TA_SWAK_2PHP_Stream **)stream,
+               in[0] /* inReal */,
+               historyLen,
+               (int)optIn[0] /* optInTimePeriod */,
+               outBegIdx,
+               outNBElement,
+               outReal[0] /* outReal */
+               );
+}
+static TA_RetCode TA_SWAK_2PHP_SFrameClose( void *stream )
+{
+   return TA_SWAK_2PHP_Close( (TA_SWAK_2PHP_Stream *)stream );
+}
+
+static TA_RetCode TA_SWAK_BP_SFrameOpen( void **stream,
+                  const double *const in[], int historyLen,
+                  const double optIn[],
+                  double *const outReal[], int *const outInteger[] )
+{
+   (void)outInteger;
+   return TA_SWAK_BP_Open(
+               (TA_SWAK_BP_Stream **)stream,
+               in[0] /* inReal */,
+               historyLen,
+               (int)optIn[0] /* optInTimePeriod */,
+               optIn[1] /* optInDelta */,
+               outReal[0] /* outReal */
+               );
+}
+static TA_RetCode TA_SWAK_BP_SFrameFill( void **stream,
+                  const double *const in[], int historyLen,
+                  const double optIn[],
+                  int *outBegIdx, int *outNBElement,
+                  double *const outReal[], int *const outInteger[] )
+{
+   (void)outInteger;
+   return TA_SWAK_BP_OpenAndFill(
+               (TA_SWAK_BP_Stream **)stream,
+               in[0] /* inReal */,
+               historyLen,
+               (int)optIn[0] /* optInTimePeriod */,
+               optIn[1] /* optInDelta */,
+               outBegIdx,
+               outNBElement,
+               outReal[0] /* outReal */
+               );
+}
+static TA_RetCode TA_SWAK_BP_SFrameClose( void *stream )
+{
+   return TA_SWAK_BP_Close( (TA_SWAK_BP_Stream *)stream );
+}
+
+static TA_RetCode TA_SWAK_BUTTER_SFrameOpen( void **stream,
+                  const double *const in[], int historyLen,
+                  const double optIn[],
+                  double *const outReal[], int *const outInteger[] )
+{
+   (void)outInteger;
+   return TA_SWAK_BUTTER_Open(
+               (TA_SWAK_BUTTER_Stream **)stream,
+               in[0] /* inReal */,
+               historyLen,
+               (int)optIn[0] /* optInTimePeriod */,
+               outReal[0] /* outReal */
+               );
+}
+static TA_RetCode TA_SWAK_BUTTER_SFrameFill( void **stream,
+                  const double *const in[], int historyLen,
+                  const double optIn[],
+                  int *outBegIdx, int *outNBElement,
+                  double *const outReal[], int *const outInteger[] )
+{
+   (void)outInteger;
+   return TA_SWAK_BUTTER_OpenAndFill(
+               (TA_SWAK_BUTTER_Stream **)stream,
+               in[0] /* inReal */,
+               historyLen,
+               (int)optIn[0] /* optInTimePeriod */,
+               outBegIdx,
+               outNBElement,
+               outReal[0] /* outReal */
+               );
+}
+static TA_RetCode TA_SWAK_BUTTER_SFrameClose( void *stream )
+{
+   return TA_SWAK_BUTTER_Close( (TA_SWAK_BUTTER_Stream *)stream );
+}
+
+static TA_RetCode TA_SWAK_GAUSS_SFrameOpen( void **stream,
+                  const double *const in[], int historyLen,
+                  const double optIn[],
+                  double *const outReal[], int *const outInteger[] )
+{
+   (void)outInteger;
+   return TA_SWAK_GAUSS_Open(
+               (TA_SWAK_GAUSS_Stream **)stream,
+               in[0] /* inReal */,
+               historyLen,
+               (int)optIn[0] /* optInTimePeriod */,
+               outReal[0] /* outReal */
+               );
+}
+static TA_RetCode TA_SWAK_GAUSS_SFrameFill( void **stream,
+                  const double *const in[], int historyLen,
+                  const double optIn[],
+                  int *outBegIdx, int *outNBElement,
+                  double *const outReal[], int *const outInteger[] )
+{
+   (void)outInteger;
+   return TA_SWAK_GAUSS_OpenAndFill(
+               (TA_SWAK_GAUSS_Stream **)stream,
+               in[0] /* inReal */,
+               historyLen,
+               (int)optIn[0] /* optInTimePeriod */,
+               outBegIdx,
+               outNBElement,
+               outReal[0] /* outReal */
+               );
+}
+static TA_RetCode TA_SWAK_GAUSS_SFrameClose( void *stream )
+{
+   return TA_SWAK_GAUSS_Close( (TA_SWAK_GAUSS_Stream *)stream );
+}
+
+static TA_RetCode TA_SWAK_HP_SFrameOpen( void **stream,
+                  const double *const in[], int historyLen,
+                  const double optIn[],
+                  double *const outReal[], int *const outInteger[] )
+{
+   (void)outInteger;
+   return TA_SWAK_HP_Open(
+               (TA_SWAK_HP_Stream **)stream,
+               in[0] /* inReal */,
+               historyLen,
+               (int)optIn[0] /* optInTimePeriod */,
+               outReal[0] /* outReal */
+               );
+}
+static TA_RetCode TA_SWAK_HP_SFrameFill( void **stream,
+                  const double *const in[], int historyLen,
+                  const double optIn[],
+                  int *outBegIdx, int *outNBElement,
+                  double *const outReal[], int *const outInteger[] )
+{
+   (void)outInteger;
+   return TA_SWAK_HP_OpenAndFill(
+               (TA_SWAK_HP_Stream **)stream,
+               in[0] /* inReal */,
+               historyLen,
+               (int)optIn[0] /* optInTimePeriod */,
+               outBegIdx,
+               outNBElement,
+               outReal[0] /* outReal */
+               );
+}
+static TA_RetCode TA_SWAK_HP_SFrameClose( void *stream )
+{
+   return TA_SWAK_HP_Close( (TA_SWAK_HP_Stream *)stream );
+}
+
 static TA_RetCode TA_T3_SFrameOpen( void **stream,
                   const double *const in[], int historyLen,
                   const double optIn[],
@@ -9388,6 +9570,16 @@ static const TA_StreamEntry TA_StreamTable[] = {
      1, TA_VIn_SUM, 1, TA_VOpt_SUM, 1, TA_VOutIsInt_SUM },
    { "SUPERTREND", TA_SUPERTREND_SFrameOpen, TA_SUPERTREND_SFrameFill, TA_SUPERTREND_SFrameClose,
      3, TA_VIn_SUPERTREND, 2, TA_VOpt_SUPERTREND, 2, TA_VOutIsInt_SUPERTREND },
+   { "SWAK_2PHP", TA_SWAK_2PHP_SFrameOpen, TA_SWAK_2PHP_SFrameFill, TA_SWAK_2PHP_SFrameClose,
+     1, TA_VIn_SWAK_2PHP, 1, TA_VOpt_SWAK_2PHP, 1, TA_VOutIsInt_SWAK_2PHP },
+   { "SWAK_BP", TA_SWAK_BP_SFrameOpen, TA_SWAK_BP_SFrameFill, TA_SWAK_BP_SFrameClose,
+     1, TA_VIn_SWAK_BP, 2, TA_VOpt_SWAK_BP, 1, TA_VOutIsInt_SWAK_BP },
+   { "SWAK_BUTTER", TA_SWAK_BUTTER_SFrameOpen, TA_SWAK_BUTTER_SFrameFill, TA_SWAK_BUTTER_SFrameClose,
+     1, TA_VIn_SWAK_BUTTER, 1, TA_VOpt_SWAK_BUTTER, 1, TA_VOutIsInt_SWAK_BUTTER },
+   { "SWAK_GAUSS", TA_SWAK_GAUSS_SFrameOpen, TA_SWAK_GAUSS_SFrameFill, TA_SWAK_GAUSS_SFrameClose,
+     1, TA_VIn_SWAK_GAUSS, 1, TA_VOpt_SWAK_GAUSS, 1, TA_VOutIsInt_SWAK_GAUSS },
+   { "SWAK_HP", TA_SWAK_HP_SFrameOpen, TA_SWAK_HP_SFrameFill, TA_SWAK_HP_SFrameClose,
+     1, TA_VIn_SWAK_HP, 1, TA_VOpt_SWAK_HP, 1, TA_VOutIsInt_SWAK_HP },
    { "T3", TA_T3_SFrameOpen, TA_T3_SFrameFill, TA_T3_SFrameClose,
      1, TA_VIn_T3, 2, TA_VOpt_T3, 1, TA_VOutIsInt_T3 },
    { "TAN", TA_TAN_SFrameOpen, TA_TAN_SFrameFill, TA_TAN_SFrameClose,
@@ -9434,6 +9626,6 @@ static const TA_StreamEntry TA_StreamTable[] = {
      1, TA_VIn_ZLEMA, 1, TA_VOpt_ZLEMA, 1, TA_VOutIsInt_ZLEMA },
 };
 
-#define TA_STREAM_TABLE_SIZE 223
+#define TA_STREAM_TABLE_SIZE 228
 
 #endif /* TA_STREAM_FRAME_H */

@@ -321,6 +321,11 @@ public final class Functions {
       put(m, f_SUB());
       put(m, f_SUM());
       put(m, f_SUPERTREND());
+      put(m, f_SWAK_2PHP());
+      put(m, f_SWAK_BP());
+      put(m, f_SWAK_BUTTER());
+      put(m, f_SWAK_GAUSS());
+      put(m, f_SWAK_HP());
       put(m, f_T3());
       put(m, f_TAN());
       put(m, f_TANH());
@@ -3939,6 +3944,101 @@ public final class Functions {
          List.of(
             new OutputInfo(OutputType.REAL, "outSupertrend", 0x00000001),
             new OutputInfo(OutputType.INTEGER, "outTrend", 0x00000001)
+         ));
+   }
+
+   private static FuncInfo f_SWAK_2PHP() {
+      return new FuncInfo(
+         "SWAK_2PHP", "Cycle Indicators", "Swiss Army Knife - Two-Pole High-Pass Filter", 0x0A000000,
+         List.of(
+            new InputInfo(InputType.REAL, "inReal", 0x00000000)
+         ),
+         List.of(
+            new OptInputInfo(
+               OptInputType.INTEGER_RANGE, "optInTimePeriod", 0x00000000,
+               "Time Period", "Cutoff period", 20.0,
+               0.0, 0.0, 0, 0.0, 0.0, 0.0,
+               2, 10000, 5, 200, 1, null)
+         ),
+         List.of(
+            new OutputInfo(OutputType.REAL, "outReal", 0x00000001)
+         ));
+   }
+
+   private static FuncInfo f_SWAK_BP() {
+      return new FuncInfo(
+         "SWAK_BP", "Cycle Indicators", "Swiss Army Knife - Band-Pass Filter", 0x0A000000,
+         List.of(
+            new InputInfo(InputType.REAL, "inReal", 0x00000000)
+         ),
+         List.of(
+            new OptInputInfo(
+               OptInputType.INTEGER_RANGE, "optInTimePeriod", 0x00000000,
+               "Time Period", "Center period", 20.0,
+               0.0, 0.0, 0, 0.0, 0.0, 0.0,
+               5, 2000, 5, 200, 1, null),
+            new OptInputInfo(
+               OptInputType.REAL_RANGE, "optInDelta", 0x00000000,
+               "Delta", "Half-bandwidth as a fraction of the center period", 0.1,
+               0.05, 0.5, 2, 0.05, 0.5, 0.05,
+               0, 0, 0, 0, 0, null)
+         ),
+         List.of(
+            new OutputInfo(OutputType.REAL, "outReal", 0x00000001)
+         ));
+   }
+
+   private static FuncInfo f_SWAK_BUTTER() {
+      return new FuncInfo(
+         "SWAK_BUTTER", "Overlap Studies", "Swiss Army Knife - Butterworth Filter", 0x0B000000,
+         List.of(
+            new InputInfo(InputType.REAL, "inReal", 0x00000000)
+         ),
+         List.of(
+            new OptInputInfo(
+               OptInputType.INTEGER_RANGE, "optInTimePeriod", 0x00000000,
+               "Time Period", "Cutoff period", 20.0,
+               0.0, 0.0, 0, 0.0, 0.0, 0.0,
+               2, 10000, 5, 200, 1, null)
+         ),
+         List.of(
+            new OutputInfo(OutputType.REAL, "outReal", 0x00000001)
+         ));
+   }
+
+   private static FuncInfo f_SWAK_GAUSS() {
+      return new FuncInfo(
+         "SWAK_GAUSS", "Overlap Studies", "Swiss Army Knife - Gaussian Filter", 0x0B000000,
+         List.of(
+            new InputInfo(InputType.REAL, "inReal", 0x00000000)
+         ),
+         List.of(
+            new OptInputInfo(
+               OptInputType.INTEGER_RANGE, "optInTimePeriod", 0x00000000,
+               "Time Period", "Cutoff period", 20.0,
+               0.0, 0.0, 0, 0.0, 0.0, 0.0,
+               2, 10000, 5, 200, 1, null)
+         ),
+         List.of(
+            new OutputInfo(OutputType.REAL, "outReal", 0x00000001)
+         ));
+   }
+
+   private static FuncInfo f_SWAK_HP() {
+      return new FuncInfo(
+         "SWAK_HP", "Cycle Indicators", "Swiss Army Knife - High-Pass Filter", 0x0A000000,
+         List.of(
+            new InputInfo(InputType.REAL, "inReal", 0x00000000)
+         ),
+         List.of(
+            new OptInputInfo(
+               OptInputType.INTEGER_RANGE, "optInTimePeriod", 0x00000000,
+               "Time Period", "Cutoff period", 20.0,
+               0.0, 0.0, 0, 0.0, 0.0, 0.0,
+               5, 100000, 5, 200, 1, null)
+         ),
+         List.of(
+            new OutputInfo(OutputType.REAL, "outReal", 0x00000001)
          ));
    }
 

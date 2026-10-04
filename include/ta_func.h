@@ -18042,6 +18042,447 @@ TA_LIB_API TA_RetCode TA_SUPERTREND_Advance( TA_SUPERTREND_Stream *stream );
 TA_LIB_API TA_RetCode TA_SUPERTREND_Clone( const TA_SUPERTREND_Stream *stream, TA_SUPERTREND_Stream **clone );
 
 /*
+ * TA_SWAK_2PHP - Swiss Army Knife - Two-Pole High-Pass Filter
+ * 
+ * Input  = double
+ * Output = double
+ * 
+ * Optional Parameters
+ * -------------------
+ * optInTimePeriod:(From 2 to 10000)
+ *    Cutoff period
+ * 
+ * 
+ */
+TA_LIB_API TA_RetCode TA_SWAK_2PHP( int    startIdx,
+                                    int    endIdx,
+                                               const double inReal[],
+                                               int           optInTimePeriod, /* From 2 to 10000 */
+                                               int          *outBegIdx,
+                                               int          *outNBElement,
+                                               double        outReal[] );
+
+TA_LIB_API TA_RetCode TA_S_SWAK_2PHP( int    startIdx,
+                                      int    endIdx,
+                                                 const float  inReal[],
+                                                 int           optInTimePeriod, /* From 2 to 10000 */
+                                                 int          *outBegIdx,
+                                                 int          *outNBElement,
+                                                 double        outReal[] );
+
+TA_LIB_API int TA_SWAK_2PHP_Lookback( int           optInTimePeriod );  /* From 2 to 10000 */
+TA_LIB_API int TA_SWAK_2PHP_DisplayShift( int optInTimePeriod, int outputIdx );
+
+
+
+/*
+ * Streaming API for TA_SWAK_2PHP: incremental per-bar evaluation.
+ */
+typedef struct TA_SWAK_2PHP_Stream TA_SWAK_2PHP_Stream;
+
+TA_LIB_API TA_RetCode TA_SWAK_2PHP_Open( TA_SWAK_2PHP_Stream **stream, const double inReal[], int historyLen, int optInTimePeriod, double *outReal );
+
+TA_LIB_API TA_RetCode TA_SWAK_2PHP_Update( TA_SWAK_2PHP_Stream *stream, double inReal, double *outReal );
+
+TA_LIB_API TA_RetCode TA_SWAK_2PHP_Peek( const TA_SWAK_2PHP_Stream *stream, double inReal, double *outReal );
+
+TA_LIB_API TA_RetCode TA_SWAK_2PHP_Close( TA_SWAK_2PHP_Stream *stream );
+
+/*
+ * OpenAndFill: like Open, but a single pass ALSO fills the caller's arrays
+ * with the whole warm-up history. The fill is bit-identical to
+ * TA_SWAK_2PHP( 0, historyLen-1, ... ).
+ */
+TA_LIB_API TA_RetCode TA_SWAK_2PHP_OpenAndFill( TA_SWAK_2PHP_Stream **stream, const double inReal[], int historyLen, int optInTimePeriod, int *outBegIdx, int *outNBElement, double outReal[] );
+
+/*
+ * Value: the value(s) at the last bar the stream counted (the bar
+ * TA_SWAK_2PHP_OutRange ends on), without recomputing. Seeded by Open, refreshed by
+ * every accepted Update, left alone by Peek.
+ */
+TA_LIB_API TA_RetCode TA_SWAK_2PHP_Value( const TA_SWAK_2PHP_Stream *stream, double *outReal );
+
+/*
+ * OutRange: the bars this stream has an output for, in the input series'
+ * coordinates. That is [*outBegIdx, *outBegIdx + *outNBElement), the range
+ * TA_SWAK_2PHP reports over the same bars. Open seeds it; every accepted Update and every
+ * TA_SWAK_2PHP_Advance adds one; a rejected Update and a Peek change nothing. The
+ * last bar it can reach is TA_INDEX_MAX: past that Update and Advance answer
+ * TA_OUT_OF_RANGE_END_INDEX, and the handle is done.
+ */
+TA_LIB_API TA_RetCode TA_SWAK_2PHP_OutRange( const TA_SWAK_2PHP_Stream *stream, int *outBegIdx, int *outNBElement );
+
+/*
+ * Advance: count one bar this stream was not fed (one an Update rejected and
+ * that will not be re-fed, or a session with no print). The range moves by one
+ * and nothing else does, so TA_SWAK_2PHP_Value keeps answering the previous output,
+ * which is this bar's output too. TA_OUT_OF_RANGE_END_INDEX once the range has
+ * reached TA_INDEX_MAX.
+ */
+TA_LIB_API TA_RetCode TA_SWAK_2PHP_Advance( TA_SWAK_2PHP_Stream *stream );
+
+/*
+ * Clone: fork the stream. The fork is an independent stream at the same bar,
+ * owning its own copy of everything the original owns. Both must be closed.
+ * The fork carries the value and the range verbatim.
+ */
+TA_LIB_API TA_RetCode TA_SWAK_2PHP_Clone( const TA_SWAK_2PHP_Stream *stream, TA_SWAK_2PHP_Stream **clone );
+
+/*
+ * TA_SWAK_BP - Swiss Army Knife - Band-Pass Filter
+ * 
+ * Input  = double
+ * Output = double
+ * 
+ * Optional Parameters
+ * -------------------
+ * optInTimePeriod:(From 5 to 2000)
+ *    Center period
+ * 
+ * optInDelta:(From 0.05 to 0.5)
+ *    Half-bandwidth as a fraction of the center period
+ * 
+ * 
+ */
+TA_LIB_API TA_RetCode TA_SWAK_BP( int    startIdx,
+                                  int    endIdx,
+                                             const double inReal[],
+                                             int           optInTimePeriod, /* From 5 to 2000 */
+                                             double        optInDelta, /* From 0.05 to 0.5 */
+                                             int          *outBegIdx,
+                                             int          *outNBElement,
+                                             double        outReal[] );
+
+TA_LIB_API TA_RetCode TA_S_SWAK_BP( int    startIdx,
+                                    int    endIdx,
+                                               const float  inReal[],
+                                               int           optInTimePeriod, /* From 5 to 2000 */
+                                               double        optInDelta, /* From 0.05 to 0.5 */
+                                               int          *outBegIdx,
+                                               int          *outNBElement,
+                                               double        outReal[] );
+
+TA_LIB_API int TA_SWAK_BP_Lookback( int           optInTimePeriod, /* From 5 to 2000 */
+                                             double        optInDelta );  /* From 0.05 to 0.5 */
+TA_LIB_API int TA_SWAK_BP_DisplayShift( int optInTimePeriod, double optInDelta, int outputIdx );
+
+
+
+/*
+ * Streaming API for TA_SWAK_BP: incremental per-bar evaluation.
+ */
+typedef struct TA_SWAK_BP_Stream TA_SWAK_BP_Stream;
+
+TA_LIB_API TA_RetCode TA_SWAK_BP_Open( TA_SWAK_BP_Stream **stream, const double inReal[], int historyLen, int optInTimePeriod, double optInDelta, double *outReal );
+
+TA_LIB_API TA_RetCode TA_SWAK_BP_Update( TA_SWAK_BP_Stream *stream, double inReal, double *outReal );
+
+TA_LIB_API TA_RetCode TA_SWAK_BP_Peek( const TA_SWAK_BP_Stream *stream, double inReal, double *outReal );
+
+TA_LIB_API TA_RetCode TA_SWAK_BP_Close( TA_SWAK_BP_Stream *stream );
+
+/*
+ * OpenAndFill: like Open, but a single pass ALSO fills the caller's arrays
+ * with the whole warm-up history. The fill is bit-identical to
+ * TA_SWAK_BP( 0, historyLen-1, ... ).
+ */
+TA_LIB_API TA_RetCode TA_SWAK_BP_OpenAndFill( TA_SWAK_BP_Stream **stream, const double inReal[], int historyLen, int optInTimePeriod, double optInDelta, int *outBegIdx, int *outNBElement, double outReal[] );
+
+/*
+ * Value: the value(s) at the last bar the stream counted (the bar
+ * TA_SWAK_BP_OutRange ends on), without recomputing. Seeded by Open, refreshed by
+ * every accepted Update, left alone by Peek.
+ */
+TA_LIB_API TA_RetCode TA_SWAK_BP_Value( const TA_SWAK_BP_Stream *stream, double *outReal );
+
+/*
+ * OutRange: the bars this stream has an output for, in the input series'
+ * coordinates. That is [*outBegIdx, *outBegIdx + *outNBElement), the range
+ * TA_SWAK_BP reports over the same bars. Open seeds it; every accepted Update and every
+ * TA_SWAK_BP_Advance adds one; a rejected Update and a Peek change nothing. The
+ * last bar it can reach is TA_INDEX_MAX: past that Update and Advance answer
+ * TA_OUT_OF_RANGE_END_INDEX, and the handle is done.
+ */
+TA_LIB_API TA_RetCode TA_SWAK_BP_OutRange( const TA_SWAK_BP_Stream *stream, int *outBegIdx, int *outNBElement );
+
+/*
+ * Advance: count one bar this stream was not fed (one an Update rejected and
+ * that will not be re-fed, or a session with no print). The range moves by one
+ * and nothing else does, so TA_SWAK_BP_Value keeps answering the previous output,
+ * which is this bar's output too. TA_OUT_OF_RANGE_END_INDEX once the range has
+ * reached TA_INDEX_MAX.
+ */
+TA_LIB_API TA_RetCode TA_SWAK_BP_Advance( TA_SWAK_BP_Stream *stream );
+
+/*
+ * Clone: fork the stream. The fork is an independent stream at the same bar,
+ * owning its own copy of everything the original owns. Both must be closed.
+ * The fork carries the value and the range verbatim.
+ */
+TA_LIB_API TA_RetCode TA_SWAK_BP_Clone( const TA_SWAK_BP_Stream *stream, TA_SWAK_BP_Stream **clone );
+
+/*
+ * TA_SWAK_BUTTER - Swiss Army Knife - Butterworth Filter
+ * 
+ * Input  = double
+ * Output = double
+ * 
+ * Optional Parameters
+ * -------------------
+ * optInTimePeriod:(From 2 to 10000)
+ *    Cutoff period
+ * 
+ * 
+ */
+TA_LIB_API TA_RetCode TA_SWAK_BUTTER( int    startIdx,
+                                      int    endIdx,
+                                                 const double inReal[],
+                                                 int           optInTimePeriod, /* From 2 to 10000 */
+                                                 int          *outBegIdx,
+                                                 int          *outNBElement,
+                                                 double        outReal[] );
+
+TA_LIB_API TA_RetCode TA_S_SWAK_BUTTER( int    startIdx,
+                                        int    endIdx,
+                                                   const float  inReal[],
+                                                   int           optInTimePeriod, /* From 2 to 10000 */
+                                                   int          *outBegIdx,
+                                                   int          *outNBElement,
+                                                   double        outReal[] );
+
+TA_LIB_API int TA_SWAK_BUTTER_Lookback( int           optInTimePeriod );  /* From 2 to 10000 */
+TA_LIB_API int TA_SWAK_BUTTER_DisplayShift( int optInTimePeriod, int outputIdx );
+
+
+
+/*
+ * Streaming API for TA_SWAK_BUTTER: incremental per-bar evaluation.
+ */
+typedef struct TA_SWAK_BUTTER_Stream TA_SWAK_BUTTER_Stream;
+
+TA_LIB_API TA_RetCode TA_SWAK_BUTTER_Open( TA_SWAK_BUTTER_Stream **stream, const double inReal[], int historyLen, int optInTimePeriod, double *outReal );
+
+TA_LIB_API TA_RetCode TA_SWAK_BUTTER_Update( TA_SWAK_BUTTER_Stream *stream, double inReal, double *outReal );
+
+TA_LIB_API TA_RetCode TA_SWAK_BUTTER_Peek( const TA_SWAK_BUTTER_Stream *stream, double inReal, double *outReal );
+
+TA_LIB_API TA_RetCode TA_SWAK_BUTTER_Close( TA_SWAK_BUTTER_Stream *stream );
+
+/*
+ * OpenAndFill: like Open, but a single pass ALSO fills the caller's arrays
+ * with the whole warm-up history. The fill is bit-identical to
+ * TA_SWAK_BUTTER( 0, historyLen-1, ... ).
+ */
+TA_LIB_API TA_RetCode TA_SWAK_BUTTER_OpenAndFill( TA_SWAK_BUTTER_Stream **stream, const double inReal[], int historyLen, int optInTimePeriod, int *outBegIdx, int *outNBElement, double outReal[] );
+
+/*
+ * Value: the value(s) at the last bar the stream counted (the bar
+ * TA_SWAK_BUTTER_OutRange ends on), without recomputing. Seeded by Open, refreshed by
+ * every accepted Update, left alone by Peek.
+ */
+TA_LIB_API TA_RetCode TA_SWAK_BUTTER_Value( const TA_SWAK_BUTTER_Stream *stream, double *outReal );
+
+/*
+ * OutRange: the bars this stream has an output for, in the input series'
+ * coordinates. That is [*outBegIdx, *outBegIdx + *outNBElement), the range
+ * TA_SWAK_BUTTER reports over the same bars. Open seeds it; every accepted Update and every
+ * TA_SWAK_BUTTER_Advance adds one; a rejected Update and a Peek change nothing. The
+ * last bar it can reach is TA_INDEX_MAX: past that Update and Advance answer
+ * TA_OUT_OF_RANGE_END_INDEX, and the handle is done.
+ */
+TA_LIB_API TA_RetCode TA_SWAK_BUTTER_OutRange( const TA_SWAK_BUTTER_Stream *stream, int *outBegIdx, int *outNBElement );
+
+/*
+ * Advance: count one bar this stream was not fed (one an Update rejected and
+ * that will not be re-fed, or a session with no print). The range moves by one
+ * and nothing else does, so TA_SWAK_BUTTER_Value keeps answering the previous output,
+ * which is this bar's output too. TA_OUT_OF_RANGE_END_INDEX once the range has
+ * reached TA_INDEX_MAX.
+ */
+TA_LIB_API TA_RetCode TA_SWAK_BUTTER_Advance( TA_SWAK_BUTTER_Stream *stream );
+
+/*
+ * Clone: fork the stream. The fork is an independent stream at the same bar,
+ * owning its own copy of everything the original owns. Both must be closed.
+ * The fork carries the value and the range verbatim.
+ */
+TA_LIB_API TA_RetCode TA_SWAK_BUTTER_Clone( const TA_SWAK_BUTTER_Stream *stream, TA_SWAK_BUTTER_Stream **clone );
+
+/*
+ * TA_SWAK_GAUSS - Swiss Army Knife - Gaussian Filter
+ * 
+ * Input  = double
+ * Output = double
+ * 
+ * Optional Parameters
+ * -------------------
+ * optInTimePeriod:(From 2 to 10000)
+ *    Cutoff period
+ * 
+ * 
+ */
+TA_LIB_API TA_RetCode TA_SWAK_GAUSS( int    startIdx,
+                                     int    endIdx,
+                                                const double inReal[],
+                                                int           optInTimePeriod, /* From 2 to 10000 */
+                                                int          *outBegIdx,
+                                                int          *outNBElement,
+                                                double        outReal[] );
+
+TA_LIB_API TA_RetCode TA_S_SWAK_GAUSS( int    startIdx,
+                                       int    endIdx,
+                                                  const float  inReal[],
+                                                  int           optInTimePeriod, /* From 2 to 10000 */
+                                                  int          *outBegIdx,
+                                                  int          *outNBElement,
+                                                  double        outReal[] );
+
+TA_LIB_API int TA_SWAK_GAUSS_Lookback( int           optInTimePeriod );  /* From 2 to 10000 */
+TA_LIB_API int TA_SWAK_GAUSS_DisplayShift( int optInTimePeriod, int outputIdx );
+
+
+
+/*
+ * Streaming API for TA_SWAK_GAUSS: incremental per-bar evaluation.
+ */
+typedef struct TA_SWAK_GAUSS_Stream TA_SWAK_GAUSS_Stream;
+
+TA_LIB_API TA_RetCode TA_SWAK_GAUSS_Open( TA_SWAK_GAUSS_Stream **stream, const double inReal[], int historyLen, int optInTimePeriod, double *outReal );
+
+TA_LIB_API TA_RetCode TA_SWAK_GAUSS_Update( TA_SWAK_GAUSS_Stream *stream, double inReal, double *outReal );
+
+TA_LIB_API TA_RetCode TA_SWAK_GAUSS_Peek( const TA_SWAK_GAUSS_Stream *stream, double inReal, double *outReal );
+
+TA_LIB_API TA_RetCode TA_SWAK_GAUSS_Close( TA_SWAK_GAUSS_Stream *stream );
+
+/*
+ * OpenAndFill: like Open, but a single pass ALSO fills the caller's arrays
+ * with the whole warm-up history. The fill is bit-identical to
+ * TA_SWAK_GAUSS( 0, historyLen-1, ... ).
+ */
+TA_LIB_API TA_RetCode TA_SWAK_GAUSS_OpenAndFill( TA_SWAK_GAUSS_Stream **stream, const double inReal[], int historyLen, int optInTimePeriod, int *outBegIdx, int *outNBElement, double outReal[] );
+
+/*
+ * Value: the value(s) at the last bar the stream counted (the bar
+ * TA_SWAK_GAUSS_OutRange ends on), without recomputing. Seeded by Open, refreshed by
+ * every accepted Update, left alone by Peek.
+ */
+TA_LIB_API TA_RetCode TA_SWAK_GAUSS_Value( const TA_SWAK_GAUSS_Stream *stream, double *outReal );
+
+/*
+ * OutRange: the bars this stream has an output for, in the input series'
+ * coordinates. That is [*outBegIdx, *outBegIdx + *outNBElement), the range
+ * TA_SWAK_GAUSS reports over the same bars. Open seeds it; every accepted Update and every
+ * TA_SWAK_GAUSS_Advance adds one; a rejected Update and a Peek change nothing. The
+ * last bar it can reach is TA_INDEX_MAX: past that Update and Advance answer
+ * TA_OUT_OF_RANGE_END_INDEX, and the handle is done.
+ */
+TA_LIB_API TA_RetCode TA_SWAK_GAUSS_OutRange( const TA_SWAK_GAUSS_Stream *stream, int *outBegIdx, int *outNBElement );
+
+/*
+ * Advance: count one bar this stream was not fed (one an Update rejected and
+ * that will not be re-fed, or a session with no print). The range moves by one
+ * and nothing else does, so TA_SWAK_GAUSS_Value keeps answering the previous output,
+ * which is this bar's output too. TA_OUT_OF_RANGE_END_INDEX once the range has
+ * reached TA_INDEX_MAX.
+ */
+TA_LIB_API TA_RetCode TA_SWAK_GAUSS_Advance( TA_SWAK_GAUSS_Stream *stream );
+
+/*
+ * Clone: fork the stream. The fork is an independent stream at the same bar,
+ * owning its own copy of everything the original owns. Both must be closed.
+ * The fork carries the value and the range verbatim.
+ */
+TA_LIB_API TA_RetCode TA_SWAK_GAUSS_Clone( const TA_SWAK_GAUSS_Stream *stream, TA_SWAK_GAUSS_Stream **clone );
+
+/*
+ * TA_SWAK_HP - Swiss Army Knife - High-Pass Filter
+ * 
+ * Input  = double
+ * Output = double
+ * 
+ * Optional Parameters
+ * -------------------
+ * optInTimePeriod:(From 5 to 100000)
+ *    Cutoff period
+ * 
+ * 
+ */
+TA_LIB_API TA_RetCode TA_SWAK_HP( int    startIdx,
+                                  int    endIdx,
+                                             const double inReal[],
+                                             int           optInTimePeriod, /* From 5 to 100000 */
+                                             int          *outBegIdx,
+                                             int          *outNBElement,
+                                             double        outReal[] );
+
+TA_LIB_API TA_RetCode TA_S_SWAK_HP( int    startIdx,
+                                    int    endIdx,
+                                               const float  inReal[],
+                                               int           optInTimePeriod, /* From 5 to 100000 */
+                                               int          *outBegIdx,
+                                               int          *outNBElement,
+                                               double        outReal[] );
+
+TA_LIB_API int TA_SWAK_HP_Lookback( int           optInTimePeriod );  /* From 5 to 100000 */
+TA_LIB_API int TA_SWAK_HP_DisplayShift( int optInTimePeriod, int outputIdx );
+
+
+
+/*
+ * Streaming API for TA_SWAK_HP: incremental per-bar evaluation.
+ */
+typedef struct TA_SWAK_HP_Stream TA_SWAK_HP_Stream;
+
+TA_LIB_API TA_RetCode TA_SWAK_HP_Open( TA_SWAK_HP_Stream **stream, const double inReal[], int historyLen, int optInTimePeriod, double *outReal );
+
+TA_LIB_API TA_RetCode TA_SWAK_HP_Update( TA_SWAK_HP_Stream *stream, double inReal, double *outReal );
+
+TA_LIB_API TA_RetCode TA_SWAK_HP_Peek( const TA_SWAK_HP_Stream *stream, double inReal, double *outReal );
+
+TA_LIB_API TA_RetCode TA_SWAK_HP_Close( TA_SWAK_HP_Stream *stream );
+
+/*
+ * OpenAndFill: like Open, but a single pass ALSO fills the caller's arrays
+ * with the whole warm-up history. The fill is bit-identical to
+ * TA_SWAK_HP( 0, historyLen-1, ... ).
+ */
+TA_LIB_API TA_RetCode TA_SWAK_HP_OpenAndFill( TA_SWAK_HP_Stream **stream, const double inReal[], int historyLen, int optInTimePeriod, int *outBegIdx, int *outNBElement, double outReal[] );
+
+/*
+ * Value: the value(s) at the last bar the stream counted (the bar
+ * TA_SWAK_HP_OutRange ends on), without recomputing. Seeded by Open, refreshed by
+ * every accepted Update, left alone by Peek.
+ */
+TA_LIB_API TA_RetCode TA_SWAK_HP_Value( const TA_SWAK_HP_Stream *stream, double *outReal );
+
+/*
+ * OutRange: the bars this stream has an output for, in the input series'
+ * coordinates. That is [*outBegIdx, *outBegIdx + *outNBElement), the range
+ * TA_SWAK_HP reports over the same bars. Open seeds it; every accepted Update and every
+ * TA_SWAK_HP_Advance adds one; a rejected Update and a Peek change nothing. The
+ * last bar it can reach is TA_INDEX_MAX: past that Update and Advance answer
+ * TA_OUT_OF_RANGE_END_INDEX, and the handle is done.
+ */
+TA_LIB_API TA_RetCode TA_SWAK_HP_OutRange( const TA_SWAK_HP_Stream *stream, int *outBegIdx, int *outNBElement );
+
+/*
+ * Advance: count one bar this stream was not fed (one an Update rejected and
+ * that will not be re-fed, or a session with no print). The range moves by one
+ * and nothing else does, so TA_SWAK_HP_Value keeps answering the previous output,
+ * which is this bar's output too. TA_OUT_OF_RANGE_END_INDEX once the range has
+ * reached TA_INDEX_MAX.
+ */
+TA_LIB_API TA_RetCode TA_SWAK_HP_Advance( TA_SWAK_HP_Stream *stream );
+
+/*
+ * Clone: fork the stream. The fork is an independent stream at the same bar,
+ * owning its own copy of everything the original owns. Both must be closed.
+ * The fork carries the value and the range verbatim.
+ */
+TA_LIB_API TA_RetCode TA_SWAK_HP_Clone( const TA_SWAK_HP_Stream *stream, TA_SWAK_HP_Stream **clone );
+
+/*
  * TA_T3 - Triple Exponential Moving Average (T3)
  * 
  * Input  = double

@@ -5468,6 +5468,128 @@ int TA_SUPERTREND_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
 {
    return TA_SUPERTREND_DisplayShift( params->optIn[0].data.optInInteger, params->optIn[1].data.optInReal, outputIdx );
 }
+TA_RetCode TA_SWAK_2PHP_FramePP( const TA_ParamHolderPriv *params,
+                           int            startIdx,
+                           int            endIdx,
+                           int           *outBegIdx,
+                           int           *outNBElement )
+{
+   return TA_SWAK_2PHP(
+               startIdx,
+               endIdx,
+               params->in[0].data.inReal, /* inReal */
+               params->optIn[0].data.optInInteger, /* optInTimePeriod*/
+               outBegIdx, 
+               outNBElement, 
+               params->out[0].data.outReal /*  outReal */
+               );
+}
+unsigned int TA_SWAK_2PHP_FramePPLB( const TA_ParamHolderPriv *params )
+{
+   return TA_SWAK_2PHP_Lookback(params->optIn[0].data.optInInteger /* optInTimePeriod*/ );
+}
+int TA_SWAK_2PHP_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+{
+   return TA_SWAK_2PHP_DisplayShift( params->optIn[0].data.optInInteger, outputIdx );
+}
+TA_RetCode TA_SWAK_BP_FramePP( const TA_ParamHolderPriv *params,
+                           int            startIdx,
+                           int            endIdx,
+                           int           *outBegIdx,
+                           int           *outNBElement )
+{
+   return TA_SWAK_BP(
+               startIdx,
+               endIdx,
+               params->in[0].data.inReal, /* inReal */
+               params->optIn[0].data.optInInteger, /* optInTimePeriod*/
+               params->optIn[1].data.optInReal, /* optInDelta*/
+               outBegIdx, 
+               outNBElement, 
+               params->out[0].data.outReal /*  outReal */
+               );
+}
+unsigned int TA_SWAK_BP_FramePPLB( const TA_ParamHolderPriv *params )
+{
+   return TA_SWAK_BP_Lookback(params->optIn[0].data.optInInteger, /* optInTimePeriod*/
+                    params->optIn[1].data.optInReal /* optInDelta*/ );
+}
+int TA_SWAK_BP_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+{
+   return TA_SWAK_BP_DisplayShift( params->optIn[0].data.optInInteger, params->optIn[1].data.optInReal, outputIdx );
+}
+TA_RetCode TA_SWAK_BUTTER_FramePP( const TA_ParamHolderPriv *params,
+                           int            startIdx,
+                           int            endIdx,
+                           int           *outBegIdx,
+                           int           *outNBElement )
+{
+   return TA_SWAK_BUTTER(
+               startIdx,
+               endIdx,
+               params->in[0].data.inReal, /* inReal */
+               params->optIn[0].data.optInInteger, /* optInTimePeriod*/
+               outBegIdx, 
+               outNBElement, 
+               params->out[0].data.outReal /*  outReal */
+               );
+}
+unsigned int TA_SWAK_BUTTER_FramePPLB( const TA_ParamHolderPriv *params )
+{
+   return TA_SWAK_BUTTER_Lookback(params->optIn[0].data.optInInteger /* optInTimePeriod*/ );
+}
+int TA_SWAK_BUTTER_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+{
+   return TA_SWAK_BUTTER_DisplayShift( params->optIn[0].data.optInInteger, outputIdx );
+}
+TA_RetCode TA_SWAK_GAUSS_FramePP( const TA_ParamHolderPriv *params,
+                           int            startIdx,
+                           int            endIdx,
+                           int           *outBegIdx,
+                           int           *outNBElement )
+{
+   return TA_SWAK_GAUSS(
+               startIdx,
+               endIdx,
+               params->in[0].data.inReal, /* inReal */
+               params->optIn[0].data.optInInteger, /* optInTimePeriod*/
+               outBegIdx, 
+               outNBElement, 
+               params->out[0].data.outReal /*  outReal */
+               );
+}
+unsigned int TA_SWAK_GAUSS_FramePPLB( const TA_ParamHolderPriv *params )
+{
+   return TA_SWAK_GAUSS_Lookback(params->optIn[0].data.optInInteger /* optInTimePeriod*/ );
+}
+int TA_SWAK_GAUSS_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+{
+   return TA_SWAK_GAUSS_DisplayShift( params->optIn[0].data.optInInteger, outputIdx );
+}
+TA_RetCode TA_SWAK_HP_FramePP( const TA_ParamHolderPriv *params,
+                           int            startIdx,
+                           int            endIdx,
+                           int           *outBegIdx,
+                           int           *outNBElement )
+{
+   return TA_SWAK_HP(
+               startIdx,
+               endIdx,
+               params->in[0].data.inReal, /* inReal */
+               params->optIn[0].data.optInInteger, /* optInTimePeriod*/
+               outBegIdx, 
+               outNBElement, 
+               params->out[0].data.outReal /*  outReal */
+               );
+}
+unsigned int TA_SWAK_HP_FramePPLB( const TA_ParamHolderPriv *params )
+{
+   return TA_SWAK_HP_Lookback(params->optIn[0].data.optInInteger /* optInTimePeriod*/ );
+}
+int TA_SWAK_HP_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+{
+   return TA_SWAK_HP_DisplayShift( params->optIn[0].data.optInInteger, outputIdx );
+}
 TA_RetCode TA_T3_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
                            int            endIdx,

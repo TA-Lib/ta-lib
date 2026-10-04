@@ -10542,6 +10542,261 @@ static void icount_SUPERTREND(int iters) {
     g_sink += acc + outNBElement;
 }
 
+static void icount_SWAK_2PHP(int iters) {
+    const char *nm = "SWAK_2PHP";
+    int outBegIdx = 0, outNBElement = 0;
+    double acc = 0.0;
+    TA_RetCode rc;
+    TA_SWAK_2PHP_Stream *st = NULL;
+    TA_SWAK_2PHP_Stream *stf = NULL;
+    double v0 = 0.0;
+
+    ICOUNT_ZERO();
+    rc = TA_SWAK_2PHP(0, g_nPoints - 1, g_close, 20, &outBegIdx, &outNBElement, g_outBuf0);
+    ICOUNT_DUMP("SWAK_2PHP/batch");
+    icount_row(nm, "batch", 1, rc);
+    acc += g_outBuf0[0];
+
+    ICOUNT_ZERO();
+    rc = TA_SWAK_2PHP_OpenAndFill(&stf, g_close, g_nPoints, 20, &outBegIdx, &outNBElement, g_outBuf0);
+    ICOUNT_DUMP("SWAK_2PHP/openfill");
+    icount_row(nm, "openfill", 1, rc);
+    acc += g_outBuf0[0];
+    if( stf ) TA_SWAK_2PHP_Close(stf);
+
+    ICOUNT_ZERO();
+    rc = TA_SWAK_2PHP_Open(&st, g_close, g_nPoints, 20, &v0);
+    ICOUNT_DUMP("SWAK_2PHP/open");
+    icount_row(nm, "open", 1, rc);
+
+    if( rc == TA_SUCCESS && st ) {
+        TA_RetCode src = TA_SUCCESS;
+        ICOUNT_ZERO();
+        for( int it = 0; it < iters; it++ ) {
+            src = TA_SWAK_2PHP_Update(st, g_close[it & ICOUNT_MASK], &v0);
+            acc += v0;
+        }
+        ICOUNT_DUMP("SWAK_2PHP/update");
+        icount_row(nm, "update", 1, src);
+        ICOUNT_ZERO();
+        for( int it = 0; it < iters; it++ ) {
+            src = TA_SWAK_2PHP_Peek(st, g_close[it & ICOUNT_MASK], &v0);
+            acc += v0;
+        }
+        ICOUNT_DUMP("SWAK_2PHP/peek");
+        icount_row(nm, "peek", 1, src);
+    } else {
+        icount_row(nm, "update", 0, rc);
+        icount_row(nm, "peek", 0, rc);
+    }
+    if( st ) TA_SWAK_2PHP_Close(st);
+    g_sink += acc + outNBElement;
+}
+
+static void icount_SWAK_BP(int iters) {
+    const char *nm = "SWAK_BP";
+    int outBegIdx = 0, outNBElement = 0;
+    double acc = 0.0;
+    TA_RetCode rc;
+    TA_SWAK_BP_Stream *st = NULL;
+    TA_SWAK_BP_Stream *stf = NULL;
+    double v0 = 0.0;
+
+    ICOUNT_ZERO();
+    rc = TA_SWAK_BP(0, g_nPoints - 1, g_close, 20, 0.100000000000000, &outBegIdx, &outNBElement, g_outBuf0);
+    ICOUNT_DUMP("SWAK_BP/batch");
+    icount_row(nm, "batch", 1, rc);
+    acc += g_outBuf0[0];
+
+    ICOUNT_ZERO();
+    rc = TA_SWAK_BP_OpenAndFill(&stf, g_close, g_nPoints, 20, 0.100000000000000, &outBegIdx, &outNBElement, g_outBuf0);
+    ICOUNT_DUMP("SWAK_BP/openfill");
+    icount_row(nm, "openfill", 1, rc);
+    acc += g_outBuf0[0];
+    if( stf ) TA_SWAK_BP_Close(stf);
+
+    ICOUNT_ZERO();
+    rc = TA_SWAK_BP_Open(&st, g_close, g_nPoints, 20, 0.100000000000000, &v0);
+    ICOUNT_DUMP("SWAK_BP/open");
+    icount_row(nm, "open", 1, rc);
+
+    if( rc == TA_SUCCESS && st ) {
+        TA_RetCode src = TA_SUCCESS;
+        ICOUNT_ZERO();
+        for( int it = 0; it < iters; it++ ) {
+            src = TA_SWAK_BP_Update(st, g_close[it & ICOUNT_MASK], &v0);
+            acc += v0;
+        }
+        ICOUNT_DUMP("SWAK_BP/update");
+        icount_row(nm, "update", 1, src);
+        ICOUNT_ZERO();
+        for( int it = 0; it < iters; it++ ) {
+            src = TA_SWAK_BP_Peek(st, g_close[it & ICOUNT_MASK], &v0);
+            acc += v0;
+        }
+        ICOUNT_DUMP("SWAK_BP/peek");
+        icount_row(nm, "peek", 1, src);
+    } else {
+        icount_row(nm, "update", 0, rc);
+        icount_row(nm, "peek", 0, rc);
+    }
+    if( st ) TA_SWAK_BP_Close(st);
+    g_sink += acc + outNBElement;
+}
+
+static void icount_SWAK_BUTTER(int iters) {
+    const char *nm = "SWAK_BUTTER";
+    int outBegIdx = 0, outNBElement = 0;
+    double acc = 0.0;
+    TA_RetCode rc;
+    TA_SWAK_BUTTER_Stream *st = NULL;
+    TA_SWAK_BUTTER_Stream *stf = NULL;
+    double v0 = 0.0;
+
+    ICOUNT_ZERO();
+    rc = TA_SWAK_BUTTER(0, g_nPoints - 1, g_close, 20, &outBegIdx, &outNBElement, g_outBuf0);
+    ICOUNT_DUMP("SWAK_BUTTER/batch");
+    icount_row(nm, "batch", 1, rc);
+    acc += g_outBuf0[0];
+
+    ICOUNT_ZERO();
+    rc = TA_SWAK_BUTTER_OpenAndFill(&stf, g_close, g_nPoints, 20, &outBegIdx, &outNBElement, g_outBuf0);
+    ICOUNT_DUMP("SWAK_BUTTER/openfill");
+    icount_row(nm, "openfill", 1, rc);
+    acc += g_outBuf0[0];
+    if( stf ) TA_SWAK_BUTTER_Close(stf);
+
+    ICOUNT_ZERO();
+    rc = TA_SWAK_BUTTER_Open(&st, g_close, g_nPoints, 20, &v0);
+    ICOUNT_DUMP("SWAK_BUTTER/open");
+    icount_row(nm, "open", 1, rc);
+
+    if( rc == TA_SUCCESS && st ) {
+        TA_RetCode src = TA_SUCCESS;
+        ICOUNT_ZERO();
+        for( int it = 0; it < iters; it++ ) {
+            src = TA_SWAK_BUTTER_Update(st, g_close[it & ICOUNT_MASK], &v0);
+            acc += v0;
+        }
+        ICOUNT_DUMP("SWAK_BUTTER/update");
+        icount_row(nm, "update", 1, src);
+        ICOUNT_ZERO();
+        for( int it = 0; it < iters; it++ ) {
+            src = TA_SWAK_BUTTER_Peek(st, g_close[it & ICOUNT_MASK], &v0);
+            acc += v0;
+        }
+        ICOUNT_DUMP("SWAK_BUTTER/peek");
+        icount_row(nm, "peek", 1, src);
+    } else {
+        icount_row(nm, "update", 0, rc);
+        icount_row(nm, "peek", 0, rc);
+    }
+    if( st ) TA_SWAK_BUTTER_Close(st);
+    g_sink += acc + outNBElement;
+}
+
+static void icount_SWAK_GAUSS(int iters) {
+    const char *nm = "SWAK_GAUSS";
+    int outBegIdx = 0, outNBElement = 0;
+    double acc = 0.0;
+    TA_RetCode rc;
+    TA_SWAK_GAUSS_Stream *st = NULL;
+    TA_SWAK_GAUSS_Stream *stf = NULL;
+    double v0 = 0.0;
+
+    ICOUNT_ZERO();
+    rc = TA_SWAK_GAUSS(0, g_nPoints - 1, g_close, 20, &outBegIdx, &outNBElement, g_outBuf0);
+    ICOUNT_DUMP("SWAK_GAUSS/batch");
+    icount_row(nm, "batch", 1, rc);
+    acc += g_outBuf0[0];
+
+    ICOUNT_ZERO();
+    rc = TA_SWAK_GAUSS_OpenAndFill(&stf, g_close, g_nPoints, 20, &outBegIdx, &outNBElement, g_outBuf0);
+    ICOUNT_DUMP("SWAK_GAUSS/openfill");
+    icount_row(nm, "openfill", 1, rc);
+    acc += g_outBuf0[0];
+    if( stf ) TA_SWAK_GAUSS_Close(stf);
+
+    ICOUNT_ZERO();
+    rc = TA_SWAK_GAUSS_Open(&st, g_close, g_nPoints, 20, &v0);
+    ICOUNT_DUMP("SWAK_GAUSS/open");
+    icount_row(nm, "open", 1, rc);
+
+    if( rc == TA_SUCCESS && st ) {
+        TA_RetCode src = TA_SUCCESS;
+        ICOUNT_ZERO();
+        for( int it = 0; it < iters; it++ ) {
+            src = TA_SWAK_GAUSS_Update(st, g_close[it & ICOUNT_MASK], &v0);
+            acc += v0;
+        }
+        ICOUNT_DUMP("SWAK_GAUSS/update");
+        icount_row(nm, "update", 1, src);
+        ICOUNT_ZERO();
+        for( int it = 0; it < iters; it++ ) {
+            src = TA_SWAK_GAUSS_Peek(st, g_close[it & ICOUNT_MASK], &v0);
+            acc += v0;
+        }
+        ICOUNT_DUMP("SWAK_GAUSS/peek");
+        icount_row(nm, "peek", 1, src);
+    } else {
+        icount_row(nm, "update", 0, rc);
+        icount_row(nm, "peek", 0, rc);
+    }
+    if( st ) TA_SWAK_GAUSS_Close(st);
+    g_sink += acc + outNBElement;
+}
+
+static void icount_SWAK_HP(int iters) {
+    const char *nm = "SWAK_HP";
+    int outBegIdx = 0, outNBElement = 0;
+    double acc = 0.0;
+    TA_RetCode rc;
+    TA_SWAK_HP_Stream *st = NULL;
+    TA_SWAK_HP_Stream *stf = NULL;
+    double v0 = 0.0;
+
+    ICOUNT_ZERO();
+    rc = TA_SWAK_HP(0, g_nPoints - 1, g_close, 20, &outBegIdx, &outNBElement, g_outBuf0);
+    ICOUNT_DUMP("SWAK_HP/batch");
+    icount_row(nm, "batch", 1, rc);
+    acc += g_outBuf0[0];
+
+    ICOUNT_ZERO();
+    rc = TA_SWAK_HP_OpenAndFill(&stf, g_close, g_nPoints, 20, &outBegIdx, &outNBElement, g_outBuf0);
+    ICOUNT_DUMP("SWAK_HP/openfill");
+    icount_row(nm, "openfill", 1, rc);
+    acc += g_outBuf0[0];
+    if( stf ) TA_SWAK_HP_Close(stf);
+
+    ICOUNT_ZERO();
+    rc = TA_SWAK_HP_Open(&st, g_close, g_nPoints, 20, &v0);
+    ICOUNT_DUMP("SWAK_HP/open");
+    icount_row(nm, "open", 1, rc);
+
+    if( rc == TA_SUCCESS && st ) {
+        TA_RetCode src = TA_SUCCESS;
+        ICOUNT_ZERO();
+        for( int it = 0; it < iters; it++ ) {
+            src = TA_SWAK_HP_Update(st, g_close[it & ICOUNT_MASK], &v0);
+            acc += v0;
+        }
+        ICOUNT_DUMP("SWAK_HP/update");
+        icount_row(nm, "update", 1, src);
+        ICOUNT_ZERO();
+        for( int it = 0; it < iters; it++ ) {
+            src = TA_SWAK_HP_Peek(st, g_close[it & ICOUNT_MASK], &v0);
+            acc += v0;
+        }
+        ICOUNT_DUMP("SWAK_HP/peek");
+        icount_row(nm, "peek", 1, src);
+    } else {
+        icount_row(nm, "update", 0, rc);
+        icount_row(nm, "peek", 0, rc);
+    }
+    if( st ) TA_SWAK_HP_Close(st);
+    g_sink += acc + outNBElement;
+}
+
 static void icount_T3(int iters) {
     const char *nm = "T3";
     int outBegIdx = 0, outNBElement = 0;
@@ -11871,6 +12126,11 @@ static void icount_all(const char *filter, int iters) {
     if( func_matches(filter, "SUB") ) { icount_SUB(iters); fflush(stdout); }
     if( func_matches(filter, "SUM") ) { icount_SUM(iters); fflush(stdout); }
     if( func_matches(filter, "SUPERTREND") ) { icount_SUPERTREND(iters); fflush(stdout); }
+    if( func_matches(filter, "SWAK_2PHP") ) { icount_SWAK_2PHP(iters); fflush(stdout); }
+    if( func_matches(filter, "SWAK_BP") ) { icount_SWAK_BP(iters); fflush(stdout); }
+    if( func_matches(filter, "SWAK_BUTTER") ) { icount_SWAK_BUTTER(iters); fflush(stdout); }
+    if( func_matches(filter, "SWAK_GAUSS") ) { icount_SWAK_GAUSS(iters); fflush(stdout); }
+    if( func_matches(filter, "SWAK_HP") ) { icount_SWAK_HP(iters); fflush(stdout); }
     if( func_matches(filter, "T3") ) { icount_T3(iters); fflush(stdout); }
     if( func_matches(filter, "TAN") ) { icount_TAN(iters); fflush(stdout); }
     if( func_matches(filter, "TANH") ) { icount_TANH(iters); fflush(stdout); }

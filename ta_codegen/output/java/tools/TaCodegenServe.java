@@ -25,9 +25,9 @@ enum FuncUnstId {
     UNUSED_12, KAMA, MAMA, UNUSED_15, MINUS_DI, MINUS_DM,
     NATR, PLUS_DI, PLUS_DM, RSI, UNUSED_22, T3,
     RMA, HA, RVI, FRAMA, MCGD, VIDYA,
-    STC,
+    STC, SWAK_GAUSS, SWAK_BUTTER, SWAK_HP, SWAK_2PHP, SWAK_BP,
     ALL;
-    static final int COUNT = 31;
+    static final int COUNT = 36;
     int value() { return this == ALL ? 65535 : ordinal(); }
 }
 
@@ -193147,6 +193147,3832 @@ class Core {
      *
      *  Initial  Name/description
      *  -------------------------------------------------------------------
+     *  MF       Mario Fortier
+     *  KL       Kevin Lin (@kevinlincg)
+     *  CC       Claude Code (AI assistant)
+     *
+     * Change history:
+     *
+     *  MMDDYY BY     Description
+     *  -------------------------------------------------------------------
+     *  100126 KL,CC  Creation (#486).
+     */
+
+       /**
+        * Number of leading input bars {@link Core#swak2php} consumes before it can
+        * produce its first value.
+        * <p>Equivalently, the index of the first bar with a value when the whole
+        * series is requested. Feed at least {@code lookback + 1} bars to get any
+        * output.
+        * <p>This function is recursive, so the result also includes this
+        * {@code Core}'s unstable-period setting — which is why it is an instance
+        * method.
+        *
+        * @param optInTimePeriod Cutoff period; cycles longer than it are removed,
+        *        cycles shorter pass (default 20; range 2..10000; {@code Integer.MIN_VALUE}
+        *        selects the default).
+        * @return The lookback, or {@code -1} if a parameter is out of range.
+        */
+       public int swak2phpLookback( int optInTimePeriod )
+       {
+          if( optInTimePeriod == Integer.MIN_VALUE ) {
+             optInTimePeriod = 20;
+          } else if( optInTimePeriod < 2 || optInTimePeriod > 10000 ) {
+             return -1;
+          }
+          /* No structural lookback: the two input slots and the two output slots are
+           * seeded from the first bar rather than read from before it, and there is
+           * no callee whose lookback could be inherited (ha.c:16-19).
+           */
+          return this.unstablePeriod[FuncUnstId.SWAK_2PHP.ordinal()] ;
+
+       }
+       /**
+        * How many bars ahead (positive) or behind (negative) of the bar that
+        * computed it a chart draws one output of {@link Core#swak2php}.
+        * <p>Every output of this function is drawn at its own bar, so the answer is
+        * 0.
+        *
+        * @param optInTimePeriod Cutoff period; cycles longer than it are removed,
+        *        cycles shorter pass (default 20; range 2..10000; {@code Integer.MIN_VALUE}
+        *        selects the default).
+        * @param outputIdx Position of the output in the batch signature, from 0.
+        * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+        *        out of range or the index names no output.
+        */
+       public int swak2phpDisplayShift( int optInTimePeriod, int outputIdx )
+       {
+          if( swak2phpLookback( optInTimePeriod ) < 0 ) {
+             return Integer.MIN_VALUE;
+          }
+          if( outputIdx < 0 || outputIdx >= 1 ) {
+             return Integer.MIN_VALUE;
+          }
+          return 0;
+       }
+       RetCode swak2phpImpl( int startIdx,
+                             int endIdx,
+                             double inReal[],
+                             int optInTimePeriod,
+                             MInteger outBegIdx,
+                             MInteger outNBElement,
+                             double outReal[] )
+       {
+          int i = 0;
+          int outIdx = 0;
+          int today = 0;
+          int lookbackTotal = 0;
+          double w = 0;
+          double b2p = 0;
+          double a2p = 0;
+          double om = 0;
+          double c0 = 0;
+          double a1 = 0;
+          double a2 = 0;
+          double x0 = 0;
+          double x1 = 0;
+          double x2 = 0;
+          double y = 0;
+          double y1 = 0;
+          double y2 = 0;
+          if( (startIdx < 0) || (startIdx > INDEX_MAX) ) {
+             return RetCode.OUT_OF_RANGE_START_INDEX ;
+          }
+          if( (endIdx < 0) || (endIdx > INDEX_MAX) || (endIdx < startIdx)) {
+             return RetCode.OUT_OF_RANGE_END_INDEX ;
+          }
+          if( optInTimePeriod == Integer.MIN_VALUE ) {
+             optInTimePeriod = 20;
+          } else if( optInTimePeriod < 2 || optInTimePeriod > 10000 ) {
+             return RetCode.BAD_PARAM;
+          }
+          outBegIdx.value = 0;
+          outNBElement.value = 0;
+          lookbackTotal = swak2phpLookback(optInTimePeriod);
+          if( startIdx < lookbackTotal ) {
+             startIdx = lookbackTotal;
+          }
+          if( startIdx > endIdx ) {
+             return RetCode.SUCCESS ;
+          }
+          /* The same two-pole alpha the Gaussian and Butterworth rows use (Ehlers,
+           * Stocks & Commodities January 2006, Figure 5); the paper's 360/P is a full
+           * turn, so 2*pi/P. a2p keeps the sqrt form rather than the algebraically
+           * equal subtraction, which cancels for large P.
+           */
+          w = 2.0 * 3.141592653589793 / (double)optInTimePeriod;
+          b2p = 2.415 * (1.0 - Math.cos(w));
+          a2p = -b2p + Math.sqrt(Math.fma(b2p, b2p, 2.0 * b2p));
+          /* The two-pole high-pass row: the same double real pole as those two, with
+           * a (1, -2, 1) numerator instead. That numerator is zero on a constant, so
+           * the DC gain is 0 and the line is centred on zero; at Nyquist it weighs 4,
+           * and c0 is exactly what divides that back to unity -- ((2-a2p)/2)^2 times
+           * 4/(2-a2p)^2 is 1. Rolling off twice as steeply as the one-pole row is the
+           * whole reason to pay for the second pole.
+           */
+          om = 1.0 - a2p;
+          c0 = (1.0 - a2p / 2.0) * (1.0 - a2p / 2.0);
+          a1 = 2.0 * om;
+          a2 = -(om * om);
+          today = startIdx - lookbackTotal;
+          /* Start in the steady state of a constant input equal to the first bar: a
+           * DC-gain-0 row answers 0 for a constant, so both output slots start there
+           * while both input slots hold the bar. The input slots are carried in
+           * locals and never re-read from inReal, because outReal may alias it.
+           */
+          x1 = inReal[today];
+          x2 = x1;
+          y1 = 0.0;
+          y2 = 0.0;
+          /* Skip the unstable period: run the recurrence but publish nothing. */
+          i = lookbackTotal;
+          while( i != 0 ) {
+             x0 = inReal[today];
+             y = Math.fma(a2, y2, Math.fma(c0, x0 - 2.0 * x1 + x2, a1 * y1));
+             x2 = x1;
+             x1 = x0;
+             y2 = y1;
+             y1 = y;
+             today += 1;
+             i -= 1;
+          }
+          outIdx = 0;
+          while( today <= endIdx ) {
+             /* The evaluation order is the bit-exactness contract across backends:
+              * the numerator as (x0 - 2*x1) + x2, then the a1 feedback, then a2.
+              */
+             x0 = inReal[today];
+             y = Math.fma(a2, y2, Math.fma(c0, x0 - 2.0 * x1 + x2, a1 * y1));
+             x2 = x1;
+             x1 = x0;
+             y2 = y1;
+             y1 = y;
+             outReal[outIdx] = y;
+             outIdx = outIdx + 1;
+             today += 1;
+          }
+          outNBElement.value = outIdx;
+          outBegIdx.value = startIdx;
+          return RetCode.SUCCESS ;
+       }
+       RetCode swak2phpImpl( int startIdx,
+                             int endIdx,
+                             float inReal[],
+                             int optInTimePeriod,
+                             MInteger outBegIdx,
+                             MInteger outNBElement,
+                             double outReal[] )
+       {
+          int i = 0;
+          int outIdx = 0;
+          int today = 0;
+          int lookbackTotal = 0;
+          double w = 0;
+          double b2p = 0;
+          double a2p = 0;
+          double om = 0;
+          double c0 = 0;
+          double a1 = 0;
+          double a2 = 0;
+          double x0 = 0;
+          double x1 = 0;
+          double x2 = 0;
+          double y = 0;
+          double y1 = 0;
+          double y2 = 0;
+          if( (startIdx < 0) || (startIdx > INDEX_MAX) ) {
+             return RetCode.OUT_OF_RANGE_START_INDEX ;
+          }
+          if( (endIdx < 0) || (endIdx > INDEX_MAX) || (endIdx < startIdx)) {
+             return RetCode.OUT_OF_RANGE_END_INDEX ;
+          }
+          if( optInTimePeriod == Integer.MIN_VALUE ) {
+             optInTimePeriod = 20;
+          } else if( optInTimePeriod < 2 || optInTimePeriod > 10000 ) {
+             return RetCode.BAD_PARAM;
+          }
+          outBegIdx.value = 0;
+          outNBElement.value = 0;
+          lookbackTotal = swak2phpLookback(optInTimePeriod);
+          if( startIdx < lookbackTotal ) {
+             startIdx = lookbackTotal;
+          }
+          if( startIdx > endIdx ) {
+             return RetCode.SUCCESS ;
+          }
+          w = 2.0 * 3.141592653589793 / (double)optInTimePeriod;
+          b2p = 2.415 * (1.0 - Math.cos(w));
+          a2p = -b2p + Math.sqrt(Math.fma(b2p, b2p, 2.0 * b2p));
+          om = 1.0 - a2p;
+          c0 = (1.0 - a2p / 2.0) * (1.0 - a2p / 2.0);
+          a1 = 2.0 * om;
+          a2 = -(om * om);
+          today = startIdx - lookbackTotal;
+          x1 = (double)inReal[today];
+          x2 = x1;
+          y1 = 0.0;
+          y2 = 0.0;
+          i = lookbackTotal;
+          while( i != 0 ) {
+             x0 = (double)inReal[today];
+             y = Math.fma(a2, y2, Math.fma(c0, x0 - 2.0 * x1 + x2, a1 * y1));
+             x2 = x1;
+             x1 = x0;
+             y2 = y1;
+             y1 = y;
+             today += 1;
+             i -= 1;
+          }
+          outIdx = 0;
+          while( today <= endIdx ) {
+             x0 = (double)inReal[today];
+             y = Math.fma(a2, y2, Math.fma(c0, x0 - 2.0 * x1 + x2, a1 * y1));
+             x2 = x1;
+             x1 = x0;
+             y2 = y1;
+             y1 = y;
+             outReal[outIdx] = y;
+             outIdx = outIdx + 1;
+             today += 1;
+          }
+          outNBElement.value = outIdx;
+          outBegIdx.value = startIdx;
+          return RetCode.SUCCESS ;
+       }
+       /**
+        * The two-pole high-pass row of John Ehlers' Swiss Army Knife filter: the
+        * same double real pole the Gaussian and Butterworth rows use, with a
+        * detrending numerator instead of a smoothing one. It removes what is slower
+        * than the cutoff period and rolls off twice as steeply as the one-pole row.
+        * Read it as an oscillator, not as price. Its DC gain is 0, so a flat market
+        * returns zero and a trend returns its departure from itself. Against
+        * {@code TA_SWAK_HP} the difference is the slope of the transition: the
+        * second pole buys a sharper separation between what is kept and what is
+        * removed, at the cost of a longer settling transient.
+        * <p>Formula and more info at <a
+        * href="https://ta-lib.org/functions/swak_2php">ta-lib.org/functions/swak_2php</a>.
+        * <p>Values are written only where the indicator is defined. The returned
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#swak2phpLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
+        *
+        * @param startIdx First bar of the requested range (inclusive).
+        * @param endIdx Last bar of the requested range (inclusive).
+        * @param inReal The series to detrend; Ehlers' default is the bar midpoint
+        *        {@code (H+L)/2}, which the caller passes as {@code TA_MEDPRICE} output.
+        * @param optInTimePeriod Cutoff period; cycles longer than it are removed,
+        *        cycles shorter pass (default 20; range 2..10000; {@code Integer.MIN_VALUE}
+        *        selects the default).
+        * @param outReal The detrended line, centred on zero. Must hold at least
+        *        {@code endIdx - max(startIdx, swak2phpLookback(...)) + 1} values, and
+        *        never be empty: an empty array is an absent output.
+        * @return The range written: {@code begIdx} is the first bar with a value,
+        *        {@code count} how many were written.
+        * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
+        *        negative or above {@link Core#INDEX_MAX}, or {@code endIdx < startIdx}.
+        * @throws IllegalArgumentException if an optional parameter is outside its
+        *        documented range, two outputs share one array, or an array is absent or
+        *        too short for the range requested — any input this function
+        *        <i>declares</i> that does not reach {@code endIdx}, or an output that
+        *        cannot hold the values produced. Declared, not read: a few candlestick
+        *        patterns take an OHLC series they never index, and it is required all the
+        *        same. An output this function documents as declinable is the one
+        *        exception: {@code null} is how you decline it. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
+        *
+        * @see Core#swakHp
+        * @see Core#swakBp
+        * @see Core#medprice
+        */
+       public OutRange swak2php( int startIdx,
+                                 int endIdx,
+                                 double inReal[],
+                                 int optInTimePeriod,
+                                 double outReal[] )
+       {
+          requireIndexRange("SWAK_2PHP", startIdx, endIdx);
+          int guardStart = clampedStart("SWAK_2PHP", startIdx, swak2phpLookback(optInTimePeriod));
+          int guardInLen = endIdx + 1;
+          int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("SWAK_2PHP", "inReal", inReal, guardInLen);
+          requireLength("SWAK_2PHP", "outReal", outReal, guardOutLen);
+          MInteger outBegIdx = new MInteger();
+          MInteger outNBElement = new MInteger();
+          RetCode retCode = swak2phpImpl(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+          if( retCode != RetCode.SUCCESS ) {
+             throw failure("SWAK_2PHP", retCode);
+          }
+          return new OutRange(outBegIdx.value, outNBElement.value);
+       }
+       /**
+        * The two-pole high-pass row of John Ehlers' Swiss Army Knife filter: the
+        * same double real pole the Gaussian and Butterworth rows use, with a
+        * detrending numerator instead of a smoothing one. It removes what is slower
+        * than the cutoff period and rolls off twice as steeply as the one-pole row.
+        * Read it as an oscillator, not as price. Its DC gain is 0, so a flat market
+        * returns zero and a trend returns its departure from itself. Against
+        * {@code TA_SWAK_HP} the difference is the slope of the transition: the
+        * second pole buys a sharper separation between what is kept and what is
+        * removed, at the cost of a longer settling transient.
+        * <p>Formula and more info at <a
+        * href="https://ta-lib.org/functions/swak_2php">ta-lib.org/functions/swak_2php</a>.
+        * <p>This is the {@code float[]} overload. The arithmetic is performed in
+        * {@code double} before being written to the {@code double[]} output, so a
+        * result beyond {@code float} range is still representable.
+        * <p>Values are written only where the indicator is defined. The returned
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#swak2phpLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
+        *
+        * @param startIdx First bar of the requested range (inclusive).
+        * @param endIdx Last bar of the requested range (inclusive).
+        * @param inReal The series to detrend; Ehlers' default is the bar midpoint
+        *        {@code (H+L)/2}, which the caller passes as {@code TA_MEDPRICE} output.
+        * @param optInTimePeriod Cutoff period; cycles longer than it are removed,
+        *        cycles shorter pass (default 20; range 2..10000; {@code Integer.MIN_VALUE}
+        *        selects the default).
+        * @param outReal The detrended line, centred on zero. Must hold at least
+        *        {@code endIdx - max(startIdx, swak2phpLookback(...)) + 1} values, and
+        *        never be empty: an empty array is an absent output.
+        * @return The range written: {@code begIdx} is the first bar with a value,
+        *        {@code count} how many were written.
+        * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
+        *        negative or above {@link Core#INDEX_MAX}, or {@code endIdx < startIdx}.
+        * @throws IllegalArgumentException if an optional parameter is outside its
+        *        documented range, two outputs share one array, or an array is absent or
+        *        too short for the range requested — any input this function
+        *        <i>declares</i> that does not reach {@code endIdx}, or an output that
+        *        cannot hold the values produced. Declared, not read: a few candlestick
+        *        patterns take an OHLC series they never index, and it is required all the
+        *        same. An output this function documents as declinable is the one
+        *        exception: {@code null} is how you decline it. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
+        *
+        * @see Core#swakHp
+        * @see Core#swakBp
+        * @see Core#medprice
+        */
+       public OutRange swak2php( int startIdx,
+                                 int endIdx,
+                                 float inReal[],
+                                 int optInTimePeriod,
+                                 double outReal[] )
+       {
+          requireIndexRange("SWAK_2PHP", startIdx, endIdx);
+          int guardStart = clampedStart("SWAK_2PHP", startIdx, swak2phpLookback(optInTimePeriod));
+          int guardInLen = endIdx + 1;
+          int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("SWAK_2PHP", "inReal", inReal, guardInLen);
+          requireLength("SWAK_2PHP", "outReal", outReal, guardOutLen);
+          MInteger outBegIdx = new MInteger();
+          MInteger outNBElement = new MInteger();
+          RetCode retCode = swak2phpImpl(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+          if( retCode != RetCode.SUCCESS ) {
+             throw failure("SWAK_2PHP", retCode);
+          }
+          return new OutRange(outBegIdx.value, outNBElement.value);
+       }
+    /**** Streaming API *****/
+
+       /**
+        * A live SWAK_2PHP stream (unrelated to {@code java.util.stream}): one value per
+        * closed bar, bit-identical to {@link Core#swak2php} over the same series.
+        * Open with {@link Core#swak2phpOpen}; there is no close — the handle is
+        * ordinary heap state, unreferenced handles are simply garbage-collected.
+        * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
+        * {@code value} and {@code clone} must not race with an {@code update} on
+        * the same handle. With no concurrent {@code update}, {@code peek}/
+        * {@code value}/{@code clone} never write the stream and may be called
+        * concurrently after safe publication. Independent streams (a
+        * {@code clone()} result included) are fully independent.
+        * <p>Not serializable by design: to checkpoint, retain the history and
+        * re-open — the result is bit-identical by contract.
+        */
+       public static final class Swak2phpStream {
+          private Core core;
+          private int optInTimePeriod;
+          private double c0;
+          private double a1;
+          private double a2;
+          private double x1;
+          private double x2;
+          private double y1;
+          private double y2;
+          private double cur_outReal;
+          private int outRangeBegIdx;
+          private int outRangeCount;
+
+          private Swak2phpStream( Core core ) { this.core = core; }
+
+          /**
+           * The bars this stream has an output for, in the input series'
+           * coordinates: {@code [begIdx, begIdx + count)}.
+           * <p>It is what {@link Core#swak2php} reports over the same bars: the
+           * opener sets it to {@code (lookback, historyLen - lookback)}, every
+           * accepted {@code update} adds one to the count — a rejected one
+           * changes nothing, and neither does {@code peek} — and
+           * {@code clone()} carries it verbatim. A plain
+           * {@code open} hands back only the last value, a subset of this range,
+           * because the caller chose not to take the fill.
+           * <p>The last bar it can reach is {@link Core#INDEX_MAX}; past that
+           * {@code update} and {@code advance} throw
+           * {@link IndexOutOfBoundsException}.
+           */
+          public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
+
+          /**
+           * Count one bar this stream was not fed: {@link #outRange()} advances
+           * by one and nothing else moves — {@link #value()} keeps answering the previous
+           * output, which is this bar's output too.
+           * <p>For a bar the caller leaves out: one an {@code update} rejected
+           * and that will not be re-fed, or a session with no print. Without it
+           * two handles on one feed drift a bar apart when only one of them skips.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#INDEX_MAX}, the last one the batch tier
+           * can address and the last this handle will count. {@code update}
+           * throws the same there.
+           */
+          public void advance() {
+             if( this.outRangeBegIdx + this.outRangeCount > INDEX_MAX )
+                throw failure("SWAK_2PHP advance", RetCode.OUT_OF_RANGE_END_INDEX);
+             this.outRangeCount++;
+          }
+
+          private Swak2phpStream( Swak2phpStream other ) {
+             this.core = other.core;
+             this.optInTimePeriod = other.optInTimePeriod;
+             this.c0 = other.c0;
+             this.a1 = other.a1;
+             this.a2 = other.a2;
+             this.x1 = other.x1;
+             this.x2 = other.x2;
+             this.y1 = other.y1;
+             this.y2 = other.y2;
+             this.cur_outReal = other.cur_outReal;
+             this.outRangeBegIdx = other.outRangeBegIdx;
+             this.outRangeCount = other.outRangeCount;
+          }
+
+          /**
+           * Commit one closed bar, returning the new current value.
+           * <p>Throws {@link IllegalArgumentException} if any bar value is not
+           * finite (NaN or an infinity). That check runs before anything is
+           * written, so nothing moves — {@link #outRange()} included — and
+           * {@link #value()} still answers the previous value. Re-feed the bar when a
+           * corrected value arrives, or call {@link #advance()} to count it and
+           * carry on; two handles on one feed drift a bar apart if neither
+           * happens.
+           * This is the one place the streaming tier is stricter than
+           * the batch API, which computes on whatever it is given: a handle
+           * retains its state, so a single non-finite bar would poison every
+           * later value it produces.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#INDEX_MAX}, which no re-feed clears: the
+           * handle has run out of index domain and only a shorter history can
+           * start a new one.
+           */
+          public double update( double inReal ) {
+             if( this.outRangeBegIdx + this.outRangeCount > INDEX_MAX )
+                throw failure("SWAK_2PHP update", RetCode.OUT_OF_RANGE_END_INDEX);
+             if( !Double.isFinite(inReal) )
+                throw nonFiniteBar("SWAK_2PHP update", "inReal");
+             core.swak2phpStepImpl(this, inReal);
+             this.outRangeCount++;
+             return this.cur_outReal;
+          }
+
+          /**
+           * Evaluate a forming bar without committing — bit-identical to what the
+           * next {@code update} with the same bar would return — the same
+           * transition, with every store it would make carried in a local instead.
+           * Never writes this handle, so peeks may run concurrently with each other.
+           * <p>It counts no bar, so it keeps answering past the
+           * {@link Core#INDEX_MAX} ceiling {@code update} stops at.
+           */
+          public double peek( double inReal ) {
+             if( !Double.isFinite(inReal) )
+                throw nonFiniteBar("SWAK_2PHP peek", "inReal");
+             Swak2phpStream sp = this;
+             double x0 = 0.0;
+             double y = 0.0;
+             double cur_outReal = 0.0;
+             double x1 = sp.x1;
+             double x2 = sp.x2;
+             double y1 = sp.y1;
+             double y2 = sp.y2;
+             /* The evaluation order is the bit-exactness contract across backends:
+              * the numerator as (x0 - 2*x1) + x2, then the a1 feedback, then a2.
+              */
+             x0 = inReal;
+             y = Math.fma(sp.a2, y2, Math.fma(sp.c0, x0 - 2.0 * x1 + x2, sp.a1 * y1));
+             x2 = x1;
+             x1 = x0;
+             y2 = y1;
+             y1 = y;
+             cur_outReal = y;
+             return cur_outReal;
+          }
+
+          /**
+           * The value at the last bar this stream counted — the bar
+           * {@link #outRange()} ends on. The last history bar right after open,
+           * then whatever the latest accepted {@code update} returned.
+           * A pure field read; {@code peek} does not change it.
+           */
+          public double value() {
+             return this.cur_outReal;
+          }
+
+          /**
+           * An independent fork of this stream: both evolve separately from here
+           * on. Buffers are copied and sub-streams cloned recursively; the
+           * {@link Core} reference is shared, since a {@code Core} is immutable
+           * for a stream's lifetime.
+           *
+           * <p>Not the {@code Cloneable} protocol: this calls a copy constructor,
+           * never {@code super.clone()}, so it throws nothing.
+           *
+           * @return an independent stream at the same bar
+           */
+          @Override
+          public Swak2phpStream clone() {
+             return new Swak2phpStream(this);
+          }
+       }
+       private void swak2phpStepImpl( Swak2phpStream sp, double inReal )
+       {
+          double x0 = 0.0;
+          double y = 0.0;
+          /* The evaluation order is the bit-exactness contract across backends:
+           * the numerator as (x0 - 2*x1) + x2, then the a1 feedback, then a2.
+           */
+          x0 = inReal;
+          y = Math.fma(sp.a2, sp.y2, Math.fma(sp.c0, x0 - 2.0 * sp.x1 + sp.x2, sp.a1 * sp.y1));
+          sp.x2 = sp.x1;
+          sp.x1 = x0;
+          sp.y2 = sp.y1;
+          sp.y1 = y;
+          sp.cur_outReal = y;
+       }
+       private RetCode swak2phpOpenImpl( Swak2phpStream sp, double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+       {
+          int i = 0;
+          int outIdx = 0;
+          int today = 0;
+          int lookbackTotal = 0;
+          double w = 0;
+          double b2p = 0;
+          double a2p = 0;
+          double om = 0;
+          double c0 = 0;
+          double a1 = 0;
+          double a2 = 0;
+          double x0 = 0;
+          double x1 = 0;
+          double x2 = 0;
+          double y = 0;
+          double y1 = 0;
+          double y2 = 0;
+          int historyLen = inReal.length;
+          int endIdx = historyLen - 1;
+          if( historyLen < 1 ) {
+             return RetCode.OUT_OF_RANGE_START_INDEX;
+          }
+          if( historyLen > INDEX_MAX + 1 ) {
+             return RetCode.OUT_OF_RANGE_END_INDEX;
+          }
+          if( optInTimePeriod == Integer.MIN_VALUE ) {
+             optInTimePeriod = 20;
+          } else if( optInTimePeriod < 2 || optInTimePeriod > 10000 ) {
+             return RetCode.BAD_PARAM;
+          }
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.INSUFFICIENT_HISTORY;
+          }
+          outBegIdx.value = 0;
+          outNBElement.value = 0;
+          lookbackTotal = swak2phpLookback(optInTimePeriod);
+          if( startIdx < lookbackTotal ) {
+             startIdx = lookbackTotal;
+          }
+          if( startIdx > endIdx ) {
+             return RetCode.INSUFFICIENT_HISTORY ;
+          }
+          /* The same two-pole alpha the Gaussian and Butterworth rows use (Ehlers,
+           * Stocks & Commodities January 2006, Figure 5); the paper's 360/P is a full
+           * turn, so 2*pi/P. a2p keeps the sqrt form rather than the algebraically
+           * equal subtraction, which cancels for large P.
+           */
+          w = 2.0 * 3.141592653589793 / (double)optInTimePeriod;
+          b2p = 2.415 * (1.0 - Math.cos(w));
+          a2p = -b2p + Math.sqrt(Math.fma(b2p, b2p, 2.0 * b2p));
+          /* The two-pole high-pass row: the same double real pole as those two, with
+           * a (1, -2, 1) numerator instead. That numerator is zero on a constant, so
+           * the DC gain is 0 and the line is centred on zero; at Nyquist it weighs 4,
+           * and c0 is exactly what divides that back to unity -- ((2-a2p)/2)^2 times
+           * 4/(2-a2p)^2 is 1. Rolling off twice as steeply as the one-pole row is the
+           * whole reason to pay for the second pole.
+           */
+          om = 1.0 - a2p;
+          c0 = (1.0 - a2p / 2.0) * (1.0 - a2p / 2.0);
+          a1 = 2.0 * om;
+          a2 = -(om * om);
+          today = startIdx - lookbackTotal;
+          /* Start in the steady state of a constant input equal to the first bar: a
+           * DC-gain-0 row answers 0 for a constant, so both output slots start there
+           * while both input slots hold the bar. The input slots are carried in
+           * locals and never re-read from inReal, because outReal may alias it.
+           */
+          x1 = inReal[today];
+          x2 = x1;
+          y1 = 0.0;
+          y2 = 0.0;
+          /* Skip the unstable period: run the recurrence but publish nothing. */
+          i = lookbackTotal;
+          while( i != 0 ) {
+             x0 = inReal[today];
+             y = Math.fma(a2, y2, Math.fma(c0, x0 - 2.0 * x1 + x2, a1 * y1));
+             x2 = x1;
+             x1 = x0;
+             y2 = y1;
+             y1 = y;
+             today += 1;
+             i -= 1;
+          }
+          outIdx = 0;
+          while( today <= endIdx ) {
+             /* The evaluation order is the bit-exactness contract across backends:
+              * the numerator as (x0 - 2*x1) + x2, then the a1 feedback, then a2.
+              */
+             x0 = inReal[today];
+             y = Math.fma(a2, y2, Math.fma(c0, x0 - 2.0 * x1 + x2, a1 * y1));
+             x2 = x1;
+             x1 = x0;
+             y2 = y1;
+             y1 = y;
+             outReal[outIdx * outStride] = y;
+             outIdx = outIdx + 1;
+             today += 1;
+          }
+          outNBElement.value = outIdx;
+          outBegIdx.value = startIdx;
+          /* Capture the live batch state into the handle. */
+          sp.optInTimePeriod = optInTimePeriod;
+          sp.c0 = c0;
+          sp.a1 = a1;
+          sp.a2 = a2;
+          sp.x1 = x1;
+          sp.x2 = x2;
+          sp.y1 = y1;
+          sp.y2 = y2;
+          sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
+          return RetCode.SUCCESS;
+       }
+       /* swak2phpOpenAndFill anchored at startIdx — the composed-open fusion seam. */
+       Swak2phpStream swak2phpOpenAndFillInternal( double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+       {
+          Swak2phpStream sp = new Swak2phpStream(this);
+          RetCode retCode = swak2phpOpenImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
+          sp.outRangeBegIdx = outBegIdx.value;
+          sp.outRangeCount = outNBElement.value;
+          if( retCode == RetCode.SUCCESS ) {
+             return sp;
+          }
+          if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
+             throw insufficientHistory("SWAK_2PHP openAndFill", inReal.length, startIdx, swak2phpLookback(optInTimePeriod));
+          }
+          throw streamFailure("SWAK_2PHP openAndFill", retCode);
+       }
+       /* Internal startIdx-anchored open behind swak2phpOpen (composition seam). */
+       Swak2phpStream swak2phpOpenInternal( double inReal[], int startIdx, int optInTimePeriod )
+       {
+          Swak2phpStream sp = new Swak2phpStream(this);
+          MInteger outBegIdx = new MInteger();
+          MInteger outNBElement = new MInteger();
+          double[] sink_outReal = new double[1];
+          RetCode retCode = swak2phpOpenImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0);
+          sp.outRangeBegIdx = outBegIdx.value;
+          sp.outRangeCount = outNBElement.value;
+          if( retCode == RetCode.SUCCESS ) {
+             return sp;
+          }
+          if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
+             throw insufficientHistory("SWAK_2PHP open", inReal.length, startIdx, swak2phpLookback(optInTimePeriod));
+          }
+          throw streamFailure("SWAK_2PHP open", retCode);
+       }
+       /**
+        * Open a live SWAK_2PHP stream over the warm-up history; the handle's
+        * {@code value()} starts at the last history bar's value — bit-identical
+        * to {@link Core#swak2php} at that bar.
+        * <p>The history must hold at least {@code swak2phpLookback(...) + 1} bars
+        * (unstable-period aware), or {@link InsufficientHistoryException} is
+        * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
+        * ({@link Integer#MIN_VALUE} selects a parameter's documented default,
+        * as in the batch API). An EMPTY history throws
+        * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
+        * names no bar — and a null argument {@link IllegalArgumentException},
+        * both ahead of everything above.
+        */
+       public Swak2phpStream swak2phpOpen( double inReal[], int optInTimePeriod )
+       {
+          requireArgument("SWAK_2PHP open", "inReal", inReal);
+          requireHistory("SWAK_2PHP open", inReal.length);
+          return swak2phpOpenInternal(inReal, 0, optInTimePeriod);
+       }
+       /**
+        * {@link Core#swak2phpOpen} that also fills the output array(s) bit-identically
+        * to {@link Core#swak2php} over the whole history in the same single pass
+        * (no separate batch call needed for the warm-up plot). Output arrays must
+        * not alias the inputs or each other, and must hold
+        * {@code historyLen - lookback} values — both checked before anything is
+        * written, so an undersized array is an {@link IllegalArgumentException}
+        * naming it rather than a fault from inside the fill.
+        * <p>The range written is on the returned handle:
+        * {@link Swak2phpStream#outRange()}.
+        */
+       public Swak2phpStream swak2phpOpenAndFill( double inReal[], int optInTimePeriod, double outReal[] )
+       {
+          requireArgument("SWAK_2PHP openAndFill", "inReal", inReal);
+          requireHistory("SWAK_2PHP openAndFill", inReal.length);
+          int guardOutLen = openFillCount("SWAK_2PHP openAndFill", inReal.length, swak2phpLookback(optInTimePeriod));
+          requireLength("SWAK_2PHP openAndFill", "outReal", outReal, guardOutLen);
+          if( (Object)outReal == (Object)inReal ) {
+             throw streamFailure("SWAK_2PHP openAndFill", RetCode.BAD_PARAM);
+          }
+          MInteger outBegIdx = new MInteger();
+          MInteger outNBElement = new MInteger();
+          return swak2phpOpenAndFillInternal(inReal, 0, optInTimePeriod, outBegIdx, outNBElement, outReal);
+       }
+    /* List of contributors:
+     *
+     *  Initial  Name/description
+     *  -------------------------------------------------------------------
+     *  MF       Mario Fortier
+     *  KL       Kevin Lin (@kevinlincg)
+     *  CC       Claude Code (AI assistant)
+     *
+     * Change history:
+     *
+     *  MMDDYY BY     Description
+     *  -------------------------------------------------------------------
+     *  100126 KL,CC  Creation (#486).
+     */
+
+       /**
+        * Number of leading input bars {@link Core#swakBp} consumes before it can
+        * produce its first value.
+        * <p>Equivalently, the index of the first bar with a value when the whole
+        * series is requested. Feed at least {@code lookback + 1} bars to get any
+        * output.
+        * <p>This function is recursive, so the result also includes this
+        * {@code Core}'s unstable-period setting — which is why it is an instance
+        * method.
+        *
+        * @param optInTimePeriod Centre period of the band; the filter passes this
+        *        one untouched (default 20; range 5..2000; {@code Integer.MIN_VALUE}
+        *        selects the default).
+        * @param optInDelta Half-bandwidth as a fraction of the centre period;
+        *        smaller is a narrower band and a longer settling transient (default 0.1;
+        *        range 0.05..0.5; {@link Core#REAL_DEFAULT} selects the default).
+        * @return The lookback, or {@code -1} if a parameter is out of range.
+        */
+       public int swakBpLookback( int optInTimePeriod, double optInDelta )
+       {
+          if( optInTimePeriod == Integer.MIN_VALUE ) {
+             optInTimePeriod = 20;
+          } else if( optInTimePeriod < 5 || optInTimePeriod > 2000 ) {
+             return -1;
+          }
+          if( optInDelta == REAL_DEFAULT ) {
+             optInDelta = 1e-1;
+          } else if( !(optInDelta >= 5e-2 && optInDelta <= 5e-1) ) {
+             return -1;
+          }
+          /* No structural lookback: the two input slots and the two output slots are
+           * seeded from the first bar rather than read from before it, and there is
+           * no callee whose lookback could be inherited (ha.c:16-19).
+           */
+          return this.unstablePeriod[FuncUnstId.SWAK_BP.ordinal()] ;
+
+       }
+       /**
+        * How many bars ahead (positive) or behind (negative) of the bar that
+        * computed it a chart draws one output of {@link Core#swakBp}.
+        * <p>Every output of this function is drawn at its own bar, so the answer is
+        * 0.
+        *
+        * @param optInTimePeriod Centre period of the band; the filter passes this
+        *        one untouched (default 20; range 5..2000; {@code Integer.MIN_VALUE}
+        *        selects the default).
+        * @param optInDelta Half-bandwidth as a fraction of the centre period;
+        *        smaller is a narrower band and a longer settling transient (default 0.1;
+        *        range 0.05..0.5; {@link Core#REAL_DEFAULT} selects the default).
+        * @param outputIdx Position of the output in the batch signature, from 0.
+        * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+        *        out of range or the index names no output.
+        */
+       public int swakBpDisplayShift( int optInTimePeriod, double optInDelta, int outputIdx )
+       {
+          if( swakBpLookback( optInTimePeriod, optInDelta ) < 0 ) {
+             return Integer.MIN_VALUE;
+          }
+          if( outputIdx < 0 || outputIdx >= 1 ) {
+             return Integer.MIN_VALUE;
+          }
+          return 0;
+       }
+       RetCode swakBpImpl( int startIdx,
+                           int endIdx,
+                           double inReal[],
+                           int optInTimePeriod,
+                           double optInDelta,
+                           MInteger outBegIdx,
+                           MInteger outNBElement,
+                           double outReal[] )
+       {
+          int i = 0;
+          int outIdx = 0;
+          int today = 0;
+          int lookbackTotal = 0;
+          double w = 0;
+          double beta = 0;
+          double t = 0;
+          double abp = 0;
+          double c0 = 0;
+          double a1 = 0;
+          double a2 = 0;
+          double x0 = 0;
+          double x1 = 0;
+          double x2 = 0;
+          double y = 0;
+          double y1 = 0;
+          double y2 = 0;
+          if( (startIdx < 0) || (startIdx > INDEX_MAX) ) {
+             return RetCode.OUT_OF_RANGE_START_INDEX ;
+          }
+          if( (endIdx < 0) || (endIdx > INDEX_MAX) || (endIdx < startIdx)) {
+             return RetCode.OUT_OF_RANGE_END_INDEX ;
+          }
+          if( optInTimePeriod == Integer.MIN_VALUE ) {
+             optInTimePeriod = 20;
+          } else if( optInTimePeriod < 5 || optInTimePeriod > 2000 ) {
+             return RetCode.BAD_PARAM;
+          }
+          if( optInDelta == REAL_DEFAULT ) {
+             optInDelta = 1e-1;
+          } else if( !(optInDelta >= 5e-2 && optInDelta <= 5e-1) ) {
+             return RetCode.BAD_PARAM;
+          }
+          outBegIdx.value = 0;
+          outNBElement.value = 0;
+          lookbackTotal = swakBpLookback(optInTimePeriod, optInDelta);
+          if( startIdx < lookbackTotal ) {
+             startIdx = lookbackTotal;
+          }
+          if( startIdx > endIdx ) {
+             return RetCode.SUCCESS ;
+          }
+          /* The band-pass row (Ehlers, Stocks & Commodities January 2006, Figure 5).
+           * The paper's 360/P is a full turn, so 2*pi/P; beta is the cosine of the
+           * centre frequency and t is the half-bandwidth angle.
+           */
+          w = 2.0 * 3.141592653589793 / (double)optInTimePeriod;
+          beta = Math.cos(w);
+          t = 4.0 * 3.141592653589793 * optInDelta / (double)optInTimePeriod;
+          /* abp is written as (1 - sin t)/cos t rather than the paper's
+           * gamma - sqrt(gamma^2 - 1) with gamma = 1/cos t. The two are equal for
+           * 0 < t < pi/2, which this function's ranges guarantee (t <= 0.4*pi), but
+           * the published form cancels as t -> 0 because gamma^2 - 1 goes as t^2.
+           * Against a 60-digit reference the published form is already 4.5e-13 off
+           * at the period cap; this one is not, and that is what lets the cap be
+           * 2000 rather than 1000.
+           */
+          abp = (1.0 - Math.sin(t)) / Math.cos(t);
+          /* The numerator (1, 0, -1) is zero both on a constant and on a Nyquist
+           * alternation, so this row answers 0 at DC and at Nyquist, and exactly 1
+           * with zero phase at the centre period itself.
+           */
+          c0 = (1.0 - abp) / 2.0;
+          a1 = beta * (1.0 + abp);
+          a2 = -abp;
+          today = startIdx - lookbackTotal;
+          /* Start in the steady state of a constant input equal to the first bar: a
+           * band-pass of a constant is 0, so both output slots start there while both
+           * input slots hold the bar. The input slots are carried in locals and never
+           * re-read from inReal, because outReal may alias it.
+           */
+          x1 = inReal[today];
+          x2 = x1;
+          y1 = 0.0;
+          y2 = 0.0;
+          /* Skip the unstable period: run the recurrence but publish nothing. */
+          i = lookbackTotal;
+          while( i != 0 ) {
+             x0 = inReal[today];
+             y = Math.fma(a2, y2, Math.fma(c0, x0 - x2, a1 * y1));
+             x2 = x1;
+             x1 = x0;
+             y2 = y1;
+             y1 = y;
+             today += 1;
+             i -= 1;
+          }
+          outIdx = 0;
+          while( today <= endIdx ) {
+             /* The evaluation order is the bit-exactness contract across backends:
+              * the numerator as c0*(x0 - x2), then the a1 feedback, then a2. The
+              * middle tap is zero and dropped rather than added, which costs an
+              * operation per bar and nothing else: adding 0.0*x1 would land on the
+              * same bits, +0.0 for a cancelled numerator included.
+              */
+             x0 = inReal[today];
+             y = Math.fma(a2, y2, Math.fma(c0, x0 - x2, a1 * y1));
+             x2 = x1;
+             x1 = x0;
+             y2 = y1;
+             y1 = y;
+             outReal[outIdx] = y;
+             outIdx = outIdx + 1;
+             today += 1;
+          }
+          outNBElement.value = outIdx;
+          outBegIdx.value = startIdx;
+          return RetCode.SUCCESS ;
+       }
+       RetCode swakBpImpl( int startIdx,
+                           int endIdx,
+                           float inReal[],
+                           int optInTimePeriod,
+                           double optInDelta,
+                           MInteger outBegIdx,
+                           MInteger outNBElement,
+                           double outReal[] )
+       {
+          int i = 0;
+          int outIdx = 0;
+          int today = 0;
+          int lookbackTotal = 0;
+          double w = 0;
+          double beta = 0;
+          double t = 0;
+          double abp = 0;
+          double c0 = 0;
+          double a1 = 0;
+          double a2 = 0;
+          double x0 = 0;
+          double x1 = 0;
+          double x2 = 0;
+          double y = 0;
+          double y1 = 0;
+          double y2 = 0;
+          if( (startIdx < 0) || (startIdx > INDEX_MAX) ) {
+             return RetCode.OUT_OF_RANGE_START_INDEX ;
+          }
+          if( (endIdx < 0) || (endIdx > INDEX_MAX) || (endIdx < startIdx)) {
+             return RetCode.OUT_OF_RANGE_END_INDEX ;
+          }
+          if( optInTimePeriod == Integer.MIN_VALUE ) {
+             optInTimePeriod = 20;
+          } else if( optInTimePeriod < 5 || optInTimePeriod > 2000 ) {
+             return RetCode.BAD_PARAM;
+          }
+          if( optInDelta == REAL_DEFAULT ) {
+             optInDelta = 1e-1;
+          } else if( !(optInDelta >= 5e-2 && optInDelta <= 5e-1) ) {
+             return RetCode.BAD_PARAM;
+          }
+          outBegIdx.value = 0;
+          outNBElement.value = 0;
+          lookbackTotal = swakBpLookback(optInTimePeriod, optInDelta);
+          if( startIdx < lookbackTotal ) {
+             startIdx = lookbackTotal;
+          }
+          if( startIdx > endIdx ) {
+             return RetCode.SUCCESS ;
+          }
+          w = 2.0 * 3.141592653589793 / (double)optInTimePeriod;
+          beta = Math.cos(w);
+          t = 4.0 * 3.141592653589793 * optInDelta / (double)optInTimePeriod;
+          abp = (1.0 - Math.sin(t)) / Math.cos(t);
+          c0 = (1.0 - abp) / 2.0;
+          a1 = beta * (1.0 + abp);
+          a2 = -abp;
+          today = startIdx - lookbackTotal;
+          x1 = (double)inReal[today];
+          x2 = x1;
+          y1 = 0.0;
+          y2 = 0.0;
+          i = lookbackTotal;
+          while( i != 0 ) {
+             x0 = (double)inReal[today];
+             y = Math.fma(a2, y2, Math.fma(c0, x0 - x2, a1 * y1));
+             x2 = x1;
+             x1 = x0;
+             y2 = y1;
+             y1 = y;
+             today += 1;
+             i -= 1;
+          }
+          outIdx = 0;
+          while( today <= endIdx ) {
+             x0 = (double)inReal[today];
+             y = Math.fma(a2, y2, Math.fma(c0, x0 - x2, a1 * y1));
+             x2 = x1;
+             x1 = x0;
+             y2 = y1;
+             y1 = y;
+             outReal[outIdx] = y;
+             outIdx = outIdx + 1;
+             today += 1;
+          }
+          outNBElement.value = outIdx;
+          outBegIdx.value = startIdx;
+          return RetCode.SUCCESS ;
+       }
+       /**
+        * The band-pass row of John Ehlers' Swiss Army Knife filter: a cycle
+        * extractor that keeps a band of periods around a chosen centre and removes
+        * everything on both sides of it. Read it as an oscillator, not as price. It
+        * answers zero on a constant, zero on a bar-to-bar alternation, and exactly
+        * the input — same amplitude, no phase shift — on a sine wave at the centre
+        * period. Between those it tapers, with the half-power points near
+        * {@code P(1 ± delta)}: at a centre of 20 bars and a delta of 0.1 the band
+        * is roughly 20 ± 2 bars. What separates it from the high-pass rows is that
+        * it rejects the fast end too. A detrender keeps everything above its
+        * cutoff, including the bar-to-bar noise; this keeps only the band asked
+        * for.
+        * <p>Formula and more info at <a
+        * href="https://ta-lib.org/functions/swak_bp">ta-lib.org/functions/swak_bp</a>.
+        * <p>Values are written only where the indicator is defined. The returned
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#swakBpLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
+        *
+        * @param startIdx First bar of the requested range (inclusive).
+        * @param endIdx Last bar of the requested range (inclusive).
+        * @param inReal The series to filter; Ehlers' default is the bar midpoint
+        *        {@code (H+L)/2}, which the caller passes as {@code TA_MEDPRICE} output.
+        * @param optInTimePeriod Centre period of the band; the filter passes this
+        *        one untouched (default 20; range 5..2000; {@code Integer.MIN_VALUE}
+        *        selects the default).
+        * @param optInDelta Half-bandwidth as a fraction of the centre period;
+        *        smaller is a narrower band and a longer settling transient (default 0.1;
+        *        range 0.05..0.5; {@link Core#REAL_DEFAULT} selects the default).
+        * @param outReal The extracted cycle, centred on zero. Must hold at least
+        *        {@code endIdx - max(startIdx, swakBpLookback(...)) + 1} values, and never
+        *        be empty: an empty array is an absent output.
+        * @return The range written: {@code begIdx} is the first bar with a value,
+        *        {@code count} how many were written.
+        * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
+        *        negative or above {@link Core#INDEX_MAX}, or {@code endIdx < startIdx}.
+        * @throws IllegalArgumentException if an optional parameter is outside its
+        *        documented range, two outputs share one array, or an array is absent or
+        *        too short for the range requested — any input this function
+        *        <i>declares</i> that does not reach {@code endIdx}, or an output that
+        *        cannot hold the values produced. Declared, not read: a few candlestick
+        *        patterns take an OHLC series they never index, and it is required all the
+        *        same. An output this function documents as declinable is the one
+        *        exception: {@code null} is how you decline it. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
+        *
+        * @see Core#swakHp
+        * @see Core#swak2php
+        * @see Core#medprice
+        */
+       public OutRange swakBp( int startIdx,
+                               int endIdx,
+                               double inReal[],
+                               int optInTimePeriod,
+                               double optInDelta,
+                               double outReal[] )
+       {
+          requireIndexRange("SWAK_BP", startIdx, endIdx);
+          int guardStart = clampedStart("SWAK_BP", startIdx, swakBpLookback(optInTimePeriod, optInDelta));
+          int guardInLen = endIdx + 1;
+          int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("SWAK_BP", "inReal", inReal, guardInLen);
+          requireLength("SWAK_BP", "outReal", outReal, guardOutLen);
+          MInteger outBegIdx = new MInteger();
+          MInteger outNBElement = new MInteger();
+          RetCode retCode = swakBpImpl(startIdx, endIdx, inReal, optInTimePeriod, optInDelta, outBegIdx, outNBElement, outReal);
+          if( retCode != RetCode.SUCCESS ) {
+             throw failure("SWAK_BP", retCode);
+          }
+          return new OutRange(outBegIdx.value, outNBElement.value);
+       }
+       /**
+        * The band-pass row of John Ehlers' Swiss Army Knife filter: a cycle
+        * extractor that keeps a band of periods around a chosen centre and removes
+        * everything on both sides of it. Read it as an oscillator, not as price. It
+        * answers zero on a constant, zero on a bar-to-bar alternation, and exactly
+        * the input — same amplitude, no phase shift — on a sine wave at the centre
+        * period. Between those it tapers, with the half-power points near
+        * {@code P(1 ± delta)}: at a centre of 20 bars and a delta of 0.1 the band
+        * is roughly 20 ± 2 bars. What separates it from the high-pass rows is that
+        * it rejects the fast end too. A detrender keeps everything above its
+        * cutoff, including the bar-to-bar noise; this keeps only the band asked
+        * for.
+        * <p>Formula and more info at <a
+        * href="https://ta-lib.org/functions/swak_bp">ta-lib.org/functions/swak_bp</a>.
+        * <p>This is the {@code float[]} overload. The arithmetic is performed in
+        * {@code double} before being written to the {@code double[]} output, so a
+        * result beyond {@code float} range is still representable.
+        * <p>Values are written only where the indicator is defined. The returned
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#swakBpLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
+        *
+        * @param startIdx First bar of the requested range (inclusive).
+        * @param endIdx Last bar of the requested range (inclusive).
+        * @param inReal The series to filter; Ehlers' default is the bar midpoint
+        *        {@code (H+L)/2}, which the caller passes as {@code TA_MEDPRICE} output.
+        * @param optInTimePeriod Centre period of the band; the filter passes this
+        *        one untouched (default 20; range 5..2000; {@code Integer.MIN_VALUE}
+        *        selects the default).
+        * @param optInDelta Half-bandwidth as a fraction of the centre period;
+        *        smaller is a narrower band and a longer settling transient (default 0.1;
+        *        range 0.05..0.5; {@link Core#REAL_DEFAULT} selects the default).
+        * @param outReal The extracted cycle, centred on zero. Must hold at least
+        *        {@code endIdx - max(startIdx, swakBpLookback(...)) + 1} values, and never
+        *        be empty: an empty array is an absent output.
+        * @return The range written: {@code begIdx} is the first bar with a value,
+        *        {@code count} how many were written.
+        * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
+        *        negative or above {@link Core#INDEX_MAX}, or {@code endIdx < startIdx}.
+        * @throws IllegalArgumentException if an optional parameter is outside its
+        *        documented range, two outputs share one array, or an array is absent or
+        *        too short for the range requested — any input this function
+        *        <i>declares</i> that does not reach {@code endIdx}, or an output that
+        *        cannot hold the values produced. Declared, not read: a few candlestick
+        *        patterns take an OHLC series they never index, and it is required all the
+        *        same. An output this function documents as declinable is the one
+        *        exception: {@code null} is how you decline it. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
+        *
+        * @see Core#swakHp
+        * @see Core#swak2php
+        * @see Core#medprice
+        */
+       public OutRange swakBp( int startIdx,
+                               int endIdx,
+                               float inReal[],
+                               int optInTimePeriod,
+                               double optInDelta,
+                               double outReal[] )
+       {
+          requireIndexRange("SWAK_BP", startIdx, endIdx);
+          int guardStart = clampedStart("SWAK_BP", startIdx, swakBpLookback(optInTimePeriod, optInDelta));
+          int guardInLen = endIdx + 1;
+          int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("SWAK_BP", "inReal", inReal, guardInLen);
+          requireLength("SWAK_BP", "outReal", outReal, guardOutLen);
+          MInteger outBegIdx = new MInteger();
+          MInteger outNBElement = new MInteger();
+          RetCode retCode = swakBpImpl(startIdx, endIdx, inReal, optInTimePeriod, optInDelta, outBegIdx, outNBElement, outReal);
+          if( retCode != RetCode.SUCCESS ) {
+             throw failure("SWAK_BP", retCode);
+          }
+          return new OutRange(outBegIdx.value, outNBElement.value);
+       }
+    /**** Streaming API *****/
+
+       /**
+        * A live SWAK_BP stream (unrelated to {@code java.util.stream}): one value per
+        * closed bar, bit-identical to {@link Core#swakBp} over the same series.
+        * Open with {@link Core#swakBpOpen}; there is no close — the handle is
+        * ordinary heap state, unreferenced handles are simply garbage-collected.
+        * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
+        * {@code value} and {@code clone} must not race with an {@code update} on
+        * the same handle. With no concurrent {@code update}, {@code peek}/
+        * {@code value}/{@code clone} never write the stream and may be called
+        * concurrently after safe publication. Independent streams (a
+        * {@code clone()} result included) are fully independent.
+        * <p>Not serializable by design: to checkpoint, retain the history and
+        * re-open — the result is bit-identical by contract.
+        */
+       public static final class SwakBpStream {
+          private Core core;
+          private int optInTimePeriod;
+          private double optInDelta;
+          private double c0;
+          private double a1;
+          private double a2;
+          private double x1;
+          private double x2;
+          private double y1;
+          private double y2;
+          private double cur_outReal;
+          private int outRangeBegIdx;
+          private int outRangeCount;
+
+          private SwakBpStream( Core core ) { this.core = core; }
+
+          /**
+           * The bars this stream has an output for, in the input series'
+           * coordinates: {@code [begIdx, begIdx + count)}.
+           * <p>It is what {@link Core#swakBp} reports over the same bars: the
+           * opener sets it to {@code (lookback, historyLen - lookback)}, every
+           * accepted {@code update} adds one to the count — a rejected one
+           * changes nothing, and neither does {@code peek} — and
+           * {@code clone()} carries it verbatim. A plain
+           * {@code open} hands back only the last value, a subset of this range,
+           * because the caller chose not to take the fill.
+           * <p>The last bar it can reach is {@link Core#INDEX_MAX}; past that
+           * {@code update} and {@code advance} throw
+           * {@link IndexOutOfBoundsException}.
+           */
+          public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
+
+          /**
+           * Count one bar this stream was not fed: {@link #outRange()} advances
+           * by one and nothing else moves — {@link #value()} keeps answering the previous
+           * output, which is this bar's output too.
+           * <p>For a bar the caller leaves out: one an {@code update} rejected
+           * and that will not be re-fed, or a session with no print. Without it
+           * two handles on one feed drift a bar apart when only one of them skips.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#INDEX_MAX}, the last one the batch tier
+           * can address and the last this handle will count. {@code update}
+           * throws the same there.
+           */
+          public void advance() {
+             if( this.outRangeBegIdx + this.outRangeCount > INDEX_MAX )
+                throw failure("SWAK_BP advance", RetCode.OUT_OF_RANGE_END_INDEX);
+             this.outRangeCount++;
+          }
+
+          private SwakBpStream( SwakBpStream other ) {
+             this.core = other.core;
+             this.optInTimePeriod = other.optInTimePeriod;
+             this.optInDelta = other.optInDelta;
+             this.c0 = other.c0;
+             this.a1 = other.a1;
+             this.a2 = other.a2;
+             this.x1 = other.x1;
+             this.x2 = other.x2;
+             this.y1 = other.y1;
+             this.y2 = other.y2;
+             this.cur_outReal = other.cur_outReal;
+             this.outRangeBegIdx = other.outRangeBegIdx;
+             this.outRangeCount = other.outRangeCount;
+          }
+
+          /**
+           * Commit one closed bar, returning the new current value.
+           * <p>Throws {@link IllegalArgumentException} if any bar value is not
+           * finite (NaN or an infinity). That check runs before anything is
+           * written, so nothing moves — {@link #outRange()} included — and
+           * {@link #value()} still answers the previous value. Re-feed the bar when a
+           * corrected value arrives, or call {@link #advance()} to count it and
+           * carry on; two handles on one feed drift a bar apart if neither
+           * happens.
+           * This is the one place the streaming tier is stricter than
+           * the batch API, which computes on whatever it is given: a handle
+           * retains its state, so a single non-finite bar would poison every
+           * later value it produces.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#INDEX_MAX}, which no re-feed clears: the
+           * handle has run out of index domain and only a shorter history can
+           * start a new one.
+           */
+          public double update( double inReal ) {
+             if( this.outRangeBegIdx + this.outRangeCount > INDEX_MAX )
+                throw failure("SWAK_BP update", RetCode.OUT_OF_RANGE_END_INDEX);
+             if( !Double.isFinite(inReal) )
+                throw nonFiniteBar("SWAK_BP update", "inReal");
+             core.swakBpStepImpl(this, inReal);
+             this.outRangeCount++;
+             return this.cur_outReal;
+          }
+
+          /**
+           * Evaluate a forming bar without committing — bit-identical to what the
+           * next {@code update} with the same bar would return — the same
+           * transition, with every store it would make carried in a local instead.
+           * Never writes this handle, so peeks may run concurrently with each other.
+           * <p>It counts no bar, so it keeps answering past the
+           * {@link Core#INDEX_MAX} ceiling {@code update} stops at.
+           */
+          public double peek( double inReal ) {
+             if( !Double.isFinite(inReal) )
+                throw nonFiniteBar("SWAK_BP peek", "inReal");
+             SwakBpStream sp = this;
+             double x0 = 0.0;
+             double y = 0.0;
+             double cur_outReal = 0.0;
+             double x1 = sp.x1;
+             double x2 = sp.x2;
+             double y1 = sp.y1;
+             double y2 = sp.y2;
+             /* The evaluation order is the bit-exactness contract across backends:
+              * the numerator as c0*(x0 - x2), then the a1 feedback, then a2. The
+              * middle tap is zero and dropped rather than added, which costs an
+              * operation per bar and nothing else: adding 0.0*x1 would land on the
+              * same bits, +0.0 for a cancelled numerator included.
+              */
+             x0 = inReal;
+             y = Math.fma(sp.a2, y2, Math.fma(sp.c0, x0 - x2, sp.a1 * y1));
+             x2 = x1;
+             x1 = x0;
+             y2 = y1;
+             y1 = y;
+             cur_outReal = y;
+             return cur_outReal;
+          }
+
+          /**
+           * The value at the last bar this stream counted — the bar
+           * {@link #outRange()} ends on. The last history bar right after open,
+           * then whatever the latest accepted {@code update} returned.
+           * A pure field read; {@code peek} does not change it.
+           */
+          public double value() {
+             return this.cur_outReal;
+          }
+
+          /**
+           * An independent fork of this stream: both evolve separately from here
+           * on. Buffers are copied and sub-streams cloned recursively; the
+           * {@link Core} reference is shared, since a {@code Core} is immutable
+           * for a stream's lifetime.
+           *
+           * <p>Not the {@code Cloneable} protocol: this calls a copy constructor,
+           * never {@code super.clone()}, so it throws nothing.
+           *
+           * @return an independent stream at the same bar
+           */
+          @Override
+          public SwakBpStream clone() {
+             return new SwakBpStream(this);
+          }
+       }
+       private void swakBpStepImpl( SwakBpStream sp, double inReal )
+       {
+          double x0 = 0.0;
+          double y = 0.0;
+          /* The evaluation order is the bit-exactness contract across backends:
+           * the numerator as c0*(x0 - x2), then the a1 feedback, then a2. The
+           * middle tap is zero and dropped rather than added, which costs an
+           * operation per bar and nothing else: adding 0.0*x1 would land on the
+           * same bits, +0.0 for a cancelled numerator included.
+           */
+          x0 = inReal;
+          y = Math.fma(sp.a2, sp.y2, Math.fma(sp.c0, x0 - sp.x2, sp.a1 * sp.y1));
+          sp.x2 = sp.x1;
+          sp.x1 = x0;
+          sp.y2 = sp.y1;
+          sp.y1 = y;
+          sp.cur_outReal = y;
+       }
+       private RetCode swakBpOpenImpl( SwakBpStream sp, double inReal[], int startIdx, int optInTimePeriod, double optInDelta, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+       {
+          int i = 0;
+          int outIdx = 0;
+          int today = 0;
+          int lookbackTotal = 0;
+          double w = 0;
+          double beta = 0;
+          double t = 0;
+          double abp = 0;
+          double c0 = 0;
+          double a1 = 0;
+          double a2 = 0;
+          double x0 = 0;
+          double x1 = 0;
+          double x2 = 0;
+          double y = 0;
+          double y1 = 0;
+          double y2 = 0;
+          int historyLen = inReal.length;
+          int endIdx = historyLen - 1;
+          if( historyLen < 1 ) {
+             return RetCode.OUT_OF_RANGE_START_INDEX;
+          }
+          if( historyLen > INDEX_MAX + 1 ) {
+             return RetCode.OUT_OF_RANGE_END_INDEX;
+          }
+          if( optInTimePeriod == Integer.MIN_VALUE ) {
+             optInTimePeriod = 20;
+          } else if( optInTimePeriod < 5 || optInTimePeriod > 2000 ) {
+             return RetCode.BAD_PARAM;
+          }
+          if( optInDelta == REAL_DEFAULT ) {
+             optInDelta = 1e-1;
+          } else if( !(optInDelta >= 5e-2 && optInDelta <= 5e-1) ) {
+             return RetCode.BAD_PARAM;
+          }
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.INSUFFICIENT_HISTORY;
+          }
+          outBegIdx.value = 0;
+          outNBElement.value = 0;
+          lookbackTotal = swakBpLookback(optInTimePeriod, optInDelta);
+          if( startIdx < lookbackTotal ) {
+             startIdx = lookbackTotal;
+          }
+          if( startIdx > endIdx ) {
+             return RetCode.INSUFFICIENT_HISTORY ;
+          }
+          /* The band-pass row (Ehlers, Stocks & Commodities January 2006, Figure 5).
+           * The paper's 360/P is a full turn, so 2*pi/P; beta is the cosine of the
+           * centre frequency and t is the half-bandwidth angle.
+           */
+          w = 2.0 * 3.141592653589793 / (double)optInTimePeriod;
+          beta = Math.cos(w);
+          t = 4.0 * 3.141592653589793 * optInDelta / (double)optInTimePeriod;
+          /* abp is written as (1 - sin t)/cos t rather than the paper's
+           * gamma - sqrt(gamma^2 - 1) with gamma = 1/cos t. The two are equal for
+           * 0 < t < pi/2, which this function's ranges guarantee (t <= 0.4*pi), but
+           * the published form cancels as t -> 0 because gamma^2 - 1 goes as t^2.
+           * Against a 60-digit reference the published form is already 4.5e-13 off
+           * at the period cap; this one is not, and that is what lets the cap be
+           * 2000 rather than 1000.
+           */
+          abp = (1.0 - Math.sin(t)) / Math.cos(t);
+          /* The numerator (1, 0, -1) is zero both on a constant and on a Nyquist
+           * alternation, so this row answers 0 at DC and at Nyquist, and exactly 1
+           * with zero phase at the centre period itself.
+           */
+          c0 = (1.0 - abp) / 2.0;
+          a1 = beta * (1.0 + abp);
+          a2 = -abp;
+          today = startIdx - lookbackTotal;
+          /* Start in the steady state of a constant input equal to the first bar: a
+           * band-pass of a constant is 0, so both output slots start there while both
+           * input slots hold the bar. The input slots are carried in locals and never
+           * re-read from inReal, because outReal may alias it.
+           */
+          x1 = inReal[today];
+          x2 = x1;
+          y1 = 0.0;
+          y2 = 0.0;
+          /* Skip the unstable period: run the recurrence but publish nothing. */
+          i = lookbackTotal;
+          while( i != 0 ) {
+             x0 = inReal[today];
+             y = Math.fma(a2, y2, Math.fma(c0, x0 - x2, a1 * y1));
+             x2 = x1;
+             x1 = x0;
+             y2 = y1;
+             y1 = y;
+             today += 1;
+             i -= 1;
+          }
+          outIdx = 0;
+          while( today <= endIdx ) {
+             /* The evaluation order is the bit-exactness contract across backends:
+              * the numerator as c0*(x0 - x2), then the a1 feedback, then a2. The
+              * middle tap is zero and dropped rather than added, which costs an
+              * operation per bar and nothing else: adding 0.0*x1 would land on the
+              * same bits, +0.0 for a cancelled numerator included.
+              */
+             x0 = inReal[today];
+             y = Math.fma(a2, y2, Math.fma(c0, x0 - x2, a1 * y1));
+             x2 = x1;
+             x1 = x0;
+             y2 = y1;
+             y1 = y;
+             outReal[outIdx * outStride] = y;
+             outIdx = outIdx + 1;
+             today += 1;
+          }
+          outNBElement.value = outIdx;
+          outBegIdx.value = startIdx;
+          /* Capture the live batch state into the handle. */
+          sp.optInTimePeriod = optInTimePeriod;
+          sp.optInDelta = optInDelta;
+          sp.c0 = c0;
+          sp.a1 = a1;
+          sp.a2 = a2;
+          sp.x1 = x1;
+          sp.x2 = x2;
+          sp.y1 = y1;
+          sp.y2 = y2;
+          sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
+          return RetCode.SUCCESS;
+       }
+       /* swakBpOpenAndFill anchored at startIdx — the composed-open fusion seam. */
+       SwakBpStream swakBpOpenAndFillInternal( double inReal[], int startIdx, int optInTimePeriod, double optInDelta, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+       {
+          SwakBpStream sp = new SwakBpStream(this);
+          RetCode retCode = swakBpOpenImpl(sp, inReal, startIdx, optInTimePeriod, optInDelta, outBegIdx, outNBElement, outReal, 1);
+          sp.outRangeBegIdx = outBegIdx.value;
+          sp.outRangeCount = outNBElement.value;
+          if( retCode == RetCode.SUCCESS ) {
+             return sp;
+          }
+          if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
+             throw insufficientHistory("SWAK_BP openAndFill", inReal.length, startIdx, swakBpLookback(optInTimePeriod, optInDelta));
+          }
+          throw streamFailure("SWAK_BP openAndFill", retCode);
+       }
+       /* Internal startIdx-anchored open behind swakBpOpen (composition seam). */
+       SwakBpStream swakBpOpenInternal( double inReal[], int startIdx, int optInTimePeriod, double optInDelta )
+       {
+          SwakBpStream sp = new SwakBpStream(this);
+          MInteger outBegIdx = new MInteger();
+          MInteger outNBElement = new MInteger();
+          double[] sink_outReal = new double[1];
+          RetCode retCode = swakBpOpenImpl(sp, inReal, startIdx, optInTimePeriod, optInDelta, outBegIdx, outNBElement, sink_outReal, 0);
+          sp.outRangeBegIdx = outBegIdx.value;
+          sp.outRangeCount = outNBElement.value;
+          if( retCode == RetCode.SUCCESS ) {
+             return sp;
+          }
+          if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
+             throw insufficientHistory("SWAK_BP open", inReal.length, startIdx, swakBpLookback(optInTimePeriod, optInDelta));
+          }
+          throw streamFailure("SWAK_BP open", retCode);
+       }
+       /**
+        * Open a live SWAK_BP stream over the warm-up history; the handle's
+        * {@code value()} starts at the last history bar's value — bit-identical
+        * to {@link Core#swakBp} at that bar.
+        * <p>The history must hold at least {@code swakBpLookback(...) + 1} bars
+        * (unstable-period aware), or {@link InsufficientHistoryException} is
+        * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
+        * ({@link Integer#MIN_VALUE} and {@link Core#REAL_DEFAULT} select a
+        * parameter's documented default, as in the batch API). An EMPTY history throws
+        * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
+        * names no bar — and a null argument {@link IllegalArgumentException},
+        * both ahead of everything above.
+        */
+       public SwakBpStream swakBpOpen( double inReal[], int optInTimePeriod, double optInDelta )
+       {
+          requireArgument("SWAK_BP open", "inReal", inReal);
+          requireHistory("SWAK_BP open", inReal.length);
+          return swakBpOpenInternal(inReal, 0, optInTimePeriod, optInDelta);
+       }
+       /**
+        * {@link Core#swakBpOpen} that also fills the output array(s) bit-identically
+        * to {@link Core#swakBp} over the whole history in the same single pass
+        * (no separate batch call needed for the warm-up plot). Output arrays must
+        * not alias the inputs or each other, and must hold
+        * {@code historyLen - lookback} values — both checked before anything is
+        * written, so an undersized array is an {@link IllegalArgumentException}
+        * naming it rather than a fault from inside the fill.
+        * <p>The range written is on the returned handle:
+        * {@link SwakBpStream#outRange()}.
+        */
+       public SwakBpStream swakBpOpenAndFill( double inReal[], int optInTimePeriod, double optInDelta, double outReal[] )
+       {
+          requireArgument("SWAK_BP openAndFill", "inReal", inReal);
+          requireHistory("SWAK_BP openAndFill", inReal.length);
+          int guardOutLen = openFillCount("SWAK_BP openAndFill", inReal.length, swakBpLookback(optInTimePeriod, optInDelta));
+          requireLength("SWAK_BP openAndFill", "outReal", outReal, guardOutLen);
+          if( (Object)outReal == (Object)inReal ) {
+             throw streamFailure("SWAK_BP openAndFill", RetCode.BAD_PARAM);
+          }
+          MInteger outBegIdx = new MInteger();
+          MInteger outNBElement = new MInteger();
+          return swakBpOpenAndFillInternal(inReal, 0, optInTimePeriod, optInDelta, outBegIdx, outNBElement, outReal);
+       }
+    /* List of contributors:
+     *
+     *  Initial  Name/description
+     *  -------------------------------------------------------------------
+     *  MF       Mario Fortier
+     *  KL       Kevin Lin (@kevinlincg)
+     *  CC       Claude Code (AI assistant)
+     *
+     * Change history:
+     *
+     *  MMDDYY BY     Description
+     *  -------------------------------------------------------------------
+     *  100126 KL,CC  Creation (#486).
+     */
+
+       /**
+        * Number of leading input bars {@link Core#swakButter} consumes before it
+        * can produce its first value.
+        * <p>Equivalently, the index of the first bar with a value when the whole
+        * series is requested. Feed at least {@code lookback + 1} bars to get any
+        * output.
+        * <p>This function is recursive, so the result also includes this
+        * {@code Core}'s unstable-period setting — which is why it is an instance
+        * method.
+        *
+        * @param optInTimePeriod Cutoff period; shorter keeps more of the fast
+        *        motion, longer smooths harder and lags more (default 20; range 2..10000;
+        *        {@code Integer.MIN_VALUE} selects the default).
+        * @return The lookback, or {@code -1} if a parameter is out of range.
+        */
+       public int swakButterLookback( int optInTimePeriod )
+       {
+          if( optInTimePeriod == Integer.MIN_VALUE ) {
+             optInTimePeriod = 20;
+          } else if( optInTimePeriod < 2 || optInTimePeriod > 10000 ) {
+             return -1;
+          }
+          /* No structural lookback: the two input slots and the two output slots are
+           * seeded from the first bar rather than read from before it, and there is
+           * no callee whose lookback could be inherited, so the function's own
+           * unstable period is the whole of it (ha.c:16-19).
+           */
+          return this.unstablePeriod[FuncUnstId.SWAK_BUTTER.ordinal()] ;
+
+       }
+       /**
+        * How many bars ahead (positive) or behind (negative) of the bar that
+        * computed it a chart draws one output of {@link Core#swakButter}.
+        * <p>Every output of this function is drawn at its own bar, so the answer is
+        * 0.
+        *
+        * @param optInTimePeriod Cutoff period; shorter keeps more of the fast
+        *        motion, longer smooths harder and lags more (default 20; range 2..10000;
+        *        {@code Integer.MIN_VALUE} selects the default).
+        * @param outputIdx Position of the output in the batch signature, from 0.
+        * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+        *        out of range or the index names no output.
+        */
+       public int swakButterDisplayShift( int optInTimePeriod, int outputIdx )
+       {
+          if( swakButterLookback( optInTimePeriod ) < 0 ) {
+             return Integer.MIN_VALUE;
+          }
+          if( outputIdx < 0 || outputIdx >= 1 ) {
+             return Integer.MIN_VALUE;
+          }
+          return 0;
+       }
+       RetCode swakButterImpl( int startIdx,
+                               int endIdx,
+                               double inReal[],
+                               int optInTimePeriod,
+                               MInteger outBegIdx,
+                               MInteger outNBElement,
+                               double outReal[] )
+       {
+          int i = 0;
+          int outIdx = 0;
+          int today = 0;
+          int lookbackTotal = 0;
+          double w = 0;
+          double b2p = 0;
+          double a2p = 0;
+          double om = 0;
+          double c0 = 0;
+          double a1 = 0;
+          double a2 = 0;
+          double x0 = 0;
+          double x1 = 0;
+          double x2 = 0;
+          double y = 0;
+          double y1 = 0;
+          double y2 = 0;
+          if( (startIdx < 0) || (startIdx > INDEX_MAX) ) {
+             return RetCode.OUT_OF_RANGE_START_INDEX ;
+          }
+          if( (endIdx < 0) || (endIdx > INDEX_MAX) || (endIdx < startIdx)) {
+             return RetCode.OUT_OF_RANGE_END_INDEX ;
+          }
+          if( optInTimePeriod == Integer.MIN_VALUE ) {
+             optInTimePeriod = 20;
+          } else if( optInTimePeriod < 2 || optInTimePeriod > 10000 ) {
+             return RetCode.BAD_PARAM;
+          }
+          outBegIdx.value = 0;
+          outNBElement.value = 0;
+          lookbackTotal = swakButterLookback(optInTimePeriod);
+          if( startIdx < lookbackTotal ) {
+             startIdx = lookbackTotal;
+          }
+          if( startIdx > endIdx ) {
+             return RetCode.SUCCESS ;
+          }
+          /* The same two-pole alpha as the Gaussian row (Ehlers, Stocks & Commodities
+           * January 2006, Figure 5); the paper's 360/P is a full turn, so 2*pi/P.
+           * a2p keeps the sqrt form rather than the algebraically equal subtraction,
+           * which cancels for large P.
+           */
+          w = 2.0 * 3.141592653589793 / (double)optInTimePeriod;
+          b2p = 2.415 * (1.0 - Math.cos(w));
+          a2p = -b2p + Math.sqrt(Math.fma(b2p, b2p, 2.0 * b2p));
+          /* The Butterworth row: the Gaussian's double real pole with two zeros added
+           * at Nyquist, which is what the (1, 2, 1) numerator is. The quarter in c0
+           * keeps the DC gain at 1 against that numerator's weight of 4.
+           */
+          om = 1.0 - a2p;
+          c0 = a2p * a2p / 4.0;
+          a1 = 2.0 * om;
+          a2 = -(om * om);
+          today = startIdx - lookbackTotal;
+          /* Start in the steady state of a constant input equal to the first bar.
+           * Unlike the Gaussian row this one has non-zero b1 and b2, so the two input
+           * slots are carried in locals and never re-read from inReal: outReal may
+           * alias inReal, and an aliased write would already have overwritten the
+           * earlier bars this recurrence needs.
+           */
+          x0 = inReal[today];
+          x1 = x0;
+          x2 = x0;
+          y1 = x0;
+          y2 = x0;
+          /* Skip the unstable period: run the recurrence but publish nothing. */
+          i = lookbackTotal;
+          while( i != 0 ) {
+             x0 = inReal[today];
+             y = Math.fma(a2, y2, Math.fma(c0, Math.fma(2.0, x1, x0) + x2, a1 * y1));
+             x2 = x1;
+             x1 = x0;
+             y2 = y1;
+             y1 = y;
+             today += 1;
+             i -= 1;
+          }
+          outIdx = 0;
+          while( today <= endIdx ) {
+             /* The evaluation order is the bit-exactness contract across backends:
+              * the numerator as (x0 + 2*x1) + x2, then the a1 feedback, then a2.
+              */
+             x0 = inReal[today];
+             y = Math.fma(a2, y2, Math.fma(c0, Math.fma(2.0, x1, x0) + x2, a1 * y1));
+             x2 = x1;
+             x1 = x0;
+             y2 = y1;
+             y1 = y;
+             outReal[outIdx] = y;
+             outIdx = outIdx + 1;
+             today += 1;
+          }
+          outNBElement.value = outIdx;
+          outBegIdx.value = startIdx;
+          return RetCode.SUCCESS ;
+       }
+       RetCode swakButterImpl( int startIdx,
+                               int endIdx,
+                               float inReal[],
+                               int optInTimePeriod,
+                               MInteger outBegIdx,
+                               MInteger outNBElement,
+                               double outReal[] )
+       {
+          int i = 0;
+          int outIdx = 0;
+          int today = 0;
+          int lookbackTotal = 0;
+          double w = 0;
+          double b2p = 0;
+          double a2p = 0;
+          double om = 0;
+          double c0 = 0;
+          double a1 = 0;
+          double a2 = 0;
+          double x0 = 0;
+          double x1 = 0;
+          double x2 = 0;
+          double y = 0;
+          double y1 = 0;
+          double y2 = 0;
+          if( (startIdx < 0) || (startIdx > INDEX_MAX) ) {
+             return RetCode.OUT_OF_RANGE_START_INDEX ;
+          }
+          if( (endIdx < 0) || (endIdx > INDEX_MAX) || (endIdx < startIdx)) {
+             return RetCode.OUT_OF_RANGE_END_INDEX ;
+          }
+          if( optInTimePeriod == Integer.MIN_VALUE ) {
+             optInTimePeriod = 20;
+          } else if( optInTimePeriod < 2 || optInTimePeriod > 10000 ) {
+             return RetCode.BAD_PARAM;
+          }
+          outBegIdx.value = 0;
+          outNBElement.value = 0;
+          lookbackTotal = swakButterLookback(optInTimePeriod);
+          if( startIdx < lookbackTotal ) {
+             startIdx = lookbackTotal;
+          }
+          if( startIdx > endIdx ) {
+             return RetCode.SUCCESS ;
+          }
+          w = 2.0 * 3.141592653589793 / (double)optInTimePeriod;
+          b2p = 2.415 * (1.0 - Math.cos(w));
+          a2p = -b2p + Math.sqrt(Math.fma(b2p, b2p, 2.0 * b2p));
+          om = 1.0 - a2p;
+          c0 = a2p * a2p / 4.0;
+          a1 = 2.0 * om;
+          a2 = -(om * om);
+          today = startIdx - lookbackTotal;
+          x0 = (double)inReal[today];
+          x1 = x0;
+          x2 = x0;
+          y1 = x0;
+          y2 = x0;
+          i = lookbackTotal;
+          while( i != 0 ) {
+             x0 = (double)inReal[today];
+             y = Math.fma(a2, y2, Math.fma(c0, Math.fma(2.0, x1, x0) + x2, a1 * y1));
+             x2 = x1;
+             x1 = x0;
+             y2 = y1;
+             y1 = y;
+             today += 1;
+             i -= 1;
+          }
+          outIdx = 0;
+          while( today <= endIdx ) {
+             x0 = (double)inReal[today];
+             y = Math.fma(a2, y2, Math.fma(c0, Math.fma(2.0, x1, x0) + x2, a1 * y1));
+             x2 = x1;
+             x1 = x0;
+             y2 = y1;
+             y1 = y;
+             outReal[outIdx] = y;
+             outIdx = outIdx + 1;
+             today += 1;
+          }
+          outNBElement.value = outIdx;
+          outBegIdx.value = startIdx;
+          return RetCode.SUCCESS ;
+       }
+       /**
+        * The Butterworth row of John Ehlers' Swiss Army Knife filter: the Gaussian
+        * row's double real pole with two zeros added at Nyquist, giving a two-pole
+        * low-pass that cuts the shortest cycles harder than the Gaussian does while
+        * keeping the same pole placement. Read it as a smoothed price line. Its DC
+        * gain is 1, so a flat market returns the price itself and the line sits on
+        * the chart with price. The two Nyquist zeros are what separate it from
+        * {@code TA_SWAK_GAUSS}: a bar-to-bar alternation — the fastest motion a
+        * sampled series can carry — is removed outright rather than merely
+        * attenuated, which is why the numerator weights three consecutive bars 1,
+        * 2, 1. The name keeps the {@code SWAK} prefix on purpose. This is the Swiss
+        * Army Knife's Butterworth row, not the Butterworth filters of Ehlers'
+        * separate article, and not the SuperSmoother, which is a third two-pole
+        * low-pass with complex poles.
+        * <p>Formula and more info at <a
+        * href="https://ta-lib.org/functions/swak_butter">ta-lib.org/functions/swak_butter</a>.
+        * <p>Values are written only where the indicator is defined. The returned
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#swakButterLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
+        *
+        * @param startIdx First bar of the requested range (inclusive).
+        * @param endIdx Last bar of the requested range (inclusive).
+        * @param inReal The series to filter; Ehlers' default is the bar midpoint
+        *        {@code (H+L)/2}, which the caller passes as {@code TA_MEDPRICE} output.
+        * @param optInTimePeriod Cutoff period; shorter keeps more of the fast
+        *        motion, longer smooths harder and lags more (default 20; range 2..10000;
+        *        {@code Integer.MIN_VALUE} selects the default).
+        * @param outReal The filtered line, on the same scale as the input. Must
+        *        hold at least {@code endIdx - max(startIdx, swakButterLookback(...)) + 1}
+        *        values, and never be empty: an empty array is an absent output.
+        * @return The range written: {@code begIdx} is the first bar with a value,
+        *        {@code count} how many were written.
+        * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
+        *        negative or above {@link Core#INDEX_MAX}, or {@code endIdx < startIdx}.
+        * @throws IllegalArgumentException if an optional parameter is outside its
+        *        documented range, two outputs share one array, or an array is absent or
+        *        too short for the range requested — any input this function
+        *        <i>declares</i> that does not reach {@code endIdx}, or an output that
+        *        cannot hold the values produced. Declared, not read: a few candlestick
+        *        patterns take an OHLC series they never index, and it is required all the
+        *        same. An output this function documents as declinable is the one
+        *        exception: {@code null} is how you decline it. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
+        *
+        * @see Core#swakGauss
+        * @see Core#ema
+        * @see Core#medprice
+        */
+       public OutRange swakButter( int startIdx,
+                                   int endIdx,
+                                   double inReal[],
+                                   int optInTimePeriod,
+                                   double outReal[] )
+       {
+          requireIndexRange("SWAK_BUTTER", startIdx, endIdx);
+          int guardStart = clampedStart("SWAK_BUTTER", startIdx, swakButterLookback(optInTimePeriod));
+          int guardInLen = endIdx + 1;
+          int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("SWAK_BUTTER", "inReal", inReal, guardInLen);
+          requireLength("SWAK_BUTTER", "outReal", outReal, guardOutLen);
+          MInteger outBegIdx = new MInteger();
+          MInteger outNBElement = new MInteger();
+          RetCode retCode = swakButterImpl(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+          if( retCode != RetCode.SUCCESS ) {
+             throw failure("SWAK_BUTTER", retCode);
+          }
+          return new OutRange(outBegIdx.value, outNBElement.value);
+       }
+       /**
+        * The Butterworth row of John Ehlers' Swiss Army Knife filter: the Gaussian
+        * row's double real pole with two zeros added at Nyquist, giving a two-pole
+        * low-pass that cuts the shortest cycles harder than the Gaussian does while
+        * keeping the same pole placement. Read it as a smoothed price line. Its DC
+        * gain is 1, so a flat market returns the price itself and the line sits on
+        * the chart with price. The two Nyquist zeros are what separate it from
+        * {@code TA_SWAK_GAUSS}: a bar-to-bar alternation — the fastest motion a
+        * sampled series can carry — is removed outright rather than merely
+        * attenuated, which is why the numerator weights three consecutive bars 1,
+        * 2, 1. The name keeps the {@code SWAK} prefix on purpose. This is the Swiss
+        * Army Knife's Butterworth row, not the Butterworth filters of Ehlers'
+        * separate article, and not the SuperSmoother, which is a third two-pole
+        * low-pass with complex poles.
+        * <p>Formula and more info at <a
+        * href="https://ta-lib.org/functions/swak_butter">ta-lib.org/functions/swak_butter</a>.
+        * <p>This is the {@code float[]} overload. The arithmetic is performed in
+        * {@code double} before being written to the {@code double[]} output, so a
+        * result beyond {@code float} range is still representable.
+        * <p>Values are written only where the indicator is defined. The returned
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#swakButterLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
+        *
+        * @param startIdx First bar of the requested range (inclusive).
+        * @param endIdx Last bar of the requested range (inclusive).
+        * @param inReal The series to filter; Ehlers' default is the bar midpoint
+        *        {@code (H+L)/2}, which the caller passes as {@code TA_MEDPRICE} output.
+        * @param optInTimePeriod Cutoff period; shorter keeps more of the fast
+        *        motion, longer smooths harder and lags more (default 20; range 2..10000;
+        *        {@code Integer.MIN_VALUE} selects the default).
+        * @param outReal The filtered line, on the same scale as the input. Must
+        *        hold at least {@code endIdx - max(startIdx, swakButterLookback(...)) + 1}
+        *        values, and never be empty: an empty array is an absent output.
+        * @return The range written: {@code begIdx} is the first bar with a value,
+        *        {@code count} how many were written.
+        * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
+        *        negative or above {@link Core#INDEX_MAX}, or {@code endIdx < startIdx}.
+        * @throws IllegalArgumentException if an optional parameter is outside its
+        *        documented range, two outputs share one array, or an array is absent or
+        *        too short for the range requested — any input this function
+        *        <i>declares</i> that does not reach {@code endIdx}, or an output that
+        *        cannot hold the values produced. Declared, not read: a few candlestick
+        *        patterns take an OHLC series they never index, and it is required all the
+        *        same. An output this function documents as declinable is the one
+        *        exception: {@code null} is how you decline it. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
+        *
+        * @see Core#swakGauss
+        * @see Core#ema
+        * @see Core#medprice
+        */
+       public OutRange swakButter( int startIdx,
+                                   int endIdx,
+                                   float inReal[],
+                                   int optInTimePeriod,
+                                   double outReal[] )
+       {
+          requireIndexRange("SWAK_BUTTER", startIdx, endIdx);
+          int guardStart = clampedStart("SWAK_BUTTER", startIdx, swakButterLookback(optInTimePeriod));
+          int guardInLen = endIdx + 1;
+          int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("SWAK_BUTTER", "inReal", inReal, guardInLen);
+          requireLength("SWAK_BUTTER", "outReal", outReal, guardOutLen);
+          MInteger outBegIdx = new MInteger();
+          MInteger outNBElement = new MInteger();
+          RetCode retCode = swakButterImpl(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+          if( retCode != RetCode.SUCCESS ) {
+             throw failure("SWAK_BUTTER", retCode);
+          }
+          return new OutRange(outBegIdx.value, outNBElement.value);
+       }
+    /**** Streaming API *****/
+
+       /**
+        * A live SWAK_BUTTER stream (unrelated to {@code java.util.stream}): one value per
+        * closed bar, bit-identical to {@link Core#swakButter} over the same series.
+        * Open with {@link Core#swakButterOpen}; there is no close — the handle is
+        * ordinary heap state, unreferenced handles are simply garbage-collected.
+        * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
+        * {@code value} and {@code clone} must not race with an {@code update} on
+        * the same handle. With no concurrent {@code update}, {@code peek}/
+        * {@code value}/{@code clone} never write the stream and may be called
+        * concurrently after safe publication. Independent streams (a
+        * {@code clone()} result included) are fully independent.
+        * <p>Not serializable by design: to checkpoint, retain the history and
+        * re-open — the result is bit-identical by contract.
+        */
+       public static final class SwakButterStream {
+          private Core core;
+          private int optInTimePeriod;
+          private double c0;
+          private double a1;
+          private double a2;
+          private double x1;
+          private double x2;
+          private double y1;
+          private double y2;
+          private double cur_outReal;
+          private int outRangeBegIdx;
+          private int outRangeCount;
+
+          private SwakButterStream( Core core ) { this.core = core; }
+
+          /**
+           * The bars this stream has an output for, in the input series'
+           * coordinates: {@code [begIdx, begIdx + count)}.
+           * <p>It is what {@link Core#swakButter} reports over the same bars: the
+           * opener sets it to {@code (lookback, historyLen - lookback)}, every
+           * accepted {@code update} adds one to the count — a rejected one
+           * changes nothing, and neither does {@code peek} — and
+           * {@code clone()} carries it verbatim. A plain
+           * {@code open} hands back only the last value, a subset of this range,
+           * because the caller chose not to take the fill.
+           * <p>The last bar it can reach is {@link Core#INDEX_MAX}; past that
+           * {@code update} and {@code advance} throw
+           * {@link IndexOutOfBoundsException}.
+           */
+          public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
+
+          /**
+           * Count one bar this stream was not fed: {@link #outRange()} advances
+           * by one and nothing else moves — {@link #value()} keeps answering the previous
+           * output, which is this bar's output too.
+           * <p>For a bar the caller leaves out: one an {@code update} rejected
+           * and that will not be re-fed, or a session with no print. Without it
+           * two handles on one feed drift a bar apart when only one of them skips.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#INDEX_MAX}, the last one the batch tier
+           * can address and the last this handle will count. {@code update}
+           * throws the same there.
+           */
+          public void advance() {
+             if( this.outRangeBegIdx + this.outRangeCount > INDEX_MAX )
+                throw failure("SWAK_BUTTER advance", RetCode.OUT_OF_RANGE_END_INDEX);
+             this.outRangeCount++;
+          }
+
+          private SwakButterStream( SwakButterStream other ) {
+             this.core = other.core;
+             this.optInTimePeriod = other.optInTimePeriod;
+             this.c0 = other.c0;
+             this.a1 = other.a1;
+             this.a2 = other.a2;
+             this.x1 = other.x1;
+             this.x2 = other.x2;
+             this.y1 = other.y1;
+             this.y2 = other.y2;
+             this.cur_outReal = other.cur_outReal;
+             this.outRangeBegIdx = other.outRangeBegIdx;
+             this.outRangeCount = other.outRangeCount;
+          }
+
+          /**
+           * Commit one closed bar, returning the new current value.
+           * <p>Throws {@link IllegalArgumentException} if any bar value is not
+           * finite (NaN or an infinity). That check runs before anything is
+           * written, so nothing moves — {@link #outRange()} included — and
+           * {@link #value()} still answers the previous value. Re-feed the bar when a
+           * corrected value arrives, or call {@link #advance()} to count it and
+           * carry on; two handles on one feed drift a bar apart if neither
+           * happens.
+           * This is the one place the streaming tier is stricter than
+           * the batch API, which computes on whatever it is given: a handle
+           * retains its state, so a single non-finite bar would poison every
+           * later value it produces.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#INDEX_MAX}, which no re-feed clears: the
+           * handle has run out of index domain and only a shorter history can
+           * start a new one.
+           */
+          public double update( double inReal ) {
+             if( this.outRangeBegIdx + this.outRangeCount > INDEX_MAX )
+                throw failure("SWAK_BUTTER update", RetCode.OUT_OF_RANGE_END_INDEX);
+             if( !Double.isFinite(inReal) )
+                throw nonFiniteBar("SWAK_BUTTER update", "inReal");
+             core.swakButterStepImpl(this, inReal);
+             this.outRangeCount++;
+             return this.cur_outReal;
+          }
+
+          /**
+           * Evaluate a forming bar without committing — bit-identical to what the
+           * next {@code update} with the same bar would return — the same
+           * transition, with every store it would make carried in a local instead.
+           * Never writes this handle, so peeks may run concurrently with each other.
+           * <p>It counts no bar, so it keeps answering past the
+           * {@link Core#INDEX_MAX} ceiling {@code update} stops at.
+           */
+          public double peek( double inReal ) {
+             if( !Double.isFinite(inReal) )
+                throw nonFiniteBar("SWAK_BUTTER peek", "inReal");
+             SwakButterStream sp = this;
+             double x0 = 0.0;
+             double y = 0.0;
+             double cur_outReal = 0.0;
+             double x1 = sp.x1;
+             double x2 = sp.x2;
+             double y1 = sp.y1;
+             double y2 = sp.y2;
+             /* The evaluation order is the bit-exactness contract across backends:
+              * the numerator as (x0 + 2*x1) + x2, then the a1 feedback, then a2.
+              */
+             x0 = inReal;
+             y = Math.fma(sp.a2, y2, Math.fma(sp.c0, Math.fma(2.0, x1, x0) + x2, sp.a1 * y1));
+             x2 = x1;
+             x1 = x0;
+             y2 = y1;
+             y1 = y;
+             cur_outReal = y;
+             return cur_outReal;
+          }
+
+          /**
+           * The value at the last bar this stream counted — the bar
+           * {@link #outRange()} ends on. The last history bar right after open,
+           * then whatever the latest accepted {@code update} returned.
+           * A pure field read; {@code peek} does not change it.
+           */
+          public double value() {
+             return this.cur_outReal;
+          }
+
+          /**
+           * An independent fork of this stream: both evolve separately from here
+           * on. Buffers are copied and sub-streams cloned recursively; the
+           * {@link Core} reference is shared, since a {@code Core} is immutable
+           * for a stream's lifetime.
+           *
+           * <p>Not the {@code Cloneable} protocol: this calls a copy constructor,
+           * never {@code super.clone()}, so it throws nothing.
+           *
+           * @return an independent stream at the same bar
+           */
+          @Override
+          public SwakButterStream clone() {
+             return new SwakButterStream(this);
+          }
+       }
+       private void swakButterStepImpl( SwakButterStream sp, double inReal )
+       {
+          double x0 = 0.0;
+          double y = 0.0;
+          /* The evaluation order is the bit-exactness contract across backends:
+           * the numerator as (x0 + 2*x1) + x2, then the a1 feedback, then a2.
+           */
+          x0 = inReal;
+          y = Math.fma(sp.a2, sp.y2, Math.fma(sp.c0, Math.fma(2.0, sp.x1, x0) + sp.x2, sp.a1 * sp.y1));
+          sp.x2 = sp.x1;
+          sp.x1 = x0;
+          sp.y2 = sp.y1;
+          sp.y1 = y;
+          sp.cur_outReal = y;
+       }
+       private RetCode swakButterOpenImpl( SwakButterStream sp, double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+       {
+          int i = 0;
+          int outIdx = 0;
+          int today = 0;
+          int lookbackTotal = 0;
+          double w = 0;
+          double b2p = 0;
+          double a2p = 0;
+          double om = 0;
+          double c0 = 0;
+          double a1 = 0;
+          double a2 = 0;
+          double x0 = 0;
+          double x1 = 0;
+          double x2 = 0;
+          double y = 0;
+          double y1 = 0;
+          double y2 = 0;
+          int historyLen = inReal.length;
+          int endIdx = historyLen - 1;
+          if( historyLen < 1 ) {
+             return RetCode.OUT_OF_RANGE_START_INDEX;
+          }
+          if( historyLen > INDEX_MAX + 1 ) {
+             return RetCode.OUT_OF_RANGE_END_INDEX;
+          }
+          if( optInTimePeriod == Integer.MIN_VALUE ) {
+             optInTimePeriod = 20;
+          } else if( optInTimePeriod < 2 || optInTimePeriod > 10000 ) {
+             return RetCode.BAD_PARAM;
+          }
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.INSUFFICIENT_HISTORY;
+          }
+          outBegIdx.value = 0;
+          outNBElement.value = 0;
+          lookbackTotal = swakButterLookback(optInTimePeriod);
+          if( startIdx < lookbackTotal ) {
+             startIdx = lookbackTotal;
+          }
+          if( startIdx > endIdx ) {
+             return RetCode.INSUFFICIENT_HISTORY ;
+          }
+          /* The same two-pole alpha as the Gaussian row (Ehlers, Stocks & Commodities
+           * January 2006, Figure 5); the paper's 360/P is a full turn, so 2*pi/P.
+           * a2p keeps the sqrt form rather than the algebraically equal subtraction,
+           * which cancels for large P.
+           */
+          w = 2.0 * 3.141592653589793 / (double)optInTimePeriod;
+          b2p = 2.415 * (1.0 - Math.cos(w));
+          a2p = -b2p + Math.sqrt(Math.fma(b2p, b2p, 2.0 * b2p));
+          /* The Butterworth row: the Gaussian's double real pole with two zeros added
+           * at Nyquist, which is what the (1, 2, 1) numerator is. The quarter in c0
+           * keeps the DC gain at 1 against that numerator's weight of 4.
+           */
+          om = 1.0 - a2p;
+          c0 = a2p * a2p / 4.0;
+          a1 = 2.0 * om;
+          a2 = -(om * om);
+          today = startIdx - lookbackTotal;
+          /* Start in the steady state of a constant input equal to the first bar.
+           * Unlike the Gaussian row this one has non-zero b1 and b2, so the two input
+           * slots are carried in locals and never re-read from inReal: outReal may
+           * alias inReal, and an aliased write would already have overwritten the
+           * earlier bars this recurrence needs.
+           */
+          x0 = inReal[today];
+          x1 = x0;
+          x2 = x0;
+          y1 = x0;
+          y2 = x0;
+          /* Skip the unstable period: run the recurrence but publish nothing. */
+          i = lookbackTotal;
+          while( i != 0 ) {
+             x0 = inReal[today];
+             y = Math.fma(a2, y2, Math.fma(c0, Math.fma(2.0, x1, x0) + x2, a1 * y1));
+             x2 = x1;
+             x1 = x0;
+             y2 = y1;
+             y1 = y;
+             today += 1;
+             i -= 1;
+          }
+          outIdx = 0;
+          while( today <= endIdx ) {
+             /* The evaluation order is the bit-exactness contract across backends:
+              * the numerator as (x0 + 2*x1) + x2, then the a1 feedback, then a2.
+              */
+             x0 = inReal[today];
+             y = Math.fma(a2, y2, Math.fma(c0, Math.fma(2.0, x1, x0) + x2, a1 * y1));
+             x2 = x1;
+             x1 = x0;
+             y2 = y1;
+             y1 = y;
+             outReal[outIdx * outStride] = y;
+             outIdx = outIdx + 1;
+             today += 1;
+          }
+          outNBElement.value = outIdx;
+          outBegIdx.value = startIdx;
+          /* Capture the live batch state into the handle. */
+          sp.optInTimePeriod = optInTimePeriod;
+          sp.c0 = c0;
+          sp.a1 = a1;
+          sp.a2 = a2;
+          sp.x1 = x1;
+          sp.x2 = x2;
+          sp.y1 = y1;
+          sp.y2 = y2;
+          sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
+          return RetCode.SUCCESS;
+       }
+       /* swakButterOpenAndFill anchored at startIdx — the composed-open fusion seam. */
+       SwakButterStream swakButterOpenAndFillInternal( double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+       {
+          SwakButterStream sp = new SwakButterStream(this);
+          RetCode retCode = swakButterOpenImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
+          sp.outRangeBegIdx = outBegIdx.value;
+          sp.outRangeCount = outNBElement.value;
+          if( retCode == RetCode.SUCCESS ) {
+             return sp;
+          }
+          if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
+             throw insufficientHistory("SWAK_BUTTER openAndFill", inReal.length, startIdx, swakButterLookback(optInTimePeriod));
+          }
+          throw streamFailure("SWAK_BUTTER openAndFill", retCode);
+       }
+       /* Internal startIdx-anchored open behind swakButterOpen (composition seam). */
+       SwakButterStream swakButterOpenInternal( double inReal[], int startIdx, int optInTimePeriod )
+       {
+          SwakButterStream sp = new SwakButterStream(this);
+          MInteger outBegIdx = new MInteger();
+          MInteger outNBElement = new MInteger();
+          double[] sink_outReal = new double[1];
+          RetCode retCode = swakButterOpenImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0);
+          sp.outRangeBegIdx = outBegIdx.value;
+          sp.outRangeCount = outNBElement.value;
+          if( retCode == RetCode.SUCCESS ) {
+             return sp;
+          }
+          if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
+             throw insufficientHistory("SWAK_BUTTER open", inReal.length, startIdx, swakButterLookback(optInTimePeriod));
+          }
+          throw streamFailure("SWAK_BUTTER open", retCode);
+       }
+       /**
+        * Open a live SWAK_BUTTER stream over the warm-up history; the handle's
+        * {@code value()} starts at the last history bar's value — bit-identical
+        * to {@link Core#swakButter} at that bar.
+        * <p>The history must hold at least {@code swakButterLookback(...) + 1} bars
+        * (unstable-period aware), or {@link InsufficientHistoryException} is
+        * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
+        * ({@link Integer#MIN_VALUE} selects a parameter's documented default,
+        * as in the batch API). An EMPTY history throws
+        * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
+        * names no bar — and a null argument {@link IllegalArgumentException},
+        * both ahead of everything above.
+        */
+       public SwakButterStream swakButterOpen( double inReal[], int optInTimePeriod )
+       {
+          requireArgument("SWAK_BUTTER open", "inReal", inReal);
+          requireHistory("SWAK_BUTTER open", inReal.length);
+          return swakButterOpenInternal(inReal, 0, optInTimePeriod);
+       }
+       /**
+        * {@link Core#swakButterOpen} that also fills the output array(s) bit-identically
+        * to {@link Core#swakButter} over the whole history in the same single pass
+        * (no separate batch call needed for the warm-up plot). Output arrays must
+        * not alias the inputs or each other, and must hold
+        * {@code historyLen - lookback} values — both checked before anything is
+        * written, so an undersized array is an {@link IllegalArgumentException}
+        * naming it rather than a fault from inside the fill.
+        * <p>The range written is on the returned handle:
+        * {@link SwakButterStream#outRange()}.
+        */
+       public SwakButterStream swakButterOpenAndFill( double inReal[], int optInTimePeriod, double outReal[] )
+       {
+          requireArgument("SWAK_BUTTER openAndFill", "inReal", inReal);
+          requireHistory("SWAK_BUTTER openAndFill", inReal.length);
+          int guardOutLen = openFillCount("SWAK_BUTTER openAndFill", inReal.length, swakButterLookback(optInTimePeriod));
+          requireLength("SWAK_BUTTER openAndFill", "outReal", outReal, guardOutLen);
+          if( (Object)outReal == (Object)inReal ) {
+             throw streamFailure("SWAK_BUTTER openAndFill", RetCode.BAD_PARAM);
+          }
+          MInteger outBegIdx = new MInteger();
+          MInteger outNBElement = new MInteger();
+          return swakButterOpenAndFillInternal(inReal, 0, optInTimePeriod, outBegIdx, outNBElement, outReal);
+       }
+    /* List of contributors:
+     *
+     *  Initial  Name/description
+     *  -------------------------------------------------------------------
+     *  MF       Mario Fortier
+     *  KL       Kevin Lin (@kevinlincg)
+     *  CC       Claude Code (AI assistant)
+     *
+     * Change history:
+     *
+     *  MMDDYY BY     Description
+     *  -------------------------------------------------------------------
+     *  100126 KL,CC  Creation (#486).
+     */
+
+       /**
+        * Number of leading input bars {@link Core#swakGauss} consumes before it can
+        * produce its first value.
+        * <p>Equivalently, the index of the first bar with a value when the whole
+        * series is requested. Feed at least {@code lookback + 1} bars to get any
+        * output.
+        * <p>This function is recursive, so the result also includes this
+        * {@code Core}'s unstable-period setting — which is why it is an instance
+        * method.
+        *
+        * @param optInTimePeriod Cutoff period; shorter keeps more of the fast
+        *        motion, longer smooths harder and lags more (default 20; range 2..10000;
+        *        {@code Integer.MIN_VALUE} selects the default).
+        * @return The lookback, or {@code -1} if a parameter is out of range.
+        */
+       public int swakGaussLookback( int optInTimePeriod )
+       {
+          if( optInTimePeriod == Integer.MIN_VALUE ) {
+             optInTimePeriod = 20;
+          } else if( optInTimePeriod < 2 || optInTimePeriod > 10000 ) {
+             return -1;
+          }
+          /* No structural lookback. Every term of the recurrence exists at the first
+           * bar -- the two history slots are seeded from that bar rather than read
+           * from before it -- and there is no callee whose lookback could be
+           * inherited, so the function's own unstable period is the whole of it
+           * (ha.c:16-19 takes the same shape for the same reason).
+           */
+          return this.unstablePeriod[FuncUnstId.SWAK_GAUSS.ordinal()] ;
+
+       }
+       /**
+        * How many bars ahead (positive) or behind (negative) of the bar that
+        * computed it a chart draws one output of {@link Core#swakGauss}.
+        * <p>Every output of this function is drawn at its own bar, so the answer is
+        * 0.
+        *
+        * @param optInTimePeriod Cutoff period; shorter keeps more of the fast
+        *        motion, longer smooths harder and lags more (default 20; range 2..10000;
+        *        {@code Integer.MIN_VALUE} selects the default).
+        * @param outputIdx Position of the output in the batch signature, from 0.
+        * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+        *        out of range or the index names no output.
+        */
+       public int swakGaussDisplayShift( int optInTimePeriod, int outputIdx )
+       {
+          if( swakGaussLookback( optInTimePeriod ) < 0 ) {
+             return Integer.MIN_VALUE;
+          }
+          if( outputIdx < 0 || outputIdx >= 1 ) {
+             return Integer.MIN_VALUE;
+          }
+          return 0;
+       }
+       RetCode swakGaussImpl( int startIdx,
+                              int endIdx,
+                              double inReal[],
+                              int optInTimePeriod,
+                              MInteger outBegIdx,
+                              MInteger outNBElement,
+                              double outReal[] )
+       {
+          int i = 0;
+          int outIdx = 0;
+          int today = 0;
+          int lookbackTotal = 0;
+          double w = 0;
+          double b2p = 0;
+          double a2p = 0;
+          double om = 0;
+          double c0 = 0;
+          double a1 = 0;
+          double a2 = 0;
+          double y = 0;
+          double y1 = 0;
+          double y2 = 0;
+          if( (startIdx < 0) || (startIdx > INDEX_MAX) ) {
+             return RetCode.OUT_OF_RANGE_START_INDEX ;
+          }
+          if( (endIdx < 0) || (endIdx > INDEX_MAX) || (endIdx < startIdx)) {
+             return RetCode.OUT_OF_RANGE_END_INDEX ;
+          }
+          if( optInTimePeriod == Integer.MIN_VALUE ) {
+             optInTimePeriod = 20;
+          } else if( optInTimePeriod < 2 || optInTimePeriod > 10000 ) {
+             return RetCode.BAD_PARAM;
+          }
+          outBegIdx.value = 0;
+          outNBElement.value = 0;
+          lookbackTotal = swakGaussLookback(optInTimePeriod);
+          if( startIdx < lookbackTotal ) {
+             startIdx = lookbackTotal;
+          }
+          if( startIdx > endIdx ) {
+             return RetCode.SUCCESS ;
+          }
+          /* The Swiss Army Knife two-pole alpha (Ehlers, Stocks & Commodities January
+           * 2006, Figure 5). The paper writes the argument as 360/P degrees and says
+           * on p.3 to read it as a full turn, so it is 2*pi/P here.
+           *
+           * a2p is the root of the quadratic that places the double real pole; it is
+           * written as -b2p + sqrt(b2p^2 + 2*b2p) rather than the algebraically equal
+           * subtraction, which cancels for large P.
+           */
+          w = 2.0 * 3.141592653589793 / (double)optInTimePeriod;
+          b2p = 2.415 * (1.0 - Math.cos(w));
+          a2p = -b2p + Math.sqrt(Math.fma(b2p, b2p, 2.0 * b2p));
+          /* The Gaussian row of Figure 5: numerator a2p^2 on the bar alone, no
+           * x[i-1] or x[i-2] term. Its DC gain is 1, so the line sits on price.
+           */
+          om = 1.0 - a2p;
+          c0 = a2p * a2p;
+          a1 = 2.0 * om;
+          a2 = -(om * om);
+          today = startIdx - lookbackTotal;
+          /* Start in the steady state of a constant input equal to the first bar: a
+           * DC-gain-1 row answers that constant, so both output slots hold it. The
+           * input slots would hold it too, but this row's b1 and b2 are zero and
+           * never reads them -- which is also why outReal may alias inReal here.
+           */
+          y1 = inReal[today];
+          y2 = y1;
+          /* Skip the unstable period: run the recurrence but publish nothing. */
+          i = lookbackTotal;
+          while( i != 0 ) {
+             y = Math.fma(a2, y2, Math.fma(c0, inReal[today], a1 * y1));
+             y2 = y1;
+             y1 = y;
+             today += 1;
+             i -= 1;
+          }
+          outIdx = 0;
+          while( today <= endIdx ) {
+             /* The evaluation order is the bit-exactness contract across backends:
+              * the numerator first, then the a1 feedback, then the a2 feedback.
+              */
+             y = Math.fma(a2, y2, Math.fma(c0, inReal[today], a1 * y1));
+             y2 = y1;
+             y1 = y;
+             outReal[outIdx] = y;
+             outIdx = outIdx + 1;
+             today += 1;
+          }
+          outNBElement.value = outIdx;
+          outBegIdx.value = startIdx;
+          return RetCode.SUCCESS ;
+       }
+       RetCode swakGaussImpl( int startIdx,
+                              int endIdx,
+                              float inReal[],
+                              int optInTimePeriod,
+                              MInteger outBegIdx,
+                              MInteger outNBElement,
+                              double outReal[] )
+       {
+          int i = 0;
+          int outIdx = 0;
+          int today = 0;
+          int lookbackTotal = 0;
+          double w = 0;
+          double b2p = 0;
+          double a2p = 0;
+          double om = 0;
+          double c0 = 0;
+          double a1 = 0;
+          double a2 = 0;
+          double y = 0;
+          double y1 = 0;
+          double y2 = 0;
+          if( (startIdx < 0) || (startIdx > INDEX_MAX) ) {
+             return RetCode.OUT_OF_RANGE_START_INDEX ;
+          }
+          if( (endIdx < 0) || (endIdx > INDEX_MAX) || (endIdx < startIdx)) {
+             return RetCode.OUT_OF_RANGE_END_INDEX ;
+          }
+          if( optInTimePeriod == Integer.MIN_VALUE ) {
+             optInTimePeriod = 20;
+          } else if( optInTimePeriod < 2 || optInTimePeriod > 10000 ) {
+             return RetCode.BAD_PARAM;
+          }
+          outBegIdx.value = 0;
+          outNBElement.value = 0;
+          lookbackTotal = swakGaussLookback(optInTimePeriod);
+          if( startIdx < lookbackTotal ) {
+             startIdx = lookbackTotal;
+          }
+          if( startIdx > endIdx ) {
+             return RetCode.SUCCESS ;
+          }
+          w = 2.0 * 3.141592653589793 / (double)optInTimePeriod;
+          b2p = 2.415 * (1.0 - Math.cos(w));
+          a2p = -b2p + Math.sqrt(Math.fma(b2p, b2p, 2.0 * b2p));
+          om = 1.0 - a2p;
+          c0 = a2p * a2p;
+          a1 = 2.0 * om;
+          a2 = -(om * om);
+          today = startIdx - lookbackTotal;
+          y1 = (double)inReal[today];
+          y2 = y1;
+          i = lookbackTotal;
+          while( i != 0 ) {
+             y = Math.fma(a2, y2, Math.fma(c0, (double)inReal[today], a1 * y1));
+             y2 = y1;
+             y1 = y;
+             today += 1;
+             i -= 1;
+          }
+          outIdx = 0;
+          while( today <= endIdx ) {
+             y = Math.fma(a2, y2, Math.fma(c0, (double)inReal[today], a1 * y1));
+             y2 = y1;
+             y1 = y;
+             outReal[outIdx] = y;
+             outIdx = outIdx + 1;
+             today += 1;
+          }
+          outNBElement.value = outIdx;
+          outBegIdx.value = startIdx;
+          return RetCode.SUCCESS ;
+       }
+       /**
+        * The Gaussian row of John Ehlers' Swiss Army Knife filter: a two-pole
+        * low-pass smoother whose impulse response approximates a Gaussian, so it
+        * lags price without the overshoot a sharper filter leaves behind a turn.
+        * Read it as a smoothed price line. Its DC gain is 1, so a flat market
+        * returns the price itself and the line sits on the chart with price rather
+        * than oscillating around zero. The cutoff period sets how much is removed:
+        * cycles far shorter than it are attenuated smoothly, cycles far longer pass
+        * essentially untouched, and there is no band in between where the filter
+        * rings. The alpha is the one the Gaussian construction asks for, not the
+        * exponential-moving-average alpha. Ehlers notes that the same shape can be
+        * had by taking an EMA of an EMA, but that doing so "leaves the computation
+        * of the correct alpha to be a little nebulous", and gives these
+        * coefficients instead. {@code TA_EMA} cannot stand in: its alpha is
+        * {@code 2/(n+1)} for whole {@code n}, and at a cutoff period of 20 this
+        * filter's alpha is 0.38217, which would ask for {@code n = 4.233}.
+        * <p>Formula and more info at <a
+        * href="https://ta-lib.org/functions/swak_gauss">ta-lib.org/functions/swak_gauss</a>.
+        * <p>Values are written only where the indicator is defined. The returned
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#swakGaussLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
+        *
+        * @param startIdx First bar of the requested range (inclusive).
+        * @param endIdx Last bar of the requested range (inclusive).
+        * @param inReal The series to filter; Ehlers' default is the bar midpoint
+        *        {@code (H+L)/2}, which the caller passes as {@code TA_MEDPRICE} output.
+        * @param optInTimePeriod Cutoff period; shorter keeps more of the fast
+        *        motion, longer smooths harder and lags more (default 20; range 2..10000;
+        *        {@code Integer.MIN_VALUE} selects the default).
+        * @param outReal The filtered line, on the same scale as the input. Must
+        *        hold at least {@code endIdx - max(startIdx, swakGaussLookback(...)) + 1}
+        *        values, and never be empty: an empty array is an absent output.
+        * @return The range written: {@code begIdx} is the first bar with a value,
+        *        {@code count} how many were written.
+        * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
+        *        negative or above {@link Core#INDEX_MAX}, or {@code endIdx < startIdx}.
+        * @throws IllegalArgumentException if an optional parameter is outside its
+        *        documented range, two outputs share one array, or an array is absent or
+        *        too short for the range requested — any input this function
+        *        <i>declares</i> that does not reach {@code endIdx}, or an output that
+        *        cannot hold the values produced. Declared, not read: a few candlestick
+        *        patterns take an OHLC series they never index, and it is required all the
+        *        same. An output this function documents as declinable is the one
+        *        exception: {@code null} is how you decline it. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
+        *
+        * @see Core#swakButter
+        * @see Core#ema
+        * @see Core#medprice
+        */
+       public OutRange swakGauss( int startIdx,
+                                  int endIdx,
+                                  double inReal[],
+                                  int optInTimePeriod,
+                                  double outReal[] )
+       {
+          requireIndexRange("SWAK_GAUSS", startIdx, endIdx);
+          int guardStart = clampedStart("SWAK_GAUSS", startIdx, swakGaussLookback(optInTimePeriod));
+          int guardInLen = endIdx + 1;
+          int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("SWAK_GAUSS", "inReal", inReal, guardInLen);
+          requireLength("SWAK_GAUSS", "outReal", outReal, guardOutLen);
+          MInteger outBegIdx = new MInteger();
+          MInteger outNBElement = new MInteger();
+          RetCode retCode = swakGaussImpl(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+          if( retCode != RetCode.SUCCESS ) {
+             throw failure("SWAK_GAUSS", retCode);
+          }
+          return new OutRange(outBegIdx.value, outNBElement.value);
+       }
+       /**
+        * The Gaussian row of John Ehlers' Swiss Army Knife filter: a two-pole
+        * low-pass smoother whose impulse response approximates a Gaussian, so it
+        * lags price without the overshoot a sharper filter leaves behind a turn.
+        * Read it as a smoothed price line. Its DC gain is 1, so a flat market
+        * returns the price itself and the line sits on the chart with price rather
+        * than oscillating around zero. The cutoff period sets how much is removed:
+        * cycles far shorter than it are attenuated smoothly, cycles far longer pass
+        * essentially untouched, and there is no band in between where the filter
+        * rings. The alpha is the one the Gaussian construction asks for, not the
+        * exponential-moving-average alpha. Ehlers notes that the same shape can be
+        * had by taking an EMA of an EMA, but that doing so "leaves the computation
+        * of the correct alpha to be a little nebulous", and gives these
+        * coefficients instead. {@code TA_EMA} cannot stand in: its alpha is
+        * {@code 2/(n+1)} for whole {@code n}, and at a cutoff period of 20 this
+        * filter's alpha is 0.38217, which would ask for {@code n = 4.233}.
+        * <p>Formula and more info at <a
+        * href="https://ta-lib.org/functions/swak_gauss">ta-lib.org/functions/swak_gauss</a>.
+        * <p>This is the {@code float[]} overload. The arithmetic is performed in
+        * {@code double} before being written to the {@code double[]} output, so a
+        * result beyond {@code float} range is still representable.
+        * <p>Values are written only where the indicator is defined. The returned
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#swakGaussLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
+        *
+        * @param startIdx First bar of the requested range (inclusive).
+        * @param endIdx Last bar of the requested range (inclusive).
+        * @param inReal The series to filter; Ehlers' default is the bar midpoint
+        *        {@code (H+L)/2}, which the caller passes as {@code TA_MEDPRICE} output.
+        * @param optInTimePeriod Cutoff period; shorter keeps more of the fast
+        *        motion, longer smooths harder and lags more (default 20; range 2..10000;
+        *        {@code Integer.MIN_VALUE} selects the default).
+        * @param outReal The filtered line, on the same scale as the input. Must
+        *        hold at least {@code endIdx - max(startIdx, swakGaussLookback(...)) + 1}
+        *        values, and never be empty: an empty array is an absent output.
+        * @return The range written: {@code begIdx} is the first bar with a value,
+        *        {@code count} how many were written.
+        * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
+        *        negative or above {@link Core#INDEX_MAX}, or {@code endIdx < startIdx}.
+        * @throws IllegalArgumentException if an optional parameter is outside its
+        *        documented range, two outputs share one array, or an array is absent or
+        *        too short for the range requested — any input this function
+        *        <i>declares</i> that does not reach {@code endIdx}, or an output that
+        *        cannot hold the values produced. Declared, not read: a few candlestick
+        *        patterns take an OHLC series they never index, and it is required all the
+        *        same. An output this function documents as declinable is the one
+        *        exception: {@code null} is how you decline it. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
+        *
+        * @see Core#swakButter
+        * @see Core#ema
+        * @see Core#medprice
+        */
+       public OutRange swakGauss( int startIdx,
+                                  int endIdx,
+                                  float inReal[],
+                                  int optInTimePeriod,
+                                  double outReal[] )
+       {
+          requireIndexRange("SWAK_GAUSS", startIdx, endIdx);
+          int guardStart = clampedStart("SWAK_GAUSS", startIdx, swakGaussLookback(optInTimePeriod));
+          int guardInLen = endIdx + 1;
+          int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("SWAK_GAUSS", "inReal", inReal, guardInLen);
+          requireLength("SWAK_GAUSS", "outReal", outReal, guardOutLen);
+          MInteger outBegIdx = new MInteger();
+          MInteger outNBElement = new MInteger();
+          RetCode retCode = swakGaussImpl(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+          if( retCode != RetCode.SUCCESS ) {
+             throw failure("SWAK_GAUSS", retCode);
+          }
+          return new OutRange(outBegIdx.value, outNBElement.value);
+       }
+    /**** Streaming API *****/
+
+       /**
+        * A live SWAK_GAUSS stream (unrelated to {@code java.util.stream}): one value per
+        * closed bar, bit-identical to {@link Core#swakGauss} over the same series.
+        * Open with {@link Core#swakGaussOpen}; there is no close — the handle is
+        * ordinary heap state, unreferenced handles are simply garbage-collected.
+        * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
+        * {@code value} and {@code clone} must not race with an {@code update} on
+        * the same handle. With no concurrent {@code update}, {@code peek}/
+        * {@code value}/{@code clone} never write the stream and may be called
+        * concurrently after safe publication. Independent streams (a
+        * {@code clone()} result included) are fully independent.
+        * <p>Not serializable by design: to checkpoint, retain the history and
+        * re-open — the result is bit-identical by contract.
+        */
+       public static final class SwakGaussStream {
+          private Core core;
+          private int optInTimePeriod;
+          private double c0;
+          private double a1;
+          private double a2;
+          private double y1;
+          private double y2;
+          private double cur_outReal;
+          private int outRangeBegIdx;
+          private int outRangeCount;
+
+          private SwakGaussStream( Core core ) { this.core = core; }
+
+          /**
+           * The bars this stream has an output for, in the input series'
+           * coordinates: {@code [begIdx, begIdx + count)}.
+           * <p>It is what {@link Core#swakGauss} reports over the same bars: the
+           * opener sets it to {@code (lookback, historyLen - lookback)}, every
+           * accepted {@code update} adds one to the count — a rejected one
+           * changes nothing, and neither does {@code peek} — and
+           * {@code clone()} carries it verbatim. A plain
+           * {@code open} hands back only the last value, a subset of this range,
+           * because the caller chose not to take the fill.
+           * <p>The last bar it can reach is {@link Core#INDEX_MAX}; past that
+           * {@code update} and {@code advance} throw
+           * {@link IndexOutOfBoundsException}.
+           */
+          public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
+
+          /**
+           * Count one bar this stream was not fed: {@link #outRange()} advances
+           * by one and nothing else moves — {@link #value()} keeps answering the previous
+           * output, which is this bar's output too.
+           * <p>For a bar the caller leaves out: one an {@code update} rejected
+           * and that will not be re-fed, or a session with no print. Without it
+           * two handles on one feed drift a bar apart when only one of them skips.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#INDEX_MAX}, the last one the batch tier
+           * can address and the last this handle will count. {@code update}
+           * throws the same there.
+           */
+          public void advance() {
+             if( this.outRangeBegIdx + this.outRangeCount > INDEX_MAX )
+                throw failure("SWAK_GAUSS advance", RetCode.OUT_OF_RANGE_END_INDEX);
+             this.outRangeCount++;
+          }
+
+          private SwakGaussStream( SwakGaussStream other ) {
+             this.core = other.core;
+             this.optInTimePeriod = other.optInTimePeriod;
+             this.c0 = other.c0;
+             this.a1 = other.a1;
+             this.a2 = other.a2;
+             this.y1 = other.y1;
+             this.y2 = other.y2;
+             this.cur_outReal = other.cur_outReal;
+             this.outRangeBegIdx = other.outRangeBegIdx;
+             this.outRangeCount = other.outRangeCount;
+          }
+
+          /**
+           * Commit one closed bar, returning the new current value.
+           * <p>Throws {@link IllegalArgumentException} if any bar value is not
+           * finite (NaN or an infinity). That check runs before anything is
+           * written, so nothing moves — {@link #outRange()} included — and
+           * {@link #value()} still answers the previous value. Re-feed the bar when a
+           * corrected value arrives, or call {@link #advance()} to count it and
+           * carry on; two handles on one feed drift a bar apart if neither
+           * happens.
+           * This is the one place the streaming tier is stricter than
+           * the batch API, which computes on whatever it is given: a handle
+           * retains its state, so a single non-finite bar would poison every
+           * later value it produces.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#INDEX_MAX}, which no re-feed clears: the
+           * handle has run out of index domain and only a shorter history can
+           * start a new one.
+           */
+          public double update( double inReal ) {
+             if( this.outRangeBegIdx + this.outRangeCount > INDEX_MAX )
+                throw failure("SWAK_GAUSS update", RetCode.OUT_OF_RANGE_END_INDEX);
+             if( !Double.isFinite(inReal) )
+                throw nonFiniteBar("SWAK_GAUSS update", "inReal");
+             core.swakGaussStepImpl(this, inReal);
+             this.outRangeCount++;
+             return this.cur_outReal;
+          }
+
+          /**
+           * Evaluate a forming bar without committing — bit-identical to what the
+           * next {@code update} with the same bar would return — the same
+           * transition, with every store it would make carried in a local instead.
+           * Never writes this handle, so peeks may run concurrently with each other.
+           * <p>It counts no bar, so it keeps answering past the
+           * {@link Core#INDEX_MAX} ceiling {@code update} stops at.
+           */
+          public double peek( double inReal ) {
+             if( !Double.isFinite(inReal) )
+                throw nonFiniteBar("SWAK_GAUSS peek", "inReal");
+             SwakGaussStream sp = this;
+             double y = 0.0;
+             double cur_outReal = 0.0;
+             double y1 = sp.y1;
+             double y2 = sp.y2;
+             /* The evaluation order is the bit-exactness contract across backends:
+              * the numerator first, then the a1 feedback, then the a2 feedback.
+              */
+             y = Math.fma(sp.a2, y2, Math.fma(sp.c0, inReal, sp.a1 * y1));
+             y2 = y1;
+             y1 = y;
+             cur_outReal = y;
+             return cur_outReal;
+          }
+
+          /**
+           * The value at the last bar this stream counted — the bar
+           * {@link #outRange()} ends on. The last history bar right after open,
+           * then whatever the latest accepted {@code update} returned.
+           * A pure field read; {@code peek} does not change it.
+           */
+          public double value() {
+             return this.cur_outReal;
+          }
+
+          /**
+           * An independent fork of this stream: both evolve separately from here
+           * on. Buffers are copied and sub-streams cloned recursively; the
+           * {@link Core} reference is shared, since a {@code Core} is immutable
+           * for a stream's lifetime.
+           *
+           * <p>Not the {@code Cloneable} protocol: this calls a copy constructor,
+           * never {@code super.clone()}, so it throws nothing.
+           *
+           * @return an independent stream at the same bar
+           */
+          @Override
+          public SwakGaussStream clone() {
+             return new SwakGaussStream(this);
+          }
+       }
+       private void swakGaussStepImpl( SwakGaussStream sp, double inReal )
+       {
+          double y = 0.0;
+          /* The evaluation order is the bit-exactness contract across backends:
+           * the numerator first, then the a1 feedback, then the a2 feedback.
+           */
+          y = Math.fma(sp.a2, sp.y2, Math.fma(sp.c0, inReal, sp.a1 * sp.y1));
+          sp.y2 = sp.y1;
+          sp.y1 = y;
+          sp.cur_outReal = y;
+       }
+       private RetCode swakGaussOpenImpl( SwakGaussStream sp, double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+       {
+          int i = 0;
+          int outIdx = 0;
+          int today = 0;
+          int lookbackTotal = 0;
+          double w = 0;
+          double b2p = 0;
+          double a2p = 0;
+          double om = 0;
+          double c0 = 0;
+          double a1 = 0;
+          double a2 = 0;
+          double y = 0;
+          double y1 = 0;
+          double y2 = 0;
+          int historyLen = inReal.length;
+          int endIdx = historyLen - 1;
+          if( historyLen < 1 ) {
+             return RetCode.OUT_OF_RANGE_START_INDEX;
+          }
+          if( historyLen > INDEX_MAX + 1 ) {
+             return RetCode.OUT_OF_RANGE_END_INDEX;
+          }
+          if( optInTimePeriod == Integer.MIN_VALUE ) {
+             optInTimePeriod = 20;
+          } else if( optInTimePeriod < 2 || optInTimePeriod > 10000 ) {
+             return RetCode.BAD_PARAM;
+          }
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.INSUFFICIENT_HISTORY;
+          }
+          outBegIdx.value = 0;
+          outNBElement.value = 0;
+          lookbackTotal = swakGaussLookback(optInTimePeriod);
+          if( startIdx < lookbackTotal ) {
+             startIdx = lookbackTotal;
+          }
+          if( startIdx > endIdx ) {
+             return RetCode.INSUFFICIENT_HISTORY ;
+          }
+          /* The Swiss Army Knife two-pole alpha (Ehlers, Stocks & Commodities January
+           * 2006, Figure 5). The paper writes the argument as 360/P degrees and says
+           * on p.3 to read it as a full turn, so it is 2*pi/P here.
+           *
+           * a2p is the root of the quadratic that places the double real pole; it is
+           * written as -b2p + sqrt(b2p^2 + 2*b2p) rather than the algebraically equal
+           * subtraction, which cancels for large P.
+           */
+          w = 2.0 * 3.141592653589793 / (double)optInTimePeriod;
+          b2p = 2.415 * (1.0 - Math.cos(w));
+          a2p = -b2p + Math.sqrt(Math.fma(b2p, b2p, 2.0 * b2p));
+          /* The Gaussian row of Figure 5: numerator a2p^2 on the bar alone, no
+           * x[i-1] or x[i-2] term. Its DC gain is 1, so the line sits on price.
+           */
+          om = 1.0 - a2p;
+          c0 = a2p * a2p;
+          a1 = 2.0 * om;
+          a2 = -(om * om);
+          today = startIdx - lookbackTotal;
+          /* Start in the steady state of a constant input equal to the first bar: a
+           * DC-gain-1 row answers that constant, so both output slots hold it. The
+           * input slots would hold it too, but this row's b1 and b2 are zero and
+           * never reads them -- which is also why outReal may alias inReal here.
+           */
+          y1 = inReal[today];
+          y2 = y1;
+          /* Skip the unstable period: run the recurrence but publish nothing. */
+          i = lookbackTotal;
+          while( i != 0 ) {
+             y = Math.fma(a2, y2, Math.fma(c0, inReal[today], a1 * y1));
+             y2 = y1;
+             y1 = y;
+             today += 1;
+             i -= 1;
+          }
+          outIdx = 0;
+          while( today <= endIdx ) {
+             /* The evaluation order is the bit-exactness contract across backends:
+              * the numerator first, then the a1 feedback, then the a2 feedback.
+              */
+             y = Math.fma(a2, y2, Math.fma(c0, inReal[today], a1 * y1));
+             y2 = y1;
+             y1 = y;
+             outReal[outIdx * outStride] = y;
+             outIdx = outIdx + 1;
+             today += 1;
+          }
+          outNBElement.value = outIdx;
+          outBegIdx.value = startIdx;
+          /* Capture the live batch state into the handle. */
+          sp.optInTimePeriod = optInTimePeriod;
+          sp.c0 = c0;
+          sp.a1 = a1;
+          sp.a2 = a2;
+          sp.y1 = y1;
+          sp.y2 = y2;
+          sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
+          return RetCode.SUCCESS;
+       }
+       /* swakGaussOpenAndFill anchored at startIdx — the composed-open fusion seam. */
+       SwakGaussStream swakGaussOpenAndFillInternal( double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+       {
+          SwakGaussStream sp = new SwakGaussStream(this);
+          RetCode retCode = swakGaussOpenImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
+          sp.outRangeBegIdx = outBegIdx.value;
+          sp.outRangeCount = outNBElement.value;
+          if( retCode == RetCode.SUCCESS ) {
+             return sp;
+          }
+          if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
+             throw insufficientHistory("SWAK_GAUSS openAndFill", inReal.length, startIdx, swakGaussLookback(optInTimePeriod));
+          }
+          throw streamFailure("SWAK_GAUSS openAndFill", retCode);
+       }
+       /* Internal startIdx-anchored open behind swakGaussOpen (composition seam). */
+       SwakGaussStream swakGaussOpenInternal( double inReal[], int startIdx, int optInTimePeriod )
+       {
+          SwakGaussStream sp = new SwakGaussStream(this);
+          MInteger outBegIdx = new MInteger();
+          MInteger outNBElement = new MInteger();
+          double[] sink_outReal = new double[1];
+          RetCode retCode = swakGaussOpenImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0);
+          sp.outRangeBegIdx = outBegIdx.value;
+          sp.outRangeCount = outNBElement.value;
+          if( retCode == RetCode.SUCCESS ) {
+             return sp;
+          }
+          if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
+             throw insufficientHistory("SWAK_GAUSS open", inReal.length, startIdx, swakGaussLookback(optInTimePeriod));
+          }
+          throw streamFailure("SWAK_GAUSS open", retCode);
+       }
+       /**
+        * Open a live SWAK_GAUSS stream over the warm-up history; the handle's
+        * {@code value()} starts at the last history bar's value — bit-identical
+        * to {@link Core#swakGauss} at that bar.
+        * <p>The history must hold at least {@code swakGaussLookback(...) + 1} bars
+        * (unstable-period aware), or {@link InsufficientHistoryException} is
+        * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
+        * ({@link Integer#MIN_VALUE} selects a parameter's documented default,
+        * as in the batch API). An EMPTY history throws
+        * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
+        * names no bar — and a null argument {@link IllegalArgumentException},
+        * both ahead of everything above.
+        */
+       public SwakGaussStream swakGaussOpen( double inReal[], int optInTimePeriod )
+       {
+          requireArgument("SWAK_GAUSS open", "inReal", inReal);
+          requireHistory("SWAK_GAUSS open", inReal.length);
+          return swakGaussOpenInternal(inReal, 0, optInTimePeriod);
+       }
+       /**
+        * {@link Core#swakGaussOpen} that also fills the output array(s) bit-identically
+        * to {@link Core#swakGauss} over the whole history in the same single pass
+        * (no separate batch call needed for the warm-up plot). Output arrays must
+        * not alias the inputs or each other, and must hold
+        * {@code historyLen - lookback} values — both checked before anything is
+        * written, so an undersized array is an {@link IllegalArgumentException}
+        * naming it rather than a fault from inside the fill.
+        * <p>The range written is on the returned handle:
+        * {@link SwakGaussStream#outRange()}.
+        */
+       public SwakGaussStream swakGaussOpenAndFill( double inReal[], int optInTimePeriod, double outReal[] )
+       {
+          requireArgument("SWAK_GAUSS openAndFill", "inReal", inReal);
+          requireHistory("SWAK_GAUSS openAndFill", inReal.length);
+          int guardOutLen = openFillCount("SWAK_GAUSS openAndFill", inReal.length, swakGaussLookback(optInTimePeriod));
+          requireLength("SWAK_GAUSS openAndFill", "outReal", outReal, guardOutLen);
+          if( (Object)outReal == (Object)inReal ) {
+             throw streamFailure("SWAK_GAUSS openAndFill", RetCode.BAD_PARAM);
+          }
+          MInteger outBegIdx = new MInteger();
+          MInteger outNBElement = new MInteger();
+          return swakGaussOpenAndFillInternal(inReal, 0, optInTimePeriod, outBegIdx, outNBElement, outReal);
+       }
+    /* List of contributors:
+     *
+     *  Initial  Name/description
+     *  -------------------------------------------------------------------
+     *  MF       Mario Fortier
+     *  KL       Kevin Lin (@kevinlincg)
+     *  CC       Claude Code (AI assistant)
+     *
+     * Change history:
+     *
+     *  MMDDYY BY     Description
+     *  -------------------------------------------------------------------
+     *  100126 KL,CC  Creation (#486).
+     */
+
+       /**
+        * Number of leading input bars {@link Core#swakHp} consumes before it can
+        * produce its first value.
+        * <p>Equivalently, the index of the first bar with a value when the whole
+        * series is requested. Feed at least {@code lookback + 1} bars to get any
+        * output.
+        * <p>This function is recursive, so the result also includes this
+        * {@code Core}'s unstable-period setting — which is why it is an instance
+        * method.
+        *
+        * @param optInTimePeriod Cutoff period; cycles longer than it are removed,
+        *        cycles shorter pass (default 20; range 5..100000;
+        *        {@code Integer.MIN_VALUE} selects the default).
+        * @return The lookback, or {@code -1} if a parameter is out of range.
+        */
+       public int swakHpLookback( int optInTimePeriod )
+       {
+          if( optInTimePeriod == Integer.MIN_VALUE ) {
+             optInTimePeriod = 20;
+          } else if( optInTimePeriod < 5 || optInTimePeriod > 100000 ) {
+             return -1;
+          }
+          /* No structural lookback: the one input slot and the one output slot are
+           * seeded from the first bar rather than read from before it, and there is
+           * no callee whose lookback could be inherited (ha.c:16-19).
+           */
+          return this.unstablePeriod[FuncUnstId.SWAK_HP.ordinal()] ;
+
+       }
+       /**
+        * How many bars ahead (positive) or behind (negative) of the bar that
+        * computed it a chart draws one output of {@link Core#swakHp}.
+        * <p>Every output of this function is drawn at its own bar, so the answer is
+        * 0.
+        *
+        * @param optInTimePeriod Cutoff period; cycles longer than it are removed,
+        *        cycles shorter pass (default 20; range 5..100000;
+        *        {@code Integer.MIN_VALUE} selects the default).
+        * @param outputIdx Position of the output in the batch signature, from 0.
+        * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+        *        out of range or the index names no output.
+        */
+       public int swakHpDisplayShift( int optInTimePeriod, int outputIdx )
+       {
+          if( swakHpLookback( optInTimePeriod ) < 0 ) {
+             return Integer.MIN_VALUE;
+          }
+          if( outputIdx < 0 || outputIdx >= 1 ) {
+             return Integer.MIN_VALUE;
+          }
+          return 0;
+       }
+       RetCode swakHpImpl( int startIdx,
+                           int endIdx,
+                           double inReal[],
+                           int optInTimePeriod,
+                           MInteger outBegIdx,
+                           MInteger outNBElement,
+                           double outReal[] )
+       {
+          int i = 0;
+          int outIdx = 0;
+          int today = 0;
+          int lookbackTotal = 0;
+          double w = 0;
+          double cw = 0;
+          double a1p = 0;
+          double c0 = 0;
+          double a1 = 0;
+          double x0 = 0;
+          double x1 = 0;
+          double y = 0;
+          double y1 = 0;
+          if( (startIdx < 0) || (startIdx > INDEX_MAX) ) {
+             return RetCode.OUT_OF_RANGE_START_INDEX ;
+          }
+          if( (endIdx < 0) || (endIdx > INDEX_MAX) || (endIdx < startIdx)) {
+             return RetCode.OUT_OF_RANGE_END_INDEX ;
+          }
+          if( optInTimePeriod == Integer.MIN_VALUE ) {
+             optInTimePeriod = 20;
+          } else if( optInTimePeriod < 5 || optInTimePeriod > 100000 ) {
+             return RetCode.BAD_PARAM;
+          }
+          outBegIdx.value = 0;
+          outNBElement.value = 0;
+          lookbackTotal = swakHpLookback(optInTimePeriod);
+          if( startIdx < lookbackTotal ) {
+             startIdx = lookbackTotal;
+          }
+          if( startIdx > endIdx ) {
+             return RetCode.SUCCESS ;
+          }
+          /* The one-pole alpha (Ehlers, Stocks & Commodities January 2006, Figure 5).
+           * The paper says this one "is computed exactly the same as it is for the
+           * EMA" (p.5) -- meaning the cutoff-period formula below, not TA_EMA's
+           * 2/(n+1). The paper's 360/P is a full turn, so 2*pi/P.
+           *
+           * The period range starts at 5 because of what this expression does below
+           * it, not for taste: at P = 4, cos(w) is 6.1e-17 and `cos w + sin w - 1`
+           * rounds to exactly 0.0, so a1p is 0, c0 and a1 are both 1, and the filter
+           * degenerates into the integrator x - x[s]. At P = 2, cos(w) is -1 and c0
+           * is 0, a dead filter. No contiguous range below 5 avoids both.
+           */
+          w = 2.0 * 3.141592653589793 / (double)optInTimePeriod;
+          cw = Math.cos(w);
+          a1p = (cw + Math.sin(w) - 1.0) / cw;
+          /* The high-pass row: a (1, -1) numerator, so its DC gain is 0 and the line
+           * is centred on zero rather than on price.
+           */
+          c0 = 1.0 - a1p / 2.0;
+          a1 = 1.0 - a1p;
+          today = startIdx - lookbackTotal;
+          /* Start in the steady state of a constant input equal to the first bar: a
+           * DC-gain-0 row answers 0 for a constant, so the output slot starts there
+           * while the input slot holds the bar. The input slot is carried in a local
+           * and never re-read from inReal, because outReal may alias it.
+           */
+          x1 = inReal[today];
+          y1 = 0.0;
+          /* Skip the unstable period: run the recurrence but publish nothing. */
+          i = lookbackTotal;
+          while( i != 0 ) {
+             x0 = inReal[today];
+             y = Math.fma(c0, x0 - x1, a1 * y1);
+             x1 = x0;
+             y1 = y;
+             today += 1;
+             i -= 1;
+          }
+          outIdx = 0;
+          while( today <= endIdx ) {
+             /* The evaluation order is the bit-exactness contract across backends:
+              * the numerator as c0*(x0 - x1), then the a1 feedback. This row's a2 is
+              * zero and the term is dropped rather than added, which costs an
+              * operation per bar and nothing else: adding 0.0*y2 would land on the
+              * same bits, +0.0 for a cancelled numerator included.
+              */
+             x0 = inReal[today];
+             y = Math.fma(c0, x0 - x1, a1 * y1);
+             x1 = x0;
+             y1 = y;
+             outReal[outIdx] = y;
+             outIdx = outIdx + 1;
+             today += 1;
+          }
+          outNBElement.value = outIdx;
+          outBegIdx.value = startIdx;
+          return RetCode.SUCCESS ;
+       }
+       RetCode swakHpImpl( int startIdx,
+                           int endIdx,
+                           float inReal[],
+                           int optInTimePeriod,
+                           MInteger outBegIdx,
+                           MInteger outNBElement,
+                           double outReal[] )
+       {
+          int i = 0;
+          int outIdx = 0;
+          int today = 0;
+          int lookbackTotal = 0;
+          double w = 0;
+          double cw = 0;
+          double a1p = 0;
+          double c0 = 0;
+          double a1 = 0;
+          double x0 = 0;
+          double x1 = 0;
+          double y = 0;
+          double y1 = 0;
+          if( (startIdx < 0) || (startIdx > INDEX_MAX) ) {
+             return RetCode.OUT_OF_RANGE_START_INDEX ;
+          }
+          if( (endIdx < 0) || (endIdx > INDEX_MAX) || (endIdx < startIdx)) {
+             return RetCode.OUT_OF_RANGE_END_INDEX ;
+          }
+          if( optInTimePeriod == Integer.MIN_VALUE ) {
+             optInTimePeriod = 20;
+          } else if( optInTimePeriod < 5 || optInTimePeriod > 100000 ) {
+             return RetCode.BAD_PARAM;
+          }
+          outBegIdx.value = 0;
+          outNBElement.value = 0;
+          lookbackTotal = swakHpLookback(optInTimePeriod);
+          if( startIdx < lookbackTotal ) {
+             startIdx = lookbackTotal;
+          }
+          if( startIdx > endIdx ) {
+             return RetCode.SUCCESS ;
+          }
+          w = 2.0 * 3.141592653589793 / (double)optInTimePeriod;
+          cw = Math.cos(w);
+          a1p = (cw + Math.sin(w) - 1.0) / cw;
+          c0 = 1.0 - a1p / 2.0;
+          a1 = 1.0 - a1p;
+          today = startIdx - lookbackTotal;
+          x1 = (double)inReal[today];
+          y1 = 0.0;
+          i = lookbackTotal;
+          while( i != 0 ) {
+             x0 = (double)inReal[today];
+             y = Math.fma(c0, x0 - x1, a1 * y1);
+             x1 = x0;
+             y1 = y;
+             today += 1;
+             i -= 1;
+          }
+          outIdx = 0;
+          while( today <= endIdx ) {
+             x0 = (double)inReal[today];
+             y = Math.fma(c0, x0 - x1, a1 * y1);
+             x1 = x0;
+             y1 = y;
+             outReal[outIdx] = y;
+             outIdx = outIdx + 1;
+             today += 1;
+          }
+          outNBElement.value = outIdx;
+          outBegIdx.value = startIdx;
+          return RetCode.SUCCESS ;
+       }
+       /**
+        * The high-pass row of John Ehlers' Swiss Army Knife filter: a one-pole
+        * detrender that removes what is slower than the cutoff period and keeps
+        * what is faster. Read it as an oscillator, not as price. Its DC gain is 0,
+        * so a flat market returns zero and a trending one returns the trend's
+        * departure from itself rather than its level. That is the point of a
+        * detrender: what remains is the cyclic part of the series, centred on zero,
+        * which can then be measured or compared across instruments whose price
+        * levels differ by orders of magnitude. The alpha is the cutoff-period one.
+        * Ehlers notes that it "is computed exactly the same as it is for the EMA",
+        * meaning the same construction, not {@code TA_EMA}'s {@code 2/(n+1)}.
+        * <p>Formula and more info at <a
+        * href="https://ta-lib.org/functions/swak_hp">ta-lib.org/functions/swak_hp</a>.
+        * <p>Values are written only where the indicator is defined. The returned
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#swakHpLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
+        *
+        * @param startIdx First bar of the requested range (inclusive).
+        * @param endIdx Last bar of the requested range (inclusive).
+        * @param inReal The series to detrend; Ehlers' default is the bar midpoint
+        *        {@code (H+L)/2}, which the caller passes as {@code TA_MEDPRICE} output.
+        * @param optInTimePeriod Cutoff period; cycles longer than it are removed,
+        *        cycles shorter pass (default 20; range 5..100000;
+        *        {@code Integer.MIN_VALUE} selects the default).
+        * @param outReal The detrended line, centred on zero. Must hold at least
+        *        {@code endIdx - max(startIdx, swakHpLookback(...)) + 1} values, and never
+        *        be empty: an empty array is an absent output.
+        * @return The range written: {@code begIdx} is the first bar with a value,
+        *        {@code count} how many were written.
+        * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
+        *        negative or above {@link Core#INDEX_MAX}, or {@code endIdx < startIdx}.
+        * @throws IllegalArgumentException if an optional parameter is outside its
+        *        documented range, two outputs share one array, or an array is absent or
+        *        too short for the range requested — any input this function
+        *        <i>declares</i> that does not reach {@code endIdx}, or an output that
+        *        cannot hold the values produced. Declared, not read: a few candlestick
+        *        patterns take an OHLC series they never index, and it is required all the
+        *        same. An output this function documents as declinable is the one
+        *        exception: {@code null} is how you decline it. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
+        *
+        * @see Core#swak2php
+        * @see Core#swakBp
+        * @see Core#medprice
+        */
+       public OutRange swakHp( int startIdx,
+                               int endIdx,
+                               double inReal[],
+                               int optInTimePeriod,
+                               double outReal[] )
+       {
+          requireIndexRange("SWAK_HP", startIdx, endIdx);
+          int guardStart = clampedStart("SWAK_HP", startIdx, swakHpLookback(optInTimePeriod));
+          int guardInLen = endIdx + 1;
+          int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("SWAK_HP", "inReal", inReal, guardInLen);
+          requireLength("SWAK_HP", "outReal", outReal, guardOutLen);
+          MInteger outBegIdx = new MInteger();
+          MInteger outNBElement = new MInteger();
+          RetCode retCode = swakHpImpl(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+          if( retCode != RetCode.SUCCESS ) {
+             throw failure("SWAK_HP", retCode);
+          }
+          return new OutRange(outBegIdx.value, outNBElement.value);
+       }
+       /**
+        * The high-pass row of John Ehlers' Swiss Army Knife filter: a one-pole
+        * detrender that removes what is slower than the cutoff period and keeps
+        * what is faster. Read it as an oscillator, not as price. Its DC gain is 0,
+        * so a flat market returns zero and a trending one returns the trend's
+        * departure from itself rather than its level. That is the point of a
+        * detrender: what remains is the cyclic part of the series, centred on zero,
+        * which can then be measured or compared across instruments whose price
+        * levels differ by orders of magnitude. The alpha is the cutoff-period one.
+        * Ehlers notes that it "is computed exactly the same as it is for the EMA",
+        * meaning the same construction, not {@code TA_EMA}'s {@code 2/(n+1)}.
+        * <p>Formula and more info at <a
+        * href="https://ta-lib.org/functions/swak_hp">ta-lib.org/functions/swak_hp</a>.
+        * <p>This is the {@code float[]} overload. The arithmetic is performed in
+        * {@code double} before being written to the {@code double[]} output, so a
+        * result beyond {@code float} range is still representable.
+        * <p>Values are written only where the indicator is defined. The returned
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#swakHpLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
+        *
+        * @param startIdx First bar of the requested range (inclusive).
+        * @param endIdx Last bar of the requested range (inclusive).
+        * @param inReal The series to detrend; Ehlers' default is the bar midpoint
+        *        {@code (H+L)/2}, which the caller passes as {@code TA_MEDPRICE} output.
+        * @param optInTimePeriod Cutoff period; cycles longer than it are removed,
+        *        cycles shorter pass (default 20; range 5..100000;
+        *        {@code Integer.MIN_VALUE} selects the default).
+        * @param outReal The detrended line, centred on zero. Must hold at least
+        *        {@code endIdx - max(startIdx, swakHpLookback(...)) + 1} values, and never
+        *        be empty: an empty array is an absent output.
+        * @return The range written: {@code begIdx} is the first bar with a value,
+        *        {@code count} how many were written.
+        * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
+        *        negative or above {@link Core#INDEX_MAX}, or {@code endIdx < startIdx}.
+        * @throws IllegalArgumentException if an optional parameter is outside its
+        *        documented range, two outputs share one array, or an array is absent or
+        *        too short for the range requested — any input this function
+        *        <i>declares</i> that does not reach {@code endIdx}, or an output that
+        *        cannot hold the values produced. Declared, not read: a few candlestick
+        *        patterns take an OHLC series they never index, and it is required all the
+        *        same. An output this function documents as declinable is the one
+        *        exception: {@code null} is how you decline it. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
+        *
+        * @see Core#swak2php
+        * @see Core#swakBp
+        * @see Core#medprice
+        */
+       public OutRange swakHp( int startIdx,
+                               int endIdx,
+                               float inReal[],
+                               int optInTimePeriod,
+                               double outReal[] )
+       {
+          requireIndexRange("SWAK_HP", startIdx, endIdx);
+          int guardStart = clampedStart("SWAK_HP", startIdx, swakHpLookback(optInTimePeriod));
+          int guardInLen = endIdx + 1;
+          int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("SWAK_HP", "inReal", inReal, guardInLen);
+          requireLength("SWAK_HP", "outReal", outReal, guardOutLen);
+          MInteger outBegIdx = new MInteger();
+          MInteger outNBElement = new MInteger();
+          RetCode retCode = swakHpImpl(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+          if( retCode != RetCode.SUCCESS ) {
+             throw failure("SWAK_HP", retCode);
+          }
+          return new OutRange(outBegIdx.value, outNBElement.value);
+       }
+    /**** Streaming API *****/
+
+       /**
+        * A live SWAK_HP stream (unrelated to {@code java.util.stream}): one value per
+        * closed bar, bit-identical to {@link Core#swakHp} over the same series.
+        * Open with {@link Core#swakHpOpen}; there is no close — the handle is
+        * ordinary heap state, unreferenced handles are simply garbage-collected.
+        * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
+        * {@code value} and {@code clone} must not race with an {@code update} on
+        * the same handle. With no concurrent {@code update}, {@code peek}/
+        * {@code value}/{@code clone} never write the stream and may be called
+        * concurrently after safe publication. Independent streams (a
+        * {@code clone()} result included) are fully independent.
+        * <p>Not serializable by design: to checkpoint, retain the history and
+        * re-open — the result is bit-identical by contract.
+        */
+       public static final class SwakHpStream {
+          private Core core;
+          private int optInTimePeriod;
+          private double c0;
+          private double a1;
+          private double x1;
+          private double y1;
+          private double cur_outReal;
+          private int outRangeBegIdx;
+          private int outRangeCount;
+
+          private SwakHpStream( Core core ) { this.core = core; }
+
+          /**
+           * The bars this stream has an output for, in the input series'
+           * coordinates: {@code [begIdx, begIdx + count)}.
+           * <p>It is what {@link Core#swakHp} reports over the same bars: the
+           * opener sets it to {@code (lookback, historyLen - lookback)}, every
+           * accepted {@code update} adds one to the count — a rejected one
+           * changes nothing, and neither does {@code peek} — and
+           * {@code clone()} carries it verbatim. A plain
+           * {@code open} hands back only the last value, a subset of this range,
+           * because the caller chose not to take the fill.
+           * <p>The last bar it can reach is {@link Core#INDEX_MAX}; past that
+           * {@code update} and {@code advance} throw
+           * {@link IndexOutOfBoundsException}.
+           */
+          public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
+
+          /**
+           * Count one bar this stream was not fed: {@link #outRange()} advances
+           * by one and nothing else moves — {@link #value()} keeps answering the previous
+           * output, which is this bar's output too.
+           * <p>For a bar the caller leaves out: one an {@code update} rejected
+           * and that will not be re-fed, or a session with no print. Without it
+           * two handles on one feed drift a bar apart when only one of them skips.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#INDEX_MAX}, the last one the batch tier
+           * can address and the last this handle will count. {@code update}
+           * throws the same there.
+           */
+          public void advance() {
+             if( this.outRangeBegIdx + this.outRangeCount > INDEX_MAX )
+                throw failure("SWAK_HP advance", RetCode.OUT_OF_RANGE_END_INDEX);
+             this.outRangeCount++;
+          }
+
+          private SwakHpStream( SwakHpStream other ) {
+             this.core = other.core;
+             this.optInTimePeriod = other.optInTimePeriod;
+             this.c0 = other.c0;
+             this.a1 = other.a1;
+             this.x1 = other.x1;
+             this.y1 = other.y1;
+             this.cur_outReal = other.cur_outReal;
+             this.outRangeBegIdx = other.outRangeBegIdx;
+             this.outRangeCount = other.outRangeCount;
+          }
+
+          /**
+           * Commit one closed bar, returning the new current value.
+           * <p>Throws {@link IllegalArgumentException} if any bar value is not
+           * finite (NaN or an infinity). That check runs before anything is
+           * written, so nothing moves — {@link #outRange()} included — and
+           * {@link #value()} still answers the previous value. Re-feed the bar when a
+           * corrected value arrives, or call {@link #advance()} to count it and
+           * carry on; two handles on one feed drift a bar apart if neither
+           * happens.
+           * This is the one place the streaming tier is stricter than
+           * the batch API, which computes on whatever it is given: a handle
+           * retains its state, so a single non-finite bar would poison every
+           * later value it produces.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#INDEX_MAX}, which no re-feed clears: the
+           * handle has run out of index domain and only a shorter history can
+           * start a new one.
+           */
+          public double update( double inReal ) {
+             if( this.outRangeBegIdx + this.outRangeCount > INDEX_MAX )
+                throw failure("SWAK_HP update", RetCode.OUT_OF_RANGE_END_INDEX);
+             if( !Double.isFinite(inReal) )
+                throw nonFiniteBar("SWAK_HP update", "inReal");
+             core.swakHpStepImpl(this, inReal);
+             this.outRangeCount++;
+             return this.cur_outReal;
+          }
+
+          /**
+           * Evaluate a forming bar without committing — bit-identical to what the
+           * next {@code update} with the same bar would return — the same
+           * transition, with every store it would make carried in a local instead.
+           * Never writes this handle, so peeks may run concurrently with each other.
+           * <p>It counts no bar, so it keeps answering past the
+           * {@link Core#INDEX_MAX} ceiling {@code update} stops at.
+           */
+          public double peek( double inReal ) {
+             if( !Double.isFinite(inReal) )
+                throw nonFiniteBar("SWAK_HP peek", "inReal");
+             SwakHpStream sp = this;
+             double x0 = 0.0;
+             double y = 0.0;
+             double cur_outReal = 0.0;
+             double x1 = sp.x1;
+             double y1 = sp.y1;
+             /* The evaluation order is the bit-exactness contract across backends:
+              * the numerator as c0*(x0 - x1), then the a1 feedback. This row's a2 is
+              * zero and the term is dropped rather than added, which costs an
+              * operation per bar and nothing else: adding 0.0*y2 would land on the
+              * same bits, +0.0 for a cancelled numerator included.
+              */
+             x0 = inReal;
+             y = Math.fma(sp.c0, x0 - x1, sp.a1 * y1);
+             x1 = x0;
+             y1 = y;
+             cur_outReal = y;
+             return cur_outReal;
+          }
+
+          /**
+           * The value at the last bar this stream counted — the bar
+           * {@link #outRange()} ends on. The last history bar right after open,
+           * then whatever the latest accepted {@code update} returned.
+           * A pure field read; {@code peek} does not change it.
+           */
+          public double value() {
+             return this.cur_outReal;
+          }
+
+          /**
+           * An independent fork of this stream: both evolve separately from here
+           * on. Buffers are copied and sub-streams cloned recursively; the
+           * {@link Core} reference is shared, since a {@code Core} is immutable
+           * for a stream's lifetime.
+           *
+           * <p>Not the {@code Cloneable} protocol: this calls a copy constructor,
+           * never {@code super.clone()}, so it throws nothing.
+           *
+           * @return an independent stream at the same bar
+           */
+          @Override
+          public SwakHpStream clone() {
+             return new SwakHpStream(this);
+          }
+       }
+       private void swakHpStepImpl( SwakHpStream sp, double inReal )
+       {
+          double x0 = 0.0;
+          double y = 0.0;
+          /* The evaluation order is the bit-exactness contract across backends:
+           * the numerator as c0*(x0 - x1), then the a1 feedback. This row's a2 is
+           * zero and the term is dropped rather than added, which costs an
+           * operation per bar and nothing else: adding 0.0*y2 would land on the
+           * same bits, +0.0 for a cancelled numerator included.
+           */
+          x0 = inReal;
+          y = Math.fma(sp.c0, x0 - sp.x1, sp.a1 * sp.y1);
+          sp.x1 = x0;
+          sp.y1 = y;
+          sp.cur_outReal = y;
+       }
+       private RetCode swakHpOpenImpl( SwakHpStream sp, double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+       {
+          int i = 0;
+          int outIdx = 0;
+          int today = 0;
+          int lookbackTotal = 0;
+          double w = 0;
+          double cw = 0;
+          double a1p = 0;
+          double c0 = 0;
+          double a1 = 0;
+          double x0 = 0;
+          double x1 = 0;
+          double y = 0;
+          double y1 = 0;
+          int historyLen = inReal.length;
+          int endIdx = historyLen - 1;
+          if( historyLen < 1 ) {
+             return RetCode.OUT_OF_RANGE_START_INDEX;
+          }
+          if( historyLen > INDEX_MAX + 1 ) {
+             return RetCode.OUT_OF_RANGE_END_INDEX;
+          }
+          if( optInTimePeriod == Integer.MIN_VALUE ) {
+             optInTimePeriod = 20;
+          } else if( optInTimePeriod < 5 || optInTimePeriod > 100000 ) {
+             return RetCode.BAD_PARAM;
+          }
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.INSUFFICIENT_HISTORY;
+          }
+          outBegIdx.value = 0;
+          outNBElement.value = 0;
+          lookbackTotal = swakHpLookback(optInTimePeriod);
+          if( startIdx < lookbackTotal ) {
+             startIdx = lookbackTotal;
+          }
+          if( startIdx > endIdx ) {
+             return RetCode.INSUFFICIENT_HISTORY ;
+          }
+          /* The one-pole alpha (Ehlers, Stocks & Commodities January 2006, Figure 5).
+           * The paper says this one "is computed exactly the same as it is for the
+           * EMA" (p.5) -- meaning the cutoff-period formula below, not TA_EMA's
+           * 2/(n+1). The paper's 360/P is a full turn, so 2*pi/P.
+           *
+           * The period range starts at 5 because of what this expression does below
+           * it, not for taste: at P = 4, cos(w) is 6.1e-17 and `cos w + sin w - 1`
+           * rounds to exactly 0.0, so a1p is 0, c0 and a1 are both 1, and the filter
+           * degenerates into the integrator x - x[s]. At P = 2, cos(w) is -1 and c0
+           * is 0, a dead filter. No contiguous range below 5 avoids both.
+           */
+          w = 2.0 * 3.141592653589793 / (double)optInTimePeriod;
+          cw = Math.cos(w);
+          a1p = (cw + Math.sin(w) - 1.0) / cw;
+          /* The high-pass row: a (1, -1) numerator, so its DC gain is 0 and the line
+           * is centred on zero rather than on price.
+           */
+          c0 = 1.0 - a1p / 2.0;
+          a1 = 1.0 - a1p;
+          today = startIdx - lookbackTotal;
+          /* Start in the steady state of a constant input equal to the first bar: a
+           * DC-gain-0 row answers 0 for a constant, so the output slot starts there
+           * while the input slot holds the bar. The input slot is carried in a local
+           * and never re-read from inReal, because outReal may alias it.
+           */
+          x1 = inReal[today];
+          y1 = 0.0;
+          /* Skip the unstable period: run the recurrence but publish nothing. */
+          i = lookbackTotal;
+          while( i != 0 ) {
+             x0 = inReal[today];
+             y = Math.fma(c0, x0 - x1, a1 * y1);
+             x1 = x0;
+             y1 = y;
+             today += 1;
+             i -= 1;
+          }
+          outIdx = 0;
+          while( today <= endIdx ) {
+             /* The evaluation order is the bit-exactness contract across backends:
+              * the numerator as c0*(x0 - x1), then the a1 feedback. This row's a2 is
+              * zero and the term is dropped rather than added, which costs an
+              * operation per bar and nothing else: adding 0.0*y2 would land on the
+              * same bits, +0.0 for a cancelled numerator included.
+              */
+             x0 = inReal[today];
+             y = Math.fma(c0, x0 - x1, a1 * y1);
+             x1 = x0;
+             y1 = y;
+             outReal[outIdx * outStride] = y;
+             outIdx = outIdx + 1;
+             today += 1;
+          }
+          outNBElement.value = outIdx;
+          outBegIdx.value = startIdx;
+          /* Capture the live batch state into the handle. */
+          sp.optInTimePeriod = optInTimePeriod;
+          sp.c0 = c0;
+          sp.a1 = a1;
+          sp.x1 = x1;
+          sp.y1 = y1;
+          sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
+          return RetCode.SUCCESS;
+       }
+       /* swakHpOpenAndFill anchored at startIdx — the composed-open fusion seam. */
+       SwakHpStream swakHpOpenAndFillInternal( double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+       {
+          SwakHpStream sp = new SwakHpStream(this);
+          RetCode retCode = swakHpOpenImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
+          sp.outRangeBegIdx = outBegIdx.value;
+          sp.outRangeCount = outNBElement.value;
+          if( retCode == RetCode.SUCCESS ) {
+             return sp;
+          }
+          if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
+             throw insufficientHistory("SWAK_HP openAndFill", inReal.length, startIdx, swakHpLookback(optInTimePeriod));
+          }
+          throw streamFailure("SWAK_HP openAndFill", retCode);
+       }
+       /* Internal startIdx-anchored open behind swakHpOpen (composition seam). */
+       SwakHpStream swakHpOpenInternal( double inReal[], int startIdx, int optInTimePeriod )
+       {
+          SwakHpStream sp = new SwakHpStream(this);
+          MInteger outBegIdx = new MInteger();
+          MInteger outNBElement = new MInteger();
+          double[] sink_outReal = new double[1];
+          RetCode retCode = swakHpOpenImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0);
+          sp.outRangeBegIdx = outBegIdx.value;
+          sp.outRangeCount = outNBElement.value;
+          if( retCode == RetCode.SUCCESS ) {
+             return sp;
+          }
+          if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
+             throw insufficientHistory("SWAK_HP open", inReal.length, startIdx, swakHpLookback(optInTimePeriod));
+          }
+          throw streamFailure("SWAK_HP open", retCode);
+       }
+       /**
+        * Open a live SWAK_HP stream over the warm-up history; the handle's
+        * {@code value()} starts at the last history bar's value — bit-identical
+        * to {@link Core#swakHp} at that bar.
+        * <p>The history must hold at least {@code swakHpLookback(...) + 1} bars
+        * (unstable-period aware), or {@link InsufficientHistoryException} is
+        * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
+        * ({@link Integer#MIN_VALUE} selects a parameter's documented default,
+        * as in the batch API). An EMPTY history throws
+        * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
+        * names no bar — and a null argument {@link IllegalArgumentException},
+        * both ahead of everything above.
+        */
+       public SwakHpStream swakHpOpen( double inReal[], int optInTimePeriod )
+       {
+          requireArgument("SWAK_HP open", "inReal", inReal);
+          requireHistory("SWAK_HP open", inReal.length);
+          return swakHpOpenInternal(inReal, 0, optInTimePeriod);
+       }
+       /**
+        * {@link Core#swakHpOpen} that also fills the output array(s) bit-identically
+        * to {@link Core#swakHp} over the whole history in the same single pass
+        * (no separate batch call needed for the warm-up plot). Output arrays must
+        * not alias the inputs or each other, and must hold
+        * {@code historyLen - lookback} values — both checked before anything is
+        * written, so an undersized array is an {@link IllegalArgumentException}
+        * naming it rather than a fault from inside the fill.
+        * <p>The range written is on the returned handle:
+        * {@link SwakHpStream#outRange()}.
+        */
+       public SwakHpStream swakHpOpenAndFill( double inReal[], int optInTimePeriod, double outReal[] )
+       {
+          requireArgument("SWAK_HP openAndFill", "inReal", inReal);
+          requireHistory("SWAK_HP openAndFill", inReal.length);
+          int guardOutLen = openFillCount("SWAK_HP openAndFill", inReal.length, swakHpLookback(optInTimePeriod));
+          requireLength("SWAK_HP openAndFill", "outReal", outReal, guardOutLen);
+          if( (Object)outReal == (Object)inReal ) {
+             throw streamFailure("SWAK_HP openAndFill", RetCode.BAD_PARAM);
+          }
+          MInteger outBegIdx = new MInteger();
+          MInteger outNBElement = new MInteger();
+          return swakHpOpenAndFillInternal(inReal, 0, optInTimePeriod, outBegIdx, outNBElement, outReal);
+       }
+    /* List of contributors:
+     *
+     *  Initial  Name/description
+     *  -------------------------------------------------------------------
      *  MHL      Matthew Lindblom
      *  MF       Mario Fortier
      *
@@ -213720,7 +217546,7 @@ class Core {
 
 public class TaCodegenServe {
     static Core core = new Core();
-    static final String SPLICED_GENCODE_DIGEST = "a8bca754f7539601";
+    static final String SPLICED_GENCODE_DIGEST = "6e24594cb1183e3c";
     static final int MAX_ARRAY_SIZE = 200000;
     static double[] refOpen = new double[MAX_ARRAY_SIZE];
     static double[] refHigh = new double[MAX_ARRAY_SIZE];
@@ -214688,6 +218514,26 @@ public class TaCodegenServe {
             new AbsIn[]{ new AbsIn(0,"inPriceHLC",14) },
             new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period","Time period for the Average True Range",10.0, 0,0,0,0,0,0, 2,100000,4,200,1, null), new AbsOpt(0,"optInMultiplier",0,"Multiplier","ATR multiplier for band width",3.0, 0.0,3e37,1,1.0,4.0,0.5, 0,0,0,0,0, null) },
             new AbsOut[]{ new AbsOut(0,"outSupertrend",1), new AbsOut(1,"outTrend",1) }));
+        ABSTRACT.put("SWAK_2PHP", new AbsFunc("SWAK_2PHP", "Cycle Indicators", "Swiss Army Knife - Two-Pole High-Pass Filter", 167772160,
+            new AbsIn[]{ new AbsIn(1,"inReal",0) },
+            new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period","Cutoff period",20.0, 0,0,0,0,0,0, 2,10000,5,200,1, null) },
+            new AbsOut[]{ new AbsOut(0,"outReal",1) }));
+        ABSTRACT.put("SWAK_BP", new AbsFunc("SWAK_BP", "Cycle Indicators", "Swiss Army Knife - Band-Pass Filter", 167772160,
+            new AbsIn[]{ new AbsIn(1,"inReal",0) },
+            new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period","Center period",20.0, 0,0,0,0,0,0, 5,2000,5,200,1, null), new AbsOpt(0,"optInDelta",0,"Delta","Half-bandwidth as a fraction of the center period",0.1, 0.05,0.5,2,0.05,0.5,0.05, 0,0,0,0,0, null) },
+            new AbsOut[]{ new AbsOut(0,"outReal",1) }));
+        ABSTRACT.put("SWAK_BUTTER", new AbsFunc("SWAK_BUTTER", "Overlap Studies", "Swiss Army Knife - Butterworth Filter", 184549376,
+            new AbsIn[]{ new AbsIn(1,"inReal",0) },
+            new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period","Cutoff period",20.0, 0,0,0,0,0,0, 2,10000,5,200,1, null) },
+            new AbsOut[]{ new AbsOut(0,"outReal",1) }));
+        ABSTRACT.put("SWAK_GAUSS", new AbsFunc("SWAK_GAUSS", "Overlap Studies", "Swiss Army Knife - Gaussian Filter", 184549376,
+            new AbsIn[]{ new AbsIn(1,"inReal",0) },
+            new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period","Cutoff period",20.0, 0,0,0,0,0,0, 2,10000,5,200,1, null) },
+            new AbsOut[]{ new AbsOut(0,"outReal",1) }));
+        ABSTRACT.put("SWAK_HP", new AbsFunc("SWAK_HP", "Cycle Indicators", "Swiss Army Knife - High-Pass Filter", 167772160,
+            new AbsIn[]{ new AbsIn(1,"inReal",0) },
+            new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period","Cutoff period",20.0, 0,0,0,0,0,0, 5,100000,5,200,1, null) },
+            new AbsOut[]{ new AbsOut(0,"outReal",1) }));
         ABSTRACT.put("T3", new AbsFunc("T3", "Overlap Studies", "Triple Exponential Moving Average (T3)", 184549377,
             new AbsIn[]{ new AbsIn(1,"inReal",0) },
             new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period","Time period",5.0, 0,0,0,0,0,0, 1,100000,1,200,1, null), new AbsOpt(0,"optInVFactor",0,"Volume Factor","Volume Factor",0.7, 0.0,1.0,2,0.01,1.0,0.05, 0,0,0,0,0, null) },
@@ -215085,6 +218931,11 @@ public class TaCodegenServe {
         "TA_SUB",
         "TA_SUM",
         "TA_SUPERTREND",
+        "TA_SWAK_2PHP",
+        "TA_SWAK_BP",
+        "TA_SWAK_BUTTER",
+        "TA_SWAK_GAUSS",
+        "TA_SWAK_HP",
         "TA_T3",
         "TA_TAN",
         "TA_TANH",
@@ -215314,28 +219165,33 @@ public class TaCodegenServe {
             case 198: return handle_SUB(json);
             case 199: return handle_SUM(json);
             case 200: return handle_SUPERTREND(json);
-            case 201: return handle_T3(json);
-            case 202: return handle_TAN(json);
-            case 203: return handle_TANH(json);
-            case 204: return handle_TEMA(json);
-            case 205: return handle_TRANGE(json);
-            case 206: return handle_TRIMA(json);
-            case 207: return handle_TRIX(json);
-            case 208: return handle_TSF(json);
-            case 209: return handle_TSI(json);
-            case 210: return handle_TYPPRICE(json);
-            case 211: return handle_ULTOSC(json);
-            case 212: return handle_VAR(json);
-            case 213: return handle_VHF(json);
-            case 214: return handle_VIDYA(json);
-            case 215: return handle_VORTEX(json);
-            case 216: return handle_VWAP(json);
-            case 217: return handle_VWMA(json);
-            case 218: return handle_WAD(json);
-            case 219: return handle_WCLPRICE(json);
-            case 220: return handle_WILLR(json);
-            case 221: return handle_WMA(json);
-            case 222: return handle_ZLEMA(json);
+            case 201: return handle_SWAK_2PHP(json);
+            case 202: return handle_SWAK_BP(json);
+            case 203: return handle_SWAK_BUTTER(json);
+            case 204: return handle_SWAK_GAUSS(json);
+            case 205: return handle_SWAK_HP(json);
+            case 206: return handle_T3(json);
+            case 207: return handle_TAN(json);
+            case 208: return handle_TANH(json);
+            case 209: return handle_TEMA(json);
+            case 210: return handle_TRANGE(json);
+            case 211: return handle_TRIMA(json);
+            case 212: return handle_TRIX(json);
+            case 213: return handle_TSF(json);
+            case 214: return handle_TSI(json);
+            case 215: return handle_TYPPRICE(json);
+            case 216: return handle_ULTOSC(json);
+            case 217: return handle_VAR(json);
+            case 218: return handle_VHF(json);
+            case 219: return handle_VIDYA(json);
+            case 220: return handle_VORTEX(json);
+            case 221: return handle_VWAP(json);
+            case 222: return handle_VWMA(json);
+            case 223: return handle_WAD(json);
+            case 224: return handle_WCLPRICE(json);
+            case 225: return handle_WILLR(json);
+            case 226: return handle_WMA(json);
+            case 227: return handle_ZLEMA(json);
             default: return null;
         }
     }
@@ -246164,6 +250020,722 @@ public class TaCodegenServe {
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
         rideSupertrend(core, json, endIdx, inHigh, inLow, inClose, optInTimePeriod, optInMultiplier, sb);
+        sb.append("}");
+        return sb.toString();
+    }
+
+    static String handle_SWAK_2PHP(String json) {
+        int startIdx = jsonInt(json, "startIdx");
+        int endIdx = jsonInt(json, "endIdx");
+        int use_preloaded = jsonInt(json, "use_preloaded");
+        int bench_iters = jsonInt(json, "iters");
+        if (bench_iters < 1) bench_iters = 1;
+        double[] inReal;
+        if (use_preloaded != 0 && refN > 0) {
+            inReal = new double[MAX_ARRAY_SIZE];
+            System.arraycopy(refClose, 0, inReal, 0, refN);
+        } else {
+            inReal = jsonDoubleArray(json, "inReal");
+        }
+        boolean _optRejected = false;
+        int optInTimePeriod = jsonInt(json, "optInTimePeriod");
+        core.unstablePeriod[34] = jsonInt(json, "unstablePeriod");
+        // The output buffers are sized to the count the call actually PRODUCES --
+        // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
+        // never below one. Not to the width of the requested range: that is the bound the
+        // managed backends check and the Rust asserts state, and at the range width it was
+        // slack by exactly the lookback, so no call could ever approach it.
+        // The pad is there because a bound is a MINIMUM, never an equality. A caller
+        // re-using a pre-allocated buffer passes a larger one, and that is not an error --
+        // the reported OutRange is what says which part was written. So the harness sends
+        // both: the startIdx axis sends no pad (the bound is reachable) while the
+        // full-range value comparison sends one (slack is legal). Sizing every call one way
+        // would silently drop the other property.
+        // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
+        // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
+        // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
+        // sizes and cannot make the check, so an exact buffer would test nothing there.
+        int _lb = core.swak2phpLookback(optInTimePeriod);
+        int _cs = startIdx > _lb ? startIdx : _lb;
+        int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
+        double[] outArr0 = new double[_outLen];
+        MInteger outBegIdx = new MInteger();
+        MInteger outNBElement = new MInteger();
+        RetCode rc = RetCode.SUCCESS;
+        int bench_mode = jsonInt(json, "bench_mode");
+        double[] _warm_inReal = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inReal, 0, endIdx + 1);
+        long startNs = 0;
+        for (int _bi = 0; _bi <= bench_iters; _bi++) {
+        if (_bi == 1) startNs = System.nanoTime();
+        if (bench_mode == 0) {
+        if (jsonInt(json, "timed") != 0) {
+            if (_optRejected) {
+                rc = RetCode.BAD_PARAM;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
+            try {
+                rc = core.swak2phpImpl(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outArr0);
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TALibFailure)) throw _e;
+                rc = ((TALibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+            }
+        } else {
+            if (_optRejected) {
+                rc = RetCode.BAD_PARAM;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
+            try {
+                OutRange _pr = core.swak2php(startIdx, endIdx, inReal, optInTimePeriod, outArr0);
+                outBegIdx.value = _pr.begIdx();
+                outNBElement.value = _pr.count();
+                rc = RetCode.SUCCESS;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TALibFailure)) throw _e;
+                rc = ((TALibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+            }
+        }
+        }
+        else if (_optRejected) { rc = RetCode.BAD_PARAM; }
+        else { try {
+            if (bench_mode == 1) {
+                core.swak2phpOpen(_warm_inReal, optInTimePeriod);
+            } else {
+                Core.Swak2phpStream _wh = core.swak2phpOpenAndFill(_warm_inReal, optInTimePeriod, outArr0);
+                outBegIdx.value = _wh.outRange().begIdx();
+                outNBElement.value = _wh.outRange().count();
+            }
+            rc = RetCode.SUCCESS;
+        } catch (RuntimeException _e) { rc = _e instanceof TALibFailure ? ((TALibFailure)_e).retCode() : RetCode.BAD_PARAM; } }
+        }
+        long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        int usedFloat = 0;
+        if (jsonInt(json, "use_float") != 0) {
+            float[] f_inReal = new float[inReal.length];
+            for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
+            if (_optRejected) {
+                rc = RetCode.BAD_PARAM;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
+            try {
+                OutRange _fr = core.swak2php(startIdx, endIdx, f_inReal, optInTimePeriod, outArr0);
+                outBegIdx.value = _fr.begIdx();
+                outNBElement.value = _fr.count();
+                rc = RetCode.SUCCESS;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TALibFailure)) throw _e;
+                rc = ((TALibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+            }
+            usedFloat = 1;
+        }
+        if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
+            long _h = svHashInit();
+            if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
+                _h = svHashF64(_h, outArr0, outNBElement.value);
+            }
+            _h = svHashFin(_h);
+            StringBuilder hb = new StringBuilder();
+            hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            rideSwak2php(core, json, endIdx, inReal, optInTimePeriod, hb);
+            hb.append("}");
+            return hb.toString();
+        }
+        StringBuilder sb = new StringBuilder();
+        sb.append("{\"retCode\":").append(rc.toInt());
+        sb.append(",\"outBegIdx\":").append(outBegIdx.value);
+        sb.append(",\"outNBElement\":").append(outNBElement.value);
+        sb.append(",\"out_len\":").append(_outLen);
+        sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
+        sb.append(",\"used_float\":").append(usedFloat);
+        sb.append(",\"timing_ns\":").append(elapsedNs);
+        rideSwak2php(core, json, endIdx, inReal, optInTimePeriod, sb);
+        sb.append("}");
+        return sb.toString();
+    }
+
+    static String handle_SWAK_BP(String json) {
+        int startIdx = jsonInt(json, "startIdx");
+        int endIdx = jsonInt(json, "endIdx");
+        int use_preloaded = jsonInt(json, "use_preloaded");
+        int bench_iters = jsonInt(json, "iters");
+        if (bench_iters < 1) bench_iters = 1;
+        double[] inReal;
+        if (use_preloaded != 0 && refN > 0) {
+            inReal = new double[MAX_ARRAY_SIZE];
+            System.arraycopy(refClose, 0, inReal, 0, refN);
+        } else {
+            inReal = jsonDoubleArray(json, "inReal");
+        }
+        boolean _optRejected = false;
+        int optInTimePeriod = jsonInt(json, "optInTimePeriod");
+        double optInDelta = jsonDouble(json, "optInDelta");
+        core.unstablePeriod[35] = jsonInt(json, "unstablePeriod");
+        // The output buffers are sized to the count the call actually PRODUCES --
+        // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
+        // never below one. Not to the width of the requested range: that is the bound the
+        // managed backends check and the Rust asserts state, and at the range width it was
+        // slack by exactly the lookback, so no call could ever approach it.
+        // The pad is there because a bound is a MINIMUM, never an equality. A caller
+        // re-using a pre-allocated buffer passes a larger one, and that is not an error --
+        // the reported OutRange is what says which part was written. So the harness sends
+        // both: the startIdx axis sends no pad (the bound is reachable) while the
+        // full-range value comparison sends one (slack is legal). Sizing every call one way
+        // would silently drop the other property.
+        // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
+        // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
+        // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
+        // sizes and cannot make the check, so an exact buffer would test nothing there.
+        int _lb = core.swakBpLookback(optInTimePeriod, optInDelta);
+        int _cs = startIdx > _lb ? startIdx : _lb;
+        int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
+        double[] outArr0 = new double[_outLen];
+        MInteger outBegIdx = new MInteger();
+        MInteger outNBElement = new MInteger();
+        RetCode rc = RetCode.SUCCESS;
+        int bench_mode = jsonInt(json, "bench_mode");
+        double[] _warm_inReal = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inReal, 0, endIdx + 1);
+        long startNs = 0;
+        for (int _bi = 0; _bi <= bench_iters; _bi++) {
+        if (_bi == 1) startNs = System.nanoTime();
+        if (bench_mode == 0) {
+        if (jsonInt(json, "timed") != 0) {
+            if (_optRejected) {
+                rc = RetCode.BAD_PARAM;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
+            try {
+                rc = core.swakBpImpl(startIdx, endIdx, inReal, optInTimePeriod, optInDelta, outBegIdx, outNBElement, outArr0);
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TALibFailure)) throw _e;
+                rc = ((TALibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+            }
+        } else {
+            if (_optRejected) {
+                rc = RetCode.BAD_PARAM;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
+            try {
+                OutRange _pr = core.swakBp(startIdx, endIdx, inReal, optInTimePeriod, optInDelta, outArr0);
+                outBegIdx.value = _pr.begIdx();
+                outNBElement.value = _pr.count();
+                rc = RetCode.SUCCESS;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TALibFailure)) throw _e;
+                rc = ((TALibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+            }
+        }
+        }
+        else if (_optRejected) { rc = RetCode.BAD_PARAM; }
+        else { try {
+            if (bench_mode == 1) {
+                core.swakBpOpen(_warm_inReal, optInTimePeriod, optInDelta);
+            } else {
+                Core.SwakBpStream _wh = core.swakBpOpenAndFill(_warm_inReal, optInTimePeriod, optInDelta, outArr0);
+                outBegIdx.value = _wh.outRange().begIdx();
+                outNBElement.value = _wh.outRange().count();
+            }
+            rc = RetCode.SUCCESS;
+        } catch (RuntimeException _e) { rc = _e instanceof TALibFailure ? ((TALibFailure)_e).retCode() : RetCode.BAD_PARAM; } }
+        }
+        long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        int usedFloat = 0;
+        if (jsonInt(json, "use_float") != 0) {
+            float[] f_inReal = new float[inReal.length];
+            for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
+            if (_optRejected) {
+                rc = RetCode.BAD_PARAM;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
+            try {
+                OutRange _fr = core.swakBp(startIdx, endIdx, f_inReal, optInTimePeriod, optInDelta, outArr0);
+                outBegIdx.value = _fr.begIdx();
+                outNBElement.value = _fr.count();
+                rc = RetCode.SUCCESS;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TALibFailure)) throw _e;
+                rc = ((TALibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+            }
+            usedFloat = 1;
+        }
+        if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
+            long _h = svHashInit();
+            if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
+                _h = svHashF64(_h, outArr0, outNBElement.value);
+            }
+            _h = svHashFin(_h);
+            StringBuilder hb = new StringBuilder();
+            hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            rideSwakBp(core, json, endIdx, inReal, optInTimePeriod, optInDelta, hb);
+            hb.append("}");
+            return hb.toString();
+        }
+        StringBuilder sb = new StringBuilder();
+        sb.append("{\"retCode\":").append(rc.toInt());
+        sb.append(",\"outBegIdx\":").append(outBegIdx.value);
+        sb.append(",\"outNBElement\":").append(outNBElement.value);
+        sb.append(",\"out_len\":").append(_outLen);
+        sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
+        sb.append(",\"used_float\":").append(usedFloat);
+        sb.append(",\"timing_ns\":").append(elapsedNs);
+        rideSwakBp(core, json, endIdx, inReal, optInTimePeriod, optInDelta, sb);
+        sb.append("}");
+        return sb.toString();
+    }
+
+    static String handle_SWAK_BUTTER(String json) {
+        int startIdx = jsonInt(json, "startIdx");
+        int endIdx = jsonInt(json, "endIdx");
+        int use_preloaded = jsonInt(json, "use_preloaded");
+        int bench_iters = jsonInt(json, "iters");
+        if (bench_iters < 1) bench_iters = 1;
+        double[] inReal;
+        if (use_preloaded != 0 && refN > 0) {
+            inReal = new double[MAX_ARRAY_SIZE];
+            System.arraycopy(refClose, 0, inReal, 0, refN);
+        } else {
+            inReal = jsonDoubleArray(json, "inReal");
+        }
+        boolean _optRejected = false;
+        int optInTimePeriod = jsonInt(json, "optInTimePeriod");
+        core.unstablePeriod[32] = jsonInt(json, "unstablePeriod");
+        // The output buffers are sized to the count the call actually PRODUCES --
+        // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
+        // never below one. Not to the width of the requested range: that is the bound the
+        // managed backends check and the Rust asserts state, and at the range width it was
+        // slack by exactly the lookback, so no call could ever approach it.
+        // The pad is there because a bound is a MINIMUM, never an equality. A caller
+        // re-using a pre-allocated buffer passes a larger one, and that is not an error --
+        // the reported OutRange is what says which part was written. So the harness sends
+        // both: the startIdx axis sends no pad (the bound is reachable) while the
+        // full-range value comparison sends one (slack is legal). Sizing every call one way
+        // would silently drop the other property.
+        // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
+        // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
+        // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
+        // sizes and cannot make the check, so an exact buffer would test nothing there.
+        int _lb = core.swakButterLookback(optInTimePeriod);
+        int _cs = startIdx > _lb ? startIdx : _lb;
+        int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
+        double[] outArr0 = new double[_outLen];
+        MInteger outBegIdx = new MInteger();
+        MInteger outNBElement = new MInteger();
+        RetCode rc = RetCode.SUCCESS;
+        int bench_mode = jsonInt(json, "bench_mode");
+        double[] _warm_inReal = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inReal, 0, endIdx + 1);
+        long startNs = 0;
+        for (int _bi = 0; _bi <= bench_iters; _bi++) {
+        if (_bi == 1) startNs = System.nanoTime();
+        if (bench_mode == 0) {
+        if (jsonInt(json, "timed") != 0) {
+            if (_optRejected) {
+                rc = RetCode.BAD_PARAM;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
+            try {
+                rc = core.swakButterImpl(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outArr0);
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TALibFailure)) throw _e;
+                rc = ((TALibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+            }
+        } else {
+            if (_optRejected) {
+                rc = RetCode.BAD_PARAM;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
+            try {
+                OutRange _pr = core.swakButter(startIdx, endIdx, inReal, optInTimePeriod, outArr0);
+                outBegIdx.value = _pr.begIdx();
+                outNBElement.value = _pr.count();
+                rc = RetCode.SUCCESS;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TALibFailure)) throw _e;
+                rc = ((TALibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+            }
+        }
+        }
+        else if (_optRejected) { rc = RetCode.BAD_PARAM; }
+        else { try {
+            if (bench_mode == 1) {
+                core.swakButterOpen(_warm_inReal, optInTimePeriod);
+            } else {
+                Core.SwakButterStream _wh = core.swakButterOpenAndFill(_warm_inReal, optInTimePeriod, outArr0);
+                outBegIdx.value = _wh.outRange().begIdx();
+                outNBElement.value = _wh.outRange().count();
+            }
+            rc = RetCode.SUCCESS;
+        } catch (RuntimeException _e) { rc = _e instanceof TALibFailure ? ((TALibFailure)_e).retCode() : RetCode.BAD_PARAM; } }
+        }
+        long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        int usedFloat = 0;
+        if (jsonInt(json, "use_float") != 0) {
+            float[] f_inReal = new float[inReal.length];
+            for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
+            if (_optRejected) {
+                rc = RetCode.BAD_PARAM;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
+            try {
+                OutRange _fr = core.swakButter(startIdx, endIdx, f_inReal, optInTimePeriod, outArr0);
+                outBegIdx.value = _fr.begIdx();
+                outNBElement.value = _fr.count();
+                rc = RetCode.SUCCESS;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TALibFailure)) throw _e;
+                rc = ((TALibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+            }
+            usedFloat = 1;
+        }
+        if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
+            long _h = svHashInit();
+            if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
+                _h = svHashF64(_h, outArr0, outNBElement.value);
+            }
+            _h = svHashFin(_h);
+            StringBuilder hb = new StringBuilder();
+            hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            rideSwakButter(core, json, endIdx, inReal, optInTimePeriod, hb);
+            hb.append("}");
+            return hb.toString();
+        }
+        StringBuilder sb = new StringBuilder();
+        sb.append("{\"retCode\":").append(rc.toInt());
+        sb.append(",\"outBegIdx\":").append(outBegIdx.value);
+        sb.append(",\"outNBElement\":").append(outNBElement.value);
+        sb.append(",\"out_len\":").append(_outLen);
+        sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
+        sb.append(",\"used_float\":").append(usedFloat);
+        sb.append(",\"timing_ns\":").append(elapsedNs);
+        rideSwakButter(core, json, endIdx, inReal, optInTimePeriod, sb);
+        sb.append("}");
+        return sb.toString();
+    }
+
+    static String handle_SWAK_GAUSS(String json) {
+        int startIdx = jsonInt(json, "startIdx");
+        int endIdx = jsonInt(json, "endIdx");
+        int use_preloaded = jsonInt(json, "use_preloaded");
+        int bench_iters = jsonInt(json, "iters");
+        if (bench_iters < 1) bench_iters = 1;
+        double[] inReal;
+        if (use_preloaded != 0 && refN > 0) {
+            inReal = new double[MAX_ARRAY_SIZE];
+            System.arraycopy(refClose, 0, inReal, 0, refN);
+        } else {
+            inReal = jsonDoubleArray(json, "inReal");
+        }
+        boolean _optRejected = false;
+        int optInTimePeriod = jsonInt(json, "optInTimePeriod");
+        core.unstablePeriod[31] = jsonInt(json, "unstablePeriod");
+        // The output buffers are sized to the count the call actually PRODUCES --
+        // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
+        // never below one. Not to the width of the requested range: that is the bound the
+        // managed backends check and the Rust asserts state, and at the range width it was
+        // slack by exactly the lookback, so no call could ever approach it.
+        // The pad is there because a bound is a MINIMUM, never an equality. A caller
+        // re-using a pre-allocated buffer passes a larger one, and that is not an error --
+        // the reported OutRange is what says which part was written. So the harness sends
+        // both: the startIdx axis sends no pad (the bound is reachable) while the
+        // full-range value comparison sends one (slack is legal). Sizing every call one way
+        // would silently drop the other property.
+        // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
+        // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
+        // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
+        // sizes and cannot make the check, so an exact buffer would test nothing there.
+        int _lb = core.swakGaussLookback(optInTimePeriod);
+        int _cs = startIdx > _lb ? startIdx : _lb;
+        int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
+        double[] outArr0 = new double[_outLen];
+        MInteger outBegIdx = new MInteger();
+        MInteger outNBElement = new MInteger();
+        RetCode rc = RetCode.SUCCESS;
+        int bench_mode = jsonInt(json, "bench_mode");
+        double[] _warm_inReal = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inReal, 0, endIdx + 1);
+        long startNs = 0;
+        for (int _bi = 0; _bi <= bench_iters; _bi++) {
+        if (_bi == 1) startNs = System.nanoTime();
+        if (bench_mode == 0) {
+        if (jsonInt(json, "timed") != 0) {
+            if (_optRejected) {
+                rc = RetCode.BAD_PARAM;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
+            try {
+                rc = core.swakGaussImpl(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outArr0);
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TALibFailure)) throw _e;
+                rc = ((TALibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+            }
+        } else {
+            if (_optRejected) {
+                rc = RetCode.BAD_PARAM;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
+            try {
+                OutRange _pr = core.swakGauss(startIdx, endIdx, inReal, optInTimePeriod, outArr0);
+                outBegIdx.value = _pr.begIdx();
+                outNBElement.value = _pr.count();
+                rc = RetCode.SUCCESS;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TALibFailure)) throw _e;
+                rc = ((TALibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+            }
+        }
+        }
+        else if (_optRejected) { rc = RetCode.BAD_PARAM; }
+        else { try {
+            if (bench_mode == 1) {
+                core.swakGaussOpen(_warm_inReal, optInTimePeriod);
+            } else {
+                Core.SwakGaussStream _wh = core.swakGaussOpenAndFill(_warm_inReal, optInTimePeriod, outArr0);
+                outBegIdx.value = _wh.outRange().begIdx();
+                outNBElement.value = _wh.outRange().count();
+            }
+            rc = RetCode.SUCCESS;
+        } catch (RuntimeException _e) { rc = _e instanceof TALibFailure ? ((TALibFailure)_e).retCode() : RetCode.BAD_PARAM; } }
+        }
+        long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        int usedFloat = 0;
+        if (jsonInt(json, "use_float") != 0) {
+            float[] f_inReal = new float[inReal.length];
+            for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
+            if (_optRejected) {
+                rc = RetCode.BAD_PARAM;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
+            try {
+                OutRange _fr = core.swakGauss(startIdx, endIdx, f_inReal, optInTimePeriod, outArr0);
+                outBegIdx.value = _fr.begIdx();
+                outNBElement.value = _fr.count();
+                rc = RetCode.SUCCESS;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TALibFailure)) throw _e;
+                rc = ((TALibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+            }
+            usedFloat = 1;
+        }
+        if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
+            long _h = svHashInit();
+            if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
+                _h = svHashF64(_h, outArr0, outNBElement.value);
+            }
+            _h = svHashFin(_h);
+            StringBuilder hb = new StringBuilder();
+            hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            rideSwakGauss(core, json, endIdx, inReal, optInTimePeriod, hb);
+            hb.append("}");
+            return hb.toString();
+        }
+        StringBuilder sb = new StringBuilder();
+        sb.append("{\"retCode\":").append(rc.toInt());
+        sb.append(",\"outBegIdx\":").append(outBegIdx.value);
+        sb.append(",\"outNBElement\":").append(outNBElement.value);
+        sb.append(",\"out_len\":").append(_outLen);
+        sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
+        sb.append(",\"used_float\":").append(usedFloat);
+        sb.append(",\"timing_ns\":").append(elapsedNs);
+        rideSwakGauss(core, json, endIdx, inReal, optInTimePeriod, sb);
+        sb.append("}");
+        return sb.toString();
+    }
+
+    static String handle_SWAK_HP(String json) {
+        int startIdx = jsonInt(json, "startIdx");
+        int endIdx = jsonInt(json, "endIdx");
+        int use_preloaded = jsonInt(json, "use_preloaded");
+        int bench_iters = jsonInt(json, "iters");
+        if (bench_iters < 1) bench_iters = 1;
+        double[] inReal;
+        if (use_preloaded != 0 && refN > 0) {
+            inReal = new double[MAX_ARRAY_SIZE];
+            System.arraycopy(refClose, 0, inReal, 0, refN);
+        } else {
+            inReal = jsonDoubleArray(json, "inReal");
+        }
+        boolean _optRejected = false;
+        int optInTimePeriod = jsonInt(json, "optInTimePeriod");
+        core.unstablePeriod[33] = jsonInt(json, "unstablePeriod");
+        // The output buffers are sized to the count the call actually PRODUCES --
+        // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
+        // never below one. Not to the width of the requested range: that is the bound the
+        // managed backends check and the Rust asserts state, and at the range width it was
+        // slack by exactly the lookback, so no call could ever approach it.
+        // The pad is there because a bound is a MINIMUM, never an equality. A caller
+        // re-using a pre-allocated buffer passes a larger one, and that is not an error --
+        // the reported OutRange is what says which part was written. So the harness sends
+        // both: the startIdx axis sends no pad (the bound is reachable) while the
+        // full-range value comparison sends one (slack is legal). Sizing every call one way
+        // would silently drop the other property.
+        // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
+        // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
+        // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
+        // sizes and cannot make the check, so an exact buffer would test nothing there.
+        int _lb = core.swakHpLookback(optInTimePeriod);
+        int _cs = startIdx > _lb ? startIdx : _lb;
+        int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
+        double[] outArr0 = new double[_outLen];
+        MInteger outBegIdx = new MInteger();
+        MInteger outNBElement = new MInteger();
+        RetCode rc = RetCode.SUCCESS;
+        int bench_mode = jsonInt(json, "bench_mode");
+        double[] _warm_inReal = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inReal, 0, endIdx + 1);
+        long startNs = 0;
+        for (int _bi = 0; _bi <= bench_iters; _bi++) {
+        if (_bi == 1) startNs = System.nanoTime();
+        if (bench_mode == 0) {
+        if (jsonInt(json, "timed") != 0) {
+            if (_optRejected) {
+                rc = RetCode.BAD_PARAM;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
+            try {
+                rc = core.swakHpImpl(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outArr0);
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TALibFailure)) throw _e;
+                rc = ((TALibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+            }
+        } else {
+            if (_optRejected) {
+                rc = RetCode.BAD_PARAM;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
+            try {
+                OutRange _pr = core.swakHp(startIdx, endIdx, inReal, optInTimePeriod, outArr0);
+                outBegIdx.value = _pr.begIdx();
+                outNBElement.value = _pr.count();
+                rc = RetCode.SUCCESS;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TALibFailure)) throw _e;
+                rc = ((TALibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+            }
+        }
+        }
+        else if (_optRejected) { rc = RetCode.BAD_PARAM; }
+        else { try {
+            if (bench_mode == 1) {
+                core.swakHpOpen(_warm_inReal, optInTimePeriod);
+            } else {
+                Core.SwakHpStream _wh = core.swakHpOpenAndFill(_warm_inReal, optInTimePeriod, outArr0);
+                outBegIdx.value = _wh.outRange().begIdx();
+                outNBElement.value = _wh.outRange().count();
+            }
+            rc = RetCode.SUCCESS;
+        } catch (RuntimeException _e) { rc = _e instanceof TALibFailure ? ((TALibFailure)_e).retCode() : RetCode.BAD_PARAM; } }
+        }
+        long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        int usedFloat = 0;
+        if (jsonInt(json, "use_float") != 0) {
+            float[] f_inReal = new float[inReal.length];
+            for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
+            if (_optRejected) {
+                rc = RetCode.BAD_PARAM;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
+            try {
+                OutRange _fr = core.swakHp(startIdx, endIdx, f_inReal, optInTimePeriod, outArr0);
+                outBegIdx.value = _fr.begIdx();
+                outNBElement.value = _fr.count();
+                rc = RetCode.SUCCESS;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TALibFailure)) throw _e;
+                rc = ((TALibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+            }
+            usedFloat = 1;
+        }
+        if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
+            long _h = svHashInit();
+            if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
+                _h = svHashF64(_h, outArr0, outNBElement.value);
+            }
+            _h = svHashFin(_h);
+            StringBuilder hb = new StringBuilder();
+            hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            rideSwakHp(core, json, endIdx, inReal, optInTimePeriod, hb);
+            hb.append("}");
+            return hb.toString();
+        }
+        StringBuilder sb = new StringBuilder();
+        sb.append("{\"retCode\":").append(rc.toInt());
+        sb.append(",\"outBegIdx\":").append(outBegIdx.value);
+        sb.append(",\"outNBElement\":").append(outNBElement.value);
+        sb.append(",\"out_len\":").append(_outLen);
+        sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
+        sb.append(",\"used_float\":").append(usedFloat);
+        sb.append(",\"timing_ns\":").append(elapsedNs);
+        rideSwakHp(core, json, endIdx, inReal, optInTimePeriod, sb);
         sb.append("}");
         return sb.toString();
     }
@@ -284405,6 +288977,857 @@ public class TaCodegenServe {
         return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign[0] + diag + "}";
     }
 
+    static String sv_SWAK_2PHP(String json) {
+        int svShape = jsonInt(json, "gen_shape");
+        int svSeed = jsonInt(json, "gen_seed");
+        int svN = jsonInt(json, "gen_n");
+        if (svN < 2) svN = 2;
+        if (svN > 256) svN = 256;
+        int svK = jsonInt(json, "unstablePeriod");
+        int optInTimePeriod = json.contains("\"optInTimePeriod\"") ? jsonInt(json, "optInTimePeriod") : 20;
+        double[] fz_o = new double[svN];
+        double[] fz_h = new double[svN];
+        double[] fz_l = new double[svN];
+        double[] fz_c = new double[svN];
+        double[] fz_v = new double[svN];
+        double[] fz_oi = new double[svN];
+        FuzzData.fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
+        double[] b0 = new double[svN];
+        long legs = 0;
+        boolean allOk = true;
+        boolean peekAll = true;
+        long peekReps = 0;
+        long peekRejects = 0;
+        boolean peekRepAll = true;
+        int fillChecked = 0;
+        boolean fillOk = true;
+        MInteger beg = new MInteger();
+        MInteger nb = new MInteger();
+        String diag = "";
+        int rangeChecked = 0;
+        boolean rangeOk = true;
+        long rangeLegs = 0;
+        int rangeSites = 0;
+        long[] zsign = { 0 };
+        int rounds = 1;
+        for (int rd = 0; rd < rounds; rd++) {
+            Core c2 = new Core();
+            c2.unstablePeriod[34] = svK;
+            RetCode rc;
+            try { rc = c2.swak2phpImpl(0, svN - 1, fz_c, optInTimePeriod, beg, nb, b0); }
+            catch (RuntimeException _sve) { if (!(_sve instanceof TALibFailure)) throw _sve; rc = ((TALibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
+            int lb = c2.swak2phpLookback(optInTimePeriod);
+            if (rc != RetCode.SUCCESS || nb.value == 0) {
+                boolean openRejects;
+                try { c2.swak2phpOpen(fz_c, optInTimePeriod); openRejects = false; } catch (IllegalArgumentException _e) { openRejects = true; }
+                return "{\"retCode\":" + rc.toInt() + ",\"legs\":0,\"nb\":" + nb.value + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (openRejects ? 1 : 0) + ",\"peek_ok\":1}";
+            }
+            fillChecked = 1;
+            try {
+                double[] f0 = new double[svN];
+                java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                Core.Swak2phpStream _fh = c2.swak2phpOpenAndFill(fz_c, optInTimePeriod, f0);
+                OutRange _fr = _fh.outRange();
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
+                if (_fr.begIdx() != beg.value || _fr.count() != nb.value) rangeOk = false;
+                if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
+                else {
+                    for (int i = 0; i < nb.value; i++) if (svXtierNe(f0[i], b0[i], zsign)) fillOk = false;
+                    for (int i = nb.value; i < svN; i++) if (f0[i] != (double)-1.2345678901234e300) fillOk = false;
+                }
+                try { c2.swak2phpOpenAndFill(fz_c, optInTimePeriod, fz_c); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
+            } catch (IllegalArgumentException _e) { fillOk = false; }
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
+            java.util.Arrays.sort(pcs);
+            int prevP = -1;
+            for (int pi = 0; pi < pcs.length; pi++) {
+                int p = pcs[pi];
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
+                prevP = p;
+                Core.Swak2phpStream st;
+                try { st = c2.swak2phpOpen(java.util.Arrays.copyOf(fz_c, p), optInTimePeriod); }
+                catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"openRejectP\":" + p; continue; }
+                legs++;
+                if (svXtierNe(st.value(), b0[p - 1 - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
+                for (int t = p; t < svN; t++) {
+                    boolean pkTook = true;
+                    double pk = 0;
+                    try { pk = st.peek(fz_c[t]); } catch (IllegalArgumentException _e) { pkTook = false; peekRejects++; }
+                    if (t % 7 == 0) {
+                        boolean rpTook = pkTook;
+                        try { st.peek(fz_c[t - 1]); } catch (IllegalArgumentException _e) { peekRejects++; }
+                        double rp = 0;
+                        try { rp = st.peek(fz_c[t]); } catch (IllegalArgumentException _e) { rpTook = false; }
+                        if (rpTook) {
+                            peekReps++;
+                            if (svBne(rp, pk)) peekRepAll = false;
+                        } else { peekRejects++; }
+                    }
+                    double up = st.update(fz_c[t]);
+                    if (pkTook && svBne(pk, up)) peekAll = false;
+                    try { st.peek(fz_c[t - 1]); } catch (IllegalArgumentException _e) { peekRejects++; }
+                    if (svBne(st.value(), up)) allOk = false;
+                    if (svXtierNe(up, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b0[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up)) + "\""; }
+                }
+                if (allOk) {
+                    rangeChecked = 1; rangeLegs++; rangeSites |= 2;
+                    if (st.outRange().begIdx() != beg.value || st.outRange().count() != nb.value) rangeOk = false;
+                    rangeLegs++; rangeSites |= 16;
+                    st.advance();
+                    if (st.outRange().begIdx() != beg.value || st.outRange().count() != nb.value + 1) rangeOk = false;
+                }
+            }
+            {
+                int p0 = lb + 1;
+                if (p0 <= svN - 1) {
+                    try {
+                        double[] f0 = new double[svN];
+                        java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                        Core.Swak2phpStream sA = c2.swak2phpOpenAndFill(java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod, f0);
+                        int mid = (p0 + svN) / 2;
+                        for (int t = p0; t < mid; t++) {
+                            double uA = sA.update(fz_c[t]);
+                            if (svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
+                        Core.Swak2phpStream sB = sA.clone();
+                        sB.advance();
+                        double[] fk0 = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            double uB = sB.update(fz_c[t]);
+                            fk0[t] = uB;
+                            if (svXtierNe(uB, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
+                        for (int t = mid; t < svN; t++) {
+                            double uA = sA.update(fz_c[t]);
+                            if (svBne(uA, fk0[t]) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
+                        if (allOk) {
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 8;
+                            if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                        }
+                    } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
+                }
+            }
+            if (lb >= 1 && lb < svN) {
+                try { c2.swak2phpOpen(java.util.Arrays.copyOf(fz_c, lb), optInTimePeriod); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryAccepted\":1"; }
+                catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                    try { c2.swak2phpOpenAndFill(java.util.Arrays.copyOf(fz_c, lb), optInTimePeriod, f0); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                    catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
+            }
+            try {
+                Core.Swak2phpStream sD = c2.swak2phpOpen(fz_c, Integer.MIN_VALUE);
+                Core.Swak2phpStream sE = c2.swak2phpOpen(fz_c, 20);
+                if (svBne(sD.value(), sE.value())) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
+            } catch (IllegalArgumentException _e) { /* defaults need more history than svN — skip */ }
+            {
+                int Sidx = lb + (svN - lb) / 3;
+                if (Sidx > lb && Sidx < svN - 1) {
+                    MInteger begS = new MInteger();
+                    MInteger nbS = new MInteger();
+                    RetCode rcS;
+                    try { rcS = c2.swak2phpImpl(Sidx, svN - 1, fz_c, optInTimePeriod, begS, nbS, b0); }
+                    catch (RuntimeException _sve) { if (!(_sve instanceof TALibFailure)) throw _sve; rcS = ((TALibFailure) _sve).retCode(); }
+                    if (rcS == RetCode.SUCCESS && nbS.value > 0) {
+                        try {
+                            Core.Swak2phpStream stA = c2.swak2phpOpenInternal(java.util.Arrays.copyOf(fz_c, svN), Sidx, optInTimePeriod);
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 4;
+                            if (stA.outRange().begIdx() != begS.value || stA.outRange().count() != nbS.value) rangeOk = false;
+                        } catch (IllegalArgumentException _e) { rangeOk = false; if (diag.isEmpty()) diag = ",\"anchoredOpenRejected\":1"; }
+                    }
+                }
+            }
+        }
+        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign[0] + diag + "}";
+    }
+
+    static String sv_SWAK_BP(String json) {
+        int svShape = jsonInt(json, "gen_shape");
+        int svSeed = jsonInt(json, "gen_seed");
+        int svN = jsonInt(json, "gen_n");
+        if (svN < 2) svN = 2;
+        if (svN > 256) svN = 256;
+        int svK = jsonInt(json, "unstablePeriod");
+        int optInTimePeriod = json.contains("\"optInTimePeriod\"") ? jsonInt(json, "optInTimePeriod") : 20;
+        double optInDelta = json.contains("\"optInDelta\"") ? jsonDouble(json, "optInDelta") : 1e-1;
+        double[] fz_o = new double[svN];
+        double[] fz_h = new double[svN];
+        double[] fz_l = new double[svN];
+        double[] fz_c = new double[svN];
+        double[] fz_v = new double[svN];
+        double[] fz_oi = new double[svN];
+        FuzzData.fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
+        double[] b0 = new double[svN];
+        long legs = 0;
+        boolean allOk = true;
+        boolean peekAll = true;
+        long peekReps = 0;
+        long peekRejects = 0;
+        boolean peekRepAll = true;
+        int fillChecked = 0;
+        boolean fillOk = true;
+        MInteger beg = new MInteger();
+        MInteger nb = new MInteger();
+        String diag = "";
+        int rangeChecked = 0;
+        boolean rangeOk = true;
+        long rangeLegs = 0;
+        int rangeSites = 0;
+        long[] zsign = { 0 };
+        int rounds = 1;
+        for (int rd = 0; rd < rounds; rd++) {
+            Core c2 = new Core();
+            c2.unstablePeriod[35] = svK;
+            RetCode rc;
+            try { rc = c2.swakBpImpl(0, svN - 1, fz_c, optInTimePeriod, optInDelta, beg, nb, b0); }
+            catch (RuntimeException _sve) { if (!(_sve instanceof TALibFailure)) throw _sve; rc = ((TALibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
+            int lb = c2.swakBpLookback(optInTimePeriod, optInDelta);
+            if (rc != RetCode.SUCCESS || nb.value == 0) {
+                boolean openRejects;
+                try { c2.swakBpOpen(fz_c, optInTimePeriod, optInDelta); openRejects = false; } catch (IllegalArgumentException _e) { openRejects = true; }
+                return "{\"retCode\":" + rc.toInt() + ",\"legs\":0,\"nb\":" + nb.value + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (openRejects ? 1 : 0) + ",\"peek_ok\":1}";
+            }
+            fillChecked = 1;
+            try {
+                double[] f0 = new double[svN];
+                java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                Core.SwakBpStream _fh = c2.swakBpOpenAndFill(fz_c, optInTimePeriod, optInDelta, f0);
+                OutRange _fr = _fh.outRange();
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
+                if (_fr.begIdx() != beg.value || _fr.count() != nb.value) rangeOk = false;
+                if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
+                else {
+                    for (int i = 0; i < nb.value; i++) if (svXtierNe(f0[i], b0[i], zsign)) fillOk = false;
+                    for (int i = nb.value; i < svN; i++) if (f0[i] != (double)-1.2345678901234e300) fillOk = false;
+                }
+                try { c2.swakBpOpenAndFill(fz_c, optInTimePeriod, optInDelta, fz_c); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
+            } catch (IllegalArgumentException _e) { fillOk = false; }
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
+            java.util.Arrays.sort(pcs);
+            int prevP = -1;
+            for (int pi = 0; pi < pcs.length; pi++) {
+                int p = pcs[pi];
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
+                prevP = p;
+                Core.SwakBpStream st;
+                try { st = c2.swakBpOpen(java.util.Arrays.copyOf(fz_c, p), optInTimePeriod, optInDelta); }
+                catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"openRejectP\":" + p; continue; }
+                legs++;
+                if (svXtierNe(st.value(), b0[p - 1 - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
+                for (int t = p; t < svN; t++) {
+                    boolean pkTook = true;
+                    double pk = 0;
+                    try { pk = st.peek(fz_c[t]); } catch (IllegalArgumentException _e) { pkTook = false; peekRejects++; }
+                    if (t % 7 == 0) {
+                        boolean rpTook = pkTook;
+                        try { st.peek(fz_c[t - 1]); } catch (IllegalArgumentException _e) { peekRejects++; }
+                        double rp = 0;
+                        try { rp = st.peek(fz_c[t]); } catch (IllegalArgumentException _e) { rpTook = false; }
+                        if (rpTook) {
+                            peekReps++;
+                            if (svBne(rp, pk)) peekRepAll = false;
+                        } else { peekRejects++; }
+                    }
+                    double up = st.update(fz_c[t]);
+                    if (pkTook && svBne(pk, up)) peekAll = false;
+                    try { st.peek(fz_c[t - 1]); } catch (IllegalArgumentException _e) { peekRejects++; }
+                    if (svBne(st.value(), up)) allOk = false;
+                    if (svXtierNe(up, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b0[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up)) + "\""; }
+                }
+                if (allOk) {
+                    rangeChecked = 1; rangeLegs++; rangeSites |= 2;
+                    if (st.outRange().begIdx() != beg.value || st.outRange().count() != nb.value) rangeOk = false;
+                    rangeLegs++; rangeSites |= 16;
+                    st.advance();
+                    if (st.outRange().begIdx() != beg.value || st.outRange().count() != nb.value + 1) rangeOk = false;
+                }
+            }
+            {
+                int p0 = lb + 1;
+                if (p0 <= svN - 1) {
+                    try {
+                        double[] f0 = new double[svN];
+                        java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                        Core.SwakBpStream sA = c2.swakBpOpenAndFill(java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod, optInDelta, f0);
+                        int mid = (p0 + svN) / 2;
+                        for (int t = p0; t < mid; t++) {
+                            double uA = sA.update(fz_c[t]);
+                            if (svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
+                        Core.SwakBpStream sB = sA.clone();
+                        sB.advance();
+                        double[] fk0 = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            double uB = sB.update(fz_c[t]);
+                            fk0[t] = uB;
+                            if (svXtierNe(uB, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
+                        for (int t = mid; t < svN; t++) {
+                            double uA = sA.update(fz_c[t]);
+                            if (svBne(uA, fk0[t]) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
+                        if (allOk) {
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 8;
+                            if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                        }
+                    } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
+                }
+            }
+            if (lb >= 1 && lb < svN) {
+                try { c2.swakBpOpen(java.util.Arrays.copyOf(fz_c, lb), optInTimePeriod, optInDelta); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryAccepted\":1"; }
+                catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                    try { c2.swakBpOpenAndFill(java.util.Arrays.copyOf(fz_c, lb), optInTimePeriod, optInDelta, f0); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                    catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
+            }
+            try {
+                Core.SwakBpStream sD = c2.swakBpOpen(fz_c, Integer.MIN_VALUE, optInDelta);
+                Core.SwakBpStream sE = c2.swakBpOpen(fz_c, 20, optInDelta);
+                if (svBne(sD.value(), sE.value())) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
+            } catch (IllegalArgumentException _e) { /* defaults need more history than svN — skip */ }
+            {
+                int Sidx = lb + (svN - lb) / 3;
+                if (Sidx > lb && Sidx < svN - 1) {
+                    MInteger begS = new MInteger();
+                    MInteger nbS = new MInteger();
+                    RetCode rcS;
+                    try { rcS = c2.swakBpImpl(Sidx, svN - 1, fz_c, optInTimePeriod, optInDelta, begS, nbS, b0); }
+                    catch (RuntimeException _sve) { if (!(_sve instanceof TALibFailure)) throw _sve; rcS = ((TALibFailure) _sve).retCode(); }
+                    if (rcS == RetCode.SUCCESS && nbS.value > 0) {
+                        try {
+                            Core.SwakBpStream stA = c2.swakBpOpenInternal(java.util.Arrays.copyOf(fz_c, svN), Sidx, optInTimePeriod, optInDelta);
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 4;
+                            if (stA.outRange().begIdx() != begS.value || stA.outRange().count() != nbS.value) rangeOk = false;
+                        } catch (IllegalArgumentException _e) { rangeOk = false; if (diag.isEmpty()) diag = ",\"anchoredOpenRejected\":1"; }
+                    }
+                }
+            }
+        }
+        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign[0] + diag + "}";
+    }
+
+    static String sv_SWAK_BUTTER(String json) {
+        int svShape = jsonInt(json, "gen_shape");
+        int svSeed = jsonInt(json, "gen_seed");
+        int svN = jsonInt(json, "gen_n");
+        if (svN < 2) svN = 2;
+        if (svN > 256) svN = 256;
+        int svK = jsonInt(json, "unstablePeriod");
+        int optInTimePeriod = json.contains("\"optInTimePeriod\"") ? jsonInt(json, "optInTimePeriod") : 20;
+        double[] fz_o = new double[svN];
+        double[] fz_h = new double[svN];
+        double[] fz_l = new double[svN];
+        double[] fz_c = new double[svN];
+        double[] fz_v = new double[svN];
+        double[] fz_oi = new double[svN];
+        FuzzData.fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
+        double[] b0 = new double[svN];
+        long legs = 0;
+        boolean allOk = true;
+        boolean peekAll = true;
+        long peekReps = 0;
+        long peekRejects = 0;
+        boolean peekRepAll = true;
+        int fillChecked = 0;
+        boolean fillOk = true;
+        MInteger beg = new MInteger();
+        MInteger nb = new MInteger();
+        String diag = "";
+        int rangeChecked = 0;
+        boolean rangeOk = true;
+        long rangeLegs = 0;
+        int rangeSites = 0;
+        long[] zsign = { 0 };
+        int rounds = 1;
+        for (int rd = 0; rd < rounds; rd++) {
+            Core c2 = new Core();
+            c2.unstablePeriod[32] = svK;
+            RetCode rc;
+            try { rc = c2.swakButterImpl(0, svN - 1, fz_c, optInTimePeriod, beg, nb, b0); }
+            catch (RuntimeException _sve) { if (!(_sve instanceof TALibFailure)) throw _sve; rc = ((TALibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
+            int lb = c2.swakButterLookback(optInTimePeriod);
+            if (rc != RetCode.SUCCESS || nb.value == 0) {
+                boolean openRejects;
+                try { c2.swakButterOpen(fz_c, optInTimePeriod); openRejects = false; } catch (IllegalArgumentException _e) { openRejects = true; }
+                return "{\"retCode\":" + rc.toInt() + ",\"legs\":0,\"nb\":" + nb.value + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (openRejects ? 1 : 0) + ",\"peek_ok\":1}";
+            }
+            fillChecked = 1;
+            try {
+                double[] f0 = new double[svN];
+                java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                Core.SwakButterStream _fh = c2.swakButterOpenAndFill(fz_c, optInTimePeriod, f0);
+                OutRange _fr = _fh.outRange();
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
+                if (_fr.begIdx() != beg.value || _fr.count() != nb.value) rangeOk = false;
+                if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
+                else {
+                    for (int i = 0; i < nb.value; i++) if (svXtierNe(f0[i], b0[i], zsign)) fillOk = false;
+                    for (int i = nb.value; i < svN; i++) if (f0[i] != (double)-1.2345678901234e300) fillOk = false;
+                }
+                try { c2.swakButterOpenAndFill(fz_c, optInTimePeriod, fz_c); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
+            } catch (IllegalArgumentException _e) { fillOk = false; }
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
+            java.util.Arrays.sort(pcs);
+            int prevP = -1;
+            for (int pi = 0; pi < pcs.length; pi++) {
+                int p = pcs[pi];
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
+                prevP = p;
+                Core.SwakButterStream st;
+                try { st = c2.swakButterOpen(java.util.Arrays.copyOf(fz_c, p), optInTimePeriod); }
+                catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"openRejectP\":" + p; continue; }
+                legs++;
+                if (svXtierNe(st.value(), b0[p - 1 - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
+                for (int t = p; t < svN; t++) {
+                    boolean pkTook = true;
+                    double pk = 0;
+                    try { pk = st.peek(fz_c[t]); } catch (IllegalArgumentException _e) { pkTook = false; peekRejects++; }
+                    if (t % 7 == 0) {
+                        boolean rpTook = pkTook;
+                        try { st.peek(fz_c[t - 1]); } catch (IllegalArgumentException _e) { peekRejects++; }
+                        double rp = 0;
+                        try { rp = st.peek(fz_c[t]); } catch (IllegalArgumentException _e) { rpTook = false; }
+                        if (rpTook) {
+                            peekReps++;
+                            if (svBne(rp, pk)) peekRepAll = false;
+                        } else { peekRejects++; }
+                    }
+                    double up = st.update(fz_c[t]);
+                    if (pkTook && svBne(pk, up)) peekAll = false;
+                    try { st.peek(fz_c[t - 1]); } catch (IllegalArgumentException _e) { peekRejects++; }
+                    if (svBne(st.value(), up)) allOk = false;
+                    if (svXtierNe(up, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b0[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up)) + "\""; }
+                }
+                if (allOk) {
+                    rangeChecked = 1; rangeLegs++; rangeSites |= 2;
+                    if (st.outRange().begIdx() != beg.value || st.outRange().count() != nb.value) rangeOk = false;
+                    rangeLegs++; rangeSites |= 16;
+                    st.advance();
+                    if (st.outRange().begIdx() != beg.value || st.outRange().count() != nb.value + 1) rangeOk = false;
+                }
+            }
+            {
+                int p0 = lb + 1;
+                if (p0 <= svN - 1) {
+                    try {
+                        double[] f0 = new double[svN];
+                        java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                        Core.SwakButterStream sA = c2.swakButterOpenAndFill(java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod, f0);
+                        int mid = (p0 + svN) / 2;
+                        for (int t = p0; t < mid; t++) {
+                            double uA = sA.update(fz_c[t]);
+                            if (svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
+                        Core.SwakButterStream sB = sA.clone();
+                        sB.advance();
+                        double[] fk0 = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            double uB = sB.update(fz_c[t]);
+                            fk0[t] = uB;
+                            if (svXtierNe(uB, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
+                        for (int t = mid; t < svN; t++) {
+                            double uA = sA.update(fz_c[t]);
+                            if (svBne(uA, fk0[t]) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
+                        if (allOk) {
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 8;
+                            if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                        }
+                    } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
+                }
+            }
+            if (lb >= 1 && lb < svN) {
+                try { c2.swakButterOpen(java.util.Arrays.copyOf(fz_c, lb), optInTimePeriod); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryAccepted\":1"; }
+                catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                    try { c2.swakButterOpenAndFill(java.util.Arrays.copyOf(fz_c, lb), optInTimePeriod, f0); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                    catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
+            }
+            try {
+                Core.SwakButterStream sD = c2.swakButterOpen(fz_c, Integer.MIN_VALUE);
+                Core.SwakButterStream sE = c2.swakButterOpen(fz_c, 20);
+                if (svBne(sD.value(), sE.value())) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
+            } catch (IllegalArgumentException _e) { /* defaults need more history than svN — skip */ }
+            {
+                int Sidx = lb + (svN - lb) / 3;
+                if (Sidx > lb && Sidx < svN - 1) {
+                    MInteger begS = new MInteger();
+                    MInteger nbS = new MInteger();
+                    RetCode rcS;
+                    try { rcS = c2.swakButterImpl(Sidx, svN - 1, fz_c, optInTimePeriod, begS, nbS, b0); }
+                    catch (RuntimeException _sve) { if (!(_sve instanceof TALibFailure)) throw _sve; rcS = ((TALibFailure) _sve).retCode(); }
+                    if (rcS == RetCode.SUCCESS && nbS.value > 0) {
+                        try {
+                            Core.SwakButterStream stA = c2.swakButterOpenInternal(java.util.Arrays.copyOf(fz_c, svN), Sidx, optInTimePeriod);
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 4;
+                            if (stA.outRange().begIdx() != begS.value || stA.outRange().count() != nbS.value) rangeOk = false;
+                        } catch (IllegalArgumentException _e) { rangeOk = false; if (diag.isEmpty()) diag = ",\"anchoredOpenRejected\":1"; }
+                    }
+                }
+            }
+        }
+        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign[0] + diag + "}";
+    }
+
+    static String sv_SWAK_GAUSS(String json) {
+        int svShape = jsonInt(json, "gen_shape");
+        int svSeed = jsonInt(json, "gen_seed");
+        int svN = jsonInt(json, "gen_n");
+        if (svN < 2) svN = 2;
+        if (svN > 256) svN = 256;
+        int svK = jsonInt(json, "unstablePeriod");
+        int optInTimePeriod = json.contains("\"optInTimePeriod\"") ? jsonInt(json, "optInTimePeriod") : 20;
+        double[] fz_o = new double[svN];
+        double[] fz_h = new double[svN];
+        double[] fz_l = new double[svN];
+        double[] fz_c = new double[svN];
+        double[] fz_v = new double[svN];
+        double[] fz_oi = new double[svN];
+        FuzzData.fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
+        double[] b0 = new double[svN];
+        long legs = 0;
+        boolean allOk = true;
+        boolean peekAll = true;
+        long peekReps = 0;
+        long peekRejects = 0;
+        boolean peekRepAll = true;
+        int fillChecked = 0;
+        boolean fillOk = true;
+        MInteger beg = new MInteger();
+        MInteger nb = new MInteger();
+        String diag = "";
+        int rangeChecked = 0;
+        boolean rangeOk = true;
+        long rangeLegs = 0;
+        int rangeSites = 0;
+        long[] zsign = { 0 };
+        int rounds = 1;
+        for (int rd = 0; rd < rounds; rd++) {
+            Core c2 = new Core();
+            c2.unstablePeriod[31] = svK;
+            RetCode rc;
+            try { rc = c2.swakGaussImpl(0, svN - 1, fz_c, optInTimePeriod, beg, nb, b0); }
+            catch (RuntimeException _sve) { if (!(_sve instanceof TALibFailure)) throw _sve; rc = ((TALibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
+            int lb = c2.swakGaussLookback(optInTimePeriod);
+            if (rc != RetCode.SUCCESS || nb.value == 0) {
+                boolean openRejects;
+                try { c2.swakGaussOpen(fz_c, optInTimePeriod); openRejects = false; } catch (IllegalArgumentException _e) { openRejects = true; }
+                return "{\"retCode\":" + rc.toInt() + ",\"legs\":0,\"nb\":" + nb.value + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (openRejects ? 1 : 0) + ",\"peek_ok\":1}";
+            }
+            fillChecked = 1;
+            try {
+                double[] f0 = new double[svN];
+                java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                Core.SwakGaussStream _fh = c2.swakGaussOpenAndFill(fz_c, optInTimePeriod, f0);
+                OutRange _fr = _fh.outRange();
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
+                if (_fr.begIdx() != beg.value || _fr.count() != nb.value) rangeOk = false;
+                if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
+                else {
+                    for (int i = 0; i < nb.value; i++) if (svXtierNe(f0[i], b0[i], zsign)) fillOk = false;
+                    for (int i = nb.value; i < svN; i++) if (f0[i] != (double)-1.2345678901234e300) fillOk = false;
+                }
+                try { c2.swakGaussOpenAndFill(fz_c, optInTimePeriod, fz_c); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
+            } catch (IllegalArgumentException _e) { fillOk = false; }
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
+            java.util.Arrays.sort(pcs);
+            int prevP = -1;
+            for (int pi = 0; pi < pcs.length; pi++) {
+                int p = pcs[pi];
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
+                prevP = p;
+                Core.SwakGaussStream st;
+                try { st = c2.swakGaussOpen(java.util.Arrays.copyOf(fz_c, p), optInTimePeriod); }
+                catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"openRejectP\":" + p; continue; }
+                legs++;
+                if (svXtierNe(st.value(), b0[p - 1 - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
+                for (int t = p; t < svN; t++) {
+                    boolean pkTook = true;
+                    double pk = 0;
+                    try { pk = st.peek(fz_c[t]); } catch (IllegalArgumentException _e) { pkTook = false; peekRejects++; }
+                    if (t % 7 == 0) {
+                        boolean rpTook = pkTook;
+                        try { st.peek(fz_c[t - 1]); } catch (IllegalArgumentException _e) { peekRejects++; }
+                        double rp = 0;
+                        try { rp = st.peek(fz_c[t]); } catch (IllegalArgumentException _e) { rpTook = false; }
+                        if (rpTook) {
+                            peekReps++;
+                            if (svBne(rp, pk)) peekRepAll = false;
+                        } else { peekRejects++; }
+                    }
+                    double up = st.update(fz_c[t]);
+                    if (pkTook && svBne(pk, up)) peekAll = false;
+                    try { st.peek(fz_c[t - 1]); } catch (IllegalArgumentException _e) { peekRejects++; }
+                    if (svBne(st.value(), up)) allOk = false;
+                    if (svXtierNe(up, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b0[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up)) + "\""; }
+                }
+                if (allOk) {
+                    rangeChecked = 1; rangeLegs++; rangeSites |= 2;
+                    if (st.outRange().begIdx() != beg.value || st.outRange().count() != nb.value) rangeOk = false;
+                    rangeLegs++; rangeSites |= 16;
+                    st.advance();
+                    if (st.outRange().begIdx() != beg.value || st.outRange().count() != nb.value + 1) rangeOk = false;
+                }
+            }
+            {
+                int p0 = lb + 1;
+                if (p0 <= svN - 1) {
+                    try {
+                        double[] f0 = new double[svN];
+                        java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                        Core.SwakGaussStream sA = c2.swakGaussOpenAndFill(java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod, f0);
+                        int mid = (p0 + svN) / 2;
+                        for (int t = p0; t < mid; t++) {
+                            double uA = sA.update(fz_c[t]);
+                            if (svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
+                        Core.SwakGaussStream sB = sA.clone();
+                        sB.advance();
+                        double[] fk0 = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            double uB = sB.update(fz_c[t]);
+                            fk0[t] = uB;
+                            if (svXtierNe(uB, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
+                        for (int t = mid; t < svN; t++) {
+                            double uA = sA.update(fz_c[t]);
+                            if (svBne(uA, fk0[t]) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
+                        if (allOk) {
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 8;
+                            if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                        }
+                    } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
+                }
+            }
+            if (lb >= 1 && lb < svN) {
+                try { c2.swakGaussOpen(java.util.Arrays.copyOf(fz_c, lb), optInTimePeriod); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryAccepted\":1"; }
+                catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                    try { c2.swakGaussOpenAndFill(java.util.Arrays.copyOf(fz_c, lb), optInTimePeriod, f0); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                    catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
+            }
+            try {
+                Core.SwakGaussStream sD = c2.swakGaussOpen(fz_c, Integer.MIN_VALUE);
+                Core.SwakGaussStream sE = c2.swakGaussOpen(fz_c, 20);
+                if (svBne(sD.value(), sE.value())) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
+            } catch (IllegalArgumentException _e) { /* defaults need more history than svN — skip */ }
+            {
+                int Sidx = lb + (svN - lb) / 3;
+                if (Sidx > lb && Sidx < svN - 1) {
+                    MInteger begS = new MInteger();
+                    MInteger nbS = new MInteger();
+                    RetCode rcS;
+                    try { rcS = c2.swakGaussImpl(Sidx, svN - 1, fz_c, optInTimePeriod, begS, nbS, b0); }
+                    catch (RuntimeException _sve) { if (!(_sve instanceof TALibFailure)) throw _sve; rcS = ((TALibFailure) _sve).retCode(); }
+                    if (rcS == RetCode.SUCCESS && nbS.value > 0) {
+                        try {
+                            Core.SwakGaussStream stA = c2.swakGaussOpenInternal(java.util.Arrays.copyOf(fz_c, svN), Sidx, optInTimePeriod);
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 4;
+                            if (stA.outRange().begIdx() != begS.value || stA.outRange().count() != nbS.value) rangeOk = false;
+                        } catch (IllegalArgumentException _e) { rangeOk = false; if (diag.isEmpty()) diag = ",\"anchoredOpenRejected\":1"; }
+                    }
+                }
+            }
+        }
+        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign[0] + diag + "}";
+    }
+
+    static String sv_SWAK_HP(String json) {
+        int svShape = jsonInt(json, "gen_shape");
+        int svSeed = jsonInt(json, "gen_seed");
+        int svN = jsonInt(json, "gen_n");
+        if (svN < 2) svN = 2;
+        if (svN > 256) svN = 256;
+        int svK = jsonInt(json, "unstablePeriod");
+        int optInTimePeriod = json.contains("\"optInTimePeriod\"") ? jsonInt(json, "optInTimePeriod") : 20;
+        double[] fz_o = new double[svN];
+        double[] fz_h = new double[svN];
+        double[] fz_l = new double[svN];
+        double[] fz_c = new double[svN];
+        double[] fz_v = new double[svN];
+        double[] fz_oi = new double[svN];
+        FuzzData.fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
+        double[] b0 = new double[svN];
+        long legs = 0;
+        boolean allOk = true;
+        boolean peekAll = true;
+        long peekReps = 0;
+        long peekRejects = 0;
+        boolean peekRepAll = true;
+        int fillChecked = 0;
+        boolean fillOk = true;
+        MInteger beg = new MInteger();
+        MInteger nb = new MInteger();
+        String diag = "";
+        int rangeChecked = 0;
+        boolean rangeOk = true;
+        long rangeLegs = 0;
+        int rangeSites = 0;
+        long[] zsign = { 0 };
+        int rounds = 1;
+        for (int rd = 0; rd < rounds; rd++) {
+            Core c2 = new Core();
+            c2.unstablePeriod[33] = svK;
+            RetCode rc;
+            try { rc = c2.swakHpImpl(0, svN - 1, fz_c, optInTimePeriod, beg, nb, b0); }
+            catch (RuntimeException _sve) { if (!(_sve instanceof TALibFailure)) throw _sve; rc = ((TALibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
+            int lb = c2.swakHpLookback(optInTimePeriod);
+            if (rc != RetCode.SUCCESS || nb.value == 0) {
+                boolean openRejects;
+                try { c2.swakHpOpen(fz_c, optInTimePeriod); openRejects = false; } catch (IllegalArgumentException _e) { openRejects = true; }
+                return "{\"retCode\":" + rc.toInt() + ",\"legs\":0,\"nb\":" + nb.value + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (openRejects ? 1 : 0) + ",\"peek_ok\":1}";
+            }
+            fillChecked = 1;
+            try {
+                double[] f0 = new double[svN];
+                java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                Core.SwakHpStream _fh = c2.swakHpOpenAndFill(fz_c, optInTimePeriod, f0);
+                OutRange _fr = _fh.outRange();
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
+                if (_fr.begIdx() != beg.value || _fr.count() != nb.value) rangeOk = false;
+                if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
+                else {
+                    for (int i = 0; i < nb.value; i++) if (svXtierNe(f0[i], b0[i], zsign)) fillOk = false;
+                    for (int i = nb.value; i < svN; i++) if (f0[i] != (double)-1.2345678901234e300) fillOk = false;
+                }
+                try { c2.swakHpOpenAndFill(fz_c, optInTimePeriod, fz_c); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
+            } catch (IllegalArgumentException _e) { fillOk = false; }
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
+            java.util.Arrays.sort(pcs);
+            int prevP = -1;
+            for (int pi = 0; pi < pcs.length; pi++) {
+                int p = pcs[pi];
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
+                prevP = p;
+                Core.SwakHpStream st;
+                try { st = c2.swakHpOpen(java.util.Arrays.copyOf(fz_c, p), optInTimePeriod); }
+                catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"openRejectP\":" + p; continue; }
+                legs++;
+                if (svXtierNe(st.value(), b0[p - 1 - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
+                for (int t = p; t < svN; t++) {
+                    boolean pkTook = true;
+                    double pk = 0;
+                    try { pk = st.peek(fz_c[t]); } catch (IllegalArgumentException _e) { pkTook = false; peekRejects++; }
+                    if (t % 7 == 0) {
+                        boolean rpTook = pkTook;
+                        try { st.peek(fz_c[t - 1]); } catch (IllegalArgumentException _e) { peekRejects++; }
+                        double rp = 0;
+                        try { rp = st.peek(fz_c[t]); } catch (IllegalArgumentException _e) { rpTook = false; }
+                        if (rpTook) {
+                            peekReps++;
+                            if (svBne(rp, pk)) peekRepAll = false;
+                        } else { peekRejects++; }
+                    }
+                    double up = st.update(fz_c[t]);
+                    if (pkTook && svBne(pk, up)) peekAll = false;
+                    try { st.peek(fz_c[t - 1]); } catch (IllegalArgumentException _e) { peekRejects++; }
+                    if (svBne(st.value(), up)) allOk = false;
+                    if (svXtierNe(up, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b0[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up)) + "\""; }
+                }
+                if (allOk) {
+                    rangeChecked = 1; rangeLegs++; rangeSites |= 2;
+                    if (st.outRange().begIdx() != beg.value || st.outRange().count() != nb.value) rangeOk = false;
+                    rangeLegs++; rangeSites |= 16;
+                    st.advance();
+                    if (st.outRange().begIdx() != beg.value || st.outRange().count() != nb.value + 1) rangeOk = false;
+                }
+            }
+            {
+                int p0 = lb + 1;
+                if (p0 <= svN - 1) {
+                    try {
+                        double[] f0 = new double[svN];
+                        java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                        Core.SwakHpStream sA = c2.swakHpOpenAndFill(java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod, f0);
+                        int mid = (p0 + svN) / 2;
+                        for (int t = p0; t < mid; t++) {
+                            double uA = sA.update(fz_c[t]);
+                            if (svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
+                        Core.SwakHpStream sB = sA.clone();
+                        sB.advance();
+                        double[] fk0 = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            double uB = sB.update(fz_c[t]);
+                            fk0[t] = uB;
+                            if (svXtierNe(uB, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
+                        for (int t = mid; t < svN; t++) {
+                            double uA = sA.update(fz_c[t]);
+                            if (svBne(uA, fk0[t]) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
+                        if (allOk) {
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 8;
+                            if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                        }
+                    } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
+                }
+            }
+            if (lb >= 1 && lb < svN) {
+                try { c2.swakHpOpen(java.util.Arrays.copyOf(fz_c, lb), optInTimePeriod); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryAccepted\":1"; }
+                catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                    try { c2.swakHpOpenAndFill(java.util.Arrays.copyOf(fz_c, lb), optInTimePeriod, f0); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                    catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
+            }
+            try {
+                Core.SwakHpStream sD = c2.swakHpOpen(fz_c, Integer.MIN_VALUE);
+                Core.SwakHpStream sE = c2.swakHpOpen(fz_c, 20);
+                if (svBne(sD.value(), sE.value())) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
+            } catch (IllegalArgumentException _e) { /* defaults need more history than svN — skip */ }
+            {
+                int Sidx = lb + (svN - lb) / 3;
+                if (Sidx > lb && Sidx < svN - 1) {
+                    MInteger begS = new MInteger();
+                    MInteger nbS = new MInteger();
+                    RetCode rcS;
+                    try { rcS = c2.swakHpImpl(Sidx, svN - 1, fz_c, optInTimePeriod, begS, nbS, b0); }
+                    catch (RuntimeException _sve) { if (!(_sve instanceof TALibFailure)) throw _sve; rcS = ((TALibFailure) _sve).retCode(); }
+                    if (rcS == RetCode.SUCCESS && nbS.value > 0) {
+                        try {
+                            Core.SwakHpStream stA = c2.swakHpOpenInternal(java.util.Arrays.copyOf(fz_c, svN), Sidx, optInTimePeriod);
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 4;
+                            if (stA.outRange().begIdx() != begS.value || stA.outRange().count() != nbS.value) rangeOk = false;
+                        } catch (IllegalArgumentException _e) { rangeOk = false; if (diag.isEmpty()) diag = ",\"anchoredOpenRejected\":1"; }
+                    }
+                }
+            }
+        }
+        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign[0] + diag + "}";
+    }
+
     static String sv_T3(String json) {
         int svShape = jsonInt(json, "gen_shape");
         int svSeed = jsonInt(json, "gen_seed");
@@ -288346,6 +293769,11 @@ public class TaCodegenServe {
         case "TA_SUB": return sv_SUB(json);
         case "TA_SUM": return sv_SUM(json);
         case "TA_SUPERTREND": return sv_SUPERTREND(json);
+        case "TA_SWAK_2PHP": return sv_SWAK_2PHP(json);
+        case "TA_SWAK_BP": return sv_SWAK_BP(json);
+        case "TA_SWAK_BUTTER": return sv_SWAK_BUTTER(json);
+        case "TA_SWAK_GAUSS": return sv_SWAK_GAUSS(json);
+        case "TA_SWAK_HP": return sv_SWAK_HP(json);
         case "TA_T3": return sv_T3(json);
         case "TA_TAN": return sv_TAN(json);
         case "TA_TANH": return sv_TANH(json);
@@ -308700,6 +314128,492 @@ public class TaCodegenServe {
                         boolean cmp = true;
                         if (cmp && svXtierNe(rb0[k], fb0[k], r.benign)) { cmp = false; r.out = 0; r.batch = Double.doubleToRawLongBits(rb0[k]); r.stream = Double.doubleToRawLongBits(fb0[k]); }
                         if (cmp && fib0[k] != rib0[k]) { cmp = false; r.out = 1; r.batch = Double.doubleToRawLongBits(rib0[k]); r.stream = Double.doubleToRawLongBits(fib0[k]); }
+                        if (cmp) r.fillBars++;
+                        if (!cmp) { r.ok = false; r.leg = 2; r.bar = beg + k; break; }
+                    }
+                }
+            } catch (RuntimeException _e) { r.ok = false; r.leg = 2; }
+        }
+
+        if (r.ok) {
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
+            rideSeenOpen[slot] = r.openBars; rideSeenFill[slot] = r.fillBars;
+        }
+    }
+
+    static void rideSwak2php(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, StringBuilder sb) {
+        if (!rideGate(json)) return;
+        RideResult r = new RideResult();
+        rideBodySwak2php(core, json, endIdx, inReal, optInTimePeriod, r);
+        r.emit(sb);
+    }
+
+    @SuppressWarnings("unused")
+    static void rideBodySwak2php(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, RideResult r) {
+        try { r.lb = core.swak2phpLookback(optInTimePeriod); } catch (RuntimeException _e) { r.lb = -1; }
+        int lb = r.lb;
+        int navail = endIdx + 1;
+        if (inReal.length < navail) navail = inReal.length;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
+        if (m > navail) m = navail;
+        r.m = m;
+        if (m > RIDE_MAX_BARS) { r.skip = 1; return; }
+        if (m < 1) { r.skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
+        if (!rideFinite(inReal, m) || false) { r.skip = 4; return; }
+
+        long hash = 0xcbf29ce484222325L;
+        hash = rideMixStr(hash, "TA_SWAK_2PHP");
+        hash = rideMix(hash, m);
+        hash = rideMix(hash, rideGen);
+        hash = rideMix(hash, jsonInt(json, "unstablePeriod"));
+        hash = rideMix(hash, optInTimePeriod);
+        hash = rideMixArr(hash, inReal, m);
+        int slot = (int) Math.floorMod(hash, (long) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash) {
+            r.dedup = 1; r.openBars = rideSeenOpen[slot]; r.fillBars = rideSeenFill[slot]; return;
+        }
+
+        double[] rb0 = new double[m];
+        int beg = 0;
+        int nb = 0;
+        String clsB = "";
+        boolean rejected = false;
+        try { OutRange _rr = core.swak2php(0, m - 1, java.util.Arrays.copyOf(inReal, m), optInTimePeriod, rb0); beg = _rr.begIdx(); nb = _rr.count(); }
+        catch (RuntimeException _e) { r.rcBatch = rideCode(_e); clsB = _e.getClass().getName(); rejected = true; }
+        if (rejected) {
+            String clsO = "", clsF = "";
+            try { core.swak2phpOpen(java.util.Arrays.copyOf(inReal, m), optInTimePeriod); } catch (RuntimeException _e) { r.rcOpen = rideCode(_e); clsO = _e.getClass().getName(); }
+            double[] fb0 = new double[m];
+            try { core.swak2phpOpenAndFill(java.util.Arrays.copyOf(inReal, m), optInTimePeriod, fb0); } catch (RuntimeException _e) { r.rcFill = rideCode(_e); clsF = _e.getClass().getName(); }
+            boolean cmpO = r.rcOpen == r.rcBatch && clsO.equals(clsB);
+            if (cmpO) r.rej++;
+            if (!cmpO) { r.ok = false; r.leg = r.rcOpen == r.rcBatch ? 4 : 3; }
+            boolean cmpF = r.rcFill == r.rcBatch && clsF.equals(clsB);
+            if (cmpF) r.rej++;
+            if (!cmpF) { r.ok = false; r.leg = r.rcFill == r.rcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.skip = 7; return; }
+        if (nb == 0) { r.skip = 5; return; }
+        if (beg != lb) { r.skip = 6; return; }
+
+        try {
+            boolean cmp;
+            Core.Swak2phpStream st = core.swak2phpOpen(java.util.Arrays.copyOf(inReal, lb + 1), optInTimePeriod);
+            double uv = st.value();
+            cmp = true;
+            if (cmp && svXtierNe(rb0[lb - beg], uv, r.benign)) { cmp = false; r.out = 0; r.batch = Double.doubleToRawLongBits(rb0[lb - beg]); r.stream = Double.doubleToRawLongBits(uv); }
+            if (cmp) r.openBars++;
+            if (!cmp) { r.ok = false; r.leg = 1; r.bar = lb; }
+            for (int t = lb + 1; r.ok && t < m; t++) {
+                double uv2 = st.update(inReal[t]);
+                uv = uv2;
+                cmp = true;
+                if (cmp && svXtierNe(rb0[t - beg], uv, r.benign)) { cmp = false; r.out = 0; r.batch = Double.doubleToRawLongBits(rb0[t - beg]); r.stream = Double.doubleToRawLongBits(uv); }
+                if (cmp) r.openBars++;
+                if (!cmp) { r.ok = false; r.leg = 1; r.bar = t; }
+            }
+        } catch (RuntimeException _e) { r.ok = false; r.leg = 1; }
+
+        if (r.ok) {
+            double[] fb0 = new double[m];
+            try {
+                Core.Swak2phpStream st2 = core.swak2phpOpenAndFill(java.util.Arrays.copyOf(inReal, m), optInTimePeriod, fb0);
+                if (st2.outRange().begIdx() != beg || st2.outRange().count() != nb) { r.ok = false; r.leg = 2; }
+                if (r.ok) {
+                    for (int k = 0; k < nb; k++) {
+                        boolean cmp = true;
+                        if (cmp && svXtierNe(rb0[k], fb0[k], r.benign)) { cmp = false; r.out = 0; r.batch = Double.doubleToRawLongBits(rb0[k]); r.stream = Double.doubleToRawLongBits(fb0[k]); }
+                        if (cmp) r.fillBars++;
+                        if (!cmp) { r.ok = false; r.leg = 2; r.bar = beg + k; break; }
+                    }
+                }
+            } catch (RuntimeException _e) { r.ok = false; r.leg = 2; }
+        }
+
+        if (r.ok) {
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
+            rideSeenOpen[slot] = r.openBars; rideSeenFill[slot] = r.fillBars;
+        }
+    }
+
+    static void rideSwakBp(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, double optInDelta, StringBuilder sb) {
+        if (!rideGate(json)) return;
+        RideResult r = new RideResult();
+        rideBodySwakBp(core, json, endIdx, inReal, optInTimePeriod, optInDelta, r);
+        r.emit(sb);
+    }
+
+    @SuppressWarnings("unused")
+    static void rideBodySwakBp(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, double optInDelta, RideResult r) {
+        try { r.lb = core.swakBpLookback(optInTimePeriod, optInDelta); } catch (RuntimeException _e) { r.lb = -1; }
+        int lb = r.lb;
+        int navail = endIdx + 1;
+        if (inReal.length < navail) navail = inReal.length;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
+        if (m > navail) m = navail;
+        r.m = m;
+        if (m > RIDE_MAX_BARS) { r.skip = 1; return; }
+        if (m < 1) { r.skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
+        if (!rideFinite(inReal, m) || false) { r.skip = 4; return; }
+
+        long hash = 0xcbf29ce484222325L;
+        hash = rideMixStr(hash, "TA_SWAK_BP");
+        hash = rideMix(hash, m);
+        hash = rideMix(hash, rideGen);
+        hash = rideMix(hash, jsonInt(json, "unstablePeriod"));
+        hash = rideMix(hash, optInTimePeriod);
+        hash = rideMix(hash, Double.doubleToRawLongBits(optInDelta));
+        hash = rideMixArr(hash, inReal, m);
+        int slot = (int) Math.floorMod(hash, (long) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash) {
+            r.dedup = 1; r.openBars = rideSeenOpen[slot]; r.fillBars = rideSeenFill[slot]; return;
+        }
+
+        double[] rb0 = new double[m];
+        int beg = 0;
+        int nb = 0;
+        String clsB = "";
+        boolean rejected = false;
+        try { OutRange _rr = core.swakBp(0, m - 1, java.util.Arrays.copyOf(inReal, m), optInTimePeriod, optInDelta, rb0); beg = _rr.begIdx(); nb = _rr.count(); }
+        catch (RuntimeException _e) { r.rcBatch = rideCode(_e); clsB = _e.getClass().getName(); rejected = true; }
+        if (rejected) {
+            String clsO = "", clsF = "";
+            try { core.swakBpOpen(java.util.Arrays.copyOf(inReal, m), optInTimePeriod, optInDelta); } catch (RuntimeException _e) { r.rcOpen = rideCode(_e); clsO = _e.getClass().getName(); }
+            double[] fb0 = new double[m];
+            try { core.swakBpOpenAndFill(java.util.Arrays.copyOf(inReal, m), optInTimePeriod, optInDelta, fb0); } catch (RuntimeException _e) { r.rcFill = rideCode(_e); clsF = _e.getClass().getName(); }
+            boolean cmpO = r.rcOpen == r.rcBatch && clsO.equals(clsB);
+            if (cmpO) r.rej++;
+            if (!cmpO) { r.ok = false; r.leg = r.rcOpen == r.rcBatch ? 4 : 3; }
+            boolean cmpF = r.rcFill == r.rcBatch && clsF.equals(clsB);
+            if (cmpF) r.rej++;
+            if (!cmpF) { r.ok = false; r.leg = r.rcFill == r.rcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.skip = 7; return; }
+        if (nb == 0) { r.skip = 5; return; }
+        if (beg != lb) { r.skip = 6; return; }
+
+        try {
+            boolean cmp;
+            Core.SwakBpStream st = core.swakBpOpen(java.util.Arrays.copyOf(inReal, lb + 1), optInTimePeriod, optInDelta);
+            double uv = st.value();
+            cmp = true;
+            if (cmp && svXtierNe(rb0[lb - beg], uv, r.benign)) { cmp = false; r.out = 0; r.batch = Double.doubleToRawLongBits(rb0[lb - beg]); r.stream = Double.doubleToRawLongBits(uv); }
+            if (cmp) r.openBars++;
+            if (!cmp) { r.ok = false; r.leg = 1; r.bar = lb; }
+            for (int t = lb + 1; r.ok && t < m; t++) {
+                double uv2 = st.update(inReal[t]);
+                uv = uv2;
+                cmp = true;
+                if (cmp && svXtierNe(rb0[t - beg], uv, r.benign)) { cmp = false; r.out = 0; r.batch = Double.doubleToRawLongBits(rb0[t - beg]); r.stream = Double.doubleToRawLongBits(uv); }
+                if (cmp) r.openBars++;
+                if (!cmp) { r.ok = false; r.leg = 1; r.bar = t; }
+            }
+        } catch (RuntimeException _e) { r.ok = false; r.leg = 1; }
+
+        if (r.ok) {
+            double[] fb0 = new double[m];
+            try {
+                Core.SwakBpStream st2 = core.swakBpOpenAndFill(java.util.Arrays.copyOf(inReal, m), optInTimePeriod, optInDelta, fb0);
+                if (st2.outRange().begIdx() != beg || st2.outRange().count() != nb) { r.ok = false; r.leg = 2; }
+                if (r.ok) {
+                    for (int k = 0; k < nb; k++) {
+                        boolean cmp = true;
+                        if (cmp && svXtierNe(rb0[k], fb0[k], r.benign)) { cmp = false; r.out = 0; r.batch = Double.doubleToRawLongBits(rb0[k]); r.stream = Double.doubleToRawLongBits(fb0[k]); }
+                        if (cmp) r.fillBars++;
+                        if (!cmp) { r.ok = false; r.leg = 2; r.bar = beg + k; break; }
+                    }
+                }
+            } catch (RuntimeException _e) { r.ok = false; r.leg = 2; }
+        }
+
+        if (r.ok) {
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
+            rideSeenOpen[slot] = r.openBars; rideSeenFill[slot] = r.fillBars;
+        }
+    }
+
+    static void rideSwakButter(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, StringBuilder sb) {
+        if (!rideGate(json)) return;
+        RideResult r = new RideResult();
+        rideBodySwakButter(core, json, endIdx, inReal, optInTimePeriod, r);
+        r.emit(sb);
+    }
+
+    @SuppressWarnings("unused")
+    static void rideBodySwakButter(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, RideResult r) {
+        try { r.lb = core.swakButterLookback(optInTimePeriod); } catch (RuntimeException _e) { r.lb = -1; }
+        int lb = r.lb;
+        int navail = endIdx + 1;
+        if (inReal.length < navail) navail = inReal.length;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
+        if (m > navail) m = navail;
+        r.m = m;
+        if (m > RIDE_MAX_BARS) { r.skip = 1; return; }
+        if (m < 1) { r.skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
+        if (!rideFinite(inReal, m) || false) { r.skip = 4; return; }
+
+        long hash = 0xcbf29ce484222325L;
+        hash = rideMixStr(hash, "TA_SWAK_BUTTER");
+        hash = rideMix(hash, m);
+        hash = rideMix(hash, rideGen);
+        hash = rideMix(hash, jsonInt(json, "unstablePeriod"));
+        hash = rideMix(hash, optInTimePeriod);
+        hash = rideMixArr(hash, inReal, m);
+        int slot = (int) Math.floorMod(hash, (long) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash) {
+            r.dedup = 1; r.openBars = rideSeenOpen[slot]; r.fillBars = rideSeenFill[slot]; return;
+        }
+
+        double[] rb0 = new double[m];
+        int beg = 0;
+        int nb = 0;
+        String clsB = "";
+        boolean rejected = false;
+        try { OutRange _rr = core.swakButter(0, m - 1, java.util.Arrays.copyOf(inReal, m), optInTimePeriod, rb0); beg = _rr.begIdx(); nb = _rr.count(); }
+        catch (RuntimeException _e) { r.rcBatch = rideCode(_e); clsB = _e.getClass().getName(); rejected = true; }
+        if (rejected) {
+            String clsO = "", clsF = "";
+            try { core.swakButterOpen(java.util.Arrays.copyOf(inReal, m), optInTimePeriod); } catch (RuntimeException _e) { r.rcOpen = rideCode(_e); clsO = _e.getClass().getName(); }
+            double[] fb0 = new double[m];
+            try { core.swakButterOpenAndFill(java.util.Arrays.copyOf(inReal, m), optInTimePeriod, fb0); } catch (RuntimeException _e) { r.rcFill = rideCode(_e); clsF = _e.getClass().getName(); }
+            boolean cmpO = r.rcOpen == r.rcBatch && clsO.equals(clsB);
+            if (cmpO) r.rej++;
+            if (!cmpO) { r.ok = false; r.leg = r.rcOpen == r.rcBatch ? 4 : 3; }
+            boolean cmpF = r.rcFill == r.rcBatch && clsF.equals(clsB);
+            if (cmpF) r.rej++;
+            if (!cmpF) { r.ok = false; r.leg = r.rcFill == r.rcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.skip = 7; return; }
+        if (nb == 0) { r.skip = 5; return; }
+        if (beg != lb) { r.skip = 6; return; }
+
+        try {
+            boolean cmp;
+            Core.SwakButterStream st = core.swakButterOpen(java.util.Arrays.copyOf(inReal, lb + 1), optInTimePeriod);
+            double uv = st.value();
+            cmp = true;
+            if (cmp && svXtierNe(rb0[lb - beg], uv, r.benign)) { cmp = false; r.out = 0; r.batch = Double.doubleToRawLongBits(rb0[lb - beg]); r.stream = Double.doubleToRawLongBits(uv); }
+            if (cmp) r.openBars++;
+            if (!cmp) { r.ok = false; r.leg = 1; r.bar = lb; }
+            for (int t = lb + 1; r.ok && t < m; t++) {
+                double uv2 = st.update(inReal[t]);
+                uv = uv2;
+                cmp = true;
+                if (cmp && svXtierNe(rb0[t - beg], uv, r.benign)) { cmp = false; r.out = 0; r.batch = Double.doubleToRawLongBits(rb0[t - beg]); r.stream = Double.doubleToRawLongBits(uv); }
+                if (cmp) r.openBars++;
+                if (!cmp) { r.ok = false; r.leg = 1; r.bar = t; }
+            }
+        } catch (RuntimeException _e) { r.ok = false; r.leg = 1; }
+
+        if (r.ok) {
+            double[] fb0 = new double[m];
+            try {
+                Core.SwakButterStream st2 = core.swakButterOpenAndFill(java.util.Arrays.copyOf(inReal, m), optInTimePeriod, fb0);
+                if (st2.outRange().begIdx() != beg || st2.outRange().count() != nb) { r.ok = false; r.leg = 2; }
+                if (r.ok) {
+                    for (int k = 0; k < nb; k++) {
+                        boolean cmp = true;
+                        if (cmp && svXtierNe(rb0[k], fb0[k], r.benign)) { cmp = false; r.out = 0; r.batch = Double.doubleToRawLongBits(rb0[k]); r.stream = Double.doubleToRawLongBits(fb0[k]); }
+                        if (cmp) r.fillBars++;
+                        if (!cmp) { r.ok = false; r.leg = 2; r.bar = beg + k; break; }
+                    }
+                }
+            } catch (RuntimeException _e) { r.ok = false; r.leg = 2; }
+        }
+
+        if (r.ok) {
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
+            rideSeenOpen[slot] = r.openBars; rideSeenFill[slot] = r.fillBars;
+        }
+    }
+
+    static void rideSwakGauss(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, StringBuilder sb) {
+        if (!rideGate(json)) return;
+        RideResult r = new RideResult();
+        rideBodySwakGauss(core, json, endIdx, inReal, optInTimePeriod, r);
+        r.emit(sb);
+    }
+
+    @SuppressWarnings("unused")
+    static void rideBodySwakGauss(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, RideResult r) {
+        try { r.lb = core.swakGaussLookback(optInTimePeriod); } catch (RuntimeException _e) { r.lb = -1; }
+        int lb = r.lb;
+        int navail = endIdx + 1;
+        if (inReal.length < navail) navail = inReal.length;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
+        if (m > navail) m = navail;
+        r.m = m;
+        if (m > RIDE_MAX_BARS) { r.skip = 1; return; }
+        if (m < 1) { r.skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
+        if (!rideFinite(inReal, m) || false) { r.skip = 4; return; }
+
+        long hash = 0xcbf29ce484222325L;
+        hash = rideMixStr(hash, "TA_SWAK_GAUSS");
+        hash = rideMix(hash, m);
+        hash = rideMix(hash, rideGen);
+        hash = rideMix(hash, jsonInt(json, "unstablePeriod"));
+        hash = rideMix(hash, optInTimePeriod);
+        hash = rideMixArr(hash, inReal, m);
+        int slot = (int) Math.floorMod(hash, (long) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash) {
+            r.dedup = 1; r.openBars = rideSeenOpen[slot]; r.fillBars = rideSeenFill[slot]; return;
+        }
+
+        double[] rb0 = new double[m];
+        int beg = 0;
+        int nb = 0;
+        String clsB = "";
+        boolean rejected = false;
+        try { OutRange _rr = core.swakGauss(0, m - 1, java.util.Arrays.copyOf(inReal, m), optInTimePeriod, rb0); beg = _rr.begIdx(); nb = _rr.count(); }
+        catch (RuntimeException _e) { r.rcBatch = rideCode(_e); clsB = _e.getClass().getName(); rejected = true; }
+        if (rejected) {
+            String clsO = "", clsF = "";
+            try { core.swakGaussOpen(java.util.Arrays.copyOf(inReal, m), optInTimePeriod); } catch (RuntimeException _e) { r.rcOpen = rideCode(_e); clsO = _e.getClass().getName(); }
+            double[] fb0 = new double[m];
+            try { core.swakGaussOpenAndFill(java.util.Arrays.copyOf(inReal, m), optInTimePeriod, fb0); } catch (RuntimeException _e) { r.rcFill = rideCode(_e); clsF = _e.getClass().getName(); }
+            boolean cmpO = r.rcOpen == r.rcBatch && clsO.equals(clsB);
+            if (cmpO) r.rej++;
+            if (!cmpO) { r.ok = false; r.leg = r.rcOpen == r.rcBatch ? 4 : 3; }
+            boolean cmpF = r.rcFill == r.rcBatch && clsF.equals(clsB);
+            if (cmpF) r.rej++;
+            if (!cmpF) { r.ok = false; r.leg = r.rcFill == r.rcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.skip = 7; return; }
+        if (nb == 0) { r.skip = 5; return; }
+        if (beg != lb) { r.skip = 6; return; }
+
+        try {
+            boolean cmp;
+            Core.SwakGaussStream st = core.swakGaussOpen(java.util.Arrays.copyOf(inReal, lb + 1), optInTimePeriod);
+            double uv = st.value();
+            cmp = true;
+            if (cmp && svXtierNe(rb0[lb - beg], uv, r.benign)) { cmp = false; r.out = 0; r.batch = Double.doubleToRawLongBits(rb0[lb - beg]); r.stream = Double.doubleToRawLongBits(uv); }
+            if (cmp) r.openBars++;
+            if (!cmp) { r.ok = false; r.leg = 1; r.bar = lb; }
+            for (int t = lb + 1; r.ok && t < m; t++) {
+                double uv2 = st.update(inReal[t]);
+                uv = uv2;
+                cmp = true;
+                if (cmp && svXtierNe(rb0[t - beg], uv, r.benign)) { cmp = false; r.out = 0; r.batch = Double.doubleToRawLongBits(rb0[t - beg]); r.stream = Double.doubleToRawLongBits(uv); }
+                if (cmp) r.openBars++;
+                if (!cmp) { r.ok = false; r.leg = 1; r.bar = t; }
+            }
+        } catch (RuntimeException _e) { r.ok = false; r.leg = 1; }
+
+        if (r.ok) {
+            double[] fb0 = new double[m];
+            try {
+                Core.SwakGaussStream st2 = core.swakGaussOpenAndFill(java.util.Arrays.copyOf(inReal, m), optInTimePeriod, fb0);
+                if (st2.outRange().begIdx() != beg || st2.outRange().count() != nb) { r.ok = false; r.leg = 2; }
+                if (r.ok) {
+                    for (int k = 0; k < nb; k++) {
+                        boolean cmp = true;
+                        if (cmp && svXtierNe(rb0[k], fb0[k], r.benign)) { cmp = false; r.out = 0; r.batch = Double.doubleToRawLongBits(rb0[k]); r.stream = Double.doubleToRawLongBits(fb0[k]); }
+                        if (cmp) r.fillBars++;
+                        if (!cmp) { r.ok = false; r.leg = 2; r.bar = beg + k; break; }
+                    }
+                }
+            } catch (RuntimeException _e) { r.ok = false; r.leg = 2; }
+        }
+
+        if (r.ok) {
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
+            rideSeenOpen[slot] = r.openBars; rideSeenFill[slot] = r.fillBars;
+        }
+    }
+
+    static void rideSwakHp(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, StringBuilder sb) {
+        if (!rideGate(json)) return;
+        RideResult r = new RideResult();
+        rideBodySwakHp(core, json, endIdx, inReal, optInTimePeriod, r);
+        r.emit(sb);
+    }
+
+    @SuppressWarnings("unused")
+    static void rideBodySwakHp(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, RideResult r) {
+        try { r.lb = core.swakHpLookback(optInTimePeriod); } catch (RuntimeException _e) { r.lb = -1; }
+        int lb = r.lb;
+        int navail = endIdx + 1;
+        if (inReal.length < navail) navail = inReal.length;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
+        if (m > navail) m = navail;
+        r.m = m;
+        if (m > RIDE_MAX_BARS) { r.skip = 1; return; }
+        if (m < 1) { r.skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
+        if (!rideFinite(inReal, m) || false) { r.skip = 4; return; }
+
+        long hash = 0xcbf29ce484222325L;
+        hash = rideMixStr(hash, "TA_SWAK_HP");
+        hash = rideMix(hash, m);
+        hash = rideMix(hash, rideGen);
+        hash = rideMix(hash, jsonInt(json, "unstablePeriod"));
+        hash = rideMix(hash, optInTimePeriod);
+        hash = rideMixArr(hash, inReal, m);
+        int slot = (int) Math.floorMod(hash, (long) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash) {
+            r.dedup = 1; r.openBars = rideSeenOpen[slot]; r.fillBars = rideSeenFill[slot]; return;
+        }
+
+        double[] rb0 = new double[m];
+        int beg = 0;
+        int nb = 0;
+        String clsB = "";
+        boolean rejected = false;
+        try { OutRange _rr = core.swakHp(0, m - 1, java.util.Arrays.copyOf(inReal, m), optInTimePeriod, rb0); beg = _rr.begIdx(); nb = _rr.count(); }
+        catch (RuntimeException _e) { r.rcBatch = rideCode(_e); clsB = _e.getClass().getName(); rejected = true; }
+        if (rejected) {
+            String clsO = "", clsF = "";
+            try { core.swakHpOpen(java.util.Arrays.copyOf(inReal, m), optInTimePeriod); } catch (RuntimeException _e) { r.rcOpen = rideCode(_e); clsO = _e.getClass().getName(); }
+            double[] fb0 = new double[m];
+            try { core.swakHpOpenAndFill(java.util.Arrays.copyOf(inReal, m), optInTimePeriod, fb0); } catch (RuntimeException _e) { r.rcFill = rideCode(_e); clsF = _e.getClass().getName(); }
+            boolean cmpO = r.rcOpen == r.rcBatch && clsO.equals(clsB);
+            if (cmpO) r.rej++;
+            if (!cmpO) { r.ok = false; r.leg = r.rcOpen == r.rcBatch ? 4 : 3; }
+            boolean cmpF = r.rcFill == r.rcBatch && clsF.equals(clsB);
+            if (cmpF) r.rej++;
+            if (!cmpF) { r.ok = false; r.leg = r.rcFill == r.rcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.skip = 7; return; }
+        if (nb == 0) { r.skip = 5; return; }
+        if (beg != lb) { r.skip = 6; return; }
+
+        try {
+            boolean cmp;
+            Core.SwakHpStream st = core.swakHpOpen(java.util.Arrays.copyOf(inReal, lb + 1), optInTimePeriod);
+            double uv = st.value();
+            cmp = true;
+            if (cmp && svXtierNe(rb0[lb - beg], uv, r.benign)) { cmp = false; r.out = 0; r.batch = Double.doubleToRawLongBits(rb0[lb - beg]); r.stream = Double.doubleToRawLongBits(uv); }
+            if (cmp) r.openBars++;
+            if (!cmp) { r.ok = false; r.leg = 1; r.bar = lb; }
+            for (int t = lb + 1; r.ok && t < m; t++) {
+                double uv2 = st.update(inReal[t]);
+                uv = uv2;
+                cmp = true;
+                if (cmp && svXtierNe(rb0[t - beg], uv, r.benign)) { cmp = false; r.out = 0; r.batch = Double.doubleToRawLongBits(rb0[t - beg]); r.stream = Double.doubleToRawLongBits(uv); }
+                if (cmp) r.openBars++;
+                if (!cmp) { r.ok = false; r.leg = 1; r.bar = t; }
+            }
+        } catch (RuntimeException _e) { r.ok = false; r.leg = 1; }
+
+        if (r.ok) {
+            double[] fb0 = new double[m];
+            try {
+                Core.SwakHpStream st2 = core.swakHpOpenAndFill(java.util.Arrays.copyOf(inReal, m), optInTimePeriod, fb0);
+                if (st2.outRange().begIdx() != beg || st2.outRange().count() != nb) { r.ok = false; r.leg = 2; }
+                if (r.ok) {
+                    for (int k = 0; k < nb; k++) {
+                        boolean cmp = true;
+                        if (cmp && svXtierNe(rb0[k], fb0[k], r.benign)) { cmp = false; r.out = 0; r.batch = Double.doubleToRawLongBits(rb0[k]); r.stream = Double.doubleToRawLongBits(fb0[k]); }
                         if (cmp) r.fillBars++;
                         if (!cmp) { r.ok = false; r.leg = 2; r.bar = beg + k; break; }
                     }

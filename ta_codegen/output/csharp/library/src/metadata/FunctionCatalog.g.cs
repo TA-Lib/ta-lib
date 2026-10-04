@@ -316,6 +316,11 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
             MakeSub(),
             MakeSum(),
             MakeSupertrend(),
+            MakeSwak2php(),
+            MakeSwakBp(),
+            MakeSwakButter(),
+            MakeSwakGauss(),
+            MakeSwakHp(),
             MakeT3(),
             MakeTan(),
             MakeTanh(),
@@ -5072,6 +5077,127 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
         invoke: static (core, c, startIdx, endIdx) =>
             core.Supertrend(
                 startIdx, endIdx, c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.IntOpt(0), c.RealOpt(1), c.RealOut(0), c.IntOut(1)));
+
+    private static FuncInfo MakeSwak2php() => new(
+        name: "SWAK_2PHP",
+        group: FunctionGroup.CycleIndicators,
+        hint: "Swiss Army Knife - Two-Pole High-Pass Filter",
+        flags: FuncFlags.Stream | FuncFlags.UnstablePeriod,
+        unstableId: FuncUnstId.SWAK_2PHP,
+        inputs:
+        [
+            new InputInfo(InputKind.Real, "inReal", PriceComponents.None, []),
+        ],
+        optInputs:
+        [
+            new OptInputInfo("optInTimePeriod", "Time Period", "Cutoff period", OptInputFlags.None, new OptInputDomain.IntegerRange(2, 10000, 20, 5, 200, 1)),
+        ],
+        outputs:
+        [
+            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line),
+        ],
+        lookback: static (core, c) => core.Swak2phpLookback(c.IntOpt(0)),
+        displayShift: static (core, c, outputIdx) => core.Swak2phpDisplayShift(c.IntOpt(0), outputIdx),
+        invoke: static (core, c, startIdx, endIdx) =>
+            core.Swak2php(
+                startIdx, endIdx, c.Series(0), c.IntOpt(0), c.RealOut(0)));
+
+    private static FuncInfo MakeSwakBp() => new(
+        name: "SWAK_BP",
+        group: FunctionGroup.CycleIndicators,
+        hint: "Swiss Army Knife - Band-Pass Filter",
+        flags: FuncFlags.Stream | FuncFlags.UnstablePeriod,
+        unstableId: FuncUnstId.SWAK_BP,
+        inputs:
+        [
+            new InputInfo(InputKind.Real, "inReal", PriceComponents.None, []),
+        ],
+        optInputs:
+        [
+            new OptInputInfo("optInTimePeriod", "Time Period", "Center period", OptInputFlags.None, new OptInputDomain.IntegerRange(5, 2000, 20, 5, 200, 1)),
+            new OptInputInfo("optInDelta", "Delta", "Half-bandwidth as a fraction of the center period", OptInputFlags.None, new OptInputDomain.RealRange(0.05, 0.5, 2, 0.1, 0.05, 0.5, 0.05)),
+        ],
+        outputs:
+        [
+            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line),
+        ],
+        lookback: static (core, c) => core.SwakBpLookback(c.IntOpt(0), c.RealOpt(1)),
+        displayShift: static (core, c, outputIdx) => core.SwakBpDisplayShift(c.IntOpt(0), c.RealOpt(1), outputIdx),
+        invoke: static (core, c, startIdx, endIdx) =>
+            core.SwakBp(
+                startIdx, endIdx, c.Series(0), c.IntOpt(0), c.RealOpt(1), c.RealOut(0)));
+
+    private static FuncInfo MakeSwakButter() => new(
+        name: "SWAK_BUTTER",
+        group: FunctionGroup.OverlapStudies,
+        hint: "Swiss Army Knife - Butterworth Filter",
+        flags: FuncFlags.Overlap | FuncFlags.Stream | FuncFlags.UnstablePeriod,
+        unstableId: FuncUnstId.SWAK_BUTTER,
+        inputs:
+        [
+            new InputInfo(InputKind.Real, "inReal", PriceComponents.None, []),
+        ],
+        optInputs:
+        [
+            new OptInputInfo("optInTimePeriod", "Time Period", "Cutoff period", OptInputFlags.None, new OptInputDomain.IntegerRange(2, 10000, 20, 5, 200, 1)),
+        ],
+        outputs:
+        [
+            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line),
+        ],
+        lookback: static (core, c) => core.SwakButterLookback(c.IntOpt(0)),
+        displayShift: static (core, c, outputIdx) => core.SwakButterDisplayShift(c.IntOpt(0), outputIdx),
+        invoke: static (core, c, startIdx, endIdx) =>
+            core.SwakButter(
+                startIdx, endIdx, c.Series(0), c.IntOpt(0), c.RealOut(0)));
+
+    private static FuncInfo MakeSwakGauss() => new(
+        name: "SWAK_GAUSS",
+        group: FunctionGroup.OverlapStudies,
+        hint: "Swiss Army Knife - Gaussian Filter",
+        flags: FuncFlags.Overlap | FuncFlags.Stream | FuncFlags.UnstablePeriod,
+        unstableId: FuncUnstId.SWAK_GAUSS,
+        inputs:
+        [
+            new InputInfo(InputKind.Real, "inReal", PriceComponents.None, []),
+        ],
+        optInputs:
+        [
+            new OptInputInfo("optInTimePeriod", "Time Period", "Cutoff period", OptInputFlags.None, new OptInputDomain.IntegerRange(2, 10000, 20, 5, 200, 1)),
+        ],
+        outputs:
+        [
+            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line),
+        ],
+        lookback: static (core, c) => core.SwakGaussLookback(c.IntOpt(0)),
+        displayShift: static (core, c, outputIdx) => core.SwakGaussDisplayShift(c.IntOpt(0), outputIdx),
+        invoke: static (core, c, startIdx, endIdx) =>
+            core.SwakGauss(
+                startIdx, endIdx, c.Series(0), c.IntOpt(0), c.RealOut(0)));
+
+    private static FuncInfo MakeSwakHp() => new(
+        name: "SWAK_HP",
+        group: FunctionGroup.CycleIndicators,
+        hint: "Swiss Army Knife - High-Pass Filter",
+        flags: FuncFlags.Stream | FuncFlags.UnstablePeriod,
+        unstableId: FuncUnstId.SWAK_HP,
+        inputs:
+        [
+            new InputInfo(InputKind.Real, "inReal", PriceComponents.None, []),
+        ],
+        optInputs:
+        [
+            new OptInputInfo("optInTimePeriod", "Time Period", "Cutoff period", OptInputFlags.None, new OptInputDomain.IntegerRange(5, 100000, 20, 5, 200, 1)),
+        ],
+        outputs:
+        [
+            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line),
+        ],
+        lookback: static (core, c) => core.SwakHpLookback(c.IntOpt(0)),
+        displayShift: static (core, c, outputIdx) => core.SwakHpDisplayShift(c.IntOpt(0), outputIdx),
+        invoke: static (core, c, startIdx, endIdx) =>
+            core.SwakHp(
+                startIdx, endIdx, c.Series(0), c.IntOpt(0), c.RealOut(0)));
 
     private static FuncInfo MakeT3() => new(
         name: "T3",

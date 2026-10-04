@@ -229,13 +229,18 @@ typedef enum {
     TA_FUNC_UNST_MCGD         = 28,
     TA_FUNC_UNST_VIDYA        = 29,
     TA_FUNC_UNST_STC          = 30,
+    TA_FUNC_UNST_SWAK_GAUSS   = 31,
+    TA_FUNC_UNST_SWAK_BUTTER  = 32,
+    TA_FUNC_UNST_SWAK_HP      = 33,
+    TA_FUNC_UNST_SWAK_2PHP    = 34,
+    TA_FUNC_UNST_SWAK_BP      = 35,
     TA_FUNC_UNST_ALL          = 65535
 } TA_FuncUnstId;
 
 /* Number of function ids above (NOT an id, and NOT TA_FUNC_UNST_ALL).
  * Sizes the unstable-period table; grows when an indicator is added.
  */
-#define TA_FUNC_UNST_COUNT 31
+#define TA_FUNC_UNST_COUNT 36
 
 /**** END GENCODE SECTION 1 - DO NOT DELETE THIS LINE ****/
 

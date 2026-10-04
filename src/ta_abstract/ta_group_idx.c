@@ -241,6 +241,11 @@ extern const TA_FuncDef TA_DEF_STOCHRSI;
 extern const TA_FuncDef TA_DEF_SUB;
 extern const TA_FuncDef TA_DEF_SUM;
 extern const TA_FuncDef TA_DEF_SUPERTREND;
+extern const TA_FuncDef TA_DEF_SWAK_2PHP;
+extern const TA_FuncDef TA_DEF_SWAK_BP;
+extern const TA_FuncDef TA_DEF_SWAK_BUTTER;
+extern const TA_FuncDef TA_DEF_SWAK_GAUSS;
+extern const TA_FuncDef TA_DEF_SWAK_HP;
 extern const TA_FuncDef TA_DEF_T3;
 extern const TA_FuncDef TA_DEF_TAN;
 extern const TA_FuncDef TA_DEF_TANH;
@@ -323,6 +328,8 @@ const TA_FuncDef *TA_PerGroupFunc_2[] = {
 &TA_DEF_SAREXT,
 &TA_DEF_SMA,
 &TA_DEF_SUPERTREND,
+&TA_DEF_SWAK_BUTTER,
+&TA_DEF_SWAK_GAUSS,
 &TA_DEF_T3,
 &TA_DEF_TEMA,
 &TA_DEF_TRIMA,
@@ -415,6 +422,9 @@ const TA_FuncDef *TA_PerGroupFunc_5[] = {
 &TA_DEF_HT_PHASOR,
 &TA_DEF_HT_SINE,
 &TA_DEF_HT_TRENDMODE,
+&TA_DEF_SWAK_2PHP,
+&TA_DEF_SWAK_BP,
+&TA_DEF_SWAK_HP,
 NULL };
 #define SIZE_GROUP_5 ((sizeof(TA_PerGroupFunc_5)/sizeof(const TA_FuncDef *))-1)
 

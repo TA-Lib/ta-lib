@@ -199,6 +199,11 @@ STOCHRSI            Stochastic Relative Strength Index
 SUB                 Vector Arithmetic Subtraction
 SUM                 Summation
 SUPERTREND          SuperTrend
+SWAK_2PHP           Swiss Army Knife - Two-Pole High-Pass Filter
+SWAK_BP             Swiss Army Knife - Band-Pass Filter
+SWAK_BUTTER         Swiss Army Knife - Butterworth Filter
+SWAK_GAUSS          Swiss Army Knife - Gaussian Filter
+SWAK_HP             Swiss Army Knife - High-Pass Filter
 T3                  Triple Exponential Moving Average (T3)
 TAN                 Vector Trigonometric Tan
 TANH                Vector Trigonometric Tanh

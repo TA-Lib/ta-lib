@@ -2258,6 +2258,61 @@ unsigned int TA_SUPERTREND_FramePPLB( const TA_ParamHolderPriv *params )
 int TA_SUPERTREND_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
 ;
 
+TA_RetCode TA_SWAK_2PHP_FramePP( const TA_ParamHolderPriv *params,
+                           int            startIdx,
+                           int            endIdx,
+                           int           *outBegIdx,
+                           int           *outNBElement )
+;
+unsigned int TA_SWAK_2PHP_FramePPLB( const TA_ParamHolderPriv *params )
+;
+int TA_SWAK_2PHP_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+;
+
+TA_RetCode TA_SWAK_BP_FramePP( const TA_ParamHolderPriv *params,
+                           int            startIdx,
+                           int            endIdx,
+                           int           *outBegIdx,
+                           int           *outNBElement )
+;
+unsigned int TA_SWAK_BP_FramePPLB( const TA_ParamHolderPriv *params )
+;
+int TA_SWAK_BP_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+;
+
+TA_RetCode TA_SWAK_BUTTER_FramePP( const TA_ParamHolderPriv *params,
+                           int            startIdx,
+                           int            endIdx,
+                           int           *outBegIdx,
+                           int           *outNBElement )
+;
+unsigned int TA_SWAK_BUTTER_FramePPLB( const TA_ParamHolderPriv *params )
+;
+int TA_SWAK_BUTTER_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+;
+
+TA_RetCode TA_SWAK_GAUSS_FramePP( const TA_ParamHolderPriv *params,
+                           int            startIdx,
+                           int            endIdx,
+                           int           *outBegIdx,
+                           int           *outNBElement )
+;
+unsigned int TA_SWAK_GAUSS_FramePPLB( const TA_ParamHolderPriv *params )
+;
+int TA_SWAK_GAUSS_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+;
+
+TA_RetCode TA_SWAK_HP_FramePP( const TA_ParamHolderPriv *params,
+                           int            startIdx,
+                           int            endIdx,
+                           int           *outBegIdx,
+                           int           *outNBElement )
+;
+unsigned int TA_SWAK_HP_FramePPLB( const TA_ParamHolderPriv *params )
+;
+int TA_SWAK_HP_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+;
+
 TA_RetCode TA_T3_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
                            int            endIdx,

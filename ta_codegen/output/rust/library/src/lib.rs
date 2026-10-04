@@ -134,13 +134,16 @@
 //! entry carries that row's own one-line hint. Follow a link for the function's
 //! formula, arguments, ranges and a runnable example.
 //!
-//! ## Cycle Indicators (5)
+//! ## Cycle Indicators (8)
 //!
 //! * [`HT_DCPERIOD`](Core::ht_dcperiod) — Hilbert Transform - Dominant Cycle Period
 //! * [`HT_DCPHASE`](Core::ht_dcphase) — Hilbert Transform - Dominant Cycle Phase
 //! * [`HT_PHASOR`](Core::ht_phasor) — Hilbert Transform - Phasor Components
 //! * [`HT_SINE`](Core::ht_sine) — Hilbert Transform - SineWave
 //! * [`HT_TRENDMODE`](Core::ht_trendmode) — Hilbert Transform - Trend vs Cycle Mode
+//! * [`SWAK_2PHP`](Core::swak_2php) — Swiss Army Knife - Two-Pole High-Pass Filter
+//! * [`SWAK_BP`](Core::swak_bp) — Swiss Army Knife - Band-Pass Filter
+//! * [`SWAK_HP`](Core::swak_hp) — Swiss Army Knife - High-Pass Filter
 //!
 //! ## Math Operators (12)
 //!
@@ -236,7 +239,7 @@
 //! * [`WAD`](Core::wad) — Williams' Accumulation/Distribution
 //! * [`WILLR`](Core::willr) — Williams' %R
 //!
-//! ## Overlap Studies (30)
+//! ## Overlap Studies (32)
 //!
 //! * [`ACCBANDS`](Core::accbands) — Acceleration Bands
 //! * [`ALMA`](Core::alma) — Arnaud Legoux Moving Average
@@ -261,6 +264,8 @@
 //! * [`SAREXT`](Core::sarext) — Parabolic SAR - Extended
 //! * [`SMA`](Core::sma) — Simple Moving Average
 //! * [`SUPERTREND`](Core::supertrend) — SuperTrend
+//! * [`SWAK_BUTTER`](Core::swak_butter) — Swiss Army Knife - Butterworth Filter
+//! * [`SWAK_GAUSS`](Core::swak_gauss) — Swiss Army Knife - Gaussian Filter
 //! * [`T3`](Core::t3) — Triple Exponential Moving Average (T3)
 //! * [`TEMA`](Core::tema) — Triple Exponential Moving Average
 //! * [`TRIMA`](Core::trima) — Triangular Moving Average

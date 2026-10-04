@@ -8606,6 +8606,204 @@ static const TA_VOptSpec TA_VOpt_SUPERTREND[] = {
    { "optInMultiplier", TA_VOPT_REAL, 0.0, 3.00000000000000022e37, 3.0 },
 };
 
+static TA_RetCode TA_SWAK_2PHP_VFrameD( int startIdx, int endIdx,
+                  const double *const in[], const double optIn[],
+                  int *outBegIdx, int *outNBElement,
+                  double *const outReal[], int *const outInteger[] )
+{
+   (void)outInteger;
+   return TA_SWAK_2PHP(
+               startIdx,
+               endIdx,
+               in[0] /* inReal */,
+               (int)optIn[0] /* optInTimePeriod */,
+               outBegIdx,
+               outNBElement,
+               outReal[0] /* outReal */
+               );
+}
+static TA_RetCode TA_SWAK_2PHP_VFrameS( int startIdx, int endIdx,
+                  const float *const in[], const double optIn[],
+                  int *outBegIdx, int *outNBElement,
+                  double *const outReal[], int *const outInteger[] )
+{
+   (void)outInteger;
+   return TA_S_SWAK_2PHP(
+               startIdx,
+               endIdx,
+               in[0] /* inReal */,
+               (int)optIn[0] /* optInTimePeriod */,
+               outBegIdx,
+               outNBElement,
+               outReal[0] /* outReal */
+               );
+}
+
+static const TA_VInputKind TA_VIn_SWAK_2PHP[] = { TA_VIN_REAL };
+static const int TA_VOutIsInt_SWAK_2PHP[] = { 0 };
+static const TA_VOptSpec TA_VOpt_SWAK_2PHP[] = {
+   { "optInTimePeriod", TA_VOPT_INT, 2.0, 10000.0, 20.0 },
+};
+
+static TA_RetCode TA_SWAK_BP_VFrameD( int startIdx, int endIdx,
+                  const double *const in[], const double optIn[],
+                  int *outBegIdx, int *outNBElement,
+                  double *const outReal[], int *const outInteger[] )
+{
+   (void)outInteger;
+   return TA_SWAK_BP(
+               startIdx,
+               endIdx,
+               in[0] /* inReal */,
+               (int)optIn[0] /* optInTimePeriod */,
+               optIn[1] /* optInDelta */,
+               outBegIdx,
+               outNBElement,
+               outReal[0] /* outReal */
+               );
+}
+static TA_RetCode TA_SWAK_BP_VFrameS( int startIdx, int endIdx,
+                  const float *const in[], const double optIn[],
+                  int *outBegIdx, int *outNBElement,
+                  double *const outReal[], int *const outInteger[] )
+{
+   (void)outInteger;
+   return TA_S_SWAK_BP(
+               startIdx,
+               endIdx,
+               in[0] /* inReal */,
+               (int)optIn[0] /* optInTimePeriod */,
+               optIn[1] /* optInDelta */,
+               outBegIdx,
+               outNBElement,
+               outReal[0] /* outReal */
+               );
+}
+
+static const TA_VInputKind TA_VIn_SWAK_BP[] = { TA_VIN_REAL };
+static const int TA_VOutIsInt_SWAK_BP[] = { 0 };
+static const TA_VOptSpec TA_VOpt_SWAK_BP[] = {
+   { "optInTimePeriod", TA_VOPT_INT, 5.0, 2000.0, 20.0 },
+   { "optInDelta", TA_VOPT_REAL, 5.00000000000000028e-2, 5.00000000000000000e-1, 1.00000000000000006e-1 },
+};
+
+static TA_RetCode TA_SWAK_BUTTER_VFrameD( int startIdx, int endIdx,
+                  const double *const in[], const double optIn[],
+                  int *outBegIdx, int *outNBElement,
+                  double *const outReal[], int *const outInteger[] )
+{
+   (void)outInteger;
+   return TA_SWAK_BUTTER(
+               startIdx,
+               endIdx,
+               in[0] /* inReal */,
+               (int)optIn[0] /* optInTimePeriod */,
+               outBegIdx,
+               outNBElement,
+               outReal[0] /* outReal */
+               );
+}
+static TA_RetCode TA_SWAK_BUTTER_VFrameS( int startIdx, int endIdx,
+                  const float *const in[], const double optIn[],
+                  int *outBegIdx, int *outNBElement,
+                  double *const outReal[], int *const outInteger[] )
+{
+   (void)outInteger;
+   return TA_S_SWAK_BUTTER(
+               startIdx,
+               endIdx,
+               in[0] /* inReal */,
+               (int)optIn[0] /* optInTimePeriod */,
+               outBegIdx,
+               outNBElement,
+               outReal[0] /* outReal */
+               );
+}
+
+static const TA_VInputKind TA_VIn_SWAK_BUTTER[] = { TA_VIN_REAL };
+static const int TA_VOutIsInt_SWAK_BUTTER[] = { 0 };
+static const TA_VOptSpec TA_VOpt_SWAK_BUTTER[] = {
+   { "optInTimePeriod", TA_VOPT_INT, 2.0, 10000.0, 20.0 },
+};
+
+static TA_RetCode TA_SWAK_GAUSS_VFrameD( int startIdx, int endIdx,
+                  const double *const in[], const double optIn[],
+                  int *outBegIdx, int *outNBElement,
+                  double *const outReal[], int *const outInteger[] )
+{
+   (void)outInteger;
+   return TA_SWAK_GAUSS(
+               startIdx,
+               endIdx,
+               in[0] /* inReal */,
+               (int)optIn[0] /* optInTimePeriod */,
+               outBegIdx,
+               outNBElement,
+               outReal[0] /* outReal */
+               );
+}
+static TA_RetCode TA_SWAK_GAUSS_VFrameS( int startIdx, int endIdx,
+                  const float *const in[], const double optIn[],
+                  int *outBegIdx, int *outNBElement,
+                  double *const outReal[], int *const outInteger[] )
+{
+   (void)outInteger;
+   return TA_S_SWAK_GAUSS(
+               startIdx,
+               endIdx,
+               in[0] /* inReal */,
+               (int)optIn[0] /* optInTimePeriod */,
+               outBegIdx,
+               outNBElement,
+               outReal[0] /* outReal */
+               );
+}
+
+static const TA_VInputKind TA_VIn_SWAK_GAUSS[] = { TA_VIN_REAL };
+static const int TA_VOutIsInt_SWAK_GAUSS[] = { 0 };
+static const TA_VOptSpec TA_VOpt_SWAK_GAUSS[] = {
+   { "optInTimePeriod", TA_VOPT_INT, 2.0, 10000.0, 20.0 },
+};
+
+static TA_RetCode TA_SWAK_HP_VFrameD( int startIdx, int endIdx,
+                  const double *const in[], const double optIn[],
+                  int *outBegIdx, int *outNBElement,
+                  double *const outReal[], int *const outInteger[] )
+{
+   (void)outInteger;
+   return TA_SWAK_HP(
+               startIdx,
+               endIdx,
+               in[0] /* inReal */,
+               (int)optIn[0] /* optInTimePeriod */,
+               outBegIdx,
+               outNBElement,
+               outReal[0] /* outReal */
+               );
+}
+static TA_RetCode TA_SWAK_HP_VFrameS( int startIdx, int endIdx,
+                  const float *const in[], const double optIn[],
+                  int *outBegIdx, int *outNBElement,
+                  double *const outReal[], int *const outInteger[] )
+{
+   (void)outInteger;
+   return TA_S_SWAK_HP(
+               startIdx,
+               endIdx,
+               in[0] /* inReal */,
+               (int)optIn[0] /* optInTimePeriod */,
+               outBegIdx,
+               outNBElement,
+               outReal[0] /* outReal */
+               );
+}
+
+static const TA_VInputKind TA_VIn_SWAK_HP[] = { TA_VIN_REAL };
+static const int TA_VOutIsInt_SWAK_HP[] = { 0 };
+static const TA_VOptSpec TA_VOpt_SWAK_HP[] = {
+   { "optInTimePeriod", TA_VOPT_INT, 5.0, 100000.0, 20.0 },
+};
+
 static TA_RetCode TA_T3_VFrameD( int startIdx, int endIdx,
                   const double *const in[], const double optIn[],
                   int *outBegIdx, int *outNBElement,
@@ -9902,6 +10100,16 @@ static const TA_VariantEntry TA_VariantTable[] = {
      1, TA_VIn_SUM, 1, TA_VOpt_SUM, 1, TA_VOutIsInt_SUM, 0 },
    { "SUPERTREND", TA_SUPERTREND_VFrameD, TA_SUPERTREND_VFrameS,
      3, TA_VIn_SUPERTREND, 2, TA_VOpt_SUPERTREND, 2, TA_VOutIsInt_SUPERTREND, 0 },
+   { "SWAK_2PHP", TA_SWAK_2PHP_VFrameD, TA_SWAK_2PHP_VFrameS,
+     1, TA_VIn_SWAK_2PHP, 1, TA_VOpt_SWAK_2PHP, 1, TA_VOutIsInt_SWAK_2PHP, 0 },
+   { "SWAK_BP", TA_SWAK_BP_VFrameD, TA_SWAK_BP_VFrameS,
+     1, TA_VIn_SWAK_BP, 2, TA_VOpt_SWAK_BP, 1, TA_VOutIsInt_SWAK_BP, 0 },
+   { "SWAK_BUTTER", TA_SWAK_BUTTER_VFrameD, TA_SWAK_BUTTER_VFrameS,
+     1, TA_VIn_SWAK_BUTTER, 1, TA_VOpt_SWAK_BUTTER, 1, TA_VOutIsInt_SWAK_BUTTER, 0 },
+   { "SWAK_GAUSS", TA_SWAK_GAUSS_VFrameD, TA_SWAK_GAUSS_VFrameS,
+     1, TA_VIn_SWAK_GAUSS, 1, TA_VOpt_SWAK_GAUSS, 1, TA_VOutIsInt_SWAK_GAUSS, 0 },
+   { "SWAK_HP", TA_SWAK_HP_VFrameD, TA_SWAK_HP_VFrameS,
+     1, TA_VIn_SWAK_HP, 1, TA_VOpt_SWAK_HP, 1, TA_VOutIsInt_SWAK_HP, 0 },
    { "T3", TA_T3_VFrameD, TA_T3_VFrameS,
      1, TA_VIn_T3, 2, TA_VOpt_T3, 1, TA_VOutIsInt_T3, 0 },
    { "TAN", TA_TAN_VFrameD, TA_TAN_VFrameS,
@@ -9948,6 +10156,6 @@ static const TA_VariantEntry TA_VariantTable[] = {
      1, TA_VIn_ZLEMA, 1, TA_VOpt_ZLEMA, 1, TA_VOutIsInt_ZLEMA, 0 },
 };
 
-#define TA_VARIANT_TABLE_SIZE 223
+#define TA_VARIANT_TABLE_SIZE 228
 
 #endif /* TA_VARIANT_FRAME_H */

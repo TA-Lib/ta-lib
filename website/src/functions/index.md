@@ -12,6 +12,9 @@ All technical-analysis functions, grouped by category. Each page documents the f
 - [HT_PHASOR](/functions/ht_phasor.md) — Hilbert Transform - Phasor Components
 - [HT_SINE](/functions/ht_sine.md) — Hilbert Transform - SineWave
 - [HT_TRENDMODE](/functions/ht_trendmode.md) — Hilbert Transform - Trend vs Cycle Mode
+- [SWAK_2PHP](/functions/swak_2php.md) — Swiss Army Knife - Two-Pole High-Pass Filter
+- [SWAK_BP](/functions/swak_bp.md) — Swiss Army Knife - Band-Pass Filter
+- [SWAK_HP](/functions/swak_hp.md) — Swiss Army Knife - High-Pass Filter
 
 ## Math Operators
 
@@ -132,6 +135,8 @@ All technical-analysis functions, grouped by category. Each page documents the f
 - [SAREXT](/functions/sarext.md) — Parabolic SAR - Extended
 - [SMA](/functions/sma.md) — Simple Moving Average
 - [SUPERTREND](/functions/supertrend.md) — SuperTrend
+- [SWAK_BUTTER](/functions/swak_butter.md) — Swiss Army Knife - Butterworth Filter
+- [SWAK_GAUSS](/functions/swak_gauss.md) — Swiss Army Knife - Gaussian Filter
 - [T3](/functions/t3.md) — Triple Exponential Moving Average (T3)
 - [TEMA](/functions/tema.md) — Triple Exponential Moving Average
 - [TRIMA](/functions/trima.md) — Triangular Moving Average

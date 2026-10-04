@@ -659,6 +659,21 @@ final class Dispatch {
          case "SUPERTREND":
             return core.supertrend(
                startIdx, endIdx, h.price(0, 1), h.price(0, 2), h.price(0, 3), h.intOpt(0), h.realOpt(1), h.realOutput(0), h.intOutput(1));
+         case "SWAK_2PHP":
+            return core.swak2php(
+               startIdx, endIdx, h.realInput(0), h.intOpt(0), h.realOutput(0));
+         case "SWAK_BP":
+            return core.swakBp(
+               startIdx, endIdx, h.realInput(0), h.intOpt(0), h.realOpt(1), h.realOutput(0));
+         case "SWAK_BUTTER":
+            return core.swakButter(
+               startIdx, endIdx, h.realInput(0), h.intOpt(0), h.realOutput(0));
+         case "SWAK_GAUSS":
+            return core.swakGauss(
+               startIdx, endIdx, h.realInput(0), h.intOpt(0), h.realOutput(0));
+         case "SWAK_HP":
+            return core.swakHp(
+               startIdx, endIdx, h.realInput(0), h.intOpt(0), h.realOutput(0));
          case "T3":
             return core.t3(
                startIdx, endIdx, h.realInput(0), h.intOpt(0), h.realOpt(1), h.realOutput(0));
@@ -1138,6 +1153,16 @@ final class Dispatch {
             return core.sumLookback(h.intOpt(0));
          case "SUPERTREND":
             return core.supertrendLookback(h.intOpt(0), h.realOpt(1));
+         case "SWAK_2PHP":
+            return core.swak2phpLookback(h.intOpt(0));
+         case "SWAK_BP":
+            return core.swakBpLookback(h.intOpt(0), h.realOpt(1));
+         case "SWAK_BUTTER":
+            return core.swakButterLookback(h.intOpt(0));
+         case "SWAK_GAUSS":
+            return core.swakGaussLookback(h.intOpt(0));
+         case "SWAK_HP":
+            return core.swakHpLookback(h.intOpt(0));
          case "T3":
             return core.t3Lookback(h.intOpt(0), h.realOpt(1));
          case "TAN":
@@ -1592,6 +1617,16 @@ final class Dispatch {
             return core.sumDisplayShift(h.intOpt(0), outputIdx);
          case "SUPERTREND":
             return core.supertrendDisplayShift(h.intOpt(0), h.realOpt(1), outputIdx);
+         case "SWAK_2PHP":
+            return core.swak2phpDisplayShift(h.intOpt(0), outputIdx);
+         case "SWAK_BP":
+            return core.swakBpDisplayShift(h.intOpt(0), h.realOpt(1), outputIdx);
+         case "SWAK_BUTTER":
+            return core.swakButterDisplayShift(h.intOpt(0), outputIdx);
+         case "SWAK_GAUSS":
+            return core.swakGaussDisplayShift(h.intOpt(0), outputIdx);
+         case "SWAK_HP":
+            return core.swakHpDisplayShift(h.intOpt(0), outputIdx);
          case "T3":
             return core.t3DisplayShift(h.intOpt(0), h.realOpt(1), outputIdx);
          case "TAN":
