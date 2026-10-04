@@ -173,7 +173,7 @@ TA_LIB_API TA_RetCode TA_SWAK_HP( int    startIdx,
    {
       /* a1*y1 stays the outermost term. y1 is the newest output, so the bar
        * rate is the latency of whatever y1 crosses to become y: outermost, that
-       * is one fused step. Nested inside, it is three, and every backend's last
+       * is one fused step. Nested inside, it is two, and every backend's last
        * bit moves with it.
        */
       x0 = inReal[today];
@@ -297,7 +297,7 @@ static TA_FMA_STEP_INLINE void TA_SWAK_HP_StepImpl( struct TA_SWAK_HP_Stream *sp
 
    /* a1*y1 stays the outermost term. y1 is the newest output, so the bar
     * rate is the latency of whatever y1 crosses to become y: outermost, that
-    * is one fused step. Nested inside, it is three, and every backend's last
+    * is one fused step. Nested inside, it is two, and every backend's last
     * bit moves with it.
     */
    x0 = inReal;
@@ -399,7 +399,7 @@ static TA_RetCode TA_SWAK_HP_OpenImpl( struct TA_SWAK_HP_Stream **stream, const 
       {
          /* a1*y1 stays the outermost term. y1 is the newest output, so the bar
           * rate is the latency of whatever y1 crosses to become y: outermost, that
-          * is one fused step. Nested inside, it is three, and every backend's last
+          * is one fused step. Nested inside, it is two, and every backend's last
           * bit moves with it.
           */
          x0 = inReal[today];
@@ -500,7 +500,7 @@ TA_LIB_API TA_RetCode TA_SWAK_HP_Peek( const TA_SWAK_HP_Stream *stream, double i
    y1 = sp->y1;
    /* a1*y1 stays the outermost term. y1 is the newest output, so the bar
     * rate is the latency of whatever y1 crosses to become y: outermost, that
-    * is one fused step. Nested inside, it is three, and every backend's last
+    * is one fused step. Nested inside, it is two, and every backend's last
     * bit moves with it.
     */
    x0 = inReal;

@@ -53,8 +53,8 @@ TA_RetCode swak_2php(int startIdx, int endIdx,
    b2p = 2.415 * (1.0 - cos(w));
    a2p = -b2p + sqrt( b2p*b2p + 2.0*b2p );
 
-   /* The two-pole high-pass row: the same double real pole as those two, with
-    * a (1, -2, 1) numerator instead. That numerator is zero on a constant, so
+   /* The two-pole high-pass row: the same double real pole as the Gaussian
+    * and Butterworth rows, with a (1, -2, 1) numerator instead. That numerator is zero on a constant, so
     * the DC gain is 0 and the line is centred on zero; at Nyquist it weighs 4,
     * and c0 is exactly what divides that back to unity -- ((2-a2p)/2)^2 times
     * 4/(2-a2p)^2 is 1. Rolling off twice as steeply as the one-pole row is the

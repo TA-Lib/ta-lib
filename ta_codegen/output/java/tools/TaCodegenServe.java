@@ -193262,8 +193262,8 @@ class Core {
           w = 2.0 * 3.141592653589793 / (double)optInTimePeriod;
           b2p = 2.415 * (1.0 - Math.cos(w));
           a2p = -b2p + Math.sqrt(Math.fma(b2p, b2p, 2.0 * b2p));
-          /* The two-pole high-pass row: the same double real pole as those two, with
-           * a (1, -2, 1) numerator instead. That numerator is zero on a constant, so
+          /* The two-pole high-pass row: the same double real pole as the Gaussian
+           * and Butterworth rows, with a (1, -2, 1) numerator instead. That numerator is zero on a constant, so
            * the DC gain is 0 and the line is centred on zero; at Nyquist it weighs 4,
            * and c0 is exactly what divides that back to unity -- ((2-a2p)/2)^2 times
            * 4/(2-a2p)^2 is 1. Rolling off twice as steeply as the one-pole row is the
@@ -193773,8 +193773,8 @@ class Core {
           w = 2.0 * 3.141592653589793 / (double)optInTimePeriod;
           b2p = 2.415 * (1.0 - Math.cos(w));
           a2p = -b2p + Math.sqrt(Math.fma(b2p, b2p, 2.0 * b2p));
-          /* The two-pole high-pass row: the same double real pole as those two, with
-           * a (1, -2, 1) numerator instead. That numerator is zero on a constant, so
+          /* The two-pole high-pass row: the same double real pole as the Gaussian
+           * and Butterworth rows, with a (1, -2, 1) numerator instead. That numerator is zero on a constant, so
            * the DC gain is 0 and the line is centred on zero; at Nyquist it weighs 4,
            * and c0 is exactly what divides that back to unity -- ((2-a2p)/2)^2 times
            * 4/(2-a2p)^2 is 1. Rolling off twice as steeply as the one-pole row is the
@@ -196392,7 +196392,7 @@ class Core {
           while( today <= endIdx ) {
              /* a1*y1 stays the outermost term. y1 is the newest output, so the bar
               * rate is the latency of whatever y1 crosses to become y: outermost, that
-              * is one fused step. Nested inside, it is three, and every backend's last
+              * is one fused step. Nested inside, it is two, and every backend's last
               * bit moves with it.
               */
              x0 = inReal[today];
@@ -196738,7 +196738,7 @@ class Core {
              double y1 = sp.y1;
              /* a1*y1 stays the outermost term. y1 is the newest output, so the bar
               * rate is the latency of whatever y1 crosses to become y: outermost, that
-              * is one fused step. Nested inside, it is three, and every backend's last
+              * is one fused step. Nested inside, it is two, and every backend's last
               * bit moves with it.
               */
              x0 = inReal;
@@ -196781,7 +196781,7 @@ class Core {
           double y = 0.0;
           /* a1*y1 stays the outermost term. y1 is the newest output, so the bar
            * rate is the latency of whatever y1 crosses to become y: outermost, that
-           * is one fused step. Nested inside, it is three, and every backend's last
+           * is one fused step. Nested inside, it is two, and every backend's last
            * bit moves with it.
            */
           x0 = inReal;
@@ -196873,7 +196873,7 @@ class Core {
           while( today <= endIdx ) {
              /* a1*y1 stays the outermost term. y1 is the newest output, so the bar
               * rate is the latency of whatever y1 crosses to become y: outermost, that
-              * is one fused step. Nested inside, it is three, and every backend's last
+              * is one fused step. Nested inside, it is two, and every backend's last
               * bit moves with it.
               */
              x0 = inReal[today];
@@ -217548,7 +217548,7 @@ class Core {
 
 public class TaCodegenServe {
     static Core core = new Core();
-    static final String SPLICED_GENCODE_DIGEST = "b5df03c069cd9e38";
+    static final String SPLICED_GENCODE_DIGEST = "e97170e0393e0438";
     static final int MAX_ARRAY_SIZE = 200000;
     static double[] refOpen = new double[MAX_ARRAY_SIZE];
     static double[] refHigh = new double[MAX_ARRAY_SIZE];

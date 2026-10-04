@@ -25,9 +25,10 @@
  *
  *   under five coefficient rows. Legs 1 to 3 assert what a row does to a
  *   constant, to a Nyquist alternation and (band-pass) to a sinusoid at its
- *   centre period. Their transient bounds are the envelope of that row's own
- *   poles, because the seed's transient decays at the row's rate and a fixed
- *   threshold is wrong at one end of the period range or the other:
+ *   centre period. The transient bounds of legs 2 and 3 are the envelope of
+ *   that row's own poles, because the seed's transient decays at the row's
+ *   rate and a fixed threshold is wrong at one end of the period range or the
+ *   other:
  *
  *       GAUSS / BUTTER / 2PHP   double real pole om = 1-a2p    k * om^k
  *       HP                      single real pole 1-a1p         p^k
@@ -50,8 +51,9 @@
  *        That last one is the control arm: without it, a row that returned 0
  *        everywhere would satisfy every other Nyquist case in this leg.
  *     3. CENTRE: BP returns cos(2*pi*i/P) unchanged, at unity gain and zero
- *        phase. Of the analytic legs only this one pins a1, which the DC and Nyquist
- *        legs are both blind to (the numerator vanishes there whatever a1 is).
+ *        phase. Of the analytic legs only this one pins a1, which the DC and
+ *        Nyquist legs are both blind to (the numerator vanishes there whatever
+ *        a1 is).
  *     4. LOOKBACK is the unstable period and nothing else, under several
  *        settings of it, per row.
  *     5. ALIASING: outReal == inReal.
@@ -59,7 +61,7 @@
  *     7. GOLDEN: frozen values from a 60-digit evaluation of the same rows and
  *        seed. The early bars are the only ones that see the seed, and the
  *        BP rows at its period cap are the only gate that tells its abp from
- *        the paper's gamma - sqrt(gamma^2 - 1), which is 7e-9 off there.
+ *        the paper's gamma - sqrt(gamma^2 - 1), whose output is 7e-9 off there.
  *     8. EDGES: the first period and delta outside each declared range are
  *        refused.
  *     9. ORACLE: frozen bars from two other implementations, each taken where
@@ -69,11 +71,12 @@
  *        eSignal port, Swak.efs, for HP, 2PHP and BP: the one independent
  *        implementation of the band-pass row.
  *
- *   SERVER_VERIFY: the constant, Nyquist and golden shapes are routed. The --codegen
+ *   SERVER_VERIFY: the constant and Nyquist shapes are routed. The --codegen
  *   sweep sends the 252-bar corpus with one parameter moved at a time and
  *   reaches neither shape, and both are exactly where a coefficient
  *   transcription error in another language shows up as a whole number rather
- *   than a last-bit difference.
+ *   than a last-bit difference. The golden series is routed too, so the other
+ *   languages are held to the frozen bars' input as well.
  */
 
 /**** Headers ****/
@@ -103,10 +106,11 @@
 #define NB_OF(a) ((int)(sizeof(a)/sizeof((a)[0])))
 
 /* Pinned coverage counts. Every input below is synthesized and every count is a
- * loop trip decided by a period and a length -- integer arithmetic only -- so
- * these are platform-free in the sense the suite requires. */
+ * loop trip decided by a period and a length. The Nyquist count also depends on
+ * which cells the envelope threshold keeps; the nearest cell on either side of
+ * it is more than two orders away, so no libm moves one across. */
 #define SWAK_DC_CMP       1878000
-#define SWAK_NYQ_CMP       210005
+#define SWAK_NYQ_CMP       210004
 #define SWAK_CENTRE_CMP    180000
 #define SWAK_LOOKBACK_CMP      132
 #define SWAK_INPLACE_CMP   114700
@@ -476,8 +480,7 @@ static ErrorNumber test_swak_nyquist( void )
          if( d > worst ) worst = d;
       }
 
-      /* Route the first period of EVERY row, so before the control arm's
-       * exit below: the routed floor is only asserted when a pipe is up, so a
+      /* Route the first period of EVERY row, so before the exits below: the routed floor is only asserted when a pipe is up, so a
        * row that routes nothing is invisible to a run without servers. */
       if( pi == 0 && di == 0 )
       {
@@ -515,6 +518,14 @@ static ErrorNumber test_swak_nyquist( void )
             swakIn[i] = (i & 1) ? -1.0 : 1.0;
       }
 
+      /* A cell whose envelope after k0 bars is still above what a wrong
+       * numerator would leave cannot fail, so it is not compared and not
+       * counted. That holds for the control arm too: its residue there is
+       * all transient. */
+      env = swakEnvelope( f, P, delta, k0 );
+      if( 3.0*env > 1e-3 )
+         continue;
+
       if( swakNyquist[f] == -1 )
       {
          /* The control arm. GAUSS's numerator is (1,0,0): it has no zero
@@ -531,11 +542,6 @@ static ErrorNumber test_swak_nyquist( void )
          continue;
       }
 
-      /* A cell whose envelope is still near the signal's own amplitude after
-       * k0 bars cannot fail, so it is not compared and not counted. */
-      env = swakEnvelope( f, P, delta, k0 );
-      if( 3.0*env > 1e-3 )
-         continue;
       bound = 3.0*env + 1e-12;
       if( worst > bound )
       {

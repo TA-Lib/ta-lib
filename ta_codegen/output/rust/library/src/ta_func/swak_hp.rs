@@ -243,7 +243,7 @@ impl Core {
             for _wk in 0.._wn {
                 // a1*y1 stays the outermost term. y1 is the newest output, so the bar
                 // rate is the latency of whatever y1 crosses to become y: outermost, that
-                // is one fused step. Nested inside, it is three, and every backend's last
+                // is one fused step. Nested inside, it is two, and every backend's last
                 // bit moves with it.
                 x0 = _w0[_wk];
                 y = (a1 as f64).mul_add(y1, c0 * (x0 - x1));
@@ -407,7 +407,7 @@ impl Core {
         let mut y: f64 = 0.0_f64;
         // a1*y1 stays the outermost term. y1 is the newest output, so the bar
         // rate is the latency of whatever y1 crosses to become y: outermost, that
-        // is one fused step. Nested inside, it is three, and every backend's last
+        // is one fused step. Nested inside, it is two, and every backend's last
         // bit moves with it.
         x0 = inReal;
         y = (sp.a1 as f64).mul_add(sp.y1, sp.c0 * (x0 - sp.x1));
@@ -503,7 +503,7 @@ impl Core {
         while today <= endIdx {
             // a1*y1 stays the outermost term. y1 is the newest output, so the bar
             // rate is the latency of whatever y1 crosses to become y: outermost, that
-            // is one fused step. Nested inside, it is three, and every backend's last
+            // is one fused step. Nested inside, it is two, and every backend's last
             // bit moves with it.
             x0 = inReal[today];
             y = (a1 as f64).mul_add(y1, c0 * (x0 - x1));
@@ -695,7 +695,7 @@ impl SwakHpStream {
             let mut y1 = sp.y1;
             // a1*y1 stays the outermost term. y1 is the newest output, so the bar
             // rate is the latency of whatever y1 crosses to become y: outermost, that
-            // is one fused step. Nested inside, it is three, and every backend's last
+            // is one fused step. Nested inside, it is two, and every backend's last
             // bit moves with it.
             x0 = inReal;
             y = (sp.a1 as f64).mul_add(y1, sp.c0 * (x0 - x1));

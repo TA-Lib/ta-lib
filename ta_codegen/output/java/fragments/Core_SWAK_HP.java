@@ -148,7 +148,7 @@
       while( today <= endIdx ) {
          /* a1*y1 stays the outermost term. y1 is the newest output, so the bar
           * rate is the latency of whatever y1 crosses to become y: outermost, that
-          * is one fused step. Nested inside, it is three, and every backend's last
+          * is one fused step. Nested inside, it is two, and every backend's last
           * bit moves with it.
           */
          x0 = inReal[today];
@@ -494,7 +494,7 @@
          double y1 = sp.y1;
          /* a1*y1 stays the outermost term. y1 is the newest output, so the bar
           * rate is the latency of whatever y1 crosses to become y: outermost, that
-          * is one fused step. Nested inside, it is three, and every backend's last
+          * is one fused step. Nested inside, it is two, and every backend's last
           * bit moves with it.
           */
          x0 = inReal;
@@ -537,7 +537,7 @@
       double y = 0.0;
       /* a1*y1 stays the outermost term. y1 is the newest output, so the bar
        * rate is the latency of whatever y1 crosses to become y: outermost, that
-       * is one fused step. Nested inside, it is three, and every backend's last
+       * is one fused step. Nested inside, it is two, and every backend's last
        * bit moves with it.
        */
       x0 = inReal;
@@ -629,7 +629,7 @@
       while( today <= endIdx ) {
          /* a1*y1 stays the outermost term. y1 is the newest output, so the bar
           * rate is the latency of whatever y1 crosses to become y: outermost, that
-          * is one fused step. Nested inside, it is three, and every backend's last
+          * is one fused step. Nested inside, it is two, and every backend's last
           * bit moves with it.
           */
          x0 = inReal[today];
