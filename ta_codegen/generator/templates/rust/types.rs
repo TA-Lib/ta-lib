@@ -16,13 +16,13 @@ pub enum RetCode {
     BadParam = 2,
     /// C parity only, never returned here: an allocation failure terminates the process (#178).
     AllocErr = 3,
-    /// Abstraction layer only: a setter was given a value of another kind than
+    /// Abstract API only: a setter was given a value of another kind than
     /// the slot it names.
     InvalidParamHolderType = 8,
-    /// Abstraction layer only: the call was refused because a required input
+    /// Abstract API only: the call was refused because a required input
     /// is not bound. The function did not run.
     InputNotAllInitialize = 10,
-    /// Abstraction layer only: the call was refused because an output is not
+    /// Abstract API only: the call was refused because an output is not
     /// bound. The function did not run.
     OutputNotAllInitialize = 11,
     /// The start index is out of range.
@@ -41,7 +41,7 @@ pub enum RetCode {
 
 /// Where a successful call's output starts and how many values it wrote.
 ///
-/// Returned by every batch entry point and by the abstraction layer's
+/// Returned by every batch entry point and by the Abstract API's
 /// [`ParamHolder::call`](crate::abstract_api::ParamHolder::call). A valid range
 /// that ends before the function's lookback is a **success with no values**
 /// (`count == 0`), not an error — the same contract as C's `TA_SUCCESS` with
@@ -91,7 +91,7 @@ impl std::fmt::Display for RetCode {
 }
 
 /// `RetCode` is the error type of every tier's `Result` — batch, streaming and
-/// the abstraction layer.
+/// the Abstract API.
 impl std::error::Error for RetCode {}
 
 /// Identifies functions that have an unstable period.

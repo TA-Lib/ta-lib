@@ -64,7 +64,7 @@ import io.github.talib.TALibArgumentException;
  * <p>Everything is validated against the {@link FuncInfo} row: an index out
  * of bounds, a type that does not match the declared parameter, or an unbound
  * input or output at {@link #call} time throws a {@link TALibArgumentException}
- * carrying the layer's {@link RetCode}. The call itself then behaves exactly
+ * carrying a {@link RetCode}. The call itself then behaves exactly
  * like the typed method, including throwing on misuse and returning an empty
  * {@link OutRange} when the range is shorter than the lookback.
  *

@@ -4663,6 +4663,38 @@ static ErrorNumber test_default_calls(void)
       }
    }
 
+   /* A handle the layer did not give out, an absent one, and an index that
+    * names no parameter. */
+   if( errNumber == TA_TEST_PASS )
+   {
+      static const long long notAHandle[16];
+      const TA_FuncHandle *forged = (const TA_FuncHandle *)notAHandle;
+      const TA_FuncHandle *sma = NULL;
+      const TA_FuncInfo *info = NULL;
+      const TA_FuncInfo *noInfo = NULL;
+      const TA_InputParameterInfo *inInfo = NULL;
+      const TA_OptInputParameterInfo *optInfo = NULL;
+      const TA_OutputParameterInfo *outInfo = NULL;
+      TA_ParamHolder *holder = NULL;
+
+      if( TA_GetFuncHandle( "SMA", &sma ) != TA_SUCCESS ||
+          TA_GetFuncInfo( sma, &info ) != TA_SUCCESS ||
+          TA_GetFuncInfo( forged, &noInfo ) != TA_INVALID_HANDLE ||
+          TA_GetInputParameterInfo( forged, 0, &inInfo ) != TA_INVALID_HANDLE ||
+          TA_GetOptInputParameterInfo( forged, 0, &optInfo ) != TA_INVALID_HANDLE ||
+          TA_GetOutputParameterInfo( forged, 0, &outInfo ) != TA_INVALID_HANDLE ||
+          TA_ParamHolderAlloc( forged, &holder ) != TA_INVALID_HANDLE || holder != NULL ||
+          TA_GetFuncInfo( NULL, &noInfo ) != TA_BAD_PARAM ||
+          TA_ParamHolderAlloc( NULL, &holder ) != TA_BAD_PARAM ||
+          TA_GetInputParameterInfo( sma, info->nbInput, &inInfo ) != TA_BAD_PARAM ||
+          TA_GetOptInputParameterInfo( sma, info->nbOptInput, &optInfo ) != TA_BAD_PARAM ||
+          TA_GetOutputParameterInfo( sma, info->nbOutput, &outInfo ) != TA_BAD_PARAM )
+      {
+         printf( "Failed: a handle or parameter-index misuse did not answer its code\n" );
+         errNumber = TA_ABS_TST_FAIL_HOLDER_CONTRACT;
+      }
+   }
+
    /* A rejected SETTER leaves the holder as it found it (#266). */
    if( errNumber == TA_TEST_PASS )
       errNumber = testHolderStaysReusable();

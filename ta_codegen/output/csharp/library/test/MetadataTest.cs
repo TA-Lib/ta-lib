@@ -102,7 +102,10 @@ public static class MetadataTest
         }
         catch (Exception e)
         {
-            if (e is not ITALibFailure f || f.RetCode != expected)
+            // Every code but the two index codes is carried by a TALibArgumentException.
+            bool argument = expected is not (RetCode.OutOfRangeStartIndex or RetCode.OutOfRangeEndIndex);
+            if (e is not ITALibFailure f || f.RetCode != expected
+                || (argument && e is not TALibArgumentException))
             {
                 _failures++;
                 Console.WriteLine($"  FAIL: {what} (threw {e.GetType().Name})");
@@ -608,6 +611,21 @@ public static class MetadataTest
             () => sma.CreateCall().SetOutput(0, buf).Call(0, N - 1), "an unbound input -> InputNotAllInitialize");
         CheckCode(RetCode.OutputNotAllInitialize,
             () => sma.CreateCall().SetInput(0, Close).Call(0, N - 1), "an unbound output -> OutputNotAllInitialize");
+        CheckCode(RetCode.InputNotAllInitialize,
+            () => stoch.CreateCall().SetPriceInput(0, PriceComponents.High, High)
+                      .SetOutput(0, new double[N]).SetOutput(1, new double[N]).Call(0, N - 1),
+            "a price input bound in part -> InputNotAllInitialize");
+
+        /* The batch call's other conditions reach a fully bound call too. */
+        CheckCode(RetCode.OutOfRangeEndIndex,
+            () => sma.CreateCall().SetInput(0, Close).SetOutput(0, new double[N]).Call(1, 0),
+            "a bound call, endIdx below startIdx -> OutOfRangeEndIndex");
+        double[] shared = new double[N];
+        CheckCode(RetCode.BadParam,
+            () => FunctionCatalog.Default["BBANDS"].CreateCall().SetInput(0, Close)
+                      .SetOutput(0, shared).SetOutput(1, shared).SetOutput(2, new double[N])
+                      .Call(0, N - 1),
+            "one array bound as two outputs -> BadParam");
 
         /* TryCall advertises "failure as a code rather than an exception" and
            then threw from the binding it performs. It now reports the codes C

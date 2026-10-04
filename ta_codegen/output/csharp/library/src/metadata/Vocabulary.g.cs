@@ -113,10 +113,10 @@ public enum FuncFlags : uint
     /// <summary>A streaming (one-bar-at-a-time) API exists for this function.</summary>
     Stream = 0x02000000,
 
-    /// <summary>The function consumes volume. No shipped function sets this bit.</summary>
+    /// <summary>Output is over the volume data. No shipped function sets this bit.</summary>
     VolumeUsed = 0x04000000,
 
-    /// <summary>Recursive: honours the unstable-period setting. See <see cref="FuncInfo.UnstableId"/>.</summary>
+    /// <summary>Owns an unstable-period id: <see cref="FuncInfo.UnstableId"/>.</summary>
     UnstablePeriod = 0x08000000,
 
     /// <summary>The function recognises a candlestick pattern.</summary>
@@ -203,22 +203,22 @@ public enum OutputFlags : uint
     /// <summary>Draw as a histogram.</summary>
     Histogram = 0x00000010,
 
-    /// <summary>0 = no pattern, 100 = pattern. No shipped function sets this bit.</summary>
+    /// <summary>A value other than 0 means the pattern is present. No shipped function sets this bit.</summary>
     PatternBool = 0x00000020,
 
-    /// <summary>-100 = bearish, 0 = none, 100 = bullish. No shipped function sets this bit.</summary>
+    /// <summary>Positive is bullish, negative bearish, 0 no pattern. No shipped function sets this bit.</summary>
     PatternBullBear = 0x00000040,
 
-    /// <summary>-200..-100 bearish, 100..200 bullish. No shipped function sets this bit.</summary>
+    /// <summary>0 is neutral; up to 100 getting bullish and above it bullish; down to -100 getting bearish and below it bearish. No shipped function sets this bit.</summary>
     PatternStrength = 0x00000080,
 
-    /// <summary>The value is always at or above zero. No shipped function sets this bit.</summary>
+    /// <summary>The output can be positive. No shipped function sets this bit.</summary>
     Positive = 0x00000100,
 
-    /// <summary>The value is always at or below zero. No shipped function sets this bit.</summary>
+    /// <summary>The output can be negative. No shipped function sets this bit.</summary>
     Negative = 0x00000200,
 
-    /// <summary>Zero is a meaningful reference level. No shipped function sets this bit.</summary>
+    /// <summary>The output can be zero. No shipped function sets this bit.</summary>
     Zero = 0x00000400,
 
     /// <summary>An upper band or limit line.</summary>
@@ -227,7 +227,7 @@ public enum OutputFlags : uint
     /// <summary>A lower band or limit line.</summary>
     LowerLimit = 0x00001000,
 
-    /// <summary>Discardable: C accepts <c>NULL</c> for it. C# still requires an array.</summary>
+    /// <summary>The typed call lets the caller decline it. A <c>ParamHolder</c> still needs it bound.</summary>
     Nullable = 0x00002000,
 
     /// <summary>A chart draws it ahead of or behind the bar that computed it, by the bars the display-shift query reports. The values are never shifted.</summary>

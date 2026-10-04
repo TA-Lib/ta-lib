@@ -44,7 +44,8 @@ package io.github.talib;
  * An argument was rejected: an optional parameter outside its documented range,
  * two outputs sharing one array, or an array too short for the values the call
  * would read or write. Also what the {@code io.github.talib.metadata} binder
- * throws for a misuse of its own, with the layer's code.
+ * throws for a misuse of its own, carrying {@code BAD_PARAM} or an Abstract API
+ * code.
  *
  * <p>An {@link IllegalArgumentException}, which is what the API documents and
  * what a caller catches; the {@link RetCode} says which condition it was.

@@ -59,9 +59,8 @@ package io.github.talib;
  * C uses for an argument it can detect) — and <b>lossless</b>: distinct codes
  * never share one thrown representation.
  *
- * <p>The {@code io.github.talib.metadata} binder reports through it too, with
- * the layer's own codes. Outside it, deliberately: {@link CoreBuilder}, which is
- * not an indicator call.
+ * <p>The {@code io.github.talib.metadata} binder reports through it too.
+ * Outside it, deliberately: {@link CoreBuilder}, which is not an indicator call.
  */
 public interface TALibFailure {
 

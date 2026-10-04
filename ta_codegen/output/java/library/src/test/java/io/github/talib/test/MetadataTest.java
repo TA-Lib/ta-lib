@@ -51,6 +51,7 @@ import io.github.talib.Core;
 import io.github.talib.MAType;
 import io.github.talib.OutRange;
 import io.github.talib.RetCode;
+import io.github.talib.TALibArgumentException;
 import io.github.talib.TALibFailure;
 import io.github.talib.metadata.FuncFlags;
 import io.github.talib.metadata.FunctionDescription;
@@ -607,6 +608,17 @@ public class MetadataTest {
                             .setOutput(0, new double[N - lookback]).call(0, N - 1);
         check(exact.count() == N - lookback,
             "an output sized to the produced count is accepted (" + exact.count() + ")");
+
+        // The batch call's other conditions reach a fully bound holder too.
+        checkRetCode(RetCode.OUT_OF_RANGE_END_INDEX,
+            () -> sma.newCall().setInput(0, CLOSE).setOutput(0, new double[N]).call(1, 0),
+            "a bound holder, endIdx below startIdx -> OUT_OF_RANGE_END_INDEX");
+        double[] shared = new double[N];
+        checkRetCode(RetCode.BAD_PARAM,
+            () -> Functions.byName("BBANDS").newCall().setInput(0, CLOSE)
+                     .setOutput(0, shared).setOutput(1, shared).setOutput(2, new double[N])
+                     .call(0, N - 1),
+            "one array bound as two outputs -> BAD_PARAM");
     }
 
     /**
@@ -686,7 +698,11 @@ public class MetadataTest {
             failures++;
             System.out.println("  FAIL: " + what + " (no exception thrown)");
         } catch (RuntimeException e) {
-            if (!(e instanceof TALibFailure f) || f.retCode() != expected) {
+            // Every code but the two index codes is carried by a TALibArgumentException.
+            boolean argument = expected != RetCode.OUT_OF_RANGE_START_INDEX
+                && expected != RetCode.OUT_OF_RANGE_END_INDEX;
+            if (!(e instanceof TALibFailure f) || f.retCode() != expected
+                    || (argument && !(e instanceof TALibArgumentException))) {
                 failures++;
                 System.out.println("  FAIL: " + what + " (threw " + e.getClass().getName() + ")");
             }

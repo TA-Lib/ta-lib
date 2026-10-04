@@ -67,10 +67,10 @@ pub fn render_matype(enums: &HashMap<String, EnumDef>) -> String {
     s.push_str(
         "\nimpl TryFrom<i32> for MAType {\n    \
          type Error = RetCode;\n\n    \
-         /// Convert a raw parameter value, as the abstract layer and the JSON-RPC\n    \
+         /// Convert a raw parameter value, as the Abstract API and the JSON-RPC\n    \
          /// server hold it.\n    ///\n    \
          /// `i32::MIN` — C's `TA_INTEGER_DEFAULT` — resolves to the `DEFAULT`\n    \
-         /// member, so a value arriving through the abstract layer still selects\n    \
+         /// member, so a value arriving through the Abstract API still selects\n    \
          /// that parameter's documented default exactly as it does in C. Every\n    \
          /// other out-of-domain value is `BadParam`, which is what keeps the\n    \
          /// rejection in this crate rather than in a caller that wraps it.\n    \

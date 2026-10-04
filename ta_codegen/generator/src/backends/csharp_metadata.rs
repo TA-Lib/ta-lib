@@ -334,11 +334,11 @@ fn cd(v: f64) -> String {
 const FUNC_FLAGS: &[(&str, &str, &str)] = &[
     ("overlap", "Overlap", "Output is on the input's scale and overlays a price chart."),
     ("stream", "Stream", "A streaming (one-bar-at-a-time) API exists for this function."),
-    ("volume", "VolumeUsed", "The function consumes volume."),
+    ("volume", "VolumeUsed", "Output is over the volume data."),
     (
         "unstable_period",
         "UnstablePeriod",
-        "Recursive: honours the unstable-period setting. See <see cref=\"FuncInfo.UnstableId\"/>.",
+        "Owns an unstable-period id: <see cref=\"FuncInfo.UnstableId\"/>.",
     ),
     ("candlestick", "Candlestick", "The function recognises a candlestick pattern."),
     (
@@ -376,18 +376,22 @@ const OUTPUT_FLAGS: &[(&str, &str, &str)] = &[
     ("dash_line", "DashLine", "Draw as a dashed line."),
     ("dot", "Dot", "Draw as unconnected dots."),
     ("histogram", "Histogram", "Draw as a histogram."),
-    ("pattern_bool", "PatternBool", "0 = no pattern, 100 = pattern."),
-    ("pattern_bull_bear", "PatternBullBear", "-100 = bearish, 0 = none, 100 = bullish."),
-    ("pattern_strength", "PatternStrength", "-200..-100 bearish, 100..200 bullish."),
-    ("positive", "Positive", "The value is always at or above zero."),
-    ("negative", "Negative", "The value is always at or below zero."),
-    ("zero", "Zero", "Zero is a meaningful reference level."),
+    ("pattern_bool", "PatternBool", "A value other than 0 means the pattern is present."),
+    ("pattern_bull_bear", "PatternBullBear", "Positive is bullish, negative bearish, 0 no pattern."),
+    (
+        "pattern_strength",
+        "PatternStrength",
+        "0 is neutral; up to 100 getting bullish and above it bullish; down to -100 getting bearish and below it bearish.",
+    ),
+    ("positive", "Positive", "The output can be positive."),
+    ("negative", "Negative", "The output can be negative."),
+    ("zero", "Zero", "The output can be zero."),
     ("upper_limit", "UpperLimit", "An upper band or limit line."),
     ("lower_limit", "LowerLimit", "A lower band or limit line."),
     (
         "nullable",
         "Nullable",
-        "Discardable: C accepts <c>NULL</c> for it. C# still requires an array.",
+        "The typed call lets the caller decline it. A <c>ParamHolder</c> still needs it bound.",
     ),
     (
         "display_shift",

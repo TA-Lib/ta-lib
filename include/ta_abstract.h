@@ -190,7 +190,7 @@ typedef int TA_FuncFlags;
                                           * for these functions for allowing to set that
                                           * unstable period. See Documentation.
                                           */
-#define TA_FUNC_FLG_CANDLESTICK 0x10000000 /* Output shall be a candlestick */
+#define TA_FUNC_FLG_CANDLESTICK 0x10000000 /* A candlestick pattern function (CDL*). */
 #define TA_FUNC_FLG_PATH_DEP  0x20000000 /* Output value is path-dependent: built
                                           * up from the first bar (a running
                                           * accumulation seeded there, or a
@@ -427,7 +427,7 @@ typedef int TA_OutputFlags;
 #define TA_OUT_HISTO             0x00000010 /* Suggest to display as an histogram. */
 #define TA_OUT_PATTERN_BOOL      0x00000020 /* Indicates if pattern exists (!=0) or not (0) */
 #define TA_OUT_PATTERN_BULL_BEAR 0x00000040 /* =0 no pattern, > 0 bullish, < 0 bearish */
-#define TA_OUT_PATTERN_STRENGTH  0x00000080 /* =0 neutral, ]0..100] getting bullish, ]100..200] bullish, [-100..0[ getting bearish, [-200..100[ bearish */
+#define TA_OUT_PATTERN_STRENGTH  0x00000080 /* =0 neutral, ]0..100] getting bullish, ]100..200] bullish, [-100..0[ getting bearish, [-200..-100[ bearish */
 #define TA_OUT_POSITIVE          0x00000100 /* Output can be positive */
 #define TA_OUT_NEGATIVE          0x00000200 /* Output can be negative */
 #define TA_OUT_ZERO              0x00000400 /* Output can be zero */
@@ -435,7 +435,8 @@ typedef int TA_OutputFlags;
 #define TA_OUT_LOWER_LIMIT       0x00001000 /* Indicates that the values represent a lower limit. */
 #define TA_OUT_NULLABLE          0x00002000 /* The output pointer may be NULL: the caller can discard
                                              * this output (it is computed but not written). E.g. MAMA's
-                                             * FAMA line when only the MAMA line is wanted. */
+                                             * FAMA line when only the MAMA line is wanted. TA_CallFunc
+                                             * still needs it bound. */
 #define TA_OUT_DISPLAY_SHIFT     0x00004000 /* A chart draws this output ahead of or behind the bar
                                              * that computed it, by the number of bars
                                              * TA_GetDisplayShift reports. The values themselves are

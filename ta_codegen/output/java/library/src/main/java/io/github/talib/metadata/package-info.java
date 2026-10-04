@@ -40,7 +40,7 @@
  * Runtime introspection: what the library's functions are, what they take,
  * and how to call one whose name is not known until run time.
  *
- * <p>The Java face of the C library's {@code ta_abstract} layer, and
+ * <p>The Java face of the C library's {@code ta_abstract} interface, and
  * generated from the same definitions as the indicators themselves, so a
  * row here cannot describe a method that does not exist.
  *

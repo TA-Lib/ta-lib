@@ -88,7 +88,7 @@ fn package_info() -> String {
          \x20* Runtime introspection: what the library's functions are, what they take,\n\
          \x20* and how to call one whose name is not known until run time.\n\
          \x20*\n\
-         \x20* <p>The Java face of the C library's {{@code ta_abstract}} layer, and\n\
+         \x20* <p>The Java face of the C library's {{@code ta_abstract}} interface, and\n\
          \x20* generated from the same definitions as the indicators themselves, so a\n\
          \x20* row here cannot describe a method that does not exist.\n\
          \x20*\n\
@@ -398,8 +398,8 @@ fn func_flags_class() -> String {
         &[
             ("OVERLAP_STUDY", 0x0100_0000, "Output overlays the price chart."),
             ("STREAMING", 0x0200_0000, "A streaming (one-bar-at-a-time) API exists."),
-            ("VOLUME_USED", 0x0400_0000, "Consumes volume."),
-            ("UNSTABLE_PERIOD", 0x0800_0000, "Recursive: honours the unstable-period setting."),
+            ("VOLUME_USED", 0x0400_0000, "Output is over the volume data."),
+            ("UNSTABLE_PERIOD", 0x0800_0000, "Owns an unstable-period id."),
             ("CANDLESTICK", 0x1000_0000, "A candlestick pattern."),
             (
                 "PATH_DEPENDENT",
@@ -461,26 +461,30 @@ fn output_flags_class() -> String {
     flag_class(
         "OutputFlags",
         "How an output is meant to be drawn, and whether it may be omitted. Values match C's \
-         {@code TA_OUT_*}. The old hand-written island stopped at {@code ZERO} and left \
-         consumers hardcoding the rest.",
+         {@code TA_OUT_*}.",
         &[
             ("LINE", 0x0000_0001, "Draw as a continuous line."),
             ("DOT_LINE", 0x0000_0002, "Draw as a dotted line."),
             ("DASH_LINE", 0x0000_0004, "Draw as a dashed line."),
             ("DOT", 0x0000_0008, "Draw as unconnected dots."),
             ("HISTOGRAM", 0x0000_0010, "Draw as a histogram."),
-            ("PATTERN_BOOL", 0x0000_0020, "0 = no pattern, 100 = pattern."),
-            ("PATTERN_BULL_BEAR", 0x0000_0040, "-100 = bearish, 0 = none, 100 = bullish."),
-            ("PATTERN_STRENGTH", 0x0000_0080, "-200..-100 = bearish, 100..200 = bullish."),
-            ("POSITIVE", 0x0000_0100, "Always &gt;= 0."),
-            ("NEGATIVE", 0x0000_0200, "Always &lt;= 0."),
-            ("ZERO", 0x0000_0400, "Zero is a meaningful reference level."),
+            ("PATTERN_BOOL", 0x0000_0020, "A value other than 0 means the pattern is present."),
+            ("PATTERN_BULL_BEAR", 0x0000_0040, "Positive is bullish, negative bearish, 0 no pattern."),
+            (
+                "PATTERN_STRENGTH",
+                0x0000_0080,
+                "0 is neutral; up to 100 getting bullish and above it bullish; down to -100 \
+                 getting bearish and below it bearish.",
+            ),
+            ("POSITIVE", 0x0000_0100, "The output can be positive."),
+            ("NEGATIVE", 0x0000_0200, "The output can be negative."),
+            ("ZERO", 0x0000_0400, "The output can be zero."),
             ("UPPER_LIMIT", 0x0000_0800, "An upper band/limit line."),
             ("LOWER_LIMIT", 0x0000_1000, "A lower band/limit line."),
             (
                 "NULLABLE",
                 0x0000_2000,
-                "Discardable: C accepts NULL for it. Java still requires an array.",
+                "The typed call lets the caller decline it. A {@code ParamHolder} still needs it bound.",
             ),
             (
                 "DISPLAY_SHIFT",
@@ -911,7 +915,7 @@ import io.github.talib.TALibArgumentException;
  * <p>Everything is validated against the {@link FuncInfo} row: an index out
  * of bounds, a type that does not match the declared parameter, or an unbound
  * input or output at {@link #call} time throws a {@link TALibArgumentException}
- * carrying the layer's {@link RetCode}. The call itself then behaves exactly
+ * carrying a {@link RetCode}. The call itself then behaves exactly
  * like the typed method, including throwing on misuse and returning an empty
  * {@link OutRange} when the range is shorter than the lookback.
  *

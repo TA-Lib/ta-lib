@@ -53,11 +53,11 @@ pub enum MAType {
 impl TryFrom<i32> for MAType {
     type Error = RetCode;
 
-    /// Convert a raw parameter value, as the abstract layer and the JSON-RPC
+    /// Convert a raw parameter value, as the Abstract API and the JSON-RPC
     /// server hold it.
     ///
     /// `i32::MIN` — C's `TA_INTEGER_DEFAULT` — resolves to the `DEFAULT`
-    /// member, so a value arriving through the abstract layer still selects
+    /// member, so a value arriving through the Abstract API still selects
     /// that parameter's documented default exactly as it does in C. Every
     /// other out-of-domain value is `BadParam`, which is what keeps the
     /// rejection in this crate rather than in a caller that wraps it.

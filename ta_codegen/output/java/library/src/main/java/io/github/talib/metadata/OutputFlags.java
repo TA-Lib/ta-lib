@@ -39,7 +39,7 @@
 package io.github.talib.metadata;
 
 /**
- * How an output is meant to be drawn, and whether it may be omitted. Values match C's {@code TA_OUT_*}. The old hand-written island stopped at {@code ZERO} and left consumers hardcoding the rest.
+ * How an output is meant to be drawn, and whether it may be omitted. Values match C's {@code TA_OUT_*}.
  */
 public final class OutputFlags {
 
@@ -60,22 +60,22 @@ public final class OutputFlags {
    /** Draw as a histogram. */
    public static final int HISTOGRAM = 0x00000010;
 
-   /** 0 = no pattern, 100 = pattern. */
+   /** A value other than 0 means the pattern is present. */
    public static final int PATTERN_BOOL = 0x00000020;
 
-   /** -100 = bearish, 0 = none, 100 = bullish. */
+   /** Positive is bullish, negative bearish, 0 no pattern. */
    public static final int PATTERN_BULL_BEAR = 0x00000040;
 
-   /** -200..-100 = bearish, 100..200 = bullish. */
+   /** 0 is neutral; up to 100 getting bullish and above it bullish; down to -100 getting bearish and below it bearish. */
    public static final int PATTERN_STRENGTH = 0x00000080;
 
-   /** Always &gt;= 0. */
+   /** The output can be positive. */
    public static final int POSITIVE = 0x00000100;
 
-   /** Always &lt;= 0. */
+   /** The output can be negative. */
    public static final int NEGATIVE = 0x00000200;
 
-   /** Zero is a meaningful reference level. */
+   /** The output can be zero. */
    public static final int ZERO = 0x00000400;
 
    /** An upper band/limit line. */
@@ -84,7 +84,7 @@ public final class OutputFlags {
    /** A lower band/limit line. */
    public static final int LOWER_LIMIT = 0x00001000;
 
-   /** Discardable: C accepts NULL for it. Java still requires an array. */
+   /** The typed call lets the caller decline it. A {@code ParamHolder} still needs it bound. */
    public static final int NULLABLE = 0x00002000;
 
    /** A chart draws it ahead of or behind the bar that computed it, by the bars {@code ParamHolder.displayShift} reports. The values are never shifted. */
