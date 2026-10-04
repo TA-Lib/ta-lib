@@ -3,13 +3,16 @@
  *  Initial  Name/description
  *  -------------------------------------------------------------------
  *  AC       Angelo Ciceri
+ *  MF       Mario Fortier
+ *  CC       Claude Code (AI assistant)
  *
  *
  * Change history:
  *
- *  MMDDYY BY   Description
+ *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
- *  022705 AC   Creation
+ *  022705 AC     Creation
+ *  100426 MF,CC  Remove the outInteger comment, which misstated the values
  *
  */
 
@@ -95,10 +98,7 @@ TA_RetCode cdl3starsinsouth(int startIdx, int endIdx,
     * - second candle: smaller black candle that opens higher than prior close but within prior candle's range
     *   and trades lower than prior close but not lower than prior low and closes off of its low (it has a shadow)
     * - third candle: small black marubozu (or candle with very short shadows) engulfed by prior candle's range
-    * The meanings of "long body", "short body", "very short shadow" are specified with TA_SetCandleSettings;
-    * outInteger is positive (1 to 100): 3 stars in the south is always bullish;
-    * the user should consider that 3 stars in the south is significant when it appears in downtrend, while this function
-    * does not consider it
+    * The meanings of "long body", "short body", "very short shadow" are specified with TA_SetCandleSettings
     */
    outIdx = 0;
    do

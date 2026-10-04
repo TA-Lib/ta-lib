@@ -45,13 +45,16 @@
  *  Initial  Name/description
  *  -------------------------------------------------------------------
  *  AC       Angelo Ciceri
+ *  MF       Mario Fortier
+ *  CC       Claude Code (AI assistant)
  *
  *
  * Change history:
  *
- *  MMDDYY BY   Description
+ *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
- *  121104 AC   Creation
+ *  121104 AC     Creation
+ *  100426 MF,CC  Remove the outInteger comment, which misstated the values
  */
 
 // Import types from parent module
@@ -278,9 +281,6 @@ impl Core {
         // - first candle: long black candle
         // - second candle: white candle with open below previous day low and close equal to previous day low
         // The meaning of "equal" is specified with TA_SetCandleSettings
-        // outInteger is negative (-1 to -100): on-neck is always bearish
-        // the user should consider that on-neck is significant when it appears in a downtrend, while this function
-        // does not consider it
         outIdx = 0;
         if i <= endIdx {
             let _wn: usize = endIdx - i + 1;
@@ -755,9 +755,6 @@ impl Core {
         // - first candle: long black candle
         // - second candle: white candle with open below previous day low and close equal to previous day low
         // The meaning of "equal" is specified with TA_SetCandleSettings
-        // outInteger is negative (-1 to -100): on-neck is always bearish
-        // the user should consider that on-neck is significant when it appears in a downtrend, while this function
-        // does not consider it
         outIdx = 0;
         loop {
             if (if inClose[i - 1] >= inOpen[i - 1] { 1 } else { -1 }) == -1 && // 1st: black

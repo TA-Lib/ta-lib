@@ -3,13 +3,16 @@
  *  Initial  Name/description
  *  -------------------------------------------------------------------
  *  AC       Angelo Ciceri
+ *  MF       Mario Fortier
+ *  CC       Claude Code (AI assistant)
  *
  *
  * Change history:
  *
- *  MMDDYY BY   Description
+ *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
- *  011505 AC   Creation
+ *  011505 AC     Creation
+ *  100426 MF,CC  Remove the outInteger comment, which misstated the values
  */
 
    /**
@@ -122,8 +125,6 @@
        * - second candle: opposite color marubozu
        * - gap between the two candles: upside gap if black then white, downside gap if white then black
        * The meaning of "long body" and "very short shadow" is specified with TA_SetCandleSettings
-       * outInteger is positive (1 to 100) when bullish or negative (-1 to -100) when bearish; the longer of the two
-       * marubozu determines the bullishness or bearishness of this pattern
        */
       outIdx = 0;
       do {
@@ -692,8 +693,6 @@
        * - second candle: opposite color marubozu
        * - gap between the two candles: upside gap if black then white, downside gap if white then black
        * The meaning of "long body" and "very short shadow" is specified with TA_SetCandleSettings
-       * outInteger is positive (1 to 100) when bullish or negative (-1 to -100) when bearish; the longer of the two
-       * marubozu determines the bullishness or bearishness of this pattern
        */
       outIdx = 0;
       do {

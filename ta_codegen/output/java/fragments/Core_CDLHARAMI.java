@@ -3,15 +3,18 @@
  *  Initial  Name/description
  *  -------------------------------------------------------------------
  *  AC       Angelo Ciceri
+ *  MF       Mario Fortier
+ *  CC       Claude Code (AI assistant)
  *
  *
  * Change history:
  *
- *  MMDDYY BY   Description
+ *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
- *  102404 AC   Creation
- *  040309 AC   Increased flexibility to allow real bodies matching
- *              on one end (Greg Morris - "Candlestick charting explained")
+ *  102404 AC     Creation
+ *  040309 AC     Increased flexibility to allow real bodies matching
+ *                on one end (Greg Morris - "Candlestick charting explained")
+ *  100426 MF,CC  Remove the outInteger comment, which misstated the values
  */
 
    /**
@@ -118,12 +121,6 @@
        * - first candle: long white (black) real body
        * - second candle: short real body totally engulfed by the first
        * The meaning of "short" and "long" is specified with TA_SetCandleSettings
-       * outInteger is positive (1 to 100) when bullish or negative (-1 to -100) when bearish:
-       * - 100 is returned when the first candle's real body begins before and ends after the second candle's real body
-       * - 80 is returned when the two real bodies match on one end (Greg Morris contemplate this case in his book
-       *   "Candlestick charting explained")
-       * The user should consider that a harami is significant when it appears in a downtrend if bullish or
-       * in an uptrend when bearish, while this function does not consider the trend
        */
       outIdx = 0;
       do {
@@ -712,12 +709,6 @@
        * - first candle: long white (black) real body
        * - second candle: short real body totally engulfed by the first
        * The meaning of "short" and "long" is specified with TA_SetCandleSettings
-       * outInteger is positive (1 to 100) when bullish or negative (-1 to -100) when bearish:
-       * - 100 is returned when the first candle's real body begins before and ends after the second candle's real body
-       * - 80 is returned when the two real bodies match on one end (Greg Morris contemplate this case in his book
-       *   "Candlestick charting explained")
-       * The user should consider that a harami is significant when it appears in a downtrend if bullish or
-       * in an uptrend when bearish, while this function does not consider the trend
        */
       outIdx = 0;
       do {

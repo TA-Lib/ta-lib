@@ -45,13 +45,16 @@
  *  Initial  Name/description
  *  -------------------------------------------------------------------
  *  AC       Angelo Ciceri
+ *  MF       Mario Fortier
+ *  CC       Claude Code (AI assistant)
  *
  *
  * Change history:
  *
- *  MMDDYY BY   Description
+ *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
- *  103004 AC   Creation
+ *  103004 AC     Creation
+ *  100426 MF,CC  Remove the outInteger comment, which misstated the values
  */
 
 // Import types from parent module
@@ -256,9 +259,7 @@ impl Core {
         // - long upper shadow
         // - no, or very short, lower shadow
         // - gap up from prior real body
-        // The meaning of "short", "very short" and "long" is specified with TA_SetCandleSettings;
-        // outInteger is negative (-1 to -100): shooting star is always bearish;
-        // the user should consider that a shooting star must appear in an uptrend, while this function does not consider it
+        // The meaning of "short", "very short" and "long" is specified with TA_SetCandleSettings
         outIdx = 0;
         if i <= endIdx {
             let _wn: usize = endIdx - i + 1;
@@ -864,9 +865,7 @@ impl Core {
         // - long upper shadow
         // - no, or very short, lower shadow
         // - gap up from prior real body
-        // The meaning of "short", "very short" and "long" is specified with TA_SetCandleSettings;
-        // outInteger is negative (-1 to -100): shooting star is always bearish;
-        // the user should consider that a shooting star must appear in an uptrend, while this function does not consider it
+        // The meaning of "short", "very short" and "long" is specified with TA_SetCandleSettings
         outIdx = 0;
         loop {
             if ((if c_min(inOpen[i], inClose[i]) > c_max(inOpen[i - 1], inClose[i - 1]) { 1 } else { 0 }) != 0) && // gap up

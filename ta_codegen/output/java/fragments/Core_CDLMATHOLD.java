@@ -3,13 +3,16 @@
  *  Initial  Name/description
  *  -------------------------------------------------------------------
  *  AC       Angelo Ciceri
+ *  MF       Mario Fortier
+ *  CC       Claude Code (AI assistant)
  *
  *
  * Change history:
  *
- *  MMDDYY BY   Description
+ *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
- *  022005 AC   Creation
+ *  022005 AC     Creation
+ *  100426 MF,CC  Remove the outInteger comment, which misstated the values
  */
 
    /**
@@ -149,7 +152,6 @@
        * "hold within" means "a part of the real body must be within";
        * optInPenetration is the maximum percentage of the first white body the reaction days can penetrate (it is
        * to specify how much the reaction days should be "higher than the reaction days of the rising three methods")
-       * outInteger is positive (1 to 100): mat hold is always bullish
        */
       outIdx = 0;
       do {
@@ -805,7 +807,6 @@
        * "hold within" means "a part of the real body must be within";
        * optInPenetration is the maximum percentage of the first white body the reaction days can penetrate (it is
        * to specify how much the reaction days should be "higher than the reaction days of the rising three methods")
-       * outInteger is positive (1 to 100): mat hold is always bullish
        */
       outIdx = 0;
       do {

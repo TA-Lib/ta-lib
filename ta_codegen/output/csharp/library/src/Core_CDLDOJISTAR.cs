@@ -47,14 +47,16 @@ public partial class Core
     *  Initial  Name/description
     *  -------------------------------------------------------------------
     *  AC       Angelo Ciceri
+    *  MF       Mario Fortier
+    *  CC       Claude Code (AI assistant)
     *
     *
     * Change history:
     *
-    *  MMDDYY BY   Description
+    *  MMDDYY BY     Description
     *  -------------------------------------------------------------------
-    *  100204 AC   Creation
-    *  100426 MF,CC Fix the comment: the sign is the opposite of the long candle's color
+    *  100204 AC     Creation
+    *  100426 MF,CC  Remove the outInteger comment, which misstated the values
     */
    /// <summary>
    /// Number of leading input bars <c>Cdldojistar</c> consumes before it can
@@ -165,8 +167,6 @@ public partial class Core
        * - first candle: long real body
        * - second candle: star (open gapping up in an uptrend or down in a downtrend) with a doji
        * The meaning of "doji" and "long" is specified with TA_SetCandleSettings
-       * outInteger is -100 when the long candle is white and the star gaps up, +100 when it is black and
-       * the star gaps down; the trend the reading presumes is not checked
        */
       outIdx = 0;
       do {
@@ -769,8 +769,6 @@ public partial class Core
        * - first candle: long real body
        * - second candle: star (open gapping up in an uptrend or down in a downtrend) with a doji
        * The meaning of "doji" and "long" is specified with TA_SetCandleSettings
-       * outInteger is -100 when the long candle is white and the star gaps up, +100 when it is black and
-       * the star gaps down; the trend the reading presumes is not checked
        */
       outIdx = 0;
       do {

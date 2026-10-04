@@ -47,13 +47,16 @@
  *  Initial  Name/description
  *  -------------------------------------------------------------------
  *  AC       Angelo Ciceri
+ *  MF       Mario Fortier
+ *  CC       Claude Code (AI assistant)
  *
  *
  * Change history:
  *
- *  MMDDYY BY   Description
+ *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
- *  071704 AC   Creation
+ *  071704 AC     Creation
+ *  100426 MF,CC  Remove the outInteger comment, which misstated the values
  */
 
 TA_LIB_API int TA_CDLLONGLINE_Lookback( void )
@@ -149,7 +152,6 @@ TA_LIB_API TA_RetCode TA_CDLLONGLINE( int    startIdx,
     * - long real body
     * - short upper and lower shadow
     * The meaning of "long" and "short" is specified with TA_SetCandleSettings
-    * outInteger is positive (1 to 100) when white (bullish), negative (-1 to -100) when black (bearish)
     */
    outIdx = 0;
    do
@@ -397,7 +399,6 @@ static TA_RetCode TA_CDLLONGLINE_OpenImpl( struct TA_CDLLONGLINE_Stream **stream
        * - long real body
        * - short upper and lower shadow
        * The meaning of "long" and "short" is specified with TA_SetCandleSettings
-       * outInteger is positive (1 to 100) when white (bullish), negative (-1 to -100) when black (bearish)
        */
       outIdx = 0;
       do

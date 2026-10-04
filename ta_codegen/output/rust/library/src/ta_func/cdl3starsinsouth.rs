@@ -45,13 +45,16 @@
  *  Initial  Name/description
  *  -------------------------------------------------------------------
  *  AC       Angelo Ciceri
+ *  MF       Mario Fortier
+ *  CC       Claude Code (AI assistant)
  *
  *
  * Change history:
  *
- *  MMDDYY BY   Description
+ *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
- *  022705 AC   Creation
+ *  022705 AC     Creation
+ *  100426 MF,CC  Remove the outInteger comment, which misstated the values
  */
 
 // Import types from parent module
@@ -414,10 +417,7 @@ impl Core {
         // - second candle: smaller black candle that opens higher than prior close but within prior candle's range
         //   and trades lower than prior close but not lower than prior low and closes off of its low (it has a shadow)
         // - third candle: small black marubozu (or candle with very short shadows) engulfed by prior candle's range
-        // The meanings of "long body", "short body", "very short shadow" are specified with TA_SetCandleSettings;
-        // outInteger is positive (1 to 100): 3 stars in the south is always bullish;
-        // the user should consider that 3 stars in the south is significant when it appears in downtrend, while this function
-        // does not consider it
+        // The meanings of "long body", "short body", "very short shadow" are specified with TA_SetCandleSettings
         outIdx = 0;
         if i <= endIdx {
             let _wn: usize = endIdx - i + 1;
@@ -578,8 +578,8 @@ impl Core {
     /// A three-candle bullish reversal pattern of three consecutive black candles that
     /// progressively shrink and stabilize: a long black candle with a long lower shadow, a smaller
     /// black candle probing lower, then a small black marubozu contained within the second candle's
-    /// range. A hit signals a bullish reversal; per the code comment it is meaningful in a
-    /// downtrend, but the function does not verify prior trend.
+    /// range. A hit signals a bullish reversal; it is meaningful in a downtrend, which the function
+    /// does not verify.
     ///
     /// Formula and more info at
     /// [ta-lib.org/functions/cdl3starsinsouth](https://ta-lib.org/functions/cdl3starsinsouth).
@@ -1165,10 +1165,7 @@ impl Core {
         // - second candle: smaller black candle that opens higher than prior close but within prior candle's range
         //   and trades lower than prior close but not lower than prior low and closes off of its low (it has a shadow)
         // - third candle: small black marubozu (or candle with very short shadows) engulfed by prior candle's range
-        // The meanings of "long body", "short body", "very short shadow" are specified with TA_SetCandleSettings;
-        // outInteger is positive (1 to 100): 3 stars in the south is always bullish;
-        // the user should consider that 3 stars in the south is significant when it appears in downtrend, while this function
-        // does not consider it
+        // The meanings of "long body", "short body", "very short shadow" are specified with TA_SetCandleSettings
         outIdx = 0;
         loop {
             if (if inClose[i - 2] >= inOpen[i - 2] { 1 } else { -1 }) == -1 && // 1st black

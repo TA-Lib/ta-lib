@@ -3,13 +3,16 @@
  *  Initial  Name/description
  *  -------------------------------------------------------------------
  *  AC       Angelo Ciceri
+ *  MF       Mario Fortier
+ *  CC       Claude Code (AI assistant)
  *
  *
  * Change history:
  *
- *  MMDDYY BY   Description
+ *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
- *  103004 AC   Creation
+ *  103004 AC     Creation
+ *  100426 MF,CC  Remove the outInteger comment, which misstated the values
  *
  */
 int cdl3blackcrows_lookback(void)
@@ -72,9 +75,6 @@ TA_RetCode cdl3blackcrows(int startIdx, int endIdx,
     * - each candle after the first must open within the prior candle's real body
     * - the first candle's close should be under the prior white candle's high
     * The meaning of "very short" is specified with TA_SetCandleSettings
-    * outInteger is negative (-1 to -100): three black crows is always bearish;
-    * the user should consider that 3 black crows is significant when it appears after a mature advance or at high levels,
-    * while this function does not consider it
     */
    outIdx = 0;
    do

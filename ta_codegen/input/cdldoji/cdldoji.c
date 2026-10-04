@@ -3,13 +3,16 @@
  *  Initial  Name/description
  *  -------------------------------------------------------------------
  *  AC       Angelo Ciceri
+ *  MF       Mario Fortier
+ *  CC       Claude Code (AI assistant)
  *
  *
  * Change history:
  *
- *  MMDDYY BY   Description
+ *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
- *  011505 AC   Creation
+ *  011505 AC     Creation
+ *  100426 MF,CC  Remove the outInteger comment, which misstated the values
  *
  */
 
@@ -66,8 +69,6 @@ TA_RetCode cdldoji(int startIdx, int endIdx,
     * Must have:
     * - open quite equal to close
     * How much can be the maximum distance between open and close is specified with TA_SetCandleSettings
-    * outInteger is always positive (1 to 100) but this does not mean it is bullish: doji shows uncertainty and it is
-    * neither bullish nor bearish when considered alone
     */
    outIdx = 0;
    do

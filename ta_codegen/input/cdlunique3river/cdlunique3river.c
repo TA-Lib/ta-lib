@@ -3,13 +3,16 @@
  *  Initial  Name/description
  *  -------------------------------------------------------------------
  *  AC       Angelo Ciceri
+ *  MF       Mario Fortier
+ *  CC       Claude Code (AI assistant)
  *
  *
  * Change history:
  *
- *  MMDDYY BY   Description
+ *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
- *  022005 AC   Creation
+ *  022005 AC     Creation
+ *  100426 MF,CC  Remove the outInteger comment, which misstated the values
  *
  */
 
@@ -76,8 +79,6 @@ TA_RetCode cdlunique3river(int startIdx, int endIdx,
     * - third candle: small white candle with open not lower than the second candle's low, better if its open and
     *   close are under the second candle's close
     * The meaning of "short" and "long" is specified with TA_SetCandleSettings
-    * outInteger is positive (1 to 100): unique 3 river is always bullish and should appear in a downtrend
-    * to be significant, while this function does not consider the trend
     */
    outIdx = 0;
    do

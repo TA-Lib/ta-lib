@@ -45,13 +45,16 @@
  *  Initial  Name/description
  *  -------------------------------------------------------------------
  *  AC       Angelo Ciceri
+ *  MF       Mario Fortier
+ *  CC       Claude Code (AI assistant)
  *
  *
  * Change history:
  *
- *  MMDDYY BY   Description
+ *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
- *  102304 AC   Creation
+ *  102304 AC     Creation
+ *  100426 MF,CC  Remove the outInteger comment, which misstated the values
  */
 
 // Import types from parent module
@@ -324,9 +327,6 @@ impl Core {
         // The meaning of "moves well within" is specified with optInPenetration and "moves" should mean the real body should
         // not be short ("short" is specified with TA_SetCandleSettings) - Greg Morris wants it to be long, someone else want
         // it to be relatively long
-        // outInteger is positive (1 to 100) when it's an abandoned baby bottom or negative (-1 to -100) when it's
-        // an abandoned baby top; the user should consider that an abandoned baby is significant when it appears in
-        // an uptrend or downtrend, while this function does not consider the trend
         outIdx = 0;
         if i <= endIdx {
             let _wn: usize = endIdx - i + 1;
@@ -1001,9 +1001,6 @@ impl Core {
         // The meaning of "moves well within" is specified with optInPenetration and "moves" should mean the real body should
         // not be short ("short" is specified with TA_SetCandleSettings) - Greg Morris wants it to be long, someone else want
         // it to be relatively long
-        // outInteger is positive (1 to 100) when it's an abandoned baby bottom or negative (-1 to -100) when it's
-        // an abandoned baby top; the user should consider that an abandoned baby is significant when it appears in
-        // an uptrend or downtrend, while this function does not consider the trend
         outIdx = 0;
         loop {
             if (inClose[i - 2] - inOpen[i - 2]).abs() > ((BodyLong_factor) * (if (BodyLong_avgPeriod) != 0 { (BodyLongPeriodTotal) / (BodyLong_avgPeriod as f64) } else { match BodyLong_rangeType { 0 => ((inClose[i - 2]) - (inOpen[i - 2])).abs(), 1 => (inHigh[i - 2]) - (inLow[i - 2]), 2 => ((inHigh[i - 2]) - (if (inClose[i - 2]) >= (inOpen[i - 2]) { (inClose[i - 2]) } else { (inOpen[i - 2]) })) + ((if (inClose[i - 2]) >= (inOpen[i - 2]) { (inOpen[i - 2]) } else { (inClose[i - 2]) }) - (inLow[i - 2])), _ => 0.0 } }) * (if (BodyLong_rangeType) == 2 { 0.5 } else { 1.0 })) && // 1st: long

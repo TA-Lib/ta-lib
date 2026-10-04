@@ -47,13 +47,16 @@
  *  Initial  Name/description
  *  -------------------------------------------------------------------
  *  AC       Angelo Ciceri
+ *  MF       Mario Fortier
+ *  CC       Claude Code (AI assistant)
  *
  *
  * Change history:
  *
- *  MMDDYY BY   Description
+ *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
- *  100304 AC   Creation
+ *  100304 AC     Creation
+ *  100426 MF,CC  Remove the outInteger comment, which misstated the values
  */
 
 TA_LIB_API int TA_CDLMORNINGDOJISTAR_Lookback( double optInPenetration )
@@ -178,9 +181,6 @@ TA_LIB_API TA_RetCode TA_CDLMORNINGDOJISTAR( int    startIdx,
     * The meaning of "moves well within" is specified with optInPenetration and "moves" should mean the real body should
     * not be short ("short" is specified with TA_SetCandleSettings) - Greg Morris wants it to be long, someone else want
     * it to be relatively long
-    * outInteger is positive (1 to 100): morning doji star is always bullish;
-    * the user should consider that a morning star is significant when it appears in a downtrend,
-    * while this function does not consider the trend
     */
    outIdx = 0;
    do
@@ -516,9 +516,6 @@ static TA_RetCode TA_CDLMORNINGDOJISTAR_OpenImpl( struct TA_CDLMORNINGDOJISTAR_S
        * The meaning of "moves well within" is specified with optInPenetration and "moves" should mean the real body should
        * not be short ("short" is specified with TA_SetCandleSettings) - Greg Morris wants it to be long, someone else want
        * it to be relatively long
-       * outInteger is positive (1 to 100): morning doji star is always bullish;
-       * the user should consider that a morning star is significant when it appears in a downtrend,
-       * while this function does not consider the trend
        */
       outIdx = 0;
       do

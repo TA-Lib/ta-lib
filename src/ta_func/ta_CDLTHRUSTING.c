@@ -47,13 +47,16 @@
  *  Initial  Name/description
  *  -------------------------------------------------------------------
  *  AC       Angelo Ciceri
+ *  MF       Mario Fortier
+ *  CC       Claude Code (AI assistant)
  *
  *
  * Change history:
  *
- *  MMDDYY BY   Description
+ *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
- *  121204 AC   Creation
+ *  121204 AC     Creation
+ *  100426 MF,CC  Remove the outInteger comment, which misstated the values
  */
 
 TA_LIB_API int TA_CDLTHRUSTING_Lookback( void )
@@ -152,10 +155,6 @@ TA_LIB_API TA_RetCode TA_CDLTHRUSTING( int    startIdx,
     * - second candle: white candle with open below previous day low and close into previous day body under the midpoint;
     * to differentiate it from in-neck the close should not be equal to the black candle's close
     * The meaning of "equal" is specified with TA_SetCandleSettings
-    * outInteger is negative (-1 to -100): thrusting pattern is always bearish
-    * the user should consider that the thrusting pattern is significant when it appears in a downtrend and it could be
-    * even bullish "when coming in an uptrend or occurring twice within several days" (Steve Nison says), while this
-    * function does not consider the trend
     */
    outIdx = 0;
    do
@@ -419,10 +418,6 @@ static TA_RetCode TA_CDLTHRUSTING_OpenImpl( struct TA_CDLTHRUSTING_Stream **stre
        * - second candle: white candle with open below previous day low and close into previous day body under the midpoint;
        * to differentiate it from in-neck the close should not be equal to the black candle's close
        * The meaning of "equal" is specified with TA_SetCandleSettings
-       * outInteger is negative (-1 to -100): thrusting pattern is always bearish
-       * the user should consider that the thrusting pattern is significant when it appears in a downtrend and it could be
-       * even bullish "when coming in an uptrend or occurring twice within several days" (Steve Nison says), while this
-       * function does not consider the trend
        */
       outIdx = 0;
       do

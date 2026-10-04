@@ -45,13 +45,16 @@
  *  Initial  Name/description
  *  -------------------------------------------------------------------
  *  AC       Angelo Ciceri
+ *  MF       Mario Fortier
+ *  CC       Claude Code (AI assistant)
  *
  *
  * Change history:
  *
- *  MMDDYY BY   Description
+ *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
- *  120804 AC   Creation
+ *  120804 AC     Creation
+ *  100426 MF,CC  Remove the outInteger comment, which misstated the values
  */
 
 // Import types from parent module
@@ -451,10 +454,7 @@ impl Core {
         // and closing higher than the prior candle
         // - third candle: small white that gaps away or "rides on the shoulder" of the prior long real body (= it's at
         // the upper end of the prior real body)
-        // The meanings of "long", "very short", "short", "near" are specified with TA_SetCandleSettings;
-        // outInteger is negative (-1 to -100): stalled pattern is always bearish;
-        // the user should consider that stalled pattern is significant when it appears in uptrend, while this function
-        // does not consider it
+        // The meanings of "long", "very short", "short", "near" are specified with TA_SetCandleSettings
         outIdx = 0;
         if i <= endIdx {
             let _wn: usize = endIdx - i + 1;
@@ -1193,10 +1193,7 @@ impl Core {
         // and closing higher than the prior candle
         // - third candle: small white that gaps away or "rides on the shoulder" of the prior long real body (= it's at
         // the upper end of the prior real body)
-        // The meanings of "long", "very short", "short", "near" are specified with TA_SetCandleSettings;
-        // outInteger is negative (-1 to -100): stalled pattern is always bearish;
-        // the user should consider that stalled pattern is significant when it appears in uptrend, while this function
-        // does not consider it
+        // The meanings of "long", "very short", "short", "near" are specified with TA_SetCandleSettings
         outIdx = 0;
         loop {
             if (if inClose[i - 2] >= inOpen[i - 2] { 1 } else { -1 }) == 1 && // 1st white

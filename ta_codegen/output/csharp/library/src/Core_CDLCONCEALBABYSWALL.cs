@@ -47,13 +47,16 @@ public partial class Core
     *  Initial  Name/description
     *  -------------------------------------------------------------------
     *  AC       Angelo Ciceri
+    *  MF       Mario Fortier
+    *  CC       Claude Code (AI assistant)
     *
     *
     * Change history:
     *
-    *  MMDDYY BY   Description
+    *  MMDDYY BY     Description
     *  -------------------------------------------------------------------
-    *  022705 AC   Creation
+    *  022705 AC     Creation
+    *  100426 MF,CC  Remove the outInteger comment, which misstated the values
     */
    /// <summary>
    /// Number of leading input bars <c>Cdlconcealbabyswall</c> consumes before it
@@ -156,10 +159,7 @@ public partial class Core
        * - second candle: black marubozu (very short shadows)
        * - third candle: black candle that opens gapping down but has an upper shadow that extends into the prior body
        * - fourth candle: black candle that completely engulfs the third candle, including the shadows
-       * The meanings of "very short shadow" are specified with TA_SetCandleSettings;
-       * outInteger is positive (1 to 100): concealing baby swallow is always bullish;
-       * the user should consider that concealing baby swallow is significant when it appears in downtrend, while
-       * this function does not consider it
+       * The meanings of "very short shadow" are specified with TA_SetCandleSettings
        */
       outIdx = 0;
       do {
@@ -755,10 +755,7 @@ public partial class Core
        * - second candle: black marubozu (very short shadows)
        * - third candle: black candle that opens gapping down but has an upper shadow that extends into the prior body
        * - fourth candle: black candle that completely engulfs the third candle, including the shadows
-       * The meanings of "very short shadow" are specified with TA_SetCandleSettings;
-       * outInteger is positive (1 to 100): concealing baby swallow is always bullish;
-       * the user should consider that concealing baby swallow is significant when it appears in downtrend, while
-       * this function does not consider it
+       * The meanings of "very short shadow" are specified with TA_SetCandleSettings
        */
       outIdx = 0;
       do {

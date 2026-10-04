@@ -45,13 +45,16 @@
  *  Initial  Name/description
  *  -------------------------------------------------------------------
  *  AC       Angelo Ciceri
+ *  MF       Mario Fortier
+ *  CC       Claude Code (AI assistant)
  *
  *
  * Change history:
  *
- *  MMDDYY BY   Description
+ *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
- *  103104 AC   Creation
+ *  103104 AC     Creation
+ *  100426 MF,CC  Remove the outInteger comment, which misstated the values
  */
 
 // Import types from parent module
@@ -380,10 +383,7 @@ impl Core {
         // - each candle must have no or very short lower shadow
         // - each candle after the first must open at or very close to the prior candle's close
         // The meaning of "very short" is specified with TA_SetCandleSettings;
-        // the meaning of "very close" is specified with TA_SetCandleSettings (Equal);
-        // outInteger is negative (-1 to -100): identical three crows is always bearish;
-        // the user should consider that identical 3 crows is significant when it appears after a mature advance or at high levels,
-        // while this function does not consider it
+        // the meaning of "very close" is specified with TA_SetCandleSettings (Equal)
         outIdx = 0;
         if i <= endIdx {
             let _wn: usize = endIdx - i + 1;
@@ -958,10 +958,7 @@ impl Core {
         // - each candle must have no or very short lower shadow
         // - each candle after the first must open at or very close to the prior candle's close
         // The meaning of "very short" is specified with TA_SetCandleSettings;
-        // the meaning of "very close" is specified with TA_SetCandleSettings (Equal);
-        // outInteger is negative (-1 to -100): identical three crows is always bearish;
-        // the user should consider that identical 3 crows is significant when it appears after a mature advance or at high levels,
-        // while this function does not consider it
+        // the meaning of "very close" is specified with TA_SetCandleSettings (Equal)
         outIdx = 0;
         loop {
             if (if inClose[i - 2] >= inOpen[i - 2] { 1 } else { -1 }) == -1 && // 1st black

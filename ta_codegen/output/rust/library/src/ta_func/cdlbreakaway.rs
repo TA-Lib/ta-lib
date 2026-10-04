@@ -45,13 +45,16 @@
  *  Initial  Name/description
  *  -------------------------------------------------------------------
  *  AC       Angelo Ciceri
+ *  MF       Mario Fortier
+ *  CC       Claude Code (AI assistant)
  *
  *
  * Change history:
  *
- *  MMDDYY BY   Description
+ *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
- *  011505 AC   Creation
+ *  011505 AC     Creation
+ *  100426 MF,CC  Remove the outInteger comment, which misstated the values
  */
 
 // Import types from parent module
@@ -216,9 +219,6 @@ impl Core {
         // - fourth candle: black (white) day with lower (higher) high and lower (higher) low than prior candle's
         // - fifth candle: white (black) day that closes inside the gap, erasing the prior 3 days
         // The meaning of "long" is specified with TA_SetCandleSettings
-        // outInteger is positive (1 to 100) when bullish or negative (-1 to -100) when bearish;
-        // the user should consider that breakaway is significant in a trend opposite to the last candle, while this
-        // function does not consider it
         outIdx = 0;
         if i <= endIdx {
             let _wn: usize = endIdx - i + 1;
@@ -689,9 +689,6 @@ impl Core {
         // - fourth candle: black (white) day with lower (higher) high and lower (higher) low than prior candle's
         // - fifth candle: white (black) day that closes inside the gap, erasing the prior 3 days
         // The meaning of "long" is specified with TA_SetCandleSettings
-        // outInteger is positive (1 to 100) when bullish or negative (-1 to -100) when bearish;
-        // the user should consider that breakaway is significant in a trend opposite to the last candle, while this
-        // function does not consider it
         outIdx = 0;
         loop {
             if (if inClose[i - 4] >= inOpen[i - 4] { 1 } else { -1 }) == (if inClose[i - 3] >= inOpen[i - 3] { 1 } else { -1 }) && // 1st, 2nd, 4th same color, 5th opposite

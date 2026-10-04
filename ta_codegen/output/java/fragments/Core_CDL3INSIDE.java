@@ -3,13 +3,16 @@
  *  Initial  Name/description
  *  -------------------------------------------------------------------
  *  AC       Angelo Ciceri
+ *  MF       Mario Fortier
+ *  CC       Claude Code (AI assistant)
  *
  *
  * Change history:
  *
- *  MMDDYY BY   Description
+ *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
- *  121104 AC   Creation
+ *  121104 AC     Creation
+ *  100426 MF,CC  Remove the outInteger comment, which misstated the values
  */
 
    /**
@@ -117,9 +120,6 @@
        * - second candle: short real body totally engulfed by the first
        * - third candle: black (white) candle that closes lower (higher) than the first candle's open
        * The meaning of "short" and "long" is specified with TA_SetCandleSettings
-       * outInteger is positive (1 to 100) for the three inside up or negative (-1 to -100) for the three inside down;
-       * the user should consider that a three inside up is significant when it appears in a downtrend and a three inside
-       * down is significant when it appears in an uptrend, while this function does not consider the trend
        */
       outIdx = 0;
       do {
@@ -694,9 +694,6 @@
        * - second candle: short real body totally engulfed by the first
        * - third candle: black (white) candle that closes lower (higher) than the first candle's open
        * The meaning of "short" and "long" is specified with TA_SetCandleSettings
-       * outInteger is positive (1 to 100) for the three inside up or negative (-1 to -100) for the three inside down;
-       * the user should consider that a three inside up is significant when it appears in a downtrend and a three inside
-       * down is significant when it appears in an uptrend, while this function does not consider the trend
        */
       outIdx = 0;
       do {

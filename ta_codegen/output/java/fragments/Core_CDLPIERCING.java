@@ -3,13 +3,16 @@
  *  Initial  Name/description
  *  -------------------------------------------------------------------
  *  AC       Angelo Ciceri
+ *  MF       Mario Fortier
+ *  CC       Claude Code (AI assistant)
  *
  *
  * Change history:
  *
- *  MMDDYY BY   Description
+ *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
- *  120904 AC   Creation
+ *  120904 AC     Creation
+ *  100426 MF,CC  Remove the outInteger comment, which misstated the values
  */
 
    /**
@@ -105,9 +108,6 @@
        * - second candle: long white candle with open below previous day low and close at least at 50% of previous day
        * real body
        * The meaning of "long" is specified with TA_SetCandleSettings
-       * outInteger is positive (1 to 100): piercing pattern is always bullish
-       * the user should consider that a piercing pattern is significant when it appears in a downtrend, while
-       * this function does not consider it
        */
       outIdx = 0;
       do {
@@ -610,9 +610,6 @@
        * - second candle: long white candle with open below previous day low and close at least at 50% of previous day
        * real body
        * The meaning of "long" is specified with TA_SetCandleSettings
-       * outInteger is positive (1 to 100): piercing pattern is always bullish
-       * the user should consider that a piercing pattern is significant when it appears in a downtrend, while
-       * this function does not consider it
        */
       outIdx = 0;
       do {

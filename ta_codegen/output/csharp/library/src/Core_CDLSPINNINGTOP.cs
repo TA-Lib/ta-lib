@@ -47,13 +47,16 @@ public partial class Core
     *  Initial  Name/description
     *  -------------------------------------------------------------------
     *  AC       Angelo Ciceri
+    *  MF       Mario Fortier
+    *  CC       Claude Code (AI assistant)
     *
     *
     * Change history:
     *
-    *  MMDDYY BY   Description
+    *  MMDDYY BY     Description
     *  -------------------------------------------------------------------
-    *  071804 AC   Creation
+    *  071804 AC     Creation
+    *  100426 MF,CC  Remove the outInteger comment, which misstated the values
     */
    /// <summary>
    /// Number of leading input bars <c>Cdlspinningtop</c> consumes before it can
@@ -149,8 +152,6 @@ public partial class Core
        * - small real body
        * - shadows longer than the real body
        * The meaning of "short" is specified with TA_SetCandleSettings
-       * outInteger is positive (1 to 100) when white or negative (-1 to -100) when black;
-       * it does not mean bullish or bearish
        */
       outIdx = 0;
       do {
@@ -647,8 +648,6 @@ public partial class Core
        * - small real body
        * - shadows longer than the real body
        * The meaning of "short" is specified with TA_SetCandleSettings
-       * outInteger is positive (1 to 100) when white or negative (-1 to -100) when black;
-       * it does not mean bullish or bearish
        */
       outIdx = 0;
       do {

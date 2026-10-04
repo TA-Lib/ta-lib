@@ -3,13 +3,16 @@
  *  Initial  Name/description
  *  -------------------------------------------------------------------
  *  AC       Angelo Ciceri
+ *  MF       Mario Fortier
+ *  CC       Claude Code (AI assistant)
  *
  *
  * Change history:
  *
- *  MMDDYY BY   Description
+ *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
- *  011505 AC   Creation
+ *  011505 AC     Creation
+ *  100426 MF,CC  Remove the outInteger comment, which misstated the values
  *
  */
 
@@ -75,8 +78,6 @@ TA_RetCode cdldragonflydoji(int startIdx, int endIdx,
     * - open and close at the high of the day = no or very short upper shadow
     * - lower shadow (to distinguish from other dojis, here lower shadow should not be very short)
     * The meaning of "doji" and "very short" is specified with TA_SetCandleSettings
-    * outInteger is always positive (1 to 100) but this does not mean it is bullish: dragonfly doji must be considered
-    * relatively to the trend
     */
    outIdx = 0;
    do

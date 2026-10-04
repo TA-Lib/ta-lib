@@ -21767,13 +21767,16 @@ class Core {
      *  Initial  Name/description
      *  -------------------------------------------------------------------
      *  AC       Angelo Ciceri
+     *  MF       Mario Fortier
+     *  CC       Claude Code (AI assistant)
      *
      *
      * Change history:
      *
-     *  MMDDYY BY   Description
+     *  MMDDYY BY     Description
      *  -------------------------------------------------------------------
-     *  121104 AC   Creation
+     *  121104 AC     Creation
+     *  100426 MF,CC  Remove the outInteger comment, which misstated the values
      */
 
        /**
@@ -21867,9 +21870,6 @@ class Core {
            * - gap between the first and the second candle's real bodies
            * - third candle: black candle that opens within the second real body and closes within the first real body
            * The meaning of "long" is specified with TA_SetCandleSettings
-           * outInteger is negative (-1 to -100): two crows is always bearish;
-           * the user should consider that two crows is significant when it appears in an uptrend, while this function
-           * does not consider the trend
            */
           outIdx = 0;
           do {
@@ -22381,9 +22381,6 @@ class Core {
            * - gap between the first and the second candle's real bodies
            * - third candle: black candle that opens within the second real body and closes within the first real body
            * The meaning of "long" is specified with TA_SetCandleSettings
-           * outInteger is negative (-1 to -100): two crows is always bearish;
-           * the user should consider that two crows is significant when it appears in an uptrend, while this function
-           * does not consider the trend
            */
           outIdx = 0;
           do {
@@ -22530,13 +22527,16 @@ class Core {
      *  Initial  Name/description
      *  -------------------------------------------------------------------
      *  AC       Angelo Ciceri
+     *  MF       Mario Fortier
+     *  CC       Claude Code (AI assistant)
      *
      *
      * Change history:
      *
-     *  MMDDYY BY   Description
+     *  MMDDYY BY     Description
      *  -------------------------------------------------------------------
-     *  103004 AC   Creation
+     *  103004 AC     Creation
+     *  100426 MF,CC  Remove the outInteger comment, which misstated the values
      */
 
        /**
@@ -22635,9 +22635,6 @@ class Core {
            * - each candle after the first must open within the prior candle's real body
            * - the first candle's close should be under the prior white candle's high
            * The meaning of "very short" is specified with TA_SetCandleSettings
-           * outInteger is negative (-1 to -100): three black crows is always bearish;
-           * the user should consider that 3 black crows is significant when it appears after a mature advance or at high levels,
-           * while this function does not consider it
            */
           outIdx = 0;
           do {
@@ -23187,9 +23184,6 @@ class Core {
            * - each candle after the first must open within the prior candle's real body
            * - the first candle's close should be under the prior white candle's high
            * The meaning of "very short" is specified with TA_SetCandleSettings
-           * outInteger is negative (-1 to -100): three black crows is always bearish;
-           * the user should consider that 3 black crows is significant when it appears after a mature advance or at high levels,
-           * while this function does not consider it
            */
           outIdx = 0;
           do {
@@ -23348,13 +23342,16 @@ class Core {
      *  Initial  Name/description
      *  -------------------------------------------------------------------
      *  AC       Angelo Ciceri
+     *  MF       Mario Fortier
+     *  CC       Claude Code (AI assistant)
      *
      *
      * Change history:
      *
-     *  MMDDYY BY   Description
+     *  MMDDYY BY     Description
      *  -------------------------------------------------------------------
-     *  121104 AC   Creation
+     *  121104 AC     Creation
+     *  100426 MF,CC  Remove the outInteger comment, which misstated the values
      */
 
        /**
@@ -23462,9 +23459,6 @@ class Core {
            * - second candle: short real body totally engulfed by the first
            * - third candle: black (white) candle that closes lower (higher) than the first candle's open
            * The meaning of "short" and "long" is specified with TA_SetCandleSettings
-           * outInteger is positive (1 to 100) for the three inside up or negative (-1 to -100) for the three inside down;
-           * the user should consider that a three inside up is significant when it appears in a downtrend and a three inside
-           * down is significant when it appears in an uptrend, while this function does not consider the trend
            */
           outIdx = 0;
           do {
@@ -24039,9 +24033,6 @@ class Core {
            * - second candle: short real body totally engulfed by the first
            * - third candle: black (white) candle that closes lower (higher) than the first candle's open
            * The meaning of "short" and "long" is specified with TA_SetCandleSettings
-           * outInteger is positive (1 to 100) for the three inside up or negative (-1 to -100) for the three inside down;
-           * the user should consider that a three inside up is significant when it appears in a downtrend and a three inside
-           * down is significant when it appears in an uptrend, while this function does not consider the trend
            */
           outIdx = 0;
           do {
@@ -24207,13 +24198,16 @@ class Core {
      *  Initial  Name/description
      *  -------------------------------------------------------------------
      *  AC       Angelo Ciceri
+     *  MF       Mario Fortier
+     *  CC       Claude Code (AI assistant)
      *
      *
      * Change history:
      *
-     *  MMDDYY BY   Description
+     *  MMDDYY BY     Description
      *  -------------------------------------------------------------------
-     *  121104 AC   Creation
+     *  121104 AC     Creation
+     *  100426 MF,CC  Remove the outInteger comment, which misstated the values
      */
 
        /**
@@ -24309,10 +24303,7 @@ class Core {
            * each opening within or near the previous real body
            * - fourth candle: black (white) candle that opens above (below) prior candle's close and closes below (above)
            * the first candle's open
-           * The meaning of "near" is specified with TA_SetCandleSettings;
-           * outInteger is positive (1 to 100) when bullish or negative (-1 to -100) when bearish;
-           * the user should consider that 3-line strike is significant when it appears in a trend in the same direction of
-           * the first three candles, while this function does not consider it
+           * The meaning of "near" is specified with TA_SetCandleSettings
            */
           outIdx = 0;
           do {
@@ -24875,10 +24866,7 @@ class Core {
            * each opening within or near the previous real body
            * - fourth candle: black (white) candle that opens above (below) prior candle's close and closes below (above)
            * the first candle's open
-           * The meaning of "near" is specified with TA_SetCandleSettings;
-           * outInteger is positive (1 to 100) when bullish or negative (-1 to -100) when bearish;
-           * the user should consider that 3-line strike is significant when it appears in a trend in the same direction of
-           * the first three candles, while this function does not consider it
+           * The meaning of "near" is specified with TA_SetCandleSettings
            */
           outIdx = 0;
           do {
@@ -25041,13 +25029,16 @@ class Core {
      *  Initial  Name/description
      *  -------------------------------------------------------------------
      *  AC       Angelo Ciceri
+     *  MF       Mario Fortier
+     *  CC       Claude Code (AI assistant)
      *
      *
      * Change history:
      *
-     *  MMDDYY BY   Description
+     *  MMDDYY BY     Description
      *  -------------------------------------------------------------------
-     *  121104 AC   Creation
+     *  121104 AC     Creation
+     *  100426 MF,CC  Remove the outInteger comment, which misstated the values
      */
 
        /**
@@ -25124,9 +25115,6 @@ class Core {
            * - first: black (white) real body
            * - second: white (black) real body that engulfs the prior real body
            * - third: candle that closes higher (lower) than the second candle
-           * outInteger is positive (1 to 100) for the three outside up or negative (-1 to -100) for the three outside down;
-           * the user should consider that a three outside up must appear in a downtrend and three outside down must appear
-           * in an uptrend, while this function does not consider it
            */
           outIdx = 0;
           do {
@@ -25566,9 +25554,6 @@ class Core {
            * - first: black (white) real body
            * - second: white (black) real body that engulfs the prior real body
            * - third: candle that closes higher (lower) than the second candle
-           * outInteger is positive (1 to 100) for the three outside up or negative (-1 to -100) for the three outside down;
-           * the user should consider that a three outside up must appear in a downtrend and three outside down must appear
-           * in an uptrend, while this function does not consider it
            */
           outIdx = 0;
           do {
@@ -25691,13 +25676,16 @@ class Core {
      *  Initial  Name/description
      *  -------------------------------------------------------------------
      *  AC       Angelo Ciceri
+     *  MF       Mario Fortier
+     *  CC       Claude Code (AI assistant)
      *
      *
      * Change history:
      *
-     *  MMDDYY BY   Description
+     *  MMDDYY BY     Description
      *  -------------------------------------------------------------------
-     *  022705 AC   Creation
+     *  022705 AC     Creation
+     *  100426 MF,CC  Remove the outInteger comment, which misstated the values
      */
 
        /**
@@ -25838,10 +25826,7 @@ class Core {
            * - second candle: smaller black candle that opens higher than prior close but within prior candle's range
            *   and trades lower than prior close but not lower than prior low and closes off of its low (it has a shadow)
            * - third candle: small black marubozu (or candle with very short shadows) engulfed by prior candle's range
-           * The meanings of "long body", "short body", "very short shadow" are specified with TA_SetCandleSettings;
-           * outInteger is positive (1 to 100): 3 stars in the south is always bullish;
-           * the user should consider that 3 stars in the south is significant when it appears in downtrend, while this function
-           * does not consider it
+           * The meanings of "long body", "short body", "very short shadow" are specified with TA_SetCandleSettings
            */
           outIdx = 0;
           do {
@@ -25994,8 +25979,8 @@ class Core {
         * that progressively shrink and stabilize: a long black candle with a long
         * lower shadow, a smaller black candle probing lower, then a small black
         * marubozu contained within the second candle's range. A hit signals a
-        * bullish reversal; per the code comment it is meaningful in a downtrend,
-        * but the function does not verify prior trend.
+        * bullish reversal; it is meaningful in a downtrend, which the function does
+        * not verify.
         * <p>Formula and more info at <a
         * href="https://ta-lib.org/functions/cdl3starsinsouth">ta-lib.org/functions/cdl3starsinsouth</a>.
         * <p><b>Notes</b>
@@ -26067,8 +26052,8 @@ class Core {
         * that progressively shrink and stabilize: a long black candle with a long
         * lower shadow, a smaller black candle probing lower, then a small black
         * marubozu contained within the second candle's range. A hit signals a
-        * bullish reversal; per the code comment it is meaningful in a downtrend,
-        * but the function does not verify prior trend.
+        * bullish reversal; it is meaningful in a downtrend, which the function does
+        * not verify.
         * <p>Formula and more info at <a
         * href="https://ta-lib.org/functions/cdl3starsinsouth">ta-lib.org/functions/cdl3starsinsouth</a>.
         * <p><b>Notes</b>
@@ -26558,10 +26543,7 @@ class Core {
            * - second candle: smaller black candle that opens higher than prior close but within prior candle's range
            *   and trades lower than prior close but not lower than prior low and closes off of its low (it has a shadow)
            * - third candle: small black marubozu (or candle with very short shadows) engulfed by prior candle's range
-           * The meanings of "long body", "short body", "very short shadow" are specified with TA_SetCandleSettings;
-           * outInteger is positive (1 to 100): 3 stars in the south is always bullish;
-           * the user should consider that 3 stars in the south is significant when it appears in downtrend, while this function
-           * does not consider it
+           * The meanings of "long body", "short body", "very short shadow" are specified with TA_SetCandleSettings
            */
           outIdx = 0;
           do {
@@ -26777,13 +26759,16 @@ class Core {
      *  Initial  Name/description
      *  -------------------------------------------------------------------
      *  AC       Angelo Ciceri
+     *  MF       Mario Fortier
+     *  CC       Claude Code (AI assistant)
      *
      *
      * Change history:
      *
-     *  MMDDYY BY   Description
+     *  MMDDYY BY     Description
      *  -------------------------------------------------------------------
-     *  120404 AC   Creation
+     *  120404 AC     Creation
+     *  100426 MF,CC  Remove the outInteger comment, which misstated the values
      */
 
        /**
@@ -26934,10 +26919,7 @@ class Core {
            * - each candle must have no or very short upper shadow
            * - to differentiate this pattern from advance block, each candle must not be far shorter than the prior candle
            * The meanings of "not short", "very short shadow", "far" and "near" are specified with TA_SetCandleSettings;
-           * here the 3 candles must be not short, if you want them to be long use TA_SetCandleSettings on BodyShort;
-           * outInteger is positive (1 to 100): advancing 3 white soldiers is always bullish;
-           * the user should consider that 3 white soldiers is significant when it appears in downtrend, while this function
-           * does not consider it
+           * here the 3 candles must be not short, if you want them to be long use TA_SetCandleSettings on BodyShort
            */
           outIdx = 0;
           do {
@@ -27671,10 +27653,7 @@ class Core {
            * - each candle must have no or very short upper shadow
            * - to differentiate this pattern from advance block, each candle must not be far shorter than the prior candle
            * The meanings of "not short", "very short shadow", "far" and "near" are specified with TA_SetCandleSettings;
-           * here the 3 candles must be not short, if you want them to be long use TA_SetCandleSettings on BodyShort;
-           * outInteger is positive (1 to 100): advancing 3 white soldiers is always bullish;
-           * the user should consider that 3 white soldiers is significant when it appears in downtrend, while this function
-           * does not consider it
+           * here the 3 candles must be not short, if you want them to be long use TA_SetCandleSettings on BodyShort
            */
           outIdx = 0;
           do {
@@ -27891,13 +27870,16 @@ class Core {
      *  Initial  Name/description
      *  -------------------------------------------------------------------
      *  AC       Angelo Ciceri
+     *  MF       Mario Fortier
+     *  CC       Claude Code (AI assistant)
      *
      *
      * Change history:
      *
-     *  MMDDYY BY   Description
+     *  MMDDYY BY     Description
      *  -------------------------------------------------------------------
-     *  102304 AC   Creation
+     *  102304 AC     Creation
+     *  100426 MF,CC  Remove the outInteger comment, which misstated the values
      */
 
        /**
@@ -28045,9 +28027,6 @@ class Core {
            * The meaning of "moves well within" is specified with optInPenetration and "moves" should mean the real body should
            * not be short ("short" is specified with TA_SetCandleSettings) - Greg Morris wants it to be long, someone else want
            * it to be relatively long
-           * outInteger is positive (1 to 100) when it's an abandoned baby bottom or negative (-1 to -100) when it's
-           * an abandoned baby top; the user should consider that an abandoned baby is significant when it appears in
-           * an uptrend or downtrend, while this function does not consider the trend
            */
           outIdx = 0;
           do {
@@ -28712,9 +28691,6 @@ class Core {
            * The meaning of "moves well within" is specified with optInPenetration and "moves" should mean the real body should
            * not be short ("short" is specified with TA_SetCandleSettings) - Greg Morris wants it to be long, someone else want
            * it to be relatively long
-           * outInteger is positive (1 to 100) when it's an abandoned baby bottom or negative (-1 to -100) when it's
-           * an abandoned baby top; the user should consider that an abandoned baby is significant when it appears in
-           * an uptrend or downtrend, while this function does not consider the trend
            */
           outIdx = 0;
           do {
@@ -28904,13 +28880,16 @@ class Core {
      *  Initial  Name/description
      *  -------------------------------------------------------------------
      *  AC       Angelo Ciceri
+     *  MF       Mario Fortier
+     *  CC       Claude Code (AI assistant)
      *
      *
      * Change history:
      *
-     *  MMDDYY BY   Description
+     *  MMDDYY BY     Description
      *  -------------------------------------------------------------------
-     *  120404 AC   Creation
+     *  120404 AC     Creation
+     *  100426 MF,CC  Remove the outInteger comment, which misstated the values
      */
 
        /**
@@ -29077,10 +29056,7 @@ class Core {
            * - first candle: long white with no or very short upper shadow (a short shadow is accepted too for more flexibility)
            * - second and third candles, or only third candle, show signs of weakening: progressively smaller white real bodies
            * and/or relatively long upper shadows; see below for specific conditions
-           * The meanings of "long body", "short shadow", "far" and "near" are specified with TA_SetCandleSettings;
-           * outInteger is negative (-1 to -100): advance block is always bearish;
-           * the user should consider that advance block is significant when it appears in uptrend, while this function
-           * does not consider it
+           * The meanings of "long body", "short shadow", "far" and "near" are specified with TA_SetCandleSettings
            */
           outIdx = 0;
           do {
@@ -29893,10 +29869,7 @@ class Core {
            * - first candle: long white with no or very short upper shadow (a short shadow is accepted too for more flexibility)
            * - second and third candles, or only third candle, show signs of weakening: progressively smaller white real bodies
            * and/or relatively long upper shadows; see below for specific conditions
-           * The meanings of "long body", "short shadow", "far" and "near" are specified with TA_SetCandleSettings;
-           * outInteger is negative (-1 to -100): advance block is always bearish;
-           * the user should consider that advance block is significant when it appears in uptrend, while this function
-           * does not consider it
+           * The meanings of "long body", "short shadow", "far" and "near" are specified with TA_SetCandleSettings
            */
           outIdx = 0;
           do {
@@ -30142,13 +30115,16 @@ class Core {
      *  Initial  Name/description
      *  -------------------------------------------------------------------
      *  AC       Angelo Ciceri
+     *  MF       Mario Fortier
+     *  CC       Claude Code (AI assistant)
      *
      *
      * Change history:
      *
-     *  MMDDYY BY   Description
+     *  MMDDYY BY     Description
      *  -------------------------------------------------------------------
-     *  010605 AC   Creation
+     *  010605 AC     Creation
+     *  100426 MF,CC  Remove the outInteger comment, which misstated the values
      */
 
        /**
@@ -30254,7 +30230,6 @@ class Core {
            * - long white (black) real body
            * - no or very short lower (upper) shadow
            * The meaning of "long" and "very short" is specified with TA_SetCandleSettings
-           * outInteger is positive (1 to 100) when white (bullish), negative (-1 to -100) when black (bearish)
            */
           outIdx = 0;
           do {
@@ -30785,7 +30760,6 @@ class Core {
            * - long white (black) real body
            * - no or very short lower (upper) shadow
            * The meaning of "long" and "very short" is specified with TA_SetCandleSettings
-           * outInteger is positive (1 to 100) when white (bullish), negative (-1 to -100) when black (bearish)
            */
           outIdx = 0;
           do {
@@ -30938,13 +30912,16 @@ class Core {
      *  Initial  Name/description
      *  -------------------------------------------------------------------
      *  AC       Angelo Ciceri
+     *  MF       Mario Fortier
+     *  CC       Claude Code (AI assistant)
      *
      *
      * Change history:
      *
-     *  MMDDYY BY   Description
+     *  MMDDYY BY     Description
      *  -------------------------------------------------------------------
-     *  011505 AC   Creation
+     *  011505 AC     Creation
+     *  100426 MF,CC  Remove the outInteger comment, which misstated the values
      */
 
        /**
@@ -31039,9 +31016,6 @@ class Core {
            * - fourth candle: black (white) day with lower (higher) high and lower (higher) low than prior candle's
            * - fifth candle: white (black) day that closes inside the gap, erasing the prior 3 days
            * The meaning of "long" is specified with TA_SetCandleSettings
-           * outInteger is positive (1 to 100) when bullish or negative (-1 to -100) when bearish;
-           * the user should consider that breakaway is significant in a trend opposite to the last candle, while this
-           * function does not consider it
            */
           outIdx = 0;
           do {
@@ -31612,9 +31586,6 @@ class Core {
            * - fourth candle: black (white) day with lower (higher) high and lower (higher) low than prior candle's
            * - fifth candle: white (black) day that closes inside the gap, erasing the prior 3 days
            * The meaning of "long" is specified with TA_SetCandleSettings
-           * outInteger is positive (1 to 100) when bullish or negative (-1 to -100) when bearish;
-           * the user should consider that breakaway is significant in a trend opposite to the last candle, while this
-           * function does not consider it
            */
           outIdx = 0;
           do {
@@ -31782,13 +31753,16 @@ class Core {
      *  Initial  Name/description
      *  -------------------------------------------------------------------
      *  AC       Angelo Ciceri
+     *  MF       Mario Fortier
+     *  CC       Claude Code (AI assistant)
      *
      *
      * Change history:
      *
-     *  MMDDYY BY   Description
+     *  MMDDYY BY     Description
      *  -------------------------------------------------------------------
-     *  022005 AC   Creation
+     *  022005 AC     Creation
+     *  100426 MF,CC  Remove the outInteger comment, which misstated the values
      */
 
        /**
@@ -31894,7 +31868,6 @@ class Core {
            * - long white (black) real body
            * - no or very short upper (lower) shadow
            * The meaning of "long" and "very short" is specified with TA_SetCandleSettings
-           * outInteger is positive (1 to 100) when white (bullish), negative (-1 to -100) when black (bearish)
            */
           outIdx = 0;
           do {
@@ -32421,7 +32394,6 @@ class Core {
            * - long white (black) real body
            * - no or very short upper (lower) shadow
            * The meaning of "long" and "very short" is specified with TA_SetCandleSettings
-           * outInteger is positive (1 to 100) when white (bullish), negative (-1 to -100) when black (bearish)
            */
           outIdx = 0;
           do {
@@ -32574,13 +32546,16 @@ class Core {
      *  Initial  Name/description
      *  -------------------------------------------------------------------
      *  AC       Angelo Ciceri
+     *  MF       Mario Fortier
+     *  CC       Claude Code (AI assistant)
      *
      *
      * Change history:
      *
-     *  MMDDYY BY   Description
+     *  MMDDYY BY     Description
      *  -------------------------------------------------------------------
-     *  022705 AC   Creation
+     *  022705 AC     Creation
+     *  100426 MF,CC  Remove the outInteger comment, which misstated the values
      */
 
        /**
@@ -32678,10 +32653,7 @@ class Core {
            * - second candle: black marubozu (very short shadows)
            * - third candle: black candle that opens gapping down but has an upper shadow that extends into the prior body
            * - fourth candle: black candle that completely engulfs the third candle, including the shadows
-           * The meanings of "very short shadow" are specified with TA_SetCandleSettings;
-           * outInteger is positive (1 to 100): concealing baby swallow is always bullish;
-           * the user should consider that concealing baby swallow is significant when it appears in downtrend, while
-           * this function does not consider it
+           * The meanings of "very short shadow" are specified with TA_SetCandleSettings
            */
           outIdx = 0;
           do {
@@ -33228,10 +33200,7 @@ class Core {
            * - second candle: black marubozu (very short shadows)
            * - third candle: black candle that opens gapping down but has an upper shadow that extends into the prior body
            * - fourth candle: black candle that completely engulfs the third candle, including the shadows
-           * The meanings of "very short shadow" are specified with TA_SetCandleSettings;
-           * outInteger is positive (1 to 100): concealing baby swallow is always bullish;
-           * the user should consider that concealing baby swallow is significant when it appears in downtrend, while
-           * this function does not consider it
+           * The meanings of "very short shadow" are specified with TA_SetCandleSettings
            */
           outIdx = 0;
           do {
@@ -33390,13 +33359,16 @@ class Core {
      *  Initial  Name/description
      *  -------------------------------------------------------------------
      *  AC       Angelo Ciceri
+     *  MF       Mario Fortier
+     *  CC       Claude Code (AI assistant)
      *
      *
      * Change history:
      *
-     *  MMDDYY BY   Description
+     *  MMDDYY BY     Description
      *  -------------------------------------------------------------------
-     *  010605 AC   Creation
+     *  010605 AC     Creation
+     *  100426 MF,CC  Remove the outInteger comment, which misstated the values
      */
 
        /**
@@ -33506,8 +33478,6 @@ class Core {
            * - first candle: long black (white)
            * - second candle: long white (black) with close equal to the prior close
            * The meaning of "equal" and "long" is specified with TA_SetCandleSettings
-           * outInteger is positive (1 to 100) when bullish or negative (-1 to -100) when bearish;
-           * the user should consider that counterattack is significant in a trend, while this function does not consider it
            */
           outIdx = 0;
           do {
@@ -34061,8 +34031,6 @@ class Core {
            * - first candle: long black (white)
            * - second candle: long white (black) with close equal to the prior close
            * The meaning of "equal" and "long" is specified with TA_SetCandleSettings
-           * outInteger is positive (1 to 100) when bullish or negative (-1 to -100) when bearish;
-           * the user should consider that counterattack is significant in a trend, while this function does not consider it
            */
           outIdx = 0;
           do {
@@ -34225,13 +34193,16 @@ class Core {
      *  Initial  Name/description
      *  -------------------------------------------------------------------
      *  AC       Angelo Ciceri
+     *  MF       Mario Fortier
+     *  CC       Claude Code (AI assistant)
      *
      *
      * Change history:
      *
-     *  MMDDYY BY   Description
+     *  MMDDYY BY     Description
      *  -------------------------------------------------------------------
-     *  120904 AC   Creation
+     *  120904 AC     Creation
+     *  100426 MF,CC  Remove the outInteger comment, which misstated the values
      */
 
        /**
@@ -34347,9 +34318,6 @@ class Core {
            * Greg Morris wants the close to be below the midpoint of the previous real body
            * The meaning of "long" is specified with TA_SetCandleSettings, the penetration of the first real body is specified
            * with optInPenetration
-           * outInteger is negative (-1 to -100): dark cloud cover is always bearish
-           * the user should consider that a dark cloud cover is significant when it appears in an uptrend, while
-           * this function does not consider it
            */
           outIdx = 0;
           do {
@@ -34860,9 +34828,6 @@ class Core {
            * Greg Morris wants the close to be below the midpoint of the previous real body
            * The meaning of "long" is specified with TA_SetCandleSettings, the penetration of the first real body is specified
            * with optInPenetration
-           * outInteger is negative (-1 to -100): dark cloud cover is always bearish
-           * the user should consider that a dark cloud cover is significant when it appears in an uptrend, while
-           * this function does not consider it
            */
           outIdx = 0;
           do {
@@ -35007,13 +34972,16 @@ class Core {
      *  Initial  Name/description
      *  -------------------------------------------------------------------
      *  AC       Angelo Ciceri
+     *  MF       Mario Fortier
+     *  CC       Claude Code (AI assistant)
      *
      *
      * Change history:
      *
-     *  MMDDYY BY   Description
+     *  MMDDYY BY     Description
      *  -------------------------------------------------------------------
-     *  011505 AC   Creation
+     *  011505 AC     Creation
+     *  100426 MF,CC  Remove the outInteger comment, which misstated the values
      */
 
        /**
@@ -35104,8 +35072,6 @@ class Core {
            * Must have:
            * - open quite equal to close
            * How much can be the maximum distance between open and close is specified with TA_SetCandleSettings
-           * outInteger is always positive (1 to 100) but this does not mean it is bullish: doji shows uncertainty and it is
-           * neither bullish nor bearish when considered alone
            */
           outIdx = 0;
           do {
@@ -35550,8 +35516,6 @@ class Core {
            * Must have:
            * - open quite equal to close
            * How much can be the maximum distance between open and close is specified with TA_SetCandleSettings
-           * outInteger is always positive (1 to 100) but this does not mean it is bullish: doji shows uncertainty and it is
-           * neither bullish nor bearish when considered alone
            */
           outIdx = 0;
           do {
@@ -35681,14 +35645,16 @@ class Core {
      *  Initial  Name/description
      *  -------------------------------------------------------------------
      *  AC       Angelo Ciceri
+     *  MF       Mario Fortier
+     *  CC       Claude Code (AI assistant)
      *
      *
      * Change history:
      *
-     *  MMDDYY BY   Description
+     *  MMDDYY BY     Description
      *  -------------------------------------------------------------------
-     *  100204 AC   Creation
-     *  100426 MF,CC Fix the comment: the sign is the opposite of the long candle's color
+     *  100204 AC     Creation
+     *  100426 MF,CC  Remove the outInteger comment, which misstated the values
      */
 
        /**
@@ -35794,8 +35760,6 @@ class Core {
            * - first candle: long real body
            * - second candle: star (open gapping up in an uptrend or down in a downtrend) with a doji
            * The meaning of "doji" and "long" is specified with TA_SetCandleSettings
-           * outInteger is -100 when the long candle is white and the star gaps up, +100 when it is black and
-           * the star gaps down; the trend the reading presumes is not checked
            */
           outIdx = 0;
           do {
@@ -36349,8 +36313,6 @@ class Core {
            * - first candle: long real body
            * - second candle: star (open gapping up in an uptrend or down in a downtrend) with a doji
            * The meaning of "doji" and "long" is specified with TA_SetCandleSettings
-           * outInteger is -100 when the long candle is white and the star gaps up, +100 when it is black and
-           * the star gaps down; the trend the reading presumes is not checked
            */
           outIdx = 0;
           do {
@@ -36508,13 +36470,16 @@ class Core {
      *  Initial  Name/description
      *  -------------------------------------------------------------------
      *  AC       Angelo Ciceri
+     *  MF       Mario Fortier
+     *  CC       Claude Code (AI assistant)
      *
      *
      * Change history:
      *
-     *  MMDDYY BY   Description
+     *  MMDDYY BY     Description
      *  -------------------------------------------------------------------
-     *  011505 AC   Creation
+     *  011505 AC     Creation
+     *  100426 MF,CC  Remove the outInteger comment, which misstated the values
      */
 
        /**
@@ -36622,8 +36587,6 @@ class Core {
            * - open and close at the high of the day = no or very short upper shadow
            * - lower shadow (to distinguish from other dojis, here lower shadow should not be very short)
            * The meaning of "doji" and "very short" is specified with TA_SetCandleSettings
-           * outInteger is always positive (1 to 100) but this does not mean it is bullish: dragonfly doji must be considered
-           * relatively to the trend
            */
           outIdx = 0;
           do {
@@ -37147,8 +37110,6 @@ class Core {
            * - open and close at the high of the day = no or very short upper shadow
            * - lower shadow (to distinguish from other dojis, here lower shadow should not be very short)
            * The meaning of "doji" and "very short" is specified with TA_SetCandleSettings
-           * outInteger is always positive (1 to 100) but this does not mean it is bullish: dragonfly doji must be considered
-           * relatively to the trend
            */
           outIdx = 0;
           do {
@@ -37296,15 +37257,18 @@ class Core {
      *  Initial  Name/description
      *  -------------------------------------------------------------------
      *  AC       Angelo Ciceri
+     *  MF       Mario Fortier
+     *  CC       Claude Code (AI assistant)
      *
      *
      * Change history:
      *
-     *  MMDDYY BY   Description
+     *  MMDDYY BY     Description
      *  -------------------------------------------------------------------
-     *  102404 AC   Creation
-     *  040309 AC   Increased flexibility to allow real bodies matching
-     *              on one end (Greg Morris - "Candlestick charting explained")
+     *  102404 AC     Creation
+     *  040309 AC     Increased flexibility to allow real bodies matching
+     *                on one end (Greg Morris - "Candlestick charting explained")
+     *  100426 MF,CC  Remove the outInteger comment, which misstated the values
      */
 
        /**
@@ -37380,12 +37344,6 @@ class Core {
            * Must have:
            * - first: black (white) real body
            * - second: white (black) real body that engulfs the prior real body
-           * outInteger is positive (1 to 100) when bullish or negative (-1 to -100) when bearish:
-           * - 100 is returned when the second candle's real body begins before and ends after the first candle's real body
-           * - 80 is returned when the two real bodies match on one end (Greg Morris contemplate this case in his book
-           *   "Candlestick charting explained")
-           * The user should consider that an engulfing must appear in a downtrend if bullish or in an uptrend if bearish,
-           * while this function does not consider it
            */
           outIdx = 0;
           do {
@@ -37842,12 +37800,6 @@ class Core {
            * Must have:
            * - first: black (white) real body
            * - second: white (black) real body that engulfs the prior real body
-           * outInteger is positive (1 to 100) when bullish or negative (-1 to -100) when bearish:
-           * - 100 is returned when the second candle's real body begins before and ends after the first candle's real body
-           * - 80 is returned when the two real bodies match on one end (Greg Morris contemplate this case in his book
-           *   "Candlestick charting explained")
-           * The user should consider that an engulfing must appear in a downtrend if bullish or in an uptrend if bearish,
-           * while this function does not consider it
            */
           outIdx = 0;
           do {
@@ -37974,13 +37926,16 @@ class Core {
      *  Initial  Name/description
      *  -------------------------------------------------------------------
      *  AC       Angelo Ciceri
+     *  MF       Mario Fortier
+     *  CC       Claude Code (AI assistant)
      *
      *
      * Change history:
      *
-     *  MMDDYY BY   Description
+     *  MMDDYY BY     Description
      *  -------------------------------------------------------------------
-     *  100304 AC   Creation
+     *  100304 AC     Creation
+     *  100426 MF,CC  Remove the outInteger comment, which misstated the values
      */
 
        /**
@@ -38126,9 +38081,6 @@ class Core {
            * The meaning of "moves well within" is specified with optInPenetration and "moves" should mean the real body should
            * not be short ("short" is specified with TA_SetCandleSettings) - Greg Morris wants it to be long, someone else want
            * it to be relatively long
-           * outInteger is negative (-1 to -100): evening star is always bearish;
-           * the user should consider that an evening star is significant when it appears in an uptrend,
-           * while this function does not consider the trend
            */
           outIdx = 0;
           do {
@@ -38771,9 +38723,6 @@ class Core {
            * The meaning of "moves well within" is specified with optInPenetration and "moves" should mean the real body should
            * not be short ("short" is specified with TA_SetCandleSettings) - Greg Morris wants it to be long, someone else want
            * it to be relatively long
-           * outInteger is negative (-1 to -100): evening star is always bearish;
-           * the user should consider that an evening star is significant when it appears in an uptrend,
-           * while this function does not consider the trend
            */
           outIdx = 0;
           do {
@@ -38957,13 +38906,16 @@ class Core {
      *  Initial  Name/description
      *  -------------------------------------------------------------------
      *  AC       Angelo Ciceri
+     *  MF       Mario Fortier
+     *  CC       Claude Code (AI assistant)
      *
      *
      * Change history:
      *
-     *  MMDDYY BY   Description
+     *  MMDDYY BY     Description
      *  -------------------------------------------------------------------
-     *  100304 AC   Creation
+     *  100304 AC     Creation
+     *  100426 MF,CC  Remove the outInteger comment, which misstated the values
      */
 
        /**
@@ -39099,9 +39051,6 @@ class Core {
            * The meaning of "moves well within" is specified with optInPenetration and "moves" should mean the real body should
            * not be short ("short" is specified with TA_SetCandleSettings) - Greg Morris wants it to be long, someone else want
            * it to be relatively long
-           * outInteger is negative (-1 to -100): evening star is always bearish;
-           * the user should consider that an evening star is significant when it appears in an uptrend,
-           * while this function does not consider the trend
            */
           outIdx = 0;
           do {
@@ -39699,9 +39648,6 @@ class Core {
            * The meaning of "moves well within" is specified with optInPenetration and "moves" should mean the real body should
            * not be short ("short" is specified with TA_SetCandleSettings) - Greg Morris wants it to be long, someone else want
            * it to be relatively long
-           * outInteger is negative (-1 to -100): evening star is always bearish;
-           * the user should consider that an evening star is significant when it appears in an uptrend,
-           * while this function does not consider the trend
            */
           outIdx = 0;
           do {
@@ -39871,13 +39817,16 @@ class Core {
      *  Initial  Name/description
      *  -------------------------------------------------------------------
      *  AC       Angelo Ciceri
+     *  MF       Mario Fortier
+     *  CC       Claude Code (AI assistant)
      *
      *
      * Change history:
      *
-     *  MMDDYY BY   Description
+     *  MMDDYY BY     Description
      *  -------------------------------------------------------------------
-     *  020605 AC   Creation
+     *  020605 AC     Creation
+     *  100426 MF,CC  Remove the outInteger comment, which misstated the values
      */
 
        /**
@@ -39987,9 +39936,6 @@ class Core {
            *   open (equal) of the previous candle
            * - the second candle does not close the window
            * The meaning of "near" and "equal" is specified with TA_SetCandleSettings
-           * outInteger is positive (1 to 100) or negative (-1 to -100): the user should consider that upside
-           * or downside gap side-by-side white lines is significant when it appears in a trend, while this function
-           * does not consider the trend
            */
           outIdx = 0;
           do {
@@ -40556,9 +40502,6 @@ class Core {
            *   open (equal) of the previous candle
            * - the second candle does not close the window
            * The meaning of "near" and "equal" is specified with TA_SetCandleSettings
-           * outInteger is positive (1 to 100) or negative (-1 to -100): the user should consider that upside
-           * or downside gap side-by-side white lines is significant when it appears in a trend, while this function
-           * does not consider the trend
            */
           outIdx = 0;
           do {
@@ -40726,13 +40669,16 @@ class Core {
      *  Initial  Name/description
      *  -------------------------------------------------------------------
      *  AC       Angelo Ciceri
+     *  MF       Mario Fortier
+     *  CC       Claude Code (AI assistant)
      *
      *
      * Change history:
      *
-     *  MMDDYY BY   Description
+     *  MMDDYY BY     Description
      *  -------------------------------------------------------------------
-     *  011505 AC   Creation
+     *  011505 AC     Creation
+     *  100426 MF,CC  Remove the outInteger comment, which misstated the values
      */
 
        /**
@@ -40840,8 +40786,6 @@ class Core {
            * - open and close at the low of the day = no or very short lower shadow
            * - upper shadow (to distinguish from other dojis, here upper shadow should not be very short)
            * The meaning of "doji" and "very short" is specified with TA_SetCandleSettings
-           * outInteger is always positive (1 to 100) but this does not mean it is bullish: gravestone doji must be considered
-           * relatively to the trend
            */
           outIdx = 0;
           do {
@@ -41365,8 +41309,6 @@ class Core {
            * - open and close at the low of the day = no or very short lower shadow
            * - upper shadow (to distinguish from other dojis, here upper shadow should not be very short)
            * The meaning of "doji" and "very short" is specified with TA_SetCandleSettings
-           * outInteger is always positive (1 to 100) but this does not mean it is bullish: gravestone doji must be considered
-           * relatively to the trend
            */
           outIdx = 0;
           do {
@@ -41514,13 +41456,16 @@ class Core {
      *  Initial  Name/description
      *  -------------------------------------------------------------------
      *  AC       Angelo Ciceri
+     *  MF       Mario Fortier
+     *  CC       Claude Code (AI assistant)
      *
      *
      * Change history:
      *
-     *  MMDDYY BY   Description
+     *  MMDDYY BY     Description
      *  -------------------------------------------------------------------
-     *  102304 AC   Creation
+     *  102304 AC     Creation
+     *  100426 MF,CC  Remove the outInteger comment, which misstated the values
      */
 
        /**
@@ -41658,9 +41603,7 @@ class Core {
            * - long lower shadow
            * - no, or very short, upper shadow
            * - body below or near the lows of the previous candle
-           * The meaning of "short", "long" and "near the lows" is specified with TA_SetCandleSettings;
-           * outInteger is positive (1 to 100): hammer is always bullish;
-           * the user should consider that a hammer must appear in a downtrend, while this function does not consider it
+           * The meaning of "short", "long" and "near the lows" is specified with TA_SetCandleSettings
            */
           outIdx = 0;
           do {
@@ -42313,9 +42256,7 @@ class Core {
            * - long lower shadow
            * - no, or very short, upper shadow
            * - body below or near the lows of the previous candle
-           * The meaning of "short", "long" and "near the lows" is specified with TA_SetCandleSettings;
-           * outInteger is positive (1 to 100): hammer is always bullish;
-           * the user should consider that a hammer must appear in a downtrend, while this function does not consider it
+           * The meaning of "short", "long" and "near the lows" is specified with TA_SetCandleSettings
            */
           outIdx = 0;
           do {
@@ -42507,13 +42448,16 @@ class Core {
      *  Initial  Name/description
      *  -------------------------------------------------------------------
      *  AC       Angelo Ciceri
+     *  MF       Mario Fortier
+     *  CC       Claude Code (AI assistant)
      *
      *
      * Change history:
      *
-     *  MMDDYY BY   Description
+     *  MMDDYY BY     Description
      *  -------------------------------------------------------------------
-     *  102304 AC   Creation
+     *  102304 AC     Creation
+     *  100426 MF,CC  Remove the outInteger comment, which misstated the values
      */
 
        /**
@@ -42651,9 +42595,7 @@ class Core {
            * - long lower shadow
            * - no, or very short, upper shadow
            * - body above or near the highs of the previous candle
-           * The meaning of "short", "long" and "near the highs" is specified with TA_SetCandleSettings;
-           * outInteger is negative (-1 to -100): hanging man is always bearish;
-           * the user should consider that a hanging man must appear in an uptrend, while this function does not consider it
+           * The meaning of "short", "long" and "near the highs" is specified with TA_SetCandleSettings
            */
           outIdx = 0;
           do {
@@ -43310,9 +43252,7 @@ class Core {
            * - long lower shadow
            * - no, or very short, upper shadow
            * - body above or near the highs of the previous candle
-           * The meaning of "short", "long" and "near the highs" is specified with TA_SetCandleSettings;
-           * outInteger is negative (-1 to -100): hanging man is always bearish;
-           * the user should consider that a hanging man must appear in an uptrend, while this function does not consider it
+           * The meaning of "short", "long" and "near the highs" is specified with TA_SetCandleSettings
            */
           outIdx = 0;
           do {
@@ -43504,15 +43444,18 @@ class Core {
      *  Initial  Name/description
      *  -------------------------------------------------------------------
      *  AC       Angelo Ciceri
+     *  MF       Mario Fortier
+     *  CC       Claude Code (AI assistant)
      *
      *
      * Change history:
      *
-     *  MMDDYY BY   Description
+     *  MMDDYY BY     Description
      *  -------------------------------------------------------------------
-     *  102404 AC   Creation
-     *  040309 AC   Increased flexibility to allow real bodies matching
-     *              on one end (Greg Morris - "Candlestick charting explained")
+     *  102404 AC     Creation
+     *  040309 AC     Increased flexibility to allow real bodies matching
+     *                on one end (Greg Morris - "Candlestick charting explained")
+     *  100426 MF,CC  Remove the outInteger comment, which misstated the values
      */
 
        /**
@@ -43619,12 +43562,6 @@ class Core {
            * - first candle: long white (black) real body
            * - second candle: short real body totally engulfed by the first
            * The meaning of "short" and "long" is specified with TA_SetCandleSettings
-           * outInteger is positive (1 to 100) when bullish or negative (-1 to -100) when bearish:
-           * - 100 is returned when the first candle's real body begins before and ends after the second candle's real body
-           * - 80 is returned when the two real bodies match on one end (Greg Morris contemplate this case in his book
-           *   "Candlestick charting explained")
-           * The user should consider that a harami is significant when it appears in a downtrend if bullish or
-           * in an uptrend when bearish, while this function does not consider the trend
            */
           outIdx = 0;
           do {
@@ -44213,12 +44150,6 @@ class Core {
            * - first candle: long white (black) real body
            * - second candle: short real body totally engulfed by the first
            * The meaning of "short" and "long" is specified with TA_SetCandleSettings
-           * outInteger is positive (1 to 100) when bullish or negative (-1 to -100) when bearish:
-           * - 100 is returned when the first candle's real body begins before and ends after the second candle's real body
-           * - 80 is returned when the two real bodies match on one end (Greg Morris contemplate this case in his book
-           *   "Candlestick charting explained")
-           * The user should consider that a harami is significant when it appears in a downtrend if bullish or
-           * in an uptrend when bearish, while this function does not consider the trend
            */
           outIdx = 0;
           do {
@@ -44387,15 +44318,18 @@ class Core {
      *  Initial  Name/description
      *  -------------------------------------------------------------------
      *  AC       Angelo Ciceri
+     *  MF       Mario Fortier
+     *  CC       Claude Code (AI assistant)
      *
      *
      * Change history:
      *
-     *  MMDDYY BY   Description
+     *  MMDDYY BY     Description
      *  -------------------------------------------------------------------
-     *  102404 AC   Creation
-     *  040309 AC   Increased flexibility to allow real bodies matching
-     *              on one end (Greg Morris - "Candlestick charting explained")
+     *  102404 AC     Creation
+     *  040309 AC     Increased flexibility to allow real bodies matching
+     *                on one end (Greg Morris - "Candlestick charting explained")
+     *  100426 MF,CC  Remove the outInteger comment, which misstated the values
      */
 
        /**
@@ -44502,9 +44436,6 @@ class Core {
            * - first candle: long white (black) real body
            * - second candle: doji totally engulfed by the first
            * The meaning of "doji" and "long" is specified with TA_SetCandleSettings
-           * outInteger is positive (1 to 100) when bullish or negative (-1 to -100) when bearish;
-           * the user should consider that a harami cross is significant when it appears in a downtrend if bullish or
-           * in an uptrend when bearish, while this function does not consider the trend
            */
           outIdx = 0;
           do {
@@ -45092,9 +45023,6 @@ class Core {
            * - first candle: long white (black) real body
            * - second candle: doji totally engulfed by the first
            * The meaning of "doji" and "long" is specified with TA_SetCandleSettings
-           * outInteger is positive (1 to 100) when bullish or negative (-1 to -100) when bearish;
-           * the user should consider that a harami cross is significant when it appears in a downtrend if bullish or
-           * in an uptrend when bearish, while this function does not consider the trend
            */
           outIdx = 0;
           do {
@@ -45262,13 +45190,16 @@ class Core {
      *  Initial  Name/description
      *  -------------------------------------------------------------------
      *  AC       Angelo Ciceri
+     *  MF       Mario Fortier
+     *  CC       Claude Code (AI assistant)
      *
      *
      * Change history:
      *
-     *  MMDDYY BY   Description
+     *  MMDDYY BY     Description
      *  -------------------------------------------------------------------
-     *  072404 AC   Creation
+     *  072404 AC     Creation
+     *  100426 MF,CC  Remove the outInteger comment, which misstated the values
      */
 
        /**
@@ -45374,8 +45305,6 @@ class Core {
            * - short real body
            * - very long upper and lower shadow
            * The meaning of "short" and "very long" is specified with TA_SetCandleSettings
-           * outInteger is positive (1 to 100) when white or negative (-1 to -100) when black;
-           * it does not mean bullish or bearish
            */
           outIdx = 0;
           do {
@@ -45893,8 +45822,6 @@ class Core {
            * - short real body
            * - very long upper and lower shadow
            * The meaning of "short" and "very long" is specified with TA_SetCandleSettings
-           * outInteger is positive (1 to 100) when white or negative (-1 to -100) when black;
-           * it does not mean bullish or bearish
            */
           outIdx = 0;
           do {
@@ -46048,13 +45975,14 @@ class Core {
      *
      * Change history:
      *
-     *  MMDDYY BY   Description
+     *  MMDDYY BY     Description
      *  -------------------------------------------------------------------
-     *  120305 AC   Creation
-     *  071226 MF,CC Streaming-friendly rewrite: carry the confirmation state
-     *               (countdown + cached 2nd-candle high/low) instead of the absolute
-     *               bar index, so the per-bar logic reads no cursor. Bit-identical
-     *               batch results (verified vs v0.6.4).
+     *  120305 AC     Creation
+     *  071226 MF,CC  Streaming-friendly rewrite: carry the confirmation state
+     *                (countdown + cached 2nd-candle high/low) instead of the absolute
+     *                bar index, so the per-bar logic reads no cursor. Bit-identical
+     *                batch results (verified vs v0.6.4).
+     *  100426 MF,CC  Remove the outInteger comment, which misstated the values
      */
 
        /**
@@ -46168,12 +46096,8 @@ class Core {
            * Must have:
            * - first and second candle: inside bar (2nd has lower high and higher low than 1st)
            * - third candle: lower high and lower low than 2nd (higher high and higher low than 2nd)
-           * outInteger[hikkakebar] is positive (1 to 100) or negative (-1 to -100) meaning bullish or bearish hikkake
            * Confirmation could come in the next 3 days with:
            * - a day that closes higher than the high (lower than the low) of the 2nd candle
-           * outInteger[confirmationbar] is equal to 100 + the bullish hikkake result or -100 - the bearish hikkake result
-           * Note: if confirmation and a new hikkake come at the same bar, only the new hikkake is reported (the new hikkake
-           * overwrites the confirmation of the old hikkake)
            */
           outIdx = 0;
           do {
@@ -46723,12 +46647,8 @@ class Core {
            * Must have:
            * - first and second candle: inside bar (2nd has lower high and higher low than 1st)
            * - third candle: lower high and lower low than 2nd (higher high and higher low than 2nd)
-           * outInteger[hikkakebar] is positive (1 to 100) or negative (-1 to -100) meaning bullish or bearish hikkake
            * Confirmation could come in the next 3 days with:
            * - a day that closes higher than the high (lower than the low) of the 2nd candle
-           * outInteger[confirmationbar] is equal to 100 + the bullish hikkake result or -100 - the bearish hikkake result
-           * Note: if confirmation and a new hikkake come at the same bar, only the new hikkake is reported (the new hikkake
-           * overwrites the confirmation of the old hikkake)
            */
           outIdx = 0;
           do {
@@ -46872,13 +46792,14 @@ class Core {
      *
      * Change history:
      *
-     *  MMDDYY BY   Description
+     *  MMDDYY BY     Description
      *  -------------------------------------------------------------------
-     *  122605 AC   Creation
-     *  071226 MF,CC Streaming-friendly rewrite: carry the confirmation state
-     *               (countdown + cached 3rd-candle high/low) instead of the absolute
-     *               bar index, so the per-bar logic reads no cursor. Bit-identical
-     *               batch results (verified vs v0.6.4).
+     *  122605 AC     Creation
+     *  071226 MF,CC  Streaming-friendly rewrite: carry the confirmation state
+     *                (countdown + cached 3rd-candle high/low) instead of the absolute
+     *                bar index, so the per-bar logic reads no cursor. Bit-identical
+     *                batch results (verified vs v0.6.4).
+     *  100426 MF,CC  Remove the outInteger comment, which misstated the values
      */
 
        /**
@@ -47016,15 +46937,8 @@ class Core {
            * - second candle: candle with range less than first candle and close near the bottom (near the top)
            * - third candle: lower high and higher low than 2nd
            * - fourth candle: lower high and lower low (higher high and higher low) than 3rd
-           * outInteger[hikkake bar] is positive (1 to 100) or negative (-1 to -100) meaning bullish or bearish hikkake
            * Confirmation could come in the next 3 days with:
            * - a day that closes higher than the high (lower than the low) of the 3rd candle
-           * outInteger[confirmationbar] is equal to 100 + the bullish hikkake result or -100 - the bearish hikkake result
-           * Note: if confirmation and a new hikkake come at the same bar, only the new hikkake is reported (the new hikkake
-           * overwrites the confirmation of the old hikkake);
-           * the user should consider that modified hikkake is a reversal pattern, while hikkake could be both a reversal
-           * or a continuation pattern, so bullish (bearish) modified hikkake is significant when appearing in a downtrend
-           * (uptrend)
            */
           outIdx = 0;
           do {
@@ -47671,15 +47585,8 @@ class Core {
            * - second candle: candle with range less than first candle and close near the bottom (near the top)
            * - third candle: lower high and higher low than 2nd
            * - fourth candle: lower high and lower low (higher high and higher low) than 3rd
-           * outInteger[hikkake bar] is positive (1 to 100) or negative (-1 to -100) meaning bullish or bearish hikkake
            * Confirmation could come in the next 3 days with:
            * - a day that closes higher than the high (lower than the low) of the 3rd candle
-           * outInteger[confirmationbar] is equal to 100 + the bullish hikkake result or -100 - the bearish hikkake result
-           * Note: if confirmation and a new hikkake come at the same bar, only the new hikkake is reported (the new hikkake
-           * overwrites the confirmation of the old hikkake);
-           * the user should consider that modified hikkake is a reversal pattern, while hikkake could be both a reversal
-           * or a continuation pattern, so bullish (bearish) modified hikkake is significant when appearing in a downtrend
-           * (uptrend)
            */
           outIdx = 0;
           do {
@@ -47847,13 +47754,16 @@ class Core {
      *  Initial  Name/description
      *  -------------------------------------------------------------------
      *  AC       Angelo Ciceri
+     *  MF       Mario Fortier
+     *  CC       Claude Code (AI assistant)
      *
      *
      * Change history:
      *
-     *  MMDDYY BY   Description
+     *  MMDDYY BY     Description
      *  -------------------------------------------------------------------
-     *  032005 AC   Creation
+     *  032005 AC     Creation
+     *  100426 MF,CC  Remove the outInteger comment, which misstated the values
      */
 
        /**
@@ -47960,9 +47870,6 @@ class Core {
            * - first candle: long black candle
            * - second candle: short black real body completely inside the previous day's body
            * The meaning of "short" and "long" is specified with TA_SetCandleSettings
-           * outInteger is positive (1 to 100): homing pigeon is always bullish;
-           * the user should consider that homing pigeon is significant when it appears in a downtrend,
-           * while this function does not consider the trend
            */
           outIdx = 0;
           do {
@@ -48503,9 +48410,6 @@ class Core {
            * - first candle: long black candle
            * - second candle: short black real body completely inside the previous day's body
            * The meaning of "short" and "long" is specified with TA_SetCandleSettings
-           * outInteger is positive (1 to 100): homing pigeon is always bullish;
-           * the user should consider that homing pigeon is significant when it appears in a downtrend,
-           * while this function does not consider the trend
            */
           outIdx = 0;
           do {
@@ -48665,13 +48569,16 @@ class Core {
      *  Initial  Name/description
      *  -------------------------------------------------------------------
      *  AC       Angelo Ciceri
+     *  MF       Mario Fortier
+     *  CC       Claude Code (AI assistant)
      *
      *
      * Change history:
      *
-     *  MMDDYY BY   Description
+     *  MMDDYY BY     Description
      *  -------------------------------------------------------------------
-     *  103104 AC   Creation
+     *  103104 AC     Creation
+     *  100426 MF,CC  Remove the outInteger comment, which misstated the values
      */
 
        /**
@@ -48787,10 +48694,7 @@ class Core {
            * - each candle must have no or very short lower shadow
            * - each candle after the first must open at or very close to the prior candle's close
            * The meaning of "very short" is specified with TA_SetCandleSettings;
-           * the meaning of "very close" is specified with TA_SetCandleSettings (Equal);
-           * outInteger is negative (-1 to -100): identical three crows is always bearish;
-           * the user should consider that identical 3 crows is significant when it appears after a mature advance or at high levels,
-           * while this function does not consider it
+           * the meaning of "very close" is specified with TA_SetCandleSettings (Equal)
            */
           outIdx = 0;
           do {
@@ -49392,10 +49296,7 @@ class Core {
            * - each candle must have no or very short lower shadow
            * - each candle after the first must open at or very close to the prior candle's close
            * The meaning of "very short" is specified with TA_SetCandleSettings;
-           * the meaning of "very close" is specified with TA_SetCandleSettings (Equal);
-           * outInteger is negative (-1 to -100): identical three crows is always bearish;
-           * the user should consider that identical 3 crows is significant when it appears after a mature advance or at high levels,
-           * while this function does not consider it
+           * the meaning of "very close" is specified with TA_SetCandleSettings (Equal)
            */
           outIdx = 0;
           do {
@@ -49571,13 +49472,16 @@ class Core {
      *  Initial  Name/description
      *  -------------------------------------------------------------------
      *  AC       Angelo Ciceri
+     *  MF       Mario Fortier
+     *  CC       Claude Code (AI assistant)
      *
      *
      * Change history:
      *
-     *  MMDDYY BY   Description
+     *  MMDDYY BY     Description
      *  -------------------------------------------------------------------
-     *  121104 AC   Creation
+     *  121104 AC     Creation
+     *  100426 MF,CC  Remove the outInteger comment, which misstated the values
      */
 
        /**
@@ -49684,9 +49588,6 @@ class Core {
            * - first candle: long black candle
            * - second candle: white candle with open below previous day low and close slightly into previous day body
            * The meaning of "equal" is specified with TA_SetCandleSettings
-           * outInteger is negative (-1 to -100): in-neck is always bearish
-           * the user should consider that in-neck is significant when it appears in a downtrend, while this function
-           * does not consider it
            */
           outIdx = 0;
           do {
@@ -50232,9 +50133,6 @@ class Core {
            * - first candle: long black candle
            * - second candle: white candle with open below previous day low and close slightly into previous day body
            * The meaning of "equal" is specified with TA_SetCandleSettings
-           * outInteger is negative (-1 to -100): in-neck is always bearish
-           * the user should consider that in-neck is significant when it appears in a downtrend, while this function
-           * does not consider it
            */
           outIdx = 0;
           do {
@@ -50396,13 +50294,16 @@ class Core {
      *  Initial  Name/description
      *  -------------------------------------------------------------------
      *  AC       Angelo Ciceri
+     *  MF       Mario Fortier
+     *  CC       Claude Code (AI assistant)
      *
      *
      * Change history:
      *
-     *  MMDDYY BY   Description
+     *  MMDDYY BY     Description
      *  -------------------------------------------------------------------
-     *  103004 AC   Creation
+     *  103004 AC     Creation
+     *  100426 MF,CC  Remove the outInteger comment, which misstated the values
      */
 
        /**
@@ -50524,9 +50425,7 @@ class Core {
            * - long upper shadow
            * - no, or very short, lower shadow
            * - gap down
-           * The meaning of "short", "very short" and "long" is specified with TA_SetCandleSettings;
-           * outInteger is positive (1 to 100): inverted hammer is always bullish;
-           * the user should consider that an inverted hammer must appear in a downtrend, while this function does not consider it
+           * The meaning of "short", "very short" and "long" is specified with TA_SetCandleSettings
            */
           outIdx = 0;
           do {
@@ -51114,9 +51013,7 @@ class Core {
            * - long upper shadow
            * - no, or very short, lower shadow
            * - gap down
-           * The meaning of "short", "very short" and "long" is specified with TA_SetCandleSettings;
-           * outInteger is positive (1 to 100): inverted hammer is always bullish;
-           * the user should consider that an inverted hammer must appear in a downtrend, while this function does not consider it
+           * The meaning of "short", "very short" and "long" is specified with TA_SetCandleSettings
            */
           outIdx = 0;
           do {
@@ -51288,13 +51185,16 @@ class Core {
      *  Initial  Name/description
      *  -------------------------------------------------------------------
      *  AC       Angelo Ciceri
+     *  MF       Mario Fortier
+     *  CC       Claude Code (AI assistant)
      *
      *
      * Change history:
      *
-     *  MMDDYY BY   Description
+     *  MMDDYY BY     Description
      *  -------------------------------------------------------------------
-     *  010705 AC   Creation
+     *  010705 AC     Creation
+     *  100426 MF,CC  Remove the outInteger comment, which misstated the values
      */
 
        /**
@@ -51407,7 +51307,6 @@ class Core {
            * - second candle: opposite color marubozu
            * - gap between the two candles: upside gap if black then white, downside gap if white then black
            * The meaning of "long body" and "very short shadow" is specified with TA_SetCandleSettings
-           * outInteger is positive (1 to 100) when bullish or negative (-1 to -100) when bearish
            */
           outIdx = 0;
           do {
@@ -51980,7 +51879,6 @@ class Core {
            * - second candle: opposite color marubozu
            * - gap between the two candles: upside gap if black then white, downside gap if white then black
            * The meaning of "long body" and "very short shadow" is specified with TA_SetCandleSettings
-           * outInteger is positive (1 to 100) when bullish or negative (-1 to -100) when bearish
            */
           outIdx = 0;
           do {
@@ -52149,13 +52047,16 @@ class Core {
      *  Initial  Name/description
      *  -------------------------------------------------------------------
      *  AC       Angelo Ciceri
+     *  MF       Mario Fortier
+     *  CC       Claude Code (AI assistant)
      *
      *
      * Change history:
      *
-     *  MMDDYY BY   Description
+     *  MMDDYY BY     Description
      *  -------------------------------------------------------------------
-     *  011505 AC   Creation
+     *  011505 AC     Creation
+     *  100426 MF,CC  Remove the outInteger comment, which misstated the values
      */
 
        /**
@@ -52268,8 +52169,6 @@ class Core {
            * - second candle: opposite color marubozu
            * - gap between the two candles: upside gap if black then white, downside gap if white then black
            * The meaning of "long body" and "very short shadow" is specified with TA_SetCandleSettings
-           * outInteger is positive (1 to 100) when bullish or negative (-1 to -100) when bearish; the longer of the two
-           * marubozu determines the bullishness or bearishness of this pattern
            */
           outIdx = 0;
           do {
@@ -52838,8 +52737,6 @@ class Core {
            * - second candle: opposite color marubozu
            * - gap between the two candles: upside gap if black then white, downside gap if white then black
            * The meaning of "long body" and "very short shadow" is specified with TA_SetCandleSettings
-           * outInteger is positive (1 to 100) when bullish or negative (-1 to -100) when bearish; the longer of the two
-           * marubozu determines the bullishness or bearishness of this pattern
            */
           outIdx = 0;
           do {
@@ -53009,13 +52906,15 @@ class Core {
      *  -------------------------------------------------------------------
      *  AC       Angelo Ciceri
      *  MF       Mario Fortier
+     *  CC       Claude Code (AI assistant)
      *
      * Change history:
      *
-     *  MMDDYY BY   Description
+     *  MMDDYY BY     Description
      *  -------------------------------------------------------------------
-     *  032005 AC   Creation
-     *  041305 MF   Minor modification for a compiler warning
+     *  032005 AC     Creation
+     *  041305 MF     Minor modification for a compiler warning
+     *  100426 MF,CC  Remove the outInteger comment, which misstated the values
      */
 
        /**
@@ -53108,9 +53007,6 @@ class Core {
            * - fourth candle: black candle with an upper shadow (it's supposed to be not very short)
            * - fifth candle: white candle that opens above prior candle's body and closes above prior candle's high
            * The meaning of "very short" is specified with TA_SetCandleSettings
-           * outInteger is positive (1 to 100): ladder bottom is always bullish;
-           * the user should consider that ladder bottom is significant when it appears in a downtrend,
-           * while this function does not consider it
            */
           outIdx = 0;
           do {
@@ -53637,9 +53533,6 @@ class Core {
            * - fourth candle: black candle with an upper shadow (it's supposed to be not very short)
            * - fifth candle: white candle that opens above prior candle's body and closes above prior candle's high
            * The meaning of "very short" is specified with TA_SetCandleSettings
-           * outInteger is positive (1 to 100): ladder bottom is always bullish;
-           * the user should consider that ladder bottom is significant when it appears in a downtrend,
-           * while this function does not consider it
            */
           outIdx = 0;
           do {
@@ -53793,13 +53686,16 @@ class Core {
      *  Initial  Name/description
      *  -------------------------------------------------------------------
      *  AC       Angelo Ciceri
+     *  MF       Mario Fortier
+     *  CC       Claude Code (AI assistant)
      *
      *
      * Change history:
      *
-     *  MMDDYY BY   Description
+     *  MMDDYY BY     Description
      *  -------------------------------------------------------------------
-     *  011505 AC   Creation
+     *  011505 AC     Creation
+     *  100426 MF,CC  Remove the outInteger comment, which misstated the values
      */
 
        /**
@@ -53906,7 +53802,6 @@ class Core {
            * - doji body
            * - one or two long shadows
            * The meaning of "doji" is specified with TA_SetCandleSettings
-           * outInteger is always positive (1 to 100) but this does not mean it is bullish: long legged doji shows uncertainty
            */
           outIdx = 0;
           do {
@@ -54423,7 +54318,6 @@ class Core {
            * - doji body
            * - one or two long shadows
            * The meaning of "doji" is specified with TA_SetCandleSettings
-           * outInteger is always positive (1 to 100) but this does not mean it is bullish: long legged doji shows uncertainty
            */
           outIdx = 0;
           do {
@@ -54571,13 +54465,16 @@ class Core {
      *  Initial  Name/description
      *  -------------------------------------------------------------------
      *  AC       Angelo Ciceri
+     *  MF       Mario Fortier
+     *  CC       Claude Code (AI assistant)
      *
      *
      * Change history:
      *
-     *  MMDDYY BY   Description
+     *  MMDDYY BY     Description
      *  -------------------------------------------------------------------
-     *  071704 AC   Creation
+     *  071704 AC     Creation
+     *  100426 MF,CC  Remove the outInteger comment, which misstated the values
      */
 
        /**
@@ -54683,7 +54580,6 @@ class Core {
            * - long real body
            * - short upper and lower shadow
            * The meaning of "long" and "short" is specified with TA_SetCandleSettings
-           * outInteger is positive (1 to 100) when white (bullish), negative (-1 to -100) when black (bearish)
            */
           outIdx = 0;
           do {
@@ -55189,7 +55085,6 @@ class Core {
            * - long real body
            * - short upper and lower shadow
            * The meaning of "long" and "short" is specified with TA_SetCandleSettings
-           * outInteger is positive (1 to 100) when white (bullish), negative (-1 to -100) when black (bearish)
            */
           outIdx = 0;
           do {
@@ -55337,13 +55232,16 @@ class Core {
      *  Initial  Name/description
      *  -------------------------------------------------------------------
      *  AC       Angelo Ciceri
+     *  MF       Mario Fortier
+     *  CC       Claude Code (AI assistant)
      *
      *
      * Change history:
      *
-     *  MMDDYY BY   Description
+     *  MMDDYY BY     Description
      *  -------------------------------------------------------------------
-     *  010605 AC   Creation
+     *  010605 AC     Creation
+     *  100426 MF,CC  Remove the outInteger comment, which misstated the values
      */
 
        /**
@@ -55449,7 +55347,6 @@ class Core {
            * - long real body
            * - no or very short upper and lower shadow
            * The meaning of "long" and "very short" is specified with TA_SetCandleSettings
-           * outInteger is positive (1 to 100) when white (bullish), negative (-1 to -100) when black (bearish)
            */
           outIdx = 0;
           do {
@@ -55959,7 +55856,6 @@ class Core {
            * - long real body
            * - no or very short upper and lower shadow
            * The meaning of "long" and "very short" is specified with TA_SetCandleSettings
-           * outInteger is positive (1 to 100) when white (bullish), negative (-1 to -100) when black (bearish)
            */
           outIdx = 0;
           do {
@@ -56107,13 +56003,16 @@ class Core {
      *  Initial  Name/description
      *  -------------------------------------------------------------------
      *  AC       Angelo Ciceri
+     *  MF       Mario Fortier
+     *  CC       Claude Code (AI assistant)
      *
      *
      * Change history:
      *
-     *  MMDDYY BY   Description
+     *  MMDDYY BY     Description
      *  -------------------------------------------------------------------
-     *  032605 AC   Creation
+     *  032605 AC     Creation
+     *  100426 MF,CC  Remove the outInteger comment, which misstated the values
      */
 
        /**
@@ -56205,7 +56104,6 @@ class Core {
            * - first candle: black candle
            * - second candle: black candle with the close equal to the previous close
            * The meaning of "equal" is specified with TA_SetCandleSettings
-           * outInteger is always positive (1 to 100): matching low is always bullish;
            */
           outIdx = 0;
           do {
@@ -56683,7 +56581,6 @@ class Core {
            * - first candle: black candle
            * - second candle: black candle with the close equal to the previous close
            * The meaning of "equal" is specified with TA_SetCandleSettings
-           * outInteger is always positive (1 to 100): matching low is always bullish;
            */
           outIdx = 0;
           do {
@@ -56823,13 +56720,16 @@ class Core {
      *  Initial  Name/description
      *  -------------------------------------------------------------------
      *  AC       Angelo Ciceri
+     *  MF       Mario Fortier
+     *  CC       Claude Code (AI assistant)
      *
      *
      * Change history:
      *
-     *  MMDDYY BY   Description
+     *  MMDDYY BY     Description
      *  -------------------------------------------------------------------
-     *  022005 AC   Creation
+     *  022005 AC     Creation
+     *  100426 MF,CC  Remove the outInteger comment, which misstated the values
      */
 
        /**
@@ -56969,7 +56869,6 @@ class Core {
            * "hold within" means "a part of the real body must be within";
            * optInPenetration is the maximum percentage of the first white body the reaction days can penetrate (it is
            * to specify how much the reaction days should be "higher than the reaction days of the rising three methods")
-           * outInteger is positive (1 to 100): mat hold is always bullish
            */
           outIdx = 0;
           do {
@@ -57625,7 +57524,6 @@ class Core {
            * "hold within" means "a part of the real body must be within";
            * optInPenetration is the maximum percentage of the first white body the reaction days can penetrate (it is
            * to specify how much the reaction days should be "higher than the reaction days of the rising three methods")
-           * outInteger is positive (1 to 100): mat hold is always bullish
            */
           outIdx = 0;
           do {
@@ -57813,13 +57711,16 @@ class Core {
      *  Initial  Name/description
      *  -------------------------------------------------------------------
      *  AC       Angelo Ciceri
+     *  MF       Mario Fortier
+     *  CC       Claude Code (AI assistant)
      *
      *
      * Change history:
      *
-     *  MMDDYY BY   Description
+     *  MMDDYY BY     Description
      *  -------------------------------------------------------------------
-     *  100304 AC   Creation
+     *  100304 AC     Creation
+     *  100426 MF,CC  Remove the outInteger comment, which misstated the values
      */
 
        /**
@@ -57967,9 +57868,6 @@ class Core {
            * The meaning of "moves well within" is specified with optInPenetration and "moves" should mean the real body should
            * not be short ("short" is specified with TA_SetCandleSettings) - Greg Morris wants it to be long, someone else want
            * it to be relatively long
-           * outInteger is positive (1 to 100): morning doji star is always bullish;
-           * the user should consider that a morning star is significant when it appears in a downtrend,
-           * while this function does not consider the trend
            */
           outIdx = 0;
           do {
@@ -58618,9 +58516,6 @@ class Core {
            * The meaning of "moves well within" is specified with optInPenetration and "moves" should mean the real body should
            * not be short ("short" is specified with TA_SetCandleSettings) - Greg Morris wants it to be long, someone else want
            * it to be relatively long
-           * outInteger is positive (1 to 100): morning doji star is always bullish;
-           * the user should consider that a morning star is significant when it appears in a downtrend,
-           * while this function does not consider the trend
            */
           outIdx = 0;
           do {
@@ -58804,13 +58699,16 @@ class Core {
      *  Initial  Name/description
      *  -------------------------------------------------------------------
      *  AC       Angelo Ciceri
+     *  MF       Mario Fortier
+     *  CC       Claude Code (AI assistant)
      *
      *
      * Change history:
      *
-     *  MMDDYY BY   Description
+     *  MMDDYY BY     Description
      *  -------------------------------------------------------------------
-     *  100304 AC   Creation
+     *  100304 AC     Creation
+     *  100426 MF,CC  Remove the outInteger comment, which misstated the values
      */
 
        /**
@@ -58944,9 +58842,6 @@ class Core {
            * The meaning of "moves well within" is specified with optInPenetration and "moves" should mean the real body should
            * not be short ("short" is specified with TA_SetCandleSettings) - Greg Morris wants it to be long, someone else want
            * it to be relatively long
-           * outInteger is positive (1 to 100): morning star is always bullish;
-           * the user should consider that a morning star is significant when it appears in a downtrend,
-           * while this function does not consider the trend
            */
           outIdx = 0;
           do {
@@ -59548,9 +59443,6 @@ class Core {
            * The meaning of "moves well within" is specified with optInPenetration and "moves" should mean the real body should
            * not be short ("short" is specified with TA_SetCandleSettings) - Greg Morris wants it to be long, someone else want
            * it to be relatively long
-           * outInteger is positive (1 to 100): morning star is always bullish;
-           * the user should consider that a morning star is significant when it appears in a downtrend,
-           * while this function does not consider the trend
            */
           outIdx = 0;
           do {
@@ -59720,13 +59612,16 @@ class Core {
      *  Initial  Name/description
      *  -------------------------------------------------------------------
      *  AC       Angelo Ciceri
+     *  MF       Mario Fortier
+     *  CC       Claude Code (AI assistant)
      *
      *
      * Change history:
      *
-     *  MMDDYY BY   Description
+     *  MMDDYY BY     Description
      *  -------------------------------------------------------------------
-     *  121104 AC   Creation
+     *  121104 AC     Creation
+     *  100426 MF,CC  Remove the outInteger comment, which misstated the values
      */
 
        /**
@@ -59833,9 +59728,6 @@ class Core {
            * - first candle: long black candle
            * - second candle: white candle with open below previous day low and close equal to previous day low
            * The meaning of "equal" is specified with TA_SetCandleSettings
-           * outInteger is negative (-1 to -100): on-neck is always bearish
-           * the user should consider that on-neck is significant when it appears in a downtrend, while this function
-           * does not consider it
            */
           outIdx = 0;
           do {
@@ -60377,9 +60269,6 @@ class Core {
            * - first candle: long black candle
            * - second candle: white candle with open below previous day low and close equal to previous day low
            * The meaning of "equal" is specified with TA_SetCandleSettings
-           * outInteger is negative (-1 to -100): on-neck is always bearish
-           * the user should consider that on-neck is significant when it appears in a downtrend, while this function
-           * does not consider it
            */
           outIdx = 0;
           do {
@@ -60541,13 +60430,16 @@ class Core {
      *  Initial  Name/description
      *  -------------------------------------------------------------------
      *  AC       Angelo Ciceri
+     *  MF       Mario Fortier
+     *  CC       Claude Code (AI assistant)
      *
      *
      * Change history:
      *
-     *  MMDDYY BY   Description
+     *  MMDDYY BY     Description
      *  -------------------------------------------------------------------
-     *  120904 AC   Creation
+     *  120904 AC     Creation
+     *  100426 MF,CC  Remove the outInteger comment, which misstated the values
      */
 
        /**
@@ -60643,9 +60535,6 @@ class Core {
            * - second candle: long white candle with open below previous day low and close at least at 50% of previous day
            * real body
            * The meaning of "long" is specified with TA_SetCandleSettings
-           * outInteger is positive (1 to 100): piercing pattern is always bullish
-           * the user should consider that a piercing pattern is significant when it appears in a downtrend, while
-           * this function does not consider it
            */
           outIdx = 0;
           do {
@@ -61148,9 +61037,6 @@ class Core {
            * - second candle: long white candle with open below previous day low and close at least at 50% of previous day
            * real body
            * The meaning of "long" is specified with TA_SetCandleSettings
-           * outInteger is positive (1 to 100): piercing pattern is always bullish
-           * the user should consider that a piercing pattern is significant when it appears in a downtrend, while
-           * this function does not consider it
            */
           outIdx = 0;
           do {
@@ -61295,13 +61181,16 @@ class Core {
      *  Initial  Name/description
      *  -------------------------------------------------------------------
      *  AC       Angelo Ciceri
+     *  MF       Mario Fortier
+     *  CC       Claude Code (AI assistant)
      *
      *
      * Change history:
      *
-     *  MMDDYY BY   Description
+     *  MMDDYY BY     Description
      *  -------------------------------------------------------------------
-     *  011505 AC   Creation
+     *  011505 AC     Creation
+     *  100426 MF,CC  Remove the outInteger comment, which misstated the values
      */
 
        /**
@@ -61424,7 +61313,6 @@ class Core {
            * - two long shadows
            * - body near the midpoint of the high-low range
            * The meaning of "doji" and "near" is specified with TA_SetCandleSettings
-           * outInteger is always positive (1 to 100) but this does not mean it is bullish: rickshaw man shows uncertainty
            */
           outIdx = 0;
           do {
@@ -61561,8 +61449,8 @@ class Core {
         * @param inLow Low price of each bar.
         * @param inClose Close price of each bar.
         * @param outInteger +100 when the pattern is present, 0 otherwise. Never
-        *        -100; the code notes the positive value does NOT imply bullish, it signals
-        *        uncertainty. Must hold at least
+        *        -100; the positive value does not imply bullish, it signals uncertainty.
+        *        Must hold at least
         *        {@code endIdx - max(startIdx, cdlrickshawmanLookback(...)) + 1} values,
         *        and never be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
@@ -61635,8 +61523,8 @@ class Core {
         * @param inLow Low price of each bar.
         * @param inClose Close price of each bar.
         * @param outInteger +100 when the pattern is present, 0 otherwise. Never
-        *        -100; the code notes the positive value does NOT imply bullish, it signals
-        *        uncertainty. Must hold at least
+        *        -100; the positive value does not imply bullish, it signals uncertainty.
+        *        Must hold at least
         *        {@code endIdx - max(startIdx, cdlrickshawmanLookback(...)) + 1} values,
         *        and never be empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
@@ -62012,7 +61900,6 @@ class Core {
            * - two long shadows
            * - body near the midpoint of the high-low range
            * The meaning of "doji" and "near" is specified with TA_SetCandleSettings
-           * outInteger is always positive (1 to 100) but this does not mean it is bullish: rickshaw man shows uncertainty
            */
           outIdx = 0;
           do {
@@ -62183,13 +62070,16 @@ class Core {
      *  Initial  Name/description
      *  -------------------------------------------------------------------
      *  AC       Angelo Ciceri
+     *  MF       Mario Fortier
+     *  CC       Claude Code (AI assistant)
      *
      *
      * Change history:
      *
-     *  MMDDYY BY   Description
+     *  MMDDYY BY     Description
      *  -------------------------------------------------------------------
-     *  020605 AC   Creation
+     *  020605 AC     Creation
+     *  100426 MF,CC  Remove the outInteger comment, which misstated the values
      */
 
        /**
@@ -62305,8 +62195,7 @@ class Core {
            * - final candle: long white (black) candle that opens above (below) the previous small candle's close
            *   and closes above (below) the first long candle's close
            * The meaning of "short" and "long" is specified with TA_SetCandleSettings; here only patterns with 3 small candles
-           * are considered;
-           * outInteger is positive (1 to 100) or negative (-1 to -100)
+           * are considered
            */
           outIdx = 0;
           do {
@@ -62954,8 +62843,7 @@ class Core {
            * - final candle: long white (black) candle that opens above (below) the previous small candle's close
            *   and closes above (below) the first long candle's close
            * The meaning of "short" and "long" is specified with TA_SetCandleSettings; here only patterns with 3 small candles
-           * are considered;
-           * outInteger is positive (1 to 100) or negative (-1 to -100)
+           * are considered
            */
           outIdx = 0;
           do {
@@ -63144,13 +63032,16 @@ class Core {
      *  Initial  Name/description
      *  -------------------------------------------------------------------
      *  AC       Angelo Ciceri
+     *  MF       Mario Fortier
+     *  CC       Claude Code (AI assistant)
      *
      *
      * Change history:
      *
-     *  MMDDYY BY   Description
+     *  MMDDYY BY     Description
      *  -------------------------------------------------------------------
-     *  011505 AC   Creation
+     *  011505 AC     Creation
+     *  100426 MF,CC  Remove the outInteger comment, which misstated the values
      */
 
        /**
@@ -63272,9 +63163,6 @@ class Core {
            * - first candle: black (white) candle
            * - second candle: bullish (bearish) belt hold with the same open as the prior candle
            * The meaning of "long body" and "very short shadow" of the belt hold is specified with TA_SetCandleSettings
-           * outInteger is positive (1 to 100) when bullish or negative (-1 to -100) when bearish;
-           * the user should consider that separating lines is significant when coming in a trend and the belt hold has
-           * the same direction of the trend, while this function does not consider it
            */
           outIdx = 0;
           do {
@@ -63876,9 +63764,6 @@ class Core {
            * - first candle: black (white) candle
            * - second candle: bullish (bearish) belt hold with the same open as the prior candle
            * The meaning of "long body" and "very short shadow" of the belt hold is specified with TA_SetCandleSettings
-           * outInteger is positive (1 to 100) when bullish or negative (-1 to -100) when bearish;
-           * the user should consider that separating lines is significant when coming in a trend and the belt hold has
-           * the same direction of the trend, while this function does not consider it
            */
           outIdx = 0;
           do {
@@ -64058,13 +63943,16 @@ class Core {
      *  Initial  Name/description
      *  -------------------------------------------------------------------
      *  AC       Angelo Ciceri
+     *  MF       Mario Fortier
+     *  CC       Claude Code (AI assistant)
      *
      *
      * Change history:
      *
-     *  MMDDYY BY   Description
+     *  MMDDYY BY     Description
      *  -------------------------------------------------------------------
-     *  103004 AC   Creation
+     *  103004 AC     Creation
+     *  100426 MF,CC  Remove the outInteger comment, which misstated the values
      */
 
        /**
@@ -64186,9 +64074,7 @@ class Core {
            * - long upper shadow
            * - no, or very short, lower shadow
            * - gap up from prior real body
-           * The meaning of "short", "very short" and "long" is specified with TA_SetCandleSettings;
-           * outInteger is negative (-1 to -100): shooting star is always bearish;
-           * the user should consider that a shooting star must appear in an uptrend, while this function does not consider it
+           * The meaning of "short", "very short" and "long" is specified with TA_SetCandleSettings
            */
           outIdx = 0;
           do {
@@ -64780,9 +64666,7 @@ class Core {
            * - long upper shadow
            * - no, or very short, lower shadow
            * - gap up from prior real body
-           * The meaning of "short", "very short" and "long" is specified with TA_SetCandleSettings;
-           * outInteger is negative (-1 to -100): shooting star is always bearish;
-           * the user should consider that a shooting star must appear in an uptrend, while this function does not consider it
+           * The meaning of "short", "very short" and "long" is specified with TA_SetCandleSettings
            */
           outIdx = 0;
           do {
@@ -64954,13 +64838,16 @@ class Core {
      *  Initial  Name/description
      *  -------------------------------------------------------------------
      *  AC       Angelo Ciceri
+     *  MF       Mario Fortier
+     *  CC       Claude Code (AI assistant)
      *
      *
      * Change history:
      *
-     *  MMDDYY BY   Description
+     *  MMDDYY BY     Description
      *  -------------------------------------------------------------------
-     *  072404 AC   Creation
+     *  072404 AC     Creation
+     *  100426 MF,CC  Remove the outInteger comment, which misstated the values
      */
 
        /**
@@ -65066,8 +64953,6 @@ class Core {
            * - short real body
            * - short upper and lower shadow
            * The meaning of "short" is specified with TA_SetCandleSettings
-           * outInteger is positive (1 to 100) when white, negative (-1 to -100) when black;
-           * it does not mean bullish or bearish
            */
           outIdx = 0;
           do {
@@ -65571,8 +65456,6 @@ class Core {
            * - short real body
            * - short upper and lower shadow
            * The meaning of "short" is specified with TA_SetCandleSettings
-           * outInteger is positive (1 to 100) when white, negative (-1 to -100) when black;
-           * it does not mean bullish or bearish
            */
           outIdx = 0;
           do {
@@ -65720,13 +65603,16 @@ class Core {
      *  Initial  Name/description
      *  -------------------------------------------------------------------
      *  AC       Angelo Ciceri
+     *  MF       Mario Fortier
+     *  CC       Claude Code (AI assistant)
      *
      *
      * Change history:
      *
-     *  MMDDYY BY   Description
+     *  MMDDYY BY     Description
      *  -------------------------------------------------------------------
-     *  071804 AC   Creation
+     *  071804 AC     Creation
+     *  100426 MF,CC  Remove the outInteger comment, which misstated the values
      */
 
        /**
@@ -65817,8 +65703,6 @@ class Core {
            * - small real body
            * - shadows longer than the real body
            * The meaning of "short" is specified with TA_SetCandleSettings
-           * outInteger is positive (1 to 100) when white or negative (-1 to -100) when black;
-           * it does not mean bullish or bearish
            */
           outIdx = 0;
           do {
@@ -66265,8 +66149,6 @@ class Core {
            * - small real body
            * - shadows longer than the real body
            * The meaning of "short" is specified with TA_SetCandleSettings
-           * outInteger is positive (1 to 100) when white or negative (-1 to -100) when black;
-           * it does not mean bullish or bearish
            */
           outIdx = 0;
           do {
@@ -66396,13 +66278,16 @@ class Core {
      *  Initial  Name/description
      *  -------------------------------------------------------------------
      *  AC       Angelo Ciceri
+     *  MF       Mario Fortier
+     *  CC       Claude Code (AI assistant)
      *
      *
      * Change history:
      *
-     *  MMDDYY BY   Description
+     *  MMDDYY BY     Description
      *  -------------------------------------------------------------------
-     *  120804 AC   Creation
+     *  120804 AC     Creation
+     *  100426 MF,CC  Remove the outInteger comment, which misstated the values
      */
 
        /**
@@ -66549,10 +66434,7 @@ class Core {
            * and closing higher than the prior candle
            * - third candle: small white that gaps away or "rides on the shoulder" of the prior long real body (= it's at
            * the upper end of the prior real body)
-           * The meanings of "long", "very short", "short", "near" are specified with TA_SetCandleSettings;
-           * outInteger is negative (-1 to -100): stalled pattern is always bearish;
-           * the user should consider that stalled pattern is significant when it appears in uptrend, while this function
-           * does not consider it
+           * The meanings of "long", "very short", "short", "near" are specified with TA_SetCandleSettings
            */
           outIdx = 0;
           do {
@@ -67263,10 +67145,7 @@ class Core {
            * and closing higher than the prior candle
            * - third candle: small white that gaps away or "rides on the shoulder" of the prior long real body (= it's at
            * the upper end of the prior real body)
-           * The meanings of "long", "very short", "short", "near" are specified with TA_SetCandleSettings;
-           * outInteger is negative (-1 to -100): stalled pattern is always bearish;
-           * the user should consider that stalled pattern is significant when it appears in uptrend, while this function
-           * does not consider it
+           * The meanings of "long", "very short", "short", "near" are specified with TA_SetCandleSettings
            */
           outIdx = 0;
           do {
@@ -67478,13 +67357,16 @@ class Core {
      *  Initial  Name/description
      *  -------------------------------------------------------------------
      *  AC       Angelo Ciceri
+     *  MF       Mario Fortier
+     *  CC       Claude Code (AI assistant)
      *
      *
      * Change history:
      *
-     *  MMDDYY BY   Description
+     *  MMDDYY BY     Description
      *  -------------------------------------------------------------------
-     *  032005 AC   Creation
+     *  032005 AC     Creation
+     *  100426 MF,CC  Remove the outInteger comment, which misstated the values
      */
 
        /**
@@ -67577,9 +67459,6 @@ class Core {
            * - second candle: white candle that trades only above the prior close (low > prior close)
            * - third candle: black candle with the close equal to the first candle's close
            * The meaning of "equal" is specified with TA_SetCandleSettings
-           * outInteger is always positive (1 to 100): stick sandwich is always bullish;
-           * the user should consider that stick sandwich is significant when coming in a downtrend,
-           * while this function does not consider it
            */
           outIdx = 0;
           do {
@@ -67665,9 +67544,8 @@ class Core {
        /**
         * A three-candle bullish reversal pattern: two black candles (1st and 3rd)
         * sandwiching a white candle, where the 3rd black candle closes at the same
-        * level as the 1st (the "bread"). A hit signals a bullish reversal (code
-        * comment notes it is significant in a downtrend, which the function does
-        * not verify).
+        * level as the 1st (the "bread"). A hit signals a bullish reversal
+        * (significant in a downtrend, which the function does not verify).
         * <p>Formula and more info at <a
         * href="https://ta-lib.org/functions/cdlsticksandwich">ta-lib.org/functions/cdlsticksandwich</a>.
         * <p><b>Notes</b>
@@ -67735,9 +67613,8 @@ class Core {
        /**
         * A three-candle bullish reversal pattern: two black candles (1st and 3rd)
         * sandwiching a white candle, where the 3rd black candle closes at the same
-        * level as the 1st (the "bread"). A hit signals a bullish reversal (code
-        * comment notes it is significant in a downtrend, which the function does
-        * not verify).
+        * level as the 1st (the "bread"). A hit signals a bullish reversal
+        * (significant in a downtrend, which the function does not verify).
         * <p>Formula and more info at <a
         * href="https://ta-lib.org/functions/cdlsticksandwich">ta-lib.org/functions/cdlsticksandwich</a>.
         * <p><b>Notes</b>
@@ -68078,9 +67955,6 @@ class Core {
            * - second candle: white candle that trades only above the prior close (low > prior close)
            * - third candle: black candle with the close equal to the first candle's close
            * The meaning of "equal" is specified with TA_SetCandleSettings
-           * outInteger is always positive (1 to 100): stick sandwich is always bullish;
-           * the user should consider that stick sandwich is significant when coming in a downtrend,
-           * while this function does not consider it
            */
           outIdx = 0;
           do {
@@ -68226,13 +68100,16 @@ class Core {
      *  Initial  Name/description
      *  -------------------------------------------------------------------
      *  AC       Angelo Ciceri
+     *  MF       Mario Fortier
+     *  CC       Claude Code (AI assistant)
      *
      *
      * Change history:
      *
-     *  MMDDYY BY   Description
+     *  MMDDYY BY     Description
      *  -------------------------------------------------------------------
-     *  011505 AC   Creation
+     *  011505 AC     Creation
+     *  100426 MF,CC  Remove the outInteger comment, which misstated the values
      */
 
        /**
@@ -68355,8 +68232,6 @@ class Core {
            * - open and close at the high of the day = no or very short upper shadow
            * - very long lower shadow
            * The meaning of "doji", "very short" and "very long" is specified with TA_SetCandleSettings
-           * outInteger is always positive (1 to 100) but this does not mean it is bullish: takuri must be considered
-           * relatively to the trend
            */
           outIdx = 0;
           do {
@@ -68931,8 +68806,6 @@ class Core {
            * - open and close at the high of the day = no or very short upper shadow
            * - very long lower shadow
            * The meaning of "doji", "very short" and "very long" is specified with TA_SetCandleSettings
-           * outInteger is always positive (1 to 100) but this does not mean it is bullish: takuri must be considered
-           * relatively to the trend
            */
           outIdx = 0;
           do {
@@ -69098,13 +68971,16 @@ class Core {
      *  Initial  Name/description
      *  -------------------------------------------------------------------
      *  AC       Angelo Ciceri
+     *  MF       Mario Fortier
+     *  CC       Claude Code (AI assistant)
      *
      *
      * Change history:
      *
-     *  MMDDYY BY   Description
+     *  MMDDYY BY     Description
      *  -------------------------------------------------------------------
-     *  011605 AC   Creation
+     *  011605 AC     Creation
+     *  100426 MF,CC  Remove the outInteger comment, which misstated the values
      */
 
        /**
@@ -69199,9 +69075,6 @@ class Core {
            *   the previous real body inside the gap
            * - the size of two real bodies should be near the same
            * The meaning of "near" is specified with TA_SetCandleSettings
-           * outInteger is positive (1 to 100) when bullish or negative (-1 to -100) when bearish;
-           * the user should consider that tasuki gap is significant when it appears in a trend, while this function does
-           * not consider it
            */
           outIdx = 0;
           do {
@@ -69728,9 +69601,6 @@ class Core {
            *   the previous real body inside the gap
            * - the size of two real bodies should be near the same
            * The meaning of "near" is specified with TA_SetCandleSettings
-           * outInteger is positive (1 to 100) when bullish or negative (-1 to -100) when bearish;
-           * the user should consider that tasuki gap is significant when it appears in a trend, while this function does
-           * not consider it
            */
           outIdx = 0;
           do {
@@ -69884,13 +69754,16 @@ class Core {
      *  Initial  Name/description
      *  -------------------------------------------------------------------
      *  AC       Angelo Ciceri
+     *  MF       Mario Fortier
+     *  CC       Claude Code (AI assistant)
      *
      *
      * Change history:
      *
-     *  MMDDYY BY   Description
+     *  MMDDYY BY     Description
      *  -------------------------------------------------------------------
-     *  121204 AC   Creation
+     *  121204 AC     Creation
+     *  100426 MF,CC  Remove the outInteger comment, which misstated the values
      */
 
        /**
@@ -69998,10 +69871,6 @@ class Core {
            * - second candle: white candle with open below previous day low and close into previous day body under the midpoint;
            * to differentiate it from in-neck the close should not be equal to the black candle's close
            * The meaning of "equal" is specified with TA_SetCandleSettings
-           * outInteger is negative (-1 to -100): thrusting pattern is always bearish
-           * the user should consider that the thrusting pattern is significant when it appears in a downtrend and it could be
-           * even bullish "when coming in an uptrend or occurring twice within several days" (Steve Nison says), while this
-           * function does not consider the trend
            */
           outIdx = 0;
           do {
@@ -70550,10 +70419,6 @@ class Core {
            * - second candle: white candle with open below previous day low and close into previous day body under the midpoint;
            * to differentiate it from in-neck the close should not be equal to the black candle's close
            * The meaning of "equal" is specified with TA_SetCandleSettings
-           * outInteger is negative (-1 to -100): thrusting pattern is always bearish
-           * the user should consider that the thrusting pattern is significant when it appears in a downtrend and it could be
-           * even bullish "when coming in an uptrend or occurring twice within several days" (Steve Nison says), while this
-           * function does not consider the trend
            */
           outIdx = 0;
           do {
@@ -70716,6 +70581,8 @@ class Core {
      *  -------------------------------------------------------------------
      *  AC       Angelo Ciceri
      *  CSB      Christopher Barnhouse
+     *  MF       Mario Fortier
+     *  CC       Claude Code (AI assistant)
      *
      * Change history:
      *
@@ -70723,6 +70590,7 @@ class Core {
      *  -------------------------------------------------------------------
      *  100204 AC      Creation
      *  051005 CSB,AC  Fix #1199526 for out-of-bound write in output.
+     *  100426 MF,CC   Remove the outInteger comment, which misstated the values
      */
 
        /**
@@ -70813,7 +70681,6 @@ class Core {
            * - 3 consecutive doji days
            * - the second doji is a star
            * The meaning of "doji" is specified with TA_SetCandleSettings
-           * outInteger is positive (1 to 100) when bullish or negative (-1 to -100) when bearish
            */
           i = startIdx;
           outIdx = 0;
@@ -71343,7 +71210,6 @@ class Core {
            * - 3 consecutive doji days
            * - the second doji is a star
            * The meaning of "doji" is specified with TA_SetCandleSettings
-           * outInteger is positive (1 to 100) when bullish or negative (-1 to -100) when bearish
            */
           i = startIdx;
           outIdx = 0;
@@ -71496,13 +71362,16 @@ class Core {
      *  Initial  Name/description
      *  -------------------------------------------------------------------
      *  AC       Angelo Ciceri
+     *  MF       Mario Fortier
+     *  CC       Claude Code (AI assistant)
      *
      *
      * Change history:
      *
-     *  MMDDYY BY   Description
+     *  MMDDYY BY     Description
      *  -------------------------------------------------------------------
-     *  022005 AC   Creation
+     *  022005 AC     Creation
+     *  100426 MF,CC  Remove the outInteger comment, which misstated the values
      */
 
        /**
@@ -71611,8 +71480,6 @@ class Core {
            * - third candle: small white candle with open not lower than the second candle's low, better if its open and
            *   close are under the second candle's close
            * The meaning of "short" and "long" is specified with TA_SetCandleSettings
-           * outInteger is positive (1 to 100): unique 3 river is always bullish and should appear in a downtrend
-           * to be significant, while this function does not consider the trend
            */
           outIdx = 0;
           do {
@@ -72181,8 +72048,6 @@ class Core {
            * - third candle: small white candle with open not lower than the second candle's low, better if its open and
            *   close are under the second candle's close
            * The meaning of "short" and "long" is specified with TA_SetCandleSettings
-           * outInteger is positive (1 to 100): unique 3 river is always bullish and should appear in a downtrend
-           * to be significant, while this function does not consider the trend
            */
           outIdx = 0;
           do {
@@ -72347,13 +72212,16 @@ class Core {
      *  Initial  Name/description
      *  -------------------------------------------------------------------
      *  AC       Angelo Ciceri
+     *  MF       Mario Fortier
+     *  CC       Claude Code (AI assistant)
      *
      *
      * Change history:
      *
-     *  MMDDYY BY   Description
+     *  MMDDYY BY     Description
      *  -------------------------------------------------------------------
-     *  110104 AC   Creation
+     *  110104 AC     Creation
+     *  100426 MF,CC  Remove the outInteger comment, which misstated the values
      */
 
        /**
@@ -72463,9 +72331,6 @@ class Core {
            * - third candle: black candle with a real body that engulfs the preceding candle
            *   and closes above the white candle's close
            * The meaning of "short" and "long" is specified with TA_SetCandleSettings
-           * outInteger is negative (-1 to -100): upside gap two crows is always bearish;
-           * the user should consider that an upside gap two crows is significant when it appears in an uptrend,
-           * while this function does not consider the trend
            */
           outIdx = 0;
           do {
@@ -73035,9 +72900,6 @@ class Core {
            * - third candle: black candle with a real body that engulfs the preceding candle
            *   and closes above the white candle's close
            * The meaning of "short" and "long" is specified with TA_SetCandleSettings
-           * outInteger is negative (-1 to -100): upside gap two crows is always bearish;
-           * the user should consider that an upside gap two crows is significant when it appears in an uptrend,
-           * while this function does not consider the trend
            */
           outIdx = 0;
           do {
@@ -73202,13 +73064,16 @@ class Core {
      *  Initial  Name/description
      *  -------------------------------------------------------------------
      *  AC       Angelo Ciceri
+     *  MF       Mario Fortier
+     *  CC       Claude Code (AI assistant)
      *
      *
      * Change history:
      *
-     *  MMDDYY BY   Description
+     *  MMDDYY BY     Description
      *  -------------------------------------------------------------------
-     *  011605 AC   Creation
+     *  011605 AC     Creation
+     *  100426 MF,CC  Remove the outInteger comment, which misstated the values
      */
 
        /**
@@ -73286,9 +73151,6 @@ class Core {
            * - second candle: white (black) candle
            * - upside (downside) gap between the first and the second real bodies
            * - third candle: black (white) candle that opens within the second real body and closes within the first real body
-           * outInteger is positive (1 to 100) when bullish or negative (-1 to -100) when bearish;
-           * the user should consider that up/downside gap 3 methods is significant when it appears in a trend, while this
-           * function does not consider it
            */
           outIdx = 0;
           do {
@@ -73737,9 +73599,6 @@ class Core {
            * - second candle: white (black) candle
            * - upside (downside) gap between the first and the second real bodies
            * - third candle: black (white) candle that opens within the second real body and closes within the first real body
-           * outInteger is positive (1 to 100) when bullish or negative (-1 to -100) when bearish;
-           * the user should consider that up/downside gap 3 methods is significant when it appears in a trend, while this
-           * function does not consider it
            */
           outIdx = 0;
           do {
@@ -217567,7 +217426,7 @@ class Core {
 
 public class TaCodegenServe {
     static Core core = new Core();
-    static final String SPLICED_GENCODE_DIGEST = "d0f9228905c0dfd1";
+    static final String SPLICED_GENCODE_DIGEST = "fccce63647606e9e";
     static final int MAX_ARRAY_SIZE = 200000;
     static double[] refOpen = new double[MAX_ARRAY_SIZE];
     static double[] refHigh = new double[MAX_ARRAY_SIZE];

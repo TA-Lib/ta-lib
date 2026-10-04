@@ -47,13 +47,16 @@
  *  Initial  Name/description
  *  -------------------------------------------------------------------
  *  AC       Angelo Ciceri
+ *  MF       Mario Fortier
+ *  CC       Claude Code (AI assistant)
  *
  *
  * Change history:
  *
- *  MMDDYY BY   Description
+ *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
- *  103004 AC   Creation
+ *  103004 AC     Creation
+ *  100426 MF,CC  Remove the outInteger comment, which misstated the values
  */
 
 TA_LIB_API int TA_CDLSHOOTINGSTAR_Lookback( void )
@@ -162,9 +165,7 @@ TA_LIB_API TA_RetCode TA_CDLSHOOTINGSTAR( int    startIdx,
     * - long upper shadow
     * - no, or very short, lower shadow
     * - gap up from prior real body
-    * The meaning of "short", "very short" and "long" is specified with TA_SetCandleSettings;
-    * outInteger is negative (-1 to -100): shooting star is always bearish;
-    * the user should consider that a shooting star must appear in an uptrend, while this function does not consider it
+    * The meaning of "short", "very short" and "long" is specified with TA_SetCandleSettings
     */
    outIdx = 0;
    do
@@ -465,9 +466,7 @@ static TA_RetCode TA_CDLSHOOTINGSTAR_OpenImpl( struct TA_CDLSHOOTINGSTAR_Stream 
        * - long upper shadow
        * - no, or very short, lower shadow
        * - gap up from prior real body
-       * The meaning of "short", "very short" and "long" is specified with TA_SetCandleSettings;
-       * outInteger is negative (-1 to -100): shooting star is always bearish;
-       * the user should consider that a shooting star must appear in an uptrend, while this function does not consider it
+       * The meaning of "short", "very short" and "long" is specified with TA_SetCandleSettings
        */
       outIdx = 0;
       do

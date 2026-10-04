@@ -17,7 +17,7 @@ Single-candle doji with two long shadows whose body sits near the midpoint of th
 
 ## Outputs
 
-- `outInteger` — +100 when the pattern is present, 0 otherwise. Never -100; the code notes the positive value does NOT imply bullish, it signals uncertainty
+- `outInteger` — +100 when the pattern is present, 0 otherwise. Never -100; the positive value does not imply bullish, it signals uncertainty
 
 ## Output Values
 

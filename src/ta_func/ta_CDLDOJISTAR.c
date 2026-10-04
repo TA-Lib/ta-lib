@@ -47,14 +47,16 @@
  *  Initial  Name/description
  *  -------------------------------------------------------------------
  *  AC       Angelo Ciceri
+ *  MF       Mario Fortier
+ *  CC       Claude Code (AI assistant)
  *
  *
  * Change history:
  *
- *  MMDDYY BY   Description
+ *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
- *  100204 AC   Creation
- *  100426 MF,CC Fix the comment: the sign is the opposite of the long candle's color
+ *  100204 AC     Creation
+ *  100426 MF,CC  Remove the outInteger comment, which misstated the values
  */
 
 TA_LIB_API int TA_CDLDOJISTAR_Lookback( void )
@@ -150,8 +152,6 @@ TA_LIB_API TA_RetCode TA_CDLDOJISTAR( int    startIdx,
     * - first candle: long real body
     * - second candle: star (open gapping up in an uptrend or down in a downtrend) with a doji
     * The meaning of "doji" and "long" is specified with TA_SetCandleSettings
-    * outInteger is -100 when the long candle is white and the star gaps up, +100 when it is black and
-    * the star gaps down; the trend the reading presumes is not checked
     */
    outIdx = 0;
    do
@@ -417,8 +417,6 @@ static TA_RetCode TA_CDLDOJISTAR_OpenImpl( struct TA_CDLDOJISTAR_Stream **stream
        * - first candle: long real body
        * - second candle: star (open gapping up in an uptrend or down in a downtrend) with a doji
        * The meaning of "doji" and "long" is specified with TA_SetCandleSettings
-       * outInteger is -100 when the long candle is white and the star gaps up, +100 when it is black and
-       * the star gaps down; the trend the reading presumes is not checked
        */
       outIdx = 0;
       do

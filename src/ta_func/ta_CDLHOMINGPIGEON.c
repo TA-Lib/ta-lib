@@ -47,13 +47,16 @@
  *  Initial  Name/description
  *  -------------------------------------------------------------------
  *  AC       Angelo Ciceri
+ *  MF       Mario Fortier
+ *  CC       Claude Code (AI assistant)
  *
  *
  * Change history:
  *
- *  MMDDYY BY   Description
+ *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
- *  032005 AC   Creation
+ *  032005 AC     Creation
+ *  100426 MF,CC  Remove the outInteger comment, which misstated the values
  */
 
 TA_LIB_API int TA_CDLHOMINGPIGEON_Lookback( void )
@@ -150,9 +153,6 @@ TA_LIB_API TA_RetCode TA_CDLHOMINGPIGEON( int    startIdx,
     * - first candle: long black candle
     * - second candle: short black real body completely inside the previous day's body
     * The meaning of "short" and "long" is specified with TA_SetCandleSettings
-    * outInteger is positive (1 to 100): homing pigeon is always bullish;
-    * the user should consider that homing pigeon is significant when it appears in a downtrend,
-    * while this function does not consider the trend
     */
    outIdx = 0;
    do
@@ -417,9 +417,6 @@ static TA_RetCode TA_CDLHOMINGPIGEON_OpenImpl( struct TA_CDLHOMINGPIGEON_Stream 
        * - first candle: long black candle
        * - second candle: short black real body completely inside the previous day's body
        * The meaning of "short" and "long" is specified with TA_SetCandleSettings
-       * outInteger is positive (1 to 100): homing pigeon is always bullish;
-       * the user should consider that homing pigeon is significant when it appears in a downtrend,
-       * while this function does not consider the trend
        */
       outIdx = 0;
       do

@@ -47,13 +47,16 @@
  *  Initial  Name/description
  *  -------------------------------------------------------------------
  *  AC       Angelo Ciceri
+ *  MF       Mario Fortier
+ *  CC       Claude Code (AI assistant)
  *
  *
  * Change history:
  *
- *  MMDDYY BY   Description
+ *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
- *  121104 AC   Creation
+ *  121104 AC     Creation
+ *  100426 MF,CC  Remove the outInteger comment, which misstated the values
  */
 
 TA_LIB_API int TA_CDLINNECK_Lookback( void )
@@ -150,9 +153,6 @@ TA_LIB_API TA_RetCode TA_CDLINNECK( int    startIdx,
     * - first candle: long black candle
     * - second candle: white candle with open below previous day low and close slightly into previous day body
     * The meaning of "equal" is specified with TA_SetCandleSettings
-    * outInteger is negative (-1 to -100): in-neck is always bearish
-    * the user should consider that in-neck is significant when it appears in a downtrend, while this function
-    * does not consider it
     */
    outIdx = 0;
    do
@@ -414,9 +414,6 @@ static TA_RetCode TA_CDLINNECK_OpenImpl( struct TA_CDLINNECK_Stream **stream, co
        * - first candle: long black candle
        * - second candle: white candle with open below previous day low and close slightly into previous day body
        * The meaning of "equal" is specified with TA_SetCandleSettings
-       * outInteger is negative (-1 to -100): in-neck is always bearish
-       * the user should consider that in-neck is significant when it appears in a downtrend, while this function
-       * does not consider it
        */
       outIdx = 0;
       do

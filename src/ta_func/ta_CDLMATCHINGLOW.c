@@ -47,13 +47,16 @@
  *  Initial  Name/description
  *  -------------------------------------------------------------------
  *  AC       Angelo Ciceri
+ *  MF       Mario Fortier
+ *  CC       Claude Code (AI assistant)
  *
  *
  * Change history:
  *
- *  MMDDYY BY   Description
+ *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
- *  032605 AC   Creation
+ *  032605 AC     Creation
+ *  100426 MF,CC  Remove the outInteger comment, which misstated the values
  */
 
 TA_LIB_API int TA_CDLMATCHINGLOW_Lookback( void )
@@ -138,7 +141,6 @@ TA_LIB_API TA_RetCode TA_CDLMATCHINGLOW( int    startIdx,
     * - first candle: black candle
     * - second candle: black candle with the close equal to the previous close
     * The meaning of "equal" is specified with TA_SetCandleSettings
-    * outInteger is always positive (1 to 100): matching low is always bullish;
     */
    outIdx = 0;
    do
@@ -357,7 +359,6 @@ static TA_RetCode TA_CDLMATCHINGLOW_OpenImpl( struct TA_CDLMATCHINGLOW_Stream **
        * - first candle: black candle
        * - second candle: black candle with the close equal to the previous close
        * The meaning of "equal" is specified with TA_SetCandleSettings
-       * outInteger is always positive (1 to 100): matching low is always bullish;
        */
       outIdx = 0;
       do

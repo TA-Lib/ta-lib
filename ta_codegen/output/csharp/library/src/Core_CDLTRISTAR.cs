@@ -48,6 +48,8 @@ public partial class Core
     *  -------------------------------------------------------------------
     *  AC       Angelo Ciceri
     *  CSB      Christopher Barnhouse
+    *  MF       Mario Fortier
+    *  CC       Claude Code (AI assistant)
     *
     * Change history:
     *
@@ -55,6 +57,7 @@ public partial class Core
     *  -------------------------------------------------------------------
     *  100204 AC      Creation
     *  051005 CSB,AC  Fix #1199526 for out-of-bound write in output.
+    *  100426 MF,CC   Remove the outInteger comment, which misstated the values
     */
    /// <summary>
    /// Number of leading input bars <c>Cdltristar</c> consumes before it can
@@ -150,7 +153,6 @@ public partial class Core
        * - 3 consecutive doji days
        * - the second doji is a star
        * The meaning of "doji" is specified with TA_SetCandleSettings
-       * outInteger is positive (1 to 100) when bullish or negative (-1 to -100) when bearish
        */
       i = startIdx;
       outIdx = 0;
@@ -728,7 +730,6 @@ public partial class Core
        * - 3 consecutive doji days
        * - the second doji is a star
        * The meaning of "doji" is specified with TA_SetCandleSettings
-       * outInteger is positive (1 to 100) when bullish or negative (-1 to -100) when bearish
        */
       i = startIdx;
       outIdx = 0;

@@ -47,15 +47,18 @@
  *  Initial  Name/description
  *  -------------------------------------------------------------------
  *  AC       Angelo Ciceri
+ *  MF       Mario Fortier
+ *  CC       Claude Code (AI assistant)
  *
  *
  * Change history:
  *
- *  MMDDYY BY   Description
+ *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
- *  102404 AC   Creation
- *  040309 AC   Increased flexibility to allow real bodies matching
- *              on one end (Greg Morris - "Candlestick charting explained")
+ *  102404 AC     Creation
+ *  040309 AC     Increased flexibility to allow real bodies matching
+ *                on one end (Greg Morris - "Candlestick charting explained")
+ *  100426 MF,CC  Remove the outInteger comment, which misstated the values
  */
 
 TA_LIB_API int TA_CDLENGULFING_Lookback( void )
@@ -127,12 +130,6 @@ TA_LIB_API TA_RetCode TA_CDLENGULFING( int    startIdx,
     * Must have:
     * - first: black (white) real body
     * - second: white (black) real body that engulfs the prior real body
-    * outInteger is positive (1 to 100) when bullish or negative (-1 to -100) when bearish:
-    * - 100 is returned when the second candle's real body begins before and ends after the first candle's real body
-    * - 80 is returned when the two real bodies match on one end (Greg Morris contemplate this case in his book
-    *   "Candlestick charting explained")
-    * The user should consider that an engulfing must appear in a downtrend if bullish or in an uptrend if bearish,
-    * while this function does not consider it
     */
    outIdx = 0;
    do
@@ -328,12 +325,6 @@ static TA_RetCode TA_CDLENGULFING_OpenImpl( struct TA_CDLENGULFING_Stream **stre
        * Must have:
        * - first: black (white) real body
        * - second: white (black) real body that engulfs the prior real body
-       * outInteger is positive (1 to 100) when bullish or negative (-1 to -100) when bearish:
-       * - 100 is returned when the second candle's real body begins before and ends after the first candle's real body
-       * - 80 is returned when the two real bodies match on one end (Greg Morris contemplate this case in his book
-       *   "Candlestick charting explained")
-       * The user should consider that an engulfing must appear in a downtrend if bullish or in an uptrend if bearish,
-       * while this function does not consider it
        */
       outIdx = 0;
       do

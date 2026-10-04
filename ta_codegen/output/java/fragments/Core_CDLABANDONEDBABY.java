@@ -3,13 +3,16 @@
  *  Initial  Name/description
  *  -------------------------------------------------------------------
  *  AC       Angelo Ciceri
+ *  MF       Mario Fortier
+ *  CC       Claude Code (AI assistant)
  *
  *
  * Change history:
  *
- *  MMDDYY BY   Description
+ *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
- *  102304 AC   Creation
+ *  102304 AC     Creation
+ *  100426 MF,CC  Remove the outInteger comment, which misstated the values
  */
 
    /**
@@ -157,9 +160,6 @@
        * The meaning of "moves well within" is specified with optInPenetration and "moves" should mean the real body should
        * not be short ("short" is specified with TA_SetCandleSettings) - Greg Morris wants it to be long, someone else want
        * it to be relatively long
-       * outInteger is positive (1 to 100) when it's an abandoned baby bottom or negative (-1 to -100) when it's
-       * an abandoned baby top; the user should consider that an abandoned baby is significant when it appears in
-       * an uptrend or downtrend, while this function does not consider the trend
        */
       outIdx = 0;
       do {
@@ -824,9 +824,6 @@
        * The meaning of "moves well within" is specified with optInPenetration and "moves" should mean the real body should
        * not be short ("short" is specified with TA_SetCandleSettings) - Greg Morris wants it to be long, someone else want
        * it to be relatively long
-       * outInteger is positive (1 to 100) when it's an abandoned baby bottom or negative (-1 to -100) when it's
-       * an abandoned baby top; the user should consider that an abandoned baby is significant when it appears in
-       * an uptrend or downtrend, while this function does not consider the trend
        */
       outIdx = 0;
       do {

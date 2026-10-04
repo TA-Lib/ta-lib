@@ -45,13 +45,16 @@
  *  Initial  Name/description
  *  -------------------------------------------------------------------
  *  AC       Angelo Ciceri
+ *  MF       Mario Fortier
+ *  CC       Claude Code (AI assistant)
  *
  *
  * Change history:
  *
- *  MMDDYY BY   Description
+ *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
- *  020605 AC   Creation
+ *  020605 AC     Creation
+ *  100426 MF,CC  Remove the outInteger comment, which misstated the values
  */
 
 // Import types from parent module
@@ -380,8 +383,7 @@ impl Core {
         // - final candle: long white (black) candle that opens above (below) the previous small candle's close
         //   and closes above (below) the first long candle's close
         // The meaning of "short" and "long" is specified with TA_SetCandleSettings; here only patterns with 3 small candles
-        // are considered;
-        // outInteger is positive (1 to 100) or negative (-1 to -100)
+        // are considered
         outIdx = 0;
         if i <= endIdx {
             let _wn: usize = endIdx - i + 1;
@@ -1017,8 +1019,7 @@ impl Core {
         // - final candle: long white (black) candle that opens above (below) the previous small candle's close
         //   and closes above (below) the first long candle's close
         // The meaning of "short" and "long" is specified with TA_SetCandleSettings; here only patterns with 3 small candles
-        // are considered;
-        // outInteger is positive (1 to 100) or negative (-1 to -100)
+        // are considered
         outIdx = 0;
         loop {
             if (if inClose[i - 4] >= inOpen[i - 4] { 1 } else { -1 }) == -(if inClose[i - 3] >= inOpen[i - 3] { 1 } else { -1 }) && // white, 3 black, white  ||  black, 3 white, black

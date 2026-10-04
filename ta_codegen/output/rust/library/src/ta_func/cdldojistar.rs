@@ -45,14 +45,16 @@
  *  Initial  Name/description
  *  -------------------------------------------------------------------
  *  AC       Angelo Ciceri
+ *  MF       Mario Fortier
+ *  CC       Claude Code (AI assistant)
  *
  *
  * Change history:
  *
- *  MMDDYY BY   Description
+ *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
- *  100204 AC   Creation
- *  100426 MF,CC Fix the comment: the sign is the opposite of the long candle's color
+ *  100204 AC     Creation
+ *  100426 MF,CC  Remove the outInteger comment, which misstated the values
  */
 
 // Import types from parent module
@@ -220,8 +222,6 @@ impl Core {
         // - first candle: long real body
         // - second candle: star (open gapping up in an uptrend or down in a downtrend) with a doji
         // The meaning of "doji" and "long" is specified with TA_SetCandleSettings
-        // outInteger is -100 when the long candle is white and the star gaps up, +100 when it is black and
-        // the star gaps down; the trend the reading presumes is not checked
         outIdx = 0;
         if i <= endIdx {
             let _wn: usize = endIdx - i + 1;
@@ -733,8 +733,6 @@ impl Core {
         // - first candle: long real body
         // - second candle: star (open gapping up in an uptrend or down in a downtrend) with a doji
         // The meaning of "doji" and "long" is specified with TA_SetCandleSettings
-        // outInteger is -100 when the long candle is white and the star gaps up, +100 when it is black and
-        // the star gaps down; the trend the reading presumes is not checked
         outIdx = 0;
         loop {
             if (inClose[i - 1] - inOpen[i - 1]).abs() > ((BodyLong_factor) * (if (BodyLong_avgPeriod) != 0 { (BodyLongPeriodTotal) / (BodyLong_avgPeriod as f64) } else { match BodyLong_rangeType { 0 => ((inClose[i - 1]) - (inOpen[i - 1])).abs(), 1 => (inHigh[i - 1]) - (inLow[i - 1]), 2 => ((inHigh[i - 1]) - (if (inClose[i - 1]) >= (inOpen[i - 1]) { (inClose[i - 1]) } else { (inOpen[i - 1]) })) + ((if (inClose[i - 1]) >= (inOpen[i - 1]) { (inOpen[i - 1]) } else { (inClose[i - 1]) }) - (inLow[i - 1])), _ => 0.0 } }) * (if (BodyLong_rangeType) == 2 { 0.5 } else { 1.0 })) && // 1st: long real body

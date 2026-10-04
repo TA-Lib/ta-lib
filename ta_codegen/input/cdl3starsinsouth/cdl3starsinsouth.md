@@ -2,7 +2,7 @@
 
 ## Summary
 
-A three-candle bullish reversal pattern of three consecutive black candles that progressively shrink and stabilize: a long black candle with a long lower shadow, a smaller black candle probing lower, then a small black marubozu contained within the second candle's range. A hit signals a bullish reversal; per the code comment it is meaningful in a downtrend, but the function does not verify prior trend.
+A three-candle bullish reversal pattern of three consecutive black candles that progressively shrink and stabilize: a long black candle with a long lower shadow, a smaller black candle probing lower, then a small black marubozu contained within the second candle's range. A hit signals a bullish reversal; it is meaningful in a downtrend, which the function does not verify.
 
 ## Notes
 

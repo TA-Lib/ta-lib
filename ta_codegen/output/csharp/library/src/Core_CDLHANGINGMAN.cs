@@ -47,13 +47,16 @@ public partial class Core
     *  Initial  Name/description
     *  -------------------------------------------------------------------
     *  AC       Angelo Ciceri
+    *  MF       Mario Fortier
+    *  CC       Claude Code (AI assistant)
     *
     *
     * Change history:
     *
-    *  MMDDYY BY   Description
+    *  MMDDYY BY     Description
     *  -------------------------------------------------------------------
-    *  102304 AC   Creation
+    *  102304 AC     Creation
+    *  100426 MF,CC  Remove the outInteger comment, which misstated the values
     */
    /// <summary>
    /// Number of leading input bars <c>Cdlhangingman</c> consumes before it can
@@ -196,9 +199,7 @@ public partial class Core
        * - long lower shadow
        * - no, or very short, upper shadow
        * - body above or near the highs of the previous candle
-       * The meaning of "short", "long" and "near the highs" is specified with TA_SetCandleSettings;
-       * outInteger is negative (-1 to -100): hanging man is always bearish;
-       * the user should consider that a hanging man must appear in an uptrend, while this function does not consider it
+       * The meaning of "short", "long" and "near the highs" is specified with TA_SetCandleSettings
        */
       outIdx = 0;
       do {
@@ -904,9 +905,7 @@ public partial class Core
        * - long lower shadow
        * - no, or very short, upper shadow
        * - body above or near the highs of the previous candle
-       * The meaning of "short", "long" and "near the highs" is specified with TA_SetCandleSettings;
-       * outInteger is negative (-1 to -100): hanging man is always bearish;
-       * the user should consider that a hanging man must appear in an uptrend, while this function does not consider it
+       * The meaning of "short", "long" and "near the highs" is specified with TA_SetCandleSettings
        */
       outIdx = 0;
       do {

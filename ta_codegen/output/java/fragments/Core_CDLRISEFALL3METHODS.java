@@ -3,13 +3,16 @@
  *  Initial  Name/description
  *  -------------------------------------------------------------------
  *  AC       Angelo Ciceri
+ *  MF       Mario Fortier
+ *  CC       Claude Code (AI assistant)
  *
  *
  * Change history:
  *
- *  MMDDYY BY   Description
+ *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
- *  020605 AC   Creation
+ *  020605 AC     Creation
+ *  100426 MF,CC  Remove the outInteger comment, which misstated the values
  */
 
    /**
@@ -125,8 +128,7 @@
        * - final candle: long white (black) candle that opens above (below) the previous small candle's close
        *   and closes above (below) the first long candle's close
        * The meaning of "short" and "long" is specified with TA_SetCandleSettings; here only patterns with 3 small candles
-       * are considered;
-       * outInteger is positive (1 to 100) or negative (-1 to -100)
+       * are considered
        */
       outIdx = 0;
       do {
@@ -774,8 +776,7 @@
        * - final candle: long white (black) candle that opens above (below) the previous small candle's close
        *   and closes above (below) the first long candle's close
        * The meaning of "short" and "long" is specified with TA_SetCandleSettings; here only patterns with 3 small candles
-       * are considered;
-       * outInteger is positive (1 to 100) or negative (-1 to -100)
+       * are considered
        */
       outIdx = 0;
       do {

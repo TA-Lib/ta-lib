@@ -3,13 +3,16 @@
  *  Initial  Name/description
  *  -------------------------------------------------------------------
  *  AC       Angelo Ciceri
+ *  MF       Mario Fortier
+ *  CC       Claude Code (AI assistant)
  *
  *
  * Change history:
  *
- *  MMDDYY BY   Description
+ *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
- *  072404 AC   Creation
+ *  072404 AC     Creation
+ *  100426 MF,CC  Remove the outInteger comment, which misstated the values
  */
 
    /**
@@ -115,8 +118,6 @@
        * - short real body
        * - very long upper and lower shadow
        * The meaning of "short" and "very long" is specified with TA_SetCandleSettings
-       * outInteger is positive (1 to 100) when white or negative (-1 to -100) when black;
-       * it does not mean bullish or bearish
        */
       outIdx = 0;
       do {
@@ -634,8 +635,6 @@
        * - short real body
        * - very long upper and lower shadow
        * The meaning of "short" and "very long" is specified with TA_SetCandleSettings
-       * outInteger is positive (1 to 100) when white or negative (-1 to -100) when black;
-       * it does not mean bullish or bearish
        */
       outIdx = 0;
       do {

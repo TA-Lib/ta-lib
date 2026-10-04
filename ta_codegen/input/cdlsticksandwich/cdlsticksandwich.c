@@ -3,13 +3,16 @@
  *  Initial  Name/description
  *  -------------------------------------------------------------------
  *  AC       Angelo Ciceri
+ *  MF       Mario Fortier
+ *  CC       Claude Code (AI assistant)
  *
  *
  * Change history:
  *
- *  MMDDYY BY   Description
+ *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
- *  032005 AC   Creation
+ *  032005 AC     Creation
+ *  100426 MF,CC  Remove the outInteger comment, which misstated the values
  *
  */
 
@@ -68,9 +71,6 @@ TA_RetCode cdlsticksandwich(int startIdx, int endIdx,
     * - second candle: white candle that trades only above the prior close (low > prior close)
     * - third candle: black candle with the close equal to the first candle's close
     * The meaning of "equal" is specified with TA_SetCandleSettings
-    * outInteger is always positive (1 to 100): stick sandwich is always bullish;
-    * the user should consider that stick sandwich is significant when coming in a downtrend,
-    * while this function does not consider it
     */
    outIdx = 0;
    do

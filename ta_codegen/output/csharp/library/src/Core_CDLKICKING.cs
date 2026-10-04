@@ -47,13 +47,16 @@ public partial class Core
     *  Initial  Name/description
     *  -------------------------------------------------------------------
     *  AC       Angelo Ciceri
+    *  MF       Mario Fortier
+    *  CC       Claude Code (AI assistant)
     *
     *
     * Change history:
     *
-    *  MMDDYY BY   Description
+    *  MMDDYY BY     Description
     *  -------------------------------------------------------------------
-    *  010705 AC   Creation
+    *  010705 AC     Creation
+    *  100426 MF,CC  Remove the outInteger comment, which misstated the values
     */
    /// <summary>
    /// Number of leading input bars <c>Cdlkicking</c> consumes before it can
@@ -171,7 +174,6 @@ public partial class Core
        * - second candle: opposite color marubozu
        * - gap between the two candles: upside gap if black then white, downside gap if white then black
        * The meaning of "long body" and "very short shadow" is specified with TA_SetCandleSettings
-       * outInteger is positive (1 to 100) when bullish or negative (-1 to -100) when bearish
        */
       outIdx = 0;
       do {
@@ -795,7 +797,6 @@ public partial class Core
        * - second candle: opposite color marubozu
        * - gap between the two candles: upside gap if black then white, downside gap if white then black
        * The meaning of "long body" and "very short shadow" is specified with TA_SetCandleSettings
-       * outInteger is positive (1 to 100) when bullish or negative (-1 to -100) when bearish
        */
       outIdx = 0;
       do {

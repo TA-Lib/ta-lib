@@ -3,13 +3,16 @@
  *  Initial  Name/description
  *  -------------------------------------------------------------------
  *  AC       Angelo Ciceri
+ *  MF       Mario Fortier
+ *  CC       Claude Code (AI assistant)
  *
  *
  * Change history:
  *
- *  MMDDYY BY   Description
+ *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
- *  110104 AC   Creation
+ *  110104 AC     Creation
+ *  100426 MF,CC  Remove the outInteger comment, which misstated the values
  */
 
    /**
@@ -119,9 +122,6 @@
        * - third candle: black candle with a real body that engulfs the preceding candle
        *   and closes above the white candle's close
        * The meaning of "short" and "long" is specified with TA_SetCandleSettings
-       * outInteger is negative (-1 to -100): upside gap two crows is always bearish;
-       * the user should consider that an upside gap two crows is significant when it appears in an uptrend,
-       * while this function does not consider the trend
        */
       outIdx = 0;
       do {
@@ -691,9 +691,6 @@
        * - third candle: black candle with a real body that engulfs the preceding candle
        *   and closes above the white candle's close
        * The meaning of "short" and "long" is specified with TA_SetCandleSettings
-       * outInteger is negative (-1 to -100): upside gap two crows is always bearish;
-       * the user should consider that an upside gap two crows is significant when it appears in an uptrend,
-       * while this function does not consider the trend
        */
       outIdx = 0;
       do {

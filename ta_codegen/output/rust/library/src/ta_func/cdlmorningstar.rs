@@ -45,13 +45,16 @@
  *  Initial  Name/description
  *  -------------------------------------------------------------------
  *  AC       Angelo Ciceri
+ *  MF       Mario Fortier
+ *  CC       Claude Code (AI assistant)
  *
  *
  * Change history:
  *
- *  MMDDYY BY   Description
+ *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
- *  100304 AC   Creation
+ *  100304 AC     Creation
+ *  100426 MF,CC  Remove the outInteger comment, which misstated the values
  */
 
 // Import types from parent module
@@ -349,9 +352,6 @@ impl Core {
         // The meaning of "moves well within" is specified with optInPenetration and "moves" should mean the real body should
         // not be short ("short" is specified with TA_SetCandleSettings) - Greg Morris wants it to be long, someone else want
         // it to be relatively long
-        // outInteger is positive (1 to 100): morning star is always bullish;
-        // the user should consider that a morning star is significant when it appears in a downtrend,
-        // while this function does not consider the trend
         outIdx = 0;
         if i <= endIdx {
             let _wn: usize = endIdx - i + 1;
@@ -914,9 +914,6 @@ impl Core {
         // The meaning of "moves well within" is specified with optInPenetration and "moves" should mean the real body should
         // not be short ("short" is specified with TA_SetCandleSettings) - Greg Morris wants it to be long, someone else want
         // it to be relatively long
-        // outInteger is positive (1 to 100): morning star is always bullish;
-        // the user should consider that a morning star is significant when it appears in a downtrend,
-        // while this function does not consider the trend
         outIdx = 0;
         loop {
             if (if inClose[i - 2] >= inOpen[i - 2] { 1 } else { -1 }) == -1 && // black

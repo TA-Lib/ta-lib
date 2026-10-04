@@ -9,13 +9,14 @@
  *
  * Change history:
  *
- *  MMDDYY BY   Description
+ *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
- *  120305 AC   Creation
- *  071226 MF,CC Streaming-friendly rewrite: carry the confirmation state
- *               (countdown + cached 2nd-candle high/low) instead of the absolute
- *               bar index, so the per-bar logic reads no cursor. Bit-identical
- *               batch results (verified vs v0.6.4).
+ *  120305 AC     Creation
+ *  071226 MF,CC  Streaming-friendly rewrite: carry the confirmation state
+ *                (countdown + cached 2nd-candle high/low) instead of the absolute
+ *                bar index, so the per-bar logic reads no cursor. Bit-identical
+ *                batch results (verified vs v0.6.4).
+ *  100426 MF,CC  Remove the outInteger comment, which misstated the values
  */
 
    /**
@@ -129,12 +130,8 @@
        * Must have:
        * - first and second candle: inside bar (2nd has lower high and higher low than 1st)
        * - third candle: lower high and lower low than 2nd (higher high and higher low than 2nd)
-       * outInteger[hikkakebar] is positive (1 to 100) or negative (-1 to -100) meaning bullish or bearish hikkake
        * Confirmation could come in the next 3 days with:
        * - a day that closes higher than the high (lower than the low) of the 2nd candle
-       * outInteger[confirmationbar] is equal to 100 + the bullish hikkake result or -100 - the bearish hikkake result
-       * Note: if confirmation and a new hikkake come at the same bar, only the new hikkake is reported (the new hikkake
-       * overwrites the confirmation of the old hikkake)
        */
       outIdx = 0;
       do {
@@ -684,12 +681,8 @@
        * Must have:
        * - first and second candle: inside bar (2nd has lower high and higher low than 1st)
        * - third candle: lower high and lower low than 2nd (higher high and higher low than 2nd)
-       * outInteger[hikkakebar] is positive (1 to 100) or negative (-1 to -100) meaning bullish or bearish hikkake
        * Confirmation could come in the next 3 days with:
        * - a day that closes higher than the high (lower than the low) of the 2nd candle
-       * outInteger[confirmationbar] is equal to 100 + the bullish hikkake result or -100 - the bearish hikkake result
-       * Note: if confirmation and a new hikkake come at the same bar, only the new hikkake is reported (the new hikkake
-       * overwrites the confirmation of the old hikkake)
        */
       outIdx = 0;
       do {

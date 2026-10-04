@@ -3,13 +3,16 @@
  *  Initial  Name/description
  *  -------------------------------------------------------------------
  *  AC       Angelo Ciceri
+ *  MF       Mario Fortier
+ *  CC       Claude Code (AI assistant)
  *
  *
  * Change history:
  *
- *  MMDDYY BY   Description
+ *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
- *  100304 AC   Creation
+ *  100304 AC     Creation
+ *  100426 MF,CC  Remove the outInteger comment, which misstated the values
  */
 
    /**
@@ -145,9 +148,6 @@
        * The meaning of "moves well within" is specified with optInPenetration and "moves" should mean the real body should
        * not be short ("short" is specified with TA_SetCandleSettings) - Greg Morris wants it to be long, someone else want
        * it to be relatively long
-       * outInteger is negative (-1 to -100): evening star is always bearish;
-       * the user should consider that an evening star is significant when it appears in an uptrend,
-       * while this function does not consider the trend
        */
       outIdx = 0;
       do {
@@ -745,9 +745,6 @@
        * The meaning of "moves well within" is specified with optInPenetration and "moves" should mean the real body should
        * not be short ("short" is specified with TA_SetCandleSettings) - Greg Morris wants it to be long, someone else want
        * it to be relatively long
-       * outInteger is negative (-1 to -100): evening star is always bearish;
-       * the user should consider that an evening star is significant when it appears in an uptrend,
-       * while this function does not consider the trend
        */
       outIdx = 0;
       do {

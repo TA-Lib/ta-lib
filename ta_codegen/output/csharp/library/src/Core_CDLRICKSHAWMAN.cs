@@ -47,13 +47,16 @@ public partial class Core
     *  Initial  Name/description
     *  -------------------------------------------------------------------
     *  AC       Angelo Ciceri
+    *  MF       Mario Fortier
+    *  CC       Claude Code (AI assistant)
     *
     *
     * Change history:
     *
-    *  MMDDYY BY   Description
+    *  MMDDYY BY     Description
     *  -------------------------------------------------------------------
-    *  011505 AC   Creation
+    *  011505 AC     Creation
+    *  100426 MF,CC  Remove the outInteger comment, which misstated the values
     */
    /// <summary>
    /// Number of leading input bars <c>Cdlrickshawman</c> consumes before it can
@@ -181,7 +184,6 @@ public partial class Core
        * - two long shadows
        * - body near the midpoint of the high-low range
        * The meaning of "doji" and "near" is specified with TA_SetCandleSettings
-       * outInteger is always positive (1 to 100) but this does not mean it is bullish: rickshaw man shows uncertainty
        */
       outIdx = 0;
       do {
@@ -332,10 +334,10 @@ public partial class Core
    /// <param name="inHigh">High price of each bar.</param>
    /// <param name="inLow">Low price of each bar.</param>
    /// <param name="inClose">Close price of each bar.</param>
-   /// <param name="outInteger">+100 when the pattern is present, 0 otherwise. Never -100; the code notes
-   /// the positive value does NOT imply bullish, it signals uncertainty. Must
-   /// hold at least <c>endIdx - max(startIdx, CdlrickshawmanLookback(...)) +
-   /// 1</c> values, and never be empty: an empty span is an absent output.</param>
+   /// <param name="outInteger">+100 when the pattern is present, 0 otherwise. Never -100; the positive
+   /// value does not imply bullish, it signals uncertainty. Must hold at least
+   /// <c>endIdx - max(startIdx, CdlrickshawmanLookback(...)) + 1</c> values, and
+   /// never be empty: an empty span is an absent output.</param>
    /// <returns>The range written: <c>BegIdx</c> is the first bar with a value,
    /// <c>Count</c> how many were written.</returns>
    /// <exception cref="System.ArgumentOutOfRangeException"><c>startIdx</c> or <c>endIdx</c> is negative or above
@@ -423,10 +425,10 @@ public partial class Core
    /// <param name="inHigh">High price of each bar.</param>
    /// <param name="inLow">Low price of each bar.</param>
    /// <param name="inClose">Close price of each bar.</param>
-   /// <param name="outInteger">+100 when the pattern is present, 0 otherwise. Never -100; the code notes
-   /// the positive value does NOT imply bullish, it signals uncertainty. Must
-   /// hold at least <c>endIdx - max(startIdx, CdlrickshawmanLookback(...)) +
-   /// 1</c> values, and never be empty: an empty span is an absent output.</param>
+   /// <param name="outInteger">+100 when the pattern is present, 0 otherwise. Never -100; the positive
+   /// value does not imply bullish, it signals uncertainty. Must hold at least
+   /// <c>endIdx - max(startIdx, CdlrickshawmanLookback(...)) + 1</c> values, and
+   /// never be empty: an empty span is an absent output.</param>
    /// <returns>The range written: <c>BegIdx</c> is the first bar with a value,
    /// <c>Count</c> how many were written.</returns>
    /// <exception cref="System.ArgumentOutOfRangeException"><c>startIdx</c> or <c>endIdx</c> is negative or above
@@ -817,7 +819,6 @@ public partial class Core
        * - two long shadows
        * - body near the midpoint of the high-low range
        * The meaning of "doji" and "near" is specified with TA_SetCandleSettings
-       * outInteger is always positive (1 to 100) but this does not mean it is bullish: rickshaw man shows uncertainty
        */
       outIdx = 0;
       do {
@@ -983,9 +984,9 @@ public partial class Core
    /// <param name="inHigh">High price of each bar. The warm-up history, oldest bar first.</param>
    /// <param name="inLow">Low price of each bar. The warm-up history, oldest bar first.</param>
    /// <param name="inClose">Close price of each bar. The warm-up history, oldest bar first.</param>
-   /// <param name="outInteger">+100 when the pattern is present, 0 otherwise. Never -100; the code notes
-   /// the positive value does NOT imply bullish, it signals uncertainty. Must
-   /// hold at least <c>historyLen - CdlrickshawmanLookback(...)</c> values.</param>
+   /// <param name="outInteger">+100 when the pattern is present, 0 otherwise. Never -100; the positive
+   /// value does not imply bullish, it signals uncertainty. Must hold at least
+   /// <c>historyLen - CdlrickshawmanLookback(...)</c> values.</param>
    /// <returns>The open stream handle, with its fill range set.</returns>
    /// <exception cref="InsufficientHistoryException">The history holds fewer than <c>CdlrickshawmanLookback(...) + 1</c> bars.</exception>
    /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, the input series

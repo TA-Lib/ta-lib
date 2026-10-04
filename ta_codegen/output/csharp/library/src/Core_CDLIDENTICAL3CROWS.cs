@@ -47,13 +47,16 @@ public partial class Core
     *  Initial  Name/description
     *  -------------------------------------------------------------------
     *  AC       Angelo Ciceri
+    *  MF       Mario Fortier
+    *  CC       Claude Code (AI assistant)
     *
     *
     * Change history:
     *
-    *  MMDDYY BY   Description
+    *  MMDDYY BY     Description
     *  -------------------------------------------------------------------
-    *  103104 AC   Creation
+    *  103104 AC     Creation
+    *  100426 MF,CC  Remove the outInteger comment, which misstated the values
     */
    /// <summary>
    /// Number of leading input bars <c>Cdlidentical3crows</c> consumes before it
@@ -174,10 +177,7 @@ public partial class Core
        * - each candle must have no or very short lower shadow
        * - each candle after the first must open at or very close to the prior candle's close
        * The meaning of "very short" is specified with TA_SetCandleSettings;
-       * the meaning of "very close" is specified with TA_SetCandleSettings (Equal);
-       * outInteger is negative (-1 to -100): identical three crows is always bearish;
-       * the user should consider that identical 3 crows is significant when it appears after a mature advance or at high levels,
-       * while this function does not consider it
+       * the meaning of "very close" is specified with TA_SetCandleSettings (Equal)
        */
       outIdx = 0;
       do {
@@ -830,10 +830,7 @@ public partial class Core
        * - each candle must have no or very short lower shadow
        * - each candle after the first must open at or very close to the prior candle's close
        * The meaning of "very short" is specified with TA_SetCandleSettings;
-       * the meaning of "very close" is specified with TA_SetCandleSettings (Equal);
-       * outInteger is negative (-1 to -100): identical three crows is always bearish;
-       * the user should consider that identical 3 crows is significant when it appears after a mature advance or at high levels,
-       * while this function does not consider it
+       * the meaning of "very close" is specified with TA_SetCandleSettings (Equal)
        */
       outIdx = 0;
       do {

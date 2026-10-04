@@ -45,13 +45,16 @@
  *  Initial  Name/description
  *  -------------------------------------------------------------------
  *  AC       Angelo Ciceri
+ *  MF       Mario Fortier
+ *  CC       Claude Code (AI assistant)
  *
  *
  * Change history:
  *
- *  MMDDYY BY   Description
+ *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
- *  102304 AC   Creation
+ *  102304 AC     Creation
+ *  100426 MF,CC  Remove the outInteger comment, which misstated the values
  */
 
 // Import types from parent module
@@ -293,9 +296,7 @@ impl Core {
         // - long lower shadow
         // - no, or very short, upper shadow
         // - body below or near the lows of the previous candle
-        // The meaning of "short", "long" and "near the lows" is specified with TA_SetCandleSettings;
-        // outInteger is positive (1 to 100): hammer is always bullish;
-        // the user should consider that a hammer must appear in a downtrend, while this function does not consider it
+        // The meaning of "short", "long" and "near the lows" is specified with TA_SetCandleSettings
         outIdx = 0;
         if i <= endIdx {
             let _wn: usize = endIdx - i + 1;
@@ -1009,9 +1010,7 @@ impl Core {
         // - long lower shadow
         // - no, or very short, upper shadow
         // - body below or near the lows of the previous candle
-        // The meaning of "short", "long" and "near the lows" is specified with TA_SetCandleSettings;
-        // outInteger is positive (1 to 100): hammer is always bullish;
-        // the user should consider that a hammer must appear in a downtrend, while this function does not consider it
+        // The meaning of "short", "long" and "near the lows" is specified with TA_SetCandleSettings
         outIdx = 0;
         loop {
             if (inClose[i] - inOpen[i]).abs() < ((BodyShort_factor) * (if (BodyShort_avgPeriod) != 0 { (BodyPeriodTotal) / (BodyShort_avgPeriod as f64) } else { match BodyShort_rangeType { 0 => ((inClose[i]) - (inOpen[i])).abs(), 1 => (inHigh[i]) - (inLow[i]), 2 => ((inHigh[i]) - (if (inClose[i]) >= (inOpen[i]) { (inClose[i]) } else { (inOpen[i]) })) + ((if (inClose[i]) >= (inOpen[i]) { (inOpen[i]) } else { (inClose[i]) }) - (inLow[i])), _ => 0.0 } }) * (if (BodyShort_rangeType) == 2 { 0.5 } else { 1.0 })) && // small rb

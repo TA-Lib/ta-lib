@@ -45,13 +45,16 @@
  *  Initial  Name/description
  *  -------------------------------------------------------------------
  *  AC       Angelo Ciceri
+ *  MF       Mario Fortier
+ *  CC       Claude Code (AI assistant)
  *
  *
  * Change history:
  *
- *  MMDDYY BY   Description
+ *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
- *  011505 AC   Creation
+ *  011505 AC     Creation
+ *  100426 MF,CC  Remove the outInteger comment, which misstated the values
  */
 
 // Import types from parent module
@@ -183,8 +186,6 @@ impl Core {
         // Must have:
         // - open quite equal to close
         // How much can be the maximum distance between open and close is specified with TA_SetCandleSettings
-        // outInteger is always positive (1 to 100) but this does not mean it is bullish: doji shows uncertainty and it is
-        // neither bullish nor bearish when considered alone
         outIdx = 0;
         if i <= endIdx {
             let _wn: usize = endIdx - i + 1;
@@ -539,8 +540,6 @@ impl Core {
         // Must have:
         // - open quite equal to close
         // How much can be the maximum distance between open and close is specified with TA_SetCandleSettings
-        // outInteger is always positive (1 to 100) but this does not mean it is bullish: doji shows uncertainty and it is
-        // neither bullish nor bearish when considered alone
         outIdx = 0;
         loop {
             outInteger[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = (if (inClose[i] - inOpen[i]).abs() <= ((BodyDoji_factor) * (if (BodyDoji_avgPeriod) != 0 { (BodyDojiPeriodTotal) / (BodyDoji_avgPeriod as f64) } else { match BodyDoji_rangeType { 0 => ((inClose[i]) - (inOpen[i])).abs(), 1 => (inHigh[i]) - (inLow[i]), 2 => ((inHigh[i]) - (if (inClose[i]) >= (inOpen[i]) { (inClose[i]) } else { (inOpen[i]) })) + ((if (inClose[i]) >= (inOpen[i]) { (inOpen[i]) } else { (inClose[i]) }) - (inLow[i])), _ => 0.0 } }) * (if (BodyDoji_rangeType) == 2 { 0.5 } else { 1.0 })) { 100 } else { 0 });

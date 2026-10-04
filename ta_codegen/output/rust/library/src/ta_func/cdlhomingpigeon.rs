@@ -45,13 +45,16 @@
  *  Initial  Name/description
  *  -------------------------------------------------------------------
  *  AC       Angelo Ciceri
+ *  MF       Mario Fortier
+ *  CC       Claude Code (AI assistant)
  *
  *
  * Change history:
  *
- *  MMDDYY BY   Description
+ *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
- *  032005 AC   Creation
+ *  032005 AC     Creation
+ *  100426 MF,CC  Remove the outInteger comment, which misstated the values
  */
 
 // Import types from parent module
@@ -249,9 +252,6 @@ impl Core {
         // - first candle: long black candle
         // - second candle: short black real body completely inside the previous day's body
         // The meaning of "short" and "long" is specified with TA_SetCandleSettings
-        // outInteger is positive (1 to 100): homing pigeon is always bullish;
-        // the user should consider that homing pigeon is significant when it appears in a downtrend,
-        // while this function does not consider the trend
         outIdx = 0;
         if i <= endIdx {
             let _wn: usize = endIdx - i + 1;
@@ -745,9 +745,6 @@ impl Core {
         // - first candle: long black candle
         // - second candle: short black real body completely inside the previous day's body
         // The meaning of "short" and "long" is specified with TA_SetCandleSettings
-        // outInteger is positive (1 to 100): homing pigeon is always bullish;
-        // the user should consider that homing pigeon is significant when it appears in a downtrend,
-        // while this function does not consider the trend
         outIdx = 0;
         loop {
             if (if inClose[i - 1] >= inOpen[i - 1] { 1 } else { -1 }) == -1 && // 1st black

@@ -45,13 +45,16 @@
  *  Initial  Name/description
  *  -------------------------------------------------------------------
  *  AC       Angelo Ciceri
+ *  MF       Mario Fortier
+ *  CC       Claude Code (AI assistant)
  *
  *
  * Change history:
  *
- *  MMDDYY BY   Description
+ *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
- *  032605 AC   Creation
+ *  032605 AC     Creation
+ *  100426 MF,CC  Remove the outInteger comment, which misstated the values
  */
 
 // Import types from parent module
@@ -213,7 +216,6 @@ impl Core {
         // - first candle: black candle
         // - second candle: black candle with the close equal to the previous close
         // The meaning of "equal" is specified with TA_SetCandleSettings
-        // outInteger is always positive (1 to 100): matching low is always bullish;
         outIdx = 0;
         if i <= endIdx {
             let _wn: usize = endIdx - i + 1;
@@ -593,7 +595,6 @@ impl Core {
         // - first candle: black candle
         // - second candle: black candle with the close equal to the previous close
         // The meaning of "equal" is specified with TA_SetCandleSettings
-        // outInteger is always positive (1 to 100): matching low is always bullish;
         outIdx = 0;
         loop {
             if (if inClose[i - 1] >= inOpen[i - 1] { 1 } else { -1 }) == -1 && // first black

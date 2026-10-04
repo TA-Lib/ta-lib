@@ -4,13 +4,15 @@
  *  -------------------------------------------------------------------
  *  AC       Angelo Ciceri
  *  MF       Mario Fortier
+ *  CC       Claude Code (AI assistant)
  *
  * Change history:
  *
- *  MMDDYY BY   Description
+ *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
- *  032005 AC   Creation
- *  041305 MF   Minor modification for a compiler warning
+ *  032005 AC     Creation
+ *  041305 MF     Minor modification for a compiler warning
+ *  100426 MF,CC  Remove the outInteger comment, which misstated the values
  */
 
 int cdlladderbottom_lookback(void)
@@ -68,9 +70,6 @@ TA_RetCode cdlladderbottom(int startIdx, int endIdx,
     * - fourth candle: black candle with an upper shadow (it's supposed to be not very short)
     * - fifth candle: white candle that opens above prior candle's body and closes above prior candle's high
     * The meaning of "very short" is specified with TA_SetCandleSettings
-    * outInteger is positive (1 to 100): ladder bottom is always bullish;
-    * the user should consider that ladder bottom is significant when it appears in a downtrend,
-    * while this function does not consider it
     */
    outIdx = 0;
    do

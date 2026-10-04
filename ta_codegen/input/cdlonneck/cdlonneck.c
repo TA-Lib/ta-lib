@@ -3,13 +3,16 @@
  *  Initial  Name/description
  *  -------------------------------------------------------------------
  *  AC       Angelo Ciceri
+ *  MF       Mario Fortier
+ *  CC       Claude Code (AI assistant)
  *
  *
  * Change history:
  *
- *  MMDDYY BY   Description
+ *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
- *  121104 AC   Creation
+ *  121104 AC     Creation
+ *  100426 MF,CC  Remove the outInteger comment, which misstated the values
  *
  */
 
@@ -75,9 +78,6 @@ TA_RetCode cdlonneck(int startIdx, int endIdx,
     * - first candle: long black candle
     * - second candle: white candle with open below previous day low and close equal to previous day low
     * The meaning of "equal" is specified with TA_SetCandleSettings
-    * outInteger is negative (-1 to -100): on-neck is always bearish
-    * the user should consider that on-neck is significant when it appears in a downtrend, while this function
-    * does not consider it
     */
    outIdx = 0;
    do

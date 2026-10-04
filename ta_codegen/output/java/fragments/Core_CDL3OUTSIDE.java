@@ -3,13 +3,16 @@
  *  Initial  Name/description
  *  -------------------------------------------------------------------
  *  AC       Angelo Ciceri
+ *  MF       Mario Fortier
+ *  CC       Claude Code (AI assistant)
  *
  *
  * Change history:
  *
- *  MMDDYY BY   Description
+ *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
- *  121104 AC   Creation
+ *  121104 AC     Creation
+ *  100426 MF,CC  Remove the outInteger comment, which misstated the values
  */
 
    /**
@@ -86,9 +89,6 @@
        * - first: black (white) real body
        * - second: white (black) real body that engulfs the prior real body
        * - third: candle that closes higher (lower) than the second candle
-       * outInteger is positive (1 to 100) for the three outside up or negative (-1 to -100) for the three outside down;
-       * the user should consider that a three outside up must appear in a downtrend and three outside down must appear
-       * in an uptrend, while this function does not consider it
        */
       outIdx = 0;
       do {
@@ -528,9 +528,6 @@
        * - first: black (white) real body
        * - second: white (black) real body that engulfs the prior real body
        * - third: candle that closes higher (lower) than the second candle
-       * outInteger is positive (1 to 100) for the three outside up or negative (-1 to -100) for the three outside down;
-       * the user should consider that a three outside up must appear in a downtrend and three outside down must appear
-       * in an uptrend, while this function does not consider it
        */
       outIdx = 0;
       do {

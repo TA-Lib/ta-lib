@@ -47,13 +47,16 @@
  *  Initial  Name/description
  *  -------------------------------------------------------------------
  *  AC       Angelo Ciceri
+ *  MF       Mario Fortier
+ *  CC       Claude Code (AI assistant)
  *
  *
  * Change history:
  *
- *  MMDDYY BY   Description
+ *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
- *  022705 AC   Creation
+ *  022705 AC     Creation
+ *  100426 MF,CC  Remove the outInteger comment, which misstated the values
  */
 
 TA_LIB_API int TA_CDL3STARSINSOUTH_Lookback( void )
@@ -178,10 +181,7 @@ TA_LIB_API TA_RetCode TA_CDL3STARSINSOUTH( int    startIdx,
     * - second candle: smaller black candle that opens higher than prior close but within prior candle's range
     *   and trades lower than prior close but not lower than prior low and closes off of its low (it has a shadow)
     * - third candle: small black marubozu (or candle with very short shadows) engulfed by prior candle's range
-    * The meanings of "long body", "short body", "very short shadow" are specified with TA_SetCandleSettings;
-    * outInteger is positive (1 to 100): 3 stars in the south is always bullish;
-    * the user should consider that 3 stars in the south is significant when it appears in downtrend, while this function
-    * does not consider it
+    * The meanings of "long body", "short body", "very short shadow" are specified with TA_SetCandleSettings
     */
    outIdx = 0;
    do
@@ -570,10 +570,7 @@ static TA_RetCode TA_CDL3STARSINSOUTH_OpenImpl( struct TA_CDL3STARSINSOUTH_Strea
        * - second candle: smaller black candle that opens higher than prior close but within prior candle's range
        *   and trades lower than prior close but not lower than prior low and closes off of its low (it has a shadow)
        * - third candle: small black marubozu (or candle with very short shadows) engulfed by prior candle's range
-       * The meanings of "long body", "short body", "very short shadow" are specified with TA_SetCandleSettings;
-       * outInteger is positive (1 to 100): 3 stars in the south is always bullish;
-       * the user should consider that 3 stars in the south is significant when it appears in downtrend, while this function
-       * does not consider it
+       * The meanings of "long body", "short body", "very short shadow" are specified with TA_SetCandleSettings
        */
       outIdx = 0;
       do

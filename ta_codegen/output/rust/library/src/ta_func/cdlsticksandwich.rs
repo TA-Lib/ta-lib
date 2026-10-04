@@ -45,13 +45,16 @@
  *  Initial  Name/description
  *  -------------------------------------------------------------------
  *  AC       Angelo Ciceri
+ *  MF       Mario Fortier
+ *  CC       Claude Code (AI assistant)
  *
  *
  * Change history:
  *
- *  MMDDYY BY   Description
+ *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
- *  032005 AC   Creation
+ *  032005 AC     Creation
+ *  100426 MF,CC  Remove the outInteger comment, which misstated the values
  */
 
 // Import types from parent module
@@ -214,9 +217,6 @@ impl Core {
         // - second candle: white candle that trades only above the prior close (low > prior close)
         // - third candle: black candle with the close equal to the first candle's close
         // The meaning of "equal" is specified with TA_SetCandleSettings
-        // outInteger is always positive (1 to 100): stick sandwich is always bullish;
-        // the user should consider that stick sandwich is significant when coming in a downtrend,
-        // while this function does not consider it
         outIdx = 0;
         if i <= endIdx {
             let _wn: usize = endIdx - i + 1;
@@ -302,8 +302,7 @@ impl Core {
     }
     /// A three-candle bullish reversal pattern: two black candles (1st and 3rd) sandwiching a white
     /// candle, where the 3rd black candle closes at the same level as the 1st (the "bread"). A hit
-    /// signals a bullish reversal (code comment notes it is significant in a downtrend, which the
-    /// function does not verify).
+    /// signals a bullish reversal (significant in a downtrend, which the function does not verify).
     ///
     /// Formula and more info at
     /// [ta-lib.org/functions/cdlsticksandwich](https://ta-lib.org/functions/cdlsticksandwich).
@@ -614,9 +613,6 @@ impl Core {
         // - second candle: white candle that trades only above the prior close (low > prior close)
         // - third candle: black candle with the close equal to the first candle's close
         // The meaning of "equal" is specified with TA_SetCandleSettings
-        // outInteger is always positive (1 to 100): stick sandwich is always bullish;
-        // the user should consider that stick sandwich is significant when coming in a downtrend,
-        // while this function does not consider it
         outIdx = 0;
         loop {
             if (if inClose[i - 2] >= inOpen[i - 2] { 1 } else { -1 }) == -1 && // first black

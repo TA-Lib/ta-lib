@@ -3,13 +3,16 @@
  *  Initial  Name/description
  *  -------------------------------------------------------------------
  *  AC       Angelo Ciceri
+ *  MF       Mario Fortier
+ *  CC       Claude Code (AI assistant)
  *
  *
  * Change history:
  *
- *  MMDDYY BY   Description
+ *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
- *  011505 AC   Creation
+ *  011505 AC     Creation
+ *  100426 MF,CC  Remove the outInteger comment, which misstated the values
  */
 
    /**
@@ -132,7 +135,6 @@
        * - two long shadows
        * - body near the midpoint of the high-low range
        * The meaning of "doji" and "near" is specified with TA_SetCandleSettings
-       * outInteger is always positive (1 to 100) but this does not mean it is bullish: rickshaw man shows uncertainty
        */
       outIdx = 0;
       do {
@@ -269,8 +271,8 @@
     * @param inLow Low price of each bar.
     * @param inClose Close price of each bar.
     * @param outInteger +100 when the pattern is present, 0 otherwise. Never
-    *        -100; the code notes the positive value does NOT imply bullish, it signals
-    *        uncertainty. Must hold at least
+    *        -100; the positive value does not imply bullish, it signals uncertainty.
+    *        Must hold at least
     *        {@code endIdx - max(startIdx, cdlrickshawmanLookback(...)) + 1} values,
     *        and never be empty: an empty array is an absent output.
     * @return The range written: {@code begIdx} is the first bar with a value,
@@ -343,8 +345,8 @@
     * @param inLow Low price of each bar.
     * @param inClose Close price of each bar.
     * @param outInteger +100 when the pattern is present, 0 otherwise. Never
-    *        -100; the code notes the positive value does NOT imply bullish, it signals
-    *        uncertainty. Must hold at least
+    *        -100; the positive value does not imply bullish, it signals uncertainty.
+    *        Must hold at least
     *        {@code endIdx - max(startIdx, cdlrickshawmanLookback(...)) + 1} values,
     *        and never be empty: an empty array is an absent output.
     * @return The range written: {@code begIdx} is the first bar with a value,
@@ -720,7 +722,6 @@
        * - two long shadows
        * - body near the midpoint of the high-low range
        * The meaning of "doji" and "near" is specified with TA_SetCandleSettings
-       * outInteger is always positive (1 to 100) but this does not mean it is bullish: rickshaw man shows uncertainty
        */
       outIdx = 0;
       do {

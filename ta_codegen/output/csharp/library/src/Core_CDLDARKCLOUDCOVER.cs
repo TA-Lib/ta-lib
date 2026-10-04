@@ -47,13 +47,16 @@ public partial class Core
     *  Initial  Name/description
     *  -------------------------------------------------------------------
     *  AC       Angelo Ciceri
+    *  MF       Mario Fortier
+    *  CC       Claude Code (AI assistant)
     *
     *
     * Change history:
     *
-    *  MMDDYY BY   Description
+    *  MMDDYY BY     Description
     *  -------------------------------------------------------------------
-    *  120904 AC   Creation
+    *  120904 AC     Creation
+    *  100426 MF,CC  Remove the outInteger comment, which misstated the values
     */
    /// <summary>
    /// Number of leading input bars <c>Cdldarkcloudcover</c> consumes before it
@@ -172,9 +175,6 @@ public partial class Core
        * Greg Morris wants the close to be below the midpoint of the previous real body
        * The meaning of "long" is specified with TA_SetCandleSettings, the penetration of the first real body is specified
        * with optInPenetration
-       * outInteger is negative (-1 to -100): dark cloud cover is always bearish
-       * the user should consider that a dark cloud cover is significant when it appears in an uptrend, while
-       * this function does not consider it
        */
       outIdx = 0;
       do {
@@ -731,9 +731,6 @@ public partial class Core
        * Greg Morris wants the close to be below the midpoint of the previous real body
        * The meaning of "long" is specified with TA_SetCandleSettings, the penetration of the first real body is specified
        * with optInPenetration
-       * outInteger is negative (-1 to -100): dark cloud cover is always bearish
-       * the user should consider that a dark cloud cover is significant when it appears in an uptrend, while
-       * this function does not consider it
        */
       outIdx = 0;
       do {

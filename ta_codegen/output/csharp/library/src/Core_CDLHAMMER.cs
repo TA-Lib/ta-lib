@@ -47,13 +47,16 @@ public partial class Core
     *  Initial  Name/description
     *  -------------------------------------------------------------------
     *  AC       Angelo Ciceri
+    *  MF       Mario Fortier
+    *  CC       Claude Code (AI assistant)
     *
     *
     * Change history:
     *
-    *  MMDDYY BY   Description
+    *  MMDDYY BY     Description
     *  -------------------------------------------------------------------
-    *  102304 AC   Creation
+    *  102304 AC     Creation
+    *  100426 MF,CC  Remove the outInteger comment, which misstated the values
     */
    /// <summary>
    /// Number of leading input bars <c>Cdlhammer</c> consumes before it can
@@ -196,9 +199,7 @@ public partial class Core
        * - long lower shadow
        * - no, or very short, upper shadow
        * - body below or near the lows of the previous candle
-       * The meaning of "short", "long" and "near the lows" is specified with TA_SetCandleSettings;
-       * outInteger is positive (1 to 100): hammer is always bullish;
-       * the user should consider that a hammer must appear in a downtrend, while this function does not consider it
+       * The meaning of "short", "long" and "near the lows" is specified with TA_SetCandleSettings
        */
       outIdx = 0;
       do {
@@ -900,9 +901,7 @@ public partial class Core
        * - long lower shadow
        * - no, or very short, upper shadow
        * - body below or near the lows of the previous candle
-       * The meaning of "short", "long" and "near the lows" is specified with TA_SetCandleSettings;
-       * outInteger is positive (1 to 100): hammer is always bullish;
-       * the user should consider that a hammer must appear in a downtrend, while this function does not consider it
+       * The meaning of "short", "long" and "near the lows" is specified with TA_SetCandleSettings
        */
       outIdx = 0;
       do {

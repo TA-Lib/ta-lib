@@ -47,13 +47,16 @@ public partial class Core
     *  Initial  Name/description
     *  -------------------------------------------------------------------
     *  AC       Angelo Ciceri
+    *  MF       Mario Fortier
+    *  CC       Claude Code (AI assistant)
     *
     *
     * Change history:
     *
-    *  MMDDYY BY   Description
+    *  MMDDYY BY     Description
     *  -------------------------------------------------------------------
-    *  121104 AC   Creation
+    *  121104 AC     Creation
+    *  100426 MF,CC  Remove the outInteger comment, which misstated the values
     */
    /// <summary>
    /// Number of leading input bars <c>Cdl2crows</c> consumes before it can
@@ -152,9 +155,6 @@ public partial class Core
        * - gap between the first and the second candle's real bodies
        * - third candle: black candle that opens within the second real body and closes within the first real body
        * The meaning of "long" is specified with TA_SetCandleSettings
-       * outInteger is negative (-1 to -100): two crows is always bearish;
-       * the user should consider that two crows is significant when it appears in an uptrend, while this function
-       * does not consider the trend
        */
       outIdx = 0;
       do {
@@ -712,9 +712,6 @@ public partial class Core
        * - gap between the first and the second candle's real bodies
        * - third candle: black candle that opens within the second real body and closes within the first real body
        * The meaning of "long" is specified with TA_SetCandleSettings
-       * outInteger is negative (-1 to -100): two crows is always bearish;
-       * the user should consider that two crows is significant when it appears in an uptrend, while this function
-       * does not consider the trend
        */
       outIdx = 0;
       do {

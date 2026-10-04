@@ -2,7 +2,7 @@
 
 ## Summary
 
-A three-candle bullish reversal pattern: two black candles (1st and 3rd) sandwiching a white candle, where the 3rd black candle closes at the same level as the 1st (the "bread"). A hit signals a bullish reversal (code comment notes it is significant in a downtrend, which the function does not verify).
+A three-candle bullish reversal pattern: two black candles (1st and 3rd) sandwiching a white candle, where the 3rd black candle closes at the same level as the 1st (the "bread"). A hit signals a bullish reversal (significant in a downtrend, which the function does not verify).
 
 ## Notes
 

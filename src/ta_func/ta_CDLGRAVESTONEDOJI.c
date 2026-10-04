@@ -47,13 +47,16 @@
  *  Initial  Name/description
  *  -------------------------------------------------------------------
  *  AC       Angelo Ciceri
+ *  MF       Mario Fortier
+ *  CC       Claude Code (AI assistant)
  *
  *
  * Change history:
  *
- *  MMDDYY BY   Description
+ *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
- *  011505 AC   Creation
+ *  011505 AC     Creation
+ *  100426 MF,CC  Remove the outInteger comment, which misstated the values
  */
 
 TA_LIB_API int TA_CDLGRAVESTONEDOJI_Lookback( void )
@@ -151,8 +154,6 @@ TA_LIB_API TA_RetCode TA_CDLGRAVESTONEDOJI( int    startIdx,
     * - open and close at the low of the day = no or very short lower shadow
     * - upper shadow (to distinguish from other dojis, here upper shadow should not be very short)
     * The meaning of "doji" and "very short" is specified with TA_SetCandleSettings
-    * outInteger is always positive (1 to 100) but this does not mean it is bullish: gravestone doji must be considered
-    * relatively to the trend
     */
    outIdx = 0;
    do
@@ -402,8 +403,6 @@ static TA_RetCode TA_CDLGRAVESTONEDOJI_OpenImpl( struct TA_CDLGRAVESTONEDOJI_Str
        * - open and close at the low of the day = no or very short lower shadow
        * - upper shadow (to distinguish from other dojis, here upper shadow should not be very short)
        * The meaning of "doji" and "very short" is specified with TA_SetCandleSettings
-       * outInteger is always positive (1 to 100) but this does not mean it is bullish: gravestone doji must be considered
-       * relatively to the trend
        */
       outIdx = 0;
       do

@@ -47,13 +47,16 @@ public partial class Core
     *  Initial  Name/description
     *  -------------------------------------------------------------------
     *  AC       Angelo Ciceri
+    *  MF       Mario Fortier
+    *  CC       Claude Code (AI assistant)
     *
     *
     * Change history:
     *
-    *  MMDDYY BY   Description
+    *  MMDDYY BY     Description
     *  -------------------------------------------------------------------
-    *  103004 AC   Creation
+    *  103004 AC     Creation
+    *  100426 MF,CC  Remove the outInteger comment, which misstated the values
     */
    /// <summary>
    /// Number of leading input bars <c>Cdlinvertedhammer</c> consumes before it
@@ -180,9 +183,7 @@ public partial class Core
        * - long upper shadow
        * - no, or very short, lower shadow
        * - gap down
-       * The meaning of "short", "very short" and "long" is specified with TA_SetCandleSettings;
-       * outInteger is positive (1 to 100): inverted hammer is always bullish;
-       * the user should consider that an inverted hammer must appear in a downtrend, while this function does not consider it
+       * The meaning of "short", "very short" and "long" is specified with TA_SetCandleSettings
        */
       outIdx = 0;
       do {
@@ -820,9 +821,7 @@ public partial class Core
        * - long upper shadow
        * - no, or very short, lower shadow
        * - gap down
-       * The meaning of "short", "very short" and "long" is specified with TA_SetCandleSettings;
-       * outInteger is positive (1 to 100): inverted hammer is always bullish;
-       * the user should consider that an inverted hammer must appear in a downtrend, while this function does not consider it
+       * The meaning of "short", "very short" and "long" is specified with TA_SetCandleSettings
        */
       outIdx = 0;
       do {

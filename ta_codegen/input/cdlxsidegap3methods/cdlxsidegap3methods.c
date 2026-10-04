@@ -3,13 +3,16 @@
  *  Initial  Name/description
  *  -------------------------------------------------------------------
  *  AC       Angelo Ciceri
+ *  MF       Mario Fortier
+ *  CC       Claude Code (AI assistant)
  *
  *
  * Change history:
  *
- *  MMDDYY BY   Description
+ *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
- *  011605 AC   Creation
+ *  011605 AC     Creation
+ *  100426 MF,CC  Remove the outInteger comment, which misstated the values
  *
  */
 
@@ -59,9 +62,6 @@ TA_RetCode cdlxsidegap3methods(int startIdx, int endIdx,
     * - second candle: white (black) candle
     * - upside (downside) gap between the first and the second real bodies
     * - third candle: black (white) candle that opens within the second real body and closes within the first real body
-    * outInteger is positive (1 to 100) when bullish or negative (-1 to -100) when bearish;
-    * the user should consider that up/downside gap 3 methods is significant when it appears in a trend, while this
-    * function does not consider it
     */
    outIdx = 0;
    do

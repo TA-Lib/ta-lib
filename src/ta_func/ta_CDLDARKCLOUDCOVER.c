@@ -47,13 +47,16 @@
  *  Initial  Name/description
  *  -------------------------------------------------------------------
  *  AC       Angelo Ciceri
+ *  MF       Mario Fortier
+ *  CC       Claude Code (AI assistant)
  *
  *
  * Change history:
  *
- *  MMDDYY BY   Description
+ *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
- *  120904 AC   Creation
+ *  120904 AC     Creation
+ *  100426 MF,CC  Remove the outInteger comment, which misstated the values
  */
 
 TA_LIB_API int TA_CDLDARKCLOUDCOVER_Lookback( double optInPenetration )
@@ -151,9 +154,6 @@ TA_LIB_API TA_RetCode TA_CDLDARKCLOUDCOVER( int    startIdx,
     * Greg Morris wants the close to be below the midpoint of the previous real body
     * The meaning of "long" is specified with TA_SetCandleSettings, the penetration of the first real body is specified
     * with optInPenetration
-    * outInteger is negative (-1 to -100): dark cloud cover is always bearish
-    * the user should consider that a dark cloud cover is significant when it appears in an uptrend, while
-    * this function does not consider it
     */
    outIdx = 0;
    do
@@ -389,9 +389,6 @@ static TA_RetCode TA_CDLDARKCLOUDCOVER_OpenImpl( struct TA_CDLDARKCLOUDCOVER_Str
        * Greg Morris wants the close to be below the midpoint of the previous real body
        * The meaning of "long" is specified with TA_SetCandleSettings, the penetration of the first real body is specified
        * with optInPenetration
-       * outInteger is negative (-1 to -100): dark cloud cover is always bearish
-       * the user should consider that a dark cloud cover is significant when it appears in an uptrend, while
-       * this function does not consider it
        */
       outIdx = 0;
       do

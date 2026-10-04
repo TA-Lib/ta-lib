@@ -47,13 +47,16 @@ public partial class Core
     *  Initial  Name/description
     *  -------------------------------------------------------------------
     *  AC       Angelo Ciceri
+    *  MF       Mario Fortier
+    *  CC       Claude Code (AI assistant)
     *
     *
     * Change history:
     *
-    *  MMDDYY BY   Description
+    *  MMDDYY BY     Description
     *  -------------------------------------------------------------------
-    *  032605 AC   Creation
+    *  032605 AC     Creation
+    *  100426 MF,CC  Remove the outInteger comment, which misstated the values
     */
    /// <summary>
    /// Number of leading input bars <c>Cdlmatchinglow</c> consumes before it can
@@ -150,7 +153,6 @@ public partial class Core
        * - first candle: black candle
        * - second candle: black candle with the close equal to the previous close
        * The meaning of "equal" is specified with TA_SetCandleSettings
-       * outInteger is always positive (1 to 100): matching low is always bullish;
        */
       outIdx = 0;
       do {
@@ -676,7 +678,6 @@ public partial class Core
        * - first candle: black candle
        * - second candle: black candle with the close equal to the previous close
        * The meaning of "equal" is specified with TA_SetCandleSettings
-       * outInteger is always positive (1 to 100): matching low is always bullish;
        */
       outIdx = 0;
       do {

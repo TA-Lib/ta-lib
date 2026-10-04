@@ -3,13 +3,16 @@
  *  Initial  Name/description
  *  -------------------------------------------------------------------
  *  AC       Angelo Ciceri
+ *  MF       Mario Fortier
+ *  CC       Claude Code (AI assistant)
  *
  *
  * Change history:
  *
- *  MMDDYY BY   Description
+ *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
- *  010605 AC   Creation
+ *  010605 AC     Creation
+ *  100426 MF,CC  Remove the outInteger comment, which misstated the values
  *
  */
 
@@ -78,8 +81,6 @@ TA_RetCode cdlcounterattack(int startIdx, int endIdx,
     * - first candle: long black (white)
     * - second candle: long white (black) with close equal to the prior close
     * The meaning of "equal" and "long" is specified with TA_SetCandleSettings
-    * outInteger is positive (1 to 100) when bullish or negative (-1 to -100) when bearish;
-    * the user should consider that counterattack is significant in a trend, while this function does not consider it
     */
    outIdx = 0;
    do

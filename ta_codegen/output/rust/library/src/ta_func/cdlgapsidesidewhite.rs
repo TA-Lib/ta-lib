@@ -45,13 +45,16 @@
  *  Initial  Name/description
  *  -------------------------------------------------------------------
  *  AC       Angelo Ciceri
+ *  MF       Mario Fortier
+ *  CC       Claude Code (AI assistant)
  *
  *
  * Change history:
  *
- *  MMDDYY BY   Description
+ *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
- *  020605 AC   Creation
+ *  020605 AC     Creation
+ *  100426 MF,CC  Remove the outInteger comment, which misstated the values
  */
 
 // Import types from parent module
@@ -281,9 +284,6 @@ impl Core {
         //   open (equal) of the previous candle
         // - the second candle does not close the window
         // The meaning of "near" and "equal" is specified with TA_SetCandleSettings
-        // outInteger is positive (1 to 100) or negative (-1 to -100): the user should consider that upside
-        // or downside gap side-by-side white lines is significant when it appears in a trend, while this function
-        // does not consider the trend
         outIdx = 0;
         if i <= endIdx {
             let _wn: usize = endIdx - i + 1;
@@ -786,9 +786,6 @@ impl Core {
         //   open (equal) of the previous candle
         // - the second candle does not close the window
         // The meaning of "near" and "equal" is specified with TA_SetCandleSettings
-        // outInteger is positive (1 to 100) or negative (-1 to -100): the user should consider that upside
-        // or downside gap side-by-side white lines is significant when it appears in a trend, while this function
-        // does not consider the trend
         outIdx = 0;
         loop {
             if (((if c_min(inOpen[i - 1], inClose[i - 1]) > c_max(inOpen[i - 2], inClose[i - 2]) { 1 } else { 0 }) != 0) && // upside or downside gap between the 1st candle and both the next 2 candles

@@ -3,13 +3,16 @@
  *  Initial  Name/description
  *  -------------------------------------------------------------------
  *  AC       Angelo Ciceri
+ *  MF       Mario Fortier
+ *  CC       Claude Code (AI assistant)
  *
  *
  * Change history:
  *
- *  MMDDYY BY   Description
+ *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
- *  020605 AC   Creation
+ *  020605 AC     Creation
+ *  100426 MF,CC  Remove the outInteger comment, which misstated the values
  *
  */
 
@@ -77,9 +80,6 @@ TA_RetCode cdlgapsidesidewhite(int startIdx, int endIdx,
     *   open (equal) of the previous candle
     * - the second candle does not close the window
     * The meaning of "near" and "equal" is specified with TA_SetCandleSettings
-    * outInteger is positive (1 to 100) or negative (-1 to -100): the user should consider that upside
-    * or downside gap side-by-side white lines is significant when it appears in a trend, while this function
-    * does not consider the trend
     */
    outIdx = 0;
    do
