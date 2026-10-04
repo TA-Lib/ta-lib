@@ -711,14 +711,11 @@ fn rust_binder_calls_the_public_tier() {
         );
         called += 1;
     }
-    // Multi-output arms take their buffers one at a time, so presence has to be
-    // settled before the first take or a rejection leaves the holder with the
-    // earlier ones missing and every later call refuses a binding that is there. Reconstructed
-    // from the row model, so the needle names the arm's own slots.
+    // An arm takes its buffers one at a time, so every refusal has to be settled
+    // before the first take, or it leaves the holder with a buffer missing and
+    // every later call refuses a binding that is there. Reconstructed from the
+    // row model, so the needle names the arm's own slots.
     for r in all_abstract_rows() {
-        if r.outputs.len() < 2 {
-            continue;
-        }
         let slots: Vec<String> = r
             .outputs
             .iter()
@@ -731,19 +728,23 @@ fn rust_binder_calls_the_public_tier() {
                 format!("self.{arr}[{k}].is_none()")
             })
             .collect();
-        // The guard, then the first take, with nothing between them: emitted as
-        // one block, so this pins the ORDER and not merely the presence of both.
-        let arr0 = match r.outputs[0].kind {
-            ta_codegen_lib::backends::abstract_rows::OutputKind::Integer => "int_out",
-            ta_codegen_lib::backends::abstract_rows::OutputKind::Real => "real_out",
-        };
+        // The binding guard, then the range check: C's order, so an unbound slot
+        // is never reported as the function's own code.
         let needle = format!(
-            "if {} {{ return Err(RetCode::OutputNotAllInitialize); }}\n                let mut o0 = self.{arr0}[0].take()",
+            "if {} {{ return Err(RetCode::OutputNotAllInitialize); }}\n                Self::check_range(start_idx, end_idx)?;",
             slots.join(" || ")
         );
+        let head = format!("            FuncId::{} => {{\n", r.name);
+        let at = out.find(&head).unwrap_or_else(|| panic!("{}: no binder arm", r.name));
+        let arm = &out[at..at + out[at..].find("let res = self.core.").expect("arm calls the function")];
+        let guard_at = arm.find(&needle).unwrap_or_else(|| {
+            panic!("{}: no binding guard ahead of the range check, expected `{needle}`", r.name)
+        });
+        let take_at = arm.find(".take()").expect("arm takes its outputs");
+        assert!(guard_at < take_at, "{}: the first take precedes the binding guard", r.name);
         assert!(
-            out.contains(&needle),
-            "{}: no presence guard immediately ahead of the first take — expected `{needle}`",
+            !arm[take_at..].contains("?;\n                let e") && !arm[take_at..].contains("try_from("),
+            "{}: a conversion that can fail sits after the first take",
             r.name
         );
         guarded += 1;
@@ -757,7 +758,7 @@ fn rust_binder_calls_the_public_tier() {
          is the public tier's"
     );
     assert!(called >= 200, "only {called} binder arms scanned");
-    assert!(guarded >= 12, "only {guarded} multi-output arms carried a presence guard");
+    assert!(guarded >= 200, "only {guarded} arms carried a binding guard");
 }
 
 /// The metadata tier's price setter validates every consumed component before

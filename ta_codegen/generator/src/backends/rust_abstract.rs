@@ -854,6 +854,13 @@ mod binder_tests {
         assert_eq!(h.set_int_output(0, &mut wrong_kind).err(), Some(RetCode::InvalidParamHolderType));
         h.set_output(0, &mut out).unwrap();
         assert_eq!(h.call(0, N - 1).err(), Some(RetCode::InputNotAllInitialize)); // input still unbound
+        // C's order: an unbound slot is reported ahead of a bad range or parameter.
+        assert_eq!(h.call(N, 0).err(), Some(RetCode::InputNotAllInitialize));
+        let mut bb = FuncId::BBANDS.new_call(&core);
+        bb.set_opt_input(3, 99_i32).unwrap();
+        assert_eq!(bb.call(0, N - 1).err(), Some(RetCode::InputNotAllInitialize));
+        bb.set_input(0, &close).unwrap();
+        assert_eq!(bb.call(0, N - 1).err(), Some(RetCode::OutputNotAllInitialize));
     }
 }
 "#;
@@ -946,10 +953,6 @@ fn emit_binder(
          \x20   /// cover `end_idx`, and every output must hold the count actually\n\
          \x20   /// produced, `end_idx - max(start_idx, lookback) + 1`.\n\
          \x20   pub fn call(&mut self, start_idx: usize, end_idx: usize) -> Result<OutRange, RetCode> {\n\
-         \x20       if start_idx > Core::INDEX_MAX { return Err(RetCode::OutOfRangeStartIndex); }\n\
-         \x20       if end_idx > Core::INDEX_MAX || end_idx < start_idx {\n\
-         \x20           return Err(RetCode::OutOfRangeEndIndex);\n\
-         \x20       }\n\
          \x20       // The buffer bounds are the PUBLIC entry point's, which every arm\n\
          \x20       // below calls (#265). This tier used to hand `_Impl` a hand-rolled\n\
          \x20       // output check of its own, `end_idx - start_idx + 1` -- the width of\n\
@@ -969,6 +972,13 @@ fn emit_binder(
     o.push_str(
         "        };\n\
          \x20       if rc == RetCode::Success { Ok(OutRange { beg_idx: beg, count: nb }) } else { Err(rc) }\n\
+         \x20   }\n\n\
+         \x20   fn check_range(start_idx: usize, end_idx: usize) -> Result<(), RetCode> {\n\
+         \x20       if start_idx > Core::INDEX_MAX { return Err(RetCode::OutOfRangeStartIndex); }\n\
+         \x20       if end_idx > Core::INDEX_MAX || end_idx < start_idx {\n\
+         \x20           return Err(RetCode::OutOfRangeEndIndex);\n\
+         \x20       }\n\
+         \x20       Ok(())\n\
          \x20   }\n}\n",
     );
 
@@ -1086,22 +1096,6 @@ fn emit_call_arm(
     let snake = super::common::snake_words(&f.name);
     let _ = writeln!(o, "            FuncId::{} => {{", f.name);
 
-    // Enum conversions happen FIRST, before any output is `take`n. A `?` after
-    // the take would leave the holder without its output bindings, so a caller
-    // that bound a bad value and then corrected it would get BadParam forever --
-    // C keeps the holder reusable, and so must this.
-    let mut enum_binds: HashMap<String, String> = HashMap::new();
-    for (i, opt) in f.opt_inputs.iter().enumerate() {
-        if let Some(ty) = enum_params.get(&f.name).and_then(|m| m.get(&opt.param_name)) {
-            let bind = format!("e{i}");
-            let _ = writeln!(
-                o,
-                "                let {bind} = {ty}::try_from(self.int_opt[{i}])?;"
-            );
-            enum_binds.insert(opt.param_name.clone(), bind);
-        }
-    }
-
     let mut args: Vec<String> = vec!["start_idx".into(), "end_idx".into()];
     for (slot, inp) in f.inputs.iter().enumerate() {
         match inp.kind {
@@ -1132,18 +1126,7 @@ fn emit_call_arm(
         }
     }
 
-    for (i, opt) in f.opt_inputs.iter().enumerate() {
-        args.push(match enum_binds.get(&opt.param_name) {
-            Some(bind) => bind.clone(),
-            None => opt_arg(f, opt, i, enum_params),
-        });
-    }
-    // Every output's presence, decided before the first `take`. With more than
-    // one output a `?` between the takes would return with the earlier ones
-    // already out of the holder and never put back, and the next `call` would
-    // then answer `OutputNotAllInitialize` forever on a binding the caller can see is there.
-    // Same reasoning as the enum conversions above; C keeps the holder reusable.
-    if f.outputs.len() > 1 {
+    {
         let bound: Vec<String> = f
             .outputs
             .iter()
@@ -1161,6 +1144,30 @@ fn emit_call_arm(
             "                if {} {{ return Err(RetCode::OutputNotAllInitialize); }}",
             bound.join(" || ")
         );
+    }
+
+    // C's order: the bindings, then the range, then the parameters. Every `?`
+    // sits before the first `take`: one after it would return with an output
+    // out of the holder and never put back, and the next `call` would refuse a
+    // binding the caller can see is there.
+    o.push_str("                Self::check_range(start_idx, end_idx)?;\n");
+    let mut enum_binds: HashMap<String, String> = HashMap::new();
+    for (i, opt) in f.opt_inputs.iter().enumerate() {
+        if let Some(ty) = enum_params.get(&f.name).and_then(|m| m.get(&opt.param_name)) {
+            let bind = format!("e{i}");
+            let _ = writeln!(
+                o,
+                "                let {bind} = {ty}::try_from(self.int_opt[{i}])?;"
+            );
+            enum_binds.insert(opt.param_name.clone(), bind);
+        }
+    }
+
+    for (i, opt) in f.opt_inputs.iter().enumerate() {
+        args.push(match enum_binds.get(&opt.param_name) {
+            Some(bind) => bind.clone(),
+            None => opt_arg(f, opt, i, enum_params),
+        });
     }
 
     for (k, out) in f.outputs.iter().enumerate() {
