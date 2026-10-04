@@ -619,6 +619,29 @@ public class MetadataTest {
                      .setOutput(0, shared).setOutput(1, shared).setOutput(2, new double[N])
                      .call(0, N - 1),
             "one array bound as two outputs -> BAD_PARAM");
+
+        // No output is declined through a holder. MAMA's second output is one the
+        // typed call takes null for.
+        FuncInfo mama = Functions.byName("MAMA");
+        check((mama.outputs().get(1).flags() & OutputFlags.NULLABLE) != 0, "MAMA's second output is declinable");
+        checkRetCode(RetCode.OUTPUT_NOT_ALL_INITIALIZE,
+            () -> mama.newCall().setInput(0, CLOSE).setOutput(0, new double[N]).call(0, N - 1),
+            "a declinable output left unbound -> OUTPUT_NOT_ALL_INITIALIZE");
+        checkRetCode(RetCode.BAD_PARAM,
+            () -> mama.newCall().setInput(0, CLOSE).setOutput(0, new double[N])
+                     .setOutput(1, new double[0]).call(0, N - 1),
+            "an empty array on a declinable output -> BAD_PARAM");
+        checkRetCode(RetCode.OUT_OF_RANGE_END_INDEX,
+            () -> mama.newCall().setInput(0, CLOSE).setOutput(0, new double[N])
+                     .setOutput(1, new double[0]).call(1, 0),
+            "and a bad range keeps its own code");
+        checkRetCode(RetCode.BAD_PARAM,
+            () -> mama.newCall().setInput(0, CLOSE).setOutput(0, new double[N])
+                     .setOutput(1, new double[0]).call(0, 0),
+            "a range that produces no values refuses it too");
+        check(mama.newCall().setInput(0, CLOSE).setOutput(0, new double[N])
+                  .setOutput(1, new double[N]).call(0, N - 1).count() > 0,
+            "control: the same call with both outputs sized succeeds");
     }
 
     /**

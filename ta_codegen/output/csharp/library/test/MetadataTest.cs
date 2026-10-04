@@ -627,6 +627,47 @@ public static class MetadataTest
                       .Call(0, N - 1),
             "one array bound as two outputs -> BadParam");
 
+        /* No output is declined through a holder. MAMA's second output is one
+           the typed method takes an empty span for. */
+        FuncInfo mama = FunctionCatalog.Default["MAMA"];
+        Check((mama.Outputs[1].Flags & OutputFlags.Nullable) != 0, "MAMA's second output is declinable");
+        CheckCode(RetCode.OutputNotAllInitialize,
+            () => mama.CreateCall().SetInput(0, Close).SetOutput(0, new double[N]).Call(0, N - 1),
+            "a declinable output left unbound -> OutputNotAllInitialize");
+        CheckCode(RetCode.BadParam,
+            () => mama.CreateCall().SetInput(0, Close).SetOutput(0, new double[N])
+                      .SetOutput(1, Array.Empty<double>()).Call(0, N - 1),
+            "an empty buffer on a declinable output -> BadParam");
+        CheckCode(RetCode.OutOfRangeEndIndex,
+            () => mama.CreateCall().SetInput(0, Close).SetOutput(0, new double[N])
+                      .SetOutput(1, Array.Empty<double>()).Call(1, 0),
+            "and a bad range keeps its own code");
+        CheckCode(RetCode.BadParam,
+            () => mama.CreateCall().SetInput(0, Close).SetOutput(0, new double[N])
+                      .SetOutput(1, Array.Empty<double>()).Call(0, 0),
+            "a range that produces no values refuses it too");
+        string diagnosis = "nothing was thrown";
+        try
+        {
+            mama.CreateCall().SetInput(0, Close).SetOptInput(0, 5.0).SetOutput(0, new double[N])
+                .SetOutput(1, Array.Empty<double>()).Call(0, N - 1);
+        }
+        catch (TALibArgumentException e)
+        {
+            diagnosis = e.Message;
+        }
+        Check(diagnosis.Contains("bad parameter", StringComparison.Ordinal),
+            $"a bad parameter outranks the empty buffer, as in the typed method ({diagnosis})");
+        double[] untouched = new double[N];
+        RetCode declined = mama.CreateCall().SetInput(0, Close).SetOutput(0, untouched)
+            .SetOutput(1, Array.Empty<double>()).TryCall(0, N - 1, out OutRange rDeclined);
+        Check(declined == RetCode.BadParam && rDeclined.Count == 0 && Array.TrueForAll(untouched, v => v == 0.0),
+            $"TryCall reports it as a code and writes nothing ({declined})");
+        Check(mama.CreateCall().SetInput(0, Close).SetOutput(0, new double[N])
+                  .SetOutput(1, new double[N]).TryCall(0, N - 1, out OutRange rBoth) == RetCode.Success
+              && rBoth.Count > 0,
+            "control: the same call with both outputs sized succeeds");
+
         /* TryCall advertises "failure as a code rather than an exception" and
            then threw from the binding it performs. It now reports the codes C
            returns for the same condition. This is load-bearing rather than

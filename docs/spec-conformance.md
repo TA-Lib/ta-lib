@@ -399,7 +399,11 @@ short output (`an_undersized_input_is_rejected_not_read_past`,
 index below the start index and one array bound as two outputs. The generator's `rust_binder_calls_the_public_tier` pins that every
 Rust arm calls the public entry point. Across languages: under `--codegen`,
 `d2_param_vectors` sends each function's rejected parameter vectors through
-`abstract_call`.
+`abstract_call`. No output declined: `checkHolderErrorContract` leaves only the
+`TA_OUT_NULLABLE` output of each function that has one unbound (C, where an
+empty buffer cannot be spelled); `no_output_is_declined_through_a_holder`
+(Rust), `holderRejectsMisuse` (Java) and `BinderRejectsMisuse` (C#) bind MAMA's
+second output to an empty buffer.
 
 rA2: `testHolderStaysReusable` (C), `a_rejected_setter_leaves_the_holder_as_it_found_it`
 (Rust), `aRejectedSetterLeavesTheHolderAsItFoundIt` (Java),

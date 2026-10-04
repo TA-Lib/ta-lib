@@ -1993,6 +1993,28 @@ public sealed class ParamHolder
         return true;
     }
 
+    /* The typed method reads an empty span on a nullable output as declined,
+       and no output can be declined through a holder. Refuse it only where
+       that method refuses an empty span on any other output: an invalid range
+       or parameter must keep its own diagnosis. */
+    private void RequireNoDeclinedOutput(int startIdx, int endIdx)
+    {
+        if (Core.ClampedStart(startIdx, endIdx, Lookback()) < 0)
+        {
+            return;
+        }
+
+        for (int i = 0; i < _info.Outputs.Length; i++)
+        {
+            OutputInfo probe = _info.Outputs[i];
+            if ((probe.Flags & OutputFlags.Nullable) != 0
+                && (probe.Kind == OutputKind.Real ? _realOuts[i]!.Length : _intOuts[i]!.Length) == 0)
+            {
+                Core.RequirePresent(_info.Name, probe.ParamName, 0);
+            }
+        }
+    }
+
     /// <summary>Runs the function over <c>[startIdx, endIdx]</c>.</summary>
     /// <param name="startIdx">First input bar to compute.</param>
     /// <param name="endIdx">Last input bar to compute.</param>
@@ -2000,7 +2022,9 @@ public sealed class ParamHolder
     /// <exception cref="TALibArgumentException">Carrying
     /// <see cref="RetCode.InputNotAllInitialize"/> or
     /// <see cref="RetCode.OutputNotAllInitialize"/>: a required input or output was
-    /// never bound, and the function did not run. Any other failure is the typed
+    /// never bound, and the function did not run. Carrying
+    /// <see cref="RetCode.BadParam"/>: an output the typed method lets a caller
+    /// decline was bound to an empty array. Any other failure is the typed
     /// method's own.</exception>
     public OutRange Call(int startIdx, int endIdx)
     {
@@ -2009,6 +2033,8 @@ public sealed class ParamHolder
         {
             throw new TALibArgumentException($"{_info.Name}: {which} was not set", bound);
         }
+
+        RequireNoDeclinedOutput(startIdx, endIdx);
 
         // The function's OWN exception, not a relabelled code. Since #265 the
         // thunk calls the public overload, whose message names the buffer and
@@ -2027,7 +2053,9 @@ public sealed class ParamHolder
     /// <returns>The function's return code. An unbound input or output is reported
     /// as <see cref="RetCode.InputNotAllInitialize"/> /
     /// <see cref="RetCode.OutputNotAllInitialize"/>, the codes C returns for the
-    /// same condition — this method does not throw.</returns>
+    /// same condition, and an empty array bound to an output the typed method lets
+    /// a caller decline as <see cref="RetCode.BadParam"/>. This method does not
+    /// throw.</returns>
     public RetCode TryCall(int startIdx, int endIdx, out OutRange range)
     {
         RetCode bound = BoundState();
@@ -2039,6 +2067,7 @@ public sealed class ParamHolder
 
         try
         {
+            RequireNoDeclinedOutput(startIdx, endIdx);
             range = _info.Invoke(_core, this, startIdx, endIdx);
             return RetCode.Success;
         }

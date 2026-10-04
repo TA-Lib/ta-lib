@@ -4039,6 +4039,7 @@ static long long g_holderNullErr = 0;   /* NULL value pointer            */
 static long long g_holderPriceNullErr = 0; /* NULL consumed price component */
 static long long g_holderInputErr = 0;  /* TA_INPUT_NOT_ALL_INITIALIZE   */
 static long long g_holderOutputErr = 0; /* TA_OUTPUT_NOT_ALL_INITIALIZE  */
+static long long g_holderDeclinableErr = 0; /* only a TA_OUT_NULLABLE output unbound */
 static long long g_holderFuncErr = 0;   /* the function's own index code */
 static long long g_holderFuncBadParam = 0; /* the function's own TA_BAD_PARAM */
 static long long g_holderForgedErr = 0; /* a holder the layer did not make */
@@ -4201,6 +4202,7 @@ static ErrorNumber checkHolderErrorContract( const TA_FuncInfo *funcInfo )
    TA_RetCode retCode;
    unsigned int i;
    int ok = 1;
+   int declinable;
    int outBegIdx, outNbElement;
    /* One buffer PER OUTPUT SLOT, not one shared: binding every output to the
     * same array is the aliasing #108 rejects, and it only stays invisible here
@@ -4384,6 +4386,26 @@ static ErrorNumber checkHolderErrorContract( const TA_FuncInfo *funcInfo )
             TA_CallFunc( paramHolder, 0, 251, &outBegIdx, &outNbElement ),
             TA_OUTPUT_NOT_ALL_INITIALIZE );
    g_holderOutputErr++;
+
+   /* An output the typed call lets a caller decline is still required here. */
+   declinable = 0;
+   for( i = 0; i < funcInfo->nbOutput; i++ )
+   {
+      TA_GetOutputParameterInfo( handle, i, &outInfo );
+      if( outInfo->flags & TA_OUT_NULLABLE )
+         declinable = 1;
+      else if( outInfo->type == TA_Output_Real )
+         TA_SetOutputParamRealPtr( paramHolder, i, dummyReal[i] );
+      else
+         TA_SetOutputParamIntegerPtr( paramHolder, i, dummyInt[i] );
+   }
+   if( declinable )
+   {
+      ok &= holder_expect( funcInfo->name, "CallFunc with only a declinable output unbound",
+               TA_CallFunc( paramHolder, 0, 251, &outBegIdx, &outNbElement ),
+               TA_OUTPUT_NOT_ALL_INITIALIZE );
+      g_holderDeclinableErr++;
+   }
 
    /* 6. Fully bound, but a NULL argument: TA_INVALID_PARAM_HOLDER, a code no
     *    function returns, so this refusal cannot read as the function's own. */
@@ -4614,23 +4636,25 @@ static ErrorNumber test_default_calls(void)
       g_holderTypeErr = g_holderIndexErr = g_holderNullErr = 0;
       g_holderInputErr = g_holderOutputErr = g_holderPriceNullErr = 0;
       g_holderFuncErr = g_holderFuncBadParam = g_holderForgedErr = 0;
+      g_holderDeclinableErr = 0;
       TA_ForEachFunc( testHolderErrorContract, &errNumber );
 
-      /* Each class must have been reached. Every function contributes to every
-       * one of these, so a zero means the sweep stopped building cases, not
-       * that the corpus lacks them. */
+      /* Each class must have been reached. The corpus reaches every one, so a
+       * zero means the sweep stopped building cases. */
       if( errNumber == TA_TEST_PASS &&
           ( g_holderTypeErr == 0 || g_holderIndexErr == 0 || g_holderNullErr == 0 ||
             g_holderInputErr == 0 || g_holderOutputErr == 0 ||
             g_holderPriceNullErr == 0 || g_holderFuncErr == 0 ||
-            g_holderFuncBadParam == 0 || g_holderForgedErr == 0 ) )
+            g_holderFuncBadParam == 0 || g_holderForgedErr == 0 ||
+            g_holderDeclinableErr == 0 ) )
       {
          printf( "Failed: ParamHolder error-contract gate vacuous "
                  "(type=%lld index=%lld null=%lld priceNull=%lld input=%lld output=%lld "
-                 "func=%lld funcBadParam=%lld forged=%lld)\n",
+                 "func=%lld funcBadParam=%lld forged=%lld declinable=%lld)\n",
                  g_holderTypeErr, g_holderIndexErr, g_holderNullErr,
                  g_holderPriceNullErr, g_holderInputErr, g_holderOutputErr,
-                 g_holderFuncErr, g_holderFuncBadParam, g_holderForgedErr );
+                 g_holderFuncErr, g_holderFuncBadParam, g_holderForgedErr,
+                 g_holderDeclinableErr );
          errNumber = TA_ABS_TST_FAIL_HOLDER_CONTRACT_VACUOUS;
       }
    }

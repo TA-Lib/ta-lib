@@ -860,6 +860,32 @@ mod binder_tests {
         assert!(h.call(0, N - 1).is_ok(), "the holder still computes");
     }
 
+    /// MAMA's second output is one the typed call takes `None` for.
+    #[test]
+    fn no_output_is_declined_through_a_holder() {
+        let core = Core::new();
+        let close = series(0.0);
+        let mut mama = vec![0.0; N];
+        let mut fama = vec![0.0; N];
+        let mut empty: [f64; 0] = [];
+        {
+            let mut h = FuncId::MAMA.new_call(&core);
+            h.set_input(0, &close).unwrap();
+            h.set_output(0, &mut mama).unwrap();
+            assert_eq!(h.call(0, N - 1).err(), Some(RetCode::OutputNotAllInitialize));
+            h.set_output(1, &mut empty).unwrap();
+            assert_eq!(h.call(0, N - 1).err(), Some(RetCode::BadParam));
+            assert_eq!(h.call(0, 0).err(), Some(RetCode::BadParam), "a range that produces no values");
+            assert_eq!(h.call(1, 0).err(), Some(RetCode::OutOfRangeEndIndex));
+        }
+        assert!(mama.iter().all(|v| *v == 0.0), "a refused call writes nothing");
+        let mut h = FuncId::MAMA.new_call(&core);
+        h.set_input(0, &close).unwrap();
+        h.set_output(0, &mut mama).unwrap();
+        h.set_output(1, &mut fama).unwrap();
+        assert!(h.call(0, N - 1).is_ok_and(|r| r.count > 0));
+    }
+
     /// Type mismatches and out-of-range indices are refused rather than silently bound.
     #[test]
     fn the_setters_refuse_what_does_not_belong() {

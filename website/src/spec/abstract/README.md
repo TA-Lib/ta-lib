@@ -63,7 +63,7 @@ A slot is one input, one optional parameter or one output. A setter names it by 
 
 ## Rules {#rules}
 
-<a id="ra1"></a>**rA1** A call through a parameter holder whose arguments are all bound and accepted by their setters is held to the [batch conditions](/spec/errors/#batch), with the same codes. The exceptions are in C. Its setters take bare pointers and no length: a bound series shorter than the range goes undetected, as in [rB5](/spec/errors/#rb5). And an absent range out-parameter answers `TA_INVALID_PARAM_HOLDER`, not [rB4](/spec/errors/#rb4)'s code.
+<a id="ra1"></a>**rA1** A call through a parameter holder whose arguments are all bound and accepted by their setters is held to the [batch conditions](/spec/errors/#batch), with the same codes, and no output can be declined: an empty buffer bound to an output the typed call lets a caller decline ([rW5](/spec/inputs-outputs/#rw5)) is absent ([rB4](/spec/errors/#rb4)). The exceptions are in C. Its setters take bare pointers and no length: a bound series shorter than the range goes undetected, as in [rB5](/spec/errors/#rb5). And an absent range out-parameter answers `TA_INVALID_PARAM_HOLDER`, not [rB4](/spec/errors/#rb4)'s code.
 
 <a id="ra2"></a>**rA2** A rejected setter leaves the parameter holder as it found it, so a rejected re-bind cannot leave the next call to succeed, silently, over a mix of old and new arguments.
 
