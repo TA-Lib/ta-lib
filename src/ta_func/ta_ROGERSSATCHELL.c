@@ -101,6 +101,7 @@ TA_LIB_API TA_RetCode TA_ROGERSSATCHELL( int    startIdx,
    double term;
    double periodTotal;
    double windowTotal;
+   double windowMagnitude;
    double peakTotal;
    double sqrtA;
    int i;
@@ -154,7 +155,7 @@ TA_LIB_API TA_RetCode TA_ROGERSSATCHELL( int    startIdx,
       *outNBElement= 0;
       return TA_SUCCESS;
    }
-   if( optInTimePeriod < 1 ) return TA_INTERNAL_ERROR(484);
+   if( optInTimePeriod < 1 ) return TA_INTERNAL_ERROR(483);
    if( (int)optInTimePeriod > (int)(sizeof(local_termRing)/sizeof(double)) )
    {
       termRing = TA_Malloc( sizeof(double)*optInTimePeriod );
@@ -214,7 +215,7 @@ TA_LIB_API TA_RetCode TA_ROGERSSATCHELL( int    startIdx,
    i = startIdx;
    outIdx = 0;
    barsSinceRebuild = 32 * optInTimePeriod;
-   peakTotal = periodTotal;
+   peakTotal = fabs(periodTotal);
    do
    {
       o = inOpen[i];
@@ -236,8 +237,9 @@ TA_LIB_API TA_RetCode TA_ROGERSSATCHELL( int    startIdx,
        */
       termRing[termRing_Idx] = term;
       periodTotal += term;
-      peakTotal = (periodTotal > peakTotal) ? periodTotal : peakTotal;
       windowTotal = periodTotal;
+      windowMagnitude = fabs(windowTotal);
+      peakTotal = (windowMagnitude > peakTotal) ? windowMagnitude : peakTotal;
       termRing_Idx++;
       if( termRing_Idx > maxIdx_termRing ) termRing_Idx = 0;
       periodTotal -= termRing[termRing_Idx];
@@ -248,11 +250,15 @@ TA_LIB_API TA_RetCode TA_ROGERSSATCHELL( int    startIdx,
        * can be nothing but that rounding, of either sign, where a fresh sum
        * of an all-flat window is exactly 0.0.
        *
+       * Compare magnitudes. A window holding a bar whose high or low sits
+       * inside its open and close can sum below zero, and a signed test
+       * would then rebuild on every bar for as long as it does.
+       *
        * Sum oldest first, so the rebuilt value is the one a fresh pass over
        * the bars gives.
        */
       barsSinceRebuild -= 1;
-      if( windowTotal < 0.000001 * peakTotal || barsSinceRebuild <= 0 )
+      if( windowMagnitude < 0.000001 * peakTotal || barsSinceRebuild <= 0 )
       {
          barsSinceRebuild = 32 * optInTimePeriod;
          windowTotal = 0.0;
@@ -264,7 +270,7 @@ TA_LIB_API TA_RetCode TA_ROGERSSATCHELL( int    startIdx,
          {
             windowTotal += termRing[j];
          }
-         peakTotal = windowTotal;
+         peakTotal = fabs(windowTotal);
          periodTotal = windowTotal;
          periodTotal -= termRing[termRing_Idx];
       }
@@ -310,6 +316,7 @@ TA_RetCode TA_S_ROGERSSATCHELL( int    startIdx,
    double term;
    double periodTotal;
    double windowTotal;
+   double windowMagnitude;
    double peakTotal;
    double sqrtA;
    int i;
@@ -359,7 +366,7 @@ TA_RetCode TA_S_ROGERSSATCHELL( int    startIdx,
       *outNBElement= 0;
       return TA_SUCCESS;
    }
-   if( optInTimePeriod < 1 ) return TA_INTERNAL_ERROR(484);
+   if( optInTimePeriod < 1 ) return TA_INTERNAL_ERROR(483);
    if( (int)optInTimePeriod > (int)(sizeof(local_termRing)/sizeof(double)) )
    {
       termRing = TA_Malloc( sizeof(double)*optInTimePeriod );
@@ -399,7 +406,7 @@ TA_RetCode TA_S_ROGERSSATCHELL( int    startIdx,
    i = startIdx;
    outIdx = 0;
    barsSinceRebuild = 32 * optInTimePeriod;
-   peakTotal = periodTotal;
+   peakTotal = fabs(periodTotal);
    do
    {
       o = (double)inOpen[i];
@@ -417,13 +424,14 @@ TA_RetCode TA_S_ROGERSSATCHELL( int    startIdx,
       }
       termRing[termRing_Idx] = term;
       periodTotal += term;
-      peakTotal = (periodTotal > peakTotal) ? periodTotal : peakTotal;
       windowTotal = periodTotal;
+      windowMagnitude = fabs(windowTotal);
+      peakTotal = (windowMagnitude > peakTotal) ? windowMagnitude : peakTotal;
       termRing_Idx++;
       if( termRing_Idx > maxIdx_termRing ) termRing_Idx = 0;
       periodTotal -= termRing[termRing_Idx];
       barsSinceRebuild -= 1;
-      if( windowTotal < 0.000001 * peakTotal || barsSinceRebuild <= 0 )
+      if( windowMagnitude < 0.000001 * peakTotal || barsSinceRebuild <= 0 )
       {
          barsSinceRebuild = 32 * optInTimePeriod;
          windowTotal = 0.0;
@@ -435,7 +443,7 @@ TA_RetCode TA_S_ROGERSSATCHELL( int    startIdx,
          {
             windowTotal += termRing[j];
          }
-         peakTotal = windowTotal;
+         peakTotal = fabs(windowTotal);
          periodTotal = windowTotal;
          periodTotal -= termRing[termRing_Idx];
       }
@@ -496,6 +504,7 @@ static void TA_ROGERSSATCHELL_StepImpl( struct TA_ROGERSSATCHELL_Stream *sp, dou
    double p2;
    double term;
    double windowTotal;
+   double windowMagnitude;
    int j;
 
    o = inOpen;
@@ -517,8 +526,9 @@ static void TA_ROGERSSATCHELL_StepImpl( struct TA_ROGERSSATCHELL_Stream *sp, dou
     */
    sp->cb_termRing[sp->termRing_Idx] = term;
    sp->periodTotal += term;
-   sp->peakTotal = (sp->periodTotal > sp->peakTotal) ? sp->periodTotal : sp->peakTotal;
    windowTotal = sp->periodTotal;
+   windowMagnitude = fabs(windowTotal);
+   sp->peakTotal = (windowMagnitude > sp->peakTotal) ? windowMagnitude : sp->peakTotal;
    sp->termRing_Idx = sp->termRing_Idx + 1;
    if( sp->termRing_Idx > sp->maxIdx_termRing )
    {
@@ -532,11 +542,15 @@ static void TA_ROGERSSATCHELL_StepImpl( struct TA_ROGERSSATCHELL_Stream *sp, dou
     * can be nothing but that rounding, of either sign, where a fresh sum
     * of an all-flat window is exactly 0.0.
     *
+    * Compare magnitudes. A window holding a bar whose high or low sits
+    * inside its open and close can sum below zero, and a signed test
+    * would then rebuild on every bar for as long as it does.
+    *
     * Sum oldest first, so the rebuilt value is the one a fresh pass over
     * the bars gives.
     */
    sp->barsSinceRebuild -= 1;
-   if( windowTotal < 0.000001 * sp->peakTotal || sp->barsSinceRebuild <= 0 )
+   if( windowMagnitude < 0.000001 * sp->peakTotal || sp->barsSinceRebuild <= 0 )
    {
       sp->barsSinceRebuild = 32 * sp->optInTimePeriod;
       windowTotal = 0.0;
@@ -548,7 +562,7 @@ static void TA_ROGERSSATCHELL_StepImpl( struct TA_ROGERSSATCHELL_Stream *sp, dou
       {
          windowTotal += sp->cb_termRing[j];
       }
-      sp->peakTotal = windowTotal;
+      sp->peakTotal = fabs(windowTotal);
       sp->periodTotal = windowTotal;
       sp->periodTotal -= sp->cb_termRing[sp->termRing_Idx];
    }
@@ -608,6 +622,7 @@ static TA_RetCode TA_ROGERSSATCHELL_OpenImpl( struct TA_ROGERSSATCHELL_Stream **
       double term;
       double periodTotal = 0.0;
       double windowTotal;
+      double windowMagnitude;
       double peakTotal = 0.0;
       double sqrtA = 0.0;
       int i;
@@ -630,7 +645,7 @@ static TA_RetCode TA_ROGERSSATCHELL_OpenImpl( struct TA_ROGERSSATCHELL_Stream **
          *outNBElement= 0;
          return TA_INSUFFICIENT_HISTORY;
       }
-      if( optInTimePeriod < 1 ) return TA_INTERNAL_ERROR(484);
+      if( optInTimePeriod < 1 ) return TA_INTERNAL_ERROR(483);
       if( (int)optInTimePeriod > (int)(sizeof(local_termRing)/sizeof(double)) )
       {
          termRing = TA_Malloc( sizeof(double)*optInTimePeriod );
@@ -690,7 +705,7 @@ static TA_RetCode TA_ROGERSSATCHELL_OpenImpl( struct TA_ROGERSSATCHELL_Stream **
       i = startIdx;
       outIdx = 0;
       barsSinceRebuild = 32 * optInTimePeriod;
-      peakTotal = periodTotal;
+      peakTotal = fabs(periodTotal);
       do
       {
          o = inOpen[i];
@@ -712,8 +727,9 @@ static TA_RetCode TA_ROGERSSATCHELL_OpenImpl( struct TA_ROGERSSATCHELL_Stream **
           */
          termRing[termRing_Idx] = term;
          periodTotal += term;
-         peakTotal = (periodTotal > peakTotal) ? periodTotal : peakTotal;
          windowTotal = periodTotal;
+         windowMagnitude = fabs(windowTotal);
+         peakTotal = (windowMagnitude > peakTotal) ? windowMagnitude : peakTotal;
          termRing_Idx++;
          if( termRing_Idx > maxIdx_termRing ) termRing_Idx = 0;
          periodTotal -= termRing[termRing_Idx];
@@ -724,11 +740,15 @@ static TA_RetCode TA_ROGERSSATCHELL_OpenImpl( struct TA_ROGERSSATCHELL_Stream **
           * can be nothing but that rounding, of either sign, where a fresh sum
           * of an all-flat window is exactly 0.0.
           *
+          * Compare magnitudes. A window holding a bar whose high or low sits
+          * inside its open and close can sum below zero, and a signed test
+          * would then rebuild on every bar for as long as it does.
+          *
           * Sum oldest first, so the rebuilt value is the one a fresh pass over
           * the bars gives.
           */
          barsSinceRebuild -= 1;
-         if( windowTotal < 0.000001 * peakTotal || barsSinceRebuild <= 0 )
+         if( windowMagnitude < 0.000001 * peakTotal || barsSinceRebuild <= 0 )
          {
             barsSinceRebuild = 32 * optInTimePeriod;
             windowTotal = 0.0;
@@ -740,7 +760,7 @@ static TA_RetCode TA_ROGERSSATCHELL_OpenImpl( struct TA_ROGERSSATCHELL_Stream **
             {
                windowTotal += termRing[j];
             }
-            peakTotal = windowTotal;
+            peakTotal = fabs(windowTotal);
             periodTotal = windowTotal;
             periodTotal -= termRing[termRing_Idx];
          }
@@ -775,7 +795,7 @@ static TA_RetCode TA_ROGERSSATCHELL_OpenImpl( struct TA_ROGERSSATCHELL_Stream **
       sp->termRing_Idx = termRing_Idx;
       sp->maxIdx_termRing = maxIdx_termRing;
       sp->cbSize_termRing = maxIdx_termRing + 1;
-      if( sp->cbSize_termRing < 1 || sp->cbSize_termRing > historyLen + 1 ) { if( termRing != &local_termRing[0] ) { TA_Free( termRing ); } TA_ROGERSSATCHELL_ReleaseImpl( sp ); return TA_INTERNAL_ERROR(485); }
+      if( sp->cbSize_termRing < 1 || sp->cbSize_termRing > historyLen + 1 ) { if( termRing != &local_termRing[0] ) { TA_Free( termRing ); } TA_ROGERSSATCHELL_ReleaseImpl( sp ); return TA_INTERNAL_ERROR(484); }
       sp->cb_termRing = (double *)TA_Malloc( sizeof(double) * (size_t)sp->cbSize_termRing );
       if( !sp->cb_termRing ) { if( termRing != &local_termRing[0] ) { TA_Free( termRing ); } TA_ROGERSSATCHELL_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
       memcpy( sp->cb_termRing, termRing, sizeof(double) * (size_t)sp->cbSize_termRing );
@@ -853,6 +873,7 @@ TA_LIB_API TA_RetCode TA_ROGERSSATCHELL_Peek( const TA_ROGERSSATCHELL_Stream *st
    double p2;
    double term;
    double windowTotal;
+   double windowMagnitude;
    int j;
    int barsSinceRebuild;
    double peakTotal;
@@ -889,8 +910,9 @@ TA_LIB_API TA_RetCode TA_ROGERSSATCHELL_Peek( const TA_ROGERSSATCHELL_Stream *st
    pkSlot0 = termRing_Idx;
    pkVal0 = term;
    periodTotal += term;
-   peakTotal = (periodTotal > peakTotal) ? periodTotal : peakTotal;
    windowTotal = periodTotal;
+   windowMagnitude = fabs(windowTotal);
+   peakTotal = (windowMagnitude > peakTotal) ? windowMagnitude : peakTotal;
    termRing_Idx = termRing_Idx + 1;
    if( termRing_Idx > sp->maxIdx_termRing )
    {
@@ -904,11 +926,15 @@ TA_LIB_API TA_RetCode TA_ROGERSSATCHELL_Peek( const TA_ROGERSSATCHELL_Stream *st
     * can be nothing but that rounding, of either sign, where a fresh sum
     * of an all-flat window is exactly 0.0.
     *
+    * Compare magnitudes. A window holding a bar whose high or low sits
+    * inside its open and close can sum below zero, and a signed test
+    * would then rebuild on every bar for as long as it does.
+    *
     * Sum oldest first, so the rebuilt value is the one a fresh pass over
     * the bars gives.
     */
    barsSinceRebuild -= 1;
-   if( windowTotal < 0.000001 * peakTotal || barsSinceRebuild <= 0 )
+   if( windowMagnitude < 0.000001 * peakTotal || barsSinceRebuild <= 0 )
    {
       barsSinceRebuild = 32 * sp->optInTimePeriod;
       windowTotal = 0.0;
@@ -920,7 +946,7 @@ TA_LIB_API TA_RetCode TA_ROGERSSATCHELL_Peek( const TA_ROGERSSATCHELL_Stream *st
       {
          windowTotal += (j != pkSlot0) ? cb_termRing[j] : pkVal0;
       }
-      peakTotal = windowTotal;
+      peakTotal = fabs(windowTotal);
       periodTotal = windowTotal;
       periodTotal -= (termRing_Idx != pkSlot0) ? cb_termRing[termRing_Idx] : pkVal0;
    }

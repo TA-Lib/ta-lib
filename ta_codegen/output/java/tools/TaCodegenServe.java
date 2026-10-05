@@ -173143,6 +173143,7 @@ class Core {
           double term = 0;
           double periodTotal = 0;
           double windowTotal = 0;
+          double windowMagnitude = 0;
           double peakTotal = 0;
           double sqrtA = 0;
           int i = 0;
@@ -173228,7 +173229,7 @@ class Core {
           i = startIdx;
           outIdx = 0;
           barsSinceRebuild = 32 * optInTimePeriod;
-          peakTotal = periodTotal;
+          peakTotal = Math.abs(periodTotal);
           do {
              o = inOpen[i];
              h = inHigh[i];
@@ -173247,8 +173248,9 @@ class Core {
               */
              termRing[termRing_Idx] = term;
              periodTotal += term;
-             peakTotal = (periodTotal > peakTotal) ? periodTotal : peakTotal;
              windowTotal = periodTotal;
+             windowMagnitude = Math.abs(windowTotal);
+             peakTotal = (windowMagnitude > peakTotal) ? windowMagnitude : peakTotal;
              termRing_Idx++;
              if( termRing_Idx > maxIdx_termRing ) { termRing_Idx = 0; }
              periodTotal -= termRing[termRing_Idx];
@@ -173259,11 +173261,15 @@ class Core {
               * can be nothing but that rounding, of either sign, where a fresh sum
               * of an all-flat window is exactly 0.0.
               *
+              * Compare magnitudes. A window holding a bar whose high or low sits
+              * inside its open and close can sum below zero, and a signed test
+              * would then rebuild on every bar for as long as it does.
+              *
               * Sum oldest first, so the rebuilt value is the one a fresh pass over
               * the bars gives.
               */
              barsSinceRebuild -= 1;
-             if( windowTotal < 0.000001 * peakTotal || barsSinceRebuild <= 0 ) {
+             if( windowMagnitude < 0.000001 * peakTotal || barsSinceRebuild <= 0 ) {
                 barsSinceRebuild = 32 * optInTimePeriod;
                 windowTotal = 0.0;
                 for( j = termRing_Idx; j < optInTimePeriod; j += 1 ) {
@@ -173272,7 +173278,7 @@ class Core {
                 for( j = 0; j < termRing_Idx; j += 1 ) {
                    windowTotal += termRing[j];
                 }
-                peakTotal = windowTotal;
+                peakTotal = Math.abs(windowTotal);
                 periodTotal = windowTotal;
                 periodTotal -= termRing[termRing_Idx];
              }
@@ -173314,6 +173320,7 @@ class Core {
           double term = 0;
           double periodTotal = 0;
           double windowTotal = 0;
+          double windowMagnitude = 0;
           double peakTotal = 0;
           double sqrtA = 0;
           int i = 0;
@@ -173375,7 +173382,7 @@ class Core {
           i = startIdx;
           outIdx = 0;
           barsSinceRebuild = 32 * optInTimePeriod;
-          peakTotal = periodTotal;
+          peakTotal = Math.abs(periodTotal);
           do {
              o = (double)inOpen[i];
              h = (double)inHigh[i];
@@ -173390,13 +173397,14 @@ class Core {
              }
              termRing[termRing_Idx] = term;
              periodTotal += term;
-             peakTotal = (periodTotal > peakTotal) ? periodTotal : peakTotal;
              windowTotal = periodTotal;
+             windowMagnitude = Math.abs(windowTotal);
+             peakTotal = (windowMagnitude > peakTotal) ? windowMagnitude : peakTotal;
              termRing_Idx++;
              if( termRing_Idx > maxIdx_termRing ) { termRing_Idx = 0; }
              periodTotal -= termRing[termRing_Idx];
              barsSinceRebuild -= 1;
-             if( windowTotal < 0.000001 * peakTotal || barsSinceRebuild <= 0 ) {
+             if( windowMagnitude < 0.000001 * peakTotal || barsSinceRebuild <= 0 ) {
                 barsSinceRebuild = 32 * optInTimePeriod;
                 windowTotal = 0.0;
                 for( j = termRing_Idx; j < optInTimePeriod; j += 1 ) {
@@ -173405,7 +173413,7 @@ class Core {
                 for( j = 0; j < termRing_Idx; j += 1 ) {
                    windowTotal += termRing[j];
                 }
-                peakTotal = windowTotal;
+                peakTotal = Math.abs(windowTotal);
                 periodTotal = windowTotal;
                 periodTotal -= termRing[termRing_Idx];
              }
@@ -173723,6 +173731,7 @@ class Core {
              double p2 = 0.0;
              double term = 0.0;
              double windowTotal = 0.0;
+             double windowMagnitude = 0.0;
              int j = 0;
              int barsSinceRebuild = sp.barsSinceRebuild;
              double cur_outReal = 0.0;
@@ -173749,8 +173758,9 @@ class Core {
              pkSlot0 = termRing_Idx;
              pkVal0 = term;
              periodTotal += term;
-             peakTotal = (periodTotal > peakTotal) ? periodTotal : peakTotal;
              windowTotal = periodTotal;
+             windowMagnitude = Math.abs(windowTotal);
+             peakTotal = (windowMagnitude > peakTotal) ? windowMagnitude : peakTotal;
              termRing_Idx = termRing_Idx + 1;
              if( termRing_Idx > sp.maxIdx_termRing ) {
                 termRing_Idx = 0;
@@ -173763,11 +173773,15 @@ class Core {
               * can be nothing but that rounding, of either sign, where a fresh sum
               * of an all-flat window is exactly 0.0.
               *
+              * Compare magnitudes. A window holding a bar whose high or low sits
+              * inside its open and close can sum below zero, and a signed test
+              * would then rebuild on every bar for as long as it does.
+              *
               * Sum oldest first, so the rebuilt value is the one a fresh pass over
               * the bars gives.
               */
              barsSinceRebuild -= 1;
-             if( windowTotal < 0.000001 * peakTotal || barsSinceRebuild <= 0 ) {
+             if( windowMagnitude < 0.000001 * peakTotal || barsSinceRebuild <= 0 ) {
                 barsSinceRebuild = 32 * sp.optInTimePeriod;
                 windowTotal = 0.0;
                 for( j = termRing_Idx; j < sp.optInTimePeriod; j += 1 ) {
@@ -173776,7 +173790,7 @@ class Core {
                 for( j = 0; j < termRing_Idx; j += 1 ) {
                    windowTotal += (j != pkSlot0) ? sp.cb_termRing[j] : pkVal0;
                 }
-                peakTotal = windowTotal;
+                peakTotal = Math.abs(windowTotal);
                 periodTotal = windowTotal;
                 periodTotal -= (termRing_Idx != pkSlot0) ? sp.cb_termRing[termRing_Idx] : pkVal0;
              }
@@ -173829,6 +173843,7 @@ class Core {
           double p2 = 0.0;
           double term = 0.0;
           double windowTotal = 0.0;
+          double windowMagnitude = 0.0;
           int j = 0;
           o = inOpen;
           h = inHigh;
@@ -173847,8 +173862,9 @@ class Core {
            */
           sp.cb_termRing[sp.termRing_Idx] = term;
           sp.periodTotal += term;
-          sp.peakTotal = (sp.periodTotal > sp.peakTotal) ? sp.periodTotal : sp.peakTotal;
           windowTotal = sp.periodTotal;
+          windowMagnitude = Math.abs(windowTotal);
+          sp.peakTotal = (windowMagnitude > sp.peakTotal) ? windowMagnitude : sp.peakTotal;
           sp.termRing_Idx = sp.termRing_Idx + 1;
           if( sp.termRing_Idx > sp.maxIdx_termRing ) {
              sp.termRing_Idx = 0;
@@ -173861,11 +173877,15 @@ class Core {
            * can be nothing but that rounding, of either sign, where a fresh sum
            * of an all-flat window is exactly 0.0.
            *
+           * Compare magnitudes. A window holding a bar whose high or low sits
+           * inside its open and close can sum below zero, and a signed test
+           * would then rebuild on every bar for as long as it does.
+           *
            * Sum oldest first, so the rebuilt value is the one a fresh pass over
            * the bars gives.
            */
           sp.barsSinceRebuild -= 1;
-          if( windowTotal < 0.000001 * sp.peakTotal || sp.barsSinceRebuild <= 0 ) {
+          if( windowMagnitude < 0.000001 * sp.peakTotal || sp.barsSinceRebuild <= 0 ) {
              sp.barsSinceRebuild = 32 * sp.optInTimePeriod;
              windowTotal = 0.0;
              for( j = sp.termRing_Idx; j < sp.optInTimePeriod; j += 1 ) {
@@ -173874,7 +173894,7 @@ class Core {
              for( j = 0; j < sp.termRing_Idx; j += 1 ) {
                 windowTotal += sp.cb_termRing[j];
              }
-             sp.peakTotal = windowTotal;
+             sp.peakTotal = Math.abs(windowTotal);
              sp.periodTotal = windowTotal;
              sp.periodTotal -= sp.cb_termRing[sp.termRing_Idx];
           }
@@ -173900,6 +173920,7 @@ class Core {
           double term = 0;
           double periodTotal = 0;
           double windowTotal = 0;
+          double windowMagnitude = 0;
           double peakTotal = 0;
           double sqrtA = 0;
           int i = 0;
@@ -173995,7 +174016,7 @@ class Core {
           i = startIdx;
           outIdx = 0;
           barsSinceRebuild = 32 * optInTimePeriod;
-          peakTotal = periodTotal;
+          peakTotal = Math.abs(periodTotal);
           do {
              o = inOpen[i];
              h = inHigh[i];
@@ -174014,8 +174035,9 @@ class Core {
               */
              termRing[termRing_Idx] = term;
              periodTotal += term;
-             peakTotal = (periodTotal > peakTotal) ? periodTotal : peakTotal;
              windowTotal = periodTotal;
+             windowMagnitude = Math.abs(windowTotal);
+             peakTotal = (windowMagnitude > peakTotal) ? windowMagnitude : peakTotal;
              termRing_Idx++;
              if( termRing_Idx > maxIdx_termRing ) { termRing_Idx = 0; }
              periodTotal -= termRing[termRing_Idx];
@@ -174026,11 +174048,15 @@ class Core {
               * can be nothing but that rounding, of either sign, where a fresh sum
               * of an all-flat window is exactly 0.0.
               *
+              * Compare magnitudes. A window holding a bar whose high or low sits
+              * inside its open and close can sum below zero, and a signed test
+              * would then rebuild on every bar for as long as it does.
+              *
               * Sum oldest first, so the rebuilt value is the one a fresh pass over
               * the bars gives.
               */
              barsSinceRebuild -= 1;
-             if( windowTotal < 0.000001 * peakTotal || barsSinceRebuild <= 0 ) {
+             if( windowMagnitude < 0.000001 * peakTotal || barsSinceRebuild <= 0 ) {
                 barsSinceRebuild = 32 * optInTimePeriod;
                 windowTotal = 0.0;
                 for( j = termRing_Idx; j < optInTimePeriod; j += 1 ) {
@@ -174039,7 +174065,7 @@ class Core {
                 for( j = 0; j < termRing_Idx; j += 1 ) {
                    windowTotal += termRing[j];
                 }
-                peakTotal = windowTotal;
+                peakTotal = Math.abs(windowTotal);
                 periodTotal = windowTotal;
                 periodTotal -= termRing[termRing_Idx];
              }
@@ -218598,7 +218624,7 @@ class Core {
 
 public class TaCodegenServe {
     static Core core = new Core();
-    static final String SPLICED_GENCODE_DIGEST = "fef69577880f7cb7";
+    static final String SPLICED_GENCODE_DIGEST = "52d42f5a5b2422a9";
     static final int MAX_ARRAY_SIZE = 200000;
     static double[] refOpen = new double[MAX_ARRAY_SIZE];
     static double[] refHigh = new double[MAX_ARRAY_SIZE];

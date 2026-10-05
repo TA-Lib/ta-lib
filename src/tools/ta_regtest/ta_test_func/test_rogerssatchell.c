@@ -101,6 +101,7 @@
 #include "ta_test_priv.h"
 #include "ta_test_func.h"
 #include "ta_utility.h"
+#include "server_verify.h"
 
 /**** Local declarations.    ****/
 
@@ -296,6 +297,21 @@ static ErrorNumber test_rs_golden( const TA_History *history )
          printf( "Fail: TA_ROGERSSATCHELL golden range: begIdx=%d (want %d), "
                  "bar %d\n", (int)begIdx, g->period - 1, g->bar );
          return TA_TESTUTIL_TFRR_BAD_PARAM;
+      }
+
+      if( server_verify_active() )
+      {
+         const double opt[2] = { (double)g->period, g->annualization };
+         ErrorNumber e = server_verify( "ROGERSSATCHELL", 0,
+                            (int)history->nbBars - 1, (int)history->nbBars,
+                            rc, begIdx, nbElement,
+                            (const TA_Real*[]){ history->open, history->high,
+                                                history->low, history->close,
+                                                NULL },
+                            opt, 2,
+                            (const TA_Real*[]){ out, NULL }, NULL );
+         if( e != TA_TEST_PASS )
+            return e;
       }
 
       got = out[g->bar - begIdx];

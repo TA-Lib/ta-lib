@@ -31,7 +31,7 @@ TA_RetCode rogerssatchell(int startIdx, int endIdx,
    int *outBegIdx, int *outNBElement,
    double outReal[])
 {
-   double o, h, l, c, p1, p2, term, periodTotal, windowTotal, peakTotal, sqrtA;
+   double o, h, l, c, p1, p2, term, periodTotal, windowTotal, windowMagnitude, peakTotal, sqrtA;
    int i, j, outIdx, nbInitialElementNeeded, barsSinceRebuild;
 
    /* Each bar's term costs four logarithms, so it is computed once and kept
@@ -99,7 +99,7 @@ TA_RetCode rogerssatchell(int startIdx, int endIdx,
    i = startIdx;
    outIdx = 0;
    barsSinceRebuild = 32 * optInTimePeriod;
-   peakTotal = periodTotal;
+   peakTotal = fabs( periodTotal );
 
    do
    {
@@ -122,8 +122,9 @@ TA_RetCode rogerssatchell(int startIdx, int endIdx,
        */
       termRing[termRing_Idx] = term;
       periodTotal += term;
-      peakTotal = ( periodTotal > peakTotal ) ? periodTotal : peakTotal;
       windowTotal = periodTotal;
+      windowMagnitude = fabs( windowTotal );
+      peakTotal = ( windowMagnitude > peakTotal ) ? windowMagnitude : peakTotal;
       CIRCBUF_NEXT(termRing);
       periodTotal -= termRing[termRing_Idx];
 
@@ -134,11 +135,15 @@ TA_RetCode rogerssatchell(int startIdx, int endIdx,
        * can be nothing but that rounding, of either sign, where a fresh sum
        * of an all-flat window is exactly 0.0.
        *
+       * Compare magnitudes. A window holding a bar whose high or low sits
+       * inside its open and close can sum below zero, and a signed test
+       * would then rebuild on every bar for as long as it does.
+       *
        * Sum oldest first, so the rebuilt value is the one a fresh pass over
        * the bars gives.
        */
       barsSinceRebuild--;
-      if( windowTotal < 0.000001 * peakTotal || barsSinceRebuild <= 0 )
+      if( windowMagnitude < 0.000001 * peakTotal || barsSinceRebuild <= 0 )
       {
          barsSinceRebuild = 32 * optInTimePeriod;
 
@@ -148,7 +153,7 @@ TA_RetCode rogerssatchell(int startIdx, int endIdx,
          for( j = 0; j < termRing_Idx; j++ )
             windowTotal += termRing[j];
 
-         peakTotal = windowTotal;
+         peakTotal = fabs( windowTotal );
          periodTotal = windowTotal;
          periodTotal -= termRing[termRing_Idx];
       }

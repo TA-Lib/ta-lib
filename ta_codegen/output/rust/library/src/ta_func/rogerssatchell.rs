@@ -173,6 +173,7 @@ impl Core {
         let mut term: f64 = 0.0_f64;
         let mut periodTotal: f64 = 0.0_f64;
         let mut windowTotal: f64 = 0.0_f64;
+        let mut windowMagnitude: f64 = 0.0_f64;
         let mut peakTotal: f64 = 0.0_f64;
         let mut sqrtA: f64 = 0.0_f64;
         let mut i: usize = 0_usize;
@@ -251,7 +252,7 @@ impl Core {
         i = startIdx;
         outIdx = 0;
         barsSinceRebuild = (32 * optInTimePeriod) as usize;
-        peakTotal = periodTotal;
+        peakTotal = (periodTotal).abs();
         loop {
             o = inOpen[i];
             h = inHigh[i];
@@ -269,8 +270,9 @@ impl Core {
             // oldest term, the one that leaves next.
             termRing[termRing_Idx] = term;
             periodTotal += term;
-            peakTotal = (if periodTotal > peakTotal { periodTotal } else { peakTotal });
             windowTotal = periodTotal;
+            windowMagnitude = (windowTotal).abs();
+            peakTotal = (if windowMagnitude > peakTotal { windowMagnitude } else { peakTotal });
             termRing_Idx += 1;
             if termRing_Idx >= termRing.len() { termRing_Idx = 0; }
             periodTotal -= termRing[termRing_Idx];
@@ -281,10 +283,14 @@ impl Core {
             // can be nothing but that rounding, of either sign, where a fresh sum
             // of an all-flat window is exactly 0.0.
             //
+            // Compare magnitudes. A window holding a bar whose high or low sits
+            // inside its open and close can sum below zero, and a signed test
+            // would then rebuild on every bar for as long as it does.
+            //
             // Sum oldest first, so the rebuilt value is the one a fresh pass over
             // the bars gives.
             barsSinceRebuild -= 1;
-            if windowTotal < 0.000001 * peakTotal || barsSinceRebuild <= 0 {
+            if windowMagnitude < 0.000001 * peakTotal || barsSinceRebuild <= 0 {
                 barsSinceRebuild = (32 * optInTimePeriod) as usize;
                 windowTotal = 0.0;
                 j = termRing_Idx;
@@ -305,7 +311,7 @@ impl Core {
                         j += 1;
                     }
                 }
-                peakTotal = windowTotal;
+                peakTotal = (windowTotal).abs();
                 periodTotal = windowTotal;
                 periodTotal -= termRing[termRing_Idx];
             }
@@ -520,6 +526,7 @@ impl Core {
         let mut p2: f64 = 0.0_f64;
         let mut term: f64 = 0.0_f64;
         let mut windowTotal: f64 = 0.0_f64;
+        let mut windowMagnitude: f64 = 0.0_f64;
         let mut j: usize = 0_usize;
         o = inOpen;
         h = inHigh;
@@ -537,8 +544,9 @@ impl Core {
         // oldest term, the one that leaves next.
         sp.cb_termRing[sp.termRing_Idx] = term;
         sp.periodTotal += term;
-        sp.peakTotal = (if sp.periodTotal > sp.peakTotal { sp.periodTotal } else { sp.peakTotal });
         windowTotal = sp.periodTotal;
+        windowMagnitude = (windowTotal).abs();
+        sp.peakTotal = (if windowMagnitude > sp.peakTotal { windowMagnitude } else { sp.peakTotal });
         sp.termRing_Idx = sp.termRing_Idx + 1;
         if sp.termRing_Idx > sp.maxIdx_termRing {
             sp.termRing_Idx = 0;
@@ -551,10 +559,14 @@ impl Core {
         // can be nothing but that rounding, of either sign, where a fresh sum
         // of an all-flat window is exactly 0.0.
         //
+        // Compare magnitudes. A window holding a bar whose high or low sits
+        // inside its open and close can sum below zero, and a signed test
+        // would then rebuild on every bar for as long as it does.
+        //
         // Sum oldest first, so the rebuilt value is the one a fresh pass over
         // the bars gives.
         sp.barsSinceRebuild -= 1;
-        if windowTotal < 0.000001 * sp.peakTotal || sp.barsSinceRebuild <= 0 {
+        if windowMagnitude < 0.000001 * sp.peakTotal || sp.barsSinceRebuild <= 0 {
             sp.barsSinceRebuild = (32 * sp.optInTimePeriod) as usize;
             windowTotal = 0.0;
             // for( j = sp.termRing_Idx; j < ((sp.optInTimePeriod) as usize); j += 1 )
@@ -569,7 +581,7 @@ impl Core {
                 windowTotal += sp.cb_termRing[j];
                 j += 1;
             }
-            sp.peakTotal = windowTotal;
+            sp.peakTotal = (windowTotal).abs();
             sp.periodTotal = windowTotal;
             sp.periodTotal -= sp.cb_termRing[sp.termRing_Idx];
         }
@@ -628,6 +640,7 @@ impl Core {
         let mut term: f64 = 0.0_f64;
         let mut periodTotal: f64 = 0.0_f64;
         let mut windowTotal: f64 = 0.0_f64;
+        let mut windowMagnitude: f64 = 0.0_f64;
         let mut peakTotal: f64 = 0.0_f64;
         let mut sqrtA: f64 = 0.0_f64;
         let mut i: usize = 0_usize;
@@ -697,7 +710,7 @@ impl Core {
         i = startIdx;
         outIdx = 0;
         barsSinceRebuild = (32 * optInTimePeriod) as usize;
-        peakTotal = periodTotal;
+        peakTotal = (periodTotal).abs();
         loop {
             o = inOpen[i];
             h = inHigh[i];
@@ -715,8 +728,9 @@ impl Core {
             // oldest term, the one that leaves next.
             termRing[termRing_Idx] = term;
             periodTotal += term;
-            peakTotal = (if periodTotal > peakTotal { periodTotal } else { peakTotal });
             windowTotal = periodTotal;
+            windowMagnitude = (windowTotal).abs();
+            peakTotal = (if windowMagnitude > peakTotal { windowMagnitude } else { peakTotal });
             termRing_Idx += 1;
             if termRing_Idx > maxIdx_termRing { termRing_Idx = 0; }
             periodTotal -= termRing[termRing_Idx];
@@ -727,10 +741,14 @@ impl Core {
             // can be nothing but that rounding, of either sign, where a fresh sum
             // of an all-flat window is exactly 0.0.
             //
+            // Compare magnitudes. A window holding a bar whose high or low sits
+            // inside its open and close can sum below zero, and a signed test
+            // would then rebuild on every bar for as long as it does.
+            //
             // Sum oldest first, so the rebuilt value is the one a fresh pass over
             // the bars gives.
             barsSinceRebuild -= 1;
-            if windowTotal < 0.000001 * peakTotal || barsSinceRebuild <= 0 {
+            if windowMagnitude < 0.000001 * peakTotal || barsSinceRebuild <= 0 {
                 barsSinceRebuild = (32 * optInTimePeriod) as usize;
                 windowTotal = 0.0;
                 // for( j = termRing_Idx; j < ((optInTimePeriod) as usize); j += 1 )
@@ -745,7 +763,7 @@ impl Core {
                     windowTotal += termRing[j];
                     j += 1;
                 }
-                peakTotal = windowTotal;
+                peakTotal = (windowTotal).abs();
                 periodTotal = windowTotal;
                 periodTotal -= termRing[termRing_Idx];
             }
@@ -972,6 +990,7 @@ impl RogerssatchellStream {
             let mut p2: f64 = 0.0_f64;
             let mut term: f64 = 0.0_f64;
             let mut windowTotal: f64 = 0.0_f64;
+            let mut windowMagnitude: f64 = 0.0_f64;
             let mut j: usize = 0_usize;
             let mut barsSinceRebuild = sp.barsSinceRebuild;
             let mut peakTotal = sp.peakTotal;
@@ -996,8 +1015,9 @@ impl RogerssatchellStream {
             pkSlot0 = termRing_Idx as usize;
             pkVal0 = term;
             periodTotal += term;
-            peakTotal = (if periodTotal > peakTotal { periodTotal } else { peakTotal });
             windowTotal = periodTotal;
+            windowMagnitude = (windowTotal).abs();
+            peakTotal = (if windowMagnitude > peakTotal { windowMagnitude } else { peakTotal });
             termRing_Idx = termRing_Idx + 1;
             if termRing_Idx > sp.maxIdx_termRing {
                 termRing_Idx = 0;
@@ -1010,10 +1030,14 @@ impl RogerssatchellStream {
             // can be nothing but that rounding, of either sign, where a fresh sum
             // of an all-flat window is exactly 0.0.
             //
+            // Compare magnitudes. A window holding a bar whose high or low sits
+            // inside its open and close can sum below zero, and a signed test
+            // would then rebuild on every bar for as long as it does.
+            //
             // Sum oldest first, so the rebuilt value is the one a fresh pass over
             // the bars gives.
             barsSinceRebuild -= 1;
-            if windowTotal < 0.000001 * peakTotal || barsSinceRebuild <= 0 {
+            if windowMagnitude < 0.000001 * peakTotal || barsSinceRebuild <= 0 {
                 barsSinceRebuild = (32 * sp.optInTimePeriod) as usize;
                 windowTotal = 0.0;
                 // for( j = termRing_Idx; j < ((sp.optInTimePeriod) as usize); j += 1 )
@@ -1028,7 +1052,7 @@ impl RogerssatchellStream {
                     windowTotal += (if (j as usize) != pkSlot0 { sp.cb_termRing[j] } else { pkVal0 });
                     j += 1;
                 }
-                peakTotal = windowTotal;
+                peakTotal = (windowTotal).abs();
                 periodTotal = windowTotal;
                 periodTotal -= (if (termRing_Idx as usize) != pkSlot0 { sp.cb_termRing[termRing_Idx] } else { pkVal0 });
             }
