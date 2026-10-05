@@ -173055,6 +173055,1350 @@ class Core {
      *  Initial  Name/description
      *  -------------------------------------------------------------------
      *  MF       Mario Fortier
+     *  KL       Kevin Lin (@kevinlincg)
+     *  CC       Claude Code (AI assistant)
+     *
+     * Change history:
+     *
+     *  MMDDYY BY     Description
+     *  -------------------------------------------------------------------
+     *  100526 KL,CC  Creation (#483).
+     */
+
+       /**
+        * Number of leading input bars {@link Core#rogerssatchell} consumes before
+        * it can produce its first value.
+        * <p>Equivalently, the index of the first bar with a value when the whole
+        * series is requested. Feed at least {@code lookback + 1} bars to get any
+        * output.
+        *
+        * @param optInTimePeriod Number of bars in the window. Default 10, range 1
+        *        to 100000. {@code n = 1} is the paper's own single-bar estimator (default
+        *        10; range 1..100000; {@code Integer.MIN_VALUE} selects the default).
+        * @param optInAnnualization Periods per year. Default 252, range 0 to
+        *        {@code TA_REAL_MAX}. Pass 1 for the per-bar figure (default 252; minimum
+        *        0; {@link Core#REAL_DEFAULT} selects the default).
+        * @return The lookback, or {@code -1} if a parameter is out of range.
+        */
+       public int rogerssatchellLookback( int optInTimePeriod, double optInAnnualization )
+       {
+          if( optInTimePeriod == Integer.MIN_VALUE ) {
+             optInTimePeriod = 10;
+          } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
+             return -1;
+          }
+          if( optInAnnualization == REAL_DEFAULT ) {
+             optInAnnualization = 2.52e2;
+          } else if( !(optInAnnualization >= 0e0 && optInAnnualization <= REAL_MAX) ) {
+             return -1;
+          }
+          /* The window's lookback and nothing else: there is no callee, and a term
+           * reads only its own bar -- no previous close -- so no bar is consumed to
+           * form it. Same as sum_lookback (sum/sum.c:16-19) and var_lookback
+           * (var/var.c:21-26), and one less than an estimator that differences
+           * against C[i-1]. optInAnnualization scales the output and cannot move the
+           * first bar, as optInNbDev cannot in var.c:23.
+           */
+          return optInTimePeriod - 1 ;
+
+       }
+       /**
+        * How many bars ahead (positive) or behind (negative) of the bar that
+        * computed it a chart draws one output of {@link Core#rogerssatchell}.
+        * <p>Every output of this function is drawn at its own bar, so the answer is
+        * 0.
+        *
+        * @param optInTimePeriod Number of bars in the window. Default 10, range 1
+        *        to 100000. {@code n = 1} is the paper's own single-bar estimator (default
+        *        10; range 1..100000; {@code Integer.MIN_VALUE} selects the default).
+        * @param optInAnnualization Periods per year. Default 252, range 0 to
+        *        {@code TA_REAL_MAX}. Pass 1 for the per-bar figure (default 252; minimum
+        *        0; {@link Core#REAL_DEFAULT} selects the default).
+        * @param outputIdx Position of the output in the batch signature, from 0.
+        * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+        *        out of range or the index names no output.
+        */
+       public int rogerssatchellDisplayShift( int optInTimePeriod, double optInAnnualization, int outputIdx )
+       {
+          if( rogerssatchellLookback( optInTimePeriod, optInAnnualization ) < 0 ) {
+             return Integer.MIN_VALUE;
+          }
+          if( outputIdx < 0 || outputIdx >= 1 ) {
+             return Integer.MIN_VALUE;
+          }
+          return 0;
+       }
+       RetCode rogerssatchellImpl( int startIdx,
+                                   int endIdx,
+                                   double inOpen[],
+                                   double inHigh[],
+                                   double inLow[],
+                                   double inClose[],
+                                   int optInTimePeriod,
+                                   double optInAnnualization,
+                                   MInteger outBegIdx,
+                                   MInteger outNBElement,
+                                   double outReal[] )
+       {
+          double o = 0;
+          double h = 0;
+          double l = 0;
+          double c = 0;
+          double p1 = 0;
+          double p2 = 0;
+          double term = 0;
+          double periodTotal = 0;
+          double windowTotal = 0;
+          double peakTotal = 0;
+          double sqrtA = 0;
+          int i = 0;
+          int j = 0;
+          int outIdx = 0;
+          int trailingIdx = 0;
+          int windowStart = 0;
+          int nbInitialElementNeeded = 0;
+          int barsSinceRebuild = 0;
+          if( (startIdx < 0) || (startIdx > INDEX_MAX) ) {
+             return RetCode.OUT_OF_RANGE_START_INDEX ;
+          }
+          if( (endIdx < 0) || (endIdx > INDEX_MAX) || (endIdx < startIdx)) {
+             return RetCode.OUT_OF_RANGE_END_INDEX ;
+          }
+          if( optInTimePeriod == Integer.MIN_VALUE ) {
+             optInTimePeriod = 10;
+          } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
+             return RetCode.BAD_PARAM;
+          }
+          if( optInAnnualization == REAL_DEFAULT ) {
+             optInAnnualization = 2.52e2;
+          } else if( !(optInAnnualization >= 0e0 && optInAnnualization <= REAL_MAX) ) {
+             return RetCode.BAD_PARAM;
+          }
+          nbInitialElementNeeded = optInTimePeriod - 1;
+          if( startIdx < nbInitialElementNeeded ) {
+             startIdx = nbInitialElementNeeded;
+          }
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.SUCCESS ;
+          }
+          /* Rogers and Satchell, The Annals of Applied Probability 1(4):504-512 (1991),
+           * eq. (2) on p.505: with the log price measured from the bar's open,
+           * S1 = ln(H/O), I1 = ln(L/O) and X1 = ln(C/O), one bar's unbiased estimate
+           * of its variance is S1(S1 - X1) + I1(I1 - X1), which is ln(H/C)ln(H/O) +
+           * ln(L/C)ln(L/O). Eq. (3) is what sets this estimator apart: that
+           * expectation is sigma^2 whatever the drift, so a bar that opens at its low
+           * and closes at its high -- all drift, no dispersion -- reads exactly zero,
+           * where a range-only estimator reads volatility.
+           *
+           * The paper stops there. The window mean, the root and the annual scale are
+           * the convention of every implementation of it, not the authors'.
+           */
+          /* Once, so that optInAnnualization = 1.0 is an exact identity rather than a
+           * multiply by a rounded 1.0, and so the per-bar and annualised outputs
+           * differ by exactly this factor.
+           */
+          sqrtA = Math.sqrt(optInAnnualization);
+          trailingIdx = startIdx - nbInitialElementNeeded;
+          periodTotal = 0.0;
+          for( j = trailingIdx; j < startIdx; j += 1 ) {
+             /* The two products are SEPARATE statements on purpose. Written as one
+              * expression the generator's FMA detector fuses the first product into
+              * the add (backends/fma.rs:406-433; a log call counts as a float factor
+              * at :252-285), which moves 159 of 243 outputs on the corpus at n = 10
+              * and buys nothing measurable. VWMA splits its product for the same
+              * reason (vwma/vwma.c:78-81).
+              *
+              * The guard is the whole bar, tested exactly rather than against a fixed
+              * band (#253): a bar with any price at or below zero contributes a 0.0
+              * term and still counts toward the window's n. Zeroing only the products
+              * that touch the bad price has no implementation behind it, and dropping
+              * the bar from the window makes n data-dependent.
+              */
+             o = inOpen[j];
+             h = inHigh[j];
+             l = inLow[j];
+             c = inClose[j];
+             if( o > 0.0 && h > 0.0 && l > 0.0 && c > 0.0 ) {
+                p1 = Math.log(h / c) * Math.log(h / o);
+                p2 = Math.log(l / c) * Math.log(l / o);
+                term = p1 + p2;
+             } else {
+                term = 0.0;
+             }
+             periodTotal += term;
+          }
+          /* outReal may be any of the four input arrays: the output written on a bar
+           * lands at or before the window's own trailing index, so every input slot
+           * this loop still reads is one no write has reached yet.
+           */
+          i = startIdx;
+          outIdx = 0;
+          barsSinceRebuild = 32 * optInTimePeriod;
+          peakTotal = periodTotal;
+          do {
+             o = inOpen[i];
+             h = inHigh[i];
+             l = inLow[i];
+             c = inClose[i];
+             if( o > 0.0 && h > 0.0 && l > 0.0 && c > 0.0 ) {
+                p1 = Math.log(h / c) * Math.log(h / o);
+                p2 = Math.log(l / c) * Math.log(l / o);
+                term = p1 + p2;
+             } else {
+                term = 0.0;
+             }
+             periodTotal += term;
+             peakTotal = (periodTotal > peakTotal) ? periodTotal : peakTotal;
+             /* The sum this bar's output is taken from, before the trailing term is
+              * removed for the next one.
+              */
+             windowTotal = periodTotal;
+             o = inOpen[trailingIdx];
+             h = inHigh[trailingIdx];
+             l = inLow[trailingIdx];
+             c = inClose[trailingIdx];
+             if( o > 0.0 && h > 0.0 && l > 0.0 && c > 0.0 ) {
+                p1 = Math.log(h / c) * Math.log(h / o);
+                p2 = Math.log(l / c) * Math.log(l / o);
+                term = p1 + p2;
+             } else {
+                term = 0.0;
+             }
+             periodTotal -= term;
+             trailingIdx += 1;
+             /* Rebuild as a fresh window sum when the running sum has collapsed to
+              * below 1e-6 of the largest it has held since the last rebuild, or at
+              * least every 32 windows -- VAR's rule (var.c:101-113). Measured against
+              * the PEAK, not the current sum: what a running sum of add-then-subtract
+              * carries is rounding at the scale of the largest window it has seen, so
+              * once a quiet stretch arrives the current sum can be nothing but that
+              * rounding. On an all-flat window the rebuild restores an exact 0.0,
+              * where a plain running sum leaves a residual that is negative about
+              * forty per cent of the time -- and a negative sum under an
+              * unconditional root is where the composition of shipped functions
+              * produces NaN.
+              */
+             barsSinceRebuild -= 1;
+             if( windowTotal < 0.000001 * peakTotal || barsSinceRebuild <= 0 ) {
+                barsSinceRebuild = 32 * optInTimePeriod;
+                windowStart = i - nbInitialElementNeeded;
+                windowTotal = 0.0;
+                for( j = windowStart; j <= i; j += 1 ) {
+                   o = inOpen[j];
+                   h = inHigh[j];
+                   l = inLow[j];
+                   c = inClose[j];
+                   if( o > 0.0 && h > 0.0 && l > 0.0 && c > 0.0 ) {
+                      p1 = Math.log(h / c) * Math.log(h / o);
+                      p2 = Math.log(l / c) * Math.log(l / o);
+                      term = p1 + p2;
+                   } else {
+                      term = 0.0;
+                   }
+                   windowTotal += term;
+                }
+                /* The rebuilt window becomes the carried state, with its trailing
+                 * term removed again so the two paths leave the same thing behind.
+                 */
+                periodTotal = windowTotal;
+                peakTotal = windowTotal;
+                o = inOpen[windowStart];
+                h = inHigh[windowStart];
+                l = inLow[windowStart];
+                c = inClose[windowStart];
+                if( o > 0.0 && h > 0.0 && l > 0.0 && c > 0.0 ) {
+                   p1 = Math.log(h / c) * Math.log(h / o);
+                   p2 = Math.log(l / c) * Math.log(l / o);
+                   term = p1 + p2;
+                } else {
+                   term = 0.0;
+                }
+                periodTotal -= term;
+             }
+             /* The divide, then the root, then the scale -- the spelling every
+              * implementation of this estimator uses, and what makes A = 1.0 exact.
+              *
+              * A sum at or below zero answers 0.0 rather than reaching the root. A
+              * fresh sum of terms from consistent bars cannot be negative, so this
+              * only catches a bar whose high or low sits strictly inside its open and
+              * close, which is not a bar the estimator is defined on. VAR floors its
+              * variance for the same reason, so that STDDEV can root it
+              * unconditionally (var.c:165-166).
+              */
+             if( windowTotal > 0.0 ) {
+                outReal[outIdx] = sqrtA * Math.sqrt(windowTotal / (double)optInTimePeriod);
+             } else {
+                outReal[outIdx] = 0.0;
+             }
+             outIdx = outIdx + 1;
+             i += 1;
+          } while( i <= endIdx );
+          outNBElement.value = outIdx;
+          outBegIdx.value = startIdx;
+          return RetCode.SUCCESS ;
+       }
+       RetCode rogerssatchellImpl( int startIdx,
+                                   int endIdx,
+                                   float inOpen[],
+                                   float inHigh[],
+                                   float inLow[],
+                                   float inClose[],
+                                   int optInTimePeriod,
+                                   double optInAnnualization,
+                                   MInteger outBegIdx,
+                                   MInteger outNBElement,
+                                   double outReal[] )
+       {
+          double o = 0;
+          double h = 0;
+          double l = 0;
+          double c = 0;
+          double p1 = 0;
+          double p2 = 0;
+          double term = 0;
+          double periodTotal = 0;
+          double windowTotal = 0;
+          double peakTotal = 0;
+          double sqrtA = 0;
+          int i = 0;
+          int j = 0;
+          int outIdx = 0;
+          int trailingIdx = 0;
+          int windowStart = 0;
+          int nbInitialElementNeeded = 0;
+          int barsSinceRebuild = 0;
+          if( (startIdx < 0) || (startIdx > INDEX_MAX) ) {
+             return RetCode.OUT_OF_RANGE_START_INDEX ;
+          }
+          if( (endIdx < 0) || (endIdx > INDEX_MAX) || (endIdx < startIdx)) {
+             return RetCode.OUT_OF_RANGE_END_INDEX ;
+          }
+          if( optInTimePeriod == Integer.MIN_VALUE ) {
+             optInTimePeriod = 10;
+          } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
+             return RetCode.BAD_PARAM;
+          }
+          if( optInAnnualization == REAL_DEFAULT ) {
+             optInAnnualization = 2.52e2;
+          } else if( !(optInAnnualization >= 0e0 && optInAnnualization <= REAL_MAX) ) {
+             return RetCode.BAD_PARAM;
+          }
+          nbInitialElementNeeded = optInTimePeriod - 1;
+          if( startIdx < nbInitialElementNeeded ) {
+             startIdx = nbInitialElementNeeded;
+          }
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.SUCCESS ;
+          }
+          sqrtA = Math.sqrt(optInAnnualization);
+          trailingIdx = startIdx - nbInitialElementNeeded;
+          periodTotal = 0.0;
+          for( j = trailingIdx; j < startIdx; j += 1 ) {
+             o = (double)inOpen[j];
+             h = (double)inHigh[j];
+             l = (double)inLow[j];
+             c = (double)inClose[j];
+             if( o > 0.0 && h > 0.0 && l > 0.0 && c > 0.0 ) {
+                p1 = Math.log(h / c) * Math.log(h / o);
+                p2 = Math.log(l / c) * Math.log(l / o);
+                term = p1 + p2;
+             } else {
+                term = 0.0;
+             }
+             periodTotal += term;
+          }
+          i = startIdx;
+          outIdx = 0;
+          barsSinceRebuild = 32 * optInTimePeriod;
+          peakTotal = periodTotal;
+          do {
+             o = (double)inOpen[i];
+             h = (double)inHigh[i];
+             l = (double)inLow[i];
+             c = (double)inClose[i];
+             if( o > 0.0 && h > 0.0 && l > 0.0 && c > 0.0 ) {
+                p1 = Math.log(h / c) * Math.log(h / o);
+                p2 = Math.log(l / c) * Math.log(l / o);
+                term = p1 + p2;
+             } else {
+                term = 0.0;
+             }
+             periodTotal += term;
+             peakTotal = (periodTotal > peakTotal) ? periodTotal : peakTotal;
+             windowTotal = periodTotal;
+             o = (double)inOpen[trailingIdx];
+             h = (double)inHigh[trailingIdx];
+             l = (double)inLow[trailingIdx];
+             c = (double)inClose[trailingIdx];
+             if( o > 0.0 && h > 0.0 && l > 0.0 && c > 0.0 ) {
+                p1 = Math.log(h / c) * Math.log(h / o);
+                p2 = Math.log(l / c) * Math.log(l / o);
+                term = p1 + p2;
+             } else {
+                term = 0.0;
+             }
+             periodTotal -= term;
+             trailingIdx += 1;
+             barsSinceRebuild -= 1;
+             if( windowTotal < 0.000001 * peakTotal || barsSinceRebuild <= 0 ) {
+                barsSinceRebuild = 32 * optInTimePeriod;
+                windowStart = i - nbInitialElementNeeded;
+                windowTotal = 0.0;
+                for( j = windowStart; j <= i; j += 1 ) {
+                   o = (double)inOpen[j];
+                   h = (double)inHigh[j];
+                   l = (double)inLow[j];
+                   c = (double)inClose[j];
+                   if( o > 0.0 && h > 0.0 && l > 0.0 && c > 0.0 ) {
+                      p1 = Math.log(h / c) * Math.log(h / o);
+                      p2 = Math.log(l / c) * Math.log(l / o);
+                      term = p1 + p2;
+                   } else {
+                      term = 0.0;
+                   }
+                   windowTotal += term;
+                }
+                periodTotal = windowTotal;
+                peakTotal = windowTotal;
+                o = (double)inOpen[windowStart];
+                h = (double)inHigh[windowStart];
+                l = (double)inLow[windowStart];
+                c = (double)inClose[windowStart];
+                if( o > 0.0 && h > 0.0 && l > 0.0 && c > 0.0 ) {
+                   p1 = Math.log(h / c) * Math.log(h / o);
+                   p2 = Math.log(l / c) * Math.log(l / o);
+                   term = p1 + p2;
+                } else {
+                   term = 0.0;
+                }
+                periodTotal -= term;
+             }
+             if( windowTotal > 0.0 ) {
+                outReal[outIdx] = sqrtA * Math.sqrt(windowTotal / (double)optInTimePeriod);
+             } else {
+                outReal[outIdx] = 0.0;
+             }
+             outIdx = outIdx + 1;
+             i += 1;
+          } while( i <= endIdx );
+          outNBElement.value = outIdx;
+          outBegIdx.value = startIdx;
+          return RetCode.SUCCESS ;
+       }
+       /**
+        * Rogers-Satchell volatility: a range-based estimator that reads one bar's
+        * open, high, low and close as a single unbiased estimate of that bar's
+        * variance, then reports the root of the mean over the last {@code n} bars,
+        * scaled to periods per year. What separates it from the other range
+        * estimators is that it is unbiased <b>whatever the drift</b>. A bar that
+        * opens at its low and closes at its high has travelled in one direction and
+        * dispersed nothing around that path, and this estimator reads it as exactly
+        * zero, where Parkinson and Garman-Klass read a wide range as volatility.
+        * The price of that is a blind spot of its own: the estimator has no
+        * close-to-open term, so overnight gaps are invisible to it. Read the output
+        * as a fraction in log-return units — not price units, not percent. At the
+        * default {@code optInAnnualization} of 252 it is an annualised figure for
+        * daily bars; pass 1 to leave the per-bar figure, 52 for weekly bars, 12 for
+        * monthly.
+        * <p>Formula and more info at <a
+        * href="https://ta-lib.org/functions/rogerssatchell">ta-lib.org/functions/rogerssatchell</a>.
+        * <p>Values are written only where the indicator is defined. The returned
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#rogerssatchellLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
+        *
+        * @param startIdx First bar of the requested range (inclusive).
+        * @param endIdx Last bar of the requested range (inclusive).
+        * @param inOpen Open price of each bar.
+        * @param inHigh High price of each bar.
+        * @param inLow Low price of each bar.
+        * @param inClose Close price of each bar.
+        * @param optInTimePeriod Number of bars in the window. Default 10, range 1
+        *        to 100000. {@code n = 1} is the paper's own single-bar estimator (default
+        *        10; range 1..100000; {@code Integer.MIN_VALUE} selects the default).
+        * @param optInAnnualization Periods per year. Default 252, range 0 to
+        *        {@code TA_REAL_MAX}. Pass 1 for the per-bar figure (default 252; minimum
+        *        0; {@link Core#REAL_DEFAULT} selects the default).
+        * @param outReal Estimated volatility, in log-return units. Must hold at
+        *        least {@code endIdx - max(startIdx, rogerssatchellLookback(...)) + 1}
+        *        values, and never be empty: an empty array is an absent output.
+        * @return The range written: {@code begIdx} is the first bar with a value,
+        *        {@code count} how many were written.
+        * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
+        *        negative or above {@link Core#INDEX_MAX}, or {@code endIdx < startIdx}.
+        * @throws IllegalArgumentException if an optional parameter is outside its
+        *        documented range, two outputs share one array, or an array is absent or
+        *        too short for the range requested — any input this function
+        *        <i>declares</i> that does not reach {@code endIdx}, or an output that
+        *        cannot hold the values produced. Declared, not read: a few candlestick
+        *        patterns take an OHLC series they never index, and it is required all the
+        *        same. An output this function documents as declinable is the one
+        *        exception: {@code null} is how you decline it. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
+        *
+        * @see Core#atr
+        * @see Core#natr
+        * @see Core#var
+        */
+       public OutRange rogerssatchell( int startIdx,
+                                       int endIdx,
+                                       double inOpen[],
+                                       double inHigh[],
+                                       double inLow[],
+                                       double inClose[],
+                                       int optInTimePeriod,
+                                       double optInAnnualization,
+                                       double outReal[] )
+       {
+          requireIndexRange("ROGERSSATCHELL", startIdx, endIdx);
+          int guardStart = clampedStart("ROGERSSATCHELL", startIdx, rogerssatchellLookback(optInTimePeriod, optInAnnualization));
+          int guardInLen = endIdx + 1;
+          int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("ROGERSSATCHELL", "inOpen", inOpen, guardInLen);
+          requireLength("ROGERSSATCHELL", "inHigh", inHigh, guardInLen);
+          requireLength("ROGERSSATCHELL", "inLow", inLow, guardInLen);
+          requireLength("ROGERSSATCHELL", "inClose", inClose, guardInLen);
+          requireLength("ROGERSSATCHELL", "outReal", outReal, guardOutLen);
+          MInteger outBegIdx = new MInteger();
+          MInteger outNBElement = new MInteger();
+          RetCode retCode = rogerssatchellImpl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, optInTimePeriod, optInAnnualization, outBegIdx, outNBElement, outReal);
+          if( retCode != RetCode.SUCCESS ) {
+             throw failure("ROGERSSATCHELL", retCode);
+          }
+          return new OutRange(outBegIdx.value, outNBElement.value);
+       }
+       /**
+        * Rogers-Satchell volatility: a range-based estimator that reads one bar's
+        * open, high, low and close as a single unbiased estimate of that bar's
+        * variance, then reports the root of the mean over the last {@code n} bars,
+        * scaled to periods per year. What separates it from the other range
+        * estimators is that it is unbiased <b>whatever the drift</b>. A bar that
+        * opens at its low and closes at its high has travelled in one direction and
+        * dispersed nothing around that path, and this estimator reads it as exactly
+        * zero, where Parkinson and Garman-Klass read a wide range as volatility.
+        * The price of that is a blind spot of its own: the estimator has no
+        * close-to-open term, so overnight gaps are invisible to it. Read the output
+        * as a fraction in log-return units — not price units, not percent. At the
+        * default {@code optInAnnualization} of 252 it is an annualised figure for
+        * daily bars; pass 1 to leave the per-bar figure, 52 for weekly bars, 12 for
+        * monthly.
+        * <p>Formula and more info at <a
+        * href="https://ta-lib.org/functions/rogerssatchell">ta-lib.org/functions/rogerssatchell</a>.
+        * <p>This is the {@code float[]} overload. The arithmetic is performed in
+        * {@code double} before being written to the {@code double[]} output, so a
+        * result beyond {@code float} range is still representable.
+        * <p>Values are written only where the indicator is defined. The returned
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#rogerssatchellLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
+        *
+        * @param startIdx First bar of the requested range (inclusive).
+        * @param endIdx Last bar of the requested range (inclusive).
+        * @param inOpen Open price of each bar.
+        * @param inHigh High price of each bar.
+        * @param inLow Low price of each bar.
+        * @param inClose Close price of each bar.
+        * @param optInTimePeriod Number of bars in the window. Default 10, range 1
+        *        to 100000. {@code n = 1} is the paper's own single-bar estimator (default
+        *        10; range 1..100000; {@code Integer.MIN_VALUE} selects the default).
+        * @param optInAnnualization Periods per year. Default 252, range 0 to
+        *        {@code TA_REAL_MAX}. Pass 1 for the per-bar figure (default 252; minimum
+        *        0; {@link Core#REAL_DEFAULT} selects the default).
+        * @param outReal Estimated volatility, in log-return units. Must hold at
+        *        least {@code endIdx - max(startIdx, rogerssatchellLookback(...)) + 1}
+        *        values, and never be empty: an empty array is an absent output.
+        * @return The range written: {@code begIdx} is the first bar with a value,
+        *        {@code count} how many were written.
+        * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
+        *        negative or above {@link Core#INDEX_MAX}, or {@code endIdx < startIdx}.
+        * @throws IllegalArgumentException if an optional parameter is outside its
+        *        documented range, two outputs share one array, or an array is absent or
+        *        too short for the range requested — any input this function
+        *        <i>declares</i> that does not reach {@code endIdx}, or an output that
+        *        cannot hold the values produced. Declared, not read: a few candlestick
+        *        patterns take an OHLC series they never index, and it is required all the
+        *        same. An output this function documents as declinable is the one
+        *        exception: {@code null} is how you decline it. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
+        *
+        * @see Core#atr
+        * @see Core#natr
+        * @see Core#var
+        */
+       public OutRange rogerssatchell( int startIdx,
+                                       int endIdx,
+                                       float inOpen[],
+                                       float inHigh[],
+                                       float inLow[],
+                                       float inClose[],
+                                       int optInTimePeriod,
+                                       double optInAnnualization,
+                                       double outReal[] )
+       {
+          requireIndexRange("ROGERSSATCHELL", startIdx, endIdx);
+          int guardStart = clampedStart("ROGERSSATCHELL", startIdx, rogerssatchellLookback(optInTimePeriod, optInAnnualization));
+          int guardInLen = endIdx + 1;
+          int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("ROGERSSATCHELL", "inOpen", inOpen, guardInLen);
+          requireLength("ROGERSSATCHELL", "inHigh", inHigh, guardInLen);
+          requireLength("ROGERSSATCHELL", "inLow", inLow, guardInLen);
+          requireLength("ROGERSSATCHELL", "inClose", inClose, guardInLen);
+          requireLength("ROGERSSATCHELL", "outReal", outReal, guardOutLen);
+          MInteger outBegIdx = new MInteger();
+          MInteger outNBElement = new MInteger();
+          RetCode retCode = rogerssatchellImpl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, optInTimePeriod, optInAnnualization, outBegIdx, outNBElement, outReal);
+          if( retCode != RetCode.SUCCESS ) {
+             throw failure("ROGERSSATCHELL", retCode);
+          }
+          return new OutRange(outBegIdx.value, outNBElement.value);
+       }
+    /**** Streaming API *****/
+
+       /**
+        * A live ROGERSSATCHELL stream (unrelated to {@code java.util.stream}): one value per
+        * closed bar, bit-identical to {@link Core#rogerssatchell} over the same series.
+        * Open with {@link Core#rogerssatchellOpen}; there is no close — the handle is
+        * ordinary heap state, unreferenced handles are simply garbage-collected.
+        * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
+        * {@code value} and {@code clone} must not race with an {@code update} on
+        * the same handle. With no concurrent {@code update}, {@code peek}/
+        * {@code value}/{@code clone} never write the stream and may be called
+        * concurrently after safe publication. Independent streams (a
+        * {@code clone()} result included) are fully independent.
+        * <p>Not serializable by design: to checkpoint, retain the history and
+        * re-open — the result is bit-identical by contract.
+        */
+       public static final class RogerssatchellStream {
+          private Core core;
+          private int optInTimePeriod;
+          private double optInAnnualization;
+          private double periodTotal;
+          private double peakTotal;
+          private double sqrtA;
+          private int trailingIdx;
+          private int nbInitialElementNeeded;
+          private int barsSinceRebuild;
+          private int j;
+          private int windowStart;
+          private int i;
+          private int xMask;
+          private double[] x_inOpen;
+          private double[] x_inHigh;
+          private double[] x_inLow;
+          private double[] x_inClose;
+          private double cur_outReal;
+          private int outRangeBegIdx;
+          private int outRangeCount;
+
+          private RogerssatchellStream( Core core ) { this.core = core; }
+
+          /**
+           * The bars this stream has an output for, in the input series'
+           * coordinates: {@code [begIdx, begIdx + count)}.
+           * <p>It is what {@link Core#rogerssatchell} reports over the same bars: the
+           * opener sets it to {@code (lookback, historyLen - lookback)}, every
+           * accepted {@code update} adds one to the count — a rejected one
+           * changes nothing, and neither does {@code peek} — and
+           * {@code clone()} carries it verbatim. A plain
+           * {@code open} hands back only the last value, a subset of this range,
+           * because the caller chose not to take the fill.
+           * <p>The last bar it can reach is {@link Core#INDEX_MAX}; past that
+           * {@code update} and {@code advance} throw
+           * {@link IndexOutOfBoundsException}.
+           */
+          public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
+
+          /**
+           * Count one bar this stream was not fed: {@link #outRange()} advances
+           * by one and nothing else moves — {@link #value()} keeps answering the previous
+           * output, which is this bar's output too.
+           * <p>For a bar the caller leaves out: one an {@code update} rejected
+           * and that will not be re-fed, or a session with no print. Without it
+           * two handles on one feed drift a bar apart when only one of them skips.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#INDEX_MAX}, the last one the batch tier
+           * can address and the last this handle will count. {@code update}
+           * throws the same there.
+           */
+          public void advance() {
+             if( this.outRangeBegIdx + this.outRangeCount > INDEX_MAX )
+                throw failure("ROGERSSATCHELL advance", RetCode.OUT_OF_RANGE_END_INDEX);
+             this.outRangeCount++;
+          }
+
+          private RogerssatchellStream( RogerssatchellStream other ) {
+             this.core = other.core;
+             this.optInTimePeriod = other.optInTimePeriod;
+             this.optInAnnualization = other.optInAnnualization;
+             this.periodTotal = other.periodTotal;
+             this.peakTotal = other.peakTotal;
+             this.sqrtA = other.sqrtA;
+             this.trailingIdx = other.trailingIdx;
+             this.nbInitialElementNeeded = other.nbInitialElementNeeded;
+             this.barsSinceRebuild = other.barsSinceRebuild;
+             this.j = other.j;
+             this.windowStart = other.windowStart;
+             this.i = other.i;
+             this.xMask = other.xMask;
+             this.x_inOpen = other.x_inOpen.clone();
+             this.x_inHigh = other.x_inHigh.clone();
+             this.x_inLow = other.x_inLow.clone();
+             this.x_inClose = other.x_inClose.clone();
+             this.cur_outReal = other.cur_outReal;
+             this.outRangeBegIdx = other.outRangeBegIdx;
+             this.outRangeCount = other.outRangeCount;
+          }
+
+          /**
+           * Commit one closed bar, returning the new current value.
+           * <p>Throws {@link IllegalArgumentException} if any bar value is not
+           * finite (NaN or an infinity). That check runs before anything is
+           * written, so nothing moves — {@link #outRange()} included — and
+           * {@link #value()} still answers the previous value. Re-feed the bar when a
+           * corrected value arrives, or call {@link #advance()} to count it and
+           * carry on; two handles on one feed drift a bar apart if neither
+           * happens.
+           * This is the one place the streaming tier is stricter than
+           * the batch API, which computes on whatever it is given: a handle
+           * retains its state, so a single non-finite bar would poison every
+           * later value it produces.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#INDEX_MAX}, which no re-feed clears: the
+           * handle has run out of index domain and only a shorter history can
+           * start a new one.
+           */
+          public double update( double inOpen, double inHigh, double inLow, double inClose ) {
+             if( this.outRangeBegIdx + this.outRangeCount > INDEX_MAX )
+                throw failure("ROGERSSATCHELL update", RetCode.OUT_OF_RANGE_END_INDEX);
+             if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
+                throw nonFiniteBar("ROGERSSATCHELL update", !Double.isFinite(inOpen) ? "inOpen" : !Double.isFinite(inHigh) ? "inHigh" : !Double.isFinite(inLow) ? "inLow" : "inClose");
+             core.rogerssatchellStepImpl(this, inOpen, inHigh, inLow, inClose);
+             this.outRangeCount++;
+             return this.cur_outReal;
+          }
+
+          /**
+           * Evaluate a forming bar without committing — bit-identical to what the
+           * next {@code update} with the same bar would return — the same
+           * transition, with every store it would make carried in a local instead.
+           * Never writes this handle, so peeks may run concurrently with each other.
+           * <p>It counts no bar, so it keeps answering past the
+           * {@link Core#INDEX_MAX} ceiling {@code update} stops at.
+           */
+          public double peek( double inOpen, double inHigh, double inLow, double inClose ) {
+             if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
+                throw nonFiniteBar("ROGERSSATCHELL peek", !Double.isFinite(inOpen) ? "inOpen" : !Double.isFinite(inHigh) ? "inHigh" : !Double.isFinite(inLow) ? "inLow" : "inClose");
+             RogerssatchellStream sp = this;
+             double o = 0.0;
+             double h = 0.0;
+             double l = 0.0;
+             double c = 0.0;
+             double p1 = 0.0;
+             double p2 = 0.0;
+             double term = 0.0;
+             double windowTotal = 0.0;
+             int barsSinceRebuild = sp.barsSinceRebuild;
+             double cur_outReal = 0.0;
+             int j = sp.j;
+             double peakTotal = sp.peakTotal;
+             double periodTotal = sp.periodTotal;
+             int trailingIdx = sp.trailingIdx;
+             int windowStart = sp.windowStart;
+             int pkSlot0 = -1;
+             double pkVal0 = 0.0;
+             int pkSlot1 = -1;
+             double pkVal1 = 0.0;
+             int pkSlot2 = -1;
+             double pkVal2 = 0.0;
+             int pkSlot3 = -1;
+             double pkVal3 = 0.0;
+             pkSlot0 = sp.i & sp.xMask;
+             pkVal0 = inOpen;
+             pkSlot1 = sp.i & sp.xMask;
+             pkVal1 = inHigh;
+             pkSlot2 = sp.i & sp.xMask;
+             pkVal2 = inLow;
+             pkSlot3 = sp.i & sp.xMask;
+             pkVal3 = inClose;
+             o = ((sp.i & sp.xMask) != pkSlot0) ? sp.x_inOpen[sp.i & sp.xMask] : pkVal0;
+             h = ((sp.i & sp.xMask) != pkSlot1) ? sp.x_inHigh[sp.i & sp.xMask] : pkVal1;
+             l = ((sp.i & sp.xMask) != pkSlot2) ? sp.x_inLow[sp.i & sp.xMask] : pkVal2;
+             c = ((sp.i & sp.xMask) != pkSlot3) ? sp.x_inClose[sp.i & sp.xMask] : pkVal3;
+             if( o > 0.0 && h > 0.0 && l > 0.0 && c > 0.0 ) {
+                p1 = Math.log(h / c) * Math.log(h / o);
+                p2 = Math.log(l / c) * Math.log(l / o);
+                term = p1 + p2;
+             } else {
+                term = 0.0;
+             }
+             periodTotal += term;
+             peakTotal = (periodTotal > peakTotal) ? periodTotal : peakTotal;
+             /* The sum this bar's output is taken from, before the trailing term is
+              * removed for the next one.
+              */
+             windowTotal = periodTotal;
+             o = ((trailingIdx & sp.xMask) != pkSlot0) ? sp.x_inOpen[trailingIdx & sp.xMask] : pkVal0;
+             h = ((trailingIdx & sp.xMask) != pkSlot1) ? sp.x_inHigh[trailingIdx & sp.xMask] : pkVal1;
+             l = ((trailingIdx & sp.xMask) != pkSlot2) ? sp.x_inLow[trailingIdx & sp.xMask] : pkVal2;
+             c = ((trailingIdx & sp.xMask) != pkSlot3) ? sp.x_inClose[trailingIdx & sp.xMask] : pkVal3;
+             if( o > 0.0 && h > 0.0 && l > 0.0 && c > 0.0 ) {
+                p1 = Math.log(h / c) * Math.log(h / o);
+                p2 = Math.log(l / c) * Math.log(l / o);
+                term = p1 + p2;
+             } else {
+                term = 0.0;
+             }
+             periodTotal -= term;
+             trailingIdx += 1;
+             /* Rebuild as a fresh window sum when the running sum has collapsed to
+              * below 1e-6 of the largest it has held since the last rebuild, or at
+              * least every 32 windows -- VAR's rule (var.c:101-113). Measured against
+              * the PEAK, not the current sum: what a running sum of add-then-subtract
+              * carries is rounding at the scale of the largest window it has seen, so
+              * once a quiet stretch arrives the current sum can be nothing but that
+              * rounding. On an all-flat window the rebuild restores an exact 0.0,
+              * where a plain running sum leaves a residual that is negative about
+              * forty per cent of the time -- and a negative sum under an
+              * unconditional root is where the composition of shipped functions
+              * produces NaN.
+              */
+             barsSinceRebuild -= 1;
+             if( windowTotal < 0.000001 * peakTotal || barsSinceRebuild <= 0 ) {
+                barsSinceRebuild = 32 * sp.optInTimePeriod;
+                windowStart = sp.i - sp.nbInitialElementNeeded;
+                windowTotal = 0.0;
+                for( j = windowStart; j <= sp.i; j += 1 ) {
+                   o = ((j & sp.xMask) != pkSlot0) ? sp.x_inOpen[j & sp.xMask] : pkVal0;
+                   h = ((j & sp.xMask) != pkSlot1) ? sp.x_inHigh[j & sp.xMask] : pkVal1;
+                   l = ((j & sp.xMask) != pkSlot2) ? sp.x_inLow[j & sp.xMask] : pkVal2;
+                   c = ((j & sp.xMask) != pkSlot3) ? sp.x_inClose[j & sp.xMask] : pkVal3;
+                   if( o > 0.0 && h > 0.0 && l > 0.0 && c > 0.0 ) {
+                      p1 = Math.log(h / c) * Math.log(h / o);
+                      p2 = Math.log(l / c) * Math.log(l / o);
+                      term = p1 + p2;
+                   } else {
+                      term = 0.0;
+                   }
+                   windowTotal += term;
+                }
+                /* The rebuilt window becomes the carried state, with its trailing
+                 * term removed again so the two paths leave the same thing behind.
+                 */
+                periodTotal = windowTotal;
+                peakTotal = windowTotal;
+                o = ((windowStart & sp.xMask) != pkSlot0) ? sp.x_inOpen[windowStart & sp.xMask] : pkVal0;
+                h = ((windowStart & sp.xMask) != pkSlot1) ? sp.x_inHigh[windowStart & sp.xMask] : pkVal1;
+                l = ((windowStart & sp.xMask) != pkSlot2) ? sp.x_inLow[windowStart & sp.xMask] : pkVal2;
+                c = ((windowStart & sp.xMask) != pkSlot3) ? sp.x_inClose[windowStart & sp.xMask] : pkVal3;
+                if( o > 0.0 && h > 0.0 && l > 0.0 && c > 0.0 ) {
+                   p1 = Math.log(h / c) * Math.log(h / o);
+                   p2 = Math.log(l / c) * Math.log(l / o);
+                   term = p1 + p2;
+                } else {
+                   term = 0.0;
+                }
+                periodTotal -= term;
+             }
+             /* The divide, then the root, then the scale -- the spelling every
+              * implementation of this estimator uses, and what makes A = 1.0 exact.
+              *
+              * A sum at or below zero answers 0.0 rather than reaching the root. A
+              * fresh sum of terms from consistent bars cannot be negative, so this
+              * only catches a bar whose high or low sits strictly inside its open and
+              * close, which is not a bar the estimator is defined on. VAR floors its
+              * variance for the same reason, so that STDDEV can root it
+              * unconditionally (var.c:165-166).
+              */
+             if( windowTotal > 0.0 ) {
+                cur_outReal = sp.sqrtA * Math.sqrt(windowTotal / (double)sp.optInTimePeriod);
+             } else {
+                cur_outReal = 0.0;
+             }
+             return cur_outReal;
+          }
+
+          /**
+           * The value at the last bar this stream counted — the bar
+           * {@link #outRange()} ends on. The last history bar right after open,
+           * then whatever the latest accepted {@code update} returned.
+           * A pure field read; {@code peek} does not change it.
+           */
+          public double value() {
+             return this.cur_outReal;
+          }
+
+          /**
+           * An independent fork of this stream: both evolve separately from here
+           * on. Buffers are copied and sub-streams cloned recursively; the
+           * {@link Core} reference is shared, since a {@code Core} is immutable
+           * for a stream's lifetime.
+           *
+           * <p>Not the {@code Cloneable} protocol: this calls a copy constructor,
+           * never {@code super.clone()}, so it throws nothing.
+           *
+           * @return an independent stream at the same bar
+           */
+          @Override
+          public RogerssatchellStream clone() {
+             return new RogerssatchellStream(this);
+          }
+       }
+       private void rogerssatchellStepImpl( RogerssatchellStream sp, double inOpen, double inHigh, double inLow, double inClose )
+       {
+          double o = 0.0;
+          double h = 0.0;
+          double l = 0.0;
+          double c = 0.0;
+          double p1 = 0.0;
+          double p2 = 0.0;
+          double term = 0.0;
+          double windowTotal = 0.0;
+          sp.x_inOpen[sp.i & sp.xMask] = inOpen;
+          sp.x_inHigh[sp.i & sp.xMask] = inHigh;
+          sp.x_inLow[sp.i & sp.xMask] = inLow;
+          sp.x_inClose[sp.i & sp.xMask] = inClose;
+          o = sp.x_inOpen[sp.i & sp.xMask];
+          h = sp.x_inHigh[sp.i & sp.xMask];
+          l = sp.x_inLow[sp.i & sp.xMask];
+          c = sp.x_inClose[sp.i & sp.xMask];
+          if( o > 0.0 && h > 0.0 && l > 0.0 && c > 0.0 ) {
+             p1 = Math.log(h / c) * Math.log(h / o);
+             p2 = Math.log(l / c) * Math.log(l / o);
+             term = p1 + p2;
+          } else {
+             term = 0.0;
+          }
+          sp.periodTotal += term;
+          sp.peakTotal = (sp.periodTotal > sp.peakTotal) ? sp.periodTotal : sp.peakTotal;
+          /* The sum this bar's output is taken from, before the trailing term is
+           * removed for the next one.
+           */
+          windowTotal = sp.periodTotal;
+          o = sp.x_inOpen[sp.trailingIdx & sp.xMask];
+          h = sp.x_inHigh[sp.trailingIdx & sp.xMask];
+          l = sp.x_inLow[sp.trailingIdx & sp.xMask];
+          c = sp.x_inClose[sp.trailingIdx & sp.xMask];
+          if( o > 0.0 && h > 0.0 && l > 0.0 && c > 0.0 ) {
+             p1 = Math.log(h / c) * Math.log(h / o);
+             p2 = Math.log(l / c) * Math.log(l / o);
+             term = p1 + p2;
+          } else {
+             term = 0.0;
+          }
+          sp.periodTotal -= term;
+          sp.trailingIdx += 1;
+          /* Rebuild as a fresh window sum when the running sum has collapsed to
+           * below 1e-6 of the largest it has held since the last rebuild, or at
+           * least every 32 windows -- VAR's rule (var.c:101-113). Measured against
+           * the PEAK, not the current sum: what a running sum of add-then-subtract
+           * carries is rounding at the scale of the largest window it has seen, so
+           * once a quiet stretch arrives the current sum can be nothing but that
+           * rounding. On an all-flat window the rebuild restores an exact 0.0,
+           * where a plain running sum leaves a residual that is negative about
+           * forty per cent of the time -- and a negative sum under an
+           * unconditional root is where the composition of shipped functions
+           * produces NaN.
+           */
+          sp.barsSinceRebuild -= 1;
+          if( windowTotal < 0.000001 * sp.peakTotal || sp.barsSinceRebuild <= 0 ) {
+             sp.barsSinceRebuild = 32 * sp.optInTimePeriod;
+             sp.windowStart = sp.i - sp.nbInitialElementNeeded;
+             windowTotal = 0.0;
+             for( sp.j = sp.windowStart; sp.j <= sp.i; sp.j += 1 ) {
+                o = sp.x_inOpen[sp.j & sp.xMask];
+                h = sp.x_inHigh[sp.j & sp.xMask];
+                l = sp.x_inLow[sp.j & sp.xMask];
+                c = sp.x_inClose[sp.j & sp.xMask];
+                if( o > 0.0 && h > 0.0 && l > 0.0 && c > 0.0 ) {
+                   p1 = Math.log(h / c) * Math.log(h / o);
+                   p2 = Math.log(l / c) * Math.log(l / o);
+                   term = p1 + p2;
+                } else {
+                   term = 0.0;
+                }
+                windowTotal += term;
+             }
+             /* The rebuilt window becomes the carried state, with its trailing
+              * term removed again so the two paths leave the same thing behind.
+              */
+             sp.periodTotal = windowTotal;
+             sp.peakTotal = windowTotal;
+             o = sp.x_inOpen[sp.windowStart & sp.xMask];
+             h = sp.x_inHigh[sp.windowStart & sp.xMask];
+             l = sp.x_inLow[sp.windowStart & sp.xMask];
+             c = sp.x_inClose[sp.windowStart & sp.xMask];
+             if( o > 0.0 && h > 0.0 && l > 0.0 && c > 0.0 ) {
+                p1 = Math.log(h / c) * Math.log(h / o);
+                p2 = Math.log(l / c) * Math.log(l / o);
+                term = p1 + p2;
+             } else {
+                term = 0.0;
+             }
+             sp.periodTotal -= term;
+          }
+          /* The divide, then the root, then the scale -- the spelling every
+           * implementation of this estimator uses, and what makes A = 1.0 exact.
+           *
+           * A sum at or below zero answers 0.0 rather than reaching the root. A
+           * fresh sum of terms from consistent bars cannot be negative, so this
+           * only catches a bar whose high or low sits strictly inside its open and
+           * close, which is not a bar the estimator is defined on. VAR floors its
+           * variance for the same reason, so that STDDEV can root it
+           * unconditionally (var.c:165-166).
+           */
+          if( windowTotal > 0.0 ) {
+             sp.cur_outReal = sp.sqrtA * Math.sqrt(windowTotal / (double)sp.optInTimePeriod);
+          } else {
+             sp.cur_outReal = 0.0;
+          }
+          sp.i += 1;
+       }
+       private RetCode rogerssatchellOpenImpl( RogerssatchellStream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod, double optInAnnualization, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+       {
+          double o = 0;
+          double h = 0;
+          double l = 0;
+          double c = 0;
+          double p1 = 0;
+          double p2 = 0;
+          double term = 0;
+          double periodTotal = 0;
+          double windowTotal = 0;
+          double peakTotal = 0;
+          double sqrtA = 0;
+          int i = 0;
+          int j = 0;
+          int outIdx = 0;
+          int trailingIdx = 0;
+          int windowStart = 0;
+          int nbInitialElementNeeded = 0;
+          int barsSinceRebuild = 0;
+          int historyLen = inOpen.length;
+          int endIdx = historyLen - 1;
+          if( historyLen < 1 ) {
+             return RetCode.OUT_OF_RANGE_START_INDEX;
+          }
+          if( historyLen > INDEX_MAX + 1 ) {
+             return RetCode.OUT_OF_RANGE_END_INDEX;
+          }
+          if( inHigh.length != inOpen.length || inLow.length != inOpen.length || inClose.length != inOpen.length ) {
+             return RetCode.BAD_PARAM;
+          }
+          if( optInTimePeriod == Integer.MIN_VALUE ) {
+             optInTimePeriod = 10;
+          } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
+             return RetCode.BAD_PARAM;
+          }
+          if( optInAnnualization == REAL_DEFAULT ) {
+             optInAnnualization = 2.52e2;
+          } else if( !(optInAnnualization >= 0e0 && optInAnnualization <= REAL_MAX) ) {
+             return RetCode.BAD_PARAM;
+          }
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.INSUFFICIENT_HISTORY;
+          }
+          nbInitialElementNeeded = optInTimePeriod - 1;
+          if( startIdx < nbInitialElementNeeded ) {
+             startIdx = nbInitialElementNeeded;
+          }
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.INSUFFICIENT_HISTORY ;
+          }
+          /* Rogers and Satchell, The Annals of Applied Probability 1(4):504-512 (1991),
+           * eq. (2) on p.505: with the log price measured from the bar's open,
+           * S1 = ln(H/O), I1 = ln(L/O) and X1 = ln(C/O), one bar's unbiased estimate
+           * of its variance is S1(S1 - X1) + I1(I1 - X1), which is ln(H/C)ln(H/O) +
+           * ln(L/C)ln(L/O). Eq. (3) is what sets this estimator apart: that
+           * expectation is sigma^2 whatever the drift, so a bar that opens at its low
+           * and closes at its high -- all drift, no dispersion -- reads exactly zero,
+           * where a range-only estimator reads volatility.
+           *
+           * The paper stops there. The window mean, the root and the annual scale are
+           * the convention of every implementation of it, not the authors'.
+           */
+          /* Once, so that optInAnnualization = 1.0 is an exact identity rather than a
+           * multiply by a rounded 1.0, and so the per-bar and annualised outputs
+           * differ by exactly this factor.
+           */
+          sqrtA = Math.sqrt(optInAnnualization);
+          trailingIdx = startIdx - nbInitialElementNeeded;
+          periodTotal = 0.0;
+          for( j = trailingIdx; j < startIdx; j += 1 ) {
+             /* The two products are SEPARATE statements on purpose. Written as one
+              * expression the generator's FMA detector fuses the first product into
+              * the add (backends/fma.rs:406-433; a log call counts as a float factor
+              * at :252-285), which moves 159 of 243 outputs on the corpus at n = 10
+              * and buys nothing measurable. VWMA splits its product for the same
+              * reason (vwma/vwma.c:78-81).
+              *
+              * The guard is the whole bar, tested exactly rather than against a fixed
+              * band (#253): a bar with any price at or below zero contributes a 0.0
+              * term and still counts toward the window's n. Zeroing only the products
+              * that touch the bad price has no implementation behind it, and dropping
+              * the bar from the window makes n data-dependent.
+              */
+             o = inOpen[j];
+             h = inHigh[j];
+             l = inLow[j];
+             c = inClose[j];
+             if( o > 0.0 && h > 0.0 && l > 0.0 && c > 0.0 ) {
+                p1 = Math.log(h / c) * Math.log(h / o);
+                p2 = Math.log(l / c) * Math.log(l / o);
+                term = p1 + p2;
+             } else {
+                term = 0.0;
+             }
+             periodTotal += term;
+          }
+          /* outReal may be any of the four input arrays: the output written on a bar
+           * lands at or before the window's own trailing index, so every input slot
+           * this loop still reads is one no write has reached yet.
+           */
+          i = startIdx;
+          outIdx = 0;
+          barsSinceRebuild = 32 * optInTimePeriod;
+          peakTotal = periodTotal;
+          do {
+             o = inOpen[i];
+             h = inHigh[i];
+             l = inLow[i];
+             c = inClose[i];
+             if( o > 0.0 && h > 0.0 && l > 0.0 && c > 0.0 ) {
+                p1 = Math.log(h / c) * Math.log(h / o);
+                p2 = Math.log(l / c) * Math.log(l / o);
+                term = p1 + p2;
+             } else {
+                term = 0.0;
+             }
+             periodTotal += term;
+             peakTotal = (periodTotal > peakTotal) ? periodTotal : peakTotal;
+             /* The sum this bar's output is taken from, before the trailing term is
+              * removed for the next one.
+              */
+             windowTotal = periodTotal;
+             o = inOpen[trailingIdx];
+             h = inHigh[trailingIdx];
+             l = inLow[trailingIdx];
+             c = inClose[trailingIdx];
+             if( o > 0.0 && h > 0.0 && l > 0.0 && c > 0.0 ) {
+                p1 = Math.log(h / c) * Math.log(h / o);
+                p2 = Math.log(l / c) * Math.log(l / o);
+                term = p1 + p2;
+             } else {
+                term = 0.0;
+             }
+             periodTotal -= term;
+             trailingIdx += 1;
+             /* Rebuild as a fresh window sum when the running sum has collapsed to
+              * below 1e-6 of the largest it has held since the last rebuild, or at
+              * least every 32 windows -- VAR's rule (var.c:101-113). Measured against
+              * the PEAK, not the current sum: what a running sum of add-then-subtract
+              * carries is rounding at the scale of the largest window it has seen, so
+              * once a quiet stretch arrives the current sum can be nothing but that
+              * rounding. On an all-flat window the rebuild restores an exact 0.0,
+              * where a plain running sum leaves a residual that is negative about
+              * forty per cent of the time -- and a negative sum under an
+              * unconditional root is where the composition of shipped functions
+              * produces NaN.
+              */
+             barsSinceRebuild -= 1;
+             if( windowTotal < 0.000001 * peakTotal || barsSinceRebuild <= 0 ) {
+                barsSinceRebuild = 32 * optInTimePeriod;
+                windowStart = i - nbInitialElementNeeded;
+                windowTotal = 0.0;
+                for( j = windowStart; j <= i; j += 1 ) {
+                   o = inOpen[j];
+                   h = inHigh[j];
+                   l = inLow[j];
+                   c = inClose[j];
+                   if( o > 0.0 && h > 0.0 && l > 0.0 && c > 0.0 ) {
+                      p1 = Math.log(h / c) * Math.log(h / o);
+                      p2 = Math.log(l / c) * Math.log(l / o);
+                      term = p1 + p2;
+                   } else {
+                      term = 0.0;
+                   }
+                   windowTotal += term;
+                }
+                /* The rebuilt window becomes the carried state, with its trailing
+                 * term removed again so the two paths leave the same thing behind.
+                 */
+                periodTotal = windowTotal;
+                peakTotal = windowTotal;
+                o = inOpen[windowStart];
+                h = inHigh[windowStart];
+                l = inLow[windowStart];
+                c = inClose[windowStart];
+                if( o > 0.0 && h > 0.0 && l > 0.0 && c > 0.0 ) {
+                   p1 = Math.log(h / c) * Math.log(h / o);
+                   p2 = Math.log(l / c) * Math.log(l / o);
+                   term = p1 + p2;
+                } else {
+                   term = 0.0;
+                }
+                periodTotal -= term;
+             }
+             /* The divide, then the root, then the scale -- the spelling every
+              * implementation of this estimator uses, and what makes A = 1.0 exact.
+              *
+              * A sum at or below zero answers 0.0 rather than reaching the root. A
+              * fresh sum of terms from consistent bars cannot be negative, so this
+              * only catches a bar whose high or low sits strictly inside its open and
+              * close, which is not a bar the estimator is defined on. VAR floors its
+              * variance for the same reason, so that STDDEV can root it
+              * unconditionally (var.c:165-166).
+              */
+             if( windowTotal > 0.0 ) {
+                outReal[outIdx * outStride] = sqrtA * Math.sqrt(windowTotal / (double)optInTimePeriod);
+             } else {
+                outReal[outIdx * outStride] = 0.0;
+             }
+             outIdx = outIdx + 1;
+             i += 1;
+          } while( i <= endIdx );
+          outNBElement.value = outIdx;
+          outBegIdx.value = startIdx;
+          /* Capture the live batch state into the handle. */
+          int capX = i - trailingIdx + 1;
+          if( capX < 1 || capX > historyLen ) {
+             return RetCode.INTERNAL_ERROR;
+          }
+          int physX = 1;
+          while( physX < capX ) {
+             physX <<= 1;
+          }
+          double[] capX_inOpen = new double[physX];
+          double[] capX_inHigh = new double[physX];
+          double[] capX_inLow = new double[physX];
+          double[] capX_inClose = new double[physX];
+          for( int fillJ = historyLen - capX; fillJ < historyLen; fillJ++ ) {
+             capX_inOpen[fillJ & (physX - 1)] = inOpen[fillJ];
+             capX_inHigh[fillJ & (physX - 1)] = inHigh[fillJ];
+             capX_inLow[fillJ & (physX - 1)] = inLow[fillJ];
+             capX_inClose[fillJ & (physX - 1)] = inClose[fillJ];
+          }
+          sp.optInTimePeriod = optInTimePeriod;
+          sp.optInAnnualization = optInAnnualization;
+          sp.periodTotal = periodTotal;
+          sp.peakTotal = peakTotal;
+          sp.sqrtA = sqrtA;
+          sp.trailingIdx = trailingIdx;
+          sp.nbInitialElementNeeded = nbInitialElementNeeded;
+          sp.barsSinceRebuild = barsSinceRebuild;
+          sp.j = j;
+          sp.windowStart = windowStart;
+          sp.i = i;
+          sp.xMask = physX - 1;
+          sp.x_inOpen = capX_inOpen;
+          sp.x_inHigh = capX_inHigh;
+          sp.x_inLow = capX_inLow;
+          sp.x_inClose = capX_inClose;
+          sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
+          return RetCode.SUCCESS;
+       }
+       /* rogerssatchellOpenAndFill anchored at startIdx — the composed-open fusion seam. */
+       RogerssatchellStream rogerssatchellOpenAndFillInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod, double optInAnnualization, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+       {
+          RogerssatchellStream sp = new RogerssatchellStream(this);
+          RetCode retCode = rogerssatchellOpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, optInTimePeriod, optInAnnualization, outBegIdx, outNBElement, outReal, 1);
+          sp.outRangeBegIdx = outBegIdx.value;
+          sp.outRangeCount = outNBElement.value;
+          if( retCode == RetCode.SUCCESS ) {
+             return sp;
+          }
+          if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
+             throw insufficientHistory("ROGERSSATCHELL openAndFill", inOpen.length, startIdx, rogerssatchellLookback(optInTimePeriod, optInAnnualization));
+          }
+          throw streamFailure("ROGERSSATCHELL openAndFill", retCode);
+       }
+       /* Internal startIdx-anchored open behind rogerssatchellOpen (composition seam). */
+       RogerssatchellStream rogerssatchellOpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod, double optInAnnualization )
+       {
+          RogerssatchellStream sp = new RogerssatchellStream(this);
+          MInteger outBegIdx = new MInteger();
+          MInteger outNBElement = new MInteger();
+          double[] sink_outReal = new double[1];
+          RetCode retCode = rogerssatchellOpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, optInTimePeriod, optInAnnualization, outBegIdx, outNBElement, sink_outReal, 0);
+          sp.outRangeBegIdx = outBegIdx.value;
+          sp.outRangeCount = outNBElement.value;
+          if( retCode == RetCode.SUCCESS ) {
+             return sp;
+          }
+          if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
+             throw insufficientHistory("ROGERSSATCHELL open", inOpen.length, startIdx, rogerssatchellLookback(optInTimePeriod, optInAnnualization));
+          }
+          throw streamFailure("ROGERSSATCHELL open", retCode);
+       }
+       /**
+        * Open a live ROGERSSATCHELL stream over the warm-up history; the handle's
+        * {@code value()} starts at the last history bar's value — bit-identical
+        * to {@link Core#rogerssatchell} at that bar.
+        * <p>The history must hold at least {@code rogerssatchellLookback(...) + 1} bars
+        * (unstable-period aware), or {@link InsufficientHistoryException} is
+        * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
+        * ({@link Integer#MIN_VALUE} and {@link Core#REAL_DEFAULT} select a
+        * parameter's documented default, as in the batch API). An EMPTY history throws
+        * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
+        * names no bar — and a null argument {@link IllegalArgumentException},
+        * both ahead of everything above.
+        */
+       public RogerssatchellStream rogerssatchellOpen( double inOpen[], double inHigh[], double inLow[], double inClose[], int optInTimePeriod, double optInAnnualization )
+       {
+          requireArgument("ROGERSSATCHELL open", "inOpen", inOpen);
+          requireHistory("ROGERSSATCHELL open", inOpen.length);
+          requireArgument("ROGERSSATCHELL open", "inHigh", inHigh);
+          requireArgument("ROGERSSATCHELL open", "inLow", inLow);
+          requireArgument("ROGERSSATCHELL open", "inClose", inClose);
+          requireHistoryLength("ROGERSSATCHELL open", "inHigh", inHigh.length, inOpen.length);
+          requireHistoryLength("ROGERSSATCHELL open", "inLow", inLow.length, inOpen.length);
+          requireHistoryLength("ROGERSSATCHELL open", "inClose", inClose.length, inOpen.length);
+          return rogerssatchellOpenInternal(inOpen, inHigh, inLow, inClose, 0, optInTimePeriod, optInAnnualization);
+       }
+       /**
+        * {@link Core#rogerssatchellOpen} that also fills the output array(s) bit-identically
+        * to {@link Core#rogerssatchell} over the whole history in the same single pass
+        * (no separate batch call needed for the warm-up plot). Output arrays must
+        * not alias the inputs or each other, and must hold
+        * {@code historyLen - lookback} values — both checked before anything is
+        * written, so an undersized array is an {@link IllegalArgumentException}
+        * naming it rather than a fault from inside the fill.
+        * <p>The range written is on the returned handle:
+        * {@link RogerssatchellStream#outRange()}.
+        */
+       public RogerssatchellStream rogerssatchellOpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int optInTimePeriod, double optInAnnualization, double outReal[] )
+       {
+          requireArgument("ROGERSSATCHELL openAndFill", "inOpen", inOpen);
+          requireHistory("ROGERSSATCHELL openAndFill", inOpen.length);
+          requireArgument("ROGERSSATCHELL openAndFill", "inHigh", inHigh);
+          requireArgument("ROGERSSATCHELL openAndFill", "inLow", inLow);
+          requireArgument("ROGERSSATCHELL openAndFill", "inClose", inClose);
+          int guardOutLen = openFillCount("ROGERSSATCHELL openAndFill", inOpen.length, rogerssatchellLookback(optInTimePeriod, optInAnnualization));
+          requireHistoryLength("ROGERSSATCHELL openAndFill", "inHigh", inHigh.length, inOpen.length);
+          requireHistoryLength("ROGERSSATCHELL openAndFill", "inLow", inLow.length, inOpen.length);
+          requireHistoryLength("ROGERSSATCHELL openAndFill", "inClose", inClose.length, inOpen.length);
+          requireLength("ROGERSSATCHELL openAndFill", "outReal", outReal, guardOutLen);
+          if( (Object)outReal == (Object)inOpen || (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow || (Object)outReal == (Object)inClose ) {
+             throw streamFailure("ROGERSSATCHELL openAndFill", RetCode.BAD_PARAM);
+          }
+          MInteger outBegIdx = new MInteger();
+          MInteger outNBElement = new MInteger();
+          return rogerssatchellOpenAndFillInternal(inOpen, inHigh, inLow, inClose, 0, optInTimePeriod, optInAnnualization, outBegIdx, outNBElement, outReal);
+       }
+    /* List of contributors:
+     *
+     *  Initial  Name/description
+     *  -------------------------------------------------------------------
+     *  MF       Mario Fortier
      *  CC       Claude Code (AI assistant)
      *
      * Change history:
@@ -217484,7 +218828,7 @@ class Core {
 
 public class TaCodegenServe {
     static Core core = new Core();
-    static final String SPLICED_GENCODE_DIGEST = "a04e1c0d515c47af";
+    static final String SPLICED_GENCODE_DIGEST = "bcd49d8737192f0f";
     static final int MAX_ARRAY_SIZE = 200000;
     static double[] refOpen = new double[MAX_ARRAY_SIZE];
     static double[] refHigh = new double[MAX_ARRAY_SIZE];
@@ -218372,6 +219716,10 @@ public class TaCodegenServe {
             new AbsIn[]{ new AbsIn(1,"inReal",0) },
             new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period","Time period",10.0, 0,0,0,0,0,0, 1,100000,1,200,1, null) },
             new AbsOut[]{ new AbsOut(0,"outReal",1) }));
+        ABSTRACT.put("ROGERSSATCHELL", new AbsFunc("ROGERSSATCHELL", "Volatility Indicators", "Rogers-Satchell Volatility", 33554432,
+            new AbsIn[]{ new AbsIn(0,"inPriceOHLC",15) },
+            new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period","Number of bars in the window",10.0, 0,0,0,0,0,0, 1,100000,2,200,1, null), new AbsOpt(0,"optInAnnualization",0,"Annualization","Periods per year; 1 leaves the per-bar figure",252.0, 0.0,3e37,2,1.0,365.0,1.0, 0,0,0,0,0, null) },
+            new AbsOut[]{ new AbsOut(0,"outReal",1) }));
         ABSTRACT.put("RSI", new AbsFunc("RSI", "Momentum Indicators", "Relative Strength Index", 167772160,
             new AbsIn[]{ new AbsIn(1,"inReal",0) },
             new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period","Time period",14.0, 0,0,0,0,0,0, 2,100000,4,200,1, null) },
@@ -218849,6 +220197,7 @@ public class TaCodegenServe {
         "TA_ROCP",
         "TA_ROCR",
         "TA_ROCR100",
+        "TA_ROGERSSATCHELL",
         "TA_RSI",
         "TA_RVI",
         "TA_RVIR",
@@ -219083,53 +220432,54 @@ public class TaCodegenServe {
             case 178: return handle_ROCP(json);
             case 179: return handle_ROCR(json);
             case 180: return handle_ROCR100(json);
-            case 181: return handle_RSI(json);
-            case 182: return handle_RVI(json);
-            case 183: return handle_RVIR(json);
-            case 184: return handle_RVOL(json);
-            case 185: return handle_SAR(json);
-            case 186: return handle_SAREXT(json);
-            case 187: return handle_SI(json);
-            case 188: return handle_SIN(json);
-            case 189: return handle_SINH(json);
-            case 190: return handle_SMA(json);
-            case 191: return handle_SMI(json);
-            case 192: return handle_SQRT(json);
-            case 193: return handle_STC(json);
-            case 194: return handle_STDDEV(json);
-            case 195: return handle_STOCH(json);
-            case 196: return handle_STOCHF(json);
-            case 197: return handle_STOCHRSI(json);
-            case 198: return handle_SUB(json);
-            case 199: return handle_SUM(json);
-            case 200: return handle_SUPERTREND(json);
-            case 201: return handle_SWAK_2PHP(json);
-            case 202: return handle_SWAK_BP(json);
-            case 203: return handle_SWAK_BUTTER(json);
-            case 204: return handle_SWAK_GAUSS(json);
-            case 205: return handle_SWAK_HP(json);
-            case 206: return handle_T3(json);
-            case 207: return handle_TAN(json);
-            case 208: return handle_TANH(json);
-            case 209: return handle_TEMA(json);
-            case 210: return handle_TRANGE(json);
-            case 211: return handle_TRIMA(json);
-            case 212: return handle_TRIX(json);
-            case 213: return handle_TSF(json);
-            case 214: return handle_TSI(json);
-            case 215: return handle_TYPPRICE(json);
-            case 216: return handle_ULTOSC(json);
-            case 217: return handle_VAR(json);
-            case 218: return handle_VHF(json);
-            case 219: return handle_VIDYA(json);
-            case 220: return handle_VORTEX(json);
-            case 221: return handle_VWAP(json);
-            case 222: return handle_VWMA(json);
-            case 223: return handle_WAD(json);
-            case 224: return handle_WCLPRICE(json);
-            case 225: return handle_WILLR(json);
-            case 226: return handle_WMA(json);
-            case 227: return handle_ZLEMA(json);
+            case 181: return handle_ROGERSSATCHELL(json);
+            case 182: return handle_RSI(json);
+            case 183: return handle_RVI(json);
+            case 184: return handle_RVIR(json);
+            case 185: return handle_RVOL(json);
+            case 186: return handle_SAR(json);
+            case 187: return handle_SAREXT(json);
+            case 188: return handle_SI(json);
+            case 189: return handle_SIN(json);
+            case 190: return handle_SINH(json);
+            case 191: return handle_SMA(json);
+            case 192: return handle_SMI(json);
+            case 193: return handle_SQRT(json);
+            case 194: return handle_STC(json);
+            case 195: return handle_STDDEV(json);
+            case 196: return handle_STOCH(json);
+            case 197: return handle_STOCHF(json);
+            case 198: return handle_STOCHRSI(json);
+            case 199: return handle_SUB(json);
+            case 200: return handle_SUM(json);
+            case 201: return handle_SUPERTREND(json);
+            case 202: return handle_SWAK_2PHP(json);
+            case 203: return handle_SWAK_BP(json);
+            case 204: return handle_SWAK_BUTTER(json);
+            case 205: return handle_SWAK_GAUSS(json);
+            case 206: return handle_SWAK_HP(json);
+            case 207: return handle_T3(json);
+            case 208: return handle_TAN(json);
+            case 209: return handle_TANH(json);
+            case 210: return handle_TEMA(json);
+            case 211: return handle_TRANGE(json);
+            case 212: return handle_TRIMA(json);
+            case 213: return handle_TRIX(json);
+            case 214: return handle_TSF(json);
+            case 215: return handle_TSI(json);
+            case 216: return handle_TYPPRICE(json);
+            case 217: return handle_ULTOSC(json);
+            case 218: return handle_VAR(json);
+            case 219: return handle_VHF(json);
+            case 220: return handle_VIDYA(json);
+            case 221: return handle_VORTEX(json);
+            case 222: return handle_VWAP(json);
+            case 223: return handle_VWMA(json);
+            case 224: return handle_WAD(json);
+            case 225: return handle_WCLPRICE(json);
+            case 226: return handle_WILLR(json);
+            case 227: return handle_WMA(json);
+            case 228: return handle_ZLEMA(json);
             default: return null;
         }
     }
@@ -246965,6 +248315,170 @@ public class TaCodegenServe {
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
         rideRocr100(core, json, endIdx, inReal, optInTimePeriod, sb);
+        sb.append("}");
+        return sb.toString();
+    }
+
+    static String handle_ROGERSSATCHELL(String json) {
+        int startIdx = jsonInt(json, "startIdx");
+        int endIdx = jsonInt(json, "endIdx");
+        int use_preloaded = jsonInt(json, "use_preloaded");
+        int bench_iters = jsonInt(json, "iters");
+        if (bench_iters < 1) bench_iters = 1;
+        double[] inOpen;
+        double[] inHigh;
+        double[] inLow;
+        double[] inClose;
+        if (use_preloaded != 0 && refN > 0) {
+            inOpen = new double[MAX_ARRAY_SIZE];
+            System.arraycopy(refOpen, 0, inOpen, 0, refN);
+            inHigh = new double[MAX_ARRAY_SIZE];
+            System.arraycopy(refHigh, 0, inHigh, 0, refN);
+            inLow = new double[MAX_ARRAY_SIZE];
+            System.arraycopy(refLow, 0, inLow, 0, refN);
+            inClose = new double[MAX_ARRAY_SIZE];
+            System.arraycopy(refClose, 0, inClose, 0, refN);
+        } else {
+            inOpen = jsonDoubleArray(json, "inOpen");
+            inHigh = jsonDoubleArray(json, "inHigh");
+            inLow = jsonDoubleArray(json, "inLow");
+            inClose = jsonDoubleArray(json, "inClose");
+        }
+        boolean _optRejected = false;
+        int optInTimePeriod = jsonInt(json, "optInTimePeriod");
+        double optInAnnualization = jsonDouble(json, "optInAnnualization");
+        // The output buffers are sized to the count the call actually PRODUCES --
+        // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
+        // never below one. Not to the width of the requested range: that is the bound the
+        // managed backends check and the Rust asserts state, and at the range width it was
+        // slack by exactly the lookback, so no call could ever approach it.
+        // The pad is there because a bound is a MINIMUM, never an equality. A caller
+        // re-using a pre-allocated buffer passes a larger one, and that is not an error --
+        // the reported OutRange is what says which part was written. So the harness sends
+        // both: the startIdx axis sends no pad (the bound is reachable) while the
+        // full-range value comparison sends one (slack is legal). Sizing every call one way
+        // would silently drop the other property.
+        // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
+        // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
+        // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
+        // sizes and cannot make the check, so an exact buffer would test nothing there.
+        int _lb = core.rogerssatchellLookback(optInTimePeriod, optInAnnualization);
+        int _cs = startIdx > _lb ? startIdx : _lb;
+        int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
+        double[] outArr0 = new double[_outLen];
+        MInteger outBegIdx = new MInteger();
+        MInteger outNBElement = new MInteger();
+        RetCode rc = RetCode.SUCCESS;
+        int bench_mode = jsonInt(json, "bench_mode");
+        double[] _warm_inOpen = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inOpen, 0, endIdx + 1);
+        double[] _warm_inHigh = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inHigh, 0, endIdx + 1);
+        double[] _warm_inLow = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inLow, 0, endIdx + 1);
+        double[] _warm_inClose = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inClose, 0, endIdx + 1);
+        long startNs = 0;
+        for (int _bi = 0; _bi <= bench_iters; _bi++) {
+        if (_bi == 1) startNs = System.nanoTime();
+        if (bench_mode == 0) {
+        if (jsonInt(json, "timed") != 0) {
+            if (_optRejected) {
+                rc = RetCode.BAD_PARAM;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
+            try {
+                rc = core.rogerssatchellImpl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, optInTimePeriod, optInAnnualization, outBegIdx, outNBElement, outArr0);
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TALibFailure)) throw _e;
+                rc = ((TALibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+            }
+        } else {
+            if (_optRejected) {
+                rc = RetCode.BAD_PARAM;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
+            try {
+                OutRange _pr = core.rogerssatchell(startIdx, endIdx, inOpen, inHigh, inLow, inClose, optInTimePeriod, optInAnnualization, outArr0);
+                outBegIdx.value = _pr.begIdx();
+                outNBElement.value = _pr.count();
+                rc = RetCode.SUCCESS;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TALibFailure)) throw _e;
+                rc = ((TALibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+            }
+        }
+        }
+        else if (_optRejected) { rc = RetCode.BAD_PARAM; }
+        else { try {
+            if (bench_mode == 1) {
+                core.rogerssatchellOpen(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose, optInTimePeriod, optInAnnualization);
+            } else {
+                Core.RogerssatchellStream _wh = core.rogerssatchellOpenAndFill(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose, optInTimePeriod, optInAnnualization, outArr0);
+                outBegIdx.value = _wh.outRange().begIdx();
+                outNBElement.value = _wh.outRange().count();
+            }
+            rc = RetCode.SUCCESS;
+        } catch (RuntimeException _e) { rc = _e instanceof TALibFailure ? ((TALibFailure)_e).retCode() : RetCode.BAD_PARAM; } }
+        }
+        long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        int usedFloat = 0;
+        if (jsonInt(json, "use_float") != 0) {
+            float[] f_inOpen = new float[inOpen.length];
+            for (int _fi = 0; _fi < inOpen.length; _fi++) f_inOpen[_fi] = (float)inOpen[_fi];
+            float[] f_inHigh = new float[inHigh.length];
+            for (int _fi = 0; _fi < inHigh.length; _fi++) f_inHigh[_fi] = (float)inHigh[_fi];
+            float[] f_inLow = new float[inLow.length];
+            for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
+            float[] f_inClose = new float[inClose.length];
+            for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
+            if (_optRejected) {
+                rc = RetCode.BAD_PARAM;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
+            try {
+                OutRange _fr = core.rogerssatchell(startIdx, endIdx, f_inOpen, f_inHigh, f_inLow, f_inClose, optInTimePeriod, optInAnnualization, outArr0);
+                outBegIdx.value = _fr.begIdx();
+                outNBElement.value = _fr.count();
+                rc = RetCode.SUCCESS;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TALibFailure)) throw _e;
+                rc = ((TALibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+            }
+            usedFloat = 1;
+        }
+        if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
+            long _h = svHashInit();
+            if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
+                _h = svHashF64(_h, outArr0, outNBElement.value);
+            }
+            _h = svHashFin(_h);
+            StringBuilder hb = new StringBuilder();
+            hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            rideRogerssatchell(core, json, endIdx, inOpen, inHigh, inLow, inClose, optInTimePeriod, optInAnnualization, hb);
+            hb.append("}");
+            return hb.toString();
+        }
+        StringBuilder sb = new StringBuilder();
+        sb.append("{\"retCode\":").append(rc.toInt());
+        sb.append(",\"outBegIdx\":").append(outBegIdx.value);
+        sb.append(",\"outNBElement\":").append(outNBElement.value);
+        sb.append(",\"out_len\":").append(_outLen);
+        sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
+        sb.append(",\"used_float\":").append(usedFloat);
+        sb.append(",\"timing_ns\":").append(elapsedNs);
+        rideRogerssatchell(core, json, endIdx, inOpen, inHigh, inLow, inClose, optInTimePeriod, optInAnnualization, sb);
         sb.append("}");
         return sb.toString();
     }
@@ -285359,6 +286873,176 @@ public class TaCodegenServe {
         return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign[0] + diag + "}";
     }
 
+    static String sv_ROGERSSATCHELL(String json) {
+        int svShape = jsonInt(json, "gen_shape");
+        int svSeed = jsonInt(json, "gen_seed");
+        int svN = jsonInt(json, "gen_n");
+        if (svN < 2) svN = 2;
+        if (svN > 256) svN = 256;
+        int svK = jsonInt(json, "unstablePeriod");
+        int optInTimePeriod = json.contains("\"optInTimePeriod\"") ? jsonInt(json, "optInTimePeriod") : 10;
+        double optInAnnualization = json.contains("\"optInAnnualization\"") ? jsonDouble(json, "optInAnnualization") : 2.52e2;
+        double[] fz_o = new double[svN];
+        double[] fz_h = new double[svN];
+        double[] fz_l = new double[svN];
+        double[] fz_c = new double[svN];
+        double[] fz_v = new double[svN];
+        double[] fz_oi = new double[svN];
+        FuzzData.fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
+        double[] b0 = new double[svN];
+        long legs = 0;
+        boolean allOk = true;
+        boolean peekAll = true;
+        long peekReps = 0;
+        long peekRejects = 0;
+        boolean peekRepAll = true;
+        int fillChecked = 0;
+        boolean fillOk = true;
+        MInteger beg = new MInteger();
+        MInteger nb = new MInteger();
+        String diag = "";
+        int rangeChecked = 0;
+        boolean rangeOk = true;
+        long rangeLegs = 0;
+        int rangeSites = 0;
+        long[] zsign = { 0 };
+        int rounds = 1;
+        for (int rd = 0; rd < rounds; rd++) {
+            Core c2 = new Core();
+            RetCode rc;
+            try { rc = c2.rogerssatchellImpl(0, svN - 1, fz_o, fz_h, fz_l, fz_c, optInTimePeriod, optInAnnualization, beg, nb, b0); }
+            catch (RuntimeException _sve) { if (!(_sve instanceof TALibFailure)) throw _sve; rc = ((TALibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
+            int lb = c2.rogerssatchellLookback(optInTimePeriod, optInAnnualization);
+            if (rc != RetCode.SUCCESS || nb.value == 0) {
+                boolean openRejects;
+                try { c2.rogerssatchellOpen(fz_o, fz_h, fz_l, fz_c, optInTimePeriod, optInAnnualization); openRejects = false; } catch (IllegalArgumentException _e) { openRejects = true; }
+                return "{\"retCode\":" + rc.toInt() + ",\"legs\":0,\"nb\":" + nb.value + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (openRejects ? 1 : 0) + ",\"peek_ok\":1}";
+            }
+            fillChecked = 1;
+            try {
+                double[] f0 = new double[svN];
+                java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                Core.RogerssatchellStream _fh = c2.rogerssatchellOpenAndFill(fz_o, fz_h, fz_l, fz_c, optInTimePeriod, optInAnnualization, f0);
+                OutRange _fr = _fh.outRange();
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
+                if (_fr.begIdx() != beg.value || _fr.count() != nb.value) rangeOk = false;
+                if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
+                else {
+                    for (int i = 0; i < nb.value; i++) if (svXtierNe(f0[i], b0[i], zsign)) fillOk = false;
+                    for (int i = nb.value; i < svN; i++) if (f0[i] != (double)-1.2345678901234e300) fillOk = false;
+                }
+                try { c2.rogerssatchellOpenAndFill(fz_o, fz_h, fz_l, fz_c, optInTimePeriod, optInAnnualization, fz_o); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
+            } catch (IllegalArgumentException _e) { fillOk = false; }
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
+            java.util.Arrays.sort(pcs);
+            int prevP = -1;
+            for (int pi = 0; pi < pcs.length; pi++) {
+                int p = pcs[pi];
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
+                prevP = p;
+                Core.RogerssatchellStream st;
+                try { st = c2.rogerssatchellOpen(java.util.Arrays.copyOf(fz_o, p), java.util.Arrays.copyOf(fz_h, p), java.util.Arrays.copyOf(fz_l, p), java.util.Arrays.copyOf(fz_c, p), optInTimePeriod, optInAnnualization); }
+                catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"openRejectP\":" + p; continue; }
+                legs++;
+                if (svXtierNe(st.value(), b0[p - 1 - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
+                for (int t = p; t < svN; t++) {
+                    boolean pkTook = true;
+                    double pk = 0;
+                    try { pk = st.peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]); } catch (IllegalArgumentException _e) { pkTook = false; peekRejects++; }
+                    if (t % 7 == 0) {
+                        boolean rpTook = pkTook;
+                        try { st.peek(fz_o[t - 1], fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]); } catch (IllegalArgumentException _e) { peekRejects++; }
+                        double rp = 0;
+                        try { rp = st.peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]); } catch (IllegalArgumentException _e) { rpTook = false; }
+                        if (rpTook) {
+                            peekReps++;
+                            if (svBne(rp, pk)) peekRepAll = false;
+                        } else { peekRejects++; }
+                    }
+                    double up = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                    if (pkTook && svBne(pk, up)) peekAll = false;
+                    try { st.peek(fz_o[t - 1], fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]); } catch (IllegalArgumentException _e) { peekRejects++; }
+                    if (svBne(st.value(), up)) allOk = false;
+                    if (svXtierNe(up, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b0[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up)) + "\""; }
+                }
+                if (allOk) {
+                    rangeChecked = 1; rangeLegs++; rangeSites |= 2;
+                    if (st.outRange().begIdx() != beg.value || st.outRange().count() != nb.value) rangeOk = false;
+                    rangeLegs++; rangeSites |= 16;
+                    st.advance();
+                    if (st.outRange().begIdx() != beg.value || st.outRange().count() != nb.value + 1) rangeOk = false;
+                }
+            }
+            {
+                int p0 = lb + 1;
+                if (p0 <= svN - 1) {
+                    try {
+                        double[] f0 = new double[svN];
+                        java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                        Core.RogerssatchellStream sA = c2.rogerssatchellOpenAndFill(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod, optInAnnualization, f0);
+                        int mid = (p0 + svN) / 2;
+                        for (int t = p0; t < mid; t++) {
+                            double uA = sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            if (svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
+                        Core.RogerssatchellStream sB = sA.clone();
+                        sB.advance();
+                        double[] fk0 = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            double uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            fk0[t] = uB;
+                            if (svXtierNe(uB, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
+                        for (int t = mid; t < svN; t++) {
+                            double uA = sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            if (svBne(uA, fk0[t]) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
+                        if (allOk) {
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 8;
+                            if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                        }
+                    } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
+                }
+            }
+            if (lb >= 1 && lb < svN) {
+                try { c2.rogerssatchellOpen(java.util.Arrays.copyOf(fz_o, lb), java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb), java.util.Arrays.copyOf(fz_c, lb), optInTimePeriod, optInAnnualization); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryAccepted\":1"; }
+                catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                    try { c2.rogerssatchellOpenAndFill(java.util.Arrays.copyOf(fz_o, lb), java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb), java.util.Arrays.copyOf(fz_c, lb), optInTimePeriod, optInAnnualization, f0); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                    catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
+            }
+            try {
+                Core.RogerssatchellStream sD = c2.rogerssatchellOpen(fz_o, fz_h, fz_l, fz_c, Integer.MIN_VALUE, optInAnnualization);
+                Core.RogerssatchellStream sE = c2.rogerssatchellOpen(fz_o, fz_h, fz_l, fz_c, 10, optInAnnualization);
+                if (svBne(sD.value(), sE.value())) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
+            } catch (IllegalArgumentException _e) { /* defaults need more history than svN — skip */ }
+            {
+                int Sidx = lb + (svN - lb) / 3;
+                if (Sidx > lb && Sidx < svN - 1) {
+                    MInteger begS = new MInteger();
+                    MInteger nbS = new MInteger();
+                    RetCode rcS;
+                    try { rcS = c2.rogerssatchellImpl(Sidx, svN - 1, fz_o, fz_h, fz_l, fz_c, optInTimePeriod, optInAnnualization, begS, nbS, b0); }
+                    catch (RuntimeException _sve) { if (!(_sve instanceof TALibFailure)) throw _sve; rcS = ((TALibFailure) _sve).retCode(); }
+                    if (rcS == RetCode.SUCCESS && nbS.value > 0) {
+                        try {
+                            Core.RogerssatchellStream stA = c2.rogerssatchellOpenInternal(java.util.Arrays.copyOf(fz_o, svN), java.util.Arrays.copyOf(fz_h, svN), java.util.Arrays.copyOf(fz_l, svN), java.util.Arrays.copyOf(fz_c, svN), Sidx, optInTimePeriod, optInAnnualization);
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 4;
+                            if (stA.outRange().begIdx() != begS.value || stA.outRange().count() != nbS.value) rangeOk = false;
+                        } catch (IllegalArgumentException _e) { rangeOk = false; if (diag.isEmpty()) diag = ",\"anchoredOpenRejected\":1"; }
+                    }
+                }
+            }
+        }
+        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign[0] + diag + "}";
+    }
+
     static String sv_RSI(String json) {
         int svShape = jsonInt(json, "gen_shape");
         int svSeed = jsonInt(json, "gen_seed");
@@ -293692,6 +295376,7 @@ public class TaCodegenServe {
         case "TA_ROCP": return sv_ROCP(json);
         case "TA_ROCR": return sv_ROCR(json);
         case "TA_ROCR100": return sv_ROCR100(json);
+        case "TA_ROGERSSATCHELL": return sv_ROGERSSATCHELL(json);
         case "TA_RSI": return sv_RSI(json);
         case "TA_RVI": return sv_RVI(json);
         case "TA_RVIR": return sv_RVIR(json);
@@ -312049,6 +313734,110 @@ public class TaCodegenServe {
             double[] fb0 = new double[m];
             try {
                 Core.Rocr100Stream st2 = core.rocr100OpenAndFill(java.util.Arrays.copyOf(inReal, m), optInTimePeriod, fb0);
+                if (st2.outRange().begIdx() != beg || st2.outRange().count() != nb) { r.ok = false; r.leg = 2; }
+                if (r.ok) {
+                    for (int k = 0; k < nb; k++) {
+                        boolean cmp = true;
+                        if (cmp && svXtierNe(rb0[k], fb0[k], r.benign)) { cmp = false; r.out = 0; r.batch = Double.doubleToRawLongBits(rb0[k]); r.stream = Double.doubleToRawLongBits(fb0[k]); }
+                        if (cmp) r.fillBars++;
+                        if (!cmp) { r.ok = false; r.leg = 2; r.bar = beg + k; break; }
+                    }
+                }
+            } catch (RuntimeException _e) { r.ok = false; r.leg = 2; }
+        }
+
+        if (r.ok) {
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
+            rideSeenOpen[slot] = r.openBars; rideSeenFill[slot] = r.fillBars;
+        }
+    }
+
+    static void rideRogerssatchell(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, int optInTimePeriod, double optInAnnualization, StringBuilder sb) {
+        if (!rideGate(json)) return;
+        RideResult r = new RideResult();
+        rideBodyRogerssatchell(core, json, endIdx, inOpen, inHigh, inLow, inClose, optInTimePeriod, optInAnnualization, r);
+        r.emit(sb);
+    }
+
+    @SuppressWarnings("unused")
+    static void rideBodyRogerssatchell(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, int optInTimePeriod, double optInAnnualization, RideResult r) {
+        try { r.lb = core.rogerssatchellLookback(optInTimePeriod, optInAnnualization); } catch (RuntimeException _e) { r.lb = -1; }
+        int lb = r.lb;
+        int navail = endIdx + 1;
+        if (inOpen.length < navail) navail = inOpen.length;
+        if (inHigh.length < navail) navail = inHigh.length;
+        if (inLow.length < navail) navail = inLow.length;
+        if (inClose.length < navail) navail = inClose.length;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
+        if (m > navail) m = navail;
+        r.m = m;
+        if (m > RIDE_MAX_BARS) { r.skip = 1; return; }
+        if (m < 1) { r.skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
+        if (!rideFinite(inOpen, m) || !rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
+
+        long hash = 0xcbf29ce484222325L;
+        hash = rideMixStr(hash, "TA_ROGERSSATCHELL");
+        hash = rideMix(hash, m);
+        hash = rideMix(hash, rideGen);
+        hash = rideMix(hash, jsonInt(json, "unstablePeriod"));
+        hash = rideMix(hash, optInTimePeriod);
+        hash = rideMix(hash, Double.doubleToRawLongBits(optInAnnualization));
+        hash = rideMixArr(hash, inOpen, m);
+        hash = rideMixArr(hash, inHigh, m);
+        hash = rideMixArr(hash, inLow, m);
+        hash = rideMixArr(hash, inClose, m);
+        int slot = (int) Math.floorMod(hash, (long) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash) {
+            r.dedup = 1; r.openBars = rideSeenOpen[slot]; r.fillBars = rideSeenFill[slot]; return;
+        }
+
+        double[] rb0 = new double[m];
+        int beg = 0;
+        int nb = 0;
+        String clsB = "";
+        boolean rejected = false;
+        try { OutRange _rr = core.rogerssatchell(0, m - 1, java.util.Arrays.copyOf(inOpen, m), java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m), optInTimePeriod, optInAnnualization, rb0); beg = _rr.begIdx(); nb = _rr.count(); }
+        catch (RuntimeException _e) { r.rcBatch = rideCode(_e); clsB = _e.getClass().getName(); rejected = true; }
+        if (rejected) {
+            String clsO = "", clsF = "";
+            try { core.rogerssatchellOpen(java.util.Arrays.copyOf(inOpen, m), java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m), optInTimePeriod, optInAnnualization); } catch (RuntimeException _e) { r.rcOpen = rideCode(_e); clsO = _e.getClass().getName(); }
+            double[] fb0 = new double[m];
+            try { core.rogerssatchellOpenAndFill(java.util.Arrays.copyOf(inOpen, m), java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m), optInTimePeriod, optInAnnualization, fb0); } catch (RuntimeException _e) { r.rcFill = rideCode(_e); clsF = _e.getClass().getName(); }
+            boolean cmpO = r.rcOpen == r.rcBatch && clsO.equals(clsB);
+            if (cmpO) r.rej++;
+            if (!cmpO) { r.ok = false; r.leg = r.rcOpen == r.rcBatch ? 4 : 3; }
+            boolean cmpF = r.rcFill == r.rcBatch && clsF.equals(clsB);
+            if (cmpF) r.rej++;
+            if (!cmpF) { r.ok = false; r.leg = r.rcFill == r.rcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.skip = 7; return; }
+        if (nb == 0) { r.skip = 5; return; }
+        if (beg != lb) { r.skip = 6; return; }
+
+        try {
+            boolean cmp;
+            Core.RogerssatchellStream st = core.rogerssatchellOpen(java.util.Arrays.copyOf(inOpen, lb + 1), java.util.Arrays.copyOf(inHigh, lb + 1), java.util.Arrays.copyOf(inLow, lb + 1), java.util.Arrays.copyOf(inClose, lb + 1), optInTimePeriod, optInAnnualization);
+            double uv = st.value();
+            cmp = true;
+            if (cmp && svXtierNe(rb0[lb - beg], uv, r.benign)) { cmp = false; r.out = 0; r.batch = Double.doubleToRawLongBits(rb0[lb - beg]); r.stream = Double.doubleToRawLongBits(uv); }
+            if (cmp) r.openBars++;
+            if (!cmp) { r.ok = false; r.leg = 1; r.bar = lb; }
+            for (int t = lb + 1; r.ok && t < m; t++) {
+                double uv2 = st.update(inOpen[t], inHigh[t], inLow[t], inClose[t]);
+                uv = uv2;
+                cmp = true;
+                if (cmp && svXtierNe(rb0[t - beg], uv, r.benign)) { cmp = false; r.out = 0; r.batch = Double.doubleToRawLongBits(rb0[t - beg]); r.stream = Double.doubleToRawLongBits(uv); }
+                if (cmp) r.openBars++;
+                if (!cmp) { r.ok = false; r.leg = 1; r.bar = t; }
+            }
+        } catch (RuntimeException _e) { r.ok = false; r.leg = 1; }
+
+        if (r.ok) {
+            double[] fb0 = new double[m];
+            try {
+                Core.RogerssatchellStream st2 = core.rogerssatchellOpenAndFill(java.util.Arrays.copyOf(inOpen, m), java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m), optInTimePeriod, optInAnnualization, fb0);
                 if (st2.outRange().begIdx() != beg || st2.outRange().count() != nb) { r.ok = false; r.leg = 2; }
                 if (r.ok) {
                     for (int k = 0; k < nb; k++) {
