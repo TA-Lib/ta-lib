@@ -13,7 +13,7 @@ outReal[i] = sinh(inReal[i])
 
 ## Notes
 
-- An input beyond about 710.47 in magnitude has a result too large for a double, so those elements come out positive or negative infinity.
+- An input beyond about 710.48 in magnitude has a result too large for a double, so those elements come out positive or negative infinity.
 
 ## Inputs
 

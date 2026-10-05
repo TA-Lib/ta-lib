@@ -149,7 +149,7 @@ public partial class Core
    /// <see href="https://ta-lib.org/functions/sinh">ta-lib.org/functions/sinh</see>.
    /// </para>
    /// <list type="bullet">
-   /// <item><description>An input beyond about 710.47 in magnitude has a result too large for a double, so those elements come out positive or negative infinity.</description></item>
+   /// <item><description>An input beyond about 710.48 in magnitude has a result too large for a double, so those elements come out positive or negative infinity.</description></item>
    /// </list>
    /// <para>
    /// Values are written only where the indicator is defined. The returned
@@ -220,7 +220,7 @@ public partial class Core
    /// <see href="https://ta-lib.org/functions/sinh">ta-lib.org/functions/sinh</see>.
    /// </para>
    /// <list type="bullet">
-   /// <item><description>An input beyond about 710.47 in magnitude has a result too large for a double, so those elements come out positive or negative infinity.</description></item>
+   /// <item><description>An input beyond about 710.48 in magnitude has a result too large for a double, so those elements come out positive or negative infinity.</description></item>
    /// </list>
    /// <para>
    /// This is the <c>float[]</c> overload: input elements are widened to

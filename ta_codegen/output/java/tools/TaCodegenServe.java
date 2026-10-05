@@ -86579,7 +86579,7 @@ class Core {
         * href="https://ta-lib.org/functions/cosh">ta-lib.org/functions/cosh</a>.
         * <p><b>Notes</b>
         * <ul>
-        * <li>An input beyond about 710.47 in magnitude has a result too large for a double, so those elements come out positive infinity.</li>
+        * <li>An input beyond about 710.48 in magnitude has a result too large for a double, so those elements come out positive infinity.</li>
         * </ul>
         * <p>Values are written only where the indicator is defined. The returned
         * {@link OutRange} says where they start and how many there are, and the
@@ -86636,7 +86636,7 @@ class Core {
         * href="https://ta-lib.org/functions/cosh">ta-lib.org/functions/cosh</a>.
         * <p><b>Notes</b>
         * <ul>
-        * <li>An input beyond about 710.47 in magnitude has a result too large for a double, so those elements come out positive infinity.</li>
+        * <li>An input beyond about 710.48 in magnitude has a result too large for a double, so those elements come out positive infinity.</li>
         * </ul>
         * <p>This is the {@code float[]} overload. The arithmetic is performed in
         * {@code double} before being written to the {@code double[]} output, so a
@@ -181392,7 +181392,7 @@ class Core {
         * href="https://ta-lib.org/functions/sinh">ta-lib.org/functions/sinh</a>.
         * <p><b>Notes</b>
         * <ul>
-        * <li>An input beyond about 710.47 in magnitude has a result too large for a double, so those elements come out positive or negative infinity.</li>
+        * <li>An input beyond about 710.48 in magnitude has a result too large for a double, so those elements come out positive or negative infinity.</li>
         * </ul>
         * <p>Values are written only where the indicator is defined. The returned
         * {@link OutRange} says where they start and how many there are, and the
@@ -181448,7 +181448,7 @@ class Core {
         * href="https://ta-lib.org/functions/sinh">ta-lib.org/functions/sinh</a>.
         * <p><b>Notes</b>
         * <ul>
-        * <li>An input beyond about 710.47 in magnitude has a result too large for a double, so those elements come out positive or negative infinity.</li>
+        * <li>An input beyond about 710.48 in magnitude has a result too large for a double, so those elements come out positive or negative infinity.</li>
         * </ul>
         * <p>This is the {@code float[]} overload. The arithmetic is performed in
         * {@code double} before being written to the {@code double[]} output, so a
@@ -217448,7 +217448,7 @@ class Core {
 
 public class TaCodegenServe {
     static Core core = new Core();
-    static final String SPLICED_GENCODE_DIGEST = "9e6b8d4d8943b9b8";
+    static final String SPLICED_GENCODE_DIGEST = "58c8825476d83a0e";
     static final int MAX_ARRAY_SIZE = 200000;
     static double[] refOpen = new double[MAX_ARRAY_SIZE];
     static double[] refHigh = new double[MAX_ARRAY_SIZE];

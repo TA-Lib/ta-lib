@@ -230,7 +230,7 @@ TA_RetCode regtest_guarded_call( const TA_ParamHolder *params,
    TA_Integer keptBeg, keptNb;
    TA_RetCode retCode;
 
-   if( !outBegIdx || !outNbElement || !params )
+   if( !outBegIdx || !outNbElement )
       return TA_CallFunc( params, startIdx, endIdx, outBegIdx, outNbElement );
 
    keptBeg = *outBegIdx;

@@ -10,7 +10,7 @@ outReal[i] = cosh(inReal[i]) = (e^{inReal[i]} + e^{-inReal[i]}) / 2
 
 ## Notes
 
-- An input beyond about 710.47 in magnitude has a result too large for a double, so those elements come out positive infinity.
+- An input beyond about 710.48 in magnitude has a result too large for a double, so those elements come out positive infinity.
 
 ## Inputs
 
