@@ -423,7 +423,7 @@ Where the reading and the measurement differ, and facts the tree states differen
 ADOSC is ruled in section 9, D6, and the index tie-break is scheduled in section 8. The period-1
 item is part of the rules of section 3.2. The rest are separate decisions.
 
-- **ADOSC was flagged path-dependent and is not** (the flag is gone, issue #502). It is the difference of two EMAs of the A/D
+- **ADOSC is built on a running total and still converges.** It is the difference of two EMAs of the A/D
   line. Both EMAs are seeded on the same first A/D value, so the constant offset between two
   starts' A/D lines cancels in the difference and what remains decays at the slower EMA's rate.
   Measured at the defaults: within `e^-10` after 51 bars, against a `PREC_4` count of 55. Under
@@ -708,7 +708,7 @@ compare at every bar both report.
   the rules exactly, and what catches a helper transcribed wrong.
 - **Accumulations and state machines** are not compared. A function flagged `path_dependent`
   that meets the converging criterion on every series and start, with `S` above `T` on at least
-  one, fails the leg: that is how a wrong flag, such as ADOSC's, is caught. NVI and PVI can be
+  one, fails the leg: that is how a wrong flag is caught. NVI and PVI can be
   identical from two early starts, which is why one series is not enough.
 - **Stated exclusions.** KAMA, FRAMA, VIDYA and the KAMA and VIDYA MA arms are compared on the
   trend and random-walk series only: their counts are sized for those (section 9, D3), and the
@@ -822,7 +822,7 @@ Steps 1, 4 and 5 each leave the tree releasable. Steps 2 and 3 are one releasabl
 lookback is what callers size history by, so either they land together or step 2 keeps every
 setter refusing `TA_UNSTABLE_AUTO` until the leg is green.
 
-The ADOSC flag (section 9, D6) is done. The tie-break of the index functions either
+The tie-break of the index functions either
 lands before step 3, or the leg names it as an exemption that the later change removes.
 
 ## 9. Rulings

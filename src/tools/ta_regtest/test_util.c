@@ -1330,7 +1330,7 @@ static int dataWithinReasonableRange( TA_Real val1, TA_Real val2,
     *                  place. This is useful for functions
     *                  that cannot be compare when changing
     *                  the range (like the accumulative
-    *                  algorithm used for TA_AD and TA_ADOSC).
+    *                  algorithm used for TA_AD).
     */
 
 
