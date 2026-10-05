@@ -142,7 +142,7 @@ which is why they cannot reach EXACT.
 `stability_class()` assigns it: an explicit `exact[]` list from a source audit,
 `SKIP` **derived** from `get_integer_tolerance` so it cannot desync from the
 integer-output skip, `CONVERGING` from `UNSTABLE_MAP`, else `EPSILON`.
-`doRangeTestEx` guards the invariant — `CONVERGING` must carry an unstId,
+`doRangeTestMulti` guards the invariant — `CONVERGING` must carry an unstId,
 `EXACT`/`EPSILON` must not, `SKIP` is exempt (SUPERTREND legitimately sweeps an
 internal ATR).
 

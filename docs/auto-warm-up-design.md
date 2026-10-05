@@ -420,14 +420,9 @@ pages carry the rule.
 ### 3.5 What the classification found
 
 Where the reading and the measurement differ, and facts the tree states differently today.
-ADOSC is ruled in section 9, D6, and the index tie-break is scheduled in section 8. The period-1
-item is part of the rules of section 3.2. The rest are separate decisions.
+The index tie-break is scheduled in section 8. The period-1 item is part of the rules of
+section 3.2. The rest are separate decisions.
 
-- **ADOSC is built on a running total and still converges.** It is the difference of two EMAs of the A/D
-  line. Both EMAs are seeded on the same first A/D value, so the constant offset between two
-  starts' A/D lines cancels in the difference and what remains decays at the slower EMA's rate.
-  Measured at the defaults: within `e^-10` after 51 bars, against a `PREC_4` count of 55. Under
-  Auto it is as stable as MACD.
 - **SUPERTREND inherits ATR's id but its bands do not converge by decay.** The unstable period
   warms the ATR; the trend flag and both bands are seeded on the first reported bar at every
   setting. Auto lengthens its lookback as a fixed count does today and promises nothing about
@@ -919,8 +914,11 @@ the advanced details. The specification states no tolerance, so the 2026-10-03 r
 - The inheritance stays mechanical. A level lengthens the lookback of ADOSC (through EMA) and
   of SUPERTREND (through ATR) as a fixed count does today.
 - ADOSC is reclassified: it loses its `path_dependent` flag and reads "Initial Unstable Period,
-  inherited from EMA" (section 3.5). This is its own change, outside the Auto work, and lands
-  before the two-start leg, which would otherwise report ADOSC as wrongly flagged.
+  inherited from EMA". Both of its EMAs are seeded on the same first A/D value, so the constant
+  offset between two starts' A/D lines cancels in the difference and what remains decays at the
+  slower EMA's rate: at the defaults, within `e^-10` after 51 bars, against a `PREC_4` count of
+  55. Done in issue #502, ahead of the two-start leg, which would otherwise have reported ADOSC
+  as wrongly flagged.
 - SUPERTREND stays path-dependent.
 
 **D7. The Hilbert functions, MAMA and STC.** Ruled (owner, 2026-10-05): the counts below, each
