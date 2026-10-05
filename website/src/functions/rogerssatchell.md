@@ -9,7 +9,7 @@ Rogers-Satchell volatility: a range-based estimator that reads one bar's open, h
 
 What separates it from the other range estimators is that it is unbiased **whatever the drift**. A bar that opens at its low and closes at its high has travelled in one direction and dispersed nothing around that path, and this estimator reads it as exactly zero, where Parkinson and Garman-Klass read a wide range as volatility. The price of that is a blind spot of its own: the estimator has no close-to-open term, so overnight gaps are invisible to it.
 
-Read the output as a fraction in log-return units — not price units, not percent. At the default `optInAnnualization` of 252 it is an annualised figure for daily bars; pass 1 to leave the per-bar figure, 52 for weekly bars, 12 for monthly.
+Read the output as a fraction in log-return units, not price units and not percent. At the default `optInAnnualization` of 252 it is an annualised figure for daily bars; pass 1 to leave the per-bar figure, 52 for weekly bars, 12 for monthly.
 
 ## Formula
 
@@ -34,7 +34,7 @@ The estimator is defined on a consistent bar, one whose low is at or below both 
 
 A bar carrying a price at or below zero contributes a zero term and still counts toward the window's `n`. The test is exact rather than against a fixed band, so an instrument quoted in small units is not zeroed out by the threshold.
 
-The window sum is carried from bar to bar and rebuilt as a fresh sum when it collapses to below a millionth of the largest it has held since the last rebuild, or at least every `32n` bars. Without that, a run of flat bars leaves the residue of earlier arithmetic behind instead of an exact zero — and that residue is negative about as often as it is positive, which under a root is where a plain running sum produces NaN rather than a volatility.
+The window sum is carried from bar to bar and rebuilt as a fresh sum whenever it collapses relative to the largest it has held, and periodically otherwise. A window of flat bars therefore reads exactly zero; a sum that is only ever added to and subtracted from would leave the rounding of earlier bars behind instead.
 
 `optInAnnualization` is applied as `sqrt(A)` computed once and multiplied in at the end, so the annualised output is exactly `sqrt(A)` times the per-bar one, and `A = 1` is an identity rather than a rounding.
 
@@ -55,8 +55,8 @@ Every term reads only its own bar, so the lookback is `n - 1`: the first output 
 
 | Parameter | Type | Default | Accepted values | Description |
 | --- | --- | --- | --- | --- |
-| `optInTimePeriod` | integer | 10 | 1–100000 | Number of bars in the window. Default 10, range 1 to 100000. `n = 1` is the paper's own single-bar estimator. |
-| `optInAnnualization` | real | 252 | ≥ 0 | Periods per year. Default 252, range 0 to `TA_REAL_MAX`. Pass 1 for the per-bar figure. |
+| `optInTimePeriod` | integer | 10 | 1–100000 | Number of bars in the window. `n = 1` is the paper's own single-bar estimator. |
+| `optInAnnualization` | real | 252 | ≥ 0 | Periods per year. Pass 1 for the per-bar figure. |
 
 ## Properties
 

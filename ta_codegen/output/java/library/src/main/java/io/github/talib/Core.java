@@ -173414,12 +173414,11 @@ public final class Core {
     * series is requested. Feed at least {@code lookback + 1} bars to get any
     * output.
     *
-    * @param optInTimePeriod Number of bars in the window. Default 10, range 1
-    *        to 100000. {@code n = 1} is the paper's own single-bar estimator (default
-    *        10; range 1..100000; {@code Integer.MIN_VALUE} selects the default).
-    * @param optInAnnualization Periods per year. Default 252, range 0 to
-    *        {@code TA_REAL_MAX}. Pass 1 for the per-bar figure (default 252; minimum
-    *        0; {@link Core#REAL_DEFAULT} selects the default).
+    * @param optInTimePeriod Number of bars in the window. {@code n = 1} is the
+    *        paper's own single-bar estimator (default 10; range 1..100000;
+    *        {@code Integer.MIN_VALUE} selects the default).
+    * @param optInAnnualization Periods per year. Pass 1 for the per-bar figure
+    *        (default 252; minimum 0; {@link Core#REAL_DEFAULT} selects the default).
     * @return The lookback, or {@code -1} if a parameter is out of range.
     */
    public int rogerssatchellLookback( int optInTimePeriod, double optInAnnualization )
@@ -173443,12 +173442,11 @@ public final class Core {
     * <p>Every output of this function is drawn at its own bar, so the answer is
     * 0.
     *
-    * @param optInTimePeriod Number of bars in the window. Default 10, range 1
-    *        to 100000. {@code n = 1} is the paper's own single-bar estimator (default
-    *        10; range 1..100000; {@code Integer.MIN_VALUE} selects the default).
-    * @param optInAnnualization Periods per year. Default 252, range 0 to
-    *        {@code TA_REAL_MAX}. Pass 1 for the per-bar figure (default 252; minimum
-    *        0; {@link Core#REAL_DEFAULT} selects the default).
+    * @param optInTimePeriod Number of bars in the window. {@code n = 1} is the
+    *        paper's own single-bar estimator (default 10; range 1..100000;
+    *        {@code Integer.MIN_VALUE} selects the default).
+    * @param optInAnnualization Periods per year. Pass 1 for the per-bar figure
+    *        (default 252; minimum 0; {@link Core#REAL_DEFAULT} selects the default).
     * @param outputIdx Position of the output in the batch signature, from 0.
     * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
     *        out of range or the index names no output.
@@ -173781,7 +173779,7 @@ public final class Core {
     * zero, where Parkinson and Garman-Klass read a wide range as volatility.
     * The price of that is a blind spot of its own: the estimator has no
     * close-to-open term, so overnight gaps are invisible to it. Read the output
-    * as a fraction in log-return units — not price units, not percent. At the
+    * as a fraction in log-return units, not price units and not percent. At the
     * default {@code optInAnnualization} of 252 it is an annualised figure for
     * daily bars; pass 1 to leave the per-bar figure, 52 for weekly bars, 12 for
     * monthly.
@@ -173799,12 +173797,11 @@ public final class Core {
     * @param inHigh High price of each bar.
     * @param inLow Low price of each bar.
     * @param inClose Close price of each bar.
-    * @param optInTimePeriod Number of bars in the window. Default 10, range 1
-    *        to 100000. {@code n = 1} is the paper's own single-bar estimator (default
-    *        10; range 1..100000; {@code Integer.MIN_VALUE} selects the default).
-    * @param optInAnnualization Periods per year. Default 252, range 0 to
-    *        {@code TA_REAL_MAX}. Pass 1 for the per-bar figure (default 252; minimum
-    *        0; {@link Core#REAL_DEFAULT} selects the default).
+    * @param optInTimePeriod Number of bars in the window. {@code n = 1} is the
+    *        paper's own single-bar estimator (default 10; range 1..100000;
+    *        {@code Integer.MIN_VALUE} selects the default).
+    * @param optInAnnualization Periods per year. Pass 1 for the per-bar figure
+    *        (default 252; minimum 0; {@link Core#REAL_DEFAULT} selects the default).
     * @param outReal Estimated volatility, in log-return units. Must hold at
     *        least {@code endIdx - max(startIdx, rogerssatchellLookback(...)) + 1}
     *        values, and never be empty: an empty array is an absent output.
@@ -173864,7 +173861,7 @@ public final class Core {
     * zero, where Parkinson and Garman-Klass read a wide range as volatility.
     * The price of that is a blind spot of its own: the estimator has no
     * close-to-open term, so overnight gaps are invisible to it. Read the output
-    * as a fraction in log-return units — not price units, not percent. At the
+    * as a fraction in log-return units, not price units and not percent. At the
     * default {@code optInAnnualization} of 252 it is an annualised figure for
     * daily bars; pass 1 to leave the per-bar figure, 52 for weekly bars, 12 for
     * monthly.
@@ -173885,12 +173882,11 @@ public final class Core {
     * @param inHigh High price of each bar.
     * @param inLow Low price of each bar.
     * @param inClose Close price of each bar.
-    * @param optInTimePeriod Number of bars in the window. Default 10, range 1
-    *        to 100000. {@code n = 1} is the paper's own single-bar estimator (default
-    *        10; range 1..100000; {@code Integer.MIN_VALUE} selects the default).
-    * @param optInAnnualization Periods per year. Default 252, range 0 to
-    *        {@code TA_REAL_MAX}. Pass 1 for the per-bar figure (default 252; minimum
-    *        0; {@link Core#REAL_DEFAULT} selects the default).
+    * @param optInTimePeriod Number of bars in the window. {@code n = 1} is the
+    *        paper's own single-bar estimator (default 10; range 1..100000;
+    *        {@code Integer.MIN_VALUE} selects the default).
+    * @param optInAnnualization Periods per year. Pass 1 for the per-bar figure
+    *        (default 252; minimum 0; {@link Core#REAL_DEFAULT} selects the default).
     * @param outReal Estimated volatility, in log-return units. Must hold at
     *        least {@code endIdx - max(startIdx, rogerssatchellLookback(...)) + 1}
     *        values, and never be empty: an empty array is an absent output.

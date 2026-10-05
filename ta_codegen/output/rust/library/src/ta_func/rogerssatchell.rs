@@ -71,10 +71,10 @@ impl Core {
     ///
     /// # Arguments
     ///
-    /// * `optInTimePeriod` — Number of bars in the window. Default 10, range 1 to 100000. `n = 1`
-    ///   is the paper's own single-bar estimator. (default 10, range 1..=100000)
-    /// * `optInAnnualization` — Periods per year. Default 252, range 0 to `TA_REAL_MAX`. Pass 1
-    ///   for the per-bar figure. (default 252, minimum 0)
+    /// * `optInTimePeriod` — Number of bars in the window. `n = 1` is the paper's own single-bar
+    ///   estimator. (default 10, range 1..=100000)
+    /// * `optInAnnualization` — Periods per year. Pass 1 for the per-bar figure. (default 252,
+    ///   minimum 0)
     ///
     /// # Errors
     ///
@@ -104,10 +104,10 @@ impl Core {
     ///
     /// # Arguments
     ///
-    /// * `optInTimePeriod` — Number of bars in the window. Default 10, range 1 to 100000. `n = 1`
-    ///   is the paper's own single-bar estimator. (default 10, range 1..=100000)
-    /// * `optInAnnualization` — Periods per year. Default 252, range 0 to `TA_REAL_MAX`. Pass 1
-    ///   for the per-bar figure. (default 252, minimum 0)
+    /// * `optInTimePeriod` — Number of bars in the window. `n = 1` is the paper's own single-bar
+    ///   estimator. (default 10, range 1..=100000)
+    /// * `optInAnnualization` — Periods per year. Pass 1 for the per-bar figure. (default 252,
+    ///   minimum 0)
     /// * `outputIdx` — Position of the output in the batch signature, from 0
     ///
     /// # Errors
@@ -340,7 +340,7 @@ impl Core {
     /// path, and this estimator reads it as exactly zero, where Parkinson and Garman-Klass read a
     /// wide range as volatility. The price of that is a blind spot of its own: the estimator has no
     /// close-to-open term, so overnight gaps are invisible to it. Read the output as a fraction in
-    /// log-return units — not price units, not percent. At the default `optInAnnualization` of
+    /// log-return units, not price units and not percent. At the default `optInAnnualization` of
     /// 252 it is an annualised figure for daily bars; pass 1 to leave the per-bar figure, 52 for
     /// weekly bars, 12 for monthly.
     ///
@@ -355,10 +355,10 @@ impl Core {
     /// * `inHigh` — High price of each bar.
     /// * `inLow` — Low price of each bar.
     /// * `inClose` — Close price of each bar.
-    /// * `optInTimePeriod` — Number of bars in the window. Default 10, range 1 to 100000. `n = 1`
-    ///   is the paper's own single-bar estimator. (default 10, range 1..=100000)
-    /// * `optInAnnualization` — Periods per year. Default 252, range 0 to `TA_REAL_MAX`. Pass 1
-    ///   for the per-bar figure. (default 252, minimum 0)
+    /// * `optInTimePeriod` — Number of bars in the window. `n = 1` is the paper's own single-bar
+    ///   estimator. (default 10, range 1..=100000)
+    /// * `optInAnnualization` — Periods per year. Pass 1 for the per-bar figure. (default 252,
+    ///   minimum 0)
     /// * `outReal` — Estimated volatility, in log-return units.
     ///
     /// Integer parameters accept [`Core::INTEGER_DEFAULT`], and real parameters

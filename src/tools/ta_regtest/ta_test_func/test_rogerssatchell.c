@@ -44,6 +44,8 @@
  *  MMDDYY BY   Description
  *  -------------------------------------------------------------------
  *  100526 KL,CC First version (proposal ROGERSSATCHELL, #483).
+ *  100526 MF,CC Whole-bar guard on every price and tier, drift-only and
+ *               negative-sum windows, server_verify (#483).
  */
 
 /* Description:
@@ -51,47 +53,15 @@
  *   Test TA_ROGERSSATCHELL (Rogers-Satchell volatility, #483).
  *
  *   --codegen, --xlang-hash and server_verify compare every language against
- *   this library, so none of them can catch a wrong formula. What constrains
- *   the formula here is a reference built from the primary itself -- Rogers
- *   and Satchell, The Annals of Applied Probability 1(4):504-512 (1991),
- *   eq. (2) -- evaluated at 60 digits and frozen below, plus three analytic
- *   properties that a wrong formula cannot hold at once.
+ *   this library, so none of them can catch a wrong formula. The formula is
+ *   held by goldens evaluated at 60 digits from eq. (2) of Rogers and
+ *   Satchell, The Annals of Applied Probability 1(4):504-512 (1991), and by
+ *   analytic properties a wrong formula cannot hold at once.
  *
- *   Legs:
- *     1. GOLDEN. Fourteen rows over the committed corpus, from a 60-digit
- *        evaluation of eq. (2) on the exact binary64 values of the corpus
- *        literals: exact logs, exact window sum, one final rounding. Held at
- *        1e-13 relative, 26x above the worst row measured. NOT a whole-series
- *        bound: at n <= 2 the floor follows C/(C-L), so a whole-series check
- *        there would need 1e-12.
- *     2. SCALE. The annualisation is exactly sqrt(A): A = 252 is bitwise
- *        sqrt(252) times A = 1 on every bar, and A = 0 is exactly 0.0 on
- *        every bar. Computing sqrt(A) per bar, or folding A inside the root,
- *        reds the first half.
- *     3. DRIFT. The property that separates this estimator from every
- *        range-only one (p.504 abstract, eq. (3)): a bar that opens at its low
- *        and closes at its high has travelled without dispersing, and reads
- *        EXACTLY 0.0. Three corpus bars are of that shape and no others, so
- *        the leg asserts the set, not a sample: a Parkinson-style ln(H/L)^2
- *        term fails it on all three.
+ *   The golden tolerance is not a whole-series bound: at n <= 2 the error
+ *   floor follows C/(C-L), so a whole-series check there needs 1e-12.
  *
- *        What each half is worth, measured rather than assumed. The EXACT-zero
- *        assertion has a mutation of its own: a 1e-30 floor added to the term
- *        leaves every golden row inside 1e-13 and is rejected here. The
- *        set-size half does NOT -- every mutation that widens the zero set
- *        tried here also moves a golden row, so it is carried as a second
- *        line of defence against an implementation that answers zero more
- *        widely than the estimator does, not as an independently discriminating
- *        gate.
- *     4. LOOKBACK AND PARAMETERS. outBegIdx is n-1 and optInAnnualization
- *        cannot move it. A negative, an over-range or a NaN annualisation is
- *        refused by the function and by _Lookback.
- *     5. ALIASING. outReal over each of the four inputs in turn.
- *     6. RANGE INDEPENDENCE. A sub-range equals the same slice of a full run.
- *        Swept via doRangeTestEx rather than one fixed split.
- *
- *   The counters below are pinned so a leg that stops comparing anything is a
- *   failure rather than a silent pass.
+ *   Every comparison count is pinned, so a leg that stops comparing fails.
  */
 
 #include <stdio.h>
@@ -123,9 +93,17 @@
 #define RS_REBUILD_CMP 24033
 /* Periods 5, 9, 14, 20 over 300 bars: 296+292+287+281. */
 #define RS_STREAM_CMP  1156
-/* Two bad-price passes of 5 pinned bars plus the bar-60 bitwise check, and
- * the inconsistent bar: 2*(5+1)+1. */
+/* Two bad-price passes of 5 pinned bars plus bar 60, and the inconsistent
+ * bar: 2*(5+1)+1. */
 #define RS_GUARD_CMP     13
+/* 4 prices x 2 bad values x 2 bars, 243 outputs each. */
+#define RS_GUARD_BAR_CMP 3888
+/* 4 prices x 2 bad values, bars 9 to 60. */
+#define RS_GUARD_STREAM_CMP 416
+/* 3 flat prices x periods 5, 9, 14, 20: sum(51-n) = 46+42+37+31. */
+#define RS_DRIFT_RUN_CMP 468
+/* Periods 5, 9, 14, 20 over 300 bars: 296+292+287+281. */
+#define RS_NEGATIVE_CMP 1156
 
 static int g_rsGoldenCmp;
 static int g_rsScaleCmp;
@@ -136,6 +114,10 @@ static int g_rsCompositeCmp;
 static int g_rsRebuildCmp;
 static int g_rsStreamCmp;
 static int g_rsGuardCmp;
+static int g_rsGuardBarCmp;
+static int g_rsGuardStreamCmp;
+static int g_rsDriftRunCmp;
+static int g_rsNegativeCmp;
 
 typedef struct
 {
@@ -168,7 +150,7 @@ static const RsGolden rsGolden[] =
 
 #define RS_NB_GOLDEN ((int)(sizeof(rsGolden)/sizeof(rsGolden[0])))
 
-/* 26x the worst row measured (2.95e-15 on this host). */
+/* The 60-digit rows reproduce to 3e-15. */
 #define RS_GOLDEN_TOL 1e-13
 
 /* The corpus bars whose open is their low and whose close is their high --
@@ -202,6 +184,10 @@ ErrorNumber test_func_rogerssatchell( TA_History *history )
    g_rsRebuildCmp = 0;
    g_rsStreamCmp = 0;
    g_rsGuardCmp = 0;
+   g_rsGuardBarCmp = 0;
+   g_rsGuardStreamCmp = 0;
+   g_rsDriftRunCmp = 0;
+   g_rsNegativeCmp = 0;
 
    if( history->nbBars != RS_NB_BAR )
    {
@@ -248,18 +234,25 @@ ErrorNumber test_func_rogerssatchell( TA_History *history )
     || g_rsCompositeCmp != RS_COMPOSITE_CMP
     || g_rsRebuildCmp  != RS_REBUILD_CMP
     || g_rsStreamCmp   != RS_STREAM_CMP
-    || g_rsGuardCmp    != RS_GUARD_CMP )
+    || g_rsGuardCmp    != RS_GUARD_CMP
+    || g_rsGuardBarCmp != RS_GUARD_BAR_CMP
+    || g_rsGuardStreamCmp != RS_GUARD_STREAM_CMP
+    || g_rsDriftRunCmp != RS_DRIFT_RUN_CMP
+    || g_rsNegativeCmp != RS_NEGATIVE_CMP )
    {
       printf( "Fail: TA_ROGERSSATCHELL comparison counts (golden %d, scale %d, "
               "drift %d, lookback %d, alias %d, composite %d, rebuild %d, "
-              "stream %d, guard %d) are not what this file asserts "
-              "(%d, %d, %d, %d, %d, %d, %d, %d, %d)\n",
+              "stream %d, guard %d, guard bar %d, guard stream %d, "
+              "drift run %d, negative %d) are not what this file asserts "
+              "(%d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d)\n",
               g_rsGoldenCmp, g_rsScaleCmp, g_rsDriftCmp, g_rsLookbackCmp,
               g_rsAliasCmp, g_rsCompositeCmp, g_rsRebuildCmp, g_rsStreamCmp,
-              g_rsGuardCmp,
+              g_rsGuardCmp, g_rsGuardBarCmp, g_rsGuardStreamCmp,
+              g_rsDriftRunCmp, g_rsNegativeCmp,
               RS_GOLDEN_CMP, RS_SCALE_CMP, RS_DRIFT_CMP, RS_LOOKBACK_CMP,
               RS_ALIAS_CMP, RS_COMPOSITE_CMP, RS_REBUILD_CMP, RS_STREAM_CMP,
-              RS_GUARD_CMP );
+              RS_GUARD_CMP, RS_GUARD_BAR_CMP, RS_GUARD_STREAM_CMP,
+              RS_DRIFT_RUN_CMP, RS_NEGATIVE_CMP );
       return TA_TESTUTIL_TFRR_BAD_CALCULATION;
    }
 
@@ -386,9 +379,8 @@ static ErrorNumber test_rs_scale( const TA_History *history )
       for( i = 0; i < nbElement; i++ )
       {
          double want = sqrtA * base[i];
-         /* Bitwise: the factor is applied once, at the end, to the same
-          * value. Anything else -- A folded inside the root, sqrt(A) taken
-          * per bar -- lands on different bits. */
+         /* Bitwise: the factor multiplies the finished per-bar value. A
+          * folded inside the root lands on different bits. */
          if( memcmp( &want, &scaled[i], sizeof(double) ) != 0 )
          {
             printf( "Fail: TA_ROGERSSATCHELL scale n=%d bar %d: %.17g, "
@@ -718,40 +710,48 @@ static ErrorNumber test_rs_composite( const TA_History *history )
 #define RS_SYN_N      300
 #define RS_FLAT_LEN    50   /* bars; real bars resume right after */
 
-/* WHERE the flat run starts matters: whether the residue a missing rebuild
- * leaves is positive (visible on an all-flat window) or negative (clamped to
- * 0.0 by the S <= 0 rule, and so invisible there) depends on which terms the
- * window was carrying when the flat run began. One cut point is one draw of
- * that; these five are swept so the leg does not rest on a lucky one. */
+/* Which sign the residue of a missing rebuild takes depends on the terms the
+ * window carried when the flat run began, and a negative one is hidden on an
+ * all-flat window by the S <= 0 rule. The legs sweep the cut point so they do
+ * not rest on one draw of it. */
 static int g_rsFlatFrom, g_rsFlatTo;
 
 static TA_Real g_synO[RS_SYN_N], g_synH[RS_SYN_N];
 static TA_Real g_synL[RS_SYN_N], g_synC[RS_SYN_N];
 static TA_Real g_synRef[RS_SYN_N];
 
-/* A trending-with-cycle series, with bars RS_FLAT_FROM..RS_FLAT_TO perfectly
- * flat at `flat`. The flat run must END before the series does: a residue
- * left in the running sum is NEGATIVE as often as positive, and a negative
- * one is clamped to 0.0 by the S <= 0 rule -- indistinguishable, on an
- * all-flat window, from the exact zero that is correct there. It only becomes
- * visible once real bars return and it offsets their sums. Measured on this
- * series with the rebuild removed: at n = 14, 20 and 50 the flat windows are
- * all still exactly 0.0 and every one of the 42, 50 and 29 wrong bars is
- * after bar 250.
+/* A trending-with-cycle series whose bars flatFrom to flatFrom+RS_FLAT_LEN-1
+ * are replaced: shape 0 leaves them flat at `flat`, shape 1 makes each open at
+ * its low and close at its high, shape 2 is flat with one bar whose high and
+ * low sit inside its open and close. Real bars resume after the run.
  */
-static void rsBuildSeries( double flat, int flatFrom )
+static void rsBuildSeriesShape( double flat, int flatFrom, int shape )
 {
-   g_rsFlatFrom = flatFrom;
-   g_rsFlatTo = flatFrom + RS_FLAT_LEN - 1;
-
    int i;
    double p, o;
+
+   g_rsFlatFrom = flatFrom;
+   g_rsFlatTo = flatFrom + RS_FLAT_LEN - 1;
 
    for( i = 0; i < RS_SYN_N; i++ )
    {
       if( i >= g_rsFlatFrom && i <= g_rsFlatTo )
       {
          g_synO[i] = g_synH[i] = g_synL[i] = g_synC[i] = flat;
+         if( shape == 1 )
+         {
+            /* A different rise on each bar, so the window is not one bar
+             * repeated. */
+            g_synH[i] = flat * ( 1.0 + 0.001 * (double)( 1 + i % 7 ) );
+            g_synC[i] = g_synH[i];
+         }
+         else if( shape == 2 && i == g_rsFlatFrom + RS_FLAT_LEN / 2 )
+         {
+            g_synO[i] = flat;
+            g_synH[i] = flat * 1.005;
+            g_synL[i] = flat * 0.9999;
+            g_synC[i] = flat * 1.01;
+         }
          continue;
       }
       p = 100.0 + 10.0 * sin( (double)i / 7.0 ) + 0.15 * (double)i;
@@ -761,6 +761,11 @@ static void rsBuildSeries( double flat, int flatFrom )
       g_synH[i] = ( o > p ? o : p ) + 0.5;
       g_synL[i] = ( o < p ? o : p ) - 0.5;
    }
+}
+
+static void rsBuildSeries( double flat, int flatFrom )
+{
+   rsBuildSeriesShape( flat, flatFrom, 0 );
 }
 
 /* One bar of 20% range among bars whose range is 1e-6 of price: the window
@@ -853,9 +858,8 @@ static ErrorNumber test_rs_rebuild( void )
             double want = g_synRef[bar];
             double err;
 
-            /* An all-flat window is exactly zero. Not "small": the rebuild
-             * restores the exact value, and a tolerance here would accept the
-             * residue it exists to remove. */
+            /* Exactly zero, not small: a tolerance here would accept the
+             * residue the rebuild exists to remove. */
             if( bar >= g_rsFlatFrom + n - 1 && bar <= g_rsFlatTo )
             {
                if( out[i] != 0.0 )
@@ -868,10 +872,7 @@ static ErrorNumber test_rs_rebuild( void )
                g_rsRebuildCmp++;
             }
 
-            /* And every bar -- the ones after the flat run above all -- is
-             * within 1e-12 of a fresh sum of the same terms. This is the half
-             * that sees a NEGATIVE residue: on a flat window the S <= 0 rule
-             * hides it, after the flat run it does not. */
+            /* Every bar is within 1e-12 of a fresh sum of the same terms. */
             err = ( want != 0.0 ) ? fabs( out[i] - want ) / fabs( want )
                                   : fabs( out[i] - want );
             if( !( err <= 1e-12 ) )
@@ -887,8 +888,8 @@ static ErrorNumber test_rs_rebuild( void )
    }
 
    /* Shock then calm: the window carries a 20% bar for n bars, then nothing
-    * but 1e-6 bars. A plain running sum measured 8.2e-10 and 1.9e-7 away from
-    * a fresh one at n = 9 and 20; the rebuild brings it back to the floor. */
+    * but 1e-6 bars. A running sum that is never rebuilt is orders of
+    * magnitude outside this tolerance once the shock has left. */
    rsBuildShockSeries();
    for( p = 0; p < 2; p++ )
    {
@@ -917,6 +918,77 @@ static ErrorNumber test_rs_rebuild( void )
             return TA_TESTUTIL_TFRR_BAD_CALCULATION;
          }
          g_rsRebuildCmp++;
+      }
+   }
+
+   /* A window made only of bars that open at their low and close at their
+    * high reads exactly 0.0, also when it follows ordinary bars. */
+   for( f = 0; f < (int)(sizeof(flats)/sizeof(flats[0])); f++ )
+   {
+      rsBuildSeriesShape( flats[f], 200, 1 );
+      for( p = 0; p < 4; p++ )
+      {
+         int n = periods[p];
+
+         rc = TA_ROGERSSATCHELL( 0, RS_SYN_N-1, g_synO, g_synH, g_synL, g_synC,
+                                 n, 1.0, &beg, &nb, out );
+         if( rc != TA_SUCCESS || beg != n - 1 )
+         {
+            printf( "Fail: TA_ROGERSSATCHELL drift run rc=%d (n=%d)\n", (int)rc, n );
+            return TA_TESTUTIL_TFRR_BAD_RETCODE;
+         }
+         for( i = g_rsFlatFrom + n - 1; i <= g_rsFlatTo; i++ )
+         {
+            if( out[i - (int)beg] != 0.0 )
+            {
+               printf( "Fail: TA_ROGERSSATCHELL drift-only window n=%d bar %d "
+                       "(price %g): %.17g, expected exactly 0\n",
+                       n, i, flats[f], out[i - (int)beg] );
+               return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+            }
+            g_rsDriftRunCmp++;
+         }
+      }
+   }
+
+   /* A window whose sum is below zero answers 0.0, and the sums around it
+    * stay those of a fresh pass: the collapse test must neither miss the
+    * residue left once the negative term has gone nor mistake a negative sum
+    * for one. */
+   rsBuildSeriesShape( 100.0, 200, 2 );
+   for( p = 0; p < 4; p++ )
+   {
+      int n = periods[p];
+
+      rsFreshReference( n, 1.0 );
+
+      rc = TA_ROGERSSATCHELL( 0, RS_SYN_N-1, g_synO, g_synH, g_synL, g_synC,
+                              n, 1.0, &beg, &nb, out );
+      if( rc != TA_SUCCESS || beg != n - 1 )
+      {
+         printf( "Fail: TA_ROGERSSATCHELL negative sum rc=%d (n=%d)\n", (int)rc, n );
+         return TA_TESTUTIL_TFRR_BAD_RETCODE;
+      }
+      if( out[g_rsFlatFrom + RS_FLAT_LEN / 2 - (int)beg] != 0.0 )
+      {
+         printf( "Fail: TA_ROGERSSATCHELL negative sum n=%d: %.17g, expected "
+                 "exactly 0\n", n, out[g_rsFlatFrom + RS_FLAT_LEN / 2 - (int)beg] );
+         return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+      }
+      for( i = 0; i < nb; i++ )
+      {
+         int bar = (int)beg + i;
+         double want = g_synRef[bar];
+         double err = ( want != 0.0 ) ? fabs( out[i] - want ) / fabs( want )
+                                      : fabs( out[i] - want );
+         if( !( err <= 1e-12 ) )
+         {
+            printf( "Fail: TA_ROGERSSATCHELL negative sum n=%d bar %d: %.17g, "
+                    "fresh-sum reference %.17g (err %.3g)\n",
+                    n, bar, out[i], want, err );
+            return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+         }
+         g_rsNegativeCmp++;
       }
    }
 
@@ -997,11 +1069,9 @@ static ErrorNumber test_rs_stream( void )
  * the low is set to zero or to its own negation: both are "not a price", and
  * the whole bar contributes 0.0 either way.
  *
- * Zeroing only the products that touch the bad price would read 0.016439 at
- * bar 50 instead, and dropping the bar from the window (LEAN's rule) would
- * read 0 there and 0.0183565 at bar 51. Both are outside the tolerance below,
- * so this leg distinguishes the three readings rather than merely checking
- * that something finite comes out.
+ * Zeroing only the products that touch the bad price reads 0.016439 at bar 50,
+ * and dropping the bar from the window reads 0 there and 0.0183565 at bar 51:
+ * both are outside the tolerance, so the leg tells the three readings apart.
  */
 static const int    rsGuardBar[]   = { 49, 50, 51, 59, 60 };
 static const double rsGuardValue[] =
@@ -1071,21 +1141,98 @@ static ErrorNumber test_rs_guard( const TA_History *history )
          g_rsGuardCmp++;
       }
 
-      /* Bar 60's window is [51, 60]: the bad bar has left it, so the output
-       * is the clean one BITWISE. A guard that leaked state past its own
-       * window -- a running sum never put back, say -- would miss here even
-       * though every value above is still inside tolerance. */
+      /* Bar 60's window is [51, 60]: the bad bar has left it. Not bitwise,
+       * the running sum reached this bar through a different history. */
       {
          int bar = 60;
-         if( memcmp( &out[bar - (int)beg], &clean[bar - (int)begC],
-                     sizeof(double) ) != 0 )
+         double want = clean[bar - (int)begC];
+         double err = fabs( out[bar - (int)beg] - want ) / fabs( want );
+         if( !( err <= RS_GOLDEN_TOL ) )
          {
             printf( "Fail: TA_ROGERSSATCHELL guard %s bar 60: %.17g, the clean "
                     "run gives %.17g; the bad bar has left this window\n",
-                    what, out[bar - (int)beg], clean[bar - (int)begC] );
+                    what, out[bar - (int)beg], want );
             return TA_TESTUTIL_TFRR_BAD_CALCULATION;
          }
          g_rsGuardCmp++;
+      }
+   }
+
+   /* The guard is the whole bar: whichever price is at or below zero, the
+    * term is 0.0, which is bit for bit the term of a flat bar. Bar 3 is read
+    * by the warm-up, bar 50 by the main loop and, streamed, by Update. */
+   for( pass = 0; pass < 16; pass++ )
+   {
+      int which = pass % 4;
+      int bar = ( pass & 4 ) ? 50 : 3;
+      double bad;
+      TA_Real *price;
+
+      for( i = 0; i < RS_NB_BAR; i++ )
+      {
+         o[i] = history->open[i];
+         h[i] = history->high[i];
+         l[i] = history->low[i];
+         c[i] = history->close[i];
+      }
+      o[bar] = h[bar] = l[bar] = c[bar] = history->close[bar];
+      rc = TA_ROGERSSATCHELL( 0, RS_NB_BAR-1, o, h, l, c, 10, 1.0,
+                              &begC, &nbC, clean );
+      if( rc != TA_SUCCESS )
+         return TA_TESTUTIL_TFRR_BAD_RETCODE;
+
+      o[bar] = history->open[bar];
+      h[bar] = history->high[bar];
+      l[bar] = history->low[bar];
+      c[bar] = history->close[bar];
+      price = ( which == 0 ) ? o : ( which == 1 ) ? h : ( which == 2 ) ? l : c;
+      bad = ( pass & 8 ) ? -price[bar] : 0.0;
+      price[bar] = bad;
+
+      rc = TA_ROGERSSATCHELL( 0, RS_NB_BAR-1, o, h, l, c, 10, 1.0,
+                              &beg, &nb, out );
+      if( rc != TA_SUCCESS || beg != begC || nb != nbC )
+         return TA_TESTUTIL_TFRR_BAD_RETCODE;
+
+      for( i = 0; i < nb; i++ )
+      {
+         if( memcmp( &out[i], &clean[i], sizeof(double) ) != 0 )
+         {
+            printf( "Fail: TA_ROGERSSATCHELL guard price %d = %g at bar %d: "
+                    "bar %d reads %.17g, a flat bar there gives %.17g\n",
+                    which, bad, bar, (int)beg + i, out[i], clean[i] );
+            return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+         }
+         g_rsGuardBarCmp++;
+      }
+
+      if( bar == 50 )
+      {
+         TA_ROGERSSATCHELL_Stream *s = NULL;
+         double got;
+
+         rc = TA_ROGERSSATCHELL_Open( &s, o, h, l, c, 10, 10, 1.0, &got );
+         if( rc != TA_SUCCESS || s == NULL )
+            return TA_TESTUTIL_TFRR_BAD_RETCODE;
+         for( i = 9; i <= 60; i++ )
+         {
+            if( memcmp( &got, &out[i - (int)beg], sizeof(double) ) != 0 )
+            {
+               printf( "Fail: TA_ROGERSSATCHELL guard stream price %d = %g: "
+                       "bar %d reads %.17g, batch %.17g\n",
+                       which, bad, i, got, out[i - (int)beg] );
+               TA_ROGERSSATCHELL_Close( s );
+               return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+            }
+            g_rsGuardStreamCmp++;
+            rc = TA_ROGERSSATCHELL_Update( s, o[i+1], h[i+1], l[i+1], c[i+1], &got );
+            if( rc != TA_SUCCESS )
+            {
+               TA_ROGERSSATCHELL_Close( s );
+               return TA_TESTUTIL_TFRR_BAD_RETCODE;
+            }
+         }
+         TA_ROGERSSATCHELL_Close( s );
       }
    }
 

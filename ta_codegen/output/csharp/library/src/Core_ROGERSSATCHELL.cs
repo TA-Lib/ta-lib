@@ -66,12 +66,11 @@ public partial class Core
    /// series is requested. Feed at least <c>lookback + 1</c> bars to get any
    /// output.
    /// </remarks>
-   /// <param name="optInTimePeriod">Number of bars in the window. Default 10, range 1 to 100000. <c>n = 1</c>
-   /// is the paper's own single-bar estimator (default 10; range 1..100000;
-   /// <c>int.MinValue</c> selects the default).</param>
-   /// <param name="optInAnnualization">Periods per year. Default 252, range 0 to <c>TA_REAL_MAX</c>. Pass 1 for
-   /// the per-bar figure (default 252; minimum 0; <see cref="Core.RealDefault"/>
-   /// selects the default).</param>
+   /// <param name="optInTimePeriod">Number of bars in the window. <c>n = 1</c> is the paper's own single-bar
+   /// estimator (default 10; range 1..100000; <c>int.MinValue</c> selects the
+   /// default).</param>
+   /// <param name="optInAnnualization">Periods per year. Pass 1 for the per-bar figure (default 252; minimum 0;
+   /// <see cref="Core.RealDefault"/> selects the default).</param>
    /// <returns>The lookback, or <c>-1</c> if a parameter is out of range.</returns>
    public int RogerssatchellLookback( int optInTimePeriod, double optInAnnualization )
    {
@@ -95,12 +94,11 @@ public partial class Core
    /// <remarks>
    /// Every output of this function is drawn at its own bar, so the answer is 0.
    /// </remarks>
-   /// <param name="optInTimePeriod">Number of bars in the window. Default 10, range 1 to 100000. <c>n = 1</c>
-   /// is the paper's own single-bar estimator (default 10; range 1..100000;
-   /// <c>int.MinValue</c> selects the default).</param>
-   /// <param name="optInAnnualization">Periods per year. Default 252, range 0 to <c>TA_REAL_MAX</c>. Pass 1 for
-   /// the per-bar figure (default 252; minimum 0; <see cref="Core.RealDefault"/>
-   /// selects the default).</param>
+   /// <param name="optInTimePeriod">Number of bars in the window. <c>n = 1</c> is the paper's own single-bar
+   /// estimator (default 10; range 1..100000; <c>int.MinValue</c> selects the
+   /// default).</param>
+   /// <param name="optInAnnualization">Periods per year. Pass 1 for the per-bar figure (default 252; minimum 0;
+   /// <see cref="Core.RealDefault"/> selects the default).</param>
    /// <param name="outputIdx">Position of the output in the batch signature, from 0.</param>
    /// <returns>The display shift, or <c>int.MinValue</c> if a parameter is out of range
    /// or the index names no output.</returns>
@@ -442,7 +440,7 @@ public partial class Core
    /// zero, where Parkinson and Garman-Klass read a wide range as volatility.
    /// The price of that is a blind spot of its own: the estimator has no
    /// close-to-open term, so overnight gaps are invisible to it. Read the output
-   /// as a fraction in log-return units — not price units, not percent. At the
+   /// as a fraction in log-return units, not price units and not percent. At the
    /// default <c>optInAnnualization</c> of 252 it is an annualised figure for
    /// daily bars; pass 1 to leave the per-bar figure, 52 for weekly bars, 12 for
    /// monthly.
@@ -471,12 +469,11 @@ public partial class Core
    /// <param name="inHigh">High price of each bar.</param>
    /// <param name="inLow">Low price of each bar.</param>
    /// <param name="inClose">Close price of each bar.</param>
-   /// <param name="optInTimePeriod">Number of bars in the window. Default 10, range 1 to 100000. <c>n = 1</c>
-   /// is the paper's own single-bar estimator (default 10; range 1..100000;
-   /// <c>int.MinValue</c> selects the default).</param>
-   /// <param name="optInAnnualization">Periods per year. Default 252, range 0 to <c>TA_REAL_MAX</c>. Pass 1 for
-   /// the per-bar figure (default 252; minimum 0; <see cref="Core.RealDefault"/>
-   /// selects the default).</param>
+   /// <param name="optInTimePeriod">Number of bars in the window. <c>n = 1</c> is the paper's own single-bar
+   /// estimator (default 10; range 1..100000; <c>int.MinValue</c> selects the
+   /// default).</param>
+   /// <param name="optInAnnualization">Periods per year. Pass 1 for the per-bar figure (default 252; minimum 0;
+   /// <see cref="Core.RealDefault"/> selects the default).</param>
    /// <param name="outReal">Estimated volatility, in log-return units. Must hold at least <c>endIdx -
    /// max(startIdx, RogerssatchellLookback(...)) + 1</c> values, and never be
    /// empty: an empty span is an absent output.</param>
@@ -541,7 +538,7 @@ public partial class Core
    /// zero, where Parkinson and Garman-Klass read a wide range as volatility.
    /// The price of that is a blind spot of its own: the estimator has no
    /// close-to-open term, so overnight gaps are invisible to it. Read the output
-   /// as a fraction in log-return units — not price units, not percent. At the
+   /// as a fraction in log-return units, not price units and not percent. At the
    /// default <c>optInAnnualization</c> of 252 it is an annualised figure for
    /// daily bars; pass 1 to leave the per-bar figure, 52 for weekly bars, 12 for
    /// monthly.
@@ -576,12 +573,11 @@ public partial class Core
    /// <param name="inHigh">High price of each bar.</param>
    /// <param name="inLow">Low price of each bar.</param>
    /// <param name="inClose">Close price of each bar.</param>
-   /// <param name="optInTimePeriod">Number of bars in the window. Default 10, range 1 to 100000. <c>n = 1</c>
-   /// is the paper's own single-bar estimator (default 10; range 1..100000;
-   /// <c>int.MinValue</c> selects the default).</param>
-   /// <param name="optInAnnualization">Periods per year. Default 252, range 0 to <c>TA_REAL_MAX</c>. Pass 1 for
-   /// the per-bar figure (default 252; minimum 0; <see cref="Core.RealDefault"/>
-   /// selects the default).</param>
+   /// <param name="optInTimePeriod">Number of bars in the window. <c>n = 1</c> is the paper's own single-bar
+   /// estimator (default 10; range 1..100000; <c>int.MinValue</c> selects the
+   /// default).</param>
+   /// <param name="optInAnnualization">Periods per year. Pass 1 for the per-bar figure (default 252; minimum 0;
+   /// <see cref="Core.RealDefault"/> selects the default).</param>
    /// <param name="outReal">Estimated volatility, in log-return units. Must hold at least <c>endIdx -
    /// max(startIdx, RogerssatchellLookback(...)) + 1</c> values, and never be
    /// empty: an empty span is an absent output.</param>
