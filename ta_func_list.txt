@@ -179,6 +179,7 @@ ROC                 Rate of change : ((price/prevPrice)-1)*100
 ROCP                Rate of change Percentage: (price-prevPrice)/prevPrice
 ROCR                Rate of change ratio: (price/prevPrice)
 ROCR100             Rate of change ratio 100 scale: (price/prevPrice)*100
+ROGERSSATCHELL      Rogers-Satchell Volatility
 RSI                 Relative Strength Index
 RVI                 Relative Volatility Index
 RVIR                Relative Volatility Index, refined high/low form

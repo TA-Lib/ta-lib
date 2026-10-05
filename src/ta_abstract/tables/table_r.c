@@ -163,6 +163,79 @@ DEF_FUNCTION( ROCR100,
              );
 /* ROCR100 END */
 
+/* ROGERSSATCHELL BEGIN */
+static const TA_IntegerRange TA_DEF_ROGERSSATCHELL_TimePeriod =
+{
+   1,
+   100000,
+   2,
+   200,
+   1
+};
+
+static const TA_OptInputParameterInfo TA_DEF_UI_D_ROGERSSATCHELL_TimePeriod =
+{
+   TA_OptInput_IntegerRange,
+   "optInTimePeriod",
+   0,
+
+   "Time Period",
+   (const void *)&TA_DEF_ROGERSSATCHELL_TimePeriod,
+   10,
+   "Number of bars in the window",
+
+   NULL
+};
+
+static const TA_RealRange TA_DEF_ROGERSSATCHELL_Annualization =
+{
+   0.0,
+   TA_REAL_MAX,
+   2,
+   1.0,
+   365.0,
+   1.0
+};
+
+static const TA_OptInputParameterInfo TA_DEF_UI_D_ROGERSSATCHELL_Annualization =
+{
+   TA_OptInput_RealRange,
+   "optInAnnualization",
+   0,
+
+   "Annualization",
+   (const void *)&TA_DEF_ROGERSSATCHELL_Annualization,
+   252.0,
+   "Periods per year; 1 leaves the per-bar figure",
+
+   NULL
+};
+
+static const TA_InputParameterInfo    *TA_ROGERSSATCHELL_Inputs[]    =
+{
+  &TA_DEF_UI_Input_Price_OHLC,
+  NULL
+};
+
+static const TA_OutputParameterInfo   *TA_ROGERSSATCHELL_Outputs[]   =
+{
+  &TA_DEF_UI_Output_Real,
+  NULL
+};
+
+static const TA_OptInputParameterInfo *TA_ROGERSSATCHELL_OptInputs[] =
+{ &TA_DEF_UI_D_ROGERSSATCHELL_TimePeriod,
+  &TA_DEF_UI_D_ROGERSSATCHELL_Annualization,
+  NULL
+};
+
+DEF_FUNCTION( ROGERSSATCHELL,
+              TA_GroupId_VolatilityIndicators,
+              "Rogers-Satchell Volatility",
+              TA_FUNC_FLG_STREAM
+             );
+/* ROGERSSATCHELL END */
+
 /* RSI BEGIN */
 static const TA_InputParameterInfo    *TA_RSI_Inputs[]    =
 {
@@ -364,6 +437,7 @@ const TA_FuncDef *TA_DEF_TableR[] =
    ADD_TO_TABLE(ROCP),
    ADD_TO_TABLE(ROCR),
    ADD_TO_TABLE(ROCR100),
+   ADD_TO_TABLE(ROGERSSATCHELL),
    ADD_TO_TABLE(RSI),
    ADD_TO_TABLE(RVI),
    ADD_TO_TABLE(RVIR),

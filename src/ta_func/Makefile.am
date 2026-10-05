@@ -184,6 +184,7 @@ libta_func_la_SOURCES = ta_utility.c \
 	ta_ROCP.c \
 	ta_ROCR.c \
 	ta_ROCR100.c \
+	ta_ROGERSSATCHELL.c \
 	ta_RSI.c \
 	ta_RVI.c \
 	ta_RVIR.c \

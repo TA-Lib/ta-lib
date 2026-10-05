@@ -4,7 +4,7 @@ format 9
 soname libta-lib.so.1
 version-info 3:0:2
 headers ta_abstract.h ta_common.h ta_defs.h ta_func.h ta_libc.h
-function-count 3004
+function-count 3017
 platform pointer=8 long=8 int=4 enum=4
 type TA_FuncInfo sizeof=48 name:const_char_*=0 group:const_char_*=8 hint:const_char_*=16 flags:TA_FuncFlags=24 nbInput:unsigned_int=28 nbOptInput:unsigned_int=32 nbOutput:unsigned_int=36 handle:const_TA_FuncHandle_*=40
 type TA_InputParameterInfo sizeof=24 type:TA_InputParameterType=0 paramName:const_char_*=8 flags:TA_InputFlags=16
@@ -2014,6 +2014,16 @@ function TA_RetCode TA_ROC_OutRange(const TA_ROC_Stream *, int *, int *)
 function TA_RetCode TA_ROC_Peek(const TA_ROC_Stream *, double, double *)
 function TA_RetCode TA_ROC_Update(TA_ROC_Stream *, double, double *)
 function TA_RetCode TA_ROC_Value(const TA_ROC_Stream *, double *)
+function TA_RetCode TA_ROGERSSATCHELL(int, int, const double *, const double *, const double *, const double *, int, double, int *, int *, double *)
+function TA_RetCode TA_ROGERSSATCHELL_Advance(TA_ROGERSSATCHELL_Stream *)
+function TA_RetCode TA_ROGERSSATCHELL_Clone(const TA_ROGERSSATCHELL_Stream *, TA_ROGERSSATCHELL_Stream **)
+function TA_RetCode TA_ROGERSSATCHELL_Close(TA_ROGERSSATCHELL_Stream *)
+function TA_RetCode TA_ROGERSSATCHELL_Open(TA_ROGERSSATCHELL_Stream **, const double *, const double *, const double *, const double *, int, int, double, double *)
+function TA_RetCode TA_ROGERSSATCHELL_OpenAndFill(TA_ROGERSSATCHELL_Stream **, const double *, const double *, const double *, const double *, int, int, double, int *, int *, double *)
+function TA_RetCode TA_ROGERSSATCHELL_OutRange(const TA_ROGERSSATCHELL_Stream *, int *, int *)
+function TA_RetCode TA_ROGERSSATCHELL_Peek(const TA_ROGERSSATCHELL_Stream *, double, double, double, double, double *)
+function TA_RetCode TA_ROGERSSATCHELL_Update(TA_ROGERSSATCHELL_Stream *, double, double, double, double, double *)
+function TA_RetCode TA_ROGERSSATCHELL_Value(const TA_ROGERSSATCHELL_Stream *, double *)
 function TA_RetCode TA_RSI(int, int, const double *, int, int *, int *, double *)
 function TA_RetCode TA_RSI_Advance(TA_RSI_Stream *)
 function TA_RetCode TA_RSI_Clone(const TA_RSI_Stream *, TA_RSI_Stream **)
@@ -2446,6 +2456,7 @@ function TA_RetCode TA_S_ROC(int, int, const float *, int, int *, int *, double 
 function TA_RetCode TA_S_ROCP(int, int, const float *, int, int *, int *, double *)
 function TA_RetCode TA_S_ROCR(int, int, const float *, int, int *, int *, double *)
 function TA_RetCode TA_S_ROCR100(int, int, const float *, int, int *, int *, double *)
+function TA_RetCode TA_S_ROGERSSATCHELL(int, int, const float *, const float *, const float *, const float *, int, double, int *, int *, double *)
 function TA_RetCode TA_S_RSI(int, int, const float *, int, int *, int *, double *)
 function TA_RetCode TA_S_RVI(int, int, const float *, int, int, int *, int *, double *)
 function TA_RetCode TA_S_RVIR(int, int, const float *, const float *, int, int, int *, int *, double *)
@@ -3095,6 +3106,8 @@ function int TA_ROCR_DisplayShift(int, int)
 function int TA_ROCR_Lookback(int)
 function int TA_ROC_DisplayShift(int, int)
 function int TA_ROC_Lookback(int)
+function int TA_ROGERSSATCHELL_DisplayShift(int, double, int)
+function int TA_ROGERSSATCHELL_Lookback(int, double)
 function int TA_RSI_DisplayShift(int, int)
 function int TA_RSI_Lookback(int)
 function int TA_RVIR_DisplayShift(int, int, int)

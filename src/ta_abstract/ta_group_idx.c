@@ -221,6 +221,7 @@ extern const TA_FuncDef TA_DEF_ROC;
 extern const TA_FuncDef TA_DEF_ROCP;
 extern const TA_FuncDef TA_DEF_ROCR;
 extern const TA_FuncDef TA_DEF_ROCR100;
+extern const TA_FuncDef TA_DEF_ROGERSSATCHELL;
 extern const TA_FuncDef TA_DEF_RSI;
 extern const TA_FuncDef TA_DEF_RVI;
 extern const TA_FuncDef TA_DEF_RVIR;
@@ -348,6 +349,7 @@ const TA_FuncDef *TA_PerGroupFunc_3[] = {
 &TA_DEF_MASSI,
 &TA_DEF_NATR,
 &TA_DEF_PERCENTB,
+&TA_DEF_ROGERSSATCHELL,
 &TA_DEF_RVI,
 &TA_DEF_RVIR,
 &TA_DEF_TRANGE,

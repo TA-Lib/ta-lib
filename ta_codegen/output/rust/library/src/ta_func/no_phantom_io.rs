@@ -15738,6 +15738,115 @@ fn legs_ROCR100(r: &mut Report) {
     r.legs_done("ROCR100", 1);
 }
 
+const V_ROGERSSATCHELL: &[(&str, i32, f64)] = &[
+    ("defaults", i32::MIN, Core::REAL_DEFAULT),
+    ("minimums", 1i32, 0.0f64),
+];
+
+fn sub_ROGERSSATCHELL(r: &mut Report) {
+    let core = Core::new();
+    for &(label, optInTimePeriod, optInAnnualization) in V_ROGERSSATCHELL {
+        let Ok(lb) = core.rogerssatchell_lookback(optInTimePeriod, optInAnnualization) else { continue; };
+        r.control("ROGERSSATCHELL", label, run(|| {
+            let inOpen: Vec<f64> = Vec::with_capacity(1);
+            let inHigh: Vec<f64> = Vec::with_capacity(1);
+            let inLow: Vec<f64> = Vec::with_capacity(1);
+            let inClose: Vec<f64> = Vec::with_capacity(1);
+            let mut outReal: Vec<f64> = Vec::with_capacity(1);
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.rogerssatchell_impl(0, lb, &inOpen, &inHigh, &inLow, &inClose, optInTimePeriod, optInAnnualization, &mut _b, &mut _n, &mut outReal);
+            (rc, _n)
+        }));
+        if lb < 1 { r.no_quiet_range("ROGERSSATCHELL", label); continue; }
+        r.quiet("ROGERSSATCHELL", label, lb, run(|| {
+            let inOpen: Vec<f64> = Vec::with_capacity(1);
+            let inHigh: Vec<f64> = Vec::with_capacity(1);
+            let inLow: Vec<f64> = Vec::with_capacity(1);
+            let inClose: Vec<f64> = Vec::with_capacity(1);
+            let mut outReal: Vec<f64> = Vec::with_capacity(1);
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.rogerssatchell_impl(0, lb - 1, &inOpen, &inHigh, &inLow, &inClose, optInTimePeriod, optInAnnualization, &mut _b, &mut _n, &mut outReal);
+            (rc, _n)
+        }));
+    }
+}
+
+fn legs_ROGERSSATCHELL(r: &mut Report) {
+    let core = Core::new();
+    let optInTimePeriod = i32::MIN;
+    let optInAnnualization = Core::REAL_DEFAULT;
+    let Ok(lb) = core.rogerssatchell_lookback(optInTimePeriod, optInAnnualization) else { r.no_legs("ROGERSSATCHELL"); return; };
+    let (startIdx, endIdx) = (lb, lb + 4);
+    {
+        let inOpen: Vec<f64> = series("open", endIdx + 1);
+        let inHigh: Vec<f64> = series("high", endIdx + 1);
+        let inLow: Vec<f64> = series("low", endIdx + 1);
+        let inClose: Vec<f64> = series("close", endIdx + 1);
+        let mut outReal: Vec<f64> = vec![Default::default(); 5];
+        r.legs_control("ROGERSSATCHELL", run(|| {
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.rogerssatchell_impl(startIdx, endIdx, &inOpen, &inHigh, &inLow, &inClose, optInTimePeriod, optInAnnualization, &mut _b, &mut _n, &mut outReal);
+            (rc, _n)
+        }));
+    }
+    {
+        let inOpen: Vec<f64> = Vec::with_capacity(1);
+        let inHigh: Vec<f64> = series("high", endIdx + 1);
+        let inLow: Vec<f64> = series("low", endIdx + 1);
+        let inClose: Vec<f64> = series("close", endIdx + 1);
+        let mut outReal: Vec<f64> = vec![Default::default(); 5];
+        r.leg("ROGERSSATCHELL", "inOpen", 0, run(|| {
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.rogerssatchell_impl(startIdx, endIdx, &inOpen, &inHigh, &inLow, &inClose, optInTimePeriod, optInAnnualization, &mut _b, &mut _n, &mut outReal);
+            (rc, _n)
+        }));
+    }
+    {
+        let inOpen: Vec<f64> = series("open", endIdx + 1);
+        let inHigh: Vec<f64> = Vec::with_capacity(1);
+        let inLow: Vec<f64> = series("low", endIdx + 1);
+        let inClose: Vec<f64> = series("close", endIdx + 1);
+        let mut outReal: Vec<f64> = vec![Default::default(); 5];
+        r.leg("ROGERSSATCHELL", "inHigh", 1, run(|| {
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.rogerssatchell_impl(startIdx, endIdx, &inOpen, &inHigh, &inLow, &inClose, optInTimePeriod, optInAnnualization, &mut _b, &mut _n, &mut outReal);
+            (rc, _n)
+        }));
+    }
+    {
+        let inOpen: Vec<f64> = series("open", endIdx + 1);
+        let inHigh: Vec<f64> = series("high", endIdx + 1);
+        let inLow: Vec<f64> = Vec::with_capacity(1);
+        let inClose: Vec<f64> = series("close", endIdx + 1);
+        let mut outReal: Vec<f64> = vec![Default::default(); 5];
+        r.leg("ROGERSSATCHELL", "inLow", 2, run(|| {
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.rogerssatchell_impl(startIdx, endIdx, &inOpen, &inHigh, &inLow, &inClose, optInTimePeriod, optInAnnualization, &mut _b, &mut _n, &mut outReal);
+            (rc, _n)
+        }));
+    }
+    {
+        let inOpen: Vec<f64> = series("open", endIdx + 1);
+        let inHigh: Vec<f64> = series("high", endIdx + 1);
+        let inLow: Vec<f64> = series("low", endIdx + 1);
+        let inClose: Vec<f64> = Vec::with_capacity(1);
+        let mut outReal: Vec<f64> = vec![Default::default(); 5];
+        r.leg("ROGERSSATCHELL", "inClose", 3, run(|| {
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.rogerssatchell_impl(startIdx, endIdx, &inOpen, &inHigh, &inLow, &inClose, optInTimePeriod, optInAnnualization, &mut _b, &mut _n, &mut outReal);
+            (rc, _n)
+        }));
+    }
+    r.legs_done("ROGERSSATCHELL", 4);
+}
+
 const V_RSI: &[(&str, i32)] = &[
     ("defaults", i32::MIN),
     ("minimums", 2i32),
@@ -19304,6 +19413,7 @@ const PROBES: &[(&str, Probe, Probe)] = &[
     ("ROCP", sub_ROCP, legs_ROCP),
     ("ROCR", sub_ROCR, legs_ROCR),
     ("ROCR100", sub_ROCR100, legs_ROCR100),
+    ("ROGERSSATCHELL", sub_ROGERSSATCHELL, legs_ROGERSSATCHELL),
     ("RSI", sub_RSI, legs_RSI),
     ("RVI", sub_RVI, legs_RVI),
     ("RVIR", sub_RVIR, legs_RVIR),
@@ -19389,7 +19499,7 @@ fn no_phantom_io() {
     // The corpus is the generator's, not a list kept by hand: a probe that
     // stopped being emitted is a shrinking sweep, which is the one way this
     // file can fail open.
-    assert_eq!(PROBES.len(), 228, "probe count");
+    assert_eq!(PROBES.len(), 229, "probe count");
     assert_eq!(
         PROBES.len(),
         crate::abstract_api::funcs().count(),

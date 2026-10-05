@@ -301,6 +301,7 @@ public final class Functions {
       put(m, f_ROCP());
       put(m, f_ROCR());
       put(m, f_ROCR100());
+      put(m, f_ROGERSSATCHELL());
       put(m, f_RSI());
       put(m, f_RVI());
       put(m, f_RVIR());
@@ -3469,6 +3470,29 @@ public final class Functions {
                "Time Period", "Time period", 10.0,
                0.0, 0.0, 0, 0.0, 0.0, 0.0,
                1, 100000, 1, 200, 1, null)
+         ),
+         List.of(
+            new OutputInfo(OutputType.REAL, "outReal", 0x00000001)
+         ));
+   }
+
+   private static FuncInfo f_ROGERSSATCHELL() {
+      return new FuncInfo(
+         "ROGERSSATCHELL", "Volatility Indicators", "Rogers-Satchell Volatility", 0x02000000,
+         List.of(
+            new InputInfo(InputType.PRICE, "inPriceOHLC", 0x0000000F)
+         ),
+         List.of(
+            new OptInputInfo(
+               OptInputType.INTEGER_RANGE, "optInTimePeriod", 0x00000000,
+               "Time Period", "Number of bars in the window", 10.0,
+               0.0, 0.0, 0, 0.0, 0.0, 0.0,
+               1, 100000, 2, 200, 1, null),
+            new OptInputInfo(
+               OptInputType.REAL_RANGE, "optInAnnualization", 0x00000000,
+               "Annualization", "Periods per year; 1 leaves the per-bar figure", 252.0,
+               0.0, 3e37, 2, 1.0, 365.0, 1.0,
+               0, 0, 0, 0, 0, null)
          ),
          List.of(
             new OutputInfo(OutputType.REAL, "outReal", 0x00000001)

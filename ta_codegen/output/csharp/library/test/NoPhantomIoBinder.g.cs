@@ -1205,6 +1205,12 @@ internal static class NoPhantomIoBinder
                 startIdx, endIdx, c.Series(0), c.IntOpt(0), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         },
+        ["ROGERSSATCHELL"] = static (core, c, startIdx, endIdx) =>
+        {
+            RetCode rc = core.RogerssatchellImpl(
+                startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.IntOpt(0), c.RealOpt(1), out int b, out int n, c.RealOut(0));
+            return new CallOutcome(rc, b, n);
+        },
         ["RSI"] = static (core, c, startIdx, endIdx) =>
         {
             RetCode rc = core.RsiImpl(
@@ -2578,6 +2584,12 @@ internal static class NoPhantomIoBinder
                 startIdx, endIdx, Narrow(c.Series(0)), c.IntOpt(0), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         },
+        ["ROGERSSATCHELL"] = static (core, c, startIdx, endIdx) =>
+        {
+            RetCode rc = core.RogerssatchellImpl(
+                startIdx, endIdx, Narrow(c.Price(0, PriceComponents.Open)), Narrow(c.Price(0, PriceComponents.High)), Narrow(c.Price(0, PriceComponents.Low)), Narrow(c.Price(0, PriceComponents.Close)), c.IntOpt(0), c.RealOpt(1), out int b, out int n, c.RealOut(0));
+            return new CallOutcome(rc, b, n);
+        },
         ["RSI"] = static (core, c, startIdx, endIdx) =>
         {
             RetCode rc = core.RsiImpl(
@@ -3046,6 +3058,7 @@ internal static class NoPhantomIoBinder
         ["ROCP"] = static (core, c) => core.RocpOpen(c.Series(0), c.IntOpt(0)),
         ["ROCR"] = static (core, c) => core.RocrOpen(c.Series(0), c.IntOpt(0)),
         ["ROCR100"] = static (core, c) => core.Rocr100Open(c.Series(0), c.IntOpt(0)),
+        ["ROGERSSATCHELL"] = static (core, c) => core.RogerssatchellOpen(c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.IntOpt(0), c.RealOpt(1)),
         ["RSI"] = static (core, c) => core.RsiOpen(c.Series(0), c.IntOpt(0)),
         ["RVI"] = static (core, c) => core.RviOpen(c.Series(0), c.IntOpt(0), c.IntOpt(1)),
         ["RVIR"] = static (core, c) => core.RvirOpen(c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.IntOpt(0), c.IntOpt(1)),

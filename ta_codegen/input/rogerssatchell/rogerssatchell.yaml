@@ -1,0 +1,28 @@
+name: ROGERSSATCHELL
+group: Volatility Indicators
+hint: Rogers-Satchell Volatility
+flags: [stream]
+inputs:
+  - name: inPriceOHLC
+    type: price
+    price_components: [open, high, low, close]
+optional_inputs:
+  - name: optInTimePeriod
+    type: integer
+    display_name: Time Period
+    hint: Number of bars in the window
+    range: [1, 100000]
+    default: 10
+    suggested: [2, 200, 1]
+  - name: optInAnnualization
+    type: real
+    display_name: Annualization
+    hint: Periods per year; 1 leaves the per-bar figure
+    range: [0, TA_REAL_MAX]
+    default: 252
+    precision: 2
+    suggested: [1, 365, 1]
+outputs:
+  - name: outReal
+    type: real
+    flags: [line]

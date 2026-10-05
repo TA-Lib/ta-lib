@@ -243,6 +243,7 @@ All technical-analysis functions, grouped by category. Each page documents the f
 - [MASSI](/functions/massi.md) — Mass Index
 - [NATR](/functions/natr.md) — Normalized Average True Range
 - [PERCENTB](/functions/percentb.md) — Bollinger Bands %B
+- [ROGERSSATCHELL](/functions/rogerssatchell.md) — Rogers-Satchell Volatility
 - [RVI](/functions/rvi.md) — Relative Volatility Index
 - [RVIR](/functions/rvir.md) — Relative Volatility Index, refined high/low form
 - [TRANGE](/functions/trange.md) — True Range

@@ -363,7 +363,7 @@
 //! * [`TSF`](Core::tsf) — Time Series Forecast
 //! * [`VAR`](Core::var) — Variance
 //!
-//! ## Volatility Indicators (10)
+//! ## Volatility Indicators (11)
 //!
 //! * [`ADR`](Core::adr) — Average Day Range
 //! * [`ATR`](Core::atr) — Average True Range
@@ -372,6 +372,7 @@
 //! * [`MASSI`](Core::massi) — Mass Index
 //! * [`NATR`](Core::natr) — Normalized Average True Range
 //! * [`PERCENTB`](Core::percentb) — Bollinger Bands %B
+//! * [`ROGERSSATCHELL`](Core::rogerssatchell) — Rogers-Satchell Volatility
 //! * [`RVI`](Core::rvi) — Relative Volatility Index
 //! * [`RVIR`](Core::rvir) — Relative Volatility Index, refined high/low form
 //! * [`TRANGE`](Core::trange) — True Range

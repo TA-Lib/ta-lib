@@ -601,6 +601,9 @@ final class Dispatch {
          case "ROCR100":
             return core.rocr100(
                startIdx, endIdx, h.realInput(0), h.intOpt(0), h.realOutput(0));
+         case "ROGERSSATCHELL":
+            return core.rogerssatchell(
+               startIdx, endIdx, h.price(0, 0), h.price(0, 1), h.price(0, 2), h.price(0, 3), h.intOpt(0), h.realOpt(1), h.realOutput(0));
          case "RSI":
             return core.rsi(
                startIdx, endIdx, h.realInput(0), h.intOpt(0), h.realOutput(0));
@@ -1115,6 +1118,8 @@ final class Dispatch {
             return core.rocrLookback(h.intOpt(0));
          case "ROCR100":
             return core.rocr100Lookback(h.intOpt(0));
+         case "ROGERSSATCHELL":
+            return core.rogerssatchellLookback(h.intOpt(0), h.realOpt(1));
          case "RSI":
             return core.rsiLookback(h.intOpt(0));
          case "RVI":
@@ -1579,6 +1584,8 @@ final class Dispatch {
             return core.rocrDisplayShift(h.intOpt(0), outputIdx);
          case "ROCR100":
             return core.rocr100DisplayShift(h.intOpt(0), outputIdx);
+         case "ROGERSSATCHELL":
+            return core.rogerssatchellDisplayShift(h.intOpt(0), h.realOpt(1), outputIdx);
          case "RSI":
             return core.rsiDisplayShift(h.intOpt(0), outputIdx);
          case "RVI":

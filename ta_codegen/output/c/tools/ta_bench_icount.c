@@ -9497,6 +9497,57 @@ static void icount_ROCR100(int iters) {
     g_sink += acc + outNBElement;
 }
 
+static void icount_ROGERSSATCHELL(int iters) {
+    const char *nm = "ROGERSSATCHELL";
+    int outBegIdx = 0, outNBElement = 0;
+    double acc = 0.0;
+    TA_RetCode rc;
+    TA_ROGERSSATCHELL_Stream *st = NULL;
+    TA_ROGERSSATCHELL_Stream *stf = NULL;
+    double v0 = 0.0;
+
+    ICOUNT_ZERO();
+    rc = TA_ROGERSSATCHELL(0, g_nPoints - 1, g_open, g_high, g_low, g_close, 10, 252.000000000000000, &outBegIdx, &outNBElement, g_outBuf0);
+    ICOUNT_DUMP("ROGERSSATCHELL/batch");
+    icount_row(nm, "batch", 1, rc);
+    acc += g_outBuf0[0];
+
+    ICOUNT_ZERO();
+    rc = TA_ROGERSSATCHELL_OpenAndFill(&stf, g_open, g_high, g_low, g_close, g_nPoints, 10, 252.000000000000000, &outBegIdx, &outNBElement, g_outBuf0);
+    ICOUNT_DUMP("ROGERSSATCHELL/openfill");
+    icount_row(nm, "openfill", 1, rc);
+    acc += g_outBuf0[0];
+    if( stf ) TA_ROGERSSATCHELL_Close(stf);
+
+    ICOUNT_ZERO();
+    rc = TA_ROGERSSATCHELL_Open(&st, g_open, g_high, g_low, g_close, g_nPoints, 10, 252.000000000000000, &v0);
+    ICOUNT_DUMP("ROGERSSATCHELL/open");
+    icount_row(nm, "open", 1, rc);
+
+    if( rc == TA_SUCCESS && st ) {
+        TA_RetCode src = TA_SUCCESS;
+        ICOUNT_ZERO();
+        for( int it = 0; it < iters; it++ ) {
+            src = TA_ROGERSSATCHELL_Update(st, g_open[it & ICOUNT_MASK], g_high[it & ICOUNT_MASK], g_low[it & ICOUNT_MASK], g_close[it & ICOUNT_MASK], &v0);
+            acc += v0;
+        }
+        ICOUNT_DUMP("ROGERSSATCHELL/update");
+        icount_row(nm, "update", 1, src);
+        ICOUNT_ZERO();
+        for( int it = 0; it < iters; it++ ) {
+            src = TA_ROGERSSATCHELL_Peek(st, g_open[it & ICOUNT_MASK], g_high[it & ICOUNT_MASK], g_low[it & ICOUNT_MASK], g_close[it & ICOUNT_MASK], &v0);
+            acc += v0;
+        }
+        ICOUNT_DUMP("ROGERSSATCHELL/peek");
+        icount_row(nm, "peek", 1, src);
+    } else {
+        icount_row(nm, "update", 0, rc);
+        icount_row(nm, "peek", 0, rc);
+    }
+    if( st ) TA_ROGERSSATCHELL_Close(st);
+    g_sink += acc + outNBElement;
+}
+
 static void icount_RSI(int iters) {
     const char *nm = "RSI";
     int outBegIdx = 0, outNBElement = 0;
@@ -12106,6 +12157,7 @@ static void icount_all(const char *filter, int iters) {
     if( func_matches(filter, "ROCP") ) { icount_ROCP(iters); fflush(stdout); }
     if( func_matches(filter, "ROCR") ) { icount_ROCR(iters); fflush(stdout); }
     if( func_matches(filter, "ROCR100") ) { icount_ROCR100(iters); fflush(stdout); }
+    if( func_matches(filter, "ROGERSSATCHELL") ) { icount_ROGERSSATCHELL(iters); fflush(stdout); }
     if( func_matches(filter, "RSI") ) { icount_RSI(iters); fflush(stdout); }
     if( func_matches(filter, "RVI") ) { icount_RVI(iters); fflush(stdout); }
     if( func_matches(filter, "RVIR") ) { icount_RVIR(iters); fflush(stdout); }
