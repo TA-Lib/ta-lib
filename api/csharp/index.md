@@ -27,7 +27,7 @@ The C# API is not yet released. Estimated release: **Q1 2027**.
 <p><a href="#advanced">4.0 Advanced Features</a></p>
 
 <blockquote>
-<p><a href="#abstract">4.1 Abstraction Layer</a><br>
+<p><a href="#abstract">4.1 Abstract API</a><br>
 <a href="#numerical_stability">4.2 Numerical Stability</a><br>
 <a href="#candle_settings">4.3 Candlestick Settings</a><br>
 <a href="#input_type">4.4 Input Type: float vs. double</a><br>
@@ -47,7 +47,7 @@ The **Core API** provides:
 * The [`Core`](#direct_call) type and the builder that configures it.
 * The settings each `Core` carries: [unstable period](/api/unstable-period/) and [candlestick settings](/api/candle-settings/). Multiple `Core` instances can safely co-exist (say for different settings).
 * Every TA function, each processing a whole array of data at once.
-* An optional [abstraction layer](#abstract) for calling those functions dynamically.
+* An optional [Abstract API](#abstract) for calling those functions dynamically.
 
 To process a live feed one bar at a time instead, see the companion [C# Streaming API](/api/csharp/stream/).
 
@@ -145,7 +145,7 @@ A few indicators are conventionally drawn at another bar than the one that compu
 int shift = core.DpoDisplayShift(20, 0);   // period 20, first output: -11
 ```
 
-The same answer comes from the [abstraction layer](/api/abstract/). The rules are in the [specification](/spec/lookback/#display-shift).
+The same answer comes from the [Abstract API](/api/abstract/). The rules are in the [specification](/spec/lookback/#display-shift).
 
 ### 3.4 Errors {#retcode}
 
@@ -171,11 +171,11 @@ A batch call may allocate managed scratch, sized by a period (MFI, ULTOSC) or, f
 
 ## 4.0 Advanced Features {#advanced}
 
-### 4.1 Abstraction Layer {#abstract}
+### 4.1 Abstract API {#abstract}
 
-`TALib.Metadata.FunctionCatalog` describes every function at run time and calls it without naming it at compile time. A span cannot be boxed, so the API cannot be invoked through `MethodInfo.Invoke`: calling a function chosen at run time needs this typed path instead of reflection. See the [Abstraction Layer](/api/abstract/) page.
+`TALib.Metadata.FunctionCatalog` describes every function at run time and calls it without naming it at compile time. A span cannot be boxed, so the API cannot be invoked through `MethodInfo.Invoke`: calling a function chosen at run time needs this typed path instead of reflection. See the [Abstract API](/api/abstract/) page.
 
-`Core.Functions` implements `IReadOnlyList<FuncInfo>`, so it is enumerable, LINQ-able, and indexable by position or by name. A misused holder (an index out of range, a mismatched type, an unbound input or output at call time) throws `ArgumentException`.
+`Core.Functions` implements `IReadOnlyList<FuncInfo>`, so it is enumerable, LINQ-able, and indexable by position or by name. A misused holder (an index out of range, a mismatched type, an unbound input or output at call time) throws `TALibArgumentException`, an `ArgumentException` that carries a return code ([rA3](/spec/abstract/#ra3)).
 
 ### 4.2 Numerical Stability {#numerical_stability}
 

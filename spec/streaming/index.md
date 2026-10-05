@@ -76,7 +76,7 @@ A loop that waits for enough history starts at one bar: an empty history is rS1.
 
 ## Discovery
 
-<a id="rh9"></a>**rH9** Every function streams, in every language. The metadata flag is `TA_FUNC_FLG_STREAM`: Rust `FuncFlags::STREAM`, Java `FuncFlags.STREAMING`, C# `FuncFlags.Stream`. A stream is opened by its typed `Open`; the abstraction layer binds batch calls only.
+<a id="rh9"></a>**rH9** Every function streams, in every language. The [metadata flag](/spec/abstract/#flags) is `TA_FUNC_FLG_STREAM`: Rust `FuncFlags::STREAM`, Java `FuncFlags.STREAMING`, C# `FuncFlags.Stream`. A stream is opened by its typed `Open`; the Abstract API binds batch calls only.
 
 ## Release
 

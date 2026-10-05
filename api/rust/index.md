@@ -26,7 +26,7 @@ The Rust API is not yet released. Estimated release: **Q1 2027**.
 <p><a href="#advanced">4.0 Advanced Features</a></p>
 
 <blockquote>
-<p><a href="#abstract">4.1 Abstraction Layer</a><br>
+<p><a href="#abstract">4.1 Abstract API</a><br>
 <a href="#numerical_stability">4.2 Numerical Stability</a><br>
 <a href="#candle_settings">4.3 Candlestick Settings</a><br>
 <a href="#index_range">4.4 Index Range</a><br>
@@ -44,7 +44,7 @@ The **Core API** provides:
 * The [`Core`](#direct_call) type and the builder that configures it.
 * The settings each `Core` carries: [unstable period](/api/unstable-period/) and [candlestick settings](/api/candle-settings/). Multiple `Core` instances can safely co-exist (say for different settings).
 * Every TA function, each processing a whole array of data at once.
-* An optional [abstraction layer](#abstract) for calling those functions dynamically.
+* An optional [Abstract API](#abstract) for calling those functions dynamically.
 
 To process a live feed one bar at a time instead of a whole array, see the companion [Rust Streaming API](/api/rust/stream/).
 
@@ -168,7 +168,7 @@ A few indicators are conventionally drawn at another bar than the one that compu
 let shift = core.dpo_display_shift(20, 0)?;   // period 20, first output: -11
 ```
 
-The same answer comes from the [abstraction layer](/api/abstract/). The rules are in the [specification](/spec/lookback/#display-shift).
+The same answer comes from the [Abstract API](/api/abstract/). The rules are in the [specification](/spec/lookback/#display-shift).
 
 ### 3.4 Results and Return Codes {#retcode}
 
@@ -182,7 +182,7 @@ On success you get an [`OutRange`](https://docs.rs/ta-lib): `beg_idx` is the inp
 | `RetCode::OutOfRangeStartIndex` | `startIdx` is above `Core::INDEX_MAX` (100,000,000). |
 | `RetCode::OutOfRangeEndIndex` | `endIdx` is above `Core::INDEX_MAX`, or below `startIdx`. |
 
-`RetCode` also carries `Success` (the code C returns and the one the other ports expose), plus `AllocErr`, never returned ([rB8](/spec/errors/#rb8)), and `InternalError`, a bug in TA-Lib to report ([rB9](/spec/errors/#rb9)).
+`RetCode` also carries `Success` (the code C returns and the one the other ports expose), plus `AllocErr`, never returned ([rB8](/spec/errors/#rb8)), `InternalError`, a bug in TA-Lib to report ([rB9](/spec/errors/#rb9)), and four codes only the [Abstract API](/api/abstract/) answers: `FuncNotFound`, `InvalidParamHolderType`, `InputNotAllInitialize` and `OutputNotAllInitialize` ([its codes](/spec/abstract/#codes)).
 
 Indexing is safe throughout: the crate is `#![forbid(unsafe_code)]`, so nothing here can read or write out of bounds. Slice sizes are checked before the call runs and reported as `BadParam`; a violated precondition anywhere below that is a panic, never memory corruption.
 
@@ -190,9 +190,9 @@ A `NaN` or `±Inf` inside an input series is not detected, and nothing is promis
 
 ## 4.0 Advanced Features {#advanced}
 
-### 4.1 Abstraction Layer {#abstract}
+### 4.1 Abstract API {#abstract}
 
-`ta_lib::abstract_api` describes every function at run time and calls it without naming it at compile time. Useful for a UI, a scripting bridge, or anything that enumerates indicators. See the [Abstraction Layer](/api/abstract/) page.
+`ta_lib::abstract_api` describes every function at run time and calls it without naming it at compile time. Useful for a UI, a scripting bridge, or anything that enumerates indicators. See the [Abstract API](/api/abstract/) page.
 
 Each optional parameter carries a typed `OptInputType` (`RealRange`, `IntegerRange`, `RealList` or `IntegerList`) with its bounds, default and suggested values, so a UI can build the right control without a lookup table of its own.
 

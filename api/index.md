@@ -2,8 +2,7 @@
 url: 'https://ta-lib.org/api/index.md'
 description: >-
   Calling TA-Lib from C/C++: initialization, the batch calling pattern, sizing
-  outputs with the lookback, return codes, the abstraction layer and thread
-  safety.
+  outputs with the lookback, return codes, the Abstract API and thread safety.
 ---
 # C/C++ Core API
 
@@ -23,7 +22,7 @@ description: >-
 
 <p><a href="#advanced">4.0 Advanced Features</a></p>
 <blockquote>
-<p><a href="#abstract">4.1 Abstraction Layer</a><br>
+<p><a href="#abstract">4.1 Abstract API</a><br>
 <a href="#numerical_stability">4.2 Numerical Stability</a><br>
 <a href="#candle_settings">4.3 Candlestick Settings</a><br>
 <a href="#input_type">4.4 Input Type: float vs. double</a><br>
@@ -38,7 +37,7 @@ description: >-
   <li>The lifecycle of the library (<a href="#init">TA_Initialize / TA_Shutdown</a>).</li>
   <li>The global settings (e.g. <a href="/api/unstable-period/">TA_SetUnstablePeriod</a>, <a href="/api/candle-settings/">TA_SetCandleSettings</a>).</li>
   <li>Every <a href="#ta_func">TA function</a>, each processing a whole array of data at once.</li>
-  <li>An optional <a href="#abstract">abstraction layer</a> for calling those functions dynamically.</li>
+  <li>An optional <a href="#abstract">Abstract API</a> for calling those functions dynamically.</li>
 </ul>
 <p>To process a live feed one bar at a time instead, see the companion <a href="/api/stream/">C/C++ Streaming API</a>.</p>
 <p>You must first <a href="/install/c/">install the C/C++ library</a>, which will provide all the shared/static libraries and headers needed to compile and link your program.</p>
@@ -81,7 +80,7 @@ For Windows, look into <b>C:\Program Files\TA-Lib</b> for 64-bit and <b>C:\Progr
 <pre>TA_RetCode TA_Initialize( void );
 TA_RetCode TA_Shutdown( void );</pre>
 
-<p><b>TA_Initialize</b> must be called once, and only once, per process, before any other API function. After it returns TA_SUCCESS, you can start processing your data in three ways: <a href="#direct_call">batch processing</a>, the <a href="/api/stream/">streaming API</a> or through the <a href="#abstract">abstraction layer</a>.</p>
+<p><b>TA_Initialize</b> must be called once, and only once, per process, before any other API function. After it returns TA_SUCCESS, you can start processing your data in three ways: <a href="#direct_call">batch processing</a>, the <a href="/api/stream/">streaming API</a> or through the <a href="#abstract">Abstract API</a>.</p>
 <p><b>TA_Shutdown</b> releases the resources acquired by TA_Initialize. Call it while no other TA function is running and no stream is open, typically just before your application exits; the library must not be used after it.</p>
 
 ### 3.2 Batch Processing {#direct_call}
@@ -190,7 +189,7 @@ it is TA_SMA_Lookback.</p>
 int shift = TA_DPO_DisplayShift( 20, 0 );   /* period 20, first output: -11 */
 ```
 
-<p>It takes the optional parameters of TA_XXXX_Lookback, then the index of the output, counted from zero. The result is a number of bars: positive ahead, negative behind, and zero for almost every function. The same answer comes from <b>TA_GetDisplayShift</b> in the <a href="/api/abstract/">abstraction layer</a>. The rules are in the <a href="/spec/lookback/#display-shift">specification</a>.</p>
+<p>It takes the optional parameters of TA_XXXX_Lookback, then the index of the output, counted from zero. The result is a number of bars: positive ahead, negative behind, and zero for almost every function. The same answer comes from <b>TA_GetDisplayShift</b> in the <a href="/api/abstract/">Abstract API</a>. The rules are in the <a href="/spec/lookback/#display-shift">specification</a>.</p>
 
 ### 3.5 Return Codes {#retcode}
 
@@ -228,9 +227,9 @@ Error 2(TA_BAD_PARAM): A parameter is out of range
 
 ## 4.0 Advanced Features {#advanced}
 
-### 4.1 Abstraction Layer {#abstract}
+### 4.1 Abstract API {#abstract}
 
-<p>Instead of hard-coding calls to specific TA functions, an app can look them up by name at run time through the interface in <a href="https://github.com/TA-Lib/ta-lib/blob/main/include/ta_abstract.h">ta_abstract.h</a>, read their inputs, parameters and outputs, and call them. See the <a href="/api/abstract/">Abstraction Layer</a> page.</p>
+<p>Instead of hard-coding calls to specific TA functions, an app can look them up by name at run time through the interface in <a href="https://github.com/TA-Lib/ta-lib/blob/main/include/ta_abstract.h">ta_abstract.h</a>, read their inputs, parameters and outputs, and call them. See the <a href="/api/abstract/">Abstract API</a> page.</p>
 
 ### 4.2 Numerical Stability {#numerical_stability}
 

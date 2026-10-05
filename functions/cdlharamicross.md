@@ -24,16 +24,18 @@ A two-candle reversal pattern: a long real body followed by a doji whose real bo
 
 ## Outputs
 
-* `outInteger` — +100/+80 when the first candle is black (bullish), -100/-80 when the first candle is white (bearish), 0 otherwise. Magnitude 100 for strict containment inside the first body, 80 when one real-body end matches
+* `outInteger` — +100/+80 when the first candle is black (bullish), -100/-80 when the first candle is white (bearish), 0 otherwise. Magnitude 100 for strict containment inside the first body, 80 when one or both real-body ends match
 
 ## Output Values
+
+How to read these values from the output's flags: [rW8](/spec/inputs-outputs/#rw8).
 
 | Value | Meaning |
 |-------|---------|
 | -100 | Bearish Harami Cross: a doji forms inside the prior long white candle — indecision after an advance, a sharper warning than a plain Harami |
-| -80 | Bearish Harami Cross, weaker variant: the doji's edge lines up exactly with one end of the long white candle |
+| -80 | Bearish Harami Cross, weaker variant: one or both of the doji's edges line up exactly with the ends of the long white candle's body |
 | 0 | No pattern |
-| 80 | Bullish Harami Cross, weaker variant: the doji's edge lines up exactly with one end of the long black candle |
+| 80 | Bullish Harami Cross, weaker variant: one or both of the doji's edges line up exactly with the ends of the long black candle's body |
 | 100 | Bullish Harami Cross: a doji forms inside the prior long black candle — indecision after a decline, a sharper warning than a plain Harami |
 
 ## Properties
@@ -46,7 +48,7 @@ A two-candle reversal pattern: a long real body followed by a doji whose real bo
 | :-- |
 | <span class="flag-box">☐</span> <span style="opacity:0.5">Overlap Input</span> |
 | <span class="flag-box">✅</span> **Independent Y-Axis** <span class="flag-tip" tabindex="0" role="note" aria-label="Output is on its own scale, drawn in a separate pane below the price chart." data-tip="Output is on its own scale, drawn in a separate pane below the price chart.">i</span> |
-| <span class="flag-box">✅</span> **Candlestick** <span class="flag-tip" tabindex="0" role="note" aria-label="Output is an integer candlestick-pattern signal (e.g. -100 / 0 / +100)." data-tip="Output is an integer candlestick-pattern signal (e.g. -100 / 0 / +100).">i</span> |
+| <span class="flag-box">✅</span> **Candlestick** <span class="flag-tip" tabindex="0" role="note" aria-label="A candlestick pattern; its values are listed under Output Values." data-tip="A candlestick pattern; its values are listed under Output Values.">i</span> |
 | <span class="flag-box">☐</span> <span style="opacity:0.5">Can Output NaN or ±Inf</span> |
 | <span class="flag-box">☐</span> <span style="opacity:0.5">Identity at Period 1</span> |
 | <span class="flag-box">☐</span> <span style="opacity:0.5">Display Shift</span> |

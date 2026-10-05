@@ -15,7 +15,7 @@ The rules cover the four native APIs (C, Rust, Java, C#). Each rule has one home
 
 ## Scope {#scope}
 
-* The four native APIs: batch, lookback, display shift, streams, settings, and the abstraction layer, which is specified only in part ([rM1](/spec/errors/#rm1)).
+* The four native APIs: batch, lookback, display shift, streams, settings, and the [Abstract API](/spec/abstract/).
 * A wrapper keeps its own conventions. ta-lib-python aligns outputs to the input and fills the warm-up with NaN; the native APIs do not ([rW3](/spec/inputs-outputs/#rw3)).
 * Published packages and their versions: [Install](/install/).
 * Owned by other pages: [Unstable Period](/api/unstable-period/), [Candlestick Settings](/api/candle-settings/) (model and defaults), streaming in [C](/api/stream/), [Rust](/api/rust/stream/), [Java](/api/java/stream/) and [C#](/api/csharp/stream/), [Numerical Stability](/functions/stability), and the [function pages](/functions/): inputs, outputs in order, parameters (type, default, accepted values), stability category, flags.
@@ -27,11 +27,12 @@ In the order a caller meets them:
 
 | Page | Covers | Rule families |
 |---|---|---|
-| [Inputs and Outputs](/spec/inputs-outputs/) | what a call takes, what a successful call writes, computing in place | `rP` parameters, `rW` writes |
-| [Lookback](/spec/lookback/) | lookback call, what enters it, display shift, stability from metadata | `rL` lookback |
+| [Batch Inputs and Outputs](/spec/inputs-outputs/) | what a call takes, what a successful call writes, pattern outputs, computing in place | `rP` parameters, `rW` writes |
+| [Lookback and Shift](/spec/lookback/) | lookback call, what enters it, display shift, stability from metadata | `rL` lookback |
 | [Streaming](/spec/streaming/) | bit-identity with batch, opening, advancing, accessors | `rH` handle behaviour, `rS` stream opening, `rU` update |
+| [Abstract API and Metadata](/spec/abstract/) | what the Abstract API provides, its rules and return codes, the catalog of metadata flags | `rA` Abstract API |
 | [Settings and Threads](/spec/settings-threads/) | C lifecycle and settings, `Core`, setting validation, threads | `rT` settings and threads |
-| [Errors](/spec/errors/) | return codes, batch conditions, abstraction layer | `rE` errors, `rB` batch conditions, `rM` abstraction layer (metadata) |
+| [Errors](/spec/errors/) | return codes, batch conditions | `rE` errors, `rB` batch conditions |
 | [Versions and Determinism](/spec/versions/) | bit-identity across languages and equivalent calls; releases | `rD` determinism, `rV` versions |
 
 Each page has two kinds of statement:
@@ -46,6 +47,8 @@ Each page has two kinds of statement:
 None of these is reported. The caller avoids them, or treats what follows as undefined.
 
 * [A buffer too short, in C](/spec/inputs-outputs/#input-length): read or written past its end. Rust, Java and C# reject it.
+* [A buffer bound to a C parameter holder](/spec/abstract/#c-buffers) and no longer valid when the holder is called.
+* [A C parameter holder or table](/spec/abstract/#c-release) never released, or released twice.
 * [NaN or infinity inside an input series](/spec/inputs-outputs/#finite-inputs), or inside the history a stream opens on.
 * [A real input outside ±3e37](/spec/inputs-outputs/#input-domain).
 * [Intermediate overflow](/spec/inputs-outputs/#overflow) on finite input.
@@ -67,7 +70,7 @@ A function's canonical name is its name on [/functions/](/functions/). A fold ch
 | UpperCamel | lower case, upper-case each `_` segment's first letter, drop `_` | `Sma` | `HtTrendline` | `Cdl3blackcrows` |
 | lowerCamel | UpperCamel, first letter lower case | `sma` | `htTrendline` | `cdl3blackcrows` |
 
-Rust uses snake for functions, UpperCamel for types; Java lowerCamel for methods, UpperCamel for types; C# UpperCamel. Messages and the abstraction layer use the canonical name. Indicator parameters keep C's names everywhere (`startIdx`, `inReal`, `optInTimePeriod`, `outReal`).
+Rust uses snake for functions, UpperCamel for types; Java lowerCamel for methods, UpperCamel for types; C# UpperCamel. Messages and the Abstract API use the canonical name. Indicator parameters keep C's names everywhere (`startIdx`, `inReal`, `optInTimePeriod`, `outReal`).
 
 Every function has this surface; in Rust, Java and C# the calls are methods of a `Core`:
 
@@ -116,18 +119,6 @@ Constants: C prefixes `TA_` (`TA_INDEX_MAX`); Rust, Java and C# hold them on `Co
 | `REAL_DEFAULT` | -4e37, selects a real parameter's default ([rP3](/spec/inputs-outputs/#rp3)) |
 | `INTEGER_DEFAULT` | `INT_MIN`, selects an integer parameter's default |
 | `REAL_MIN`, `REAL_MAX` | -3e37, 3e37 ([input domain](/spec/inputs-outputs/#input-domain)) |
-
-### Abstraction layer {#abstraction}
-
-It describes every function at run time (inputs, outputs, each optional parameter's default and range, flags) and runs its double-precision batch call. What its flags say about numerical stability: [Lookback](/spec/lookback/#metadata).
-
-| | C `ta_abstract.h` | Rust `ta_lib::abstract_api` | Java `io.github.talib.metadata` | C# `TALib.Metadata` |
-|---|---|---|---|---|
-| look up, enumerate | `TA_GetFuncHandle`, `TA_ForEachFunc` | `get_func_handle`, `FUNCS` | `Functions.byName`, `Functions.all()` | `FunctionCatalog.Default[name]`, `FunctionCatalog.Default` |
-| call | `TA_ParamHolderAlloc`, `TA_CallFunc` | `FuncId::new_call`, `call` | `FuncInfo.newCall`, `call` | `FuncInfo.CreateCall`, `Call`, `TryCall` |
-| lookback | `TA_GetLookback` | `ParamHolder::lookback` | `ParamHolder.lookback` | `ParamHolder.Lookback` |
-| display shift of one output | `TA_GetDisplayShift` | `ParamHolder::display_shift` | `ParamHolder.displayShift` | `ParamHolder.DisplayShift` |
-| all as one XML document | `TA_FunctionDescriptionXML()` | `function_description_xml()` | `FunctionDescription.xml()` | `FunctionDescription.Xml` |
 
 ## How a failure reaches the caller {#failures}
 

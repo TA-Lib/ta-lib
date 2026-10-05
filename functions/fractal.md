@@ -8,7 +8,7 @@ description: 'Williams Fractal: a causal swing-pivot detector.'
 
 Williams Fractal: a causal swing-pivot detector. A bar is a swing high when its high strictly exceeds the highs of the `optInLeftBars` bars before it and the `optInRightBars` bars after it; a swing low is the mirror on the lows. Bill Williams' original is the symmetric five-candle case; independent left and right arms generalise it.
 
-The right arm cannot be known until it has closed, so the verdict is reported on the confirmation bar, `optInRightBars` bars after the pivot itself. Each output value therefore describes the bar `optInRightBars` back, not the bar it is written at: a flag at output index `k` names input bar `outBegIdx + k - optInRightBars`, whose price is `inHigh[...]` / `inLow[...]` at that index.
+The right arm cannot be known until it has closed, so the value is written on the bar that completes the pivot, `optInRightBars` bars after the pivot itself. Each output value therefore describes the bar `optInRightBars` back, not the bar it is written at: a flag at output index `k` names input bar `outBegIdx + k - optInRightBars`, whose price is `inHigh[...]` / `inLow[...]` at that index. The display shift both outputs report, `-optInRightBars`, is that offset: a chart draws each flag that many bars to the left.
 
 The two outputs are independent flags rather than one signed value, because an outside bar can be a swing high and a swing low at once.
 
@@ -22,7 +22,7 @@ swingLow(i) = 100 if Low\[c] < Low\[j] for every j in \[c-L, c+R] other than c, 
 
 ## Notes
 
-* Strict on both sides: a bar tied with any other bar of its window is not a pivot. TradingView's Pine runtime differs — its `ta.pivothigh` / `ta.pivotlow` let a tie with an older bar stand and let a tie with a newer bar cancel, i.e. non-strict left and strict right — so a plateau Pine reports as a pivot is not one here.
+* Strict on both sides: a bar tied with any other bar of its window is not a pivot. TradingView's Pine runtime differs: its `ta.pivothigh` / `ta.pivotlow` let a tie with an older bar stand and let a tie with a newer bar cancel, i.e. non-strict left and strict right — so a plateau Pine reports as a pivot is not one here.
 * Each output is decided on its own side: a high tied with any other high in the window forces `outSwingHigh` to 0 while leaving `outSwingLow` free to fire 100, and the mirror holds. Only a window flat in both series emits 0 on both.
 
 ## Inputs
@@ -34,6 +34,24 @@ swingLow(i) = 100 if Low\[c] < Low\[j] for every j in \[c-L, c+R] other than c, 
 
 * `outSwingHigh` — 100 when the bar `optInRightBars` back is a strict swing high, 0 otherwise
 * `outSwingLow` — 100 when the bar `optInRightBars` back is a strict swing low, 0 otherwise
+
+## Output Values
+
+How to read these values from the output's flags: [rW8](/spec/inputs-outputs/#rw8).
+
+### `outSwingHigh`
+
+| Value | Meaning |
+|-------|---------|
+| 0 | The bar `optInRightBars` back is not a swing high |
+| 100 | The bar `optInRightBars` back is a strict swing high |
+
+### `outSwingLow`
+
+| Value | Meaning |
+|-------|---------|
+| 0 | The bar `optInRightBars` back is not a swing low |
+| 100 | The bar `optInRightBars` back is a strict swing low |
 
 ## Parameters
 
@@ -55,7 +73,7 @@ swingLow(i) = 100 if Low\[c] < Low\[j] for every j in \[c-L, c+R] other than c, 
 | <span class="flag-box">☐</span> <span style="opacity:0.5">Candlestick</span> |
 | <span class="flag-box">☐</span> <span style="opacity:0.5">Can Output NaN or ±Inf</span> |
 | <span class="flag-box">☐</span> <span style="opacity:0.5">Identity at Period 1</span> |
-| <span class="flag-box">☐</span> <span style="opacity:0.5">Display Shift</span> |
+| <span class="flag-box">✅</span> **Display Shift** <span class="flag-tip" tabindex="0" role="note" aria-label="A chart draws at least one output ahead of or behind the bar that computed it. The display-shift query gives the number of bars; the values are not shifted." data-tip="A chart draws at least one output ahead of or behind the bar that computed it. The display-shift query gives the number of bars; the values are not shifted.">i</span> |
 
 </div>
 

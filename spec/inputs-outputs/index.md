@@ -3,9 +3,9 @@ url: 'https://ta-lib.org/spec/inputs-outputs/index.md'
 description: >-
   What a TA-Lib call takes and what a successful call writes: what the caller
   must pass, index range, optional parameters, output range and size, argument
-  order, integer and declinable outputs, and computing in place.
+  order, integer, declinable and pattern outputs, and computing in place.
 ---
-# Inputs and Outputs
+# Batch Inputs and Outputs
 
 *Part of TA-Lib's [specification](/spec/), a reference for AI-agent-driven integration.*
 
@@ -26,7 +26,7 @@ Nothing here is checked unless the item says so. A call that breaks an unchecked
 
 <a id="rp1"></a>**rP1** `startIdx` and `endIdx` are zero-based, inclusive indices into the input series passed. They select the bars to produce output for; bars before `startIdx` are read as history when the lookback needs them. In C# they index the span passed, not the array behind it: a slice holds no bars before its first element. Bounds and codes: [rB1](/spec/errors/#rb1), [rB2](/spec/errors/#rb2).
 
-<a id="rp2"></a>**rP2** Each optional parameter's default and accepted values are per function: the Parameters table of its [function page](/functions/), and the same data through the [abstraction layer](/spec/#abstraction). A value outside them is rejected, and so is a NaN or infinite value for a real parameter and, in Java, a null `MAType`. A function may also reject a single value inside the listed range, or a combination of values that are each accepted; its page's Notes state it ([FRAMA](/functions/frama) rejects an odd `optInTimePeriod`, [MAVP](/functions/mavp) rejects `optInMinPeriod > optInMaxPeriod`). Rejections: [rB3](/spec/errors/#rb3), [rS3](/spec/streaming/#rs3), [rL2](/spec/lookback/#rl2).
+<a id="rp2"></a>**rP2** Each optional parameter's default and accepted values are per function: the Parameters table of its [function page](/functions/), and the same data through the [Abstract API](/spec/abstract/#provides). A value outside them is rejected, and so is a NaN or infinite value for a real parameter and, in Java, a null `MAType`. A function may also reject a single value inside the listed range, or a combination of values that are each accepted; its page's Notes state it ([FRAMA](/functions/frama) rejects an odd `optInTimePeriod`, [MAVP](/functions/mavp) rejects `optInMinPeriod > optInMaxPeriod`). Rejections: [rB3](/spec/errors/#rb3), [rS3](/spec/streaming/#rs3), [rL2](/spec/lookback/#rl2).
 
 An MA-type parameter accepts every `MAType` member, and a release may add members ([rV3](/spec/versions/#rv3)). To check a raw integer, use the enum your code was built with, never a fixed list: in C the range `TA_MATYPE_MIN` to `TA_MATYPE_MAX`, in Rust `MAType::try_from`, in Java `MAType.values()`, in C# `Enum.IsDefined`.
 
@@ -46,13 +46,13 @@ An MA-type parameter accepts every `MAType` member, and a release may add member
 
 <a id="rw4"></a>**rW4** What an integer output holds:
 
-* **Candlestick patterns** (`CDL*`): every value is one of 0, ±80, ±100 and ±200, and 0 means no pattern on that bar. The sign is the pattern's direction (+ bullish, - bearish) or, for some, only the candle's color (+ white, - black). Which values a pattern emits, and what each means, is in the Output Values table on its function page.
+* **Pattern outputs** (every `CDL*` output, among others): [rW8](/spec/inputs-outputs/#rw8).
 * **Index outputs** ([MININDEX](/functions/minindex), [MAXINDEX](/functions/maxindex), [MINMAXINDEX](/functions/minmaxindex)): the position of a bar in the input passed, not relative to `startIdx` or `begIdx`. Which of several tied bars it names is unspecified.
 * **Other integer outputs** (for example [HT_TRENDMODE](/functions/ht_trendmode)): as their function page says.
 
-<a id="rw5"></a>**rW5** An output whose metadata flags include `TA_OUT_NULLABLE` (Rust `OutputFlags::NULLABLE`, Java `OutputFlags.NULLABLE`, C# `OutputFlags.Nullable`) may be declined, for example MAMA's `outFAMA`; read the flag rather than a list of names. Decline it with `NULL` in C, `None` in Rust (the parameter is an `Option`), `null` in Java, an empty span such as `default` in C#. It is still computed: every other output is bit-identical to the same call with it supplied, and a stream opened that way still reports its value. No other output can be declined: [rB7](/spec/errors/#rb7), [rS7](/spec/streaming/#rs7), [rU5](/spec/streaming/#ru5).
+<a id="rw5"></a>**rW5** An output whose [metadata flags](/spec/abstract/#flags) include `TA_OUT_NULLABLE` (Rust `OutputFlags::NULLABLE`, Java `OutputFlags.NULLABLE`, C# `OutputFlags.Nullable`) may be declined, for example MAMA's `outFAMA`; read the flag rather than a list of names. Decline it with `NULL` in C, `None` in Rust (the parameter is an `Option`), `null` in Java, an empty span such as `default` in C#. It is still computed: every other output is bit-identical to the same call with it supplied, and a stream opened that way still reports its value. No other output can be declined: [rB7](/spec/errors/#rb7), [rS7](/spec/streaming/#rs7), [rU5](/spec/streaming/#ru5).
 
-<a id="rw6"></a>**rW6** A function whose flags include `TA_FUNC_FLG_NAN_INF_OUT` (Rust `FuncFlags::NAN_INF_OUTPUT`, Java `FuncFlags.NAN_INF_OUTPUT`, C# `FuncFlags.NanInfOutput`; "Can Output NaN or ±Inf" on its function page) can write NaN or ±Inf in a successful call on ordinary finite input. The Notes on its function page say when.
+<a id="rw6"></a>**rW6** A function whose [metadata flags](/spec/abstract/#flags) include `TA_FUNC_FLG_NAN_INF_OUT` (Rust `FuncFlags::NAN_INF_OUTPUT`, Java `FuncFlags.NAN_INF_OUTPUT`, C# `FuncFlags.NanInfOutput`; "Can Output NaN or ±Inf" on its function page) can write NaN or ±Inf in a successful call on ordinary finite input. The Notes on its function page say when.
 
 ## Computing in place {#aliasing}
 
@@ -62,3 +62,17 @@ An MA-type parameter accepts every `MAType` member, and a release may add member
 |---|---|---|---|---|
 | "The same buffer" means | the same pointer | not expressible in safe code | the same array | equal spans: same start and length; at `OpenAndFill`, the same start; a null array is no buffer |
 | Output on an input | allowed | not expressible | allowed | allowed |
+
+## Pattern outputs {#patterns}
+
+<a id="rw8"></a>**rW8** A pattern output writes 0 or a sign times a level. Its [metadata flags](/spec/abstract/#flags) say which values it writes and what they mean, and the Output Values table on its function page says what each value means for that pattern.
+
+* **The values.** `TA_OUT_POSITIVE`, `TA_OUT_NEGATIVE` and `TA_OUT_ZERO` are the signs that occur: an output setting any of them sets every sign it writes, and one setting none declares nothing. The levels are 100, plus 80 with `TA_OUT_PATTERN_WEAK` and 200 with `TA_OUT_PATTERN_CONFIRM`. The output writes every declared sign times every level, 0 when `TA_OUT_ZERO` is set, and nothing else. 0 means no pattern on that bar.
+* **The sign.**
+  * With `TA_OUT_PATTERN_BOOL` it means nothing, and the values are 0 and 100.
+  * With `TA_OUT_PATTERN_BULL_BEAR` it is the pattern's call: + bullish, - bearish. No function checks the trend a pattern's definition presumes.
+  * With neither, on an integer output of a `TA_FUNC_FLG_CANDLESTICK` function that sets all three sign flags, it is the color of the input bar at the value's own index: + when close >= open, - otherwise. A display shift does not move that bar.
+  * Any other output is not a pattern output.
+* **The level.** 100 is the pattern, found on this bar, and 80 a weaker form of it. 200 confirms the output's live pattern: its most recent earlier value of level 100 or 80, which has the same sign. A value of level 100 or 80 ends any earlier live pattern, and a 200 ends the one it confirms. The confirmed value can lie before the first value the caller received: before `begIdx`, or in the history a stream opened on. A peek value is never one.
+* **Counting.** The patterns found are the values of level 100 or 80; the confirmations are those of level 200.
+* **A flag a program does not know.** A later release may add flags. On a pattern output carrying one, the values listed above may not be all, and the sign keeps its meaning.

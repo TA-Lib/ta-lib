@@ -5,7 +5,7 @@ description: >-
   outputs and flags, and call it without naming it at compile time, in C, Rust,
   Java and C#.
 ---
-# Abstraction Layer
+# Abstract API
 
 **TL;DR:** Every function describes itself at run time and can be called by name. Use it when the function or its parameters are not fixed in your code.
 
@@ -20,7 +20,7 @@ If you only need a handful of specific functions, calling them directly is simpl
 
 ## Describe a function
 
-Look a function up by name, or enumerate them all. Each one reports its group, its inputs, its optional parameters (type, range, default) and its outputs, with flags.
+Look a function up by name, or enumerate them all. Each one reports its group, its inputs, its optional parameters (type, range, default) and its outputs, with flags. Every flag is listed in the specification: [Abstract API and Metadata](/spec/abstract/#flags).
 
 ::: code-tabs#lang
 
@@ -37,7 +37,7 @@ TA_GetFuncHandle( "SMA", &handle );
 TA_GetFuncInfo( handle, &info );          /* name, group, hint, flags, nbInput, nbOptInput, nbOutput */
 TA_GetOptInputParameterInfo( handle, 0, &opt );   /* displayName, type, dataSet (range), defaultValue */
 
-/* Every function, group by group: TA_ForEachFunc( callback, opaqueData ); */
+/* Every function: TA_ForEachFunc( callback, opaqueData ); */
 ```
 
 @tab Rust
@@ -137,7 +137,7 @@ OutRange r = Core.Functions["SMA"].CreateCall()
 
 :::
 
-The call behaves like the typed one: same values, same range, same rejections. A parameter holder is not thread-safe: confine one to one thread, or build one per call.
+The call behaves like the typed one: same values, same range, same rejections. A parameter holder is not thread-safe: confine one to one thread, or build one per call. The exact rules: [Abstract API and Metadata](/spec/abstract/).
 
 ## Lookback and display shift
 
@@ -190,4 +190,4 @@ int shift = call.DisplayShift(0);   // output 0: -11
 
 :::
 
-A function with at least one shifted output carries the display-shift flag, and so does each such output, so a generic client can skip the query for every other function. The exact rules: [Lookback specification](/spec/lookback/).
+A function with at least one shifted output carries the display-shift flag, and so does each such output, so a generic client can skip the query for every other function. The exact rules: [Lookback and Shift](/spec/lookback/).

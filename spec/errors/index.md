@@ -2,8 +2,7 @@
 url: 'https://ta-lib.org/spec/errors/index.md'
 description: >-
   What a rejected TA-Lib call reports: the return codes a function call can
-  answer, the batch call's conditions, and the abstraction layer, for the C,
-  Rust, Java and C# APIs.
+  answer and the batch call's conditions, for the C, Rust, Java and C# APIs.
 ---
 # Errors
 
@@ -33,7 +32,7 @@ The codes a batch, lookback or stream call can answer:
 | 17 | `TA_INSUFFICIENT_HISTORY` | Stream openers only ([rS8](/spec/streaming/#rs8)). A batch call never returns it. |
 | 5000 to 5999 | `TA_INTERNAL_ERROR` + id | [rB9](/spec/errors/#rb9). |
 
-`TA_RetCode` has further members, declared in `ta_defs.h`. Only the abstraction layer returns them.
+The Abstract API answers codes of its own: [Abstract API and Metadata](/spec/abstract/#codes). The remaining members of `TA_RetCode`, declared in `ta_defs.h`, are returned by nothing.
 
 ## General rules
 
@@ -67,14 +66,6 @@ A batch call accepts `0 <= startIdx <= endIdx <= TA_INDEX_MAX` ([`TA_INDEX_MAX`]
 
 **rB9.** A bug in TA-Lib, not in the call: report it, with the number in C. C's `TA_SetRetCodeInfo` names every value from 5000 to 5999 `TA_INTERNAL_ERROR`, and a value that is not a `TA_RetCode` member `TA_UNKNOWN_ERR`. Rust, Java and C# report `TA_INTERNAL_ERROR` without an id.
 
-## Abstraction layer {#abstraction-layer}
-
-<a id="rm1"></a>**rM1** A call through the abstraction layer ([per language](/spec/#abstraction)) whose arguments are all bound and accepted by their setters is held to the batch conditions, with the same codes. The exception is C, whose setters take bare pointers and no length: a bound series shorter than the range goes undetected there, as in rB5.
-
-<a id="rm2"></a>**rM2** A rejected setter leaves the parameter holder as it found it, so a rejected re-bind cannot leave the next call to succeed, silently, over a mix of old and new arguments.
-
-How the layer answers a misuse of its own surface (an unknown name, an unbound or mistyped argument) is not specified.
-
 ## Conditions on other pages
 
 | Call | Rules |
@@ -82,4 +73,5 @@ How the layer answers a misuse of its own surface (an unknown name, an unbound o
 | Lookback, display shift | [rL2](/spec/lookback/#rl2) rejection signal, [rL3](/spec/lookback/#rl3) agrees with batch, [rL11](/spec/lookback/#rl11) display shift |
 | Stream opening | [rS1](/spec/streaming/#rs1) empty history, [rS2](/spec/streaming/#rs2) too long, [rS3](/spec/streaming/#rs3) parameter, [rS4](/spec/streaming/#rs4) absent, [rS5](/spec/streaming/#rs5) length, [rS6](/spec/streaming/#rs6) one buffer twice, [rS7](/spec/streaming/#rs7) declined output, [rS8](/spec/streaming/#rs8) short history |
 | Stream advancing | [rU1](/spec/streaming/#ru1) absent handle, [rU2](/spec/streaming/#ru2) absent output, [rU3](/spec/streaming/#ru3) non-finite bar, [rU4](/spec/streaming/#ru4) index ceiling, [rU5](/spec/streaming/#ru5) declined output |
+| Abstract API | [rA1](/spec/abstract/#ra1) batch conditions through a holder, [rA2](/spec/abstract/#ra2) rejected setter, [rA3](/spec/abstract/#ra3) misuse of a holder, [rA4](/spec/abstract/#ra4) unknown name |
 | Settings | [rT2](/spec/settings-threads/#rt2) target, [rT3](/spec/settings-threads/#rt3) unstable period, [rT4](/spec/settings-threads/#rt4) reading, [rT5](/spec/settings-threads/#rt5) range type, [rT6](/spec/settings-threads/#rt6) average, [rT7](/spec/settings-threads/#rt7) factor, [rT8](/spec/settings-threads/#rt8) no change on refusal |
