@@ -630,8 +630,8 @@ flag_newtype!(
     CANDLESTICK = 0x1000_0000,
     /// Output is path-dependent: built up from the first bar, so it depends on
     /// the requested `startIdx` and never converges across ranges — the same bar
-    /// computed from a different `startIdx` can differ. E.g. AD, ADOSC, OBV,
-    /// NVI, PVI, SAR, SAREXT.
+    /// computed from a different `startIdx` can differ. E.g. AD, OBV, NVI,
+    /// PVI, SAR, SAREXT.
     PATH_DEPENDENT = 0x2000_0000,
     /// Inputs of ordinary magnitude can have no finite result, so a successful
     /// call may write NaN or ±Inf (e.g. ACOS outside `[-1, 1]`, LN of zero,
@@ -903,7 +903,7 @@ static FUNC_TABLE: [FuncInfo; 228] = [
         name: "ADOSC",
         group: Group::VolumeIndicators,
         hint: "Chaikin A/D Oscillator",
-        flags: FuncFlags(0x22000000),
+        flags: FuncFlags(0x02000000),
         inputs: &[InputInfo { param_name: "inPriceHLCV", kind: InputType::Price, flags: InputFlags(0x0000001e) }, ],
         opt_inputs: &[OptInputInfo { param_name: "optInFastPeriod", display_name: "Fast Period", hint: "Period of the fast MA", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 2, max: 100000, default: 3, suggested: (4, 200, 1) } }, OptInputInfo { param_name: "optInSlowPeriod", display_name: "Slow Period", hint: "Period of the slow MA", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 2, max: 100000, default: 10, suggested: (4, 200, 1) } }, ],
         outputs: &[OutputInfo { param_name: "outReal", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, ],

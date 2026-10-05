@@ -423,7 +423,7 @@ Where the reading and the measurement differ, and facts the tree states differen
 ADOSC is ruled in section 9, D6, and the index tie-break is scheduled in section 8. The period-1
 item is part of the rules of section 3.2. The rest are separate decisions.
 
-- **ADOSC is flagged path-dependent and is not.** It is the difference of two EMAs of the A/D
+- **ADOSC was flagged path-dependent and is not** (the flag is gone, issue #502). It is the difference of two EMAs of the A/D
   line. Both EMAs are seeded on the same first A/D value, so the constant offset between two
   starts' A/D lines cancels in the difference and what remains decays at the slower EMA's rate.
   Measured at the defaults: within `e^-10` after 51 bars, against a `PREC_4` count of 55. Under
@@ -822,8 +822,8 @@ Steps 1, 4 and 5 each leave the tree releasable. Steps 2 and 3 are one releasabl
 lookback is what callers size history by, so either they land together or step 2 keeps every
 setter refusing `TA_UNSTABLE_AUTO` until the leg is green.
 
-Before step 3: the ADOSC flag (section 9, D6). The tie-break of the index functions either
-lands before step 3 too, or the leg names it as an exemption that the later change removes.
+The ADOSC flag (section 9, D6) is done. The tie-break of the index functions either
+lands before step 3, or the leg names it as an exemption that the later change removes.
 
 ## 9. Rulings
 

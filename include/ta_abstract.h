@@ -200,8 +200,7 @@ typedef int TA_FuncFlags;
                                           * never converges across ranges -- the
                                           * same bar computed from a different
                                           * startIdx can differ.
-                                          * e.g. AD, ADOSC, OBV, NVI, PVI, SAR,
-                                          * SAREXT.
+                                          * e.g. AD, OBV, NVI, PVI, SAR, SAREXT.
                                           */
 #define TA_FUNC_FLG_NAN_INF_OUT 0x40000000 /* Some inputs of ordinary
                                           * magnitude have no finite result, so

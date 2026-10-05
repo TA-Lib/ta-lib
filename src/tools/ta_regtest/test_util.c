@@ -694,8 +694,8 @@ ErrorNumber doRangeTestMulti( RangeTestFunction testFunction,
     *    is the vestigial-flag trap that let a bug hide behind the loose
     *    convergence tolerance (IMI #14, MFI #4). Fail loudly instead.
     *  - SKIP is exempt: an accumulation seeded at startIdx may still legitimately
-    *    sweep an internal EMA's unstable period while its values are left
-    *    uncompared (e.g. ADOSC passes unstId=EMA with TA_DO_NOT_COMPARE). */
+    *    sweep an internal recursion's unstable period while its values are left
+    *    uncompared (e.g. SUPERTREND, through ATR). */
    if( stability == TA_STABLE_CONVERGING && unstId == TA_TEST_UNST_NONE )
    {
       printf( "Fail: doRangeTest CONVERGING class has no unstable-period id\n" );

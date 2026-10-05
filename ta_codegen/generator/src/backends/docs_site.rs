@@ -507,8 +507,8 @@ fn stability_line(
 
     let (state, mut reason) = if st.path_dependent {
         // Path-dependence subsumes an unstable period -- nothing converges either way -- but
-        // an inherited period still moves the lookback, so ADOSC must not lose that it
-        // responds to EMA's setting just because the stronger property won the headline.
+        // an inherited period still moves the lookback, so SUPERTREND must not lose that it
+        // responds to ATR's setting just because the stronger property won the headline.
         let why = if st.inherited_from.is_empty() {
             String::new()
         } else {
@@ -1876,19 +1876,19 @@ mod tests {
         );
 
         // ...but a path-dependent function that also inherits a period keeps that clause,
-        // because the period still moves its lookback (ADOSC through EMA).
-        let f = stability_of("ADOSC", &["path_dependent"], vec![]);
+        // because the period still moves its lookback (SUPERTREND through ATR).
+        let f = stability_of("SUPERTREND", &["path_dependent"], vec![]);
         let mut all = HashMap::new();
         all.insert(
-            "ADOSC".to_string(),
+            "SUPERTREND".to_string(),
             Stability {
                 path_dependent: true,
-                inherited_from: vec!["EMA".into()],
+                inherited_from: vec!["ATR".into()],
                 ..Stability::default()
             },
         );
         let line = stability_line(&f, &enums, &all);
-        assert!(line.contains("computes EMA internally"), "{line}");
+        assert!(line.contains("computes ATR internally"), "{line}");
     }
 
     /// An unchecked display cell must not carry a tooltip: its text would describe a

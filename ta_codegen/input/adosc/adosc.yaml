@@ -1,7 +1,7 @@
 name: ADOSC
 group: Volume Indicators
 hint: Chaikin A/D Oscillator
-flags: [stream, path_dependent]
+flags: [stream]
 inputs:
   - name: inPriceHLCV
     type: price

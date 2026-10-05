@@ -814,8 +814,7 @@ static ErrorNumber do_test( const TA_History *history,
       case TA_ADOSC_5_2_TEST:
          errNb = doRangeTest( rangeTestFunction,
                               TA_FUNC_UNST_EMA,
-                              (void *)&testParam, 1,
-                              TA_DO_NOT_COMPARE );
+                              (void *)&testParam, 1, 0 );
          if( errNb != TA_TEST_PASS )
             return errNb;
          break;

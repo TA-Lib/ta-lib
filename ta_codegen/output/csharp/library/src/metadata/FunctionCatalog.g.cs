@@ -505,7 +505,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
         name: "ADOSC",
         group: FunctionGroup.VolumeIndicators,
         hint: "Chaikin A/D Oscillator",
-        flags: FuncFlags.Stream | FuncFlags.PathDependent,
+        flags: FuncFlags.Stream,
         unstableId: null,
         inputs:
         [

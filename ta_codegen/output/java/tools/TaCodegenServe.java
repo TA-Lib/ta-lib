@@ -217632,7 +217632,7 @@ public class TaCodegenServe {
             new AbsIn[]{ new AbsIn(1,"inReal0",0), new AbsIn(1,"inReal1",0) },
             new AbsOpt[]{  },
             new AbsOut[]{ new AbsOut(0,"outReal",1) }));
-        ABSTRACT.put("ADOSC", new AbsFunc("ADOSC", "Volume Indicators", "Chaikin A/D Oscillator", 570425344,
+        ABSTRACT.put("ADOSC", new AbsFunc("ADOSC", "Volume Indicators", "Chaikin A/D Oscillator", 33554432,
             new AbsIn[]{ new AbsIn(0,"inPriceHLCV",30) },
             new AbsOpt[]{ new AbsOpt(2,"optInFastPeriod",0,"Fast Period","Period of the fast MA",3.0, 0,0,0,0,0,0, 2,100000,4,200,1, null), new AbsOpt(2,"optInSlowPeriod",0,"Slow Period","Period of the slow MA",10.0, 0,0,0,0,0,0, 2,100000,4,200,1, null) },
             new AbsOut[]{ new AbsOut(0,"outReal",1) }));

@@ -442,7 +442,7 @@ public final class Functions {
 
    private static FuncInfo f_ADOSC() {
       return new FuncInfo(
-         "ADOSC", "Volume Indicators", "Chaikin A/D Oscillator", 0x22000000,
+         "ADOSC", "Volume Indicators", "Chaikin A/D Oscillator", 0x02000000,
          List.of(
             new InputInfo(InputType.PRICE, "inPriceHLCV", 0x0000001E)
          ),

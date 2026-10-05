@@ -1583,8 +1583,8 @@ flag_newtype!(
     CANDLESTICK = 0x1000_0000,
     /// Output is path-dependent: built up from the first bar, so it depends on
     /// the requested `startIdx` and never converges across ranges — the same bar
-    /// computed from a different `startIdx` can differ. E.g. AD, ADOSC, OBV,
-    /// NVI, PVI, SAR, SAREXT.
+    /// computed from a different `startIdx` can differ. E.g. AD, OBV, NVI,
+    /// PVI, SAR, SAREXT.
     PATH_DEPENDENT = 0x2000_0000,
     /// Inputs of ordinary magnitude can have no finite result, so a successful
     /// call may write NaN or ±Inf (e.g. ACOS outside `[-1, 1]`, LN of zero,

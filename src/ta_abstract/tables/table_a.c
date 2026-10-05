@@ -266,7 +266,7 @@ static const TA_OptInputParameterInfo *TA_ADOSC_OptInputs[] =
 DEF_FUNCTION( ADOSC,
               TA_GroupId_VolumeIndicators,
               "Chaikin A/D Oscillator",
-              TA_FUNC_FLG_STREAM | TA_FUNC_FLG_PATH_DEP
+              TA_FUNC_FLG_STREAM
              );
 /* ADOSC END */
 
