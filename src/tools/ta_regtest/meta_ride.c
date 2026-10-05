@@ -27,6 +27,9 @@
 #define C_N200      0x200u
 #define C_OTHER     0x400u
 #define C_NONE      0x800u /* declared by a pattern output with no value flag */
+/* What a flag permits and a call did: TA_OUT_DISPLAY_SHIFT, TA_OUT_NULLABLE. */
+#define C_SHIFTED   0x1000u
+#define C_DECLINED  0x2000u
 
 #define PATTERN_FLAGS (TA_OUT_PATTERN_BOOL | TA_OUT_PATTERN_BULL_BEAR)
 #define SIGN_FLAGS    (TA_OUT_POSITIVE | TA_OUT_NEGATIVE | TA_OUT_ZERO)
@@ -41,6 +44,7 @@ typedef struct
    const TA_OutputParameterInfo *out[MAX_OUT];
    int pattern[MAX_OUT];           /* a pattern output of rule rW8 */
    unsigned int declared[MAX_OUT]; /* 0: the output declares no value or sign */
+   unsigned int required[MAX_OUT]; /* what some call of the run must show */
    unsigned int seen[MAX_OUT];
    unsigned long long calls;
 } Site;
@@ -49,10 +53,8 @@ static Site sites[TA_META_FRAME_SIZE];
 static int  resolved;
 static long mismatches;
 
-/* Per check: what it judged, and how often the case its flag permits occurred. */
-static unsigned long long finiteJudged, nonFiniteFlagged, nonFiniteExcused;
-static unsigned long long shiftJudged, shiftFlaggedNonZero;
-static unsigned long long patternJudged;
+static unsigned long long finiteJudged, nonFiniteExcused;
+static unsigned long long shiftJudged, patternJudged, pointerJudged;
 static unsigned long long rangeJudged, rangeEmpty;
 
 static int report( const Site *s )
@@ -118,6 +120,9 @@ static void resolve( void )
          TA_GetOutputParameterInfo( handle, o, &s->out[o] );
          s->pattern[o] = is_pattern( s->info, s->out[o] );
          s->declared[o] = declared_classes( s->out[o], s->pattern[o] );
+         s->required[o] = s->declared[o] & (C_OTHER - 1);
+         if( s->out[o]->flags & TA_OUT_DISPLAY_SHIFT ) s->required[o] |= C_SHIFTED;
+         if( s->out[o]->flags & TA_OUT_NULLABLE )      s->required[o] |= C_DECLINED;
       }
    }
    resolved = 1;
@@ -240,13 +245,23 @@ void meta_ride_check( int site, int single, int startIdx, int endIdx,
       if( shift[o] != 0 )
       {
          if( info->flags & TA_OUT_DISPLAY_SHIFT )
-            shiftFlaggedNonZero++;
+            s->seen[o] |= C_SHIFTED;
          else if( report( s ) )
             printf( "%s has display shift %d without TA_OUT_DISPLAY_SHIFT\n",
                     info->paramName, shift[o] );
       }
 
-      if( !out[o] || nb <= 0 || (isInt && !declared) )
+      pointerJudged++;
+      if( !out[o] )
+      {
+         if( info->flags & TA_OUT_NULLABLE )
+            s->seen[o] |= C_DECLINED;
+         else if( report( s ) )
+            printf( "%s was NULL in a successful call without TA_OUT_NULLABLE\n",
+                    info->paramName );
+         continue;
+      }
+      if( nb <= 0 || (isInt && !declared) )
          continue;
 
       if( isInt )
@@ -256,36 +271,36 @@ void meta_ride_check( int site, int single, int startIdx, int endIdx,
          c = real_classes( (const double *)out[o], nb );
       else if( any_non_finite( (const double *)out[o], nb ) )
          c = C_NONFINITE;
-      s->seen[o] |= c;
+      s->seen[o] |= c & ~C_NONFINITE;
 
       if( !isInt )
       {
-         if( s->info->flags & TA_FUNC_FLG_NAN_INF_OUT )
-            nonFiniteFlagged += (c & C_NONFINITE) != 0;
-         else
-         {
-            finiteJudged += nb;
-            if( c & C_NONFINITE )
-            {
-               int from = outBegIdx - lookback;
-               int inPlace = 0, k;
-               unsigned int oo;
+         int flagged = (s->info->flags & TA_FUNC_FLG_NAN_INF_OUT) != 0;
 
-               /* Computed in place, the inputs are gone and nothing is judged. */
-               for( k = 0; k < nbIn; k++ )
-                  for( oo = 0; oo < s->info->nbOutput; oo++ )
-                     inPlace |= in[k] && in[k] == out[oo];
-               if( inPlace ||
-                   !inputs_ordinary( single, in, nbIn, from > 0 ? from : 0, endIdx ) )
-                  nonFiniteExcused++;
-               else if( report( s ) )
-               {
-                  const double *v = (const double *)out[o];
-                  for( i = 0; v[i] - v[i] == 0.0; i++ ) {}
-                  printf( "%s[%d] is %g, from ordinary inputs, without "
-                          "TA_FUNC_FLG_NAN_INF_OUT (range %d, %d)\n",
-                          info->paramName, i, v[i], startIdx, endIdx );
-               }
+         if( !flagged )
+            finiteJudged += nb;
+         if( c & C_NONFINITE )
+         {
+            int from = outBegIdx - lookback;
+            int inPlace = 0, k;
+            unsigned int oo;
+
+            /* Computed in place, the inputs are gone and nothing is judged. */
+            for( k = 0; k < nbIn; k++ )
+               for( oo = 0; oo < s->info->nbOutput; oo++ )
+                  inPlace |= in[k] && in[k] == out[oo];
+            if( inPlace ||
+                !inputs_ordinary( single, in, nbIn, from > 0 ? from : 0, endIdx ) )
+               nonFiniteExcused++;
+            else if( flagged )
+               s->seen[o] |= C_NONFINITE;
+            else if( report( s ) )
+            {
+               const double *v = (const double *)out[o];
+               for( i = 0; v[i] - v[i] == 0.0; i++ ) {}
+               printf( "%s[%d] is %g, from ordinary inputs, without "
+                       "TA_FUNC_FLG_NAN_INF_OUT (range %d, %d)\n",
+                       info->paramName, i, v[i], startIdx, endIdx );
             }
          }
       }
@@ -379,19 +394,22 @@ long meta_ride_mismatches( void )
    return mismatches;
 }
 
-static const char *class_name( unsigned int c )
+/* What an output declares that no call of the run showed. */
+static const char *unreached( unsigned int c )
 {
    switch( c )
    {
-   case C_ZERO: return "0";
-   case C_POS:  return "a positive value";
-   case C_NEG:  return "a negative value";
-   case C_P100: return "+100";
-   case C_N100: return "-100";
-   case C_P80:  return "+80";
-   case C_N80:  return "-80";
-   case C_P200: return "+200";
-   default:     return "-200";
+   case C_ZERO: return "0 and no call wrote it";
+   case C_POS:  return "a positive value and no call wrote one";
+   case C_NEG:  return "a negative value and no call wrote one";
+   case C_P100: return "+100 and no call wrote it";
+   case C_N100: return "-100 and no call wrote it";
+   case C_P80:  return "+80 and no call wrote it";
+   case C_N80:  return "-80 and no call wrote it";
+   case C_P200: return "+200 and no call wrote it";
+   case C_N200: return "-200 and no call wrote it";
+   case C_SHIFTED: return "TA_OUT_DISPLAY_SHIFT and no call had a non-zero shift";
+   default:     return "TA_OUT_NULLABLE and no call passed NULL";
    }
 }
 
@@ -399,11 +417,10 @@ ErrorNumber meta_ride_whole_run( void )
 {
    const struct { const char *what; unsigned long long count; } floors[] = {
       { "real output values held finite", finiteJudged },
-      { "non-finite outputs of a TA_FUNC_FLG_NAN_INF_OUT function", nonFiniteFlagged },
       { "non-finite outputs excused by their inputs", nonFiniteExcused },
       { "display shifts", shiftJudged },
-      { "non-zero display shifts of a TA_OUT_DISPLAY_SHIFT output", shiftFlaggedNonZero },
       { "pattern output values", patternJudged },
+      { "output pointers", pointerJudged },
       { "output ranges", rangeJudged },
       { "ranges too short for the lookback", rangeEmpty },
    };
@@ -431,12 +448,24 @@ ErrorNumber meta_ride_whole_run( void )
          printf( "\nMETA RIDE [TA_%s]: never called\n", s->info->name );
          retValue = TA_META_RIDE_UNREACHED;
       }
+      if( s->info->flags & TA_FUNC_FLG_NAN_INF_OUT )
+      {
+         unsigned int seen = 0;
+         for( o = 0; o < s->info->nbOutput; o++ )
+            seen |= s->seen[o];
+         if( !(seen & C_NONFINITE) )
+         {
+            printf( "\nMETA RIDE [TA_%s]: declares TA_FUNC_FLG_NAN_INF_OUT and no call "
+                    "wrote a non-finite value from ordinary inputs\n", s->info->name );
+            retValue = TA_META_RIDE_UNREACHED;
+         }
+      }
       for( o = 0; o < s->info->nbOutput; o++ )
-         for( bit = 1; bit < C_OTHER; bit <<= 1 )
-            if( (s->declared[o] & bit) && !(s->seen[o] & bit) )
+         for( bit = 1; bit <= C_DECLINED; bit <<= 1 )
+            if( (s->required[o] & bit) && !(s->seen[o] & bit) )
             {
-               printf( "\nMETA RIDE [TA_%s]: %s declares %s and no call wrote it\n",
-                       s->info->name, s->out[o]->paramName, class_name( bit ) );
+               printf( "\nMETA RIDE [TA_%s]: %s declares %s\n",
+                       s->info->name, s->out[o]->paramName, unreached( bit ) );
                retValue = TA_META_RIDE_UNREACHED;
             }
    }
