@@ -1,0 +1,680 @@
+Auto warm-up probe: results at commit 86285a0a9, warmup_probe 40000, gcc 14, x86_64 Linux.
+
+== 1. Classes at the default parameters (analyze.py summary) ==
+Counter({'EXACT': 122, 'CONV': 59, 'ROUND': 38, 'NEVER': 9})
+ROUND AC ACCBANDS AO BBANDS BBW BETA CCI CMF COPPOCK CORREL CRSI CTI DPO EMV FOSC HMA KST KSTEXT KURTOSIS LINEARREG LINEARREG_ANGLE LINEARREG_INTERCEPT LINEARREG_SLOPE MA MACDEXT MAVP MFI PERCENTB SMA STDDEV STOCH STOCHF SUM TRIMA TSF VAR VWMA WMA
+CONV ADOSC ADX ADXR APO ATR CKSP CMO CVI DEMA DX EFI EMA ERI FRAMA HA HT_DCPERIOD HT_DCPHASE HT_PHASOR HT_SINE HT_TRENDLINE HT_TRENDMODE KAMA KC KDJ MACD MACDFIX MAMA MASSI MAXINDEX MCGD MINMAXINDEX MINUS_DI MINUS_DM NATR PLUS_DI PLUS_DM PPO PVO RMA RSI RVI RVIR SAR SAREXT SMI STC STOCHRSI SUPERTREND SWAK_2PHP SWAK_BP SWAK_BUTTER SWAK_GAUSS SWAK_HP T3 TEMA TRIX TSI VIDYA ZLEMA
+SLOW 
+NEVER AD ASI CUMSUM NVI OBV PVI PVT VWAP WAD
+EXACT non-cdl ACOS ADD ADR ALMA AROON AROONOSC ASIN ATAN AVGDEV AVGPRICE BOP CEIL CG CHOP CHOPTR CMOU COS COSH DIV DONCHIAN ER EXP FLOOR FRACTAL IBS IMI LN LOG10 MARKETFI MAX MEDIAN MEDPRICE MIDPOINT MIDPRICE MIN MININDEX MINMAX MOM MULT PERCENTILE PERCENTRANK QSTICK ROC ROCP ROCR ROCR100 RVOL SI SIN SINH SQRT SUB TAN TANH TRANGE TYPPRICE ULTOSC VHF VORTEX WCLPRICE WILLR
+EXACT cdl count 61
+
+== 2. Outputs that are not bit-identical: defaults, tripled periods, each MA type (analyze.py nonexact) ==
+func          cfg                          out               lb cls            S      S/R |    A7   A10   A14   A16   A19   A21   A28 |   B10   B19 |    C4    C8 |      Z     tail | rw/zz/tr A10
+AC            defaults                     outReal           37 ROUND   7.39e-13  5.8e-14 |    -1    -1    -1    -1    -1    -1    -1 |     0     0 | 17805 17805 |     -1  1.0e+00 | 18526/-1/-1
+AC            FastPeriod=15,SlowPeriod=102 outReal          115 ROUND   7.39e-13  8.4e-14 |    -1    -1    -1    -1    -1    -1    -1 |     0     0 |     0     0 |     -1  1.0e+00 | 26840/-1/3864
+ACCBANDS      defaults                     outRealUpperBa    19 ROUND   1.82e-12  2.5e-14 |    -1    -1    -1    -1    -1    -1    -1 |     0     0 |     0     0 |     -1  1.0e+00 | 19752/-1/-1
+ACCBANDS      defaults                     outRealMiddleB    19 ROUND   4.41e-13  4.4e-14 |    -1    -1    -1    -1    -1    -1    -1 |     0     0 |     0     0 |     -1  9.4e-01 | 16357/-1/2349
+ACCBANDS      defaults                     outRealLowerBa    19 ROUND   9.09e-13  2.5e-15 |    -1    -1    -1    -1    -1    -1    -1 |     0     0 |     0     0 |     -1  1.0e+00 | 19831/-1/4146
+ACCBANDS      TimePeriod=60                outRealUpperBa    59 ROUND   2.27e-13  3.9e-15 |    -1    -1    -1    -1    -1    -1    -1 |     0     0 |     0     0 |     -1  1.0e+00 | 14486/-1/1108
+ACCBANDS      TimePeriod=60                outRealMiddleB    59 ROUND   2.73e-12  7.1e-15 |    -1    -1    -1    -1    -1    -1    -1 |     0     0 |     0     0 |     -1  1.0e+00 | 18530/-1/-1
+ACCBANDS      TimePeriod=60                outRealLowerBa    59 ROUND   9.09e-13  1.2e-14 |    -1    -1    -1    -1    -1    -1    -1 |     0     0 |     0     0 |     -1  1.0e+00 | 14515/-1/3868
+AD            defaults                     outReal            0 NEVER    1.2e+08  2.3e-01 |    -1    -1    -1    -1    -1    -1    -1 |    -1    -1 |    -1    -1 |     -1  1.0e+00 | -1/-1/-1
+ADOSC         defaults                     outReal            9 CONV    2.93e+05  6.6e-02 |    36    51    71    81    95   105    -1 |    37    82 |    77   107 |     -1  3.8e-11 | 50/51/50
+ADOSC         FastPeriod=9,SlowPeriod=30   outReal           29 CONV    4.26e+05  6.8e-02 |   110   155   215   245   290   320    -1 |   110   245 |   175 30206 |     -1  1.0e-10 | 152/155/151
+ADX           defaults                     outReal           27 CONV          12  2.3e-01 |   134   179   237   266   308   336   434 |   134   263 |   135   264 |    539  0.0e+00 | 171/158/179
+ADX           TimePeriod=42                outReal           83 CONV        8.55  2.1e-01 |   416   556   729   818   949  1034  1329 |   404   812 |   453   837 |   1638  0.0e+00 | 425/547/556
+ADXR          defaults                     outReal           40 CONV        9.35  2.0e-01 |   130   175   234   262   305   333   430 |   131   260 |   128   258 |    537  0.0e+00 | 168/154/175
+ADXR          TimePeriod=42                outReal          124 CONV        5.93  1.8e-01 |   403   543   717   823   968  1058  1360 |   393   800 |   427   820 |   1638  0.0e+00 | 422/535/543
+AO            defaults                     outReal           33 ROUND   1.82e-12  3.0e-13 |    -1    -1    -1    -1    -1    -1    -1 |     0     0 | 39780 39780 |     -1  1.0e+00 | 18526/-1/-1
+AO            FastPeriod=15,SlowPeriod=102 outReal          101 ROUND   9.09e-13  2.5e-13 |    -1    -1    -1    -1    -1    -1    -1 |     0     0 |     0 29599 |     -1  1.0e+00 | 21016/-1/3864
+APO           defaults                     outReal           25 CONV        0.81  1.3e-01 |   100   139   191   217   256   282   388 |   107   224 |   172   293 |    450  0.0e+00 | 139/137/139
+APO           FastPeriod=36,SlowPeriod=78  outReal           77 CONV        1.29  2.6e-02 |   282   399   555   633   750   828  1128 |   256   607 |   458   821 |   1296  0.0e+00 | 398/399/393
+APO           matype=0                     outReal           25 ROUND   9.09e-13  6.0e-13 |    -1    -1    -1    -1    -1    -1    -1 |     0     0 | 38227 38227 |     -1  1.0e+00 | 19114/-1/4122
+APO           matype=1                     outReal           25 CONV        0.81  1.3e-01 |   100   139   191   217   256   282   388 |   107   224 |   172   293 |    450  0.0e+00 | 139/137/139
+APO           matype=11                    outReal           25 CONV        0.81  1.3e-01 |   100   139   191   217   256   282   388 |   107   224 |   172   293 |    450  0.0e+00 | 139/137/139
+APO           matype=12                    outReal           37 CONV        2.34  1.5e-01 |    96   135   187   213   252   278   376 |   104   221 |   182   305 |    445  0.0e+00 | 131/129/135
+APO           matype=13                    outReal           25 CONV        2.99  3.0e-01 |   198   275   377   428   504   555   730 |   227   456 |   373   642 |    868  0.0e+00 | 264/275/265
+APO           matype=14                    outReal           20 CONV         4.9  3.6e-01 | 14261 20200 28247 31969 37905    -1    -1 | 17310 35200 | 31443 38964 |     -1  1.7e-08 | 661/20200/136
+APO           matype=2                     outReal           25 ROUND   3.11e-09  1.7e-11 |    -1    -1    -1    -1    -1    -1    -1 |     0     0 |  6951 39954 |     -1  1.0e+00 | -1/-1/-1
+APO           matype=3                     outReal           50 CONV       0.568  4.0e-02 |   124   166   222   249   290   317   403 |   118   244 |   166   300 |    447  0.0e+00 | 156/166/150
+APO           matype=4                     outReal           75 CONV       0.486  9.4e-03 |   153   198   257   286   329   357   469 |   110   245 |   222   316 |    469  0.0e+00 | 198/198/174
+APO           matype=5                     outReal           25 NEVER   2.33e-10  1.1e-09 |    -1    -1    -1    -1    -1    -1    -1 |     0     0 | 35283 39959 |     -1  1.0e+00 | -1/-1/-1
+APO           matype=6                     outReal           26 CONV        5.97  3.1e+00 |  1602  2347  3165  3669  4297  4706  6592 |  2377  4328 |  4788  6185 |   7121  0.0e+00 | 287/2347/19
+APO           matype=8                     outReal          150 CONV      0.0478  6.7e-04 |   138   172   272   307   396   435   500 |    56   194 |   124   287 |    500  0.0e+00 | 170/172/170
+APO           matype=9                     outReal           29 ROUND    8.5e-09  3.9e-11 |    -1    -1    -1    -1    -1    -1    -1 |     0     0 |     0 39238 |     -1  1.0e+00 | -1/-1/-1
+ASI           defaults                     outReal            0 NEVER   2.54e+03  1.9e-01 |    -1    -1    -1    -1    -1    -1    -1 |    -1    -1 |    -1    -1 |     -1  1.0e+00 | -1/-1/-1
+ATR           defaults                     outReal           14 CONV       0.281  9.1e-02 |    95   135   189   216   257   284   379 |   103   224 |   101   228 |    469  0.0e+00 | 135/135/135
+ATR           TimePeriod=42                outReal           42 CONV         0.2  1.1e-01 |   291   415   581   664   789   872  1210 |   322   696 |   299   672 |   1468  0.0e+00 | 415/415/415
+BBANDS        defaults                     outRealUpperBa    19 ROUND   1.43e-08  3.7e-13 |    -1    -1    -1    -1    -1    -1    -1 |     0     0 |     0     0 |     -1  1.0e+00 | -1/-1/-1
+BBANDS        defaults                     outRealMiddleB    19 ROUND   4.41e-13  4.4e-14 |    -1    -1    -1    -1    -1    -1    -1 |     0     0 |     0     0 |     -1  9.4e-01 | 0/-1/2349
+BBANDS        defaults                     outRealLowerBa    19 ROUND   1.43e-08  3.7e-13 |    -1    -1    -1    -1    -1    -1    -1 |     0     0 |     0     0 |     -1  1.0e+00 | -1/-1/-1
+BBANDS        TimePeriod=60                outRealUpperBa    59 ROUND    1.3e-08  1.2e-12 |    -1    -1    -1    -1    -1    -1    -1 |     0     0 |     0     0 |     -1  1.0e+00 | -1/-1/-1
+BBANDS        TimePeriod=60                outRealMiddleB    59 ROUND   2.73e-12  7.1e-15 |    -1    -1    -1    -1    -1    -1    -1 |     0     0 |     0     0 |     -1  1.0e+00 | 0/-1/-1
+BBANDS        TimePeriod=60                outRealLowerBa    59 ROUND    1.3e-08  1.3e-12 |    -1    -1    -1    -1    -1    -1    -1 |     0     0 |     0     0 |     -1  1.0e+00 | -1/-1/-1
+BBANDS        matype=0                     outRealUpperBa    19 ROUND   1.43e-08  3.7e-13 |    -1    -1    -1    -1    -1    -1    -1 |     0     0 |     0     0 |     -1  1.0e+00 | -1/-1/-1
+BBANDS        matype=0                     outRealMiddleB    19 ROUND   4.41e-13  4.4e-14 |    -1    -1    -1    -1    -1    -1    -1 |     0     0 |     0     0 |     -1  9.4e-01 | 0/-1/2349
+BBANDS        matype=0                     outRealLowerBa    19 ROUND   1.43e-08  3.7e-13 |    -1    -1    -1    -1    -1    -1    -1 |     0     0 |     0     0 |     -1  1.0e+00 | -1/-1/-1
+BBANDS        matype=1                     outRealUpperBa    19 CONV       0.594  4.5e-03 |    70   100   140 36476    -1    -1    -1 |    46   136 |    44   136 |     -1  1.4e-07 | 100/100/100
+BBANDS        matype=1                     outRealMiddleB    19 CONV       0.594  4.5e-03 |    70   100   140   160   190   210   299 |    46   136 |    45   137 |    325  0.0e+00 | 100/100/100
+BBANDS        matype=1                     outRealLowerBa    19 CONV       0.594  4.5e-03 |    70   100   140 36476    -1    -1    -1 |    46   136 |    45   137 |     -1  1.4e-07 | 100/100/100
+BBANDS        matype=10                    outRealUpperBa    19 ROUND   1.43e-08  3.6e-13 |    -1    -1    -1    -1    -1    -1    -1 |     0     0 |     0     0 |     -1  1.0e+00 | -1/-1/-1
+BBANDS        matype=10                    outRealLowerBa    19 ROUND   1.43e-08  3.7e-13 |    -1    -1    -1    -1    -1    -1    -1 |     0     0 |     0     0 |     -1  1.0e+00 | -1/-1/-1
+BBANDS        matype=11                    outRealUpperBa    19 ROUND   1.43e-08  3.7e-13 |    -1    -1    -1    -1    -1    -1    -1 |     0     0 |     0     0 |     -1  1.0e+00 | -1/-1/-1
+BBANDS        matype=11                    outRealMiddleB    19 ROUND   4.41e-13  4.4e-14 |    -1    -1    -1    -1    -1    -1    -1 |     0     0 |     0     0 |     -1  9.4e-01 | 0/-1/2349
+BBANDS        matype=11                    outRealLowerBa    19 ROUND   1.43e-08  3.7e-13 |    -1    -1    -1    -1    -1    -1    -1 |     0     0 |     0     0 |     -1  1.0e+00 | -1/-1/-1
+BBANDS        matype=12                    outRealUpperBa    28 CONV        3.23  1.3e-02 |    70   100   140 16638    -1    -1    -1 |    57   147 |    58   149 |     -1  6.7e-08 | 100/100/100
+BBANDS        matype=12                    outRealMiddleB    28 CONV        3.23  1.4e-02 |    70   100   140   160   190   210   292 |    57   147 |    59   150 |    331  0.0e+00 | 100/100/100
+BBANDS        matype=12                    outRealLowerBa    28 CONV        3.23  1.3e-02 |    70   100   140 16638    -1    -1    -1 |    57   147 |    59   150 |     -1  6.7e-08 | 100/100/100
+BBANDS        matype=13                    outRealUpperBa    19 CONV        3.14  9.3e-03 |   137   195   273   312    -1    -1    -1 |   104   280 |   114   292 |     -1  4.0e-08 | 195/195/195
+BBANDS        matype=13                    outRealMiddleB    19 CONV        3.14  9.4e-03 |   137   195   273   312   371   410   582 |   104   280 |   114   293 |    650  0.0e+00 | 195/195/195
+BBANDS        matype=13                    outRealLowerBa    19 CONV        3.14  9.3e-03 |   137   195   273   312    -1    -1    -1 |   104   280 |   115   294 |     -1  4.0e-08 | 195/195/195
+BBANDS        matype=14                    outRealUpperBa    19 CONV        3.98  8.6e-02 |  1100  1570  2198  2512    -1    -1    -1 |  1186  2599 |   685  2145 |     -1  4.4e-08 | 431/1570/103
+BBANDS        matype=14                    outRealMiddleB    19 CONV        3.98  8.7e-02 |  1100  1570  2198  2512  2983  3297  4431 |  1187  2600 |   687  2146 |   5111  0.0e+00 | 431/1570/103
+BBANDS        matype=14                    outRealLowerBa    19 CONV        3.98  8.6e-02 |  1100  1570  2198  2512    -1    -1    -1 |  1186  2599 |   688  2148 |     -1  4.4e-08 | 431/1570/103
+BBANDS        matype=15                    outRealUpperBa    19 ROUND   1.43e-08  3.7e-13 |    -1    -1    -1    -1    -1    -1    -1 |     0     0 |     0     0 |     -1  1.0e+00 | -1/-1/-1
+BBANDS        matype=15                    outRealLowerBa    19 ROUND   1.43e-08  3.7e-13 |    -1    -1    -1    -1    -1    -1    -1 |     0     0 |     0     0 |     -1  1.0e+00 | -1/-1/-1
+BBANDS        matype=2                     outRealUpperBa    19 ROUND   1.44e-08  3.6e-13 |    -1    -1    -1    -1    -1    -1    -1 |     0     0 |     0     0 |     -1  1.0e+00 | -1/-1/-1
+BBANDS        matype=2                     outRealMiddleB    19 ROUND   3.35e-09  3.1e-13 |    -1    -1    -1    -1    -1    -1    -1 |     0     0 |     0     0 |     -1  1.0e+00 | -1/-1/-1
+BBANDS        matype=2                     outRealLowerBa    19 ROUND   1.43e-08  3.7e-13 |    -1    -1    -1    -1    -1    -1    -1 |     0     0 |     0     0 |     -1  1.0e+00 | -1/-1/-1
+BBANDS        matype=3                     outRealUpperBa    38 CONV       0.679  6.5e-04 |   103   135   178 39006    -1    -1    -1 |    44   144 |    44   144 |     -1  3.4e-07 | 135/134/114
+BBANDS        matype=3                     outRealMiddleB    38 CONV       0.679  6.6e-04 |   103   135   178   199   231   251   329 |    44   144 |    45   145 |    334  0.0e+00 | 135/134/114
+BBANDS        matype=3                     outRealLowerBa    38 CONV       0.679  6.5e-04 |   103   135   178 39006    -1    -1    -1 |    44   144 |    45   145 |     -1  3.4e-07 | 135/134/114
+BBANDS        matype=4                     outRealUpperBa    57 CONV       0.259  7.2e-05 |   119   154 39006 39039    -1    -1    -1 |    30   146 |    41   145 |     -1  1.2e-06 | 142/154/140
+BBANDS        matype=4                     outRealMiddleB    57 CONV       0.259  7.2e-05 |   119   154   199   221   253   278   345 |    30   146 |    41   146 |    363  0.0e+00 | 142/154/140
+BBANDS        matype=4                     outRealLowerBa    57 CONV       0.259  7.2e-05 |   119   154 39006 39039    -1    -1    -1 |    30   146 |    42   147 |     -1  1.2e-06 | 142/154/140
+BBANDS        matype=5                     outRealUpperBa    19 ROUND   1.44e-08  1.7e-11 |    -1    -1    -1    -1    -1    -1    -1 |     0     0 |     0     0 |     -1  1.0e+00 | -1/-1/-1
+BBANDS        matype=5                     outRealMiddleB    19 ROUND   1.66e-10  1.7e-11 |    -1    -1    -1    -1    -1    -1    -1 |     0     0 |     0     0 |     -1  1.0e+00 | -1/-1/-1
+BBANDS        matype=5                     outRealLowerBa    19 ROUND   1.43e-08  1.7e-11 |    -1    -1    -1    -1    -1    -1    -1 |     0     0 |     0     0 |     -1  1.0e+00 | -1/-1/-1
+BBANDS        matype=6                     outRealUpperBa    20 CONV         2.5  1.8e-01 |  1483  2143  2966 38992    -1    -1    -1 |  1757  3692 |  1100  3029 |     -1  1.3e-07 | 220/2143/19
+BBANDS        matype=6                     outRealMiddleB    20 CONV         2.5  1.8e-01 |  1483  2143  2966  3393  4048  4449  6039 |  1758  3693 |  1103  3031 |   7459  0.0e+00 | 220/2143/19
+BBANDS        matype=6                     outRealLowerBa    20 CONV         2.5  1.8e-01 |  1483  2143  2966 38992    -1    -1    -1 |  1756  3691 |  1105  3033 |     -1  1.3e-07 | 220/2143/19
+BBANDS        matype=7                     outRealUpperBa    32 CONV       0.667  3.9e-02 |   161   202 38863 39599    -1    -1    -1 |   124   260 |    68   210 |     -1  9.7e-07 | 173/202/200
+BBANDS        matype=7                     outRealMiddleB    32 CONV       0.667  3.9e-02 |   161   202   258 39593 39716 39814 39933 |   124   260 |    68   210 |  39965  2.2e-07 | 173/202/200
+BBANDS        matype=7                     outRealLowerBa    32 CONV       0.667  3.9e-02 |   161   202 38863 39593    -1    -1    -1 |   124   259 |    68   210 |     -1  9.7e-07 | 173/202/200
+BBANDS        matype=8                     outRealUpperBa   114 CONV      0.0367  1.2e-05 |   109   126 39029 39679    -1    -1    -1 |     0   102 |    17   118 |     -1  1.7e-06 | 118/126/117
+BBANDS        matype=8                     outRealMiddleB   114 CONV      0.0367  1.2e-05 |   109   126   212   239   279   338   371 |     0   102 |    17   119 |    371  0.0e+00 | 118/126/117
+BBANDS        matype=8                     outRealLowerBa   114 CONV      0.0367  1.2e-05 |   109   126 39029 39679    -1    -1    -1 |     0   102 |    17   120 |     -1  1.7e-06 | 118/126/117
+BBANDS        matype=9                     outRealUpperBa    22 ROUND   9.11e-09  5.2e-13 |    -1    -1    -1    -1    -1    -1    -1 |     0     0 |     0     0 |     -1  1.0e+00 | -1/-1/-1
+BBANDS        matype=9                     outRealMiddleB    22 ROUND   7.31e-09  5.2e-13 |    -1    -1    -1    -1    -1    -1    -1 |     0     0 |     0     0 |     -1  1.0e+00 | -1/-1/-1
+BBANDS        matype=9                     outRealLowerBa    22 ROUND   1.07e-08  5.2e-13 |    -1    -1    -1    -1    -1    -1    -1 |     0     0 |     0     0 |     -1  1.0e+00 | -1/-1/-1
+BBW           defaults                     outReal           19 ROUND   1.37e-10  6.4e-11 |    -1    -1    -1    -1    -1    -1    -1 |     0     0 |     0     0 |     -1  7.6e-01 | -1/-1/-1
+BBW           TimePeriod=60                outReal           59 ROUND   1.35e-09  3.0e-10 |    -1    -1    -1    -1    -1    -1    -1 |     0     0 |     0     0 |     -1  1.0e+00 | -1/-1/-1
+BBW           matype=0                     outReal           19 ROUND   1.37e-10  6.4e-11 |    -1    -1    -1    -1    -1    -1    -1 |     0     0 |     0     0 |     -1  7.6e-01 | -1/-1/-1
+BBW           matype=1                     outReal           19 CONV      0.0526  2.3e-03 |    78   102 36466 39679    -1    -1    -1 |    41   136 |    45   137 |     -1  8.6e-07 | 102/100/100
+BBW           matype=10                    outReal           19 ROUND   1.38e-10  6.5e-11 |    -1    -1    -1    -1    -1    -1    -1 |     0     0 |     0     0 |     -1  7.6e-01 | -1/-1/-1
+BBW           matype=11                    outReal           19 ROUND   1.37e-10  6.4e-11 |    -1    -1    -1    -1    -1    -1    -1 |     0     0 |     0     0 |     -1  7.6e-01 | -1/-1/-1
+BBW           matype=12                    outReal           28 CONV       0.391  1.5e-02 |    79   101 16638 39679    -1    -1    -1 |    56   143 |    59   150 |     -1  7.2e-07 | 101/101/100
+BBW           matype=13                    outReal           19 CONV       0.386  1.6e-02 |   159   215   281 18558 39679    -1    -1 |   105   278 |   114   293 |     -1  8.3e-08 | 215/196/196
+BBW           matype=14                    outReal           19 CONV       0.329  4.5e-02 |  1124  1597  2217 39677    -1    -1    -1 |  1077  2516 |   687  2146 |     -1  2.6e-07 | 466/1597/101
+BBW           matype=15                    outReal           19 ROUND   1.37e-10  6.5e-11 |    -1    -1    -1    -1    -1    -1    -1 |     0     0 |     0     0 |     -1  7.6e-01 | -1/-1/-1
+BBW           matype=2                     outReal           19 ROUND   1.37e-10  6.4e-11 |    -1    -1    -1    -1    -1    -1    -1 |     0     0 |     0     0 |     -1  7.6e-01 | -1/-1/-1
+BBW           matype=3                     outReal           38 CONV       0.116  4.5e-03 |   102   134 39034 39960    -1    -1    -1 |    42   143 |    45   145 |     -1  1.7e-06 | 128/134/113
+BBW           matype=4                     outReal           57 CONV        0.04  1.5e-03 |   120   154 39679    -1    -1    -1    -1 |    35   145 |    41   146 |     -1  8.1e-06 | 146/154/138
+BBW           matype=5                     outReal           19 ROUND   1.37e-10  6.4e-11 |    -1    -1    -1    -1    -1    -1    -1 |     0     0 |     0     0 |     -1  1.0e+00 | -1/-1/-1
+BBW           matype=6                     outReal           20 CONV       0.269  9.3e-02 |  1520  2174  2980 39673    -1    -1    -1 |  1625  3525 |  1103  3031 |     -1  1.6e-07 | 219/2174/19
+BBW           matype=7                     outReal           32 CONV      0.0505  2.1e-02 |   161   202   259 26878 39946    -1    -1 |   122   221 |    68   210 |     -1  7.7e-08 | 173/202/176
+BBW           matype=8                     outReal          114 SLOW     0.00622  2.6e-04 |   108   126    -1    -1    -1    -1    -1 |     9   120 |    17   119 |     -1  1.6e-05 | 122/126/119
+BBW           matype=9                     outReal           22 ROUND    1.5e-10  7.1e-11 |    -1    -1    -1    -1    -1    -1    -1 |     0     0 |     0     0 |     -1  9.6e-01 | -1/-1/-1
+BETA          defaults                     outReal            5 ROUND   3.37e-11  6.0e-13 |    -1    -1    -1    -1    -1    -1    -1 |     0     0 |     0     0 |     -1  8.8e-01 | -1/-1/-1
+BETA          TimePeriod=15                outReal           15 ROUND   8.69e-13  3.6e-14 |    -1    -1    -1    -1    -1    -1    -1 |     0     0 |     0     0 |     -1  1.0e+00 | -1/-1/-1
+CCI           defaults                     outReal           13 ROUND   6.32e-11  1.2e-13 |    -1    -1    -1    -1    -1    -1    -1 |     0     0 |     0     0 |     -1  1.0e+00 | -1/-1/-1
+CCI           TimePeriod=42                outReal           41 ROUND   3.81e-11  6.4e-14 |    -1    -1    -1    -1    -1    -1    -1 |     0     0 |     0     0 |     -1  1.0e+00 | -1/-1/-1
+CKSP          defaults                     outHighStop       18 CONV       0.265  5.0e-03 |    74    96   138   159   182   206   301 |    43   130 |    30   113 |    308  0.0e+00 | 96/95/95
+CKSP          defaults                     outLowStop        18 CONV       0.184  3.3e-03 |    70   100   140   158   184   205   307 |    37   126 |    27   121 |    316  0.0e+00 | 97/100/99
+CKSP          TimePeriod=30,StopPeriod=27  outHighStop       56 CONV       0.203  1.4e-03 |   228   316   419   493   579   646   940 |   125   393 |    64   339 |   1016  0.0e+00 | 316/300/275
+CKSP          TimePeriod=30,StopPeriod=27  outLowStop        56 CONV       0.102  2.1e-03 |   217   311   418   477   584   642   914 |   108   381 |    93   353 |   1042  0.0e+00 | 311/301/300
+CMF           defaults                     outReal           19 ROUND      5e-16  4.6e-16 |    -1    -1    -1    -1    -1    -1    -1 |     0     0 |     0     0 |     -1  9.4e-01 | -1/-1/-1
+CMF           TimePeriod=60                outReal           59 ROUND   4.44e-16  6.7e-16 |    -1    -1    -1    -1    -1    -1    -1 |     0     0 |     0     0 |     -1  1.0e+00 | -1/-1/-1
+CMO           defaults                     outReal           14 CONV        23.2  5.0e-01 |   117   149   198   226   265   306   411 |   126   247 |   190   273 |    503  0.0e+00 | 146/136/149
+CMO           TimePeriod=42                outReal           42 CONV          12  3.9e-01 |   312   430   614   695   823   905  1216 |   377   750 |   555   879 |   1465  0.0e+00 | 430/416/403
+COPPOCK       defaults                     outReal           23 ROUND   1.96e-13  6.1e-15 |    -1    -1    -1    -1    -1    -1    -1 |     0     0 |     0     0 |     -1  1.0e+00 | -1/-1/-1
+COPPOCK       WMAPeriod=30,ROC1Period=33,R outReal           71 ROUND   7.42e-13  1.0e-14 |    -1    -1    -1    -1    -1    -1    -1 |     0     0 |     0     0 |     -1  1.0e+00 | -1/-1/-1
+CORREL        defaults                     outReal           29 ROUND   9.05e-11  2.5e-10 |    -1    -1    -1    -1    -1    -1    -1 |     0     0 | 13435 20043 |     -1  1.0e+00 | -1/-1/-1
+CORREL        TimePeriod=90                outReal           89 NEVER    1.3e-09  3.5e-08 |    -1    -1    -1    -1    -1    -1    -1 |     0 39906 |     0 30681 |     -1  9.2e-01 | -1/-1/-1
+CRSI          defaults                     outReal          101 ROUND   1.42e-14  2.7e-16 | 39893 39893 39893 39893 39893 39893 39893 |     0     0 |     0     0 |  39893  1.0e+00 | 0/39893/0
+CRSI          TimePeriod=9,StreakPeriod=6, outReal          301 ROUND   2.84e-14  7.3e-16 |    -1    -1    -1    -1    -1    -1    -1 |     0     0 |     0     0 |     -1  1.0e+00 | 6/-1/1
+CTI           defaults                     outReal           19 ROUND   1.07e-10  5.3e-11 |    -1    -1    -1    -1    -1    -1    -1 |     0     0 | 38953 38953 |     -1  1.0e+00 | -1/-1/-1
+CTI           TimePeriod=60                outReal           59 ROUND   2.43e-10  1.2e-10 |    -1    -1    -1    -1    -1    -1    -1 |     0     0 |     0 38259 |     -1  1.0e+00 | -1/-1/-1
+CUMSUM        defaults                     outReal            0 NEVER   1.57e+05  2.7e-02 |    -1    -1    -1    -1    -1    -1    -1 |    -1    -1 |    -1    -1 |     -1  1.0e+00 | -1/-1/-1
+CVI           defaults                     outReal           19 CONV        25.9  1.2e-01 |    39    54    74    83    98   108   142 |    40    85 |    67   107 |    182  0.0e+00 | 54/52/52
+CVI           TimePeriod=30,ROCPeriod=30   outReal           59 CONV        9.92  1.1e-01 |   113   160   219   254   292   327   426 |   115   250 |   177   321 |    524  0.0e+00 | 160/152/152
+DEMA          defaults                     outReal           58 CONV       0.344  4.3e-04 |   158   208   272   303   350   388   471 |    58   210 |    70   223 |    529  0.0e+00 | 186/208/201
+DEMA          TimePeriod=90                outReal          178 CONV        1.11  1.3e-03 |   416   564   756   851   993  1086  1477 |   161   586 |   241   704 |   1556  0.0e+00 | 503/564/563
+DPO           defaults                     outReal           19 ROUND   4.41e-13  3.5e-13 |    -1    -1    -1    -1    -1    -1    -1 |     0     0 |  3252  3252 |     -1  9.4e-01 | 16357/-1/2349
+DPO           TimePeriod=60                outReal           59 ROUND   2.73e-12  5.8e-14 |    -1    -1    -1    -1    -1    -1    -1 |     0     0 |  8813 28877 |     -1  1.0e+00 | 18530/-1/-1
+DX            defaults                     outReal           14 CONV        22.8  3.3e-01 |   110   147   205   229   267   298   397 |   120   242 |   158   291 |    515  0.0e+00 | 147/137/143
+DX            TimePeriod=42                outReal           42 CONV        19.3  4.6e-01 |   347   444   650   746   855   936  1212 |   382   760 |   554   897 |   1485  0.0e+00 | 444/425/434
+EFI           defaults                     outReal           13 CONV    1.54e+05  7.8e-02 |    46    65    91   104   124   137   182 |    49   107 |    89   128 |    266  0.0e+00 | 65/65/65
+EFI           TimePeriod=39                outReal           39 CONV    9.82e+04  1.1e-01 |   137   195   273   312   371   410   548 |   153   329 |   267   484 |    739  0.0e+00 | 195/195/195
+EMA           defaults                     outReal           29 CONV        1.11  3.2e-03 |   105   150   210   240   285   315   434 |    64   199 |    72   209 |    497  0.0e+00 | 150/150/150
+EMA           TimePeriod=90                outReal           89 CONV        1.53  1.3e-03 |   315   450   630   720   856   950  1279 |   151   556 |   227   648 |   1530  0.0e+00 | 450/450/450
+EMV           defaults                     outReal           14 ROUND   2.22e-16  4.8e-16 |    -1    -1    -1    -1    -1    -1    -1 |     0     0 |     0     0 |     -1  1.0e+00 | 17884/-1/1250
+EMV           TimePeriod=42                outReal           42 ROUND   2.78e-17  2.7e-16 |    -1    -1    -1    -1    -1    -1    -1 |     0     0 |     0     0 |     -1  1.0e+00 | 14513/-1/1136
+ERI           defaults                     outBullPower      12 CONV       0.317  2.0e-03 |    46    65    91   104   124   137   193 |    25    84 |    67   130 |    210  0.0e+00 | 65/65/65
+ERI           defaults                     outBearPower      12 CONV       0.317  2.2e-03 |    46    65    91   104   124   137   193 |    26    84 |    68   159 |    210  0.0e+00 | 65/65/65
+ERI           TimePeriod=39                outBullPower      38 CONV        1.28  1.9e-03 |   137   195   273   312   371   411   573 |    74   249 |   257   400 |    678  0.0e+00 | 195/195/195
+ERI           TimePeriod=39                outBearPower      38 CONV        1.28  2.1e-03 |   137   195   273   312   371   411   573 |    76   251 |   218   404 |    678  0.0e+00 | 195/195/195
+FOSC          defaults                     outReal            5 ROUND   5.86e-11  7.3e-11 |    -1    -1    -1    -1    -1    -1    -1 |     0     0 | 39941 39941 |     -1  9.1e-01 | -1/-1/-1
+FOSC          TimePeriod=15                outReal           15 ROUND   5.83e-11  5.8e-11 |    -1    -1    -1    -1    -1    -1    -1 |     0     0 |  9419 39786 |     -1  1.0e+00 | -1/-1/-1
+FRAMA         defaults                     outReal           16 CONV        2.46  4.8e-02 |   363   514   724   806   937  1032  1370 |   354   788 |   190   654 |   1583  0.0e+00 | 57/514/113
+FRAMA         TimePeriod=48                outReal           48 CONV        3.41  6.1e-02 |   399   586   806   909  1044  1142  1487 |   411   914 |   226   764 |   1739  0.0e+00 | 159/586/33
+HA            defaults                     outHAOpen          0 CONV        2.28  3.4e-02 |    11    15    21    24    28    31    41 |    10    23 |     8    22 |     49  0.0e+00 | 15/15/15
+HA            defaults                     outHAHigh          0 CONV        1.98  6.3e-06 |    11    15    19    24    28    31    41 |     0    19 |     8    22 |     47  0.0e+00 | 15/0/0
+HA            defaults                     outHALow           0 CONV       0.368  2.3e-05 |    11    15    21    24    28    31    41 |     0    13 |     7    20 |     46  0.0e+00 | 15/0/15
+HMA           defaults                     outReal           22 ROUND   7.31e-09  5.2e-13 |    -1    -1    -1    -1    -1    -1    -1 |     0     0 |     0     0 |     -1  1.0e+00 | -1/-1/-1
+HMA           TimePeriod=60                outReal           65 ROUND   5.33e-09  4.9e-13 |    -1    -1    -1    -1    -1    -1    -1 |     0     0 |     0     0 |     -1  1.0e+00 | -1/-1/-1
+HT_DCPERIOD   defaults                     outReal           32 CONV        25.3  1.1e+00 |   182   233   287   306   370   408    -1 |   193   346 |   190   347 |     -1  1.0e-10 | 144/233/181
+HT_DCPHASE    defaults                     outReal           63 CONV         347  9.6e-01 |   156   205   277   338   387 38114    -1 |   153   318 |   178 33164 |     -1  2.1e-09 | 91/205/187
+HT_PHASOR     defaults                     outInPhase        32 CONV        1.64  9.4e-02 |   154   228   280   291   364   404    -1 |   178   308 | 39479 39479 |     -1  4.0e-10 | 129/228/179
+HT_PHASOR     defaults                     outQuadrature     32 CONV        3.54  7.3e-02 |   187   235   286   314   396   439    -1 |   187   304 |   252 29933 |     -1  5.6e-10 | 153/235/182
+HT_SINE       defaults                     outSine           63 CONV        1.52  7.6e-01 |   156   205   277   338   387 37364    -1 |   161   346 |   242 33164 |     -1  1.1e-09 | 109/205/187
+HT_SINE       defaults                     outLeadSine       63 CONV        1.63  8.1e-01 |   153   204   275   316   376 35509    -1 |   159   345 |   199 35892 |     -1  1.3e-09 | 113/204/185
+HT_TRENDLINE  defaults                     outReal           63 CONV        2.64  4.3e-03 |   153   153   153   153   153   153   153 |   153   153 |   120   153 |    153  0.0e+00 | 71/153/122
+HT_TRENDMODE  defaults                     outInteger        63 CONV           1  1.0e+00 |   150   150   150   150   150   150   150 |   150   150 |   150   150 |    150  0.0e+00 | 68/150/0
+KAMA          defaults                     outReal           30 CONV        5.41  1.9e-01 |  1485  2148  2970  3399  4054  4455  5936 |  1764  3704 |  1108  3039 |   7063  0.0e+00 | 329/2148/19
+KAMA          TimePeriod=90                outReal           90 CONV        3.85  1.8e-01 |  1487  2154  2973  3408  4059  4460  6065 |  1759  3702 |  1101  3033 |   6938  0.0e+00 | 570/2154/18
+KC            defaults                     outRealUpperBa    19 CONV       0.725  2.7e-02 |    70   100   139   159   189   209   282 |    61   146 |    46   137 |    333  0.0e+00 | 100/96/98
+KC            defaults                     outRealMiddleB    19 CONV        0.57  2.0e-03 |    70    99   139   159   189   209   279 |    38   128 |    44   136 |    328  0.0e+00 | 99/97/94
+KC            defaults                     outRealLowerBa    19 CONV       0.516  3.1e-02 |    70   100   140   160   190   210   281 |    63   148 |    42   135 |    333  0.0e+00 | 100/99/97
+KC            TimePeriod=60,ATRPeriod=30   outRealUpperBa    59 CONV       0.882  9.4e-03 |   210   300   420   480   569   629   924 |   158   424 |   136   406 |   1025  0.0e+00 | 300/299/300
+KC            TimePeriod=60,ATRPeriod=30   outRealMiddleB    59 CONV       0.922  1.2e-03 |   209   299   419   479   569   629   840 |    98   368 |   139   408 |   1025  0.0e+00 | 299/286/294
+KC            TimePeriod=60,ATRPeriod=30   outRealLowerBa    59 CONV       0.963  7.6e-03 |   210   300   420   480   570   630   924 |   151   416 |   141   412 |   1025  0.0e+00 | 300/287/298
+KDJ           defaults                     outK              12 CONV           4  5.7e-02 |    18    25    35    40    47    52    69 |    18    40 |    21    41 |     91  0.0e+00 | 25/24/25
+KDJ           defaults                     outD              12 CONV        10.2  1.5e-01 |    23    31    41    47    54    60    77 |    24    48 |    26    49 |     98  0.0e+00 | 31/30/31
+KDJ           defaults                     outJ              12 CONV        8.49  5.6e-02 |    24    32    43    48    56    61    79 |    24    48 |    37    62 |     98  0.0e+00 | 32/32/32
+KDJ           FastK_Period=27,SlowK_Period outK              42 CONV        7.27  7.6e-02 |    57    82   116   133   158   175   234 |    64   140 |    61   137 |    296  0.0e+00 | 79/81/82
+KDJ           FastK_Period=27,SlowK_Period outD              42 CONV          17  1.9e-01 |    76   104   140   158   185   202   265 |    85   166 |    88   164 |    341  0.0e+00 | 101/103/104
+KDJ           FastK_Period=27,SlowK_Period outJ              42 CONV        21.8  1.3e-01 |    81   109   145   163   190   208   269 |    85   166 |   112   205 |    341  0.0e+00 | 107/108/109
+KDJ           matype=0                     outK              12 ROUND   1.14e-13  1.1e-15 |    -1    -1    -1    -1    -1    -1    -1 |     0     0 |     0     0 |     -1  1.0e+00 | -1/-1/-1
+KDJ           matype=0                     outD              12 ROUND   7.67e-13  1.4e-14 |    -1    -1    -1    -1    -1    -1    -1 |     0     0 |     0     0 |     -1  1.0e+00 | -1/-1/-1
+KDJ           matype=0                     outJ              12 ROUND   1.65e-12  1.4e-14 |    -1    -1    -1    -1    -1    -1    -1 |     0     0 |     0     0 |     -1  1.0e+00 | -1/-1/-1
+KDJ           matype=1                     outK              12 CONV        2.28  2.3e-02 |    10    15    20    23    28    31    41 |    10    22 |     8    26 |     56  0.0e+00 | 15/14/15
+KDJ           matype=1                     outD              12 CONV        5.32  5.5e-02 |    13    18    24    27    32    35    45 |    13    26 |    12    28 |     55  0.0e+00 | 18/18/18
+KDJ           matype=1                     outJ              12 CONV        6.13  4.3e-02 |    14    19    25    28    33    36    46 |    13    27 |    16    31 |     56  0.0e+00 | 19/18/19
+KDJ           matype=11                    outK              12 CONV           4  5.7e-02 |    18    25    35    40    47    52    69 |    18    40 |    21    41 |     91  0.0e+00 | 25/24/25
+KDJ           matype=11                    outD              12 CONV        10.2  1.5e-01 |    23    31    41    47    54    60    77 |    24    48 |    26    49 |     98  0.0e+00 | 31/30/31
+KDJ           matype=11                    outJ              12 CONV        8.49  5.6e-02 |    24    32    43    48    56    61    79 |    24    48 |    37    62 |     98  0.0e+00 | 32/32/32
+KDJ           matype=12                    outK              14 CONV        2.42  2.4e-02 |    10    14    20    23    27    30    40 |    10    23 |    16    28 |     53  0.0e+00 | 14/14/13
+KDJ           matype=12                    outD              14 CONV        17.8  1.8e-01 |    10    14    20    23    27    30    40 |    12    25 |    17    30 |     54  0.0e+00 | 14/14/14
+KDJ           matype=12                    outJ              14 CONV        31.2  3.1e-01 |    11    15    21    24    28    31    41 |    13    26 |    17    30 |     54  0.0e+00 | 15/15/15
+KDJ           matype=13                    outK              12 CONV           4  5.7e-02 |    18    25    35    40    47    52    69 |    18    40 |    21    41 |     91  0.0e+00 | 25/24/25
+KDJ           matype=13                    outD              12 CONV        10.2  1.5e-01 |    23    31    41    47    54    60    77 |    24    48 |    26    49 |     98  0.0e+00 | 31/30/31
+KDJ           matype=13                    outJ              12 CONV        8.49  5.6e-02 |    24    32    43    48    56    61    79 |    24    48 |    37    62 |     98  0.0e+00 | 32/32/32
+KDJ           matype=14                    outK              12 CONV        6.81  3.6e-01 |   328   462   654   737   861   931  2316 |   406   818 |   332   753 |   3462  0.0e+00 | 21/462/23
+KDJ           matype=14                    outD              12 CONV        7.44  4.4e-01 |   334   463   655   739   861   933 39714 |   412   821 |   336   753 |     -1  1.4e-10 | 24/463/25
+KDJ           matype=14                    outJ              12 CONV        7.05  2.0e-01 |   323   457   651   736   861   923    -1 |   381   786 |   325   751 |     -1  4.0e-11 | 25/457/25
+KDJ           matype=2                     outK              12 ROUND   8.74e-13  9.6e-15 |    -1    -1    -1    -1    -1    -1    -1 |     0     0 |     0     0 |     -1  1.0e+00 | -1/-1/-1
+KDJ           matype=2                     outD              12 ROUND   1.07e-12  1.3e-14 |    -1    -1    -1    -1    -1    -1    -1 |     0     0 |     0     0 |     -1  1.0e+00 | -1/-1/-1
+KDJ           matype=2                     outJ              12 ROUND   1.96e-12  1.6e-14 |    -1    -1    -1    -1    -1    -1    -1 |     0     0 |     0     0 |     -1  1.0e+00 | -1/-1/-1
+KDJ           matype=3                     outK              16 CONV       0.332  3.1e-03 |    11    16    22    25    29    32    43 |     8    22 |    13    28 |     52  0.0e+00 | 14/16/12
+KDJ           matype=3                     outD              16 CONV        4.96  4.2e-02 |    14    20    27    30    35    38    50 |    12    27 |    15    30 |     58  0.0e+00 | 19/20/17
+KDJ           matype=3                     outJ              16 CONV        10.7  8.3e-02 |    16    21    28    31    36    40    51 |    13    28 |    19    31 |     58  0.0e+00 | 20/21/18
+KDJ           matype=4                     outK              20 CONV      0.0677  6.1e-04 |    10    16    22    25    30    33    50 |     6    21 |    11    24 |     52  0.0e+00 | 15/16/12
+KDJ           matype=4                     outD              20 CONV        2.11  1.7e-02 |    16    21    28    32    37    41    55 |    10    27 |    18    32 |     61  0.0e+00 | 21/21/18
+KDJ           matype=4                     outJ              20 CONV        4.03  3.3e-02 |    17    22    30    33    38    42    56 |    12    28 |    18    33 |     61  0.0e+00 | 22/22/19
+KDJ           matype=5                     outK              12 ROUND   1.67e-09  2.5e-11 |    -1    -1    -1    -1    -1    -1    -1 |     0     0 |     0     0 |     -1  1.0e+00 | -1/-1/-1
+KDJ           matype=5                     outD              12 ROUND   1.11e-08  1.1e-10 |    -1    -1    -1    -1    -1    -1    -1 |     0     0 |     0 35707 |     -1  1.0e+00 | -1/-1/-1
+KDJ           matype=5                     outJ              12 ROUND   1.83e-08  9.4e-11 |    -1    -1    -1    -1    -1    -1    -1 |     0     0 |     0 39877 |     -1  1.0e+00 | -1/-1/-1
+KDJ           matype=6                     outK              14 CONV        25.4  8.6e-01 |    95   136   190   216   257   284   378 |   134   255 |   116   238 |     -1  2.2e-13 | 41/136/41
+KDJ           matype=6                     outD              14 CONV        27.2  1.1e+00 |   107   148   202   228   269   294 25823 |   147   266 |   127   251 |     -1  6.0e-13 | 44/148/42
+KDJ           matype=6                     outJ              14 CONV        24.2  5.9e-01 |   107   148   202   223   268   281 31405 |   141   257 |   120   247 |     -1  4.1e-13 | 43/148/36
+KDJ           matype=7                     outK              72 CONV       0.386  4.0e-03 |    87   143   172   179   220 20679    -1 |    74   172 |    70   172 |     -1  4.2e-08 | 105/143/73
+KDJ           matype=7                     outD              72 CONV        9.44  1.0e-01 |   129   148   173   205   243 34526    -1 |    95   181 |    78   181 |     -1  2.6e-10 | 139/148/129
+KDJ           matype=7                     outJ              72 CONV        18.9  6.5e-02 |   130   152   179   206   247 34758    -1 |    76   181 |   143   249 |     -1  2.7e-10 | 140/152/130
+KDJ           matype=8                     outK              32 CONV    0.000274  2.6e-06 |     6    10    17    21    27    31    44 |     0    10 |     1    13 |     48  0.0e+00 | 7/10/9
+KDJ           matype=8                     outD              32 CONV       0.363  3.3e-03 |    16    21    27    30    36    40    56 |     8    22 |    14    24 |     59  0.0e+00 | 19/20/21
+KDJ           matype=8                     outJ              32 CONV       0.725  3.6e-03 |    17    22    28    32    37    41    58 |     8    22 |    13    27 |     59  0.0e+00 | 21/21/22
+KDJ           matype=9                     outK              12 ROUND   8.81e-13  7.3e-15 |    -1    -1    -1    -1    -1    -1    -1 |     0     0 |  3682  3682 |     -1  1.0e+00 | -1/-1/-1
+KDJ           matype=9                     outD              12 ROUND   1.51e-12  8.7e-15 |    -1    -1    -1    -1    -1    -1    -1 |     0     0 |     0     0 |     -1  1.0e+00 | -1/-1/-1
+KDJ           matype=9                     outJ              12 ROUND   1.68e-12  1.8e-14 |    -1    -1    -1    -1    -1    -1    -1 |     0     0 |     0     0 |     -1  1.0e+00 | -1/-1/-1
+KST           defaults                     outKST            52 ROUND   5.68e-14  6.1e-16 |    -1    -1    -1    -1    -1    -1    -1 |     0     0 |     0     0 |     -1  1.0e+00 | -1/0/-1
+KST           defaults                     outKSTSignal      52 ROUND   9.09e-13  8.6e-15 |    -1    -1    -1    -1    -1    -1    -1 |     0     0 |     0     0 |     -1  1.0e+00 | -1/-1/-1
+KST           ROC1Period=30,ROC2Period=45, outKST           160 ROUND   2.27e-13  7.6e-16 |    -1    -1    -1    -1    -1    -1    -1 |     0     0 |     0     0 |     -1  1.0e+00 | -1/-1/-1
+KST           ROC1Period=30,ROC2Period=45, outKSTSignal     160 ROUND      2e-12  5.4e-15 |    -1    -1    -1    -1    -1    -1    -1 |     0     0 |     0     0 |     -1  1.0e+00 | -1/-1/-1
+KSTEXT        defaults                     outKST            52 ROUND   5.68e-14  6.1e-16 |    -1    -1    -1    -1    -1    -1    -1 |     0     0 |     0     0 |     -1  1.0e+00 | -1/0/-1
+KSTEXT        defaults                     outKSTSignal      52 ROUND   9.09e-13  8.6e-15 |    -1    -1    -1    -1    -1    -1    -1 |     0     0 |     0     0 |     -1  1.0e+00 | -1/-1/-1
+KSTEXT        ROC1Period=30,ROC2Period=45, outKST           160 ROUND   2.27e-13  7.6e-16 |    -1    -1    -1    -1    -1    -1    -1 |     0     0 |     0     0 |     -1  1.0e+00 | -1/-1/-1
+KSTEXT        ROC1Period=30,ROC2Period=45, outKSTSignal     160 ROUND      2e-12  5.4e-15 |    -1    -1    -1    -1    -1    -1    -1 |     0     0 |     0     0 |     -1  1.0e+00 | -1/-1/-1
+KSTEXT        matype=0                     outKST            52 ROUND   5.68e-14  6.1e-16 |    -1    -1    -1    -1    -1    -1    -1 |     0     0 |     0     0 |     -1  1.0e+00 | -1/0/-1
+KSTEXT        matype=0                     outKSTSignal      52 ROUND   9.09e-13  8.6e-15 |    -1    -1    -1    -1    -1    -1    -1 |     0     0 |     0     0 |     -1  1.0e+00 | -1/-1/-1
+KSTEXT        matype=1                     outKST            52 CONV        2.81  1.1e-02 |    52    74   104   119   142   157   208 |    36   103 |    84   128 |    269  0.0e+00 | 71/69/74
+KSTEXT        matype=1                     outKSTSignal      52 CONV        6.47  3.6e-02 |    58    81   111   126   148   163   215 |    43   110 |    84   133 |    272  0.0e+00 | 77/75/81
+KSTEXT        matype=11                    outKST            52 ROUND   5.68e-14  6.1e-16 |    -1    -1    -1    -1    -1    -1    -1 |     0     0 |     0     0 |     -1  1.0e+00 | -1/0/-1
+KSTEXT        matype=11                    outKSTSignal      52 ROUND   9.09e-13  8.6e-15 |    -1    -1    -1    -1    -1    -1    -1 |     0     0 |     0     0 |     -1  1.0e+00 | -1/-1/-1
+KSTEXT        matype=12                    outKST            63 CONV        2.11  5.7e-03 |    53    75   105   120   143   158   210 |    35   102 |    80   129 |    262  0.0e+00 | 75/68/65
+KSTEXT        matype=12                    outKSTSignal      63 CONV        9.33  2.2e-02 |    50    72   102   117   140   155   207 |    34   100 |    51   135 |    266  0.0e+00 | 72/65/62
+KSTEXT        matype=13                    outKST            52 CONV        10.1  3.1e-02 |    89   133   190   219   263   292   393 |    88   218 |   169   296 |    538  0.0e+00 | 133/132/131
+KSTEXT        matype=13                    outKSTSignal      52 CONV        22.2  7.6e-02 |   102   145   203   232   275   304   407 |   102   232 |   175   305 |    539  0.0e+00 | 145/145/144
+KSTEXT        matype=14                    outKST            48 CONV        14.7  3.2e-01 | 13100 18682 25898 29638 35127 38784    -1 | 16465 32915 | 26293 39818 |     -1  4.1e-09 | 293/18682/220
+KSTEXT        matype=14                    outKSTSignal      48 CONV        21.3  3.2e-01 | 13112 18685 25906 29648 35131 38788    -1 | 16483 32933 | 30814 39822 |     -1  4.2e-09 | 296/18685/224
+KSTEXT        matype=2                     outKST            52 ROUND    9.5e-13  5.2e-15 |    -1    -1    -1    -1    -1    -1    -1 |     0     0 |     0     0 |     -1  1.0e+00 | -1/-1/-1
+KSTEXT        matype=2                     outKSTSignal      52 ROUND   1.59e-12  7.8e-15 |    -1    -1    -1    -1    -1    -1    -1 |     0     0 |     0     0 |     -1  1.0e+00 | -1/-1/-1
+KSTEXT        matype=3                     outKST            74 CONV       0.407  1.4e-03 |    54    79   111   127   151   167   222 |    27   101 |    62   146 |    276  0.0e+00 | 76/79/70
+KSTEXT        matype=3                     outKSTSignal      74 CONV           8  1.9e-02 |    50    69    97   116   142   159   213 |    33    88 |    54   125 |    288  0.0e+00 | 58/69/66
+KSTEXT        matype=4                     outKST            96 CONV      0.0735  1.8e-04 |    58    84   119   135   160   176   231 |    14    95 |    47   118 |    287  0.0e+00 | 70/84/60
+KSTEXT        matype=4                     outKSTSignal      96 CONV        3.12  7.3e-03 |    62    89   124   141   166   183   287 |    29    99 |    59   135 |    295  0.0e+00 | 72/89/67
+KSTEXT        matype=5                     outKST            52 ROUND   1.45e-10  7.5e-13 |    -1    -1    -1    -1    -1    -1    -1 |     0     0 |     0 37225 |     -1  1.0e+00 | -1/38829/-1
+KSTEXT        matype=5                     outKSTSignal      52 ROUND   7.59e-09  7.6e-11 |    -1    -1    -1    -1    -1    -1    -1 |     0     0 |     0 39841 |     -1  1.0e+00 | -1/-1/-1
+KSTEXT        matype=6                     outKST            54 CONV        18.7  8.2e-01 |  1645  2332  3247  3706  4397  4855  6459 |  2251  4315 |  2810  5793 |     -1  2.5e-14 | 176/2332/148
+KSTEXT        matype=6                     outKSTSignal      54 CONV        21.3  8.3e-01 |  1649  2329  3248  3709  4402  4861  6455 |  2251  4325 |  2813  5280 |     -1  6.1e-14 | 178/2329/149
+KSTEXT        matype=7                     outKST            94 CONV       0.494  1.3e-03 |    88   133   178   200   256   263 39863 |    57   141 |    83   196 |  39883  4.2e-09 | 102/101/133
+KSTEXT        matype=7                     outKSTSignal      94 CONV        4.08  2.5e-02 |   115   182   224   234   299 13987 39864 |    93   199 |   115   286 |     -1  5.9e-10 | 182/128/147
+KSTEXT        matype=8                     outKST           162 CONV    0.000668  1.7e-06 |    25    49    96   117   146   165   240 |     0    51 |    41    66 |    255  0.0e+00 | 36/49/48
+KSTEXT        matype=8                     outKSTSignal     162 CONV       0.564  1.4e-03 |    41    60    96   114   141   158   262 |    17    63 |    46    73 |    271  0.0e+00 | 60/57/54
+KSTEXT        matype=9                     outKST            56 ROUND   1.55e-12  9.0e-15 |    -1    -1    -1    -1    -1    -1    -1 |     0     0 |     0     0 |     -1  1.0e+00 | -1/-1/-1
+KSTEXT        matype=9                     outKSTSignal      56 ROUND   4.13e-12  1.4e-14 |    -1    -1    -1    -1    -1    -1    -1 |     0     0 |     0     0 |     -1  1.0e+00 | -1/-1/-1
+KURTOSIS      defaults                     outReal           29 ROUND   1.53e-12  3.8e-12 |    -1    -1    -1    -1    -1    -1    -1 |     0     0 |     0     0 |     -1  9.7e-01 | 562/-1/1643
+KURTOSIS      TimePeriod=90                outReal           89 ROUND   3.42e-12  2.1e-12 | 39906    -1    -1    -1    -1    -1    -1 |     0     0 |     0     0 |     -1  8.4e-01 | 1118/-1/11730
+LINEARREG     defaults                     outReal           13 ROUND   5.03e-08  2.9e-12 |    -1    -1    -1    -1    -1    -1    -1 |     0     0 |     0     0 |     -1  1.0e+00 | -1/-1/-1
+LINEARREG     TimePeriod=42                outReal           41 ROUND   3.04e-08  3.5e-12 |    -1    -1    -1    -1    -1    -1    -1 |     0     0 |     0     0 |     -1  1.0e+00 | -1/-1/-1
+LINEARREG_ANGLE defaults                     outReal           13 ROUND   1.41e-07  7.8e-10 |    -1    -1    -1    -1    -1    -1    -1 |     0     0 |     0 37512 |     -1  1.0e+00 | 39955/-1/-1
+LINEARREG_ANGLE TimePeriod=42                outReal           41 ROUND   6.99e-08  3.9e-10 |    -1    -1    -1    -1    -1    -1    -1 |     0     0 |     0 39788 |     -1  1.0e+00 | 39907/-1/-1
+LINEARREG_INTERCEPT defaults                     outReal           13 ROUND   5.09e-08  3.0e-12 |    -1    -1    -1    -1    -1    -1    -1 |     0     0 |     0     0 |     -1  1.0e+00 | -1/-1/-1
+LINEARREG_INTERCEPT TimePeriod=42                outReal           41 ROUND   3.09e-08  3.6e-12 |    -1    -1    -1    -1    -1    -1    -1 |     0     0 |     0     0 |     -1  1.0e+00 | -1/-1/-1
+LINEARREG_SLOPE defaults                     outReal           13 ROUND   7.78e-09  7.4e-11 |    -1    -1    -1    -1    -1    -1    -1 |     0     0 |     0 37512 |     -1  1.0e+00 | -1/-1/-1
+LINEARREG_SLOPE TimePeriod=42                outReal           41 ROUND   1.49e-09  6.7e-11 |    -1    -1    -1    -1    -1    -1    -1 |     0     0 |     0 39788 |     -1  1.0e+00 | -1/-1/-1
+MA            defaults                     outReal           29 ROUND   9.09e-13  4.2e-15 |    -1    -1    -1    -1    -1    -1    -1 |     0     0 |     0     0 |     -1  1.0e+00 | 15236/-1/3794
+MA            TimePeriod=90                outReal           89 ROUND   4.55e-13  7.1e-15 |    -1    -1    -1    -1    -1    -1    -1 |     0     0 |     0     0 |     -1  1.0e+00 | 23336/-1/2376
+MA            matype=0                     outReal           29 ROUND   9.09e-13  4.2e-15 |    -1    -1    -1    -1    -1    -1    -1 |     0     0 |     0     0 |     -1  1.0e+00 | 15236/-1/3794
+MA            matype=1                     outReal           29 CONV        1.11  3.2e-03 |   105   150   210   240   285   315   434 |    64   199 |    72   209 |    497  0.0e+00 | 150/150/150
+MA            matype=11                    outReal           29 ROUND   9.09e-13  4.2e-15 |    -1    -1    -1    -1    -1    -1    -1 |     0     0 |     0     0 |     -1  1.0e+00 | 15236/-1/3794
+MA            matype=12                    outReal           43 CONV        1.59  3.3e-03 |   105   150   210   240   286   316   445 |    65   200 |    81   222 |    525  0.0e+00 | 150/150/150
+MA            matype=13                    outReal           29 CONV        3.81  1.3e-02 |   207   295   413   472   561   620   836 |   167   432 |   179   452 |   1062  0.0e+00 | 295/295/295
+MA            matype=14                    outReal           23 CONV        6.94  1.8e-01 |  2492  3560  4984  5696  6764  7477  9979 |  2941  6145 |  1774  5058 |  11375  0.0e+00 | 837/3560/155
+MA            matype=2                     outReal           29 ROUND   2.24e-09  2.2e-13 |    -1    -1    -1    -1    -1    -1    -1 |     0     0 |     0     0 |     -1  1.0e+00 | -1/-1/-1
+MA            matype=3                     outReal           58 CONV       0.344  4.3e-04 |   158   208   272   303   350   388   471 |    58   210 |    70   223 |    529  0.0e+00 | 186/208/201
+MA            matype=4                     outReal           87 CONV       0.366  1.5e-04 |   176   228   295   328   377   409   568 |    32   213 |    66   227 |    568  0.0e+00 | 226/228/184
+MA            matype=5                     outReal           29 ROUND   3.04e-10  3.0e-11 |    -1    -1    -1    -1    -1    -1    -1 |     0     0 |     0     0 |     -1  1.0e+00 | -1/-1/-1
+MA            matype=6                     outReal           30 CONV        5.41  1.9e-01 |  1485  2148  2970  3399  4054  4455  5936 |  1764  3704 |  1108  3039 |   7063  0.0e+00 | 329/2148/19
+MA            matype=7                     outReal           32 CONV       0.667  3.9e-02 |   161   202   258 39593 39716 39814 39933 |   124   260 |    68   210 |  39965  2.2e-07 | 173/202/200
+MA            matype=8                     outReal          174 CONV      0.0206  1.2e-05 |   164   218   316   357   432   517   574 |     0   152 |    12   191 |    574  0.0e+00 | 218/218/190
+MA            matype=9                     outReal           33 ROUND   6.32e-09  4.2e-13 |    -1    -1    -1    -1    -1    -1    -1 |     0     0 |     0     0 |     -1  1.0e+00 | -1/-1/-1
+MACD          defaults                     outMACD           33 CONV         0.4  2.8e-02 |    99   138   190   216   255   281   380 |    99   216 |   164   285 |    442  0.0e+00 | 138/136/136
+MACD          defaults                     outMACDSignal     33 CONV        0.61  1.1e-01 |   104   143   195   221   260   286   383 |   108   225 |   167   290 |    469  0.0e+00 | 143/141/141
+MACD          defaults                     outMACDHist       33 CONV       0.275  2.8e-01 |    89   128   180   206   245   271   383 |   106   223 |   203   322 |    469  0.0e+00 | 128/126/126
+MACD          FastPeriod=36,SlowPeriod=78, outMACD          103 CONV       0.498  8.3e-03 |   306   423   579   657   774   851  1102 |   230   581 |   432   795 |   1270  0.0e+00 | 401/420/423
+MACD          FastPeriod=36,SlowPeriod=78, outMACDSignal    103 CONV       0.714  1.7e-02 |   322   439   595   673   790   867  1115 |   248   599 |   492   745 |   1368  0.0e+00 | 417/436/439
+MACD          FastPeriod=36,SlowPeriod=78, outMACDHist      103 CONV       0.331  1.5e-01 |   280   397   553   631   748   827  1115 |   302   653 |   498   939 |   1368  0.0e+00 | 374/394/397
+MACDEXT       defaults                     outMACD           33 ROUND   9.09e-13  5.2e-13 |    -1    -1    -1    -1    -1    -1    -1 |     0     0 | 38191 38191 |     -1  1.0e+00 | 19106/-1/3869
+MACDEXT       defaults                     outMACDSignal     33 ROUND   7.59e-13  5.6e-13 |    -1    -1    -1    -1    -1    -1    -1 |     0     0 | 26268 39437 |     -1  1.0e+00 | 19114/-1/3877
+MACDEXT       defaults                     outMACDHist       33 ROUND   5.08e-13  5.2e-13 |    -1    -1    -1    -1    -1    -1    -1 |     0     0 | 37647 37647 |     -1  1.0e+00 | 19114/-1/3877
+MACDEXT       FastPeriod=36,SlowPeriod=78, outMACD          103 ROUND   4.55e-13  1.2e-13 |    -1    -1    -1    -1    -1    -1    -1 |     0     0 | 38189 38189 |     -1  1.0e+00 | 19738/-1/4291
+MACDEXT       FastPeriod=36,SlowPeriod=78, outMACDSignal    103 ROUND   4.41e-13  8.8e-14 |    -1    -1    -1    -1    -1    -1    -1 |     0     0 |  6697  6697 |     -1  1.0e+00 | 24203/-1/4317
+MACDEXT       FastPeriod=36,SlowPeriod=78, outMACDHist      103 ROUND   4.26e-13  8.0e-13 |    -1    -1    -1    -1    -1    -1    -1 |     0     0 | 37462 38473 |     -1  1.0e+00 | 24203/-1/4317
+MACDEXT       matype=0                     outMACD           33 ROUND   9.09e-13  5.2e-13 |    -1    -1    -1    -1    -1    -1    -1 |     0     0 | 38191 38191 |     -1  1.0e+00 | 19106/-1/3869
+MACDEXT       matype=0                     outMACDSignal     33 ROUND   7.59e-13  5.6e-13 |    -1    -1    -1    -1    -1    -1    -1 |     0     0 | 26268 39437 |     -1  1.0e+00 | 19114/-1/3877
+MACDEXT       matype=0                     outMACDHist       33 ROUND   5.08e-13  5.2e-13 |    -1    -1    -1    -1    -1    -1    -1 |     0     0 | 37647 37647 |     -1  1.0e+00 | 19114/-1/3877
+MACDEXT       matype=1                     outMACD           33 CONV         0.4  2.8e-02 |    99   138   190   216   255   281   380 |    99   216 |   164   285 |    442  0.0e+00 | 138/136/136
+MACDEXT       matype=1                     outMACDSignal     33 CONV        0.61  1.1e-01 |   104   143   195   221   260   286   383 |   108   225 |   167   290 |    469  0.0e+00 | 143/141/141
+MACDEXT       matype=1                     outMACDHist       33 CONV       0.275  2.8e-01 |    89   128   180   206   245   271   383 |   106   223 |   203   322 |    469  0.0e+00 | 128/126/126
+MACDEXT       matype=11                    outMACD           33 ROUND   9.09e-13  5.2e-13 |    -1    -1    -1    -1    -1    -1    -1 |     0     0 | 38191 38191 |     -1  1.0e+00 | 19106/-1/3869
+MACDEXT       matype=11                    outMACDSignal     33 ROUND   7.59e-13  5.6e-13 |    -1    -1    -1    -1    -1    -1    -1 |     0     0 | 26268 39437 |     -1  1.0e+00 | 19114/-1/3877
+MACDEXT       matype=11                    outMACDHist       33 ROUND   5.08e-13  5.2e-13 |    -1    -1    -1    -1    -1    -1    -1 |     0     0 | 37647 37647 |     -1  1.0e+00 | 19114/-1/3877
+MACDEXT       matype=12                    outMACD           49 CONV       0.983  6.0e-02 |    92   131   183   209   248   274   370 |    92   209 |   170   293 |    433  0.0e+00 | 131/129/129
+MACDEXT       matype=12                    outMACDSignal     49 CONV         1.2  1.5e-01 |    91   130   182   208   247   273   371 |   105   222 |   173   291 |    459  0.0e+00 | 130/129/128
+MACDEXT       matype=12                    outMACDHist       49 CONV       0.839  1.1e-01 |    55    94   146   172   211   237   371 |    56   175 |   152   249 |    459  0.0e+00 | 94/93/92
+MACDEXT       matype=13                    outMACD           33 CONV        1.74  2.0e-01 |   213   289   391   442   519   570   766 |   219   448 |   365   634 |    860  0.0e+00 | 289/284/275
+MACDEXT       matype=13                    outMACDSignal     33 CONV           2  2.5e-01 |   223   299   401   452   528   579   771 |   231   461 |   370   576 |    908  0.0e+00 | 299/294/285
+MACDEXT       matype=13                    outMACDHist       33 CONV       0.458  3.0e-01 |   193   270   372   423   499   550   728 |   252   482 |   407   603 |    908  0.0e+00 | 270/265/256
+MACDEXT       matype=14                    outMACD           27 CONV        4.41  3.1e-01 | 14357 20316 28150 32208 38116    -1    -1 | 17303 35193 | 31436 38957 |     -1  1.9e-08 | 667/20316/141
+MACDEXT       matype=14                    outMACDSignal     27 CONV        4.45  3.2e-01 | 14358 20316 28154 32207 38118    -1    -1 | 17308 35199 | 31941 38961 |     -1  1.9e-08 | 670/20316/147
+MACDEXT       matype=14                    outMACDHist       27 CONV       0.525  5.6e-01 |  3545  8728 17054 20717 26735 30569 39961 | 15461 32829 | 24788 39771 |     -1  1.7e-08 | 498/8728/137
+MACDEXT       matype=2                     outMACD           33 ROUND   3.99e-09  1.6e-11 |    -1    -1    -1    -1    -1    -1    -1 |     0     0 |  6944 39914 |     -1  1.0e+00 | -1/-1/-1
+MACDEXT       matype=2                     outMACDSignal     33 ROUND   3.89e-09  2.1e-11 |    -1    -1    -1    -1    -1    -1    -1 |     0     0 |     0 39718 |     -1  1.0e+00 | -1/-1/-1
+MACDEXT       matype=2                     outMACDHist       33 ROUND    3.4e-09  3.0e-11 |    -1    -1    -1    -1    -1    -1    -1 |     0     0 | 11099 38202 |     -1  1.0e+00 | -1/-1/-1
+MACDEXT       matype=3                     outMACD           66 CONV         0.2  1.2e-02 |   128   171   227   254   295   323   413 |   102   228 |   150   284 |    431  0.0e+00 | 171/165/148
+MACDEXT       matype=3                     outMACDSignal     66 CONV       0.133  2.8e-02 |   126   169   224   252   293   320   406 |   110   235 |   206   286 |    460  0.0e+00 | 169/163/145
+MACDEXT       matype=3                     outMACDHist       66 CONV       0.139  9.5e-03 |    98   145   203   231   273   300   399 |    78   209 |   176   291 |    460  0.0e+00 | 145/140/124
+MACDEXT       matype=4                     outMACD           99 CONV      0.0691  1.8e-03 |   135   180   238   267   309   340   432 |    86   221 |   198   292 |    445  0.0e+00 | 152/180/160
+MACDEXT       matype=4                     outMACDSignal     99 CONV       0.236  1.6e-02 |   136   181   239   267   310   337   445 |    97   232 |   149   315 |    497  0.0e+00 | 153/181/161
+MACDEXT       matype=4                     outMACDHist       99 CONV       0.246  1.2e-02 |    64   134   197   227   271   301   445 |    32   186 |   143   282 |    495  0.0e+00 | 109/134/117
+MACDEXT       matype=5                     outMACD           33 NEVER   3.13e-10  1.6e-09 |    -1    -1    -1    -1    -1    -1    -1 |     0     0 | 35275    -1 |     -1  1.0e+00 | -1/-1/-1
+MACDEXT       matype=5                     outMACDSignal     33 NEVER   3.13e-10  1.7e-09 |    -1    -1    -1    -1    -1    -1    -1 |     0     0 |     0 39963 |     -1  1.0e+00 | -1/-1/-1
+MACDEXT       matype=5                     outMACDHist       33 ROUND   6.55e-11  2.4e-12 |    -1    -1    -1    -1    -1    -1    -1 |     0     0 | 38059 38347 |     -1  1.0e+00 | -1/-1/-1
+MACDEXT       matype=6                     outMACD           35 CONV        4.99  1.6e-01 |  2412  3051  3998  4412  5036  5529  7150 |  2418  4391 |  4530  6271 |   7150  0.0e+00 | 230/3051/15
+MACDEXT       matype=6                     outMACDSignal     35 CONV        4.74  1.7e-01 |  2412  3054  4007  4412  5050  5534  7157 |  2429  4401 |  3699  6217 |   7259  0.0e+00 | 241/3054/34
+MACDEXT       matype=6                     outMACDHist       35 CONV        1.13  2.1e-01 |  1605  2158  3321  3544  4396  4816  7157 |  1981  4178 |  3616  6778 |   7259  0.0e+00 | 205/2158/34
+MACDEXT       matype=8                     outMACD          198 CONV     0.00151  6.4e-05 |    98   161   238   271   374   387   452 |     8   146 |    76   239 |    452  0.0e+00 | 130/161/136
+MACDEXT       matype=8                     outMACDSignal    198 CONV      0.0311  8.2e-04 |    98   165   240   272   376   398   484 |    14   152 |    67   244 |    484  0.0e+00 | 130/165/136
+MACDEXT       matype=8                     outMACDHist      198 CONV      0.0301  3.2e-03 |    66   123   200   232   381   398   484 |    20   142 |    91   239 |    484  0.0e+00 | 93/123/92
+MACDEXT       matype=9                     outMACD           39 ROUND   8.27e-09  4.1e-11 |    -1    -1    -1    -1    -1    -1    -1 |     0     0 |     0 38729 |     -1  1.0e+00 | -1/-1/-1
+MACDEXT       matype=9                     outMACDSignal     39 ROUND   8.26e-09  4.7e-11 |    -1    -1    -1    -1    -1    -1    -1 |     0     0 |     0 39532 |     -1  1.0e+00 | -1/-1/-1
+MACDEXT       matype=9                     outMACDHist       39 ROUND   2.38e-09  1.6e-11 |    -1    -1    -1    -1    -1    -1    -1 |     0     0 |     0 36871 |     -1  1.0e+00 | -1/-1/-1
+MACDFIX       defaults                     outMACD           33 CONV       0.392  2.7e-02 |   105   144   195   221   259   285   374 |    99   214 |   140   285 |    413  0.0e+00 | 136/135/144
+MACDFIX       defaults                     outMACDSignal     33 CONV         0.6  1.1e-01 |   110   149   200   226   264   290   376 |   107   222 |   167   290 |    442  0.0e+00 | 142/140/149
+MACDFIX       defaults                     outMACDHist       33 CONV       0.275  2.8e-01 |    96   134   186   211   250   276   376 |   106   221 |   202   282 |    442  0.0e+00 | 127/125/134
+MACDFIX       SignalPeriod=27              outMACD           51 CONV       0.105  1.8e-02 |    92   131   182   208   246   272   356 |    81   196 |   122   267 |    395  0.0e+00 | 127/131/128
+MACDFIX       SignalPeriod=27              outMACDSignal     51 CONV       0.586  2.9e-02 |   123   166   223   251   293   320   416 |   113   242 |   154   351 |    532  0.0e+00 | 164/166/164
+MACDFIX       SignalPeriod=27              outMACDHist       51 CONV        0.48  1.1e-01 |   121   166   223   251   292   320   416 |   124   253 |   195   329 |    532  0.0e+00 | 163/166/163
+MAMA          defaults                     outMAMA           32 CONV       0.667  3.9e-02 |   104   131   207   213   290 34541 39933 |   124   260 |    68   210 |  39965  2.2e-07 | 53/127/131
+MAMA          defaults                     outFAMA           32 CONV        9.48  4.6e-01 |   103   138   224   240   268   308    -1 |   127   258 |    82   235 |     -1  3.5e-10 | 108/138/136
+MASSI         defaults                     outReal           40 CONV       0.641  1.1e-01 |    41    56    74    85    99   108   151 |    41    84 |    30    74 |     -1  6.6e-13 | 55/52/56
+MASSI         FastPeriod=27,SlowPeriod=75  outReal          126 CONV        1.02  9.5e-02 |   134   178   236   265   307   334    -1 |   117   248 |    75   210 |     -1  4.9e-12 | 174/178/166
+MAVP          defaults                     outReal           29 ROUND   1.82e-12  6.6e-14 |    -1    -1    -1    -1    -1    -1    -1 |     0     0 |     0     0 |     -1  1.0e+00 | 23544/-1/39952
+MAVP          MinPeriod=6,MaxPeriod=90     outReal           89 ROUND   1.82e-12  5.9e-14 |    -1    -1    -1    -1    -1    -1    -1 |     0     0 |     0     0 |     -1  1.0e+00 | 23677/-1/39869
+MAVP          matype=0                     outReal           29 ROUND   1.82e-12  6.6e-14 |    -1    -1    -1    -1    -1    -1    -1 |     0     0 |     0     0 |     -1  1.0e+00 | 23544/-1/39952
+MAVP          matype=1                     outReal           29 CONV        1.71  7.8e-03 |   107   148   206   235   281   310   414 |    62   186 |    66   203 |    484  0.0e+00 | 144/136/148
+MAVP          matype=11                    outReal           29 ROUND   1.82e-12  6.6e-14 |    -1    -1    -1    -1    -1    -1    -1 |     0     0 |     0     0 |     -1  1.0e+00 | 23544/-1/39952
+MAVP          matype=12                    outReal           43 CONV        2.92  1.3e-02 |   107   151   219   248   281   310   437 |    68   201 |    72   213 |    511  0.0e+00 | 151/130/147
+MAVP          matype=13                    outReal           29 CONV        3.52  1.1e-02 |   207   294   410   480   567   629   877 |   161   422 |   165   430 |   1045  0.0e+00 | 291/291/294
+MAVP          matype=14                    outReal           23 CONV        6.84  3.4e-01 | 15773 22240 31143 35580    -1    -1    -1 | 19663    -1 | 12616 33206 |     -1  1.2e-07 | 838/22240/154
+MAVP          matype=2                     outReal           29 ROUND   3.73e-09  3.9e-13 |    -1    -1    -1    -1    -1    -1    -1 |     0     0 |     0     0 |     -1  1.0e+00 | -1/-1/-1
+MAVP          matype=3                     outReal           58 CONV        0.42  6.9e-04 |   136   181   239   281   323   352   467 |    49   207 |    62   207 |    525  0.0e+00 | 181/178/169
+MAVP          matype=4                     outReal           87 CONV       0.365  1.5e-04 |   149   207   265   294   352   381   484 |    29   207 |    57   219 |    554  0.0e+00 | 181/207/169
+MAVP          matype=5                     outReal           29 ROUND   3.38e-09  3.3e-10 |    -1    -1    -1    -1    -1    -1    -1 |     0     0 |     0     0 |     -1  1.0e+00 | -1/-1/-1
+MAVP          matype=6                     outReal           30 CONV        5.43  1.7e-01 |  1486  2148  2969  3395  4054  4453  6114 |  1742  3677 |  1104  3034 |   7421  0.0e+00 | 309/2148/19
+MAVP          matype=7                     outReal           32 CONV       0.667  3.9e-02 |   161   202   258 39593 39716 39814 39933 |   124   260 |    68   210 |  39965  2.2e-07 | 173/202/200
+MAVP          matype=8                     outReal          174 CONV      0.0359  2.3e-05 |   149   178   294   323   381   439   559 |     0   145 |    19   179 |    559  0.0e+00 | 175/178/175
+MAVP          matype=9                     outReal           33 ROUND   6.81e-09  4.5e-13 |    -1    -1    -1    -1    -1    -1    -1 |     0     0 |     0     0 |     -1  1.0e+00 | -1/-1/-1
+MAXINDEX      defaults                     outInteger        29 CONV          12  3.0e-04 |     2     2     2     2     2     2     2 |     2     2 |     2     2 |      2  0.0e+00 | 0/2/0
+MCGD          defaults                     outReal           13 CONV        1.09  3.4e-02 |   106   151   211   241   286   316   424 |    91   214 |    58   195 |    522  0.0e+00 | 141/137/151
+MCGD          TimePeriod=42                outReal           41 CONV        4.02  3.6e-02 |   410   584   818   935  1103  1215  1777 |   286   667 |   290   803 |   1834  0.0e+00 | 491/429/584
+MFI           defaults                     outReal           14 ROUND   1.42e-13  2.5e-15 |    -1    -1    -1    -1    -1    -1    -1 |     0     0 |     0     0 |     -1  1.0e+00 | 13078/-1/2263
+MFI           TimePeriod=42                outReal           42 ROUND   1.14e-12  1.5e-14 |    -1    -1    -1    -1    -1    -1    -1 |     0     0 |     0     0 |     -1  1.0e+00 | 25030/-1/-1
+MINMAXINDEX   defaults                     outMaxIdx         29 CONV          12  3.0e-04 |     2     2     2     2     2     2     2 |     2     2 |     2     2 |      2  0.0e+00 | 0/2/0
+MINUS_DI      defaults                     outReal           14 CONV        6.28  1.2e-01 |   111   146   199   234   265   301   393 |   105   223 |   110   234 |    490  0.0e+00 | 138/139/146
+MINUS_DI      TimePeriod=42                outReal           42 CONV        3.17  2.3e-01 |   313   430   620   699   826   904  1193 |   354   729 |   325   712 |   1485  0.0e+00 | 430/419/407
+MINUS_DM      defaults                     outReal           13 CONV        1.43  1.2e-01 |    95   135   189   216   257   284   379 |   106   228 |   121   235 |    489  0.0e+00 | 135/135/135
+MINUS_DM      TimePeriod=42                outReal           41 CONV        1.76  2.0e-01 |   291   415   581   664   789   872  1172 |   348   722 |   321   723 |   1463  0.0e+00 | 415/415/415
+NATR          defaults                     outReal           14 CONV       0.295  2.2e-01 |    96   137   192   219   261   287   382 |   114   237 |   101   228 |    469  0.0e+00 | 137/135/134
+NATR          TimePeriod=42                outReal           42 CONV       0.224  2.5e-01 |   299   429   603   685   806   887  1212 |   357   729 |   299   672 |   1467  0.0e+00 | 429/417/403
+NVI           defaults                     outReal            0 NEVER   2.62e+03  3.9e-01 |    -1    -1    -1    -1    -1    -1    -1 |    -1    -1 |    -1    -1 |     -1  1.0e+00 | -1/-1/-1
+OBV           defaults                     outReal            0 NEVER   9.07e+08  2.0e-01 |    -1    -1    -1    -1    -1    -1    -1 |    -1    -1 |    -1    -1 |     -1  1.0e+00 | -1/-1/-1
+PERCENTB      defaults                     outReal           19 ROUND   6.41e-11  5.3e-11 |    -1    -1    -1    -1    -1    -1    -1 |     0     0 |     0 38115 |     -1  9.4e-01 | -1/-1/-1
+PERCENTB      TimePeriod=60                outReal           59 ROUND   1.28e-10  1.1e-10 |    -1    -1    -1    -1    -1    -1    -1 |     0     0 |     0 37963 |     -1  1.0e+00 | -1/-1/-1
+PERCENTB      matype=0                     outReal           19 ROUND   6.41e-11  5.3e-11 |    -1    -1    -1    -1    -1    -1    -1 |     0     0 |     0 38115 |     -1  9.4e-01 | -1/-1/-1
+PERCENTB      matype=1                     outReal           19 CONV       0.167  8.9e-02 |    74   108   147   164 39675 39679    -1 |    70   157 |   127 39626 |     -1  1.6e-08 | 108/101/103
+PERCENTB      matype=10                    outReal           19 NEVER    1.3e-14  1.1e+00 | 39946 39946 39946 39946 39946 39946 39946 | 39946 39946 |     0     0 |  39946  1.0e+00 | 39946/0/39630
+PERCENTB      matype=11                    outReal           19 ROUND   6.41e-11  5.3e-11 |    -1    -1    -1    -1    -1    -1    -1 |     0     0 |     0 38115 |     -1  9.4e-01 | -1/-1/-1
+PERCENTB      matype=12                    outReal           28 CONV       0.474  2.8e-01 |    76   105   147   169   197 39662    -1 |    88   175 |   114   196 |     -1  1.2e-09 | 105/100/103
+PERCENTB      matype=13                    outReal           19 CONV        0.64  1.9e-01 |   148   204   286   324   379 39677    -1 |   157   338 |   262   465 |     -1  3.1e-09 | 204/196/197
+PERCENTB      matype=14                    outReal           19 CONV        1.23  2.4e-01 |  1103  1575  2202  2516  2987 39679    -1 |  1320  2731 |  2225 39664 |     -1  4.8e-09 | 453/1575/104
+PERCENTB      matype=15                    outReal           19 ROUND   3.65e-11  4.2e-11 |    -1    -1    -1    -1    -1    -1    -1 |     0     0 |     0     0 |     -1  1.0e+00 | -1/-1/-1
+PERCENTB      matype=2                     outReal           19 ROUND   4.81e-11  4.6e-11 |    -1    -1    -1    -1    -1    -1    -1 |     0     0 |     0     0 |     -1  9.9e-01 | -1/-1/-1
+PERCENTB      matype=3                     outReal           38 CONV       0.105  5.3e-02 |   101   134   181   198 29975 39677    -1 |    76   168 |   104   562 |     -1  1.7e-09 | 134/134/114
+PERCENTB      matype=4                     outReal           57 CONV      0.0486  2.8e-02 |   119   154   199   221 39654 39676    -1 |    80   180 |   136   197 |     -1  2.1e-08 | 139/154/139
+PERCENTB      matype=5                     outReal           19 ROUND    8.5e-11  1.2e-10 |    -1    -1    -1    -1    -1    -1    -1 |     0     0 |     0 39665 |     -1  1.0e+00 | -1/-1/-1
+PERCENTB      matype=6                     outReal           20 CONV       0.829  3.3e-01 |  1491  2141  2972  3393  4048 28121    -1 |  1893  3820 |  2358  5081 |     -1  4.8e-10 | 214/2141/19
+PERCENTB      matype=7                     outReal           32 CONV       0.206  2.1e-01 |   161   203   258   291 32612 39244    -1 |   197   266 |   201   284 |     -1  4.8e-09 | 172/203/200
+PERCENTB      matype=8                     outReal          114 CONV     0.00753  2.9e-03 |   109   142   212 26223    -1    -1    -1 |    44   151 |    78   224 |     -1  1.1e-07 | 112/142/112
+PERCENTB      matype=9                     outReal           22 ROUND   1.34e-11  1.8e-11 |    -1    -1    -1    -1    -1    -1    -1 |     0     0 |     0     0 |     -1  9.9e-01 | -1/-1/-1
+PLUS_DI       defaults                     outReal           14 CONV        5.25  1.4e-01 |   104   139   199   220   275   290   389 |   110   232 |   113   240 |    516  0.0e+00 | 139/136/134
+PLUS_DI       TimePeriod=42                outReal           42 CONV        4.23  1.5e-01 |   297   418   604   682   793   875  1185 |   334   711 |   300   695 |   1484  0.0e+00 | 416/418/414
+PLUS_DM       defaults                     outReal           13 CONV        1.21  1.4e-01 |    95   135   189   216   257   284   378 |   109   230 |   114   241 |    519  0.0e+00 | 135/135/135
+PLUS_DM       TimePeriod=42                outReal           41 CONV        3.69  1.6e-01 |   291   415   581   664   789   872  1169 |   339   712 |   328   702 |   1478  0.0e+00 | 415/415/415
+PPO           defaults                     outReal           25 CONV        1.05  1.3e-01 |   100   138   191   218   257   283   388 |   107   224 |   172   293 |    450  0.0e+00 | 138/137/138
+PPO           FastPeriod=36,SlowPeriod=78  outReal           77 CONV        1.42  8.5e-02 |   286   403   556   632   751   832  1128 |   295   649 |   458   821 |   1296  0.0e+00 | 403/398/381
+PPO           matype=0                     outReal           25 ROUND    2.5e-12  6.3e-13 |    -1    -1    -1    -1    -1    -1    -1 |     0     0 | 38227 38227 |     -1  1.0e+00 | 19114/-1/4122
+PPO           matype=1                     outReal           25 CONV        1.05  1.3e-01 |   100   138   191   218   257   283   388 |   107   224 |   172   293 |    450  0.0e+00 | 138/137/138
+PPO           matype=11                    outReal           25 CONV        1.05  1.3e-01 |   100   138   191   218   257   283   388 |   107   224 |   172   293 |    450  0.0e+00 | 138/137/138
+PPO           matype=12                    outReal           37 CONV        2.68  2.7e-01 |    95   134   185   211   251   277   372 |   113   229 |   182   305 |    445  0.0e+00 | 132/129/134
+PPO           matype=13                    outReal           25 CONV        3.15  3.2e-01 |   198   274   376   427   503   556   734 |   226   455 |   373   642 |    868  0.0e+00 | 267/274/260
+PPO           matype=14                    outReal           20 CONV        5.83  3.6e-01 | 14109 19940 28236 31850 37807    -1    -1 | 17373 35247 | 31443 38964 |     -1  1.8e-08 | 716/19940/134
+PPO           matype=2                     outReal           25 ROUND   2.82e-12  1.7e-11 |    -1    -1    -1    -1    -1    -1    -1 |     0     0 |  6951 39954 |     -1  1.0e+00 | -1/-1/-1
+PPO           matype=3                     outReal           50 CONV       0.636  6.5e-02 |   124   166   222   249   290   317   407 |   118   243 |   166   300 |    447  0.0e+00 | 156/166/148
+PPO           matype=4                     outReal           75 CONV       0.515  5.8e-02 |   153   201   260   289   332   361   469 |   109   244 |   222   316 |    469  0.0e+00 | 201/198/172
+PPO           matype=5                     outReal           25 NEVER   2.19e-10  1.1e-09 |    -1    -1    -1    -1    -1    -1    -1 |     0     0 | 35283 39959 |     -1  1.0e+00 | -1/-1/-1
+PPO           matype=6                     outReal           26 CONV         5.7  2.9e+00 |  1614  2364  3169  3669  4303  4721  6592 |  2392  4330 |  4788  6185 |   7121  0.0e+00 | 303/2364/19
+PPO           matype=8                     outReal          150 CONV      0.0456  2.2e-03 |   138   173   272   307   396   435   500 |    56   196 |   124   287 |    500  0.0e+00 | 173/172/168
+PPO           matype=9                     outReal           29 ROUND   6.27e-12  4.0e-11 |    -1    -1    -1    -1    -1    -1    -1 |     0     0 |     0 39238 |     -1  1.0e+00 | -1/-1/-1
+PVI           defaults                     outReal            0 NEVER   3.39e+05  5.4e-01 |    -1    -1    -1    -1    -1    -1    -1 |    -1    -1 |    -1    -1 |     -1  6.7e-01 | -1/-1/-1
+PVO           defaults                     outReal           25 CONV        6.05  2.2e-01 |   107   145   198   224   262   290   379 |   108   227 |   173   295 |    453  0.0e+00 | 143/132/145
+PVO           FastPeriod=36,SlowPeriod=78  outReal           77 CONV        2.42  1.5e-01 |   327   444   599   677   794   874  1155 |   322   675 |   564   946 |   1376  0.0e+00 | 444/427/396
+PVO           matype=1                     outReal           25 CONV        6.05  2.2e-01 |   107   145   198   224   262   290   379 |   108   227 |   173   295 |    453  0.0e+00 | 143/132/145
+PVO           matype=11                    outReal           25 CONV        6.05  2.2e-01 |   107   145   198   224   262   290   379 |   108   227 |   173   295 |    453  0.0e+00 | 143/132/145
+PVO           matype=12                    outReal           37 CONV        15.5  2.1e-01 |    95   137   190   212   251   277   370 |   107   224 |   205   360 |    473  0.0e+00 | 137/130/133
+PVO           matype=13                    outReal           25 CONV        4.31  2.1e-01 |   207   283   385   437   513   564   755 |   228   454 |   380   601 |    881  0.0e+00 | 283/277/270
+PVO           matype=14                    outReal           20 CONV        28.7  1.4e+00 |  2096  2820  3851  4367  5172  5700  7521 |  2771  5141 |  5131  7543 |   9778  0.0e+00 | 2780/2820/2802
+PVO           matype=3                     outReal           50 CONV        3.09  7.5e-02 |   130   174   227   256   296   322   416 |   101   228 |   209   294 |    509  0.0e+00 | 172/174/158
+PVO           matype=4                     outReal           75 CONV        1.11  2.0e-02 |   146   190   244   272   317   346   442 |    98   230 |   167   306 |    517  0.0e+00 | 190/174/173
+PVO           matype=6                     outReal           26 CONV         137  4.6e+00 |  1033  1405  1906  2157  2546  2791  3660 |  1348  2484 |  2336  3584 |   4747  0.0e+00 | 1370/1307/1405
+PVO           matype=8                     outReal          150 CONV        0.13  2.5e-03 |   142   219   293   326   375   405   536 |    55   189 |   126   273 |    536  0.0e+00 | 158/219/158
+PVO           matype=9                     outReal           29 ROUND   1.83e-12  1.8e-14 |    -1    -1    -1    -1    -1    -1    -1 |     0     0 |     0     0 |     -1  9.1e-01 | -1/-1/-1
+PVT           defaults                     outReal            0 NEVER   8.44e+05  2.1e-01 |    -1    -1    -1    -1    -1    -1    -1 |    -1    -1 |    -1    -1 |     -1  1.0e+00 | -1/-1/-1
+RMA           defaults                     outReal           29 CONV        3.81  1.3e-02 |   207   295   413   472   561   620   836 |   167   432 |   179   452 |   1062  0.0e+00 | 295/295/295
+RMA           TimePeriod=90                outReal           89 CONV        8.09  4.0e-02 |   627   895  1253  1432  1701  1880  2516 |   607  1413 |   634  1462 |   3170  0.0e+00 | 895/895/895
+RSI           defaults                     outReal           14 CONV        11.6  5.0e-01 |   117   149   198   226   265   306   409 |   126   247 |   108   225 |    511  0.0e+00 | 146/136/149
+RSI           TimePeriod=42                outReal           42 CONV        6.02  3.9e-01 |   312   430   614   695   823   905  1214 |   377   750 |   281   667 |   1514  0.0e+00 | 430/416/403
+RVI           defaults                     outReal           22 CONV         4.8  5.3e-01 |   112   150   197   225 38698 39900    -1 |   127   248 |    97   230 |     -1  6.0e-09 | 150/135/135
+RVI           TimePeriod=42,StdDevPeriod=3 outReal           70 CONV        6.83  4.2e-01 |   352   435   615   687   820 36480    -1 |   380   754 |   307   673 |     -1  1.5e-09 | 435/417/434
+RVIR          defaults                     outReal           22 CONV          12  1.5e-01 |   102   141   194   228   267   291    -1 |   108   231 |   100   225 |     -1  6.3e-11 | 141/139/140
+RVIR          TimePeriod=42,StdDevPeriod=3 outReal           70 CONV        6.39  1.2e-01 |   318   438   614   683   819   906    -1 |   339   688 |   314   682 |     -1  3.3e-10 | 438/427/416
+SAR           defaults                     outReal            1 CONV        7.55  1.7e-01 |   113   113   113   113   113   113   113 |   101   113 |   113   113 |    113  0.0e+00 | 24/8/113
+SAREXT        defaults                     outReal            1 CONV         475  9.9e-01 |   102   113   113   113   113   113   113 |    97   113 |   113   113 |    113  0.0e+00 | 24/8/113
+SMA           defaults                     outReal           29 ROUND   9.09e-13  4.2e-15 |    -1    -1    -1    -1    -1    -1    -1 |     0     0 |     0     0 |     -1  1.0e+00 | 15236/-1/3794
+SMA           TimePeriod=90                outReal           89 ROUND   4.55e-13  7.1e-15 |    -1    -1    -1    -1    -1    -1    -1 |     0     0 |     0     0 |     -1  1.0e+00 | 23336/-1/2376
+SMI           defaults                     outSMI            45 CONV        8.95  4.9e-02 |    94   132   179   205   243   268   354 |    95   204 |   153   263 |    445  0.0e+00 | 132/123/125
+SMI           defaults                     outSMISignal      45 CONV          17  9.6e-02 |   100   135   183   210   248   273   359 |    99   209 |   156   296 |    453  0.0e+00 | 135/128/131
+SMI           TimePeriod=39,FastPeriod=6,S outSMI           143 CONV        13.4  8.1e-02 |   268   371   547   616   732   802  1079 |   280   632 |   446   853 |   1342  0.0e+00 | 371/368/361
+SMI           TimePeriod=39,FastPeriod=6,S outSMISignal     143 CONV          14  8.8e-02 |   284   389   564   633   748   818  1076 |   300   653 |   407   874 |   1372  0.0e+00 | 389/384/377
+STC           defaults                     outReal           67 CONV         100  1.0e+00 |   209   280   380   442   529   548   729 |   219   462 |   219   471 |    817  0.0e+00 | 265/216/280
+STC           FastPeriod=69,SlowPeriod=150 outReal          207 CONV         100  1.0e+00 |   663   995  1222  1438  1562  1746  2403 |   742  1560 |   913  1560 |   2604  0.0e+00 | 995/706/942
+STDDEV        defaults                     outReal            4 ROUND   3.76e-09  1.1e-11 |    -1    -1    -1    -1    -1    -1    -1 |     0     0 |     0     0 |     -1  1.0e+00 | -1/-1/-1
+STDDEV        TimePeriod=15                outReal           14 ROUND   5.62e-09  1.8e-11 |    -1    -1    -1    -1    -1    -1    -1 |     0     0 |     0     0 |     -1  1.0e+00 | -1/-1/-1
+STOCH         defaults                     outSlowK           8 ROUND   8.53e-14  9.1e-16 |    -1    -1    -1    -1    -1    -1    -1 |     0     0 |     0     0 |     -1  1.0e+00 | -1/-1/-1
+STOCH         defaults                     outSlowD           8 ROUND   1.51e-12  1.7e-14 |    -1    -1    -1    -1    -1    -1    -1 |     0     0 |     0     0 |     -1  1.0e+00 | -1/-1/-1
+STOCH         FastK_Period=15,SlowK_Period outSlowK          30 ROUND   1.56e-13  1.9e-15 |    -1    -1    -1    -1    -1    -1    -1 |     0     0 |     0     0 |     -1  1.0e+00 | -1/-1/-1
+STOCH         FastK_Period=15,SlowK_Period outSlowD          30 ROUND   1.59e-12  2.6e-14 |    -1    -1    -1    -1    -1    -1    -1 |     0     0 |     0     0 |     -1  1.0e+00 | -1/-1/-1
+STOCH         matype=0                     outSlowK           8 ROUND   8.53e-14  9.1e-16 |    -1    -1    -1    -1    -1    -1    -1 |     0     0 |     0     0 |     -1  1.0e+00 | -1/-1/-1
+STOCH         matype=0                     outSlowD           8 ROUND   1.51e-12  1.7e-14 |    -1    -1    -1    -1    -1    -1    -1 |     0     0 |     0     0 |     -1  1.0e+00 | -1/-1/-1
+STOCH         matype=1                     outSlowK           8 CONV        1.89  2.0e-02 |    11    15    21    24    28    31    41 |     9    22 |     8    24 |     50  0.0e+00 | 14/14/15
+STOCH         matype=1                     outSlowD           8 CONV        8.65  9.1e-02 |    13    18    24    27    32    35    45 |    13    26 |    12    27 |     55  0.0e+00 | 17/18/18
+STOCH         matype=11                    outSlowK           8 ROUND   8.53e-14  9.1e-16 |    -1    -1    -1    -1    -1    -1    -1 |     0     0 |     0     0 |     -1  1.0e+00 | -1/-1/-1
+STOCH         matype=11                    outSlowD           8 ROUND   1.51e-12  1.7e-14 |    -1    -1    -1    -1    -1    -1    -1 |     0     0 |     0     0 |     -1  1.0e+00 | -1/-1/-1
+STOCH         matype=12                    outSlowK          10 CONV        2.45  2.5e-02 |    10    15    21    23    28    31    41 |    10    23 |    12    25 |     54  0.0e+00 | 15/12/13
+STOCH         matype=12                    outSlowD          10 CONV        26.3  2.6e-01 |    11    15    21    24    28    31    41 |    13    26 |    17    29 |     55  0.0e+00 | 15/15/15
+STOCH         matype=13                    outSlowK           8 CONV        4.12  4.3e-02 |    18    25    35    40    47    52    69 |    17    40 |    16    41 |     88  0.0e+00 | 23/24/25
+STOCH         matype=13                    outSlowD           8 CONV         8.6  1.5e-01 |    22    31    41    47    54    60    78 |    24    47 |    25    48 |     97  0.0e+00 | 30/30/31
+STOCH         matype=14                    outSlowK           8 CONV        7.38  3.1e-01 |   223   318   441   502   587   643   836 |   274   530 |   217   486 |   6593  0.0e+00 | 22/318/22
+STOCH         matype=14                    outSlowD           8 CONV        11.6  3.4e-01 |   226   318   444   506   587   646 39582 |   276   537 |   220   487 |     -1  1.3e-12 | 25/318/25
+STOCH         matype=2                     outSlowK           8 ROUND   8.17e-13  8.2e-15 |    -1    -1    -1    -1    -1    -1    -1 |     0     0 |     0     0 |     -1  1.0e+00 | -1/-1/-1
+STOCH         matype=2                     outSlowD           8 ROUND   1.06e-12  1.3e-14 |    -1    -1    -1    -1    -1    -1    -1 |     0     0 |     0     0 |     -1  8.0e-01 | -1/-1/-1
+STOCH         matype=3                     outSlowK          12 CONV        0.54  5.0e-03 |    11    16    22    25    30    33    43 |     8    22 |     7    23 |     51  0.0e+00 | 16/15/14
+STOCH         matype=3                     outSlowD          12 CONV        1.75  1.7e-02 |    17    22    28    31    36    39    50 |    13    28 |    18    32 |     60  0.0e+00 | 22/21/21
+STOCH         matype=4                     outSlowK          16 CONV      0.0824  7.4e-04 |    13    17    23    26    31    34    48 |     6    21 |    15    24 |     54  0.0e+00 | 14/13/17
+STOCH         matype=4                     outSlowD          16 CONV        5.04  4.1e-02 |    17    23    31    34    39    43    61 |    10    27 |    16    31 |     64  0.0e+00 | 19/18/23
+STOCH         matype=5                     outSlowK           8 ROUND   2.39e-09  2.4e-11 |    -1    -1    -1    -1    -1    -1    -1 |     0     0 |     0     0 |     -1  1.0e+00 | -1/-1/-1
+STOCH         matype=5                     outSlowD           8 ROUND   2.13e-08  2.3e-10 |    -1    -1    -1    -1    -1    -1    -1 |     0     0 |     0 33732 |     -1  1.0e+00 | -1/-1/-1
+STOCH         matype=6                     outSlowK          10 CONV        31.4  1.2e+00 |    94   134   188   214   255   281   374 |   136   257 |   118   240 |     -1  6.5e-14 | 41/134/42
+STOCH         matype=6                     outSlowD          10 CONV        33.4  1.5e+00 |   104   145   199   222   263   289   382 |   146   270 |   129   248 |     -1  2.4e-13 | 47/145/47
+STOCH         matype=7                     outSlowK          68 CONV       0.285  3.1e-03 |    77   130   170   178   217 21839    -1 |    44   170 |    44   170 |     -1  5.6e-09 | 130/128/80
+STOCH         matype=7                     outSlowD          68 CONV        3.23  3.7e-02 |   127   178   241   250   277 28547    -1 |    95   212 |    80   211 |     -1  7.3e-10 | 149/156/178
+STOCH         matype=8                     outSlowK          28 CONV    0.000403  3.8e-06 |     3     8    15    18    24    28    44 |     0    11 |     5    12 |     48  0.0e+00 | 8/8/6
+STOCH         matype=8                     outSlowD          28 CONV       0.327  3.0e-03 |    15    20    26    30    36    40    55 |     8    22 |     9    24 |     56  0.0e+00 | 19/19/20
+STOCH         matype=9                     outSlowK           8 ROUND   8.17e-13  4.6e-15 |    -1    -1    -1    -1    -1    -1    -1 |     0     0 | 10544 10544 |     -1  1.0e+00 | -1/-1/-1
+STOCH         matype=9                     outSlowD           8 ROUND   1.26e-12  4.9e-15 |    -1    -1    -1    -1    -1    -1    -1 |     0     0 |     0     0 |     -1  1.0e+00 | -1/-1/-1
+STOCHF        defaults                     outFastD           6 ROUND   8.53e-14  9.1e-16 |    -1    -1    -1    -1    -1    -1    -1 |     0     0 |     0     0 |     -1  1.0e+00 | -1/-1/-1
+STOCHF        FastK_Period=15,FastD_Period outFastD          22 ROUND   1.56e-13  1.9e-15 |    -1    -1    -1    -1    -1    -1    -1 |     0     0 |     0     0 |     -1  1.0e+00 | -1/-1/-1
+STOCHF        matype=0                     outFastD           6 ROUND   8.53e-14  9.1e-16 |    -1    -1    -1    -1    -1    -1    -1 |     0     0 |     0     0 |     -1  1.0e+00 | -1/-1/-1
+STOCHF        matype=1                     outFastD           6 CONV        7.58  7.8e-02 |    11    15    21    24    28    31    41 |    11    24 |    10    26 |     52  0.0e+00 | 15/15/15
+STOCHF        matype=11                    outFastD           6 ROUND   8.53e-14  9.1e-16 |    -1    -1    -1    -1    -1    -1    -1 |     0     0 |     0     0 |     -1  1.0e+00 | -1/-1/-1
+STOCHF        matype=12                    outFastD           7 CONV        19.6  2.0e-01 |    11    15    21    24    28    31    41 |    13    26 |    15    28 |     57  0.0e+00 | 15/15/15
+STOCHF        matype=13                    outFastD           6 CONV        9.28  9.8e-02 |    18    25    35    40    47    52    70 |    19    42 |    18    43 |     90  0.0e+00 | 25/25/25
+STOCHF        matype=14                    outFastD           6 CONV        17.5  3.5e-01 |   224   320   443   504   587   644   838 |   276   532 |   219   488 |   6595  0.0e+00 | 24/320/25
+STOCHF        matype=2                     outFastD           6 ROUND   8.17e-13  8.2e-15 |    -1    -1    -1    -1    -1    -1    -1 |     0     0 |     0     0 |     -1  1.0e+00 | -1/-1/-1
+STOCHF        matype=3                     outFastD           8 CONV        6.55  6.0e-02 |    16    20    27    30    34    37    48 |    12    26 |    11    27 |     55  0.0e+00 | 18/20/19
+STOCHF        matype=4                     outFastD          10 CONV        2.74  2.5e-02 |    15    20    26    29    34    37    48 |    12    27 |    21    30 |     60  0.0e+00 | 20/19/19
+STOCHF        matype=5                     outFastD           6 ROUND   2.39e-09  2.4e-11 |    -1    -1    -1    -1    -1    -1    -1 |     0     0 |     0     0 |     -1  1.0e+00 | -1/-1/-1
+STOCHF        matype=6                     outFastD           7 CONV        39.6  1.3e+00 |    94   134   188   214   255   281   375 |   138   258 |   121   243 |     -1  2.9e-14 | 44/134/45
+STOCHF        matype=7                     outFastD          36 CONV        15.5  2.3e-01 |   133   165   198   209   284 28080 39909 |    76   202 |    76   202 |     -1  1.2e-10 | 165/144/133
+STOCHF        matype=8                     outFastD          16 CONV       0.506  4.8e-03 |    15    19    27    30    36    40    54 |     8    23 |    17    24 |     60  0.0e+00 | 19/18/19
+STOCHF        matype=9                     outFastD           6 ROUND   8.17e-13  4.6e-15 |    -1    -1    -1    -1    -1    -1    -1 |     0     0 | 10546 10546 |     -1  1.0e+00 | -1/-1/-1
+STOCHRSI      defaults                     outFastK          20 CONV        22.5  2.2e-01 |   109   171   218   243   302   309   440 |   113   239 |   166   307 |    487  0.0e+00 | 157/141/171
+STOCHRSI      defaults                     outFastD          20 CONV        12.8  2.5e-01 |   110   155   220   240   304   304    -1 |   121   242 |    -1    -1 |     -1  8.4e-12 | 142/140/155
+STOCHRSI      TimePeriod=42,FastK_Period=1 outFastK          64 CONV        12.7  1.3e-01 |   387   457   622   724   818   905  1445 |   348   724 |  1348  1348 |   1445  0.0e+00 | 436/435/457
+STOCHRSI      TimePeriod=42,FastK_Period=1 outFastD          64 CONV        11.2  5.0e-01 |   296   464   591   728   818   908  1441 |   407   773 | 39900 39900 |     -1  1.6e-13 | 410/420/464
+STOCHRSI      matype=0                     outFastK          20 CONV        22.5  2.2e-01 |   109   171   218   243   302   309   440 |   113   239 |   166   307 |    487  0.0e+00 | 157/141/171
+STOCHRSI      matype=0                     outFastD          20 CONV        12.8  2.5e-01 |   110   155   220   240   304   304    -1 |   121   242 |    -1    -1 |     -1  8.4e-12 | 142/140/155
+STOCHRSI      matype=1                     outFastK          20 CONV        22.5  2.2e-01 |   109   155   218   243   302   302   440 |   113   239 |   166   307 |    487  0.0e+00 | 153/141/155
+STOCHRSI      matype=1                     outFastD          20 CONV        19.2  2.8e-01 |   109   155   219   243   303   306   419 |   121   241 |   112   245 |    493  0.0e+00 | 139/140/155
+STOCHRSI      matype=10                    outFastK          18 CONV        22.5  2.2e-01 |   111   173   220   245   304   311   442 |   115   241 |   168   309 |    489  0.0e+00 | 159/141/173
+STOCHRSI      matype=10                    outFastD          18 CONV        22.5  2.2e-01 |   111   173   220   245   304   311   442 |   115   241 |   168   309 |    489  0.0e+00 | 159/141/173
+STOCHRSI      matype=11                    outFastK          20 CONV        22.5  2.2e-01 |   109   171   218   243   302   309   440 |   113   239 |   166   307 |    487  0.0e+00 | 157/141/171
+STOCHRSI      matype=11                    outFastD          20 CONV        12.8  2.5e-01 |   110   155   220   240   304   304    -1 |   121   242 |    -1    -1 |     -1  8.4e-12 | 142/140/155
+STOCHRSI      matype=12                    outFastK          21 CONV        12.8  1.3e-01 |   108   170   217   242   301   301   439 |   112   238 |   165   306 |    486  0.0e+00 | 152/138/170
+STOCHRSI      matype=12                    outFastD          21 CONV        31.3  3.1e-01 |   108   170   217   242   301   301   439 |   112   238 |   456   456 |    486  0.0e+00 | 152/138/170
+STOCHRSI      matype=13                    outFastK          20 CONV        22.5  2.2e-01 |   109   155   197   243   274   302   440 |   113   239 |   166   307 |    487  0.0e+00 | 153/137/155
+STOCHRSI      matype=13                    outFastD          20 CONV        21.1  6.8e-01 |   110   142   198   238   259   293   419 |   124   243 |   113   244 |    494  0.0e+00 | 135/132/142
+STOCHRSI      matype=14                    outFastK          20 CONV        22.5  2.2e-01 |   109   153   197   243   274   291   419 |   113   239 |   166   307 |    487  0.0e+00 | 153/141/112
+STOCHRSI      matype=14                    outFastD          20 CONV        19.3  6.5e-01 |   915  1284  1786  2074  2460  2738  3582 |  1128  2289 |   896  2084 |   4525  0.0e+00 | 139/1284/561
+STOCHRSI      matype=15                    outFastK          20 CONV        22.5  2.2e-01 |   109   171   218   243   302   309   440 |   113   239 |   166   307 |    487  0.0e+00 | 157/139/171
+STOCHRSI      matype=15                    outFastD          20 CONV        18.6  2.1e-01 |   110   158   219   244   303   306   441 |   117   238 |   121   260 |    489  0.0e+00 | 158/140/156
+STOCHRSI      matype=2                     outFastK          20 CONV        22.5  2.2e-01 |   109   171   218   243   302   309   440 |   113   239 |   166   307 |    487  0.0e+00 | 157/141/171
+STOCHRSI      matype=2                     outFastD          20 CONV        15.3  2.5e-01 |   109   155   219   243   303   304    -1 |   121   241 |    -1    -1 |     -1  2.1e-11 | 142/140/155
+STOCHRSI      matype=3                     outFastK          22 CONV        11.8  1.2e-01 |   107   155   216   241   300   303   438 |   111   237 |   164   305 |    485  0.0e+00 | 155/142/153
+STOCHRSI      matype=3                     outFastD          22 CONV        10.5  1.6e-01 |   107   153   216   241   300   303   438 |   115   239 |   119   258 |    491  0.0e+00 | 138/138/153
+STOCHRSI      matype=4                     outFastK          24 CONV        11.2  1.1e-01 |   105   149   214   239   298   299   415 |   109   235 |   162   303 |    483  0.0e+00 | 149/141/135
+STOCHRSI      matype=4                     outFastD          24 CONV        10.3  1.4e-01 |   105   149   214   239   298   301   417 |   109   233 |   124   255 |    491  0.0e+00 | 149/141/135
+STOCHRSI      matype=5                     outFastK          20 CONV        22.5  2.2e-01 |   109   171   218   243   302   309   440 |   113   239 |   166   307 |    487  0.0e+00 | 157/141/171
+STOCHRSI      matype=5                     outFastD          20 CONV        13.4  7.6e-01 |   110   156   219   240   304    -1    -1 |   133   252 |    -1    -1 |     -1  3.0e-09 | 142/140/156
+STOCHRSI      matype=6                     outFastK          21 CONV        12.8  1.3e-01 |   108   154   197   242   273   301   439 |   112   238 |   165   306 |    486  0.0e+00 | 152/121/154
+STOCHRSI      matype=6                     outFastD          21 CONV        84.1  5.2e+00 |   223   229   236   247   282   310   440 |   219   296 |   218   273 |     -1  5.4e-15 | 137/153/229
+STOCHRSI      matype=7                     outFastK          50 CONV        2.43  2.4e-02 |    82   131   190   209   261   282   410 |    83   209 |   136   277 |    457  0.0e+00 | 131/95/55
+STOCHRSI      matype=7                     outFastD          50 NEVER         49  5.4e-01 | 36610 36616 36621 36624 39818 39846 39934 | 36614 39817 | 36670 39822 |     -1  1.0e+00 | 6858/130/36616
+STOCHRSI      matype=8                     outFastK          30 CONV        7.31  7.3e-02 |   102   161   208   233   292   299   430 |   103   229 |   156   297 |    477  0.0e+00 | 147/139/161
+STOCHRSI      matype=8                     outFastD          30 CONV        5.38  2.2e-01 |   100   147   210   230   294   299   431 |   122   236 |   113   235 |    488  0.0e+00 | 132/140/147
+STOCHRSI      matype=9                     outFastK          20 CONV        22.5  2.2e-01 |   109   155   218   243   302   302   440 |   113   239 |   166   307 |    487  0.0e+00 | 140/136/155
+STOCHRSI      matype=9                     outFastD          20 CONV        29.7  1.5e-01 |   108   157   219   243   303   309 39935 |   108   234 |    -1    -1 |     -1  9.4e-12 | 157/141/155
+SUM           defaults                     outReal           29 ROUND   1.46e-11  3.0e-15 |    -1    -1    -1    -1    -1    -1    -1 |     0     0 |     0     0 |     -1  1.0e+00 | 15236/-1/3794
+SUM           TimePeriod=90                outReal           89 ROUND   2.91e-11  6.1e-15 |    -1    -1    -1    -1    -1    -1    -1 |     0     0 |     0     0 |     -1  1.0e+00 | 23336/-1/2376
+SUPERTREND    defaults                     outSupertrend     10 CONV        9.05  5.0e-01 |   466   466   466   466   466   466   466 |   466   466 |   466   466 |    466  0.0e+00 | 105/466/97
+SUPERTREND    defaults                     outTrend          10 CONV           2  1.0e+00 |   466   466   466   466   466   466   466 |   466   466 |   466   466 |    466  0.0e+00 | 25/466/0
+SUPERTREND    TimePeriod=30                outSupertrend     30 CONV        8.68  5.3e-01 |   480   480   480   488   591  1118  1367 |   480   480 |   480   480 |   1367  0.0e+00 | 222/480/296
+SUPERTREND    TimePeriod=30                outTrend          30 CONV           2  1.0e+00 |   480   480   480   480   480   480   480 |   480   480 |   480   480 |    480  0.0e+00 | 108/480/0
+SWAK_2PHP     defaults                     outReal            0 CONV       0.982  5.1e-01 |    23    29    38    43    49    53    68 |    25    45 |    39    55 |    166  0.0e+00 | 28/27/29
+SWAK_2PHP     TimePeriod=60                outReal            0 CONV        3.63  5.7e-01 |    65    85   111   124   144   157   201 |    74   133 |   114   161 |    525  0.0e+00 | 82/79/85
+SWAK_BP       defaults                     outReal            0 CONV        2.04  1.7e+00 |   228   322   451   512   609   673   894 |   338   621 |   494   820 |   2375  0.0e+00 | 322/322/318
+SWAK_BP       TimePeriod=60                outReal            0 CONV        1.65  1.5e+00 |   690   964  1354  1537  1835  2019  5870 |   988  1859 |  1618  2330 |  11603  0.0e+00 | 964/964/955
+SWAK_BUTTER   defaults                     outReal            0 CONV        4.73  9.3e-02 |    21    28    37    41    48    52    67 |    21    41 |    17    37 |    106  0.0e+00 | 27/28/26
+SWAK_BUTTER   TimePeriod=60                outReal            0 CONV        5.34  9.6e-02 |    62    82   108   121   140   153   293 |    62   121 |    53   113 |    505  0.0e+00 | 78/82/78
+SWAK_GAUSS    defaults                     outReal            0 CONV        3.54  8.2e-02 |    20    27    35    40    46    51    65 |    20    40 |    15    36 |    116  0.0e+00 | 26/27/26
+SWAK_GAUSS    TimePeriod=60                outReal            0 CONV        5.18  9.4e-02 |    60    81   107   120   139   152   270 |    61   120 |    52   112 |    495  0.0e+00 | 77/81/77
+SWAK_HP       defaults                     outReal            0 CONV        3.22  5.6e-01 |    22    32    44    51    60    66    88 |    30    58 |    38    70 |    125  0.0e+00 | 32/32/32
+SWAK_HP       TimePeriod=60                outReal            0 CONV        4.51  5.6e-01 |    67    96   134   153   182   201   272 |    90   176 |   118   221 |    370  0.0e+00 | 96/96/96
+T3            defaults                     outReal           24 CONV      0.0294  3.2e-05 |    27    34    45    51    66    76    96 |     0    26 |     3    29 |     96  0.0e+00 | 32/34/29
+T3            TimePeriod=15                outReal           84 CONV      0.0288  1.2e-05 |    89   119   168   190   237   237   280 |     0    60 |    11    89 |    280  0.0e+00 | 99/119/83
+TEMA          defaults                     outReal           87 CONV       0.366  1.5e-04 |   176   228   295   328   377   409   568 |    32   213 |    66   227 |    568  0.0e+00 | 226/228/184
+TEMA          TimePeriod=90                outReal          267 CONV       0.787  1.1e-03 |   515   671   872   971  1120  1218  1510 |   168   616 |   221   729 |   1685  0.0e+00 | 615/671/552
+TRIMA         defaults                     outReal           29 ROUND   3.04e-10  3.0e-11 |    -1    -1    -1    -1    -1    -1    -1 |     0     0 |     0     0 |     -1  1.0e+00 | -1/-1/-1
+TRIMA         TimePeriod=90                outReal           89 ROUND   5.82e-11  5.2e-12 |    -1    -1    -1    -1    -1    -1    -1 |     0     0 |     0     0 |     -1  1.0e+00 | 39737/-1/-1
+TRIX          defaults                     outReal           88 CONV      0.0379  3.7e-02 |   167   218   285   318   367   429   568 |   120   273 |   151   319 |    568  0.0e+00 | 201/218/194
+TRIX          TimePeriod=90                outReal          268 CONV      0.0182  4.3e-02 |   425   581   782   881  1029  1191  1662 |   370   844 |   616   908 |   1662  0.0e+00 | 568/581/518
+TSF           defaults                     outReal           13 ROUND    5.8e-08  3.4e-12 |    -1    -1    -1    -1    -1    -1    -1 |     0     0 |     0     0 |     -1  1.0e+00 | -1/-1/-1
+TSF           TimePeriod=42                outReal           41 ROUND   3.19e-08  3.7e-12 |    -1    -1    -1    -1    -1    -1    -1 |     0     0 |     0     0 |     -1  1.0e+00 | -1/-1/-1
+TSI           defaults                     outReal           37 CONV        15.6  9.9e-02 |   107   145   195   219   257   282   397 |   104   218 |   161   281 |    533  0.0e+00 | 136/145/134
+TSI           FirstPeriod=75,SecondPeriod= outReal          113 CONV        12.1  1.5e-01 |   310   424   583   657   771   845  1238 |   291   623 |   606   946 |   1404  0.0e+00 | 424/391/414
+ULTOSC        TimePeriod1=21,TimePeriod2=4 outReal           84 ROUND   1.42e-13  2.7e-15 |    -1    -1    -1    -1    -1    -1    -1 |     0     0 |     0     0 |     -1  1.0e+00 | 19115/-1/0
+VAR           defaults                     outReal            4 ROUND   9.06e-06  3.0e-12 |    -1    -1    -1    -1    -1    -1    -1 |     0     0 |     0     0 |     -1  1.0e+00 | -1/-1/39739
+VAR           TimePeriod=15                outReal           14 ROUND   2.67e-05  1.3e-11 |    -1    -1    -1    -1    -1    -1    -1 |     0     0 |     0     0 |     -1  1.0e+00 | -1/-1/-1
+VIDYA         defaults                     outReal            9 CONV        1.47  6.1e-02 |   407   581   812   928  1102  1218  1624 |   418   940 |   237   769 |   1769  0.0e+00 | 210/581/62
+VIDYA         TimePeriod=36,CMOPeriod=27   outReal           27 CONV        8.72  2.3e-01 |  3494  4990  6986  7984  9482 10481 13988 |  4257  8748 |  2562  7128 |  16076  0.0e+00 | 1073/4990/187
+VWAP          defaults                     outReal            0 NEVER        845  5.7e-01 |    -1    -1    -1    -1    -1    -1    -1 |    -1    -1 |    -1    -1 |     -1  1.0e+00 | -1/-1/-1
+VWMA          defaults                     outReal           29 ROUND   9.09e-13  1.7e-14 |    -1    -1    -1    -1    -1    -1    -1 |     0     0 |     0     0 |     -1  1.0e+00 | 11946/-1/2848
+VWMA          TimePeriod=90                outReal           89 ROUND   6.82e-13  5.6e-15 |    -1    -1    -1    -1    -1    -1    -1 |     0     0 |     0     0 |     -1  1.0e+00 | 20890/-1/2517
+WAD           defaults                     outReal            0 NEVER        640  3.8e-02 |    -1    -1    -1    -1    -1    -1    -1 |    -1    -1 |    -1    -1 |     -1  1.0e+00 | -1/-1/-1
+WMA           defaults                     outReal           29 ROUND   2.24e-09  2.2e-13 |    -1    -1    -1    -1    -1    -1    -1 |     0     0 |     0     0 |     -1  1.0e+00 | -1/-1/-1
+WMA           TimePeriod=90                outReal           89 ROUND   4.05e-09  3.5e-13 |    -1    -1    -1    -1    -1    -1    -1 |     0     0 |     0     0 |     -1  1.0e+00 | -1/-1/-1
+ZLEMA         defaults                     outReal           43 CONV        1.59  3.3e-03 |   105   150   210   240   286   316   445 |    65   200 |    81   222 |    525  0.0e+00 | 150/150/150
+ZLEMA         TimePeriod=90                outReal          133 CONV        2.99  1.1e-03 |   315   450   630   720   856   946  1289 |   146   551 |   282   706 |   1492  0.0e+00 | 450/450/450
+
+== 3. Rules at PREC_4 (K = 10, X = 4) and PREC_8 (K = 19, X = 8) against the need, id owners (rules_vs_need.py) ==
+id           cfg | PREC_4: rule  1e-4  leg(e^-7) sig4 | PREC_8: rule  1e-8  leg(e^-16) sig8 | flags
+EMA          def |          155   150       105    72 |          295   285        240   209 |
+EMA          x3  |          455   450       315   227 |          865   856        720   648 |
+RMA          def |          300   295       207   179 |          570   561        472   452 |
+RMA          x3  |          900   895       627   634 |         1710  1701       1432  1462 |
+ATR          def |          140   135        95   101 |          266   257        216   228 |
+ATR          x3  |          420   415       291   299 |          798   789        664   672 |
+NATR         def |          140   137        96   101 |          266   261        219   228 |
+NATR         x3  |          420   429       299   299 |          798   806        685   672 | k4 k8
+RSI          def |          140   149       117   108 |          266   265        226   225 | k4
+RSI          x3  |          420   430       312   281 |          798   823        695   667 | k4 k8
+CMO          def |          140   149       117   190 |          266   265        226   273 | k4 sig4 sig8
+CMO          x3  |          420   430       312   555 |          798   823        695   879 | k4 k8 sig4 sig8
+DX           def |          140   147       110   158 |          266   267        229   291 | k4 k8 sig4 sig8
+DX           x3  |          420   444       347   554 |          798   855        746   897 | k4 k8 sig4 sig8
+PLUS_DI      def |          140   139       104   113 |          266   275        220   240 | k8
+PLUS_DI      x3  |          420   418       297   300 |          798   793        682   695 |
+MINUS_DI     def |          140   146       111   110 |          266   265        234   234 | k4
+MINUS_DI     x3  |          420   430       313   325 |          798   826        699   712 | k4 k8
+PLUS_DM      def |          140   135        95   114 |          266   257        216   241 |
+PLUS_DM      x3  |          420   415       291   328 |          798   789        664   702 |
+MINUS_DM     def |          140   135        95   121 |          266   257        216   235 |
+MINUS_DM     x3  |          420   415       291   321 |          798   789        664   723 |
+RVI          def |          140   150       112    97 |          266 38698        225   230 | k4 k8
+RVI          x3  |          420   435       352   307 |          798   820        687   673 | k4 k8
+ADX          def |          224   179       134   135 |          350   308        266   264 |
+ADX          x3  |          672   556       416   453 |         1050   949        818   837 |
+T3           def |           90    34        27     3 |          117    66         51    29 |
+T3           x3  |          240   119        89    11 |          312   237        190    89 |
+HA           def |           20    15        11     8 |           38    28         24    22 |
+SWAK_HP      def |           34    32        22    38 |           64    60         51    70 | sig4 sig8
+SWAK_HP      x3  |          100    96        67   118 |          190   182        153   221 | sig4 sig8
+SWAK_GAUSS   def |           37    27        20    15 |           59    46         40    36 |
+SWAK_GAUSS   x3  |          104    81        60    52 |          166   139        120   112 |
+SWAK_BUTTER  def |           37    28        21    17 |           59    48         41    37 |
+SWAK_BUTTER  x3  |          104    82        62    53 |          166   140        121   113 |
+SWAK_2PHP    def |           37    29        23    39 |           59    49         43    55 | sig4
+SWAK_2PHP    x3  |          104    85        65   114 |          166   144        124   161 | sig4
+SWAK_BP      def |          367   322       228   494 |          667   609        512   820 | sig4 sig8
+SWAK_BP      x3  |         1100   964       690  1618 |         2000  1835       1537  2330 | sig4 sig8
+KAMA         def |          500   329       247   184 |         1000   550        477   471 |
+KAMA         x3  |          900   570       420   356 |         1800  1245       1031   938 |
+FRAMA        def |          320   113        71    42 |          640   216        186   156 |
+FRAMA        x3  |          320   159       112    88 |          640   194        190   188 |
+MAMA         def |          320   138       104    82 |          556   290        240   235 |
+VIDYA        def |          312   210       151   129 |          624   380        313   290 |
+VIDYA        x3  |         1480  1073       777   842 |         2960  2006       1667  1766 |
+MCGD         def |          280   151       106    58 |          560   286        241   195 |
+MCGD         x3  |          840   584       410   290 |         1680  1103        935   803 |
+STC          def |          428   280       209   219 |          676   529        442   471 |
+STC          x3  |         1228   995       663   913 |         1926  1562       1438  1560 |
+HT_DCPERIOD  def |          280   233       182   190 |          480   370        306   347 |
+HT_DCPHASE   def |          280   205       156   178 |          480   387        338 33164 | sig8
+HT_PHASOR    def |          280   235       187 39479 |          480   396        314 39479 | sig4 sig8
+HT_SINE      def |          280   205       156   242 |          480   387        338 35892 | sig8
+HT_TRENDLINE def |          280   153       153   120 |          480   153        153   153 |
+HT_TRENDMODE def |          280   150       150   150 |          480   150        150   150 |
+
+== 4. Check of the proven rules against the kernels (rules_check.py) ==
+one-pole violations: [] 0
+2-pole: violations 0 []  tightest slack (K-units, <=0 ok): -2.4271209489624805
+  P=    2  rule(K=14)=    9  exact-bound need=    8  bars/K-unit=0.408
+  P=    5  rule(K=14)=   15  exact-bound need=   11  bars/K-unit=0.611
+  P=   10  rule(K=14)=   26  exact-bound need=   20  bars/K-unit=1.079
+  P=   20  rule(K=14)=   47  exact-bound need=   38  bars/K-unit=2.077
+  P=   60  rule(K=14)=  131  exact-bound need=  111  bars/K-unit=6.154
+  P=  200  rule(K=14)=  427  exact-bound need=  367  bars/K-unit=20.486
+  P= 1000  rule(K=14)= 2116  exact-bound need= 1834  bars/K-unit=102.415
+  P=10000  rule(K=14)=21116  exact-bound need=18338  bars/K-unit=1024.145
+HP: violations 0  tightest slack -0.3303882389925983
+BP: real-pole cases 0  violations 0 []  tightest slack -0.6844333670957603
+T3 (K+20): violations 0 []  tightest slack -4.482686596271471
+  T3 with K+8: violations at [7, 10, 14, 19, 20, 28, 37]
+  T3 with K+10: violations at [10, 14, 19, 20, 28, 37]
+  T3 with K+12: violations at [19, 20, 28, 37]
+  T3 with K+14: violations at [37]
+  T3 with K+16: violations at []
+  2-stage Wilder with K+2: violations at K= [7, 10, 14, 19, 20, 28, 37]
+  2-stage Wilder with K+3: violations at K= [19, 20, 28, 37]
+  2-stage Wilder with K+4: violations at K= []
+  2-stage Wilder with K+5: violations at K= []
+  2-stage Wilder with K+6: violations at K= []
+
+== 5. MAXINDEX / MININDEX on ties (tie_break.c) ==
+MAXINDEX period 2 bar 37: from startIdx 0 -> 37, from startIdx 37 -> 36 (values 3 and 3)
+MAXINDEX period 2 bar 114: from startIdx 0 -> 114, from startIdx 114 -> 113 (values 3 and 3)
+MAXINDEX period 2 bar 115: from startIdx 0 -> 115, from startIdx 114 -> 114 (values 3 and 3)
+MAXINDEX period 2 bar 142: from startIdx 0 -> 142, from startIdx 142 -> 141 (values 2 and 2)
+mismatching bars: MAXINDEX 8732, MININDEX 7963
+
+== 6. MAMA by limits (OVR=FastLimit=..,SlowLimit=.. warmup_probe 40000 MAMA): worst need over series and starts ==
+fast  slow   need(e^-10)  need(e^-19)   count PREC_4 / PREC_8 = 80+50X + ceil(2K/max(fast,slow))
+0.5   0.05       138          290        320 / 556
+0.5   0.01       153          306        320 / 556
+0.2   0.05       227          417        380 / 670
+0.2   0.02       294          534        380 / 670
+0.1   0.05       331          607        480 / 860
+0.05  0.05       418          773        680 / 1240
+0.02  0.02      1054         1949        1280 / 2380
