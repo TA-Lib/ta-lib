@@ -130,6 +130,9 @@
       outIdx = 0;
       today = startIdx;
       trailingIdx = startIdx - nbInitialElementNeeded;
+      if( keyable(inReal, startIdx - maxLookback(optInTimePeriod), endIdx) ) {
+         return maxKeyedImpl(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      }
       if( optInTimePeriod < 1 ) return RetCode.INTERNAL_ERROR;
       sufHighest = new double[optInTimePeriod];
       maxIdx_sufHighest = (optInTimePeriod)-1;
@@ -206,6 +209,98 @@
       outNBElement.value = outIdx;
       return RetCode.SUCCESS ;
    }
+   /* Exact only where keyable() held for every scanned input over [startIdx - lookback, endIdx]. */
+   RetCode maxKeyedImpl( int startIdx,
+                         int endIdx,
+                         double inReal[],
+                         int optInTimePeriod,
+                         MInteger outBegIdx,
+                         MInteger outNBElement,
+                         double outReal[] )
+   {
+      long[] sufHighest;
+      int sufHighest_Idx = 0;
+      int maxIdx_sufHighest = (30)-1;
+      long[] preHighest;
+      int preHighest_Idx = 0;
+      int maxIdx_preHighest = (30)-1;
+      long highest = 0;
+      long tmp = 0;
+      int outIdx = 0;
+      int nbInitialElementNeeded = 0;
+      int trailingIdx = 0;
+      int today = 0;
+      int i = 0;
+      int blockStart = 0;
+      int nAvail = 0;
+      int m = 0;
+      nbInitialElementNeeded = optInTimePeriod - 1;
+      if( startIdx < nbInitialElementNeeded ) {
+         startIdx = nbInitialElementNeeded;
+      }
+      if( startIdx > endIdx ) {
+         outBegIdx.value = 0;
+         outNBElement.value = 0;
+         return RetCode.SUCCESS ;
+      }
+      outIdx = 0;
+      today = startIdx;
+      trailingIdx = startIdx - nbInitialElementNeeded;
+      if( optInTimePeriod < 1 ) return RetCode.INTERNAL_ERROR;
+      sufHighest = new long[optInTimePeriod];
+      maxIdx_sufHighest = (optInTimePeriod)-1;
+      sufHighest_Idx = 0;
+      if( optInTimePeriod < 1 ) return RetCode.INTERNAL_ERROR;
+      preHighest = new long[optInTimePeriod];
+      maxIdx_preHighest = (optInTimePeriod)-1;
+      preHighest_Idx = 0;
+      blockStart = trailingIdx;
+      while( today <= endIdx ) {
+         i = blockStart + optInTimePeriod - 1;
+         highest = Double.doubleToRawLongBits(inReal[i]);
+         sufHighest[optInTimePeriod - 1] = highest;
+         while( i > blockStart ) {
+            i -= 1;
+            tmp = Double.doubleToRawLongBits(inReal[i]);
+            highest = keyMax(highest, tmp);
+            sufHighest[i - blockStart] = highest;
+         }
+         highest = sufHighest[0];
+         outReal[outIdx++] = Double.longBitsToDouble(highest);
+         trailingIdx += 1;
+         today += 1;
+         if( today > endIdx ) {
+            blockStart = blockStart + optInTimePeriod;
+         } else {
+            nAvail = endIdx - (blockStart + optInTimePeriod) + 1;
+            if( nAvail > optInTimePeriod - 1 ) {
+               nAvail = optInTimePeriod - 1;
+            }
+            highest = Double.doubleToRawLongBits(inReal[blockStart + optInTimePeriod]);
+            preHighest[0] = highest;
+            i = 1;
+            while( i < nAvail ) {
+               tmp = Double.doubleToRawLongBits(inReal[blockStart + optInTimePeriod + i]);
+               highest = keyMax(highest, tmp);
+               preHighest[i] = highest;
+               i += 1;
+            }
+            m = 1;
+            while( m <= nAvail ) {
+               highest = sufHighest[m];
+               highest = keyMax(highest, preHighest[m - 1]);
+               outReal[outIdx++] = Double.longBitsToDouble(highest);
+               m += 1;
+            }
+            trailingIdx = trailingIdx + nAvail;
+            today = today + nAvail;
+            blockStart = blockStart + optInTimePeriod;
+         }
+      }
+      outBegIdx.value = startIdx;
+      outNBElement.value = outIdx;
+      return RetCode.SUCCESS ;
+   }
    RetCode maxImpl( int startIdx,
                     int endIdx,
                     float inReal[],
@@ -253,6 +348,9 @@
       outIdx = 0;
       today = startIdx;
       trailingIdx = startIdx - nbInitialElementNeeded;
+      if( keyable(inReal, startIdx - maxLookback(optInTimePeriod), endIdx) ) {
+         return maxKeyedImpl(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      }
       if( optInTimePeriod < 1 ) return RetCode.INTERNAL_ERROR;
       sufHighest = new double[optInTimePeriod];
       maxIdx_sufHighest = (optInTimePeriod)-1;
@@ -303,6 +401,98 @@
                   highest = preHighest[m - 1];
                }
                outReal[outIdx++] = highest;
+               m += 1;
+            }
+            trailingIdx = trailingIdx + nAvail;
+            today = today + nAvail;
+            blockStart = blockStart + optInTimePeriod;
+         }
+      }
+      outBegIdx.value = startIdx;
+      outNBElement.value = outIdx;
+      return RetCode.SUCCESS ;
+   }
+   /* Exact only where keyable() held for every scanned input over [startIdx - lookback, endIdx]. */
+   RetCode maxKeyedImpl( int startIdx,
+                         int endIdx,
+                         float inReal[],
+                         int optInTimePeriod,
+                         MInteger outBegIdx,
+                         MInteger outNBElement,
+                         double outReal[] )
+   {
+      long[] sufHighest;
+      int sufHighest_Idx = 0;
+      int maxIdx_sufHighest = (30)-1;
+      long[] preHighest;
+      int preHighest_Idx = 0;
+      int maxIdx_preHighest = (30)-1;
+      long highest = 0;
+      long tmp = 0;
+      int outIdx = 0;
+      int nbInitialElementNeeded = 0;
+      int trailingIdx = 0;
+      int today = 0;
+      int i = 0;
+      int blockStart = 0;
+      int nAvail = 0;
+      int m = 0;
+      nbInitialElementNeeded = optInTimePeriod - 1;
+      if( startIdx < nbInitialElementNeeded ) {
+         startIdx = nbInitialElementNeeded;
+      }
+      if( startIdx > endIdx ) {
+         outBegIdx.value = 0;
+         outNBElement.value = 0;
+         return RetCode.SUCCESS ;
+      }
+      outIdx = 0;
+      today = startIdx;
+      trailingIdx = startIdx - nbInitialElementNeeded;
+      if( optInTimePeriod < 1 ) return RetCode.INTERNAL_ERROR;
+      sufHighest = new long[optInTimePeriod];
+      maxIdx_sufHighest = (optInTimePeriod)-1;
+      sufHighest_Idx = 0;
+      if( optInTimePeriod < 1 ) return RetCode.INTERNAL_ERROR;
+      preHighest = new long[optInTimePeriod];
+      maxIdx_preHighest = (optInTimePeriod)-1;
+      preHighest_Idx = 0;
+      blockStart = trailingIdx;
+      while( today <= endIdx ) {
+         i = blockStart + optInTimePeriod - 1;
+         highest = Double.doubleToRawLongBits((double)inReal[i]);
+         sufHighest[optInTimePeriod - 1] = highest;
+         while( i > blockStart ) {
+            i -= 1;
+            tmp = Double.doubleToRawLongBits((double)inReal[i]);
+            highest = keyMax(highest, tmp);
+            sufHighest[i - blockStart] = highest;
+         }
+         highest = sufHighest[0];
+         outReal[outIdx++] = Double.longBitsToDouble(highest);
+         trailingIdx += 1;
+         today += 1;
+         if( today > endIdx ) {
+            blockStart = blockStart + optInTimePeriod;
+         } else {
+            nAvail = endIdx - (blockStart + optInTimePeriod) + 1;
+            if( nAvail > optInTimePeriod - 1 ) {
+               nAvail = optInTimePeriod - 1;
+            }
+            highest = Double.doubleToRawLongBits((double)inReal[blockStart + optInTimePeriod]);
+            preHighest[0] = highest;
+            i = 1;
+            while( i < nAvail ) {
+               tmp = Double.doubleToRawLongBits((double)inReal[blockStart + optInTimePeriod + i]);
+               highest = keyMax(highest, tmp);
+               preHighest[i] = highest;
+               i += 1;
+            }
+            m = 1;
+            while( m <= nAvail ) {
+               highest = sufHighest[m];
+               highest = keyMax(highest, preHighest[m - 1]);
+               outReal[outIdx++] = Double.longBitsToDouble(highest);
                m += 1;
             }
             trailingIdx = trailingIdx + nAvail;

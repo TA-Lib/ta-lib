@@ -1181,6 +1181,7 @@ fn stream_ctx<'a>(
         // The streaming tier keeps every output required, so no store is guarded.
         nullable_outputs: empty,
         nullable_shadow: false,
+        key_slots: None,
         // A transition dispatches MA-type structurally. The Open region sets
         // this, since the batch region it transcribes may compare `== TA_MAType_*`.
         matype_map: HashMap::new(),
@@ -2163,6 +2164,7 @@ fn emit_open_region(
         single_precision: false,
         nullable_outputs: &nullable,
         nullable_shadow: true,
+        key_slots: None,
         address_of_vars: &address_of_vars,
         double_address_of_vars: &double_address_of_vars,
         float_input_params: &empty,
@@ -4583,6 +4585,7 @@ fn emit_composed_open(
         single_precision: false,
         nullable_outputs: &empty,
         nullable_shadow: false,
+        key_slots: None,
         address_of_vars: &ins_address_of,
         double_address_of_vars: &ins_double_address_of,
         float_input_params: &empty,

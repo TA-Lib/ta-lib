@@ -275,6 +275,21 @@ backend emits `wrapping_sub(1)` for post/pre-decrement — debug builds and
 doctests then behave like the regtest-verified release builds instead of
 panicking on `attempt to subtract with overflow`.
 
+## Java Backend Details
+
+**The block scan is rendered twice** (`backends/java_keyscan.rs`, #415): the
+transcribed `<n>Impl`, and a `<n>KeyedImpl` twin whose running extremes are raw
+`long` bits selected with integer arithmetic, because HotSpot keeps a branch on
+a loop-carried `double` min or max. The transcribed body hands the twin a range
+only when every scanned input in it is non-negative and NaN-free.
+
+- A twin fed one unkeyable value answers with wrong bits and no error. The
+  guard's range must stay the whole range the body reads.
+- The recogniser proves what a key may hold, not aliasing: `KeyedScanTest`
+  does, and it refuses a twin it has no row for.
+- A helper a generated Java body calls must exist twice, token for token: in
+  `Core.java` and in the server's inline `Core` (`server_gen.rs`).
+
 ## Linting
 
 Strict Clippy pedantic in `src/lib.rs`, with `module_name_repetitions`,

@@ -1993,3 +1993,97 @@ fn java_backend_hoisted_helper_declares_local_vars() {
 }
 
 // ---------------------------------------------------------------------------
+
+/// Java carries the block scan's extremes as `long` keys in a twin body, and
+/// the transcribed body hands a keyable range to it (#415). Exactly the block
+/// scans get one, each twin selects with integer arithmetic alone, and the
+/// transcribed body is otherwise untouched.
+#[test]
+fn java_renders_the_block_scan_with_a_keyed_twin() {
+    let registry = common::make_registry();
+    let helpers = common::make_helpers();
+    // (name, selects per twin, key arrays per twin, the guard's scanned inputs)
+    let scans: [(&str, usize, usize, &[&str]); 6] = [
+        ("max", 3, 2, &["inReal"]),
+        ("midpoint", 6, 4, &["inReal"]),
+        ("midprice", 6, 4, &["inHigh", "inLow"]),
+        ("min", 3, 2, &["inReal"]),
+        ("minmax", 6, 4, &["inReal"]),
+        ("willr", 6, 4, &["inHigh", "inLow"]),
+    ];
+
+    // An `if` whose first statement keeps an extreme.
+    let branches = |text: &str| {
+        let lines: Vec<&str> = text.lines().map(str::trim_start).collect();
+        lines
+            .windows(2)
+            .filter(|w| {
+                w[0].starts_with("if( ") && w[0].ends_with(") {") && (w[1].starts_with("lowest = ") || w[1].starts_with("highest = "))
+            })
+            .count()
+    };
+
+    let mut fired = Vec::new();
+    for name in common::discover_indicators() {
+        let (func, enums) = common::load_indicator(&name);
+        if backends::java::generate(&func, &enums, registry, helpers).contains("KeyedImpl") {
+            fired.push(name);
+        }
+    }
+    fired.sort();
+    assert_eq!(fired, scans.map(|s| s.0), "the functions rendered with a keyed twin");
+
+    for (name, selects, arrays, scanned) in scans {
+        let (func, enums) = common::load_indicator(name);
+        let java = backends::java::generate(&func, &enums, registry, helpers);
+        let stream = java.find(" class ").unwrap_or_else(|| panic!("{name}: no stream section"));
+        let (batch, stream) = java.split_at(stream);
+        assert!(
+            !stream.contains("KeyedImpl") && !stream.contains("doubleToRawLongBits") && !stream.contains("keyM"),
+            "{name}: the stream tier must not be keyed"
+        );
+
+        let methods: Vec<&str> = batch.split("\n   RetCode ").skip(1).collect();
+        let named = |n: &str| -> Vec<&str> {
+            methods.iter().copied().filter(|m| m.starts_with(&format!("{n}( "))).collect()
+        };
+        let (guarded, twins) = (named(&format!("{name}Impl")), named(&format!("{name}KeyedImpl")));
+        assert_eq!((guarded.len(), twins.len()), (2, 2), "{name}: one twin per precision");
+
+        let from = format!("startIdx - {name}Lookback(optInTimePeriod), endIdx)");
+        let guard = format!(
+            "      if( {} ) {{\n         return {name}KeyedImpl(startIdx, endIdx, ",
+            scanned.iter().map(|i| format!("keyable({i}, {from}")).collect::<Vec<_>>().join(" && ")
+        );
+        for body in guarded {
+            let at = body.find(&guard).unwrap_or_else(|| panic!("{name}: no guard `{guard}` in {body}"));
+            let alloc = body.find("new double[").unwrap_or_else(|| panic!("{name}: no scratch array"));
+            assert!(at < alloc, "{name}: the guard must precede the first allocation");
+            let code = body.lines().filter(|l| !l.trim_start().starts_with(['*', '/']));
+            let keyed = code.filter(|l| l.contains("key") || l.contains("Keyed") || l.contains("long")).count();
+            assert_eq!(keyed, 2, "{name}: only the guard's two lines may mention a key: {body}");
+            assert_eq!(
+                branches(body),
+                selects,
+                "{name}: the transcribed body must keep its compare-and-keep branches: {body}"
+            );
+        }
+        for (twin, read) in twins.iter().zip(["Double.doubleToRawLongBits(in", "Double.doubleToRawLongBits((double)in"]) {
+            assert_eq!(
+                twin.matches("keyMin(").count() + twin.matches("keyMax(").count(),
+                selects,
+                "{name}: every select of the twin is a key select: {twin}"
+            );
+            assert_eq!(twin.matches("new long[").count(), arrays, "{name}: key arrays: {twin}");
+            assert!(twin.contains(read), "{name}: the twin must read `{read}`: {twin}");
+            for banned in ["new double[", "Math.min(", "Math.max(", "Math.fma(", "keyable("] {
+                assert!(!twin.contains(banned), "{name}: the twin must not contain `{banned}`: {twin}");
+            }
+            assert_eq!(branches(twin), 0, "{name}: the twin must not branch on an extreme: {twin}");
+            assert!(
+                !twin.contains("OUT_OF_RANGE_START_INDEX"),
+                "{name}: the twin's caller has validated: {twin}"
+            );
+        }
+    }
+}

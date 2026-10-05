@@ -129,6 +129,9 @@
       outIdx = 0;
       today = startIdx;
       trailingIdx = startIdx - nbInitialElementNeeded;
+      if( keyable(inReal, startIdx - minLookback(optInTimePeriod), endIdx) ) {
+         return minKeyedImpl(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      }
       if( optInTimePeriod < 1 ) return RetCode.INTERNAL_ERROR;
       sufLowest = new double[optInTimePeriod];
       maxIdx_sufLowest = (optInTimePeriod)-1;
@@ -205,6 +208,98 @@
       outNBElement.value = outIdx;
       return RetCode.SUCCESS ;
    }
+   /* Exact only where keyable() held for every scanned input over [startIdx - lookback, endIdx]. */
+   RetCode minKeyedImpl( int startIdx,
+                         int endIdx,
+                         double inReal[],
+                         int optInTimePeriod,
+                         MInteger outBegIdx,
+                         MInteger outNBElement,
+                         double outReal[] )
+   {
+      long[] sufLowest;
+      int sufLowest_Idx = 0;
+      int maxIdx_sufLowest = (30)-1;
+      long[] preLowest;
+      int preLowest_Idx = 0;
+      int maxIdx_preLowest = (30)-1;
+      long lowest = 0;
+      long tmp = 0;
+      int outIdx = 0;
+      int nbInitialElementNeeded = 0;
+      int trailingIdx = 0;
+      int today = 0;
+      int i = 0;
+      int blockStart = 0;
+      int nAvail = 0;
+      int m = 0;
+      nbInitialElementNeeded = optInTimePeriod - 1;
+      if( startIdx < nbInitialElementNeeded ) {
+         startIdx = nbInitialElementNeeded;
+      }
+      if( startIdx > endIdx ) {
+         outBegIdx.value = 0;
+         outNBElement.value = 0;
+         return RetCode.SUCCESS ;
+      }
+      outIdx = 0;
+      today = startIdx;
+      trailingIdx = startIdx - nbInitialElementNeeded;
+      if( optInTimePeriod < 1 ) return RetCode.INTERNAL_ERROR;
+      sufLowest = new long[optInTimePeriod];
+      maxIdx_sufLowest = (optInTimePeriod)-1;
+      sufLowest_Idx = 0;
+      if( optInTimePeriod < 1 ) return RetCode.INTERNAL_ERROR;
+      preLowest = new long[optInTimePeriod];
+      maxIdx_preLowest = (optInTimePeriod)-1;
+      preLowest_Idx = 0;
+      blockStart = trailingIdx;
+      while( today <= endIdx ) {
+         i = blockStart + optInTimePeriod - 1;
+         lowest = Double.doubleToRawLongBits(inReal[i]);
+         sufLowest[optInTimePeriod - 1] = lowest;
+         while( i > blockStart ) {
+            i -= 1;
+            tmp = Double.doubleToRawLongBits(inReal[i]);
+            lowest = keyMin(lowest, tmp);
+            sufLowest[i - blockStart] = lowest;
+         }
+         lowest = sufLowest[0];
+         outReal[outIdx++] = Double.longBitsToDouble(lowest);
+         trailingIdx += 1;
+         today += 1;
+         if( today > endIdx ) {
+            blockStart = blockStart + optInTimePeriod;
+         } else {
+            nAvail = endIdx - (blockStart + optInTimePeriod) + 1;
+            if( nAvail > optInTimePeriod - 1 ) {
+               nAvail = optInTimePeriod - 1;
+            }
+            lowest = Double.doubleToRawLongBits(inReal[blockStart + optInTimePeriod]);
+            preLowest[0] = lowest;
+            i = 1;
+            while( i < nAvail ) {
+               tmp = Double.doubleToRawLongBits(inReal[blockStart + optInTimePeriod + i]);
+               lowest = keyMin(lowest, tmp);
+               preLowest[i] = lowest;
+               i += 1;
+            }
+            m = 1;
+            while( m <= nAvail ) {
+               lowest = sufLowest[m];
+               lowest = keyMin(lowest, preLowest[m - 1]);
+               outReal[outIdx++] = Double.longBitsToDouble(lowest);
+               m += 1;
+            }
+            trailingIdx = trailingIdx + nAvail;
+            today = today + nAvail;
+            blockStart = blockStart + optInTimePeriod;
+         }
+      }
+      outBegIdx.value = startIdx;
+      outNBElement.value = outIdx;
+      return RetCode.SUCCESS ;
+   }
    RetCode minImpl( int startIdx,
                     int endIdx,
                     float inReal[],
@@ -252,6 +347,9 @@
       outIdx = 0;
       today = startIdx;
       trailingIdx = startIdx - nbInitialElementNeeded;
+      if( keyable(inReal, startIdx - minLookback(optInTimePeriod), endIdx) ) {
+         return minKeyedImpl(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      }
       if( optInTimePeriod < 1 ) return RetCode.INTERNAL_ERROR;
       sufLowest = new double[optInTimePeriod];
       maxIdx_sufLowest = (optInTimePeriod)-1;
@@ -302,6 +400,98 @@
                   lowest = preLowest[m - 1];
                }
                outReal[outIdx++] = lowest;
+               m += 1;
+            }
+            trailingIdx = trailingIdx + nAvail;
+            today = today + nAvail;
+            blockStart = blockStart + optInTimePeriod;
+         }
+      }
+      outBegIdx.value = startIdx;
+      outNBElement.value = outIdx;
+      return RetCode.SUCCESS ;
+   }
+   /* Exact only where keyable() held for every scanned input over [startIdx - lookback, endIdx]. */
+   RetCode minKeyedImpl( int startIdx,
+                         int endIdx,
+                         float inReal[],
+                         int optInTimePeriod,
+                         MInteger outBegIdx,
+                         MInteger outNBElement,
+                         double outReal[] )
+   {
+      long[] sufLowest;
+      int sufLowest_Idx = 0;
+      int maxIdx_sufLowest = (30)-1;
+      long[] preLowest;
+      int preLowest_Idx = 0;
+      int maxIdx_preLowest = (30)-1;
+      long lowest = 0;
+      long tmp = 0;
+      int outIdx = 0;
+      int nbInitialElementNeeded = 0;
+      int trailingIdx = 0;
+      int today = 0;
+      int i = 0;
+      int blockStart = 0;
+      int nAvail = 0;
+      int m = 0;
+      nbInitialElementNeeded = optInTimePeriod - 1;
+      if( startIdx < nbInitialElementNeeded ) {
+         startIdx = nbInitialElementNeeded;
+      }
+      if( startIdx > endIdx ) {
+         outBegIdx.value = 0;
+         outNBElement.value = 0;
+         return RetCode.SUCCESS ;
+      }
+      outIdx = 0;
+      today = startIdx;
+      trailingIdx = startIdx - nbInitialElementNeeded;
+      if( optInTimePeriod < 1 ) return RetCode.INTERNAL_ERROR;
+      sufLowest = new long[optInTimePeriod];
+      maxIdx_sufLowest = (optInTimePeriod)-1;
+      sufLowest_Idx = 0;
+      if( optInTimePeriod < 1 ) return RetCode.INTERNAL_ERROR;
+      preLowest = new long[optInTimePeriod];
+      maxIdx_preLowest = (optInTimePeriod)-1;
+      preLowest_Idx = 0;
+      blockStart = trailingIdx;
+      while( today <= endIdx ) {
+         i = blockStart + optInTimePeriod - 1;
+         lowest = Double.doubleToRawLongBits((double)inReal[i]);
+         sufLowest[optInTimePeriod - 1] = lowest;
+         while( i > blockStart ) {
+            i -= 1;
+            tmp = Double.doubleToRawLongBits((double)inReal[i]);
+            lowest = keyMin(lowest, tmp);
+            sufLowest[i - blockStart] = lowest;
+         }
+         lowest = sufLowest[0];
+         outReal[outIdx++] = Double.longBitsToDouble(lowest);
+         trailingIdx += 1;
+         today += 1;
+         if( today > endIdx ) {
+            blockStart = blockStart + optInTimePeriod;
+         } else {
+            nAvail = endIdx - (blockStart + optInTimePeriod) + 1;
+            if( nAvail > optInTimePeriod - 1 ) {
+               nAvail = optInTimePeriod - 1;
+            }
+            lowest = Double.doubleToRawLongBits((double)inReal[blockStart + optInTimePeriod]);
+            preLowest[0] = lowest;
+            i = 1;
+            while( i < nAvail ) {
+               tmp = Double.doubleToRawLongBits((double)inReal[blockStart + optInTimePeriod + i]);
+               lowest = keyMin(lowest, tmp);
+               preLowest[i] = lowest;
+               i += 1;
+            }
+            m = 1;
+            while( m <= nAvail ) {
+               lowest = sufLowest[m];
+               lowest = keyMin(lowest, preLowest[m - 1]);
+               outReal[outIdx++] = Double.longBitsToDouble(lowest);
                m += 1;
             }
             trailingIdx = trailingIdx + nAvail;

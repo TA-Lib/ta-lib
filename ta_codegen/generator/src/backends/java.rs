@@ -81,6 +81,7 @@ use super::common::{contains_alloc_err_return, expr_directly_contains_candle_cal
 use super::builtins::{MathFn, SpecialBuiltin, StdlibFn};
 use super::expr_walk::{binop_prec, expr_prec, is_int_bitwise, wrap_child, wrap_inlined, ExprEmitter};
 use super::fma::{self, FmaVarSets};
+use super::java_keyscan::KeyPlan;
 use super::stmt_walk::StatementEmitter;
 
 /// Candle helper function names that should be rendered inline (as ternary
@@ -121,6 +122,9 @@ pub(crate) struct JavaRenderCtx<'a> {
     /// array to read it back from. The batch bodies have no such capture, so
     /// they leave this false and the shadow is never declared there.
     pub(crate) nullable_shadow: bool,
+    /// Locals and scratch arrays that hold `long` keys in the body being
+    /// rendered ([`super::java_keyscan`]). `None` everywhere but a keyed twin.
+    pub(crate) key_slots: Option<&'a HashSet<String>>,
 }
 
 /// Build the `TA_MAType_*` → `MAType.<Pascal>` map the [`ExprEmitter::var`] hook
@@ -476,8 +480,9 @@ pub fn generate(
     // verbatim into BOTH the shipped Core and the JSON-RPC server's inline Core,
     // and the server calls these directly — so the harness's retCode ints and
     // output hashes are untouched by the public surface below.
-    out.push_str(&gen_func(func, false, enums, registry, helpers)); // double-precision guarded
-    out.push_str(&gen_func(func, true, enums, registry, helpers)); // single-precision guarded
+    let plan = key_plan(func, registry);
+    out.push_str(&gen_func(func, false, plan.as_ref(), enums, registry, helpers)); // double-precision guarded
+    out.push_str(&gen_func(func, true, plan.as_ref(), enums, registry, helpers)); // single-precision guarded
     // Public surface: OutRange-returning wrappers over the cores above.
     out.push_str(&gen_public_wrapper(func, false, enums, registry));
     out.push_str(&gen_public_wrapper(func, true, enums, registry));
@@ -759,6 +764,31 @@ fn body_name(base: &str) -> String {
     format!("{base}Impl")
 }
 
+fn keyed_name(base: &str) -> String {
+    format!("{base}KeyedImpl")
+}
+
+/// The hand-off from a guarded core to its keyed twin. The range checked is
+/// the whole range the body reads: a twin fed one unkeyable value answers
+/// with wrong bits, not an error.
+fn key_guard(func: &FuncDef, base: &str, plan: &KeyPlan) -> String {
+    let opts: Vec<&str> = func.optional_inputs.iter().map(|o| o.name.as_str()).collect();
+    let from = format!("startIdx - {base}Lookback({})", opts.join(", "));
+    let cond: Vec<String> =
+        plan.sources.iter().map(|inp| format!("keyable({inp}, {from}, endIdx)")).collect();
+    let mut args: Vec<&str> = vec!["startIdx", "endIdx"];
+    args.extend(func.inputs.iter().map(|i| i.name.as_str()));
+    args.extend(&opts);
+    args.extend(["outBegIdx", "outNBElement"]);
+    args.extend(func.outputs.iter().map(|o| o.name.as_str()));
+    format!(
+        "      if( {} ) {{\n         return {}({});\n      }}\n",
+        cond.join(" && "),
+        keyed_name(base),
+        args.join(", ")
+    )
+}
+
 /// Emit the wrapper's array-argument checks (issue #172 C2).
 ///
 /// C cannot do this — it is handed bare pointers and has no sizes. Java arrays
@@ -953,7 +983,7 @@ fn gen_private(
 ) -> String {
     let base_name = super::common::camel_words(&func.name);
     let name_override = format!("{base_name}Private");
-    gen_func_inner(func, false, Some(&name_override), enums, registry, helpers)
+    gen_func_inner(func, false, Some(&name_override), KeyMode::Off, enums, registry, helpers)
 }
 
 /// Generate the Private method float overload (for Java method overloading).
@@ -969,17 +999,57 @@ fn gen_private_sp(
 ) -> String {
     let base_name = super::common::camel_words(&func.name);
     let name_override = format!("{base_name}Private");
-    gen_func_inner(func, true, Some(&name_override), enums, registry, helpers)
+    gen_func_inner(func, true, Some(&name_override), KeyMode::Off, enums, registry, helpers)
 }
 
 fn gen_func(
     func: &FuncDef,
     single_precision: bool,
+    plan: Option<&KeyPlan>,
     enums: &HashMap<String, EnumDef>,
     registry: &Registry,
     helpers: &HelperRegistry,
 ) -> String {
-    gen_func_inner(func, single_precision, None, enums, registry, helpers)
+    let Some(plan) = plan else {
+        return gen_func_inner(func, single_precision, None, KeyMode::Off, enums, registry, helpers);
+    };
+    let mut out =
+        gen_func_inner(func, single_precision, None, KeyMode::Guarded(plan), enums, registry, helpers);
+    out.push_str(&gen_func_inner(func, single_precision, None, KeyMode::Keyed(plan), enums, registry, helpers));
+    out
+}
+
+/// How [`gen_func_inner`] treats a block scan ([`super::java_keyscan`]).
+#[derive(Clone, Copy)]
+enum KeyMode<'a> {
+    Off,
+    /// The transcribed body, handing a keyable range to the keyed twin.
+    Guarded(&'a KeyPlan),
+    /// The twin: the same body with its key slots holding raw bits.
+    Keyed(&'a KeyPlan),
+}
+
+/// This backend's cleanup sequence, explicit so a pass can be made
+/// conditional later. C states none: every one of these would be wrong there.
+fn cleaned(body: &[Statement], registry: &Registry) -> Vec<Statement> {
+    // The transcribed guard on a cross-call this backend answers by throwing is
+    // dead (#267). The passes are length-preserving, so a caller's indices into
+    // the slice stay valid.
+    let admits = |f: &str, a: &[Expr]| cross_call_split(f, a, registry).is_some();
+    let folded = super::ir_cleanup::drop_answered_cross_call_guards(body, &admits, None);
+    let folded = super::ir_cleanup::drop_deallocation(&folded);
+    super::ir_cleanup::drop_inert_guards(&folded)
+}
+
+/// The key plan of `func`'s batch body, if it is a block scan. `func` must be
+/// the Java-resolved view. Panics on a scan that cannot be keyed: rendering it
+/// unkeyed would lose the fast path with nothing to say so.
+fn key_plan(func: &FuncDef, registry: &Registry) -> Option<KeyPlan> {
+    let body = super::stmt_walk::strip_comments(&cleaned(&func.body, registry));
+    match super::java_keyscan::plan(func, &body) {
+        Ok(plan) => plan,
+        Err(why) => panic!("{}: the block scan cannot be keyed for Java: {why}", func.name),
+    }
 }
 
 /// `name_override` distinguishes the two things this emits: `Some(..)` is the
@@ -990,17 +1060,29 @@ fn gen_func_inner(
     func: &FuncDef,
     single_precision: bool,
     name_override: Option<&str>,
+    key: KeyMode,
     enums: &HashMap<String, EnumDef>,
     registry: &Registry,
     helpers: &HelperRegistry,
 ) -> String {
     let mut out = String::new();
     let base_name = super::common::camel_words(&func.name);
+    let keyed = match key {
+        KeyMode::Keyed(plan) => Some(plan),
+        _ => None,
+    };
     let name = if let Some(n) = name_override {
         n.to_string()
+    } else if keyed.is_some() {
+        keyed_name(&base_name)
     } else {
         body_name(&base_name)
     };
+    if keyed.is_some() {
+        out.push_str(
+            "   /* Exact only where keyable() held for every scanned input over [startIdx - lookback, endIdx]. */\n",
+        );
+    }
 
     // Build parameter list
     let mut params: Vec<String> = Vec::new();
@@ -1083,10 +1165,9 @@ fn gen_func_inner(
         &func.body
     };
 
-    // Carry source comments only in the double-precision implementation (guarded
-    // `xxx` and, for explicit-private functions, `xxxPrivate`). Strip them from the
-    // single-precision copy.
-    let keep_comments = !single_precision;
+    // Source comments are carried once, in the double-precision transcribed body
+    // (and `xxxPrivate` where declared); every other copy is stripped.
+    let keep_comments = !single_precision && keyed.is_none();
     let body_stripped;
     let body: &[Statement] = if keep_comments {
         body
@@ -1095,16 +1176,15 @@ fn gen_func_inner(
         &body_stripped
     };
 
-    // The transcribed guard on a cross-call this backend answers by throwing is
-    // dead (#267). Fold it before anything below is derived from the body; the
-    // pass is length-preserving, so the caller's indices into this slice stay valid.
-    // This backend's cleanup sequence, explicit so a pass can be made
-    // conditional later. C states none: every one of these would be wrong there.
-    let admits = |f: &str, a: &[Expr]| cross_call_split(f, a, registry).is_some();
-    let folded = super::ir_cleanup::drop_answered_cross_call_guards(body, &admits, None);
-    let folded = super::ir_cleanup::drop_deallocation(&folded);
-    let folded = super::ir_cleanup::drop_inert_guards(&folded);
+    // Fold before anything below is derived from the body.
+    let folded = cleaned(body, registry);
+    let folded = match keyed {
+        Some(plan) => super::java_keyscan::rewrite(&folded, plan),
+        None => folded,
+    };
     let body: &[Statement] = &folded;
+    let key_slots = keyed.map(KeyPlan::slots);
+    let is_key = |n: &str| key_slots.as_ref().is_some_and(|k| k.contains(n));
     // Pre-scan for variables used in AddressOf contexts (need MInteger wrapping)
     let mut address_of_vars = collect_address_of_vars(body);
 
@@ -1149,14 +1229,17 @@ fn gen_func_inner(
         }) = stmt
         {
             for (arr, t) in circbuf_arrays(id, layout) {
-                out.push_str(&format!("      {}[] {arr};\n", java_circbuf_elem(&t)));
+                let elem = if is_key(id) { "long" } else { java_circbuf_elem(&t) };
+                out.push_str(&format!("      {elem}[] {arr};\n"));
             }
             out.push_str(&format!("      int {id}_Idx = 0;\n"));
             out.push_str(&format!("      int maxIdx_{id} = ({static_size})-1;\n"));
             continue;
         }
         if let Statement::VarDecl { var_type, name, .. } = stmt {
-            let java_decl = if matype_vars.contains(name) {
+            let java_decl = if is_key(name) {
+                format!("long {name} = 0")
+            } else if matype_vars.contains(name) {
                 format!("MAType {name}")
             } else if address_of_vars.contains(name)
                 && matches!(var_type, VarType::Integer | VarType::Index)
@@ -1196,9 +1279,9 @@ fn gen_func_inner(
         out.push_str(&emit_java_unpacking(&candle_used, 6));
     }
 
-    // Validation prologue. Omitted for the `Private` variant, whose callers are the
-    // guarded cores that have already validated.
-    if name_override.is_none() {
+    // Validation prologue. Omitted for the `Private` variant and the keyed twin,
+    // whose callers are the guarded cores that have already validated.
+    if name_override.is_none() && keyed.is_none() {
         out.push_str("      if( (startIdx < 0) || (startIdx > INDEX_MAX) ) {\n");
         out.push_str("         return RetCode.OUT_OF_RANGE_START_INDEX ;\n");
         out.push_str("      }\n");
@@ -1277,6 +1360,7 @@ fn gen_func_inner(
         nullable_outputs: &nullable_outputs,
         nullable_shadow: false,
         matype_map: build_matype_map(enums),
+        key_slots: key_slots.as_ref(),
     };
 
     // Emit VarDecl initializations
@@ -1309,12 +1393,24 @@ fn gen_func_inner(
     }
 
     // Render body statements (skip VarDecls)
+    let mut guard = match key {
+        KeyMode::Guarded(plan) => Some(plan),
+        _ => None,
+    };
     for stmt in body {
         if matches!(stmt, Statement::VarDecl { .. }) {
             continue;
         }
+        // The range is clamped and known non-empty here, and nothing is allocated yet.
+        if let (Some(plan), Statement::CircBuf(CircBuf::Init { id, .. })) = (guard, stmt) {
+            if plan.arrays.contains(id) {
+                out.push_str(&key_guard(func, &base_name, plan));
+                guard = None;
+            }
+        }
         out.push_str(&render_statement_ctx(stmt, 6, &ctx, enums, registry, helpers));
     }
+    assert!(guard.is_none(), "{}: the keyed twin is emitted but never called", func.name);
 
     // Closing brace — return statement comes from IR body
     out.push_str("   }\n");
@@ -1434,6 +1530,7 @@ pub fn render_statement(
         double_address_of_vars,
         nullable_outputs: &no_nullable,
         nullable_shadow: false,
+        key_slots: None,
         float_input_params,
         inline_counter,
         // Auxiliary entry (no body available to derive fusion sets); fusion for
@@ -1522,11 +1619,10 @@ impl StatementEmitter for JavaStmt<'_> {
                 // The size is derived, so < 1 is a logic defect rather than an allocation
                 // failure: same code as C's TA_INTERNAL_ERROR(137) (#178).
                 s.push_str(&format!("{pad}if( {sz} < 1 ) return RetCode.INTERNAL_ERROR;\n"));
+                let key = self.ctx.key_slots.is_some_and(|k| k.contains(id));
                 for (arr, t) in circbuf_arrays(id, layout) {
-                    s.push_str(&format!(
-                        "{pad}{arr} = new {}[{sz}];\n",
-                        java_circbuf_elem(&t)
-                    ));
+                    let elem = if key { "long" } else { java_circbuf_elem(&t) };
+                    s.push_str(&format!("{pad}{arr} = new {elem}[{sz}];\n"));
                 }
                 s.push_str(&format!("{pad}maxIdx_{id} = ({sz})-1;\n"));
                 s.push_str(&format!("{pad}{id}_Idx = 0;\n"));
@@ -2259,6 +2355,7 @@ impl ExprEmitter for JavaExpr<'_> {
             double_address_of_vars: &empty,
             nullable_outputs: self.ctx.nullable_outputs,
             nullable_shadow: false,
+            key_slots: self.ctx.key_slots,
             float_input_params: self.ctx.float_input_params,
             inline_counter: self.ctx.inline_counter,
             // Carry the fusion sets so any a*b+c inside the address-of expression
@@ -2469,6 +2566,18 @@ fn render_func_call(
     registry: &Registry,
     helpers: &HelperRegistry,
 ) -> String {
+    let key_call = match fname {
+        super::java_keyscan::KEY_BITS => Some("Double.doubleToRawLongBits"),
+        super::java_keyscan::KEY_REAL => Some("Double.longBitsToDouble"),
+        super::java_keyscan::KEY_MIN => Some("keyMin"),
+        super::java_keyscan::KEY_MAX => Some("keyMax"),
+        _ => None,
+    };
+    if let Some(java) = key_call {
+        let rendered: Vec<String> = args.iter().map(|a| render_expr(a, ctx, registry, helpers)).collect();
+        return format!("{java}({})", rendered.join(", "));
+    }
+
     // Check if this is a call to a helper function that can be inlined
     if let Some(helper) = helpers.get(fname) {
         if let Some(inlined_expr) = try_inline_expr(helper, args) {
@@ -2777,6 +2886,7 @@ fn render_lookback_code(
         double_address_of_vars: &double_address_of_vars,
         nullable_outputs: &no_nullable,
         nullable_shadow: false,
+        key_slots: None,
         float_input_params: &float_input_params,
         inline_counter: &inline_counter,
         // Lookback bodies are pure integer index arithmetic — no float multiply-add.

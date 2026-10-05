@@ -1573,6 +1573,31 @@ pub fn generate_java_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
     s.push_str("            throw new TALibArgumentException(funcName + \": \" + argName + \" is empty\", RetCode.BAD_PARAM);\n");
     s.push_str("        }\n");
     s.push_str("    }\n\n");
+    for ty in ["double", "float"] {
+        s.push_str(&format!("    static boolean keyable({ty}[] a, int from, int to) {{\n"));
+        s.push_str("        int i = from;\n");
+        s.push_str("        while (i <= to) {\n");
+        s.push_str("            int stop = to - i > 63 ? i + 63 : to;\n");
+        s.push_str("            long acc = 0;\n");
+        s.push_str("            for (; i <= stop; i++) {\n");
+        s.push_str("                long b = Double.doubleToRawLongBits(a[i]);\n");
+        s.push_str("                acc |= b | (0x7ff0000000000000L - b);\n");
+        s.push_str("            }\n");
+        s.push_str("            if (acc < 0) {\n");
+        s.push_str("                return false;\n");
+        s.push_str("            }\n");
+        s.push_str("        }\n");
+        s.push_str("        return true;\n");
+        s.push_str("    }\n\n");
+    }
+    s.push_str("    static long keyMin(long a, long b) {\n");
+    s.push_str("        long d = a - b;\n");
+    s.push_str("        return b + (d & (d >> 63));\n");
+    s.push_str("    }\n\n");
+    s.push_str("    static long keyMax(long a, long b) {\n");
+    s.push_str("        long d = a - b;\n");
+    s.push_str("        return a - (d & (d >> 63));\n");
+    s.push_str("    }\n\n");
     s.push_str("    static void requireIndexRange(String funcName, int startIdx, int endIdx) {\n");
     s.push_str("        if (startIdx < 0 || startIdx > INDEX_MAX) {\n");
     s.push_str("            throw failure(funcName, RetCode.OUT_OF_RANGE_START_INDEX);\n");
