@@ -55,6 +55,7 @@ public partial class Core
     *  MMDDYY BY     Description
     *  -------------------------------------------------------------------
     *  100526 KL,CC  Creation (#483).
+    *  100526 MF,CC  Carry the window's terms in a ring (#483).
     */
    /// <summary>
    /// Number of leading input bars <c>Rogerssatchell</c> consumes before it can
@@ -84,13 +85,6 @@ public partial class Core
       } else if( !(optInAnnualization >= 0e0 && optInAnnualization <= RealMax) ) {
          return -1;
       }
-      /* The window's lookback and nothing else: there is no callee, and a term
-       * reads only its own bar -- no previous close -- so no bar is consumed to
-       * form it. Same as sum_lookback (sum/sum.c:16-19) and var_lookback
-       * (var/var.c:21-26), and one less than an estimator that differences
-       * against C[i-1]. optInAnnualization scales the output and cannot move the
-       * first bar, as optInNbDev cannot in var.c:23.
-       */
       return optInTimePeriod - 1 ;
 
    }
@@ -148,10 +142,11 @@ public partial class Core
       int i = 0;
       int j = 0;
       int outIdx = 0;
-      int trailingIdx = 0;
-      int windowStart = 0;
       int nbInitialElementNeeded = 0;
       int barsSinceRebuild = 0;
+      double[] termRing;
+      int termRing_Idx = 0;
+      int maxIdx_termRing = (32)-1;
       if( (startIdx < 0) || (startIdx > IndexMax) ) {
          return RetCode.OutOfRangeStartIndex ;
       }
@@ -171,6 +166,10 @@ public partial class Core
       if( (outReal.Overlaps(inOpen) && outReal != inOpen) || (outReal.Overlaps(inHigh) && outReal != inHigh) || (outReal.Overlaps(inLow) && outReal != inLow) || (outReal.Overlaps(inClose) && outReal != inClose) ) {
          return RetCode.BadParam ;
       }
+      /* Each bar's term costs four logarithms, so it is computed once and kept
+       * until it leaves the window. That also makes outReal safe to alias any
+       * input: a bar is never read again once it has been consumed.
+       */
       nbInitialElementNeeded = optInTimePeriod - 1;
       if( startIdx < nbInitialElementNeeded ) {
          startIdx = nbInitialElementNeeded;
@@ -180,38 +179,32 @@ public partial class Core
          outNBElement = 0;
          return RetCode.Success ;
       }
+      if( optInTimePeriod < 1 ) return RetCode.InternalError;
+      termRing = new double[optInTimePeriod];
+      maxIdx_termRing = (optInTimePeriod)-1;
+      termRing_Idx = 0;
       /* Rogers and Satchell, The Annals of Applied Probability 1(4):504-512 (1991),
-       * eq. (2) on p.505: with the log price measured from the bar's open,
-       * S1 = ln(H/O), I1 = ln(L/O) and X1 = ln(C/O), one bar's unbiased estimate
-       * of its variance is S1(S1 - X1) + I1(I1 - X1), which is ln(H/C)ln(H/O) +
-       * ln(L/C)ln(L/O). Eq. (3) is what sets this estimator apart: that
-       * expectation is sigma^2 whatever the drift, so a bar that opens at its low
-       * and closes at its high -- all drift, no dispersion -- reads exactly zero,
-       * where a range-only estimator reads volatility.
+       * eq. (2): with the log price measured from the bar's open, S1 = ln(H/O),
+       * I1 = ln(L/O) and X1 = ln(C/O), one bar's estimate of its variance is
+       * S1(S1 - X1) + I1(I1 - X1) = ln(H/C)ln(H/O) + ln(L/C)ln(L/O), unbiased
+       * whatever the drift. The window mean, the root and the annual scale are
+       * convention, not the paper's.
        *
-       * The paper stops there. The window mean, the root and the annual scale are
-       * the convention of every implementation of it, not the authors'.
-       */
-      /* Once, so that optInAnnualization = 1.0 is an exact identity rather than a
-       * multiply by a rounded 1.0, and so the per-bar and annualised outputs
-       * differ by exactly this factor.
+       * Keep sqrt(A) a separate factor applied last: A = 1.0 is then an exact
+       * identity and the annualised output is exactly sqrt(A) times the per-bar
+       * one. Folding A under the root moves both by an ulp.
        */
       sqrtA = Math.Sqrt(optInAnnualization);
-      trailingIdx = startIdx - nbInitialElementNeeded;
       periodTotal = 0.0;
-      for( j = trailingIdx; j < startIdx; j += 1 ) {
-         /* The two products are SEPARATE statements on purpose. Written as one
-          * expression the generator's FMA detector fuses the first product into
-          * the add (backends/fma.rs:406-433; a log call counts as a float factor
-          * at :252-285), which moves 159 of 243 outputs on the corpus at n = 10
-          * and buys nothing measurable. VWMA splits its product for the same
-          * reason (vwma/vwma.c:78-81).
+      for( j = startIdx - nbInitialElementNeeded; j < startIdx; j += 1 ) {
+         /* Keep the two products separate statements. As one expression the
+          * first product is fused into the add, which changes the values and
+          * breaks bit equality with the same estimator composed from LN, DIV,
+          * MULT, ADD and SUM.
           *
-          * The guard is the whole bar, tested exactly rather than against a fixed
-          * band (#253): a bar with any price at or below zero contributes a 0.0
-          * term and still counts toward the window's n. Zeroing only the products
-          * that touch the bad price has no implementation behind it, and dropping
-          * the bar from the window makes n data-dependent.
+          * A bar with any price at or below zero contributes a 0.0 term and
+          * still counts toward the window. The test is exact, not a band, so a
+          * small-unit quote is not zeroed.
           */
          o = inOpen[j];
          h = inHigh[j];
@@ -224,12 +217,11 @@ public partial class Core
          } else {
             term = 0.0;
          }
+         termRing[termRing_Idx] = term;
          periodTotal += term;
+         termRing_Idx++;
+         if( termRing_Idx > maxIdx_termRing ) { termRing_Idx = 0; }
       }
-      /* outReal may be any of the four input arrays: the output written on a bar
-       * lands at or before the window's own trailing index, so every input slot
-       * this loop still reads is one no write has reached yet.
-       */
       i = startIdx;
       outIdx = 0;
       barsSinceRebuild = 32 * optInTimePeriod;
@@ -246,83 +238,45 @@ public partial class Core
          } else {
             term = 0.0;
          }
+         /* Add, publish, subtract: the slot written here was taken out of the
+          * sum at the end of the previous bar, and the advance lands on the
+          * oldest term, the one that leaves next.
+          */
+         termRing[termRing_Idx] = term;
          periodTotal += term;
          peakTotal = MaxGt(periodTotal, peakTotal);
-         /* The sum this bar's output is taken from, before the trailing term is
-          * removed for the next one.
-          */
          windowTotal = periodTotal;
-         o = inOpen[trailingIdx];
-         h = inHigh[trailingIdx];
-         l = inLow[trailingIdx];
-         c = inClose[trailingIdx];
-         if( o > 0.0 && h > 0.0 && l > 0.0 && c > 0.0 ) {
-            p1 = Math.Log(h / c) * Math.Log(h / o);
-            p2 = Math.Log(l / c) * Math.Log(l / o);
-            term = p1 + p2;
-         } else {
-            term = 0.0;
-         }
-         periodTotal -= term;
-         trailingIdx += 1;
-         /* Rebuild as a fresh window sum when the running sum has collapsed to
-          * below 1e-6 of the largest it has held since the last rebuild, or at
-          * least every 32 windows -- VAR's rule (var.c:101-113). Measured against
-          * the PEAK, not the current sum: what a running sum of add-then-subtract
-          * carries is rounding at the scale of the largest window it has seen, so
-          * once a quiet stretch arrives the current sum can be nothing but that
-          * rounding. On an all-flat window the rebuild restores an exact 0.0,
-          * where a plain running sum leaves a residual that is negative about
-          * forty per cent of the time -- and a negative sum under an
-          * unconditional root is where the composition of shipped functions
-          * produces NaN.
+         termRing_Idx++;
+         if( termRing_Idx > maxIdx_termRing ) { termRing_Idx = 0; }
+         periodTotal -= termRing[termRing_Idx];
+         /* A running sum carries rounding at the scale of the largest window it
+          * has held, so it is rebuilt as a fresh sum once it falls below 1e-6 of
+          * that peak, and at least every 32 windows. Compare against the peak,
+          * not the current sum: after a quiet stretch arrives the current sum
+          * can be nothing but that rounding, of either sign, where a fresh sum
+          * of an all-flat window is exactly 0.0.
+          *
+          * Sum oldest first, so the rebuilt value is the one a fresh pass over
+          * the bars gives.
           */
          barsSinceRebuild -= 1;
          if( windowTotal < 0.000001 * peakTotal || barsSinceRebuild <= 0 ) {
             barsSinceRebuild = 32 * optInTimePeriod;
-            windowStart = i - nbInitialElementNeeded;
             windowTotal = 0.0;
-            for( j = windowStart; j <= i; j += 1 ) {
-               o = inOpen[j];
-               h = inHigh[j];
-               l = inLow[j];
-               c = inClose[j];
-               if( o > 0.0 && h > 0.0 && l > 0.0 && c > 0.0 ) {
-                  p1 = Math.Log(h / c) * Math.Log(h / o);
-                  p2 = Math.Log(l / c) * Math.Log(l / o);
-                  term = p1 + p2;
-               } else {
-                  term = 0.0;
-               }
-               windowTotal += term;
+            for( j = termRing_Idx; j < optInTimePeriod; j += 1 ) {
+               windowTotal += termRing[j];
             }
-            /* The rebuilt window becomes the carried state, with its trailing
-             * term removed again so the two paths leave the same thing behind.
-             */
-            periodTotal = windowTotal;
+            for( j = 0; j < termRing_Idx; j += 1 ) {
+               windowTotal += termRing[j];
+            }
             peakTotal = windowTotal;
-            o = inOpen[windowStart];
-            h = inHigh[windowStart];
-            l = inLow[windowStart];
-            c = inClose[windowStart];
-            if( o > 0.0 && h > 0.0 && l > 0.0 && c > 0.0 ) {
-               p1 = Math.Log(h / c) * Math.Log(h / o);
-               p2 = Math.Log(l / c) * Math.Log(l / o);
-               term = p1 + p2;
-            } else {
-               term = 0.0;
-            }
-            periodTotal -= term;
+            periodTotal = windowTotal;
+            periodTotal -= termRing[termRing_Idx];
          }
-         /* The divide, then the root, then the scale -- the spelling every
-          * implementation of this estimator uses, and what makes A = 1.0 exact.
-          *
-          * A sum at or below zero answers 0.0 rather than reaching the root. A
-          * fresh sum of terms from consistent bars cannot be negative, so this
-          * only catches a bar whose high or low sits strictly inside its open and
-          * close, which is not a bar the estimator is defined on. VAR floors its
-          * variance for the same reason, so that STDDEV can root it
-          * unconditionally (var.c:165-166).
+         /* Divide, then root, then scale. A sum at or below zero answers 0.0
+          * instead of reaching the root: only a bar whose high or low sits
+          * strictly inside its open and close can make a fresh sum negative,
+          * and the estimator is not defined on such a bar.
           */
          if( windowTotal > 0.0 ) {
             outReal[outIdx] = sqrtA * Math.Sqrt(windowTotal / (double)optInTimePeriod);
@@ -364,10 +318,11 @@ public partial class Core
       int i = 0;
       int j = 0;
       int outIdx = 0;
-      int trailingIdx = 0;
-      int windowStart = 0;
       int nbInitialElementNeeded = 0;
       int barsSinceRebuild = 0;
+      double[] termRing;
+      int termRing_Idx = 0;
+      int maxIdx_termRing = (32)-1;
       if( (startIdx < 0) || (startIdx > IndexMax) ) {
          return RetCode.OutOfRangeStartIndex ;
       }
@@ -396,10 +351,13 @@ public partial class Core
          outNBElement = 0;
          return RetCode.Success ;
       }
+      if( optInTimePeriod < 1 ) return RetCode.InternalError;
+      termRing = new double[optInTimePeriod];
+      maxIdx_termRing = (optInTimePeriod)-1;
+      termRing_Idx = 0;
       sqrtA = Math.Sqrt(optInAnnualization);
-      trailingIdx = startIdx - nbInitialElementNeeded;
       periodTotal = 0.0;
-      for( j = trailingIdx; j < startIdx; j += 1 ) {
+      for( j = startIdx - nbInitialElementNeeded; j < startIdx; j += 1 ) {
          o = (double)inOpen[j];
          h = (double)inHigh[j];
          l = (double)inLow[j];
@@ -411,7 +369,10 @@ public partial class Core
          } else {
             term = 0.0;
          }
+         termRing[termRing_Idx] = term;
          periodTotal += term;
+         termRing_Idx++;
+         if( termRing_Idx > maxIdx_termRing ) { termRing_Idx = 0; }
       }
       i = startIdx;
       outIdx = 0;
@@ -429,55 +390,26 @@ public partial class Core
          } else {
             term = 0.0;
          }
+         termRing[termRing_Idx] = term;
          periodTotal += term;
          peakTotal = MaxGt(periodTotal, peakTotal);
          windowTotal = periodTotal;
-         o = (double)inOpen[trailingIdx];
-         h = (double)inHigh[trailingIdx];
-         l = (double)inLow[trailingIdx];
-         c = (double)inClose[trailingIdx];
-         if( o > 0.0 && h > 0.0 && l > 0.0 && c > 0.0 ) {
-            p1 = Math.Log(h / c) * Math.Log(h / o);
-            p2 = Math.Log(l / c) * Math.Log(l / o);
-            term = p1 + p2;
-         } else {
-            term = 0.0;
-         }
-         periodTotal -= term;
-         trailingIdx += 1;
+         termRing_Idx++;
+         if( termRing_Idx > maxIdx_termRing ) { termRing_Idx = 0; }
+         periodTotal -= termRing[termRing_Idx];
          barsSinceRebuild -= 1;
          if( windowTotal < 0.000001 * peakTotal || barsSinceRebuild <= 0 ) {
             barsSinceRebuild = 32 * optInTimePeriod;
-            windowStart = i - nbInitialElementNeeded;
             windowTotal = 0.0;
-            for( j = windowStart; j <= i; j += 1 ) {
-               o = (double)inOpen[j];
-               h = (double)inHigh[j];
-               l = (double)inLow[j];
-               c = (double)inClose[j];
-               if( o > 0.0 && h > 0.0 && l > 0.0 && c > 0.0 ) {
-                  p1 = Math.Log(h / c) * Math.Log(h / o);
-                  p2 = Math.Log(l / c) * Math.Log(l / o);
-                  term = p1 + p2;
-               } else {
-                  term = 0.0;
-               }
-               windowTotal += term;
+            for( j = termRing_Idx; j < optInTimePeriod; j += 1 ) {
+               windowTotal += termRing[j];
             }
-            periodTotal = windowTotal;
+            for( j = 0; j < termRing_Idx; j += 1 ) {
+               windowTotal += termRing[j];
+            }
             peakTotal = windowTotal;
-            o = (double)inOpen[windowStart];
-            h = (double)inHigh[windowStart];
-            l = (double)inLow[windowStart];
-            c = (double)inClose[windowStart];
-            if( o > 0.0 && h > 0.0 && l > 0.0 && c > 0.0 ) {
-               p1 = Math.Log(h / c) * Math.Log(h / o);
-               p2 = Math.Log(l / c) * Math.Log(l / o);
-               term = p1 + p2;
-            } else {
-               term = 0.0;
-            }
-            periodTotal -= term;
+            periodTotal = windowTotal;
+            periodTotal -= termRing[termRing_Idx];
          }
          if( windowTotal > 0.0 ) {
             outReal[outIdx] = sqrtA * Math.Sqrt(windowTotal / (double)optInTimePeriod);
@@ -723,17 +655,11 @@ public partial class Core
       internal double periodTotal;
       internal double peakTotal;
       internal double sqrtA;
-      internal int trailingIdx;
-      internal int nbInitialElementNeeded;
       internal int barsSinceRebuild;
-      internal int j;
-      internal int windowStart;
-      internal int i;
-      internal int xMask;
-      internal double[] x_inOpen = [];
-      internal double[] x_inHigh = [];
-      internal double[] x_inLow = [];
-      internal double[] x_inClose = [];
+      internal int termRing_Idx;
+      internal int maxIdx_termRing;
+      internal int cbSize_termRing;
+      internal double[] cb_termRing = [];
       internal double cur_outReal;
       internal int outRangeBegIdx;
       internal int outRangeCount;
@@ -781,21 +707,12 @@ public partial class Core
          this.periodTotal = other.periodTotal;
          this.peakTotal = other.peakTotal;
          this.sqrtA = other.sqrtA;
-         this.trailingIdx = other.trailingIdx;
-         this.nbInitialElementNeeded = other.nbInitialElementNeeded;
          this.barsSinceRebuild = other.barsSinceRebuild;
-         this.j = other.j;
-         this.windowStart = other.windowStart;
-         this.i = other.i;
-         this.xMask = other.xMask;
-         this.x_inOpen = new double[other.x_inOpen.Length];
-         Array.Copy( other.x_inOpen, this.x_inOpen, other.x_inOpen.Length );
-         this.x_inHigh = new double[other.x_inHigh.Length];
-         Array.Copy( other.x_inHigh, this.x_inHigh, other.x_inHigh.Length );
-         this.x_inLow = new double[other.x_inLow.Length];
-         Array.Copy( other.x_inLow, this.x_inLow, other.x_inLow.Length );
-         this.x_inClose = new double[other.x_inClose.Length];
-         Array.Copy( other.x_inClose, this.x_inClose, other.x_inClose.Length );
+         this.termRing_Idx = other.termRing_Idx;
+         this.maxIdx_termRing = other.maxIdx_termRing;
+         this.cbSize_termRing = other.cbSize_termRing;
+         this.cb_termRing = new double[other.cb_termRing.Length];
+         Array.Copy( other.cb_termRing, this.cb_termRing, other.cb_termRing.Length );
          this.cur_outReal = other.cur_outReal;
          this.outRangeBegIdx = other.outRangeBegIdx;
          this.outRangeCount = other.outRangeCount;
@@ -859,33 +776,18 @@ public partial class Core
          double p2 = 0.0;
          double term = 0.0;
          double windowTotal = 0.0;
+         int j = 0;
          int barsSinceRebuild = sp.barsSinceRebuild;
          double cur_outReal = 0.0;
-         int j = sp.j;
          double peakTotal = sp.peakTotal;
          double periodTotal = sp.periodTotal;
-         int trailingIdx = sp.trailingIdx;
-         int windowStart = sp.windowStart;
+         int termRing_Idx = sp.termRing_Idx;
          int pkSlot0 = -1;
          double pkVal0 = 0.0;
-         int pkSlot1 = -1;
-         double pkVal1 = 0.0;
-         int pkSlot2 = -1;
-         double pkVal2 = 0.0;
-         int pkSlot3 = -1;
-         double pkVal3 = 0.0;
-         pkSlot0 = sp.i & sp.xMask;
-         pkVal0 = inOpen;
-         pkSlot1 = sp.i & sp.xMask;
-         pkVal1 = inHigh;
-         pkSlot2 = sp.i & sp.xMask;
-         pkVal2 = inLow;
-         pkSlot3 = sp.i & sp.xMask;
-         pkVal3 = inClose;
-         o = ((sp.i & sp.xMask) != pkSlot0) ? sp.x_inOpen[sp.i & sp.xMask] : pkVal0;
-         h = ((sp.i & sp.xMask) != pkSlot1) ? sp.x_inHigh[sp.i & sp.xMask] : pkVal1;
-         l = ((sp.i & sp.xMask) != pkSlot2) ? sp.x_inLow[sp.i & sp.xMask] : pkVal2;
-         c = ((sp.i & sp.xMask) != pkSlot3) ? sp.x_inClose[sp.i & sp.xMask] : pkVal3;
+         o = inOpen;
+         h = inHigh;
+         l = inLow;
+         c = inClose;
          if( o > 0.0 && h > 0.0 && l > 0.0 && c > 0.0 ) {
             p1 = Math.Log(h / c) * Math.Log(h / o);
             p2 = Math.Log(l / c) * Math.Log(l / o);
@@ -893,83 +795,48 @@ public partial class Core
          } else {
             term = 0.0;
          }
+         /* Add, publish, subtract: the slot written here was taken out of the
+          * sum at the end of the previous bar, and the advance lands on the
+          * oldest term, the one that leaves next.
+          */
+         pkSlot0 = termRing_Idx;
+         pkVal0 = term;
          periodTotal += term;
          peakTotal = MaxGt(periodTotal, peakTotal);
-         /* The sum this bar's output is taken from, before the trailing term is
-          * removed for the next one.
-          */
          windowTotal = periodTotal;
-         o = ((trailingIdx & sp.xMask) != pkSlot0) ? sp.x_inOpen[trailingIdx & sp.xMask] : pkVal0;
-         h = ((trailingIdx & sp.xMask) != pkSlot1) ? sp.x_inHigh[trailingIdx & sp.xMask] : pkVal1;
-         l = ((trailingIdx & sp.xMask) != pkSlot2) ? sp.x_inLow[trailingIdx & sp.xMask] : pkVal2;
-         c = ((trailingIdx & sp.xMask) != pkSlot3) ? sp.x_inClose[trailingIdx & sp.xMask] : pkVal3;
-         if( o > 0.0 && h > 0.0 && l > 0.0 && c > 0.0 ) {
-            p1 = Math.Log(h / c) * Math.Log(h / o);
-            p2 = Math.Log(l / c) * Math.Log(l / o);
-            term = p1 + p2;
-         } else {
-            term = 0.0;
+         termRing_Idx = termRing_Idx + 1;
+         if( termRing_Idx > sp.maxIdx_termRing ) {
+            termRing_Idx = 0;
          }
-         periodTotal -= term;
-         trailingIdx += 1;
-         /* Rebuild as a fresh window sum when the running sum has collapsed to
-          * below 1e-6 of the largest it has held since the last rebuild, or at
-          * least every 32 windows -- VAR's rule (var.c:101-113). Measured against
-          * the PEAK, not the current sum: what a running sum of add-then-subtract
-          * carries is rounding at the scale of the largest window it has seen, so
-          * once a quiet stretch arrives the current sum can be nothing but that
-          * rounding. On an all-flat window the rebuild restores an exact 0.0,
-          * where a plain running sum leaves a residual that is negative about
-          * forty per cent of the time -- and a negative sum under an
-          * unconditional root is where the composition of shipped functions
-          * produces NaN.
+         periodTotal -= (termRing_Idx != pkSlot0) ? sp.cb_termRing[termRing_Idx] : pkVal0;
+         /* A running sum carries rounding at the scale of the largest window it
+          * has held, so it is rebuilt as a fresh sum once it falls below 1e-6 of
+          * that peak, and at least every 32 windows. Compare against the peak,
+          * not the current sum: after a quiet stretch arrives the current sum
+          * can be nothing but that rounding, of either sign, where a fresh sum
+          * of an all-flat window is exactly 0.0.
+          *
+          * Sum oldest first, so the rebuilt value is the one a fresh pass over
+          * the bars gives.
           */
          barsSinceRebuild -= 1;
          if( windowTotal < 0.000001 * peakTotal || barsSinceRebuild <= 0 ) {
             barsSinceRebuild = 32 * sp.optInTimePeriod;
-            windowStart = sp.i - sp.nbInitialElementNeeded;
             windowTotal = 0.0;
-            for( j = windowStart; j <= sp.i; j += 1 ) {
-               o = ((j & sp.xMask) != pkSlot0) ? sp.x_inOpen[j & sp.xMask] : pkVal0;
-               h = ((j & sp.xMask) != pkSlot1) ? sp.x_inHigh[j & sp.xMask] : pkVal1;
-               l = ((j & sp.xMask) != pkSlot2) ? sp.x_inLow[j & sp.xMask] : pkVal2;
-               c = ((j & sp.xMask) != pkSlot3) ? sp.x_inClose[j & sp.xMask] : pkVal3;
-               if( o > 0.0 && h > 0.0 && l > 0.0 && c > 0.0 ) {
-                  p1 = Math.Log(h / c) * Math.Log(h / o);
-                  p2 = Math.Log(l / c) * Math.Log(l / o);
-                  term = p1 + p2;
-               } else {
-                  term = 0.0;
-               }
-               windowTotal += term;
+            for( j = termRing_Idx; j < sp.optInTimePeriod; j += 1 ) {
+               windowTotal += (j != pkSlot0) ? sp.cb_termRing[j] : pkVal0;
             }
-            /* The rebuilt window becomes the carried state, with its trailing
-             * term removed again so the two paths leave the same thing behind.
-             */
-            periodTotal = windowTotal;
+            for( j = 0; j < termRing_Idx; j += 1 ) {
+               windowTotal += (j != pkSlot0) ? sp.cb_termRing[j] : pkVal0;
+            }
             peakTotal = windowTotal;
-            o = ((windowStart & sp.xMask) != pkSlot0) ? sp.x_inOpen[windowStart & sp.xMask] : pkVal0;
-            h = ((windowStart & sp.xMask) != pkSlot1) ? sp.x_inHigh[windowStart & sp.xMask] : pkVal1;
-            l = ((windowStart & sp.xMask) != pkSlot2) ? sp.x_inLow[windowStart & sp.xMask] : pkVal2;
-            c = ((windowStart & sp.xMask) != pkSlot3) ? sp.x_inClose[windowStart & sp.xMask] : pkVal3;
-            if( o > 0.0 && h > 0.0 && l > 0.0 && c > 0.0 ) {
-               p1 = Math.Log(h / c) * Math.Log(h / o);
-               p2 = Math.Log(l / c) * Math.Log(l / o);
-               term = p1 + p2;
-            } else {
-               term = 0.0;
-            }
-            periodTotal -= term;
+            periodTotal = windowTotal;
+            periodTotal -= (termRing_Idx != pkSlot0) ? sp.cb_termRing[termRing_Idx] : pkVal0;
          }
-         /* The divide, then the root, then the scale -- the spelling every
-          * implementation of this estimator uses, and what makes A = 1.0 exact.
-          *
-          * A sum at or below zero answers 0.0 rather than reaching the root. A
-          * fresh sum of terms from consistent bars cannot be negative, so this
-          * only catches a bar whose high or low sits strictly inside its open and
-          * close, which is not a bar the estimator is defined on. VAR floors its
-          * variance for the same reason, so that STDDEV can root it
-          * unconditionally (var.c:165-166).
+         /* Divide, then root, then scale. A sum at or below zero answers 0.0
+          * instead of reaching the root: only a bar whose high or low sits
+          * strictly inside its open and close can make a fresh sum negative,
+          * and the estimator is not defined on such a bar.
           */
          if( windowTotal > 0.0 ) {
             cur_outReal = sp.sqrtA * Math.Sqrt(windowTotal / (double)sp.optInTimePeriod);
@@ -1006,14 +873,11 @@ public partial class Core
       double p2 = 0.0;
       double term = 0.0;
       double windowTotal = 0.0;
-      sp.x_inOpen[sp.i & sp.xMask] = inOpen;
-      sp.x_inHigh[sp.i & sp.xMask] = inHigh;
-      sp.x_inLow[sp.i & sp.xMask] = inLow;
-      sp.x_inClose[sp.i & sp.xMask] = inClose;
-      o = sp.x_inOpen[sp.i & sp.xMask];
-      h = sp.x_inHigh[sp.i & sp.xMask];
-      l = sp.x_inLow[sp.i & sp.xMask];
-      c = sp.x_inClose[sp.i & sp.xMask];
+      int j = 0;
+      o = inOpen;
+      h = inHigh;
+      l = inLow;
+      c = inClose;
       if( o > 0.0 && h > 0.0 && l > 0.0 && c > 0.0 ) {
          p1 = Math.Log(h / c) * Math.Log(h / o);
          p2 = Math.Log(l / c) * Math.Log(l / o);
@@ -1021,90 +885,53 @@ public partial class Core
       } else {
          term = 0.0;
       }
+      /* Add, publish, subtract: the slot written here was taken out of the
+       * sum at the end of the previous bar, and the advance lands on the
+       * oldest term, the one that leaves next.
+       */
+      sp.cb_termRing[sp.termRing_Idx] = term;
       sp.periodTotal += term;
       sp.peakTotal = MaxGt(sp.periodTotal, sp.peakTotal);
-      /* The sum this bar's output is taken from, before the trailing term is
-       * removed for the next one.
-       */
       windowTotal = sp.periodTotal;
-      o = sp.x_inOpen[sp.trailingIdx & sp.xMask];
-      h = sp.x_inHigh[sp.trailingIdx & sp.xMask];
-      l = sp.x_inLow[sp.trailingIdx & sp.xMask];
-      c = sp.x_inClose[sp.trailingIdx & sp.xMask];
-      if( o > 0.0 && h > 0.0 && l > 0.0 && c > 0.0 ) {
-         p1 = Math.Log(h / c) * Math.Log(h / o);
-         p2 = Math.Log(l / c) * Math.Log(l / o);
-         term = p1 + p2;
-      } else {
-         term = 0.0;
+      sp.termRing_Idx = sp.termRing_Idx + 1;
+      if( sp.termRing_Idx > sp.maxIdx_termRing ) {
+         sp.termRing_Idx = 0;
       }
-      sp.periodTotal -= term;
-      sp.trailingIdx += 1;
-      /* Rebuild as a fresh window sum when the running sum has collapsed to
-       * below 1e-6 of the largest it has held since the last rebuild, or at
-       * least every 32 windows -- VAR's rule (var.c:101-113). Measured against
-       * the PEAK, not the current sum: what a running sum of add-then-subtract
-       * carries is rounding at the scale of the largest window it has seen, so
-       * once a quiet stretch arrives the current sum can be nothing but that
-       * rounding. On an all-flat window the rebuild restores an exact 0.0,
-       * where a plain running sum leaves a residual that is negative about
-       * forty per cent of the time -- and a negative sum under an
-       * unconditional root is where the composition of shipped functions
-       * produces NaN.
+      sp.periodTotal -= sp.cb_termRing[sp.termRing_Idx];
+      /* A running sum carries rounding at the scale of the largest window it
+       * has held, so it is rebuilt as a fresh sum once it falls below 1e-6 of
+       * that peak, and at least every 32 windows. Compare against the peak,
+       * not the current sum: after a quiet stretch arrives the current sum
+       * can be nothing but that rounding, of either sign, where a fresh sum
+       * of an all-flat window is exactly 0.0.
+       *
+       * Sum oldest first, so the rebuilt value is the one a fresh pass over
+       * the bars gives.
        */
       sp.barsSinceRebuild -= 1;
       if( windowTotal < 0.000001 * sp.peakTotal || sp.barsSinceRebuild <= 0 ) {
          sp.barsSinceRebuild = 32 * sp.optInTimePeriod;
-         sp.windowStart = sp.i - sp.nbInitialElementNeeded;
          windowTotal = 0.0;
-         for( sp.j = sp.windowStart; sp.j <= sp.i; sp.j += 1 ) {
-            o = sp.x_inOpen[sp.j & sp.xMask];
-            h = sp.x_inHigh[sp.j & sp.xMask];
-            l = sp.x_inLow[sp.j & sp.xMask];
-            c = sp.x_inClose[sp.j & sp.xMask];
-            if( o > 0.0 && h > 0.0 && l > 0.0 && c > 0.0 ) {
-               p1 = Math.Log(h / c) * Math.Log(h / o);
-               p2 = Math.Log(l / c) * Math.Log(l / o);
-               term = p1 + p2;
-            } else {
-               term = 0.0;
-            }
-            windowTotal += term;
+         for( j = sp.termRing_Idx; j < sp.optInTimePeriod; j += 1 ) {
+            windowTotal += sp.cb_termRing[j];
          }
-         /* The rebuilt window becomes the carried state, with its trailing
-          * term removed again so the two paths leave the same thing behind.
-          */
-         sp.periodTotal = windowTotal;
+         for( j = 0; j < sp.termRing_Idx; j += 1 ) {
+            windowTotal += sp.cb_termRing[j];
+         }
          sp.peakTotal = windowTotal;
-         o = sp.x_inOpen[sp.windowStart & sp.xMask];
-         h = sp.x_inHigh[sp.windowStart & sp.xMask];
-         l = sp.x_inLow[sp.windowStart & sp.xMask];
-         c = sp.x_inClose[sp.windowStart & sp.xMask];
-         if( o > 0.0 && h > 0.0 && l > 0.0 && c > 0.0 ) {
-            p1 = Math.Log(h / c) * Math.Log(h / o);
-            p2 = Math.Log(l / c) * Math.Log(l / o);
-            term = p1 + p2;
-         } else {
-            term = 0.0;
-         }
-         sp.periodTotal -= term;
+         sp.periodTotal = windowTotal;
+         sp.periodTotal -= sp.cb_termRing[sp.termRing_Idx];
       }
-      /* The divide, then the root, then the scale -- the spelling every
-       * implementation of this estimator uses, and what makes A = 1.0 exact.
-       *
-       * A sum at or below zero answers 0.0 rather than reaching the root. A
-       * fresh sum of terms from consistent bars cannot be negative, so this
-       * only catches a bar whose high or low sits strictly inside its open and
-       * close, which is not a bar the estimator is defined on. VAR floors its
-       * variance for the same reason, so that STDDEV can root it
-       * unconditionally (var.c:165-166).
+      /* Divide, then root, then scale. A sum at or below zero answers 0.0
+       * instead of reaching the root: only a bar whose high or low sits
+       * strictly inside its open and close can make a fresh sum negative,
+       * and the estimator is not defined on such a bar.
        */
       if( windowTotal > 0.0 ) {
          sp.cur_outReal = sp.sqrtA * Math.Sqrt(windowTotal / (double)sp.optInTimePeriod);
       } else {
          sp.cur_outReal = 0.0;
       }
-      sp.i += 1;
    }
 
    private RetCode RogerssatchellOpenImpl( RogerssatchellStream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, int optInTimePeriod, double optInAnnualization, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
@@ -1125,10 +952,11 @@ public partial class Core
       int i = 0;
       int j = 0;
       int outIdx = 0;
-      int trailingIdx = 0;
-      int windowStart = 0;
       int nbInitialElementNeeded = 0;
       int barsSinceRebuild = 0;
+      double[] termRing = [];
+      int termRing_Idx = 0;
+      int maxIdx_termRing = (32)-1;
       int historyLen = inOpen.Length;
       int endIdx = historyLen - 1;
       if( historyLen < 1 ) {
@@ -1155,6 +983,10 @@ public partial class Core
          outNBElement = 0;
          return RetCode.InsufficientHistory;
       }
+      /* Each bar's term costs four logarithms, so it is computed once and kept
+       * until it leaves the window. That also makes outReal safe to alias any
+       * input: a bar is never read again once it has been consumed.
+       */
       nbInitialElementNeeded = optInTimePeriod - 1;
       if( startIdx < nbInitialElementNeeded ) {
          startIdx = nbInitialElementNeeded;
@@ -1164,38 +996,32 @@ public partial class Core
          outNBElement = 0;
          return RetCode.InsufficientHistory ;
       }
+      if( optInTimePeriod < 1 ) return RetCode.InternalError;
+      termRing = new double[optInTimePeriod];
+      maxIdx_termRing = (optInTimePeriod)-1;
+      termRing_Idx = 0;
       /* Rogers and Satchell, The Annals of Applied Probability 1(4):504-512 (1991),
-       * eq. (2) on p.505: with the log price measured from the bar's open,
-       * S1 = ln(H/O), I1 = ln(L/O) and X1 = ln(C/O), one bar's unbiased estimate
-       * of its variance is S1(S1 - X1) + I1(I1 - X1), which is ln(H/C)ln(H/O) +
-       * ln(L/C)ln(L/O). Eq. (3) is what sets this estimator apart: that
-       * expectation is sigma^2 whatever the drift, so a bar that opens at its low
-       * and closes at its high -- all drift, no dispersion -- reads exactly zero,
-       * where a range-only estimator reads volatility.
+       * eq. (2): with the log price measured from the bar's open, S1 = ln(H/O),
+       * I1 = ln(L/O) and X1 = ln(C/O), one bar's estimate of its variance is
+       * S1(S1 - X1) + I1(I1 - X1) = ln(H/C)ln(H/O) + ln(L/C)ln(L/O), unbiased
+       * whatever the drift. The window mean, the root and the annual scale are
+       * convention, not the paper's.
        *
-       * The paper stops there. The window mean, the root and the annual scale are
-       * the convention of every implementation of it, not the authors'.
-       */
-      /* Once, so that optInAnnualization = 1.0 is an exact identity rather than a
-       * multiply by a rounded 1.0, and so the per-bar and annualised outputs
-       * differ by exactly this factor.
+       * Keep sqrt(A) a separate factor applied last: A = 1.0 is then an exact
+       * identity and the annualised output is exactly sqrt(A) times the per-bar
+       * one. Folding A under the root moves both by an ulp.
        */
       sqrtA = Math.Sqrt(optInAnnualization);
-      trailingIdx = startIdx - nbInitialElementNeeded;
       periodTotal = 0.0;
-      for( j = trailingIdx; j < startIdx; j += 1 ) {
-         /* The two products are SEPARATE statements on purpose. Written as one
-          * expression the generator's FMA detector fuses the first product into
-          * the add (backends/fma.rs:406-433; a log call counts as a float factor
-          * at :252-285), which moves 159 of 243 outputs on the corpus at n = 10
-          * and buys nothing measurable. VWMA splits its product for the same
-          * reason (vwma/vwma.c:78-81).
+      for( j = startIdx - nbInitialElementNeeded; j < startIdx; j += 1 ) {
+         /* Keep the two products separate statements. As one expression the
+          * first product is fused into the add, which changes the values and
+          * breaks bit equality with the same estimator composed from LN, DIV,
+          * MULT, ADD and SUM.
           *
-          * The guard is the whole bar, tested exactly rather than against a fixed
-          * band (#253): a bar with any price at or below zero contributes a 0.0
-          * term and still counts toward the window's n. Zeroing only the products
-          * that touch the bad price has no implementation behind it, and dropping
-          * the bar from the window makes n data-dependent.
+          * A bar with any price at or below zero contributes a 0.0 term and
+          * still counts toward the window. The test is exact, not a band, so a
+          * small-unit quote is not zeroed.
           */
          o = inOpen[j];
          h = inHigh[j];
@@ -1208,12 +1034,11 @@ public partial class Core
          } else {
             term = 0.0;
          }
+         termRing[termRing_Idx] = term;
          periodTotal += term;
+         termRing_Idx++;
+         if( termRing_Idx > maxIdx_termRing ) { termRing_Idx = 0; }
       }
-      /* outReal may be any of the four input arrays: the output written on a bar
-       * lands at or before the window's own trailing index, so every input slot
-       * this loop still reads is one no write has reached yet.
-       */
       i = startIdx;
       outIdx = 0;
       barsSinceRebuild = 32 * optInTimePeriod;
@@ -1230,83 +1055,45 @@ public partial class Core
          } else {
             term = 0.0;
          }
+         /* Add, publish, subtract: the slot written here was taken out of the
+          * sum at the end of the previous bar, and the advance lands on the
+          * oldest term, the one that leaves next.
+          */
+         termRing[termRing_Idx] = term;
          periodTotal += term;
          peakTotal = MaxGt(periodTotal, peakTotal);
-         /* The sum this bar's output is taken from, before the trailing term is
-          * removed for the next one.
-          */
          windowTotal = periodTotal;
-         o = inOpen[trailingIdx];
-         h = inHigh[trailingIdx];
-         l = inLow[trailingIdx];
-         c = inClose[trailingIdx];
-         if( o > 0.0 && h > 0.0 && l > 0.0 && c > 0.0 ) {
-            p1 = Math.Log(h / c) * Math.Log(h / o);
-            p2 = Math.Log(l / c) * Math.Log(l / o);
-            term = p1 + p2;
-         } else {
-            term = 0.0;
-         }
-         periodTotal -= term;
-         trailingIdx += 1;
-         /* Rebuild as a fresh window sum when the running sum has collapsed to
-          * below 1e-6 of the largest it has held since the last rebuild, or at
-          * least every 32 windows -- VAR's rule (var.c:101-113). Measured against
-          * the PEAK, not the current sum: what a running sum of add-then-subtract
-          * carries is rounding at the scale of the largest window it has seen, so
-          * once a quiet stretch arrives the current sum can be nothing but that
-          * rounding. On an all-flat window the rebuild restores an exact 0.0,
-          * where a plain running sum leaves a residual that is negative about
-          * forty per cent of the time -- and a negative sum under an
-          * unconditional root is where the composition of shipped functions
-          * produces NaN.
+         termRing_Idx++;
+         if( termRing_Idx > maxIdx_termRing ) { termRing_Idx = 0; }
+         periodTotal -= termRing[termRing_Idx];
+         /* A running sum carries rounding at the scale of the largest window it
+          * has held, so it is rebuilt as a fresh sum once it falls below 1e-6 of
+          * that peak, and at least every 32 windows. Compare against the peak,
+          * not the current sum: after a quiet stretch arrives the current sum
+          * can be nothing but that rounding, of either sign, where a fresh sum
+          * of an all-flat window is exactly 0.0.
+          *
+          * Sum oldest first, so the rebuilt value is the one a fresh pass over
+          * the bars gives.
           */
          barsSinceRebuild -= 1;
          if( windowTotal < 0.000001 * peakTotal || barsSinceRebuild <= 0 ) {
             barsSinceRebuild = 32 * optInTimePeriod;
-            windowStart = i - nbInitialElementNeeded;
             windowTotal = 0.0;
-            for( j = windowStart; j <= i; j += 1 ) {
-               o = inOpen[j];
-               h = inHigh[j];
-               l = inLow[j];
-               c = inClose[j];
-               if( o > 0.0 && h > 0.0 && l > 0.0 && c > 0.0 ) {
-                  p1 = Math.Log(h / c) * Math.Log(h / o);
-                  p2 = Math.Log(l / c) * Math.Log(l / o);
-                  term = p1 + p2;
-               } else {
-                  term = 0.0;
-               }
-               windowTotal += term;
+            for( j = termRing_Idx; j < optInTimePeriod; j += 1 ) {
+               windowTotal += termRing[j];
             }
-            /* The rebuilt window becomes the carried state, with its trailing
-             * term removed again so the two paths leave the same thing behind.
-             */
-            periodTotal = windowTotal;
+            for( j = 0; j < termRing_Idx; j += 1 ) {
+               windowTotal += termRing[j];
+            }
             peakTotal = windowTotal;
-            o = inOpen[windowStart];
-            h = inHigh[windowStart];
-            l = inLow[windowStart];
-            c = inClose[windowStart];
-            if( o > 0.0 && h > 0.0 && l > 0.0 && c > 0.0 ) {
-               p1 = Math.Log(h / c) * Math.Log(h / o);
-               p2 = Math.Log(l / c) * Math.Log(l / o);
-               term = p1 + p2;
-            } else {
-               term = 0.0;
-            }
-            periodTotal -= term;
+            periodTotal = windowTotal;
+            periodTotal -= termRing[termRing_Idx];
          }
-         /* The divide, then the root, then the scale -- the spelling every
-          * implementation of this estimator uses, and what makes A = 1.0 exact.
-          *
-          * A sum at or below zero answers 0.0 rather than reaching the root. A
-          * fresh sum of terms from consistent bars cannot be negative, so this
-          * only catches a bar whose high or low sits strictly inside its open and
-          * close, which is not a bar the estimator is defined on. VAR floors its
-          * variance for the same reason, so that STDDEV can root it
-          * unconditionally (var.c:165-166).
+         /* Divide, then root, then scale. A sum at or below zero answers 0.0
+          * instead of reaching the root: only a bar whose high or low sits
+          * strictly inside its open and close can make a fresh sum negative,
+          * and the estimator is not defined on such a bar.
           */
          if( windowTotal > 0.0 ) {
             outReal[outIdx * outStride] = sqrtA * Math.Sqrt(windowTotal / (double)optInTimePeriod);
@@ -1319,40 +1106,20 @@ public partial class Core
       outNBElement = outIdx;
       outBegIdx = startIdx;
       /* Capture the live batch state into the handle. */
-      int capX = i - trailingIdx + 1;
-      if( capX < 1 || capX > historyLen ) {
+      int capCb_termRing = maxIdx_termRing + 1;
+      if( capCb_termRing > historyLen + 1 ) {
          return RetCode.InternalError;
-      }
-      int physX = 1;
-      while( physX < capX ) {
-         physX <<= 1;
-      }
-      double[] capX_inOpen = new double[physX];
-      double[] capX_inHigh = new double[physX];
-      double[] capX_inLow = new double[physX];
-      double[] capX_inClose = new double[physX];
-      for( int fillJ = historyLen - capX; fillJ < historyLen; fillJ++ ) {
-         capX_inOpen[fillJ & (physX - 1)] = inOpen[fillJ];
-         capX_inHigh[fillJ & (physX - 1)] = inHigh[fillJ];
-         capX_inLow[fillJ & (physX - 1)] = inLow[fillJ];
-         capX_inClose[fillJ & (physX - 1)] = inClose[fillJ];
       }
       sp.optInTimePeriod = optInTimePeriod;
       sp.optInAnnualization = optInAnnualization;
       sp.periodTotal = periodTotal;
       sp.peakTotal = peakTotal;
       sp.sqrtA = sqrtA;
-      sp.trailingIdx = trailingIdx;
-      sp.nbInitialElementNeeded = nbInitialElementNeeded;
       sp.barsSinceRebuild = barsSinceRebuild;
-      sp.j = j;
-      sp.windowStart = windowStart;
-      sp.i = i;
-      sp.xMask = physX - 1;
-      sp.x_inOpen = capX_inOpen;
-      sp.x_inHigh = capX_inHigh;
-      sp.x_inLow = capX_inLow;
-      sp.x_inClose = capX_inClose;
+      sp.termRing_Idx = termRing_Idx;
+      sp.maxIdx_termRing = maxIdx_termRing;
+      sp.cbSize_termRing = capCb_termRing;
+      sp.cb_termRing = termRing;
       sp.cur_outReal = outReal[(outNBElement - 1) * outStride];
       return RetCode.Success;
    }

@@ -11,19 +11,13 @@
  *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
  *  100526 KL,CC  Creation (#483).
+ *  100526 MF,CC  Carry the window's terms in a ring (#483).
  */
 
 int rogerssatchell_lookback(int optInTimePeriod, double optInAnnualization)
 {
    (void)optInAnnualization;
 
-   /* The window's lookback and nothing else: there is no callee, and a term
-    * reads only its own bar -- no previous close -- so no bar is consumed to
-    * form it. Same as sum_lookback (sum/sum.c:16-19) and var_lookback
-    * (var/var.c:21-26), and one less than an estimator that differences
-    * against C[i-1]. optInAnnualization scales the output and cannot move the
-    * first bar, as optInNbDev cannot in var.c:23.
-    */
    return optInTimePeriod - 1;
 }
 
@@ -38,7 +32,13 @@ TA_RetCode rogerssatchell(int startIdx, int endIdx,
    double outReal[])
 {
    double o, h, l, c, p1, p2, term, periodTotal, windowTotal, peakTotal, sqrtA;
-   int i, j, outIdx, trailingIdx, windowStart, nbInitialElementNeeded, barsSinceRebuild;
+   int i, j, outIdx, nbInitialElementNeeded, barsSinceRebuild;
+
+   /* Each bar's term costs four logarithms, so it is computed once and kept
+    * until it leaves the window. That also makes outReal safe to alias any
+    * input: a bar is never read again once it has been consumed.
+    */
+   CIRCBUF_PROLOG(termRing,double,32);
 
    nbInitialElementNeeded = optInTimePeriod - 1;
 
@@ -52,42 +52,32 @@ TA_RetCode rogerssatchell(int startIdx, int endIdx,
       return TA_SUCCESS;
    }
 
-   /* Rogers and Satchell, The Annals of Applied Probability 1(4):504-512 (1991),
-    * eq. (2) on p.505: with the log price measured from the bar's open,
-    * S1 = ln(H/O), I1 = ln(L/O) and X1 = ln(C/O), one bar's unbiased estimate
-    * of its variance is S1(S1 - X1) + I1(I1 - X1), which is ln(H/C)ln(H/O) +
-    * ln(L/C)ln(L/O). Eq. (3) is what sets this estimator apart: that
-    * expectation is sigma^2 whatever the drift, so a bar that opens at its low
-    * and closes at its high -- all drift, no dispersion -- reads exactly zero,
-    * where a range-only estimator reads volatility.
-    *
-    * The paper stops there. The window mean, the root and the annual scale are
-    * the convention of every implementation of it, not the authors'.
-    */
+   CIRCBUF_INIT( termRing, double, optInTimePeriod );
 
-   /* Once, so that optInAnnualization = 1.0 is an exact identity rather than a
-    * multiply by a rounded 1.0, and so the per-bar and annualised outputs
-    * differ by exactly this factor.
+   /* Rogers and Satchell, The Annals of Applied Probability 1(4):504-512 (1991),
+    * eq. (2): with the log price measured from the bar's open, S1 = ln(H/O),
+    * I1 = ln(L/O) and X1 = ln(C/O), one bar's estimate of its variance is
+    * S1(S1 - X1) + I1(I1 - X1) = ln(H/C)ln(H/O) + ln(L/C)ln(L/O), unbiased
+    * whatever the drift. The window mean, the root and the annual scale are
+    * convention, not the paper's.
+    *
+    * Keep sqrt(A) a separate factor applied last: A = 1.0 is then an exact
+    * identity and the annualised output is exactly sqrt(A) times the per-bar
+    * one. Folding A under the root moves both by an ulp.
     */
    sqrtA = sqrt( optInAnnualization );
 
-   trailingIdx = startIdx - nbInitialElementNeeded;
-
    periodTotal = 0.0;
-   for( j = trailingIdx; j < startIdx; j++ )
+   for( j = startIdx - nbInitialElementNeeded; j < startIdx; j++ )
    {
-      /* The two products are SEPARATE statements on purpose. Written as one
-       * expression the generator's FMA detector fuses the first product into
-       * the add (backends/fma.rs:406-433; a log call counts as a float factor
-       * at :252-285), which moves 159 of 243 outputs on the corpus at n = 10
-       * and buys nothing measurable. VWMA splits its product for the same
-       * reason (vwma/vwma.c:78-81).
+      /* Keep the two products separate statements. As one expression the
+       * first product is fused into the add, which changes the values and
+       * breaks bit equality with the same estimator composed from LN, DIV,
+       * MULT, ADD and SUM.
        *
-       * The guard is the whole bar, tested exactly rather than against a fixed
-       * band (#253): a bar with any price at or below zero contributes a 0.0
-       * term and still counts toward the window's n. Zeroing only the products
-       * that touch the bad price has no implementation behind it, and dropping
-       * the bar from the window makes n data-dependent.
+       * A bar with any price at or below zero contributes a 0.0 term and
+       * still counts toward the window. The test is exact, not a band, so a
+       * small-unit quote is not zeroed.
        */
       o = inOpen[j];
       h = inHigh[j];
@@ -101,13 +91,11 @@ TA_RetCode rogerssatchell(int startIdx, int endIdx,
       }
       else
          term = 0.0;
+      termRing[termRing_Idx] = term;
       periodTotal += term;
+      CIRCBUF_NEXT(termRing);
    }
 
-   /* outReal may be any of the four input arrays: the output written on a bar
-    * lands at or before the window's own trailing index, so every input slot
-    * this loop still reads is one no write has reached yet.
-    */
    i = startIdx;
    outIdx = 0;
    barsSinceRebuild = 32 * optInTimePeriod;
@@ -127,96 +115,48 @@ TA_RetCode rogerssatchell(int startIdx, int endIdx,
       }
       else
          term = 0.0;
+
+      /* Add, publish, subtract: the slot written here was taken out of the
+       * sum at the end of the previous bar, and the advance lands on the
+       * oldest term, the one that leaves next.
+       */
+      termRing[termRing_Idx] = term;
       periodTotal += term;
       peakTotal = ( periodTotal > peakTotal ) ? periodTotal : peakTotal;
-
-      /* The sum this bar's output is taken from, before the trailing term is
-       * removed for the next one.
-       */
       windowTotal = periodTotal;
+      CIRCBUF_NEXT(termRing);
+      periodTotal -= termRing[termRing_Idx];
 
-      o = inOpen[trailingIdx];
-      h = inHigh[trailingIdx];
-      l = inLow[trailingIdx];
-      c = inClose[trailingIdx];
-      if( o > 0.0 && h > 0.0 && l > 0.0 && c > 0.0 )
-      {
-         p1 = log( h / c ) * log( h / o );
-         p2 = log( l / c ) * log( l / o );
-         term = p1 + p2;
-      }
-      else
-         term = 0.0;
-      periodTotal -= term;
-      trailingIdx++;
-
-      /* Rebuild as a fresh window sum when the running sum has collapsed to
-       * below 1e-6 of the largest it has held since the last rebuild, or at
-       * least every 32 windows -- VAR's rule (var.c:101-113). Measured against
-       * the PEAK, not the current sum: what a running sum of add-then-subtract
-       * carries is rounding at the scale of the largest window it has seen, so
-       * once a quiet stretch arrives the current sum can be nothing but that
-       * rounding. On an all-flat window the rebuild restores an exact 0.0,
-       * where a plain running sum leaves a residual that is negative about
-       * forty per cent of the time -- and a negative sum under an
-       * unconditional root is where the composition of shipped functions
-       * produces NaN.
+      /* A running sum carries rounding at the scale of the largest window it
+       * has held, so it is rebuilt as a fresh sum once it falls below 1e-6 of
+       * that peak, and at least every 32 windows. Compare against the peak,
+       * not the current sum: after a quiet stretch arrives the current sum
+       * can be nothing but that rounding, of either sign, where a fresh sum
+       * of an all-flat window is exactly 0.0.
+       *
+       * Sum oldest first, so the rebuilt value is the one a fresh pass over
+       * the bars gives.
        */
       barsSinceRebuild--;
       if( windowTotal < 0.000001 * peakTotal || barsSinceRebuild <= 0 )
       {
          barsSinceRebuild = 32 * optInTimePeriod;
 
-         windowStart = i - nbInitialElementNeeded;
-
          windowTotal = 0.0;
-         for( j = windowStart; j <= i; j++ )
-         {
-            o = inOpen[j];
-            h = inHigh[j];
-            l = inLow[j];
-            c = inClose[j];
-            if( o > 0.0 && h > 0.0 && l > 0.0 && c > 0.0 )
-            {
-               p1 = log( h / c ) * log( h / o );
-               p2 = log( l / c ) * log( l / o );
-               term = p1 + p2;
-            }
-            else
-               term = 0.0;
-            windowTotal += term;
-         }
+         for( j = termRing_Idx; j < optInTimePeriod; j++ )
+            windowTotal += termRing[j];
+         for( j = 0; j < termRing_Idx; j++ )
+            windowTotal += termRing[j];
 
-         /* The rebuilt window becomes the carried state, with its trailing
-          * term removed again so the two paths leave the same thing behind.
-          */
-         periodTotal = windowTotal;
          peakTotal = windowTotal;
-
-         o = inOpen[windowStart];
-         h = inHigh[windowStart];
-         l = inLow[windowStart];
-         c = inClose[windowStart];
-         if( o > 0.0 && h > 0.0 && l > 0.0 && c > 0.0 )
-         {
-            p1 = log( h / c ) * log( h / o );
-            p2 = log( l / c ) * log( l / o );
-            term = p1 + p2;
-         }
-         else
-            term = 0.0;
-         periodTotal -= term;
+         periodTotal = windowTotal;
+         periodTotal -= termRing[termRing_Idx];
       }
 
-      /* The divide, then the root, then the scale -- the spelling every
-       * implementation of this estimator uses, and what makes A = 1.0 exact.
-       *
-       * A sum at or below zero answers 0.0 rather than reaching the root. A
-       * fresh sum of terms from consistent bars cannot be negative, so this
-       * only catches a bar whose high or low sits strictly inside its open and
-       * close, which is not a bar the estimator is defined on. VAR floors its
-       * variance for the same reason, so that STDDEV can root it
-       * unconditionally (var.c:165-166).
+      /* Divide, then root, then scale. A sum at or below zero answers 0.0
+       * instead of reaching the root: only a bar whose high or low sits
+       * strictly inside its open and close can make a fresh sum negative,
+       * and the estimator is not defined on such a bar.
        */
       if( windowTotal > 0.0 )
          outReal[outIdx] = sqrtA * sqrt( windowTotal / (double)optInTimePeriod );
@@ -226,6 +166,8 @@ TA_RetCode rogerssatchell(int startIdx, int endIdx,
       outIdx = outIdx + 1;
       i++;
    } while( i <= endIdx );
+
+   CIRCBUF_DESTROY(termRing);
 
    *outNBElement = outIdx;
    *outBegIdx = startIdx;

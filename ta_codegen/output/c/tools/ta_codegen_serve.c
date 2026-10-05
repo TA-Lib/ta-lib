@@ -5930,7 +5930,7 @@ static int sv_steq_TA_ROCR100( const struct TA_ROCR100_Stream *a, const struct T
 static int sv_steq_TA_ROGERSSATCHELL( const struct TA_ROGERSSATCHELL_Stream *a, const struct TA_ROGERSSATCHELL_Stream *b, const char **w, int *z )
 {
    int k = 0, ix = 0, ia = 0, ib = 0;
-   (void)ia; (void)ib;
+   (void)ix; (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
    if( sv_xtier_ne(a->cur_outReal, b->cur_outReal, z) ) { *w = "cur_outReal"; return 1; }
@@ -5939,39 +5939,12 @@ static int sv_steq_TA_ROGERSSATCHELL( const struct TA_ROGERSSATCHELL_Stream *a, 
    if( sv_xtier_ne(a->periodTotal, b->periodTotal, z) ) { *w = "periodTotal"; return 1; }
    if( sv_xtier_ne(a->peakTotal, b->peakTotal, z) ) { *w = "peakTotal"; return 1; }
    if( sv_xtier_ne(a->sqrtA, b->sqrtA, z) ) { *w = "sqrtA"; return 1; }
-   if( a->trailingIdx != b->trailingIdx ) { *w = "trailingIdx"; return 1; }
-   if( a->nbInitialElementNeeded != b->nbInitialElementNeeded ) { *w = "nbInitialElementNeeded"; return 1; }
    if( a->barsSinceRebuild != b->barsSinceRebuild ) { *w = "barsSinceRebuild"; return 1; }
-   if( a->j != b->j ) { *w = "j"; return 1; }
-   if( a->windowStart != b->windowStart ) { *w = "windowStart"; return 1; }
-   if( a->i != b->i ) { *w = "i"; return 1; }
-   if( a->xCap != b->xCap ) { *w = "xCap"; return 1; }
-   if( a->xPhys != b->xPhys ) { *w = "xPhys"; return 1; }
-   if( a->xMask != b->xMask ) { *w = "xMask"; return 1; }
-   if( (a->x_inOpen == NULL) != (b->x_inOpen == NULL) ) { *w = "x_inOpen"; return 1; }
-   if( a->x_inOpen ) for( k = 0; k < a->xCap; k++ )
-   {
-      ix = (a->trailingIdx - 1 + a->xPhys + k) & a->xMask;
-      if( sv_xtier_ne(a->x_inOpen[ix], b->x_inOpen[ix], z) ) { *w = "x_inOpen"; return 1; }
-   }
-   if( (a->x_inHigh == NULL) != (b->x_inHigh == NULL) ) { *w = "x_inHigh"; return 1; }
-   if( a->x_inHigh ) for( k = 0; k < a->xCap; k++ )
-   {
-      ix = (a->trailingIdx - 1 + a->xPhys + k) & a->xMask;
-      if( sv_xtier_ne(a->x_inHigh[ix], b->x_inHigh[ix], z) ) { *w = "x_inHigh"; return 1; }
-   }
-   if( (a->x_inLow == NULL) != (b->x_inLow == NULL) ) { *w = "x_inLow"; return 1; }
-   if( a->x_inLow ) for( k = 0; k < a->xCap; k++ )
-   {
-      ix = (a->trailingIdx - 1 + a->xPhys + k) & a->xMask;
-      if( sv_xtier_ne(a->x_inLow[ix], b->x_inLow[ix], z) ) { *w = "x_inLow"; return 1; }
-   }
-   if( (a->x_inClose == NULL) != (b->x_inClose == NULL) ) { *w = "x_inClose"; return 1; }
-   if( a->x_inClose ) for( k = 0; k < a->xCap; k++ )
-   {
-      ix = (a->trailingIdx - 1 + a->xPhys + k) & a->xMask;
-      if( sv_xtier_ne(a->x_inClose[ix], b->x_inClose[ix], z) ) { *w = "x_inClose"; return 1; }
-   }
+   if( a->termRing_Idx != b->termRing_Idx ) { *w = "termRing_Idx"; return 1; }
+   if( a->maxIdx_termRing != b->maxIdx_termRing ) { *w = "maxIdx_termRing"; return 1; }
+   if( a->cbSize_termRing != b->cbSize_termRing ) { *w = "cbSize_termRing"; return 1; }
+   if( (a->cb_termRing == NULL) != (b->cb_termRing == NULL) ) { *w = "cb_termRing"; return 1; }
+   if( a->cb_termRing ) for( k = 0; k < a->cbSize_termRing; k++ ) if( sv_xtier_ne(a->cb_termRing[k], b->cb_termRing[k], z) ) { *w = "cb_termRing"; return 1; }
    return 0;
 }
 
