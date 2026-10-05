@@ -6,8 +6,8 @@
 #policy	monotone
 #toolchain	x86_64/x86_64-linux-gnu/13.3.0
 #corpus	points=20000 regime_period=14 seed=42 shape=randwalk stream_iters=1024 trend_strength=0.500000
-#commit	f5d10ed21d763b5afbb4d5a50001490b8f967ff2
-#generated	2026-10-03T10:08:57Z
+#commit	17d8034288fb17ffb7ccf3144db981081e52f961
+#generated	2026-10-05T04:23:44Z
 AC	batch	0	703438
 AC	open	0	704171
 AC	openfill	0	692624
@@ -1013,6 +1013,31 @@ SUPERTREND	open	0	1320052
 SUPERTREND	openfill	0	1320053
 SUPERTREND	peek	0	86456
 SUPERTREND	update	0	99850
+SWAK_2PHP	batch	0	320209
+SWAK_2PHP	open	0	700301
+SWAK_2PHP	openfill	0	740339
+SWAK_2PHP	peek	0	39952
+SWAK_2PHP	update	0	56334
+SWAK_BP	batch	0	260332
+SWAK_BP	open	0	640418
+SWAK_BP	openfill	0	680445
+SWAK_BP	peek	0	36880
+SWAK_BP	update	0	52241
+SWAK_BUTTER	batch	0	320210
+SWAK_BUTTER	open	0	860294
+SWAK_BUTTER	openfill	0	880330
+SWAK_BUTTER	peek	0	38928
+SWAK_BUTTER	update	0	56334
+SWAK_GAUSS	batch	0	180207
+SWAK_GAUSS	open	0	500300
+SWAK_GAUSS	openfill	0	540330
+SWAK_GAUSS	peek	0	35856
+SWAK_GAUSS	update	0	48142
+SWAK_HP	batch	0	200257
+SWAK_HP	open	0	360316
+SWAK_HP	openfill	0	400348
+SWAK_HP	peek	0	34832
+SWAK_HP	update	0	47118
 T3	batch	0	419894
 T3	open	0	1998800
 T3	openfill	0	1998795
