@@ -36,16 +36,17 @@
  *
  *  Initial  Name/description
  *  -------------------------------------------------------------------
+ *  MF       Mario Fortier
  *  KL       Kevin Lin (@kevinlincg)
  *  CC       Claude Code (AI assistant)
  *
  * Change history:
  *
- *  MMDDYY BY   Description
+ *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
- *  100526 KL,CC First version (proposal ROGERSSATCHELL, #483).
- *  100526 MF,CC Whole-bar guard on every price and tier, drift-only and
- *               negative-sum windows, server_verify (#483).
+ *  100526 KL,CC  First version (proposal ROGERSSATCHELL, #483).
+ *  100526 MF,CC  Whole-bar guard on every price and tier, drift-only and
+ *                negative-sum windows, rebuild bits, server_verify (#483).
  */
 
 /* Description:
@@ -62,6 +63,10 @@
  *   floor follows C/(C-L), so a whole-series check there needs 1e-12.
  *
  *   Every comparison count is pinned, so a leg that stops comparing fails.
+ *
+ *   SERVER_VERIFY: the guard leg's bad-price calls and the rebuild leg's
+ *   negative-sum call. No sweep sends a price at or below zero or a window
+ *   that sums below zero.
  */
 
 #include <stdio.h>
@@ -104,6 +109,8 @@
 #define RS_DRIFT_RUN_CMP 468
 /* Periods 5, 9, 14, 20 over 300 bars: 296+292+287+281. */
 #define RS_NEGATIVE_CMP 1156
+/* The forced rebuild at n = 5 and the collapse rebuild at n = 9 and 20. */
+#define RS_REBUILD_BIT_CMP 3
 
 static int g_rsGoldenCmp;
 static int g_rsScaleCmp;
@@ -118,6 +125,7 @@ static int g_rsGuardBarCmp;
 static int g_rsGuardStreamCmp;
 static int g_rsDriftRunCmp;
 static int g_rsNegativeCmp;
+static int g_rsRebuildBitCmp;
 
 typedef struct
 {
@@ -188,6 +196,7 @@ ErrorNumber test_func_rogerssatchell( TA_History *history )
    g_rsGuardStreamCmp = 0;
    g_rsDriftRunCmp = 0;
    g_rsNegativeCmp = 0;
+   g_rsRebuildBitCmp = 0;
 
    if( history->nbBars != RS_NB_BAR )
    {
@@ -238,21 +247,23 @@ ErrorNumber test_func_rogerssatchell( TA_History *history )
     || g_rsGuardBarCmp != RS_GUARD_BAR_CMP
     || g_rsGuardStreamCmp != RS_GUARD_STREAM_CMP
     || g_rsDriftRunCmp != RS_DRIFT_RUN_CMP
-    || g_rsNegativeCmp != RS_NEGATIVE_CMP )
+    || g_rsNegativeCmp != RS_NEGATIVE_CMP
+    || g_rsRebuildBitCmp != RS_REBUILD_BIT_CMP )
    {
       printf( "Fail: TA_ROGERSSATCHELL comparison counts (golden %d, scale %d, "
               "drift %d, lookback %d, alias %d, composite %d, rebuild %d, "
               "stream %d, guard %d, guard bar %d, guard stream %d, "
-              "drift run %d, negative %d) are not what this file asserts "
-              "(%d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d)\n",
+              "drift run %d, negative %d, rebuild bits %d) are not what this "
+              "file asserts (%d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, "
+              "%d, %d)\n",
               g_rsGoldenCmp, g_rsScaleCmp, g_rsDriftCmp, g_rsLookbackCmp,
               g_rsAliasCmp, g_rsCompositeCmp, g_rsRebuildCmp, g_rsStreamCmp,
               g_rsGuardCmp, g_rsGuardBarCmp, g_rsGuardStreamCmp,
-              g_rsDriftRunCmp, g_rsNegativeCmp,
+              g_rsDriftRunCmp, g_rsNegativeCmp, g_rsRebuildBitCmp,
               RS_GOLDEN_CMP, RS_SCALE_CMP, RS_DRIFT_CMP, RS_LOOKBACK_CMP,
               RS_ALIAS_CMP, RS_COMPOSITE_CMP, RS_REBUILD_CMP, RS_STREAM_CMP,
               RS_GUARD_CMP, RS_GUARD_BAR_CMP, RS_GUARD_STREAM_CMP,
-              RS_DRIFT_RUN_CMP, RS_NEGATIVE_CMP );
+              RS_DRIFT_RUN_CMP, RS_NEGATIVE_CMP, RS_REBUILD_BIT_CMP );
       return TA_TESTUTIL_TFRR_BAD_CALCULATION;
    }
 
@@ -290,21 +301,6 @@ static ErrorNumber test_rs_golden( const TA_History *history )
          printf( "Fail: TA_ROGERSSATCHELL golden range: begIdx=%d (want %d), "
                  "bar %d\n", (int)begIdx, g->period - 1, g->bar );
          return TA_TESTUTIL_TFRR_BAD_PARAM;
-      }
-
-      if( server_verify_active() )
-      {
-         const double opt[2] = { (double)g->period, g->annualization };
-         ErrorNumber e = server_verify( "ROGERSSATCHELL", 0,
-                            (int)history->nbBars - 1, (int)history->nbBars,
-                            rc, begIdx, nbElement,
-                            (const TA_Real*[]){ history->open, history->high,
-                                                history->low, history->close,
-                                                NULL },
-                            opt, 2,
-                            (const TA_Real*[]){ out, NULL }, NULL );
-         if( e != TA_TEST_PASS )
-            return e;
       }
 
       got = out[g->bar - begIdx];
@@ -722,8 +718,8 @@ static TA_Real g_synRef[RS_SYN_N];
 
 /* A trending-with-cycle series whose bars flatFrom to flatFrom+RS_FLAT_LEN-1
  * are replaced: shape 0 leaves them flat at `flat`, shape 1 makes each open at
- * its low and close at its high, shape 2 is flat with one bar whose high and
- * low sit inside its open and close. Real bars resume after the run.
+ * its low and close at its high, shape 2 is flat with one bar whose high sits
+ * strictly inside its open and close. Real bars resume after the run.
  */
 static void rsBuildSeriesShape( double flat, int flatFrom, int shape )
 {
@@ -919,10 +915,41 @@ static ErrorNumber test_rs_rebuild( void )
          }
          g_rsRebuildCmp++;
       }
+
+      /* The first window without the shock collapses and is rebuilt, so
+       * its output is the fresh sum taken oldest first, bit for bit. */
+      if( memcmp( &out[150 + n - (int)beg], &g_synRef[150 + n],
+                  sizeof(double) ) != 0 )
+      {
+         printf( "Fail: TA_ROGERSSATCHELL shock n=%d bar %d: %.17g, the "
+                 "rebuilt sum gives %.17g\n", n, 150 + n,
+                 out[150 + n - (int)beg], g_synRef[150 + n] );
+         return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+      }
+      g_rsRebuildBitCmp++;
    }
 
-   /* A window made only of bars that open at their low and close at their
-    * high reads exactly 0.0, also when it follows ordinary bars. */
+   /* With no collapse before it, output 32n is the first forced rebuild. */
+   rsBuildSeries( 100.0, 200 );
+   rsFreshReference( 5, 1.0 );
+   rc = TA_ROGERSSATCHELL( 0, RS_SYN_N-1, g_synO, g_synH, g_synL, g_synC,
+                           5, 1.0, &beg, &nb, out );
+   if( rc != TA_SUCCESS || beg != 4 )
+   {
+      printf( "Fail: TA_ROGERSSATCHELL forced rebuild rc=%d\n", (int)rc );
+      return TA_TESTUTIL_TFRR_BAD_RETCODE;
+   }
+   if( memcmp( &out[32*5 - 1], &g_synRef[4 + 32*5 - 1], sizeof(double) ) != 0 )
+   {
+      printf( "Fail: TA_ROGERSSATCHELL forced rebuild n=5 bar %d: %.17g, the "
+              "rebuilt sum gives %.17g\n", 4 + 32*5 - 1, out[32*5 - 1],
+              g_synRef[4 + 32*5 - 1] );
+      return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+   }
+   g_rsRebuildBitCmp++;
+
+   /* A bar that opens at its low and closes at its high has a term of
+    * exactly 0.0, so a window of them reads 0.0 at any period. */
    for( f = 0; f < (int)(sizeof(flats)/sizeof(flats[0])); f++ )
    {
       rsBuildSeriesShape( flats[f], 200, 1 );
@@ -951,10 +978,8 @@ static ErrorNumber test_rs_rebuild( void )
       }
    }
 
-   /* A window whose sum is below zero answers 0.0, and the sums around it
-    * stay those of a fresh pass: the collapse test must neither miss the
-    * residue left once the negative term has gone nor mistake a negative sum
-    * for one. */
+   /* A window whose sum is below zero answers 0.0 at n > 1, and the windows
+    * around it match a fresh sum. */
    rsBuildSeriesShape( 100.0, 200, 2 );
    for( p = 0; p < 4; p++ )
    {
@@ -968,6 +993,18 @@ static ErrorNumber test_rs_rebuild( void )
       {
          printf( "Fail: TA_ROGERSSATCHELL negative sum rc=%d (n=%d)\n", (int)rc, n );
          return TA_TESTUTIL_TFRR_BAD_RETCODE;
+      }
+      if( n == 9 && server_verify_active() )
+      {
+         const double opt[2] = { 9.0, 1.0 };
+         ErrorNumber e = server_verify( "ROGERSSATCHELL", 0, RS_SYN_N-1,
+                            RS_SYN_N, rc, beg, nb,
+                            (const TA_Real*[]){ g_synO, g_synH, g_synL,
+                                                g_synC, NULL },
+                            opt, 2,
+                            (const TA_Real*[]){ out, NULL }, NULL );
+         if( e != TA_TEST_PASS )
+            return e;
       }
       if( out[g_rsFlatFrom + RS_FLAT_LEN / 2 - (int)beg] != 0.0 )
       {
@@ -1125,6 +1162,17 @@ static ErrorNumber test_rs_guard( const TA_History *history )
                  what, (int)rc, (int)beg, (int)nb );
          return TA_TESTUTIL_TFRR_BAD_RETCODE;
       }
+      if( server_verify_active() )
+      {
+         const double opt[2] = { 10.0, 1.0 };
+         ErrorNumber e = server_verify( "ROGERSSATCHELL", 0, RS_NB_BAR-1,
+                            RS_NB_BAR, rc, beg, nb,
+                            (const TA_Real*[]){ o, h, l, c, NULL },
+                            opt, 2,
+                            (const TA_Real*[]){ out, NULL }, NULL );
+         if( e != TA_TEST_PASS )
+            return e;
+      }
 
       for( k = 0; k < RS_NB_GUARD; k++ )
       {
@@ -1179,7 +1227,10 @@ static ErrorNumber test_rs_guard( const TA_History *history )
       rc = TA_ROGERSSATCHELL( 0, RS_NB_BAR-1, o, h, l, c, 10, 1.0,
                               &begC, &nbC, clean );
       if( rc != TA_SUCCESS )
+      {
+         printf( "Fail: TA_ROGERSSATCHELL guard flat bar %d: rc=%d\n", bar, (int)rc );
          return TA_TESTUTIL_TFRR_BAD_RETCODE;
+      }
 
       o[bar] = history->open[bar];
       h[bar] = history->high[bar];
@@ -1192,7 +1243,11 @@ static ErrorNumber test_rs_guard( const TA_History *history )
       rc = TA_ROGERSSATCHELL( 0, RS_NB_BAR-1, o, h, l, c, 10, 1.0,
                               &beg, &nb, out );
       if( rc != TA_SUCCESS || beg != begC || nb != nbC )
+      {
+         printf( "Fail: TA_ROGERSSATCHELL guard price %d = %g at bar %d: rc=%d "
+                 "range %d/%d\n", which, bad, bar, (int)rc, (int)beg, (int)nb );
          return TA_TESTUTIL_TFRR_BAD_RETCODE;
+      }
 
       for( i = 0; i < nb; i++ )
       {
@@ -1213,7 +1268,11 @@ static ErrorNumber test_rs_guard( const TA_History *history )
 
          rc = TA_ROGERSSATCHELL_Open( &s, o, h, l, c, 10, 10, 1.0, &got );
          if( rc != TA_SUCCESS || s == NULL )
+         {
+            printf( "Fail: TA_ROGERSSATCHELL_Open guard price %d = %g: rc=%d\n",
+                    which, bad, (int)rc );
             return TA_TESTUTIL_TFRR_BAD_RETCODE;
+         }
          for( i = 9; i <= 60; i++ )
          {
             if( memcmp( &got, &out[i - (int)beg], sizeof(double) ) != 0 )
@@ -1228,6 +1287,8 @@ static ErrorNumber test_rs_guard( const TA_History *history )
             rc = TA_ROGERSSATCHELL_Update( s, o[i+1], h[i+1], l[i+1], c[i+1], &got );
             if( rc != TA_SUCCESS )
             {
+               printf( "Fail: TA_ROGERSSATCHELL_Update guard price %d = %g "
+                       "bar %d: rc=%d\n", which, bad, i + 1, (int)rc );
                TA_ROGERSSATCHELL_Close( s );
                return TA_TESTUTIL_TFRR_BAD_RETCODE;
             }
@@ -1236,8 +1297,8 @@ static ErrorNumber test_rs_guard( const TA_History *history )
       }
    }
 
-   /* An inconsistent bar -- the high and the low both strictly inside the open
-    * and the close -- gives a NEGATIVE term (-2.3747e-5 at 60 digits here). At
+   /* A bar whose high sits strictly inside its open and close gives a
+    * NEGATIVE term (-2.3747e-5 at 60 digits here). At
     * n = 1 that is the whole window, so the sum is negative and the output is
     * 0.0 rather than a root of a negative number. */
    for( i = 0; i < RS_NB_BAR; i++ )

@@ -9,7 +9,7 @@ Rogers-Satchell volatility: a range-based estimator that reads one bar's open, h
 
 What separates it from the other range estimators is that it is unbiased **whatever the drift**. A bar that opens at its low and closes at its high has travelled in one direction and dispersed nothing around that path, and this estimator reads it as exactly zero, where Parkinson and Garman-Klass read a wide range as volatility. The price of that is a blind spot of its own: the estimator has no close-to-open term, so overnight gaps are invisible to it.
 
-Read the output as a fraction in log-return units, not price units and not percent. At the default `optInAnnualization` of 252 it is an annualised figure for daily bars; pass 1 to leave the per-bar figure, 52 for weekly bars, 12 for monthly.
+Read the output as a fraction in log-return units, not price units and not percent. At an `optInAnnualization` of 252 it is an annualised figure for daily bars; pass 1 to leave the per-bar figure, 52 for weekly bars, 12 for monthly.
 
 ## Formula
 

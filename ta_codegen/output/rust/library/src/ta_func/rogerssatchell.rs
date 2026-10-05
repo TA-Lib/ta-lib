@@ -54,6 +54,7 @@
  *  -------------------------------------------------------------------
  *  100526 KL,CC  Creation (#483).
  *  100526 MF,CC  Carry the window's terms in a ring (#483).
+ *  100526 MF,CC  Rebuild trigger compares magnitudes (#483).
  */
 
 // Import types from parent module
@@ -340,9 +341,9 @@ impl Core {
     /// path, and this estimator reads it as exactly zero, where Parkinson and Garman-Klass read a
     /// wide range as volatility. The price of that is a blind spot of its own: the estimator has no
     /// close-to-open term, so overnight gaps are invisible to it. Read the output as a fraction in
-    /// log-return units, not price units and not percent. At the default `optInAnnualization` of
-    /// 252 it is an annualised figure for daily bars; pass 1 to leave the per-bar figure, 52 for
-    /// weekly bars, 12 for monthly.
+    /// log-return units, not price units and not percent. At an `optInAnnualization` of 252 it is
+    /// an annualised figure for daily bars; pass 1 to leave the per-bar figure, 52 for weekly bars,
+    /// 12 for monthly.
     ///
     /// Formula and more info at
     /// [ta-lib.org/functions/rogerssatchell](https://ta-lib.org/functions/rogerssatchell).

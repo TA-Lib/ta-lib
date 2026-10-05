@@ -12,6 +12,7 @@
  *  -------------------------------------------------------------------
  *  100526 KL,CC  Creation (#483).
  *  100526 MF,CC  Carry the window's terms in a ring (#483).
+ *  100526 MF,CC  Rebuild trigger compares magnitudes (#483).
  */
 
 int rogerssatchell_lookback(int optInTimePeriod, double optInAnnualization)

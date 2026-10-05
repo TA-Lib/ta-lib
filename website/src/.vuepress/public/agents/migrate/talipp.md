@@ -76,7 +76,7 @@ These talipp classes map to a TA-Lib function of another name, or need care:
 | McGinleyDynamic | [MCGD](https://ta-lib.org/functions/mcgd.md) | |
 | MeanDev | [AVGDEV](https://ta-lib.org/functions/avgdev.md) | |
 | ParabolicSAR | [SAR](https://ta-lib.org/functions/sar.md) | |
-| RogersSatchell | [ROGERSSATCHELL](https://ta-lib.org/functions/rogerssatchell.md) | Pass `annualization=1` for talipp's per-bar value; the default 252 annualises it. |
+| RogersSatchell | [ROGERSSATCHELL](https://ta-lib.org/functions/rogerssatchell.md) | Pass `annualization=1` for talipp's per-bar value. |
 | SMMA | [RMA](https://ta-lib.org/functions/rma.md) | |
 | STC | [STC](https://ta-lib.org/functions/stc.md) | TA-Lib smooths both stochastic stages with a factor of 0.5, which is talipp's `stoch_smoothing_period=3` with `stoch_ma_type=MAType.EMA`; talipp's default, `MAType.SMA`, has no TA-Lib function. |
 | StdDev | [STDDEV](https://ta-lib.org/functions/stddev.md) | |

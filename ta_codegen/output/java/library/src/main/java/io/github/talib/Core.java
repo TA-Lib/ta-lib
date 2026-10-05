@@ -173405,6 +173405,7 @@ public final class Core {
  *  -------------------------------------------------------------------
  *  100526 KL,CC  Creation (#483).
  *  100526 MF,CC  Carry the window's terms in a ring (#483).
+ *  100526 MF,CC  Rebuild trigger compares magnitudes (#483).
  */
 
    /**
@@ -173779,9 +173780,9 @@ public final class Core {
     * zero, where Parkinson and Garman-Klass read a wide range as volatility.
     * The price of that is a blind spot of its own: the estimator has no
     * close-to-open term, so overnight gaps are invisible to it. Read the output
-    * as a fraction in log-return units, not price units and not percent. At the
-    * default {@code optInAnnualization} of 252 it is an annualised figure for
-    * daily bars; pass 1 to leave the per-bar figure, 52 for weekly bars, 12 for
+    * as a fraction in log-return units, not price units and not percent. At an
+    * {@code optInAnnualization} of 252 it is an annualised figure for daily
+    * bars; pass 1 to leave the per-bar figure, 52 for weekly bars, 12 for
     * monthly.
     * <p>Formula and more info at <a
     * href="https://ta-lib.org/functions/rogerssatchell">ta-lib.org/functions/rogerssatchell</a>.
@@ -173861,9 +173862,9 @@ public final class Core {
     * zero, where Parkinson and Garman-Klass read a wide range as volatility.
     * The price of that is a blind spot of its own: the estimator has no
     * close-to-open term, so overnight gaps are invisible to it. Read the output
-    * as a fraction in log-return units, not price units and not percent. At the
-    * default {@code optInAnnualization} of 252 it is an annualised figure for
-    * daily bars; pass 1 to leave the per-bar figure, 52 for weekly bars, 12 for
+    * as a fraction in log-return units, not price units and not percent. At an
+    * {@code optInAnnualization} of 252 it is an annualised figure for daily
+    * bars; pass 1 to leave the per-bar figure, 52 for weekly bars, 12 for
     * monthly.
     * <p>Formula and more info at <a
     * href="https://ta-lib.org/functions/rogerssatchell">ta-lib.org/functions/rogerssatchell</a>.

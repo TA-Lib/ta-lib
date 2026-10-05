@@ -56,6 +56,7 @@ public partial class Core
     *  -------------------------------------------------------------------
     *  100526 KL,CC  Creation (#483).
     *  100526 MF,CC  Carry the window's terms in a ring (#483).
+    *  100526 MF,CC  Rebuild trigger compares magnitudes (#483).
     */
    /// <summary>
    /// Number of leading input bars <c>Rogerssatchell</c> consumes before it can
@@ -440,9 +441,9 @@ public partial class Core
    /// zero, where Parkinson and Garman-Klass read a wide range as volatility.
    /// The price of that is a blind spot of its own: the estimator has no
    /// close-to-open term, so overnight gaps are invisible to it. Read the output
-   /// as a fraction in log-return units, not price units and not percent. At the
-   /// default <c>optInAnnualization</c> of 252 it is an annualised figure for
-   /// daily bars; pass 1 to leave the per-bar figure, 52 for weekly bars, 12 for
+   /// as a fraction in log-return units, not price units and not percent. At an
+   /// <c>optInAnnualization</c> of 252 it is an annualised figure for daily
+   /// bars; pass 1 to leave the per-bar figure, 52 for weekly bars, 12 for
    /// monthly.
    /// </summary>
    /// <remarks>
@@ -538,9 +539,9 @@ public partial class Core
    /// zero, where Parkinson and Garman-Klass read a wide range as volatility.
    /// The price of that is a blind spot of its own: the estimator has no
    /// close-to-open term, so overnight gaps are invisible to it. Read the output
-   /// as a fraction in log-return units, not price units and not percent. At the
-   /// default <c>optInAnnualization</c> of 252 it is an annualised figure for
-   /// daily bars; pass 1 to leave the per-bar figure, 52 for weekly bars, 12 for
+   /// as a fraction in log-return units, not price units and not percent. At an
+   /// <c>optInAnnualization</c> of 252 it is an annualised figure for daily
+   /// bars; pass 1 to leave the per-bar figure, 52 for weekly bars, 12 for
    /// monthly.
    /// </summary>
    /// <remarks>
