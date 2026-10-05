@@ -296,6 +296,13 @@ of all six runs, which is what `ta_bench --shape=... --mode=open` and
 `ta_bench_stream`'s `update_ns` measure. Reach for the shape sweep when the arm
 under test is one of those; for the six functions' batch arm it is inert.
 
+The Java batch arm of those six is the one exception: it takes its keyed scan
+only when the scanned inputs are non-negative and NaN-free over the call's
+range. The close of `randwalk` and `randwalk-hi` goes negative on a long
+series, so MIN, MAX, MINMAX and MIDPOINT can time the fallback there, and a
+`--points` sweep can cross from one body to the other; `--shape=gbm` always
+times the keyed scan.
+
 `--shape` is opt-in and `randwalk` reproduces the pre-corpus series bit for bit,
 so a default run costs and measures exactly what it did before. `--seed` picks
 the stream; `--regime-period` the window the trend/chop regime length is relative

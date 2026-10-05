@@ -25,6 +25,7 @@ pub mod java_abstract;
 pub mod java_stream;
 pub mod java_doc;
 pub mod java_enums;
+pub(crate) mod java_keyscan;
 pub mod java_metadata;
 pub mod java_shipped;
 pub mod makefile_am;
