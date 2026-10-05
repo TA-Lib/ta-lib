@@ -44,8 +44,8 @@ with the bound `-ln(1-a) >= a`, which costs about `K/2` bars at any period and k
 free of `log`, so every backend computes the same one.
 
 Each rule is derived from the recurrence, the coefficient and the seed read in the function's
-source, then checked by measurement (section 10). Where the source gives no usable coefficient
-the count is sized by measurement and says so.
+source, then checked by measurement (section 10). Where the source gives no usable coefficient, or
+only a bound too long to use, the count is sized by measurement and says so.
 
 Four limits belong with the promise.
 
@@ -92,9 +92,9 @@ significant digits of the value, against the rule's count.
   period and trendline. On the price scale the count usually delivers about two digits more:
   EMA(30) agrees to four digits after 72 bars and to six after 140, against a `PREC_4` count
   of 155.
-- **For an output that reaches zero, count the digits from the size of its swing.** A value
-  near zero has no leading digits to keep, whatever the warm-up. CMO, DX, the high-pass and
-  band-pass SWAK filters, HT_PHASOR and HT_SINE are in this group, with MACD, APO, PPO, TRIX and
+- **For an output that reaches zero, count the digits from the size of its swing.** A value near
+  zero has no leading digits to keep, whatever the warm-up. CMO, DX, the high-pass and band-pass
+  SWAK filters, HT_PHASOR, HT_SINE and HT_DCPHASE are in this group, with MACD, APO, PPO, TRIX and
   the other oscillators centred on zero. For them `PREC_4` means the difference is about one
   ten-thousandth of the largest difference two starts ever show, which is about the size of the
   oscillator's swing. Outputs that divide by a state (DX, CMO, STOCHRSI, PPO, PVO) can be a few
@@ -149,7 +149,7 @@ the function has with its unstable period at 0.
   under `10^-4` and `10^-8`. `X` is the level's digit count, 4 or 8. A proven rule is written in
   `K`, because it follows from the kernel's decay; a calibrated one for an adaptive average is
   a constant times `X`.
-- `isqrt` is the integer square root, as HMA's lookback already uses.
+- `isqrt(n)` is the integer square root, written `(int)sqrt((double)n)` as in HMA's lookback.
 - The counts in the table are for the two levels at the default parameters.
 - Every rule returns 0 where the function does no smoothing: a period of 1 for EMA, RMA, ATR,
   NATR, RVI, T3, KAMA and VIDYA, and the period-1 arms the DI and DM functions already have.
@@ -170,7 +170,7 @@ the function has with its unstable period at 0.
 | `VIDYA` | `2*X*(n+1)*isqrt(m)`, `m = optInCMOPeriod`, saturating at `TA_INDEX_MAX` | 312 / 624 | calibrated | the coefficient is `2/(n+1)` times `abs(CMO)/100` and can be 0, so no bound exists. On random-walk data `abs(CMO)` shrinks about with the square root of its period, which the formula follows |
 | `MCGD` | `5*X*n` | 280 / 560 | calibrated | the coefficient depends on the line itself and is Wilder's `1/n` when the line is on the price. No bound exists: a line more than 20% below the price amplifies its seed |
 | `HT_DCPERIOD`, `HT_DCPHASE`, `HT_PHASOR`, `HT_SINE`, `HT_TRENDLINE`, `HT_TRENDMODE` | `H` | 280 / 480 | calibrated | no parameter. The period estimate feeds back into its own filter gains through clamps and a rate limiter, so no bound is derivable |
-| `MAMA` | `H + ceil(2*K/max(fast, slow))` | 320 / 556 | calibrated | the Hilbert pipeline has to settle before the two smoothers see the same alpha; then FAMA, the slower one, at the rate of the larger limit, which is where alpha usually sits. Dividing by the smaller limit is the bound, several times longer |
+| `MAMA` | `H + ceil(2*K/max(fast, slow))` | 320 / 556 | calibrated | the Hilbert pipeline has to settle before the two smoothers see the same alpha; then FAMA, the slower one, at the rate of the larger limit, which is where alpha usually sits when fast is not below slow. Dividing by the smaller limit is the bound, several times longer |
 | `STC` | `2*K + 3*(s+1)`, `s = max(fast, slow)`, on top of the `E(s)` it inherits | 173 / 191 | calibrated | two poles at 1/2 run together, plus six time constants of the slow EMA for what the two range divisions magnify |
 
 The tiers:
@@ -188,9 +188,10 @@ Two groups are calibrated, for different reasons.
   Their counts are sized on all three kinds of series the study uses.
 - **The adaptive averages, KAMA, FRAMA, VIDYA and MCGD,** change their own rate with the market.
   Their counts are sized for a market that trends or wanders (ruled, section 9, D3). In a
-  range-bound market they slow down by design and take several times longer: KAMA(30) needs
-  2148 bars at `PREC_4` against a count of 500, FRAMA(16) 514 against 320, VIDYA(12, 9) 581
-  against 312. A caller who needs more sets a fixed count on that id.
+  range-bound market KAMA, FRAMA and VIDYA slow down by design and take several times longer:
+  KAMA(30) needs 2148 bars at `PREC_4` against a count of 500, FRAMA(16) 514 against 320,
+  VIDYA(12, 9) 581 against 312. MCGD is slowest in a trend, and its count covers all three kinds
+  of series at the periods measured. A caller who needs more sets a fixed count on that id.
 
 The SWAK_BP and MAMA rules read a real parameter. Each is defined as its `double` expression in
 one fixed order, `ceil( (double)((K+1)*P) / (6.0*optInDelta) )` and
@@ -418,8 +419,9 @@ pages carry the rule.
 
 ### 3.5 What the classification found
 
-Where the reading and the measurement differ, and facts the tree states differently today. None
-is needed for Auto; each is a separate decision.
+Where the reading and the measurement differ, and facts the tree states differently today.
+ADOSC is ruled in section 9, D6, and the index tie-break is scheduled in section 8. The period-1
+item is part of the rules of section 3.2. The rest are separate decisions.
 
 - **ADOSC is flagged path-dependent and is not.** It is the difference of two EMAs of the A/D
   line. Both EMAs are seeded on the same first A/D value, so the constant offset between two
@@ -499,7 +501,7 @@ let core = Core::builder()
 ### 4.2 The getter returns what was set
 
 `TA_GetUnstablePeriod` and the three `Core` getters return the stored value, so under Auto they
-return `TA_UNSTABLE_AUTO`. This is the issue's open question 2.
+return `TA_UNSTABLE_AUTO`.
 
 - Save and restore keeps working: `saved = get(id); ...; set(id, saved)` puts Auto back. A getter
   that answered 0 would turn Auto off on the way through, silently.
@@ -523,11 +525,11 @@ return `TA_UNSTABLE_AUTO`. This is the issue's open question 2.
   on the first reported bar, so its values near that bar can move by a band width, as they do
   today between two fixed counts.
 - **Batch.** A range that ends before the Auto lookback answers `TA_SUCCESS` with no output.
-- **Streams.** `Open` needs `lookback + 1` bars and answers `TA_INSUFFICIENT_HISTORY` below
-  that. A stream reads the unstable period inside `Open` only, in all four languages, and no
-  later bar depends on a stored count: the count is resolved once, from the setting in effect at
-  `Open` and the stream's parameters, and a handle is never re-warmed. This is the issue's open
-  question 3. In C the rule that no setting changes while a stream is open stands.
+- **Streams.** `Open` needs `lookback + 1` bars and answers `TA_INSUFFICIENT_HISTORY` below that.
+  A stream reads the unstable period inside `Open` only, in all four languages, and no later bar
+  depends on a stored count: the count is resolved once, from the setting in effect at `Open` and
+  the stream's parameters, and a handle is never re-warmed. In C the rule that no setting changes
+  while a stream is open stands.
 - **The abstraction layer.** `TA_GetLookback` forwards to the function's lookback and needs
   nothing.
 - **ABI.** Each macro is an addition: no soname change. The PR carries the `ABI.manifest` that
@@ -595,11 +597,17 @@ the rule is written once per id, in the helper its reads name.
   live in `ta_codegen/input/helpers/`, where single-return `int` and `double` functions are
   inlined into all four backends. Every helper takes `K` or `X` as an argument, and the read
   supplies them from the stored level: the dialect has no named constants. No lookback calls a
-  helper today, so this path is new coverage.
-- **The two real-valued rules need care in Rust.** The Rust backend renders `(int)` of a
-  `double` as a cast to `usize`, accepts it only as the whole right-hand side of an assignment,
-  and does not see a cast that arrives through an inlined helper. SWAK_BP and MAMA stage the
-  cast through an `int` local in the lookback, as HMA's lookback does for its square root.
+  helper today, so this path is new coverage. The shared type classifier treats a `ta_` call as
+  floating point unless its name is on a short list of integer helpers: the new integer helpers
+  join that list, or the classifier learns to read a helper's return type.
+- **Four rules go through a `double`, which needs care in Rust.** SWAK_BP and MAMA divide by a
+  real parameter. KAMA and VIDYA take an integer square root, which the dialect writes
+  `(int)sqrt((double)n)` as HMA's lookback does. The Rust backend renders `(int)` of a `double`
+  as a cast to `usize`, accepts it only as the whole right-hand side of an assignment, and does
+  not see a cast that arrives through an inlined helper. So each of the four lookbacks stages
+  the cast through an `int` local before its read: the root for KAMA and VIDYA, and for SWAK_BP
+  and MAMA one count per level, since `K` sits inside their `ceil`. A further level then adds a
+  local to those two lookbacks.
 - **The lookback stays straight-line.** The ring-lag analysis inlines a callee lookback only
   when it is declarations, assignments and one return. An `if (auto)` inside `ema_lookback`
   would make it opaque to every caller's proof; a call expression does not. The analysis matches
@@ -615,12 +623,14 @@ the rule is written once per id, in the helper its reads name.
 - **Rendering.** One arm per backend serves the lookback, the batch body and the stream opener.
   C renders a macro beside today's `TA_GLOBALS_UNSTABLE_PERIOD`; Rust, Java and C# a select on
   the stored value.
-- **Hand-written places that learn the sentinel:** the C setter; the constant and the builder
+- **Hand-written places that learn the level constants:** the C setter; the constant and the builder
   bound in the Rust template, Java and C#; the Java server's embedded `Core`; and the Java and
   C# servers' own `set_unstable_period` handlers, which restate the bound. The C and Rust
   servers call the library setter.
-- **No rule calls `log`, `exp` or a trigonometric function.** The two real-valued rules are one
-  multiplication, one division and one `ceil`, each correctly rounded everywhere.
+- **No rule calls `log`, `exp` or a trigonometric function.** The four that go through a
+  `double` use a multiplication, a division, a `ceil` or a square root, each correctly rounded
+  everywhere. VIDYA's saturation is `min(count, 100000000)`, taken before the product can
+  overflow.
 
 ### 5.3 Coincidences that one count per id was hiding
 
@@ -702,28 +712,35 @@ compare at every bar both report.
   identical from two early starts, which is why one series is not enough.
 - **Stated exclusions.** KAMA, FRAMA, VIDYA and the KAMA and VIDYA MA arms are compared on the
   trend and random-walk series only: their counts are sized for those (section 9, D3), and the
-  range-bound series takes several times longer. STOCHRSI with the MAMA or the VIDYA type is
-  not compared: its FastK rests at 0 or 100, where MAMA does not converge and the VIDYA
-  coefficient is 0. MAXINDEX, MININDEX and MINMAXINDEX are compared on bars whose window holds
-  its extreme once, until their tie-break is start-independent.
+  range-bound series takes several times longer. STOCHRSI with the MAMA or the VIDYA type is not
+  compared: its FastK rests at 0 or 100, where MAMA does not converge and the VIDYA coefficient is
+  0. PVO with the KAMA or the VIDYA type is compared only if the corpus's volume itself trends or
+  wanders: on volume drawn as noise those arms are range-bound on every series. CRSI is not
+  compared when its Auto count is above 0: its streak is a short-lived state machine (section 3.5)
+  that restarts a difference at the first reversal, whatever the warm-up. MAXINDEX, MININDEX and
+  MINMAXINDEX are compared on bars whose window holds its extreme once, until their tie-break is
+  start-independent.
 - **Vectors.** Defaults; every integer period at its minimum; every integer period tripled;
-  every MA type on every MA-type parameter; each real parameter a rule reads at both ends of its
-  range. A rule is only tested by moving what it scales with.
-- **Corpus.** Three series of their own: a trend, a random walk and a range-bound one. The
-  longest Auto lookbacks among the vectors, at `PREC_8`, are MAMA at its smallest limit at about
-  4300 bars and VIDYA(36, 27) at about 3000, so each series is 8192 bars, with later starts no
-  further than bar 1000. The range-bound series holds the proven rules and the Hilbert, MAMA
-  and STC counts where they are slowest.
+  every MA type on every MA-type parameter; and the real parameters a rule reads: SWAK_BP's
+  delta at 0.05 and 0.5, and MAMA's limits at (0.01, 0.01), (0.99, 0.99), (0.99, 0.01) and
+  (0.01, 0.99), the last with fast below slow. A rule is only tested by moving what it scales
+  with.
+- **Corpus.** Three series of their own: a trend, a random walk and a range-bound one. The longest
+  Auto lookbacks among the vectors, at `PREC_8`, are MAMA at its smallest limit at about 4300 bars
+  and VIDYA(36, 27) at about 3000, so each series is 8192 bars, with later starts no further than
+  bar 1000. All three series are compared for the proven rules and for the Hilbert, MAMA and STC
+  counts; the range-bound one is where the Hilbert and MAMA counts are slowest.
 - **Levels.** The count check runs at every level. The two-start comparison holds `PREC_4`
   wherever `S` is more than about 1e-4 of the output's range: its threshold is about 1e-3 of
   `S`. Where `S` is smaller (T3 and its MA arm, bands over TEMA) `T` is the criterion and the
   count check alone holds the level. At `PREC_8` the threshold is about 1e-7 of `S`, the size of
   the window tolerance, so with `T` as floor the second pass would show nothing. For that pass
-  the floor is each converging function's own: where its two runs stop improving on the corpus.
-  Most reach bit-identity; ADOSC, MAMA, MASSI, RVI, RVIR, STOCHRSI's FastD, the Hilbert period,
-  phase, phasor and sine outputs, and bands over a recursive MA type do not. A function whose
-  own floor is above its `PREC_8` threshold is held at `PREC_8` by the count check alone, and
-  the leg names it.
+  the floor is a committed number per function and output: the largest two-start difference
+  over the last quarter of each corpus series with every id at 0, times 4, measured once when
+  the corpus is committed and not in the run it gates. Most outputs reach bit-identity and get
+  a floor of rounding size; ADOSC, MAMA, MASSI, RVI, RVIR, the Hilbert period, phase, phasor and
+  sine outputs, and bands over a recursive MA type do not. An output whose floor is above its
+  `PREC_8` threshold is held at `PREC_8` by the count check alone, and the leg lists it.
 - **Non-vacuity.** One counter per class with a floor, and a floor on the number of compared
   bars per call: an Auto lookback longer than the series compares nothing.
 - **Where.** In-process C, in the bare `ta_regtest` run, so it runs in every nightly job. No PR
@@ -770,18 +787,18 @@ compare at every bar both report.
 
 | Page | Change |
 |---|---|
-| `api/unstable-period` | Auto as the recommended way to use approach 3; what a level means (section 2.1); the rule table; the tiers; what the promise is and is not. The figure's "stable" boundary is drawn at 1e-3 of price and would contradict the Auto count: redraw or recaption |
+| `api/unstable-period` | Auto under approach 3, leading with `PREC_4`; what a level means (section 2.1); the rule table; the tiers; what the promise is and is not. The figure's "stable" boundary is drawn at 1e-3 of price and would contradict the Auto count: redraw or recaption |
 | `functions/stability` and every function page (generated) | the rule beside "Initial Unstable Period"; the MA-type table gains the `M(n, type)` column. Derived from the same lookback read as today's line |
 | spec rL6 | "adds exactly that many bars" holds for a count; under Auto the id adds its rule's count |
 | spec rL8 | under Auto a `period1_identity` function has a lookback of 0 at a period of 1 |
 | spec rL5 | still true: the count depends on parameters and settings only |
 | spec lookback, the inheritance recipe | "every id set above that first lookback" has to name a count, not `TA_UNSTABLE_AUTO` |
 | spec rT3, or a new rule beside it | the accepted values are `[0, TA_INDEX_MAX]` and `TA_UNSTABLE_AUTO`, and a getter returns the value the setter stored. rT4, the wildcard read, is unchanged |
-| spec streaming | no rule changes: `lookback + 1` already follows the setting. If the restart rule gains a sentence, it says a stream reopened on fewer bars agrees with the original within the Auto tolerance, not bit for bit |
+| spec streaming | no rule changes: `lookback + 1` already follows the setting |
 | the four streaming API pages | the setting is resolved once at `Open`; the history an `Open` needs under Auto is the Auto lookback plus one |
 | spec constants table | a row per level |
 | `website/config/llms-key-facts.md` | the unstable-period fact: a count drops that many outputs, Auto drops the rule's count |
-| `docs/spec-conformance.md` | the rT3 rationale, the rL4, rL6 and rL8 gate descriptions, the new leg |
+| `docs/spec-conformance.md` | the rT3 rationale, the rL4 and rL6 gate descriptions, the new leg |
 | input `.md` files that state a fixed-count relation by hand (MASSI, ERI, STC and others) | reworded so they hold for both |
 | `docs/ta_codegen_input_code.md`, the contributor page and the `new-ta-func` skill | an id needs a rule, its tier and its helper; the read takes two arguments, only in its owner's lookback |
 
@@ -794,8 +811,8 @@ rules for the mechanics (section 9, D5).
    generate-time refusals. No output changes. The gates that can see one are `ref` and the bare
    regtest; `--codegen` and `xlang-hash` compare the languages with each other and show only
    that they still agree.
-2. **The sentinel and the rules.** The constant in four languages, the setters, the servers, the
-   two-argument read, the helpers.
+2. **The level constants and the rules.** The constants in four languages, the setters, the
+   servers, the two-argument read, the helpers.
 3. **The leg** of section 6.1 and the Auto passes of section 6.2. A rule that fails here is
    changed here.
 4. **Pages and specification.**
@@ -837,16 +854,16 @@ Bars added to the lookback, by digits of seed weight:
 - **Why 8 and not 10.** At `PREC_8` every converging function but RVI comes within `e^-19` of
   its seed difference at the default parameters; RVI's own variance arithmetic stops it near
   6e-9. At level 10 about ten outputs stop short for the same reason (HT_DCPHASE, HT_SINE, the
-  MAMA line, ADOSC, HT_DCPERIOD, HT_PHASOR, FAMA, RVIR, STOCHRSI's FastD).
+  MAMA line, ADOSC, HT_DCPERIOD, HT_PHASOR, FAMA, RVIR).
 - **Why not "bit-level".** The issue's `K = 37` costs 3.7 times the bars of `PREC_4` and 1.9
   times those of `PREC_8`, and it could not be promised as bit-identity: about ten converging
   outputs never become bit-identical on the study's series, because rounding in their own
   arithmetic takes over.
-- **Cost of a level.** Every rule is a function of `K`, and the proven ones were checked at
-  seven values from 7 to 37, 10 and 19 among them, so a level is one constant and one accepted
-  value. It is also one more pass of
-  every Auto gate, and one more sizing of the calibrated rules. The identity gates of section
-  5.3 need both ids at the same level.
+- **Cost of a level.** Every rule is a function of `K`, and the proven ones were checked at seven
+  values from 7 to 37, 10 and 19 among them, so a level is one constant, one accepted value, and
+  one more local in the two lookbacks that divide by a real parameter. It is also one more pass of
+  every Auto gate, and one more sizing of the calibrated rules. The identity gates of section 5.3
+  need both ids at the same level.
 
 **D2. The getter under Auto.** Ruled (owner, 2026-10-04): it returns the level constant
 (section 4.2). A caller observes the effect of a level through the lookback call.
@@ -873,11 +890,11 @@ difference, at `PREC_4` and `PREC_8`.)
   smoothing constant: 2403 and 1000 bars at `PREC_4`, whatever the period. It asks for about ten
   years of daily bars before KAMA reports anything, so the typical count was chosen. VIDYA and
   MCGD have no guaranteed count at all.
-- **What the typical count does not cover.** A range-bound market: these averages slow down
-  there by design, and the last column is what they then need. The study's range is a one-bar
+- **What the typical count does not cover.** A range-bound market: these averages slow down there
+  by design, and the last column is what they then need. The study's range is a one-bar
   alternation, the hardest case; with an even CMO period VIDYA's coefficient is near zero there
-  and it does not converge at all. MCGD is the exception: it is slowest in a trend, and its
-  count covers all three series at the periods measured.
+  and it converges more than ten times slower still. MCGD is the exception: it is slowest in a
+  trend, and its count covers all three series at the periods measured.
 - **Why the period terms.** KAMA's typical need grows about with the square root of its period
   (329 bars at 30, 570 at 90, at `PREC_4`), because a longer efficiency window sees a smaller
   ratio. VIDYA's follows its EMA period and the square root of its CMO period. MCGD's follows
@@ -915,7 +932,7 @@ with a fixed part and a part that grows with the level, so that neither level is
 | MAMA(0.5, 0.05) | `H + ceil(2*K/max(fast, slow))` | 320 / 556 | 138 / 290 | 2.3 / 1.9 times |
 | STC(69, 150, 30) | `2*K + 3*(s+1)`, on top of `E(s)` | 1228 / 1926 | 995 / 1562 | 23% / 23% |
 
-MAMA's need follows its larger limit, measured at these settings:
+MAMA's need follows its larger limit when fast is not below slow, measured at these settings:
 
 | fast, slow | Need, `PREC_4` / `PREC_8` | Count |
 |---|---|---|
@@ -927,6 +944,9 @@ MAMA's need follows its larger limit, measured at these settings:
 | 0.05, 0.05 | 418 / 773 | 680 / 1240 |
 | 0.02, 0.02 | 1054 / 1949 | 1280 / 2380 |
 
+- With fast below slow alpha rests on the smaller limit for part of the time. MAMA(0.01, 0.02)
+  needs 1384 / 2534 bars against a count of 1280 / 2380: 8% and 6% past it at the level's
+  `e^-K`, while the leg's threshold holds (992 / 2144).
 - A pure multiple of `X` was rejected for the Hilbert count: the need grows by 69% from `PREC_4`
   to `PREC_8`, not by 100%, because part of it is the pipeline's own settling time.
 - The count for MAMA stays generous at its default limits: it carries the full Hilbert count,
@@ -936,15 +956,17 @@ MAMA's need follows its larger limit, measured at these settings:
 - All three are sized on price series and held by the two-start leg only. MAMA and the Hilbert
   functions do not hold on an input that rests on one value (section 2).
 
-**D8. Where this design departs from the issue.** Ruled (owner, 2026-10-05): accepted.
+**D8. Where this design departs from the issue as first filed (2026-09-30).** Ruled (owner,
+2026-10-05): accepted. The issue's text was then rewritten to match this design.
 
 - `K` is 10 or 19 by level, where the issue asks to choose between 14 and 37 (D1).
 - T3 is `ceil((K+20)*(n+1)/2)`, 90 bars at the default and `PREC_4`, where "the sum of its six
   EMAs" is 180. The six stages are stepped together, so one longer count bounds them.
 - ADX is `(K+6)*n`, 224, where the Wilder family's `K*n` is 140: it is two stages.
 - The five SWAK ids, absent from the issue's table, each have a rule.
-- Two rules use one `double` division and one `ceil` (SWAK_BP, MAMA). The issue asks for integer
-  arithmetic so that every backend agrees; these operations are correctly rounded and agree too.
+- Four rules go through a `double`: SWAK_BP and MAMA divide by a real parameter, KAMA and VIDYA
+  take an integer square root. The issue asks for integer arithmetic so that every backend
+  agrees; these operations are correctly rounded and agree too.
 - The promise is the seed's weight in the states, not agreement of the outputs within the
   tolerance whatever the start: ratio outputs pass `e^-K` at their count by up to a fifth, and
   the calibrated tier is not a bound.
@@ -993,8 +1015,8 @@ results. In short:
 | KAMA(30), trend and random walk | 500 | 329 | 247 | 1000 | 550 | 477 |
 | FRAMA(16), trend and random walk | 320 | 113 | 71 | 640 | 216 | 186 |
 | VIDYA(12, 9), trend and random walk | 312 | 210 | 151 | 624 | 380 | 313 |
-| MCGD(14) | 280 | 151 | 106 | 532 | 286 | 241 |
-| MCGD(42) | 840 | 584 | 410 | 1596 | 1103 | 935 |
+| MCGD(14) | 280 | 151 | 106 | 560 | 286 | 241 |
+| MCGD(42) | 840 | 584 | 410 | 1680 | 1103 | 935 |
 | Hilbert functions, worst | 280 | 235 | 187 | 480 | 396 | 338 |
 | MAMA(0.5, 0.05) | 320 | 138 | 104 | 556 | 290 | 240 |
 | STC(23, 50, 10), with `E(50)` | 428 | 280 | 209 | 676 | 529 | 442 |
@@ -1017,13 +1039,12 @@ results. In short:
   They do not for CMO, DX, SWAK_HP, SWAK_2PHP, SWAK_BP, HT_PHASOR and HT_SINE, whose outputs
   pass through zero, nor for HT_DCPHASE at 8 digits (section 2.1).
 - **The MA-type runs.** The inherited cases that do not meet their count are the limits already
-  stated: the KAMA and VIDYA arms on the zigzag, which the leg does not compare; the VIDYA arm
-  and the MAMA arm in STOCHRSI, whose FastK rests at 0 or 100; and BBW with the T3 type on the
-  trend series, where the leg's threshold applied to a seed difference of 5e-6 is at the band's
-  own rounding.
+  stated: the KAMA and VIDYA arms on the zigzag, which the leg does not compare; the same two
+  arms in PVO on every series, because the study's volume is noise; the VIDYA arm and the MAMA
+  arm in STOCHRSI, whose FastK rests at 0 or 100; and BBW with the T3 type on the trend series,
+  where the leg's threshold applied to a seed difference of 5e-6 is at the band's own rounding.
 - **The proven rules were also checked against the kernels' decay laws**, at seven values of
-  `K` from 7 to 37 and a grid of periods, with no violation. KAMA's and FRAMA's follow from the
-  floor of their coefficient and are not in that script.
+  `K` from 7 to 37 and a grid of periods, with no violation.
 - **Not measured.** Real market data; periods beyond three times the default; SWAK_BP away
   from its default delta; the ports (the rules are a few arithmetic operations, and the
   cross-language lookback gate is what holds them equal).

@@ -1,6 +1,6 @@
 # Checks of the proven Auto rules against the kernels' decay laws, at seven values of K and a
-# grid of periods. Not exhaustive: KAMA and FRAMA follow from their coefficient floor and are
-# not here; the two-pole envelopes are stated against the largest difference the seed causes.
+# grid of periods. Not exhaustive, and the calibrated rules are not here. The two-pole
+# envelopes are stated against the largest difference the seed causes.
 import math
 Ks=[7,10,14,19,20,28,37]
 def ceil_div(a,b): return -(-a//b)

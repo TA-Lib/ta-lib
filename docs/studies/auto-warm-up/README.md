@@ -10,7 +10,7 @@ how the value at a bar computed from a later start approaches the value computed
 | `warmup_probe.c` | Runs every function through the abstraction layer from bar 0 and from six later starts, on three synthetic series, and writes one row per (series, function, parameter set, output, start) |
 | `analyze.py` | Folds those rows into one line per output, worst case over series and starts, and a class per function |
 | `rules_vs_need.py` | Evaluates the design's rule for each unstable id, at both levels, against the measured need |
-| `rules_check.py` | Checks the one-pole, SWAK and T3 rules against the kernels' decay laws at seven values of K and a grid of periods, with no library involved. KAMA's and FRAMA's follow from their coefficient floor and are not in it |
+| `rules_check.py` | Checks the one-pole, SWAK and T3 rules against the kernels' decay laws at seven values of K and a grid of periods, with no library involved. The calibrated rules are not in it: section 3 of `results.txt` holds those |
 | `tie_break.c` | Shows MAXINDEX and MININDEX answering differently from two starts when the window holds equal extremes |
 | `results.txt` | The output of all of the above at the commit named on its first line |
 
@@ -87,8 +87,9 @@ never held to the end.
   `k8` that it is short at the level's own `e^-K`, which happens for ratio outputs; `sig4` and
   `sig8` that the value does not agree to that many significant digits at the count, which
   happens for outputs that pass through zero.
-- The MA-type rows of section 2 are not compared with a rule by any script here. Four cases do
-  not meet the count the design gives: the KAMA and VIDYA types on `zz`;
-  the VIDYA and the MAMA type in STOCHRSI, whose FastK rests at 0 or 100; and BBW with the T3
-  type on `tr`, where the seed difference is 5e-6 and the leg's threshold applied to it is at
-  the band's own rounding.
+- The MA-type rows of section 2 are not compared with a rule by any script here. The cases
+  that do not meet the count the design gives: the KAMA and VIDYA types on `zz`; the same two
+  types in PVO on every series, because the volume here is independent noise; the VIDYA and the
+  MAMA type in STOCHRSI, whose FastK rests at 0 or 100; and BBW with the T3 type on `tr`, where
+  the seed difference is 5e-6 and the leg's threshold applied to it is at the band's own
+  rounding.
