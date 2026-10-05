@@ -56,6 +56,7 @@
  *  -------------------------------------------------------------------
  *  100126 KL,CC  Creation (#486).
  *  100326 MF,CC  The newest output on one fused step (#486).
+ *  100526 MF,CC  b2p without its cancellation at long periods (#486).
  */
 
 TA_LIB_API int TA_SWAK_2PHP_Lookback( int optInTimePeriod )
@@ -93,7 +94,7 @@ TA_LIB_API TA_RetCode TA_SWAK_2PHP( int    startIdx,
    int outIdx;
    int today;
    int lookbackTotal;
-   double w;
+   double s;
    double b2p;
    double a2p;
    double om;
@@ -136,9 +137,12 @@ TA_LIB_API TA_RetCode TA_SWAK_2PHP( int    startIdx,
    }
    /* The two-pole alpha of Ehlers' "Swiss Army Knife Indicator", Figure 5. The
     * paper's 360/P is a full turn, so 2*pi/P.
+    *
+    * Keep 1 - cos(w) as 2*sin(w/2)^2: the subtraction cancels more of b2p's
+    * digits the longer the period, and the cutoff drifts with them.
     */
-   w = 2.0 * 3.141592653589793 / (double)optInTimePeriod;
-   b2p = 2.415 * (1.0 - cos(w));
+   s = sin(3.141592653589793 / (double)optInTimePeriod);
+   b2p = 2.415 * (2.0 * s * s);
    a2p = -b2p + sqrt(fma(b2p, b2p, 2.0 * b2p));
    /* The two-pole high-pass row: the same double real pole as the Gaussian
     * and Butterworth rows, with a (1, -2, 1) numerator instead. That
@@ -211,7 +215,7 @@ TA_RetCode TA_S_SWAK_2PHP( int    startIdx,
    int outIdx;
    int today;
    int lookbackTotal;
-   double w;
+   double s;
    double b2p;
    double a2p;
    double om;
@@ -252,8 +256,8 @@ TA_RetCode TA_S_SWAK_2PHP( int    startIdx,
    {
       return TA_SUCCESS;
    }
-   w = 2.0 * 3.141592653589793 / (double)optInTimePeriod;
-   b2p = 2.415 * (1.0 - cos(w));
+   s = sin(3.141592653589793 / (double)optInTimePeriod);
+   b2p = 2.415 * (2.0 * s * s);
    a2p = -b2p + sqrt(fma(b2p, b2p, 2.0 * b2p));
    om = 1.0 - a2p;
    c0 = (1.0 - a2p / 2.0) * (1.0 - a2p / 2.0);
@@ -362,7 +366,7 @@ static TA_RetCode TA_SWAK_2PHP_OpenImpl( struct TA_SWAK_2PHP_Stream **stream, co
       int outIdx;
       int today;
       int lookbackTotal;
-      double w;
+      double s;
       double b2p;
       double a2p;
       double om;
@@ -388,9 +392,12 @@ static TA_RetCode TA_SWAK_2PHP_OpenImpl( struct TA_SWAK_2PHP_Stream **stream, co
       }
       /* The two-pole alpha of Ehlers' "Swiss Army Knife Indicator", Figure 5. The
        * paper's 360/P is a full turn, so 2*pi/P.
+       *
+       * Keep 1 - cos(w) as 2*sin(w/2)^2: the subtraction cancels more of b2p's
+       * digits the longer the period, and the cutoff drifts with them.
        */
-      w = 2.0 * 3.141592653589793 / (double)optInTimePeriod;
-      b2p = 2.415 * (1.0 - cos(w));
+      s = sin(3.141592653589793 / (double)optInTimePeriod);
+      b2p = 2.415 * (2.0 * s * s);
       a2p = -b2p + sqrt(fma(b2p, b2p, 2.0 * b2p));
       /* The two-pole high-pass row: the same double real pole as the Gaussian
        * and Butterworth rows, with a (1, -2, 1) numerator instead. That

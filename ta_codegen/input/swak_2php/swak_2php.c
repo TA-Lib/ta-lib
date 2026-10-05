@@ -12,6 +12,7 @@
  *  -------------------------------------------------------------------
  *  100126 KL,CC  Creation (#486).
  *  100326 MF,CC  The newest output on one fused step (#486).
+ *  100526 MF,CC  b2p without its cancellation at long periods (#486).
  */
 
 int swak_2php_lookback(int optInTimePeriod)
@@ -32,7 +33,7 @@ TA_RetCode swak_2php(int startIdx, int endIdx,
    double outReal[])
 {
    int i, outIdx, today, lookbackTotal;
-   double w, b2p, a2p, om, c0, a1, a2;
+   double s, b2p, a2p, om, c0, a1, a2;
    double x0, x1, x2, y, y1, y2;
 
    *outBegIdx = 0;
@@ -48,9 +49,12 @@ TA_RetCode swak_2php(int startIdx, int endIdx,
 
    /* The two-pole alpha of Ehlers' "Swiss Army Knife Indicator", Figure 5. The
     * paper's 360/P is a full turn, so 2*pi/P.
+    *
+    * Keep 1 - cos(w) as 2*sin(w/2)^2: the subtraction cancels more of b2p's
+    * digits the longer the period, and the cutoff drifts with them.
     */
-   w   = (2.0 * 3.14159265358979323846) / (double)optInTimePeriod;
-   b2p = 2.415 * (1.0 - cos(w));
+   s   = sin( 3.14159265358979323846 / (double)optInTimePeriod );
+   b2p = 2.415 * (2.0 * s * s);
    a2p = -b2p + sqrt( b2p*b2p + 2.0*b2p );
 
    /* The two-pole high-pass row: the same double real pole as the Gaussian

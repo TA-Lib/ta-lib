@@ -150,8 +150,7 @@ static const int swakDcUnity[SWAK_NB_FUNC] = { 1, 1, 0, 0, 0 };
 static const int swakNyquist[SWAK_NB_FUNC] = { -1, 0, 1, 1, 0 };
 
 /* Periods per row, spanning each one's declared range. HP starts at 5 (at 4 its
- * alpha rounds to exactly 0 and it degenerates into an integrator) and BP's cap
- * is 2000. */
+ * alpha is 0/0) and BP's cap is 2000. */
 static const int swakPerGauss[] = { 2, 5, 20, 1000, 10000 };
 static const int swakPerHp[]    = { 5, 20, 1000, 100000 };
 static const int swakPerBp[]    = { 5, 20, 200, 2000 };
@@ -856,7 +855,7 @@ static ErrorNumber test_swak_golden( void )
 }
 
 /* (8) One step outside each declared range. HP's 4 is the period at which its
- * alpha rounds to 0 and the row turns into an integrator. */
+ * alpha is 0/0. */
 static ErrorNumber test_swak_edges( void )
 {
    static const struct { int f; int P; double delta; } bad[] =

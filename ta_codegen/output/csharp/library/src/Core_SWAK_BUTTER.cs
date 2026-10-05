@@ -56,6 +56,7 @@ public partial class Core
     *  -------------------------------------------------------------------
     *  100126 KL,CC  Creation (#486).
     *  100326 MF,CC  The newest output on one fused step (#486).
+    *  100526 MF,CC  b2p without its cancellation at long periods (#486).
     */
    /// <summary>
    /// Number of leading input bars <c>SwakButter</c> consumes before it can
@@ -126,7 +127,7 @@ public partial class Core
       int outIdx = 0;
       int today = 0;
       int lookbackTotal = 0;
-      double w = 0;
+      double s = 0;
       double b2p = 0;
       double a2p = 0;
       double om = 0;
@@ -164,9 +165,12 @@ public partial class Core
       }
       /* The two-pole alpha of Ehlers' "Swiss Army Knife Indicator", Figure 5. The
        * paper's 360/P is a full turn, so 2*pi/P.
+       *
+       * Keep 1 - cos(w) as 2*sin(w/2)^2: the subtraction cancels more of b2p's
+       * digits the longer the period, and the cutoff drifts with them.
        */
-      w = 2.0 * 3.141592653589793 / (double)optInTimePeriod;
-      b2p = 2.415 * (1.0 - Math.Cos(w));
+      s = Math.Sin(3.141592653589793 / (double)optInTimePeriod);
+      b2p = 2.415 * (2.0 * s * s);
       a2p = -b2p + Math.Sqrt(Math.FusedMultiplyAdd(b2p, b2p, 2.0 * b2p));
       /* The Butterworth row: the Gaussian's double real pole with two zeros added
        * at Nyquist, which is what the (1, 2, 1) numerator is. The quarter in c0
@@ -235,7 +239,7 @@ public partial class Core
       int outIdx = 0;
       int today = 0;
       int lookbackTotal = 0;
-      double w = 0;
+      double s = 0;
       double b2p = 0;
       double a2p = 0;
       double om = 0;
@@ -271,8 +275,8 @@ public partial class Core
       if( startIdx > endIdx ) {
          return RetCode.Success ;
       }
-      w = 2.0 * 3.141592653589793 / (double)optInTimePeriod;
-      b2p = 2.415 * (1.0 - Math.Cos(w));
+      s = Math.Sin(3.141592653589793 / (double)optInTimePeriod);
+      b2p = 2.415 * (2.0 * s * s);
       a2p = -b2p + Math.Sqrt(Math.FusedMultiplyAdd(b2p, b2p, 2.0 * b2p));
       om = 1.0 - a2p;
       c0 = a2p * a2p / 4.0;
@@ -684,7 +688,7 @@ public partial class Core
       int outIdx = 0;
       int today = 0;
       int lookbackTotal = 0;
-      double w = 0;
+      double s = 0;
       double b2p = 0;
       double a2p = 0;
       double om = 0;
@@ -726,9 +730,12 @@ public partial class Core
       }
       /* The two-pole alpha of Ehlers' "Swiss Army Knife Indicator", Figure 5. The
        * paper's 360/P is a full turn, so 2*pi/P.
+       *
+       * Keep 1 - cos(w) as 2*sin(w/2)^2: the subtraction cancels more of b2p's
+       * digits the longer the period, and the cutoff drifts with them.
        */
-      w = 2.0 * 3.141592653589793 / (double)optInTimePeriod;
-      b2p = 2.415 * (1.0 - Math.Cos(w));
+      s = Math.Sin(3.141592653589793 / (double)optInTimePeriod);
+      b2p = 2.415 * (2.0 * s * s);
       a2p = -b2p + Math.Sqrt(Math.FusedMultiplyAdd(b2p, b2p, 2.0 * b2p));
       /* The Butterworth row: the Gaussian's double real pole with two zeros added
        * at Nyquist, which is what the (1, 2, 1) numerator is. The quarter in c0

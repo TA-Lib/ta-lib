@@ -12,6 +12,7 @@
  *  -------------------------------------------------------------------
  *  100126 KL,CC  Creation (#486).
  *  100326 MF,CC  The newest output on one fused step (#486).
+ *  100526 MF,CC  a1p without its cancellation at long periods (#486).
  */
 
 int swak_hp_lookback(int optInTimePeriod)
@@ -32,7 +33,7 @@ TA_RetCode swak_hp(int startIdx, int endIdx,
    double outReal[])
 {
    int i, outIdx, today, lookbackTotal;
-   double w, cw, a1p, c0, a1;
+   double h, sh, ch, a1p, c0, a1;
    double x0, x1, y, y1;
 
    *outBegIdx = 0;
@@ -52,14 +53,19 @@ TA_RetCode swak_hp(int startIdx, int endIdx,
     * 2/(n+1). The paper's 360/P is a full turn, so 2*pi/P.
     *
     * The period range starts at 5 because of what this expression does below
-    * it, not for taste: at P = 4, cos(w) is 6.1e-17 and `cos w + sin w - 1`
-    * rounds to exactly 0.0, so a1p is 0, c0 and a1 are both 1, and the filter
-    * degenerates into the integrator x - x[s]. At P = 2, cos(w) is -1 and c0
-    * is 0, a dead filter. No contiguous range below 5 avoids both.
+    * it, not for taste: at P = 4 it is 0/0, and what the doubles make of that
+    * is no filter. At P = 2, cos(w) is -1 and c0 is 0, a dead filter. No
+    * contiguous range below 5 avoids both.
+    *
+    * Keep it in the half angle h = w/2, where it is 2*sin h*(cos h - sin h)
+    * over 1 - 2*sin(h)^2. Written in w, cos(w) - 1 cancels more of the
+    * numerator's digits the longer the period, and the cutoff drifts with
+    * them.
     */
-   w   = (2.0 * 3.14159265358979323846) / (double)optInTimePeriod;
-   cw  = cos(w);
-   a1p = (cw + sin(w) - 1.0) / cw;
+   h   = 3.14159265358979323846 / (double)optInTimePeriod;
+   sh  = sin(h);
+   ch  = cos(h);
+   a1p = (2.0 * sh * (ch - sh)) / (1.0 - 2.0 * sh * sh);
 
    /* The high-pass row: a (1, -1) numerator, so its DC gain is 0 and the line
     * is centred on zero rather than on price.

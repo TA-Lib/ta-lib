@@ -54,6 +54,7 @@
  *  -------------------------------------------------------------------
  *  100126 KL,CC  Creation (#486).
  *  100326 MF,CC  The newest output on one fused step (#486).
+ *  100526 MF,CC  b2p without its cancellation at long periods (#486).
  */
 
 // Import types from parent module
@@ -178,7 +179,7 @@ impl Core {
         let mut outIdx: usize = 0_usize;
         let mut today: usize = 0_usize;
         let mut lookbackTotal: usize = 0_usize;
-        let mut w: f64 = 0.0_f64;
+        let mut s: f64 = 0.0_f64;
         let mut b2p: f64 = 0.0_f64;
         let mut a2p: f64 = 0.0_f64;
         let mut om: f64 = 0.0_f64;
@@ -203,8 +204,11 @@ impl Core {
         let inReal = &inReal[..=endIdx];
         // The two-pole alpha of Ehlers' "Swiss Army Knife Indicator", Figure 5. The
         // paper's 360/P is a full turn, so 2*pi/P.
-        w = 2.0 * 3.141592653589793 / (optInTimePeriod as f64);
-        b2p = 2.415 * (1.0 - (w).cos());
+        //
+        // Keep 1 - cos(w) as 2*sin(w/2)^2: the subtraction cancels more of b2p's
+        // digits the longer the period, and the cutoff drifts with them.
+        s = (3.141592653589793 / (optInTimePeriod as f64)).sin();
+        b2p = 2.415 * (2.0 * s * s);
         a2p = -b2p + ((b2p as f64).mul_add(b2p, 2.0 * b2p)).sqrt();
         // The two-pole high-pass row: the same double real pole as the Gaussian
         // and Butterworth rows, with a (1, -2, 1) numerator instead. That
@@ -460,7 +464,7 @@ impl Core {
         let mut outIdx: usize = 0_usize;
         let mut today: usize = 0_usize;
         let mut lookbackTotal: usize = 0_usize;
-        let mut w: f64 = 0.0_f64;
+        let mut s: f64 = 0.0_f64;
         let mut b2p: f64 = 0.0_f64;
         let mut a2p: f64 = 0.0_f64;
         let mut om: f64 = 0.0_f64;
@@ -484,8 +488,11 @@ impl Core {
         }
         // The two-pole alpha of Ehlers' "Swiss Army Knife Indicator", Figure 5. The
         // paper's 360/P is a full turn, so 2*pi/P.
-        w = 2.0 * 3.141592653589793 / (optInTimePeriod as f64);
-        b2p = 2.415 * (1.0 - (w).cos());
+        //
+        // Keep 1 - cos(w) as 2*sin(w/2)^2: the subtraction cancels more of b2p's
+        // digits the longer the period, and the cutoff drifts with them.
+        s = (3.141592653589793 / (optInTimePeriod as f64)).sin();
+        b2p = 2.415 * (2.0 * s * s);
         a2p = -b2p + ((b2p as f64).mul_add(b2p, 2.0 * b2p)).sqrt();
         // The two-pole high-pass row: the same double real pole as the Gaussian
         // and Butterworth rows, with a (1, -2, 1) numerator instead. That
