@@ -296,6 +296,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
             MakeRocp(),
             MakeRocr(),
             MakeRocr100(),
+            MakeRogerssatchell(),
             MakeRsi(),
             MakeRvi(),
             MakeRvir(),
@@ -4577,6 +4578,31 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
         invoke: static (core, c, startIdx, endIdx) =>
             core.Rocr100(
                 startIdx, endIdx, c.Series(0), c.IntOpt(0), c.RealOut(0)));
+
+    private static FuncInfo MakeRogerssatchell() => new(
+        name: "ROGERSSATCHELL",
+        group: FunctionGroup.VolatilityIndicators,
+        hint: "Rogers-Satchell Volatility",
+        flags: FuncFlags.Stream,
+        unstableId: null,
+        inputs:
+        [
+            new InputInfo(InputKind.Price, "inPriceOHLC", PriceComponents.Open | PriceComponents.High | PriceComponents.Low | PriceComponents.Close, [PriceComponents.Open, PriceComponents.High, PriceComponents.Low, PriceComponents.Close]),
+        ],
+        optInputs:
+        [
+            new OptInputInfo("optInTimePeriod", "Time Period", "Number of bars in the window", OptInputFlags.None, new OptInputDomain.IntegerRange(1, 100000, 10, 2, 200, 1)),
+            new OptInputInfo("optInAnnualization", "Annualization", "Periods per year; 1 leaves the per-bar figure", OptInputFlags.None, new OptInputDomain.RealRange(0.0, 3e37, 2, 252.0, 1.0, 365.0, 1.0)),
+        ],
+        outputs:
+        [
+            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line),
+        ],
+        lookback: static (core, c) => core.RogerssatchellLookback(c.IntOpt(0), c.RealOpt(1)),
+        displayShift: static (core, c, outputIdx) => core.RogerssatchellDisplayShift(c.IntOpt(0), c.RealOpt(1), outputIdx),
+        invoke: static (core, c, startIdx, endIdx) =>
+            core.Rogerssatchell(
+                startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.IntOpt(0), c.RealOpt(1), c.RealOut(0)));
 
     private static FuncInfo MakeRsi() => new(
         name: "RSI",

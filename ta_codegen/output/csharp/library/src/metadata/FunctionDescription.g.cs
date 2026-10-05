@@ -8643,6 +8643,73 @@ public static class FunctionDescription
 	</FinancialFunction>
 
 
+	<!-- ROGERSSATCHELL -->
+	<FinancialFunction>
+		<Abbreviation>ROGERSSATCHELL</Abbreviation>
+		<ShortDescription>Rogers-Satchell Volatility</ShortDescription>
+		<GroupId>Volatility Indicators</GroupId>
+		<Flags>
+			<Flag>Streaming</Flag>
+		</Flags>
+		<RequiredInputArguments>
+			<RequiredInputArgument>
+				<Type>Open</Type>
+				<Name>Open</Name>
+			</RequiredInputArgument>
+			<RequiredInputArgument>
+				<Type>High</Type>
+				<Name>High</Name>
+			</RequiredInputArgument>
+			<RequiredInputArgument>
+				<Type>Low</Type>
+				<Name>Low</Name>
+			</RequiredInputArgument>
+			<RequiredInputArgument>
+				<Type>Close</Type>
+				<Name>Close</Name>
+			</RequiredInputArgument>
+		</RequiredInputArguments>
+		<OptionalInputArguments>
+			<OptionalInputArgument>
+				<Name>Time Period</Name>
+				<ShortDescription>Number of bars in the window</ShortDescription>
+				<Type>Integer</Type>
+				<Range>
+					<Minimum>1</Minimum>
+					<Maximum>100000</Maximum>
+					<SuggestedStart>2</SuggestedStart>
+					<SuggestedEnd>200</SuggestedEnd>
+					<SuggestedIncrement>1</SuggestedIncrement>
+				</Range>
+				<DefaultValue>10</DefaultValue>
+			</OptionalInputArgument>
+			<OptionalInputArgument>
+				<Name>Annualization</Name>
+				<ShortDescription>Periods per year; 1 leaves the per-bar figure</ShortDescription>
+				<Type>Double</Type>
+				<Range>
+					<Minimum>0.000000e+0</Minimum>
+					<Maximum>3.000000e+37</Maximum>
+					<Precision>2</Precision>
+					<SuggestedStart>1.000000e+0</SuggestedStart>
+					<SuggestedEnd>3.650000e+2</SuggestedEnd>
+					<SuggestedIncrement>1.000000e+0</SuggestedIncrement>
+				</Range>
+				<DefaultValue>2.520000e+2</DefaultValue>
+			</OptionalInputArgument>
+		</OptionalInputArguments>
+		<OutputArguments>
+			<OutputArgument>
+				<Type>Double Array</Type>
+				<Name>outReal</Name>
+				<Flags>
+					<Flag>Line</Flag>
+				</Flags>
+			</OutputArgument>
+		</OutputArguments>
+	</FinancialFunction>
+
+
 	<!-- RSI -->
 	<FinancialFunction>
 		<Abbreviation>RSI</Abbreviation>

@@ -2038,6 +2038,17 @@ unsigned int TA_ROCR100_FramePPLB( const TA_ParamHolderPriv *params )
 int TA_ROCR100_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
 ;
 
+TA_RetCode TA_ROGERSSATCHELL_FramePP( const TA_ParamHolderPriv *params,
+                           int            startIdx,
+                           int            endIdx,
+                           int           *outBegIdx,
+                           int           *outNBElement )
+;
+unsigned int TA_ROGERSSATCHELL_FramePPLB( const TA_ParamHolderPriv *params )
+;
+int TA_ROGERSSATCHELL_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+;
+
 TA_RetCode TA_RSI_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
                            int            endIdx,

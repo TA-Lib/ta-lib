@@ -404,6 +404,8 @@ pub enum FuncId {
     ROCR,
     /// Rate of change ratio 100 scale: (price/prevPrice)*100 — [`Core::rocr100`](crate::Core::rocr100).
     ROCR100,
+    /// Rogers-Satchell Volatility — [`Core::rogerssatchell`](crate::Core::rogerssatchell).
+    ROGERSSATCHELL,
     /// Relative Strength Index — [`Core::rsi`](crate::Core::rsi).
     RSI,
     /// Relative Volatility Index — [`Core::rvi`](crate::Core::rvi).
@@ -502,7 +504,7 @@ pub enum FuncId {
 
 impl FuncId {
     /// Number of functions in the registry.
-    pub const COUNT: usize = 228;
+    pub const COUNT: usize = 229;
     /// Metadata for this function (O(1) index into the const table).
     #[inline] pub fn info(self) -> &'static FuncInfo { &FUNC_TABLE[self as usize] }
     /// Upper-case TA name, e.g. "RSI".
@@ -842,7 +844,7 @@ impl FuncInfo {
 
 /// Backing storage for [`FUNCS`], indexed by [`FuncId`]. Link-time const, in
 /// `.rodata`. Private, so its length is nobody's business but this module's.
-static FUNC_TABLE: [FuncInfo; 228] = [
+static FUNC_TABLE: [FuncInfo; 229] = [
     FuncInfo {
         id: FuncId::AC,
         name: "AC",
@@ -2835,6 +2837,17 @@ static FUNC_TABLE: [FuncInfo; 228] = [
         unst_id: None,
     },
     FuncInfo {
+        id: FuncId::ROGERSSATCHELL,
+        name: "ROGERSSATCHELL",
+        group: Group::VolatilityIndicators,
+        hint: "Rogers-Satchell Volatility",
+        flags: FuncFlags(0x02000000),
+        inputs: &[InputInfo { param_name: "inPriceOHLC", kind: InputType::Price, flags: InputFlags(0x0000000f) }, ],
+        opt_inputs: &[OptInputInfo { param_name: "optInTimePeriod", display_name: "Time Period", hint: "Number of bars in the window", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 1, max: 100000, default: 10, suggested: (2, 200, 1) } }, OptInputInfo { param_name: "optInAnnualization", display_name: "Annualization", hint: "Periods per year; 1 leaves the per-bar figure", flags: OptInputFlags(0x00000000), kind: OptInputType::RealRange { min: 0.0, max: 3e37, precision: 2, default: 252.0, suggested: (1.0, 365.0, 1.0) } }, ],
+        outputs: &[OutputInfo { param_name: "outReal", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, ],
+        unst_id: None,
+    },
+    FuncInfo {
         id: FuncId::RSI,
         name: "RSI",
         group: Group::MomentumIndicators,
@@ -3550,6 +3563,7 @@ fn get_func_handle_exact(name: &str) -> Option<FuncId> {
         "ROCP" => FuncId::ROCP,
         "ROCR" => FuncId::ROCR,
         "ROCR100" => FuncId::ROCR100,
+        "ROGERSSATCHELL" => FuncId::ROGERSSATCHELL,
         "RSI" => FuncId::RSI,
         "RVI" => FuncId::RVI,
         "RVIR" => FuncId::RVIR,
@@ -4046,6 +4060,7 @@ impl<'a> ParamHolder<'a> {
             FuncId::ROCP => self.core.rocp_lookback(self.int_opt[0]),
             FuncId::ROCR => self.core.rocr_lookback(self.int_opt[0]),
             FuncId::ROCR100 => self.core.rocr100_lookback(self.int_opt[0]),
+            FuncId::ROGERSSATCHELL => self.core.rogerssatchell_lookback(self.int_opt[0], self.real_opt[1]),
             FuncId::RSI => self.core.rsi_lookback(self.int_opt[0]),
             FuncId::RVI => self.core.rvi_lookback(self.int_opt[0], self.int_opt[1]),
             FuncId::RVIR => self.core.rvir_lookback(self.int_opt[0], self.int_opt[1]),
@@ -4287,6 +4302,7 @@ impl<'a> ParamHolder<'a> {
             FuncId::ROCP => self.core.rocp_display_shift(self.int_opt[0], output_idx),
             FuncId::ROCR => self.core.rocr_display_shift(self.int_opt[0], output_idx),
             FuncId::ROCR100 => self.core.rocr100_display_shift(self.int_opt[0], output_idx),
+            FuncId::ROGERSSATCHELL => self.core.rogerssatchell_display_shift(self.int_opt[0], self.real_opt[1], output_idx),
             FuncId::RSI => self.core.rsi_display_shift(self.int_opt[0], output_idx),
             FuncId::RVI => self.core.rvi_display_shift(self.int_opt[0], self.int_opt[1], output_idx),
             FuncId::RVIR => self.core.rvir_display_shift(self.int_opt[0], self.int_opt[1], output_idx),
@@ -6877,6 +6893,21 @@ impl<'a> ParamHolder<'a> {
                 Self::check_range(start_idx, end_idx)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.rocr100(start_idx, end_idx, i0, self.int_opt[0], &mut *o0);
+                self.real_out[0] = Some(o0);
+                match res {
+                    Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
+                    Err(e) => e,
+                }
+            }
+            FuncId::ROGERSSATCHELL => {
+                let i0_0 = self.price[0][0].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_1 = self.price[0][1].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_2 = self.price[0][2].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_3 = self.price[0][3].ok_or(RetCode::InputNotAllInitialize)?;
+                if self.real_out[0].is_none() { return Err(RetCode::OutputNotAllInitialize); }
+                Self::check_range(start_idx, end_idx)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let res = self.core.rogerssatchell(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, self.int_opt[0], self.real_opt[1], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
                     Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }

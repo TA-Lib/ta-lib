@@ -7333,6 +7333,50 @@ static TA_RetCode TA_ROCR100_SFrameClose( void *stream )
    return TA_ROCR100_Close( (TA_ROCR100_Stream *)stream );
 }
 
+static TA_RetCode TA_ROGERSSATCHELL_SFrameOpen( void **stream,
+                  const double *const in[], int historyLen,
+                  const double optIn[],
+                  double *const outReal[], int *const outInteger[] )
+{
+   (void)outInteger;
+   return TA_ROGERSSATCHELL_Open(
+               (TA_ROGERSSATCHELL_Stream **)stream,
+               in[0] /* inOpen */,
+               in[1] /* inHigh */,
+               in[2] /* inLow */,
+               in[3] /* inClose */,
+               historyLen,
+               (int)optIn[0] /* optInTimePeriod */,
+               optIn[1] /* optInAnnualization */,
+               outReal[0] /* outReal */
+               );
+}
+static TA_RetCode TA_ROGERSSATCHELL_SFrameFill( void **stream,
+                  const double *const in[], int historyLen,
+                  const double optIn[],
+                  int *outBegIdx, int *outNBElement,
+                  double *const outReal[], int *const outInteger[] )
+{
+   (void)outInteger;
+   return TA_ROGERSSATCHELL_OpenAndFill(
+               (TA_ROGERSSATCHELL_Stream **)stream,
+               in[0] /* inOpen */,
+               in[1] /* inHigh */,
+               in[2] /* inLow */,
+               in[3] /* inClose */,
+               historyLen,
+               (int)optIn[0] /* optInTimePeriod */,
+               optIn[1] /* optInAnnualization */,
+               outBegIdx,
+               outNBElement,
+               outReal[0] /* outReal */
+               );
+}
+static TA_RetCode TA_ROGERSSATCHELL_SFrameClose( void *stream )
+{
+   return TA_ROGERSSATCHELL_Close( (TA_ROGERSSATCHELL_Stream *)stream );
+}
+
 static TA_RetCode TA_RSI_SFrameOpen( void **stream,
                   const double *const in[], int historyLen,
                   const double optIn[],
@@ -9530,6 +9574,8 @@ static const TA_StreamEntry TA_StreamTable[] = {
      1, TA_VIn_ROCR, 1, TA_VOpt_ROCR, 1, TA_VOutIsInt_ROCR },
    { "ROCR100", TA_ROCR100_SFrameOpen, TA_ROCR100_SFrameFill, TA_ROCR100_SFrameClose,
      1, TA_VIn_ROCR100, 1, TA_VOpt_ROCR100, 1, TA_VOutIsInt_ROCR100 },
+   { "ROGERSSATCHELL", TA_ROGERSSATCHELL_SFrameOpen, TA_ROGERSSATCHELL_SFrameFill, TA_ROGERSSATCHELL_SFrameClose,
+     4, TA_VIn_ROGERSSATCHELL, 2, TA_VOpt_ROGERSSATCHELL, 1, TA_VOutIsInt_ROGERSSATCHELL },
    { "RSI", TA_RSI_SFrameOpen, TA_RSI_SFrameFill, TA_RSI_SFrameClose,
      1, TA_VIn_RSI, 1, TA_VOpt_RSI, 1, TA_VOutIsInt_RSI },
    { "RVI", TA_RVI_SFrameOpen, TA_RVI_SFrameFill, TA_RVI_SFrameClose,
@@ -9626,6 +9672,6 @@ static const TA_StreamEntry TA_StreamTable[] = {
      1, TA_VIn_ZLEMA, 1, TA_VOpt_ZLEMA, 1, TA_VOutIsInt_ZLEMA },
 };
 
-#define TA_STREAM_TABLE_SIZE 228
+#define TA_STREAM_TABLE_SIZE 229
 
 #endif /* TA_STREAM_FRAME_H */

@@ -4912,6 +4912,35 @@ int TA_ROCR100_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
 {
    return TA_ROCR100_DisplayShift( params->optIn[0].data.optInInteger, outputIdx );
 }
+TA_RetCode TA_ROGERSSATCHELL_FramePP( const TA_ParamHolderPriv *params,
+                           int            startIdx,
+                           int            endIdx,
+                           int           *outBegIdx,
+                           int           *outNBElement )
+{
+   return TA_ROGERSSATCHELL(
+               startIdx,
+               endIdx,
+               params->in[0].data.inPrice.open, /* inOpen */
+               params->in[0].data.inPrice.high, /* inHigh */
+               params->in[0].data.inPrice.low, /* inLow */
+               params->in[0].data.inPrice.close, /* inClose */
+               params->optIn[0].data.optInInteger, /* optInTimePeriod*/
+               params->optIn[1].data.optInReal, /* optInAnnualization*/
+               outBegIdx, 
+               outNBElement, 
+               params->out[0].data.outReal /*  outReal */
+               );
+}
+unsigned int TA_ROGERSSATCHELL_FramePPLB( const TA_ParamHolderPriv *params )
+{
+   return TA_ROGERSSATCHELL_Lookback(params->optIn[0].data.optInInteger, /* optInTimePeriod*/
+                    params->optIn[1].data.optInReal /* optInAnnualization*/ );
+}
+int TA_ROGERSSATCHELL_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+{
+   return TA_ROGERSSATCHELL_DisplayShift( params->optIn[0].data.optInInteger, params->optIn[1].data.optInReal, outputIdx );
+}
 TA_RetCode TA_RSI_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
                            int            endIdx,

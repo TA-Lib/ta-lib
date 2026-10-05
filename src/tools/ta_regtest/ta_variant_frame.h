@@ -7722,6 +7722,54 @@ static const TA_VOptSpec TA_VOpt_ROCR100[] = {
    { "optInTimePeriod", TA_VOPT_INT, 1.0, 100000.0, 10.0 },
 };
 
+static TA_RetCode TA_ROGERSSATCHELL_VFrameD( int startIdx, int endIdx,
+                  const double *const in[], const double optIn[],
+                  int *outBegIdx, int *outNBElement,
+                  double *const outReal[], int *const outInteger[] )
+{
+   (void)outInteger;
+   return TA_ROGERSSATCHELL(
+               startIdx,
+               endIdx,
+               in[0] /* inOpen */,
+               in[1] /* inHigh */,
+               in[2] /* inLow */,
+               in[3] /* inClose */,
+               (int)optIn[0] /* optInTimePeriod */,
+               optIn[1] /* optInAnnualization */,
+               outBegIdx,
+               outNBElement,
+               outReal[0] /* outReal */
+               );
+}
+static TA_RetCode TA_ROGERSSATCHELL_VFrameS( int startIdx, int endIdx,
+                  const float *const in[], const double optIn[],
+                  int *outBegIdx, int *outNBElement,
+                  double *const outReal[], int *const outInteger[] )
+{
+   (void)outInteger;
+   return TA_S_ROGERSSATCHELL(
+               startIdx,
+               endIdx,
+               in[0] /* inOpen */,
+               in[1] /* inHigh */,
+               in[2] /* inLow */,
+               in[3] /* inClose */,
+               (int)optIn[0] /* optInTimePeriod */,
+               optIn[1] /* optInAnnualization */,
+               outBegIdx,
+               outNBElement,
+               outReal[0] /* outReal */
+               );
+}
+
+static const TA_VInputKind TA_VIn_ROGERSSATCHELL[] = { TA_VIN_OPEN, TA_VIN_HIGH, TA_VIN_LOW, TA_VIN_CLOSE };
+static const int TA_VOutIsInt_ROGERSSATCHELL[] = { 0 };
+static const TA_VOptSpec TA_VOpt_ROGERSSATCHELL[] = {
+   { "optInTimePeriod", TA_VOPT_INT, 1.0, 100000.0, 10.0 },
+   { "optInAnnualization", TA_VOPT_REAL, 0.0, 3.00000000000000022e37, 252.0 },
+};
+
 static TA_RetCode TA_RSI_VFrameD( int startIdx, int endIdx,
                   const double *const in[], const double optIn[],
                   int *outBegIdx, int *outNBElement,
@@ -10060,6 +10108,8 @@ static const TA_VariantEntry TA_VariantTable[] = {
      1, TA_VIn_ROCR, 1, TA_VOpt_ROCR, 1, TA_VOutIsInt_ROCR, 0 },
    { "ROCR100", TA_ROCR100_VFrameD, TA_ROCR100_VFrameS,
      1, TA_VIn_ROCR100, 1, TA_VOpt_ROCR100, 1, TA_VOutIsInt_ROCR100, 0 },
+   { "ROGERSSATCHELL", TA_ROGERSSATCHELL_VFrameD, TA_ROGERSSATCHELL_VFrameS,
+     4, TA_VIn_ROGERSSATCHELL, 2, TA_VOpt_ROGERSSATCHELL, 1, TA_VOutIsInt_ROGERSSATCHELL, 0 },
    { "RSI", TA_RSI_VFrameD, TA_RSI_VFrameS,
      1, TA_VIn_RSI, 1, TA_VOpt_RSI, 1, TA_VOutIsInt_RSI, 0 },
    { "RVI", TA_RVI_VFrameD, TA_RVI_VFrameS,
@@ -10156,6 +10206,6 @@ static const TA_VariantEntry TA_VariantTable[] = {
      1, TA_VIn_ZLEMA, 1, TA_VOpt_ZLEMA, 1, TA_VOutIsInt_ZLEMA, 0 },
 };
 
-#define TA_VARIANT_TABLE_SIZE 228
+#define TA_VARIANT_TABLE_SIZE 229
 
 #endif /* TA_VARIANT_FRAME_H */

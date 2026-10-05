@@ -16141,6 +16141,105 @@ TA_LIB_API TA_RetCode TA_ROCR100_Advance( TA_ROCR100_Stream *stream );
 TA_LIB_API TA_RetCode TA_ROCR100_Clone( const TA_ROCR100_Stream *stream, TA_ROCR100_Stream **clone );
 
 /*
+ * TA_ROGERSSATCHELL - Rogers-Satchell Volatility
+ * 
+ * Input  = Open, High, Low, Close
+ * Output = double
+ * 
+ * Optional Parameters
+ * -------------------
+ * optInTimePeriod:(From 1 to 100000)
+ *    Number of bars in the window
+ * 
+ * optInAnnualization:(From 0 to 30000000000000000000000000000000000000)
+ *    Periods per year; 1 leaves the per-bar figure
+ * 
+ * 
+ */
+TA_LIB_API TA_RetCode TA_ROGERSSATCHELL( int    startIdx,
+                                         int    endIdx,
+                                                    const double inOpen[],
+                                                    const double inHigh[],
+                                                    const double inLow[],
+                                                    const double inClose[],
+                                                    int           optInTimePeriod, /* From 1 to 100000 */
+                                                    double        optInAnnualization, /* From 0 to 30000000000000000000000000000000000000 */
+                                                    int          *outBegIdx,
+                                                    int          *outNBElement,
+                                                    double        outReal[] );
+
+TA_LIB_API TA_RetCode TA_S_ROGERSSATCHELL( int    startIdx,
+                                           int    endIdx,
+                                                      const float  inOpen[],
+                                                      const float  inHigh[],
+                                                      const float  inLow[],
+                                                      const float  inClose[],
+                                                      int           optInTimePeriod, /* From 1 to 100000 */
+                                                      double        optInAnnualization, /* From 0 to 30000000000000000000000000000000000000 */
+                                                      int          *outBegIdx,
+                                                      int          *outNBElement,
+                                                      double        outReal[] );
+
+TA_LIB_API int TA_ROGERSSATCHELL_Lookback( int           optInTimePeriod, /* From 1 to 100000 */
+                                                    double        optInAnnualization );  /* From 0 to 30000000000000000000000000000000000000 */
+TA_LIB_API int TA_ROGERSSATCHELL_DisplayShift( int optInTimePeriod, double optInAnnualization, int outputIdx );
+
+
+
+/*
+ * Streaming API for TA_ROGERSSATCHELL: incremental per-bar evaluation.
+ */
+typedef struct TA_ROGERSSATCHELL_Stream TA_ROGERSSATCHELL_Stream;
+
+TA_LIB_API TA_RetCode TA_ROGERSSATCHELL_Open( TA_ROGERSSATCHELL_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, int optInTimePeriod, double optInAnnualization, double *outReal );
+
+TA_LIB_API TA_RetCode TA_ROGERSSATCHELL_Update( TA_ROGERSSATCHELL_Stream *stream, double inOpen, double inHigh, double inLow, double inClose, double *outReal );
+
+TA_LIB_API TA_RetCode TA_ROGERSSATCHELL_Peek( const TA_ROGERSSATCHELL_Stream *stream, double inOpen, double inHigh, double inLow, double inClose, double *outReal );
+
+TA_LIB_API TA_RetCode TA_ROGERSSATCHELL_Close( TA_ROGERSSATCHELL_Stream *stream );
+
+/*
+ * OpenAndFill: like Open, but a single pass ALSO fills the caller's arrays
+ * with the whole warm-up history. The fill is bit-identical to
+ * TA_ROGERSSATCHELL( 0, historyLen-1, ... ).
+ */
+TA_LIB_API TA_RetCode TA_ROGERSSATCHELL_OpenAndFill( TA_ROGERSSATCHELL_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, int optInTimePeriod, double optInAnnualization, int *outBegIdx, int *outNBElement, double outReal[] );
+
+/*
+ * Value: the value(s) at the last bar the stream counted (the bar
+ * TA_ROGERSSATCHELL_OutRange ends on), without recomputing. Seeded by Open, refreshed by
+ * every accepted Update, left alone by Peek.
+ */
+TA_LIB_API TA_RetCode TA_ROGERSSATCHELL_Value( const TA_ROGERSSATCHELL_Stream *stream, double *outReal );
+
+/*
+ * OutRange: the bars this stream has an output for, in the input series'
+ * coordinates. That is [*outBegIdx, *outBegIdx + *outNBElement), the range
+ * TA_ROGERSSATCHELL reports over the same bars. Open seeds it; every accepted Update and every
+ * TA_ROGERSSATCHELL_Advance adds one; a rejected Update and a Peek change nothing. The
+ * last bar it can reach is TA_INDEX_MAX: past that Update and Advance answer
+ * TA_OUT_OF_RANGE_END_INDEX, and the handle is done.
+ */
+TA_LIB_API TA_RetCode TA_ROGERSSATCHELL_OutRange( const TA_ROGERSSATCHELL_Stream *stream, int *outBegIdx, int *outNBElement );
+
+/*
+ * Advance: count one bar this stream was not fed (one an Update rejected and
+ * that will not be re-fed, or a session with no print). The range moves by one
+ * and nothing else does, so TA_ROGERSSATCHELL_Value keeps answering the previous output,
+ * which is this bar's output too. TA_OUT_OF_RANGE_END_INDEX once the range has
+ * reached TA_INDEX_MAX.
+ */
+TA_LIB_API TA_RetCode TA_ROGERSSATCHELL_Advance( TA_ROGERSSATCHELL_Stream *stream );
+
+/*
+ * Clone: fork the stream. The fork is an independent stream at the same bar,
+ * owning its own copy of everything the original owns. Both must be closed.
+ * The fork carries the value and the range verbatim.
+ */
+TA_LIB_API TA_RetCode TA_ROGERSSATCHELL_Clone( const TA_ROGERSSATCHELL_Stream *stream, TA_ROGERSSATCHELL_Stream **clone );
+
+/*
  * TA_RSI - Relative Strength Index
  * 
  * Input  = double
