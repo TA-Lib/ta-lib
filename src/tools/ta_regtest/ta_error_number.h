@@ -597,6 +597,13 @@ typedef enum
   TA_META_RIDE_VACUOUS               = 1712,
   TA_META_RIDE_UNREACHED             = 1713,
 
+  /* (#501) What MININDEX, MAXINDEX and MINMAXINDEX write, against the input. */
+  TA_REGTEST_INDEX_CALL              = 1714,
+  TA_REGTEST_INDEX_OUTSIDE_WINDOW    = 1715,
+  TA_REGTEST_INDEX_NOT_EXTREMUM      = 1716,
+  TA_REGTEST_INDEX_DISAGREE          = 1717,
+  TA_REGTEST_INDEX_VACUOUS           = 1718,
+
   /* Error code related to bug fix documentented on SourceForge. */
   TA_TEST_FAIL_BUG1359452_1  = 2000,
   TA_TEST_FAIL_BUG1359452_2  = 2001,
