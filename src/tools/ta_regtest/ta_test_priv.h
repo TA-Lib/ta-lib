@@ -53,6 +53,8 @@ long regtest_rejected_calls_wrote_range( void );
    #define TA_CallFunc regtest_guarded_call
 #endif
 
+#include "ta_meta_frame.h"
+
 void reportError( const char *str, TA_RetCode retCode );
 
 /* Global Temporary Used by the ta_func_xxx function. */

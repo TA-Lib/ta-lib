@@ -2555,7 +2555,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
         name: "COSH",
         group: FunctionGroup.MathTransform,
         hint: "Vector Trigonometric Cosh",
-        flags: FuncFlags.Stream,
+        flags: FuncFlags.Stream | FuncFlags.NanInfOutput,
         unstableId: null,
         inputs:
         [
@@ -2914,7 +2914,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
         name: "EXP",
         group: FunctionGroup.MathTransform,
         hint: "Vector Arithmetic Exp",
-        flags: FuncFlags.Stream,
+        flags: FuncFlags.Stream | FuncFlags.NanInfOutput,
         unstableId: null,
         inputs:
         [
@@ -2993,8 +2993,8 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
         ],
         outputs:
         [
-            new OutputInfo(OutputKind.Integer, "outSwingHigh", OutputFlags.Line | OutputFlags.DisplayShift),
-            new OutputInfo(OutputKind.Integer, "outSwingLow", OutputFlags.Line | OutputFlags.DisplayShift),
+            new OutputInfo(OutputKind.Integer, "outSwingHigh", OutputFlags.Line | OutputFlags.PatternBool | OutputFlags.Positive | OutputFlags.Zero | OutputFlags.DisplayShift),
+            new OutputInfo(OutputKind.Integer, "outSwingLow", OutputFlags.Line | OutputFlags.PatternBool | OutputFlags.Positive | OutputFlags.Zero | OutputFlags.DisplayShift),
         ],
         lookback: static (core, c) => core.FractalLookback(c.IntOpt(0), c.IntOpt(1)),
         displayShift: static (core, c, outputIdx) => core.FractalDisplayShift(c.IntOpt(0), c.IntOpt(1), outputIdx),
@@ -4781,7 +4781,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
         name: "SINH",
         group: FunctionGroup.MathTransform,
         hint: "Vector Trigonometric Sinh",
-        flags: FuncFlags.Stream,
+        flags: FuncFlags.Stream | FuncFlags.NanInfOutput,
         unstableId: null,
         inputs:
         [

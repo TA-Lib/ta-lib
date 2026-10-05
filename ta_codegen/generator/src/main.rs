@@ -704,6 +704,8 @@ fn generate(func_filter: Option<&str>, backend_filter: Option<&str>) {
         // straight into ta_regtest — never a separate server process.
         backends::stream_frame::generate(all_funcs, &root);
 
+        backends::meta_frame::generate(all_funcs, &root);
+
         // Take over gen_code's two remaining C-side scalar generators:
         //   - the FuncUnstId enum (GENCODE SECTION 1) in the public header ta_defs.h
         //   - the TA_SetRetCodeInfo table in ta_common/ta_retcode.c (from the csv)

@@ -862,6 +862,7 @@ if(_TA_BUILD_TOOLS)
 		"${CMAKE_CURRENT_SOURCE_DIR}/src/tools/ta_regtest/codegen_pipe.c"
 		"${CMAKE_CURRENT_SOURCE_DIR}/src/tools/ta_regtest/test_codegen.c"
 		"${CMAKE_CURRENT_SOURCE_DIR}/src/tools/ta_regtest/test_util.c"
+		"${CMAKE_CURRENT_SOURCE_DIR}/src/tools/ta_regtest/meta_ride.c"
 		"${CMAKE_CURRENT_SOURCE_DIR}/src/tools/ta_regtest/test_data.c"
 		"${CMAKE_CURRENT_SOURCE_DIR}/src/tools/ta_regtest/test_abstract.c"
 		"${CMAKE_CURRENT_SOURCE_DIR}/src/tools/ta_regtest/server_verify.c"

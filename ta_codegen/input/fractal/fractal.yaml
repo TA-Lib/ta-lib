@@ -24,7 +24,7 @@ optional_inputs:
 outputs:
   - name: outSwingHigh
     type: integer
-    flags: [line, display_shift]
+    flags: [line, display_shift, pattern_bool, zero, positive]
   - name: outSwingLow
     type: integer
-    flags: [line, display_shift]
+    flags: [line, display_shift, pattern_bool, zero, positive]

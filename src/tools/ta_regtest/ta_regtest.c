@@ -71,6 +71,7 @@
 #include "test_codegen.h"
 #include "codegen_pipe.h"
 #include "server_verify.h"
+#include "meta_ride.h"
 #include "ta_utility.h"
 
 /**** External functions declarations. ****/
@@ -638,6 +639,13 @@ static ErrorNumber test_with_simulator( void )
    if( retValue != TA_TEST_PASS )
    {
       return retValue;
+   }
+
+   if( functionFilter == NULL )
+   {
+      retValue = meta_ride_whole_run();
+      if( retValue != TA_TEST_PASS )
+         return retValue;
    }
 
    /* Clean-up and exit. */

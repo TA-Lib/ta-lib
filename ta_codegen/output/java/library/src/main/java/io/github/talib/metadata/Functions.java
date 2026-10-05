@@ -1824,7 +1824,7 @@ public final class Functions {
 
    private static FuncInfo f_COSH() {
       return new FuncInfo(
-         "COSH", "Math Transform", "Vector Trigonometric Cosh", 0x02000000,
+         "COSH", "Math Transform", "Vector Trigonometric Cosh", 0x42000000,
          List.of(
             new InputInfo(InputType.REAL, "inReal", 0x00000000)
          ),
@@ -2100,7 +2100,7 @@ public final class Functions {
 
    private static FuncInfo f_EXP() {
       return new FuncInfo(
-         "EXP", "Math Transform", "Vector Arithmetic Exp", 0x02000000,
+         "EXP", "Math Transform", "Vector Arithmetic Exp", 0x42000000,
          List.of(
             new InputInfo(InputType.REAL, "inReal", 0x00000000)
          ),
@@ -2159,8 +2159,8 @@ public final class Functions {
                1, 100000, 1, 10, 1, null)
          ),
          List.of(
-            new OutputInfo(OutputType.INTEGER, "outSwingHigh", 0x00004001),
-            new OutputInfo(OutputType.INTEGER, "outSwingLow", 0x00004001)
+            new OutputInfo(OutputType.INTEGER, "outSwingHigh", 0x00004521),
+            new OutputInfo(OutputType.INTEGER, "outSwingLow", 0x00004521)
          ));
    }
 
@@ -3665,7 +3665,7 @@ public final class Functions {
 
    private static FuncInfo f_SINH() {
       return new FuncInfo(
-         "SINH", "Math Transform", "Vector Trigonometric Sinh", 0x02000000,
+         "SINH", "Math Transform", "Vector Trigonometric Sinh", 0x42000000,
          List.of(
             new InputInfo(InputType.REAL, "inReal", 0x00000000)
          ),

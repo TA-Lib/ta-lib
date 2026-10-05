@@ -185,11 +185,10 @@ value forward instead of writing Inf — the `IS_FINITE(...)` guard in
 ta4j and bukosabino/ta all compound unguarded; pandas-ta side-steps it by
 summing returns instead of compounding them), so the choice was ours to make.
 
-The flag is a **contract, not an annotation**: `test_abstract.c` holds every
-function *without* it to finite output across all five of its datasets
-(negative, zero, two epsilon sets, random), so adding a function that emits NaN
-or Inf on ordinary input fails the suite until the flag — and the `## Notes`
-sentence explaining when — are written.
+The flag is a **contract, not an annotation**: `ta_regtest` holds every call it
+makes of a function *without* it to finite output, so adding a function that
+emits NaN or Inf on ordinary input fails the suite until the flag — and the
+`## Notes` sentence explaining when — are written.
 
 `period1_identity` (issue #184) is the same shape of contract, for the promise
 that a period of 1 returns the input untouched. It has to be *declared* because

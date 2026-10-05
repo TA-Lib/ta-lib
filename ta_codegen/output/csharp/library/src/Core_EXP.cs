@@ -148,6 +148,9 @@ public partial class Core
    /// Formula and more info at
    /// <see href="https://ta-lib.org/functions/exp">ta-lib.org/functions/exp</see>.
    /// </para>
+   /// <list type="bullet">
+   /// <item><description>An input above about 709.78 has a result too large for a double, so those elements come out positive infinity.</description></item>
+   /// </list>
    /// <para>
    /// Values are written only where the indicator is defined. The returned
    /// <see cref="OutRange"/> says where they start and how many there are, and
@@ -216,6 +219,9 @@ public partial class Core
    /// Formula and more info at
    /// <see href="https://ta-lib.org/functions/exp">ta-lib.org/functions/exp</see>.
    /// </para>
+   /// <list type="bullet">
+   /// <item><description>An input above about 709.78 has a result too large for a double, so those elements come out positive infinity.</description></item>
+   /// </list>
    /// <para>
    /// This is the <c>float[]</c> overload: input elements are widened to
    /// <c>double</c> as they are read and all arithmetic is performed in

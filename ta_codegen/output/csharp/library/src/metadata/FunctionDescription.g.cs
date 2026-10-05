@@ -4552,6 +4552,7 @@ public static class FunctionDescription
 		<GroupId>Math Transform</GroupId>
 		<Flags>
 			<Flag>Streaming</Flag>
+			<Flag>Can Output NaN or +/-Inf</Flag>
 		</Flags>
 		<RequiredInputArguments>
 			<RequiredInputArgument>
@@ -5247,6 +5248,7 @@ public static class FunctionDescription
 		<GroupId>Math Transform</GroupId>
 		<Flags>
 			<Flag>Streaming</Flag>
+			<Flag>Can Output NaN or +/-Inf</Flag>
 		</Flags>
 		<RequiredInputArguments>
 			<RequiredInputArgument>
@@ -5386,6 +5388,9 @@ public static class FunctionDescription
 				<Name>outSwingHigh</Name>
 				<Flags>
 					<Flag>Line</Flag>
+					<Flag>Pattern Bool</Flag>
+					<Flag>Positive</Flag>
+					<Flag>Zero</Flag>
 					<Flag>Display Shift</Flag>
 				</Flags>
 			</OutputArgument>
@@ -5394,6 +5399,9 @@ public static class FunctionDescription
 				<Name>outSwingLow</Name>
 				<Flags>
 					<Flag>Line</Flag>
+					<Flag>Pattern Bool</Flag>
+					<Flag>Positive</Flag>
+					<Flag>Zero</Flag>
 					<Flag>Display Shift</Flag>
 				</Flags>
 			</OutputArgument>
@@ -9128,6 +9136,7 @@ public static class FunctionDescription
 		<GroupId>Math Transform</GroupId>
 		<Flags>
 			<Flag>Streaming</Flag>
+			<Flag>Can Output NaN or +/-Inf</Flag>
 		</Flags>
 		<RequiredInputArguments>
 			<RequiredInputArgument>

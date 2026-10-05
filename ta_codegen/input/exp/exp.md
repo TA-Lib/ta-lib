@@ -8,6 +8,10 @@ Element-wise base-e exponential of the input series.
 
 outReal[i] = exp(inReal[i]) = e^{inReal[i]}
 
+## Notes
+
+- An input above about 709.78 has a result too large for a double, so those elements come out positive infinity.
+
 ## Inputs
 
 - `inReal` — Input values

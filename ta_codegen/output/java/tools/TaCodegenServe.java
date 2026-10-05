@@ -86577,6 +86577,10 @@ class Core {
         * Element-wise hyperbolic cosine of the input series.
         * <p>Formula and more info at <a
         * href="https://ta-lib.org/functions/cosh">ta-lib.org/functions/cosh</a>.
+        * <p><b>Notes</b>
+        * <ul>
+        * <li>An input beyond about 710.47 in magnitude has a result too large for a double, so those elements come out positive infinity.</li>
+        * </ul>
         * <p>Values are written only where the indicator is defined. The returned
         * {@link OutRange} says where they start and how many there are, and the
         * library never pads with NaN. A valid range that ends before
@@ -86630,6 +86634,10 @@ class Core {
         * Element-wise hyperbolic cosine of the input series.
         * <p>Formula and more info at <a
         * href="https://ta-lib.org/functions/cosh">ta-lib.org/functions/cosh</a>.
+        * <p><b>Notes</b>
+        * <ul>
+        * <li>An input beyond about 710.47 in magnitude has a result too large for a double, so those elements come out positive infinity.</li>
+        * </ul>
         * <p>This is the {@code float[]} overload. The arithmetic is performed in
         * {@code double} before being written to the {@code double[]} output, so a
         * result beyond {@code float} range is still representable.
@@ -99141,6 +99149,10 @@ class Core {
         * Element-wise base-e exponential of the input series.
         * <p>Formula and more info at <a
         * href="https://ta-lib.org/functions/exp">ta-lib.org/functions/exp</a>.
+        * <p><b>Notes</b>
+        * <ul>
+        * <li>An input above about 709.78 has a result too large for a double, so those elements come out positive infinity.</li>
+        * </ul>
         * <p>Values are written only where the indicator is defined. The returned
         * {@link OutRange} says where they start and how many there are, and the
         * library never pads with NaN. A valid range that ends before
@@ -99193,6 +99205,10 @@ class Core {
         * Element-wise base-e exponential of the input series.
         * <p>Formula and more info at <a
         * href="https://ta-lib.org/functions/exp">ta-lib.org/functions/exp</a>.
+        * <p><b>Notes</b>
+        * <ul>
+        * <li>An input above about 709.78 has a result too large for a double, so those elements come out positive infinity.</li>
+        * </ul>
         * <p>This is the {@code float[]} overload. The arithmetic is performed in
         * {@code double} before being written to the {@code double[]} output, so a
         * result beyond {@code float} range is still representable.
@@ -181374,6 +181390,10 @@ class Core {
         * Element-wise hyperbolic sine of the input series.
         * <p>Formula and more info at <a
         * href="https://ta-lib.org/functions/sinh">ta-lib.org/functions/sinh</a>.
+        * <p><b>Notes</b>
+        * <ul>
+        * <li>An input beyond about 710.47 in magnitude has a result too large for a double, so those elements come out positive or negative infinity.</li>
+        * </ul>
         * <p>Values are written only where the indicator is defined. The returned
         * {@link OutRange} says where they start and how many there are, and the
         * library never pads with NaN. A valid range that ends before
@@ -181426,6 +181446,10 @@ class Core {
         * Element-wise hyperbolic sine of the input series.
         * <p>Formula and more info at <a
         * href="https://ta-lib.org/functions/sinh">ta-lib.org/functions/sinh</a>.
+        * <p><b>Notes</b>
+        * <ul>
+        * <li>An input beyond about 710.47 in magnitude has a result too large for a double, so those elements come out positive or negative infinity.</li>
+        * </ul>
         * <p>This is the {@code float[]} overload. The arithmetic is performed in
         * {@code double} before being written to the {@code double[]} output, so a
         * result beyond {@code float} range is still representable.
@@ -217424,7 +217448,7 @@ class Core {
 
 public class TaCodegenServe {
     static Core core = new Core();
-    static final String SPLICED_GENCODE_DIGEST = "59353347ddf02234";
+    static final String SPLICED_GENCODE_DIGEST = "9e6b8d4d8943b9b8";
     static final int MAX_ARRAY_SIZE = 200000;
     static double[] refOpen = new double[MAX_ARRAY_SIZE];
     static double[] refHigh = new double[MAX_ARRAY_SIZE];
@@ -217976,7 +218000,7 @@ public class TaCodegenServe {
             new AbsIn[]{ new AbsIn(1,"inReal",0) },
             new AbsOpt[]{  },
             new AbsOut[]{ new AbsOut(0,"outReal",1) }));
-        ABSTRACT.put("COSH", new AbsFunc("COSH", "Math Transform", "Vector Trigonometric Cosh", 33554432,
+        ABSTRACT.put("COSH", new AbsFunc("COSH", "Math Transform", "Vector Trigonometric Cosh", 1107296256,
             new AbsIn[]{ new AbsIn(1,"inReal",0) },
             new AbsOpt[]{  },
             new AbsOut[]{ new AbsOut(0,"outReal",1) }));
@@ -218036,7 +218060,7 @@ public class TaCodegenServe {
             new AbsIn[]{ new AbsIn(0,"inPriceHLC",14) },
             new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period","Number of bars in the EMA of close",13.0, 0,0,0,0,0,0, 1,100000,1,200,1, null) },
             new AbsOut[]{ new AbsOut(0,"outBullPower",1), new AbsOut(0,"outBearPower",1) }));
-        ABSTRACT.put("EXP", new AbsFunc("EXP", "Math Transform", "Vector Arithmetic Exp", 33554432,
+        ABSTRACT.put("EXP", new AbsFunc("EXP", "Math Transform", "Vector Arithmetic Exp", 1107296256,
             new AbsIn[]{ new AbsIn(1,"inReal",0) },
             new AbsOpt[]{  },
             new AbsOut[]{ new AbsOut(0,"outReal",1) }));
@@ -218051,7 +218075,7 @@ public class TaCodegenServe {
         ABSTRACT.put("FRACTAL", new AbsFunc("FRACTAL", "Momentum Indicators", "Williams Fractal", 33554434,
             new AbsIn[]{ new AbsIn(0,"inPriceHL",6) },
             new AbsOpt[]{ new AbsOpt(2,"optInLeftBars",0,"Left Bars","Number of bars required to be lower/higher before the pivot",2.0, 0,0,0,0,0,0, 1,100000,1,10,1, null), new AbsOpt(2,"optInRightBars",0,"Right Bars","Number of bars required to be lower/higher after the pivot",2.0, 0,0,0,0,0,0, 1,100000,1,10,1, null) },
-            new AbsOut[]{ new AbsOut(1,"outSwingHigh",16385), new AbsOut(1,"outSwingLow",16385) }));
+            new AbsOut[]{ new AbsOut(1,"outSwingHigh",17697), new AbsOut(1,"outSwingLow",17697) }));
         ABSTRACT.put("FRAMA", new AbsFunc("FRAMA", "Overlap Studies", "Fractal Adaptive Moving Average", 184549376,
             new AbsIn[]{ new AbsIn(0,"inPriceHL",6) },
             new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period","Number of bars, even; the window is split into two halves of optInTimePeriod/2 bars",16.0, 0,0,0,0,0,0, 2,100000,4,200,2, null) },
@@ -218344,7 +218368,7 @@ public class TaCodegenServe {
             new AbsIn[]{ new AbsIn(1,"inReal",0) },
             new AbsOpt[]{  },
             new AbsOut[]{ new AbsOut(0,"outReal",1) }));
-        ABSTRACT.put("SINH", new AbsFunc("SINH", "Math Transform", "Vector Trigonometric Sinh", 33554432,
+        ABSTRACT.put("SINH", new AbsFunc("SINH", "Math Transform", "Vector Trigonometric Sinh", 1107296256,
             new AbsIn[]{ new AbsIn(1,"inReal",0) },
             new AbsOpt[]{  },
             new AbsOut[]{ new AbsOut(0,"outReal",1) }));

@@ -4497,6 +4497,7 @@
 		<GroupId>Math Transform</GroupId>
 		<Flags>
 			<Flag>Streaming</Flag>
+			<Flag>Can Output NaN or +/-Inf</Flag>
 		</Flags>
 		<RequiredInputArguments>
 			<RequiredInputArgument>
@@ -5192,6 +5193,7 @@
 		<GroupId>Math Transform</GroupId>
 		<Flags>
 			<Flag>Streaming</Flag>
+			<Flag>Can Output NaN or +/-Inf</Flag>
 		</Flags>
 		<RequiredInputArguments>
 			<RequiredInputArgument>
@@ -5331,6 +5333,9 @@
 				<Name>outSwingHigh</Name>
 				<Flags>
 					<Flag>Line</Flag>
+					<Flag>Pattern Bool</Flag>
+					<Flag>Positive</Flag>
+					<Flag>Zero</Flag>
 					<Flag>Display Shift</Flag>
 				</Flags>
 			</OutputArgument>
@@ -5339,6 +5344,9 @@
 				<Name>outSwingLow</Name>
 				<Flags>
 					<Flag>Line</Flag>
+					<Flag>Pattern Bool</Flag>
+					<Flag>Positive</Flag>
+					<Flag>Zero</Flag>
 					<Flag>Display Shift</Flag>
 				</Flags>
 			</OutputArgument>
@@ -9073,6 +9081,7 @@
 		<GroupId>Math Transform</GroupId>
 		<Flags>
 			<Flag>Streaming</Flag>
+			<Flag>Can Output NaN or +/-Inf</Flag>
 		</Flags>
 		<RequiredInputArguments>
 			<RequiredInputArgument>

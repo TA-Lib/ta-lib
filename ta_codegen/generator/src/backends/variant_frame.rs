@@ -29,7 +29,7 @@ use std::path::Path;
 use super::write_if_changed;
 use crate::ir::{EnumDef, FuncDef, OptInput, ParamType, PriceComponent};
 
-const LICENSE: &str = "\
+pub(crate) const LICENSE: &str = "\
 /* TA-LIB Copyright (c) 1999-2026, Mario Fortier
  * All rights reserved.
  *

@@ -43,6 +43,7 @@ pub mod stmt_walk;
 pub mod stream_frame;
 pub mod ta_abstract_c;
 pub mod ta_defs;
+pub mod meta_frame;
 pub mod variant_frame;
 
 use crate::helper_registry::HelperRegistry;

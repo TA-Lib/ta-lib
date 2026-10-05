@@ -34,6 +34,24 @@ swingLow(i) = 100 if Low[c] < Low[j] for every j in [c-L, c+R] other than c, els
 - `outSwingHigh` — 100 when the bar `optInRightBars` back is a strict swing high, 0 otherwise
 - `outSwingLow` — 100 when the bar `optInRightBars` back is a strict swing low, 0 otherwise
 
+## Output Values
+
+How to read these values from the output's flags: [rW8](/spec/inputs-outputs/#rw8).
+
+### `outSwingHigh`
+
+| Value | Meaning |
+|-------|---------|
+| 0 | The bar `optInRightBars` back is not a swing high |
+| 100 | The bar `optInRightBars` back is a strict swing high |
+
+### `outSwingLow`
+
+| Value | Meaning |
+|-------|---------|
+| 0 | The bar `optInRightBars` back is not a swing low |
+| 100 | The bar `optInRightBars` back is a strict swing low |
+
 ## Parameters
 
 | Parameter | Type | Default | Accepted values | Description |

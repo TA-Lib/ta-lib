@@ -157,10 +157,10 @@ static const TA_OptInputParameterInfo TA_DEF_UI_D_FRACTAL_RightBars =
 };
 
 const TA_OutputParameterInfo TA_DEF_UI_Output_Integer_FRACTAL_outSwingHigh =
-                               { TA_Output_Integer, "outSwingHigh", TA_OUT_LINE | TA_OUT_DISPLAY_SHIFT };
+                               { TA_Output_Integer, "outSwingHigh", TA_OUT_LINE | TA_OUT_DISPLAY_SHIFT | TA_OUT_PATTERN_BOOL | TA_OUT_ZERO | TA_OUT_POSITIVE };
 
 const TA_OutputParameterInfo TA_DEF_UI_Output_Integer_FRACTAL_outSwingLow =
-                               { TA_Output_Integer, "outSwingLow", TA_OUT_LINE | TA_OUT_DISPLAY_SHIFT };
+                               { TA_Output_Integer, "outSwingLow", TA_OUT_LINE | TA_OUT_DISPLAY_SHIFT | TA_OUT_PATTERN_BOOL | TA_OUT_ZERO | TA_OUT_POSITIVE };
 
 static const TA_InputParameterInfo    *TA_FRACTAL_Inputs[]    =
 {

@@ -427,7 +427,7 @@ static const TA_OptInputParameterInfo *TA_SINH_OptInputs[] =
 DEF_FUNCTION( SINH,
               TA_GroupId_MathTransform,
               "Vector Trigonometric Sinh",
-              TA_FUNC_FLG_STREAM
+              TA_FUNC_FLG_STREAM | TA_FUNC_FLG_NAN_INF_OUT
              );
 /* SINH END */
 

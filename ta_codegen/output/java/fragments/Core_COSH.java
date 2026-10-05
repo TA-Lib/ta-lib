@@ -90,6 +90,10 @@
     * Element-wise hyperbolic cosine of the input series.
     * <p>Formula and more info at <a
     * href="https://ta-lib.org/functions/cosh">ta-lib.org/functions/cosh</a>.
+    * <p><b>Notes</b>
+    * <ul>
+    * <li>An input beyond about 710.47 in magnitude has a result too large for a double, so those elements come out positive infinity.</li>
+    * </ul>
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are, and the
     * library never pads with NaN. A valid range that ends before
@@ -143,6 +147,10 @@
     * Element-wise hyperbolic cosine of the input series.
     * <p>Formula and more info at <a
     * href="https://ta-lib.org/functions/cosh">ta-lib.org/functions/cosh</a>.
+    * <p><b>Notes</b>
+    * <ul>
+    * <li>An input beyond about 710.47 in magnitude has a result too large for a double, so those elements come out positive infinity.</li>
+    * </ul>
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a
     * result beyond {@code float} range is still representable.

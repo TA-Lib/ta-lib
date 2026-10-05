@@ -592,6 +592,11 @@ typedef enum
   /* A call that was rejected wrote *outBegIdx or *outNBElement. */
   TA_REJECTED_CALL_WROTE_RANGE       = 1710,
 
+  /* The metadata ride: a call's output against its function's metadata. */
+  TA_META_RIDE_MISMATCH              = 1711,
+  TA_META_RIDE_VACUOUS               = 1712,
+  TA_META_RIDE_UNREACHED             = 1713,
+
   /* Error code related to bug fix documentented on SourceForge. */
   TA_TEST_FAIL_BUG1359452_1  = 2000,
   TA_TEST_FAIL_BUG1359452_2  = 2001,

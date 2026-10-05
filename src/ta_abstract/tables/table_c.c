@@ -2073,7 +2073,7 @@ static const TA_OptInputParameterInfo *TA_COSH_OptInputs[] =
 DEF_FUNCTION( COSH,
               TA_GroupId_MathTransform,
               "Vector Trigonometric Cosh",
-              TA_FUNC_FLG_STREAM
+              TA_FUNC_FLG_STREAM | TA_FUNC_FLG_NAN_INF_OUT
              );
 /* COSH END */
 

@@ -301,10 +301,10 @@ impl Core {
     /// )?;
     /// assert!(out_range.count > 0);
     /// assert_eq!(out_range.beg_idx + out_range.count, high.len());
-    /// // the swing-high flag is 0 or 100; an outside bar carries 100 on both
-    /// assert!(swing_high[..out_range.count].iter().all(|&v| v == 0 || v == 100));
-    /// // the swing-low flag is 0 or 100; an outside bar carries 100 on both
-    /// assert!(swing_low[..out_range.count].iter().all(|&v| v == 0 || v == 100));
+    /// // a pattern output writes only the values its flags declare
+    /// assert!(swing_high[..out_range.count].iter().all(|v| [0, 100].contains(v)));
+    /// // a pattern output writes only the values its flags declare
+    /// assert!(swing_low[..out_range.count].iter().all(|v| [0, 100].contains(v)));
     /// # Ok::<(), ta_lib::RetCode>(())
     /// ```
     ///

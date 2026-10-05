@@ -1,7 +1,7 @@
 name: COSH
 group: Math Transform
 hint: Vector Trigonometric Cosh
-flags: [stream]
+flags: [stream, nan_inf_output]
 inputs:
   - name: inReal
     type: real

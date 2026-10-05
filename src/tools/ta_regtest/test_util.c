@@ -67,6 +67,7 @@
 #include "ta_test_priv.h"
 #include "ta_utility.h"
 #include "ta_memory.h"
+#include "meta_ride.h"
 
 
 /**** External functions declarations. ****/
@@ -185,6 +186,7 @@ ErrorNumber allocLib()
 
 static long rejectedJudged;
 static long rejectedWroteRange;
+static long rideMismatchesReported;
 
 ErrorNumber freeLib()
 {
@@ -198,6 +200,14 @@ ErrorNumber freeLib()
    {
       printf( "TA_Shutdown failed [%d]\n", retCode );
       return TA_TESTUTIL_SHUTDOWN_FAILED;
+   }
+
+   if( meta_ride_mismatches() > rideMismatchesReported )
+   {
+      printf( "Failed: %ld call(s) contradicted their function's metadata\n",
+              meta_ride_mismatches() - rideMismatchesReported );
+      rideMismatchesReported = meta_ride_mismatches();
+      return TA_META_RIDE_MISMATCH;
    }
 
    if( rejectedWroteRange > 0 )
@@ -220,7 +230,7 @@ TA_RetCode regtest_guarded_call( const TA_ParamHolder *params,
    TA_Integer keptBeg, keptNb;
    TA_RetCode retCode;
 
-   if( !outBegIdx || !outNbElement )
+   if( !outBegIdx || !outNbElement || !params )
       return TA_CallFunc( params, startIdx, endIdx, outBegIdx, outNbElement );
 
    keptBeg = *outBegIdx;
@@ -229,7 +239,10 @@ TA_RetCode regtest_guarded_call( const TA_ParamHolder *params,
    retCode = TA_CallFunc( params, startIdx, endIdx, outBegIdx, outNbElement );
 
    if( retCode == TA_SUCCESS )
+   {
+      meta_ride_call( params, startIdx, endIdx, *outBegIdx, *outNbElement );
       return retCode;
+   }
 
    /* Nothing is held after an allocation failure or an internal error. */
    if( retCode != TA_ALLOC_ERR && !( (int)retCode >= 5000 && (int)retCode <= 5999 ) )

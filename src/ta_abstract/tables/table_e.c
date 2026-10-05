@@ -279,7 +279,7 @@ static const TA_OptInputParameterInfo *TA_EXP_OptInputs[] =
 DEF_FUNCTION( EXP,
               TA_GroupId_MathTransform,
               "Vector Arithmetic Exp",
-              TA_FUNC_FLG_STREAM
+              TA_FUNC_FLG_STREAM | TA_FUNC_FLG_NAN_INF_OUT
              );
 /* EXP END */
 

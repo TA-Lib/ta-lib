@@ -2983,40 +2983,6 @@ static ErrorNumber callWithDefaults( const char *funcName, const double *input, 
       }
    }
 
-   /* A successful call writes finite values -- unless the function declares
-    * TA_FUNC_FLG_NAN_INF_OUT, whose own domain has holes. Those are exempt;
-    * every other function is held to finite output on all five datasets, which
-    * is what makes the flag a contract rather than a docs annotation
-    * (issue #191).
-    *
-    * Placed HERE, against the call above, and not further down: the server
-    * verification and d2_param_vectors both re-issue TA_CallFunc into these
-    * same output buffers, so anywhere after them this would be reading another
-    * vector's output against this call's outNbElement.
-    *
-    * The datasets stay well inside double's range, so this cannot fire on the
-    * overflow class (non-finite only past ~1e160 of input) that is deliberately
-    * unflagged.
-    */
-   if( !(funcInfo->flags & TA_FUNC_FLG_NAN_INF_OUT) )
-   {
-      for( i=0; i < funcInfo->nbOutput; i++ )
-      {
-         TA_GetOutputParameterInfo( handle, i, &outputInfo );
-         if( outputInfo->type != TA_Output_Real )
-            continue;
-         for( j=0; j < outNbElement; j++ )
-         {
-            if( !isfinite(output[i][j]) )
-            {
-               printf( "Failed: non-finite output[%d][%d] = %e\n", i, j, output[i][j] );
-               TA_ParamHolderFree( paramHolder );
-               return TA_ABS_TST_FAIL_INVALID_OUTPUT;
-            }
-         }
-      }
-   }
-
    /* If server is connected, verify TA_GetLookback independently. */
    if( g_abstractPipe )
    {
