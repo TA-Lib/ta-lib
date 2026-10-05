@@ -232,10 +232,10 @@ there is no list of function names and none may be added.
 
 | check | fails when |
 |---|---|
-| finite | a real output is NaN or ±Inf, the function lacks `TA_FUNC_FLG_NAN_INF_OUT`, and every input bar the call could read is finite and at most `1e100` in magnitude |
+| finite | a real output is NaN or ±Inf, the function lacks `TA_FUNC_FLG_NAN_INF_OUT`, and every input bar the call could read is finite and at most `1e75` in magnitude. A call computed in place is not judged: its inputs are gone |
 | display shift | an output's shift for the call's parameters is non-zero without `TA_OUT_DISPLAY_SHIFT` |
-| pattern values | a `TA_OUT_PATTERN_BOOL` / `_BULL_BEAR` integer output writes a value its flags do not declare (rule rW8) |
-| signs | any other output declaring a sign flag writes a value of an undeclared sign |
+| pattern values | a pattern output of rule rW8 writes a value its flags do not declare |
+| signs | any other output declaring a sign flag writes a value of an undeclared sign. No shipped output is one, so this arm has no counter |
 | range | `outBegIdx` / `outNBElement` are not `max(startIdx, lookback)` to `endIdx`, or not `0, 0` when nothing fits |
 
 A mismatch prints a `META RIDE [TA_<N>]` line where it happens and fails the

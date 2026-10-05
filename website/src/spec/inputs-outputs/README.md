@@ -42,7 +42,7 @@ An MA-type parameter accepts every `MAType` member, and a release may add member
 
 <a id="rw4"></a>**rW4** What an integer output holds:
 
-- **Pattern outputs** (every `CDL*` output): [rW8](/spec/inputs-outputs/#rw8).
+- **Pattern outputs** (every `CDL*` output, among others): [rW8](/spec/inputs-outputs/#rw8).
 - **Index outputs** ([MININDEX](/functions/minindex), [MAXINDEX](/functions/maxindex), [MINMAXINDEX](/functions/minmaxindex)): the position of a bar in the input passed, not relative to `startIdx` or `begIdx`. Which of several tied bars it names is unspecified.
 - **Other integer outputs** (for example [HT_TRENDMODE](/functions/ht_trendmode)): as their function page says.
 

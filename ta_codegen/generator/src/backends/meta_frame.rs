@@ -2,10 +2,10 @@
 //! `TA_<N>` / `TA_S_<N>` that hands each successful call to `ta_regtest`'s
 //! metadata ride (`meta_ride.c`), then renames the function to its wrapper.
 //!
-//! The rename is an object-like macro, so a function pointer and a `TA_##x`
-//! paste are wrapped like a plain call. The bodies are emitted once, under
-//! `TA_META_FRAME_IMPL`, with external linkage: a `static` copy per translation
-//! unit would give one function a different address in each.
+//! Keep the rename an object-like macro, so a function pointer and a `TA_##x`
+//! paste are wrapped like a plain call, and keep the bodies in one translation
+//! unit with external linkage: a function's address must be the same in every
+//! unit that compares it.
 
 use std::fmt::Write as _;
 use std::path::Path;
@@ -51,7 +51,7 @@ fn signature(func: &FuncDef, callee: &str, elem: &str) -> String {
 fn emit_body(o: &mut String, func: &FuncDef, idx: usize, callee: &str, elem: &str) {
     let inputs: Vec<String> = flat_inputs(func).into_iter().map(|(_, n)| n).collect();
     let opts: Vec<String> = func.optional_inputs.iter().map(|opt| opt.name.clone()).collect();
-    let outs: Vec<String> = func.outputs.iter().map(|out| out.name.clone()).collect();
+    let out_names: Vec<String> = func.outputs.iter().map(|out| out.name.clone()).collect();
     let name = &func.name;
 
     let mut args: Vec<String> = vec!["startIdx".into(), "endIdx".into()];
@@ -59,7 +59,7 @@ fn emit_body(o: &mut String, func: &FuncDef, idx: usize, callee: &str, elem: &st
     args.extend(opts.iter().cloned());
     args.push("outBegIdx".into());
     args.push("outNBElement".into());
-    args.extend(outs.iter().cloned());
+    args.extend(out_names.iter().cloned());
 
     let opt_args = |tail: &str| {
         let mut a = opts.clone();
@@ -68,7 +68,7 @@ fn emit_body(o: &mut String, func: &FuncDef, idx: usize, callee: &str, elem: &st
         }
         a.join(", ")
     };
-    let shifts: Vec<String> = (0..outs.len())
+    let shifts: Vec<String> = (0..out_names.len())
         .map(|i| format!("TA_{name}_DisplayShift( {} )", opt_args(&i.to_string())))
         .collect();
 
@@ -90,7 +90,7 @@ fn emit_body(o: &mut String, func: &FuncDef, idx: usize, callee: &str, elem: &st
         signature(func, callee, elem),
         args.join(", "),
         inputs.join(", "),
-        outs.join(", "),
+        out_names.join(", "),
         shifts.join(", "),
         i32::from(elem == "float"),
         inputs.len(),

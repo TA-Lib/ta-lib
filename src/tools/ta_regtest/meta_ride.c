@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <string.h>
 #include <math.h>
 
 #include "ta_libc.h"
@@ -25,21 +26,23 @@
 #define C_P200      0x100u
 #define C_N200      0x200u
 #define C_OTHER     0x400u
+#define C_NONE      0x800u /* declared by a pattern output with no value flag */
 
 #define PATTERN_FLAGS (TA_OUT_PATTERN_BOOL | TA_OUT_PATTERN_BULL_BEAR)
 #define SIGN_FLAGS    (TA_OUT_POSITIVE | TA_OUT_NEGATIVE | TA_OUT_ZERO)
 
-/* Above this an intermediate product of three inputs overflows, which
- * TA_FUNC_FLG_NAN_INF_OUT does not describe. */
-#define ORDINARY_MAX 1e100
+/* A product of four inputs this large is still finite. Past it a non-finite
+ * output is overflow, which TA_FUNC_FLG_NAN_INF_OUT does not describe. */
+#define ORDINARY_MAX 1e75
 
 typedef struct
 {
    const TA_FuncInfo *info;
    const TA_OutputParameterInfo *out[MAX_OUT];
+   int pattern[MAX_OUT];           /* a pattern output of rule rW8 */
    unsigned int declared[MAX_OUT]; /* 0: the output declares no value or sign */
    unsigned int seen[MAX_OUT];
-   long calls;
+   unsigned long long calls;
 } Site;
 
 static Site sites[TA_META_FRAME_SIZE];
@@ -47,10 +50,10 @@ static int  resolved;
 static long mismatches;
 
 /* Per check: what it judged, and how often the case its flag permits occurred. */
-static long finiteJudged, nonFiniteFlagged, nonFiniteExcused;
-static long shiftJudged, shiftFlaggedNonZero;
-static long patternJudged, signJudged;
-static long rangeJudged, rangeEmpty;
+static unsigned long long finiteJudged, nonFiniteFlagged, nonFiniteExcused;
+static unsigned long long shiftJudged, shiftFlaggedNonZero;
+static unsigned long long patternJudged;
+static unsigned long long rangeJudged, rangeEmpty;
 
 static int report( const Site *s )
 {
@@ -60,14 +63,23 @@ static int report( const Site *s )
    return 1;
 }
 
-static unsigned int declared_classes( const TA_OutputParameterInfo *o )
+static int is_pattern( const TA_FuncInfo *func, const TA_OutputParameterInfo *o )
+{
+   if( o->type != TA_Output_Integer )
+      return 0;
+   return (o->flags & PATTERN_FLAGS) ||
+          ((func->flags & TA_FUNC_FLG_CANDLESTICK) &&
+           (o->flags & SIGN_FLAGS) == SIGN_FLAGS);
+}
+
+static unsigned int declared_classes( const TA_OutputParameterInfo *o, int pattern )
 {
    unsigned int c = 0;
    int f = o->flags;
 
    if( f & TA_OUT_ZERO )
       c |= C_ZERO;
-   if( o->type == TA_Output_Integer && (f & PATTERN_FLAGS) )
+   if( pattern )
    {
       if( f & TA_OUT_POSITIVE )
          c |= C_P100 | ((f & TA_OUT_PATTERN_WEAK) ? C_P80 : 0)
@@ -75,8 +87,7 @@ static unsigned int declared_classes( const TA_OutputParameterInfo *o )
       if( f & TA_OUT_NEGATIVE )
          c |= C_N100 | ((f & TA_OUT_PATTERN_WEAK) ? C_N80 : 0)
                      | ((f & TA_OUT_PATTERN_CONFIRM) ? C_N200 : 0);
-      /* A pattern output declares its values even with no sign flag. */
-      return c ? c : C_OTHER;
+      return c ? c : C_NONE;
    }
    if( f & TA_OUT_POSITIVE ) c |= C_POS;
    if( f & TA_OUT_NEGATIVE ) c |= C_NEG;
@@ -105,7 +116,8 @@ static void resolve( void )
       for( o = 0; o < s->info->nbOutput; o++ )
       {
          TA_GetOutputParameterInfo( handle, o, &s->out[o] );
-         s->declared[o] = declared_classes( s->out[o] );
+         s->pattern[o] = is_pattern( s->info, s->out[o] );
+         s->declared[o] = declared_classes( s->out[o], s->pattern[o] );
       }
    }
    resolved = 1;
@@ -125,6 +137,21 @@ static unsigned int real_classes( const double *v, int nb )
       if( x - x != 0.0 )  c |= C_NONFINITE;
    }
    return c;
+}
+
+/* The exponent field is all ones exactly when adding one to it carries into
+ * the sign bit, so the loop is three integer operations and vectorizes. */
+static int any_non_finite( const double *v, int nb )
+{
+   unsigned long long acc = 0, bits;
+   int i;
+
+   for( i = 0; i < nb; i++ )
+   {
+      memcpy( &bits, &v[i], sizeof(bits) );
+      acc |= (bits & 0x7FF0000000000000ULL) + 0x0010000000000000ULL;
+   }
+   return (int)(acc >> 63);
 }
 
 static unsigned int int_class( int x, int pattern )
@@ -192,16 +219,20 @@ void meta_ride_check( int site, int single, int startIdx, int endIdx,
                  "outNBElement %d; nothing fits\n",
                  startIdx, endIdx, lookback, outBegIdx, nb );
    }
-   else if( (outBegIdx != first || nb != endIdx - first + 1) && report( s ) )
-      printf( "range (%d, %d) with lookback %d answered outBegIdx %d, "
-              "outNBElement %d; expected %d, %d\n",
-              startIdx, endIdx, lookback, outBegIdx, nb, first, endIdx - first + 1 );
+   else if( outBegIdx != first || nb != endIdx - first + 1 )
+   {
+      if( report( s ) )
+         printf( "range (%d, %d) with lookback %d answered outBegIdx %d, "
+                 "outNBElement %d; expected %d, %d\n",
+                 startIdx, endIdx, lookback, outBegIdx, nb, first, endIdx - first + 1 );
+      return;
+   }
 
    for( o = 0; o < s->info->nbOutput; o++ )
    {
       const TA_OutputParameterInfo *info = s->out[o];
       int isInt = info->type == TA_Output_Integer;
-      int pattern = isInt && (info->flags & PATTERN_FLAGS);
+      int pattern = s->pattern[o];
       unsigned int declared = s->declared[o];
       unsigned int c = 0, bad;
 
@@ -215,14 +246,16 @@ void meta_ride_check( int site, int single, int startIdx, int endIdx,
                     info->paramName, shift[o] );
       }
 
-      if( !out[o] || nb <= 0 )
+      if( !out[o] || nb <= 0 || (isInt && !declared) )
          continue;
 
       if( isInt )
          for( i = 0; i < nb; i++ )
             c |= int_class( ((const int *)out[o])[i], pattern );
-      else
+      else if( declared )
          c = real_classes( (const double *)out[o], nb );
+      else if( any_non_finite( (const double *)out[o], nb ) )
+         c = C_NONFINITE;
       s->seen[o] |= c;
 
       if( !isInt )
@@ -235,7 +268,15 @@ void meta_ride_check( int site, int single, int startIdx, int endIdx,
             if( c & C_NONFINITE )
             {
                int from = outBegIdx - lookback;
-               if( !inputs_ordinary( single, in, nbIn, from > 0 ? from : 0, endIdx ) )
+               int inPlace = 0, k;
+               unsigned int oo;
+
+               /* Computed in place, the inputs are gone and nothing is judged. */
+               for( k = 0; k < nbIn; k++ )
+                  for( oo = 0; oo < s->info->nbOutput; oo++ )
+                     inPlace |= in[k] && in[k] == out[oo];
+               if( inPlace ||
+                   !inputs_ordinary( single, in, nbIn, from > 0 ? from : 0, endIdx ) )
                   nonFiniteExcused++;
                else if( report( s ) )
                {
@@ -251,8 +292,8 @@ void meta_ride_check( int site, int single, int startIdx, int endIdx,
 
       if( !declared )
          continue;
-      if( pattern ) patternJudged += nb;
-      else          signJudged += nb;
+      if( pattern )
+         patternJudged += nb;
 
       bad = c & ~declared & ~C_NONFINITE;
       if( !bad )
@@ -356,14 +397,13 @@ static const char *class_name( unsigned int c )
 
 ErrorNumber meta_ride_whole_run( void )
 {
-   const struct { const char *what; long count; } floors[] = {
+   const struct { const char *what; unsigned long long count; } floors[] = {
       { "real output values held finite", finiteJudged },
       { "non-finite outputs of a TA_FUNC_FLG_NAN_INF_OUT function", nonFiniteFlagged },
       { "non-finite outputs excused by their inputs", nonFiniteExcused },
       { "display shifts", shiftJudged },
       { "non-zero display shifts of a TA_OUT_DISPLAY_SHIFT output", shiftFlaggedNonZero },
       { "pattern output values", patternJudged },
-      { "sign-declared output values", signJudged },
       { "output ranges", rangeJudged },
       { "ranges too short for the lookback", rangeEmpty },
    };
@@ -375,7 +415,7 @@ ErrorNumber meta_ride_whole_run( void )
       resolve();
 
    for( k = 0; k < sizeof(floors) / sizeof(floors[0]); k++ )
-      if( floors[k].count <= 0 )
+      if( floors[k].count == 0 )
       {
          printf( "\nMETA RIDE: the suite produced no %s\n", floors[k].what );
          retValue = TA_META_RIDE_VACUOUS;
