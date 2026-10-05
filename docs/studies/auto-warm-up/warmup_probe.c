@@ -149,7 +149,10 @@ static TA_RetCode run(const TA_FuncInfo *fi, const Cfg *cfg, int D, Res *res, ch
          if( v < rg->min ) v = rg->min;
          rc = TA_SetOptInputParamInteger(ph, i, (TA_Integer)v);
          if( rc != TA_SUCCESS ) { TA_ParamHolderFree(ph); return rc; }
-         used += (size_t)snprintf(desc+used, descsz-used, "%s%s=%ld", used ? "," : "", oi->paramName+5, v);
+         {
+            int w = snprintf(desc+used, descsz-used, "%s%s=%ld", used ? "," : "", oi->paramName+5, v);
+            if( w > 0 ) used = ((size_t)w < descsz-used) ? used+(size_t)w : descsz-1;
+         }
          applied++;
       }
       else if( cfg->kind == 2 && oi->type == TA_OptInput_IntegerList && strstr(oi->paramName, "MAType") )
