@@ -9099,6 +9099,52 @@ static TA_RetCode TA_WAD_SFrameClose( void *stream )
    return TA_WAD_Close( (TA_WAD_Stream *)stream );
 }
 
+static TA_RetCode TA_WAVETREND_SFrameOpen( void **stream,
+                  const double *const in[], int historyLen,
+                  const double optIn[],
+                  double *const outReal[], int *const outInteger[] )
+{
+   (void)outInteger;
+   return TA_WAVETREND_Open(
+               (TA_WAVETREND_Stream **)stream,
+               in[0] /* inHigh */,
+               in[1] /* inLow */,
+               in[2] /* inClose */,
+               historyLen,
+               (int)optIn[0] /* optInChannelPeriod */,
+               (int)optIn[1] /* optInAveragePeriod */,
+               (int)optIn[2] /* optInSignalPeriod */,
+               outReal[0] /* outWT1 */,
+               outReal[1] /* outWT2 */
+               );
+}
+static TA_RetCode TA_WAVETREND_SFrameFill( void **stream,
+                  const double *const in[], int historyLen,
+                  const double optIn[],
+                  int *outBegIdx, int *outNBElement,
+                  double *const outReal[], int *const outInteger[] )
+{
+   (void)outInteger;
+   return TA_WAVETREND_OpenAndFill(
+               (TA_WAVETREND_Stream **)stream,
+               in[0] /* inHigh */,
+               in[1] /* inLow */,
+               in[2] /* inClose */,
+               historyLen,
+               (int)optIn[0] /* optInChannelPeriod */,
+               (int)optIn[1] /* optInAveragePeriod */,
+               (int)optIn[2] /* optInSignalPeriod */,
+               outBegIdx,
+               outNBElement,
+               outReal[0] /* outWT1 */,
+               outReal[1] /* outWT2 */
+               );
+}
+static TA_RetCode TA_WAVETREND_SFrameClose( void *stream )
+{
+   return TA_WAVETREND_Close( (TA_WAVETREND_Stream *)stream );
+}
+
 static TA_RetCode TA_WCLPRICE_SFrameOpen( void **stream,
                   const double *const in[], int historyLen,
                   const double optIn[],
@@ -9704,6 +9750,8 @@ static const TA_StreamEntry TA_StreamTable[] = {
      2, TA_VIn_VWMA, 1, TA_VOpt_VWMA, 1, TA_VOutIsInt_VWMA },
    { "WAD", TA_WAD_SFrameOpen, TA_WAD_SFrameFill, TA_WAD_SFrameClose,
      3, TA_VIn_WAD, 0, NULL, 1, TA_VOutIsInt_WAD },
+   { "WAVETREND", TA_WAVETREND_SFrameOpen, TA_WAVETREND_SFrameFill, TA_WAVETREND_SFrameClose,
+     3, TA_VIn_WAVETREND, 3, TA_VOpt_WAVETREND, 2, TA_VOutIsInt_WAVETREND },
    { "WCLPRICE", TA_WCLPRICE_SFrameOpen, TA_WCLPRICE_SFrameFill, TA_WCLPRICE_SFrameClose,
      3, TA_VIn_WCLPRICE, 0, NULL, 1, TA_VOutIsInt_WCLPRICE },
    { "WILLR", TA_WILLR_SFrameOpen, TA_WILLR_SFrameFill, TA_WILLR_SFrameClose,
@@ -9714,6 +9762,6 @@ static const TA_StreamEntry TA_StreamTable[] = {
      1, TA_VIn_ZLEMA, 1, TA_VOpt_ZLEMA, 1, TA_VOutIsInt_ZLEMA },
 };
 
-#define TA_STREAM_TABLE_SIZE 230
+#define TA_STREAM_TABLE_SIZE 231
 
 #endif /* TA_STREAM_FRAME_H */

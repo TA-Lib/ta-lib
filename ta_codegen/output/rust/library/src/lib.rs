@@ -178,7 +178,7 @@
 //! * [`TAN`](Core::tan) — Vector Trigonometric Tan
 //! * [`TANH`](Core::tanh) — Vector Trigonometric Tanh
 //!
-//! ## Momentum Indicators (59)
+//! ## Momentum Indicators (60)
 //!
 //! * [`AC`](Core::ac) — Accelerator/Decelerator Oscillator
 //! * [`ADX`](Core::adx) — Average Directional Movement Index
@@ -238,6 +238,7 @@
 //! * [`VHF`](Core::vhf) — Vertical Horizontal Filter
 //! * [`VORTEX`](Core::vortex) — Vortex Indicator
 //! * [`WAD`](Core::wad) — Williams' Accumulation/Distribution
+//! * [`WAVETREND`](Core::wavetrend) — WaveTrend Oscillator
 //! * [`WILLR`](Core::willr) — Williams' %R
 //!
 //! ## Overlap Studies (32)

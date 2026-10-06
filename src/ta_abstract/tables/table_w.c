@@ -61,6 +61,100 @@ DEF_FUNCTION( WAD,
              );
 /* WAD END */
 
+/* WAVETREND BEGIN */
+static const TA_IntegerRange TA_DEF_WAVETREND_ChannelPeriod =
+{
+   2,
+   100000,
+   2,
+   200,
+   1
+};
+
+static const TA_OptInputParameterInfo TA_DEF_UI_D_WAVETREND_ChannelPeriod =
+{
+   TA_OptInput_IntegerRange,
+   "optInChannelPeriod",
+   0,
+
+   "Channel Period",
+   (const void *)&TA_DEF_WAVETREND_ChannelPeriod,
+   10,
+   "Period of the price channel, used by both the average and the deviation",
+
+   NULL
+};
+
+static const TA_OptInputParameterInfo TA_DEF_UI_D_WAVETREND_AveragePeriod =
+{
+   TA_OptInput_IntegerRange,
+   "optInAveragePeriod",
+   0,
+
+   "Average Period",
+   (const void *)&TA_DEF_TimePeriod_Positive,
+   21,
+   "Smoothing for the oscillator line",
+
+   NULL
+};
+
+static const TA_IntegerRange TA_DEF_WAVETREND_SignalPeriod =
+{
+   1,
+   100000,
+   1,
+   50,
+   1
+};
+
+static const TA_OptInputParameterInfo TA_DEF_UI_D_WAVETREND_SignalPeriod =
+{
+   TA_OptInput_IntegerRange,
+   "optInSignalPeriod",
+   0,
+
+   "Signal Period",
+   (const void *)&TA_DEF_WAVETREND_SignalPeriod,
+   4,
+   "Simple average of the oscillator line, making the signal line",
+
+   NULL
+};
+
+const TA_OutputParameterInfo TA_DEF_UI_Output_Real_WAVETREND_outWT1 =
+                               { TA_Output_Real, "outWT1", TA_OUT_LINE };
+
+const TA_OutputParameterInfo TA_DEF_UI_Output_Real_WAVETREND_outWT2 =
+                               { TA_Output_Real, "outWT2", TA_OUT_DASH_LINE };
+
+static const TA_InputParameterInfo    *TA_WAVETREND_Inputs[]    =
+{
+  &TA_DEF_UI_Input_Price_HLC,
+  NULL
+};
+
+static const TA_OutputParameterInfo   *TA_WAVETREND_Outputs[]   =
+{
+  &TA_DEF_UI_Output_Real_WAVETREND_outWT1,
+  &TA_DEF_UI_Output_Real_WAVETREND_outWT2,
+  NULL
+};
+
+static const TA_OptInputParameterInfo *TA_WAVETREND_OptInputs[] =
+{ &TA_DEF_UI_D_WAVETREND_ChannelPeriod,
+  &TA_DEF_UI_D_WAVETREND_AveragePeriod,
+  &TA_DEF_UI_D_WAVETREND_SignalPeriod,
+  NULL
+};
+
+DEF_FUNCTION( WAVETREND,
+              TA_GroupId_MomentumIndicators,
+              "WaveTrend Oscillator",
+              TA_FUNC_FLG_STREAM
+             );
+/* WAVETREND END */
+
 /* WCLPRICE BEGIN */
 static const TA_InputParameterInfo    *TA_WCLPRICE_Inputs[]    =
 {
@@ -141,6 +235,7 @@ DEF_FUNCTION( WMA,
 const TA_FuncDef *TA_DEF_TableW[] =
 {
    ADD_TO_TABLE(WAD),
+   ADD_TO_TABLE(WAVETREND),
    ADD_TO_TABLE(WCLPRICE),
    ADD_TO_TABLE(WILLR),
    ADD_TO_TABLE(WMA),

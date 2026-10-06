@@ -72,6 +72,7 @@ const INHERITED: &[(&str, &str)] = &[
     ("TEMA", "EMA"),
     ("TRIX", "EMA"),
     ("TSI", "EMA"),
+    ("WAVETREND", "EMA"),
     ("ZLEMA", "EMA"),
 ];
 

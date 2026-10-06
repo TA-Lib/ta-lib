@@ -2533,6 +2533,17 @@ unsigned int TA_WAD_FramePPLB( const TA_ParamHolderPriv *params )
 int TA_WAD_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
 ;
 
+TA_RetCode TA_WAVETREND_FramePP( const TA_ParamHolderPriv *params,
+                           int            startIdx,
+                           int            endIdx,
+                           int           *outBegIdx,
+                           int           *outNBElement )
+;
+unsigned int TA_WAVETREND_FramePPLB( const TA_ParamHolderPriv *params )
+;
+int TA_WAVETREND_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+;
+
 TA_RetCode TA_WCLPRICE_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
                            int            endIdx,
