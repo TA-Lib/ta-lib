@@ -354,15 +354,24 @@ fn walk_expr(expr: &Expr, out: &mut BTreeSet<String>) {
 /// one place; a second site that disagrees with the lookback reads bars the lookback
 /// did not reserve, with no error. `funcs` must be the whole corpus: the check that every
 /// live id has a reader is wrong over a subset.
-pub fn validate_unstable_reads(
+pub fn validate_unstable_reads<S: std::hash::BuildHasher>(
     funcs: &[FuncDef],
     helpers: &crate::helper_registry::HelperRegistry,
-    enums: &HashMap<String, crate::ir::EnumDef>,
+    enums: &HashMap<String, crate::ir::EnumDef, S>,
 ) -> Result<(), Vec<String>> {
     // Counted in the IR's debug text, not with a walker: a walker that skips one
     // statement kind would pass a read placed there.
     fn count<T: std::fmt::Debug>(tree: &T) -> usize {
         format!("{tree:?}").matches("FuncCall(\"UNSTABLE_PERIOD\"").count()
+    }
+    fn in_returns(stmts: &[Statement], count: &dyn Fn(&Statement) -> usize) -> usize {
+        stmts
+            .iter()
+            .map(|s| match s {
+                Statement::Return { .. } => count(s),
+                _ => crate::streaming::nested_bodies(s).0.into_iter().map(|b| in_returns(b, count)).sum(),
+            })
+            .sum()
     }
     fn ids(e: &Expr, out: &mut Vec<String>) {
         let Expr::FuncCall(name, args) = e else { return };
@@ -411,15 +420,6 @@ pub fn validate_unstable_reads(
             }
             // One read per path, held by shape: every read sits in its own return, or
             // there is one read and no return holds it.
-            fn in_returns(stmts: &[Statement], count: &dyn Fn(&Statement) -> usize) -> usize {
-                stmts
-                    .iter()
-                    .map(|s| match s {
-                        Statement::Return { .. } => count(s),
-                        _ => crate::streaming::nested_bodies(s).0.into_iter().map(|b| in_returns(b, count)).sum(),
-                    })
-                    .sum()
-            }
             let returned = in_returns(stmts, &|s| count(s));
             let elsewhere = count(stmts) - returned;
             if elsewhere > 1 || (elsewhere == 1 && returned > 0) {
@@ -436,7 +436,7 @@ pub fn validate_unstable_reads(
             }
         }
         let flagged = f.flags.iter().any(|x| x == "unstable_period");
-        let owns = in_lookback.iter().any(|id| *id == name);
+        let owns = in_lookback.contains(&name);
         if owns {
             read_by_owner.insert(name.clone());
         }

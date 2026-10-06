@@ -184,19 +184,25 @@ pub fn unstable_level_counts(args: &[Expr]) -> Option<Vec<Expr>> {
 /// `4 == 4 ? a : b` to `a`, inside sums, casts and call arguments: how a count that cannot be written in `K` picks
 /// a per-level local (`X == 4 ? count4 : count8`) without leaving a constant condition in
 /// the output.
-fn fold_level_select(e: Expr) -> Expr {
-    let b = |e: Box<Expr>| Box::new(fold_level_select(*e));
-    match e {
-        Expr::Ternary(c, t, f) => match fold_level_select(*c) {
-            Expr::BinOp(l, BinOp::Eq, r) => match (*l, *r) {
-                (Expr::IntLiteral(x), Expr::IntLiteral(y)) => fold_level_select(if x == y { *t } else { *f }),
-                (l, r) => Expr::Ternary(Box::new(Expr::BinOp(Box::new(l), BinOp::Eq, Box::new(r))), b(t), b(f)),
+fn fold_level_select(expr: Expr) -> Expr {
+    let fold = |inner: Box<Expr>| Box::new(fold_level_select(*inner));
+    match expr {
+        Expr::Ternary(cond, then, other) => match fold_level_select(*cond) {
+            Expr::BinOp(lhs, BinOp::Eq, rhs) => match (*lhs, *rhs) {
+                (Expr::IntLiteral(left), Expr::IntLiteral(right)) => {
+                    fold_level_select(if left == right { *then } else { *other })
+                }
+                (lhs, rhs) => Expr::Ternary(
+                    Box::new(Expr::BinOp(Box::new(lhs), BinOp::Eq, Box::new(rhs))),
+                    fold(then),
+                    fold(other),
+                ),
             },
-            c => Expr::Ternary(Box::new(c), b(t), b(f)),
+            cond => Expr::Ternary(Box::new(cond), fold(then), fold(other)),
         },
-        Expr::BinOp(l, op, r) => Expr::BinOp(b(l), op, b(r)),
-        Expr::Cast(t, x) => Expr::Cast(t, b(x)),
-        Expr::FuncCall(n, args) => Expr::FuncCall(n, args.into_iter().map(fold_level_select).collect()),
-        e => e,
+        Expr::BinOp(lhs, op, rhs) => Expr::BinOp(fold(lhs), op, fold(rhs)),
+        Expr::Cast(ty, inner) => Expr::Cast(ty, fold(inner)),
+        Expr::FuncCall(name, args) => Expr::FuncCall(name, args.into_iter().map(fold_level_select).collect()),
+        other => other,
     }
 }
