@@ -1177,7 +1177,7 @@ TA_RetCode max( int    startIdx,
       today++;
    }
    for( i=0; i < outIdx; i++ )
-      outReal[i] = sqrt(outReal[i]);
+      outReal[i] = sqrt(outReal[i]) + 1.0;
 
    *outBegIdx = startIdx;
    *outNBElement = outIdx;
@@ -1193,7 +1193,7 @@ TA_RetCode max( int    startIdx,
         "if( j - pos >= 16 ) { ShiftUp(sorted, j, pos); j = pos; } else { while( j > pos ) {",
         "double _ld1 = inReal[today]; double _ld2 = sorted[0]; double _ld3 = sorted[1];",
         "x = Math.FusedMultiplyAdd(Math.Floor(_ld2), Math.Ceiling(_ld3), Math.Sqrt(_ld1));",
-        "double _ld4 = outReal[i]; outReal[i] = Math.Sqrt(_ld4);",
+        "double _ld4 = outReal[i]; outReal[i] = Math.Sqrt(_ld4) + 1.0;",
         // Near misses. A reduction loop's select paces the loop.
         "if( tmp < low ) { lowIdx = i; low = tmp; }",
         "if( b < a ) { swap = a; a = b; }",
@@ -1235,6 +1235,8 @@ TA_RetCode mama( int    startIdx,
       outFAMA[outIdx] = sqrt(outFAMA[outIdx]);
       outIdx++;
    }
+   for( i=0; i < outIdx; i++ )
+      outFAMA[i] = sqrt(outFAMA[i]);
 
    *outBegIdx = startIdx;
    *outNBElement = outIdx;
@@ -1247,6 +1249,59 @@ TA_RetCode mama( int    startIdx,
     for needle in [
         "double _ld0 = outMAMA[outIdx]; outMAMA[outIdx] = Math.Sqrt(_ld0);",
         "if( !outFAMA.IsEmpty ) outFAMA[outIdx] = Math.Sqrt(outFAMA[outIdx]);",
+    ] {
+        assert!(flat.contains(needle), "C# output missing `{needle}`:\n{cs}");
+    }
+    assert!(!flat.contains("SqrtRun(outFAMA"), "{cs}");
+}
+
+/// C# hands a square-root map loop to `SqrtRun` in the batch body, and keeps
+/// the loop when the map does more or its bound moves with the loop.
+#[test]
+fn csharp_runs_a_square_root_map_through_the_packed_helper() {
+    let source = r#"
+int max_lookback( int optInTimePeriod )
+{
+   return (optInTimePeriod-1);
+}
+
+TA_RetCode max( int    startIdx,
+                int    endIdx,
+                const double inReal[],
+                int    optInTimePeriod,
+                int   *outBegIdx,
+                int   *outNBElement,
+                double outReal[] )
+{
+   int outIdx, i, j;
+   double k;
+
+   k = 2.0;
+   for( i=startIdx, outIdx=0; i <= endIdx; i++, outIdx++ )
+      outReal[outIdx] = sqrt(inReal[i]);
+   for( i=0; i < outIdx; i++ )
+      outReal[i] = sqrt(outReal[i]) * k;
+   for( i=0; i < outIdx; i++ )
+      outReal[i] = sqrt(outReal[i]) + k;
+   for( i=0, j=0; i < j+outIdx; i++, j++ )
+      outReal[j] = sqrt(inReal[i]);
+   for( i=0; i < outIdx; i++ )
+      outReal[i] = sqrt(inReal[i+1]);
+
+   *outBegIdx = startIdx;
+   *outNBElement = outIdx;
+   return TA_SUCCESS;
+}
+"#;
+    let (func, enums) = load_indicator_with_source("max", source);
+    let cs = backends::csharp::generate(&func, &enums, make_registry(), make_helpers());
+    let flat: String = cs.split_whitespace().collect::<Vec<_>>().join(" ");
+    for needle in [
+        "i = startIdx; outIdx = 0; int _sq0 = SqrtRun(inReal, i, endIdx + 1, outReal, outIdx); i += _sq0; outIdx += _sq0;",
+        "i = 0; int _sq1 = SqrtRun(outReal, i, outIdx, outReal, i, k); i += _sq1;",
+        "for( i = 0; i < outIdx; i += 1 ) { double _ld2 = outReal[i]; outReal[i] = Math.Sqrt(_ld2) + k; }",
+        "for( i = 0, j = 0; i < j + outIdx; i += 1, j += 1 ) {",
+        "for( i = 0; i < outIdx; i += 1 ) { double _ld4 = inReal[i + 1];",
     ] {
         assert!(flat.contains(needle), "C# output missing `{needle}`:\n{cs}");
     }

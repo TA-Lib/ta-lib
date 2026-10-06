@@ -81,6 +81,7 @@ public static class AllTests
         ["MetadataTest"] = 4_282,
         ["NoPhantomIoTest"] = 868,
         ["SMathOverflowTest"] = 5,
+        ["SqrtRunTest"] = 45_375,
         ["StreamApiTest"] = 4_022,
     };
 

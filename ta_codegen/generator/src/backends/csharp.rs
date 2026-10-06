@@ -120,8 +120,8 @@ pub(crate) struct CsRenderCtx<'a> {
     /// Set while rendering the body of a loop that neither stores to an array
     /// nor holds another loop: a reduction, whose select is its critical path.
     pub(crate) in_reduction_loop: Cell<bool>,
-    /// The batch tier, the only one [`CsStmt::if_as_picks`] and the shift copy
-    /// rewrite: in a stream body each read slower on one CPU or another.
+    /// The batch tier. A rewrite that read slower in a stream body on one CPU or
+    /// another applies only here.
     pub(crate) batch: bool,
 }
 
@@ -1463,6 +1463,55 @@ impl CsStmt<'_> {
         out
     }
 
+    fn for_as_sqrt_run(
+        &self,
+        init: &Statement,
+        condition: &Expr,
+        update: &Statement,
+        body: &[Statement],
+        indent: usize,
+    ) -> Option<String> {
+        if !self.ctx.batch {
+            return None;
+        }
+        let run = sqrt_run(init, condition, update, body)?;
+        let fs = self.ctx.fma?.view();
+        let real = |array: &str| {
+            let element = Expr::ArrayAccess(array.to_string(), Box::new(Expr::IntLiteral(0)));
+            fma::expr_is_float_typed(&element, Some(&fs))
+        };
+        if !real(run.src)
+            || !real(run.dst)
+            || self.ctx.float_input_params.contains(run.src)
+            || self.ctx.nullable_outputs.contains(run.dst)
+            || run.scale.is_some_and(|k| !fma::expr_is_float_typed(k, Some(&fs)))
+        {
+            return None;
+        }
+        let render = |e: &Expr| render_expr(e, self.ctx, self.registry, self.helpers);
+        let name = |n: &str| render(&Expr::Var(n.to_string()));
+        let pad = " ".repeat(indent);
+        let mut out: String = match init {
+            Statement::Block { body } => body.iter().map(|s| self.walk_stmt(s, indent)).collect(),
+            one => self.walk_stmt(one, indent),
+        };
+        let end = if run.inclusive {
+            render(&Expr::BinOp(Box::new(run.bound.clone()), BinOp::Add, Box::new(Expr::IntLiteral(1))))
+        } else {
+            render(run.bound)
+        };
+        let scale = run.scale.map(|k| format!(", {}", render(k))).unwrap_or_default();
+        let id = self.ctx.inline_counter.get();
+        self.ctx.inline_counter.set(id + 1);
+        let (src, s, dst, d) = (name(run.src), name(run.s), name(run.dst), name(run.d));
+        out.push_str(&format!("{pad}int _sq{id} = SqrtRun({src}, {s}, {end}, {dst}, {d}{scale});\n"));
+        out.push_str(&format!("{pad}{s} += _sq{id};\n"));
+        if d != s {
+            out.push_str(&format!("{pad}{d} += _sq{id};\n"));
+        }
+        Some(out)
+    }
+
     fn plain_while(&self, condition: &Expr, body: &[Statement], indent: usize) -> String {
         let pad = " ".repeat(indent);
         let mut hoisted = Vec::new();
@@ -1871,6 +1920,9 @@ impl StatementEmitter for CsStmt<'_> {
         body: &[Statement],
         indent: usize,
     ) -> String {
+        if let Some(out) = self.for_as_sqrt_run(init, condition, update, body, indent) {
+            return out;
+        }
         let pad = " ".repeat(indent);
         let init_str = render_forc_part(init, self.ctx, self.enums, self.registry, self.helpers);
         let update_str = render_forc_part(update, self.ctx, self.enums, self.registry, self.helpers);
@@ -2452,6 +2504,102 @@ fn shift_run<'e>(condition: &'e Expr, body: &'e [Statement]) -> Option<(&'static
         _ => false,
     };
     (advances && plain_index(bound, j, dst)).then_some((helper, j.as_str(), bound.as_ref()))
+}
+
+struct SqrtRun<'e> {
+    src: &'e str,
+    s: &'e str,
+    dst: &'e str,
+    d: &'e str,
+    bound: &'e Expr,
+    inclusive: bool,
+    scale: Option<&'e Expr>,
+}
+
+/// `for( s = .., d = ..; s < bound; s++, d++ ) dst[d] = sqrt(src[s]);`, with an
+/// optional `* scale` and with `d` possibly `s` itself: a map RyuJIT runs one
+/// element at a time where gcc emits the packed square root.
+///
+/// The bound and the scale name no array and neither index, so the loop
+/// cannot change them. Where the two arrays overlap is the helper's to settle.
+fn sqrt_run<'e>(
+    init: &'e Statement,
+    condition: &'e Expr,
+    update: &'e Statement,
+    body: &'e [Statement],
+) -> Option<SqrtRun<'e>> {
+    fn parts(stmt: &Statement) -> &[Statement] {
+        match stmt {
+            Statement::Block { body } => body,
+            one => std::slice::from_ref(one),
+        }
+    }
+    fn mentions(e: &Expr, names: &[&str]) -> bool {
+        let mut found = false;
+        streaming::walk_expr(e, &mut |sub| {
+            found |= matches!(sub, Expr::ArrayAccess(..))
+                || matches!(sub, Expr::Var(n) if names.contains(&n.as_str()));
+        });
+        found
+    }
+    let stepped = |stmt: &'e Statement| -> Option<&'e str> {
+        match stmt {
+            Statement::Expr(Expr::PostIncrement(e) | Expr::PreIncrement(e)) => match e.as_ref() {
+                Expr::Var(n) => Some(n.as_str()),
+                _ => None,
+            },
+            Statement::Assign { target: Expr::Var(n), value: Expr::BinOp(l, BinOp::Add, r), .. }
+                if matches!(l.as_ref(), Expr::Var(v) if v == n) && matches!(r.as_ref(), Expr::IntLiteral(1)) =>
+            {
+                Some(n.as_str())
+            }
+            _ => None,
+        }
+    };
+    let [Statement::Assign { target: Expr::ArrayAccess(dst, at), value, compound: false }] = body else {
+        return None;
+    };
+    let (root, scale) = match value {
+        Expr::BinOp(l, BinOp::Mul, r) if matches!(r.as_ref(), Expr::Var(_)) => (l.as_ref(), Some(r.as_ref())),
+        other => (other, None),
+    };
+    let Expr::FuncCall(f, args) = root else { return None };
+    let [Expr::ArrayAccess(src, from)] = args.as_slice() else { return None };
+    let (Expr::Var(d), Expr::Var(s)) = (at.as_ref(), from.as_ref()) else { return None };
+    if !matches!(MathFn::from_name(f), Some(MathFn::Sqrt)) {
+        return None;
+    }
+    let indices: Vec<&str> = if s == d { vec![s.as_str()] } else { vec![s.as_str(), d.as_str()] };
+    let steps: Vec<&str> = parts(update).iter().map(stepped).collect::<Option<_>>()?;
+    let mut starts = Vec::new();
+    for stmt in parts(init) {
+        let Statement::Assign { target: Expr::Var(n), value, compound: false } = stmt else { return None };
+        if mentions(value, &indices) || !is_pure_operand(value) {
+            return None;
+        }
+        starts.push(n.as_str());
+    }
+    let same = |seen: &[&str]| seen.len() == indices.len() && indices.iter().all(|i| seen.contains(i));
+    if !same(&steps) || !same(&starts) {
+        return None;
+    }
+    let Expr::BinOp(idx, cmp @ (BinOp::Less | BinOp::LessEq), bound) = condition else { return None };
+    if !matches!(idx.as_ref(), Expr::Var(n) if n == s)
+        || mentions(bound, &indices)
+        || !is_pure_operand(bound)
+        || scale.is_some_and(|k| mentions(k, &indices))
+    {
+        return None;
+    }
+    Some(SqrtRun {
+        src,
+        s,
+        dst,
+        d,
+        bound,
+        inclusive: matches!(cmp, BinOp::LessEq),
+        scale,
+    })
 }
 
 /// Replaces the array-element operand of each `sqrt`, `floor` and `ceil` in

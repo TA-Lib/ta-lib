@@ -179,15 +179,13 @@ public partial class Core
        * Dropping it also leaves a pure map, which the branch had kept sqrt out of.
        */
       if( optInNbDev != 1.0 ) {
-         for( i = 0; i < (int)outNBElement; i += 1 ) {
-            double _ld1 = outReal[i];
-            outReal[i] = Math.Sqrt(_ld1) * optInNbDev;
-         }
+         i = 0;
+         int _sq1 = SqrtRun(outReal, i, (int)outNBElement, outReal, i, optInNbDev);
+         i += _sq1;
       } else {
-         for( i = 0; i < (int)outNBElement; i += 1 ) {
-            double _ld2 = outReal[i];
-            outReal[i] = Math.Sqrt(_ld2);
-         }
+         i = 0;
+         int _sq2 = SqrtRun(outReal, i, (int)outNBElement, outReal, i);
+         i += _sq2;
       }
       return RetCode.Success ;
    }
@@ -233,15 +231,13 @@ public partial class Core
       outNBElement = _xr0.Count;
       retCode = RetCode.Success;
       if( optInNbDev != 1.0 ) {
-         for( i = 0; i < (int)outNBElement; i += 1 ) {
-            double _ld1 = outReal[i];
-            outReal[i] = Math.Sqrt(_ld1) * optInNbDev;
-         }
+         i = 0;
+         int _sq1 = SqrtRun(outReal, i, (int)outNBElement, outReal, i, optInNbDev);
+         i += _sq1;
       } else {
-         for( i = 0; i < (int)outNBElement; i += 1 ) {
-            double _ld2 = outReal[i];
-            outReal[i] = Math.Sqrt(_ld2);
-         }
+         i = 0;
+         int _sq2 = SqrtRun(outReal, i, (int)outNBElement, outReal, i);
+         i += _sq2;
       }
       return RetCode.Success ;
    }

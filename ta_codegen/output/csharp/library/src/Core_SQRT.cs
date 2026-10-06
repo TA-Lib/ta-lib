@@ -106,10 +106,11 @@ public partial class Core
       if( (outReal.Overlaps(inReal) && outReal != inReal) ) {
          return RetCode.BadParam ;
       }
-      for( i = startIdx, outIdx = 0; i <= endIdx; i += 1, outIdx += 1 ) {
-         double _ld0 = inReal[i];
-         outReal[outIdx] = Math.Sqrt(_ld0);
-      }
+      i = startIdx;
+      outIdx = 0;
+      int _sq0 = SqrtRun(inReal, i, endIdx + 1, outReal, outIdx);
+      i += _sq0;
+      outIdx += _sq0;
       outNBElement = outIdx;
       outBegIdx = startIdx;
       return RetCode.Success ;
