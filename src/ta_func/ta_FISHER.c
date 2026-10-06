@@ -174,7 +174,7 @@ TA_LIB_API TA_RetCode TA_FISHER( int    startIdx,
    today = startIdx - unstablePeriod;
    blockStart = today - lookbackTotal;
    outIdx = 0;
-   if( optInTimePeriod < 1 ) return TA_INTERNAL_ERROR(486);
+   if( optInTimePeriod < 1 ) return TA_INTERNAL_ERROR(487);
    if( (int)optInTimePeriod > (int)(sizeof(local_sufHighest)/sizeof(double)) )
    {
       sufHighest = TA_Malloc( sizeof(double)*optInTimePeriod );
@@ -187,7 +187,7 @@ TA_LIB_API TA_RetCode TA_FISHER( int    startIdx,
    {
       sufHighest = &local_sufHighest[0];
    }
-   if( optInTimePeriod < 1 ) return TA_INTERNAL_ERROR(487);
+   if( optInTimePeriod < 1 ) return TA_INTERNAL_ERROR(488);
    if( (int)optInTimePeriod > (int)(sizeof(local_preHighest)/sizeof(double)) )
    {
       preHighest = TA_Malloc( sizeof(double)*optInTimePeriod );
@@ -201,7 +201,7 @@ TA_LIB_API TA_RetCode TA_FISHER( int    startIdx,
    {
       preHighest = &local_preHighest[0];
    }
-   if( optInTimePeriod < 1 ) return TA_INTERNAL_ERROR(488);
+   if( optInTimePeriod < 1 ) return TA_INTERNAL_ERROR(489);
    if( (int)optInTimePeriod > (int)(sizeof(local_sufLowest)/sizeof(double)) )
    {
       sufLowest = TA_Malloc( sizeof(double)*optInTimePeriod );
@@ -216,7 +216,7 @@ TA_LIB_API TA_RetCode TA_FISHER( int    startIdx,
    {
       sufLowest = &local_sufLowest[0];
    }
-   if( optInTimePeriod < 1 ) return TA_INTERNAL_ERROR(489);
+   if( optInTimePeriod < 1 ) return TA_INTERNAL_ERROR(490);
    if( (int)optInTimePeriod > (int)(sizeof(local_preLowest)/sizeof(double)) )
    {
       preLowest = TA_Malloc( sizeof(double)*optInTimePeriod );
@@ -435,7 +435,7 @@ TA_RetCode TA_S_FISHER( int    startIdx,
    today = startIdx - unstablePeriod;
    blockStart = today - lookbackTotal;
    outIdx = 0;
-   if( optInTimePeriod < 1 ) return TA_INTERNAL_ERROR(486);
+   if( optInTimePeriod < 1 ) return TA_INTERNAL_ERROR(487);
    if( (int)optInTimePeriod > (int)(sizeof(local_sufHighest)/sizeof(double)) )
    {
       sufHighest = TA_Malloc( sizeof(double)*optInTimePeriod );
@@ -448,7 +448,7 @@ TA_RetCode TA_S_FISHER( int    startIdx,
    {
       sufHighest = &local_sufHighest[0];
    }
-   if( optInTimePeriod < 1 ) return TA_INTERNAL_ERROR(487);
+   if( optInTimePeriod < 1 ) return TA_INTERNAL_ERROR(488);
    if( (int)optInTimePeriod > (int)(sizeof(local_preHighest)/sizeof(double)) )
    {
       preHighest = TA_Malloc( sizeof(double)*optInTimePeriod );
@@ -462,7 +462,7 @@ TA_RetCode TA_S_FISHER( int    startIdx,
    {
       preHighest = &local_preHighest[0];
    }
-   if( optInTimePeriod < 1 ) return TA_INTERNAL_ERROR(488);
+   if( optInTimePeriod < 1 ) return TA_INTERNAL_ERROR(489);
    if( (int)optInTimePeriod > (int)(sizeof(local_sufLowest)/sizeof(double)) )
    {
       sufLowest = TA_Malloc( sizeof(double)*optInTimePeriod );
@@ -477,7 +477,7 @@ TA_RetCode TA_S_FISHER( int    startIdx,
    {
       sufLowest = &local_sufLowest[0];
    }
-   if( optInTimePeriod < 1 ) return TA_INTERNAL_ERROR(489);
+   if( optInTimePeriod < 1 ) return TA_INTERNAL_ERROR(490);
    if( (int)optInTimePeriod > (int)(sizeof(local_preLowest)/sizeof(double)) )
    {
       preLowest = TA_Malloc( sizeof(double)*optInTimePeriod );
@@ -957,7 +957,7 @@ static TA_FMA_STEP_INLINE TA_RetCode TA_FISHER_OpenImpl( struct TA_FISHER_Stream
       sp->i = i;
       sp->today = today;
       sp->xCap = (int)(today - trailingIdx) + 1;
-      if( sp->xCap < 1 || sp->xCap > historyLen ) { TA_FISHER_ReleaseImpl( sp ); return TA_INTERNAL_ERROR(485); }
+      if( sp->xCap < 1 || sp->xCap > historyLen ) { TA_FISHER_ReleaseImpl( sp ); return TA_INTERNAL_ERROR(491); }
       sp->xPhys = 1;
       while( sp->xPhys < sp->xCap ) sp->xPhys <<= 1;
       sp->xMask = sp->xPhys - 1;

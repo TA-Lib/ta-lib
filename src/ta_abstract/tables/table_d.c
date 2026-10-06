@@ -123,6 +123,120 @@ DEF_FUNCTION( DONCHIAN,
              );
 /* DONCHIAN END */
 
+/* DOSC BEGIN */
+static const TA_OptInputParameterInfo TA_DEF_UI_D_DOSC_TimePeriod =
+{
+   TA_OptInput_IntegerRange,
+   "optInTimePeriod",
+   0,
+
+   "Time Period",
+   (const void *)&TA_DEF_TimePeriod_Positive_Minimum2,
+   14,
+   "Period of the RSI",
+
+   NULL
+};
+
+static const TA_IntegerRange TA_DEF_DOSC_FirstPeriod =
+{
+   2,
+   100000,
+   2,
+   50,
+   1
+};
+
+static const TA_OptInputParameterInfo TA_DEF_UI_D_DOSC_FirstPeriod =
+{
+   TA_OptInput_IntegerRange,
+   "optInFirstPeriod",
+   0,
+
+   "First Smoothing Period",
+   (const void *)&TA_DEF_DOSC_FirstPeriod,
+   5,
+   "Period of the first smoothing, applied to the RSI",
+
+   NULL
+};
+
+static const TA_IntegerRange TA_DEF_DOSC_SecondPeriod =
+{
+   2,
+   100000,
+   2,
+   50,
+   1
+};
+
+static const TA_OptInputParameterInfo TA_DEF_UI_D_DOSC_SecondPeriod =
+{
+   TA_OptInput_IntegerRange,
+   "optInSecondPeriod",
+   0,
+
+   "Second Smoothing Period",
+   (const void *)&TA_DEF_DOSC_SecondPeriod,
+   3,
+   "Period of the second smoothing, applied to the first",
+
+   NULL
+};
+
+static const TA_IntegerRange TA_DEF_DOSC_SignalPeriod =
+{
+   2,
+   100000,
+   2,
+   50,
+   1
+};
+
+static const TA_OptInputParameterInfo TA_DEF_UI_D_DOSC_SignalPeriod =
+{
+   TA_OptInput_IntegerRange,
+   "optInSignalPeriod",
+   0,
+
+   "Signal Period",
+   (const void *)&TA_DEF_DOSC_SignalPeriod,
+   9,
+   "Period of the simple average subtracted from the smoothed line",
+
+   NULL
+};
+
+const TA_OutputParameterInfo TA_DEF_UI_Output_Real_DOSC_Default =
+                               { TA_Output_Real, "outReal", TA_OUT_HISTO };
+
+static const TA_InputParameterInfo    *TA_DOSC_Inputs[]    =
+{
+  &TA_DEF_UI_Input_Real,
+  NULL
+};
+
+static const TA_OutputParameterInfo   *TA_DOSC_Outputs[]   =
+{
+  &TA_DEF_UI_Output_Real_DOSC_Default,
+  NULL
+};
+
+static const TA_OptInputParameterInfo *TA_DOSC_OptInputs[] =
+{ &TA_DEF_UI_D_DOSC_TimePeriod,
+  &TA_DEF_UI_D_DOSC_FirstPeriod,
+  &TA_DEF_UI_D_DOSC_SecondPeriod,
+  &TA_DEF_UI_D_DOSC_SignalPeriod,
+  NULL
+};
+
+DEF_FUNCTION( DOSC,
+              TA_GroupId_MomentumIndicators,
+              "Derivative Oscillator",
+              TA_FUNC_FLG_STREAM
+             );
+/* DOSC END */
+
 /* DPO BEGIN */
 static const TA_IntegerRange TA_DEF_DPO_TimePeriod =
 {
@@ -208,6 +322,7 @@ const TA_FuncDef *TA_DEF_TableD[] =
    ADD_TO_TABLE(DEMA),
    ADD_TO_TABLE(DIV),
    ADD_TO_TABLE(DONCHIAN),
+   ADD_TO_TABLE(DOSC),
    ADD_TO_TABLE(DPO),
    ADD_TO_TABLE(DX),
    NULL

@@ -373,6 +373,9 @@ final class Dispatch {
          case "DONCHIAN":
             return core.donchian(
                startIdx, endIdx, h.price(0, 1), h.price(0, 2), h.intOpt(0), h.realOutput(0), h.realOutput(1), h.realOutput(2));
+         case "DOSC":
+            return core.dosc(
+               startIdx, endIdx, h.realInput(0), h.intOpt(0), h.intOpt(1), h.intOpt(2), h.intOpt(3), h.realOutput(0));
          case "DPO":
             return core.dpo(
                startIdx, endIdx, h.realInput(0), h.intOpt(0), h.realOutput(0));
@@ -969,6 +972,8 @@ final class Dispatch {
             return core.divLookback();
          case "DONCHIAN":
             return core.donchianLookback(h.intOpt(0));
+         case "DOSC":
+            return core.doscLookback(h.intOpt(0), h.intOpt(1), h.intOpt(2), h.intOpt(3));
          case "DPO":
             return core.dpoLookback(h.intOpt(0));
          case "DX":
@@ -1437,6 +1442,8 @@ final class Dispatch {
             return core.divDisplayShift(outputIdx);
          case "DONCHIAN":
             return core.donchianDisplayShift(h.intOpt(0), outputIdx);
+         case "DOSC":
+            return core.doscDisplayShift(h.intOpt(0), h.intOpt(1), h.intOpt(2), h.intOpt(3), outputIdx);
          case "DPO":
             return core.dpoDisplayShift(h.intOpt(0), outputIdx);
          case "DX":

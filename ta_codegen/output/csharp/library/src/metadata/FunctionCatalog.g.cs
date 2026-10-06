@@ -220,6 +220,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
             MakeDema(),
             MakeDiv(),
             MakeDonchian(),
+            MakeDosc(),
             MakeDpo(),
             MakeDx(),
             MakeEfi(),
@@ -2741,6 +2742,33 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
         invoke: static (core, c, startIdx, endIdx) =>
             core.Donchian(
                 startIdx, endIdx, c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.IntOpt(0), c.RealOut(0), c.RealOut(1), c.RealOut(2)));
+
+    private static FuncInfo MakeDosc() => new(
+        name: "DOSC",
+        group: FunctionGroup.MomentumIndicators,
+        hint: "Derivative Oscillator",
+        flags: FuncFlags.Stream,
+        unstableId: null,
+        inputs:
+        [
+            new InputInfo(InputKind.Real, "inReal", PriceComponents.None, []),
+        ],
+        optInputs:
+        [
+            new OptInputInfo("optInTimePeriod", "Time Period", "Period of the RSI", OptInputFlags.None, new OptInputDomain.IntegerRange(2, 100000, 14, 4, 200, 1)),
+            new OptInputInfo("optInFirstPeriod", "First Smoothing Period", "Period of the first smoothing, applied to the RSI", OptInputFlags.None, new OptInputDomain.IntegerRange(2, 100000, 5, 2, 50, 1)),
+            new OptInputInfo("optInSecondPeriod", "Second Smoothing Period", "Period of the second smoothing, applied to the first", OptInputFlags.None, new OptInputDomain.IntegerRange(2, 100000, 3, 2, 50, 1)),
+            new OptInputInfo("optInSignalPeriod", "Signal Period", "Period of the simple average subtracted from the smoothed line", OptInputFlags.None, new OptInputDomain.IntegerRange(2, 100000, 9, 2, 50, 1)),
+        ],
+        outputs:
+        [
+            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Histogram),
+        ],
+        lookback: static (core, c) => core.DoscLookback(c.IntOpt(0), c.IntOpt(1), c.IntOpt(2), c.IntOpt(3)),
+        displayShift: static (core, c, outputIdx) => core.DoscDisplayShift(c.IntOpt(0), c.IntOpt(1), c.IntOpt(2), c.IntOpt(3), outputIdx),
+        invoke: static (core, c, startIdx, endIdx) =>
+            core.Dosc(
+                startIdx, endIdx, c.Series(0), c.IntOpt(0), c.IntOpt(1), c.IntOpt(2), c.IntOpt(3), c.RealOut(0)));
 
     private static FuncInfo MakeDpo() => new(
         name: "DPO",
