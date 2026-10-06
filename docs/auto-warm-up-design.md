@@ -778,7 +778,7 @@ compare at every bar both report.
 | Page | Change |
 |---|---|
 | `api/unstable-period` | Auto under approach 3, leading with `PREC_4`; what a level means (section 2.1); the rule table; the tiers; what the promise is and is not. The figure's "stable" boundary is drawn at 1e-3 of price and would contradict the Auto count: redraw or recaption |
-| `functions/stability` and every function page (generated) | the rule beside "Initial Unstable Period"; the MA-type table gains the `M(n, type)` column. Derived from the same lookback read as today's line |
+| `functions/stability` and every function page (generated) | none: ruled out (section 9, D9) |
 | spec rL6 | "adds exactly that many bars" holds for a count; under Auto the id adds its rule's count |
 | spec rL8 | under Auto a `period1_identity` function has a lookback of 0 at a period of 1 |
 | spec rL5 | still true: the count depends on parameters and settings only |
@@ -964,6 +964,12 @@ MAMA's need follows its larger limit when fast is not below slow, measured at th
 - The adaptive averages use typical counts (D3), where the issue names "a bound from the slowest
   alpha, or a measured bound".
 - No `set_auto_warm_up` in ta-lib-python: its existing `set_unstable_period` takes a level (D1).
+
+**D9. The rule on each function page.** Ruled (owner, 2026-10-06): not needed. Auto is
+documented on the Unstable Period page and in the specification only. A function page keeps its
+"Numerical Stability" line and its link to `functions/stability`, which presents the stability
+classes side by side; the unstable period is a subject large enough for a page of its own, and
+no function page carries a rule, a count or a direct link to the rule table.
 
 ## 10. Evidence
 
