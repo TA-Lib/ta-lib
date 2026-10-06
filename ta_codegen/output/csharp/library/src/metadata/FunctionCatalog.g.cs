@@ -228,6 +228,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
             MakeEr(),
             MakeEri(),
             MakeExp(),
+            MakeFisher(),
             MakeFloor(),
             MakeFosc(),
             MakeFractal(),
@@ -2931,6 +2932,31 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
         invoke: static (core, c, startIdx, endIdx) =>
             core.Exp(
                 startIdx, endIdx, c.Series(0), c.RealOut(0)));
+
+    private static FuncInfo MakeFisher() => new(
+        name: "FISHER",
+        group: FunctionGroup.MomentumIndicators,
+        hint: "Fisher Transform",
+        flags: FuncFlags.Stream | FuncFlags.UnstablePeriod,
+        unstableId: FuncUnstId.FISHER,
+        inputs:
+        [
+            new InputInfo(InputKind.Price, "inPriceHL", PriceComponents.High | PriceComponents.Low, [PriceComponents.High, PriceComponents.Low]),
+        ],
+        optInputs:
+        [
+            new OptInputInfo("optInTimePeriod", "Time Period", "Time period", OptInputFlags.None, new OptInputDomain.IntegerRange(2, 100000, 10, 5, 50, 1)),
+        ],
+        outputs:
+        [
+            new OutputInfo(OutputKind.Real, "outFisher", OutputFlags.Line),
+            new OutputInfo(OutputKind.Real, "outTrigger", OutputFlags.DashLine),
+        ],
+        lookback: static (core, c) => core.FisherLookback(c.IntOpt(0)),
+        displayShift: static (core, c, outputIdx) => core.FisherDisplayShift(c.IntOpt(0), outputIdx),
+        invoke: static (core, c, startIdx, endIdx) =>
+            core.Fisher(
+                startIdx, endIdx, c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.IntOpt(0), c.RealOut(0), c.RealOut(1)));
 
     private static FuncInfo MakeFloor() => new(
         name: "FLOOR",

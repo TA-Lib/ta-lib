@@ -153,6 +153,7 @@ extern const TA_FuncDef TA_DEF_EMV;
 extern const TA_FuncDef TA_DEF_ER;
 extern const TA_FuncDef TA_DEF_ERI;
 extern const TA_FuncDef TA_DEF_EXP;
+extern const TA_FuncDef TA_DEF_FISHER;
 extern const TA_FuncDef TA_DEF_FLOOR;
 extern const TA_FuncDef TA_DEF_FOSC;
 extern const TA_FuncDef TA_DEF_FRACTAL;
@@ -379,6 +380,7 @@ const TA_FuncDef *TA_PerGroupFunc_4[] = {
 &TA_DEF_DX,
 &TA_DEF_ER,
 &TA_DEF_ERI,
+&TA_DEF_FISHER,
 &TA_DEF_FOSC,
 &TA_DEF_FRACTAL,
 &TA_DEF_IBS,

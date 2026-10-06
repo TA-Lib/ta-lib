@@ -178,7 +178,7 @@
 //! * [`TAN`](Core::tan) — Vector Trigonometric Tan
 //! * [`TANH`](Core::tanh) — Vector Trigonometric Tanh
 //!
-//! ## Momentum Indicators (58)
+//! ## Momentum Indicators (59)
 //!
 //! * [`AC`](Core::ac) — Accelerator/Decelerator Oscillator
 //! * [`ADX`](Core::adx) — Average Directional Movement Index
@@ -202,6 +202,7 @@
 //! * [`DX`](Core::dx) — Directional Movement Index
 //! * [`ER`](Core::er) — Kaufman Efficiency Ratio
 //! * [`ERI`](Core::eri) — Elder Ray Index (Bull Power / Bear Power)
+//! * [`FISHER`](Core::fisher) — Fisher Transform
 //! * [`FOSC`](Core::fosc) — Forecast Oscillator
 //! * [`FRACTAL`](Core::fractal) — Williams Fractal
 //! * [`IBS`](Core::ibs) — Internal Bar Strength

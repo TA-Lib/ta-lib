@@ -26,8 +26,9 @@ enum FuncUnstId {
     NATR, PLUS_DI, PLUS_DM, RSI, UNUSED_22, T3,
     RMA, HA, RVI, FRAMA, MCGD, VIDYA,
     STC, SWAK_GAUSS, SWAK_BUTTER, SWAK_HP, SWAK_2PHP, SWAK_BP,
+    FISHER,
     ALL;
-    static final int COUNT = 36;
+    static final int COUNT = 37;
     int value() { return this == ALL ? 65535 : ordinal(); }
 }
 
@@ -99689,6 +99690,1174 @@ class Core {
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           return expOpenAndFillInternal(inReal, 0, outBegIdx, outNBElement, outReal);
+       }
+    /* List of contributors:
+     *
+     *  Initial  Name/description
+     *  -------------------------------------------------------------------
+     *  MF       Mario Fortier
+     *  KL       Kevin Lin (@kevinlincg)
+     *  CC       Claude Code (AI assistant)
+     *
+     * Change history:
+     *
+     *  MMDDYY BY     Description
+     *  -------------------------------------------------------------------
+     *  100626 KL,CC  Creation (#485).
+     */
+
+       /**
+        * Number of leading input bars {@link Core#fisher} consumes before it can
+        * produce its first value.
+        * <p>Equivalently, the index of the first bar with a value when the whole
+        * series is requested. Feed at least {@code lookback + 1} bars to get any
+        * output.
+        * <p>This function is recursive, so the result also includes this
+        * {@code Core}'s unstable-period setting — which is why it is an instance
+        * method.
+        *
+        * @param optInTimePeriod Time period (default 10; range 2..100000;
+        *        {@code Integer.MIN_VALUE} selects the default).
+        * @return The lookback, or {@code -1} if a parameter is out of range.
+        */
+       public int fisherLookback( int optInTimePeriod )
+       {
+          if( optInTimePeriod == Integer.MIN_VALUE ) {
+             optInTimePeriod = 10;
+          } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
+             return -1;
+          }
+          /* The channel needs its own n-1 bars before it has a value. On top of that
+           * the two recursions carry a seed that decays rather than ending.
+           *
+           * The count is DERIVED rather than sampled. The seed reaches the output
+           * through the smoothing pole alone -- 0.67 per bar, the same whatever the
+           * period, so unlike EMA's this count does not grow with n. Two factors sit
+           * between that pole and the output: the transform's derivative 1/(1-v^2),
+           * which the clamp caps at 1/(1-0.999^2) = 500 and which is the only reason
+           * this is finite at all, and the convolution with the transform's own 0.5
+           * pole, worth 1/(0.67-0.5) = 5.9. So the seed's weight is under e^-K once
+           *
+           *     n >= (K + ln(500*5.9)) / ln(1/0.67) = (K + 8.0) / 0.4005
+           *
+           * which is 44.9 bars at K = 10 and 67.4 at K = 19. The form below is 2.5
+           * bars per e-fold with those 9 e-folds of gain folded in: 48 and 70.
+           *
+           * A sampled worst case was NOT used. Over 400 input patterns and 22 seeds
+           * it reads 33 and 58, and it kept climbing as the sample grew -- 30 and 54
+           * at a tenth of it -- which is what a sampled maximum does when it is not
+           * a bound.
+           */
+          return optInTimePeriod - 1 + this.unstableCount(FuncUnstId.FISHER.ordinal(), (5 * (10 + 9) + 1) / 2, (5 * (19 + 9) + 1) / 2) ;
+
+       }
+       /**
+        * How many bars ahead (positive) or behind (negative) of the bar that
+        * computed it a chart draws one output of {@link Core#fisher}.
+        * <p>Every output of this function is drawn at its own bar, so the answer is
+        * 0.
+        *
+        * @param optInTimePeriod Time period (default 10; range 2..100000;
+        *        {@code Integer.MIN_VALUE} selects the default).
+        * @param outputIdx Position of the output in the batch signature, from 0.
+        * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+        *        out of range or the index names no output.
+        */
+       public int fisherDisplayShift( int optInTimePeriod, int outputIdx )
+       {
+          if( fisherLookback( optInTimePeriod ) < 0 ) {
+             return Integer.MIN_VALUE;
+          }
+          if( outputIdx < 0 || outputIdx >= 2 ) {
+             return Integer.MIN_VALUE;
+          }
+          return 0;
+       }
+       RetCode fisherImpl( int startIdx,
+                           int endIdx,
+                           double inHigh[],
+                           double inLow[],
+                           int optInTimePeriod,
+                           MInteger outBegIdx,
+                           MInteger outNBElement,
+                           double outFisher[],
+                           double outTrigger[] )
+       {
+          double price = 0;
+          double highest = 0;
+          double lowest = 0;
+          double ratio = 0;
+          double smoothed = 0;
+          double fish = 0;
+          double prevFish = 0;
+          double tempReal = 0;
+          double tempHigh = 0;
+          double tempLow = 0;
+          int outIdx = 0;
+          int lookbackTotal = 0;
+          int unstablePeriod = 0;
+          int nbInitialElementNeeded = 0;
+          int today = 0;
+          int trailingIdx = 0;
+          int highestIdx = 0;
+          int lowestIdx = 0;
+          int i = 0;
+          if( (startIdx < 0) || (startIdx > INDEX_MAX) ) {
+             return RetCode.OUT_OF_RANGE_START_INDEX ;
+          }
+          if( (endIdx < 0) || (endIdx > INDEX_MAX) || (endIdx < startIdx)) {
+             return RetCode.OUT_OF_RANGE_END_INDEX ;
+          }
+          if( optInTimePeriod == Integer.MIN_VALUE ) {
+             optInTimePeriod = 10;
+          } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
+             return RetCode.BAD_PARAM;
+          }
+          if( outFisher == outTrigger ) {
+             return RetCode.BAD_PARAM ;
+          }
+          nbInitialElementNeeded = fisherLookback(optInTimePeriod);
+          if( startIdx < nbInitialElementNeeded ) {
+             startIdx = nbInitialElementNeeded;
+          }
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.SUCCESS ;
+          }
+          lookbackTotal = optInTimePeriod - 1;
+          unstablePeriod = nbInitialElementNeeded - lookbackTotal;
+          /* John F. Ehlers, "Using The Fisher Transform", Stocks & Commodities
+           * V.20:11 (November 2002), pp.40-42, the EasyLanguage listing in Figure 4.
+           *
+           * The bar's midpoint is located in its rolling n-bar channel, rescaled to
+           * (-1, +1), smoothed, clamped, and passed through atanh. What the
+           * transform buys is the tail: a channel position is close to uniformly
+           * distributed, and the Fisher transform of a uniform variable is close to
+           * normal, so an extreme reading is rare rather than routine and a turn is
+           * a sharp corner rather than a drift.
+           *
+           * Both recursions start from the author's zero seed and decay at their own
+           * coefficient -- 0.67 for the smoothing, 0.5 for the transform -- so the
+           * first bars carry the seed rather than the series. That is what the
+           * unstable period discards.
+           */
+          smoothed = 0.0;
+          prevFish = 0.0;
+          today = startIdx - unstablePeriod;
+          trailingIdx = today - lookbackTotal;
+          highestIdx = -1;
+          highest = 0.0;
+          lowestIdx = -1;
+          lowest = 0.0;
+          outIdx = 0;
+          while( today <= endIdx ) {
+             /* The channel, over the midpoints rather than over the highs and the
+              * lows separately: this indicator reads one series, which happens to be
+              * (H+L)/2, so both extremes come from that same series. STOCH's shape,
+              * with the midpoint recomputed on the rare rescan rather than held in a
+              * buffer the caller would have to own.
+              */
+             price = (inHigh[today] + inLow[today]) / 2.0;
+             if( highestIdx < trailingIdx ) {
+                highestIdx = trailingIdx;
+                tempHigh = inHigh[highestIdx];
+                tempLow = inLow[highestIdx];
+                highest = (tempHigh + tempLow) / 2.0;
+                i = highestIdx;
+                while( ++i <= today ) {
+                   tempHigh = inHigh[i];
+                   tempLow = inLow[i];
+                   tempReal = (tempHigh + tempLow) / 2.0;
+                   if( tempReal > highest ) {
+                      highestIdx = i;
+                      highest = tempReal;
+                   }
+                }
+             } else if( price >= highest ) {
+                highestIdx = today;
+                highest = price;
+             }
+             if( lowestIdx < trailingIdx ) {
+                lowestIdx = trailingIdx;
+                tempHigh = inHigh[lowestIdx];
+                tempLow = inLow[lowestIdx];
+                lowest = (tempHigh + tempLow) / 2.0;
+                i = lowestIdx;
+                while( ++i <= today ) {
+                   tempHigh = inHigh[i];
+                   tempLow = inLow[i];
+                   tempReal = (tempHigh + tempLow) / 2.0;
+                   if( tempReal < lowest ) {
+                      lowestIdx = i;
+                      lowest = tempReal;
+                   }
+                }
+             } else if( price <= lowest ) {
+                lowestIdx = today;
+                lowest = price;
+             }
+             /* A flat window answers the neutral position rather than dividing by
+              * its own zero range. The band is the range against its own two
+              * extremes, STOCH's test: a fixed constant answers "flat" for every
+              * window of an instrument quoted below it (#253), and an exact test
+              * divides a machine-flat window into noise (#107). At 0.5 the bar
+              * contributes nothing and both recursions decay on their own
+              * coefficients.
+              */
+             tempReal = highest - lowest;
+             if( !(Math.abs(tempReal) <= 0.00000000000001 * (Math.abs(highest) + Math.abs(lowest))) ) {
+                ratio = (price - lowest) / tempReal;
+             } else {
+                ratio = 0.5;
+             }
+             /* The listing's .33*2*(r-.5) + .67*Value1[1]. */
+             smoothed = Math.fma(0.67, smoothed, 0.33 * 2.0 * (ratio - 0.5));
+             /* The clamp is what keeps atanh finite, and the CLAMPED smoothed is what
+              * the next bar's smoothing reads -- the listing assigns it back to
+              * Value1 rather than holding it for the transform alone.
+              */
+             if( smoothed > 0.99 ) {
+                smoothed = 0.999;
+             }
+             if( smoothed < -0.99 ) {
+                smoothed = -0.999;
+             }
+             fish = Math.fma(0.5, Math.log((1.0 + smoothed) / (1.0 - smoothed)), 0.5 * prevFish);
+             if( today >= startIdx ) {
+                outFisher[outIdx] = fish;
+                /* The author's second plot is Fish[1]: the previous bar's smoothed,
+                 * which at the first output bar is the zero seed when no unstable
+                 * period was discarded, and the computed smoothed of the bar before it
+                 * when one was.
+                 */
+                outTrigger[outIdx] = prevFish;
+                outIdx = outIdx + 1;
+             }
+             prevFish = fish;
+             trailingIdx += 1;
+             today += 1;
+          }
+          outNBElement.value = outIdx;
+          outBegIdx.value = startIdx;
+          return RetCode.SUCCESS ;
+       }
+       RetCode fisherImpl( int startIdx,
+                           int endIdx,
+                           float inHigh[],
+                           float inLow[],
+                           int optInTimePeriod,
+                           MInteger outBegIdx,
+                           MInteger outNBElement,
+                           double outFisher[],
+                           double outTrigger[] )
+       {
+          double price = 0;
+          double highest = 0;
+          double lowest = 0;
+          double ratio = 0;
+          double smoothed = 0;
+          double fish = 0;
+          double prevFish = 0;
+          double tempReal = 0;
+          double tempHigh = 0;
+          double tempLow = 0;
+          int outIdx = 0;
+          int lookbackTotal = 0;
+          int unstablePeriod = 0;
+          int nbInitialElementNeeded = 0;
+          int today = 0;
+          int trailingIdx = 0;
+          int highestIdx = 0;
+          int lowestIdx = 0;
+          int i = 0;
+          if( (startIdx < 0) || (startIdx > INDEX_MAX) ) {
+             return RetCode.OUT_OF_RANGE_START_INDEX ;
+          }
+          if( (endIdx < 0) || (endIdx > INDEX_MAX) || (endIdx < startIdx)) {
+             return RetCode.OUT_OF_RANGE_END_INDEX ;
+          }
+          if( optInTimePeriod == Integer.MIN_VALUE ) {
+             optInTimePeriod = 10;
+          } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
+             return RetCode.BAD_PARAM;
+          }
+          if( outFisher == outTrigger ) {
+             return RetCode.BAD_PARAM ;
+          }
+          nbInitialElementNeeded = fisherLookback(optInTimePeriod);
+          if( startIdx < nbInitialElementNeeded ) {
+             startIdx = nbInitialElementNeeded;
+          }
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.SUCCESS ;
+          }
+          lookbackTotal = optInTimePeriod - 1;
+          unstablePeriod = nbInitialElementNeeded - lookbackTotal;
+          smoothed = 0.0;
+          prevFish = 0.0;
+          today = startIdx - unstablePeriod;
+          trailingIdx = today - lookbackTotal;
+          highestIdx = -1;
+          highest = 0.0;
+          lowestIdx = -1;
+          lowest = 0.0;
+          outIdx = 0;
+          while( today <= endIdx ) {
+             price = ((double)inHigh[today] + (double)inLow[today]) / 2.0;
+             if( highestIdx < trailingIdx ) {
+                highestIdx = trailingIdx;
+                tempHigh = (double)inHigh[highestIdx];
+                tempLow = (double)inLow[highestIdx];
+                highest = (tempHigh + tempLow) / 2.0;
+                i = highestIdx;
+                while( ++i <= today ) {
+                   tempHigh = (double)inHigh[i];
+                   tempLow = (double)inLow[i];
+                   tempReal = (tempHigh + tempLow) / 2.0;
+                   if( tempReal > highest ) {
+                      highestIdx = i;
+                      highest = tempReal;
+                   }
+                }
+             } else if( price >= highest ) {
+                highestIdx = today;
+                highest = price;
+             }
+             if( lowestIdx < trailingIdx ) {
+                lowestIdx = trailingIdx;
+                tempHigh = (double)inHigh[lowestIdx];
+                tempLow = (double)inLow[lowestIdx];
+                lowest = (tempHigh + tempLow) / 2.0;
+                i = lowestIdx;
+                while( ++i <= today ) {
+                   tempHigh = (double)inHigh[i];
+                   tempLow = (double)inLow[i];
+                   tempReal = (tempHigh + tempLow) / 2.0;
+                   if( tempReal < lowest ) {
+                      lowestIdx = i;
+                      lowest = tempReal;
+                   }
+                }
+             } else if( price <= lowest ) {
+                lowestIdx = today;
+                lowest = price;
+             }
+             tempReal = highest - lowest;
+             if( !(Math.abs(tempReal) <= 0.00000000000001 * (Math.abs(highest) + Math.abs(lowest))) ) {
+                ratio = (price - lowest) / tempReal;
+             } else {
+                ratio = 0.5;
+             }
+             smoothed = Math.fma(0.67, smoothed, 0.33 * 2.0 * (ratio - 0.5));
+             if( smoothed > 0.99 ) {
+                smoothed = 0.999;
+             }
+             if( smoothed < -0.99 ) {
+                smoothed = -0.999;
+             }
+             fish = Math.fma(0.5, Math.log((1.0 + smoothed) / (1.0 - smoothed)), 0.5 * prevFish);
+             if( today >= startIdx ) {
+                outFisher[outIdx] = fish;
+                outTrigger[outIdx] = prevFish;
+                outIdx = outIdx + 1;
+             }
+             prevFish = fish;
+             trailingIdx += 1;
+             today += 1;
+          }
+          outNBElement.value = outIdx;
+          outBegIdx.value = startIdx;
+          return RetCode.SUCCESS ;
+       }
+       /**
+        * Fisher Transform
+        * <p>Formula and more info at <a
+        * href="https://ta-lib.org/functions/fisher">ta-lib.org/functions/fisher</a>.
+        * <p>Values are written only where the indicator is defined. The returned
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#fisherLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
+        *
+        * @param startIdx First bar of the requested range (inclusive).
+        * @param endIdx Last bar of the requested range (inclusive).
+        * @param inHigh High price per bar.
+        * @param inLow Low price per bar.
+        * @param optInTimePeriod Time period (default 10; range 2..100000;
+        *        {@code Integer.MIN_VALUE} selects the default).
+        * @param outFisher Output values. Must hold at least
+        *        {@code endIdx - max(startIdx, fisherLookback(...)) + 1} values, and never
+        *        be empty: an empty array is an absent output.
+        * @param outTrigger Output values. Must hold at least
+        *        {@code endIdx - max(startIdx, fisherLookback(...)) + 1} values, and never
+        *        be empty: an empty array is an absent output.
+        * @return The range written: {@code begIdx} is the first bar with a value,
+        *        {@code count} how many were written.
+        * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
+        *        negative or above {@link Core#INDEX_MAX}, or {@code endIdx < startIdx}.
+        * @throws IllegalArgumentException if an optional parameter is outside its
+        *        documented range, two outputs share one array, or an array is absent or
+        *        too short for the range requested — any input this function
+        *        <i>declares</i> that does not reach {@code endIdx}, or an output that
+        *        cannot hold the values produced. Declared, not read: a few candlestick
+        *        patterns take an OHLC series they never index, and it is required all the
+        *        same. An output this function documents as declinable is the one
+        *        exception: {@code null} is how you decline it. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
+        */
+       public OutRange fisher( int startIdx,
+                               int endIdx,
+                               double inHigh[],
+                               double inLow[],
+                               int optInTimePeriod,
+                               double outFisher[],
+                               double outTrigger[] )
+       {
+          requireIndexRange("FISHER", startIdx, endIdx);
+          int guardStart = clampedStart("FISHER", startIdx, fisherLookback(optInTimePeriod));
+          int guardInLen = endIdx + 1;
+          int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("FISHER", "inHigh", inHigh, guardInLen);
+          requireLength("FISHER", "inLow", inLow, guardInLen);
+          requireLength("FISHER", "outFisher", outFisher, guardOutLen);
+          requireLength("FISHER", "outTrigger", outTrigger, guardOutLen);
+          MInteger outBegIdx = new MInteger();
+          MInteger outNBElement = new MInteger();
+          RetCode retCode = fisherImpl(startIdx, endIdx, inHigh, inLow, optInTimePeriod, outBegIdx, outNBElement, outFisher, outTrigger);
+          if( retCode != RetCode.SUCCESS ) {
+             throw failure("FISHER", retCode);
+          }
+          return new OutRange(outBegIdx.value, outNBElement.value);
+       }
+       /**
+        * Fisher Transform
+        * <p>Formula and more info at <a
+        * href="https://ta-lib.org/functions/fisher">ta-lib.org/functions/fisher</a>.
+        * <p>This is the {@code float[]} overload. The arithmetic is performed in
+        * {@code double} before being written to the {@code double[]} output, so a
+        * result beyond {@code float} range is still representable.
+        * <p>Values are written only where the indicator is defined. The returned
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#fisherLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
+        *
+        * @param startIdx First bar of the requested range (inclusive).
+        * @param endIdx Last bar of the requested range (inclusive).
+        * @param inHigh High price per bar.
+        * @param inLow Low price per bar.
+        * @param optInTimePeriod Time period (default 10; range 2..100000;
+        *        {@code Integer.MIN_VALUE} selects the default).
+        * @param outFisher Output values. Must hold at least
+        *        {@code endIdx - max(startIdx, fisherLookback(...)) + 1} values, and never
+        *        be empty: an empty array is an absent output.
+        * @param outTrigger Output values. Must hold at least
+        *        {@code endIdx - max(startIdx, fisherLookback(...)) + 1} values, and never
+        *        be empty: an empty array is an absent output.
+        * @return The range written: {@code begIdx} is the first bar with a value,
+        *        {@code count} how many were written.
+        * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
+        *        negative or above {@link Core#INDEX_MAX}, or {@code endIdx < startIdx}.
+        * @throws IllegalArgumentException if an optional parameter is outside its
+        *        documented range, two outputs share one array, or an array is absent or
+        *        too short for the range requested — any input this function
+        *        <i>declares</i> that does not reach {@code endIdx}, or an output that
+        *        cannot hold the values produced. Declared, not read: a few candlestick
+        *        patterns take an OHLC series they never index, and it is required all the
+        *        same. An output this function documents as declinable is the one
+        *        exception: {@code null} is how you decline it. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
+        */
+       public OutRange fisher( int startIdx,
+                               int endIdx,
+                               float inHigh[],
+                               float inLow[],
+                               int optInTimePeriod,
+                               double outFisher[],
+                               double outTrigger[] )
+       {
+          requireIndexRange("FISHER", startIdx, endIdx);
+          int guardStart = clampedStart("FISHER", startIdx, fisherLookback(optInTimePeriod));
+          int guardInLen = endIdx + 1;
+          int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("FISHER", "inHigh", inHigh, guardInLen);
+          requireLength("FISHER", "inLow", inLow, guardInLen);
+          requireLength("FISHER", "outFisher", outFisher, guardOutLen);
+          requireLength("FISHER", "outTrigger", outTrigger, guardOutLen);
+          MInteger outBegIdx = new MInteger();
+          MInteger outNBElement = new MInteger();
+          RetCode retCode = fisherImpl(startIdx, endIdx, inHigh, inLow, optInTimePeriod, outBegIdx, outNBElement, outFisher, outTrigger);
+          if( retCode != RetCode.SUCCESS ) {
+             throw failure("FISHER", retCode);
+          }
+          return new OutRange(outBegIdx.value, outNBElement.value);
+       }
+    /**** Streaming API *****/
+
+       /**
+        * A live FISHER stream (unrelated to {@code java.util.stream}): one value per
+        * closed bar, bit-identical to {@link Core#fisher} over the same series.
+        * Open with {@link Core#fisherOpen}; there is no close — the handle is
+        * ordinary heap state, unreferenced handles are simply garbage-collected.
+        * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
+        * {@code value} and {@code clone} must not race with an {@code update} on
+        * the same handle. With no concurrent {@code update}, {@code peek}/
+        * {@code value}/{@code clone} never write the stream and may be called
+        * concurrently after safe publication. Independent streams (a
+        * {@code clone()} result included) are fully independent.
+        * <p>Not serializable by design: to checkpoint, retain the history and
+        * re-open — the result is bit-identical by contract.
+        */
+       public static final class FisherStream {
+          private Core core;
+          private int optInTimePeriod;
+          private double highest;
+          private double lowest;
+          private double smoothed;
+          private double prevFish;
+          private int trailingIdx;
+          private int highestIdx;
+          private int lowestIdx;
+          private int i;
+          private int today;
+          private int xMask;
+          private double[] x_inHigh;
+          private double[] x_inLow;
+          private double cur_outFisher;
+          private double cur_outTrigger;
+          private int outRangeBegIdx;
+          private int outRangeCount;
+
+          private FisherStream( Core core ) { this.core = core; }
+
+          /**
+           * The bars this stream has an output for, in the input series'
+           * coordinates: {@code [begIdx, begIdx + count)}.
+           * <p>It is what {@link Core#fisher} reports over the same bars: the
+           * opener sets it to {@code (lookback, historyLen - lookback)}, every
+           * accepted {@code update} adds one to the count — a rejected one
+           * changes nothing, and neither does {@code peek} — and
+           * {@code clone()} carries it verbatim. A plain
+           * {@code open} hands back only the last value, a subset of this range,
+           * because the caller chose not to take the fill.
+           * <p>The last bar it can reach is {@link Core#INDEX_MAX}; past that
+           * {@code update} and {@code advance} throw
+           * {@link IndexOutOfBoundsException}.
+           */
+          public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
+
+          /**
+           * Count one bar this stream was not fed: {@link #outRange()} advances
+           * by one and nothing else moves — {@link #value(FisherOut)} keeps answering the previous
+           * output, which is this bar's output too.
+           * <p>For a bar the caller leaves out: one an {@code update} rejected
+           * and that will not be re-fed, or a session with no print. Without it
+           * two handles on one feed drift a bar apart when only one of them skips.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#INDEX_MAX}, the last one the batch tier
+           * can address and the last this handle will count. {@code update}
+           * throws the same there.
+           */
+          public void advance() {
+             if( this.outRangeBegIdx + this.outRangeCount > INDEX_MAX )
+                throw failure("FISHER advance", RetCode.OUT_OF_RANGE_END_INDEX);
+             this.outRangeCount++;
+          }
+
+          private FisherStream( FisherStream other ) {
+             this.core = other.core;
+             this.optInTimePeriod = other.optInTimePeriod;
+             this.highest = other.highest;
+             this.lowest = other.lowest;
+             this.smoothed = other.smoothed;
+             this.prevFish = other.prevFish;
+             this.trailingIdx = other.trailingIdx;
+             this.highestIdx = other.highestIdx;
+             this.lowestIdx = other.lowestIdx;
+             this.i = other.i;
+             this.today = other.today;
+             this.xMask = other.xMask;
+             this.x_inHigh = other.x_inHigh.clone();
+             this.x_inLow = other.x_inLow.clone();
+             this.cur_outFisher = other.cur_outFisher;
+             this.cur_outTrigger = other.cur_outTrigger;
+             this.outRangeBegIdx = other.outRangeBegIdx;
+             this.outRangeCount = other.outRangeCount;
+          }
+
+          /**
+           * Commit one closed bar, writing the new current values into the {@code out} the CALLER owns.
+           * <p>Throws {@link IllegalArgumentException} if any bar value is not
+           * finite (NaN or an infinity). That check runs before anything is
+           * written, so nothing moves — {@link #outRange()} included — and
+           * {@link #value(FisherOut)} still answers the previous value. Re-feed the bar when a
+           * corrected value arrives, or call {@link #advance()} to count it and
+           * carry on; two handles on one feed drift a bar apart if neither
+           * happens.
+           * This is the one place the streaming tier is stricter than
+           * the batch API, which computes on whatever it is given: a handle
+           * retains its state, so a single non-finite bar would poison every
+           * later value it produces.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#INDEX_MAX}, which no re-feed clears: the
+           * handle has run out of index domain and only a shorter history can
+           * start a new one.
+           */
+          public void update( double inHigh, double inLow, FisherOut out ) {
+             if( this.outRangeBegIdx + this.outRangeCount > INDEX_MAX )
+                throw failure("FISHER update", RetCode.OUT_OF_RANGE_END_INDEX);
+             requireArgument("FISHER update", "out", out);
+             if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) )
+                throw nonFiniteBar("FISHER update", !Double.isFinite(inHigh) ? "inHigh" : "inLow");
+             core.fisherStepImpl(this, inHigh, inLow);
+             this.outRangeCount++;
+             out.fisher = this.cur_outFisher;
+             out.trigger = this.cur_outTrigger;
+          }
+
+          /**
+           * Evaluate a forming bar without committing — bit-identical to what the
+           * next {@code update} with the same bar would write — the same
+           * transition, with every store it would make carried in a local instead.
+           * Never writes this handle, so peeks may run concurrently with each other.
+           * <p>It counts no bar, so it keeps answering past the
+           * {@link Core#INDEX_MAX} ceiling {@code update} stops at.
+           */
+          public void peek( double inHigh, double inLow, FisherOut out ) {
+             requireArgument("FISHER peek", "out", out);
+             if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) )
+                throw nonFiniteBar("FISHER peek", !Double.isFinite(inHigh) ? "inHigh" : "inLow");
+             FisherStream sp = this;
+             double price = 0.0;
+             double ratio = 0.0;
+             double fish = 0.0;
+             double tempReal = 0.0;
+             double tempHigh = 0.0;
+             double tempLow = 0.0;
+             double cur_outFisher = 0.0;
+             double cur_outTrigger = 0.0;
+             double highest = sp.highest;
+             int highestIdx = sp.highestIdx;
+             int i = sp.i;
+             double lowest = sp.lowest;
+             int lowestIdx = sp.lowestIdx;
+             double smoothed = sp.smoothed;
+             int pkSlot0 = -1;
+             double pkVal0 = 0.0;
+             int pkSlot1 = -1;
+             double pkVal1 = 0.0;
+             pkSlot0 = sp.today & sp.xMask;
+             pkVal0 = inHigh;
+             pkSlot1 = sp.today & sp.xMask;
+             pkVal1 = inLow;
+             /* The channel, over the midpoints rather than over the highs and the
+              * lows separately: this indicator reads one series, which happens to be
+              * (H+L)/2, so both extremes come from that same series. STOCH's shape,
+              * with the midpoint recomputed on the rare rescan rather than held in a
+              * buffer the caller would have to own.
+              */
+             price = ((((sp.today & sp.xMask) != pkSlot0) ? sp.x_inHigh[sp.today & sp.xMask] : pkVal0) + (((sp.today & sp.xMask) != pkSlot1) ? sp.x_inLow[sp.today & sp.xMask] : pkVal1)) / 2.0;
+             if( highestIdx < sp.trailingIdx ) {
+                highestIdx = sp.trailingIdx;
+                tempHigh = ((highestIdx & sp.xMask) != pkSlot0) ? sp.x_inHigh[highestIdx & sp.xMask] : pkVal0;
+                tempLow = ((highestIdx & sp.xMask) != pkSlot1) ? sp.x_inLow[highestIdx & sp.xMask] : pkVal1;
+                highest = (tempHigh + tempLow) / 2.0;
+                i = highestIdx;
+                while( ++i <= sp.today ) {
+                   tempHigh = ((i & sp.xMask) != pkSlot0) ? sp.x_inHigh[i & sp.xMask] : pkVal0;
+                   tempLow = ((i & sp.xMask) != pkSlot1) ? sp.x_inLow[i & sp.xMask] : pkVal1;
+                   tempReal = (tempHigh + tempLow) / 2.0;
+                   if( tempReal > highest ) {
+                      highestIdx = i;
+                      highest = tempReal;
+                   }
+                }
+             } else if( price >= highest ) {
+                highestIdx = sp.today;
+                highest = price;
+             }
+             if( lowestIdx < sp.trailingIdx ) {
+                lowestIdx = sp.trailingIdx;
+                tempHigh = ((lowestIdx & sp.xMask) != pkSlot0) ? sp.x_inHigh[lowestIdx & sp.xMask] : pkVal0;
+                tempLow = ((lowestIdx & sp.xMask) != pkSlot1) ? sp.x_inLow[lowestIdx & sp.xMask] : pkVal1;
+                lowest = (tempHigh + tempLow) / 2.0;
+                i = lowestIdx;
+                while( ++i <= sp.today ) {
+                   tempHigh = ((i & sp.xMask) != pkSlot0) ? sp.x_inHigh[i & sp.xMask] : pkVal0;
+                   tempLow = ((i & sp.xMask) != pkSlot1) ? sp.x_inLow[i & sp.xMask] : pkVal1;
+                   tempReal = (tempHigh + tempLow) / 2.0;
+                   if( tempReal < lowest ) {
+                      lowestIdx = i;
+                      lowest = tempReal;
+                   }
+                }
+             } else if( price <= lowest ) {
+                lowestIdx = sp.today;
+                lowest = price;
+             }
+             /* A flat window answers the neutral position rather than dividing by
+              * its own zero range. The band is the range against its own two
+              * extremes, STOCH's test: a fixed constant answers "flat" for every
+              * window of an instrument quoted below it (#253), and an exact test
+              * divides a machine-flat window into noise (#107). At 0.5 the bar
+              * contributes nothing and both recursions decay on their own
+              * coefficients.
+              */
+             tempReal = highest - lowest;
+             if( !(Math.abs(tempReal) <= 0.00000000000001 * (Math.abs(highest) + Math.abs(lowest))) ) {
+                ratio = (price - lowest) / tempReal;
+             } else {
+                ratio = 0.5;
+             }
+             /* The listing's .33*2*(r-.5) + .67*Value1[1]. */
+             smoothed = Math.fma(0.67, smoothed, 0.33 * 2.0 * (ratio - 0.5));
+             /* The clamp is what keeps atanh finite, and the CLAMPED smoothed is what
+              * the next bar's smoothing reads -- the listing assigns it back to
+              * Value1 rather than holding it for the transform alone.
+              */
+             if( smoothed > 0.99 ) {
+                smoothed = 0.999;
+             }
+             if( smoothed < -0.99 ) {
+                smoothed = -0.999;
+             }
+             fish = Math.fma(0.5, Math.log((1.0 + smoothed) / (1.0 - smoothed)), 0.5 * sp.prevFish);
+             cur_outFisher = fish;
+             /* The author's second plot is Fish[1]: the previous bar's smoothed,
+              * which at the first output bar is the zero seed when no unstable
+              * period was discarded, and the computed smoothed of the bar before it
+              * when one was.
+              */
+             cur_outTrigger = sp.prevFish;
+             out.fisher = cur_outFisher;
+             out.trigger = cur_outTrigger;
+          }
+
+          /**
+           * The value at the last bar this stream counted — the bar
+           * {@link #outRange()} ends on. The last history bar right after open,
+           * then whatever the latest accepted {@code update} wrote.
+           * A pure field read; {@code peek} does not change it. Overwrites {@code out}.
+           */
+          public void value( FisherOut out ) {
+             requireArgument("FISHER value", "out", out);
+             out.fisher = this.cur_outFisher;
+             out.trigger = this.cur_outTrigger;
+          }
+
+          /**
+           * An independent fork of this stream: both evolve separately from here
+           * on. Buffers are copied and sub-streams cloned recursively; the
+           * {@link Core} reference is shared, since a {@code Core} is immutable
+           * for a stream's lifetime.
+           *
+           * <p>Not the {@code Cloneable} protocol: this calls a copy constructor,
+           * never {@code super.clone()}, so it throws nothing.
+           *
+           * @return an independent stream at the same bar
+           */
+          @Override
+          public FisherStream clone() {
+             return new FisherStream(this);
+          }
+       }
+
+       /**
+        * The outputs of one FISHER bar, written by the stream into an object the
+        * CALLER owns. Allocate one and reuse it: {@code update}, {@code peek}
+        * and {@code value} overwrite its fields, so the sink itself costs
+        * nothing per bar.
+        *
+        * <p><b>Its contents are only valid until the next call that writes it.</b>
+        * It is a mutable buffer, not a reading: a reference kept past that call,
+        * or one put in a collection, sees the value change underneath it. Copy the
+        * fields out if the reading has to outlive the call.
+        *
+        * <p>Deliberately no {@code equals} or {@code hashCode}: a mutable type
+        * with value equality breaks the {@code HashMap}/{@code HashSet}
+        * invariant the moment a reused instance becomes a key. Compare the fields.
+        */
+       public static final class FisherOut {
+          /** Output values. */
+          public double fisher;
+          /** Output values. */
+          public double trigger;
+       }
+       private void fisherStepImpl( FisherStream sp, double inHigh, double inLow )
+       {
+          double price = 0.0;
+          double ratio = 0.0;
+          double fish = 0.0;
+          double tempReal = 0.0;
+          double tempHigh = 0.0;
+          double tempLow = 0.0;
+          sp.x_inHigh[sp.today & sp.xMask] = inHigh;
+          sp.x_inLow[sp.today & sp.xMask] = inLow;
+          /* The channel, over the midpoints rather than over the highs and the
+           * lows separately: this indicator reads one series, which happens to be
+           * (H+L)/2, so both extremes come from that same series. STOCH's shape,
+           * with the midpoint recomputed on the rare rescan rather than held in a
+           * buffer the caller would have to own.
+           */
+          price = (sp.x_inHigh[sp.today & sp.xMask] + sp.x_inLow[sp.today & sp.xMask]) / 2.0;
+          if( sp.highestIdx < sp.trailingIdx ) {
+             sp.highestIdx = sp.trailingIdx;
+             tempHigh = sp.x_inHigh[sp.highestIdx & sp.xMask];
+             tempLow = sp.x_inLow[sp.highestIdx & sp.xMask];
+             sp.highest = (tempHigh + tempLow) / 2.0;
+             sp.i = sp.highestIdx;
+             while( ++sp.i <= sp.today ) {
+                tempHigh = sp.x_inHigh[sp.i & sp.xMask];
+                tempLow = sp.x_inLow[sp.i & sp.xMask];
+                tempReal = (tempHigh + tempLow) / 2.0;
+                if( tempReal > sp.highest ) {
+                   sp.highestIdx = sp.i;
+                   sp.highest = tempReal;
+                }
+             }
+          } else if( price >= sp.highest ) {
+             sp.highestIdx = sp.today;
+             sp.highest = price;
+          }
+          if( sp.lowestIdx < sp.trailingIdx ) {
+             sp.lowestIdx = sp.trailingIdx;
+             tempHigh = sp.x_inHigh[sp.lowestIdx & sp.xMask];
+             tempLow = sp.x_inLow[sp.lowestIdx & sp.xMask];
+             sp.lowest = (tempHigh + tempLow) / 2.0;
+             sp.i = sp.lowestIdx;
+             while( ++sp.i <= sp.today ) {
+                tempHigh = sp.x_inHigh[sp.i & sp.xMask];
+                tempLow = sp.x_inLow[sp.i & sp.xMask];
+                tempReal = (tempHigh + tempLow) / 2.0;
+                if( tempReal < sp.lowest ) {
+                   sp.lowestIdx = sp.i;
+                   sp.lowest = tempReal;
+                }
+             }
+          } else if( price <= sp.lowest ) {
+             sp.lowestIdx = sp.today;
+             sp.lowest = price;
+          }
+          /* A flat window answers the neutral position rather than dividing by
+           * its own zero range. The band is the range against its own two
+           * extremes, STOCH's test: a fixed constant answers "flat" for every
+           * window of an instrument quoted below it (#253), and an exact test
+           * divides a machine-flat window into noise (#107). At 0.5 the bar
+           * contributes nothing and both recursions decay on their own
+           * coefficients.
+           */
+          tempReal = sp.highest - sp.lowest;
+          if( !(Math.abs(tempReal) <= 0.00000000000001 * (Math.abs(sp.highest) + Math.abs(sp.lowest))) ) {
+             ratio = (price - sp.lowest) / tempReal;
+          } else {
+             ratio = 0.5;
+          }
+          /* The listing's .33*2*(r-.5) + .67*Value1[1]. */
+          sp.smoothed = Math.fma(0.67, sp.smoothed, 0.33 * 2.0 * (ratio - 0.5));
+          /* The clamp is what keeps atanh finite, and the CLAMPED smoothed is what
+           * the next bar's smoothing reads -- the listing assigns it back to
+           * Value1 rather than holding it for the transform alone.
+           */
+          if( sp.smoothed > 0.99 ) {
+             sp.smoothed = 0.999;
+          }
+          if( sp.smoothed < -0.99 ) {
+             sp.smoothed = -0.999;
+          }
+          fish = Math.fma(0.5, Math.log((1.0 + sp.smoothed) / (1.0 - sp.smoothed)), 0.5 * sp.prevFish);
+          sp.cur_outFisher = fish;
+          /* The author's second plot is Fish[1]: the previous bar's smoothed,
+           * which at the first output bar is the zero seed when no unstable
+           * period was discarded, and the computed smoothed of the bar before it
+           * when one was.
+           */
+          sp.cur_outTrigger = sp.prevFish;
+          sp.prevFish = fish;
+          sp.trailingIdx += 1;
+          sp.today += 1;
+       }
+       private RetCode fisherOpenImpl( FisherStream sp, double inHigh[], double inLow[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outFisher[], double outTrigger[], int outStride )
+       {
+          double price = 0;
+          double highest = 0;
+          double lowest = 0;
+          double ratio = 0;
+          double smoothed = 0;
+          double fish = 0;
+          double prevFish = 0;
+          double tempReal = 0;
+          double tempHigh = 0;
+          double tempLow = 0;
+          int outIdx = 0;
+          int lookbackTotal = 0;
+          int unstablePeriod = 0;
+          int nbInitialElementNeeded = 0;
+          int today = 0;
+          int trailingIdx = 0;
+          int highestIdx = 0;
+          int lowestIdx = 0;
+          int i = 0;
+          int historyLen = inHigh.length;
+          int endIdx = historyLen - 1;
+          if( historyLen < 1 ) {
+             return RetCode.OUT_OF_RANGE_START_INDEX;
+          }
+          if( historyLen > INDEX_MAX + 1 ) {
+             return RetCode.OUT_OF_RANGE_END_INDEX;
+          }
+          if( inLow.length != inHigh.length ) {
+             return RetCode.BAD_PARAM;
+          }
+          if( optInTimePeriod == Integer.MIN_VALUE ) {
+             optInTimePeriod = 10;
+          } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
+             return RetCode.BAD_PARAM;
+          }
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.INSUFFICIENT_HISTORY;
+          }
+          nbInitialElementNeeded = fisherLookback(optInTimePeriod);
+          if( startIdx < nbInitialElementNeeded ) {
+             startIdx = nbInitialElementNeeded;
+          }
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.INSUFFICIENT_HISTORY ;
+          }
+          lookbackTotal = optInTimePeriod - 1;
+          unstablePeriod = nbInitialElementNeeded - lookbackTotal;
+          /* John F. Ehlers, "Using The Fisher Transform", Stocks & Commodities
+           * V.20:11 (November 2002), pp.40-42, the EasyLanguage listing in Figure 4.
+           *
+           * The bar's midpoint is located in its rolling n-bar channel, rescaled to
+           * (-1, +1), smoothed, clamped, and passed through atanh. What the
+           * transform buys is the tail: a channel position is close to uniformly
+           * distributed, and the Fisher transform of a uniform variable is close to
+           * normal, so an extreme reading is rare rather than routine and a turn is
+           * a sharp corner rather than a drift.
+           *
+           * Both recursions start from the author's zero seed and decay at their own
+           * coefficient -- 0.67 for the smoothing, 0.5 for the transform -- so the
+           * first bars carry the seed rather than the series. That is what the
+           * unstable period discards.
+           */
+          smoothed = 0.0;
+          prevFish = 0.0;
+          today = startIdx - unstablePeriod;
+          trailingIdx = today - lookbackTotal;
+          highestIdx = -1;
+          highest = 0.0;
+          lowestIdx = -1;
+          lowest = 0.0;
+          outIdx = 0;
+          while( today <= endIdx ) {
+             /* The channel, over the midpoints rather than over the highs and the
+              * lows separately: this indicator reads one series, which happens to be
+              * (H+L)/2, so both extremes come from that same series. STOCH's shape,
+              * with the midpoint recomputed on the rare rescan rather than held in a
+              * buffer the caller would have to own.
+              */
+             price = (inHigh[today] + inLow[today]) / 2.0;
+             if( highestIdx < trailingIdx ) {
+                highestIdx = trailingIdx;
+                tempHigh = inHigh[highestIdx];
+                tempLow = inLow[highestIdx];
+                highest = (tempHigh + tempLow) / 2.0;
+                i = highestIdx;
+                while( ++i <= today ) {
+                   tempHigh = inHigh[i];
+                   tempLow = inLow[i];
+                   tempReal = (tempHigh + tempLow) / 2.0;
+                   if( tempReal > highest ) {
+                      highestIdx = i;
+                      highest = tempReal;
+                   }
+                }
+             } else if( price >= highest ) {
+                highestIdx = today;
+                highest = price;
+             }
+             if( lowestIdx < trailingIdx ) {
+                lowestIdx = trailingIdx;
+                tempHigh = inHigh[lowestIdx];
+                tempLow = inLow[lowestIdx];
+                lowest = (tempHigh + tempLow) / 2.0;
+                i = lowestIdx;
+                while( ++i <= today ) {
+                   tempHigh = inHigh[i];
+                   tempLow = inLow[i];
+                   tempReal = (tempHigh + tempLow) / 2.0;
+                   if( tempReal < lowest ) {
+                      lowestIdx = i;
+                      lowest = tempReal;
+                   }
+                }
+             } else if( price <= lowest ) {
+                lowestIdx = today;
+                lowest = price;
+             }
+             /* A flat window answers the neutral position rather than dividing by
+              * its own zero range. The band is the range against its own two
+              * extremes, STOCH's test: a fixed constant answers "flat" for every
+              * window of an instrument quoted below it (#253), and an exact test
+              * divides a machine-flat window into noise (#107). At 0.5 the bar
+              * contributes nothing and both recursions decay on their own
+              * coefficients.
+              */
+             tempReal = highest - lowest;
+             if( !(Math.abs(tempReal) <= 0.00000000000001 * (Math.abs(highest) + Math.abs(lowest))) ) {
+                ratio = (price - lowest) / tempReal;
+             } else {
+                ratio = 0.5;
+             }
+             /* The listing's .33*2*(r-.5) + .67*Value1[1]. */
+             smoothed = Math.fma(0.67, smoothed, 0.33 * 2.0 * (ratio - 0.5));
+             /* The clamp is what keeps atanh finite, and the CLAMPED smoothed is what
+              * the next bar's smoothing reads -- the listing assigns it back to
+              * Value1 rather than holding it for the transform alone.
+              */
+             if( smoothed > 0.99 ) {
+                smoothed = 0.999;
+             }
+             if( smoothed < -0.99 ) {
+                smoothed = -0.999;
+             }
+             fish = Math.fma(0.5, Math.log((1.0 + smoothed) / (1.0 - smoothed)), 0.5 * prevFish);
+             if( today >= startIdx ) {
+                outFisher[outIdx * outStride] = fish;
+                /* The author's second plot is Fish[1]: the previous bar's smoothed,
+                 * which at the first output bar is the zero seed when no unstable
+                 * period was discarded, and the computed smoothed of the bar before it
+                 * when one was.
+                 */
+                outTrigger[outIdx * outStride] = prevFish;
+                outIdx = outIdx + 1;
+             }
+             prevFish = fish;
+             trailingIdx += 1;
+             today += 1;
+          }
+          outNBElement.value = outIdx;
+          outBegIdx.value = startIdx;
+          /* Capture the live batch state into the handle. */
+          int capX = today - trailingIdx + 1;
+          if( capX < 1 || capX > historyLen ) {
+             return RetCode.INTERNAL_ERROR;
+          }
+          int physX = 1;
+          while( physX < capX ) {
+             physX <<= 1;
+          }
+          double[] capX_inHigh = new double[physX];
+          double[] capX_inLow = new double[physX];
+          for( int fillJ = historyLen - capX; fillJ < historyLen; fillJ++ ) {
+             capX_inHigh[fillJ & (physX - 1)] = inHigh[fillJ];
+             capX_inLow[fillJ & (physX - 1)] = inLow[fillJ];
+          }
+          sp.optInTimePeriod = optInTimePeriod;
+          sp.highest = highest;
+          sp.lowest = lowest;
+          sp.smoothed = smoothed;
+          sp.prevFish = prevFish;
+          sp.trailingIdx = trailingIdx;
+          sp.highestIdx = highestIdx;
+          sp.lowestIdx = lowestIdx;
+          sp.i = i;
+          sp.today = today;
+          sp.xMask = physX - 1;
+          sp.x_inHigh = capX_inHigh;
+          sp.x_inLow = capX_inLow;
+          sp.cur_outFisher = outFisher[(outNBElement.value - 1) * outStride];
+          sp.cur_outTrigger = outTrigger[(outNBElement.value - 1) * outStride];
+          return RetCode.SUCCESS;
+       }
+       /* fisherOpenAndFill anchored at startIdx — the composed-open fusion seam. */
+       FisherStream fisherOpenAndFillInternal( double inHigh[], double inLow[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outFisher[], double outTrigger[] )
+       {
+          FisherStream sp = new FisherStream(this);
+          RetCode retCode = fisherOpenImpl(sp, inHigh, inLow, startIdx, optInTimePeriod, outBegIdx, outNBElement, outFisher, outTrigger, 1);
+          sp.outRangeBegIdx = outBegIdx.value;
+          sp.outRangeCount = outNBElement.value;
+          if( retCode == RetCode.SUCCESS ) {
+             return sp;
+          }
+          if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
+             throw insufficientHistory("FISHER openAndFill", inHigh.length, startIdx, fisherLookback(optInTimePeriod));
+          }
+          throw streamFailure("FISHER openAndFill", retCode);
+       }
+       /* Internal startIdx-anchored open behind fisherOpen (composition seam). */
+       FisherStream fisherOpenInternal( double inHigh[], double inLow[], int startIdx, int optInTimePeriod )
+       {
+          FisherStream sp = new FisherStream(this);
+          MInteger outBegIdx = new MInteger();
+          MInteger outNBElement = new MInteger();
+          double[] sink_outFisher = new double[1];
+          double[] sink_outTrigger = new double[1];
+          RetCode retCode = fisherOpenImpl(sp, inHigh, inLow, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outFisher, sink_outTrigger, 0);
+          sp.outRangeBegIdx = outBegIdx.value;
+          sp.outRangeCount = outNBElement.value;
+          if( retCode == RetCode.SUCCESS ) {
+             return sp;
+          }
+          if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
+             throw insufficientHistory("FISHER open", inHigh.length, startIdx, fisherLookback(optInTimePeriod));
+          }
+          throw streamFailure("FISHER open", retCode);
+       }
+       /**
+        * Open a live FISHER stream over the warm-up history; the handle's
+        * {@code value()} starts at the last history bar's value — bit-identical
+        * to {@link Core#fisher} at that bar.
+        * <p>The history must hold at least {@code fisherLookback(...) + 1} bars
+        * (unstable-period aware), or {@link InsufficientHistoryException} is
+        * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
+        * ({@link Integer#MIN_VALUE} selects a parameter's documented default,
+        * as in the batch API). An EMPTY history throws
+        * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
+        * names no bar — and a null argument {@link IllegalArgumentException},
+        * both ahead of everything above.
+        */
+       public FisherStream fisherOpen( double inHigh[], double inLow[], int optInTimePeriod )
+       {
+          requireArgument("FISHER open", "inHigh", inHigh);
+          requireHistory("FISHER open", inHigh.length);
+          requireArgument("FISHER open", "inLow", inLow);
+          requireHistoryLength("FISHER open", "inLow", inLow.length, inHigh.length);
+          return fisherOpenInternal(inHigh, inLow, 0, optInTimePeriod);
+       }
+       /**
+        * {@link Core#fisherOpen} that also fills the output array(s) bit-identically
+        * to {@link Core#fisher} over the whole history in the same single pass
+        * (no separate batch call needed for the warm-up plot). Output arrays must
+        * not alias the inputs or each other, and must hold
+        * {@code historyLen - lookback} values — both checked before anything is
+        * written, so an undersized array is an {@link IllegalArgumentException}
+        * naming it rather than a fault from inside the fill.
+        * <p>The range written is on the returned handle:
+        * {@link FisherStream#outRange()}.
+        */
+       public FisherStream fisherOpenAndFill( double inHigh[], double inLow[], int optInTimePeriod, double outFisher[], double outTrigger[] )
+       {
+          requireArgument("FISHER openAndFill", "inHigh", inHigh);
+          requireHistory("FISHER openAndFill", inHigh.length);
+          requireArgument("FISHER openAndFill", "inLow", inLow);
+          int guardOutLen = openFillCount("FISHER openAndFill", inHigh.length, fisherLookback(optInTimePeriod));
+          requireHistoryLength("FISHER openAndFill", "inLow", inLow.length, inHigh.length);
+          requireLength("FISHER openAndFill", "outFisher", outFisher, guardOutLen);
+          requireLength("FISHER openAndFill", "outTrigger", outTrigger, guardOutLen);
+          if( (Object)outFisher == (Object)inHigh || (Object)outFisher == (Object)inLow || (Object)outTrigger == (Object)inHigh || (Object)outTrigger == (Object)inLow || (Object)outFisher == (Object)outTrigger ) {
+             throw streamFailure("FISHER openAndFill", RetCode.BAD_PARAM);
+          }
+          MInteger outBegIdx = new MInteger();
+          MInteger outNBElement = new MInteger();
+          return fisherOpenAndFillInternal(inHigh, inLow, 0, optInTimePeriod, outBegIdx, outNBElement, outFisher, outTrigger);
        }
     /* List of contributors:
      *
@@ -220576,7 +221745,7 @@ class Core {
 
 public class TaCodegenServe {
     static Core core = new Core();
-    static final String SPLICED_GENCODE_DIGEST = "11b11120aa121f65";
+    static final String SPLICED_GENCODE_DIGEST = "240956f3c9c42c21";
     static final int MAX_ARRAY_SIZE = 200000;
     static double[] refOpen = new double[MAX_ARRAY_SIZE];
     static double[] refHigh = new double[MAX_ARRAY_SIZE];
@@ -221192,6 +222361,10 @@ public class TaCodegenServe {
             new AbsIn[]{ new AbsIn(1,"inReal",0) },
             new AbsOpt[]{  },
             new AbsOut[]{ new AbsOut(0,"outReal",1) }));
+        ABSTRACT.put("FISHER", new AbsFunc("FISHER", "Momentum Indicators", "Fisher Transform", 167772160,
+            new AbsIn[]{ new AbsIn(0,"inPriceHL",6) },
+            new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period","Time period",10.0, 0,0,0,0,0,0, 2,100000,5,50,1, null) },
+            new AbsOut[]{ new AbsOut(0,"outFisher",1), new AbsOut(0,"outTrigger",4) }));
         ABSTRACT.put("FLOOR", new AbsFunc("FLOOR", "Math Transform", "Vector Floor", 33554432,
             new AbsIn[]{ new AbsIn(1,"inReal",0) },
             new AbsOpt[]{  },
@@ -221877,6 +223050,7 @@ public class TaCodegenServe {
         "TA_ER",
         "TA_ERI",
         "TA_EXP",
+        "TA_FISHER",
         "TA_FLOOR",
         "TA_FOSC",
         "TA_FRACTAL",
@@ -222112,122 +223286,123 @@ public class TaCodegenServe {
             case 110: return handle_ER(json);
             case 111: return handle_ERI(json);
             case 112: return handle_EXP(json);
-            case 113: return handle_FLOOR(json);
-            case 114: return handle_FOSC(json);
-            case 115: return handle_FRACTAL(json);
-            case 116: return handle_FRAMA(json);
-            case 117: return handle_HA(json);
-            case 118: return handle_HMA(json);
-            case 119: return handle_HT_DCPERIOD(json);
-            case 120: return handle_HT_DCPHASE(json);
-            case 121: return handle_HT_PHASOR(json);
-            case 122: return handle_HT_SINE(json);
-            case 123: return handle_HT_TRENDLINE(json);
-            case 124: return handle_HT_TRENDMODE(json);
-            case 125: return handle_IBS(json);
-            case 126: return handle_IMI(json);
-            case 127: return handle_KAMA(json);
-            case 128: return handle_KC(json);
-            case 129: return handle_KDJ(json);
-            case 130: return handle_KST(json);
-            case 131: return handle_KSTEXT(json);
-            case 132: return handle_KURTOSIS(json);
-            case 133: return handle_LINEARREG(json);
-            case 134: return handle_LINEARREG_ANGLE(json);
-            case 135: return handle_LINEARREG_INTERCEPT(json);
-            case 136: return handle_LINEARREG_SLOPE(json);
-            case 137: return handle_LN(json);
-            case 138: return handle_LOG10(json);
-            case 139: return handle_MA(json);
-            case 140: return handle_MACD(json);
-            case 141: return handle_MACDEXT(json);
-            case 142: return handle_MACDFIX(json);
-            case 143: return handle_MAMA(json);
-            case 144: return handle_MARKETFI(json);
-            case 145: return handle_MASSI(json);
-            case 146: return handle_MAVP(json);
-            case 147: return handle_MAX(json);
-            case 148: return handle_MAXINDEX(json);
-            case 149: return handle_MCGD(json);
-            case 150: return handle_MEDIAN(json);
-            case 151: return handle_MEDPRICE(json);
-            case 152: return handle_MFI(json);
-            case 153: return handle_MIDPOINT(json);
-            case 154: return handle_MIDPRICE(json);
-            case 155: return handle_MIN(json);
-            case 156: return handle_MININDEX(json);
-            case 157: return handle_MINMAX(json);
-            case 158: return handle_MINMAXINDEX(json);
-            case 159: return handle_MINUS_DI(json);
-            case 160: return handle_MINUS_DM(json);
-            case 161: return handle_MOM(json);
-            case 162: return handle_MULT(json);
-            case 163: return handle_NATR(json);
-            case 164: return handle_NVI(json);
-            case 165: return handle_OBV(json);
-            case 166: return handle_PERCENTB(json);
-            case 167: return handle_PERCENTILE(json);
-            case 168: return handle_PERCENTRANK(json);
-            case 169: return handle_PLUS_DI(json);
-            case 170: return handle_PLUS_DM(json);
-            case 171: return handle_PPO(json);
-            case 172: return handle_PVI(json);
-            case 173: return handle_PVO(json);
-            case 174: return handle_PVT(json);
-            case 175: return handle_QSTICK(json);
-            case 176: return handle_RMA(json);
-            case 177: return handle_ROC(json);
-            case 178: return handle_ROCP(json);
-            case 179: return handle_ROCR(json);
-            case 180: return handle_ROCR100(json);
-            case 181: return handle_ROGERSSATCHELL(json);
-            case 182: return handle_RSI(json);
-            case 183: return handle_RVI(json);
-            case 184: return handle_RVIR(json);
-            case 185: return handle_RVOL(json);
-            case 186: return handle_SAR(json);
-            case 187: return handle_SAREXT(json);
-            case 188: return handle_SI(json);
-            case 189: return handle_SIN(json);
-            case 190: return handle_SINH(json);
-            case 191: return handle_SMA(json);
-            case 192: return handle_SMI(json);
-            case 193: return handle_SQRT(json);
-            case 194: return handle_STC(json);
-            case 195: return handle_STDDEV(json);
-            case 196: return handle_STOCH(json);
-            case 197: return handle_STOCHF(json);
-            case 198: return handle_STOCHRSI(json);
-            case 199: return handle_SUB(json);
-            case 200: return handle_SUM(json);
-            case 201: return handle_SUPERTREND(json);
-            case 202: return handle_SWAK_2PHP(json);
-            case 203: return handle_SWAK_BP(json);
-            case 204: return handle_SWAK_BUTTER(json);
-            case 205: return handle_SWAK_GAUSS(json);
-            case 206: return handle_SWAK_HP(json);
-            case 207: return handle_T3(json);
-            case 208: return handle_TAN(json);
-            case 209: return handle_TANH(json);
-            case 210: return handle_TEMA(json);
-            case 211: return handle_TRANGE(json);
-            case 212: return handle_TRIMA(json);
-            case 213: return handle_TRIX(json);
-            case 214: return handle_TSF(json);
-            case 215: return handle_TSI(json);
-            case 216: return handle_TYPPRICE(json);
-            case 217: return handle_ULTOSC(json);
-            case 218: return handle_VAR(json);
-            case 219: return handle_VHF(json);
-            case 220: return handle_VIDYA(json);
-            case 221: return handle_VORTEX(json);
-            case 222: return handle_VWAP(json);
-            case 223: return handle_VWMA(json);
-            case 224: return handle_WAD(json);
-            case 225: return handle_WCLPRICE(json);
-            case 226: return handle_WILLR(json);
-            case 227: return handle_WMA(json);
-            case 228: return handle_ZLEMA(json);
+            case 113: return handle_FISHER(json);
+            case 114: return handle_FLOOR(json);
+            case 115: return handle_FOSC(json);
+            case 116: return handle_FRACTAL(json);
+            case 117: return handle_FRAMA(json);
+            case 118: return handle_HA(json);
+            case 119: return handle_HMA(json);
+            case 120: return handle_HT_DCPERIOD(json);
+            case 121: return handle_HT_DCPHASE(json);
+            case 122: return handle_HT_PHASOR(json);
+            case 123: return handle_HT_SINE(json);
+            case 124: return handle_HT_TRENDLINE(json);
+            case 125: return handle_HT_TRENDMODE(json);
+            case 126: return handle_IBS(json);
+            case 127: return handle_IMI(json);
+            case 128: return handle_KAMA(json);
+            case 129: return handle_KC(json);
+            case 130: return handle_KDJ(json);
+            case 131: return handle_KST(json);
+            case 132: return handle_KSTEXT(json);
+            case 133: return handle_KURTOSIS(json);
+            case 134: return handle_LINEARREG(json);
+            case 135: return handle_LINEARREG_ANGLE(json);
+            case 136: return handle_LINEARREG_INTERCEPT(json);
+            case 137: return handle_LINEARREG_SLOPE(json);
+            case 138: return handle_LN(json);
+            case 139: return handle_LOG10(json);
+            case 140: return handle_MA(json);
+            case 141: return handle_MACD(json);
+            case 142: return handle_MACDEXT(json);
+            case 143: return handle_MACDFIX(json);
+            case 144: return handle_MAMA(json);
+            case 145: return handle_MARKETFI(json);
+            case 146: return handle_MASSI(json);
+            case 147: return handle_MAVP(json);
+            case 148: return handle_MAX(json);
+            case 149: return handle_MAXINDEX(json);
+            case 150: return handle_MCGD(json);
+            case 151: return handle_MEDIAN(json);
+            case 152: return handle_MEDPRICE(json);
+            case 153: return handle_MFI(json);
+            case 154: return handle_MIDPOINT(json);
+            case 155: return handle_MIDPRICE(json);
+            case 156: return handle_MIN(json);
+            case 157: return handle_MININDEX(json);
+            case 158: return handle_MINMAX(json);
+            case 159: return handle_MINMAXINDEX(json);
+            case 160: return handle_MINUS_DI(json);
+            case 161: return handle_MINUS_DM(json);
+            case 162: return handle_MOM(json);
+            case 163: return handle_MULT(json);
+            case 164: return handle_NATR(json);
+            case 165: return handle_NVI(json);
+            case 166: return handle_OBV(json);
+            case 167: return handle_PERCENTB(json);
+            case 168: return handle_PERCENTILE(json);
+            case 169: return handle_PERCENTRANK(json);
+            case 170: return handle_PLUS_DI(json);
+            case 171: return handle_PLUS_DM(json);
+            case 172: return handle_PPO(json);
+            case 173: return handle_PVI(json);
+            case 174: return handle_PVO(json);
+            case 175: return handle_PVT(json);
+            case 176: return handle_QSTICK(json);
+            case 177: return handle_RMA(json);
+            case 178: return handle_ROC(json);
+            case 179: return handle_ROCP(json);
+            case 180: return handle_ROCR(json);
+            case 181: return handle_ROCR100(json);
+            case 182: return handle_ROGERSSATCHELL(json);
+            case 183: return handle_RSI(json);
+            case 184: return handle_RVI(json);
+            case 185: return handle_RVIR(json);
+            case 186: return handle_RVOL(json);
+            case 187: return handle_SAR(json);
+            case 188: return handle_SAREXT(json);
+            case 189: return handle_SI(json);
+            case 190: return handle_SIN(json);
+            case 191: return handle_SINH(json);
+            case 192: return handle_SMA(json);
+            case 193: return handle_SMI(json);
+            case 194: return handle_SQRT(json);
+            case 195: return handle_STC(json);
+            case 196: return handle_STDDEV(json);
+            case 197: return handle_STOCH(json);
+            case 198: return handle_STOCHF(json);
+            case 199: return handle_STOCHRSI(json);
+            case 200: return handle_SUB(json);
+            case 201: return handle_SUM(json);
+            case 202: return handle_SUPERTREND(json);
+            case 203: return handle_SWAK_2PHP(json);
+            case 204: return handle_SWAK_BP(json);
+            case 205: return handle_SWAK_BUTTER(json);
+            case 206: return handle_SWAK_GAUSS(json);
+            case 207: return handle_SWAK_HP(json);
+            case 208: return handle_T3(json);
+            case 209: return handle_TAN(json);
+            case 210: return handle_TANH(json);
+            case 211: return handle_TEMA(json);
+            case 212: return handle_TRANGE(json);
+            case 213: return handle_TRIMA(json);
+            case 214: return handle_TRIX(json);
+            case 215: return handle_TSF(json);
+            case 216: return handle_TSI(json);
+            case 217: return handle_TYPPRICE(json);
+            case 218: return handle_ULTOSC(json);
+            case 219: return handle_VAR(json);
+            case 220: return handle_VHF(json);
+            case 221: return handle_VIDYA(json);
+            case 222: return handle_VORTEX(json);
+            case 223: return handle_VWAP(json);
+            case 224: return handle_VWMA(json);
+            case 225: return handle_WAD(json);
+            case 226: return handle_WCLPRICE(json);
+            case 227: return handle_WILLR(json);
+            case 228: return handle_WMA(json);
+            case 229: return handle_ZLEMA(json);
             default: return null;
         }
     }
@@ -240032,6 +241207,159 @@ public class TaCodegenServe {
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
         rideExp(core, json, endIdx, inReal, sb);
+        sb.append("}");
+        return sb.toString();
+    }
+
+    static String handle_FISHER(String json) {
+        int startIdx = jsonInt(json, "startIdx");
+        int endIdx = jsonInt(json, "endIdx");
+        int use_preloaded = jsonInt(json, "use_preloaded");
+        int bench_iters = jsonInt(json, "iters");
+        if (bench_iters < 1) bench_iters = 1;
+        double[] inHigh;
+        double[] inLow;
+        if (use_preloaded != 0 && refN > 0) {
+            inHigh = new double[MAX_ARRAY_SIZE];
+            System.arraycopy(refHigh, 0, inHigh, 0, refN);
+            inLow = new double[MAX_ARRAY_SIZE];
+            System.arraycopy(refLow, 0, inLow, 0, refN);
+        } else {
+            inHigh = jsonDoubleArray(json, "inHigh");
+            inLow = jsonDoubleArray(json, "inLow");
+        }
+        boolean _optRejected = false;
+        int optInTimePeriod = jsonInt(json, "optInTimePeriod");
+        core.unstablePeriod[36] = jsonInt(json, "unstablePeriod");
+        // The output buffers are sized to the count the call actually PRODUCES --
+        // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
+        // never below one. Not to the width of the requested range: that is the bound the
+        // managed backends check and the Rust asserts state, and at the range width it was
+        // slack by exactly the lookback, so no call could ever approach it.
+        // The pad is there because a bound is a MINIMUM, never an equality. A caller
+        // re-using a pre-allocated buffer passes a larger one, and that is not an error --
+        // the reported OutRange is what says which part was written. So the harness sends
+        // both: the startIdx axis sends no pad (the bound is reachable) while the
+        // full-range value comparison sends one (slack is legal). Sizing every call one way
+        // would silently drop the other property.
+        // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
+        // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
+        // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
+        // sizes and cannot make the check, so an exact buffer would test nothing there.
+        int _lb = core.fisherLookback(optInTimePeriod);
+        int _cs = startIdx > _lb ? startIdx : _lb;
+        int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
+        double[] outArr0 = new double[_outLen];
+        double[] outArr1 = new double[_outLen];
+        MInteger outBegIdx = new MInteger();
+        MInteger outNBElement = new MInteger();
+        RetCode rc = RetCode.SUCCESS;
+        int bench_mode = jsonInt(json, "bench_mode");
+        double[] _warm_inHigh = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inHigh, 0, endIdx + 1);
+        double[] _warm_inLow = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inLow, 0, endIdx + 1);
+        long startNs = 0;
+        for (int _bi = 0; _bi <= bench_iters; _bi++) {
+        if (_bi == 1) startNs = System.nanoTime();
+        if (bench_mode == 0) {
+        if (jsonInt(json, "timed") != 0) {
+            if (_optRejected) {
+                rc = RetCode.BAD_PARAM;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
+            try {
+                rc = core.fisherImpl(startIdx, endIdx, inHigh, inLow, optInTimePeriod, outBegIdx, outNBElement, outArr0, outArr1);
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TALibFailure)) throw _e;
+                rc = ((TALibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+            }
+        } else {
+            if (_optRejected) {
+                rc = RetCode.BAD_PARAM;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
+            try {
+                OutRange _pr = core.fisher(startIdx, endIdx, inHigh, inLow, optInTimePeriod, outArr0, outArr1);
+                outBegIdx.value = _pr.begIdx();
+                outNBElement.value = _pr.count();
+                rc = RetCode.SUCCESS;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TALibFailure)) throw _e;
+                rc = ((TALibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+            }
+        }
+        }
+        else if (_optRejected) { rc = RetCode.BAD_PARAM; }
+        else { try {
+            if (bench_mode == 1) {
+                core.fisherOpen(_warm_inHigh, _warm_inLow, optInTimePeriod);
+            } else {
+                Core.FisherStream _wh = core.fisherOpenAndFill(_warm_inHigh, _warm_inLow, optInTimePeriod, outArr0, outArr1);
+                outBegIdx.value = _wh.outRange().begIdx();
+                outNBElement.value = _wh.outRange().count();
+            }
+            rc = RetCode.SUCCESS;
+        } catch (RuntimeException _e) { rc = _e instanceof TALibFailure ? ((TALibFailure)_e).retCode() : RetCode.BAD_PARAM; } }
+        }
+        long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        int usedFloat = 0;
+        if (jsonInt(json, "use_float") != 0) {
+            float[] f_inHigh = new float[inHigh.length];
+            for (int _fi = 0; _fi < inHigh.length; _fi++) f_inHigh[_fi] = (float)inHigh[_fi];
+            float[] f_inLow = new float[inLow.length];
+            for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
+            if (_optRejected) {
+                rc = RetCode.BAD_PARAM;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
+            try {
+                OutRange _fr = core.fisher(startIdx, endIdx, f_inHigh, f_inLow, optInTimePeriod, outArr0, outArr1);
+                outBegIdx.value = _fr.begIdx();
+                outNBElement.value = _fr.count();
+                rc = RetCode.SUCCESS;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TALibFailure)) throw _e;
+                rc = ((TALibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+            }
+            usedFloat = 1;
+        }
+        if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
+            long _h = svHashInit();
+            if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
+                _h = svHashF64(_h, outArr0, outNBElement.value);
+                _h = svHashF64(_h, outArr1, outNBElement.value);
+            }
+            _h = svHashFin(_h);
+            StringBuilder hb = new StringBuilder();
+            hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            rideFisher(core, json, endIdx, inHigh, inLow, optInTimePeriod, hb);
+            hb.append("}");
+            return hb.toString();
+        }
+        StringBuilder sb = new StringBuilder();
+        sb.append("{\"retCode\":").append(rc.toInt());
+        sb.append(",\"outBegIdx\":").append(outBegIdx.value);
+        sb.append(",\"outNBElement\":").append(outNBElement.value);
+        sb.append(",\"out_len\":").append(_outLen);
+        sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
+        sb.append(",\"outReal1\":").append(doubleArrayToJson(outArr1, outNBElement.value));
+        sb.append(",\"used_float\":").append(usedFloat);
+        sb.append(",\"timing_ns\":").append(elapsedNs);
+        rideFisher(core, json, endIdx, inHigh, inLow, optInTimePeriod, sb);
         sb.append("}");
         return sb.toString();
     }
@@ -276643,6 +277971,206 @@ public class TaCodegenServe {
         return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign[0] + diag + "}";
     }
 
+    static String sv_FISHER(String json) {
+        int svShape = jsonInt(json, "gen_shape");
+        int svSeed = jsonInt(json, "gen_seed");
+        int svN = jsonInt(json, "gen_n");
+        if (svN < 2) svN = 2;
+        if (svN > 256) svN = 256;
+        int svK = jsonInt(json, "unstablePeriod");
+        int optInTimePeriod = json.contains("\"optInTimePeriod\"") ? jsonInt(json, "optInTimePeriod") : 10;
+        double[] fz_o = new double[svN];
+        double[] fz_h = new double[svN];
+        double[] fz_l = new double[svN];
+        double[] fz_c = new double[svN];
+        double[] fz_v = new double[svN];
+        double[] fz_oi = new double[svN];
+        FuzzData.fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
+        double[] b0 = new double[svN];
+        double[] b1 = new double[svN];
+        long legs = 0;
+        boolean allOk = true;
+        boolean peekAll = true;
+        long peekReps = 0;
+        long peekRejects = 0;
+        boolean peekRepAll = true;
+        int fillChecked = 0;
+        boolean fillOk = true;
+        MInteger beg = new MInteger();
+        MInteger nb = new MInteger();
+        String diag = "";
+        int rangeChecked = 0;
+        boolean rangeOk = true;
+        long rangeLegs = 0;
+        int rangeSites = 0;
+        long[] zsign = { 0 };
+        int rounds = 1;
+        for (int rd = 0; rd < rounds; rd++) {
+            Core c2 = new Core();
+            c2.unstablePeriod[36] = svK;
+            RetCode rc;
+            try { rc = c2.fisherImpl(0, svN - 1, fz_h, fz_l, optInTimePeriod, beg, nb, b0, b1); }
+            catch (RuntimeException _sve) { if (!(_sve instanceof TALibFailure)) throw _sve; rc = ((TALibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
+            int lb = c2.fisherLookback(optInTimePeriod);
+            if (rc != RetCode.SUCCESS || nb.value == 0) {
+                boolean openRejects;
+                try { c2.fisherOpen(fz_h, fz_l, optInTimePeriod); openRejects = false; } catch (IllegalArgumentException _e) { openRejects = true; }
+                return "{\"retCode\":" + rc.toInt() + ",\"legs\":0,\"nb\":" + nb.value + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (openRejects ? 1 : 0) + ",\"peek_ok\":1}";
+            }
+            fillChecked = 1;
+            try {
+                double[] f0 = new double[svN];
+                java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                double[] f1 = new double[svN];
+                java.util.Arrays.fill(f1, (double)-1.2345678901234e300);
+                Core.FisherStream _fh = c2.fisherOpenAndFill(fz_h, fz_l, optInTimePeriod, f0, f1);
+                OutRange _fr = _fh.outRange();
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
+                if (_fr.begIdx() != beg.value || _fr.count() != nb.value) rangeOk = false;
+                if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
+                else {
+                    for (int i = 0; i < nb.value; i++) if (svXtierNe(f0[i], b0[i], zsign)) fillOk = false;
+                    for (int i = 0; i < nb.value; i++) if (svXtierNe(f1[i], b1[i], zsign)) fillOk = false;
+                    for (int i = nb.value; i < svN; i++) if (f0[i] != (double)-1.2345678901234e300) fillOk = false;
+                    for (int i = nb.value; i < svN; i++) if (f1[i] != (double)-1.2345678901234e300) fillOk = false;
+                }
+                try { c2.fisherOpenAndFill(fz_h, fz_l, optInTimePeriod, fz_h, f1); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
+                try { c2.fisherOpenAndFill(fz_h, fz_l, optInTimePeriod, f0, f0); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases output */ }
+            } catch (IllegalArgumentException _e) { fillOk = false; }
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
+            java.util.Arrays.sort(pcs);
+            int prevP = -1;
+            for (int pi = 0; pi < pcs.length; pi++) {
+                int p = pcs[pi];
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
+                prevP = p;
+                Core.FisherStream st;
+                try { st = c2.fisherOpen(java.util.Arrays.copyOf(fz_h, p), java.util.Arrays.copyOf(fz_l, p), optInTimePeriod); }
+                catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"openRejectP\":" + p; continue; }
+                legs++;
+                Core.FisherOut v0 = new Core.FisherOut(); st.value(v0);
+                if (svXtierNe(v0.fisher, b0[p - 1 - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
+                if (svXtierNe(v0.trigger, b1[p - 1 - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":1,\"where\":\"open\""; }
+                Core.FisherOut pk = new Core.FisherOut();
+                Core.FisherOut up = new Core.FisherOut();
+                Core.FisherOut vc = new Core.FisherOut();
+                Core.FisherOut rp = new Core.FisherOut();
+                for (int t = p; t < svN; t++) {
+                    boolean pkTook = true;
+                    try { st.peek(fz_h[t], fz_l[t], pk); } catch (IllegalArgumentException _e) { pkTook = false; peekRejects++; }
+                    if (t % 7 == 0) {
+                        boolean rpTook = pkTook;
+                        try { st.peek(fz_h[t - 1], fz_l[t - 1], rp); } catch (IllegalArgumentException _e) { peekRejects++; }
+                        try { st.peek(fz_h[t], fz_l[t], rp); } catch (IllegalArgumentException _e) { rpTook = false; }
+                        if (rpTook) {
+                            peekReps++;
+                            if (svBne(rp.fisher, pk.fisher)) peekRepAll = false;
+                            if (svBne(rp.trigger, pk.trigger)) peekRepAll = false;
+                        } else { peekRejects++; }
+                    }
+                    st.update(fz_h[t], fz_l[t], up);
+                    if (pkTook && svBne(pk.fisher, up.fisher)) peekAll = false;
+                    if (pkTook && svBne(pk.trigger, up.trigger)) peekAll = false;
+                    try { st.peek(fz_h[t - 1], fz_l[t - 1], pk); } catch (IllegalArgumentException _e) { peekRejects++; }
+                    st.value(vc);
+                    if (svBne(vc.fisher, up.fisher)) allOk = false;
+                    if (svBne(vc.trigger, up.trigger)) allOk = false;
+                    if (svXtierNe(up.fisher, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b0[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.fisher)) + "\""; }
+                    if (svXtierNe(up.trigger, b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":1,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b1[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.trigger)) + "\""; }
+                }
+                if (allOk) {
+                    rangeChecked = 1; rangeLegs++; rangeSites |= 2;
+                    if (st.outRange().begIdx() != beg.value || st.outRange().count() != nb.value) rangeOk = false;
+                    rangeLegs++; rangeSites |= 16;
+                    st.advance();
+                    if (st.outRange().begIdx() != beg.value || st.outRange().count() != nb.value + 1) rangeOk = false;
+                }
+            }
+            {
+                int p0 = lb + 1;
+                if (p0 <= svN - 1) {
+                    try {
+                        double[] f0 = new double[svN];
+                        java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                        double[] f1 = new double[svN];
+                        java.util.Arrays.fill(f1, (double)-1.2345678901234e300);
+                        Core.FisherStream sA = c2.fisherOpenAndFill(java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), optInTimePeriod, f0, f1);
+                        int mid = (p0 + svN) / 2;
+                        Core.FisherOut uA = new Core.FisherOut();
+                        Core.FisherOut uB = new Core.FisherOut();
+                        for (int t = p0; t < mid; t++) {
+                            sA.update(fz_h[t], fz_l[t], uA);
+                            if (svXtierNe(uA.fisher, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svXtierNe(uA.trigger, b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
+                        Core.FisherStream sB = sA.clone();
+                        sB.advance();
+                        sB.advance();
+                        double[] fk0 = new double[svN];
+                        double[] fk1 = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            sB.update(fz_h[t], fz_l[t], uB);
+                            fk0[t] = uB.fisher;
+                            if (svXtierNe(uB.fisher, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            fk1[t] = uB.trigger;
+                            if (svXtierNe(uB.trigger, b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
+                        for (int t = mid; t < svN; t++) {
+                            sA.update(fz_h[t], fz_l[t], uA);
+                            if (svBne(uA.fisher, fk0[t]) || svXtierNe(uA.fisher, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svBne(uA.trigger, fk1[t]) || svXtierNe(uA.trigger, b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
+                        if (allOk) {
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 8;
+                            if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 2) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                        }
+                    } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
+                }
+            }
+            if (lb >= 1 && lb < svN) {
+                try { c2.fisherOpen(java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb), optInTimePeriod); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryAccepted\":1"; }
+                catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                    double[] f1 = new double[svN];
+                    java.util.Arrays.fill(f1, (double)-1.2345678901234e300);
+                    try { c2.fisherOpenAndFill(java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb), optInTimePeriod, f0, f1); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                    catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
+            }
+            try {
+                Core.FisherStream sD = c2.fisherOpen(fz_h, fz_l, Integer.MIN_VALUE);
+                Core.FisherStream sE = c2.fisherOpen(fz_h, fz_l, 10);
+                Core.FisherOut vD = new Core.FisherOut(); sD.value(vD);
+                Core.FisherOut vE = new Core.FisherOut(); sE.value(vE);
+                if (svBne(vD.fisher, vE.fisher)) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
+                if (svBne(vD.trigger, vE.trigger)) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
+            } catch (IllegalArgumentException _e) { /* defaults need more history than svN — skip */ }
+            {
+                int Sidx = lb + (svN - lb) / 3;
+                if (Sidx > lb && Sidx < svN - 1) {
+                    MInteger begS = new MInteger();
+                    MInteger nbS = new MInteger();
+                    RetCode rcS;
+                    try { rcS = c2.fisherImpl(Sidx, svN - 1, fz_h, fz_l, optInTimePeriod, begS, nbS, b0, b1); }
+                    catch (RuntimeException _sve) { if (!(_sve instanceof TALibFailure)) throw _sve; rcS = ((TALibFailure) _sve).retCode(); }
+                    if (rcS == RetCode.SUCCESS && nbS.value > 0) {
+                        try {
+                            Core.FisherStream stA = c2.fisherOpenInternal(java.util.Arrays.copyOf(fz_h, svN), java.util.Arrays.copyOf(fz_l, svN), Sidx, optInTimePeriod);
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 4;
+                            if (stA.outRange().begIdx() != begS.value || stA.outRange().count() != nbS.value) rangeOk = false;
+                        } catch (IllegalArgumentException _e) { rangeOk = false; if (diag.isEmpty()) diag = ",\"anchoredOpenRejected\":1"; }
+                    }
+                }
+            }
+        }
+        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign[0] + diag + "}";
+    }
+
     static String sv_FLOOR(String json) {
         int svShape = jsonInt(json, "gen_shape");
         int svSeed = jsonInt(json, "gen_seed");
@@ -297286,6 +298814,7 @@ public class TaCodegenServe {
         case "TA_ER": return sv_ER(json);
         case "TA_ERI": return sv_ERI(json);
         case "TA_EXP": return sv_EXP(json);
+        case "TA_FISHER": return sv_FISHER(json);
         case "TA_FLOOR": return sv_FLOOR(json);
         case "TA_FOSC": return sv_FOSC(json);
         case "TA_FRACTAL": return sv_FRACTAL(json);
@@ -308912,6 +310441,110 @@ public class TaCodegenServe {
                     for (int k = 0; k < nb; k++) {
                         boolean cmp = true;
                         if (cmp && svXtierNe(rb0[k], fb0[k], r.benign)) { cmp = false; r.out = 0; r.batch = Double.doubleToRawLongBits(rb0[k]); r.stream = Double.doubleToRawLongBits(fb0[k]); }
+                        if (cmp) r.fillBars++;
+                        if (!cmp) { r.ok = false; r.leg = 2; r.bar = beg + k; break; }
+                    }
+                }
+            } catch (RuntimeException _e) { r.ok = false; r.leg = 2; }
+        }
+
+        if (r.ok) {
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
+            rideSeenOpen[slot] = r.openBars; rideSeenFill[slot] = r.fillBars;
+        }
+    }
+
+    static void rideFisher(Core core, String json, int endIdx, double[] inHigh, double[] inLow, int optInTimePeriod, StringBuilder sb) {
+        if (!rideGate(json)) return;
+        RideResult r = new RideResult();
+        rideBodyFisher(core, json, endIdx, inHigh, inLow, optInTimePeriod, r);
+        r.emit(sb);
+    }
+
+    @SuppressWarnings("unused")
+    static void rideBodyFisher(Core core, String json, int endIdx, double[] inHigh, double[] inLow, int optInTimePeriod, RideResult r) {
+        try { r.lb = core.fisherLookback(optInTimePeriod); } catch (RuntimeException _e) { r.lb = -1; }
+        int lb = r.lb;
+        int navail = endIdx + 1;
+        if (inHigh.length < navail) navail = inHigh.length;
+        if (inLow.length < navail) navail = inLow.length;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
+        if (m > navail) m = navail;
+        r.m = m;
+        if (m > RIDE_MAX_BARS) { r.skip = 1; return; }
+        if (m < 1) { r.skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
+        if (!rideFinite(inHigh, m) || !rideFinite(inLow, m) || false) { r.skip = 4; return; }
+
+        long hash = 0xcbf29ce484222325L;
+        hash = rideMixStr(hash, "TA_FISHER");
+        hash = rideMix(hash, m);
+        hash = rideMix(hash, rideGen);
+        hash = rideMix(hash, jsonInt(json, "unstablePeriod"));
+        hash = rideMix(hash, optInTimePeriod);
+        hash = rideMixArr(hash, inHigh, m);
+        hash = rideMixArr(hash, inLow, m);
+        int slot = (int) Math.floorMod(hash, (long) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash) {
+            r.dedup = 1; r.openBars = rideSeenOpen[slot]; r.fillBars = rideSeenFill[slot]; return;
+        }
+
+        double[] rb0 = new double[m];
+        double[] rb1 = new double[m];
+        int beg = 0;
+        int nb = 0;
+        String clsB = "";
+        boolean rejected = false;
+        try { OutRange _rr = core.fisher(0, m - 1, java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), optInTimePeriod, rb0, rb1); beg = _rr.begIdx(); nb = _rr.count(); }
+        catch (RuntimeException _e) { r.rcBatch = rideCode(_e); clsB = _e.getClass().getName(); rejected = true; }
+        if (rejected) {
+            String clsO = "", clsF = "";
+            try { core.fisherOpen(java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), optInTimePeriod); } catch (RuntimeException _e) { r.rcOpen = rideCode(_e); clsO = _e.getClass().getName(); }
+            double[] fb0 = new double[m];
+            double[] fb1 = new double[m];
+            try { core.fisherOpenAndFill(java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), optInTimePeriod, fb0, fb1); } catch (RuntimeException _e) { r.rcFill = rideCode(_e); clsF = _e.getClass().getName(); }
+            boolean cmpO = r.rcOpen == r.rcBatch && clsO.equals(clsB);
+            if (cmpO) r.rej++;
+            if (!cmpO) { r.ok = false; r.leg = r.rcOpen == r.rcBatch ? 4 : 3; }
+            boolean cmpF = r.rcFill == r.rcBatch && clsF.equals(clsB);
+            if (cmpF) r.rej++;
+            if (!cmpF) { r.ok = false; r.leg = r.rcFill == r.rcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.skip = 7; return; }
+        if (nb == 0) { r.skip = 5; return; }
+        if (beg != lb) { r.skip = 6; return; }
+
+        try {
+            boolean cmp;
+            Core.FisherStream st = core.fisherOpen(java.util.Arrays.copyOf(inHigh, lb + 1), java.util.Arrays.copyOf(inLow, lb + 1), optInTimePeriod);
+            Core.FisherOut uo = new Core.FisherOut(); st.value(uo);
+            cmp = true;
+            if (cmp && svXtierNe(rb0[lb - beg], uo.fisher, r.benign)) { cmp = false; r.out = 0; r.batch = Double.doubleToRawLongBits(rb0[lb - beg]); r.stream = Double.doubleToRawLongBits(uo.fisher); }
+            if (cmp && svXtierNe(rb1[lb - beg], uo.trigger, r.benign)) { cmp = false; r.out = 1; r.batch = Double.doubleToRawLongBits(rb1[lb - beg]); r.stream = Double.doubleToRawLongBits(uo.trigger); }
+            if (cmp) r.openBars++;
+            if (!cmp) { r.ok = false; r.leg = 1; r.bar = lb; }
+            for (int t = lb + 1; r.ok && t < m; t++) {
+                st.update(inHigh[t], inLow[t], uo);
+                cmp = true;
+                if (cmp && svXtierNe(rb0[t - beg], uo.fisher, r.benign)) { cmp = false; r.out = 0; r.batch = Double.doubleToRawLongBits(rb0[t - beg]); r.stream = Double.doubleToRawLongBits(uo.fisher); }
+                if (cmp && svXtierNe(rb1[t - beg], uo.trigger, r.benign)) { cmp = false; r.out = 1; r.batch = Double.doubleToRawLongBits(rb1[t - beg]); r.stream = Double.doubleToRawLongBits(uo.trigger); }
+                if (cmp) r.openBars++;
+                if (!cmp) { r.ok = false; r.leg = 1; r.bar = t; }
+            }
+        } catch (RuntimeException _e) { r.ok = false; r.leg = 1; }
+
+        if (r.ok) {
+            double[] fb0 = new double[m];
+            double[] fb1 = new double[m];
+            try {
+                Core.FisherStream st2 = core.fisherOpenAndFill(java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), optInTimePeriod, fb0, fb1);
+                if (st2.outRange().begIdx() != beg || st2.outRange().count() != nb) { r.ok = false; r.leg = 2; }
+                if (r.ok) {
+                    for (int k = 0; k < nb; k++) {
+                        boolean cmp = true;
+                        if (cmp && svXtierNe(rb0[k], fb0[k], r.benign)) { cmp = false; r.out = 0; r.batch = Double.doubleToRawLongBits(rb0[k]); r.stream = Double.doubleToRawLongBits(fb0[k]); }
+                        if (cmp && svXtierNe(rb1[k], fb1[k], r.benign)) { cmp = false; r.out = 1; r.batch = Double.doubleToRawLongBits(rb1[k]); r.stream = Double.doubleToRawLongBits(fb1[k]); }
                         if (cmp) r.fillBars++;
                         if (!cmp) { r.ok = false; r.leg = 2; r.bar = beg + k; break; }
                     }

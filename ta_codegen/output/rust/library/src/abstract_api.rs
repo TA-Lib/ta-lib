@@ -268,6 +268,8 @@ pub enum FuncId {
     ERI,
     /// Vector Arithmetic Exp — [`Core::exp`](crate::Core::exp).
     EXP,
+    /// Fisher Transform — [`Core::fisher`](crate::Core::fisher).
+    FISHER,
     /// Vector Floor — [`Core::floor`](crate::Core::floor).
     FLOOR,
     /// Forecast Oscillator — [`Core::fosc`](crate::Core::fosc).
@@ -504,7 +506,7 @@ pub enum FuncId {
 
 impl FuncId {
     /// Number of functions in the registry.
-    pub const COUNT: usize = 229;
+    pub const COUNT: usize = 230;
     /// Metadata for this function (O(1) index into the const table).
     #[inline] pub fn info(self) -> &'static FuncInfo { &FUNC_TABLE[self as usize] }
     /// Upper-case TA name, e.g. "RSI".
@@ -844,7 +846,7 @@ impl FuncInfo {
 
 /// Backing storage for [`FUNCS`], indexed by [`FuncId`]. Link-time const, in
 /// `.rodata`. Private, so its length is nobody's business but this module's.
-static FUNC_TABLE: [FuncInfo; 229] = [
+static FUNC_TABLE: [FuncInfo; 230] = [
     FuncInfo {
         id: FuncId::AC,
         name: "AC",
@@ -2087,6 +2089,17 @@ static FUNC_TABLE: [FuncInfo; 229] = [
         opt_inputs: &[],
         outputs: &[OutputInfo { param_name: "outReal", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, ],
         unst_id: None,
+    },
+    FuncInfo {
+        id: FuncId::FISHER,
+        name: "FISHER",
+        group: Group::MomentumIndicators,
+        hint: "Fisher Transform",
+        flags: FuncFlags(0x0a000000),
+        inputs: &[InputInfo { param_name: "inPriceHL", kind: InputType::Price, flags: InputFlags(0x00000006) }, ],
+        opt_inputs: &[OptInputInfo { param_name: "optInTimePeriod", display_name: "Time Period", hint: "Time period", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 2, max: 100000, default: 10, suggested: (5, 50, 1) } }, ],
+        outputs: &[OutputInfo { param_name: "outFisher", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, OutputInfo { param_name: "outTrigger", kind: OutputType::Real, flags: OutputFlags(0x00000004) }, ],
+        unst_id: Some(FuncUnstId::FISHER),
     },
     FuncInfo {
         id: FuncId::FLOOR,
@@ -3495,6 +3508,7 @@ fn get_func_handle_exact(name: &str) -> Option<FuncId> {
         "ER" => FuncId::ER,
         "ERI" => FuncId::ERI,
         "EXP" => FuncId::EXP,
+        "FISHER" => FuncId::FISHER,
         "FLOOR" => FuncId::FLOOR,
         "FOSC" => FuncId::FOSC,
         "FRACTAL" => FuncId::FRACTAL,
@@ -3992,6 +4006,7 @@ impl<'a> ParamHolder<'a> {
             FuncId::ER => self.core.er_lookback(self.int_opt[0]),
             FuncId::ERI => self.core.eri_lookback(self.int_opt[0]),
             FuncId::EXP => self.core.exp_lookback(),
+            FuncId::FISHER => self.core.fisher_lookback(self.int_opt[0]),
             FuncId::FLOOR => self.core.floor_lookback(),
             FuncId::FOSC => self.core.fosc_lookback(self.int_opt[0]),
             FuncId::FRACTAL => self.core.fractal_lookback(self.int_opt[0], self.int_opt[1]),
@@ -4234,6 +4249,7 @@ impl<'a> ParamHolder<'a> {
             FuncId::ER => self.core.er_display_shift(self.int_opt[0], output_idx),
             FuncId::ERI => self.core.eri_display_shift(self.int_opt[0], output_idx),
             FuncId::EXP => self.core.exp_display_shift(output_idx),
+            FuncId::FISHER => self.core.fisher_display_shift(self.int_opt[0], output_idx),
             FuncId::FLOOR => self.core.floor_display_shift(output_idx),
             FuncId::FOSC => self.core.fosc_display_shift(self.int_opt[0], output_idx),
             FuncId::FRACTAL => self.core.fractal_display_shift(self.int_opt[0], self.int_opt[1], output_idx),
@@ -5989,6 +6005,21 @@ impl<'a> ParamHolder<'a> {
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.exp(start_idx, end_idx, i0, &mut *o0);
                 self.real_out[0] = Some(o0);
+                match res {
+                    Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
+                    Err(e) => e,
+                }
+            }
+            FuncId::FISHER => {
+                let i0_1 = self.price[0][1].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_2 = self.price[0][2].ok_or(RetCode::InputNotAllInitialize)?;
+                if self.real_out[0].is_none() || self.real_out[1].is_none() { return Err(RetCode::OutputNotAllInitialize); }
+                Self::check_range(start_idx, end_idx)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let mut o1 = self.real_out[1].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let res = self.core.fisher(start_idx, end_idx, i0_1, i0_2, self.int_opt[0], &mut *o0, &mut *o1);
+                self.real_out[0] = Some(o0);
+                self.real_out[1] = Some(o1);
                 match res {
                     Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
                     Err(e) => e,

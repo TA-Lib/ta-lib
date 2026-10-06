@@ -187,6 +187,10 @@ static int awRule( const char *name, int K, int X, int p0, int p1, double r0, do
       big = r0 > r1 ? r0 : r1;
       return hilbert + (int)ceil( (double)(2*K) / big );
    }
+   /* FISHER is the one rule here that does not grow with the period: both of
+    * its recursions have fixed coefficients, so the count is a constant per
+    * e-fold plus the gain the clamp bounds. */
+   if( !strcmp(name,"FISHER") ) return awCeilDiv( 5*(K+9), 2 );
    /* STC: p0 = fast, p1 = slow; on top of the EMA count it inherits. */
    if( !strcmp(name,"STC") ) return 2*K + 3*( (p0 > p1 ? p0 : p1) + 1 );
    return -1;
@@ -423,6 +427,7 @@ static TA_FuncUnstId awOwnId( const char *name )
       { "SWAK_BUTTER", TA_FUNC_UNST_SWAK_BUTTER },
       { "SWAK_HP", TA_FUNC_UNST_SWAK_HP },
       { "SWAK_2PHP", TA_FUNC_UNST_SWAK_2PHP },
+      { "FISHER", TA_FUNC_UNST_FISHER },
       { "SWAK_BP", TA_FUNC_UNST_SWAK_BP },
    };
    unsigned int i;

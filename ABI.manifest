@@ -4,7 +4,7 @@ format 9
 soname libta-lib.so.1
 version-info 3:0:2
 headers ta_abstract.h ta_common.h ta_defs.h ta_func.h ta_libc.h
-function-count 3017
+function-count 3030
 platform pointer=8 long=8 int=4 enum=4
 type TA_FuncInfo sizeof=48 name:const_char_*=0 group:const_char_*=8 hint:const_char_*=16 flags:TA_FuncFlags=24 nbInput:unsigned_int=28 nbOptInput:unsigned_int=32 nbOutput:unsigned_int=36 handle:const_TA_FuncHandle_*=40
 type TA_InputParameterInfo sizeof=24 type:TA_InputParameterType=0 paramName:const_char_*=8 flags:TA_InputFlags=16
@@ -72,6 +72,7 @@ enum TA_FuncUnstId TA_FUNC_UNST_SWAK_BUTTER = 32
 enum TA_FuncUnstId TA_FUNC_UNST_SWAK_HP = 33
 enum TA_FuncUnstId TA_FUNC_UNST_SWAK_2PHP = 34
 enum TA_FuncUnstId TA_FUNC_UNST_SWAK_BP = 35
+enum TA_FuncUnstId TA_FUNC_UNST_FISHER = 36
 enum TA_FuncUnstId TA_FUNC_UNST_ALL = 65535
 enum TA_InputParameterType sizeof=4
 enum TA_InputParameterType TA_Input_Price = 0
@@ -1321,6 +1322,16 @@ function TA_RetCode TA_EXP_OutRange(const TA_EXP_Stream *, int *, int *)
 function TA_RetCode TA_EXP_Peek(const TA_EXP_Stream *, double, double *)
 function TA_RetCode TA_EXP_Update(TA_EXP_Stream *, double, double *)
 function TA_RetCode TA_EXP_Value(const TA_EXP_Stream *, double *)
+function TA_RetCode TA_FISHER(int, int, const double *, const double *, int, int *, int *, double *, double *)
+function TA_RetCode TA_FISHER_Advance(TA_FISHER_Stream *)
+function TA_RetCode TA_FISHER_Clone(const TA_FISHER_Stream *, TA_FISHER_Stream **)
+function TA_RetCode TA_FISHER_Close(TA_FISHER_Stream *)
+function TA_RetCode TA_FISHER_Open(TA_FISHER_Stream **, const double *, const double *, int, int, double *, double *)
+function TA_RetCode TA_FISHER_OpenAndFill(TA_FISHER_Stream **, const double *, const double *, int, int, int *, int *, double *, double *)
+function TA_RetCode TA_FISHER_OutRange(const TA_FISHER_Stream *, int *, int *)
+function TA_RetCode TA_FISHER_Peek(const TA_FISHER_Stream *, double, double, double *, double *)
+function TA_RetCode TA_FISHER_Update(TA_FISHER_Stream *, double, double, double *, double *)
+function TA_RetCode TA_FISHER_Value(const TA_FISHER_Stream *, double *, double *)
 function TA_RetCode TA_FLOOR(int, int, const double *, int *, int *, double *)
 function TA_RetCode TA_FLOOR_Advance(TA_FLOOR_Stream *)
 function TA_RetCode TA_FLOOR_Clone(const TA_FLOOR_Stream *, TA_FLOOR_Stream **)
@@ -2390,6 +2401,7 @@ function TA_RetCode TA_S_EMV(int, int, const float *, const float *, const float
 function TA_RetCode TA_S_ER(int, int, const float *, int, int *, int *, double *)
 function TA_RetCode TA_S_ERI(int, int, const float *, const float *, const float *, int, int *, int *, double *, double *)
 function TA_RetCode TA_S_EXP(int, int, const float *, int *, int *, double *)
+function TA_RetCode TA_S_FISHER(int, int, const float *, const float *, int, int *, int *, double *, double *)
 function TA_RetCode TA_S_FLOOR(int, int, const float *, int *, int *, double *)
 function TA_RetCode TA_S_FOSC(int, int, const float *, int, int *, int *, double *)
 function TA_RetCode TA_S_FRACTAL(int, int, const float *, const float *, int, int, int *, int *, int *, int *)
@@ -2972,6 +2984,8 @@ function int TA_ER_DisplayShift(int, int)
 function int TA_ER_Lookback(int)
 function int TA_EXP_DisplayShift(int)
 function int TA_EXP_Lookback(void)
+function int TA_FISHER_DisplayShift(int, int)
+function int TA_FISHER_Lookback(int)
 function int TA_FLOOR_DisplayShift(int)
 function int TA_FLOOR_Lookback(void)
 function int TA_FOSC_DisplayShift(int, int)

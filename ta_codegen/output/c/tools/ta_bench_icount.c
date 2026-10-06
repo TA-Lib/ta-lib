@@ -5924,6 +5924,62 @@ static void icount_EXP(int iters) {
     g_sink += acc + outNBElement;
 }
 
+static void icount_FISHER(int iters) {
+    const char *nm = "FISHER";
+    int outBegIdx = 0, outNBElement = 0;
+    double acc = 0.0;
+    TA_RetCode rc;
+    TA_FISHER_Stream *st = NULL;
+    TA_FISHER_Stream *stf = NULL;
+    double v0 = 0.0;
+    double v1 = 0.0;
+
+    ICOUNT_ZERO();
+    rc = TA_FISHER(0, g_nPoints - 1, g_high, g_low, 10, &outBegIdx, &outNBElement, g_outBuf0, g_outBuf1);
+    ICOUNT_DUMP("FISHER/batch");
+    icount_row(nm, "batch", 1, rc);
+    acc += g_outBuf0[0];
+    acc += g_outBuf1[0];
+
+    ICOUNT_ZERO();
+    rc = TA_FISHER_OpenAndFill(&stf, g_high, g_low, g_nPoints, 10, &outBegIdx, &outNBElement, g_outBuf0, g_outBuf1);
+    ICOUNT_DUMP("FISHER/openfill");
+    icount_row(nm, "openfill", 1, rc);
+    acc += g_outBuf0[0];
+    acc += g_outBuf1[0];
+    if( stf ) TA_FISHER_Close(stf);
+
+    ICOUNT_ZERO();
+    rc = TA_FISHER_Open(&st, g_high, g_low, g_nPoints, 10, &v0, &v1);
+    ICOUNT_DUMP("FISHER/open");
+    icount_row(nm, "open", 1, rc);
+
+    if( rc == TA_SUCCESS && st ) {
+        TA_RetCode src = TA_SUCCESS;
+        ICOUNT_ZERO();
+        for( int it = 0; it < iters; it++ ) {
+            src = TA_FISHER_Update(st, g_high[it & ICOUNT_MASK], g_low[it & ICOUNT_MASK], &v0, &v1);
+            acc += v0;
+            acc += v1;
+        }
+        ICOUNT_DUMP("FISHER/update");
+        icount_row(nm, "update", 1, src);
+        ICOUNT_ZERO();
+        for( int it = 0; it < iters; it++ ) {
+            src = TA_FISHER_Peek(st, g_high[it & ICOUNT_MASK], g_low[it & ICOUNT_MASK], &v0, &v1);
+            acc += v0;
+            acc += v1;
+        }
+        ICOUNT_DUMP("FISHER/peek");
+        icount_row(nm, "peek", 1, src);
+    } else {
+        icount_row(nm, "update", 0, rc);
+        icount_row(nm, "peek", 0, rc);
+    }
+    if( st ) TA_FISHER_Close(st);
+    g_sink += acc + outNBElement;
+}
+
 static void icount_FLOOR(int iters) {
     const char *nm = "FLOOR";
     int outBegIdx = 0, outNBElement = 0;
@@ -12089,6 +12145,7 @@ static void icount_all(const char *filter, int iters) {
     if( func_matches(filter, "ER") ) { icount_ER(iters); fflush(stdout); }
     if( func_matches(filter, "ERI") ) { icount_ERI(iters); fflush(stdout); }
     if( func_matches(filter, "EXP") ) { icount_EXP(iters); fflush(stdout); }
+    if( func_matches(filter, "FISHER") ) { icount_FISHER(iters); fflush(stdout); }
     if( func_matches(filter, "FLOOR") ) { icount_FLOOR(iters); fflush(stdout); }
     if( func_matches(filter, "FOSC") ) { icount_FOSC(iters); fflush(stdout); }
     if( func_matches(filter, "FRACTAL") ) { icount_FRACTAL(iters); fflush(stdout); }

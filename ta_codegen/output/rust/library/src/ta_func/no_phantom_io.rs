@@ -10816,6 +10816,83 @@ fn legs_EXP(r: &mut Report) {
     r.legs_done("EXP", 1);
 }
 
+const V_FISHER: &[(&str, i32)] = &[
+    ("defaults", i32::MIN),
+    ("minimums", 2i32),
+];
+
+fn sub_FISHER(r: &mut Report) {
+    let core = Core::new();
+    for &(label, optInTimePeriod) in V_FISHER {
+        let Ok(lb) = core.fisher_lookback(optInTimePeriod) else { continue; };
+        r.control("FISHER", label, run(|| {
+            let inHigh: Vec<f64> = Vec::with_capacity(1);
+            let inLow: Vec<f64> = Vec::with_capacity(1);
+            let mut outFisher: Vec<f64> = Vec::with_capacity(1);
+            let mut outTrigger: Vec<f64> = Vec::with_capacity(1);
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.fisher_impl(0, lb, &inHigh, &inLow, optInTimePeriod, &mut _b, &mut _n, &mut outFisher, &mut outTrigger);
+            (rc, _n)
+        }));
+        if lb < 1 { r.no_quiet_range("FISHER", label); continue; }
+        r.quiet("FISHER", label, lb, run(|| {
+            let inHigh: Vec<f64> = Vec::with_capacity(1);
+            let inLow: Vec<f64> = Vec::with_capacity(1);
+            let mut outFisher: Vec<f64> = Vec::with_capacity(1);
+            let mut outTrigger: Vec<f64> = Vec::with_capacity(1);
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.fisher_impl(0, lb - 1, &inHigh, &inLow, optInTimePeriod, &mut _b, &mut _n, &mut outFisher, &mut outTrigger);
+            (rc, _n)
+        }));
+    }
+}
+
+fn legs_FISHER(r: &mut Report) {
+    let core = Core::new();
+    let optInTimePeriod = i32::MIN;
+    let Ok(lb) = core.fisher_lookback(optInTimePeriod) else { r.no_legs("FISHER"); return; };
+    let (startIdx, endIdx) = (lb, lb + 4);
+    {
+        let inHigh: Vec<f64> = series("high", endIdx + 1);
+        let inLow: Vec<f64> = series("low", endIdx + 1);
+        let mut outFisher: Vec<f64> = vec![Default::default(); 5];
+        let mut outTrigger: Vec<f64> = vec![Default::default(); 5];
+        r.legs_control("FISHER", run(|| {
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.fisher_impl(startIdx, endIdx, &inHigh, &inLow, optInTimePeriod, &mut _b, &mut _n, &mut outFisher, &mut outTrigger);
+            (rc, _n)
+        }));
+    }
+    {
+        let inHigh: Vec<f64> = Vec::with_capacity(1);
+        let inLow: Vec<f64> = series("low", endIdx + 1);
+        let mut outFisher: Vec<f64> = vec![Default::default(); 5];
+        let mut outTrigger: Vec<f64> = vec![Default::default(); 5];
+        r.leg("FISHER", "inHigh", 0, run(|| {
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.fisher_impl(startIdx, endIdx, &inHigh, &inLow, optInTimePeriod, &mut _b, &mut _n, &mut outFisher, &mut outTrigger);
+            (rc, _n)
+        }));
+    }
+    {
+        let inHigh: Vec<f64> = series("high", endIdx + 1);
+        let inLow: Vec<f64> = Vec::with_capacity(1);
+        let mut outFisher: Vec<f64> = vec![Default::default(); 5];
+        let mut outTrigger: Vec<f64> = vec![Default::default(); 5];
+        r.leg("FISHER", "inLow", 1, run(|| {
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.fisher_impl(startIdx, endIdx, &inHigh, &inLow, optInTimePeriod, &mut _b, &mut _n, &mut outFisher, &mut outTrigger);
+            (rc, _n)
+        }));
+    }
+    r.legs_done("FISHER", 2);
+}
+
 const V_FLOOR: &[&str] = &[
     "defaults",
 ];
@@ -19345,6 +19422,7 @@ const PROBES: &[(&str, Probe, Probe)] = &[
     ("ER", sub_ER, legs_ER),
     ("ERI", sub_ERI, legs_ERI),
     ("EXP", sub_EXP, legs_EXP),
+    ("FISHER", sub_FISHER, legs_FISHER),
     ("FLOOR", sub_FLOOR, legs_FLOOR),
     ("FOSC", sub_FOSC, legs_FOSC),
     ("FRACTAL", sub_FRACTAL, legs_FRACTAL),
@@ -19499,7 +19577,7 @@ fn no_phantom_io() {
     // The corpus is the generator's, not a list kept by hand: a probe that
     // stopped being emitted is a shrinking sweep, which is the one way this
     // file can fail open.
-    assert_eq!(PROBES.len(), 229, "probe count");
+    assert_eq!(PROBES.len(), 230, "probe count");
     assert_eq!(
         PROBES.len(),
         crate::abstract_api::funcs().count(),

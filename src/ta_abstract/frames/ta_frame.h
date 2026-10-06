@@ -1290,6 +1290,17 @@ unsigned int TA_EXP_FramePPLB( const TA_ParamHolderPriv *params )
 int TA_EXP_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
 ;
 
+TA_RetCode TA_FISHER_FramePP( const TA_ParamHolderPriv *params,
+                           int            startIdx,
+                           int            endIdx,
+                           int           *outBegIdx,
+                           int           *outNBElement )
+;
+unsigned int TA_FISHER_FramePPLB( const TA_ParamHolderPriv *params )
+;
+int TA_FISHER_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+;
+
 TA_RetCode TA_FLOOR_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
                            int            endIdx,

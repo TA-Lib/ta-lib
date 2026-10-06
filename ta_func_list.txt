@@ -111,6 +111,7 @@ EMV                 Arms Ease of Movement
 ER                  Kaufman Efficiency Ratio
 ERI                 Elder Ray Index (Bull Power / Bear Power)
 EXP                 Vector Arithmetic Exp
+FISHER              Fisher Transform
 FLOOR               Vector Floor
 FOSC                Forecast Oscillator
 FRACTAL             Williams Fractal

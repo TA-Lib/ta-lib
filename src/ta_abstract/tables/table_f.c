@@ -38,6 +38,61 @@
 #include "ta_abstract.h"
 #include "ta_def_ui.h"
 
+/* FISHER BEGIN */
+static const TA_IntegerRange TA_DEF_FISHER_TimePeriod =
+{
+   2,
+   100000,
+   5,
+   50,
+   1
+};
+
+static const TA_OptInputParameterInfo TA_DEF_UI_D_FISHER_TimePeriod =
+{
+   TA_OptInput_IntegerRange,
+   "optInTimePeriod",
+   0,
+
+   "Time Period",
+   (const void *)&TA_DEF_FISHER_TimePeriod,
+   10,
+   "Time period",
+
+   NULL
+};
+
+const TA_OutputParameterInfo TA_DEF_UI_Output_Real_FISHER_outFisher =
+                               { TA_Output_Real, "outFisher", TA_OUT_LINE };
+
+const TA_OutputParameterInfo TA_DEF_UI_Output_Real_FISHER_outTrigger =
+                               { TA_Output_Real, "outTrigger", TA_OUT_DASH_LINE };
+
+static const TA_InputParameterInfo    *TA_FISHER_Inputs[]    =
+{
+  &TA_DEF_UI_Input_Price_HL,
+  NULL
+};
+
+static const TA_OutputParameterInfo   *TA_FISHER_Outputs[]   =
+{
+  &TA_DEF_UI_Output_Real_FISHER_outFisher,
+  &TA_DEF_UI_Output_Real_FISHER_outTrigger,
+  NULL
+};
+
+static const TA_OptInputParameterInfo *TA_FISHER_OptInputs[] =
+{ &TA_DEF_UI_D_FISHER_TimePeriod,
+  NULL
+};
+
+DEF_FUNCTION( FISHER,
+              TA_GroupId_MomentumIndicators,
+              "Fisher Transform",
+              TA_FUNC_FLG_UNST_PER | TA_FUNC_FLG_STREAM
+             );
+/* FISHER END */
+
 /* FLOOR BEGIN */
 static const TA_InputParameterInfo    *TA_FLOOR_Inputs[]    =
 {
@@ -242,6 +297,7 @@ DEF_FUNCTION( FRAMA,
  ****************************************************************************/
 const TA_FuncDef *TA_DEF_TableF[] =
 {
+   ADD_TO_TABLE(FISHER),
    ADD_TO_TABLE(FLOOR),
    ADD_TO_TABLE(FOSC),
    ADD_TO_TABLE(FRACTAL),
