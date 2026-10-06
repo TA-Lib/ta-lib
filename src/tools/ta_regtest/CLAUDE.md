@@ -204,13 +204,15 @@ tiers cannot be wrong together. All four counts are asserted non-zero.
 
 **The display shift** rides the same vectors: `abstract_check_display_shift`
 asks C and the server for every output plus the two indices that name none, at
-the defaults and at each `d2_param_vectors` vector. The lookback is the reference
-for which vectors are rejected, because a lookback body can refuse a parameter
-the declared range allows (FRAMA's odd period) and a query that only
+the defaults and at each `d2_param_vectors` vector. The lookback is the
+reference for which vectors are rejected, because a lookback body can refuse a
+parameter the declared range allows (FRAMA's odd period) and a query that only
 range-checked would accept it. `ds_param_vectors` adds each integer range's
-bounds and one step outside each, with or without a server, so a bare run
-reaches rejected parameters too. Each counter is asserted non-zero; the server
-one only when a server is attached.
+bounds and one step outside each, each real range's bounds and a value outside
+each, and each integer list's values and one step outside it, with or without a
+server, so a bare run reaches rejected parameters too. A value outside its
+declared domain that the lookback accepts fails. Each counter is asserted
+non-zero; the server one only when a server is attached.
 
 Opt-level `hint` is compared too. For a bespoke descriptor that is a genuine
 YAML-vs-C check; for a slot folded onto a predefined `TA_DEF_UI_*` it is not —

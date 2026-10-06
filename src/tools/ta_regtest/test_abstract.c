@@ -109,6 +109,13 @@ static long long g_dsAnswered = 0;
 static long long g_dsRejected = 0;
 static long long g_dsParamRejected = 0;
 static long long g_dsBoundRejected = 0;
+/* ds_param_vectors' probes of a real range and of an integer list: the values
+ * outside the domain that the lookback rejected, and the declared ones it
+ * accepted. */
+static long long g_dsRealOutRejected = 0;
+static long long g_dsListOutRejected = 0;
+static long long g_dsRealAccepted = 0;
+static long long g_dsListAccepted = 0;
 static long long g_dsFlagged = 0;
 static long long g_dsNonZero = 0;
 static long long g_dsServer = 0;
@@ -185,6 +192,7 @@ void test_abstract_set_server(CodegenPipe *cp, const char *lang)
    g_d2Ordering = 0;
    g_d2NonFinite = g_d2NonFiniteFuncs = 0;
    g_dsAnswered = g_dsRejected = g_dsParamRejected = g_dsBoundRejected = 0;
+   g_dsRealOutRejected = g_dsListOutRejected = g_dsRealAccepted = g_dsListAccepted = 0;
    g_dsFlagged = g_dsNonZero = g_dsServer = 0;
    g_rejectedAtBoundClean = g_rejectedAboveMinClean = 0;
    g_lsCdlMoved = g_lsShiftLive = g_lsCeilingUnst = g_lsCeilingCandle = 0;
@@ -1872,7 +1880,9 @@ static ErrorNumber abstract_lookback_under_settings( const char *funcName,
 
 /* The display shift at parameter vectors built from the declared domains: every
  * slot at a non-default value, then each integer range at both bounds, one
- * step outside each and one step above the lower one. Needs no server, so a
+ * step outside each and one step above the lower one, each real range at both
+ * bounds and outside each, and each integer list at every value and outside
+ * it. A value outside its domain must be rejected. Needs no server, so a
  * bare run reaches rejected parameters on integer-only functions; the bounds
  * are what make a shift that depends on its parameters answer something other
  * than its default.
@@ -1881,6 +1891,7 @@ static ErrorNumber abstract_lookback_under_settings( const char *funcName,
  * FRAMA refuses a value inside its declared range. Every vector the lookback
  * rejects is also called, to see that the rejection wrote nothing.
  */
+#define DS_MAX_PROBE 32
 static ErrorNumber ds_param_vectors( const char *funcName, const TA_FuncHandle *handle,
                                      const TA_FuncInfo *funcInfo,
                                      TA_ParamHolder *paramHolder, int size )
@@ -1914,23 +1925,61 @@ static ErrorNumber ds_param_vectors( const char *funcName, const TA_FuncHandle *
 
     for( k = 0; e == TA_TEST_PASS && k < funcInfo->nbOptInput; k++ )
     {
-        const TA_IntegerRange *r;
-        double probe[5];
+        const TA_IntegerRange *r = NULL;
+        double probe[DS_MAX_PROBE];
+        int outside[DS_MAX_PROBE];
         int nbProbe = 0, aboveMin = -1;
 
         TA_GetOptInputParameterInfo(handle, k, &oi);
-        r = (const TA_IntegerRange *)oi->dataSet;
-        if( oi->type != TA_OptInput_IntegerRange || !r )
+        if( !oi->dataSet )
             continue;
-        probe[nbProbe++] = (double)r->min;
-        probe[nbProbe++] = (double)r->max;
-        if( r->min > INT_MIN ) probe[nbProbe++] = (double)r->min - 1.0;
-        if( r->max < INT_MAX ) probe[nbProbe++] = (double)r->max + 1.0;
-        if( r->min + 1 < r->max )
+        memset(outside, 0, sizeof(outside));
+        if( oi->type == TA_OptInput_IntegerRange )
         {
-            aboveMin = nbProbe;
-            probe[nbProbe++] = (double)r->min + 1.0;
+            r = (const TA_IntegerRange *)oi->dataSet;
+            probe[nbProbe++] = (double)r->min;
+            probe[nbProbe++] = (double)r->max;
+            if( r->min > TA_INTEGER_MIN ) { outside[nbProbe] = 1; probe[nbProbe++] = (double)r->min - 1.0; }
+            if( r->max < INT_MAX ) { outside[nbProbe] = 1; probe[nbProbe++] = (double)r->max + 1.0; }
+            if( r->min + 1 < r->max )
+            {
+                aboveMin = nbProbe;
+                probe[nbProbe++] = (double)r->min + 1.0;
+            }
         }
+        else if( oi->type == TA_OptInput_RealRange )
+        {
+            const TA_RealRange *rr = (const TA_RealRange *)oi->dataSet;
+            probe[nbProbe++] = rr->min;
+            probe[nbProbe++] = rr->max;
+            outside[nbProbe] = outside[nbProbe + 1] = 1;
+            nbProbe += d2_out_of_range(oi, &probe[nbProbe]);
+        }
+        else if( oi->type == TA_OptInput_IntegerList )
+        {
+            const TA_IntegerList *l = (const TA_IntegerList *)oi->dataSet;
+            int lo = INT_MAX, hi = INT_MIN;
+            unsigned int n;
+
+            for( n = 0; n < l->nbElement && nbProbe < DS_MAX_PROBE - 2; n++ )
+            {
+                probe[nbProbe++] = (double)l->data[n].value;
+                if( l->data[n].value < lo ) lo = l->data[n].value;
+                if( l->data[n].value > hi ) hi = l->data[n].value;
+            }
+            if( l->nbElement == 0 )
+                continue;
+            if( n != l->nbElement )
+            {
+                printf("  Failed [%s]: %s lists %u value(s), the sweep holds %d\n",
+                       funcName, oi->paramName, l->nbElement, DS_MAX_PROBE - 2);
+                return TA_ABS_TST_FAIL_DISPLAY_SHIFT;
+            }
+            if( lo > TA_INTEGER_MIN ) { outside[nbProbe] = 1; probe[nbProbe++] = (double)lo - 1.0; }
+            if( hi < INT_MAX ) { outside[nbProbe] = 1; probe[nbProbe++] = (double)hi + 1.0; }
+        }
+        else
+            continue;
 
         for( b = 0; e == TA_TEST_PASS && b < nbProbe; b++ )
         {
@@ -1941,15 +1990,28 @@ static ErrorNumber ds_param_vectors( const char *funcName, const TA_FuncHandle *
             d2_set_opts(paramHolder, handle, funcInfo, vec);
             if( TA_GetLookback(paramHolder, &lookback) == TA_SUCCESS && lookback < 0 )
             {
-                g_dsBoundRejected++;
+                if( r ) g_dsBoundRejected++;
                 e = abstract_rejected_call_writes_nothing(funcName, paramHolder, size,
                                                           oi->paramName);
                 if( e != TA_TEST_PASS ) break;
                 if( b == aboveMin )
                     g_rejectedAboveMinClean++;
-                else if( probe[b] >= (double)r->min && probe[b] <= (double)r->max )
+                else if( r && !outside[b] )
                     g_rejectedAtBoundClean++;
+                if( outside[b] && oi->type == TA_OptInput_RealRange ) g_dsRealOutRejected++;
+                if( outside[b] && oi->type == TA_OptInput_IntegerList ) g_dsListOutRejected++;
             }
+            else if( outside[b] )
+            {
+                printf("  Failed [%s]: the lookback accepts %s = %.17g, outside its "
+                       "declared domain\n", funcName, oi->paramName, probe[b]);
+                e = TA_ABS_TST_FAIL_DISPLAY_SHIFT;
+                break;
+            }
+            else if( oi->type == TA_OptInput_RealRange )
+                g_dsRealAccepted++;
+            else if( oi->type == TA_OptInput_IntegerList )
+                g_dsListAccepted++;
             e = abstract_check_display_shift(funcName, handle, funcInfo, paramHolder, vec, 1);
         }
     }
@@ -2587,6 +2649,17 @@ ErrorNumber test_abstract( void )
               g_lsCdlMoved, g_lsShiftLive, g_lsCeilingUnst, g_lsCeilingCandle,
               g_lsCeilingAtMax );
       return TA_ABS_TST_FAIL_LOOKBACK_SETTINGS_VACUOUS;
+   }
+
+   if( g_dsRealOutRejected == 0 || g_dsListOutRejected == 0 ||
+       g_dsRealAccepted == 0 || g_dsListAccepted == 0 )
+   {
+      printf( "  Failed: the display-shift sweep rejected %lld real value(s) outside a "
+              "range and %lld integer(s) outside a list, and accepted %lld real "
+              "bound(s) and %lld listed value(s)\n",
+              g_dsRealOutRejected, g_dsListOutRejected, g_dsRealAccepted,
+              g_dsListAccepted );
+      return TA_ABS_TST_FAIL_DISPLAY_SHIFT_VACUOUS;
    }
 
    if( g_rejectedAtBoundClean == 0 || g_rejectedAboveMinClean == 0 )

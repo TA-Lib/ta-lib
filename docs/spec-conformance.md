@@ -215,7 +215,10 @@ What enters a lookback, in C, in a bare run:
   unstable period, then every averaging period, at `TA_INDEX_MAX` the lookback
   only grows, at the integer parameters' maxima too.
 - rL2's signal: `abstract_check_display_shift` refuses a negative lookback
-  other than -1 on every vector it drives.
+  other than -1 on every vector it drives. `ds_param_vectors` drives every
+  function with each integer range, real range and integer list at its bounds
+  or values and outside them, one parameter at a time, and requires the
+  rejection outside.
 
 rL4 under settings: `server_verify_lookback_value` compares each server's
 lookback with C's, for every function with every unstable period raised
