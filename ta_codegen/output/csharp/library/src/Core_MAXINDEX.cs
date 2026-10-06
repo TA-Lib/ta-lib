@@ -172,9 +172,10 @@ public partial class Core
                   highest = tmp;
                }
             }
-         } else if( tmp >= highest ) {
-            highestIdx = today;
-            highest = tmp;
+         } else {
+            var _pk0 = MaskLe(highest, tmp);
+            highestIdx = Pick(_pk0, today, highestIdx);
+            highest = Pick(_pk0, tmp, highest);
          }
          outInteger[outIdx++] = highestIdx;
          trailingIdx += 1;
@@ -246,9 +247,10 @@ public partial class Core
                   highest = tmp;
                }
             }
-         } else if( tmp >= highest ) {
-            highestIdx = today;
-            highest = tmp;
+         } else {
+            var _pk0 = MaskLe(highest, tmp);
+            highestIdx = Pick(_pk0, today, highestIdx);
+            highest = Pick(_pk0, tmp, highest);
          }
          outInteger[outIdx++] = highestIdx;
          trailingIdx += 1;

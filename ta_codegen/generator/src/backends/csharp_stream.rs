@@ -1297,6 +1297,7 @@ fn stream_ctx<'a>(
         fma: Some(fma_sets),
         matype_map: HashMap::new(),
         plain_selects: Cell::new(false),
+        in_reduction_loop: Cell::new(false),
         batch: false,
     }
 }
@@ -2190,6 +2191,7 @@ fn emit_open_region(
         fma: Some(stream_fma),
         matype_map: build_matype_map(enums),
         plain_selects: Cell::new(false),
+        in_reduction_loop: Cell::new(false),
         batch: false,
     };
 
@@ -4829,6 +4831,7 @@ fn emit_composed_open(
         fma: Some(stream_fma),
         matype_map: HashMap::new(),
         plain_selects: Cell::new(false),
+        in_reduction_loop: Cell::new(false),
         batch: false,
     };
     let region_len = region_stmts.len();

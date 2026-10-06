@@ -1094,6 +1094,118 @@ TA_RetCode max( int    startIdx,
     assert!(at("/* lead */") < at("hi = MaxGt(x, hi);") && at("hi = MaxGt(x, hi);") < at("/* trail */"), "{cs}");
 }
 
+/// C# shapes three constructs for RyuJIT and leaves each near miss as the C
+/// wrote it: an element operand of `sqrt`, `floor` or `ceil` is loaded first;
+/// a one-slot shift loop copies a long run; one compare steering several
+/// stores becomes a mask, except in a reduction loop.
+#[test]
+fn csharp_shapes_loads_shifts_and_multi_store_selects() {
+    let source = r#"
+int max_lookback( int optInTimePeriod )
+{
+   return (optInTimePeriod-1);
+}
+
+TA_RetCode max( int    startIdx,
+                int    endIdx,
+                const double inReal[],
+                int    optInTimePeriod,
+                int   *outBegIdx,
+                int   *outNBElement,
+                double outReal[] )
+{
+   int outIdx, today, i, j, pos, lowIdx, a, b, swap;
+   double tmp, low, x;
+   double sorted[30];
+
+   outIdx = 0;
+   lowIdx = 0;
+   low = 0.0;
+   pos = 3;
+   a = 1;
+   b = 2;
+   today = startIdx;
+   while( today <= endIdx )
+   {
+      tmp = inReal[today];
+      if( tmp <= low )
+      {
+         lowIdx = today;
+         low = tmp;
+      }
+      i = today - optInTimePeriod;
+      while( ++i <= today )
+      {
+         tmp = inReal[i];
+         if( tmp < low )
+         {
+            lowIdx = i;
+            low = tmp;
+         }
+      }
+      if( b < a )
+      {
+         swap = a;
+         a = b;
+      }
+      if( tmp > low )
+      {
+         lowIdx = today;
+         low = inReal[today-1];
+      }
+      j = 0;
+      while( j < pos-1 )
+      {
+         sorted[j] = sorted[j+1];
+         j++;
+      }
+      j = 9;
+      while( j > pos )
+      {
+         sorted[j] = sorted[j-1];
+         j--;
+      }
+      j = 0;
+      while( j <= pos )
+      {
+         sorted[j] = sorted[j+1];
+         j++;
+      }
+      x = sqrt(inReal[today]) + floor(sorted[0]) * ceil(sorted[1]);
+      x = tmp > 0.0 ? sqrt(inReal[today-1]) : x;
+      outReal[outIdx++] = sqrt(inReal[today]) + x + low + lowIdx + swap + a;
+      today++;
+   }
+   for( i=0; i < outIdx; i++ )
+      outReal[i] = sqrt(outReal[i]);
+
+   *outBegIdx = startIdx;
+   *outNBElement = outIdx;
+   return TA_SUCCESS;
+}
+"#;
+    let (func, enums) = load_indicator_with_source("max", source);
+    let cs = backends::csharp::generate(&func, &enums, make_registry(), make_helpers());
+    let flat: String = cs.split_whitespace().collect::<Vec<_>>().join(" ");
+    for needle in [
+        "var _pk0 = MaskLe(tmp, low); lowIdx = Pick(_pk0, today, lowIdx); low = Pick(_pk0, tmp, low);",
+        "if( (pos - 1) - j >= 16 ) { ShiftDown(sorted, j, pos - 1); j = pos - 1; } else { while( j < pos - 1 ) {",
+        "if( j - pos >= 16 ) { ShiftUp(sorted, j, pos); j = pos; } else { while( j > pos ) {",
+        "double _ld1 = inReal[today]; double _ld2 = sorted[0]; double _ld3 = sorted[1];",
+        "x = Math.FusedMultiplyAdd(Math.Floor(_ld2), Math.Ceiling(_ld3), Math.Sqrt(_ld1));",
+        "double _ld4 = outReal[i]; outReal[i] = Math.Sqrt(_ld4);",
+        // Near misses. A reduction loop's select paces the loop.
+        "if( tmp < low ) { lowIdx = i; low = tmp; }",
+        "if( b < a ) { swap = a; a = b; }",
+        "if( tmp > low ) { lowIdx = today; low = inReal[today - 1]; }",
+        "while( j <= pos ) { sorted[j] = sorted[j + 1];",
+        "? Math.Sqrt(inReal[today - 1]) : x;",
+        "outReal[outIdx++] = Math.Sqrt(inReal[today])",
+    ] {
+        assert!(flat.contains(needle), "C# output missing `{needle}`:\n{cs}");
+    }
+}
+
 /// A store into a nullable output is skipped when the caller declines it, so
 /// its `sqrt` operand must not be loaded ahead of that guard.
 #[test]

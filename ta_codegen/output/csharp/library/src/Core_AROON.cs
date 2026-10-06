@@ -184,9 +184,10 @@ public partial class Core
                   lowest = tmp;
                }
             }
-         } else if( tmp <= lowest ) {
-            lowestIdx = today;
-            lowest = tmp;
+         } else {
+            var _pk0 = MaskLe(tmp, lowest);
+            lowestIdx = Pick(_pk0, today, lowestIdx);
+            lowest = Pick(_pk0, tmp, lowest);
          }
          /* Keep track of the highestIdx */
          tmp = inHigh[today];
@@ -201,9 +202,10 @@ public partial class Core
                   highest = tmp;
                }
             }
-         } else if( tmp >= highest ) {
-            highestIdx = today;
-            highest = tmp;
+         } else {
+            var _pk1 = MaskLe(highest, tmp);
+            highestIdx = Pick(_pk1, today, highestIdx);
+            highest = Pick(_pk1, tmp, highest);
          }
          /* Note: Do not forget that input and output buffer can be the same,
           *       so writing to the output is the last thing being done here.
@@ -289,9 +291,10 @@ public partial class Core
                   lowest = tmp;
                }
             }
-         } else if( tmp <= lowest ) {
-            lowestIdx = today;
-            lowest = tmp;
+         } else {
+            var _pk0 = MaskLe(tmp, lowest);
+            lowestIdx = Pick(_pk0, today, lowestIdx);
+            lowest = Pick(_pk0, tmp, lowest);
          }
          tmp = (double)inHigh[today];
          if( highestIdx < trailingIdx ) {
@@ -305,9 +308,10 @@ public partial class Core
                   highest = tmp;
                }
             }
-         } else if( tmp >= highest ) {
-            highestIdx = today;
-            highest = tmp;
+         } else {
+            var _pk1 = MaskLe(highest, tmp);
+            highestIdx = Pick(_pk1, today, highestIdx);
+            highest = Pick(_pk1, tmp, highest);
          }
          outAroonUp[outIdx] = factor * (optInTimePeriod - (today - highestIdx));
          outAroonDown[outIdx] = factor * (optInTimePeriod - (today - lowestIdx));

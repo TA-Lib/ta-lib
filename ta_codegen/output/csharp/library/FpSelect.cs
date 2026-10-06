@@ -162,6 +162,62 @@ public sealed partial class Core
         return a < b ? 0.0 : x;
     }
 
+    // One compare can steer several stores: `if( a < b ) { i = j; v = a; }` is
+    // a mask and one Pick per store. Only element 0 of a mask means anything.
+
+    /// <summary>All ones where <c>a &lt; b</c>, else zero.</summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    internal static Vector128<double> MaskLt(double a, double b)
+    {
+        if (Sse2.IsSupported)
+        {
+            return Sse2.CompareScalarLessThan(Lo128(a), Lo128(b));
+        }
+        if (AdvSimd.Arm64.IsSupported)
+        {
+            return AdvSimd.Arm64.CompareLessThanScalar(Lo64(a), Lo64(b)).ToVector128Unsafe();
+        }
+        return a < b ? Vector128<double>.AllBitsSet : Vector128<double>.Zero;
+    }
+
+    /// <summary>All ones where <c>a &lt;= b</c>, else zero.</summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    internal static Vector128<double> MaskLe(double a, double b)
+    {
+        if (Sse2.IsSupported)
+        {
+            return Sse2.CompareScalarLessThanOrEqual(Lo128(a), Lo128(b));
+        }
+        if (AdvSimd.Arm64.IsSupported)
+        {
+            return AdvSimd.Arm64.CompareLessThanOrEqualScalar(Lo64(a), Lo64(b)).ToVector128Unsafe();
+        }
+        return a <= b ? Vector128<double>.AllBitsSet : Vector128<double>.Zero;
+    }
+
+    /// <summary><c>x</c> where the mask is set, else <c>y</c>.</summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    internal static double Pick(Vector128<double> mask, double x, double y)
+    {
+        if (Sse2.IsSupported)
+        {
+            return Sse2.Or(Sse2.And(mask, Lo128(x)), Sse2.AndNot(mask, Lo128(y))).ToScalar();
+        }
+        if (AdvSimd.Arm64.IsSupported)
+        {
+            return AdvSimd.BitwiseSelect(mask.GetLower(), Lo64(x), Lo64(y)).ToScalar();
+        }
+        return mask.AsInt64().ToScalar() != 0 ? x : y;
+    }
+
+    /// <inheritdoc cref="Pick(Vector128{double}, double, double)"/>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    internal static int Pick(Vector128<double> mask, int x, int y)
+    {
+        int k = mask.AsInt32().ToScalar();
+        return (x & k) | (y & ~k);
+    }
+
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static Vector128<double> Lo128(double x) => Vector128.CreateScalarUnsafe(x);
 

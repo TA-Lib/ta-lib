@@ -304,9 +304,10 @@ public partial class Core
                   lowest = tmp;
                }
             }
-         } else if( tmp <= lowest ) {
-            lowestIdx = today;
-            lowest = tmp;
+         } else {
+            var _pk0 = MaskLe(tmp, lowest);
+            lowestIdx = Pick(_pk0, today, lowestIdx);
+            lowest = Pick(_pk0, tmp, lowest);
          }
          /* Set the highest high */
          tmp = inHigh[today];
@@ -321,9 +322,10 @@ public partial class Core
                   highest = tmp;
                }
             }
-         } else if( tmp >= highest ) {
-            highestIdx = today;
-            highest = tmp;
+         } else {
+            var _pk1 = MaskLe(highest, tmp);
+            highestIdx = Pick(_pk1, today, highestIdx);
+            highest = Pick(_pk1, tmp, highest);
          }
          /* Divide by the range itself and scale after: the guard has to test the
           * very expression the division uses, or a scaling step can carry a
@@ -346,9 +348,9 @@ public partial class Core
       /* Fast-K calculation completed. This K calculation is returned
        * to the caller. It is smoothed to become Fast-D.
        */
-      OutRange _xr0 = Ma(0, outIdx - 1, tempBuffer, optInFastD_Period, optInFastD_MAType, outFastD);
-      outBegIdx = _xr0.BegIdx;
-      outNBElement = _xr0.Count;
+      OutRange _xr2 = Ma(0, outIdx - 1, tempBuffer, optInFastD_Period, optInFastD_MAType, outFastD);
+      outBegIdx = _xr2.BegIdx;
+      outNBElement = _xr2.Count;
       retCode = RetCode.Success;
       if( (int)outNBElement == 0 ) {
          /* Something wrong happen? No further data? */
@@ -463,9 +465,10 @@ public partial class Core
                   lowest = tmp;
                }
             }
-         } else if( tmp <= lowest ) {
-            lowestIdx = today;
-            lowest = tmp;
+         } else {
+            var _pk0 = MaskLe(tmp, lowest);
+            lowestIdx = Pick(_pk0, today, lowestIdx);
+            lowest = Pick(_pk0, tmp, lowest);
          }
          tmp = (double)inHigh[today];
          if( highestIdx < trailingIdx ) {
@@ -479,9 +482,10 @@ public partial class Core
                   highest = tmp;
                }
             }
-         } else if( tmp >= highest ) {
-            highestIdx = today;
-            highest = tmp;
+         } else {
+            var _pk1 = MaskLe(highest, tmp);
+            highestIdx = Pick(_pk1, today, highestIdx);
+            highest = Pick(_pk1, tmp, highest);
          }
          if( !(Math.Abs(highest - lowest) <= 0.00000000000001 * (Math.Abs(highest) + Math.Abs(lowest))) ) {
             tempBuffer[outIdx++] = ((double)inClose[today] - lowest) / (highest - lowest) * 100.0;
@@ -491,9 +495,9 @@ public partial class Core
          trailingIdx += 1;
          today += 1;
       }
-      OutRange _xr0 = Ma(0, outIdx - 1, tempBuffer, optInFastD_Period, optInFastD_MAType, outFastD);
-      outBegIdx = _xr0.BegIdx;
-      outNBElement = _xr0.Count;
+      OutRange _xr2 = Ma(0, outIdx - 1, tempBuffer, optInFastD_Period, optInFastD_MAType, outFastD);
+      outBegIdx = _xr2.BegIdx;
+      outNBElement = _xr2.Count;
       retCode = RetCode.Success;
       if( (int)outNBElement == 0 ) {
          outBegIdx = 0;

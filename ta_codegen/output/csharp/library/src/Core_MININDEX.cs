@@ -172,9 +172,10 @@ public partial class Core
                   lowest = tmp;
                }
             }
-         } else if( tmp <= lowest ) {
-            lowestIdx = today;
-            lowest = tmp;
+         } else {
+            var _pk0 = MaskLe(tmp, lowest);
+            lowestIdx = Pick(_pk0, today, lowestIdx);
+            lowest = Pick(_pk0, tmp, lowest);
          }
          outInteger[outIdx++] = lowestIdx;
          trailingIdx += 1;
@@ -246,9 +247,10 @@ public partial class Core
                   lowest = tmp;
                }
             }
-         } else if( tmp <= lowest ) {
-            lowestIdx = today;
-            lowest = tmp;
+         } else {
+            var _pk0 = MaskLe(tmp, lowest);
+            lowestIdx = Pick(_pk0, today, lowestIdx);
+            lowest = Pick(_pk0, tmp, lowest);
          }
          outInteger[outIdx++] = lowestIdx;
          trailingIdx += 1;

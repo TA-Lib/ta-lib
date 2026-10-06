@@ -117,8 +117,11 @@ pub(crate) struct CsRenderCtx<'a> {
     /// [`FmaVarSets::recurrent_select_targets`] name, whose selects stay
     /// branches.
     pub(crate) plain_selects: Cell<bool>,
-    /// The batch tier, the only one the shift copy rewrites: in a stream body it
-    /// read slower on one CPU.
+    /// Set while rendering the body of a loop that neither stores to an array
+    /// nor holds another loop: a reduction, whose select is its critical path.
+    pub(crate) in_reduction_loop: Cell<bool>,
+    /// The batch tier, the only one [`CsStmt::if_as_picks`] and the shift copy
+    /// rewrite: in a stream body each read slower on one CPU or another.
     pub(crate) batch: bool,
 }
 
@@ -1068,6 +1071,7 @@ fn gen_func_inner(
         fma: Some(&fma_sets),
         matype_map: build_matype_map(enums),
         plain_selects: Cell::new(false),
+        in_reduction_loop: Cell::new(false),
         batch: true,
     };
 
@@ -1252,6 +1256,87 @@ impl CsStmt<'_> {
         Some(lead + &self.assign(target, &select, false, indent) + &trail)
     }
 
+    /// `if( a < b ) { i = j; v = a; }` as one compare mask and a `Pick` per
+    /// store, so a test that does not predict costs no flush.
+    ///
+    /// Not in a reduction loop: there the select chain is what paces the loop,
+    /// and a branch that predicts lets iterations overlap. Each value is a
+    /// name or a literal, so evaluating it when the test fails reads nothing
+    /// the C would not.
+    fn if_as_picks(
+        &self,
+        condition: &Expr,
+        then_body: &[Statement],
+        else_body: &[Statement],
+        cond_comments: &[Option<Vec<String>>],
+        indent: usize,
+    ) -> Option<String> {
+        if !else_body.is_empty()
+            || !cond_comments.is_empty()
+            || !self.ctx.batch
+            || self.ctx.in_reduction_loop.get()
+            || self.ctx.plain_selects.get()
+        {
+            return None;
+        }
+        let Expr::BinOp(lhs, op, rhs) = condition else { return None };
+        let (mask, low, high) = match op {
+            BinOp::Less => ("MaskLt", lhs, rhs),
+            BinOp::Greater => ("MaskLt", rhs, lhs),
+            BinOp::LessEq => ("MaskLe", lhs, rhs),
+            BinOp::GreaterEq => ("MaskLe", rhs, lhs),
+            _ => return None,
+        };
+        // An untyped pair is not enough here: an integer swap has this shape.
+        let fs = self.ctx.fma?.view();
+        if !(fma::expr_is_float_typed(lhs, Some(&fs)) || fma::expr_is_float_typed(rhs, Some(&fs)))
+            || !compares_reals(lhs, rhs, self.ctx)
+            || !is_pure_operand(condition)
+        {
+            return None;
+        }
+        let mut stores = Vec::new();
+        for stmt in then_body {
+            match stmt {
+                Statement::Comment(_) => {}
+                Statement::Assign { target: target @ Expr::Var(name), value, compound: false }
+                    if matches!(value, Expr::Var(_) | Expr::Literal(_) | Expr::IntLiteral(_))
+                        && !is_recurrent_select_target(name, self.ctx)
+                        && nullable_target_base(target, self.ctx.nullable_outputs).is_none()
+                        && !stores.iter().any(|(seen, _)| *seen == target) =>
+                {
+                    stores.push((target, value));
+                }
+                _ => return None,
+            }
+        }
+        if stores.len() < 2 {
+            return None;
+        }
+        let render = |e: &Expr| render_expr(e, self.ctx, self.registry, self.helpers);
+        let pad = " ".repeat(indent);
+        let id = self.ctx.inline_counter.get();
+        self.ctx.inline_counter.set(id + 1);
+        let mut out = format!("{pad}var _pk{id} = {mask}({}, {});\n", render(low), render(high));
+        for stmt in then_body {
+            match stmt {
+                Statement::Assign { target, value, .. } => {
+                    let dest = render_assign_target(target, self.ctx, self.registry, self.helpers);
+                    out.push_str(&format!("{pad}{dest} = Pick(_pk{id}, {}, {});\n", render(value), render(target)));
+                }
+                comment => out.push_str(&self.walk_stmt(comment, indent)),
+            }
+        }
+        Some(out)
+    }
+
+    fn in_loop(&self, body: &[Statement], render: impl FnOnce() -> String) -> String {
+        let outer = self.ctx.in_reduction_loop.replace(is_reduction_body(body));
+        let out = render();
+        self.ctx.in_reduction_loop.set(outer);
+        out
+    }
+
     fn if_as_count(
         &self,
         condition: &Expr,
@@ -1395,9 +1480,7 @@ impl CsStmt<'_> {
             format!("({cond_str}) != 0")
         };
         out.push_str(&format!("{pad}while( {cond_cs} ) {{\n"));
-        for s in body {
-            out.push_str(&self.walk_stmt(s, indent + 3));
-        }
+        out.push_str(&self.in_loop(body, || body.iter().map(|s| self.walk_stmt(s, indent + 3)).collect()));
         out.push_str(&format!("{pad}}}\n"));
         out
     }
@@ -1431,6 +1514,7 @@ impl CsStmt<'_> {
                 // the else or dangles onto the next sibling. Collapse only
                 // when the walk still starts with an `if(`; otherwise fall
                 // through to the braced form.
+                let temps = self.ctx.inline_counter.get();
                 let inner = self.walk_stmt(&else_body[code_start], indent);
                 if inner.trim_start().starts_with("if(") {
                     for c in &else_body[..code_start] {
@@ -1440,6 +1524,7 @@ impl CsStmt<'_> {
                     out.push_str(inner.trim_start());
                     return out;
                 }
+                self.ctx.inline_counter.set(temps);
             }
             out.push_str(&format!("{pad}}} else {{\n"));
             for s in else_body {
@@ -1591,9 +1676,7 @@ impl StatementEmitter for CsStmt<'_> {
             hoist_block_helpers(condition, self.helpers, &mut hoisted, &mut cnt, CANDLE_FNS);
         self.ctx.inline_counter.set(cnt);
         let mut out = format!("{pad}do {{\n");
-        for s in body {
-            out.push_str(&self.walk_stmt(s, indent + 3));
-        }
+        out.push_str(&self.in_loop(body, || body.iter().map(|s| self.walk_stmt(s, indent + 3)).collect()));
         out.push_str(&render_hoisted_blocks(
             &hoisted, indent + 3, self.ctx, self.enums, self.registry, self.helpers,
         ));
@@ -1646,6 +1729,9 @@ impl StatementEmitter for CsStmt<'_> {
             }
         }
         if let Some(out) = self.if_as_select(condition, then_body, else_body, cond_comments, indent) {
+            return out;
+        }
+        if let Some(out) = self.if_as_picks(condition, then_body, else_body, cond_comments, indent) {
             return out;
         }
         // Split `if(A && B)` into nested `if(A) { if(B)` when both sides
@@ -1772,9 +1858,7 @@ impl StatementEmitter for CsStmt<'_> {
             var,
             var,
         );
-        for s in body {
-            out.push_str(&self.walk_stmt(s, indent + 3));
-        }
+        out.push_str(&self.in_loop(body, || body.iter().map(|s| self.walk_stmt(s, indent + 3)).collect()));
         out.push_str(&format!("{pad}}}\n"));
         out
     }
@@ -1805,9 +1889,7 @@ impl StatementEmitter for CsStmt<'_> {
             render_expr(&new_condition, self.ctx, self.registry, self.helpers),
             update_str.trim()
         ));
-        for s in body {
-            out.push_str(&self.walk_stmt(s, indent + 3));
-        }
+        out.push_str(&self.in_loop(body, || body.iter().map(|s| self.walk_stmt(s, indent + 3)).collect()));
         out.push_str(&format!("{pad}}}\n"));
         out
     }
@@ -2193,6 +2275,7 @@ impl ExprEmitter for CsExpr<'_> {
                     fma: self.ctx.fma,
                     matype_map: self.ctx.matype_map.clone(),
                     plain_selects: Cell::new(self.ctx.plain_selects.get()),
+                    in_reduction_loop: Cell::new(false),
                     batch: self.ctx.batch,
                 };
                 render_expr(inner, &inner_ctx, self.registry, self.helpers)
@@ -2299,6 +2382,24 @@ fn fp_select<'e>(
         return Some((if gt { "ZeroIfGt" } else { "ZeroIfLt" }, vec![l, r, else_expr]));
     }
     None
+}
+
+fn is_reduction_body(body: &[Statement]) -> bool {
+    body.iter().all(|s| match s {
+        Statement::Assign { target, .. } => !matches!(target, Expr::ArrayAccess(..) | Expr::PointerDeref(_)),
+        Statement::If { then_body, else_body, .. } => is_reduction_body(then_body) && is_reduction_body(else_body),
+        Statement::Block { body } => is_reduction_body(body),
+        Statement::Switch { cases, default, .. } => {
+            cases.iter().all(|(_, b)| is_reduction_body(b)) && is_reduction_body(default)
+        }
+        Statement::While { .. }
+        | Statement::DoWhile { .. }
+        | Statement::For { .. }
+        | Statement::ForC { .. }
+        | Statement::Expr(_)
+        | Statement::CircBuf(_) => false,
+        _ => true,
+    })
 }
 
 /// Runs shorter than this stay a loop: a copy is a call, and RyuJIT moves a few
@@ -2766,6 +2867,7 @@ fn render_lookback_code(
         fma: None,
         matype_map: build_matype_map(enums),
         plain_selects: Cell::new(false),
+        in_reduction_loop: Cell::new(false),
         batch: false,
     };
 

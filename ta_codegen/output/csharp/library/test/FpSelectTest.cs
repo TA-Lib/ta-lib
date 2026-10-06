@@ -97,6 +97,10 @@ public static class FpSelectTest
         Check("KeepIfLt", a, b, x, Core.KeepIfLt(a, b, x), a < b ? x : 0.0);
         Check("ZeroIfGt", a, b, x, Core.ZeroIfGt(a, b, x), a > b ? 0.0 : x);
         Check("ZeroIfLt", a, b, x, Core.ZeroIfLt(a, b, x), a < b ? 0.0 : x);
+        Check("Pick/MaskLt", a, b, x, Core.Pick(Core.MaskLt(a, b), x, b), a < b ? x : b);
+        Check("Pick/MaskLe", a, b, x, Core.Pick(Core.MaskLe(a, b), x, b), a <= b ? x : b);
+        Check("Pick(int)/MaskLt", a, b, x, Core.Pick(Core.MaskLt(a, b), 7, int.MinValue), a < b ? 7 : int.MinValue);
+        Check("Pick(int)/MaskLe", a, b, x, Core.Pick(Core.MaskLe(a, b), -1, int.MaxValue), a <= b ? -1 : int.MaxValue);
     }
 
     // The C rule written out, so the no-intrinsics path (where the helper IS the
@@ -116,6 +120,12 @@ public static class FpSelectTest
         Check("KeepIfLt", -0.0, 0.0, 5.0, Core.KeepIfLt(-0.0, 0.0, 5.0), 0.0);
         Check("ZeroIfGt", nan, 0.0, 5.0, Core.ZeroIfGt(nan, 0.0, 5.0), 5.0);
         Check("ZeroIfLt", -0.0, 0.0, 5.0, Core.ZeroIfLt(-0.0, 0.0, 5.0), 5.0);
+        Check("Pick/MaskLt", -0.0, 0.0, 5.0, Core.Pick(Core.MaskLt(-0.0, 0.0), 5.0, 6.0), 6.0);
+        Check("Pick/MaskLt", nan, 1.0, 5.0, Core.Pick(Core.MaskLt(nan, 1.0), 5.0, 6.0), 6.0);
+        Check("Pick/MaskLe", -0.0, 0.0, 5.0, Core.Pick(Core.MaskLe(-0.0, 0.0), 5.0, 6.0), 5.0);
+        Check("Pick/MaskLe", 1.0, nan, 5.0, Core.Pick(Core.MaskLe(1.0, nan), 5.0, 6.0), 6.0);
+        Check("Pick(int)/MaskLe", 1.0, 1.0, 0, Core.Pick(Core.MaskLe(1.0, 1.0), 7, 9), 7);
+        Check("Pick(int)/MaskLt", 1.0, 1.0, 0, Core.Pick(Core.MaskLt(1.0, 1.0), 7, 9), 9);
     }
 
     /// <summary>Runs every case; returns 0 on success, 1 on any failure.</summary>

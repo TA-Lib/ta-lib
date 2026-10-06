@@ -201,9 +201,10 @@ public partial class Core
                   highest = tmpHigh;
                }
             }
-         } else if( tmpHigh >= highest ) {
-            highestIdx = today;
-            highest = tmpHigh;
+         } else {
+            var _pk0 = MaskLe(highest, tmpHigh);
+            highestIdx = Pick(_pk0, today, highestIdx);
+            highest = Pick(_pk0, tmpHigh, highest);
          }
          if( lowestIdx < trailingIdx ) {
             lowestIdx = trailingIdx;
@@ -216,9 +217,10 @@ public partial class Core
                   lowest = tmpLow;
                }
             }
-         } else if( tmpLow <= lowest ) {
-            lowestIdx = today;
-            lowest = tmpLow;
+         } else {
+            var _pk1 = MaskLe(tmpLow, lowest);
+            lowestIdx = Pick(_pk1, today, lowestIdx);
+            lowest = Pick(_pk1, tmpLow, lowest);
          }
          outRealUpperBand[outIdx] = highest;
          outRealLowerBand[outIdx] = lowest;
@@ -305,9 +307,10 @@ public partial class Core
                   highest = tmpHigh;
                }
             }
-         } else if( tmpHigh >= highest ) {
-            highestIdx = today;
-            highest = tmpHigh;
+         } else {
+            var _pk0 = MaskLe(highest, tmpHigh);
+            highestIdx = Pick(_pk0, today, highestIdx);
+            highest = Pick(_pk0, tmpHigh, highest);
          }
          if( lowestIdx < trailingIdx ) {
             lowestIdx = trailingIdx;
@@ -320,9 +323,10 @@ public partial class Core
                   lowest = tmpLow;
                }
             }
-         } else if( tmpLow <= lowest ) {
-            lowestIdx = today;
-            lowest = tmpLow;
+         } else {
+            var _pk1 = MaskLe(tmpLow, lowest);
+            lowestIdx = Pick(_pk1, today, lowestIdx);
+            lowest = Pick(_pk1, tmpLow, lowest);
          }
          outRealUpperBand[outIdx] = highest;
          outRealLowerBand[outIdx] = lowest;
