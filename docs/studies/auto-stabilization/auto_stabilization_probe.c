@@ -1,4 +1,4 @@
-/* Probe for the Auto warm-up design (docs/auto-warm-up-design.md). Not part of the library.
+/* Probe for the Auto-Stabilization design (docs/auto-stabilization-design.md). Not part of the library.
  *
  * For every function reachable through ta_abstract, compute the outputs over a
  * series fed from bar 0 and over the same series fed from bar D, and measure how

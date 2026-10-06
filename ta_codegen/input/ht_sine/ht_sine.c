@@ -24,7 +24,7 @@ int ht_sine_lookback(void)
     * 31 is for being compatible with Tradestation.
     * See mama_lookback for an explanation of the "32".
     */
-   return 63 + TA_UNSTABLE( TA_FUNC_UNST_HT_SINE, ta_warmup_hilbert(X) );
+   return 63 + TA_UNSTABLE( TA_FUNC_UNST_HT_SINE, ta_auto_stabilization_hilbert(X) );
 }
 
 TA_RetCode ht_sine(int startIdx, int endIdx,

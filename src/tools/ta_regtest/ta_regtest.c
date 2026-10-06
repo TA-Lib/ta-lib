@@ -989,7 +989,7 @@ static ErrorNumber testTAFunction_ALL( void )
    DO_TEST_LBL_NOSV( test_func_unstable_shift,
             "UNSTABLE,LOOKBACK,SHIFT",
             "Unstable period shift" );
-   DO_TEST_LBL_NOSV( test_func_auto_warmup,
+   DO_TEST_LBL_NOSV( test_func_auto_stabilization,
             "UNSTABLE,LOOKBACK,AUTO",
             "Unstable period Auto levels" );
 

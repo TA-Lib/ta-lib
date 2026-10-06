@@ -1,9 +1,9 @@
-# Auto warm-up: an "Auto" unstable period
+# Auto-Stabilization: an "Auto" unstable period
 
 **Status:** design for [#492](https://github.com/TA-Lib/ta-lib/issues/492), with its decisions
 ruled by the owner (section 9). Implemented in this tree, except the function-page row of section 7;
 sections 5 and 8 describe the change, and "today" there is the tree before it. The measurements are reproducible from
-[`studies/auto-warm-up/`](studies/auto-warm-up/README.md).
+[`studies/auto-stabilization/`](studies/auto-stabilization/README.md).
 
 ## 1. Summary
 
@@ -576,7 +576,7 @@ The dialect's read gains a second argument, the Auto count for this call as an e
 int ema_lookback(int optInTimePeriod)
 {
    return optInTimePeriod - 1
-        + TA_UNSTABLE( TA_FUNC_UNST_EMA, ta_warmup_ema(K, optInTimePeriod) );
+        + TA_UNSTABLE( TA_FUNC_UNST_EMA, ta_auto_stabilization_ema(K, optInTimePeriod) );
 }
 ```
 
@@ -585,7 +585,7 @@ int ema_lookback(int optInTimePeriod)
 expression per level and a select on the stored value. With every read in the owner's lookback,
 the rule is written once per id, in the helper its reads name.
 
-- **The formulas are helpers.** `ta_warmup_ema`, `ta_warmup_wilder` and the per-function ones
+- **The formulas are helpers.** `ta_auto_stabilization_ema`, `ta_auto_stabilization_wilder` and the per-function ones
   live in `ta_codegen/input/helpers/`, where single-return `int` and `double` functions are
   inlined into all four backends. Every helper takes `K` or `X` as an argument, and the read
   supplies them from the stored level: the dialect has no named constants. No lookback calls a
@@ -778,7 +778,7 @@ compare at every bar both report.
 | Page | Change |
 |---|---|
 | `api/unstable-period` | Auto under approach 3, leading with `PREC_4`; what a level means (section 2.1); the rule table; the tiers; what the promise is and is not. The figure's "stable" boundary is drawn at 1e-3 of price and would contradict the Auto count: redraw or recaption |
-| `functions/stability` and every function page (generated) | the rule beside "Initial Unstable Period"; the MA-type table gains the `M(n, type)` column. Derived from the same lookback read as today's line |
+| `functions/stability` and every function page (generated) | none: ruled out (section 9, D9) |
 | spec rL6 | "adds exactly that many bars" holds for a count; under Auto the id adds its rule's count |
 | spec rL8 | under Auto a `period1_identity` function has a lookback of 0 at a period of 1 |
 | spec rL5 | still true: the count depends on parameters and settings only |
@@ -965,9 +965,15 @@ MAMA's need follows its larger limit when fast is not below slow, measured at th
   alpha, or a measured bound".
 - No `set_auto_warm_up` in ta-lib-python: its existing `set_unstable_period` takes a level (D1).
 
+**D9. The rule on each function page.** Ruled (owner, 2026-10-06): not needed. Auto is
+documented on the Unstable Period page and in the specification only. A function page keeps its
+"Numerical Stability" line and its link to `functions/stability`, which presents the stability
+classes side by side; the unstable period is a subject large enough for a page of its own, and
+no function page carries a rule, a count or a direct link to the rule table.
+
 ## 10. Evidence
 
-[`studies/auto-warm-up/`](studies/auto-warm-up/README.md) holds the probe, its analysis and the
+[`studies/auto-stabilization/`](studies/auto-stabilization/README.md) holds the probe, its analysis and the
 results. In short:
 
 - **Method.** Every function through the abstraction layer, on 40000 bars of three synthetic

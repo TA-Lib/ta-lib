@@ -22,7 +22,7 @@ int swak_2php_lookback(int optInTimePeriod)
     * seeded from the first bar rather than read from before it, and there is
     * no callee whose lookback could be inherited.
     */
-   return TA_UNSTABLE( TA_FUNC_UNST_SWAK_2PHP, ta_warmup_two_pole(K, optInTimePeriod) );
+   return TA_UNSTABLE( TA_FUNC_UNST_SWAK_2PHP, ta_auto_stabilization_two_pole(K, optInTimePeriod) );
 }
 
 TA_RetCode swak_2php(int startIdx, int endIdx,

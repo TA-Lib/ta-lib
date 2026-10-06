@@ -23,7 +23,7 @@ int swak_gauss_lookback(int optInTimePeriod)
     * from before it -- and there is no callee whose lookback could be
     * inherited, so the function's own unstable period is the whole of it.
     */
-   return TA_UNSTABLE( TA_FUNC_UNST_SWAK_GAUSS, ta_warmup_two_pole(K, optInTimePeriod) );
+   return TA_UNSTABLE( TA_FUNC_UNST_SWAK_GAUSS, ta_auto_stabilization_two_pole(K, optInTimePeriod) );
 }
 
 TA_RetCode swak_gauss(int startIdx, int endIdx,

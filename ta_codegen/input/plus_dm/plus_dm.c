@@ -20,7 +20,7 @@
 int plus_dm_lookback(int optInTimePeriod)
 {
    if( optInTimePeriod > 1 )
-      return optInTimePeriod + TA_UNSTABLE( TA_FUNC_UNST_PLUS_DM, ta_warmup_wilder(K, optInTimePeriod) ) - 1;
+      return optInTimePeriod + TA_UNSTABLE( TA_FUNC_UNST_PLUS_DM, ta_auto_stabilization_wilder(K, optInTimePeriod) ) - 1;
    else
       return 1;
 }

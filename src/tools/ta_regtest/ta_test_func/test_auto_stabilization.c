@@ -207,7 +207,7 @@ static char awMsg[256];
 static void awFail( const char *name, const char *what )
 {
    if( awNbReport < AW_MAX_REPORT )
-      printf( "\n  auto warm-up: %s %s: %s", name, what, awMsg );
+      printf( "\n  auto-stabilization: %s %s: %s", name, what, awMsg );
    awNbReport++;
 }
 
@@ -581,13 +581,13 @@ static double awMax( const TA_FuncInfo *funcInfo, const double perOut[AW_MAX_OUT
  * with T as floor that pass would show nothing. Its floor is instead a
  * committed number per function and output: 4 times the largest two-start
  * difference over the last quarter of each series at a setting of 0, where
- * only rounding is left. Measured once (TA_AUTO_WARMUP_FLOORS=1 prints the
+ * only rounding is left. Measured once (TA_AUTO_STABILIZATION_FLOORS=1 prints the
  * table), never in the run it gates: a floor measured in the run would follow
  * a regression. An output absent from the table has a floor of 0.
  */
 typedef struct { const char *name; int output; double floor; } AwFloor;
 static const AwFloor awFloor[] = {
-#include "test_auto_warmup_floors.h"
+#include "test_auto_stabilization_floors.h"
    { NULL, 0, 0.0 }
 };
 
@@ -837,7 +837,7 @@ static void awOneFunction( const TA_FuncInfo *funcInfo, void *opaque )
             printf( "\n   { \"%s\", %d, %.3e },", funcInfo->name, v, 4.0 * awTail[v] );
 }
 
-ErrorNumber test_func_auto_warmup( TA_History *history )
+ErrorNumber test_func_auto_stabilization( TA_History *history )
 {
    (void)history;
 
@@ -847,12 +847,12 @@ ErrorNumber test_func_auto_warmup( TA_History *history )
    if( !awSeries || !awFull || !awLate )
    {
       free( awSeries ); free( awFull ); free( awLate );
-      return TA_AUTO_WARMUP_FAIL;
+      return TA_AUTO_STABILIZATION_FAIL;
    }
    awNbReport = 0;
    awNbWindow = awNbConverging = awNbPathDep = awNbCount = awNbCountNonZero = awNbFloorHeld = 0;
    awNbSameValues = awNbPeriod1 = 0;
-   awPrintFloors = getenv( "TA_AUTO_WARMUP_FLOORS" ) != NULL;
+   awPrintFloors = getenv( "TA_AUTO_STABILIZATION_FLOORS" ) != NULL;
    awBuildSeries();
 
    TA_ForEachFunc( awOneFunction, NULL );
@@ -863,19 +863,19 @@ ErrorNumber test_func_auto_warmup( TA_History *history )
 
    if( awNbReport != 0 )
    {
-      printf( "\n  auto warm-up: %d failure(s)\n", awNbReport );
-      return TA_AUTO_WARMUP_FAIL;
+      printf( "\n  auto-stabilization: %d failure(s)\n", awNbReport );
+      return TA_AUTO_STABILIZATION_FAIL;
    }
    if( awNbWindow < 1600 || awNbConverging < 1600 || awNbPathDep < 30 ||
        awNbCount < 200 || awNbCountNonZero < 175 || awNbSameValues < 200 || awNbPeriod1 < 100 ||
        ( !awPrintFloors && awNbFloorHeld < 60 ) )
    {
-      printf( "\n  auto warm-up: vacuous: %u window, %u converging, %u path-dependent, "
+      printf( "\n  auto-stabilization: vacuous: %u window, %u converging, %u path-dependent, "
               "%u counts (%u above 0), %u owner value checks, %u period-1 lookbacks, "
               "%u outputs held to a floor\n",
               awNbWindow, awNbConverging, awNbPathDep, awNbCount, awNbCountNonZero,
               awNbSameValues, awNbPeriod1, awNbFloorHeld );
-      return TA_AUTO_WARMUP_VACUOUS;
+      return TA_AUTO_STABILIZATION_VACUOUS;
    }
    return TA_TEST_PASS;
 }

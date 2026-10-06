@@ -155,7 +155,7 @@ bite while authoring the `.c`):
 - A function with its own `TA_FUNC_UNST_<NAME>` id reads it once, in its own lookback
   and nowhere else, as `TA_UNSTABLE( TA_FUNC_UNST_<NAME>, <count> )`. `<count>` is the
   id's Auto rule, written in `K`, in `X` or in both, through a helper of
-  `ta_codegen/input/helpers/warmup.c` when the kernel is an existing one. The rule and
+  `ta_codegen/input/helpers/auto_stabilization.c` when the kernel is an existing one. The rule and
   its tier are stated on the spec issue; the constraints on a rule are
   under "An unstable id and its Auto rule" in `docs/ta_codegen_input_code.md`.
 - Open the file with the contributor / change-history comment block (copy its shape

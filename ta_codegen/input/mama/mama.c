@@ -45,7 +45,7 @@ int mama_lookback(double        optInFastLimit,                                 
     */
 
    return 32 + TA_UNSTABLE( TA_FUNC_UNST_MAMA,
-      ta_warmup_hilbert(X) + (X == 4 ? count4 : count8) );
+      ta_auto_stabilization_hilbert(X) + (X == 4 ? count4 : count8) );
 }
 
 TA_RetCode mama(int startIdx, int endIdx,

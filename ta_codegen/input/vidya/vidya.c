@@ -22,7 +22,7 @@ int vidya_lookback(int optInTimePeriod, int optInCMOPeriod)
       return TA_UNSTABLE( TA_FUNC_UNST_VIDYA, 0 );
 
    return optInCMOPeriod
-   + TA_UNSTABLE( TA_FUNC_UNST_VIDYA, ta_warmup_vidya(X, optInTimePeriod, root) );
+   + TA_UNSTABLE( TA_FUNC_UNST_VIDYA, ta_auto_stabilization_vidya(X, optInTimePeriod, root) );
 }
 
 TA_RetCode vidya(int startIdx, int endIdx,

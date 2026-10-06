@@ -17,7 +17,7 @@
 int ht_dcperiod_lookback(void)
 {
    /* See mama_lookback for an explanation of these */
-   return 32 + TA_UNSTABLE( TA_FUNC_UNST_HT_DCPERIOD, ta_warmup_hilbert(X) );
+   return 32 + TA_UNSTABLE( TA_FUNC_UNST_HT_DCPERIOD, ta_auto_stabilization_hilbert(X) );
 }
 
 TA_RetCode ht_dcperiod(int startIdx, int endIdx,

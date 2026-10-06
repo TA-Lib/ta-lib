@@ -1,13 +1,13 @@
-# Auto warm-up: how fast two starts agree
+# Auto-Stabilization: how fast two starts agree
 
-Measurements behind [the Auto warm-up design](../../auto-warm-up-design.md): for every function,
+Measurements behind [the Auto-Stabilization design](../../auto-stabilization-design.md): for every function,
 how the value at a bar computed from a later start approaches the value computed from bar 0.
 
 ## What is here
 
 | File | What it does |
 |---|---|
-| `warmup_probe.c` | Runs every function through the abstraction layer from bar 0 and from six later starts, on three synthetic series, and writes one row per (series, function, parameter set, output, start) |
+| `auto_stabilization_probe.c` | Runs every function through the abstraction layer from bar 0 and from six later starts, on three synthetic series, and writes one row per (series, function, parameter set, output, start) |
 | `analyze.py` | Folds those rows into one line per output, worst case over series and starts, and a class per function |
 | `rules_vs_need.py` | Evaluates the design's rule for each unstable id, at both levels, against the measured need |
 | `rules_check.py` | Checks the one-pole, SWAK and T3 rules against the kernels' decay laws at seven values of K and a grid of periods, with no library involved. The calibrated rules are not in it: section 3 of `results.txt` holds those |
@@ -19,10 +19,10 @@ how the value at a bar computed from a later start approaches the value computed
 From the repository root, after `scripts/build.py`:
 
 ```bash
-cd docs/studies/auto-warm-up
-gcc -O2 -I../../../include warmup_probe.c ../../../cmake-build/libta-lib.a -lm -o /tmp/warmup_probe
-/tmp/warmup_probe 40000 > /tmp/probe.tsv          # every function; add a name to run one
-OVR="FastLimit=0.2,SlowLimit=0.02" /tmp/warmup_probe 40000 MAMA   # one function, other parameters
+cd docs/studies/auto-stabilization
+gcc -O2 -I../../../include auto_stabilization_probe.c ../../../cmake-build/libta-lib.a -lm -o /tmp/auto_stabilization_probe
+/tmp/auto_stabilization_probe 40000 > /tmp/probe.tsv          # every function; add a name to run one
+OVR="FastLimit=0.2,SlowLimit=0.02" /tmp/auto_stabilization_probe 40000 MAMA   # one function, other parameters
 python3 analyze.py /tmp/probe.tsv /tmp/agg.json summary
 python3 analyze.py /tmp/probe.tsv /tmp/agg.json nonexact
 python3 rules_vs_need.py /tmp/probe.tsv ../../..
