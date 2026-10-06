@@ -43,8 +43,8 @@ fn load() -> Vec<FuncDef> {
     funcs
 }
 
-/// Functions that inherit an unstable period through a hard-coded inner call or a direct
-/// read of another function's id, and the function each one inherits from. Measured: every one of these moves at default params
+/// Functions that inherit an unstable period through a hard-coded inner call, and the
+/// function each one inherits from. Measured: every one of these moves at default params
 /// except CRSI, whose default 101-bar rank lookback outlasts both RSI legs at an unstable
 /// period of 10; it moves at (14,14,20), 21 -> 25.
 /// KC is the only one with TWO sources (EMA for its centre line, ATR for its band), and it
@@ -214,4 +214,159 @@ fn derivation_agrees_with_ta_regtest_unstable_map() {
         unexplained.is_empty(),
         "UNSTABLE_MAP rows the derivation calls start-independent: {unexplained:?}"
     );
+}
+
+fn unstable_read_gate_with(
+    funcs: &[FuncDef],
+    helpers: &ta_codegen_lib::helper_registry::HelperRegistry,
+) -> Vec<String> {
+    let base = Path::new(env!("CARGO_MANIFEST_DIR")).join("../input");
+    let enums = parser::enums::load_enums(&base.join("enums.yaml"));
+    stability::validate_unstable_reads(funcs, helpers, &enums).err().unwrap_or_default()
+}
+
+fn unstable_read_gate(funcs: &[FuncDef]) -> Vec<String> {
+    let base = Path::new(env!("CARGO_MANIFEST_DIR")).join("../input");
+    unstable_read_gate_with(funcs, &ta_codegen_lib::helper_registry::HelperRegistry::from_dir(&base))
+}
+
+fn lookback_stmts(f: &FuncDef) -> Vec<ta_codegen_lib::ir::Statement> {
+    match &f.lookback {
+        Some(ta_codegen_lib::ir::LookbackExpr::Code(s)) => s.clone(),
+        other => panic!("{}: lookback is not code: {other:?}", f.name),
+    }
+}
+
+#[test]
+fn unstable_read_gate_accepts_the_corpus() {
+    assert_eq!(unstable_read_gate(&load()), Vec::<String>::new());
+}
+
+/// One mutation per refusal, each on the real corpus, each asserted to be the only
+/// thing reported.
+#[test]
+fn unstable_read_gate_refuses_each_misplaced_read() {
+    use ta_codegen_lib::ir::{BinOp, Expr, LookbackExpr, Statement};
+    let corpus = load();
+    let at = |n: &str| corpus.iter().position(|f| f.name == n).expect(n);
+    let (ema, sma) = (at("EMA"), at("SMA"));
+    let read = lookback_stmts(&corpus[ema]);
+    let Some(Statement::Return { value: Some(read_expr) }) = read.last().cloned() else {
+        panic!("EMA's lookback no longer ends on a return")
+    };
+    let only = |errs: Vec<String>, needle: &str| {
+        assert_eq!(errs.len(), 1, "expected one error containing {needle:?}, got {errs:#?}");
+        assert!(errs[0].contains(needle), "{:?} lacks {needle:?}", errs[0]);
+    };
+    let mutated = |edit: &dyn Fn(&mut Vec<FuncDef>)| {
+        let mut funcs = corpus.clone();
+        edit(&mut funcs);
+        unstable_read_gate(&funcs)
+    };
+
+    // Every place outside a lookback.
+    only(mutated(&|f| f[sma].body.extend(read.clone())), "SMA: the body reads");
+    only(
+        mutated(&|f| {
+            f[sma].has_explicit_private = true;
+            f[sma].private_body.extend(read.clone());
+        }),
+        "SMA: the private body reads",
+    );
+    only(mutated(&|f| f[sma].display_shift = Some(read.clone())), "SMA: the display shift reads");
+    let with_alt = corpus.iter().position(|f| !f.alternates.is_empty()).expect("a function with an _ALT body");
+    only(mutated(&|f| f[with_alt].alternates[0].body.extend(read.clone())), "an alternate body reads");
+    only(
+        mutated(&|f| f[sma].private_param_init.push(("x".into(), read_expr.clone()))),
+        "SMA: a private parameter initializer reads",
+    );
+
+    // A statement kind the expression walker does not enter.
+    only(
+        mutated(&|f| {
+            f[sma].body.push(Statement::CircBuf(ta_codegen_lib::ir::CircBuf::Init {
+                id: "ring".into(),
+                layout: ta_codegen_lib::ir::CircBufLayout::Plain(ta_codegen_lib::ir::VarType::Real),
+                size: read_expr.clone(),
+            }));
+        }),
+        "SMA: the body reads",
+    );
+
+    // A helper.
+    let helper = ta_codegen_lib::ir::HelperDef {
+        name: "ta_probe".into(),
+        return_type: ta_codegen_lib::ir::VarType::Integer,
+        params: Vec::new(),
+        body: read.clone(),
+    };
+    only(
+        unstable_read_gate_with(&corpus, &ta_codegen_lib::helper_registry::HelperRegistry::from_defs(vec![helper])),
+        "helpers/ta_probe: reads",
+    );
+
+    // Another function's id in a lookback.
+    only(
+        mutated(&|f| f[sma].lookback = Some(LookbackExpr::Code(read.clone()))),
+        "SMA: the lookback reads TA_FUNC_UNST_EMA; write TA_UNSTABLE",
+    );
+
+    // A flag with no read, which also leaves the id unread.
+    let errs = mutated(&|f| f[ema].lookback = f[sma].lookback.clone());
+    assert_eq!(errs.len(), 2, "{errs:#?}");
+    assert!(errs.iter().any(|e| e.contains("EMA: flagged unstable_period, but its lookback does not read")));
+    assert!(errs.iter().any(|e| e.contains("TA_FUNC_UNST_EMA: no lookback reads this id")));
+
+    // A read with no flag.
+    only(
+        mutated(&|f| f[ema].flags.retain(|x| x != "unstable_period")),
+        "EMA: its lookback reads TA_FUNC_UNST_EMA, but it is not flagged",
+    );
+
+    // Two reads in one expression, and two on one path in two statements.
+    let twice = Expr::BinOp(Box::new(read_expr.clone()), BinOp::Add, Box::new(read_expr.clone()));
+    let errs = mutated(&|f| f[ema].lookback = Some(LookbackExpr::Code(vec![Statement::Return { value: Some(twice.clone()) }])));
+    assert!(errs.iter().any(|e| e.contains("EMA: one lookback expression reads an unstable id more than once")), "{errs:#?}");
+    let dx = at("DX");
+    assert!(format!("{:?}", corpus[dx].lookback).matches("Return {").count() > 1, "DX's lookback has lost its second return");
+    for target in [ema, dx] {
+        let own = corpus[target].name.clone();
+        only(
+            mutated(&|f| {
+                let mut stmts = lookback_stmts(&f[target]);
+                let extra = Expr::FuncCall("UNSTABLE_PERIOD".into(), vec![Expr::Var(format!("FUNC_UNST_{own}")), Expr::IntLiteral(0)]);
+                stmts.insert(0, Statement::Expr(extra));
+                f[target].lookback = Some(LookbackExpr::Code(stmts));
+            }),
+            &format!("{own}: the lookback reads an unstable id more than once on a path"),
+        );
+    }
+
+    // A read in a lookback statement the expression walker does not enter.
+    let errs = mutated(&|f| {
+        let mut stmts = lookback_stmts(&f[sma]);
+        stmts.insert(
+            0,
+            Statement::CircBuf(ta_codegen_lib::ir::CircBuf::Init {
+                id: "ring".into(),
+                layout: ta_codegen_lib::ir::CircBufLayout::Plain(ta_codegen_lib::ir::VarType::Real),
+                size: read_expr.clone(),
+            }),
+        );
+        f[sma].lookback = Some(LookbackExpr::Code(stmts));
+    });
+    assert!(errs.iter().any(|e| e.contains("SMA: the lookback reads an unstable id where the gate cannot name it")), "{errs:#?}");
+
+    // A read whose first argument is not a bare id, and one with no Auto rule.
+    let Expr::BinOp(l, op, r) = read_expr.clone() else { panic!("EMA's lookback is no longer a sum") };
+    let Expr::FuncCall(callee, read_args) = *r else { panic!("EMA's lookback no longer ends on its read") };
+    assert_eq!(read_args.len(), 2, "EMA's read has lost its Auto rule");
+    for (bad_args, needle) in [
+        (vec![Expr::IntLiteral(5), read_args[1].clone()], "EMA: the lookback reads TA_FUNC_UNST_<2 argument(s)>"),
+        (vec![read_args[0].clone()], "EMA: the lookback reads TA_FUNC_UNST_<1 argument(s)>"),
+    ] {
+        let odd = Expr::BinOp(l.clone(), op.clone(), Box::new(Expr::FuncCall(callee.clone(), bad_args)));
+        let errs = mutated(&|f| f[ema].lookback = Some(LookbackExpr::Code(vec![Statement::Return { value: Some(odd.clone()) }])));
+        assert!(errs.iter().any(|e| e.contains(needle)), "{errs:#?}");
+    }
 }

@@ -58,8 +58,11 @@
  *  052603 MF   Adapt code to compile with .NET Managed C++
  */
 
-TA_LIB_API int TA_MAMA_Lookback( double optInFastLimit, double optInSlowLimit )
+TA_NOINLINE TA_LIB_API int TA_MAMA_Lookback( double optInFastLimit, double optInSlowLimit )
 {
+   double limit;
+   int count4;
+   int count8;
    if( optInFastLimit == TA_REAL_DEFAULT )
       optInFastLimit = 0.5;
    else if( !(optInFastLimit >= 1e-2 && optInFastLimit <= 9.9e-1) )
@@ -68,10 +71,12 @@ TA_LIB_API int TA_MAMA_Lookback( double optInFastLimit, double optInSlowLimit )
       optInSlowLimit = 0.05;
    else if( !(optInSlowLimit >= 1e-2 && optInSlowLimit <= 9.9e-1) )
       return -1;
-   /* The two parameters are not a factor to determine
-    * the lookback, but are still requested for
-    * consistency with all other Lookback functions.
+   /* ceil( 2*K / max(fast, slow) ) per level, in this order of operations: the
+    * count is defined as this double expression, not as the real quotient.
     */
+   limit = (optInFastLimit > optInSlowLimit) ? optInFastLimit : optInSlowLimit;
+   count4 = (int)ceil(20.0 / limit);
+   count8 = (int)ceil(38.0 / limit);
    /* Lookback is a fix amount + the unstable period.
     *
     *
@@ -88,7 +93,7 @@ TA_LIB_API int TA_MAMA_Lookback( double optInFastLimit, double optInSlowLimit )
     *        -------
     *         32 Total
     */
-   return 32 + TA_GLOBALS_UNSTABLE_PERIOD(TA_FUNC_UNST_MAMA,Mama);
+   return 32 + TA_GLOBALS_UNSTABLE(TA_FUNC_UNST_MAMA,Mama,(80 + 50 * 4) + count4,(80 + 50 * 8) + count8);
 }
 
 TA_LIB_API int TA_MAMA_DisplayShift( double optInFastLimit, double optInSlowLimit, int outputIdx )
@@ -203,7 +208,7 @@ TA_LIB_API TA_RetCode TA_MAMA( int    startIdx,
    /* Identify the minimum number of price bar needed
     * to calculate at least one output.
     */
-   lookbackTotal = 32 + TA_GLOBALS_UNSTABLE_PERIOD(TA_FUNC_UNST_MAMA,Mama);
+   lookbackTotal = TA_MAMA_Lookback(optInFastLimit,optInSlowLimit);
    /* Move up the start index if there is not
     * enough initial data.
     */
@@ -620,7 +625,7 @@ TA_RetCode TA_S_MAMA( int    startIdx,
    a = 0.0962;
    b = 0.5769;
    rad2Deg = 180.0 / (4.0 * atan(1));
-   lookbackTotal = 32 + TA_GLOBALS_UNSTABLE_PERIOD(TA_FUNC_UNST_MAMA,Mama);
+   lookbackTotal = TA_MAMA_Lookback(optInFastLimit,optInSlowLimit);
    if( startIdx < lookbackTotal )
    {
       startIdx = lookbackTotal;
@@ -1274,7 +1279,7 @@ static TA_RetCode TA_MAMA_OpenImpl( struct TA_MAMA_Stream **stream, const double
       /* Identify the minimum number of price bar needed
        * to calculate at least one output.
        */
-      lookbackTotal = 32 + TA_GLOBALS_UNSTABLE_PERIOD(TA_FUNC_UNST_MAMA,Mama);
+      lookbackTotal = TA_MAMA_Lookback(optInFastLimit,optInSlowLimit);
       /* Move up the start index if there is not
        * enough initial data.
        */

@@ -486,6 +486,13 @@ fn generate(func_filter: Option<&str>, backend_filter: Option<&str>) {
         std::process::exit(1);
     }
 
+    if let Err(errors) = ta_codegen_lib::stability::validate_unstable_reads(&all_defs, &helper_registry, &enums) {
+        for e in &errors {
+            eprintln!("error: {e}");
+        }
+        std::process::exit(1);
+    }
+
     // Documentation gate — before the stale-file clean and before any backend
     // writes. The website renders every function's `## Parameters` from its .md
     // joined to the YAML, so a section that disagrees with the YAML is caught

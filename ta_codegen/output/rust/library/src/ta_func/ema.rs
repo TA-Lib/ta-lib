@@ -87,7 +87,7 @@ impl Core {
         } else if (((optInTimePeriod) as i32) < 1) || (((optInTimePeriod) as i32) > 100000) {
             return Err(RetCode::BadParam);
         }
-        return Ok((optInTimePeriod - 1 + self.unstable_period[FuncUnstId::EMA as usize]) as usize);
+        return Ok((optInTimePeriod - 1 + self.unstable_count(FuncUnstId::EMA, (if optInTimePeriod > 1 { (10 * (optInTimePeriod + 1) + 1) / 2 } else { 0 }), (if optInTimePeriod > 1 { (19 * (optInTimePeriod + 1) + 1) / 2 } else { 0 }))) as usize);
     }
     /// Display shift of one output of [`Core::ema`]: how many bars ahead (positive) or behind
     /// (negative) of the bar that computed it a chart draws that output. The values are never
@@ -180,15 +180,19 @@ impl Core {
         let mut today: usize = 0_usize;
         let mut outIdx: usize = 0_usize;
         let mut lookbackTotal: usize = 0_usize;
-        emaBeta = ((optInTimePeriod - 1) as f64) / ((optInTimePeriod + 1) as f64);
-        optInK_1 = 1.0 - emaBeta;
-        // emaBeta + optInK_1 must be exactly 1.0, or a flat input drifts off
-        // its level. Each subtraction is exact only from an operand in
-        // [0.5,1): at a period of 2 that is optInK_1, above it emaBeta.
-        emaBeta = 1.0 - ((optInK_1) as f64);
         // Identify the minimum number of price bar needed
         // to calculate at least one output.
         lookbackTotal = self.ema_lookback(optInTimePeriod).unwrap_or(usize::MAX);
+        // After the lookback call: a double live across a call is saved and
+        // restored around every fma call of the loops below, one more instruction
+        // per bar.
+        //
+        // emaBeta + optInK_1 must be exactly 1.0, or a flat input drifts off
+        // its level. Each subtraction is exact only from an operand in
+        // [0.5,1): at a period of 2 that is optInK_1, above it emaBeta.
+        emaBeta = ((optInTimePeriod - 1) as f64) / ((optInTimePeriod + 1) as f64);
+        optInK_1 = 1.0 - emaBeta;
+        emaBeta = 1.0 - ((optInK_1) as f64);
         // Move up the start index if there is not
         // enough initial data.
         if startIdx < lookbackTotal {
@@ -443,15 +447,19 @@ impl Core {
         let mut today: usize = 0_usize;
         let mut outIdx: usize = 0_usize;
         let mut lookbackTotal: usize = 0_usize;
-        emaBeta = ((optInTimePeriod - 1) as f64) / ((optInTimePeriod + 1) as f64);
-        optInK_1 = 1.0 - emaBeta;
-        // emaBeta + optInK_1 must be exactly 1.0, or a flat input drifts off
-        // its level. Each subtraction is exact only from an operand in
-        // [0.5,1): at a period of 2 that is optInK_1, above it emaBeta.
-        emaBeta = 1.0 - ((optInK_1) as f64);
         // Identify the minimum number of price bar needed
         // to calculate at least one output.
         lookbackTotal = self.ema_lookback(optInTimePeriod)?;
+        // After the lookback call: a double live across a call is saved and
+        // restored around every fma call of the loops below, one more instruction
+        // per bar.
+        //
+        // emaBeta + optInK_1 must be exactly 1.0, or a flat input drifts off
+        // its level. Each subtraction is exact only from an operand in
+        // [0.5,1): at a period of 2 that is optInK_1, above it emaBeta.
+        emaBeta = ((optInTimePeriod - 1) as f64) / ((optInTimePeriod + 1) as f64);
+        optInK_1 = 1.0 - emaBeta;
+        emaBeta = 1.0 - ((optInK_1) as f64);
         // Move up the start index if there is not
         // enough initial data.
         if startIdx < lookbackTotal {

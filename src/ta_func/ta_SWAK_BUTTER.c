@@ -59,7 +59,7 @@
  *  100526 MF,CC  b2p without its cancellation at long periods (#486).
  */
 
-TA_LIB_API int TA_SWAK_BUTTER_Lookback( int optInTimePeriod )
+TA_NOINLINE TA_LIB_API int TA_SWAK_BUTTER_Lookback( int optInTimePeriod )
 {
    if( (int)optInTimePeriod == TA_INTEGER_DEFAULT )
       optInTimePeriod = 20;
@@ -70,7 +70,7 @@ TA_LIB_API int TA_SWAK_BUTTER_Lookback( int optInTimePeriod )
     * no callee whose lookback could be inherited, so the function's own
     * unstable period is the whole of it.
     */
-   return TA_GLOBALS_UNSTABLE_PERIOD(TA_FUNC_UNST_SWAK_BUTTER,Swak_butter);
+   return TA_GLOBALS_UNSTABLE(TA_FUNC_UNST_SWAK_BUTTER,Swak_butter,(((10 + 5) * (optInTimePeriod + 2) + 8) / 9),(((19 + 5) * (optInTimePeriod + 2) + 8) / 9));
 }
 
 TA_LIB_API int TA_SWAK_BUTTER_DisplayShift( int optInTimePeriod, int outputIdx )

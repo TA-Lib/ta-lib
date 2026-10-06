@@ -67,7 +67,7 @@
  *  091326 MF,CC #411 Wilder steps without a divide or a branch.
  */
 
-TA_LIB_API int TA_MINUS_DI_Lookback( int optInTimePeriod )
+TA_NOINLINE TA_LIB_API int TA_MINUS_DI_Lookback( int optInTimePeriod )
 {
    if( (int)optInTimePeriod == TA_INTEGER_DEFAULT )
       optInTimePeriod = 14;
@@ -75,7 +75,7 @@ TA_LIB_API int TA_MINUS_DI_Lookback( int optInTimePeriod )
       return -1;
    if( optInTimePeriod > 1 )
    {
-      return optInTimePeriod + TA_GLOBALS_UNSTABLE_PERIOD(TA_FUNC_UNST_MINUS_DI,Minus_di);
+      return optInTimePeriod + TA_GLOBALS_UNSTABLE(TA_FUNC_UNST_MINUS_DI,Minus_di,((optInTimePeriod > 1) ? 10 * optInTimePeriod : 0),((optInTimePeriod > 1) ? 19 * optInTimePeriod : 0));
    } else 
    {
       return 1;
@@ -228,13 +228,7 @@ TA_LIB_API TA_RetCode TA_MINUS_DI( int    startIdx,
     * TA-Lib does not do the rounding. Still, if you want to reproduce Wilder's examples,
     * you can comment out the following #undef/#define and rebuild the library.
     */
-   if( optInTimePeriod > 1 )
-   {
-      lookbackTotal = optInTimePeriod + TA_GLOBALS_UNSTABLE_PERIOD(TA_FUNC_UNST_MINUS_DI,Minus_di);
-   } else 
-   {
-      lookbackTotal = 1;
-   }
+   lookbackTotal = TA_MINUS_DI_Lookback(optInTimePeriod);
    /* Adjust startIdx to account for the lookback period. */
    if( startIdx < lookbackTotal )
    {
@@ -366,7 +360,7 @@ TA_LIB_API TA_RetCode TA_MINUS_DI( int    startIdx,
    /* Skip the unstable period. Note that this loop must be executed
     * at least ONCE to calculate the first DI.
     */
-   i = TA_GLOBALS_UNSTABLE_PERIOD(TA_FUNC_UNST_MINUS_DI,Minus_di) + 1;
+   i = lookbackTotal - (optInTimePeriod - 1);
    while( i-- != 0 )
    {
       /* Calculate the prevMinusDM */
@@ -512,13 +506,7 @@ TA_RetCode TA_S_MINUS_DI( int    startIdx,
    if( !outReal )
       return TA_BAD_PARAM;
 
-   if( optInTimePeriod > 1 )
-   {
-      lookbackTotal = optInTimePeriod + TA_GLOBALS_UNSTABLE_PERIOD(TA_FUNC_UNST_MINUS_DI,Minus_di);
-   } else 
-   {
-      lookbackTotal = 1;
-   }
+   lookbackTotal = TA_MINUS_DI_Lookback(optInTimePeriod);
    if( startIdx < lookbackTotal )
    {
       startIdx = lookbackTotal;
@@ -618,7 +606,7 @@ TA_RetCode TA_S_MINUS_DI( int    startIdx,
       prevTR += tempReal;
       prevClose = (double)inClose[today];
    }
-   i = TA_GLOBALS_UNSTABLE_PERIOD(TA_FUNC_UNST_MINUS_DI,Minus_di) + 1;
+   i = lookbackTotal - (optInTimePeriod - 1);
    while( i-- != 0 )
    {
       today += 1;
@@ -945,13 +933,7 @@ static TA_RetCode TA_MINUS_DI_OpenImpl( struct TA_MINUS_DI_Stream **stream, cons
        * TA-Lib does not do the rounding. Still, if you want to reproduce Wilder's examples,
        * you can comment out the following #undef/#define and rebuild the library.
        */
-      if( optInTimePeriod > 1 )
-      {
-         lookbackTotal = optInTimePeriod + TA_GLOBALS_UNSTABLE_PERIOD(TA_FUNC_UNST_MINUS_DI,Minus_di);
-      } else 
-      {
-         lookbackTotal = 1;
-      }
+      lookbackTotal = TA_MINUS_DI_Lookback(optInTimePeriod);
       /* Adjust startIdx to account for the lookback period. */
       if( startIdx < lookbackTotal )
       {
@@ -1148,13 +1130,7 @@ static TA_RetCode TA_MINUS_DI_OpenImpl( struct TA_MINUS_DI_Stream **stream, cons
        * TA-Lib does not do the rounding. Still, if you want to reproduce Wilder's examples,
        * you can comment out the following #undef/#define and rebuild the library.
        */
-      if( optInTimePeriod > 1 )
-      {
-         lookbackTotal = optInTimePeriod + TA_GLOBALS_UNSTABLE_PERIOD(TA_FUNC_UNST_MINUS_DI,Minus_di);
-      } else 
-      {
-         lookbackTotal = 1;
-      }
+      lookbackTotal = TA_MINUS_DI_Lookback(optInTimePeriod);
       /* Adjust startIdx to account for the lookback period. */
       if( startIdx < lookbackTotal )
       {
@@ -1229,7 +1205,7 @@ static TA_RetCode TA_MINUS_DI_OpenImpl( struct TA_MINUS_DI_Stream **stream, cons
       /* Skip the unstable period. Note that this loop must be executed
        * at least ONCE to calculate the first DI.
        */
-      i = TA_GLOBALS_UNSTABLE_PERIOD(TA_FUNC_UNST_MINUS_DI,Minus_di) + 1;
+      i = lookbackTotal - (optInTimePeriod - 1);
       while( i-- != 0 )
       {
          /* Calculate the prevMinusDM */

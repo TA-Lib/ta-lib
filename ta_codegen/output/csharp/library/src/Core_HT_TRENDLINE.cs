@@ -91,7 +91,7 @@ public partial class Core
        * 31 is for being compatible with Tradestation.
        * See mama_lookback for an explanation of the "32".
        */
-      return 63 + this._unstablePeriod[(int)FuncUnstId.HT_TRENDLINE] ;
+      return 63 + this.UnstableCount((int)FuncUnstId.HT_TRENDLINE, (80 + 50 * 4), (80 + 50 * 8)) ;
 
    }
    /// <summary>
@@ -208,7 +208,7 @@ public partial class Core
       /* Identify the minimum number of price bar needed
        * to calculate at least one output.
        */
-      lookbackTotal = 63 + this._unstablePeriod[(int)FuncUnstId.HT_TRENDLINE];
+      lookbackTotal = HtTrendlineLookback();
       /* Move up the start index if there is not
        * enough initial data.
        */
@@ -584,7 +584,7 @@ public partial class Core
       iTrend1 = iTrend2;
       tempReal = Math.Atan(1);
       rad2Deg = 45.0 / tempReal;
-      lookbackTotal = 63 + this._unstablePeriod[(int)FuncUnstId.HT_TRENDLINE];
+      lookbackTotal = HtTrendlineLookback();
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
       }
@@ -1705,7 +1705,7 @@ public partial class Core
       /* Identify the minimum number of price bar needed
        * to calculate at least one output.
        */
-      lookbackTotal = 63 + this._unstablePeriod[(int)FuncUnstId.HT_TRENDLINE];
+      lookbackTotal = HtTrendlineLookback();
       /* Move up the start index if there is not
        * enough initial data.
        */

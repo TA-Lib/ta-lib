@@ -91,10 +91,12 @@ impl Core {
         } else if (((optInCMOPeriod) as i32) < 2) || (((optInCMOPeriod) as i32) > 100000) {
             return Err(RetCode::BadParam);
         }
+        let mut root: usize = 0_usize;
+        root = ((optInCMOPeriod as f64).sqrt() as usize) as usize;
         if optInTimePeriod == 1 {
-            return Ok((self.unstable_period[FuncUnstId::VIDYA as usize]) as usize);
+            return Ok((self.unstable_count(FuncUnstId::VIDYA, 0, 0)) as usize);
         }
-        return Ok((optInCMOPeriod + self.unstable_period[FuncUnstId::VIDYA as usize]) as usize);
+        return Ok((optInCMOPeriod + self.unstable_count(FuncUnstId::VIDYA, (if 2 * 4 * (optInTimePeriod + 1) * ((root) as i32) > 100000000 { 100000000 } else { 2 * 4 * (optInTimePeriod + 1) * ((root) as i32) }), (if 2 * 8 * (optInTimePeriod + 1) * ((root) as i32) > 100000000 { 100000000 } else { 2 * 8 * (optInTimePeriod + 1) * ((root) as i32) }))) as usize);
     }
     /// Display shift of one output of [`Core::vidya`]: how many bars ahead (positive) or behind
     /// (negative) of the bar that computed it a chart draws that output. The values are never
@@ -210,7 +212,7 @@ impl Core {
         // No smoothing at period 1: the output is a copy of the input, as MA gives
         // for every MAType. The unstable period still delays the first output.
         if optInTimePeriod == 1 {
-            lookbackTotal = (self.unstable_period[FuncUnstId::VIDYA as usize]) as usize;
+            lookbackTotal = self.vidya_lookback(optInTimePeriod, optInCMOPeriod).unwrap_or(usize::MAX);
             if startIdx < lookbackTotal {
                 startIdx = lookbackTotal;
             }

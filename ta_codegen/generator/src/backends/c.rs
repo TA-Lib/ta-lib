@@ -710,8 +710,12 @@ fn gen_lookback(
         None => format!("{validation}   return 0;\n"),
     };
 
+    // Out of line where it resolves an unstable period: inlined into the batch
+    // and Open bodies, the per-level counts cost gcc 13 and 14 up to six
+    // instructions per bar in loops that never read them.
+    let attr = if body.contains("TA_GLOBALS_UNSTABLE(") { "TA_NOINLINE " } else { "" };
     format!(
-        "TA_LIB_API int TA_{name}_Lookback({param_str})\n\
+        "{attr}TA_LIB_API int TA_{name}_Lookback({param_str})\n\
          {{\n\
          {body}\
          }}\n\n"
@@ -2509,17 +2513,20 @@ fn render_func_call(
     if let Some(b) = SpecialBuiltin::from_name(fname) {
         match b {
             SpecialBuiltin::UnstablePeriod => {
-                // UNSTABLE_PERIOD(RSI) -> TA_GLOBALS_UNSTABLE_PERIOD(TA_FUNC_UNST_RSI,Rsi)
-                // UNSTABLE_PERIOD(FUNC_UNST_ATR) -> strip FUNC_UNST_ prefix first
+                // UNSTABLE_PERIOD(FUNC_UNST_ATR, count) -> strip FUNC_UNST_ prefix first
                 if let Some(Expr::Var(func_name)) = args.first() {
                     let base = func_name
                         .strip_prefix("FUNC_UNST_")
                         .unwrap_or(func_name);
                     let upper = base.to_uppercase();
                     let pascal = pascal_word(base);
-                    return format!("TA_GLOBALS_UNSTABLE_PERIOD(TA_FUNC_UNST_{upper},{pascal})");
+                    if let Some(counts) = super::builtins::unstable_level_counts(args) {
+                        let counts: Vec<String> =
+                            counts.iter().map(|c| render_expr(c, ctx, registry, helpers)).collect();
+                        return format!("TA_GLOBALS_UNSTABLE(TA_FUNC_UNST_{upper},{pascal},{})", counts.join(","));
+                    }
                 }
-                "TA_GLOBALS_UNSTABLE_PERIOD(0,0)".to_string()
+                panic!("an unstable-period read takes an id and a count")
             }
             pred @ (SpecialBuiltin::IsZero
                    | SpecialBuiltin::IsZeroScaled

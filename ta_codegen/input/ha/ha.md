@@ -22,7 +22,7 @@ HA_low[i]   = min( L[i], HA_open[i], HA_close[i] )
 
 - The first candle has no predecessor, so its open is seeded with the midpoint of the raw open and close. Other conventions exist — ta4j emits the raw bar unchanged as its first candle — and they differ only while the seed still carries weight.
 - Both divisors are exact powers of two, so implementations that scale by `0.5` and `0.25` produce the same doubles as those that divide by 2 and 4.
-- The unstable period discards that many candles of warm-up before the first output, trading history for a smaller residual difference between two requests that start at different bars.
+- The unstable period discards candles of warm-up before the first output, trading history for a smaller residual difference between two requests that start at different bars.
 - Averaging four prices of one bar is also what [`AVGPRICE`](/functions/avgprice) computes, but it sums them in a different order, so the two can differ in the last bits.
 
 ## Inputs

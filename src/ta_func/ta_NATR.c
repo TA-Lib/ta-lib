@@ -65,7 +65,7 @@
  *                loop-carried chain.
  */
 
-TA_LIB_API int TA_NATR_Lookback( int optInTimePeriod )
+TA_NOINLINE TA_LIB_API int TA_NATR_Lookback( int optInTimePeriod )
 {
    if( (int)optInTimePeriod == TA_INTEGER_DEFAULT )
       optInTimePeriod = 14;
@@ -78,7 +78,7 @@ TA_LIB_API int TA_NATR_Lookback( int optInTimePeriod )
     * (optInTimePeriod-1) is for the simple
     * moving average.
     */
-   return optInTimePeriod + TA_GLOBALS_UNSTABLE_PERIOD(TA_FUNC_UNST_NATR,Natr);
+   return optInTimePeriod + TA_GLOBALS_UNSTABLE(TA_FUNC_UNST_NATR,Natr,((optInTimePeriod > 1) ? 10 * optInTimePeriod : 0),((optInTimePeriod > 1) ? 19 * optInTimePeriod : 0));
 }
 
 TA_LIB_API int TA_NATR_DisplayShift( int optInTimePeriod, int outputIdx )
@@ -238,7 +238,7 @@ TA_LIB_API TA_RetCode TA_NATR( int    startIdx,
    }
    prevATR = periodTotal / optInTimePeriod;
    /* Skip the unstable period. */
-   i = TA_GLOBALS_UNSTABLE_PERIOD(TA_FUNC_UNST_NATR,Natr);
+   i = lookbackTotal - optInTimePeriod;
    while( i != 0 )
    {
       /* Find the greatest of the 3 values. */
@@ -414,7 +414,7 @@ TA_RetCode TA_S_NATR( int    startIdx,
       today += 1;
    }
    prevATR = periodTotal / optInTimePeriod;
-   i = TA_GLOBALS_UNSTABLE_PERIOD(TA_FUNC_UNST_NATR,Natr);
+   i = lookbackTotal - optInTimePeriod;
    while( i != 0 )
    {
       tempLT = (double)inLow[today];
@@ -693,7 +693,7 @@ static TA_RetCode TA_NATR_OpenImpl( struct TA_NATR_Stream **stream, const double
       }
       prevATR = periodTotal / optInTimePeriod;
       /* Skip the unstable period. */
-      i = TA_GLOBALS_UNSTABLE_PERIOD(TA_FUNC_UNST_NATR,Natr);
+      i = lookbackTotal - optInTimePeriod;
       while( i != 0 )
       {
          /* Find the greatest of the 3 values. */

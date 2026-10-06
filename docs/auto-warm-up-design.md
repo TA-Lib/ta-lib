@@ -1,7 +1,8 @@
 # Auto warm-up: an "Auto" unstable period
 
 **Status:** design for [#492](https://github.com/TA-Lib/ta-lib/issues/492), with its decisions
-ruled by the owner (section 9). Nothing is implemented. The measurements are reproducible from
+ruled by the owner (section 9). Implemented in this tree, except the function-page row of section 7;
+sections 5 and 8 describe the change, and "today" there is the tree before it. The measurements are reproducible from
 [`studies/auto-warm-up/`](studies/auto-warm-up/README.md).
 
 ## 1. Summary
@@ -755,7 +756,7 @@ compare at every bar both report.
 - **The MACDEXT diagonal.** The all-EMA vector that reaches the MACD delegation is the defaults
   only. Its Auto lookback is 218 bars at `PREC_4`, which leaves 22 bars of that 240-bar series,
   and 385 at `PREC_8`, which leaves none. The gate of section 5.3 needs a longer series or an
-  all-EMA vector with different fast and slow periods that fits, such as (2, 3, 2).
+  all-EMA vector with different fast and slow periods that fits, such as (7, 8, 2).
 - **"Exactly that many bars."** The shift test raises an id by 5 and requires five more bars and
   the same remaining values. Under Auto the same test requires the rule's count and the same
   remaining values. It runs on 252 bars with 512-bar buffers, where many owners report nothing

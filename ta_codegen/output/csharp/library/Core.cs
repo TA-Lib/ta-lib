@@ -96,6 +96,24 @@ public sealed partial class Core
     /// rejected the same way in all four.</para></remarks>
     public const int IndexMax = 100000000;
 
+    /// <summary>Auto level of <see cref="CoreBuilder.UnstablePeriod"/>, passed in
+    /// place of a count: each function discards output until its first 4
+    /// significant digits no longer depend on where the data starts (C's
+    /// <c>TA_UNSTABLE_AUTO_PREC_4</c>).</summary>
+    public const int UnstableAutoPrec4 = IndexMax + 4;
+
+    /// <summary>As <see cref="UnstableAutoPrec4"/>, to 8 significant digits.</summary>
+    public const int UnstableAutoPrec8 = IndexMax + 8;
+
+    // The unstable period of one id for one call: the stored count, or under an
+    // Auto level that level's count. The builder stores nothing else above
+    // IndexMax, so the last arm needs no test.
+    internal int UnstableCount(int slot, int prec4, int prec8)
+    {
+        int stored = _unstablePeriod[slot];
+        return stored <= IndexMax ? stored : stored == UnstableAutoPrec4 ? prec4 : prec8;
+    }
+
     internal readonly int[] _unstablePeriod;
 
     /* The 11 defaults, in CandleSettingType order, from
@@ -180,7 +198,7 @@ public sealed partial class Core
 
     /// <summary>Reads the unstable period configured for one function.</summary>
     /// <param name="id">The function to query.</param>
-    /// <returns>Its extra warm-up bars.</returns>
+    /// <returns>The stored setting: a count of warm-up bars, or an Auto level.</returns>
     /// <exception cref="ArgumentOutOfRangeException"><paramref name="id"/> is
     /// <see cref="FuncUnstId.ALL"/>, which is the set-all wildcard and names no
     /// single function, or is not a function id at all.</exception>

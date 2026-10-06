@@ -1,1 +1,3 @@
 #nullable enable
+const TALib.Core.UnstableAutoPrec4 = 100000004 -> int
+const TALib.Core.UnstableAutoPrec8 = 100000008 -> int

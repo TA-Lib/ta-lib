@@ -95,7 +95,7 @@ impl Core {
         } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
             return Err(RetCode::BadParam);
         }
-        return Ok((2 * optInTimePeriod + self.unstable_period[FuncUnstId::ADX as usize] - 1) as usize);
+        return Ok((2 * optInTimePeriod + self.unstable_count(FuncUnstId::ADX, (10 + 6) * optInTimePeriod, (19 + 6) * optInTimePeriod) - 1) as usize);
     }
     /// Display shift of one output of [`Core::adx`]: how many bars ahead (positive) or behind
     /// (negative) of the bar that computed it a chart draws that output. The values are never
@@ -287,7 +287,7 @@ impl Core {
         //
         // TA-Lib does not do the rounding. Still, if you want to reproduce Wilder's examples,
         // you can comment out the following #undef/#define and rebuild the library.
-        lookbackTotal = (2 * optInTimePeriod + self.unstable_period[FuncUnstId::ADX as usize] - 1) as usize;
+        lookbackTotal = self.adx_lookback(optInTimePeriod).unwrap_or(usize::MAX);
         // Adjust startIdx to account for the lookback period.
         if startIdx < lookbackTotal {
             startIdx = lookbackTotal;
@@ -425,7 +425,7 @@ impl Core {
         // Calculate the first ADX
         prevADX = (sumDX / ((optInTimePeriod) as f64));
         // Skip the unstable period
-        i = (self.unstable_period[FuncUnstId::ADX as usize]) as usize;
+        i = lookbackTotal - (((2 * optInTimePeriod - 1)) as usize);
         while { let _v = i; i = i.wrapping_sub(1); _v } > 0 {
             // Calculate the prevMinusDM and prevPlusDM
             today += 1;
@@ -908,7 +908,7 @@ impl Core {
         //
         // TA-Lib does not do the rounding. Still, if you want to reproduce Wilder's examples,
         // you can comment out the following #undef/#define and rebuild the library.
-        lookbackTotal = (2 * optInTimePeriod + self.unstable_period[FuncUnstId::ADX as usize] - 1) as usize;
+        lookbackTotal = self.adx_lookback(optInTimePeriod)?;
         // Adjust startIdx to account for the lookback period.
         if startIdx < lookbackTotal {
             startIdx = lookbackTotal;
@@ -1033,7 +1033,7 @@ impl Core {
         // Calculate the first ADX
         prevADX = (sumDX / ((optInTimePeriod) as f64));
         // Skip the unstable period
-        i = (self.unstable_period[FuncUnstId::ADX as usize]) as usize;
+        i = lookbackTotal - (((2 * optInTimePeriod - 1)) as usize);
         while { let _v = i; i = i.wrapping_sub(1); _v } > 0 {
             // Calculate the prevMinusDM and prevPlusDM
             today += 1;

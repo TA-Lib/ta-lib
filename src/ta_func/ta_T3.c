@@ -67,7 +67,7 @@
  *                floating point (~1e-14 drift), so the copy is explicit.
  */
 
-TA_LIB_API int TA_T3_Lookback( int optInTimePeriod, double optInVFactor )
+TA_NOINLINE TA_LIB_API int TA_T3_Lookback( int optInTimePeriod, double optInVFactor )
 {
    if( (int)optInTimePeriod == TA_INTEGER_DEFAULT )
       optInTimePeriod = 5;
@@ -77,7 +77,7 @@ TA_LIB_API int TA_T3_Lookback( int optInTimePeriod, double optInVFactor )
       optInVFactor = 0.7;
    else if( !(optInVFactor >= 0e0 && optInVFactor <= 1e0) )
       return -1;
-   return 6 * (optInTimePeriod - 1) + TA_GLOBALS_UNSTABLE_PERIOD(TA_FUNC_UNST_T3,T3);
+   return 6 * (optInTimePeriod - 1) + TA_GLOBALS_UNSTABLE(TA_FUNC_UNST_T3,T3,(optInTimePeriod > 1) ? ((10 + 20) * (optInTimePeriod + 1) + 1) / 2 : 0,(optInTimePeriod > 1) ? ((19 + 20) * (optInTimePeriod + 1) + 1) / 2 : 0);
 }
 
 TA_LIB_API int TA_T3_DisplayShift( int optInTimePeriod, double optInVFactor, int outputIdx )
@@ -153,7 +153,7 @@ TA_LIB_API TA_RetCode TA_T3( int    startIdx,
     * Do not confuse a T3 with EMA3. Both are called "Triple EMA"
     * in the litterature.
     */
-   lookbackTotal = 6 * (optInTimePeriod - 1) + TA_GLOBALS_UNSTABLE_PERIOD(TA_FUNC_UNST_T3,T3);
+   lookbackTotal = TA_T3_Lookback(optInTimePeriod,optInVFactor);
    if( startIdx <= lookbackTotal )
    {
       startIdx = lookbackTotal;
@@ -329,7 +329,7 @@ TA_RetCode TA_S_T3( int    startIdx,
    if( !outReal )
       return TA_BAD_PARAM;
 
-   lookbackTotal = 6 * (optInTimePeriod - 1) + TA_GLOBALS_UNSTABLE_PERIOD(TA_FUNC_UNST_T3,T3);
+   lookbackTotal = TA_T3_Lookback(optInTimePeriod,optInVFactor);
    if( startIdx <= lookbackTotal )
    {
       startIdx = lookbackTotal;
@@ -581,7 +581,7 @@ static TA_RetCode TA_T3_OpenImpl( struct TA_T3_Stream **stream, const double inR
        * Do not confuse a T3 with EMA3. Both are called "Triple EMA"
        * in the litterature.
        */
-      lookbackTotal = 6 * (optInTimePeriod - 1) + TA_GLOBALS_UNSTABLE_PERIOD(TA_FUNC_UNST_T3,T3);
+      lookbackTotal = TA_T3_Lookback(optInTimePeriod,optInVFactor);
       if( startIdx <= lookbackTotal )
       {
          startIdx = lookbackTotal;

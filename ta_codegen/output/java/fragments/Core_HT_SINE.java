@@ -35,7 +35,7 @@
        * 31 is for being compatible with Tradestation.
        * See mama_lookback for an explanation of the "32".
        */
-      return 63 + this.unstablePeriod[FuncUnstId.HT_SINE.ordinal()] ;
+      return 63 + this.unstableCount(FuncUnstId.HT_SINE.ordinal(), (80 + 50 * 4), (80 + 50 * 8)) ;
 
    }
    /**
@@ -160,7 +160,7 @@
       /* Identify the minimum number of price bar needed
        * to calculate at least one output.
        */
-      lookbackTotal = 63 + this.unstablePeriod[FuncUnstId.HT_SINE.ordinal()];
+      lookbackTotal = htSineLookback();
       /* Move up the start index if there is not
        * enough initial data.
        */
@@ -563,7 +563,7 @@
       rad2Deg = 45.0 / tempReal;
       deg2Rad = 1.0 / rad2Deg;
       constDeg2RadBy360 = tempReal * 8.0;
-      lookbackTotal = 63 + this.unstablePeriod[FuncUnstId.HT_SINE.ordinal()];
+      lookbackTotal = htSineLookback();
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
       }
@@ -1753,7 +1753,7 @@
       /* Identify the minimum number of price bar needed
        * to calculate at least one output.
        */
-      lookbackTotal = 63 + this.unstablePeriod[FuncUnstId.HT_SINE.ordinal()];
+      lookbackTotal = htSineLookback();
       /* Move up the start index if there is not
        * enough initial data.
        */

@@ -94,10 +94,12 @@ public partial class Core
       } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
          return -1;
       }
+      int root = 0;
+      root = (int)Math.Sqrt((double)optInTimePeriod);
       if( optInTimePeriod == 1 ) {
-         return this._unstablePeriod[(int)FuncUnstId.KAMA] ;
+         return this.UnstableCount((int)FuncUnstId.KAMA, 0, 0) ;
       }
-      return optInTimePeriod + this._unstablePeriod[(int)FuncUnstId.KAMA] ;
+      return optInTimePeriod + this.UnstableCount((int)FuncUnstId.KAMA, 25 * 4 * root, 25 * 8 * root) ;
 
    }
    /// <summary>
@@ -170,7 +172,7 @@ public partial class Core
        * still delays the first output for API consistency.
        */
       if( optInTimePeriod == 1 ) {
-         lookbackTotal = this._unstablePeriod[(int)FuncUnstId.KAMA];
+         lookbackTotal = KamaLookback(optInTimePeriod);
          if( startIdx < lookbackTotal ) {
             startIdx = lookbackTotal;
          }
@@ -189,7 +191,7 @@ public partial class Core
       /* Identify the minimum number of price bar needed
        * to calculate at least one output.
        */
-      lookbackTotal = optInTimePeriod + this._unstablePeriod[(int)FuncUnstId.KAMA];
+      lookbackTotal = KamaLookback(optInTimePeriod);
       /* Move up the start index if there is not
        * enough initial data.
        */
@@ -411,7 +413,7 @@ public partial class Core
       outBegIdx = 0;
       outNBElement = 0;
       if( optInTimePeriod == 1 ) {
-         lookbackTotal = this._unstablePeriod[(int)FuncUnstId.KAMA];
+         lookbackTotal = KamaLookback(optInTimePeriod);
          if( startIdx < lookbackTotal ) {
             startIdx = lookbackTotal;
          }
@@ -427,7 +429,7 @@ public partial class Core
          outNBElement = outIdx;
          return RetCode.Success ;
       }
-      lookbackTotal = optInTimePeriod + this._unstablePeriod[(int)FuncUnstId.KAMA];
+      lookbackTotal = KamaLookback(optInTimePeriod);
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
       }
@@ -1037,7 +1039,7 @@ public partial class Core
       /* Identify the minimum number of price bar needed
        * to calculate at least one output.
        */
-      lookbackTotal = optInTimePeriod + this._unstablePeriod[(int)FuncUnstId.KAMA];
+      lookbackTotal = KamaLookback(optInTimePeriod);
       /* Move up the start index if there is not
        * enough initial data.
        */

@@ -30,10 +30,14 @@
 
 int kama_lookback(int optInTimePeriod)
 {
-   if( optInTimePeriod == 1 )
-      return TA_GetUnstablePeriod(TA_FUNC_UNST_KAMA);
+   int root;
 
-   return optInTimePeriod + TA_GetUnstablePeriod(TA_FUNC_UNST_KAMA);
+   root = (int)sqrt((double)optInTimePeriod);
+
+   if( optInTimePeriod == 1 )
+      return TA_UNSTABLE( TA_FUNC_UNST_KAMA, 0 );
+
+   return optInTimePeriod + TA_UNSTABLE( TA_FUNC_UNST_KAMA, 25 * X * root );
 }
 
 TA_RetCode kama(int startIdx, int endIdx,
@@ -62,7 +66,7 @@ TA_RetCode kama(int startIdx, int endIdx,
     */
    if( optInTimePeriod == 1 )
    {
-      lookbackTotal = TA_GetUnstablePeriod(TA_FUNC_UNST_KAMA);
+      lookbackTotal = kama_lookback( optInTimePeriod );
       if( startIdx < lookbackTotal )
          startIdx = lookbackTotal;
       if( startIdx > endIdx )
@@ -80,7 +84,7 @@ TA_RetCode kama(int startIdx, int endIdx,
    /* Identify the minimum number of price bar needed
     * to calculate at least one output.
     */
-   lookbackTotal = optInTimePeriod + TA_GetUnstablePeriod(TA_FUNC_UNST_KAMA);
+   lookbackTotal = kama_lookback( optInTimePeriod );
 
    /* Move up the start index if there is not
     * enough initial data.

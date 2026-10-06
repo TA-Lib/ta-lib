@@ -61,7 +61,7 @@
  *                loop-carried chain.
  */
 
-TA_LIB_API int TA_ATR_Lookback( int optInTimePeriod )
+TA_NOINLINE TA_LIB_API int TA_ATR_Lookback( int optInTimePeriod )
 {
    if( (int)optInTimePeriod == TA_INTEGER_DEFAULT )
       optInTimePeriod = 14;
@@ -74,7 +74,7 @@ TA_LIB_API int TA_ATR_Lookback( int optInTimePeriod )
     * (optInTimePeriod-1) is for the simple
     * moving average.
     */
-   return optInTimePeriod + TA_GLOBALS_UNSTABLE_PERIOD(TA_FUNC_UNST_ATR,Atr);
+   return optInTimePeriod + TA_GLOBALS_UNSTABLE(TA_FUNC_UNST_ATR,Atr,((optInTimePeriod > 1) ? 10 * optInTimePeriod : 0),((optInTimePeriod > 1) ? 19 * optInTimePeriod : 0));
 }
 
 TA_LIB_API int TA_ATR_DisplayShift( int optInTimePeriod, int outputIdx )
@@ -217,7 +217,7 @@ TA_LIB_API TA_RetCode TA_ATR( int    startIdx,
    }
    prevATR = periodTotal / optInTimePeriod;
    /* Skip the unstable period. */
-   i = TA_GLOBALS_UNSTABLE_PERIOD(TA_FUNC_UNST_ATR,Atr);
+   i = lookbackTotal - optInTimePeriod;
    while( i != 0 )
    {
       /* Find the greatest of the 3 values. */
@@ -357,7 +357,7 @@ TA_RetCode TA_S_ATR( int    startIdx,
       today += 1;
    }
    prevATR = periodTotal / optInTimePeriod;
-   i = TA_GLOBALS_UNSTABLE_PERIOD(TA_FUNC_UNST_ATR,Atr);
+   i = lookbackTotal - optInTimePeriod;
    while( i != 0 )
    {
       tempLT = (double)inLow[today];
@@ -578,7 +578,7 @@ static TA_RetCode TA_ATR_OpenImpl( struct TA_ATR_Stream **stream, const double i
       }
       prevATR = periodTotal / optInTimePeriod;
       /* Skip the unstable period. */
-      i = TA_GLOBALS_UNSTABLE_PERIOD(TA_FUNC_UNST_ATR,Atr);
+      i = lookbackTotal - optInTimePeriod;
       while( i != 0 )
       {
          /* Find the greatest of the 3 values. */

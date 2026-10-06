@@ -57,10 +57,10 @@
  *  052603 MF   Adapt code to compile with .NET Managed C++
  */
 
-TA_LIB_API int TA_HT_PHASOR_Lookback( void )
+TA_NOINLINE TA_LIB_API int TA_HT_PHASOR_Lookback( void )
 {
    /* See mama_lookback for an explanation of these */
-   return 32 + TA_GLOBALS_UNSTABLE_PERIOD(TA_FUNC_UNST_HT_PHASOR,Ht_phasor);
+   return 32 + TA_GLOBALS_UNSTABLE(TA_FUNC_UNST_HT_PHASOR,Ht_phasor,(80 + 50 * 4),(80 + 50 * 8));
 }
 
 TA_LIB_API int TA_HT_PHASOR_DisplayShift( int outputIdx )
@@ -162,7 +162,7 @@ TA_LIB_API TA_RetCode TA_HT_PHASOR( int    startIdx,
    /* Identify the minimum number of price bar needed
     * to calculate at least one output.
     */
-   lookbackTotal = 32 + TA_GLOBALS_UNSTABLE_PERIOD(TA_FUNC_UNST_HT_PHASOR,Ht_phasor);
+   lookbackTotal = TA_HT_PHASOR_Lookback();
    /* Move up the start index if there is not
     * enough initial data.
     */
@@ -527,7 +527,7 @@ TA_RetCode TA_S_HT_PHASOR( int    startIdx,
    a = 0.0962;
    b = 0.5769;
    rad2Deg = 180.0 / (4.0 * atan(1));
-   lookbackTotal = 32 + TA_GLOBALS_UNSTABLE_PERIOD(TA_FUNC_UNST_HT_PHASOR,Ht_phasor);
+   lookbackTotal = TA_HT_PHASOR_Lookback();
    if( startIdx < lookbackTotal )
    {
       startIdx = lookbackTotal;
@@ -1081,7 +1081,7 @@ static TA_RetCode TA_HT_PHASOR_OpenImpl( struct TA_HT_PHASOR_Stream **stream, co
       /* Identify the minimum number of price bar needed
        * to calculate at least one output.
        */
-      lookbackTotal = 32 + TA_GLOBALS_UNSTABLE_PERIOD(TA_FUNC_UNST_HT_PHASOR,Ht_phasor);
+      lookbackTotal = TA_HT_PHASOR_Lookback();
       /* Move up the start index if there is not
        * enough initial data.
        */

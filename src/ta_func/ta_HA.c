@@ -56,9 +56,9 @@
  *  090526 MF,CC  First version (issue #373).
  */
 
-TA_LIB_API int TA_HA_Lookback( void )
+TA_NOINLINE TA_LIB_API int TA_HA_Lookback( void )
 {
-   return TA_GLOBALS_UNSTABLE_PERIOD(TA_FUNC_UNST_HA,Ha);
+   return TA_GLOBALS_UNSTABLE(TA_FUNC_UNST_HA,Ha,2 * 10,2 * 19);
 }
 
 TA_LIB_API int TA_HA_DisplayShift( int outputIdx )

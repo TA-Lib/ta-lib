@@ -26,7 +26,7 @@
 int t3_lookback(int optInTimePeriod, double optInVFactor)
 {
    (void)optInVFactor;
-   return 6 * (optInTimePeriod-1) + TA_GetUnstablePeriod(TA_FUNC_UNST_T3);
+   return 6 * (optInTimePeriod-1) + TA_UNSTABLE( TA_FUNC_UNST_T3, optInTimePeriod > 1 ? ((K + 20) * (optInTimePeriod + 1) + 1) / 2 : 0 );
 }
 
 TA_RetCode t3(int startIdx, int endIdx,
@@ -60,7 +60,7 @@ TA_RetCode t3(int startIdx, int endIdx,
     * in the litterature.
     *
     */
-   lookbackTotal = 6 * (optInTimePeriod - 1) + TA_GetUnstablePeriod(TA_FUNC_UNST_T3);
+   lookbackTotal = t3_lookback( optInTimePeriod, optInVFactor );
    if( startIdx <= lookbackTotal )
       startIdx = lookbackTotal;
 

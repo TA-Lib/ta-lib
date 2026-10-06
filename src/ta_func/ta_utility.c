@@ -76,9 +76,12 @@ TA_RetCode TA_SetUnstablePeriod( TA_FuncUnstId id,
     * addressable series could never produce output, so nothing legitimate is
     * refused. Guarding here rather than in each lookback keeps the invariant in
     * one place -- every unstable-period function derives its lookback from this
-    * value.
+    * value. An Auto level is stored as itself and resolved to a count by each
+    * lookback (TA_GLOBALS_UNSTABLE).
     */
-   if( unstablePeriod > (unsigned int)TA_INDEX_MAX )
+   if( unstablePeriod > (unsigned int)TA_INDEX_MAX &&
+       unstablePeriod != (unsigned int)TA_UNSTABLE_AUTO_PREC_4 &&
+       unstablePeriod != (unsigned int)TA_UNSTABLE_AUTO_PREC_8 )
       return TA_BAD_PARAM;
 
    if( id == TA_FUNC_UNST_ALL )

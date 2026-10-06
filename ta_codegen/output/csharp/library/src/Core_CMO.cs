@@ -85,9 +85,7 @@ public partial class Core
       } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
          return -1;
       }
-      int retValue = 0;
-      retValue = optInTimePeriod + this._unstablePeriod[(int)FuncUnstId.CMO];
-      return retValue ;
+      return optInTimePeriod + this.UnstableCount((int)FuncUnstId.CMO, ((optInTimePeriod > 1) ? 10 * optInTimePeriod : 0), ((optInTimePeriod > 1) ? 19 * optInTimePeriod : 0)) ;
 
    }
    /// <summary>

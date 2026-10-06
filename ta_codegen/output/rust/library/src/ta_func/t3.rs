@@ -102,7 +102,7 @@ impl Core {
         } else if !((optInVFactor >= 0e0) && (optInVFactor <= 1e0)) {
             return Err(RetCode::BadParam);
         }
-        return Ok((6 * (optInTimePeriod - 1) + self.unstable_period[FuncUnstId::T3 as usize]) as usize);
+        return Ok((6 * (optInTimePeriod - 1) + self.unstable_count(FuncUnstId::T3, (if optInTimePeriod > 1 { ((10 + 20) * (optInTimePeriod + 1) + 1) / 2 } else { 0 }), (if optInTimePeriod > 1 { ((19 + 20) * (optInTimePeriod + 1) + 1) / 2 } else { 0 }))) as usize);
     }
     /// Display shift of one output of [`Core::t3`]: how many bars ahead (positive) or behind
     /// (negative) of the bar that computed it a chart draws that output. The values are never
@@ -229,7 +229,7 @@ impl Core {
         //
         // Do not confuse a T3 with EMA3. Both are called "Triple EMA"
         // in the litterature.
-        lookbackTotal = (6 * (optInTimePeriod - 1) + self.unstable_period[FuncUnstId::T3 as usize]) as usize;
+        lookbackTotal = self.t3_lookback(optInTimePeriod, optInVFactor).unwrap_or(usize::MAX);
         if startIdx <= lookbackTotal {
             startIdx = lookbackTotal;
         }
@@ -630,7 +630,7 @@ impl Core {
         //
         // Do not confuse a T3 with EMA3. Both are called "Triple EMA"
         // in the litterature.
-        lookbackTotal = (6 * (optInTimePeriod - 1) + self.unstable_period[FuncUnstId::T3 as usize]) as usize;
+        lookbackTotal = self.t3_lookback(optInTimePeriod, optInVFactor)?;
         if startIdx <= lookbackTotal {
             startIdx = lookbackTotal;
         }

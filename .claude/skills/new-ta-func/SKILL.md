@@ -136,7 +136,7 @@ Plain C, exactly as it would appear in `src/ta_func`: two functions,
 `int <name>_lookback(...)` and
 `TA_RetCode <name>(int startIdx, int endIdx, const double inReal[], ..., int *outBegIdx, int *outNBElement, double outReal[])`.
 Full syntax and the `ta_defs.h` vocabulary (`TA_IS_ZERO`,
-`TA_GetUnstablePeriod(TA_FUNC_UNST_X)`, `CIRCBUF_*`, …) are in
+`TA_UNSTABLE( TA_FUNC_UNST_<NAME>, <count> )`, `CIRCBUF_*`, …) are in
 `docs/ta_codegen_input_code.md`, which marks the constructs closed to new functions.
 
 **Rules** (the full invariant list is on the contribute page; these are the ones that
@@ -152,6 +152,12 @@ bite while authoring the `.c`):
   writing that bar's output; a trailing index can reach the slot you just wrote, so
   carry what you need in a scalar. `ta_regtest`'s in-place alias gate (issue #130)
   checks every (input, output) pair bitwise on every function.
+- A function with its own `TA_FUNC_UNST_<NAME>` id reads it once, in its own lookback
+  and nowhere else, as `TA_UNSTABLE( TA_FUNC_UNST_<NAME>, <count> )`. `<count>` is the
+  id's Auto rule, written in `K`, in `X` or in both, through a helper of
+  `ta_codegen/input/helpers/warmup.c` when the kernel is an existing one. The rule and
+  its tier are stated on the spec issue; the constraints on a rule are
+  under "An unstable id and its Auto rule" in `docs/ta_codegen_input_code.md`.
 - Open the file with the contributor / change-history comment block (copy its shape
   from `ta_codegen/input/cmf/cmf.c`): add your initials and a one-line `MMDDYY` entry.
   Do **not** add a license header — the generator injects the BSD-3-Clause notice into
@@ -329,7 +335,7 @@ automatically; Rust is concrete `f64` and has no `_s` variant.
 |---|---|---|
 | Simple loop | MULT | while, assign, array access |
 | Accumulator | SMA | if/else, return, cast, running sum |
-| Stateful | RSI | `TA_GetUnstablePeriod`, `TA_IS_ZERO`, for-loop, complex lookback |
+| Stateful | RSI | `TA_UNSTABLE`, `TA_IS_ZERO`, for-loop, complex lookback |
 | Recursive | EMA | k factor, seeded recursion, operator precedence |
 | Dispatcher | MA | switch/case, cross-call dispatch, `TA_BAD_PARAM`/`TA_SUCCESS` |
 | Multi-output | BBANDS | multiple output arrays |

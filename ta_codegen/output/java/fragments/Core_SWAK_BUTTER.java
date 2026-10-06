@@ -42,7 +42,7 @@
        * no callee whose lookback could be inherited, so the function's own
        * unstable period is the whole of it.
        */
-      return this.unstablePeriod[FuncUnstId.SWAK_BUTTER.ordinal()] ;
+      return this.unstableCount(FuncUnstId.SWAK_BUTTER.ordinal(), (((10 + 5) * (optInTimePeriod + 2) + 8) / 9), (((19 + 5) * (optInTimePeriod + 2) + 8) / 9)) ;
 
    }
    /**

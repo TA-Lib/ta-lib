@@ -83,7 +83,7 @@ public partial class Core
          return -1;
       }
       if( optInTimePeriod > 1 ) {
-         return optInTimePeriod + this._unstablePeriod[(int)FuncUnstId.PLUS_DM] - 1 ;
+         return optInTimePeriod + this.UnstableCount((int)FuncUnstId.PLUS_DM, ((optInTimePeriod > 1) ? 10 * optInTimePeriod : 0), ((optInTimePeriod > 1) ? 19 * optInTimePeriod : 0)) - 1 ;
       } else {
          return 1 ;
       }
@@ -213,11 +213,7 @@ public partial class Core
        * Reference:
        *    New Concepts In Technical Trading Systems, J. Welles Wilder Jr
        */
-      if( optInTimePeriod > 1 ) {
-         lookbackTotal = optInTimePeriod + this._unstablePeriod[(int)FuncUnstId.PLUS_DM] - 1;
-      } else {
-         lookbackTotal = 1;
-      }
+      lookbackTotal = PlusDmLookback(optInTimePeriod);
       /* Adjust startIdx to account for the lookback period. */
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
@@ -288,7 +284,7 @@ public partial class Core
       }
       /* Process subsequent DM */
       /* Skip the unstable period. */
-      i = this._unstablePeriod[(int)FuncUnstId.PLUS_DM];
+      i = lookbackTotal - (optInTimePeriod - 1);
       while( i-- != 0 ) {
          today += 1;
          tempReal = inHigh[today];
@@ -367,11 +363,7 @@ public partial class Core
       if( System.Runtime.InteropServices.MemoryMarshal.AsBytes(outReal).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inHigh)) || System.Runtime.InteropServices.MemoryMarshal.AsBytes(outReal).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inLow)) ) {
          return RetCode.BadParam ;
       }
-      if( optInTimePeriod > 1 ) {
-         lookbackTotal = optInTimePeriod + this._unstablePeriod[(int)FuncUnstId.PLUS_DM] - 1;
-      } else {
-         lookbackTotal = 1;
-      }
+      lookbackTotal = PlusDmLookback(optInTimePeriod);
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
       }
@@ -421,7 +413,7 @@ public partial class Core
          tempReal = prevPlusDM + plusDM1;
          prevPlusDM = (prevPlusDM > tempReal) ? prevPlusDM : tempReal;
       }
-      i = this._unstablePeriod[(int)FuncUnstId.PLUS_DM];
+      i = lookbackTotal - (optInTimePeriod - 1);
       while( i-- != 0 ) {
          today += 1;
          tempReal = (double)inHigh[today];
@@ -948,11 +940,7 @@ public partial class Core
           * Reference:
           *    New Concepts In Technical Trading Systems, J. Welles Wilder Jr
           */
-         if( optInTimePeriod > 1 ) {
-            lookbackTotal = optInTimePeriod + this._unstablePeriod[(int)FuncUnstId.PLUS_DM] - 1;
-         } else {
-            lookbackTotal = 1;
-         }
+         lookbackTotal = PlusDmLookback(optInTimePeriod);
          /* Adjust startIdx to account for the lookback period. */
          if( startIdx < lookbackTotal ) {
             startIdx = lookbackTotal;
@@ -1076,11 +1064,7 @@ public partial class Core
           * Reference:
           *    New Concepts In Technical Trading Systems, J. Welles Wilder Jr
           */
-         if( optInTimePeriod > 1 ) {
-            lookbackTotal = optInTimePeriod + this._unstablePeriod[(int)FuncUnstId.PLUS_DM] - 1;
-         } else {
-            lookbackTotal = 1;
-         }
+         lookbackTotal = PlusDmLookback(optInTimePeriod);
          /* Adjust startIdx to account for the lookback period. */
          if( startIdx < lookbackTotal ) {
             startIdx = lookbackTotal;
@@ -1126,7 +1110,7 @@ public partial class Core
          }
          /* Process subsequent DM */
          /* Skip the unstable period. */
-         i = this._unstablePeriod[(int)FuncUnstId.PLUS_DM];
+         i = lookbackTotal - (optInTimePeriod - 1);
          while( i-- != 0 ) {
             today += 1;
             tempReal = inHigh[today];

@@ -382,6 +382,29 @@ impl Core {
     /// accepted or rejected identically in all four.
     pub const INDEX_MAX: usize = 100_000_000;
 
+    /// Auto level of [`CoreBuilder::unstable_period`], passed in place of a count:
+    /// each function discards output until its first 4 significant digits no
+    /// longer depend on where the data starts (C's `TA_UNSTABLE_AUTO_PREC_4`).
+    pub const UNSTABLE_AUTO_PREC_4: u32 = 100_000_004;
+
+    /// As [`Core::UNSTABLE_AUTO_PREC_4`], to 8 significant digits.
+    pub const UNSTABLE_AUTO_PREC_8: u32 = 100_000_008;
+
+    /// The unstable period of `id` for one call: the stored count, or under an
+    /// Auto level that level's count. The builder stores nothing else above
+    /// `INDEX_MAX`, so the last arm needs no test.
+    #[inline]
+    pub(crate) fn unstable_count(&self, id: FuncUnstId, prec_4: i32, prec_8: i32) -> i32 {
+        let stored = self.unstable_period[id as usize];
+        if stored <= Core::INDEX_MAX as i32 {
+            stored
+        } else if stored == Core::UNSTABLE_AUTO_PREC_4 as i32 {
+            prec_4
+        } else {
+            prec_8
+        }
+    }
+
     /// Create a new `Core` with default settings.
     ///
     /// Infallible, unlike [`CoreBuilder::build`]: there is no argument to reject,
@@ -432,8 +455,9 @@ impl Core {
             return Err(RetCode::BadParam);
         }
         // Stored as i32 for the generated indicators' signed lookback arithmetic;
-        // every value that reaches the array came through the builder's
-        // `0..=INDEX_MAX` guard, so the conversion cannot fail.
+        // every value that reaches the array came through the builder's guard
+        // (a count in `0..=INDEX_MAX`, or an Auto level), so the conversion
+        // cannot fail.
         Ok(self.unstable_period[id as usize] as u32)
     }
 }
@@ -504,8 +528,10 @@ impl CoreBuilder {
     ///
     /// # Errors
     ///
-    /// A `period` above [`Core::INDEX_MAX`] is rejected, and [`CoreBuilder::build`]
-    /// then reports [`RetCode::BadParam`]. The period is added to a lookback that
+    /// A `period` above [`Core::INDEX_MAX`] that is not an Auto level
+    /// ([`Core::UNSTABLE_AUTO_PREC_4`], [`Core::UNSTABLE_AUTO_PREC_8`]) is
+    /// rejected, and [`CoreBuilder::build`] then reports [`RetCode::BadParam`].
+    /// A count is added to a lookback that
     /// is then used as an index, so an unbounded one overflows that lookback
     /// negative and the function indexes far past the end of its input.
     /// `INDEX_MAX` is the ceiling the index space already enforces on
@@ -518,7 +544,10 @@ impl CoreBuilder {
         // Widened both sides rather than narrowing INDEX_MAX: u32 and usize are
         // the same width on a 32-bit target, so an `INDEX_MAX as u32` would be a
         // truncating cast there and a lint everywhere.
-        if u64::from(period) > Core::INDEX_MAX as u64 {
+        if u64::from(period) > Core::INDEX_MAX as u64
+            && period != Core::UNSTABLE_AUTO_PREC_4
+            && period != Core::UNSTABLE_AUTO_PREC_8
+        {
             return self.reject(RetCode::BadParam);
         }
         // In range by the check above, so it round-trips through the i32 storage
@@ -794,6 +823,33 @@ mod tests {
         let ceiling = u32::try_from(Core::INDEX_MAX).unwrap();
         let core = Core::builder().unstable_period(FuncUnstId::EMA, ceiling).build().unwrap();
         assert_eq!(core.get_unstable_period(FuncUnstId::EMA), Ok(ceiling));
+    }
+
+    #[test]
+    fn unstable_period_takes_an_auto_level_as_a_value() {
+        // Above INDEX_MAX only the levels are values. Each is read back as itself,
+        // and an offset that names no level is refused like any other value there.
+        assert_eq!(Core::UNSTABLE_AUTO_PREC_4 as usize, Core::INDEX_MAX + 4);
+        assert_eq!(Core::UNSTABLE_AUTO_PREC_8 as usize, Core::INDEX_MAX + 8);
+        let core = Core::builder()
+            .unstable_period(FuncUnstId::ALL, Core::UNSTABLE_AUTO_PREC_8)
+            .unstable_period(FuncUnstId::EMA, Core::UNSTABLE_AUTO_PREC_4)
+            .build()
+            .unwrap();
+        assert_eq!(core.get_unstable_period(FuncUnstId::EMA), Ok(Core::UNSTABLE_AUTO_PREC_4));
+        assert_eq!(core.get_unstable_period(FuncUnstId::RSI), Ok(Core::UNSTABLE_AUTO_PREC_8));
+        for off in [1, 5, 9] {
+            let bad = u32::try_from(Core::INDEX_MAX).unwrap() + off;
+            assert_eq!(
+                Core::builder().unstable_period(FuncUnstId::EMA, bad).build().err(),
+                Some(RetCode::BadParam),
+                "INDEX_MAX + {off}"
+            );
+        }
+        // The stored level is not a count: it must never reach lookback arithmetic.
+        assert_eq!(core.unstable_count(FuncUnstId::EMA, 155, 295), 155);
+        assert_eq!(core.unstable_count(FuncUnstId::RSI, 140, 266), 266);
+        assert_eq!(Core::new().unstable_count(FuncUnstId::EMA, 155, 295), 0);
     }
 
     #[test]

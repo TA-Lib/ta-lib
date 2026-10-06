@@ -26,7 +26,7 @@
 int plus_di_lookback(int optInTimePeriod)
 {
    if( optInTimePeriod > 1 )
-      return optInTimePeriod + TA_GetUnstablePeriod(TA_FUNC_UNST_PLUS_DI);
+      return optInTimePeriod + TA_UNSTABLE( TA_FUNC_UNST_PLUS_DI, ta_warmup_wilder(K, optInTimePeriod) );
    else
       return 1;
 }
@@ -139,10 +139,7 @@ TA_RetCode plus_di(int startIdx, int endIdx,
     * TA-Lib does not do the rounding. Still, if you want to reproduce Wilder's examples,
     * you can comment out the following #undef/#define and rebuild the library.
     */
-   if( optInTimePeriod > 1 )
-      lookbackTotal = optInTimePeriod + TA_GetUnstablePeriod(TA_FUNC_UNST_PLUS_DI);
-   else
-      lookbackTotal = 1;
+   lookbackTotal = plus_di_lookback( optInTimePeriod );
 
    /* Adjust startIdx to account for the lookback period. */
    if( startIdx < lookbackTotal )
@@ -249,7 +246,7 @@ TA_RetCode plus_di(int startIdx, int endIdx,
    /* Skip the unstable period. Note that this loop must be executed
     * at least ONCE to calculate the first DI.
     */
-   i = TA_GetUnstablePeriod(TA_FUNC_UNST_PLUS_DI) + 1;
+   i = lookbackTotal - (optInTimePeriod - 1);
    while( i-- != 0 )
    {
       /* Calculate the prevPlusDM */

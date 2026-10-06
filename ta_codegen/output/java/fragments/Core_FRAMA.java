@@ -41,7 +41,7 @@
       if( optInTimePeriod % 2 != 0 ) {
          return -1 ;
       }
-      return optInTimePeriod + this.unstablePeriod[FuncUnstId.FRAMA.ordinal()] ;
+      return optInTimePeriod + this.unstableCount(FuncUnstId.FRAMA.ordinal(), 80 * 4, 80 * 8) ;
 
    }
    /**
@@ -123,7 +123,7 @@
       }
       outBegIdx.value = 0;
       outNBElement.value = 0;
-      lookbackTotal = optInTimePeriod + this.unstablePeriod[FuncUnstId.FRAMA.ordinal()];
+      lookbackTotal = framaLookback(optInTimePeriod);
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
       }
@@ -149,7 +149,7 @@
       maxIdx_slot = (half)-1;
       slot_Idx = 0;
       today = startIdx - lookbackTotal + 1;
-      seedIdx = startIdx - this.unstablePeriod[FuncUnstId.FRAMA.ordinal()] - 1;
+      seedIdx = startIdx - (lookbackTotal - optInTimePeriod) - 1;
       /* The first block's suffix reads must see a bar inside the window. */
       i = 0;
       while( i < half ) {
@@ -338,7 +338,7 @@
       }
       outBegIdx.value = 0;
       outNBElement.value = 0;
-      lookbackTotal = optInTimePeriod + this.unstablePeriod[FuncUnstId.FRAMA.ordinal()];
+      lookbackTotal = framaLookback(optInTimePeriod);
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
       }
@@ -355,7 +355,7 @@
       maxIdx_slot = (half)-1;
       slot_Idx = 0;
       today = startIdx - lookbackTotal + 1;
-      seedIdx = startIdx - this.unstablePeriod[FuncUnstId.FRAMA.ordinal()] - 1;
+      seedIdx = startIdx - (lookbackTotal - optInTimePeriod) - 1;
       i = 0;
       while( i < half ) {
          slot_sufHigh[i] = (double)inHigh[today];
@@ -979,7 +979,7 @@
       }
       outBegIdx.value = 0;
       outNBElement.value = 0;
-      lookbackTotal = optInTimePeriod + this.unstablePeriod[FuncUnstId.FRAMA.ordinal()];
+      lookbackTotal = framaLookback(optInTimePeriod);
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
       }
@@ -1005,7 +1005,7 @@
       maxIdx_slot = (half)-1;
       slot_Idx = 0;
       today = startIdx - lookbackTotal + 1;
-      seedIdx = startIdx - this.unstablePeriod[FuncUnstId.FRAMA.ordinal()] - 1;
+      seedIdx = startIdx - (lookbackTotal - optInTimePeriod) - 1;
       /* The first block's suffix reads must see a bar inside the window. */
       i = 0;
       while( i < half ) {

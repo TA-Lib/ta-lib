@@ -17,13 +17,12 @@
 
 int swak_2php_lookback(int optInTimePeriod)
 {
-   (void)optInTimePeriod;
 
    /* No structural lookback: the two input slots and the two output slots are
     * seeded from the first bar rather than read from before it, and there is
     * no callee whose lookback could be inherited.
     */
-   return TA_GetUnstablePeriod(TA_FUNC_UNST_SWAK_2PHP);
+   return TA_UNSTABLE( TA_FUNC_UNST_SWAK_2PHP, ta_warmup_two_pole(K, optInTimePeriod) );
 }
 
 TA_RetCode swak_2php(int startIdx, int endIdx,

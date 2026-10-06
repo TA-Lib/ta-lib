@@ -135,6 +135,8 @@ TA_LIB_API TA_RetCode TA_MACD( int    startIdx,
    int tempInteger;
    int lookbackTotal;
    int lookbackSignal;
+   int lookbackSlow;
+   int fastToday;
 
    if( (startIdx < 0) || (startIdx > TA_INDEX_MAX) )
       return TA_OUT_OF_RANGE_START_INDEX;
@@ -213,8 +215,8 @@ TA_LIB_API TA_RetCode TA_MACD( int    startIdx,
    /* Move up the start index if there is not
     * enough initial data.
     */
-   lookbackTotal = lookbackSignal;
-   lookbackTotal += TA_EMA_Lookback(optInSlowPeriod);
+   lookbackSlow = TA_EMA_Lookback(optInSlowPeriod);
+   lookbackTotal = lookbackSignal + lookbackSlow;
    if( startIdx < lookbackTotal )
    {
       startIdx = lookbackTotal;
@@ -236,8 +238,7 @@ TA_LIB_API TA_RetCode TA_MACD( int    startIdx,
     *  - EMA recursion: k*x + beta*prev, with ema.c's k and beta.
     *  - Each EMA is seeded with the sum of its first 'period'
     *    inputs, accumulated from 0.0 in input order, divided by
-    *    the period. The fast and slow seed windows end on the
-    *    same bar. The signal EMA is seeded the same way from the
+    *    the period. The signal EMA is seeded the same way from the
     *    first 'signal period' MACD-line values.
     *
     * In-place (an output == inReal) is supported: outputs at
@@ -245,26 +246,36 @@ TA_LIB_API TA_RetCode TA_MACD( int    startIdx,
     * read.
     */
    /* Seed each price EMA with a simple average of its first
-    * 'period' price bars. The fast window is the tail of the
-    * slow window: consume the leading slow-only bars first,
-    * then accumulate both over the shared bars.
+    * 'period' price bars, each window placed by that EMA's own
+    * lookback, so that the line is TA_EMA(fast) - TA_EMA(slow) bit
+    * for bit. The slow EMA then runs alone to the end of the fast
+    * window.
+    *
+    * ema_lookback(n) - n must never decrease as n grows: a fast
+    * window ending before the slow one would skip bars of the fast
+    * EMA, and one starting before it would read below the lookback.
     */
    today = startIdx - lookbackTotal;
    tempReal = 0.0;
-   i = optInSlowPeriod - optInFastPeriod;
+   i = optInSlowPeriod;
    while( i-- > 0 )
    {
       tempReal += inReal[today++];
    }
+   prevSlow = tempReal / optInSlowPeriod;
+   fastToday = startIdx - lookbackTotal + (lookbackSlow - TA_EMA_Lookback(optInFastPeriod));
    prevFast = 0.0;
    i = optInFastPeriod;
    while( i-- > 0 )
    {
-      prevFast += inReal[today];
-      tempReal += inReal[today++];
+      prevFast += inReal[fastToday++];
    }
-   prevSlow = tempReal / optInSlowPeriod;
    prevFast = prevFast / optInFastPeriod;
+   while( today < fastToday )
+   {
+      tempReal = inReal[today++];
+      prevSlow = fma(slowBeta, prevSlow, slowK * tempReal);
+   }
    /* Advance both EMA through their unstable period, up to the
     * first MACD-line bar.
     */
@@ -369,6 +380,8 @@ TA_RetCode TA_S_MACD( int    startIdx,
    int tempInteger;
    int lookbackTotal;
    int lookbackSignal;
+   int lookbackSlow;
+   int fastToday;
 
    if( (startIdx < 0) || (startIdx > TA_INDEX_MAX) )
       return TA_OUT_OF_RANGE_START_INDEX;
@@ -430,8 +443,8 @@ TA_RetCode TA_S_MACD( int    startIdx,
    signalK = 1.0 - signalBeta;
    signalBeta = 1.0 - signalK;
    lookbackSignal = TA_EMA_Lookback(optInSignalPeriod);
-   lookbackTotal = lookbackSignal;
-   lookbackTotal += TA_EMA_Lookback(optInSlowPeriod);
+   lookbackSlow = TA_EMA_Lookback(optInSlowPeriod);
+   lookbackTotal = lookbackSignal + lookbackSlow;
    if( startIdx < lookbackTotal )
    {
       startIdx = lookbackTotal;
@@ -444,20 +457,25 @@ TA_RetCode TA_S_MACD( int    startIdx,
    }
    today = startIdx - lookbackTotal;
    tempReal = 0.0;
-   i = optInSlowPeriod - optInFastPeriod;
+   i = optInSlowPeriod;
    while( i-- > 0 )
    {
       tempReal += (double)inReal[today++];
    }
+   prevSlow = tempReal / optInSlowPeriod;
+   fastToday = startIdx - lookbackTotal + (lookbackSlow - TA_EMA_Lookback(optInFastPeriod));
    prevFast = 0.0;
    i = optInFastPeriod;
    while( i-- > 0 )
    {
-      prevFast += (double)inReal[today];
-      tempReal += (double)inReal[today++];
+      prevFast += (double)inReal[fastToday++];
    }
-   prevSlow = tempReal / optInSlowPeriod;
    prevFast = prevFast / optInFastPeriod;
+   while( today < fastToday )
+   {
+      tempReal = (double)inReal[today++];
+      prevSlow = fma(slowBeta, prevSlow, slowK * tempReal);
+   }
    while( today <= startIdx - lookbackSignal )
    {
       tempReal = (double)inReal[today++];
@@ -620,6 +638,8 @@ static TA_RetCode TA_MACD_OpenImpl( struct TA_MACD_Stream **stream, const double
       int tempInteger;
       int lookbackTotal;
       int lookbackSignal;
+      int lookbackSlow;
+      int fastToday;
       /* Make sure slow is really slower than
        * the fast period! if not, swap...
        */
@@ -667,8 +687,8 @@ static TA_RetCode TA_MACD_OpenImpl( struct TA_MACD_Stream **stream, const double
       /* Move up the start index if there is not
        * enough initial data.
        */
-      lookbackTotal = lookbackSignal;
-      lookbackTotal += TA_EMA_Lookback(optInSlowPeriod);
+      lookbackSlow = TA_EMA_Lookback(optInSlowPeriod);
+      lookbackTotal = lookbackSignal + lookbackSlow;
       if( startIdx < lookbackTotal )
       {
          startIdx = lookbackTotal;
@@ -690,8 +710,7 @@ static TA_RetCode TA_MACD_OpenImpl( struct TA_MACD_Stream **stream, const double
        *  - EMA recursion: k*x + beta*prev, with ema.c's k and beta.
        *  - Each EMA is seeded with the sum of its first 'period'
        *    inputs, accumulated from 0.0 in input order, divided by
-       *    the period. The fast and slow seed windows end on the
-       *    same bar. The signal EMA is seeded the same way from the
+       *    the period. The signal EMA is seeded the same way from the
        *    first 'signal period' MACD-line values.
        *
        * In-place (an output == inReal) is supported: outputs at
@@ -699,26 +718,36 @@ static TA_RetCode TA_MACD_OpenImpl( struct TA_MACD_Stream **stream, const double
        * read.
        */
       /* Seed each price EMA with a simple average of its first
-       * 'period' price bars. The fast window is the tail of the
-       * slow window: consume the leading slow-only bars first,
-       * then accumulate both over the shared bars.
+       * 'period' price bars, each window placed by that EMA's own
+       * lookback, so that the line is TA_EMA(fast) - TA_EMA(slow) bit
+       * for bit. The slow EMA then runs alone to the end of the fast
+       * window.
+       *
+       * ema_lookback(n) - n must never decrease as n grows: a fast
+       * window ending before the slow one would skip bars of the fast
+       * EMA, and one starting before it would read below the lookback.
        */
       today = startIdx - lookbackTotal;
       tempReal = 0.0;
-      i = optInSlowPeriod - optInFastPeriod;
+      i = optInSlowPeriod;
       while( i-- > 0 )
       {
          tempReal += inReal[today++];
       }
+      prevSlow = tempReal / optInSlowPeriod;
+      fastToday = startIdx - lookbackTotal + (lookbackSlow - TA_EMA_Lookback(optInFastPeriod));
       prevFast = 0.0;
       i = optInFastPeriod;
       while( i-- > 0 )
       {
-         prevFast += inReal[today];
-         tempReal += inReal[today++];
+         prevFast += inReal[fastToday++];
       }
-      prevSlow = tempReal / optInSlowPeriod;
       prevFast = prevFast / optInFastPeriod;
+      while( today < fastToday )
+      {
+         tempReal = inReal[today++];
+         prevSlow = fma(slowBeta, prevSlow, slowK * tempReal);
+      }
       /* Advance both EMA through their unstable period, up to the
        * first MACD-line bar.
        */

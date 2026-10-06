@@ -109,7 +109,7 @@ impl Core {
         // The MACD line's own lookback, which is what inherits TA_FUNC_UNST_EMA,
         // then one window per stochastic stage. The two 0.5 smoothers seed on
         // their first input, so they add only the unstable period.
-        return Ok((self.ema_lookback(optInSlowPeriod)? + ((2 * (optInCyclePeriod - 1)) as usize) + ((self.unstable_period[FuncUnstId::STC as usize]) as usize)) as usize);
+        return Ok((self.ema_lookback(optInSlowPeriod)? + ((2 * (optInCyclePeriod - 1)) as usize) + ((self.unstable_count(FuncUnstId::STC, 2 * 10 + 3 * (optInSlowPeriod + 1), 2 * 19 + 3 * (optInSlowPeriod + 1))) as usize)) as usize);
     }
     /// Display shift of one output of [`Core::stc`]: how many bars ahead (positive) or behind
     /// (negative) of the bar that computed it a chart draws that output. The values are never
@@ -254,10 +254,12 @@ impl Core {
         let mut sufLo: f64 = 0.0_f64;
         let mut i: usize = 0_usize;
         let mut today: usize = 0_usize;
+        let mut fastToday: usize = 0_usize;
         let mut lineStart: usize = 0_usize;
         let mut outIdx: usize = 0_usize;
         let mut tempInteger: usize = 0_usize;
         let mut lookbackTotal: usize = 0_usize;
+        let mut lookbackSlow: usize = 0_usize;
         let mut lastIdx: usize = 0_usize;
         let mut nLine: usize = 0_usize;
         let mut nPF: usize = 0_usize;
@@ -332,27 +334,34 @@ impl Core {
             pfSufLo = &mut heap_pfSufLo;
         }
         lastIdx = (optInCyclePeriod - 1) as usize;
-        // The line is TA_MACD's: co-terminal SMA seeds, then both EMAs advanced
-        // through TA_FUNC_UNST_EMA to lineStart, so that from lineStart on it is
-        // TA_EMA(fast) - TA_EMA(slow) bit for bit. The chain is fed from
+        // The line is TA_MACD's: each SMA seed placed by its own EMA lookback, then
+        // both EMAs advanced to lineStart, so that from lineStart on it is
+        // TA_EMA(fast) - TA_EMA(slow) bit for bit. That placement reads out of
+        // bounds or skips bars unless ema_lookback(n) - n never decreases as n
+        // grows. The chain is fed from
         // lineStart, not from the EMA seed: TA_FUNC_UNST_EMA then reaches only the
         // line, while TA_FUNC_UNST_STC moves the whole chain back and so warms the
         // line and both smoothers.
-        lineStart = startIdx - (lookbackTotal - self.ema_lookback(optInSlowPeriod).unwrap_or(usize::MAX));
+        lookbackSlow = self.ema_lookback(optInSlowPeriod).unwrap_or(usize::MAX);
+        lineStart = startIdx - (lookbackTotal - lookbackSlow);
         today = startIdx - lookbackTotal;
         tempReal = 0.0;
-        i = (optInSlowPeriod - optInFastPeriod) as usize;
+        i = (optInSlowPeriod) as usize;
         while { let _v = i; i = i.wrapping_sub(1); _v } > 0 {
-            tempReal += inReal[{ let _v = today; today += 1; _v }];
-        }
-        prevFast = 0.0;
-        i = (optInFastPeriod) as usize;
-        while { let _v = i; i = i.wrapping_sub(1); _v } > 0 {
-            prevFast += inReal[today];
             tempReal += inReal[{ let _v = today; today += 1; _v }];
         }
         prevSlow = tempReal / ((optInSlowPeriod) as f64);
+        fastToday = startIdx - lookbackTotal + (lookbackSlow - self.ema_lookback(optInFastPeriod).unwrap_or(usize::MAX));
+        prevFast = 0.0;
+        i = (optInFastPeriod) as usize;
+        while { let _v = i; i = i.wrapping_sub(1); _v } > 0 {
+            prevFast += inReal[{ let _v = fastToday; fastToday += 1; _v }];
+        }
         prevFast = prevFast / ((optInFastPeriod) as f64);
+        while today < fastToday {
+            tempReal = inReal[{ let _v = today; today += 1; _v }];
+            prevSlow = (slowBeta as f64).mul_add(prevSlow, slowK * tempReal);
+        }
         while today <= lineStart {
             tempReal = inReal[{ let _v = today; today += 1; _v }];
             prevFast = (fastBeta as f64).mul_add(prevFast, fastK * tempReal);
@@ -963,10 +972,12 @@ impl Core {
         let mut sufLo: f64 = 0.0_f64;
         let mut i: usize = 0_usize;
         let mut today: usize = 0_usize;
+        let mut fastToday: usize = 0_usize;
         let mut lineStart: usize = 0_usize;
         let mut outIdx: usize = 0_usize;
         let mut tempInteger: usize = 0_usize;
         let mut lookbackTotal: usize = 0_usize;
+        let mut lookbackSlow: usize = 0_usize;
         let mut lastIdx: usize = 0_usize;
         let mut nLine: usize = 0_usize;
         let mut nPF: usize = 0_usize;
@@ -1020,27 +1031,34 @@ impl Core {
         maxIdx_pfSufLo = ((optInCyclePeriod) as usize) - 1;
         pfSufLo_Idx = 0;
         lastIdx = (optInCyclePeriod - 1) as usize;
-        // The line is TA_MACD's: co-terminal SMA seeds, then both EMAs advanced
-        // through TA_FUNC_UNST_EMA to lineStart, so that from lineStart on it is
-        // TA_EMA(fast) - TA_EMA(slow) bit for bit. The chain is fed from
+        // The line is TA_MACD's: each SMA seed placed by its own EMA lookback, then
+        // both EMAs advanced to lineStart, so that from lineStart on it is
+        // TA_EMA(fast) - TA_EMA(slow) bit for bit. That placement reads out of
+        // bounds or skips bars unless ema_lookback(n) - n never decreases as n
+        // grows. The chain is fed from
         // lineStart, not from the EMA seed: TA_FUNC_UNST_EMA then reaches only the
         // line, while TA_FUNC_UNST_STC moves the whole chain back and so warms the
         // line and both smoothers.
-        lineStart = startIdx - (lookbackTotal - self.ema_lookback(optInSlowPeriod)?);
+        lookbackSlow = self.ema_lookback(optInSlowPeriod)?;
+        lineStart = startIdx - (lookbackTotal - lookbackSlow);
         today = startIdx - lookbackTotal;
         tempReal = 0.0;
-        i = (optInSlowPeriod - optInFastPeriod) as usize;
+        i = (optInSlowPeriod) as usize;
         while { let _v = i; i = i.wrapping_sub(1); _v } > 0 {
-            tempReal += inReal[{ let _v = today; today += 1; _v }];
-        }
-        prevFast = 0.0;
-        i = (optInFastPeriod) as usize;
-        while { let _v = i; i = i.wrapping_sub(1); _v } > 0 {
-            prevFast += inReal[today];
             tempReal += inReal[{ let _v = today; today += 1; _v }];
         }
         prevSlow = tempReal / ((optInSlowPeriod) as f64);
+        fastToday = startIdx - lookbackTotal + (lookbackSlow - self.ema_lookback(optInFastPeriod)?);
+        prevFast = 0.0;
+        i = (optInFastPeriod) as usize;
+        while { let _v = i; i = i.wrapping_sub(1); _v } > 0 {
+            prevFast += inReal[{ let _v = fastToday; fastToday += 1; _v }];
+        }
         prevFast = prevFast / ((optInFastPeriod) as f64);
+        while today < fastToday {
+            tempReal = inReal[{ let _v = today; today += 1; _v }];
+            prevSlow = (slowBeta as f64).mul_add(prevSlow, slowK * tempReal);
+        }
         while today <= lineStart {
             tempReal = inReal[{ let _v = today; today += 1; _v }];
             prevFast = (fastBeta as f64).mul_add(prevFast, fastK * tempReal);

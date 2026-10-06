@@ -20,7 +20,7 @@ int frama_lookback(int optInTimePeriod)
    if( (optInTimePeriod%2) != 0 )
       return -1;
 
-   return optInTimePeriod + TA_GetUnstablePeriod(TA_FUNC_UNST_FRAMA);
+   return optInTimePeriod + TA_UNSTABLE( TA_FUNC_UNST_FRAMA, 80 * X );
 }
 
 TA_RetCode frama(int startIdx, int endIdx,
@@ -46,7 +46,7 @@ TA_RetCode frama(int startIdx, int endIdx,
    *outBegIdx = 0;
    *outNBElement = 0;
 
-   lookbackTotal = optInTimePeriod + TA_GetUnstablePeriod(TA_FUNC_UNST_FRAMA);
+   lookbackTotal = frama_lookback( optInTimePeriod );
 
    if( startIdx < lookbackTotal )
       startIdx = lookbackTotal;
@@ -69,7 +69,7 @@ TA_RetCode frama(int startIdx, int endIdx,
    CIRCBUF_INIT_CLASS( slot, FramaSlot, half );
 
    today = startIdx-lookbackTotal+1;
-   seedIdx = startIdx-TA_GetUnstablePeriod(TA_FUNC_UNST_FRAMA)-1;
+   seedIdx = startIdx-(lookbackTotal-optInTimePeriod)-1;
 
    /* The first block's suffix reads must see a bar inside the window. */
    i = 0;

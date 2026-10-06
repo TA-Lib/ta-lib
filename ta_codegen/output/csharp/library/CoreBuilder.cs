@@ -98,10 +98,11 @@ public sealed class CoreBuilder
     /// function at once when given <see cref="FuncUnstId.ALL"/>.</summary>
     /// <param name="id">The function to configure, or <see cref="FuncUnstId.ALL"/>
     /// as the set-all wildcard, mirroring C's <c>TA_SetUnstablePeriod</c>.</param>
-    /// <param name="period">Extra warm-up bars, in <c>0</c>..<see cref="Core.IndexMax"/>.</param>
+    /// <param name="period">Extra warm-up bars, in <c>0</c>..<see cref="Core.IndexMax"/>,
+    /// or an Auto level such as <see cref="Core.UnstableAutoPrec4"/>.</param>
     /// <returns>This builder, for chaining.</returns>
     /// <exception cref="ArgumentOutOfRangeException"><paramref name="period"/> is
-    /// negative or above <see cref="Core.IndexMax"/>, or <paramref name="id"/>
+    /// negative, or above <see cref="Core.IndexMax"/> and not an Auto level, or <paramref name="id"/>
     /// is neither a function id nor the wildcard. A rejected call writes
     /// nothing.</exception>
     public CoreBuilder UnstablePeriod(FuncUnstId id, int period)
@@ -113,10 +114,11 @@ public sealed class CoreBuilder
          * addressable series could never produce output, so nothing legitimate is
          * refused. C applies the same bound in TA_SetUnstablePeriod.
          */
-        if (period < 0 || period > Core.IndexMax)
+        if (period < 0 || (period > Core.IndexMax
+            && period != Core.UnstableAutoPrec4 && period != Core.UnstableAutoPrec8))
         {
             throw new ArgumentOutOfRangeException(nameof(period), period,
-                "unstable period must be in 0.." + Core.IndexMax);
+                "unstable period must be in 0.." + Core.IndexMax + " or an UnstableAuto level");
         }
 
         /* A C# enum is NOT a closed domain -- (FuncUnstId)(-1) and (FuncUnstId)9999

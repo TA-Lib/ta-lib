@@ -14,7 +14,7 @@
 
 int mcgd_lookback(int optInTimePeriod)
 {
-   return optInTimePeriod - 1 + TA_GetUnstablePeriod(TA_FUNC_UNST_MCGD);
+   return optInTimePeriod - 1 + TA_UNSTABLE( TA_FUNC_UNST_MCGD, 5 * X * optInTimePeriod );
 }
 
 TA_RetCode mcgd(int startIdx, int endIdx,

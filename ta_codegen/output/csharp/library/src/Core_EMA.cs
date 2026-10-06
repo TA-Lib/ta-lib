@@ -81,7 +81,7 @@ public partial class Core
       } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
          return -1;
       }
-      return optInTimePeriod - 1 + this._unstablePeriod[(int)FuncUnstId.EMA] ;
+      return optInTimePeriod - 1 + this.UnstableCount((int)FuncUnstId.EMA, ((optInTimePeriod > 1) ? (10 * (optInTimePeriod + 1) + 1) / 2 : 0), ((optInTimePeriod > 1) ? (19 * (optInTimePeriod + 1) + 1) / 2 : 0)) ;
 
    }
    /// <summary>
@@ -138,17 +138,21 @@ public partial class Core
       if( (outReal.Overlaps(inReal) && outReal != inReal) ) {
          return RetCode.BadParam ;
       }
-      emaBeta = (double)(optInTimePeriod - 1) / (double)(optInTimePeriod + 1);
-      optInK_1 = 1.0 - emaBeta;
-      /* emaBeta + optInK_1 must be exactly 1.0, or a flat input drifts off
-       * its level. Each subtraction is exact only from an operand in
-       * [0.5,1): at a period of 2 that is optInK_1, above it emaBeta.
-       */
-      emaBeta = 1.0 - optInK_1;
       /* Identify the minimum number of price bar needed
        * to calculate at least one output.
        */
       lookbackTotal = EmaLookback(optInTimePeriod);
+      /* After the lookback call: a double live across a call is saved and
+       * restored around every fma call of the loops below, one more instruction
+       * per bar.
+       *
+       * emaBeta + optInK_1 must be exactly 1.0, or a flat input drifts off
+       * its level. Each subtraction is exact only from an operand in
+       * [0.5,1): at a period of 2 that is optInK_1, above it emaBeta.
+       */
+      emaBeta = (double)(optInTimePeriod - 1) / (double)(optInTimePeriod + 1);
+      optInK_1 = 1.0 - emaBeta;
+      emaBeta = 1.0 - optInK_1;
       /* Move up the start index if there is not
        * enough initial data.
        */
@@ -230,10 +234,10 @@ public partial class Core
       if( System.Runtime.InteropServices.MemoryMarshal.AsBytes(outReal).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inReal)) ) {
          return RetCode.BadParam ;
       }
+      lookbackTotal = EmaLookback(optInTimePeriod);
       emaBeta = (double)(optInTimePeriod - 1) / (double)(optInTimePeriod + 1);
       optInK_1 = 1.0 - emaBeta;
       emaBeta = 1.0 - optInK_1;
-      lookbackTotal = EmaLookback(optInTimePeriod);
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
       }
@@ -652,17 +656,21 @@ public partial class Core
          sp.cur_outReal = outReal[(outNBElement - 1) * outStride];
          return RetCode.Success;
       }
-      emaBeta = (double)(optInTimePeriod - 1) / (double)(optInTimePeriod + 1);
-      optInK_1 = 1.0 - emaBeta;
-      /* emaBeta + optInK_1 must be exactly 1.0, or a flat input drifts off
-       * its level. Each subtraction is exact only from an operand in
-       * [0.5,1): at a period of 2 that is optInK_1, above it emaBeta.
-       */
-      emaBeta = 1.0 - optInK_1;
       /* Identify the minimum number of price bar needed
        * to calculate at least one output.
        */
       lookbackTotal = EmaLookback(optInTimePeriod);
+      /* After the lookback call: a double live across a call is saved and
+       * restored around every fma call of the loops below, one more instruction
+       * per bar.
+       *
+       * emaBeta + optInK_1 must be exactly 1.0, or a flat input drifts off
+       * its level. Each subtraction is exact only from an operand in
+       * [0.5,1): at a period of 2 that is optInK_1, above it emaBeta.
+       */
+      emaBeta = (double)(optInTimePeriod - 1) / (double)(optInTimePeriod + 1);
+      optInK_1 = 1.0 - emaBeta;
+      emaBeta = 1.0 - optInK_1;
       /* Move up the start index if there is not
        * enough initial data.
        */

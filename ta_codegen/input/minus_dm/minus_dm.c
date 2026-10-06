@@ -18,7 +18,7 @@
 int minus_dm_lookback(int optInTimePeriod)
 {
    if( optInTimePeriod > 1 )
-      return optInTimePeriod + TA_GetUnstablePeriod(TA_FUNC_UNST_MINUS_DM) - 1;
+      return optInTimePeriod + TA_UNSTABLE( TA_FUNC_UNST_MINUS_DM, ta_warmup_wilder(K, optInTimePeriod) ) - 1;
    else
       return 1;
 }
@@ -102,10 +102,7 @@ TA_RetCode minus_dm(int startIdx, int endIdx,
     *    New Concepts In Technical Trading Systems, J. Welles Wilder Jr
     */
 
-   if( optInTimePeriod > 1 )
-      lookbackTotal = optInTimePeriod + TA_GetUnstablePeriod(TA_FUNC_UNST_MINUS_DM) - 1;
-   else
-      lookbackTotal = 1;
+   lookbackTotal = minus_dm_lookback( optInTimePeriod );
 
    /* Adjust startIdx to account for the lookback period. */
    if( startIdx < lookbackTotal )
@@ -186,7 +183,7 @@ TA_RetCode minus_dm(int startIdx, int endIdx,
    /* Process subsequent DM */
 
    /* Skip the unstable period. */
-   i = TA_GetUnstablePeriod(TA_FUNC_UNST_MINUS_DM);
+   i = lookbackTotal - (optInTimePeriod - 1);
    while( i-- != 0 )
    {
       today++;

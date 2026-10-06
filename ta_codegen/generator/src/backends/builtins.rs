@@ -11,6 +11,8 @@
 //! `fabs`/`ABS` → [`MathFn::Abs`]. Each backend starts from [`MathFn::canonical`]
 //! and applies its own small remap.
 
+use crate::ir::{BinOp, Expr};
+
 /// A `<math.h>` builtin math function callable from indicator source.
 #[derive(Clone, Copy)]
 pub enum MathFn {
@@ -93,8 +95,8 @@ impl MathFn {
 /// runtime construct rather than emitting verbatim. The names and the set are
 /// identical across the C/Rust/Java backends and are checked before any other
 /// dispatch; only the per-backend *rendering* differs (e.g. `UNSTABLE_PERIOD` →
-/// `TA_GLOBALS_UNSTABLE_PERIOD(...)` in C, `this.unstablePeriod[...]` in Java,
-/// `self.unstable_period[...]` in Rust). This enum is purely the shared classifier;
+/// `TA_GLOBALS_UNSTABLE(...)` in C, `this.unstableCount(...)` in Java,
+/// `self.unstable_count(...)` in Rust). This enum is purely the shared classifier;
 /// each backend matches it and supplies its own output.
 #[derive(Clone, Copy)]
 pub enum SpecialBuiltin {
@@ -151,5 +153,56 @@ impl StdlibFn {
             "memset" => Self::Memset,
             _ => return None,
         })
+    }
+}
+
+
+/// The Auto levels of the unstable-period setting, as `(X, K)`: the level's constant is
+/// `INDEX_MAX + X`, `X` is its digit count and `K` its number of e-folds.
+pub const UNSTABLE_AUTO_LEVELS: &[(i64, i64)] = &[(4, 10), (8, 19)];
+
+/// The count expression of a `TA_UNSTABLE(id, count)` read, once per Auto level, with the
+/// free names `K` and `X` bound to that level's values. `None` unless the read has both
+/// arguments.
+#[must_use]
+pub fn unstable_level_counts(args: &[Expr]) -> Option<Vec<Expr>> {
+    let [_, count] = args else { return None };
+    Some(
+        UNSTABLE_AUTO_LEVELS
+            .iter()
+            .map(|&(x, k)| {
+                let subs = std::collections::HashMap::from([
+                    ("K".to_string(), Expr::IntLiteral(k)),
+                    ("X".to_string(), Expr::IntLiteral(x)),
+                ]);
+                fold_level_select(crate::helper_registry::substitute_expr(count, &subs))
+            })
+            .collect(),
+    )
+}
+
+/// `4 == 4 ? a : b` to `a`, inside sums, casts and call arguments: how a count that cannot be written in `K` picks
+/// a per-level local (`X == 4 ? count4 : count8`) without leaving a constant condition in
+/// the output.
+fn fold_level_select(expr: Expr) -> Expr {
+    let fold = |inner: Box<Expr>| Box::new(fold_level_select(*inner));
+    match expr {
+        Expr::Ternary(cond, then, other) => match fold_level_select(*cond) {
+            Expr::BinOp(lhs, BinOp::Eq, rhs) => match (*lhs, *rhs) {
+                (Expr::IntLiteral(left), Expr::IntLiteral(right)) => {
+                    fold_level_select(if left == right { *then } else { *other })
+                }
+                (lhs, rhs) => Expr::Ternary(
+                    Box::new(Expr::BinOp(Box::new(lhs), BinOp::Eq, Box::new(rhs))),
+                    fold(then),
+                    fold(other),
+                ),
+            },
+            cond => Expr::Ternary(Box::new(cond), fold(then), fold(other)),
+        },
+        Expr::BinOp(lhs, op, rhs) => Expr::BinOp(fold(lhs), op, fold(rhs)),
+        Expr::Cast(ty, inner) => Expr::Cast(ty, fold(inner)),
+        Expr::FuncCall(name, args) => Expr::FuncCall(name, args.into_iter().map(fold_level_select).collect()),
+        other => other,
     }
 }

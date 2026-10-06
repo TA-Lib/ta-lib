@@ -83,11 +83,8 @@ impl Core {
         } else if (((optInTimePeriod) as i32) < 1) || (((optInTimePeriod) as i32) > 100000) {
             return Err(RetCode::BadParam);
         }
-        // One bar is consumed forming the first close-to-close change, then the
-        // EMA's own warm-up on top:
-        //    1 + ema_lookback(optInTimePeriod)
-        //  = 1 + (optInTimePeriod - 1) + TA_GetUnstablePeriod(TA_FUNC_UNST_EMA)
-        return Ok((optInTimePeriod + self.unstable_period[FuncUnstId::EMA as usize]) as usize);
+        // One bar forms the first close-to-close change.
+        return Ok((1 + self.ema_lookback(optInTimePeriod)?) as usize);
     }
     /// Display shift of one output of [`Core::efi`]: how many bars ahead (positive) or behind
     /// (negative) of the bar that computed it a chart draws that output. The values are never
@@ -186,9 +183,6 @@ impl Core {
         let mut today: usize = 0_usize;
         let mut outIdx: usize = 0_usize;
         let mut lookbackTotal: usize = 0_usize;
-        emaBeta = ((optInTimePeriod - 1) as f64) / ((optInTimePeriod + 1) as f64);
-        optInK_1 = 1.0 - emaBeta;
-        emaBeta = 1.0 - ((optInK_1) as f64);
         // Alexander Elder's Force Index (Trading for a Living, 1993): the one-bar
         // close-to-close move weighted by that bar's volume, then smoothed with an
         // EMA. Elder's 2-period reading is the short-term form and 13 the
@@ -217,6 +211,12 @@ impl Core {
         // Identify the minimum number of price bar needed
         // to calculate at least one output.
         lookbackTotal = self.efi_lookback(optInTimePeriod).unwrap_or(usize::MAX);
+        // After the lookback call: a double live across a call is saved and
+        // restored around every fma call of the loops below, one more instruction
+        // per bar.
+        emaBeta = ((optInTimePeriod - 1) as f64) / ((optInTimePeriod + 1) as f64);
+        optInK_1 = 1.0 - emaBeta;
+        emaBeta = 1.0 - ((optInK_1) as f64);
         // Move up the start index if there is not
         // enough initial data.
         if startIdx < lookbackTotal {
@@ -518,9 +518,6 @@ impl Core {
             let mut today: usize = 0_usize;
             let mut outIdx: usize = 0_usize;
             let mut lookbackTotal: usize = 0_usize;
-            emaBeta = ((optInTimePeriod - 1) as f64) / ((optInTimePeriod + 1) as f64);
-            optInK_1 = 1.0 - emaBeta;
-            emaBeta = 1.0 - ((optInK_1) as f64);
             // Alexander Elder's Force Index (Trading for a Living, 1993): the one-bar
             // close-to-close move weighted by that bar's volume, then smoothed with an
             // EMA. Elder's 2-period reading is the short-term form and 13 the
@@ -549,6 +546,12 @@ impl Core {
             // Identify the minimum number of price bar needed
             // to calculate at least one output.
             lookbackTotal = self.efi_lookback(optInTimePeriod)?;
+            // After the lookback call: a double live across a call is saved and
+            // restored around every fma call of the loops below, one more instruction
+            // per bar.
+            emaBeta = ((optInTimePeriod - 1) as f64) / ((optInTimePeriod + 1) as f64);
+            optInK_1 = 1.0 - emaBeta;
+            emaBeta = 1.0 - ((optInK_1) as f64);
             // Move up the start index if there is not
             // enough initial data.
             if startIdx < lookbackTotal {
@@ -597,9 +600,6 @@ impl Core {
             let mut today: usize = 0_usize;
             let mut outIdx: usize = 0_usize;
             let mut lookbackTotal: usize = 0_usize;
-            emaBeta = ((optInTimePeriod - 1) as f64) / ((optInTimePeriod + 1) as f64);
-            optInK_1 = 1.0 - emaBeta;
-            emaBeta = 1.0 - ((optInK_1) as f64);
             // Alexander Elder's Force Index (Trading for a Living, 1993): the one-bar
             // close-to-close move weighted by that bar's volume, then smoothed with an
             // EMA. Elder's 2-period reading is the short-term form and 13 the
@@ -628,6 +628,12 @@ impl Core {
             // Identify the minimum number of price bar needed
             // to calculate at least one output.
             lookbackTotal = self.efi_lookback(optInTimePeriod)?;
+            // After the lookback call: a double live across a call is saved and
+            // restored around every fma call of the loops below, one more instruction
+            // per bar.
+            emaBeta = ((optInTimePeriod - 1) as f64) / ((optInTimePeriod + 1) as f64);
+            optInK_1 = 1.0 - emaBeta;
+            emaBeta = 1.0 - ((optInK_1) as f64);
             // Move up the start index if there is not
             // enough initial data.
             if startIdx < lookbackTotal {

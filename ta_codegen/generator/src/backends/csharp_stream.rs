@@ -22,7 +22,7 @@
 //!   not-serializable for free.
 //!
 //! - **The step stays a method on `Core`, not on the handle.** Transcribed
-//!   bodies read the unstable period as `this._unstablePeriod[(int)FuncUnstId.X]`,
+//!   bodies read the unstable period as `this.UnstableCount((int)FuncUnstId.X, ..)`,
 //!   which only compiles inside a `Core` instance method; passing the handle in
 //!   measured indistinguishable from `this`.
 //!
@@ -1630,7 +1630,7 @@ fn peek_frame_arm_named(
 /// per-bar transition; `Update` runs it on live state, `Peek` on a copy.
 ///
 /// It stays a method on `Core` rather than on the handle because transcribed
-/// bodies render unstable-period reads as `this._unstablePeriod[(int)FuncUnstId.X]`,
+/// bodies render unstable-period reads as `this.UnstableCount((int)FuncUnstId.X, ..)`,
 /// which only compiles inside a `Core` instance method.
 #[allow(clippy::too_many_arguments)]
 fn emit_step(

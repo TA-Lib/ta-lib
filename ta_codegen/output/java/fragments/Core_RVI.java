@@ -43,7 +43,7 @@
       } else if( optInStdDevPeriod < 2 || optInStdDevPeriod > 100000 ) {
          return -1;
       }
-      return optInStdDevPeriod - 1 + (optInTimePeriod - 1) + this.unstablePeriod[FuncUnstId.RVI.ordinal()] ;
+      return optInStdDevPeriod - 1 + (optInTimePeriod - 1) + this.unstableCount(FuncUnstId.RVI.ordinal(), ((optInTimePeriod > 1) ? 10 * optInTimePeriod : 0), ((optInTimePeriod > 1) ? 19 * optInTimePeriod : 0)) ;
 
    }
    /**
@@ -236,7 +236,7 @@
       prevUp = upTotal / optInTimePeriod;
       prevDn = dnTotal / optInTimePeriod;
       /* Skip the unstable period. Same step, smoothed but not stored. */
-      i = this.unstablePeriod[FuncUnstId.RVI.ordinal()];
+      i = lookbackTotal - (optInStdDevPeriod - 1 + (optInTimePeriod - 1));
       while( i != 0 ) {
          tempReal = inReal[today] - shift;
          periodTotal1 += tempReal;
@@ -534,7 +534,7 @@
       }
       prevUp = upTotal / optInTimePeriod;
       prevDn = dnTotal / optInTimePeriod;
-      i = this.unstablePeriod[FuncUnstId.RVI.ordinal()];
+      i = lookbackTotal - (optInStdDevPeriod - 1 + (optInTimePeriod - 1));
       while( i != 0 ) {
          tempReal = (double)inReal[today] - shift;
          periodTotal1 += tempReal;
@@ -1341,7 +1341,7 @@
       prevUp = upTotal / optInTimePeriod;
       prevDn = dnTotal / optInTimePeriod;
       /* Skip the unstable period. Same step, smoothed but not stored. */
-      i = this.unstablePeriod[FuncUnstId.RVI.ordinal()];
+      i = lookbackTotal - (optInStdDevPeriod - 1 + (optInTimePeriod - 1));
       while( i != 0 ) {
          tempReal = inReal[today] - shift;
          periodTotal1 += tempReal;

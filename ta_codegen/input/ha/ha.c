@@ -14,7 +14,7 @@
 
 int ha_lookback(void)
 {
-   return TA_GetUnstablePeriod(TA_FUNC_UNST_HA);
+   return TA_UNSTABLE( TA_FUNC_UNST_HA, 2 * K );
 }
 
 TA_RetCode ha(int startIdx, int endIdx,

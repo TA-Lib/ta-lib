@@ -62,7 +62,7 @@
        * then one window per stochastic stage. The two 0.5 smoothers seed on
        * their first input, so they add only the unstable period.
        */
-      return emaLookback(optInSlowPeriod) + 2 * (optInCyclePeriod - 1) + this.unstablePeriod[FuncUnstId.STC.ordinal()] ;
+      return emaLookback(optInSlowPeriod) + 2 * (optInCyclePeriod - 1) + this.unstableCount(FuncUnstId.STC.ordinal(), 2 * 10 + 3 * (optInSlowPeriod + 1), 2 * 19 + 3 * (optInSlowPeriod + 1)) ;
 
    }
    /**
@@ -142,10 +142,12 @@
       double sufLo = 0;
       int i = 0;
       int today = 0;
+      int fastToday = 0;
       int lineStart = 0;
       int outIdx = 0;
       int tempInteger = 0;
       int lookbackTotal = 0;
+      int lookbackSlow = 0;
       int lastIdx = 0;
       int nLine = 0;
       int nPF = 0;
@@ -221,28 +223,35 @@
       maxIdx_pfSufLo = (optInCyclePeriod)-1;
       pfSufLo_Idx = 0;
       lastIdx = optInCyclePeriod - 1;
-      /* The line is TA_MACD's: co-terminal SMA seeds, then both EMAs advanced
-       * through TA_FUNC_UNST_EMA to lineStart, so that from lineStart on it is
-       * TA_EMA(fast) - TA_EMA(slow) bit for bit. The chain is fed from
+      /* The line is TA_MACD's: each SMA seed placed by its own EMA lookback, then
+       * both EMAs advanced to lineStart, so that from lineStart on it is
+       * TA_EMA(fast) - TA_EMA(slow) bit for bit. That placement reads out of
+       * bounds or skips bars unless ema_lookback(n) - n never decreases as n
+       * grows. The chain is fed from
        * lineStart, not from the EMA seed: TA_FUNC_UNST_EMA then reaches only the
        * line, while TA_FUNC_UNST_STC moves the whole chain back and so warms the
        * line and both smoothers.
        */
-      lineStart = startIdx - (lookbackTotal - emaLookback(optInSlowPeriod));
+      lookbackSlow = emaLookback(optInSlowPeriod);
+      lineStart = startIdx - (lookbackTotal - lookbackSlow);
       today = startIdx - lookbackTotal;
       tempReal = 0.0;
-      i = optInSlowPeriod - optInFastPeriod;
+      i = optInSlowPeriod;
       while( i-- > 0 ) {
-         tempReal += inReal[today++];
-      }
-      prevFast = 0.0;
-      i = optInFastPeriod;
-      while( i-- > 0 ) {
-         prevFast += inReal[today];
          tempReal += inReal[today++];
       }
       prevSlow = tempReal / optInSlowPeriod;
+      fastToday = startIdx - lookbackTotal + (lookbackSlow - emaLookback(optInFastPeriod));
+      prevFast = 0.0;
+      i = optInFastPeriod;
+      while( i-- > 0 ) {
+         prevFast += inReal[fastToday++];
+      }
       prevFast = prevFast / optInFastPeriod;
+      while( today < fastToday ) {
+         tempReal = inReal[today++];
+         prevSlow = Math.fma(slowBeta, prevSlow, slowK * tempReal);
+      }
       while( today <= lineStart ) {
          tempReal = inReal[today++];
          prevFast = Math.fma(fastBeta, prevFast, fastK * tempReal);
@@ -554,10 +563,12 @@
       double sufLo = 0;
       int i = 0;
       int today = 0;
+      int fastToday = 0;
       int lineStart = 0;
       int outIdx = 0;
       int tempInteger = 0;
       int lookbackTotal = 0;
+      int lookbackSlow = 0;
       int lastIdx = 0;
       int nLine = 0;
       int nPF = 0;
@@ -628,21 +639,26 @@
       maxIdx_pfSufLo = (optInCyclePeriod)-1;
       pfSufLo_Idx = 0;
       lastIdx = optInCyclePeriod - 1;
-      lineStart = startIdx - (lookbackTotal - emaLookback(optInSlowPeriod));
+      lookbackSlow = emaLookback(optInSlowPeriod);
+      lineStart = startIdx - (lookbackTotal - lookbackSlow);
       today = startIdx - lookbackTotal;
       tempReal = 0.0;
-      i = optInSlowPeriod - optInFastPeriod;
+      i = optInSlowPeriod;
       while( i-- > 0 ) {
-         tempReal += (double)inReal[today++];
-      }
-      prevFast = 0.0;
-      i = optInFastPeriod;
-      while( i-- > 0 ) {
-         prevFast += (double)inReal[today];
          tempReal += (double)inReal[today++];
       }
       prevSlow = tempReal / optInSlowPeriod;
+      fastToday = startIdx - lookbackTotal + (lookbackSlow - emaLookback(optInFastPeriod));
+      prevFast = 0.0;
+      i = optInFastPeriod;
+      while( i-- > 0 ) {
+         prevFast += (double)inReal[fastToday++];
+      }
       prevFast = prevFast / optInFastPeriod;
+      while( today < fastToday ) {
+         tempReal = (double)inReal[today++];
+         prevSlow = Math.fma(slowBeta, prevSlow, slowK * tempReal);
+      }
       while( today <= lineStart ) {
          tempReal = (double)inReal[today++];
          prevFast = Math.fma(fastBeta, prevFast, fastK * tempReal);
@@ -1552,10 +1568,12 @@
       double sufLo = 0;
       int i = 0;
       int today = 0;
+      int fastToday = 0;
       int lineStart = 0;
       int outIdx = 0;
       int tempInteger = 0;
       int lookbackTotal = 0;
+      int lookbackSlow = 0;
       int lastIdx = 0;
       int nLine = 0;
       int nPF = 0;
@@ -1638,28 +1656,35 @@
       maxIdx_pfSufLo = (optInCyclePeriod)-1;
       pfSufLo_Idx = 0;
       lastIdx = optInCyclePeriod - 1;
-      /* The line is TA_MACD's: co-terminal SMA seeds, then both EMAs advanced
-       * through TA_FUNC_UNST_EMA to lineStart, so that from lineStart on it is
-       * TA_EMA(fast) - TA_EMA(slow) bit for bit. The chain is fed from
+      /* The line is TA_MACD's: each SMA seed placed by its own EMA lookback, then
+       * both EMAs advanced to lineStart, so that from lineStart on it is
+       * TA_EMA(fast) - TA_EMA(slow) bit for bit. That placement reads out of
+       * bounds or skips bars unless ema_lookback(n) - n never decreases as n
+       * grows. The chain is fed from
        * lineStart, not from the EMA seed: TA_FUNC_UNST_EMA then reaches only the
        * line, while TA_FUNC_UNST_STC moves the whole chain back and so warms the
        * line and both smoothers.
        */
-      lineStart = startIdx - (lookbackTotal - emaLookback(optInSlowPeriod));
+      lookbackSlow = emaLookback(optInSlowPeriod);
+      lineStart = startIdx - (lookbackTotal - lookbackSlow);
       today = startIdx - lookbackTotal;
       tempReal = 0.0;
-      i = optInSlowPeriod - optInFastPeriod;
+      i = optInSlowPeriod;
       while( i-- > 0 ) {
-         tempReal += inReal[today++];
-      }
-      prevFast = 0.0;
-      i = optInFastPeriod;
-      while( i-- > 0 ) {
-         prevFast += inReal[today];
          tempReal += inReal[today++];
       }
       prevSlow = tempReal / optInSlowPeriod;
+      fastToday = startIdx - lookbackTotal + (lookbackSlow - emaLookback(optInFastPeriod));
+      prevFast = 0.0;
+      i = optInFastPeriod;
+      while( i-- > 0 ) {
+         prevFast += inReal[fastToday++];
+      }
       prevFast = prevFast / optInFastPeriod;
+      while( today < fastToday ) {
+         tempReal = inReal[today++];
+         prevSlow = Math.fma(slowBeta, prevSlow, slowK * tempReal);
+      }
       while( today <= lineStart ) {
          tempReal = inReal[today++];
          prevFast = Math.fma(fastBeta, prevFast, fastK * tempReal);

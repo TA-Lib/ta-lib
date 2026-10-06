@@ -44,11 +44,18 @@
       } else if( !(optInDelta >= 5e-2 && optInDelta <= 5e-1) ) {
          return -1;
       }
+      int count4;
+      int count8;
+      /* ceil( (K+1)*P / (6*delta) ) per level, in this order of operations: the
+       * count is defined as this double expression, not as the real quotient.
+       */
+      count4 = (int)Math.ceil((double)(11 * optInTimePeriod) / (6.0 * optInDelta));
+      count8 = (int)Math.ceil((double)(20 * optInTimePeriod) / (6.0 * optInDelta));
       /* No structural lookback: the two input slots and the two output slots are
        * seeded from the first bar rather than read from before it, and there is
        * no callee whose lookback could be inherited.
        */
-      return this.unstablePeriod[FuncUnstId.SWAK_BP.ordinal()] ;
+      return this.unstableCount(FuncUnstId.SWAK_BP.ordinal(), count4, count8) ;
 
    }
    /**

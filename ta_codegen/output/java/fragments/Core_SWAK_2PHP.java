@@ -41,7 +41,7 @@
        * seeded from the first bar rather than read from before it, and there is
        * no callee whose lookback could be inherited.
        */
-      return this.unstablePeriod[FuncUnstId.SWAK_2PHP.ordinal()] ;
+      return this.unstableCount(FuncUnstId.SWAK_2PHP.ordinal(), (((10 + 5) * (optInTimePeriod + 2) + 8) / 9), (((19 + 5) * (optInTimePeriod + 2) + 8) / 9)) ;
 
    }
    /**

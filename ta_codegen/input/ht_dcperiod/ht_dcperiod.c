@@ -17,7 +17,7 @@
 int ht_dcperiod_lookback(void)
 {
    /* See mama_lookback for an explanation of these */
-   return 32 + TA_GetUnstablePeriod(TA_FUNC_UNST_HT_DCPERIOD);
+   return 32 + TA_UNSTABLE( TA_FUNC_UNST_HT_DCPERIOD, ta_warmup_hilbert(X) );
 }
 
 TA_RetCode ht_dcperiod(int startIdx, int endIdx,
@@ -86,7 +86,7 @@ TA_RetCode ht_dcperiod(int startIdx, int endIdx,
    /* Identify the minimum number of price bar needed
     * to calculate at least one output.
     */
-   lookbackTotal = 32 + TA_GetUnstablePeriod(TA_FUNC_UNST_HT_DCPERIOD);
+   lookbackTotal = ht_dcperiod_lookback();
 
    /* Move up the start index if there is not
     * enough initial data.

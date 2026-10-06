@@ -16,7 +16,7 @@
 int rvi_lookback(int optInTimePeriod, int optInStdDevPeriod)
 {
    return (optInStdDevPeriod-1) + (optInTimePeriod-1)
-   + TA_GetUnstablePeriod(TA_FUNC_UNST_RVI);
+   + TA_UNSTABLE( TA_FUNC_UNST_RVI, ta_warmup_wilder(K, optInTimePeriod) );
 }
 
 TA_RetCode rvi(int startIdx, int endIdx,
@@ -165,7 +165,7 @@ TA_RetCode rvi(int startIdx, int endIdx,
    prevDn = dnTotal / optInTimePeriod;
 
    /* Skip the unstable period. Same step, smoothed but not stored. */
-   i = TA_GetUnstablePeriod(TA_FUNC_UNST_RVI);
+   i = lookbackTotal - ((optInStdDevPeriod-1) + (optInTimePeriod-1));
    while( i != 0 )
    {
       tempReal = inReal[today] - shift;

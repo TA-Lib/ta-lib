@@ -86,7 +86,7 @@ public partial class Core
       } else if( optInStdDevPeriod < 2 || optInStdDevPeriod > 100000 ) {
          return -1;
       }
-      return optInStdDevPeriod - 1 + (optInTimePeriod - 1) + this._unstablePeriod[(int)FuncUnstId.RVI] ;
+      return optInStdDevPeriod - 1 + (optInTimePeriod - 1) + this.UnstableCount((int)FuncUnstId.RVI, ((optInTimePeriod > 1) ? 10 * optInTimePeriod : 0), ((optInTimePeriod > 1) ? 19 * optInTimePeriod : 0)) ;
 
    }
    /// <summary>
@@ -280,7 +280,7 @@ public partial class Core
       prevUp = upTotal / optInTimePeriod;
       prevDn = dnTotal / optInTimePeriod;
       /* Skip the unstable period. Same step, smoothed but not stored. */
-      i = this._unstablePeriod[(int)FuncUnstId.RVI];
+      i = lookbackTotal - (optInStdDevPeriod - 1 + (optInTimePeriod - 1));
       while( i != 0 ) {
          tempReal = inReal[today] - shift;
          periodTotal1 += tempReal;
@@ -577,7 +577,7 @@ public partial class Core
       }
       prevUp = upTotal / optInTimePeriod;
       prevDn = dnTotal / optInTimePeriod;
-      i = this._unstablePeriod[(int)FuncUnstId.RVI];
+      i = lookbackTotal - (optInStdDevPeriod - 1 + (optInTimePeriod - 1));
       while( i != 0 ) {
          tempReal = (double)inReal[today] - shift;
          periodTotal1 += tempReal;
@@ -1407,7 +1407,7 @@ public partial class Core
       prevUp = upTotal / optInTimePeriod;
       prevDn = dnTotal / optInTimePeriod;
       /* Skip the unstable period. Same step, smoothed but not stored. */
-      i = this._unstablePeriod[(int)FuncUnstId.RVI];
+      i = lookbackTotal - (optInStdDevPeriod - 1 + (optInTimePeriod - 1));
       while( i != 0 ) {
          tempReal = inReal[today] - shift;
          periodTotal1 += tempReal;

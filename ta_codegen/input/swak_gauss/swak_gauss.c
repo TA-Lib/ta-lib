@@ -17,14 +17,13 @@
 
 int swak_gauss_lookback(int optInTimePeriod)
 {
-   (void)optInTimePeriod;
 
    /* No structural lookback. Every term of the recurrence exists at the first
     * bar -- the two history slots are seeded from that bar rather than read
     * from before it -- and there is no callee whose lookback could be
     * inherited, so the function's own unstable period is the whole of it.
     */
-   return TA_GetUnstablePeriod(TA_FUNC_UNST_SWAK_GAUSS);
+   return TA_UNSTABLE( TA_FUNC_UNST_SWAK_GAUSS, ta_warmup_two_pole(K, optInTimePeriod) );
 }
 
 TA_RetCode swak_gauss(int startIdx, int endIdx,

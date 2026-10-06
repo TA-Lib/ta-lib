@@ -94,7 +94,7 @@ impl Core {
         // Where 1 is for the True Range, and
         // (optInTimePeriod-1) is for the simple
         // moving average.
-        return Ok((optInTimePeriod + self.unstable_period[FuncUnstId::ATR as usize]) as usize);
+        return Ok((optInTimePeriod + self.unstable_count(FuncUnstId::ATR, (if optInTimePeriod > 1 { 10 * optInTimePeriod } else { 0 }), (if optInTimePeriod > 1 { 19 * optInTimePeriod } else { 0 }))) as usize);
     }
     /// Display shift of one output of [`Core::atr`]: how many bars ahead (positive) or behind
     /// (negative) of the bar that computed it a chart draws that output. The values are never
@@ -284,7 +284,7 @@ impl Core {
         }
         prevATR = periodTotal / ((optInTimePeriod) as f64);
         // Skip the unstable period.
-        i = (self.unstable_period[FuncUnstId::ATR as usize]) as usize;
+        i = lookbackTotal - ((optInTimePeriod) as usize);
         if i != 0 {
             let _wn: usize = i;
             let _w0 = &inClose[today - 1..][.._wn];
@@ -645,7 +645,7 @@ impl Core {
         }
         prevATR = periodTotal / ((optInTimePeriod) as f64);
         // Skip the unstable period.
-        i = (self.unstable_period[FuncUnstId::ATR as usize]) as usize;
+        i = lookbackTotal - ((optInTimePeriod) as usize);
         while i != 0 {
             // Find the greatest of the 3 values.
             tempLT = inLow[today];

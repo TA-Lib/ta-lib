@@ -56,13 +56,13 @@
  *  092926 MF,CC  First version (issue #471).
  */
 
-TA_LIB_API int TA_MCGD_Lookback( int optInTimePeriod )
+TA_NOINLINE TA_LIB_API int TA_MCGD_Lookback( int optInTimePeriod )
 {
    if( (int)optInTimePeriod == TA_INTEGER_DEFAULT )
       optInTimePeriod = 14;
    else if( (int)optInTimePeriod < 2 || (int)optInTimePeriod > 100000 )
       return -1;
-   return optInTimePeriod - 1 + TA_GLOBALS_UNSTABLE_PERIOD(TA_FUNC_UNST_MCGD,Mcgd);
+   return optInTimePeriod - 1 + TA_GLOBALS_UNSTABLE(TA_FUNC_UNST_MCGD,Mcgd,5 * 4 * optInTimePeriod,5 * 8 * optInTimePeriod);
 }
 
 TA_LIB_API int TA_MCGD_DisplayShift( int optInTimePeriod, int outputIdx )

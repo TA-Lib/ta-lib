@@ -33,7 +33,7 @@
       } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
          return -1;
       }
-      return optInTimePeriod - 1 + this.unstablePeriod[FuncUnstId.MCGD.ordinal()] ;
+      return optInTimePeriod - 1 + this.unstableCount(FuncUnstId.MCGD.ordinal(), 5 * 4 * optInTimePeriod, 5 * 8 * optInTimePeriod) ;
 
    }
    /**

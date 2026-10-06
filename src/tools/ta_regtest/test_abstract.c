@@ -3525,7 +3525,7 @@ static void testIndexRange( const TA_FuncInfo *funcInfo, void *opaqueData )
  * Integer outputs can never alias a real input (different element type);
  * they are still compared for collateral damage. */
 
-#define IO_ALIAS_SIZE    252
+#define IO_ALIAS_SIZE    2048
 /* Bars past endIdx: an output placed on an input must leave them as they were. */
 #define IO_ALIAS_TAIL    16
 #define IO_ALIAS_END     (IO_ALIAS_SIZE - 1 - IO_ALIAS_TAIL)
@@ -3816,8 +3816,10 @@ static void testInPlaceAlias( const TA_FuncInfo *funcInfo, void *opaqueData )
  * do read.
  */
 #define FIRST_BAR_MAX_PREFIX 96
+#define FIRST_BAR_MIN_AUTO 50
 static int firstBarNbCompared;   /* functions with at least one compared call */
 static int firstBarNbLive;       /* of those, the ones the control changed */
+static int firstBarNbAuto[2];    /* compared under each Auto level that lengthened the lookback */
 
 static void firstBarPoison( int nbBars, double value, double saved[][6][FIRST_BAR_MAX_PREFIX] )
 {
@@ -3870,8 +3872,10 @@ static ErrorNumber checkNoBarBeforeTheFirst( const TA_FuncInfo *funcInfo )
    const TA_OutputParameterInfo *outInfo;
    TA_ParamHolder *paramHolder;
    ErrorNumber errNumber = TA_TEST_PASS;
-   int compared = 0, live = 0;
-   unsigned int k, unst;
+   static const unsigned int setting[4] = { 0, 5, (unsigned int)TA_UNSTABLE_AUTO_PREC_4,
+                                            (unsigned int)TA_UNSTABLE_AUTO_PREC_8 };
+   int compared = 0, live = 0, autoCompared[2] = { 0, 0 }, lookbackAtZero = 0;
+   unsigned int k, unst, u;
    int s, p;
 
    if( funcInfo->nbInput > IO_ALIAS_MAX_IN || funcInfo->nbOutput > IO_ALIAS_MAX_OUT )
@@ -3888,10 +3892,11 @@ static ErrorNumber checkNoBarBeforeTheFirst( const TA_FuncInfo *funcInfo )
       return TA_ABS_TST_FAIL_PARAMREALPTR;
    }
 
-   for( unst = 0; unst <= 5 && errNumber == TA_TEST_PASS; unst += 5 )
+   for( u = 0; u < 4 && errNumber == TA_TEST_PASS; u++ )
    {
       TA_Integer lookback = -1;
 
+      unst = setting[u];
       TA_SetUnstablePeriod( TA_FUNC_UNST_ALL, unst );
       if( TA_GetLookback( paramHolder, &lookback ) != TA_SUCCESS || lookback < 0 )
       {
@@ -3899,6 +3904,8 @@ static ErrorNumber checkNoBarBeforeTheFirst( const TA_FuncInfo *funcInfo )
          errNumber = TA_ABS_TST_FAIL_FIRST_BAR;
          break;
       }
+      if( u == 0 )
+         lookbackAtZero = lookback;
       for( s = 0; s < 2 && errNumber == TA_TEST_PASS; s++ )
       {
          int startIdx = lookback + past[s];
@@ -3907,7 +3914,15 @@ static ErrorNumber checkNoBarBeforeTheFirst( const TA_FuncInfo *funcInfo )
          TA_RetCode refRc;
 
          if( startIdx > IO_ALIAS_SIZE - 1 || unread + 1 > FIRST_BAR_MAX_PREFIX )
+         {
+            if( u >= 2 )
+            {
+               printf( "  FIRST BAR [%s]: a lookback of %d under an Auto level does not fit "
+                       "the series\n", funcInfo->name, (int)lookback );
+               errNumber = TA_ABS_TST_FAIL_FIRST_BAR;
+            }
             continue;
+         }
 
          for( k = 0; k < funcInfo->nbOutput; k++ )
          {
@@ -3950,6 +3965,8 @@ static ErrorNumber checkNoBarBeforeTheFirst( const TA_FuncInfo *funcInfo )
                break;
             }
             compared++;
+            if( u >= 2 && lookback > lookbackAtZero )
+               autoCompared[u - 2] = 1;
          }
 
          firstBarPoison( unread + 1, poison[0], saved );
@@ -3965,6 +3982,8 @@ static ErrorNumber checkNoBarBeforeTheFirst( const TA_FuncInfo *funcInfo )
    {
       firstBarNbCompared++;
       firstBarNbLive += live;
+      firstBarNbAuto[0] += autoCompared[0];
+      firstBarNbAuto[1] += autoCompared[1];
    }
    return errNumber;
 }
@@ -4583,7 +4602,7 @@ static ErrorNumber test_default_calls(void)
    if( errNumber == TA_TEST_PASS )
    {
       int nbFunc = 0;
-      firstBarNbCompared = firstBarNbLive = 0;
+      firstBarNbCompared = firstBarNbLive = firstBarNbAuto[0] = firstBarNbAuto[1] = 0;
       TA_ForEachFunc( testNoBarBeforeTheFirst, &errNumber );
       TA_ForEachFunc( countFunctions, &nbFunc );
       if( errNumber == TA_TEST_PASS &&
@@ -4592,6 +4611,13 @@ static ErrorNumber test_default_calls(void)
          printf( "Failed: the first-bar sweep compared %d of %d function(s), and the "
                  "control of one more overwritten bar changed %d of them\n",
                  firstBarNbCompared, nbFunc, firstBarNbLive );
+         errNumber = TA_ABS_TST_FAIL_FIRST_BAR_VACUOUS;
+      }
+      if( errNumber == TA_TEST_PASS &&
+          ( firstBarNbAuto[0] < FIRST_BAR_MIN_AUTO || firstBarNbAuto[1] < FIRST_BAR_MIN_AUTO ) )
+      {
+         printf( "Failed: the first-bar sweep compared only %d and %d function(s) under the "
+                 "Auto levels that lengthened the lookback\n", firstBarNbAuto[0], firstBarNbAuto[1] );
          errNumber = TA_ABS_TST_FAIL_FIRST_BAR_VACUOUS;
       }
    }

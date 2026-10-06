@@ -71,7 +71,7 @@ public partial class Core
    /// <returns>The lookback, or <c>-1</c> if a parameter is out of range.</returns>
    public int HaLookback( )
    {
-      return this._unstablePeriod[(int)FuncUnstId.HA] ;
+      return this.UnstableCount((int)FuncUnstId.HA, 2 * 10, 2 * 19) ;
 
    }
    /// <summary>
@@ -327,7 +327,7 @@ public partial class Core
    /// <list type="bullet">
    /// <item><description>The first candle has no predecessor, so its open is seeded with the midpoint of the raw open and close. Other conventions exist — ta4j emits the raw bar unchanged as its first candle — and they differ only while the seed still carries weight.</description></item>
    /// <item><description>Both divisors are exact powers of two, so implementations that scale by <c>0.5</c> and <c>0.25</c> produce the same doubles as those that divide by 2 and 4.</description></item>
-   /// <item><description>The unstable period discards that many candles of warm-up before the first output, trading history for a smaller residual difference between two requests that start at different bars.</description></item>
+   /// <item><description>The unstable period discards candles of warm-up before the first output, trading history for a smaller residual difference between two requests that start at different bars.</description></item>
    /// <item><description>Averaging four prices of one bar is also what <see href="https://ta-lib.org/functions/avgprice"><c>AVGPRICE</c></see> computes, but it sums them in a different order, so the two can differ in the last bits.</description></item>
    /// </list>
    /// <para>
@@ -442,7 +442,7 @@ public partial class Core
    /// <list type="bullet">
    /// <item><description>The first candle has no predecessor, so its open is seeded with the midpoint of the raw open and close. Other conventions exist — ta4j emits the raw bar unchanged as its first candle — and they differ only while the seed still carries weight.</description></item>
    /// <item><description>Both divisors are exact powers of two, so implementations that scale by <c>0.5</c> and <c>0.25</c> produce the same doubles as those that divide by 2 and 4.</description></item>
-   /// <item><description>The unstable period discards that many candles of warm-up before the first output, trading history for a smaller residual difference between two requests that start at different bars.</description></item>
+   /// <item><description>The unstable period discards candles of warm-up before the first output, trading history for a smaller residual difference between two requests that start at different bars.</description></item>
    /// <item><description>Averaging four prices of one bar is also what <see href="https://ta-lib.org/functions/avgprice"><c>AVGPRICE</c></see> computes, but it sums them in a different order, so the two can differ in the last bits.</description></item>
    /// </list>
    /// <para>

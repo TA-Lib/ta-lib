@@ -80,7 +80,7 @@ public partial class Core
        * 31 is for being compatible with Tradestation.
        * See mama_lookback for an explanation of the "32".
        */
-      return 63 + this._unstablePeriod[(int)FuncUnstId.HT_DCPHASE] ;
+      return 63 + this.UnstableCount((int)FuncUnstId.HT_DCPHASE, (80 + 50 * 4), (80 + 50 * 8)) ;
 
    }
    /// <summary>
@@ -204,7 +204,7 @@ public partial class Core
       /* Identify the minimum number of price bar needed
        * to calculate at least one output.
        */
-      lookbackTotal = 63 + this._unstablePeriod[(int)FuncUnstId.HT_DCPHASE];
+      lookbackTotal = HtDcphaseLookback();
       /* Move up the start index if there is not
        * enough initial data.
        */
@@ -605,7 +605,7 @@ public partial class Core
       tempReal = Math.Atan(1);
       rad2Deg = 45.0 / tempReal;
       constDeg2RadBy360 = tempReal * 8.0;
-      lookbackTotal = 63 + this._unstablePeriod[(int)FuncUnstId.HT_DCPHASE];
+      lookbackTotal = HtDcphaseLookback();
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
       }
@@ -1799,7 +1799,7 @@ public partial class Core
       /* Identify the minimum number of price bar needed
        * to calculate at least one output.
        */
-      lookbackTotal = 63 + this._unstablePeriod[(int)FuncUnstId.HT_DCPHASE];
+      lookbackTotal = HtDcphaseLookback();
       /* Move up the start index if there is not
        * enough initial data.
        */

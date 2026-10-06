@@ -74,11 +74,23 @@
  *
  * Depending of the language/platform, the globals might be in reality
  * a private member variable of an object...
- *
- * The second parameter of TA_GLOBALS_UNSTABLE_PERIOD is unused in C; it is
- * kept so the generated call sites stay stable across backends.
  */
-#define TA_GLOBALS_UNSTABLE_PERIOD(x,y) (TA_Globals->unstablePeriod[x])
+
+#if defined(_MSC_VER)
+   #define TA_NOINLINE __declspec(noinline)
+#elif defined(__GNUC__)
+   #define TA_NOINLINE __attribute__((noinline))
+#else
+   #define TA_NOINLINE
+#endif
+
+/* The unstable period of id x for this call: the stored count, or under an Auto
+ * level that level's count (c4, c8). The setter stores nothing else above
+ * TA_INDEX_MAX, so the last arm needs no test.
+ */
+#define TA_GLOBALS_UNSTABLE(x,y,c4,c8) \
+   ( TA_Globals->unstablePeriod[x] <= (unsigned int)TA_INDEX_MAX ? (int)TA_Globals->unstablePeriod[x] \
+   : TA_Globals->unstablePeriod[x] == (unsigned int)TA_UNSTABLE_AUTO_PREC_4 ? (int)(c4) : (int)(c8) )
 
 
 

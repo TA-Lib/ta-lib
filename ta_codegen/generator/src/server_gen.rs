@@ -1506,6 +1506,12 @@ pub fn generate_java_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
     s.push_str("    static final int INTEGER_MIN = Integer.MIN_VALUE + 1;\n");
     s.push_str("    static final int INTEGER_MAX = Integer.MAX_VALUE;\n");
     s.push_str("    static final int INDEX_MAX = 100000000;\n");
+    s.push_str("    static final int UNSTABLE_AUTO_PREC_4 = INDEX_MAX + 4;\n");
+    s.push_str("    static final int UNSTABLE_AUTO_PREC_8 = INDEX_MAX + 8;\n");
+    s.push_str("    int unstableCount(int slot, int prec4, int prec8) {\n");
+    s.push_str("        int stored = unstablePeriod[slot];\n");
+    s.push_str("        return stored <= INDEX_MAX ? stored : stored == UNSTABLE_AUTO_PREC_4 ? prec4 : prec8;\n");
+    s.push_str("    }\n");
     // Sized by the id count, so the wildcard gets no slot -- matching the
     // shipped CoreBuilder (#144).
     s.push_str("    int[] unstablePeriod = new int[FuncUnstId.COUNT];\n");
@@ -1883,9 +1889,10 @@ pub fn generate_java_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
     s.push_str("            rideGen++;\n");
     s.push_str("            int id = jsonInt(json, \"id\");\n");
     s.push_str("            int period = jsonInt(json, \"period\");\n");
-    // The same 0..=INDEX_MAX domain the C library enforces. Checked before any
-    // store, so a rejected call leaves every slot as it was (#186).
-    s.push_str("            if (period < 0 || period > Core.INDEX_MAX) {\n");
+    // The domain the C library enforces: a count or an Auto level. Checked before
+    // any store, so a rejected call leaves every slot as it was (#186).
+    s.push_str("            if (period < 0 || (period > Core.INDEX_MAX\n");
+    s.push_str("                && period != Core.UNSTABLE_AUTO_PREC_4 && period != Core.UNSTABLE_AUTO_PREC_8)) {\n");
     s.push_str("                return \"{\\\"error\\\":\\\"Invalid unstable period value\\\"}\"; \n");
     s.push_str("            }\n");
     // FuncUnstId.ALL is the "set all" sentinel (matches C TA_SetUnstablePeriod).
@@ -2816,9 +2823,10 @@ pub fn generate_csharp_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef
     s.push_str("                rideGen++;\n");
     s.push_str("                int id = GetInt(p, \"id\", -1);\n");
     s.push_str("                int period = GetInt(p, \"period\", 0);\n");
-    // The same 0..=IndexMax domain the C library enforces. Checked before any
-    // store, so a rejected call leaves every slot as it was (#186).
-    s.push_str("                if (period < 0 || period > Core.IndexMax) {\n");
+    // The domain the C library enforces: a count or an Auto level. Checked before
+    // any store, so a rejected call leaves every slot as it was (#186).
+    s.push_str("                if (period < 0 || (period > Core.IndexMax\n");
+    s.push_str("                    && period != Core.UnstableAutoPrec4 && period != Core.UnstableAutoPrec8)) {\n");
     s.push_str("                    return \"{\\\"error\\\":\\\"Invalid unstable period value\\\"}\";\n");
     s.push_str("                }\n");
     s.push_str("                if (id == (int)FuncUnstId.ALL) {\n");

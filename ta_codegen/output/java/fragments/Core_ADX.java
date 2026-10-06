@@ -45,7 +45,7 @@
       } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
          return -1;
       }
-      return 2 * optInTimePeriod + this.unstablePeriod[FuncUnstId.ADX.ordinal()] - 1 ;
+      return 2 * optInTimePeriod + this.unstableCount(FuncUnstId.ADX.ordinal(), (10 + 6) * optInTimePeriod, (19 + 6) * optInTimePeriod) - 1 ;
 
    }
    /**
@@ -227,7 +227,7 @@
        * TA-Lib does not do the rounding. Still, if you want to reproduce Wilder's examples,
        * you can comment out the following #undef/#define and rebuild the library.
        */
-      lookbackTotal = 2 * optInTimePeriod + this.unstablePeriod[FuncUnstId.ADX.ordinal()] - 1;
+      lookbackTotal = adxLookback(optInTimePeriod);
       /* Adjust startIdx to account for the lookback period. */
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
@@ -356,7 +356,7 @@
       /* Calculate the first ADX */
       prevADX = (sumDX / optInTimePeriod);
       /* Skip the unstable period */
-      i = this.unstablePeriod[FuncUnstId.ADX.ordinal()];
+      i = lookbackTotal - (2 * optInTimePeriod - 1);
       while( i-- > 0 ) {
          /* Calculate the prevMinusDM and prevPlusDM */
          today += 1;
@@ -501,7 +501,7 @@
       } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
          return RetCode.BAD_PARAM;
       }
-      lookbackTotal = 2 * optInTimePeriod + this.unstablePeriod[FuncUnstId.ADX.ordinal()] - 1;
+      lookbackTotal = adxLookback(optInTimePeriod);
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
       }
@@ -593,7 +593,7 @@
          }
       }
       prevADX = (sumDX / optInTimePeriod);
-      i = this.unstablePeriod[FuncUnstId.ADX.ordinal()];
+      i = lookbackTotal - (2 * optInTimePeriod - 1);
       while( i-- > 0 ) {
          today += 1;
          tempReal = (double)inHigh[today];
@@ -1262,7 +1262,7 @@
        * TA-Lib does not do the rounding. Still, if you want to reproduce Wilder's examples,
        * you can comment out the following #undef/#define and rebuild the library.
        */
-      lookbackTotal = 2 * optInTimePeriod + this.unstablePeriod[FuncUnstId.ADX.ordinal()] - 1;
+      lookbackTotal = adxLookback(optInTimePeriod);
       /* Adjust startIdx to account for the lookback period. */
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
@@ -1391,7 +1391,7 @@
       /* Calculate the first ADX */
       prevADX = (sumDX / optInTimePeriod);
       /* Skip the unstable period */
-      i = this.unstablePeriod[FuncUnstId.ADX.ordinal()];
+      i = lookbackTotal - (2 * optInTimePeriod - 1);
       while( i-- > 0 ) {
          /* Calculate the prevMinusDM and prevPlusDM */
          today += 1;
