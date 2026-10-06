@@ -73,6 +73,7 @@ All technical-analysis functions, grouped by category. Each page documents the f
 - [DX](/functions/dx.md) — Directional Movement Index
 - [ER](/functions/er.md) — Kaufman Efficiency Ratio
 - [ERI](/functions/eri.md) — Elder Ray Index (Bull Power / Bear Power)
+- [FISHER](/functions/fisher.md) — Fisher Transform
 - [FOSC](/functions/fosc.md) — Forecast Oscillator
 - [FRACTAL](/functions/fractal.md) — Williams Fractal
 - [IBS](/functions/ibs.md) — Internal Bar Strength

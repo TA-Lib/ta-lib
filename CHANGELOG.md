@@ -25,6 +25,7 @@ See [github commits](https://github.com/TA-Lib/ta-lib/commits) for complete list
   - CRSI: Connors RSI (#431)
   - CTI: Correlation Trend Indicator (#430)
   - EMV: Arms Ease of Movement, the midpoint move per unit of volume-to-range, SMA-smoothed (#465)
+  - FISHER: Ehlers' Fisher Transform (#485)
   - FRAMA: Fractal Adaptive Moving Average, Ehlers' adaptive EMA driven by the window's fractal dimension (#464)
   - IBS: Internal Bar Strength, where the close sits inside its own bar range (#468)
   - KST: Know Sure Thing (#472)

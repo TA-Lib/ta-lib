@@ -55,6 +55,7 @@
  *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
  *  100626 KL,CC  Creation (#485).
+ *  100626 MF,CC  Batch tier: block scan of the channel (#485).
  */
 
 TA_NOINLINE TA_LIB_API int TA_FISHER_Lookback( int optInTimePeriod )
@@ -63,26 +64,11 @@ TA_NOINLINE TA_LIB_API int TA_FISHER_Lookback( int optInTimePeriod )
       optInTimePeriod = 10;
    else if( (int)optInTimePeriod < 2 || (int)optInTimePeriod > 100000 )
       return -1;
-   /* The channel needs its own n-1 bars before it has a value. On top of that
-    * the two recursions carry a seed that decays rather than ending.
-    *
-    * The count is DERIVED rather than sampled. The seed reaches the output
-    * through the smoothing pole alone -- 0.67 per bar, the same whatever the
-    * period, so unlike EMA's this count does not grow with n. Two factors sit
-    * between that pole and the output: the transform's derivative 1/(1-v^2),
-    * which the clamp caps at 1/(1-0.999^2) = 500 and which is the only reason
-    * this is finite at all, and the convolution with the transform's own 0.5
-    * pole, worth 1/(0.67-0.5) = 5.9. So the seed's weight is under e^-K once
-    *
-    *     n >= (K + ln(500*5.9)) / ln(1/0.67) = (K + 8.0) / 0.4005
-    *
-    * which is 44.9 bars at K = 10 and 67.4 at K = 19. The form below is 2.5
-    * bars per e-fold with those 9 e-folds of gain folded in: 48 and 70.
-    *
-    * A sampled worst case was NOT used. Over 400 input patterns and 22 seeds
-    * it reads 33 and 58, and it kept climbing as the sample grew -- 30 and 54
-    * at a tenth of it -- which is what a sampled maximum does when it is not
-    * a bound.
+   /* The seed reaches the output through the smoothing pole alone, 0.67 per
+    * bar whatever the period: 2.5 bars per e-fold. The 9 e-folds added to K
+    * are the gain between that pole and the output: the transform's
+    * derivative, which the clamp caps at 500, times 5.9 for the convolution
+    * with its own 0.5 pole.
     */
    return optInTimePeriod - 1 + TA_GLOBALS_UNSTABLE(TA_FUNC_UNST_FISHER,Fisher,(5 * (10 + 9) + 1) / 2,(5 * (19 + 9) + 1) / 2);
 }
@@ -107,6 +93,14 @@ TA_LIB_API TA_RetCode TA_FISHER( int    startIdx,
                                  double        outFisher[],
                                  double        outTrigger[] )
 {
+   double local_sufHighest[30];
+   double *sufHighest = &local_sufHighest[0];
+   double local_preHighest[30];
+   double *preHighest = &local_preHighest[0];
+   double local_sufLowest[30];
+   double *sufLowest = &local_sufLowest[0];
+   double local_preLowest[30];
+   double *preLowest = &local_preLowest[0];
    double price;
    double highest;
    double lowest;
@@ -122,10 +116,11 @@ TA_LIB_API TA_RetCode TA_FISHER( int    startIdx,
    int unstablePeriod;
    int nbInitialElementNeeded;
    int today;
-   int trailingIdx;
-   int highestIdx;
-   int lowestIdx;
    int i;
+   int m;
+   int blockStart;
+   int blockNext;
+   int nAvail;
 
    if( (startIdx < 0) || (startIdx > TA_INDEX_MAX) )
       return TA_OUT_OF_RANGE_START_INDEX;
@@ -162,131 +157,195 @@ TA_LIB_API TA_RetCode TA_FISHER( int    startIdx,
    }
    lookbackTotal = optInTimePeriod - 1;
    unstablePeriod = nbInitialElementNeeded - lookbackTotal;
-   /* John F. Ehlers, "Using The Fisher Transform", Stocks & Commodities
-    * V.20:11 (November 2002), pp.40-42, the EasyLanguage listing in Figure 4.
-    *
-    * The bar's midpoint is located in its rolling n-bar channel, rescaled to
-    * (-1, +1), smoothed, clamped, and passed through atanh. What the
-    * transform buys is the tail: a channel position is close to uniformly
-    * distributed, and the Fisher transform of a uniform variable is close to
-    * normal, so an extreme reading is rare rather than routine and a turn is
-    * a sharp corner rather than a drift.
-    *
-    * Both recursions start from the author's zero seed and decay at their own
-    * coefficient -- 0.67 for the smoothing, 0.5 for the transform -- so the
-    * first bars carry the seed rather than the series. That is what the
-    * unstable period discards.
+   /* Same values as fisher_ALT1 below, which carries the formula. Only the
+    * channel differs: a Van Herk / Gil-Werman block scan (WILLR's, issue
+    * #147) over the midpoints, so the cost per bar does not depend on the
+    * period or on the shape of the input, where the cached extremum of
+    * fisher_ALT1 rescans its whole window on every bar of a flat or
+    * trending stretch. Every scratch array holds copies, so an output may
+    * alias an input.
     */
    smoothed = 0.0;
    prevFish = 0.0;
    today = startIdx - unstablePeriod;
-   trailingIdx = today - lookbackTotal;
-   highestIdx = -1;
-   highest = 0.0;
-   lowestIdx = -1;
-   lowest = 0.0;
+   blockStart = today - lookbackTotal;
    outIdx = 0;
+   if( optInTimePeriod < 1 ) return TA_INTERNAL_ERROR(486);
+   if( (int)optInTimePeriod > (int)(sizeof(local_sufHighest)/sizeof(double)) )
+   {
+      sufHighest = TA_Malloc( sizeof(double)*optInTimePeriod );
+      if( !sufHighest )
+      {
+         return TA_ALLOC_ERR;
+      }
+   }
+   else
+   {
+      sufHighest = &local_sufHighest[0];
+   }
+   if( optInTimePeriod < 1 ) return TA_INTERNAL_ERROR(487);
+   if( (int)optInTimePeriod > (int)(sizeof(local_preHighest)/sizeof(double)) )
+   {
+      preHighest = TA_Malloc( sizeof(double)*optInTimePeriod );
+      if( !preHighest )
+      {
+         if( sufHighest != &local_sufHighest[0] ) TA_Free( sufHighest );
+         return TA_ALLOC_ERR;
+      }
+   }
+   else
+   {
+      preHighest = &local_preHighest[0];
+   }
+   if( optInTimePeriod < 1 ) return TA_INTERNAL_ERROR(488);
+   if( (int)optInTimePeriod > (int)(sizeof(local_sufLowest)/sizeof(double)) )
+   {
+      sufLowest = TA_Malloc( sizeof(double)*optInTimePeriod );
+      if( !sufLowest )
+      {
+         if( sufHighest != &local_sufHighest[0] ) TA_Free( sufHighest );
+         if( preHighest != &local_preHighest[0] ) TA_Free( preHighest );
+         return TA_ALLOC_ERR;
+      }
+   }
+   else
+   {
+      sufLowest = &local_sufLowest[0];
+   }
+   if( optInTimePeriod < 1 ) return TA_INTERNAL_ERROR(489);
+   if( (int)optInTimePeriod > (int)(sizeof(local_preLowest)/sizeof(double)) )
+   {
+      preLowest = TA_Malloc( sizeof(double)*optInTimePeriod );
+      if( !preLowest )
+      {
+         if( sufHighest != &local_sufHighest[0] ) TA_Free( sufHighest );
+         if( preHighest != &local_preHighest[0] ) TA_Free( preHighest );
+         if( sufLowest != &local_sufLowest[0] ) TA_Free( sufLowest );
+         return TA_ALLOC_ERR;
+      }
+   }
+   else
+   {
+      preLowest = &local_preLowest[0];
+   }
    while( today <= endIdx )
    {
-      /* The channel, over the midpoints rather than over the highs and the
-       * lows separately: this indicator reads one series, which happens to be
-       * (H+L)/2, so both extremes come from that same series. STOCH's shape,
-       * with the midpoint recomputed on the rare rescan rather than held in a
-       * buffer the caller would have to own.
-       */
-      price = (inHigh[today] + inLow[today]) / 2.0;
-      if( highestIdx < trailingIdx )
+      /* Suffix extrema of the block [blockStart, today]. */
+      i = today;
+      tempHigh = inHigh[i];
+      tempLow = inLow[i];
+      highest = (tempHigh + tempLow) / 2.0;
+      lowest = highest;
+      sufHighest[optInTimePeriod - 1] = highest;
+      sufLowest[optInTimePeriod - 1] = lowest;
+      TA_UNROLL(4)
+      while( i > blockStart )
       {
-         highestIdx = trailingIdx;
-         tempHigh = inHigh[highestIdx];
-         tempLow = inLow[highestIdx];
-         highest = (tempHigh + tempLow) / 2.0;
-         i = highestIdx;
-         while( ++i <= today )
+         i -= 1;
+         tempHigh = inHigh[i];
+         tempLow = inLow[i];
+         tempReal = (tempHigh + tempLow) / 2.0;
+         if( tempReal > highest )
          {
-            tempHigh = inHigh[i];
-            tempLow = inLow[i];
+            highest = tempReal;
+         }
+         if( tempReal < lowest )
+         {
+            lowest = tempReal;
+         }
+         sufHighest[i - blockStart] = highest;
+         sufLowest[i - blockStart] = lowest;
+      }
+      /* Prefix extrema of the next block, clamped to what remains, stored
+       * one slot up: slot 0 repeats the suffix so that bar 'today', whose
+       * window is the block itself, runs the same combine as the others.
+       */
+      blockNext = blockStart + optInTimePeriod;
+      nAvail = endIdx + 1 - blockNext;
+      if( nAvail > optInTimePeriod - 1 )
+      {
+         nAvail = optInTimePeriod - 1;
+      }
+      preHighest[0] = sufHighest[0];
+      preLowest[0] = sufLowest[0];
+      if( nAvail > 0 )
+      {
+         tempHigh = inHigh[blockNext];
+         tempLow = inLow[blockNext];
+         highest = (tempHigh + tempLow) / 2.0;
+         lowest = highest;
+         preHighest[1] = highest;
+         preLowest[1] = lowest;
+         i = 1;
+         TA_UNROLL(4)
+         while( i < nAvail )
+         {
+            tempHigh = inHigh[blockNext + i];
+            tempLow = inLow[blockNext + i];
             tempReal = (tempHigh + tempLow) / 2.0;
             if( tempReal > highest )
             {
-               highestIdx = i;
                highest = tempReal;
             }
-         }
-      } else if( price >= highest )
-      {
-         highestIdx = today;
-         highest = price;
-      }
-      if( lowestIdx < trailingIdx )
-      {
-         lowestIdx = trailingIdx;
-         tempHigh = inHigh[lowestIdx];
-         tempLow = inLow[lowestIdx];
-         lowest = (tempHigh + tempLow) / 2.0;
-         i = lowestIdx;
-         while( ++i <= today )
-         {
-            tempHigh = inHigh[i];
-            tempLow = inLow[i];
-            tempReal = (tempHigh + tempLow) / 2.0;
             if( tempReal < lowest )
             {
-               lowestIdx = i;
                lowest = tempReal;
             }
+            preHighest[i + 1] = highest;
+            preLowest[i + 1] = lowest;
+            i += 1;
          }
-      } else if( price <= lowest )
-      {
-         lowestIdx = today;
-         lowest = price;
       }
-      /* A flat window answers the neutral position rather than dividing by
-       * its own zero range. The band is the range against its own two
-       * extremes, STOCH's test: a fixed constant answers "flat" for every
-       * window of an instrument quoted below it (#253), and an exact test
-       * divides a machine-flat window into noise (#107). At 0.5 the bar
-       * contributes nothing and both recursions decay on their own
-       * coefficients.
-       */
-      tempReal = highest - lowest;
-      if( !TA_IS_ZERO_SCALED(tempReal, fabs(highest) + fabs(lowest)) )
+      m = 0;
+      while( m <= nAvail )
       {
-         ratio = (price - lowest) / tempReal;
-      } else 
-      {
-         ratio = 0.5;
+         highest = sufHighest[m];
+         if( preHighest[m] > highest )
+         {
+            highest = preHighest[m];
+         }
+         lowest = sufLowest[m];
+         if( preLowest[m] < lowest )
+         {
+            lowest = preLowest[m];
+         }
+         tempHigh = inHigh[today + m];
+         tempLow = inLow[today + m];
+         price = (tempHigh + tempLow) / 2.0;
+         tempReal = highest - lowest;
+         if( !TA_IS_ZERO_SCALED(tempReal, fabs(highest) + fabs(lowest)) )
+         {
+            ratio = (price - lowest) / tempReal;
+         } else 
+         {
+            ratio = 0.5;
+         }
+         smoothed = fma(0.67, smoothed, 0.33 * 2.0 * (ratio - 0.5));
+         if( smoothed > 0.99 )
+         {
+            smoothed = 0.999;
+         }
+         if( smoothed < -0.99 )
+         {
+            smoothed = -0.999;
+         }
+         fish = fma(0.5, log((1.0 + smoothed) / (1.0 - smoothed)), 0.5 * prevFish);
+         if( today + m >= startIdx )
+         {
+            outFisher[outIdx] = fish;
+            outTrigger[outIdx] = prevFish;
+            outIdx = outIdx + 1;
+         }
+         prevFish = fish;
+         m += 1;
       }
-      /* The listing's .33*2*(r-.5) + .67*Value1[1]. */
-      smoothed = fma(0.67, smoothed, 0.33 * 2.0 * (ratio - 0.5));
-      /* The clamp is what keeps atanh finite, and the CLAMPED smoothed is what
-       * the next bar's smoothing reads -- the listing assigns it back to
-       * Value1 rather than holding it for the transform alone.
-       */
-      if( smoothed > 0.99 )
-      {
-         smoothed = 0.999;
-      }
-      if( smoothed < -0.99 )
-      {
-         smoothed = -0.999;
-      }
-      fish = fma(0.5, log((1.0 + smoothed) / (1.0 - smoothed)), 0.5 * prevFish);
-      if( today >= startIdx )
-      {
-         outFisher[outIdx] = fish;
-         /* The author's second plot is Fish[1]: the previous bar's smoothed,
-          * which at the first output bar is the zero seed when no unstable
-          * period was discarded, and the computed smoothed of the bar before it
-          * when one was.
-          */
-         outTrigger[outIdx] = prevFish;
-         outIdx = outIdx + 1;
-      }
-      prevFish = fish;
-      trailingIdx += 1;
-      today += 1;
+      today = today + nAvail + 1;
+      blockStart = blockNext;
    }
+   if( sufHighest != &local_sufHighest[0] ) { TA_Free( sufHighest ); sufHighest = &local_sufHighest[0]; }
+   if( preHighest != &local_preHighest[0] ) { TA_Free( preHighest ); preHighest = &local_preHighest[0]; }
+   if( sufLowest != &local_sufLowest[0] ) { TA_Free( sufLowest ); sufLowest = &local_sufLowest[0]; }
+   if( preLowest != &local_preLowest[0] ) { TA_Free( preLowest ); preLowest = &local_preLowest[0]; }
    *outNBElement= outIdx;
    *outBegIdx= startIdx;
    return TA_SUCCESS;
@@ -303,6 +362,14 @@ TA_RetCode TA_S_FISHER( int    startIdx,
                         double        outFisher[],
                         double        outTrigger[] )
 {
+   double local_sufHighest[30];
+   double *sufHighest = &local_sufHighest[0];
+   double local_preHighest[30];
+   double *preHighest = &local_preHighest[0];
+   double local_sufLowest[30];
+   double *sufLowest = &local_sufLowest[0];
+   double local_preLowest[30];
+   double *preLowest = &local_preLowest[0];
    double price;
    double highest;
    double lowest;
@@ -318,10 +385,11 @@ TA_RetCode TA_S_FISHER( int    startIdx,
    int unstablePeriod;
    int nbInitialElementNeeded;
    int today;
-   int trailingIdx;
-   int highestIdx;
-   int lowestIdx;
    int i;
+   int m;
+   int blockStart;
+   int blockNext;
+   int nAvail;
 
    if( (startIdx < 0) || (startIdx > TA_INDEX_MAX) )
       return TA_OUT_OF_RANGE_START_INDEX;
@@ -361,95 +429,187 @@ TA_RetCode TA_S_FISHER( int    startIdx,
    smoothed = 0.0;
    prevFish = 0.0;
    today = startIdx - unstablePeriod;
-   trailingIdx = today - lookbackTotal;
-   highestIdx = -1;
-   highest = 0.0;
-   lowestIdx = -1;
-   lowest = 0.0;
+   blockStart = today - lookbackTotal;
    outIdx = 0;
+   if( optInTimePeriod < 1 ) return TA_INTERNAL_ERROR(486);
+   if( (int)optInTimePeriod > (int)(sizeof(local_sufHighest)/sizeof(double)) )
+   {
+      sufHighest = TA_Malloc( sizeof(double)*optInTimePeriod );
+      if( !sufHighest )
+      {
+         return TA_ALLOC_ERR;
+      }
+   }
+   else
+   {
+      sufHighest = &local_sufHighest[0];
+   }
+   if( optInTimePeriod < 1 ) return TA_INTERNAL_ERROR(487);
+   if( (int)optInTimePeriod > (int)(sizeof(local_preHighest)/sizeof(double)) )
+   {
+      preHighest = TA_Malloc( sizeof(double)*optInTimePeriod );
+      if( !preHighest )
+      {
+         if( sufHighest != &local_sufHighest[0] ) TA_Free( sufHighest );
+         return TA_ALLOC_ERR;
+      }
+   }
+   else
+   {
+      preHighest = &local_preHighest[0];
+   }
+   if( optInTimePeriod < 1 ) return TA_INTERNAL_ERROR(488);
+   if( (int)optInTimePeriod > (int)(sizeof(local_sufLowest)/sizeof(double)) )
+   {
+      sufLowest = TA_Malloc( sizeof(double)*optInTimePeriod );
+      if( !sufLowest )
+      {
+         if( sufHighest != &local_sufHighest[0] ) TA_Free( sufHighest );
+         if( preHighest != &local_preHighest[0] ) TA_Free( preHighest );
+         return TA_ALLOC_ERR;
+      }
+   }
+   else
+   {
+      sufLowest = &local_sufLowest[0];
+   }
+   if( optInTimePeriod < 1 ) return TA_INTERNAL_ERROR(489);
+   if( (int)optInTimePeriod > (int)(sizeof(local_preLowest)/sizeof(double)) )
+   {
+      preLowest = TA_Malloc( sizeof(double)*optInTimePeriod );
+      if( !preLowest )
+      {
+         if( sufHighest != &local_sufHighest[0] ) TA_Free( sufHighest );
+         if( preHighest != &local_preHighest[0] ) TA_Free( preHighest );
+         if( sufLowest != &local_sufLowest[0] ) TA_Free( sufLowest );
+         return TA_ALLOC_ERR;
+      }
+   }
+   else
+   {
+      preLowest = &local_preLowest[0];
+   }
    while( today <= endIdx )
    {
-      price = ((double)inHigh[today] + (double)inLow[today]) / 2.0;
-      if( highestIdx < trailingIdx )
+      i = today;
+      tempHigh = (double)inHigh[i];
+      tempLow = (double)inLow[i];
+      highest = (tempHigh + tempLow) / 2.0;
+      lowest = highest;
+      sufHighest[optInTimePeriod - 1] = highest;
+      sufLowest[optInTimePeriod - 1] = lowest;
+      TA_UNROLL(4)
+      while( i > blockStart )
       {
-         highestIdx = trailingIdx;
-         tempHigh = (double)inHigh[highestIdx];
-         tempLow = (double)inLow[highestIdx];
-         highest = (tempHigh + tempLow) / 2.0;
-         i = highestIdx;
-         while( ++i <= today )
+         i -= 1;
+         tempHigh = (double)inHigh[i];
+         tempLow = (double)inLow[i];
+         tempReal = (tempHigh + tempLow) / 2.0;
+         if( tempReal > highest )
          {
-            tempHigh = (double)inHigh[i];
-            tempLow = (double)inLow[i];
+            highest = tempReal;
+         }
+         if( tempReal < lowest )
+         {
+            lowest = tempReal;
+         }
+         sufHighest[i - blockStart] = highest;
+         sufLowest[i - blockStart] = lowest;
+      }
+      blockNext = blockStart + optInTimePeriod;
+      nAvail = endIdx + 1 - blockNext;
+      if( nAvail > optInTimePeriod - 1 )
+      {
+         nAvail = optInTimePeriod - 1;
+      }
+      preHighest[0] = sufHighest[0];
+      preLowest[0] = sufLowest[0];
+      if( nAvail > 0 )
+      {
+         tempHigh = (double)inHigh[blockNext];
+         tempLow = (double)inLow[blockNext];
+         highest = (tempHigh + tempLow) / 2.0;
+         lowest = highest;
+         preHighest[1] = highest;
+         preLowest[1] = lowest;
+         i = 1;
+         TA_UNROLL(4)
+         while( i < nAvail )
+         {
+            tempHigh = (double)inHigh[blockNext + i];
+            tempLow = (double)inLow[blockNext + i];
             tempReal = (tempHigh + tempLow) / 2.0;
             if( tempReal > highest )
             {
-               highestIdx = i;
                highest = tempReal;
             }
-         }
-      } else if( price >= highest )
-      {
-         highestIdx = today;
-         highest = price;
-      }
-      if( lowestIdx < trailingIdx )
-      {
-         lowestIdx = trailingIdx;
-         tempHigh = (double)inHigh[lowestIdx];
-         tempLow = (double)inLow[lowestIdx];
-         lowest = (tempHigh + tempLow) / 2.0;
-         i = lowestIdx;
-         while( ++i <= today )
-         {
-            tempHigh = (double)inHigh[i];
-            tempLow = (double)inLow[i];
-            tempReal = (tempHigh + tempLow) / 2.0;
             if( tempReal < lowest )
             {
-               lowestIdx = i;
                lowest = tempReal;
             }
+            preHighest[i + 1] = highest;
+            preLowest[i + 1] = lowest;
+            i += 1;
          }
-      } else if( price <= lowest )
-      {
-         lowestIdx = today;
-         lowest = price;
       }
-      tempReal = highest - lowest;
-      if( !TA_IS_ZERO_SCALED(tempReal, fabs(highest) + fabs(lowest)) )
+      m = 0;
+      while( m <= nAvail )
       {
-         ratio = (price - lowest) / tempReal;
-      } else 
-      {
-         ratio = 0.5;
+         highest = sufHighest[m];
+         if( preHighest[m] > highest )
+         {
+            highest = preHighest[m];
+         }
+         lowest = sufLowest[m];
+         if( preLowest[m] < lowest )
+         {
+            lowest = preLowest[m];
+         }
+         tempHigh = (double)inHigh[today + m];
+         tempLow = (double)inLow[today + m];
+         price = (tempHigh + tempLow) / 2.0;
+         tempReal = highest - lowest;
+         if( !TA_IS_ZERO_SCALED(tempReal, fabs(highest) + fabs(lowest)) )
+         {
+            ratio = (price - lowest) / tempReal;
+         } else 
+         {
+            ratio = 0.5;
+         }
+         smoothed = fma(0.67, smoothed, 0.33 * 2.0 * (ratio - 0.5));
+         if( smoothed > 0.99 )
+         {
+            smoothed = 0.999;
+         }
+         if( smoothed < -0.99 )
+         {
+            smoothed = -0.999;
+         }
+         fish = fma(0.5, log((1.0 + smoothed) / (1.0 - smoothed)), 0.5 * prevFish);
+         if( today + m >= startIdx )
+         {
+            outFisher[outIdx] = fish;
+            outTrigger[outIdx] = prevFish;
+            outIdx = outIdx + 1;
+         }
+         prevFish = fish;
+         m += 1;
       }
-      smoothed = fma(0.67, smoothed, 0.33 * 2.0 * (ratio - 0.5));
-      if( smoothed > 0.99 )
-      {
-         smoothed = 0.999;
-      }
-      if( smoothed < -0.99 )
-      {
-         smoothed = -0.999;
-      }
-      fish = fma(0.5, log((1.0 + smoothed) / (1.0 - smoothed)), 0.5 * prevFish);
-      if( today >= startIdx )
-      {
-         outFisher[outIdx] = fish;
-         outTrigger[outIdx] = prevFish;
-         outIdx = outIdx + 1;
-      }
-      prevFish = fish;
-      trailingIdx += 1;
-      today += 1;
+      today = today + nAvail + 1;
+      blockStart = blockNext;
    }
+   if( sufHighest != &local_sufHighest[0] ) { TA_Free( sufHighest ); sufHighest = &local_sufHighest[0]; }
+   if( preHighest != &local_preHighest[0] ) { TA_Free( preHighest ); preHighest = &local_preHighest[0]; }
+   if( sufLowest != &local_sufLowest[0] ) { TA_Free( sufLowest ); sufLowest = &local_sufLowest[0]; }
+   if( preLowest != &local_preLowest[0] ) { TA_Free( preLowest ); preLowest = &local_preLowest[0]; }
    *outNBElement= outIdx;
    *outBegIdx= startIdx;
    return TA_SUCCESS;
 }
 
 /**** Streaming API *****/
+
+/* Using fisher_ALT1 for TA_ALT={STREAM,ALL_LANGUAGES} */
 
 struct TA_FISHER_Stream {
    /* The bars this handle has an output for (see TA_FISHER_OutRange). */

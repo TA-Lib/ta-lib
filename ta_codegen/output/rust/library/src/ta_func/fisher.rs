@@ -53,6 +53,7 @@
  *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
  *  100626 KL,CC  Creation (#485).
+ *  100626 MF,CC  Batch tier: block scan of the channel (#485).
  */
 
 // Import types from parent module
@@ -70,7 +71,8 @@ impl Core {
     ///
     /// # Arguments
     ///
-    /// * `optInTimePeriod` — Time period (default 10, range 2..=100000)
+    /// * `optInTimePeriod` — Number of bars in the channel the midpoint is located in (default
+    ///   10, range 2..=100000)
     ///
     /// # Errors
     ///
@@ -84,26 +86,11 @@ impl Core {
         } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
             return Err(RetCode::BadParam);
         }
-        // The channel needs its own n-1 bars before it has a value. On top of that
-        // the two recursions carry a seed that decays rather than ending.
-        //
-        // The count is DERIVED rather than sampled. The seed reaches the output
-        // through the smoothing pole alone -- 0.67 per bar, the same whatever the
-        // period, so unlike EMA's this count does not grow with n. Two factors sit
-        // between that pole and the output: the transform's derivative 1/(1-v^2),
-        // which the clamp caps at 1/(1-0.999^2) = 500 and which is the only reason
-        // this is finite at all, and the convolution with the transform's own 0.5
-        // pole, worth 1/(0.67-0.5) = 5.9. So the seed's weight is under e^-K once
-        //
-        //     n >= (K + ln(500*5.9)) / ln(1/0.67) = (K + 8.0) / 0.4005
-        //
-        // which is 44.9 bars at K = 10 and 67.4 at K = 19. The form below is 2.5
-        // bars per e-fold with those 9 e-folds of gain folded in: 48 and 70.
-        //
-        // A sampled worst case was NOT used. Over 400 input patterns and 22 seeds
-        // it reads 33 and 58, and it kept climbing as the sample grew -- 30 and 54
-        // at a tenth of it -- which is what a sampled maximum does when it is not
-        // a bound.
+        // The seed reaches the output through the smoothing pole alone, 0.67 per
+        // bar whatever the period: 2.5 bars per e-fold. The 9 e-folds added to K
+        // are the gain between that pole and the output: the transform's
+        // derivative, which the clamp caps at 500, times 5.9 for the convolution
+        // with its own 0.5 pole.
         return Ok((optInTimePeriod - 1 + self.unstable_count(FuncUnstId::FISHER, (5 * (10 + 9) + 1) / 2, (5 * (19 + 9) + 1) / 2)) as usize);
     }
     /// Display shift of one output of [`Core::fisher`]: how many bars ahead (positive) or behind
@@ -114,7 +101,8 @@ impl Core {
     ///
     /// # Arguments
     ///
-    /// * `optInTimePeriod` — Time period (default 10, range 2..=100000)
+    /// * `optInTimePeriod` — Number of bars in the channel the midpoint is located in (default
+    ///   10, range 2..=100000)
     /// * `outputIdx` — Position of the output in the batch signature, from 0
     ///
     /// # Errors
@@ -199,6 +187,18 @@ impl Core {
             return RetCode::BadParam;
         }
         let mut startIdx = startIdx;
+        let mut local_sufHighest: [f64; 30] = [0.0_f64; 30];
+        let mut heap_sufHighest: Vec<f64> = Vec::new();
+        let mut sufHighest: &mut [f64] = &mut [];
+        let mut local_preHighest: [f64; 30] = [0.0_f64; 30];
+        let mut heap_preHighest: Vec<f64> = Vec::new();
+        let mut preHighest: &mut [f64] = &mut [];
+        let mut local_sufLowest: [f64; 30] = [0.0_f64; 30];
+        let mut heap_sufLowest: Vec<f64> = Vec::new();
+        let mut sufLowest: &mut [f64] = &mut [];
+        let mut local_preLowest: [f64; 30] = [0.0_f64; 30];
+        let mut heap_preLowest: Vec<f64> = Vec::new();
+        let mut preLowest: &mut [f64] = &mut [];
         let mut price: f64 = 0.0_f64;
         let mut highest: f64 = 0.0_f64;
         let mut lowest: f64 = 0.0_f64;
@@ -214,10 +214,11 @@ impl Core {
         let mut unstablePeriod: usize = 0_usize;
         let mut nbInitialElementNeeded: usize = 0_usize;
         let mut today: usize = 0_usize;
-        let mut trailingIdx: usize = 0_usize;
-        let mut highestIdx: i32 = 0_i32;
-        let mut lowestIdx: i32 = 0_i32;
         let mut i: usize = 0_usize;
+        let mut m: usize = 0_usize;
+        let mut blockStart: usize = 0_usize;
+        let mut blockNext: usize = 0_usize;
+        let mut nAvail: usize = 0_usize;
         nbInitialElementNeeded = self.fisher_lookback(optInTimePeriod).unwrap_or(usize::MAX);
         if startIdx < nbInitialElementNeeded {
             startIdx = nbInitialElementNeeded;
@@ -231,117 +232,151 @@ impl Core {
         let inLow = &inLow[..=endIdx];
         lookbackTotal = (optInTimePeriod - 1) as usize;
         unstablePeriod = nbInitialElementNeeded - lookbackTotal;
-        // John F. Ehlers, "Using The Fisher Transform", Stocks & Commodities
-        // V.20:11 (November 2002), pp.40-42, the EasyLanguage listing in Figure 4.
-        //
-        // The bar's midpoint is located in its rolling n-bar channel, rescaled to
-        // (-1, +1), smoothed, clamped, and passed through atanh. What the
-        // transform buys is the tail: a channel position is close to uniformly
-        // distributed, and the Fisher transform of a uniform variable is close to
-        // normal, so an extreme reading is rare rather than routine and a turn is
-        // a sharp corner rather than a drift.
-        //
-        // Both recursions start from the author's zero seed and decay at their own
-        // coefficient -- 0.67 for the smoothing, 0.5 for the transform -- so the
-        // first bars carry the seed rather than the series. That is what the
-        // unstable period discards.
+        // Same values as fisher_ALT1 below, which carries the formula. Only the
+        // channel differs: a Van Herk / Gil-Werman block scan (WILLR's, issue
+        // #147) over the midpoints, so the cost per bar does not depend on the
+        // period or on the shape of the input, where the cached extremum of
+        // fisher_ALT1 rescans its whole window on every bar of a flat or
+        // trending stretch. Every scratch array holds copies, so an output may
+        // alias an input.
         smoothed = 0.0;
         prevFish = 0.0;
         today = startIdx - unstablePeriod;
-        trailingIdx = today - lookbackTotal;
-        highestIdx = -1;
-        highest = 0.0;
-        lowestIdx = -1;
-        lowest = 0.0;
+        blockStart = today - lookbackTotal;
         outIdx = 0;
+        if optInTimePeriod < 1 { return RetCode::InternalError; }
+        if (optInTimePeriod) as usize <= 30usize {
+            sufHighest = &mut local_sufHighest[..(optInTimePeriod) as usize];
+        } else {
+            heap_sufHighest = vec![0.0_f64; (optInTimePeriod) as usize];
+            sufHighest = &mut heap_sufHighest;
+        }
+        if optInTimePeriod < 1 { return RetCode::InternalError; }
+        if (optInTimePeriod) as usize <= 30usize {
+            preHighest = &mut local_preHighest[..(optInTimePeriod) as usize];
+        } else {
+            heap_preHighest = vec![0.0_f64; (optInTimePeriod) as usize];
+            preHighest = &mut heap_preHighest;
+        }
+        if optInTimePeriod < 1 { return RetCode::InternalError; }
+        if (optInTimePeriod) as usize <= 30usize {
+            sufLowest = &mut local_sufLowest[..(optInTimePeriod) as usize];
+        } else {
+            heap_sufLowest = vec![0.0_f64; (optInTimePeriod) as usize];
+            sufLowest = &mut heap_sufLowest;
+        }
+        if optInTimePeriod < 1 { return RetCode::InternalError; }
+        if (optInTimePeriod) as usize <= 30usize {
+            preLowest = &mut local_preLowest[..(optInTimePeriod) as usize];
+        } else {
+            heap_preLowest = vec![0.0_f64; (optInTimePeriod) as usize];
+            preLowest = &mut heap_preLowest;
+        }
         while today <= endIdx {
-            // The channel, over the midpoints rather than over the highs and the
-            // lows separately: this indicator reads one series, which happens to be
-            // (H+L)/2, so both extremes come from that same series. STOCH's shape,
-            // with the midpoint recomputed on the rare rescan rather than held in a
-            // buffer the caller would have to own.
-            price = (inHigh[today] + inLow[today]) / 2.0;
-            if highestIdx < ((trailingIdx) as i32) {
-                highestIdx = (trailingIdx) as i32;
-                tempHigh = inHigh[(highestIdx) as usize];
-                tempLow = inLow[(highestIdx) as usize];
+            // Suffix extrema of the block [blockStart, today].
+            i = today;
+            tempHigh = inHigh[i];
+            tempLow = inLow[i];
+            highest = (tempHigh + tempLow) / 2.0;
+            lowest = highest;
+            sufHighest[(optInTimePeriod - 1) as usize] = highest;
+            sufLowest[(optInTimePeriod - 1) as usize] = lowest;
+            if i > blockStart {
+                let _wn: usize = i - blockStart;
+                let _w0 = &inHigh[i - _wn..][.._wn];
+                let _w1 = &inLow[i - _wn..][.._wn];
+                let _w2 = &mut sufHighest[i - _wn - blockStart..][.._wn];
+                let _w3 = &mut sufLowest[i - _wn - blockStart..][.._wn];
+                for _wk in (0.._wn).rev() {
+                    i -= 1;
+                    tempHigh = _w0[_wk];
+                    tempLow = _w1[_wk];
+                    tempReal = (tempHigh + tempLow) / 2.0;
+                    highest = c_max(tempReal, highest);
+                    lowest = c_min(tempReal, lowest);
+                    _w2[_wk] = highest;
+                    _w3[_wk] = lowest;
+                }
+            }
+            // Prefix extrema of the next block, clamped to what remains, stored
+            // one slot up: slot 0 repeats the suffix so that bar 'today', whose
+            // window is the block itself, runs the same combine as the others.
+            blockNext = blockStart + ((optInTimePeriod) as usize);
+            nAvail = endIdx + 1 - blockNext;
+            if nAvail > ((optInTimePeriod - 1) as usize) {
+                nAvail = (optInTimePeriod - 1) as usize;
+            }
+            preHighest[0] = sufHighest[0];
+            preLowest[0] = sufLowest[0];
+            if nAvail > 0 {
+                tempHigh = inHigh[blockNext];
+                tempLow = inLow[blockNext];
                 highest = (tempHigh + tempLow) / 2.0;
-                i = (highestIdx) as usize;
-                while { i += 1; i } <= today {
-                    tempHigh = inHigh[i];
-                    tempLow = inLow[i];
-                    tempReal = (tempHigh + tempLow) / 2.0;
-                    if tempReal > highest {
-                        highestIdx = (i) as i32;
-                        highest = tempReal;
+                lowest = highest;
+                preHighest[1] = highest;
+                preLowest[1] = lowest;
+                i = 1;
+                if i < nAvail {
+                    let _wn: usize = nAvail - i;
+                    let _w0 = &inHigh[blockNext + i..][.._wn];
+                    let _w1 = &inLow[blockNext + i..][.._wn];
+                    let _w2 = &mut preHighest[i + 1..][.._wn];
+                    let _w3 = &mut preLowest[i + 1..][.._wn];
+                    for _wk in 0.._wn {
+                        tempHigh = _w0[_wk];
+                        tempLow = _w1[_wk];
+                        tempReal = (tempHigh + tempLow) / 2.0;
+                        highest = c_max(tempReal, highest);
+                        lowest = c_min(tempReal, lowest);
+                        _w2[_wk] = highest;
+                        _w3[_wk] = lowest;
+                        i += 1;
                     }
                 }
-            } else if price >= highest {
-                highestIdx = (today) as i32;
-                highest = price;
             }
-            if lowestIdx < ((trailingIdx) as i32) {
-                lowestIdx = (trailingIdx) as i32;
-                tempHigh = inHigh[(lowestIdx) as usize];
-                tempLow = inLow[(lowestIdx) as usize];
-                lowest = (tempHigh + tempLow) / 2.0;
-                i = (lowestIdx) as usize;
-                while { i += 1; i } <= today {
-                    tempHigh = inHigh[i];
-                    tempLow = inLow[i];
-                    tempReal = (tempHigh + tempLow) / 2.0;
-                    if tempReal < lowest {
-                        lowestIdx = (i) as i32;
-                        lowest = tempReal;
-                    }
+            m = 0;
+            while m <= nAvail {
+                highest = sufHighest[m];
+                highest = c_max(preHighest[m], highest);
+                lowest = sufLowest[m];
+                lowest = c_min(preLowest[m], lowest);
+                tempHigh = inHigh[today + m];
+                tempLow = inLow[today + m];
+                price = (tempHigh + tempLow) / 2.0;
+                tempReal = highest - lowest;
+                if !(((tempReal).abs() <= 1e-14 * ((highest).abs() + (lowest).abs()))) {
+                    ratio = (price - lowest) / tempReal;
+                } else {
+                    ratio = 0.5;
                 }
-            } else if price <= lowest {
-                lowestIdx = (today) as i32;
-                lowest = price;
+                smoothed = (0.67 as f64).mul_add(smoothed, 0.33 * 2.0 * (ratio - 0.5));
+                if smoothed > 0.99 {
+                    smoothed = 0.999;
+                }
+                if smoothed < -0.99 {
+                    smoothed = -0.999;
+                }
+                fish = (0.5 as f64).mul_add(((1.0 + smoothed) / (1.0 - smoothed)).ln(), 0.5 * prevFish);
+                if today + m >= startIdx {
+                    outFisher[outIdx] = fish;
+                    outTrigger[outIdx] = prevFish;
+                    outIdx = outIdx + 1;
+                }
+                prevFish = fish;
+                m += 1;
             }
-            // A flat window answers the neutral position rather than dividing by
-            // its own zero range. The band is the range against its own two
-            // extremes, STOCH's test: a fixed constant answers "flat" for every
-            // window of an instrument quoted below it (#253), and an exact test
-            // divides a machine-flat window into noise (#107). At 0.5 the bar
-            // contributes nothing and both recursions decay on their own
-            // coefficients.
-            tempReal = highest - lowest;
-            if !(((tempReal).abs() <= 1e-14 * ((highest).abs() + (lowest).abs()))) {
-                ratio = (price - lowest) / tempReal;
-            } else {
-                ratio = 0.5;
-            }
-            // The listing's .33*2*(r-.5) + .67*Value1[1].
-            smoothed = (0.67 as f64).mul_add(smoothed, 0.33 * 2.0 * (ratio - 0.5));
-            // The clamp is what keeps atanh finite, and the CLAMPED smoothed is what
-            // the next bar's smoothing reads -- the listing assigns it back to
-            // Value1 rather than holding it for the transform alone.
-            if smoothed > 0.99 {
-                smoothed = 0.999;
-            }
-            if smoothed < -0.99 {
-                smoothed = -0.999;
-            }
-            fish = (0.5 as f64).mul_add(((1.0 + smoothed) / (1.0 - smoothed)).ln(), 0.5 * prevFish);
-            if today >= startIdx {
-                outFisher[outIdx] = fish;
-                // The author's second plot is Fish[1]: the previous bar's smoothed,
-                // which at the first output bar is the zero seed when no unstable
-                // period was discarded, and the computed smoothed of the bar before it
-                // when one was.
-                outTrigger[outIdx] = prevFish;
-                outIdx = outIdx + 1;
-            }
-            prevFish = fish;
-            trailingIdx += 1;
-            today += 1;
+            today = today + nAvail + 1;
+            blockStart = blockNext;
         }
         (*outNBElement) = outIdx;
         (*outBegIdx) = startIdx;
         return RetCode::Success;
     }
-    /// Fisher Transform
+    /// Ehlers' Fisher Transform: an oscillator that reshapes the midpoint's position in its rolling
+    /// channel into a near-normal distribution. Extreme values become rare and turning points
+    /// sharp, where a plain channel position spends much of its time pinned near the edges. The
+    /// output is unbounded and centred on zero. A peak or trough marks a likely turn, and the
+    /// Fisher line crossing its Trigger, the same line one bar later, is the author's entry signal.
     ///
     /// Formula and more info at [ta-lib.org/functions/fisher](https://ta-lib.org/functions/fisher).
     ///
@@ -349,11 +384,12 @@ impl Core {
     ///
     /// * `startIdx` — Start index of the requested calculation range.
     /// * `endIdx` — End index of the requested calculation range (inclusive).
-    /// * `inHigh` — High prices per bar.
-    /// * `inLow` — Low prices per bar.
-    /// * `optInTimePeriod` — Time period (default 10, range 2..=100000)
-    /// * `outFisher` — Output values.
-    /// * `outTrigger` — Output values.
+    /// * `inHigh` — High price of each bar.
+    /// * `inLow` — Low price of each bar.
+    /// * `optInTimePeriod` — Number of bars in the channel the midpoint is located in (default
+    ///   10, range 2..=100000)
+    /// * `outFisher` — Fisher Transform value.
+    /// * `outTrigger` — Fisher value of the previous bar.
     ///
     /// Integer parameters accept [`Core::INTEGER_DEFAULT`] to select their default value.
     ///
@@ -393,7 +429,20 @@ impl Core {
     /// assert!(fisher[..out_range.count].iter().all(|v| v.is_finite()));
     /// # Ok::<(), ta_lib::RetCode>(())
     /// ```
+    ///
+    /// # See also
+    ///
+    /// [`STOCHF`](Core::stochf) · [`WILLR`](Core::willr) · [`MIDPRICE`](Core::midprice) ·
+    /// [`IBS`](Core::ibs)
+    ///
+    /// # References
+    ///
+    /// * John F. Ehlers, "Using The Fisher Transform", *Technical Analysis of Stocks &
+    ///   Commodities*, V.20:11 (November 2002), 40-42
+    /// * John F. Ehlers, *Cybernetic Analysis for Stocks and Futures*, Wiley, 2004
     #[doc(alias = "TA_FISHER")]
+    #[doc(alias = "FisherTransform")]
+    #[doc(alias = "EhlersFisherTransform")]
     pub fn fisher(
         &self,
         startIdx: usize,
@@ -446,6 +495,8 @@ impl Core {
 
 }
 /**** Streaming API *****/
+
+/* Using fisher_ALT1 for TA_ALT={STREAM,ALL_LANGUAGES} */
 
 /// Live FISHER stream: one value per closed bar, bit-identical to [`Core::fisher`]
 /// over the same series. Open with [`Core::fisher_open`]; dropping the handle

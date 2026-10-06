@@ -11,7 +11,10 @@
  *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
  *  100626 KL,CC  Creation (#485).
+ *  100626 MF,CC  Batch tier: block scan of the channel (#485).
  */
+
+/* Using fisher_ALT1 for TA_ALT={BATCH,JAVA} */
 
    /**
     * Number of leading input bars {@link Core#fisher} consumes before it can
@@ -23,8 +26,9 @@
     * {@code Core}'s unstable-period setting — which is why it is an instance
     * method.
     *
-    * @param optInTimePeriod Time period (default 10; range 2..100000;
-    *        {@code Integer.MIN_VALUE} selects the default).
+    * @param optInTimePeriod Number of bars in the channel the midpoint is
+    *        located in (default 10; range 2..100000; {@code Integer.MIN_VALUE} selects
+    *        the default).
     * @return The lookback, or {@code -1} if a parameter is out of range.
     */
    public int fisherLookback( int optInTimePeriod )
@@ -34,26 +38,11 @@
       } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
          return -1;
       }
-      /* The channel needs its own n-1 bars before it has a value. On top of that
-       * the two recursions carry a seed that decays rather than ending.
-       *
-       * The count is DERIVED rather than sampled. The seed reaches the output
-       * through the smoothing pole alone -- 0.67 per bar, the same whatever the
-       * period, so unlike EMA's this count does not grow with n. Two factors sit
-       * between that pole and the output: the transform's derivative 1/(1-v^2),
-       * which the clamp caps at 1/(1-0.999^2) = 500 and which is the only reason
-       * this is finite at all, and the convolution with the transform's own 0.5
-       * pole, worth 1/(0.67-0.5) = 5.9. So the seed's weight is under e^-K once
-       *
-       *     n >= (K + ln(500*5.9)) / ln(1/0.67) = (K + 8.0) / 0.4005
-       *
-       * which is 44.9 bars at K = 10 and 67.4 at K = 19. The form below is 2.5
-       * bars per e-fold with those 9 e-folds of gain folded in: 48 and 70.
-       *
-       * A sampled worst case was NOT used. Over 400 input patterns and 22 seeds
-       * it reads 33 and 58, and it kept climbing as the sample grew -- 30 and 54
-       * at a tenth of it -- which is what a sampled maximum does when it is not
-       * a bound.
+      /* The seed reaches the output through the smoothing pole alone, 0.67 per
+       * bar whatever the period: 2.5 bars per e-fold. The 9 e-folds added to K
+       * are the gain between that pole and the output: the transform's
+       * derivative, which the clamp caps at 500, times 5.9 for the convolution
+       * with its own 0.5 pole.
        */
       return optInTimePeriod - 1 + this.unstableCount(FuncUnstId.FISHER.ordinal(), (5 * (10 + 9) + 1) / 2, (5 * (19 + 9) + 1) / 2) ;
 
@@ -64,8 +53,9 @@
     * <p>Every output of this function is drawn at its own bar, so the answer is
     * 0.
     *
-    * @param optInTimePeriod Time period (default 10; range 2..100000;
-    *        {@code Integer.MIN_VALUE} selects the default).
+    * @param optInTimePeriod Number of bars in the channel the midpoint is
+    *        located in (default 10; range 2..100000; {@code Integer.MIN_VALUE} selects
+    *        the default).
     * @param outputIdx Position of the output in the batch signature, from 0.
     * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
     *        out of range or the index names no output.
@@ -380,9 +370,19 @@
       return RetCode.SUCCESS ;
    }
    /**
-    * Fisher Transform
+    * Ehlers' Fisher Transform: an oscillator that reshapes the midpoint's
+    * position in its rolling channel into a near-normal distribution. Extreme
+    * values become rare and turning points sharp, where a plain channel
+    * position spends much of its time pinned near the edges. The output is
+    * unbounded and centred on zero. A peak or trough marks a likely turn, and
+    * the Fisher line crossing its Trigger, the same line one bar later, is the
+    * author's entry signal.
     * <p>Formula and more info at <a
     * href="https://ta-lib.org/functions/fisher">ta-lib.org/functions/fisher</a>.
+    * <p><b>Notes</b>
+    * <ul>
+    * <li>A window whose midpoints are all equal takes the neutral position, so a market that does not move decays toward 0. The original divides by the zero range there.</li>
+    * </ul>
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are, and the
     * library never pads with NaN. A valid range that ends before
@@ -391,14 +391,15 @@
     *
     * @param startIdx First bar of the requested range (inclusive).
     * @param endIdx Last bar of the requested range (inclusive).
-    * @param inHigh High price per bar.
-    * @param inLow Low price per bar.
-    * @param optInTimePeriod Time period (default 10; range 2..100000;
-    *        {@code Integer.MIN_VALUE} selects the default).
-    * @param outFisher Output values. Must hold at least
+    * @param inHigh High price of each bar.
+    * @param inLow Low price of each bar.
+    * @param optInTimePeriod Number of bars in the channel the midpoint is
+    *        located in (default 10; range 2..100000; {@code Integer.MIN_VALUE} selects
+    *        the default).
+    * @param outFisher Fisher Transform value. Must hold at least
     *        {@code endIdx - max(startIdx, fisherLookback(...)) + 1} values, and never
     *        be empty: an empty array is an absent output.
-    * @param outTrigger Output values. Must hold at least
+    * @param outTrigger Fisher value of the previous bar. Must hold at least
     *        {@code endIdx - max(startIdx, fisherLookback(...)) + 1} values, and never
     *        be empty: an empty array is an absent output.
     * @return The range written: {@code begIdx} is the first bar with a value,
@@ -414,6 +415,11 @@
     *        same. An output this function documents as declinable is the one
     *        exception: {@code null} is how you decline it. Checked before anything is
     *        written, so a rejected call leaves every buffer untouched.
+    *
+    * @see Core#stochf
+    * @see Core#willr
+    * @see Core#midprice
+    * @see Core#ibs
     */
    public OutRange fisher( int startIdx,
                            int endIdx,
@@ -440,9 +446,19 @@
       return new OutRange(outBegIdx.value, outNBElement.value);
    }
    /**
-    * Fisher Transform
+    * Ehlers' Fisher Transform: an oscillator that reshapes the midpoint's
+    * position in its rolling channel into a near-normal distribution. Extreme
+    * values become rare and turning points sharp, where a plain channel
+    * position spends much of its time pinned near the edges. The output is
+    * unbounded and centred on zero. A peak or trough marks a likely turn, and
+    * the Fisher line crossing its Trigger, the same line one bar later, is the
+    * author's entry signal.
     * <p>Formula and more info at <a
     * href="https://ta-lib.org/functions/fisher">ta-lib.org/functions/fisher</a>.
+    * <p><b>Notes</b>
+    * <ul>
+    * <li>A window whose midpoints are all equal takes the neutral position, so a market that does not move decays toward 0. The original divides by the zero range there.</li>
+    * </ul>
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a
     * result beyond {@code float} range is still representable.
@@ -454,14 +470,15 @@
     *
     * @param startIdx First bar of the requested range (inclusive).
     * @param endIdx Last bar of the requested range (inclusive).
-    * @param inHigh High price per bar.
-    * @param inLow Low price per bar.
-    * @param optInTimePeriod Time period (default 10; range 2..100000;
-    *        {@code Integer.MIN_VALUE} selects the default).
-    * @param outFisher Output values. Must hold at least
+    * @param inHigh High price of each bar.
+    * @param inLow Low price of each bar.
+    * @param optInTimePeriod Number of bars in the channel the midpoint is
+    *        located in (default 10; range 2..100000; {@code Integer.MIN_VALUE} selects
+    *        the default).
+    * @param outFisher Fisher Transform value. Must hold at least
     *        {@code endIdx - max(startIdx, fisherLookback(...)) + 1} values, and never
     *        be empty: an empty array is an absent output.
-    * @param outTrigger Output values. Must hold at least
+    * @param outTrigger Fisher value of the previous bar. Must hold at least
     *        {@code endIdx - max(startIdx, fisherLookback(...)) + 1} values, and never
     *        be empty: an empty array is an absent output.
     * @return The range written: {@code begIdx} is the first bar with a value,
@@ -477,6 +494,11 @@
     *        same. An output this function documents as declinable is the one
     *        exception: {@code null} is how you decline it. Checked before anything is
     *        written, so a rejected call leaves every buffer untouched.
+    *
+    * @see Core#stochf
+    * @see Core#willr
+    * @see Core#midprice
+    * @see Core#ibs
     */
    public OutRange fisher( int startIdx,
                            int endIdx,
@@ -503,6 +525,8 @@
       return new OutRange(outBegIdx.value, outNBElement.value);
    }
 /**** Streaming API *****/
+
+/* Using fisher_ALT1 for TA_ALT={STREAM,ALL_LANGUAGES} */
 
    /**
     * A live FISHER stream (unrelated to {@code java.util.stream}): one value per
@@ -788,9 +812,9 @@
     * invariant the moment a reused instance becomes a key. Compare the fields.
     */
    public static final class FisherOut {
-      /** Output values. */
+      /** Fisher Transform value. */
       public double fisher;
-      /** Output values. */
+      /** Fisher value of the previous bar. */
       public double trigger;
    }
    private void fisherStepImpl( FisherStream sp, double inHigh, double inLow )

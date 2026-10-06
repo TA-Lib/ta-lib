@@ -55,6 +55,7 @@ public partial class Core
     *  MMDDYY BY     Description
     *  -------------------------------------------------------------------
     *  100626 KL,CC  Creation (#485).
+    *  100626 MF,CC  Batch tier: block scan of the channel (#485).
     */
    /// <summary>
    /// Number of leading input bars <c>Fisher</c> consumes before it can produce
@@ -69,8 +70,8 @@ public partial class Core
    /// unstable-period setting — which is why it is an instance method.
    /// </para>
    /// </remarks>
-   /// <param name="optInTimePeriod">Time period (default 10; range 2..100000; <c>int.MinValue</c> selects the
-   /// default).</param>
+   /// <param name="optInTimePeriod">Number of bars in the channel the midpoint is located in (default 10;
+   /// range 2..100000; <c>int.MinValue</c> selects the default).</param>
    /// <returns>The lookback, or <c>-1</c> if a parameter is out of range.</returns>
    public int FisherLookback( int optInTimePeriod )
    {
@@ -79,26 +80,11 @@ public partial class Core
       } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
          return -1;
       }
-      /* The channel needs its own n-1 bars before it has a value. On top of that
-       * the two recursions carry a seed that decays rather than ending.
-       *
-       * The count is DERIVED rather than sampled. The seed reaches the output
-       * through the smoothing pole alone -- 0.67 per bar, the same whatever the
-       * period, so unlike EMA's this count does not grow with n. Two factors sit
-       * between that pole and the output: the transform's derivative 1/(1-v^2),
-       * which the clamp caps at 1/(1-0.999^2) = 500 and which is the only reason
-       * this is finite at all, and the convolution with the transform's own 0.5
-       * pole, worth 1/(0.67-0.5) = 5.9. So the seed's weight is under e^-K once
-       *
-       *     n >= (K + ln(500*5.9)) / ln(1/0.67) = (K + 8.0) / 0.4005
-       *
-       * which is 44.9 bars at K = 10 and 67.4 at K = 19. The form below is 2.5
-       * bars per e-fold with those 9 e-folds of gain folded in: 48 and 70.
-       *
-       * A sampled worst case was NOT used. Over 400 input patterns and 22 seeds
-       * it reads 33 and 58, and it kept climbing as the sample grew -- 30 and 54
-       * at a tenth of it -- which is what a sampled maximum does when it is not
-       * a bound.
+      /* The seed reaches the output through the smoothing pole alone, 0.67 per
+       * bar whatever the period: 2.5 bars per e-fold. The 9 e-folds added to K
+       * are the gain between that pole and the output: the transform's
+       * derivative, which the clamp caps at 500, times 5.9 for the convolution
+       * with its own 0.5 pole.
        */
       return optInTimePeriod - 1 + this.UnstableCount((int)FuncUnstId.FISHER, (5 * (10 + 9) + 1) / 2, (5 * (19 + 9) + 1) / 2) ;
 
@@ -110,8 +96,8 @@ public partial class Core
    /// <remarks>
    /// Every output of this function is drawn at its own bar, so the answer is 0.
    /// </remarks>
-   /// <param name="optInTimePeriod">Time period (default 10; range 2..100000; <c>int.MinValue</c> selects the
-   /// default).</param>
+   /// <param name="optInTimePeriod">Number of bars in the channel the midpoint is located in (default 10;
+   /// range 2..100000; <c>int.MinValue</c> selects the default).</param>
    /// <param name="outputIdx">Position of the output in the batch signature, from 0.</param>
    /// <returns>The display shift, or <c>int.MinValue</c> if a parameter is out of range
    /// or the index names no output.</returns>
@@ -137,6 +123,18 @@ public partial class Core
    {
       outBegIdx = 0;
       outNBElement = 0;
+      double[] sufHighest;
+      int sufHighest_Idx = 0;
+      int maxIdx_sufHighest = (30)-1;
+      double[] preHighest;
+      int preHighest_Idx = 0;
+      int maxIdx_preHighest = (30)-1;
+      double[] sufLowest;
+      int sufLowest_Idx = 0;
+      int maxIdx_sufLowest = (30)-1;
+      double[] preLowest;
+      int preLowest_Idx = 0;
+      int maxIdx_preLowest = (30)-1;
       double price = 0;
       double highest = 0;
       double lowest = 0;
@@ -152,10 +150,11 @@ public partial class Core
       int unstablePeriod = 0;
       int nbInitialElementNeeded = 0;
       int today = 0;
-      int trailingIdx = 0;
-      int highestIdx = 0;
-      int lowestIdx = 0;
       int i = 0;
+      int m = 0;
+      int blockStart = 0;
+      int blockNext = 0;
+      int nAvail = 0;
       if( (startIdx < 0) || (startIdx > IndexMax) ) {
          return RetCode.OutOfRangeStartIndex ;
       }
@@ -184,116 +183,117 @@ public partial class Core
       }
       lookbackTotal = optInTimePeriod - 1;
       unstablePeriod = nbInitialElementNeeded - lookbackTotal;
-      /* John F. Ehlers, "Using The Fisher Transform", Stocks & Commodities
-       * V.20:11 (November 2002), pp.40-42, the EasyLanguage listing in Figure 4.
-       *
-       * The bar's midpoint is located in its rolling n-bar channel, rescaled to
-       * (-1, +1), smoothed, clamped, and passed through atanh. What the
-       * transform buys is the tail: a channel position is close to uniformly
-       * distributed, and the Fisher transform of a uniform variable is close to
-       * normal, so an extreme reading is rare rather than routine and a turn is
-       * a sharp corner rather than a drift.
-       *
-       * Both recursions start from the author's zero seed and decay at their own
-       * coefficient -- 0.67 for the smoothing, 0.5 for the transform -- so the
-       * first bars carry the seed rather than the series. That is what the
-       * unstable period discards.
+      /* Same values as fisher_ALT1 below, which carries the formula. Only the
+       * channel differs: a Van Herk / Gil-Werman block scan (WILLR's, issue
+       * #147) over the midpoints, so the cost per bar does not depend on the
+       * period or on the shape of the input, where the cached extremum of
+       * fisher_ALT1 rescans its whole window on every bar of a flat or
+       * trending stretch. Every scratch array holds copies, so an output may
+       * alias an input.
        */
       smoothed = 0.0;
       prevFish = 0.0;
       today = startIdx - unstablePeriod;
-      trailingIdx = today - lookbackTotal;
-      highestIdx = -1;
-      highest = 0.0;
-      lowestIdx = -1;
-      lowest = 0.0;
+      blockStart = today - lookbackTotal;
       outIdx = 0;
+      if( optInTimePeriod < 1 ) return RetCode.InternalError;
+      sufHighest = new double[optInTimePeriod];
+      maxIdx_sufHighest = (optInTimePeriod)-1;
+      sufHighest_Idx = 0;
+      if( optInTimePeriod < 1 ) return RetCode.InternalError;
+      preHighest = new double[optInTimePeriod];
+      maxIdx_preHighest = (optInTimePeriod)-1;
+      preHighest_Idx = 0;
+      if( optInTimePeriod < 1 ) return RetCode.InternalError;
+      sufLowest = new double[optInTimePeriod];
+      maxIdx_sufLowest = (optInTimePeriod)-1;
+      sufLowest_Idx = 0;
+      if( optInTimePeriod < 1 ) return RetCode.InternalError;
+      preLowest = new double[optInTimePeriod];
+      maxIdx_preLowest = (optInTimePeriod)-1;
+      preLowest_Idx = 0;
       while( today <= endIdx ) {
-         /* The channel, over the midpoints rather than over the highs and the
-          * lows separately: this indicator reads one series, which happens to be
-          * (H+L)/2, so both extremes come from that same series. STOCH's shape,
-          * with the midpoint recomputed on the rare rescan rather than held in a
-          * buffer the caller would have to own.
+         /* Suffix extrema of the block [blockStart, today]. */
+         i = today;
+         tempHigh = inHigh[i];
+         tempLow = inLow[i];
+         highest = (tempHigh + tempLow) / 2.0;
+         lowest = highest;
+         sufHighest[optInTimePeriod - 1] = highest;
+         sufLowest[optInTimePeriod - 1] = lowest;
+         while( i > blockStart ) {
+            i -= 1;
+            tempHigh = inHigh[i];
+            tempLow = inLow[i];
+            tempReal = (tempHigh + tempLow) / 2.0;
+            highest = MaxGt(tempReal, highest);
+            lowest = MinLt(tempReal, lowest);
+            sufHighest[i - blockStart] = highest;
+            sufLowest[i - blockStart] = lowest;
+         }
+         /* Prefix extrema of the next block, clamped to what remains, stored
+          * one slot up: slot 0 repeats the suffix so that bar 'today', whose
+          * window is the block itself, runs the same combine as the others.
           */
-         price = (inHigh[today] + inLow[today]) / 2.0;
-         if( highestIdx < trailingIdx ) {
-            highestIdx = trailingIdx;
-            tempHigh = inHigh[highestIdx];
-            tempLow = inLow[highestIdx];
+         blockNext = blockStart + optInTimePeriod;
+         nAvail = endIdx + 1 - blockNext;
+         if( nAvail > optInTimePeriod - 1 ) {
+            nAvail = optInTimePeriod - 1;
+         }
+         preHighest[0] = sufHighest[0];
+         preLowest[0] = sufLowest[0];
+         if( nAvail > 0 ) {
+            tempHigh = inHigh[blockNext];
+            tempLow = inLow[blockNext];
             highest = (tempHigh + tempLow) / 2.0;
-            i = highestIdx;
-            while( ++i <= today ) {
-               tempHigh = inHigh[i];
-               tempLow = inLow[i];
+            lowest = highest;
+            preHighest[1] = highest;
+            preLowest[1] = lowest;
+            i = 1;
+            while( i < nAvail ) {
+               tempHigh = inHigh[blockNext + i];
+               tempLow = inLow[blockNext + i];
                tempReal = (tempHigh + tempLow) / 2.0;
-               if( tempReal > highest ) {
-                  highestIdx = i;
-                  highest = tempReal;
-               }
+               highest = MaxGt(tempReal, highest);
+               lowest = MinLt(tempReal, lowest);
+               preHighest[i + 1] = highest;
+               preLowest[i + 1] = lowest;
+               i += 1;
             }
-         } else if( price >= highest ) {
-            highestIdx = today;
-            highest = price;
          }
-         if( lowestIdx < trailingIdx ) {
-            lowestIdx = trailingIdx;
-            tempHigh = inHigh[lowestIdx];
-            tempLow = inLow[lowestIdx];
-            lowest = (tempHigh + tempLow) / 2.0;
-            i = lowestIdx;
-            while( ++i <= today ) {
-               tempHigh = inHigh[i];
-               tempLow = inLow[i];
-               tempReal = (tempHigh + tempLow) / 2.0;
-               if( tempReal < lowest ) {
-                  lowestIdx = i;
-                  lowest = tempReal;
-               }
+         m = 0;
+         while( m <= nAvail ) {
+            highest = sufHighest[m];
+            highest = MaxGt(preHighest[m], highest);
+            lowest = sufLowest[m];
+            lowest = MinLt(preLowest[m], lowest);
+            tempHigh = inHigh[today + m];
+            tempLow = inLow[today + m];
+            price = (tempHigh + tempLow) / 2.0;
+            tempReal = highest - lowest;
+            if( !(Math.Abs(tempReal) <= 0.00000000000001 * (Math.Abs(highest) + Math.Abs(lowest))) ) {
+               ratio = (price - lowest) / tempReal;
+            } else {
+               ratio = 0.5;
             }
-         } else if( price <= lowest ) {
-            lowestIdx = today;
-            lowest = price;
+            smoothed = Math.FusedMultiplyAdd(0.67, smoothed, 0.33 * 2.0 * (ratio - 0.5));
+            if( smoothed > 0.99 ) {
+               smoothed = 0.999;
+            }
+            if( smoothed < -0.99 ) {
+               smoothed = -0.999;
+            }
+            fish = Math.FusedMultiplyAdd(0.5, Math.Log((1.0 + smoothed) / (1.0 - smoothed)), 0.5 * prevFish);
+            if( today + m >= startIdx ) {
+               outFisher[outIdx] = fish;
+               outTrigger[outIdx] = prevFish;
+               outIdx = outIdx + 1;
+            }
+            prevFish = fish;
+            m += 1;
          }
-         /* A flat window answers the neutral position rather than dividing by
-          * its own zero range. The band is the range against its own two
-          * extremes, STOCH's test: a fixed constant answers "flat" for every
-          * window of an instrument quoted below it (#253), and an exact test
-          * divides a machine-flat window into noise (#107). At 0.5 the bar
-          * contributes nothing and both recursions decay on their own
-          * coefficients.
-          */
-         tempReal = highest - lowest;
-         if( !(Math.Abs(tempReal) <= 0.00000000000001 * (Math.Abs(highest) + Math.Abs(lowest))) ) {
-            ratio = (price - lowest) / tempReal;
-         } else {
-            ratio = 0.5;
-         }
-         /* The listing's .33*2*(r-.5) + .67*Value1[1]. */
-         smoothed = Math.FusedMultiplyAdd(0.67, smoothed, 0.33 * 2.0 * (ratio - 0.5));
-         /* The clamp is what keeps atanh finite, and the CLAMPED smoothed is what
-          * the next bar's smoothing reads -- the listing assigns it back to
-          * Value1 rather than holding it for the transform alone.
-          */
-         if( smoothed > 0.99 ) {
-            smoothed = 0.999;
-         }
-         if( smoothed < -0.99 ) {
-            smoothed = -0.999;
-         }
-         fish = Math.FusedMultiplyAdd(0.5, Math.Log((1.0 + smoothed) / (1.0 - smoothed)), 0.5 * prevFish);
-         if( today >= startIdx ) {
-            outFisher[outIdx] = fish;
-            /* The author's second plot is Fish[1]: the previous bar's smoothed,
-             * which at the first output bar is the zero seed when no unstable
-             * period was discarded, and the computed smoothed of the bar before it
-             * when one was.
-             */
-            outTrigger[outIdx] = prevFish;
-            outIdx = outIdx + 1;
-         }
-         prevFish = fish;
-         trailingIdx += 1;
-         today += 1;
+         today = today + nAvail + 1;
+         blockStart = blockNext;
       }
       outNBElement = outIdx;
       outBegIdx = startIdx;
@@ -311,6 +311,18 @@ public partial class Core
    {
       outBegIdx = 0;
       outNBElement = 0;
+      double[] sufHighest;
+      int sufHighest_Idx = 0;
+      int maxIdx_sufHighest = (30)-1;
+      double[] preHighest;
+      int preHighest_Idx = 0;
+      int maxIdx_preHighest = (30)-1;
+      double[] sufLowest;
+      int sufLowest_Idx = 0;
+      int maxIdx_sufLowest = (30)-1;
+      double[] preLowest;
+      int preLowest_Idx = 0;
+      int maxIdx_preLowest = (30)-1;
       double price = 0;
       double highest = 0;
       double lowest = 0;
@@ -326,10 +338,11 @@ public partial class Core
       int unstablePeriod = 0;
       int nbInitialElementNeeded = 0;
       int today = 0;
-      int trailingIdx = 0;
-      int highestIdx = 0;
-      int lowestIdx = 0;
       int i = 0;
+      int m = 0;
+      int blockStart = 0;
+      int blockNext = 0;
+      int nAvail = 0;
       if( (startIdx < 0) || (startIdx > IndexMax) ) {
          return RetCode.OutOfRangeStartIndex ;
       }
@@ -361,87 +374,123 @@ public partial class Core
       smoothed = 0.0;
       prevFish = 0.0;
       today = startIdx - unstablePeriod;
-      trailingIdx = today - lookbackTotal;
-      highestIdx = -1;
-      highest = 0.0;
-      lowestIdx = -1;
-      lowest = 0.0;
+      blockStart = today - lookbackTotal;
       outIdx = 0;
+      if( optInTimePeriod < 1 ) return RetCode.InternalError;
+      sufHighest = new double[optInTimePeriod];
+      maxIdx_sufHighest = (optInTimePeriod)-1;
+      sufHighest_Idx = 0;
+      if( optInTimePeriod < 1 ) return RetCode.InternalError;
+      preHighest = new double[optInTimePeriod];
+      maxIdx_preHighest = (optInTimePeriod)-1;
+      preHighest_Idx = 0;
+      if( optInTimePeriod < 1 ) return RetCode.InternalError;
+      sufLowest = new double[optInTimePeriod];
+      maxIdx_sufLowest = (optInTimePeriod)-1;
+      sufLowest_Idx = 0;
+      if( optInTimePeriod < 1 ) return RetCode.InternalError;
+      preLowest = new double[optInTimePeriod];
+      maxIdx_preLowest = (optInTimePeriod)-1;
+      preLowest_Idx = 0;
       while( today <= endIdx ) {
-         price = ((double)inHigh[today] + (double)inLow[today]) / 2.0;
-         if( highestIdx < trailingIdx ) {
-            highestIdx = trailingIdx;
-            tempHigh = (double)inHigh[highestIdx];
-            tempLow = (double)inLow[highestIdx];
+         i = today;
+         tempHigh = (double)inHigh[i];
+         tempLow = (double)inLow[i];
+         highest = (tempHigh + tempLow) / 2.0;
+         lowest = highest;
+         sufHighest[optInTimePeriod - 1] = highest;
+         sufLowest[optInTimePeriod - 1] = lowest;
+         while( i > blockStart ) {
+            i -= 1;
+            tempHigh = (double)inHigh[i];
+            tempLow = (double)inLow[i];
+            tempReal = (tempHigh + tempLow) / 2.0;
+            highest = MaxGt(tempReal, highest);
+            lowest = MinLt(tempReal, lowest);
+            sufHighest[i - blockStart] = highest;
+            sufLowest[i - blockStart] = lowest;
+         }
+         blockNext = blockStart + optInTimePeriod;
+         nAvail = endIdx + 1 - blockNext;
+         if( nAvail > optInTimePeriod - 1 ) {
+            nAvail = optInTimePeriod - 1;
+         }
+         preHighest[0] = sufHighest[0];
+         preLowest[0] = sufLowest[0];
+         if( nAvail > 0 ) {
+            tempHigh = (double)inHigh[blockNext];
+            tempLow = (double)inLow[blockNext];
             highest = (tempHigh + tempLow) / 2.0;
-            i = highestIdx;
-            while( ++i <= today ) {
-               tempHigh = (double)inHigh[i];
-               tempLow = (double)inLow[i];
+            lowest = highest;
+            preHighest[1] = highest;
+            preLowest[1] = lowest;
+            i = 1;
+            while( i < nAvail ) {
+               tempHigh = (double)inHigh[blockNext + i];
+               tempLow = (double)inLow[blockNext + i];
                tempReal = (tempHigh + tempLow) / 2.0;
-               if( tempReal > highest ) {
-                  highestIdx = i;
-                  highest = tempReal;
-               }
+               highest = MaxGt(tempReal, highest);
+               lowest = MinLt(tempReal, lowest);
+               preHighest[i + 1] = highest;
+               preLowest[i + 1] = lowest;
+               i += 1;
             }
-         } else if( price >= highest ) {
-            highestIdx = today;
-            highest = price;
          }
-         if( lowestIdx < trailingIdx ) {
-            lowestIdx = trailingIdx;
-            tempHigh = (double)inHigh[lowestIdx];
-            tempLow = (double)inLow[lowestIdx];
-            lowest = (tempHigh + tempLow) / 2.0;
-            i = lowestIdx;
-            while( ++i <= today ) {
-               tempHigh = (double)inHigh[i];
-               tempLow = (double)inLow[i];
-               tempReal = (tempHigh + tempLow) / 2.0;
-               if( tempReal < lowest ) {
-                  lowestIdx = i;
-                  lowest = tempReal;
-               }
+         m = 0;
+         while( m <= nAvail ) {
+            highest = sufHighest[m];
+            highest = MaxGt(preHighest[m], highest);
+            lowest = sufLowest[m];
+            lowest = MinLt(preLowest[m], lowest);
+            tempHigh = (double)inHigh[today + m];
+            tempLow = (double)inLow[today + m];
+            price = (tempHigh + tempLow) / 2.0;
+            tempReal = highest - lowest;
+            if( !(Math.Abs(tempReal) <= 0.00000000000001 * (Math.Abs(highest) + Math.Abs(lowest))) ) {
+               ratio = (price - lowest) / tempReal;
+            } else {
+               ratio = 0.5;
             }
-         } else if( price <= lowest ) {
-            lowestIdx = today;
-            lowest = price;
+            smoothed = Math.FusedMultiplyAdd(0.67, smoothed, 0.33 * 2.0 * (ratio - 0.5));
+            if( smoothed > 0.99 ) {
+               smoothed = 0.999;
+            }
+            if( smoothed < -0.99 ) {
+               smoothed = -0.999;
+            }
+            fish = Math.FusedMultiplyAdd(0.5, Math.Log((1.0 + smoothed) / (1.0 - smoothed)), 0.5 * prevFish);
+            if( today + m >= startIdx ) {
+               outFisher[outIdx] = fish;
+               outTrigger[outIdx] = prevFish;
+               outIdx = outIdx + 1;
+            }
+            prevFish = fish;
+            m += 1;
          }
-         tempReal = highest - lowest;
-         if( !(Math.Abs(tempReal) <= 0.00000000000001 * (Math.Abs(highest) + Math.Abs(lowest))) ) {
-            ratio = (price - lowest) / tempReal;
-         } else {
-            ratio = 0.5;
-         }
-         smoothed = Math.FusedMultiplyAdd(0.67, smoothed, 0.33 * 2.0 * (ratio - 0.5));
-         if( smoothed > 0.99 ) {
-            smoothed = 0.999;
-         }
-         if( smoothed < -0.99 ) {
-            smoothed = -0.999;
-         }
-         fish = Math.FusedMultiplyAdd(0.5, Math.Log((1.0 + smoothed) / (1.0 - smoothed)), 0.5 * prevFish);
-         if( today >= startIdx ) {
-            outFisher[outIdx] = fish;
-            outTrigger[outIdx] = prevFish;
-            outIdx = outIdx + 1;
-         }
-         prevFish = fish;
-         trailingIdx += 1;
-         today += 1;
+         today = today + nAvail + 1;
+         blockStart = blockNext;
       }
       outNBElement = outIdx;
       outBegIdx = startIdx;
       return RetCode.Success ;
    }
    /// <summary>
-   /// Fisher Transform
+   /// Ehlers' Fisher Transform: an oscillator that reshapes the midpoint's
+   /// position in its rolling channel into a near-normal distribution. Extreme
+   /// values become rare and turning points sharp, where a plain channel
+   /// position spends much of its time pinned near the edges. The output is
+   /// unbounded and centred on zero. A peak or trough marks a likely turn, and
+   /// the Fisher line crossing its Trigger, the same line one bar later, is the
+   /// author's entry signal.
    /// </summary>
    /// <remarks>
    /// <para>
    /// Formula and more info at
    /// <see href="https://ta-lib.org/functions/fisher">ta-lib.org/functions/fisher</see>.
    /// </para>
+   /// <list type="bullet">
+   /// <item><description>A window whose midpoints are all equal takes the neutral position, so a market that does not move decays toward 0. The original divides by the zero range there.</description></item>
+   /// </list>
    /// <para>
    /// Values are written only where the indicator is defined. The returned
    /// <see cref="OutRange"/> says where they start and how many there are, and
@@ -457,16 +506,16 @@ public partial class Core
    /// </remarks>
    /// <param name="startIdx">First bar of the requested range (inclusive).</param>
    /// <param name="endIdx">Last bar of the requested range (inclusive).</param>
-   /// <param name="inHigh">High price per bar.</param>
-   /// <param name="inLow">Low price per bar.</param>
-   /// <param name="optInTimePeriod">Time period (default 10; range 2..100000; <c>int.MinValue</c> selects the
-   /// default).</param>
-   /// <param name="outFisher">Output values. Must hold at least <c>endIdx - max(startIdx,
+   /// <param name="inHigh">High price of each bar.</param>
+   /// <param name="inLow">Low price of each bar.</param>
+   /// <param name="optInTimePeriod">Number of bars in the channel the midpoint is located in (default 10;
+   /// range 2..100000; <c>int.MinValue</c> selects the default).</param>
+   /// <param name="outFisher">Fisher Transform value. Must hold at least <c>endIdx - max(startIdx,
    /// FisherLookback(...)) + 1</c> values, and never be empty: an empty span is
    /// an absent output.</param>
-   /// <param name="outTrigger">Output values. Must hold at least <c>endIdx - max(startIdx,
-   /// FisherLookback(...)) + 1</c> values, and never be empty: an empty span is
-   /// an absent output.</param>
+   /// <param name="outTrigger">Fisher value of the previous bar. Must hold at least <c>endIdx -
+   /// max(startIdx, FisherLookback(...)) + 1</c> values, and never be empty: an
+   /// empty span is an absent output.</param>
    /// <returns>The range written: <c>BegIdx</c> is the first bar with a value,
    /// <c>Count</c> how many were written.</returns>
    /// <exception cref="System.ArgumentOutOfRangeException"><c>startIdx</c> or <c>endIdx</c> is negative or above
@@ -489,6 +538,10 @@ public partial class Core
    /// that IS an input) is allowed.</description></item>
    /// </list>
    /// </exception>
+   /// <seealso cref="Core.Stochf(int, int, ReadOnlySpan{double}, ReadOnlySpan{double}, ReadOnlySpan{double}, int, int, MAType, Span{double}, Span{double})"/>
+   /// <seealso cref="Core.Willr(int, int, ReadOnlySpan{double}, ReadOnlySpan{double}, ReadOnlySpan{double}, int, Span{double})"/>
+   /// <seealso cref="Core.Midprice(int, int, ReadOnlySpan{double}, ReadOnlySpan{double}, int, Span{double})"/>
+   /// <seealso cref="Core.Ibs(int, int, ReadOnlySpan{double}, ReadOnlySpan{double}, ReadOnlySpan{double}, Span{double})"/>
    public OutRange Fisher( int startIdx,
                            int endIdx,
                            ReadOnlySpan<double> inHigh,
@@ -513,13 +566,22 @@ public partial class Core
       return new OutRange(outBegIdx, outNBElement);
    }
    /// <summary>
-   /// Fisher Transform
+   /// Ehlers' Fisher Transform: an oscillator that reshapes the midpoint's
+   /// position in its rolling channel into a near-normal distribution. Extreme
+   /// values become rare and turning points sharp, where a plain channel
+   /// position spends much of its time pinned near the edges. The output is
+   /// unbounded and centred on zero. A peak or trough marks a likely turn, and
+   /// the Fisher line crossing its Trigger, the same line one bar later, is the
+   /// author's entry signal.
    /// </summary>
    /// <remarks>
    /// <para>
    /// Formula and more info at
    /// <see href="https://ta-lib.org/functions/fisher">ta-lib.org/functions/fisher</see>.
    /// </para>
+   /// <list type="bullet">
+   /// <item><description>A window whose midpoints are all equal takes the neutral position, so a market that does not move decays toward 0. The original divides by the zero range there.</description></item>
+   /// </list>
    /// <para>
    /// This is the <c>float[]</c> overload: input elements are widened to
    /// <c>double</c> as they are read and all arithmetic is performed in
@@ -541,16 +603,16 @@ public partial class Core
    /// </remarks>
    /// <param name="startIdx">First bar of the requested range (inclusive).</param>
    /// <param name="endIdx">Last bar of the requested range (inclusive).</param>
-   /// <param name="inHigh">High price per bar.</param>
-   /// <param name="inLow">Low price per bar.</param>
-   /// <param name="optInTimePeriod">Time period (default 10; range 2..100000; <c>int.MinValue</c> selects the
-   /// default).</param>
-   /// <param name="outFisher">Output values. Must hold at least <c>endIdx - max(startIdx,
+   /// <param name="inHigh">High price of each bar.</param>
+   /// <param name="inLow">Low price of each bar.</param>
+   /// <param name="optInTimePeriod">Number of bars in the channel the midpoint is located in (default 10;
+   /// range 2..100000; <c>int.MinValue</c> selects the default).</param>
+   /// <param name="outFisher">Fisher Transform value. Must hold at least <c>endIdx - max(startIdx,
    /// FisherLookback(...)) + 1</c> values, and never be empty: an empty span is
    /// an absent output.</param>
-   /// <param name="outTrigger">Output values. Must hold at least <c>endIdx - max(startIdx,
-   /// FisherLookback(...)) + 1</c> values, and never be empty: an empty span is
-   /// an absent output.</param>
+   /// <param name="outTrigger">Fisher value of the previous bar. Must hold at least <c>endIdx -
+   /// max(startIdx, FisherLookback(...)) + 1</c> values, and never be empty: an
+   /// empty span is an absent output.</param>
    /// <returns>The range written: <c>BegIdx</c> is the first bar with a value,
    /// <c>Count</c> how many were written.</returns>
    /// <exception cref="System.ArgumentOutOfRangeException"><c>startIdx</c> or <c>endIdx</c> is negative or above
@@ -575,6 +637,10 @@ public partial class Core
    /// is rejected.</description></item>
    /// </list>
    /// </exception>
+   /// <seealso cref="Core.Stochf(int, int, ReadOnlySpan{double}, ReadOnlySpan{double}, ReadOnlySpan{double}, int, int, MAType, Span{double}, Span{double})"/>
+   /// <seealso cref="Core.Willr(int, int, ReadOnlySpan{double}, ReadOnlySpan{double}, ReadOnlySpan{double}, int, Span{double})"/>
+   /// <seealso cref="Core.Midprice(int, int, ReadOnlySpan{double}, ReadOnlySpan{double}, int, Span{double})"/>
+   /// <seealso cref="Core.Ibs(int, int, ReadOnlySpan{double}, ReadOnlySpan{double}, ReadOnlySpan{double}, Span{double})"/>
    public OutRange Fisher( int startIdx,
                            int endIdx,
                            ReadOnlySpan<float> inHigh,
@@ -600,6 +666,8 @@ public partial class Core
    }
    /**** Streaming API *****/
 
+   /* Using fisher_ALT1 for TA_ALT={STREAM,ALL_LANGUAGES} */
+
    /// <summary>One <c>FISHER</c> output set, in batch output order.</summary>
    /// <remarks>
    /// <para>Equality is the compiler-generated record-struct equality, which compares
@@ -609,8 +677,8 @@ public partial class Core
    /// <see cref="System.BitConverter.DoubleToInt64Bits(double)"/> per component
    /// when bit-level identity is what you mean.</para>
    /// </remarks>
-   /// <param name="Fisher">Output values.</param>
-   /// <param name="Trigger">Output values.</param>
+   /// <param name="Fisher">Fisher Transform value.</param>
+   /// <param name="Trigger">Fisher value of the previous bar.</param>
    public readonly record struct FisherValue( double Fisher, double Trigger );
 
    /// <summary>A live <c>FISHER</c> stream: one value per closed bar, bit-identical to
@@ -1213,8 +1281,8 @@ public partial class Core
    /// (unstable-period aware). Nothing is written to any caller array; use
    /// <c>FisherOpenAndFill</c> to get the warm-up values as well.</para>
    /// </remarks>
-   /// <param name="inHigh">High price per bar. The warm-up history, oldest bar first.</param>
-   /// <param name="inLow">Low price per bar. The warm-up history, oldest bar first.</param>
+   /// <param name="inHigh">High price of each bar. The warm-up history, oldest bar first.</param>
+   /// <param name="inLow">Low price of each bar. The warm-up history, oldest bar first.</param>
    /// <param name="optInTimePeriod">As in the batch call; see <see cref="FisherLookback"/> for its default and
    /// range (<c>int.MinValue</c> selects the default).</param>
    /// <returns>The open stream handle.</returns>
@@ -1247,14 +1315,14 @@ public partial class Core
    /// <para>The range written is reported on the returned handle:
    /// <see cref="FisherStream.OutRange"/>.</para>
    /// </remarks>
-   /// <param name="inHigh">High price per bar. The warm-up history, oldest bar first.</param>
-   /// <param name="inLow">Low price per bar. The warm-up history, oldest bar first.</param>
+   /// <param name="inHigh">High price of each bar. The warm-up history, oldest bar first.</param>
+   /// <param name="inLow">Low price of each bar. The warm-up history, oldest bar first.</param>
    /// <param name="optInTimePeriod">As in the batch call; see <see cref="FisherLookback"/> for its default and
    /// range (<c>int.MinValue</c> selects the default).</param>
-   /// <param name="outFisher">Output values. Must hold at least <c>historyLen - FisherLookback(...)</c>
-   /// values.</param>
-   /// <param name="outTrigger">Output values. Must hold at least <c>historyLen - FisherLookback(...)</c>
-   /// values.</param>
+   /// <param name="outFisher">Fisher Transform value. Must hold at least <c>historyLen -
+   /// FisherLookback(...)</c> values.</param>
+   /// <param name="outTrigger">Fisher value of the previous bar. Must hold at least <c>historyLen -
+   /// FisherLookback(...)</c> values.</param>
    /// <returns>The open stream handle, with its fill range set.</returns>
    /// <exception cref="InsufficientHistoryException">The history holds fewer than <c>FisherLookback(...) + 1</c> bars.</exception>
    /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, the input series

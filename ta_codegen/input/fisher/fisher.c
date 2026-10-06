@@ -11,36 +11,204 @@
  *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
  *  100626 KL,CC  Creation (#485).
+ *  100626 MF,CC  Batch tier: block scan of the channel (#485).
  */
 
 int fisher_lookback(int optInTimePeriod)
 {
-   /* The channel needs its own n-1 bars before it has a value. On top of that
-    * the two recursions carry a seed that decays rather than ending.
-    *
-    * The count is DERIVED rather than sampled. The seed reaches the output
-    * through the smoothing pole alone -- 0.67 per bar, the same whatever the
-    * period, so unlike EMA's this count does not grow with n. Two factors sit
-    * between that pole and the output: the transform's derivative 1/(1-v^2),
-    * which the clamp caps at 1/(1-0.999^2) = 500 and which is the only reason
-    * this is finite at all, and the convolution with the transform's own 0.5
-    * pole, worth 1/(0.67-0.5) = 5.9. So the seed's weight is under e^-K once
-    *
-    *     n >= (K + ln(500*5.9)) / ln(1/0.67) = (K + 8.0) / 0.4005
-    *
-    * which is 44.9 bars at K = 10 and 67.4 at K = 19. The form below is 2.5
-    * bars per e-fold with those 9 e-folds of gain folded in: 48 and 70.
-    *
-    * A sampled worst case was NOT used. Over 400 input patterns and 22 seeds
-    * it reads 33 and 58, and it kept climbing as the sample grew -- 30 and 54
-    * at a tenth of it -- which is what a sampled maximum does when it is not
-    * a bound.
+   /* The seed reaches the output through the smoothing pole alone, 0.67 per
+    * bar whatever the period: 2.5 bars per e-fold. The 9 e-folds added to K
+    * are the gain between that pole and the output: the transform's
+    * derivative, which the clamp caps at 500, times 5.9 for the convolution
+    * with its own 0.5 pole.
     */
    return (optInTimePeriod - 1)
    + TA_UNSTABLE( TA_FUNC_UNST_FISHER, (5 * (K + 9) + 1) / 2 );
 }
 
 TA_RetCode fisher(int startIdx, int endIdx,
+   const double inHigh[],
+   const double inLow[],
+   int optInTimePeriod,
+   int *outBegIdx, int *outNBElement,
+   double outFisher[], double outTrigger[])
+{
+   CIRCBUF_PROLOG(sufHighest,double,30);
+   CIRCBUF_PROLOG(preHighest,double,30);
+   CIRCBUF_PROLOG(sufLowest,double,30);
+   CIRCBUF_PROLOG(preLowest,double,30);
+   double price, highest, lowest, ratio, smoothed, fish, prevFish, tempReal;
+   double tempHigh, tempLow;
+   int outIdx, lookbackTotal, unstablePeriod, nbInitialElementNeeded;
+   int today, i, m, blockStart, blockNext, nAvail;
+
+   nbInitialElementNeeded = fisher_lookback( optInTimePeriod );
+
+   if( startIdx < nbInitialElementNeeded )
+      startIdx = nbInitialElementNeeded;
+
+   if( startIdx > endIdx )
+   {
+      *outBegIdx = 0;
+      *outNBElement = 0;
+      return TA_SUCCESS;
+   }
+
+   lookbackTotal = optInTimePeriod - 1;
+   unstablePeriod = nbInitialElementNeeded - lookbackTotal;
+
+   /* Same values as fisher_ALT1 below, which carries the formula. Only the
+    * channel differs: a Van Herk / Gil-Werman block scan (WILLR's, issue
+    * #147) over the midpoints, so the cost per bar does not depend on the
+    * period or on the shape of the input, where the cached extremum of
+    * fisher_ALT1 rescans its whole window on every bar of a flat or
+    * trending stretch. Every scratch array holds copies, so an output may
+    * alias an input.
+    */
+   smoothed = 0.0;
+   prevFish = 0.0;
+
+   today = startIdx - unstablePeriod;
+   blockStart = today - lookbackTotal;
+   outIdx = 0;
+
+   CIRCBUF_INIT( sufHighest, double, optInTimePeriod );
+   CIRCBUF_INIT( preHighest, double, optInTimePeriod );
+   CIRCBUF_INIT( sufLowest, double, optInTimePeriod );
+   CIRCBUF_INIT( preLowest, double, optInTimePeriod );
+
+   while( today <= endIdx )
+   {
+      /* Suffix extrema of the block [blockStart, today]. */
+      i = today;
+      tempHigh = inHigh[i];
+      tempLow = inLow[i];
+      highest = (tempHigh + tempLow) / 2.0;
+      lowest = highest;
+      sufHighest[optInTimePeriod - 1] = highest;
+      sufLowest[optInTimePeriod - 1] = lowest;
+      TA_UNROLL(4)
+      while( i > blockStart )
+      {
+         i--;
+         tempHigh = inHigh[i];
+         tempLow = inLow[i];
+         tempReal = (tempHigh + tempLow) / 2.0;
+         if( tempReal > highest )
+         {
+            highest = tempReal;
+         }
+         if( tempReal < lowest )
+         {
+            lowest = tempReal;
+         }
+         sufHighest[i - blockStart] = highest;
+         sufLowest[i - blockStart] = lowest;
+      }
+
+      /* Prefix extrema of the next block, clamped to what remains, stored
+       * one slot up: slot 0 repeats the suffix so that bar 'today', whose
+       * window is the block itself, runs the same combine as the others.
+       */
+      blockNext = blockStart + optInTimePeriod;
+      nAvail = endIdx + 1 - blockNext;
+      if( nAvail > optInTimePeriod - 1 )
+      {
+         nAvail = optInTimePeriod - 1;
+      }
+      preHighest[0] = sufHighest[0];
+      preLowest[0] = sufLowest[0];
+      if( nAvail > 0 )
+      {
+         tempHigh = inHigh[blockNext];
+         tempLow = inLow[blockNext];
+         highest = (tempHigh + tempLow) / 2.0;
+         lowest = highest;
+         preHighest[1] = highest;
+         preLowest[1] = lowest;
+         i = 1;
+         TA_UNROLL(4)
+         while( i < nAvail )
+         {
+            tempHigh = inHigh[blockNext + i];
+            tempLow = inLow[blockNext + i];
+            tempReal = (tempHigh + tempLow) / 2.0;
+            if( tempReal > highest )
+            {
+               highest = tempReal;
+            }
+            if( tempReal < lowest )
+            {
+               lowest = tempReal;
+            }
+            preHighest[i + 1] = highest;
+            preLowest[i + 1] = lowest;
+            i++;
+         }
+      }
+
+      m = 0;
+      while( m <= nAvail )
+      {
+         highest = sufHighest[m];
+         if( preHighest[m] > highest )
+         {
+            highest = preHighest[m];
+         }
+         lowest = sufLowest[m];
+         if( preLowest[m] < lowest )
+         {
+            lowest = preLowest[m];
+         }
+
+         tempHigh = inHigh[today + m];
+         tempLow = inLow[today + m];
+         price = (tempHigh + tempLow) / 2.0;
+
+         tempReal = highest - lowest;
+         if( !TA_IS_ZERO_SCALED( tempReal, fabs(highest) + fabs(lowest) ) )
+            ratio = (price - lowest) / tempReal;
+         else
+            ratio = 0.5;
+
+         smoothed = 0.33 * 2.0 * (ratio - 0.5) + 0.67 * smoothed;
+
+         if( smoothed > 0.99 )
+            smoothed = 0.999;
+         if( smoothed < -0.99 )
+            smoothed = -0.999;
+
+         fish = 0.5 * log( (1.0 + smoothed) / (1.0 - smoothed) ) + 0.5 * prevFish;
+
+         if( today + m >= startIdx )
+         {
+            outFisher[outIdx] = fish;
+            outTrigger[outIdx] = prevFish;
+            outIdx = outIdx + 1;
+         }
+
+         prevFish = fish;
+         m++;
+      }
+
+      today = today + nAvail + 1;
+      blockStart = blockNext;
+   }
+
+   CIRCBUF_DESTROY(sufHighest);
+   CIRCBUF_DESTROY(preHighest);
+   CIRCBUF_DESTROY(sufLowest);
+   CIRCBUF_DESTROY(preLowest);
+
+   *outNBElement = outIdx;
+   *outBegIdx = startIdx;
+
+   return TA_SUCCESS;
+}
+
+/* PRAGMA TA_ALT={STREAM,ALL_LANGUAGES} the block scan cannot be a per-bar automaton */
+/* PRAGMA TA_ALT={BATCH,JAVA} HotSpot keeps the branch of a double min/max, and a midpoint has no bit key */
+TA_RetCode fisher_ALT1(int startIdx, int endIdx,
    const double inHigh[],
    const double inLow[],
    int optInTimePeriod,
