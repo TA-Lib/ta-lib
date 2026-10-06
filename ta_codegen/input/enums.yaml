@@ -88,3 +88,4 @@ FuncUnstId:
     - { name: SWAK_HP,      value: 33 }
     - { name: SWAK_2PHP,    value: 34 }
     - { name: SWAK_BP,      value: 35 }
+    - { name: FISHER,       value: 36 }

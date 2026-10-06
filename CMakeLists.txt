@@ -424,6 +424,7 @@ set(LIB_SOURCES
 	"${CMAKE_CURRENT_SOURCE_DIR}/src/ta_func/ta_ER.c"
 	"${CMAKE_CURRENT_SOURCE_DIR}/src/ta_func/ta_ERI.c"
 	"${CMAKE_CURRENT_SOURCE_DIR}/src/ta_func/ta_EXP.c"
+	"${CMAKE_CURRENT_SOURCE_DIR}/src/ta_func/ta_FISHER.c"
 	"${CMAKE_CURRENT_SOURCE_DIR}/src/ta_func/ta_FLOOR.c"
 	"${CMAKE_CURRENT_SOURCE_DIR}/src/ta_func/ta_FOSC.c"
 	"${CMAKE_CURRENT_SOURCE_DIR}/src/ta_func/ta_FRACTAL.c"

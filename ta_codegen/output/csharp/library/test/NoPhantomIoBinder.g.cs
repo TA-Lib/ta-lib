@@ -797,6 +797,12 @@ internal static class NoPhantomIoBinder
                 startIdx, endIdx, c.Series(0), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         },
+        ["FISHER"] = static (core, c, startIdx, endIdx) =>
+        {
+            RetCode rc = core.FisherImpl(
+                startIdx, endIdx, c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.IntOpt(0), out int b, out int n, c.RealOut(0), c.RealOut(1));
+            return new CallOutcome(rc, b, n);
+        },
         ["FLOOR"] = static (core, c, startIdx, endIdx) =>
         {
             RetCode rc = core.FloorImpl(
@@ -2176,6 +2182,12 @@ internal static class NoPhantomIoBinder
                 startIdx, endIdx, Narrow(c.Series(0)), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         },
+        ["FISHER"] = static (core, c, startIdx, endIdx) =>
+        {
+            RetCode rc = core.FisherImpl(
+                startIdx, endIdx, Narrow(c.Price(0, PriceComponents.High)), Narrow(c.Price(0, PriceComponents.Low)), c.IntOpt(0), out int b, out int n, c.RealOut(0), c.RealOut(1));
+            return new CallOutcome(rc, b, n);
+        },
         ["FLOOR"] = static (core, c, startIdx, endIdx) =>
         {
             RetCode rc = core.FloorImpl(
@@ -2990,6 +3002,7 @@ internal static class NoPhantomIoBinder
         ["ER"] = static (core, c) => core.ErOpen(c.Series(0), c.IntOpt(0)),
         ["ERI"] = static (core, c) => core.EriOpen(c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.IntOpt(0)),
         ["EXP"] = static (core, c) => core.ExpOpen(c.Series(0)),
+        ["FISHER"] = static (core, c) => core.FisherOpen(c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.IntOpt(0)),
         ["FLOOR"] = static (core, c) => core.FloorOpen(c.Series(0)),
         ["FOSC"] = static (core, c) => core.FoscOpen(c.Series(0), c.IntOpt(0)),
         ["FRACTAL"] = static (core, c) => core.FractalOpen(c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.IntOpt(0), c.IntOpt(1)),

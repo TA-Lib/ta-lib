@@ -111,6 +111,13 @@ const ANNOTATED: &[(&str, &str, &str, &str)] = &[
     ("HT_SINE", "smoothPeriod", "period clamped to [6,50] before the combination", ""),
     ("HT_TRENDMODE", "smoothPeriod", "period clamped to [6,50] before the combination", ""),
 
+    // The same shape one line down rather than one clamp away: FISHER clamps
+    // `smoothed` to +-0.999 on the bar that then divides by `1 - smoothed`, so
+    // both `1 + smoothed` and `1 - smoothed` are at least 1e-3. Without the
+    // clamp the recursion `0.66*(r-0.5) + 0.67*smoothed` reaches +-1, which is
+    // exactly the pole the author introduced the clamp to keep off.
+    ("FISHER", "smoothed", "clamped to |smoothed| <= 0.999 on the bar before the division", ""),
+
     // Every term is an exp(), and the one at j == m is exp(-0.0) == 1.0 exactly, so
     // norm >= 1. That needs the squared width to stay non-zero: sigma's upper bound
     // TA_REAL_MAX keeps it above 1e-75, and it only underflows past sigma ~1e162.

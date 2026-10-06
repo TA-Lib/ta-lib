@@ -128,6 +128,7 @@ struct TA_EMV_Stream;
 struct TA_ER_Stream;
 struct TA_ERI_Stream;
 struct TA_EXP_Stream;
+struct TA_FISHER_Stream;
 struct TA_FLOOR_Stream;
 struct TA_FOSC_Stream;
 struct TA_FRACTAL_Stream;
@@ -357,6 +358,7 @@ TA_RetCode TA_EMV_OpenInternal( struct TA_EMV_Stream **stream, const double inHi
 TA_RetCode TA_ER_OpenInternal( struct TA_ER_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInTimePeriod, double *outReal );
 TA_RetCode TA_ERI_OpenInternal( struct TA_ERI_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, int optInTimePeriod, double *outBullPower, double *outBearPower );
 TA_RetCode TA_EXP_OpenInternal( struct TA_EXP_Stream **stream, const double inReal[], int startIdx, int historyLen, double *outReal );
+TA_RetCode TA_FISHER_OpenInternal( struct TA_FISHER_Stream **stream, const double inHigh[], const double inLow[], int startIdx, int historyLen, int optInTimePeriod, double *outFisher, double *outTrigger );
 TA_RetCode TA_FLOOR_OpenInternal( struct TA_FLOOR_Stream **stream, const double inReal[], int startIdx, int historyLen, double *outReal );
 TA_RetCode TA_FOSC_OpenInternal( struct TA_FOSC_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInTimePeriod, double *outReal );
 TA_RetCode TA_FRACTAL_OpenInternal( struct TA_FRACTAL_Stream **stream, const double inHigh[], const double inLow[], int startIdx, int historyLen, int optInLeftBars, int optInRightBars, int *outSwingHigh, int *outSwingLow );
@@ -588,6 +590,7 @@ TA_RetCode TA_EMV_OpenAndFillInternal( struct TA_EMV_Stream **stream, const doub
 TA_RetCode TA_ER_OpenAndFillInternal( struct TA_ER_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInTimePeriod, int *outBegIdx, int *outNBElement, double outReal[] );
 TA_RetCode TA_ERI_OpenAndFillInternal( struct TA_ERI_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, int optInTimePeriod, int *outBegIdx, int *outNBElement, double outBullPower[], double outBearPower[] );
 TA_RetCode TA_EXP_OpenAndFillInternal( struct TA_EXP_Stream **stream, const double inReal[], int startIdx, int historyLen, int *outBegIdx, int *outNBElement, double outReal[] );
+TA_RetCode TA_FISHER_OpenAndFillInternal( struct TA_FISHER_Stream **stream, const double inHigh[], const double inLow[], int startIdx, int historyLen, int optInTimePeriod, int *outBegIdx, int *outNBElement, double outFisher[], double outTrigger[] );
 TA_RetCode TA_FLOOR_OpenAndFillInternal( struct TA_FLOOR_Stream **stream, const double inReal[], int startIdx, int historyLen, int *outBegIdx, int *outNBElement, double outReal[] );
 TA_RetCode TA_FOSC_OpenAndFillInternal( struct TA_FOSC_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInTimePeriod, int *outBegIdx, int *outNBElement, double outReal[] );
 TA_RetCode TA_FRACTAL_OpenAndFillInternal( struct TA_FRACTAL_Stream **stream, const double inHigh[], const double inLow[], int startIdx, int historyLen, int optInLeftBars, int optInRightBars, int *outBegIdx, int *outNBElement, int outSwingHigh[], int outSwingLow[] );

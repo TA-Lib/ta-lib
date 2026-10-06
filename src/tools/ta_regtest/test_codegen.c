@@ -793,6 +793,10 @@ static const UnstableLookup UNSTABLE_MAP[] = {
      * ~1e-13; the second consumer is the stream K-leg, whose v == 0 defaults
      * vector runs only for a function this map calls unstable. */
     {"KDJ",          TA_FUNC_UNST_RMA},
+    /* FISHER smooths the channel position with a 0.33/0.67 recursion and
+     * the transform with a 0.5 one, both seeded at zero and both its own:
+     * it calls nothing, so the id is its own rather than inherited. */
+    {"FISHER",       TA_FUNC_UNST_FISHER},
 };
 #define NUM_UNSTABLE_MAP (sizeof(UNSTABLE_MAP) / sizeof(UNSTABLE_MAP[0]))
 
@@ -6937,7 +6941,7 @@ void codegen_hash_report(const char *who, TA_RetCode goldRc, int goldBeg,
  * sqrt/ceil/floor users (IEEE correctly-rounded) — stays bit-identical across
  * languages. Source-derived from a grep of ta_codegen/input. ---- */
 static const char *const CODEGEN_TRANSCENDENTAL[] = {
-    "ACOS", "ALMA", "ASIN", "ATAN", "CHOP", "CHOPTR", "COS", "COSH", "EXP", "FRAMA",
+    "ACOS", "ALMA", "ASIN", "ATAN", "CHOP", "CHOPTR", "COS", "COSH", "EXP", "FISHER", "FRAMA",
     "HT_DCPERIOD", "HT_DCPHASE", "HT_PHASOR", "HT_SINE", "HT_TRENDLINE",
     "HT_TRENDMODE", "LINEARREG_ANGLE", "LN", "LOG10", "MAMA",
     "ROGERSSATCHELL", "SIN", "SINH",

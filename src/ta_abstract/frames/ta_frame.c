@@ -3116,6 +3116,32 @@ int TA_EXP_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
    (void)params;
    return TA_EXP_DisplayShift( outputIdx );
 }
+TA_RetCode TA_FISHER_FramePP( const TA_ParamHolderPriv *params,
+                           int            startIdx,
+                           int            endIdx,
+                           int           *outBegIdx,
+                           int           *outNBElement )
+{
+   return TA_FISHER(
+               startIdx,
+               endIdx,
+               params->in[0].data.inPrice.high, /* inHigh */
+               params->in[0].data.inPrice.low, /* inLow */
+               params->optIn[0].data.optInInteger, /* optInTimePeriod*/
+               outBegIdx, 
+               outNBElement, 
+               params->out[0].data.outReal, /*  outFisher */
+               params->out[1].data.outReal /*  outTrigger */
+               );
+}
+unsigned int TA_FISHER_FramePPLB( const TA_ParamHolderPriv *params )
+{
+   return TA_FISHER_Lookback(params->optIn[0].data.optInInteger /* optInTimePeriod*/ );
+}
+int TA_FISHER_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+{
+   return TA_FISHER_DisplayShift( params->optIn[0].data.optInInteger, outputIdx );
+}
 TA_RetCode TA_FLOOR_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
                            int            endIdx,

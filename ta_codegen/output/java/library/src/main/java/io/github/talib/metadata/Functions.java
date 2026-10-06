@@ -233,6 +233,7 @@ public final class Functions {
       put(m, f_ER());
       put(m, f_ERI());
       put(m, f_EXP());
+      put(m, f_FISHER());
       put(m, f_FLOOR());
       put(m, f_FOSC());
       put(m, f_FRACTAL());
@@ -2108,6 +2109,25 @@ public final class Functions {
          List.of(),
          List.of(
             new OutputInfo(OutputType.REAL, "outReal", 0x00000001)
+         ));
+   }
+
+   private static FuncInfo f_FISHER() {
+      return new FuncInfo(
+         "FISHER", "Momentum Indicators", "Fisher Transform", 0x0A000000,
+         List.of(
+            new InputInfo(InputType.PRICE, "inPriceHL", 0x00000006)
+         ),
+         List.of(
+            new OptInputInfo(
+               OptInputType.INTEGER_RANGE, "optInTimePeriod", 0x00000000,
+               "Time Period", "Time period", 10.0,
+               0.0, 0.0, 0, 0.0, 0.0, 0.0,
+               2, 100000, 5, 50, 1, null)
+         ),
+         List.of(
+            new OutputInfo(OutputType.REAL, "outFisher", 0x00000001),
+            new OutputInfo(OutputType.REAL, "outTrigger", 0x00000004)
          ));
    }
 

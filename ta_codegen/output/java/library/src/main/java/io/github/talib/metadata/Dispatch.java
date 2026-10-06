@@ -397,6 +397,9 @@ final class Dispatch {
          case "EXP":
             return core.exp(
                startIdx, endIdx, h.realInput(0), h.realOutput(0));
+         case "FISHER":
+            return core.fisher(
+               startIdx, endIdx, h.price(0, 1), h.price(0, 2), h.intOpt(0), h.realOutput(0), h.realOutput(1));
          case "FLOOR":
             return core.floor(
                startIdx, endIdx, h.realInput(0), h.realOutput(0));
@@ -982,6 +985,8 @@ final class Dispatch {
             return core.eriLookback(h.intOpt(0));
          case "EXP":
             return core.expLookback();
+         case "FISHER":
+            return core.fisherLookback(h.intOpt(0));
          case "FLOOR":
             return core.floorLookback();
          case "FOSC":
@@ -1448,6 +1453,8 @@ final class Dispatch {
             return core.eriDisplayShift(h.intOpt(0), outputIdx);
          case "EXP":
             return core.expDisplayShift(outputIdx);
+         case "FISHER":
+            return core.fisherDisplayShift(h.intOpt(0), outputIdx);
          case "FLOOR":
             return core.floorDisplayShift(outputIdx);
          case "FOSC":

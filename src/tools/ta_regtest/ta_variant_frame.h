@@ -4877,6 +4877,49 @@ static TA_RetCode TA_EXP_VFrameS( int startIdx, int endIdx,
 static const TA_VInputKind TA_VIn_EXP[] = { TA_VIN_REAL };
 static const int TA_VOutIsInt_EXP[] = { 0 };
 
+static TA_RetCode TA_FISHER_VFrameD( int startIdx, int endIdx,
+                  const double *const in[], const double optIn[],
+                  int *outBegIdx, int *outNBElement,
+                  double *const outReal[], int *const outInteger[] )
+{
+   (void)outInteger;
+   return TA_FISHER(
+               startIdx,
+               endIdx,
+               in[0] /* inHigh */,
+               in[1] /* inLow */,
+               (int)optIn[0] /* optInTimePeriod */,
+               outBegIdx,
+               outNBElement,
+               outReal[0] /* outFisher */,
+               outReal[1] /* outTrigger */
+               );
+}
+static TA_RetCode TA_FISHER_VFrameS( int startIdx, int endIdx,
+                  const float *const in[], const double optIn[],
+                  int *outBegIdx, int *outNBElement,
+                  double *const outReal[], int *const outInteger[] )
+{
+   (void)outInteger;
+   return TA_S_FISHER(
+               startIdx,
+               endIdx,
+               in[0] /* inHigh */,
+               in[1] /* inLow */,
+               (int)optIn[0] /* optInTimePeriod */,
+               outBegIdx,
+               outNBElement,
+               outReal[0] /* outFisher */,
+               outReal[1] /* outTrigger */
+               );
+}
+
+static const TA_VInputKind TA_VIn_FISHER[] = { TA_VIN_HIGH, TA_VIN_LOW };
+static const int TA_VOutIsInt_FISHER[] = { 0, 0 };
+static const TA_VOptSpec TA_VOpt_FISHER[] = {
+   { "optInTimePeriod", TA_VOPT_INT, 2.0, 100000.0, 10.0 },
+};
+
 static TA_RetCode TA_FLOOR_VFrameD( int startIdx, int endIdx,
                   const double *const in[], const double optIn[],
                   int *outBegIdx, int *outNBElement,
@@ -9972,6 +10015,8 @@ static const TA_VariantEntry TA_VariantTable[] = {
      3, TA_VIn_ERI, 1, TA_VOpt_ERI, 2, TA_VOutIsInt_ERI, 0 },
    { "EXP", TA_EXP_VFrameD, TA_EXP_VFrameS,
      1, TA_VIn_EXP, 0, NULL, 1, TA_VOutIsInt_EXP, 0 },
+   { "FISHER", TA_FISHER_VFrameD, TA_FISHER_VFrameS,
+     2, TA_VIn_FISHER, 1, TA_VOpt_FISHER, 2, TA_VOutIsInt_FISHER, 0 },
    { "FLOOR", TA_FLOOR_VFrameD, TA_FLOOR_VFrameS,
      1, TA_VIn_FLOOR, 0, NULL, 1, TA_VOutIsInt_FLOOR, 0 },
    { "FOSC", TA_FOSC_VFrameD, TA_FOSC_VFrameS,
@@ -10206,6 +10251,6 @@ static const TA_VariantEntry TA_VariantTable[] = {
      1, TA_VIn_ZLEMA, 1, TA_VOpt_ZLEMA, 1, TA_VOutIsInt_ZLEMA, 0 },
 };
 
-#define TA_VARIANT_TABLE_SIZE 229
+#define TA_VARIANT_TABLE_SIZE 230
 
 #endif /* TA_VARIANT_FRAME_H */

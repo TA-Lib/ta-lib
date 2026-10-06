@@ -139,6 +139,7 @@
 #include "ta_ER.c"
 #include "ta_ERI.c"
 #include "ta_EXP.c"
+#include "ta_FISHER.c"
 #include "ta_FLOOR.c"
 #include "ta_FOSC.c"
 #include "ta_FRACTAL.c"
@@ -2171,6 +2172,23 @@ static void bench_all(const char *filter, int iters) {
             g_sink += g_outBuf0[0];
         }
         printf("EXP %lld\n", best / iters);
+        fflush(stdout);
+    }
+    if( func_matches(filter, "FISHER") ) {
+        long long best = 0;
+        for( int pass = 0; pass < 3; pass++ ) {
+            int outBegIdx, outNBElement;
+            long long t0 = get_nanotime();
+            for( int it = 0; it < iters; it++ ) {
+                TA_FISHER(0, g_nPoints - 1, g_high, g_low, 10, &outBegIdx, &outNBElement, g_outBuf0, g_outBuf1);
+            }
+            long long elapsed = get_nanotime() - t0;
+            if( !best || elapsed < best ) best = elapsed;
+            g_sink += outNBElement;
+            g_sink += g_outBuf0[0];
+            g_sink += g_outBuf1[0];
+        }
+        printf("FISHER %lld\n", best / iters);
         fflush(stdout);
     }
     if( func_matches(filter, "FLOOR") ) {
