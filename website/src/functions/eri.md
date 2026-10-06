@@ -11,7 +11,7 @@ Elder Ray Index: Alexander Elder's Bull Power / Bear Power pair from *Trading fo
 
 `Bull Power = High − EMA(Close, n)` and `Bear Power = Low − EMA(Close, n)`, both lines against the **same** EMA. Bull ≥ Bear on every bar since high ≥ low. TradingView's built-in *Bull Bear Power* — which its own support page calls "otherwise known as the Elder-Ray Index" — plots only the sum of the two, not the pair; StockCharts, TC2000 and pandas-ta all ship the two lines.
 
-Because the underlying average is an [`EMA`](/functions/ema.md), ERI inherits its unstable period: the warm-up consumes `TA_GetUnstablePeriod(TA_FUNC_UNST_EMA)` extra bars, exactly as `EMA` itself does.
+Because the underlying average is an [`EMA`](/functions/ema.md), ERI inherits its unstable period: its warm-up is exactly that of `EMA` at the same period, whether `TA_FUNC_UNST_EMA` is set to a count or to an Auto level.
 
 ## Inputs
 

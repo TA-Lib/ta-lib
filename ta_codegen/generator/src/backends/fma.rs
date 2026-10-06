@@ -338,7 +338,7 @@ pub(crate) fn is_integer_returning_helper(name: &str) -> bool {
             | "ta_realbodygapdown"
             | "ta_candlegapup"
             | "ta_candlegapdown"
-    )
+    ) || name.starts_with("ta_warmup_")
 }
 
 /// True if `e` references the variable `name` anywhere.

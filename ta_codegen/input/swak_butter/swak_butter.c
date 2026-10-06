@@ -17,14 +17,13 @@
 
 int swak_butter_lookback(int optInTimePeriod)
 {
-   (void)optInTimePeriod;
 
    /* No structural lookback: the two input slots and the two output slots are
     * seeded from the first bar rather than read from before it, and there is
     * no callee whose lookback could be inherited, so the function's own
     * unstable period is the whole of it.
     */
-   return TA_GetUnstablePeriod(TA_FUNC_UNST_SWAK_BUTTER);
+   return TA_UNSTABLE( TA_FUNC_UNST_SWAK_BUTTER, ta_warmup_two_pole(K, optInTimePeriod) );
 }
 
 TA_RetCode swak_butter(int startIdx, int endIdx,

@@ -245,6 +245,8 @@ impl Core {
         let mut tempInteger: usize = 0_usize;
         let mut lookbackTotal: usize = 0_usize;
         let mut lookbackSignal: usize = 0_usize;
+        let mut lookbackSlow: usize = 0_usize;
+        let mut fastToday: usize = 0_usize;
         // Make sure slow is really slower than
         // the fast period! if not, swap...
         if optInSlowPeriod < optInFastPeriod {
@@ -283,8 +285,8 @@ impl Core {
         lookbackSignal = self.ema_lookback(optInSignalPeriod).unwrap_or(usize::MAX);
         // Move up the start index if there is not
         // enough initial data.
-        lookbackTotal = lookbackSignal;
-        lookbackTotal += self.ema_lookback(optInSlowPeriod).unwrap_or(usize::MAX);
+        lookbackSlow = self.ema_lookback(optInSlowPeriod).unwrap_or(usize::MAX);
+        lookbackTotal = lookbackSignal + lookbackSlow;
         if startIdx < lookbackTotal {
             startIdx = lookbackTotal;
         }
@@ -305,31 +307,39 @@ impl Core {
         //  - EMA recursion: k*x + beta*prev, with ema.c's k and beta.
         //  - Each EMA is seeded with the sum of its first 'period'
         //    inputs, accumulated from 0.0 in input order, divided by
-        //    the period. The fast and slow seed windows end on the
-        //    same bar. The signal EMA is seeded the same way from the
+        //    the period. The signal EMA is seeded the same way from the
         //    first 'signal period' MACD-line values.
         //
         // In-place (an output == inReal) is supported: outputs at
         // [outIdx] are written only after inReal[startIdx+outIdx] was
         // read.
         // Seed each price EMA with a simple average of its first
-        // 'period' price bars. The fast window is the tail of the
-        // slow window: consume the leading slow-only bars first,
-        // then accumulate both over the shared bars.
+        // 'period' price bars, each window placed by that EMA's own
+        // lookback, so that the line is TA_EMA(fast) - TA_EMA(slow) bit
+        // for bit. The slow EMA then runs alone to the end of the fast
+        // window.
+        //
+        // ema_lookback(n) - n must never decrease as n grows: a fast
+        // window ending before the slow one would skip bars of the fast
+        // EMA, and one starting before it would read below the lookback.
         today = startIdx - lookbackTotal;
         tempReal = 0.0;
-        i = (optInSlowPeriod - optInFastPeriod) as usize;
+        i = (optInSlowPeriod) as usize;
         while { let _v = i; i = i.wrapping_sub(1); _v } > 0 {
-            tempReal += inReal[{ let _v = today; today += 1; _v }];
-        }
-        prevFast = 0.0;
-        i = (optInFastPeriod) as usize;
-        while { let _v = i; i = i.wrapping_sub(1); _v } > 0 {
-            prevFast += inReal[today];
             tempReal += inReal[{ let _v = today; today += 1; _v }];
         }
         prevSlow = tempReal / ((optInSlowPeriod) as f64);
+        fastToday = startIdx - lookbackTotal + (lookbackSlow - self.ema_lookback(optInFastPeriod).unwrap_or(usize::MAX));
+        prevFast = 0.0;
+        i = (optInFastPeriod) as usize;
+        while { let _v = i; i = i.wrapping_sub(1); _v } > 0 {
+            prevFast += inReal[{ let _v = fastToday; fastToday += 1; _v }];
+        }
         prevFast = prevFast / ((optInFastPeriod) as f64);
+        while today < fastToday {
+            tempReal = inReal[{ let _v = today; today += 1; _v }];
+            prevSlow = (slowBeta as f64).mul_add(prevSlow, slowK * tempReal);
+        }
         // Advance both EMA through their unstable period, up to the
         // first MACD-line bar.
         while today <= startIdx - lookbackSignal {
@@ -641,6 +651,8 @@ impl Core {
         let mut tempInteger: usize = 0_usize;
         let mut lookbackTotal: usize = 0_usize;
         let mut lookbackSignal: usize = 0_usize;
+        let mut lookbackSlow: usize = 0_usize;
+        let mut fastToday: usize = 0_usize;
         // Make sure slow is really slower than
         // the fast period! if not, swap...
         if optInSlowPeriod < optInFastPeriod {
@@ -679,8 +691,8 @@ impl Core {
         lookbackSignal = self.ema_lookback(optInSignalPeriod)?;
         // Move up the start index if there is not
         // enough initial data.
-        lookbackTotal = lookbackSignal;
-        lookbackTotal += self.ema_lookback(optInSlowPeriod)?;
+        lookbackSlow = self.ema_lookback(optInSlowPeriod)?;
+        lookbackTotal = lookbackSignal + lookbackSlow;
         if startIdx < lookbackTotal {
             startIdx = lookbackTotal;
         }
@@ -700,31 +712,39 @@ impl Core {
         //  - EMA recursion: k*x + beta*prev, with ema.c's k and beta.
         //  - Each EMA is seeded with the sum of its first 'period'
         //    inputs, accumulated from 0.0 in input order, divided by
-        //    the period. The fast and slow seed windows end on the
-        //    same bar. The signal EMA is seeded the same way from the
+        //    the period. The signal EMA is seeded the same way from the
         //    first 'signal period' MACD-line values.
         //
         // In-place (an output == inReal) is supported: outputs at
         // [outIdx] are written only after inReal[startIdx+outIdx] was
         // read.
         // Seed each price EMA with a simple average of its first
-        // 'period' price bars. The fast window is the tail of the
-        // slow window: consume the leading slow-only bars first,
-        // then accumulate both over the shared bars.
+        // 'period' price bars, each window placed by that EMA's own
+        // lookback, so that the line is TA_EMA(fast) - TA_EMA(slow) bit
+        // for bit. The slow EMA then runs alone to the end of the fast
+        // window.
+        //
+        // ema_lookback(n) - n must never decrease as n grows: a fast
+        // window ending before the slow one would skip bars of the fast
+        // EMA, and one starting before it would read below the lookback.
         today = startIdx - lookbackTotal;
         tempReal = 0.0;
-        i = (optInSlowPeriod - optInFastPeriod) as usize;
+        i = (optInSlowPeriod) as usize;
         while { let _v = i; i = i.wrapping_sub(1); _v } > 0 {
-            tempReal += inReal[{ let _v = today; today += 1; _v }];
-        }
-        prevFast = 0.0;
-        i = (optInFastPeriod) as usize;
-        while { let _v = i; i = i.wrapping_sub(1); _v } > 0 {
-            prevFast += inReal[today];
             tempReal += inReal[{ let _v = today; today += 1; _v }];
         }
         prevSlow = tempReal / ((optInSlowPeriod) as f64);
+        fastToday = startIdx - lookbackTotal + (lookbackSlow - self.ema_lookback(optInFastPeriod)?);
+        prevFast = 0.0;
+        i = (optInFastPeriod) as usize;
+        while { let _v = i; i = i.wrapping_sub(1); _v } > 0 {
+            prevFast += inReal[{ let _v = fastToday; fastToday += 1; _v }];
+        }
         prevFast = prevFast / ((optInFastPeriod) as f64);
+        while today < fastToday {
+            tempReal = inReal[{ let _v = today; today += 1; _v }];
+            prevSlow = (slowBeta as f64).mul_add(prevSlow, slowK * tempReal);
+        }
         // Advance both EMA through their unstable period, up to the
         // first MACD-line bar.
         while today <= startIdx - lookbackSignal {

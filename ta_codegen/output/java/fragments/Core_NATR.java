@@ -50,7 +50,7 @@
        * (optInTimePeriod-1) is for the simple
        * moving average.
        */
-      return optInTimePeriod + this.unstablePeriod[FuncUnstId.NATR.ordinal()] ;
+      return optInTimePeriod + this.unstableCount(FuncUnstId.NATR.ordinal(), ((optInTimePeriod > 1) ? 10 * optInTimePeriod : 0), ((optInTimePeriod > 1) ? 19 * optInTimePeriod : 0)) ;
 
    }
    /**
@@ -208,7 +208,7 @@
       }
       prevATR = periodTotal / optInTimePeriod;
       /* Skip the unstable period. */
-      i = this.unstablePeriod[FuncUnstId.NATR.ordinal()];
+      i = lookbackTotal - optInTimePeriod;
       while( i != 0 ) {
          /* Find the greatest of the 3 values. */
          tempLT = inLow[today];
@@ -353,7 +353,7 @@
          today += 1;
       }
       prevATR = periodTotal / optInTimePeriod;
-      i = this.unstablePeriod[FuncUnstId.NATR.ordinal()];
+      i = lookbackTotal - optInTimePeriod;
       while( i != 0 ) {
          tempLT = (double)inLow[today];
          tempHT = (double)inHigh[today];
@@ -897,7 +897,7 @@
       }
       prevATR = periodTotal / optInTimePeriod;
       /* Skip the unstable period. */
-      i = this.unstablePeriod[FuncUnstId.NATR.ordinal()];
+      i = lookbackTotal - optInTimePeriod;
       while( i != 0 ) {
          /* Find the greatest of the 3 values. */
          tempLT = inLow[today];

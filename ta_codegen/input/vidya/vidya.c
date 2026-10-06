@@ -14,10 +14,15 @@
 
 int vidya_lookback(int optInTimePeriod, int optInCMOPeriod)
 {
-   if( optInTimePeriod == 1 )
-      return TA_GetUnstablePeriod(TA_FUNC_UNST_VIDYA);
+   int root;
 
-   return optInCMOPeriod + TA_GetUnstablePeriod(TA_FUNC_UNST_VIDYA);
+   root = (int)sqrt((double)optInCMOPeriod);
+
+   if( optInTimePeriod == 1 )
+      return TA_UNSTABLE( TA_FUNC_UNST_VIDYA, 0 );
+
+   return optInCMOPeriod
+   + TA_UNSTABLE( TA_FUNC_UNST_VIDYA, ta_warmup_vidya(X, optInTimePeriod, root) );
 }
 
 TA_RetCode vidya(int startIdx, int endIdx,
@@ -41,7 +46,7 @@ TA_RetCode vidya(int startIdx, int endIdx,
     */
    if( optInTimePeriod == 1 )
    {
-      lookbackTotal = TA_GetUnstablePeriod(TA_FUNC_UNST_VIDYA);
+      lookbackTotal = vidya_lookback( optInTimePeriod, optInCMOPeriod );
       if( startIdx < lookbackTotal )
          startIdx = lookbackTotal;
       if( startIdx > endIdx )

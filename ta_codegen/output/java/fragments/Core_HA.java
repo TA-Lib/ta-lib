@@ -26,7 +26,7 @@
     */
    public int haLookback( )
    {
-      return this.unstablePeriod[FuncUnstId.HA.ordinal()] ;
+      return this.unstableCount(FuncUnstId.HA.ordinal(), 2 * 10, 2 * 19) ;
 
    }
    /**
@@ -301,7 +301,7 @@
     * <ul>
     * <li>The first candle has no predecessor, so its open is seeded with the midpoint of the raw open and close. Other conventions exist — ta4j emits the raw bar unchanged as its first candle — and they differ only while the seed still carries weight.</li>
     * <li>Both divisors are exact powers of two, so implementations that scale by {@code 0.5} and {@code 0.25} produce the same doubles as those that divide by 2 and 4.</li>
-    * <li>The unstable period discards that many candles of warm-up before the first output, trading history for a smaller residual difference between two requests that start at different bars.</li>
+    * <li>The unstable period discards candles of warm-up before the first output, trading history for a smaller residual difference between two requests that start at different bars.</li>
     * <li>Averaging four prices of one bar is also what <a href="https://ta-lib.org/functions/avgprice">{@code AVGPRICE}</a> computes, but it sums them in a different order, so the two can differ in the last bits.</li>
     * </ul>
     * <p>Values are written only where the indicator is defined. The returned
@@ -398,7 +398,7 @@
     * <ul>
     * <li>The first candle has no predecessor, so its open is seeded with the midpoint of the raw open and close. Other conventions exist — ta4j emits the raw bar unchanged as its first candle — and they differ only while the seed still carries weight.</li>
     * <li>Both divisors are exact powers of two, so implementations that scale by {@code 0.5} and {@code 0.25} produce the same doubles as those that divide by 2 and 4.</li>
-    * <li>The unstable period discards that many candles of warm-up before the first output, trading history for a smaller residual difference between two requests that start at different bars.</li>
+    * <li>The unstable period discards candles of warm-up before the first output, trading history for a smaller residual difference between two requests that start at different bars.</li>
     * <li>Averaging four prices of one bar is also what <a href="https://ta-lib.org/functions/avgprice">{@code AVGPRICE}</a> computes, but it sums them in a different order, so the two can differ in the last bits.</li>
     * </ul>
     * <p>This is the {@code float[]} overload. The arithmetic is performed in

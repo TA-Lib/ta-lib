@@ -87,7 +87,7 @@ public partial class Core
        * from before it -- and there is no callee whose lookback could be
        * inherited, so the function's own unstable period is the whole of it.
        */
-      return this._unstablePeriod[(int)FuncUnstId.SWAK_GAUSS] ;
+      return this.UnstableCount((int)FuncUnstId.SWAK_GAUSS, (((10 + 5) * (optInTimePeriod + 2) + 8) / 9), (((19 + 5) * (optInTimePeriod + 2) + 8) / 9)) ;
 
    }
    /// <summary>

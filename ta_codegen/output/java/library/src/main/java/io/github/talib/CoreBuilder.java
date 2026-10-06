@@ -92,8 +92,9 @@ public final class CoreBuilder {
     * mirroring the C {@code TA_SetUnstablePeriod} wildcard.
     *
     * @throws NullPointerException if {@code id} is null
-    * @throws IllegalArgumentException if {@code period} is negative or above
-    *         {@link Core#INDEX_MAX}
+    * @throws IllegalArgumentException if {@code period} is negative, or above
+    *         {@link Core#INDEX_MAX} and not an Auto level such as
+    *         {@link Core#UNSTABLE_AUTO_PREC_4}
     */
    public CoreBuilder unstablePeriod(FuncUnstId id, int period) {
       if (id == null) {
@@ -109,9 +110,10 @@ public final class CoreBuilder {
        * addressable series could never produce output, so nothing legitimate is
        * refused. C applies the same bound in TA_SetUnstablePeriod.
        */
-      if (period > Core.INDEX_MAX) {
+      if (period > Core.INDEX_MAX
+          && period != Core.UNSTABLE_AUTO_PREC_4 && period != Core.UNSTABLE_AUTO_PREC_8) {
          throw new IllegalArgumentException(
-            "unstablePeriod must be <= " + Core.INDEX_MAX + ", got " + period);
+            "unstablePeriod must be <= " + Core.INDEX_MAX + " or an UNSTABLE_AUTO level, got " + period);
       }
       if (id == FuncUnstId.ALL) {
          java.util.Arrays.fill(unstablePeriod, period);

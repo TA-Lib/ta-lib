@@ -49,10 +49,12 @@
       } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
          return -1;
       }
+      int root;
+      root = (int)Math.sqrt((double)optInTimePeriod);
       if( optInTimePeriod == 1 ) {
-         return this.unstablePeriod[FuncUnstId.KAMA.ordinal()] ;
+         return this.unstableCount(FuncUnstId.KAMA.ordinal(), 0, 0) ;
       }
-      return optInTimePeriod + this.unstablePeriod[FuncUnstId.KAMA.ordinal()] ;
+      return optInTimePeriod + this.unstableCount(FuncUnstId.KAMA.ordinal(), 25 * 4 * root, 25 * 8 * root) ;
 
    }
    /**
@@ -120,7 +122,7 @@
        * still delays the first output for API consistency.
        */
       if( optInTimePeriod == 1 ) {
-         lookbackTotal = this.unstablePeriod[FuncUnstId.KAMA.ordinal()];
+         lookbackTotal = kamaLookback(optInTimePeriod);
          if( startIdx < lookbackTotal ) {
             startIdx = lookbackTotal;
          }
@@ -139,7 +141,7 @@
       /* Identify the minimum number of price bar needed
        * to calculate at least one output.
        */
-      lookbackTotal = optInTimePeriod + this.unstablePeriod[FuncUnstId.KAMA.ordinal()];
+      lookbackTotal = kamaLookback(optInTimePeriod);
       /* Move up the start index if there is not
        * enough initial data.
        */
@@ -362,7 +364,7 @@
       outBegIdx.value = 0;
       outNBElement.value = 0;
       if( optInTimePeriod == 1 ) {
-         lookbackTotal = this.unstablePeriod[FuncUnstId.KAMA.ordinal()];
+         lookbackTotal = kamaLookback(optInTimePeriod);
          if( startIdx < lookbackTotal ) {
             startIdx = lookbackTotal;
          }
@@ -378,7 +380,7 @@
          outNBElement.value = outIdx;
          return RetCode.SUCCESS ;
       }
-      lookbackTotal = optInTimePeriod + this.unstablePeriod[FuncUnstId.KAMA.ordinal()];
+      lookbackTotal = kamaLookback(optInTimePeriod);
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
       }
@@ -961,7 +963,7 @@
       /* Identify the minimum number of price bar needed
        * to calculate at least one output.
        */
-      lookbackTotal = optInTimePeriod + this.unstablePeriod[FuncUnstId.KAMA.ordinal()];
+      lookbackTotal = kamaLookback(optInTimePeriod);
       /* Move up the start index if there is not
        * enough initial data.
        */

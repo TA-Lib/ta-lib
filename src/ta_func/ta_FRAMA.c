@@ -57,7 +57,7 @@
  *  100226 MF,CC  #497. An odd period is refused before the range is written.
  */
 
-TA_LIB_API int TA_FRAMA_Lookback( int optInTimePeriod )
+TA_NOINLINE TA_LIB_API int TA_FRAMA_Lookback( int optInTimePeriod )
 {
    if( (int)optInTimePeriod == TA_INTEGER_DEFAULT )
       optInTimePeriod = 16;
@@ -70,7 +70,7 @@ TA_LIB_API int TA_FRAMA_Lookback( int optInTimePeriod )
    {
       return -1;
    }
-   return optInTimePeriod + TA_GLOBALS_UNSTABLE_PERIOD(TA_FUNC_UNST_FRAMA,Frama);
+   return optInTimePeriod + TA_GLOBALS_UNSTABLE(TA_FUNC_UNST_FRAMA,Frama,80 * 4,80 * 8);
 }
 
 TA_LIB_API int TA_FRAMA_DisplayShift( int optInTimePeriod, int outputIdx )
@@ -152,7 +152,7 @@ TA_LIB_API TA_RetCode TA_FRAMA( int    startIdx,
    }
    *outBegIdx= 0;
    *outNBElement= 0;
-   lookbackTotal = optInTimePeriod + TA_GLOBALS_UNSTABLE_PERIOD(TA_FUNC_UNST_FRAMA,Frama);
+   lookbackTotal = TA_FRAMA_Lookback(optInTimePeriod);
    if( startIdx < lookbackTotal )
    {
       startIdx = lookbackTotal;
@@ -212,7 +212,7 @@ TA_LIB_API TA_RetCode TA_FRAMA( int    startIdx,
    maxIdx_slot = (half-1);
    slot_Idx = 0;
    today = startIdx - lookbackTotal + 1;
-   seedIdx = startIdx - TA_GLOBALS_UNSTABLE_PERIOD(TA_FUNC_UNST_FRAMA,Frama) - 1;
+   seedIdx = startIdx - (lookbackTotal - optInTimePeriod) - 1;
    /* The first block's suffix reads must see a bar inside the window. */
    i = 0;
    while( i < half )
@@ -450,7 +450,7 @@ TA_RetCode TA_S_FRAMA( int    startIdx,
    }
    *outBegIdx= 0;
    *outNBElement= 0;
-   lookbackTotal = optInTimePeriod + TA_GLOBALS_UNSTABLE_PERIOD(TA_FUNC_UNST_FRAMA,Frama);
+   lookbackTotal = TA_FRAMA_Lookback(optInTimePeriod);
    if( startIdx < lookbackTotal )
    {
       startIdx = lookbackTotal;
@@ -501,7 +501,7 @@ TA_RetCode TA_S_FRAMA( int    startIdx,
    maxIdx_slot = (half-1);
    slot_Idx = 0;
    today = startIdx - lookbackTotal + 1;
-   seedIdx = startIdx - TA_GLOBALS_UNSTABLE_PERIOD(TA_FUNC_UNST_FRAMA,Frama) - 1;
+   seedIdx = startIdx - (lookbackTotal - optInTimePeriod) - 1;
    i = 0;
    while( i < half )
    {
@@ -859,7 +859,7 @@ static TA_RetCode TA_FRAMA_OpenImpl( struct TA_FRAMA_Stream **stream, const doub
       }
       *outBegIdx= 0;
       *outNBElement= 0;
-      lookbackTotal = optInTimePeriod + TA_GLOBALS_UNSTABLE_PERIOD(TA_FUNC_UNST_FRAMA,Frama);
+      lookbackTotal = TA_FRAMA_Lookback(optInTimePeriod);
       if( startIdx < lookbackTotal )
       {
          startIdx = lookbackTotal;
@@ -919,7 +919,7 @@ static TA_RetCode TA_FRAMA_OpenImpl( struct TA_FRAMA_Stream **stream, const doub
       maxIdx_slot = (half-1);
       slot_Idx = 0;
       today = startIdx - lookbackTotal + 1;
-      seedIdx = startIdx - TA_GLOBALS_UNSTABLE_PERIOD(TA_FUNC_UNST_FRAMA,Frama) - 1;
+      seedIdx = startIdx - (lookbackTotal - optInTimePeriod) - 1;
       /* The first block's suffix reads must see a bar inside the window. */
       i = 0;
       while( i < half )

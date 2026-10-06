@@ -94,7 +94,7 @@ impl Core {
             return Err(RetCode::BadParam);
         }
         if optInTimePeriod > 1 {
-            return Ok((optInTimePeriod + self.unstable_period[FuncUnstId::DX as usize]) as usize);
+            return Ok((optInTimePeriod + self.unstable_count(FuncUnstId::DX, (if optInTimePeriod > 1 { 10 * optInTimePeriod } else { 0 }), (if optInTimePeriod > 1 { 19 * optInTimePeriod } else { 0 }))) as usize);
         } else {
             return Ok((2) as usize);
         }
@@ -273,11 +273,7 @@ impl Core {
         //
         // TA-Lib does not do the rounding. Still, if you want to reproduce Wilder's examples,
         // you can comment out the following #undef/#define and rebuild the library.
-        if optInTimePeriod > 1 {
-            lookbackTotal = (optInTimePeriod + self.unstable_period[FuncUnstId::DX as usize]) as usize;
-        } else {
-            lookbackTotal = 2;
-        }
+        lookbackTotal = self.dx_lookback(optInTimePeriod).unwrap_or(usize::MAX);
         // Adjust startIdx to account for the lookback period.
         if startIdx < lookbackTotal {
             startIdx = lookbackTotal;
@@ -356,14 +352,12 @@ impl Core {
         }
         // Skip the unstable period. Note that this loop must be executed
         // at least ONCE to calculate the first DI.
-        i = (self.unstable_period[FuncUnstId::DX as usize] + 1) as usize;
-        if i > 0 {
-            let _wn: usize = i;
+        if today < startIdx {
+            let _wn: usize = startIdx - today;
             let _w0 = &inClose[today + 1..][.._wn];
             let _w1 = &inHigh[today + 1..][.._wn];
             let _w2 = &inLow[today + 1..][.._wn];
             for _wk in 0.._wn {
-                i -= 1;
                 // Calculate the prevMinusDM and prevPlusDM
                 today += 1;
                 tempReal = _w1[_wk];
@@ -398,9 +392,6 @@ impl Core {
                 prevTR = prevTR - prevTR * invPeriod + tempReal;
                 prevClose = _w0[_wk];
             }
-            i = i.wrapping_sub(1);
-        } else {
-            i = i.wrapping_sub(1);
         }
         // Write the first DX output.
         //
@@ -843,11 +834,7 @@ impl Core {
         //
         // TA-Lib does not do the rounding. Still, if you want to reproduce Wilder's examples,
         // you can comment out the following #undef/#define and rebuild the library.
-        if optInTimePeriod > 1 {
-            lookbackTotal = (optInTimePeriod + self.unstable_period[FuncUnstId::DX as usize]) as usize;
-        } else {
-            lookbackTotal = 2;
-        }
+        lookbackTotal = self.dx_lookback(optInTimePeriod)?;
         // Adjust startIdx to account for the lookback period.
         if startIdx < lookbackTotal {
             startIdx = lookbackTotal;
@@ -913,8 +900,7 @@ impl Core {
         }
         // Skip the unstable period. Note that this loop must be executed
         // at least ONCE to calculate the first DI.
-        i = (self.unstable_period[FuncUnstId::DX as usize] + 1) as usize;
-        while { let _v = i; i = i.wrapping_sub(1); _v } != 0 {
+        while today < startIdx {
             // Calculate the prevMinusDM and prevPlusDM
             today += 1;
             tempReal = inHigh[today];

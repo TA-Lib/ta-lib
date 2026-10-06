@@ -2599,13 +2599,16 @@ fn render_func_call(
     if let Some(b) = SpecialBuiltin::from_name(fname) {
         match b {
             SpecialBuiltin::UnstablePeriod => {
-                // UNSTABLE_PERIOD(RSI) -> this.unstablePeriod[FuncUnstId.Rsi.ordinal()]
-                // UNSTABLE_PERIOD(FUNC_UNST_ATR) -> strip FUNC_UNST_ prefix first
+                // UNSTABLE_PERIOD(FUNC_UNST_ATR, count) -> strip FUNC_UNST_ prefix first
                 if let Some(Expr::Var(func_name)) = args.first() {
                     let variant = unst_variant_name(func_name);
-                    return format!("this.unstablePeriod[FuncUnstId.{variant}.ordinal()]");
+                    if let Some(counts) = super::builtins::unstable_level_counts(args) {
+                        let counts: Vec<String> =
+                            counts.iter().map(|c| render_expr(c, ctx, registry, helpers)).collect();
+                        return format!("this.unstableCount(FuncUnstId.{variant}.ordinal(), {})", counts.join(", "));
+                    }
                 }
-                "this.unstablePeriod[0]".to_string()
+                panic!("an unstable-period read takes an id and a count")
             }
             pred @ (SpecialBuiltin::IsZero
                    | SpecialBuiltin::IsZeroScaled

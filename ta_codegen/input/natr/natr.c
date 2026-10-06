@@ -30,7 +30,7 @@ int natr_lookback(int optInTimePeriod)
     * (optInTimePeriod-1) is for the simple
     * moving average.
     */
-   return optInTimePeriod + TA_GetUnstablePeriod(TA_FUNC_UNST_NATR);
+   return optInTimePeriod + TA_UNSTABLE( TA_FUNC_UNST_NATR, ta_warmup_wilder(K, optInTimePeriod) );
 }
 
 TA_RetCode natr(int startIdx, int endIdx,
@@ -151,7 +151,7 @@ TA_RetCode natr(int startIdx, int endIdx,
    prevATR = periodTotal / optInTimePeriod;
 
    /* Skip the unstable period. */
-   i = TA_GetUnstablePeriod(TA_FUNC_UNST_NATR);
+   i = lookbackTotal - optInTimePeriod;
    while( i != 0 )
    {
       /* Find the greatest of the 3 values. */

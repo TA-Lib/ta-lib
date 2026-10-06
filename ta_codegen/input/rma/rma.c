@@ -14,7 +14,7 @@
 
 int rma_lookback(int optInTimePeriod)
 {
-   return optInTimePeriod - 1 + TA_GetUnstablePeriod(TA_FUNC_UNST_RMA);
+   return optInTimePeriod - 1 + TA_UNSTABLE( TA_FUNC_UNST_RMA, ta_warmup_wilder(K, optInTimePeriod) );
 }
 
 TA_RetCode rma(int startIdx, int endIdx,
@@ -72,7 +72,7 @@ TA_RetCode rma(int startIdx, int endIdx,
    prevRMA = periodTotal / optInTimePeriod;
 
    /* Skip the unstable period. */
-   i = TA_GetUnstablePeriod(TA_FUNC_UNST_RMA);
+   i = lookbackTotal - (optInTimePeriod - 1);
    while( i != 0 )
    {
       prevRMA = wAlpha * inReal[today] + wBeta * prevRMA;

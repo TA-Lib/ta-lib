@@ -90,7 +90,7 @@ public partial class Core
          return -1;
       }
       if( optInTimePeriod > 1 ) {
-         return optInTimePeriod + this._unstablePeriod[(int)FuncUnstId.PLUS_DI] ;
+         return optInTimePeriod + this.UnstableCount((int)FuncUnstId.PLUS_DI, ((optInTimePeriod > 1) ? 10 * optInTimePeriod : 0), ((optInTimePeriod > 1) ? 19 * optInTimePeriod : 0)) ;
       } else {
          return 1 ;
       }
@@ -250,11 +250,7 @@ public partial class Core
        * TA-Lib does not do the rounding. Still, if you want to reproduce Wilder's examples,
        * you can comment out the following #undef/#define and rebuild the library.
        */
-      if( optInTimePeriod > 1 ) {
-         lookbackTotal = optInTimePeriod + this._unstablePeriod[(int)FuncUnstId.PLUS_DI];
-      } else {
-         lookbackTotal = 1;
-      }
+      lookbackTotal = PlusDiLookback(optInTimePeriod);
       /* Adjust startIdx to account for the lookback period. */
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
@@ -365,7 +361,7 @@ public partial class Core
       /* Skip the unstable period. Note that this loop must be executed
        * at least ONCE to calculate the first DI.
        */
-      i = this._unstablePeriod[(int)FuncUnstId.PLUS_DI] + 1;
+      i = lookbackTotal - (optInTimePeriod - 1);
       while( i-- != 0 ) {
          /* Calculate the prevPlusDM */
          today += 1;
@@ -487,11 +483,7 @@ public partial class Core
       if( System.Runtime.InteropServices.MemoryMarshal.AsBytes(outReal).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inHigh)) || System.Runtime.InteropServices.MemoryMarshal.AsBytes(outReal).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inLow)) || System.Runtime.InteropServices.MemoryMarshal.AsBytes(outReal).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inClose)) ) {
          return RetCode.BadParam ;
       }
-      if( optInTimePeriod > 1 ) {
-         lookbackTotal = optInTimePeriod + this._unstablePeriod[(int)FuncUnstId.PLUS_DI];
-      } else {
-         lookbackTotal = 1;
-      }
+      lookbackTotal = PlusDiLookback(optInTimePeriod);
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
       }
@@ -570,7 +562,7 @@ public partial class Core
          prevTR += tempReal;
          prevClose = (double)inClose[today];
       }
-      i = this._unstablePeriod[(int)FuncUnstId.PLUS_DI] + 1;
+      i = lookbackTotal - (optInTimePeriod - 1);
       while( i-- != 0 ) {
          today += 1;
          tempReal = (double)inHigh[today];
@@ -1239,11 +1231,7 @@ public partial class Core
           * TA-Lib does not do the rounding. Still, if you want to reproduce Wilder's examples,
           * you can comment out the following #undef/#define and rebuild the library.
           */
-         if( optInTimePeriod > 1 ) {
-            lookbackTotal = optInTimePeriod + this._unstablePeriod[(int)FuncUnstId.PLUS_DI];
-         } else {
-            lookbackTotal = 1;
-         }
+         lookbackTotal = PlusDiLookback(optInTimePeriod);
          /* Adjust startIdx to account for the lookback period. */
          if( startIdx < lookbackTotal ) {
             startIdx = lookbackTotal;
@@ -1418,11 +1406,7 @@ public partial class Core
           * TA-Lib does not do the rounding. Still, if you want to reproduce Wilder's examples,
           * you can comment out the following #undef/#define and rebuild the library.
           */
-         if( optInTimePeriod > 1 ) {
-            lookbackTotal = optInTimePeriod + this._unstablePeriod[(int)FuncUnstId.PLUS_DI];
-         } else {
-            lookbackTotal = 1;
-         }
+         lookbackTotal = PlusDiLookback(optInTimePeriod);
          /* Adjust startIdx to account for the lookback period. */
          if( startIdx < lookbackTotal ) {
             startIdx = lookbackTotal;
@@ -1488,7 +1472,7 @@ public partial class Core
          /* Skip the unstable period. Note that this loop must be executed
           * at least ONCE to calculate the first DI.
           */
-         i = this._unstablePeriod[(int)FuncUnstId.PLUS_DI] + 1;
+         i = lookbackTotal - (optInTimePeriod - 1);
          while( i-- != 0 ) {
             /* Calculate the prevPlusDM */
             today += 1;

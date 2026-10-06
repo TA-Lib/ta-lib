@@ -38,7 +38,7 @@
          return -1;
       }
       if( optInTimePeriod > 1 ) {
-         return optInTimePeriod + this.unstablePeriod[FuncUnstId.PLUS_DM.ordinal()] - 1 ;
+         return optInTimePeriod + this.unstableCount(FuncUnstId.PLUS_DM.ordinal(), ((optInTimePeriod > 1) ? 10 * optInTimePeriod : 0), ((optInTimePeriod > 1) ? 19 * optInTimePeriod : 0)) - 1 ;
       } else {
          return 1 ;
       }
@@ -163,11 +163,7 @@
        * Reference:
        *    New Concepts In Technical Trading Systems, J. Welles Wilder Jr
        */
-      if( optInTimePeriod > 1 ) {
-         lookbackTotal = optInTimePeriod + this.unstablePeriod[FuncUnstId.PLUS_DM.ordinal()] - 1;
-      } else {
-         lookbackTotal = 1;
-      }
+      lookbackTotal = plusDmLookback(optInTimePeriod);
       /* Adjust startIdx to account for the lookback period. */
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
@@ -238,7 +234,7 @@
       }
       /* Process subsequent DM */
       /* Skip the unstable period. */
-      i = this.unstablePeriod[FuncUnstId.PLUS_DM.ordinal()];
+      i = lookbackTotal - (optInTimePeriod - 1);
       while( i-- != 0 ) {
          today += 1;
          tempReal = inHigh[today];
@@ -312,11 +308,7 @@
       } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
          return RetCode.BAD_PARAM;
       }
-      if( optInTimePeriod > 1 ) {
-         lookbackTotal = optInTimePeriod + this.unstablePeriod[FuncUnstId.PLUS_DM.ordinal()] - 1;
-      } else {
-         lookbackTotal = 1;
-      }
+      lookbackTotal = plusDmLookback(optInTimePeriod);
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
       }
@@ -366,7 +358,7 @@
          tempReal = prevPlusDM + plusDM1;
          prevPlusDM = (prevPlusDM > tempReal) ? prevPlusDM : tempReal;
       }
-      i = this.unstablePeriod[FuncUnstId.PLUS_DM.ordinal()];
+      i = lookbackTotal - (optInTimePeriod - 1);
       while( i-- != 0 ) {
          today += 1;
          tempReal = (double)inHigh[today];
@@ -853,11 +845,7 @@
           * Reference:
           *    New Concepts In Technical Trading Systems, J. Welles Wilder Jr
           */
-         if( optInTimePeriod > 1 ) {
-            lookbackTotal = optInTimePeriod + this.unstablePeriod[FuncUnstId.PLUS_DM.ordinal()] - 1;
-         } else {
-            lookbackTotal = 1;
-         }
+         lookbackTotal = plusDmLookback(optInTimePeriod);
          /* Adjust startIdx to account for the lookback period. */
          if( startIdx < lookbackTotal ) {
             startIdx = lookbackTotal;
@@ -981,11 +969,7 @@
           * Reference:
           *    New Concepts In Technical Trading Systems, J. Welles Wilder Jr
           */
-         if( optInTimePeriod > 1 ) {
-            lookbackTotal = optInTimePeriod + this.unstablePeriod[FuncUnstId.PLUS_DM.ordinal()] - 1;
-         } else {
-            lookbackTotal = 1;
-         }
+         lookbackTotal = plusDmLookback(optInTimePeriod);
          /* Adjust startIdx to account for the lookback period. */
          if( startIdx < lookbackTotal ) {
             startIdx = lookbackTotal;
@@ -1031,7 +1015,7 @@
          }
          /* Process subsequent DM */
          /* Skip the unstable period. */
-         i = this.unstablePeriod[FuncUnstId.PLUS_DM.ordinal()];
+         i = lookbackTotal - (optInTimePeriod - 1);
          while( i-- != 0 ) {
             today += 1;
             tempReal = inHigh[today];

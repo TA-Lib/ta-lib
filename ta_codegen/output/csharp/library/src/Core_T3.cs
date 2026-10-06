@@ -97,7 +97,7 @@ public partial class Core
       } else if( !(optInVFactor >= 0e0 && optInVFactor <= 1e0) ) {
          return -1;
       }
-      return 6 * (optInTimePeriod - 1) + this._unstablePeriod[(int)FuncUnstId.T3] ;
+      return 6 * (optInTimePeriod - 1) + this.UnstableCount((int)FuncUnstId.T3, (optInTimePeriod > 1) ? ((10 + 20) * (optInTimePeriod + 1) + 1) / 2 : 0, (optInTimePeriod > 1) ? ((19 + 20) * (optInTimePeriod + 1) + 1) / 2 : 0) ;
 
    }
    /// <summary>
@@ -188,7 +188,7 @@ public partial class Core
        * Do not confuse a T3 with EMA3. Both are called "Triple EMA"
        * in the litterature.
        */
-      lookbackTotal = 6 * (optInTimePeriod - 1) + this._unstablePeriod[(int)FuncUnstId.T3];
+      lookbackTotal = T3Lookback(optInTimePeriod, optInVFactor);
       if( startIdx <= lookbackTotal ) {
          startIdx = lookbackTotal;
       }
@@ -350,7 +350,7 @@ public partial class Core
       if( System.Runtime.InteropServices.MemoryMarshal.AsBytes(outReal).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inReal)) ) {
          return RetCode.BadParam ;
       }
-      lookbackTotal = 6 * (optInTimePeriod - 1) + this._unstablePeriod[(int)FuncUnstId.T3];
+      lookbackTotal = T3Lookback(optInTimePeriod, optInVFactor);
       if( startIdx <= lookbackTotal ) {
          startIdx = lookbackTotal;
       }
@@ -902,7 +902,7 @@ public partial class Core
        * Do not confuse a T3 with EMA3. Both are called "Triple EMA"
        * in the litterature.
        */
-      lookbackTotal = 6 * (optInTimePeriod - 1) + this._unstablePeriod[(int)FuncUnstId.T3];
+      lookbackTotal = T3Lookback(optInTimePeriod, optInVFactor);
       if( startIdx <= lookbackTotal ) {
          startIdx = lookbackTotal;
       }

@@ -61,7 +61,7 @@
  *  092926 MF,CC  Initial version (#478).
  */
 
-TA_LIB_API int TA_STC_Lookback( int optInFastPeriod, int optInSlowPeriod, int optInCyclePeriod )
+TA_NOINLINE TA_LIB_API int TA_STC_Lookback( int optInFastPeriod, int optInSlowPeriod, int optInCyclePeriod )
 {
    int tempInteger;
    if( (int)optInFastPeriod == TA_INTEGER_DEFAULT )
@@ -86,7 +86,7 @@ TA_LIB_API int TA_STC_Lookback( int optInFastPeriod, int optInSlowPeriod, int op
     * then one window per stochastic stage. The two 0.5 smoothers seed on
     * their first input, so they add only the unstable period.
     */
-   return TA_EMA_Lookback(optInSlowPeriod) + 2 * (optInCyclePeriod - 1) + TA_GLOBALS_UNSTABLE_PERIOD(TA_FUNC_UNST_STC,Stc);
+   return TA_EMA_Lookback(optInSlowPeriod) + 2 * (optInCyclePeriod - 1) + TA_GLOBALS_UNSTABLE(TA_FUNC_UNST_STC,Stc,2 * 10 + 3 * (optInSlowPeriod + 1),2 * 19 + 3 * (optInSlowPeriod + 1));
 }
 
 TA_LIB_API int TA_STC_DisplayShift( int optInFastPeriod, int optInSlowPeriod, int optInCyclePeriod, int outputIdx )
@@ -148,10 +148,12 @@ TA_LIB_API TA_RetCode TA_STC( int    startIdx,
    double sufLo;
    int i;
    int today;
+   int fastToday;
    int lineStart;
    int outIdx;
    int tempInteger;
    int lookbackTotal;
+   int lookbackSlow;
    int lastIdx;
    int nLine;
    int nPF;
@@ -307,30 +309,38 @@ TA_LIB_API TA_RetCode TA_STC( int    startIdx,
       pfSufLo = &local_pfSufLo[0];
    }
    lastIdx = optInCyclePeriod - 1;
-   /* The line is TA_MACD's: co-terminal SMA seeds, then both EMAs advanced
-    * through TA_FUNC_UNST_EMA to lineStart, so that from lineStart on it is
-    * TA_EMA(fast) - TA_EMA(slow) bit for bit. The chain is fed from
+   /* The line is TA_MACD's: each SMA seed placed by its own EMA lookback, then
+    * both EMAs advanced to lineStart, so that from lineStart on it is
+    * TA_EMA(fast) - TA_EMA(slow) bit for bit. That placement reads out of
+    * bounds or skips bars unless ema_lookback(n) - n never decreases as n
+    * grows. The chain is fed from
     * lineStart, not from the EMA seed: TA_FUNC_UNST_EMA then reaches only the
     * line, while TA_FUNC_UNST_STC moves the whole chain back and so warms the
     * line and both smoothers.
     */
-   lineStart = startIdx - (lookbackTotal - TA_EMA_Lookback(optInSlowPeriod));
+   lookbackSlow = TA_EMA_Lookback(optInSlowPeriod);
+   lineStart = startIdx - (lookbackTotal - lookbackSlow);
    today = startIdx - lookbackTotal;
    tempReal = 0.0;
-   i = optInSlowPeriod - optInFastPeriod;
+   i = optInSlowPeriod;
    while( i-- > 0 )
    {
       tempReal += inReal[today++];
    }
+   prevSlow = tempReal / optInSlowPeriod;
+   fastToday = startIdx - lookbackTotal + (lookbackSlow - TA_EMA_Lookback(optInFastPeriod));
    prevFast = 0.0;
    i = optInFastPeriod;
    while( i-- > 0 )
    {
-      prevFast += inReal[today];
-      tempReal += inReal[today++];
+      prevFast += inReal[fastToday++];
    }
-   prevSlow = tempReal / optInSlowPeriod;
    prevFast = prevFast / optInFastPeriod;
+   while( today < fastToday )
+   {
+      tempReal = inReal[today++];
+      prevSlow = fma(slowBeta, prevSlow, slowK * tempReal);
+   }
    while( today <= lineStart )
    {
       tempReal = inReal[today++];
@@ -705,10 +715,12 @@ TA_RetCode TA_S_STC( int    startIdx,
    double sufLo;
    int i;
    int today;
+   int fastToday;
    int lineStart;
    int outIdx;
    int tempInteger;
    int lookbackTotal;
+   int lookbackSlow;
    int lastIdx;
    int nLine;
    int nPF;
@@ -859,23 +871,29 @@ TA_RetCode TA_S_STC( int    startIdx,
       pfSufLo = &local_pfSufLo[0];
    }
    lastIdx = optInCyclePeriod - 1;
-   lineStart = startIdx - (lookbackTotal - TA_EMA_Lookback(optInSlowPeriod));
+   lookbackSlow = TA_EMA_Lookback(optInSlowPeriod);
+   lineStart = startIdx - (lookbackTotal - lookbackSlow);
    today = startIdx - lookbackTotal;
    tempReal = 0.0;
-   i = optInSlowPeriod - optInFastPeriod;
+   i = optInSlowPeriod;
    while( i-- > 0 )
    {
       tempReal += (double)inReal[today++];
    }
+   prevSlow = tempReal / optInSlowPeriod;
+   fastToday = startIdx - lookbackTotal + (lookbackSlow - TA_EMA_Lookback(optInFastPeriod));
    prevFast = 0.0;
    i = optInFastPeriod;
    while( i-- > 0 )
    {
-      prevFast += (double)inReal[today];
-      tempReal += (double)inReal[today++];
+      prevFast += (double)inReal[fastToday++];
    }
-   prevSlow = tempReal / optInSlowPeriod;
    prevFast = prevFast / optInFastPeriod;
+   while( today < fastToday )
+   {
+      tempReal = (double)inReal[today++];
+      prevSlow = fma(slowBeta, prevSlow, slowK * tempReal);
+   }
    while( today <= lineStart )
    {
       tempReal = (double)inReal[today++];
@@ -1492,10 +1510,12 @@ static TA_RetCode TA_STC_OpenImpl( struct TA_STC_Stream **stream, const double i
       double sufLo;
       int i;
       int today;
+      int fastToday;
       int lineStart;
       int outIdx;
       int tempInteger;
       int lookbackTotal;
+      int lookbackSlow;
       int lastIdx = 0;
       int nLine;
       int nPF;
@@ -1634,30 +1654,38 @@ static TA_RetCode TA_STC_OpenImpl( struct TA_STC_Stream **stream, const double i
       maxIdx_pfSufLo = (optInCyclePeriod-1);
       pfSufLo_Idx = 0;
       lastIdx = optInCyclePeriod - 1;
-      /* The line is TA_MACD's: co-terminal SMA seeds, then both EMAs advanced
-       * through TA_FUNC_UNST_EMA to lineStart, so that from lineStart on it is
-       * TA_EMA(fast) - TA_EMA(slow) bit for bit. The chain is fed from
+      /* The line is TA_MACD's: each SMA seed placed by its own EMA lookback, then
+       * both EMAs advanced to lineStart, so that from lineStart on it is
+       * TA_EMA(fast) - TA_EMA(slow) bit for bit. That placement reads out of
+       * bounds or skips bars unless ema_lookback(n) - n never decreases as n
+       * grows. The chain is fed from
        * lineStart, not from the EMA seed: TA_FUNC_UNST_EMA then reaches only the
        * line, while TA_FUNC_UNST_STC moves the whole chain back and so warms the
        * line and both smoothers.
        */
-      lineStart = startIdx - (lookbackTotal - TA_EMA_Lookback(optInSlowPeriod));
+      lookbackSlow = TA_EMA_Lookback(optInSlowPeriod);
+      lineStart = startIdx - (lookbackTotal - lookbackSlow);
       today = startIdx - lookbackTotal;
       tempReal = 0.0;
-      i = optInSlowPeriod - optInFastPeriod;
+      i = optInSlowPeriod;
       while( i-- > 0 )
       {
          tempReal += inReal[today++];
       }
+      prevSlow = tempReal / optInSlowPeriod;
+      fastToday = startIdx - lookbackTotal + (lookbackSlow - TA_EMA_Lookback(optInFastPeriod));
       prevFast = 0.0;
       i = optInFastPeriod;
       while( i-- > 0 )
       {
-         prevFast += inReal[today];
-         tempReal += inReal[today++];
+         prevFast += inReal[fastToday++];
       }
-      prevSlow = tempReal / optInSlowPeriod;
       prevFast = prevFast / optInFastPeriod;
+      while( today < fastToday )
+      {
+         tempReal = inReal[today++];
+         prevSlow = fma(slowBeta, prevSlow, slowK * tempReal);
+      }
       while( today <= lineStart )
       {
          tempReal = inReal[today++];

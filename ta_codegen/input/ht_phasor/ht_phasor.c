@@ -17,7 +17,7 @@
 int ht_phasor_lookback(void)
 {
    /* See mama_lookback for an explanation of these */
-   return 32 + TA_GetUnstablePeriod(TA_FUNC_UNST_HT_PHASOR);
+   return 32 + TA_UNSTABLE( TA_FUNC_UNST_HT_PHASOR, ta_warmup_hilbert(X) );
 }
 
 TA_RetCode ht_phasor(int startIdx, int endIdx,
@@ -87,7 +87,7 @@ TA_RetCode ht_phasor(int startIdx, int endIdx,
    /* Identify the minimum number of price bar needed
     * to calculate at least one output.
     */
-   lookbackTotal = 32 + TA_GetUnstablePeriod(TA_FUNC_UNST_HT_PHASOR);
+   lookbackTotal = ht_phasor_lookback();
 
    /* Move up the start index if there is not
     * enough initial data.

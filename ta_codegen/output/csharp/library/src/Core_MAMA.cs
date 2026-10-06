@@ -87,10 +87,15 @@ public partial class Core
       } else if( !(optInSlowLimit >= 1e-2 && optInSlowLimit <= 9.9e-1) ) {
          return -1;
       }
-      /* The two parameters are not a factor to determine
-       * the lookback, but are still requested for
-       * consistency with all other Lookback functions.
+      double limit = 0;
+      int count4 = 0;
+      int count8 = 0;
+      /* ceil( 2*K / max(fast, slow) ) per level, in this order of operations: the
+       * count is defined as this double expression, not as the real quotient.
        */
+      limit = (optInFastLimit > optInSlowLimit) ? optInFastLimit : optInSlowLimit;
+      count4 = (int)Math.Ceiling(20.0 / limit);
+      count8 = (int)Math.Ceiling(38.0 / limit);
       /* Lookback is a fix amount + the unstable period.
        *
        *
@@ -107,7 +112,7 @@ public partial class Core
        *        -------
        *         32 Total
        */
-      return 32 + this._unstablePeriod[(int)FuncUnstId.MAMA] ;
+      return 32 + this.UnstableCount((int)FuncUnstId.MAMA, (80 + 50 * 4) + count4, (80 + 50 * 8) + count8) ;
 
    }
    /// <summary>
@@ -237,7 +242,7 @@ public partial class Core
       /* Identify the minimum number of price bar needed
        * to calculate at least one output.
        */
-      lookbackTotal = 32 + this._unstablePeriod[(int)FuncUnstId.MAMA];
+      lookbackTotal = MamaLookback(optInFastLimit, optInSlowLimit);
       /* Move up the start index if there is not
        * enough initial data.
        */
@@ -628,7 +633,7 @@ public partial class Core
       a = 0.0962;
       b = 0.5769;
       rad2Deg = 180.0 / (4.0 * Math.Atan(1));
-      lookbackTotal = 32 + this._unstablePeriod[(int)FuncUnstId.MAMA];
+      lookbackTotal = MamaLookback(optInFastLimit, optInSlowLimit);
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
       }
@@ -1729,7 +1734,7 @@ public partial class Core
       /* Identify the minimum number of price bar needed
        * to calculate at least one output.
        */
-      lookbackTotal = 32 + this._unstablePeriod[(int)FuncUnstId.MAMA];
+      lookbackTotal = MamaLookback(optInFastLimit, optInSlowLimit);
       /* Move up the start index if there is not
        * enough initial data.
        */

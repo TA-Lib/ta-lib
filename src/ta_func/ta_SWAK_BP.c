@@ -58,8 +58,10 @@
  *  100326 MF,CC  The newest output on one fused step (#486).
  */
 
-TA_LIB_API int TA_SWAK_BP_Lookback( int optInTimePeriod, double optInDelta )
+TA_NOINLINE TA_LIB_API int TA_SWAK_BP_Lookback( int optInTimePeriod, double optInDelta )
 {
+   int count4;
+   int count8;
    if( (int)optInTimePeriod == TA_INTEGER_DEFAULT )
       optInTimePeriod = 20;
    else if( (int)optInTimePeriod < 5 || (int)optInTimePeriod > 2000 )
@@ -68,11 +70,16 @@ TA_LIB_API int TA_SWAK_BP_Lookback( int optInTimePeriod, double optInDelta )
       optInDelta = 0.1;
    else if( !(optInDelta >= 5e-2 && optInDelta <= 5e-1) )
       return -1;
+   /* ceil( (K+1)*P / (6*delta) ) per level, in this order of operations: the
+    * count is defined as this double expression, not as the real quotient.
+    */
+   count4 = (int)ceil((double)(11 * optInTimePeriod) / (6.0 * optInDelta));
+   count8 = (int)ceil((double)(20 * optInTimePeriod) / (6.0 * optInDelta));
    /* No structural lookback: the two input slots and the two output slots are
     * seeded from the first bar rather than read from before it, and there is
     * no callee whose lookback could be inherited.
     */
-   return TA_GLOBALS_UNSTABLE_PERIOD(TA_FUNC_UNST_SWAK_BP,Swak_bp);
+   return TA_GLOBALS_UNSTABLE(TA_FUNC_UNST_SWAK_BP,Swak_bp,count4,count8);
 }
 
 TA_LIB_API int TA_SWAK_BP_DisplayShift( int optInTimePeriod, double optInDelta, int outputIdx )

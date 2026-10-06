@@ -40,10 +40,12 @@
       } else if( optInCMOPeriod < 2 || optInCMOPeriod > 100000 ) {
          return -1;
       }
+      int root;
+      root = (int)Math.sqrt((double)optInCMOPeriod);
       if( optInTimePeriod == 1 ) {
-         return this.unstablePeriod[FuncUnstId.VIDYA.ordinal()] ;
+         return this.unstableCount(FuncUnstId.VIDYA.ordinal(), 0, 0) ;
       }
-      return optInCMOPeriod + this.unstablePeriod[FuncUnstId.VIDYA.ordinal()] ;
+      return optInCMOPeriod + this.unstableCount(FuncUnstId.VIDYA.ordinal(), ((2 * 4 * (optInTimePeriod + 1) * root > 100000000) ? 100000000 : 2 * 4 * (optInTimePeriod + 1) * root), ((2 * 8 * (optInTimePeriod + 1) * root > 100000000) ? 100000000 : 2 * 8 * (optInTimePeriod + 1) * root)) ;
 
    }
    /**
@@ -117,7 +119,7 @@
        * for every MAType. The unstable period still delays the first output.
        */
       if( optInTimePeriod == 1 ) {
-         lookbackTotal = this.unstablePeriod[FuncUnstId.VIDYA.ordinal()];
+         lookbackTotal = vidyaLookback(optInTimePeriod, optInCMOPeriod);
          if( startIdx < lookbackTotal ) {
             startIdx = lookbackTotal;
          }
@@ -305,7 +307,7 @@
       outBegIdx.value = 0;
       outNBElement.value = 0;
       if( optInTimePeriod == 1 ) {
-         lookbackTotal = this.unstablePeriod[FuncUnstId.VIDYA.ordinal()];
+         lookbackTotal = vidyaLookback(optInTimePeriod, optInCMOPeriod);
          if( startIdx < lookbackTotal ) {
             startIdx = lookbackTotal;
          }

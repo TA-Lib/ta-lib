@@ -29,12 +29,8 @@
       } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
          return -1;
       }
-      /* One bar is consumed forming the first close-to-close change, then the
-       * EMA's own warm-up on top:
-       *    1 + ema_lookback(optInTimePeriod)
-       *  = 1 + (optInTimePeriod - 1) + TA_GetUnstablePeriod(TA_FUNC_UNST_EMA)
-       */
-      return optInTimePeriod + this.unstablePeriod[FuncUnstId.EMA.ordinal()] ;
+      /* One bar forms the first close-to-close change. */
+      return 1 + emaLookback(optInTimePeriod) ;
 
    }
    /**
@@ -89,9 +85,6 @@
       } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
          return RetCode.BAD_PARAM;
       }
-      emaBeta = (double)(optInTimePeriod - 1) / (double)(optInTimePeriod + 1);
-      optInK_1 = 1.0 - emaBeta;
-      emaBeta = 1.0 - optInK_1;
       /* Alexander Elder's Force Index (Trading for a Living, 1993): the one-bar
        * close-to-close move weighted by that bar's volume, then smoothed with an
        * EMA. Elder's 2-period reading is the short-term form and 13 the
@@ -122,6 +115,13 @@
        * to calculate at least one output.
        */
       lookbackTotal = efiLookback(optInTimePeriod);
+      /* After the lookback call: a double live across a call is saved and
+       * restored around every fma call of the loops below, one more instruction
+       * per bar.
+       */
+      emaBeta = (double)(optInTimePeriod - 1) / (double)(optInTimePeriod + 1);
+      optInK_1 = 1.0 - emaBeta;
+      emaBeta = 1.0 - optInK_1;
       /* Move up the start index if there is not
        * enough initial data.
        */
@@ -218,10 +218,10 @@
       } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
          return RetCode.BAD_PARAM;
       }
+      lookbackTotal = efiLookback(optInTimePeriod);
       emaBeta = (double)(optInTimePeriod - 1) / (double)(optInTimePeriod + 1);
       optInK_1 = 1.0 - emaBeta;
       emaBeta = 1.0 - optInK_1;
-      lookbackTotal = efiLookback(optInTimePeriod);
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
       }
@@ -629,9 +629,6 @@
          int today = 0;
          int outIdx = 0;
          int lookbackTotal = 0;
-         emaBeta = (double)(optInTimePeriod - 1) / (double)(optInTimePeriod + 1);
-         optInK_1 = 1.0 - emaBeta;
-         emaBeta = 1.0 - optInK_1;
          /* Alexander Elder's Force Index (Trading for a Living, 1993): the one-bar
           * close-to-close move weighted by that bar's volume, then smoothed with an
           * EMA. Elder's 2-period reading is the short-term form and 13 the
@@ -662,6 +659,13 @@
           * to calculate at least one output.
           */
          lookbackTotal = efiLookback(optInTimePeriod);
+         /* After the lookback call: a double live across a call is saved and
+          * restored around every fma call of the loops below, one more instruction
+          * per bar.
+          */
+         emaBeta = (double)(optInTimePeriod - 1) / (double)(optInTimePeriod + 1);
+         optInK_1 = 1.0 - emaBeta;
+         emaBeta = 1.0 - optInK_1;
          /* Move up the start index if there is not
           * enough initial data.
           */
@@ -709,9 +713,6 @@
          int today = 0;
          int outIdx = 0;
          int lookbackTotal = 0;
-         emaBeta = (double)(optInTimePeriod - 1) / (double)(optInTimePeriod + 1);
-         optInK_1 = 1.0 - emaBeta;
-         emaBeta = 1.0 - optInK_1;
          /* Alexander Elder's Force Index (Trading for a Living, 1993): the one-bar
           * close-to-close move weighted by that bar's volume, then smoothed with an
           * EMA. Elder's 2-period reading is the short-term form and 13 the
@@ -742,6 +743,13 @@
           * to calculate at least one output.
           */
          lookbackTotal = efiLookback(optInTimePeriod);
+         /* After the lookback call: a double live across a call is saved and
+          * restored around every fma call of the loops below, one more instruction
+          * per bar.
+          */
+         emaBeta = (double)(optInTimePeriod - 1) / (double)(optInTimePeriod + 1);
+         optInK_1 = 1.0 - emaBeta;
+         emaBeta = 1.0 - optInK_1;
          /* Move up the start index if there is not
           * enough initial data.
           */

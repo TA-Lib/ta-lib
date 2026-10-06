@@ -1378,8 +1378,8 @@ fn test_rsi_c_unstable_period() {
     let out = generate_all(&func, &enums);
 
     assert!(
-        out.c.contains("TA_GLOBALS_UNSTABLE_PERIOD"),
-        "C RSI should use TA_GLOBALS_UNSTABLE_PERIOD"
+        out.c.contains("TA_GLOBALS_UNSTABLE(TA_FUNC_UNST_RSI,Rsi,"),
+        "C RSI should use TA_GLOBALS_UNSTABLE"
     );
 }
 
@@ -1413,8 +1413,8 @@ fn test_rsi_rust_unstable_period() {
     let out = generate_all(&func, &enums);
 
     assert!(
-        out.rust.contains("unstable_period"),
-        "Rust RSI should reference unstable_period"
+        out.rust.contains("self.unstable_count(FuncUnstId::RSI, "),
+        "Rust RSI should call unstable_count"
     );
 }
 
@@ -1424,8 +1424,8 @@ fn test_rsi_java_unstable_period() {
     let out = generate_all(&func, &enums);
 
     assert!(
-        out.java.contains("this.unstablePeriod"),
-        "Java RSI should reference this.unstablePeriod"
+        out.java.contains("this.unstableCount(FuncUnstId."),
+        "Java RSI should call this.unstableCount"
     );
 }
 
@@ -1437,8 +1437,8 @@ fn test_ema_c_unstable_period() {
     let out = generate_all(&func, &enums);
 
     assert!(
-        out.c.contains("TA_GLOBALS_UNSTABLE_PERIOD"),
-        "C EMA should use TA_GLOBALS_UNSTABLE_PERIOD"
+        out.c.contains("TA_GLOBALS_UNSTABLE(TA_FUNC_UNST_EMA,Ema,"),
+        "C EMA should use TA_GLOBALS_UNSTABLE"
     );
 }
 
@@ -1472,8 +1472,8 @@ fn test_ema_rust_unstable_period() {
     let out = generate_all(&func, &enums);
 
     assert!(
-        out.rust.contains("unstable_period"),
-        "Rust EMA should reference unstable_period"
+        out.rust.contains("self.unstable_count(FuncUnstId::EMA, "),
+        "Rust EMA should call unstable_count"
     );
 }
 
@@ -1556,8 +1556,8 @@ fn test_mult_simplicity() {
 
     // No unstable period
     assert!(
-        !out.c.contains("UNSTABLE_PERIOD"),
-        "C MULT should NOT use UNSTABLE_PERIOD"
+        !out.c.contains("TA_GLOBALS_UNSTABLE"),
+        "C MULT should NOT read an unstable period"
     );
 }
 

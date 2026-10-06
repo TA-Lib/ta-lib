@@ -17,13 +17,12 @@
 
 int swak_hp_lookback(int optInTimePeriod)
 {
-   (void)optInTimePeriod;
 
    /* No structural lookback: the one input slot and the one output slot are
     * seeded from the first bar rather than read from before it, and there is
     * no callee whose lookback could be inherited.
     */
-   return TA_GetUnstablePeriod(TA_FUNC_UNST_SWAK_HP);
+   return TA_UNSTABLE( TA_FUNC_UNST_SWAK_HP, (K * optInTimePeriod + 5) / 6 );
 }
 
 TA_RetCode swak_hp(int startIdx, int endIdx,

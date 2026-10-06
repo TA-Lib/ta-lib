@@ -83,7 +83,7 @@ impl Core {
         } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
             return Err(RetCode::BadParam);
         }
-        return Ok((optInTimePeriod - 1 + self.unstable_period[FuncUnstId::MCGD as usize]) as usize);
+        return Ok((optInTimePeriod - 1 + self.unstable_count(FuncUnstId::MCGD, 5 * 4 * optInTimePeriod, 5 * 8 * optInTimePeriod)) as usize);
     }
     /// Display shift of one output of [`Core::mcgd`]: how many bars ahead (positive) or behind
     /// (negative) of the bar that computed it a chart draws that output. The values are never

@@ -85,7 +85,7 @@ public partial class Core
       if( optInTimePeriod % 2 != 0 ) {
          return -1 ;
       }
-      return optInTimePeriod + this._unstablePeriod[(int)FuncUnstId.FRAMA] ;
+      return optInTimePeriod + this.UnstableCount((int)FuncUnstId.FRAMA, 80 * 4, 80 * 8) ;
 
    }
    /// <summary>
@@ -171,7 +171,7 @@ public partial class Core
       }
       outBegIdx = 0;
       outNBElement = 0;
-      lookbackTotal = optInTimePeriod + this._unstablePeriod[(int)FuncUnstId.FRAMA];
+      lookbackTotal = FramaLookback(optInTimePeriod);
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
       }
@@ -197,7 +197,7 @@ public partial class Core
       maxIdx_slot = (half)-1;
       slot_Idx = 0;
       today = startIdx - lookbackTotal + 1;
-      seedIdx = startIdx - this._unstablePeriod[(int)FuncUnstId.FRAMA] - 1;
+      seedIdx = startIdx - (lookbackTotal - optInTimePeriod) - 1;
       /* The first block's suffix reads must see a bar inside the window. */
       i = 0;
       while( i < half ) {
@@ -375,7 +375,7 @@ public partial class Core
       }
       outBegIdx = 0;
       outNBElement = 0;
-      lookbackTotal = optInTimePeriod + this._unstablePeriod[(int)FuncUnstId.FRAMA];
+      lookbackTotal = FramaLookback(optInTimePeriod);
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
       }
@@ -392,7 +392,7 @@ public partial class Core
       maxIdx_slot = (half)-1;
       slot_Idx = 0;
       today = startIdx - lookbackTotal + 1;
-      seedIdx = startIdx - this._unstablePeriod[(int)FuncUnstId.FRAMA] - 1;
+      seedIdx = startIdx - (lookbackTotal - optInTimePeriod) - 1;
       i = 0;
       while( i < half ) {
          slot_sufHigh[i] = (double)inHigh[today];
@@ -1024,7 +1024,7 @@ public partial class Core
       }
       outBegIdx = 0;
       outNBElement = 0;
-      lookbackTotal = optInTimePeriod + this._unstablePeriod[(int)FuncUnstId.FRAMA];
+      lookbackTotal = FramaLookback(optInTimePeriod);
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
       }
@@ -1050,7 +1050,7 @@ public partial class Core
       maxIdx_slot = (half)-1;
       slot_Idx = 0;
       today = startIdx - lookbackTotal + 1;
-      seedIdx = startIdx - this._unstablePeriod[(int)FuncUnstId.FRAMA] - 1;
+      seedIdx = startIdx - (lookbackTotal - optInTimePeriod) - 1;
       /* The first block's suffix reads must see a bar inside the window. */
       i = 0;
       while( i < half ) {

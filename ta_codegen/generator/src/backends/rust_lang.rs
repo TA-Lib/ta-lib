@@ -5434,9 +5434,15 @@ fn render_func_call(
                     let base = func_name
                         .strip_prefix("FUNC_UNST_")
                         .unwrap_or(func_name);
-                    return format!("self.unstable_period[FuncUnstId::{base} as usize]");
+                    if let Some(counts) = super::builtins::unstable_level_counts(args) {
+                        let counts: Vec<String> = counts
+                            .iter()
+                            .map(|c| render_expr(c, ctx, opt_real_params, registry, helpers))
+                            .collect();
+                        return format!("self.unstable_count(FuncUnstId::{base}, {})", counts.join(", "));
+                    }
                 }
-                "self.unstable_period[0]".to_string()
+                panic!("an unstable-period read takes an id and a count")
             }
             pred @ (SpecialBuiltin::IsZero
                    | SpecialBuiltin::IsZeroScaled

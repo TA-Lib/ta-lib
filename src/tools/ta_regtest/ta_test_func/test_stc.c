@@ -89,16 +89,16 @@
 /* TA_EMA against stcRefEma, relative. Worst over the grid: 2.6e-16. */
 #define STC_EMA_REL 8e-16
 
-#define STC_COMPOSITE_CMP 486496
-#define STC_EMA_CMP       993600
-#define STC_MACD_CMP      248640
-#define STC_LOOKBACK_CMP  10
+#define STC_COMPOSITE_CMP 2030988
+#define STC_EMA_CMP       4288616
+#define STC_MACD_CMP      1544001
+#define STC_LOOKBACK_CMP  14
 #define STC_SHIFT_CMP     46085
 #define STC_GOLD_CMP      10
 #define STC_TREND_CMP     336
 #define STC_FLAT_CMP      7357
 #define STC_SWAP_CMP      6866
-#define STC_INPLACE_CMP   16380
+#define STC_INPLACE_CMP   20484
 
 typedef struct { int bar; double want; } StcGolden;
 
@@ -128,9 +128,9 @@ typedef struct { int fast, slow, cycle; } StcTuple;
 /* Cycle 40 exceeds the rings' 30-slot stack prologue. */
 static const StcTuple stcTuples[] =
 {
-   { 23, 50, 10 }, { 2, 3, 2 }, { 12, 26, 40 }, { 5, 13, 3 },
+   { 23, 50, 10 }, { 2, 3, 2 }, { 12, 26, 40 }, { 5, 13, 3 }, { 2, 26, 10 },
 };
-static const int stcUnst[] = { 0, 5 };
+static const int stcUnst[] = { 0, 5, TA_UNSTABLE_AUTO_PREC_4, TA_UNSTABLE_AUTO_PREC_8 };
 /* Offsets from the lookback, then absolute bars: the seeds are anchored to
  * startIdx, so a gate at the lookback alone cannot see an anchor error. */
 static const int stcStartOff[] = { 0, 1, 7 };
@@ -416,7 +416,7 @@ static void stcStage( const double *x, int n, int cycle, double *outSm,
 static TA_RetCode stcRefEma( int startIdx, int endIdx, const double *in, int period,
                              TA_Integer *outBegIdx, TA_Integer *outNBElement, double *out )
 {
-   int lookback = period - 1 + (int)TA_GetUnstablePeriod( TA_FUNC_UNST_EMA );
+   int lookback = TA_EMA_Lookback( period );
    double k = 2.0 / (double)(period + 1), prev = 0.0;
    int today, i, outIdx = 0;
 
@@ -506,7 +506,8 @@ static ErrorNumber stcComposite( const char *tag, const double *c, int nb,
    }
    g_stcEmaCmp += 2 * nL;
 
-   if( k == 0 )
+   /* Under a level the signal EMA of period 1 adds no bar, as at a count of 0. */
+   if( k == 0 || k > TA_INDEX_MAX )
    {
       rc = TA_MACD( L0, nb-1, c, t->fast, t->slow, 1, &b1, &n1, mac, sig, hist );
       if( rc != TA_SUCCESS || b1 != L0 || n1 != nL
@@ -542,7 +543,7 @@ static ErrorNumber test_stc_composite( void )
    const char *tags[] = { "composite walk", "composite sin", "composite trend",
                           "composite F(130)" };
    ErrorNumber e;
-   int s, it, ik, iu, is, nb, lb, startIdx;
+   int s, it, ik, iu, is, nb, lb, u, startIdx;
 
    for( s = 0; s < NB_OF(tags); s++ )
    {
@@ -559,16 +560,19 @@ static ErrorNumber test_stc_composite( void )
       for( ik = 0; ik < NB_OF(stcUnst); ik++ )
       for( iu = 0; iu < NB_OF(stcUnst); iu++ )
       {
+         /* The count the STC id adds: its setting, or under a level that level's. */
+         stcSetUnst( stcUnst[ik], 0 );
+         u = TA_STC_Lookback( stcTuples[it].fast, stcTuples[it].slow, stcTuples[it].cycle );
          stcSetUnst( stcUnst[ik], stcUnst[iu] );
          lb = TA_STC_Lookback( stcTuples[it].fast, stcTuples[it].slow, stcTuples[it].cycle );
+         u = lb - u;
          for( is = 0; is < NB_OF(stcStartOff) + NB_OF(stcStartAbs); is++ )
          {
             startIdx = is < NB_OF(stcStartOff) ? lb + stcStartOff[is]
                                                : stcStartAbs[is - NB_OF(stcStartOff)];
             if( startIdx < lb || startIdx >= nb )
                continue;
-            e = stcComposite( tags[s], c, nb, &stcTuples[it], stcUnst[ik], stcUnst[iu],
-                              startIdx );
+            e = stcComposite( tags[s], c, nb, &stcTuples[it], stcUnst[ik], u, startIdx );
             if( e != TA_TEST_PASS )
                return e;
          }
@@ -605,6 +609,26 @@ static ErrorNumber test_stc_lookback( void )
       {
          printf( "STC lookback Fail [k %d u %d]: outBegIdx %d, lookback %d, expected %d\n",
                  ks[ik], us[iu], begA, TA_STC_Lookback( 23, 50, 10 ), want );
+         return TA_TESTUTIL_TFRR_BAD_BEGIDX;
+      }
+      g_stcLookbackCmp++;
+   }
+
+   /* Under a level the count follows the periods: the swapped order must
+    * resolve the same one, in the lookback and in the call. */
+   for( ik = 0; ik < 2; ik++ )
+   for( iu = 0; iu < 2; iu++ )
+   {
+      stcSetUnst( ik ? TA_UNSTABLE_AUTO_PREC_8 : TA_UNSTABLE_AUTO_PREC_4,
+                  iu ? TA_UNSTABLE_AUTO_PREC_8 : TA_UNSTABLE_AUTO_PREC_4 );
+      want = TA_STC_Lookback( 23, 50, 10 );
+      rc = TA_STC( 0, STC_WALK_NB-1, c, 50, 23, 10, &begA, &nbA, a );
+      if( rc != TA_SUCCESS || want <= 67 || TA_STC_Lookback( 50, 23, 10 ) != want
+          || begA != want || nbA != STC_WALK_NB - want )
+      {
+         printf( "STC lookback Fail [level %d %d]: swapped periods answer lookback %d and "
+                 "outBegIdx %d, expected %d\n", ik, iu, TA_STC_Lookback( 50, 23, 10 ),
+                 begA, want );
          return TA_TESTUTIL_TFRR_BAD_BEGIDX;
       }
       g_stcLookbackCmp++;

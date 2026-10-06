@@ -57,7 +57,7 @@
  *  052603 MF   Adapt code to compile with .NET Managed C++
  */
 
-TA_LIB_API int TA_HT_DCPHASE_Lookback( void )
+TA_NOINLINE TA_LIB_API int TA_HT_DCPHASE_Lookback( void )
 {
    /* 31 input are skip
     * +32 output are skip to account for misc lookback
@@ -67,7 +67,7 @@ TA_LIB_API int TA_HT_DCPHASE_Lookback( void )
     * 31 is for being compatible with Tradestation.
     * See mama_lookback for an explanation of the "32".
     */
-   return 63 + TA_GLOBALS_UNSTABLE_PERIOD(TA_FUNC_UNST_HT_DCPHASE,Ht_dcphase);
+   return 63 + TA_GLOBALS_UNSTABLE(TA_FUNC_UNST_HT_DCPHASE,Ht_dcphase,(80 + 50 * 4),(80 + 50 * 8));
 }
 
 TA_LIB_API int TA_HT_DCPHASE_DisplayShift( int outputIdx )
@@ -187,7 +187,7 @@ TA_LIB_API TA_RetCode TA_HT_DCPHASE( int    startIdx,
    /* Identify the minimum number of price bar needed
     * to calculate at least one output.
     */
-   lookbackTotal = 63 + TA_GLOBALS_UNSTABLE_PERIOD(TA_FUNC_UNST_HT_DCPHASE,Ht_dcphase);
+   lookbackTotal = TA_HT_DCPHASE_Lookback();
    /* Move up the start index if there is not
     * enough initial data.
     */
@@ -618,7 +618,7 @@ TA_RetCode TA_S_HT_DCPHASE( int    startIdx,
    tempReal = atan(1);
    rad2Deg = 45.0 / tempReal;
    constDeg2RadBy360 = tempReal * 8.0;
-   lookbackTotal = 63 + TA_GLOBALS_UNSTABLE_PERIOD(TA_FUNC_UNST_HT_DCPHASE,Ht_dcphase);
+   lookbackTotal = TA_HT_DCPHASE_Lookback();
    if( startIdx < lookbackTotal )
    {
       startIdx = lookbackTotal;
@@ -1310,7 +1310,7 @@ static TA_RetCode TA_HT_DCPHASE_OpenImpl( struct TA_HT_DCPHASE_Stream **stream, 
       /* Identify the minimum number of price bar needed
        * to calculate at least one output.
        */
-      lookbackTotal = 63 + TA_GLOBALS_UNSTABLE_PERIOD(TA_FUNC_UNST_HT_DCPHASE,Ht_dcphase);
+      lookbackTotal = TA_HT_DCPHASE_Lookback();
       /* Move up the start index if there is not
        * enough initial data.
        */

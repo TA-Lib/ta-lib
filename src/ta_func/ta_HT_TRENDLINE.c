@@ -68,7 +68,7 @@
  *                literal cap lets the streaming rescan-window machinery bound it.
  */
 
-TA_LIB_API int TA_HT_TRENDLINE_Lookback( void )
+TA_NOINLINE TA_LIB_API int TA_HT_TRENDLINE_Lookback( void )
 {
    /* 31 input are skip
     * +32 output are skip to account for misc lookback
@@ -78,7 +78,7 @@ TA_LIB_API int TA_HT_TRENDLINE_Lookback( void )
     * 31 is for being compatible with Tradestation.
     * See mama_lookback for an explanation of the "32".
     */
-   return 63 + TA_GLOBALS_UNSTABLE_PERIOD(TA_FUNC_UNST_HT_TRENDLINE,Ht_trendline);
+   return 63 + TA_GLOBALS_UNSTABLE(TA_FUNC_UNST_HT_TRENDLINE,Ht_trendline,(80 + 50 * 4),(80 + 50 * 8));
 }
 
 TA_LIB_API int TA_HT_TRENDLINE_DisplayShift( int outputIdx )
@@ -188,7 +188,7 @@ TA_LIB_API TA_RetCode TA_HT_TRENDLINE( int    startIdx,
    /* Identify the minimum number of price bar needed
     * to calculate at least one output.
     */
-   lookbackTotal = 63 + TA_GLOBALS_UNSTABLE_PERIOD(TA_FUNC_UNST_HT_TRENDLINE,Ht_trendline);
+   lookbackTotal = TA_HT_TRENDLINE_Lookback();
    /* Move up the start index if there is not
     * enough initial data.
     */
@@ -584,7 +584,7 @@ TA_RetCode TA_S_HT_TRENDLINE( int    startIdx,
    iTrend1 = iTrend2;
    tempReal = atan(1);
    rad2Deg = 45.0 / tempReal;
-   lookbackTotal = 63 + TA_GLOBALS_UNSTABLE_PERIOD(TA_FUNC_UNST_HT_TRENDLINE,Ht_trendline);
+   lookbackTotal = TA_HT_TRENDLINE_Lookback();
    if( startIdx < lookbackTotal )
    {
       startIdx = lookbackTotal;
@@ -1210,7 +1210,7 @@ static TA_RetCode TA_HT_TRENDLINE_OpenImpl( struct TA_HT_TRENDLINE_Stream **stre
       /* Identify the minimum number of price bar needed
        * to calculate at least one output.
        */
-      lookbackTotal = 63 + TA_GLOBALS_UNSTABLE_PERIOD(TA_FUNC_UNST_HT_TRENDLINE,Ht_trendline);
+      lookbackTotal = TA_HT_TRENDLINE_Lookback();
       /* Move up the start index if there is not
        * enough initial data.
        */

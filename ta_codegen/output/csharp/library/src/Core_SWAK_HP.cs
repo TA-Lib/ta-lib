@@ -85,7 +85,7 @@ public partial class Core
        * seeded from the first bar rather than read from before it, and there is
        * no callee whose lookback could be inherited.
        */
-      return this._unstablePeriod[(int)FuncUnstId.SWAK_HP] ;
+      return this.UnstableCount((int)FuncUnstId.SWAK_HP, (10 * optInTimePeriod + 5) / 6, (19 * optInTimePeriod + 5) / 6) ;
 
    }
    /// <summary>

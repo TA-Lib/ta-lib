@@ -84,7 +84,7 @@ impl Core {
         //
         // 31 is for being compatible with Tradestation.
         // See mama_lookback for an explanation of the "32".
-        return Ok((63 + self.unstable_period[FuncUnstId::HT_TRENDMODE as usize]) as usize);
+        return Ok((63 + self.unstable_count(FuncUnstId::HT_TRENDMODE, (80 + 50 * 4), (80 + 50 * 8))) as usize);
     }
     /// Display shift of one output of [`Core::ht_trendmode`]: how many bars ahead (positive) or
     /// behind (negative) of the bar that computed it a chart draws that output. The values are
@@ -268,7 +268,7 @@ impl Core {
         constDeg2RadBy360 = tempReal * 8.0;
         // Identify the minimum number of price bar needed
         // to calculate at least one output.
-        lookbackTotal = (63 + self.unstable_period[FuncUnstId::HT_TRENDMODE as usize]) as usize;
+        lookbackTotal = self.ht_trendmode_lookback().unwrap_or(usize::MAX);
         // Move up the start index if there is not
         // enough initial data.
         if startIdx < lookbackTotal {
@@ -1235,7 +1235,7 @@ impl Core {
         constDeg2RadBy360 = tempReal * 8.0;
         // Identify the minimum number of price bar needed
         // to calculate at least one output.
-        lookbackTotal = (63 + self.unstable_period[FuncUnstId::HT_TRENDMODE as usize]) as usize;
+        lookbackTotal = self.ht_trendmode_lookback()?;
         // Move up the start index if there is not
         // enough initial data.
         if startIdx < lookbackTotal {

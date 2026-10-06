@@ -451,7 +451,7 @@ public partial class Core
    /// <item><description>The two periods are not interchangeable and are never swapped: <c>optInFastPeriod</c> is the length of both exponential averages, <c>optInSlowPeriod</c> the length of the summation window. Some implementations reorder them when the summation window is the shorter of the two; this one does not.</description></item>
    /// <item><description>A window in which every bar is exactly flat, high equal to low, leaves both averages at zero. The ratio is reported as 1 there, its continuous limit, so a flat market yields exactly <c>optInSlowPeriod</c> rather than a spurious zero.</description></item>
    /// <item><description>Implementations disagree on how the exponential averages are seeded. TA-Lib uses its own EMA convention, the simple average of the first <c>optInFastPeriod</c> inputs, where Tulip Indicators, ta4j and trading-signals seed from a single raw value and converge to these values only after many bars. Published sample vectors, including the one in Achelis, are seeded that way and match only in the tail.</description></item>
-   /// <item><description>MASSI inherits EMA's unstable period rather than owning one, and inherits it twice: <c>TA_SetUnstablePeriod(TA_FUNC_UNST_EMA, u)</c> moves the first output by 2u.</description></item>
+   /// <item><description>MASSI inherits EMA's unstable period rather than owning one, and inherits it twice: when <c>TA_FUNC_UNST_EMA</c>, set to a count or to an Auto level, discards <c>u</c> bars from an EMA of <c>optInFastPeriod</c>, MASSI's first output moves by 2u.</description></item>
    /// </list>
    /// <para>
    /// Values are written only where the indicator is defined. The returned
@@ -549,7 +549,7 @@ public partial class Core
    /// <item><description>The two periods are not interchangeable and are never swapped: <c>optInFastPeriod</c> is the length of both exponential averages, <c>optInSlowPeriod</c> the length of the summation window. Some implementations reorder them when the summation window is the shorter of the two; this one does not.</description></item>
    /// <item><description>A window in which every bar is exactly flat, high equal to low, leaves both averages at zero. The ratio is reported as 1 there, its continuous limit, so a flat market yields exactly <c>optInSlowPeriod</c> rather than a spurious zero.</description></item>
    /// <item><description>Implementations disagree on how the exponential averages are seeded. TA-Lib uses its own EMA convention, the simple average of the first <c>optInFastPeriod</c> inputs, where Tulip Indicators, ta4j and trading-signals seed from a single raw value and converge to these values only after many bars. Published sample vectors, including the one in Achelis, are seeded that way and match only in the tail.</description></item>
-   /// <item><description>MASSI inherits EMA's unstable period rather than owning one, and inherits it twice: <c>TA_SetUnstablePeriod(TA_FUNC_UNST_EMA, u)</c> moves the first output by 2u.</description></item>
+   /// <item><description>MASSI inherits EMA's unstable period rather than owning one, and inherits it twice: when <c>TA_FUNC_UNST_EMA</c>, set to a count or to an Auto level, discards <c>u</c> bars from an EMA of <c>optInFastPeriod</c>, MASSI's first output moves by 2u.</description></item>
    /// </list>
    /// <para>
    /// This is the <c>float[]</c> overload: input elements are widened to

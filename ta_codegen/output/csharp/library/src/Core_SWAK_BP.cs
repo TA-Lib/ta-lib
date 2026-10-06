@@ -88,11 +88,18 @@ public partial class Core
       } else if( !(optInDelta >= 5e-2 && optInDelta <= 5e-1) ) {
          return -1;
       }
+      int count4 = 0;
+      int count8 = 0;
+      /* ceil( (K+1)*P / (6*delta) ) per level, in this order of operations: the
+       * count is defined as this double expression, not as the real quotient.
+       */
+      count4 = (int)Math.Ceiling((double)(11 * optInTimePeriod) / (6.0 * optInDelta));
+      count8 = (int)Math.Ceiling((double)(20 * optInTimePeriod) / (6.0 * optInDelta));
       /* No structural lookback: the two input slots and the two output slots are
        * seeded from the first bar rather than read from before it, and there is
        * no callee whose lookback could be inherited.
        */
-      return this._unstablePeriod[(int)FuncUnstId.SWAK_BP] ;
+      return this.UnstableCount((int)FuncUnstId.SWAK_BP, count4, count8) ;
 
    }
    /// <summary>

@@ -17,12 +17,15 @@
 
 int mama_lookback(double        optInFastLimit,                                             double        optInSlowLimit)
 {
-   /* The two parameters are not a factor to determine
-    * the lookback, but are still requested for
-    * consistency with all other Lookback functions.
+   double limit;
+   int count4, count8;
+
+   /* ceil( 2*K / max(fast, slow) ) per level, in this order of operations: the
+    * count is defined as this double expression, not as the real quotient.
     */
-   (void)optInFastLimit;
-   (void)optInSlowLimit;
+   limit = optInFastLimit > optInSlowLimit ? optInFastLimit : optInSlowLimit;
+   count4 = (int)ceil( 20.0 / limit );
+   count8 = (int)ceil( 38.0 / limit );
 
    /* Lookback is a fix amount + the unstable period.
     *
@@ -41,7 +44,8 @@ int mama_lookback(double        optInFastLimit,                                 
     *         32 Total
     */
 
-   return 32 + TA_GetUnstablePeriod(TA_FUNC_UNST_MAMA);
+   return 32 + TA_UNSTABLE( TA_FUNC_UNST_MAMA,
+      ta_warmup_hilbert(X) + (X == 4 ? count4 : count8) );
 }
 
 TA_RetCode mama(int startIdx, int endIdx,
@@ -113,7 +117,7 @@ TA_RetCode mama(int startIdx, int endIdx,
    /* Identify the minimum number of price bar needed
     * to calculate at least one output.
     */
-   lookbackTotal = 32 + TA_GetUnstablePeriod(TA_FUNC_UNST_MAMA);
+   lookbackTotal = mama_lookback( optInFastLimit, optInSlowLimit );
 
    /* Move up the start index if there is not
     * enough initial data.

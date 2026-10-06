@@ -18,7 +18,8 @@
 
 int ema_lookback(int optInTimePeriod)
 {
-   return optInTimePeriod - 1 + TA_GetUnstablePeriod(TA_FUNC_UNST_EMA);
+   return optInTimePeriod - 1
+   + TA_UNSTABLE( TA_FUNC_UNST_EMA, ta_warmup_ema(K, optInTimePeriod) );
 }
 
 TA_RetCode ema(int startIdx, int endIdx,
@@ -27,21 +28,26 @@ TA_RetCode ema(int startIdx, int endIdx,
    int *outBegIdx, int *outNBElement,
    double *outReal)
 {
-   double emaBeta = ((double)(optInTimePeriod - 1)) / ((double)(optInTimePeriod + 1));
-   double optInK_1 = 1.0 - emaBeta;
+   double emaBeta, optInK_1;
    double tempReal, prevMA;
    int i, today, outIdx, lookbackTotal;
-
-   /* emaBeta + optInK_1 must be exactly 1.0, or a flat input drifts off
-    * its level. Each subtraction is exact only from an operand in
-    * [0.5,1): at a period of 2 that is optInK_1, above it emaBeta.
-    */
-   emaBeta = 1.0 - optInK_1;
 
    /* Identify the minimum number of price bar needed
     * to calculate at least one output.
     */
    lookbackTotal = ema_lookback( optInTimePeriod );
+
+   /* After the lookback call: a double live across a call is saved and
+    * restored around every fma call of the loops below, one more instruction
+    * per bar.
+    *
+    * emaBeta + optInK_1 must be exactly 1.0, or a flat input drifts off
+    * its level. Each subtraction is exact only from an operand in
+    * [0.5,1): at a period of 2 that is optInK_1, above it emaBeta.
+    */
+   emaBeta = ((double)(optInTimePeriod - 1)) / ((double)(optInTimePeriod + 1));
+   optInK_1 = 1.0 - emaBeta;
+   emaBeta = 1.0 - optInK_1;
 
    /* Move up the start index if there is not
     * enough initial data.

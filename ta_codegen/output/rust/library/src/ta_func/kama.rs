@@ -100,10 +100,12 @@ impl Core {
         } else if (((optInTimePeriod) as i32) < 1) || (((optInTimePeriod) as i32) > 100000) {
             return Err(RetCode::BadParam);
         }
+        let mut root: usize = 0_usize;
+        root = ((optInTimePeriod as f64).sqrt() as usize) as usize;
         if optInTimePeriod == 1 {
-            return Ok((self.unstable_period[FuncUnstId::KAMA as usize]) as usize);
+            return Ok((self.unstable_count(FuncUnstId::KAMA, 0, 0)) as usize);
         }
-        return Ok((optInTimePeriod + self.unstable_period[FuncUnstId::KAMA as usize]) as usize);
+        return Ok((optInTimePeriod + self.unstable_count(FuncUnstId::KAMA, 25 * 4 * ((root) as i32), 25 * 8 * ((root) as i32))) as usize);
     }
     /// Display shift of one output of [`Core::kama`]: how many bars ahead (positive) or behind
     /// (negative) of the bar that computed it a chart draws that output. The values are never
@@ -211,7 +213,7 @@ impl Core {
         // (same convention as TA_MA for every MAType). The unstable period
         // still delays the first output for API consistency.
         if optInTimePeriod == 1 {
-            lookbackTotal = (self.unstable_period[FuncUnstId::KAMA as usize]) as usize;
+            lookbackTotal = self.kama_lookback(optInTimePeriod).unwrap_or(usize::MAX);
             if startIdx < lookbackTotal {
                 startIdx = lookbackTotal;
             }
@@ -230,7 +232,7 @@ impl Core {
         }
         // Identify the minimum number of price bar needed
         // to calculate at least one output.
-        lookbackTotal = (optInTimePeriod + self.unstable_period[FuncUnstId::KAMA as usize]) as usize;
+        lookbackTotal = self.kama_lookback(optInTimePeriod).unwrap_or(usize::MAX);
         // Move up the start index if there is not
         // enough initial data.
         if startIdx < lookbackTotal {
@@ -734,7 +736,7 @@ impl Core {
         (*outNBElement) = 0;
         // Identify the minimum number of price bar needed
         // to calculate at least one output.
-        lookbackTotal = (optInTimePeriod + self.unstable_period[FuncUnstId::KAMA as usize]) as usize;
+        lookbackTotal = self.kama_lookback(optInTimePeriod)?;
         // Move up the start index if there is not
         // enough initial data.
         if startIdx < lookbackTotal {

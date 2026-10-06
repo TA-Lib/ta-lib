@@ -92,7 +92,7 @@ impl Core {
         } else if (((optInStdDevPeriod) as i32) < 2) || (((optInStdDevPeriod) as i32) > 100000) {
             return Err(RetCode::BadParam);
         }
-        return Ok((optInStdDevPeriod - 1 + (optInTimePeriod - 1) + self.unstable_period[FuncUnstId::RVI as usize]) as usize);
+        return Ok((optInStdDevPeriod - 1 + (optInTimePeriod - 1) + self.unstable_count(FuncUnstId::RVI, (if optInTimePeriod > 1 { 10 * optInTimePeriod } else { 0 }), (if optInTimePeriod > 1 { 19 * optInTimePeriod } else { 0 }))) as usize);
     }
     /// Display shift of one output of [`Core::rvi`]: how many bars ahead (positive) or behind
     /// (negative) of the bar that computed it a chart draws that output. The values are never
@@ -333,7 +333,7 @@ impl Core {
         prevUp = upTotal / ((optInTimePeriod) as f64);
         prevDn = dnTotal / ((optInTimePeriod) as f64);
         // Skip the unstable period. Same step, smoothed but not stored.
-        i = (self.unstable_period[FuncUnstId::RVI as usize]) as usize;
+        i = lookbackTotal - (((optInStdDevPeriod - 1 + (optInTimePeriod - 1))) as usize);
         while i != 0 {
             tempReal = inReal[today] - shift;
             periodTotal1 += tempReal;
@@ -921,7 +921,7 @@ impl Core {
         prevUp = upTotal / ((optInTimePeriod) as f64);
         prevDn = dnTotal / ((optInTimePeriod) as f64);
         // Skip the unstable period. Same step, smoothed but not stored.
-        i = (self.unstable_period[FuncUnstId::RVI as usize]) as usize;
+        i = lookbackTotal - (((optInStdDevPeriod - 1 + (optInTimePeriod - 1))) as usize);
         while i != 0 {
             tempReal = inReal[today] - shift;
             periodTotal1 += tempReal;

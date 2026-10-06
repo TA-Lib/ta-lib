@@ -90,7 +90,7 @@ impl Core {
         if optInTimePeriod % 2 != 0 {
             return Err(RetCode::BadParam);
         }
-        return Ok((optInTimePeriod + self.unstable_period[FuncUnstId::FRAMA as usize]) as usize);
+        return Ok((optInTimePeriod + self.unstable_count(FuncUnstId::FRAMA, 80 * 4, 80 * 8)) as usize);
     }
     /// Display shift of one output of [`Core::frama`]: how many bars ahead (positive) or behind
     /// (negative) of the bar that computed it a chart draws that output. The values are never
@@ -222,7 +222,7 @@ impl Core {
         }
         (*outBegIdx) = 0;
         (*outNBElement) = 0;
-        lookbackTotal = (optInTimePeriod + self.unstable_period[FuncUnstId::FRAMA as usize]) as usize;
+        lookbackTotal = self.frama_lookback(optInTimePeriod).unwrap_or(usize::MAX);
         if startIdx < lookbackTotal {
             startIdx = lookbackTotal;
         }
@@ -259,7 +259,7 @@ impl Core {
         }
         slot_Idx = 0;
         today = startIdx - lookbackTotal + 1;
-        seedIdx = startIdx - ((self.unstable_period[FuncUnstId::FRAMA as usize]) as usize) - 1;
+        seedIdx = startIdx - (lookbackTotal - ((optInTimePeriod) as usize)) - 1;
         // The first block's suffix reads must see a bar inside the window.
         i = 0;
         if i < half {
@@ -674,7 +674,7 @@ impl Core {
         }
         (*outBegIdx) = 0;
         (*outNBElement) = 0;
-        lookbackTotal = (optInTimePeriod + self.unstable_period[FuncUnstId::FRAMA as usize]) as usize;
+        lookbackTotal = self.frama_lookback(optInTimePeriod)?;
         if startIdx < lookbackTotal {
             startIdx = lookbackTotal;
         }
@@ -699,7 +699,7 @@ impl Core {
         maxIdx_slot = ((half) as usize) - 1;
         slot_Idx = 0;
         today = startIdx - lookbackTotal + 1;
-        seedIdx = startIdx - ((self.unstable_period[FuncUnstId::FRAMA as usize]) as usize) - 1;
+        seedIdx = startIdx - (lookbackTotal - ((optInTimePeriod) as usize)) - 1;
         // The first block's suffix reads must see a bar inside the window.
         i = 0;
         while i < half {

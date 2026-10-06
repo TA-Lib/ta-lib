@@ -44,10 +44,15 @@
       } else if( !(optInSlowLimit >= 1e-2 && optInSlowLimit <= 9.9e-1) ) {
          return -1;
       }
-      /* The two parameters are not a factor to determine
-       * the lookback, but are still requested for
-       * consistency with all other Lookback functions.
+      double limit;
+      int count4;
+      int count8;
+      /* ceil( 2*K / max(fast, slow) ) per level, in this order of operations: the
+       * count is defined as this double expression, not as the real quotient.
        */
+      limit = (optInFastLimit > optInSlowLimit) ? optInFastLimit : optInSlowLimit;
+      count4 = (int)Math.ceil(20.0 / limit);
+      count8 = (int)Math.ceil(38.0 / limit);
       /* Lookback is a fix amount + the unstable period.
        *
        *
@@ -64,7 +69,7 @@
        *        -------
        *         32 Total
        */
-      return 32 + this.unstablePeriod[FuncUnstId.MAMA.ordinal()] ;
+      return 32 + this.unstableCount(FuncUnstId.MAMA.ordinal(), (80 + 50 * 4) + count4, (80 + 50 * 8) + count8) ;
 
    }
    /**
@@ -191,7 +196,7 @@
       /* Identify the minimum number of price bar needed
        * to calculate at least one output.
        */
-      lookbackTotal = 32 + this.unstablePeriod[FuncUnstId.MAMA.ordinal()];
+      lookbackTotal = mamaLookback(optInFastLimit, optInSlowLimit);
       /* Move up the start index if there is not
        * enough initial data.
        */
@@ -581,7 +586,7 @@
       a = 0.0962;
       b = 0.5769;
       rad2Deg = 180.0 / (4.0 * Math.atan(1));
-      lookbackTotal = 32 + this.unstablePeriod[FuncUnstId.MAMA.ordinal()];
+      lookbackTotal = mamaLookback(optInFastLimit, optInSlowLimit);
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
       }
@@ -1666,7 +1671,7 @@
       /* Identify the minimum number of price bar needed
        * to calculate at least one output.
        */
-      lookbackTotal = 32 + this.unstablePeriod[FuncUnstId.MAMA.ordinal()];
+      lookbackTotal = mamaLookback(optInFastLimit, optInSlowLimit);
       /* Move up the start index if there is not
        * enough initial data.
        */

@@ -59,7 +59,7 @@
  *  100526 MF,CC  a1p without its cancellation at long periods (#486).
  */
 
-TA_LIB_API int TA_SWAK_HP_Lookback( int optInTimePeriod )
+TA_NOINLINE TA_LIB_API int TA_SWAK_HP_Lookback( int optInTimePeriod )
 {
    if( (int)optInTimePeriod == TA_INTEGER_DEFAULT )
       optInTimePeriod = 20;
@@ -69,7 +69,7 @@ TA_LIB_API int TA_SWAK_HP_Lookback( int optInTimePeriod )
     * seeded from the first bar rather than read from before it, and there is
     * no callee whose lookback could be inherited.
     */
-   return TA_GLOBALS_UNSTABLE_PERIOD(TA_FUNC_UNST_SWAK_HP,Swak_hp);
+   return TA_GLOBALS_UNSTABLE(TA_FUNC_UNST_SWAK_HP,Swak_hp,(10 * optInTimePeriod + 5) / 6,(19 * optInTimePeriod + 5) / 6);
 }
 
 TA_LIB_API int TA_SWAK_HP_DisplayShift( int optInTimePeriod, int outputIdx )

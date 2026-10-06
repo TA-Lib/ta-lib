@@ -52,7 +52,7 @@
       } else if( !(optInVFactor >= 0e0 && optInVFactor <= 1e0) ) {
          return -1;
       }
-      return 6 * (optInTimePeriod - 1) + this.unstablePeriod[FuncUnstId.T3.ordinal()] ;
+      return 6 * (optInTimePeriod - 1) + this.unstableCount(FuncUnstId.T3.ordinal(), (optInTimePeriod > 1) ? ((10 + 20) * (optInTimePeriod + 1) + 1) / 2 : 0, (optInTimePeriod > 1) ? ((19 + 20) * (optInTimePeriod + 1) + 1) / 2 : 0) ;
 
    }
    /**
@@ -138,7 +138,7 @@
        * Do not confuse a T3 with EMA3. Both are called "Triple EMA"
        * in the litterature.
        */
-      lookbackTotal = 6 * (optInTimePeriod - 1) + this.unstablePeriod[FuncUnstId.T3.ordinal()];
+      lookbackTotal = t3Lookback(optInTimePeriod, optInVFactor);
       if( startIdx <= lookbackTotal ) {
          startIdx = lookbackTotal;
       }
@@ -295,7 +295,7 @@
       } else if( !(optInVFactor >= 0e0 && optInVFactor <= 1e0) ) {
          return RetCode.BAD_PARAM;
       }
-      lookbackTotal = 6 * (optInTimePeriod - 1) + this.unstablePeriod[FuncUnstId.T3.ordinal()];
+      lookbackTotal = t3Lookback(optInTimePeriod, optInVFactor);
       if( startIdx <= lookbackTotal ) {
          startIdx = lookbackTotal;
       }
@@ -811,7 +811,7 @@
        * Do not confuse a T3 with EMA3. Both are called "Triple EMA"
        * in the litterature.
        */
-      lookbackTotal = 6 * (optInTimePeriod - 1) + this.unstablePeriod[FuncUnstId.T3.ordinal()];
+      lookbackTotal = t3Lookback(optInTimePeriod, optInVFactor);
       if( startIdx <= lookbackTotal ) {
          startIdx = lookbackTotal;
       }

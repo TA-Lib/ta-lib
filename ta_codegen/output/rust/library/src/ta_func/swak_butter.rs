@@ -91,7 +91,7 @@ impl Core {
         // seeded from the first bar rather than read from before it, and there is
         // no callee whose lookback could be inherited, so the function's own
         // unstable period is the whole of it.
-        return Ok((self.unstable_period[FuncUnstId::SWAK_BUTTER as usize]) as usize);
+        return Ok((self.unstable_count(FuncUnstId::SWAK_BUTTER, (((10 + 5) * (optInTimePeriod + 2) + 8) / 9), (((19 + 5) * (optInTimePeriod + 2) + 8) / 9))) as usize);
     }
     /// Display shift of one output of [`Core::swak_butter`]: how many bars ahead (positive) or
     /// behind (negative) of the bar that computed it a chart draws that output. The values are

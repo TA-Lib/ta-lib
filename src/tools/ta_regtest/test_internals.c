@@ -1653,6 +1653,38 @@ static ErrorNumber testUnstablePeriodBounds( void )
       printf( "\nFailed: TA_SetUnstablePeriod rejected the TA_INDEX_MAX ceiling\n" );
       return TA_INTERNAL_UNST_VALUE_FAIL;
    }
+
+   /* Above the ceiling only the Auto levels are values: each is stored and read
+    * back as itself, per id and through the wildcard, and an offset that names
+    * no level stays refused and unwritten.
+    */
+   if( TA_SetUnstablePeriod( TA_FUNC_UNST_EMA, TA_UNSTABLE_AUTO_PREC_4 ) != TA_SUCCESS ||
+       TA_GetUnstablePeriod( TA_FUNC_UNST_EMA ) != (unsigned int)TA_INDEX_MAX + 4 ||
+       TA_SetUnstablePeriod( TA_FUNC_UNST_ALL, TA_UNSTABLE_AUTO_PREC_8 ) != TA_SUCCESS ||
+       TA_GetUnstablePeriod( TA_FUNC_UNST_EMA ) != (unsigned int)TA_INDEX_MAX + 8 ||
+       TA_GetUnstablePeriod( TA_FUNC_UNST_SWAK_BP ) != (unsigned int)TA_INDEX_MAX + 8 ||
+       TA_SetUnstablePeriod( TA_FUNC_UNST_EMA, (unsigned int)TA_INDEX_MAX + 1 ) != TA_BAD_PARAM ||
+       TA_SetUnstablePeriod( TA_FUNC_UNST_EMA, (unsigned int)TA_INDEX_MAX + 2 ) != TA_BAD_PARAM ||
+       TA_SetUnstablePeriod( TA_FUNC_UNST_EMA, (unsigned int)TA_INDEX_MAX + 3 ) != TA_BAD_PARAM ||
+       TA_SetUnstablePeriod( TA_FUNC_UNST_EMA, (unsigned int)TA_INDEX_MAX + 5 ) != TA_BAD_PARAM ||
+       TA_SetUnstablePeriod( TA_FUNC_UNST_EMA, (unsigned int)TA_INDEX_MAX + 6 ) != TA_BAD_PARAM ||
+       TA_SetUnstablePeriod( TA_FUNC_UNST_EMA, (unsigned int)TA_INDEX_MAX + 7 ) != TA_BAD_PARAM ||
+       TA_SetUnstablePeriod( TA_FUNC_UNST_EMA, (unsigned int)TA_INDEX_MAX + 9 ) != TA_BAD_PARAM ||
+       TA_GetUnstablePeriod( TA_FUNC_UNST_EMA ) != (unsigned int)TA_INDEX_MAX + 8 ||
+       TA_SetUnstablePeriod( TA_FUNC_UNST_ALL, (unsigned int)TA_INDEX_MAX + 5 ) != TA_BAD_PARAM ||
+       TA_GetUnstablePeriod( TA_FUNC_UNST_SWAK_BP ) != (unsigned int)TA_INDEX_MAX + 8 ||
+       TA_SetUnstablePeriod( TA_FUNC_UNST_ALL, TA_UNSTABLE_AUTO_PREC_4 ) != TA_SUCCESS ||
+       TA_GetUnstablePeriod( TA_FUNC_UNST_SWAK_BP ) != (unsigned int)TA_INDEX_MAX + 4 ||
+       TA_SetUnstablePeriod( TA_FUNC_UNST_RSI, TA_UNSTABLE_AUTO_PREC_8 ) != TA_SUCCESS ||
+       TA_GetUnstablePeriod( TA_FUNC_UNST_RSI ) != (unsigned int)TA_INDEX_MAX + 8 ||
+       TA_GetUnstablePeriod( TA_FUNC_UNST_EMA ) != (unsigned int)TA_INDEX_MAX + 4 ||
+       TA_SetUnstablePeriod( TA_FUNC_UNST_ALL, 0 ) != TA_SUCCESS ||
+       TA_GetUnstablePeriod( TA_FUNC_UNST_EMA ) != 0 )
+   {
+      printf( "\nFailed: TA_SetUnstablePeriod and the Auto levels\n" );
+      return TA_INTERNAL_UNST_VALUE_FAIL;
+   }
+   TA_SetUnstablePeriod( TA_FUNC_UNST_ALL, 7 );
    TA_SetUnstablePeriod( TA_FUNC_UNST_EMA, 7 );
 
    retCode = TA_SetUnstablePeriod( TA_FUNC_UNST_RSI, 3 );

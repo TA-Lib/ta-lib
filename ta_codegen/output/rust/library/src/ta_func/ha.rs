@@ -68,7 +68,7 @@ impl Core {
     /// first output value can be produced.
     #[doc(alias = "TA_HA_Lookback")]
     pub fn ha_lookback(&self) -> Result<usize, RetCode> {
-        return Ok((self.unstable_period[FuncUnstId::HA as usize]) as usize);
+        return Ok((self.unstable_count(FuncUnstId::HA, 2 * 10, 2 * 19)) as usize);
     }
     /// Display shift of one output of [`Core::ha`]: how many bars ahead (positive) or behind
     /// (negative) of the bar that computed it a chart draws that output. The values are never

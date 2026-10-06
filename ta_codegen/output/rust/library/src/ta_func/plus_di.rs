@@ -95,7 +95,7 @@ impl Core {
             return Err(RetCode::BadParam);
         }
         if optInTimePeriod > 1 {
-            return Ok((optInTimePeriod + self.unstable_period[FuncUnstId::PLUS_DI as usize]) as usize);
+            return Ok((optInTimePeriod + self.unstable_count(FuncUnstId::PLUS_DI, (if optInTimePeriod > 1 { 10 * optInTimePeriod } else { 0 }), (if optInTimePeriod > 1 { 19 * optInTimePeriod } else { 0 }))) as usize);
         } else {
             return Ok((1) as usize);
         }
@@ -260,11 +260,7 @@ impl Core {
         //
         // TA-Lib does not do the rounding. Still, if you want to reproduce Wilder's examples,
         // you can comment out the following #undef/#define and rebuild the library.
-        if optInTimePeriod > 1 {
-            lookbackTotal = (optInTimePeriod + self.unstable_period[FuncUnstId::PLUS_DI as usize]) as usize;
-        } else {
-            lookbackTotal = 1;
-        }
+        lookbackTotal = self.plus_di_lookback(optInTimePeriod).unwrap_or(usize::MAX);
         // Adjust startIdx to account for the lookback period.
         if startIdx < lookbackTotal {
             startIdx = lookbackTotal;
@@ -394,7 +390,7 @@ impl Core {
         // Process subsequent DI
         // Skip the unstable period. Note that this loop must be executed
         // at least ONCE to calculate the first DI.
-        i = (self.unstable_period[FuncUnstId::PLUS_DI as usize] + 1) as usize;
+        i = lookbackTotal - (((optInTimePeriod - 1)) as usize);
         if i > 0 {
             let _wn: usize = i;
             let _w0 = &inClose[today + 1..][.._wn];
@@ -866,11 +862,7 @@ impl Core {
             //
             // TA-Lib does not do the rounding. Still, if you want to reproduce Wilder's examples,
             // you can comment out the following #undef/#define and rebuild the library.
-            if optInTimePeriod > 1 {
-                lookbackTotal = (optInTimePeriod + self.unstable_period[FuncUnstId::PLUS_DI as usize]) as usize;
-            } else {
-                lookbackTotal = 1;
-            }
+            lookbackTotal = self.plus_di_lookback(optInTimePeriod)?;
             // Adjust startIdx to account for the lookback period.
             if startIdx < lookbackTotal {
                 startIdx = lookbackTotal;
@@ -1048,11 +1040,7 @@ impl Core {
             //
             // TA-Lib does not do the rounding. Still, if you want to reproduce Wilder's examples,
             // you can comment out the following #undef/#define and rebuild the library.
-            if optInTimePeriod > 1 {
-                lookbackTotal = (optInTimePeriod + self.unstable_period[FuncUnstId::PLUS_DI as usize]) as usize;
-            } else {
-                lookbackTotal = 1;
-            }
+            lookbackTotal = self.plus_di_lookback(optInTimePeriod)?;
             // Adjust startIdx to account for the lookback period.
             if startIdx < lookbackTotal {
                 startIdx = lookbackTotal;
@@ -1118,7 +1106,7 @@ impl Core {
             // Process subsequent DI
             // Skip the unstable period. Note that this loop must be executed
             // at least ONCE to calculate the first DI.
-            i = (self.unstable_period[FuncUnstId::PLUS_DI as usize] + 1) as usize;
+            i = lookbackTotal - (((optInTimePeriod - 1)) as usize);
             while { let _v = i; i = i.wrapping_sub(1); _v } != 0 {
                 // Calculate the prevPlusDM
                 today += 1;

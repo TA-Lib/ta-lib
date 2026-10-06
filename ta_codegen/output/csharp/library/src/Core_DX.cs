@@ -88,7 +88,7 @@ public partial class Core
          return -1;
       }
       if( optInTimePeriod > 1 ) {
-         return optInTimePeriod + this._unstablePeriod[(int)FuncUnstId.DX] ;
+         return optInTimePeriod + this.UnstableCount((int)FuncUnstId.DX, ((optInTimePeriod > 1) ? 10 * optInTimePeriod : 0), ((optInTimePeriod > 1) ? 19 * optInTimePeriod : 0)) ;
       } else {
          return 2 ;
       }
@@ -261,11 +261,7 @@ public partial class Core
        * TA-Lib does not do the rounding. Still, if you want to reproduce Wilder's examples,
        * you can comment out the following #undef/#define and rebuild the library.
        */
-      if( optInTimePeriod > 1 ) {
-         lookbackTotal = optInTimePeriod + this._unstablePeriod[(int)FuncUnstId.DX];
-      } else {
-         lookbackTotal = 2;
-      }
+      lookbackTotal = DxLookback(optInTimePeriod);
       /* Adjust startIdx to account for the lookback period. */
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
@@ -331,8 +327,7 @@ public partial class Core
       /* Skip the unstable period. Note that this loop must be executed
        * at least ONCE to calculate the first DI.
        */
-      i = this._unstablePeriod[(int)FuncUnstId.DX] + 1;
-      while( i-- != 0 ) {
+      while( today < startIdx ) {
          /* Calculate the prevMinusDM and prevPlusDM */
          today += 1;
          tempReal = inHigh[today];
@@ -482,11 +477,7 @@ public partial class Core
       if( System.Runtime.InteropServices.MemoryMarshal.AsBytes(outReal).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inHigh)) || System.Runtime.InteropServices.MemoryMarshal.AsBytes(outReal).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inLow)) || System.Runtime.InteropServices.MemoryMarshal.AsBytes(outReal).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inClose)) ) {
          return RetCode.BadParam ;
       }
-      if( optInTimePeriod > 1 ) {
-         lookbackTotal = optInTimePeriod + this._unstablePeriod[(int)FuncUnstId.DX];
-      } else {
-         lookbackTotal = 2;
-      }
+      lookbackTotal = DxLookback(optInTimePeriod);
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
       }
@@ -532,8 +523,7 @@ public partial class Core
          prevTR += tempReal;
          prevClose = (double)inClose[today];
       }
-      i = this._unstablePeriod[(int)FuncUnstId.DX] + 1;
-      while( i-- != 0 ) {
+      while( today < startIdx ) {
          today += 1;
          tempReal = (double)inHigh[today];
          diffP = tempReal - prevHigh;
@@ -1214,11 +1204,7 @@ public partial class Core
        * TA-Lib does not do the rounding. Still, if you want to reproduce Wilder's examples,
        * you can comment out the following #undef/#define and rebuild the library.
        */
-      if( optInTimePeriod > 1 ) {
-         lookbackTotal = optInTimePeriod + this._unstablePeriod[(int)FuncUnstId.DX];
-      } else {
-         lookbackTotal = 2;
-      }
+      lookbackTotal = DxLookback(optInTimePeriod);
       /* Adjust startIdx to account for the lookback period. */
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
@@ -1284,8 +1270,7 @@ public partial class Core
       /* Skip the unstable period. Note that this loop must be executed
        * at least ONCE to calculate the first DI.
        */
-      i = this._unstablePeriod[(int)FuncUnstId.DX] + 1;
-      while( i-- != 0 ) {
+      while( today < startIdx ) {
          /* Calculate the prevMinusDM and prevPlusDM */
          today += 1;
          tempReal = inHigh[today];

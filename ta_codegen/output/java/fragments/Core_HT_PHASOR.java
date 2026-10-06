@@ -28,7 +28,7 @@
    public int htPhasorLookback( )
    {
       /* See mama_lookback for an explanation of these */
-      return 32 + this.unstablePeriod[FuncUnstId.HT_PHASOR.ordinal()] ;
+      return 32 + this.unstableCount(FuncUnstId.HT_PHASOR.ordinal(), (80 + 50 * 4), (80 + 50 * 8)) ;
 
    }
    /**
@@ -131,7 +131,7 @@
       /* Identify the minimum number of price bar needed
        * to calculate at least one output.
        */
-      lookbackTotal = 32 + this.unstablePeriod[FuncUnstId.HT_PHASOR.ordinal()];
+      lookbackTotal = htPhasorLookback();
       /* Move up the start index if there is not
        * enough initial data.
        */
@@ -472,7 +472,7 @@
       a = 0.0962;
       b = 0.5769;
       rad2Deg = 180.0 / (4.0 * Math.atan(1));
-      lookbackTotal = 32 + this.unstablePeriod[FuncUnstId.HT_PHASOR.ordinal()];
+      lookbackTotal = htPhasorLookback();
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
       }
@@ -1428,7 +1428,7 @@
       /* Identify the minimum number of price bar needed
        * to calculate at least one output.
        */
-      lookbackTotal = 32 + this.unstablePeriod[FuncUnstId.HT_PHASOR.ordinal()];
+      lookbackTotal = htPhasorLookback();
       /* Move up the start index if there is not
        * enough initial data.
        */

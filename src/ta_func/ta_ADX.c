@@ -67,13 +67,13 @@
  *  091326 MF,CC #411 Wilder steps without a divide or a branch.
  */
 
-TA_LIB_API int TA_ADX_Lookback( int optInTimePeriod )
+TA_NOINLINE TA_LIB_API int TA_ADX_Lookback( int optInTimePeriod )
 {
    if( (int)optInTimePeriod == TA_INTEGER_DEFAULT )
       optInTimePeriod = 14;
    else if( (int)optInTimePeriod < 2 || (int)optInTimePeriod > 100000 )
       return -1;
-   return 2 * optInTimePeriod + TA_GLOBALS_UNSTABLE_PERIOD(TA_FUNC_UNST_ADX,Adx) - 1;
+   return 2 * optInTimePeriod + TA_GLOBALS_UNSTABLE(TA_FUNC_UNST_ADX,Adx,(10 + 6) * optInTimePeriod,(19 + 6) * optInTimePeriod) - 1;
 }
 
 TA_LIB_API int TA_ADX_DisplayShift( int optInTimePeriod, int outputIdx )
@@ -251,7 +251,7 @@ TA_LIB_API TA_RetCode TA_ADX( int    startIdx,
     * TA-Lib does not do the rounding. Still, if you want to reproduce Wilder's examples,
     * you can comment out the following #undef/#define and rebuild the library.
     */
-   lookbackTotal = 2 * optInTimePeriod + TA_GLOBALS_UNSTABLE_PERIOD(TA_FUNC_UNST_ADX,Adx) - 1;
+   lookbackTotal = TA_ADX_Lookback(optInTimePeriod);
    /* Adjust startIdx to account for the lookback period. */
    if( startIdx < lookbackTotal )
    {
@@ -390,7 +390,7 @@ TA_LIB_API TA_RetCode TA_ADX( int    startIdx,
    /* Calculate the first ADX */
    prevADX = (sumDX / optInTimePeriod);
    /* Skip the unstable period */
-   i = TA_GLOBALS_UNSTABLE_PERIOD(TA_FUNC_UNST_ADX,Adx);
+   i = lookbackTotal - (2 * optInTimePeriod - 1);
    while( i-- > 0 )
    {
       /* Calculate the prevMinusDM and prevPlusDM */
@@ -556,7 +556,7 @@ TA_RetCode TA_S_ADX( int    startIdx,
    if( !outReal )
       return TA_BAD_PARAM;
 
-   lookbackTotal = 2 * optInTimePeriod + TA_GLOBALS_UNSTABLE_PERIOD(TA_FUNC_UNST_ADX,Adx) - 1;
+   lookbackTotal = TA_ADX_Lookback(optInTimePeriod);
    if( startIdx < lookbackTotal )
    {
       startIdx = lookbackTotal;
@@ -658,7 +658,7 @@ TA_RetCode TA_S_ADX( int    startIdx,
       }
    }
    prevADX = (sumDX / optInTimePeriod);
-   i = TA_GLOBALS_UNSTABLE_PERIOD(TA_FUNC_UNST_ADX,Adx);
+   i = lookbackTotal - (2 * optInTimePeriod - 1);
    while( i-- > 0 )
    {
       today += 1;
@@ -1001,7 +1001,7 @@ static TA_RetCode TA_ADX_OpenImpl( struct TA_ADX_Stream **stream, const double i
        * TA-Lib does not do the rounding. Still, if you want to reproduce Wilder's examples,
        * you can comment out the following #undef/#define and rebuild the library.
        */
-      lookbackTotal = 2 * optInTimePeriod + TA_GLOBALS_UNSTABLE_PERIOD(TA_FUNC_UNST_ADX,Adx) - 1;
+      lookbackTotal = TA_ADX_Lookback(optInTimePeriod);
       /* Adjust startIdx to account for the lookback period. */
       if( startIdx < lookbackTotal )
       {
@@ -1140,7 +1140,7 @@ static TA_RetCode TA_ADX_OpenImpl( struct TA_ADX_Stream **stream, const double i
       /* Calculate the first ADX */
       prevADX = (sumDX / optInTimePeriod);
       /* Skip the unstable period */
-      i = TA_GLOBALS_UNSTABLE_PERIOD(TA_FUNC_UNST_ADX,Adx);
+      i = lookbackTotal - (2 * optInTimePeriod - 1);
       while( i-- > 0 )
       {
          /* Calculate the prevMinusDM and prevPlusDM */

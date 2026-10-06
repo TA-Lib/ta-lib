@@ -1417,13 +1417,13 @@ fn rust_func_call_unstable_period() {
         target: ir::Expr::Var("x".to_string()),
         value: ir::Expr::FuncCall(
             "UNSTABLE_PERIOD".to_string(),
-            vec![ir::Expr::Var("FUNC_UNST_RSI".to_string())],
+            vec![ir::Expr::Var("FUNC_UNST_RSI".to_string()), ir::Expr::IntLiteral(0)],
         ),
         compound: false,
     };
     let rendered = render_rust_stmt(&stmt);
     assert!(
-        rendered.contains("self.unstable_period[FuncUnstId::RSI as usize]"),
+        rendered.contains("self.unstable_count(FuncUnstId::RSI, "),
         "UNSTABLE_PERIOD should render with FuncUnstId: {rendered}"
     );
 }

@@ -89,7 +89,7 @@ public partial class Core
       } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
          return -1;
       }
-      return 2 * optInTimePeriod + this._unstablePeriod[(int)FuncUnstId.ADX] - 1 ;
+      return 2 * optInTimePeriod + this.UnstableCount((int)FuncUnstId.ADX, (10 + 6) * optInTimePeriod, (19 + 6) * optInTimePeriod) - 1 ;
 
    }
    /// <summary>
@@ -275,7 +275,7 @@ public partial class Core
        * TA-Lib does not do the rounding. Still, if you want to reproduce Wilder's examples,
        * you can comment out the following #undef/#define and rebuild the library.
        */
-      lookbackTotal = 2 * optInTimePeriod + this._unstablePeriod[(int)FuncUnstId.ADX] - 1;
+      lookbackTotal = AdxLookback(optInTimePeriod);
       /* Adjust startIdx to account for the lookback period. */
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
@@ -396,7 +396,7 @@ public partial class Core
       /* Calculate the first ADX */
       prevADX = (sumDX / optInTimePeriod);
       /* Skip the unstable period */
-      i = this._unstablePeriod[(int)FuncUnstId.ADX];
+      i = lookbackTotal - (2 * optInTimePeriod - 1);
       while( i-- > 0 ) {
          /* Calculate the prevMinusDM and prevPlusDM */
          today += 1;
@@ -538,7 +538,7 @@ public partial class Core
       if( System.Runtime.InteropServices.MemoryMarshal.AsBytes(outReal).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inHigh)) || System.Runtime.InteropServices.MemoryMarshal.AsBytes(outReal).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inLow)) || System.Runtime.InteropServices.MemoryMarshal.AsBytes(outReal).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inClose)) ) {
          return RetCode.BadParam ;
       }
-      lookbackTotal = 2 * optInTimePeriod + this._unstablePeriod[(int)FuncUnstId.ADX] - 1;
+      lookbackTotal = AdxLookback(optInTimePeriod);
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
       }
@@ -622,7 +622,7 @@ public partial class Core
          }
       }
       prevADX = (sumDX / optInTimePeriod);
-      i = this._unstablePeriod[(int)FuncUnstId.ADX];
+      i = lookbackTotal - (2 * optInTimePeriod - 1);
       while( i-- > 0 ) {
          today += 1;
          tempReal = (double)inHigh[today];
@@ -1313,7 +1313,7 @@ public partial class Core
        * TA-Lib does not do the rounding. Still, if you want to reproduce Wilder's examples,
        * you can comment out the following #undef/#define and rebuild the library.
        */
-      lookbackTotal = 2 * optInTimePeriod + this._unstablePeriod[(int)FuncUnstId.ADX] - 1;
+      lookbackTotal = AdxLookback(optInTimePeriod);
       /* Adjust startIdx to account for the lookback period. */
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
@@ -1434,7 +1434,7 @@ public partial class Core
       /* Calculate the first ADX */
       prevADX = (sumDX / optInTimePeriod);
       /* Skip the unstable period */
-      i = this._unstablePeriod[(int)FuncUnstId.ADX];
+      i = lookbackTotal - (2 * optInTimePeriod - 1);
       while( i-- > 0 ) {
          /* Calculate the prevMinusDM and prevPlusDM */
          today += 1;

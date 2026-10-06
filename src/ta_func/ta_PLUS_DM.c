@@ -60,7 +60,7 @@
  *  091326 MF,CC  #411 Wilder step without a divide or a branch.
  */
 
-TA_LIB_API int TA_PLUS_DM_Lookback( int optInTimePeriod )
+TA_NOINLINE TA_LIB_API int TA_PLUS_DM_Lookback( int optInTimePeriod )
 {
    if( (int)optInTimePeriod == TA_INTEGER_DEFAULT )
       optInTimePeriod = 14;
@@ -68,7 +68,7 @@ TA_LIB_API int TA_PLUS_DM_Lookback( int optInTimePeriod )
       return -1;
    if( optInTimePeriod > 1 )
    {
-      return optInTimePeriod + TA_GLOBALS_UNSTABLE_PERIOD(TA_FUNC_UNST_PLUS_DM,Plus_dm) - 1;
+      return optInTimePeriod + TA_GLOBALS_UNSTABLE(TA_FUNC_UNST_PLUS_DM,Plus_dm,((optInTimePeriod > 1) ? 10 * optInTimePeriod : 0),((optInTimePeriod > 1) ? 19 * optInTimePeriod : 0)) - 1;
    } else 
    {
       return 1;
@@ -189,13 +189,7 @@ TA_LIB_API TA_RetCode TA_PLUS_DM( int    startIdx,
     * Reference:
     *    New Concepts In Technical Trading Systems, J. Welles Wilder Jr
     */
-   if( optInTimePeriod > 1 )
-   {
-      lookbackTotal = optInTimePeriod + TA_GLOBALS_UNSTABLE_PERIOD(TA_FUNC_UNST_PLUS_DM,Plus_dm) - 1;
-   } else 
-   {
-      lookbackTotal = 1;
-   }
+   lookbackTotal = TA_PLUS_DM_Lookback(optInTimePeriod);
    /* Adjust startIdx to account for the lookback period. */
    if( startIdx < lookbackTotal )
    {
@@ -271,7 +265,7 @@ TA_LIB_API TA_RetCode TA_PLUS_DM( int    startIdx,
    }
    /* Process subsequent DM */
    /* Skip the unstable period. */
-   i = TA_GLOBALS_UNSTABLE_PERIOD(TA_FUNC_UNST_PLUS_DM,Plus_dm);
+   i = lookbackTotal - (optInTimePeriod - 1);
    while( i-- != 0 )
    {
       today += 1;
@@ -356,13 +350,7 @@ TA_RetCode TA_S_PLUS_DM( int    startIdx,
    if( !outReal )
       return TA_BAD_PARAM;
 
-   if( optInTimePeriod > 1 )
-   {
-      lookbackTotal = optInTimePeriod + TA_GLOBALS_UNSTABLE_PERIOD(TA_FUNC_UNST_PLUS_DM,Plus_dm) - 1;
-   } else 
-   {
-      lookbackTotal = 1;
-   }
+   lookbackTotal = TA_PLUS_DM_Lookback(optInTimePeriod);
    if( startIdx < lookbackTotal )
    {
       startIdx = lookbackTotal;
@@ -417,7 +405,7 @@ TA_RetCode TA_S_PLUS_DM( int    startIdx,
       tempReal = prevPlusDM + plusDM1;
       prevPlusDM = (prevPlusDM > tempReal) ? prevPlusDM : tempReal;
    }
-   i = TA_GLOBALS_UNSTABLE_PERIOD(TA_FUNC_UNST_PLUS_DM,Plus_dm);
+   i = lookbackTotal - (optInTimePeriod - 1);
    while( i-- != 0 )
    {
       today += 1;
@@ -621,13 +609,7 @@ static TA_RetCode TA_PLUS_DM_OpenImpl( struct TA_PLUS_DM_Stream **stream, const 
        * Reference:
        *    New Concepts In Technical Trading Systems, J. Welles Wilder Jr
        */
-      if( optInTimePeriod > 1 )
-      {
-         lookbackTotal = optInTimePeriod + TA_GLOBALS_UNSTABLE_PERIOD(TA_FUNC_UNST_PLUS_DM,Plus_dm) - 1;
-      } else 
-      {
-         lookbackTotal = 1;
-      }
+      lookbackTotal = TA_PLUS_DM_Lookback(optInTimePeriod);
       /* Adjust startIdx to account for the lookback period. */
       if( startIdx < lookbackTotal )
       {
@@ -764,13 +746,7 @@ static TA_RetCode TA_PLUS_DM_OpenImpl( struct TA_PLUS_DM_Stream **stream, const 
        * Reference:
        *    New Concepts In Technical Trading Systems, J. Welles Wilder Jr
        */
-      if( optInTimePeriod > 1 )
-      {
-         lookbackTotal = optInTimePeriod + TA_GLOBALS_UNSTABLE_PERIOD(TA_FUNC_UNST_PLUS_DM,Plus_dm) - 1;
-      } else 
-      {
-         lookbackTotal = 1;
-      }
+      lookbackTotal = TA_PLUS_DM_Lookback(optInTimePeriod);
       /* Adjust startIdx to account for the lookback period. */
       if( startIdx < lookbackTotal )
       {
@@ -819,7 +795,7 @@ static TA_RetCode TA_PLUS_DM_OpenImpl( struct TA_PLUS_DM_Stream **stream, const 
       }
       /* Process subsequent DM */
       /* Skip the unstable period. */
-      i = TA_GLOBALS_UNSTABLE_PERIOD(TA_FUNC_UNST_PLUS_DM,Plus_dm);
+      i = lookbackTotal - (optInTimePeriod - 1);
       while( i-- != 0 )
       {
          today += 1;

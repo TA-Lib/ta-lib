@@ -180,6 +180,23 @@ public static class CoreBuilderTest
         Core core = Core.Builder().UnstablePeriod(FuncUnstId.EMA, Core.IndexMax).Build();
         Check(core.UnstablePeriod(FuncUnstId.EMA) == Core.IndexMax,
             "the IndexMax ceiling is accepted, not rejected");
+
+        // Above IndexMax only the Auto levels are values: each is read back as
+        // itself, resolves to the function's own count in its lookback, and an
+        // offset that names no level is refused.
+        Check(Core.UnstableAutoPrec4 == Core.IndexMax + 4 && Core.UnstableAutoPrec8 == Core.IndexMax + 8,
+            "the Auto levels are IndexMax + 4 and + 8");
+        Core auto = Core.Builder()
+            .UnstablePeriod(FuncUnstId.ALL, Core.UnstableAutoPrec8)
+            .UnstablePeriod(FuncUnstId.EMA, Core.UnstableAutoPrec4).Build();
+        Check(auto.UnstablePeriod(FuncUnstId.EMA) == Core.UnstableAutoPrec4
+            && auto.UnstablePeriod(FuncUnstId.RSI) == Core.UnstableAutoPrec8,
+            "a level is read back as the level, per id and through the wildcard");
+        Check(auto.EmaLookback(30) == 184 && auto.RsiLookback(14) == 280,
+            "under a level the lookback adds the id's own count");
+        CheckThrows<ArgumentOutOfRangeException>(
+            () => Core.Builder().UnstablePeriod(FuncUnstId.EMA, Core.IndexMax + 5),
+            "an offset above IndexMax that names no level -> ArgumentOutOfRangeException");
     }
 
     private static void ARejectedCallWritesNothing()

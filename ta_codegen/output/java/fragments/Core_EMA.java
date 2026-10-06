@@ -37,7 +37,7 @@
       } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
          return -1;
       }
-      return optInTimePeriod - 1 + this.unstablePeriod[FuncUnstId.EMA.ordinal()] ;
+      return optInTimePeriod - 1 + this.unstableCount(FuncUnstId.EMA.ordinal(), ((optInTimePeriod > 1) ? (10 * (optInTimePeriod + 1) + 1) / 2 : 0), ((optInTimePeriod > 1) ? (19 * (optInTimePeriod + 1) + 1) / 2 : 0)) ;
 
    }
    /**
@@ -90,17 +90,21 @@
       } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
          return RetCode.BAD_PARAM;
       }
-      emaBeta = (double)(optInTimePeriod - 1) / (double)(optInTimePeriod + 1);
-      optInK_1 = 1.0 - emaBeta;
-      /* emaBeta + optInK_1 must be exactly 1.0, or a flat input drifts off
-       * its level. Each subtraction is exact only from an operand in
-       * [0.5,1): at a period of 2 that is optInK_1, above it emaBeta.
-       */
-      emaBeta = 1.0 - optInK_1;
       /* Identify the minimum number of price bar needed
        * to calculate at least one output.
        */
       lookbackTotal = emaLookback(optInTimePeriod);
+      /* After the lookback call: a double live across a call is saved and
+       * restored around every fma call of the loops below, one more instruction
+       * per bar.
+       *
+       * emaBeta + optInK_1 must be exactly 1.0, or a flat input drifts off
+       * its level. Each subtraction is exact only from an operand in
+       * [0.5,1): at a period of 2 that is optInK_1, above it emaBeta.
+       */
+      emaBeta = (double)(optInTimePeriod - 1) / (double)(optInTimePeriod + 1);
+      optInK_1 = 1.0 - emaBeta;
+      emaBeta = 1.0 - optInK_1;
       /* Move up the start index if there is not
        * enough initial data.
        */
@@ -177,10 +181,10 @@
       } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
          return RetCode.BAD_PARAM;
       }
+      lookbackTotal = emaLookback(optInTimePeriod);
       emaBeta = (double)(optInTimePeriod - 1) / (double)(optInTimePeriod + 1);
       optInK_1 = 1.0 - emaBeta;
       emaBeta = 1.0 - optInK_1;
-      lookbackTotal = emaLookback(optInTimePeriod);
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
       }
@@ -565,17 +569,21 @@
          sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
          return RetCode.SUCCESS;
       }
-      emaBeta = (double)(optInTimePeriod - 1) / (double)(optInTimePeriod + 1);
-      optInK_1 = 1.0 - emaBeta;
-      /* emaBeta + optInK_1 must be exactly 1.0, or a flat input drifts off
-       * its level. Each subtraction is exact only from an operand in
-       * [0.5,1): at a period of 2 that is optInK_1, above it emaBeta.
-       */
-      emaBeta = 1.0 - optInK_1;
       /* Identify the minimum number of price bar needed
        * to calculate at least one output.
        */
       lookbackTotal = emaLookback(optInTimePeriod);
+      /* After the lookback call: a double live across a call is saved and
+       * restored around every fma call of the loops below, one more instruction
+       * per bar.
+       *
+       * emaBeta + optInK_1 must be exactly 1.0, or a flat input drifts off
+       * its level. Each subtraction is exact only from an operand in
+       * [0.5,1): at a period of 2 that is optInK_1, above it emaBeta.
+       */
+      emaBeta = (double)(optInTimePeriod - 1) / (double)(optInTimePeriod + 1);
+      optInK_1 = 1.0 - emaBeta;
+      emaBeta = 1.0 - optInK_1;
       /* Move up the start index if there is not
        * enough initial data.
        */

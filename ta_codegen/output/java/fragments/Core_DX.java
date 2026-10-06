@@ -43,7 +43,7 @@
          return -1;
       }
       if( optInTimePeriod > 1 ) {
-         return optInTimePeriod + this.unstablePeriod[FuncUnstId.DX.ordinal()] ;
+         return optInTimePeriod + this.unstableCount(FuncUnstId.DX.ordinal(), ((optInTimePeriod > 1) ? 10 * optInTimePeriod : 0), ((optInTimePeriod > 1) ? 19 * optInTimePeriod : 0)) ;
       } else {
          return 2 ;
       }
@@ -211,11 +211,7 @@
        * TA-Lib does not do the rounding. Still, if you want to reproduce Wilder's examples,
        * you can comment out the following #undef/#define and rebuild the library.
        */
-      if( optInTimePeriod > 1 ) {
-         lookbackTotal = optInTimePeriod + this.unstablePeriod[FuncUnstId.DX.ordinal()];
-      } else {
-         lookbackTotal = 2;
-      }
+      lookbackTotal = dxLookback(optInTimePeriod);
       /* Adjust startIdx to account for the lookback period. */
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
@@ -285,8 +281,7 @@
       /* Skip the unstable period. Note that this loop must be executed
        * at least ONCE to calculate the first DI.
        */
-      i = this.unstablePeriod[FuncUnstId.DX.ordinal()] + 1;
-      while( i-- != 0 ) {
+      while( today < startIdx ) {
          /* Calculate the prevMinusDM and prevPlusDM */
          today += 1;
          tempReal = inHigh[today];
@@ -439,11 +434,7 @@
       } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
          return RetCode.BAD_PARAM;
       }
-      if( optInTimePeriod > 1 ) {
-         lookbackTotal = optInTimePeriod + this.unstablePeriod[FuncUnstId.DX.ordinal()];
-      } else {
-         lookbackTotal = 2;
-      }
+      lookbackTotal = dxLookback(optInTimePeriod);
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
       }
@@ -493,8 +484,7 @@
          prevTR += tempReal;
          prevClose = (double)inClose[today];
       }
-      i = this.unstablePeriod[FuncUnstId.DX.ordinal()] + 1;
-      while( i-- != 0 ) {
+      while( today < startIdx ) {
          today += 1;
          tempReal = (double)inHigh[today];
          diffP = tempReal - prevHigh;
@@ -1151,11 +1141,7 @@
        * TA-Lib does not do the rounding. Still, if you want to reproduce Wilder's examples,
        * you can comment out the following #undef/#define and rebuild the library.
        */
-      if( optInTimePeriod > 1 ) {
-         lookbackTotal = optInTimePeriod + this.unstablePeriod[FuncUnstId.DX.ordinal()];
-      } else {
-         lookbackTotal = 2;
-      }
+      lookbackTotal = dxLookback(optInTimePeriod);
       /* Adjust startIdx to account for the lookback period. */
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
@@ -1225,8 +1211,7 @@
       /* Skip the unstable period. Note that this loop must be executed
        * at least ONCE to calculate the first DI.
        */
-      i = this.unstablePeriod[FuncUnstId.DX.ordinal()] + 1;
-      while( i-- != 0 ) {
+      while( today < startIdx ) {
          /* Calculate the prevMinusDM and prevPlusDM */
          today += 1;
          tempReal = inHigh[today];

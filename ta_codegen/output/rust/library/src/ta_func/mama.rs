@@ -93,9 +93,14 @@ impl Core {
         } else if !((optInSlowLimit >= 1e-2) && (optInSlowLimit <= 9.9e-1)) {
             return Err(RetCode::BadParam);
         }
-        // The two parameters are not a factor to determine
-        // the lookback, but are still requested for
-        // consistency with all other Lookback functions.
+        let mut limit: f64 = 0.0_f64;
+        let mut count4: i32 = 0i32;
+        let mut count8: i32 = 0i32;
+        // ceil( 2*K / max(fast, slow) ) per level, in this order of operations: the
+        // count is defined as this double expression, not as the real quotient.
+        limit = (if optInFastLimit > optInSlowLimit { optInFastLimit } else { optInSlowLimit });
+        count4 = (c_ceil(20.0 / limit)) as i32;
+        count8 = (c_ceil(38.0 / limit)) as i32;
         // Lookback is a fix amount + the unstable period.
         //
         //
@@ -111,7 +116,7 @@ impl Core {
         //          1 price bar for the Delta Phase
         //        -------
         //         32 Total
-        return Ok((32 + self.unstable_period[FuncUnstId::MAMA as usize]) as usize);
+        return Ok((32 + self.unstable_count(FuncUnstId::MAMA, (((80 + 50 * 4)) as i32) + count4, (((80 + 50 * 8)) as i32) + count8)) as usize);
     }
     /// Display shift of one output of [`Core::mama`]: how many bars ahead (positive) or behind
     /// (negative) of the bar that computed it a chart draws that output. The values are never
@@ -281,7 +286,7 @@ impl Core {
         rad2Deg = 180.0 / (4.0 * (1_f64).atan());
         // Identify the minimum number of price bar needed
         // to calculate at least one output.
-        lookbackTotal = (32 + self.unstable_period[FuncUnstId::MAMA as usize]) as usize;
+        lookbackTotal = self.mama_lookback(optInFastLimit, optInSlowLimit).unwrap_or(usize::MAX);
         // Move up the start index if there is not
         // enough initial data.
         if startIdx < lookbackTotal {
@@ -1237,7 +1242,7 @@ impl Core {
         rad2Deg = 180.0 / (4.0 * (1_f64).atan());
         // Identify the minimum number of price bar needed
         // to calculate at least one output.
-        lookbackTotal = (32 + self.unstable_period[FuncUnstId::MAMA as usize]) as usize;
+        lookbackTotal = self.mama_lookback(optInFastLimit, optInSlowLimit)?;
         // Move up the start index if there is not
         // enough initial data.
         if startIdx < lookbackTotal {

@@ -91,9 +91,7 @@ impl Core {
         } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
             return Err(RetCode::BadParam);
         }
-        let mut retValue: usize = 0_usize;
-        retValue = (optInTimePeriod + self.unstable_period[FuncUnstId::CMO as usize]) as usize;
-        return Ok(retValue);
+        return Ok((optInTimePeriod + self.unstable_count(FuncUnstId::CMO, (if optInTimePeriod > 1 { 10 * optInTimePeriod } else { 0 }), (if optInTimePeriod > 1 { 19 * optInTimePeriod } else { 0 }))) as usize);
     }
     /// Display shift of one output of [`Core::cmo`]: how many bars ahead (positive) or behind
     /// (negative) of the bar that computed it a chart draws that output. The values are never

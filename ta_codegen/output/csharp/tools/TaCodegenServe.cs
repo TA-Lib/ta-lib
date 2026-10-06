@@ -816,7 +816,8 @@ public class TaCodegenServe {
                 rideGen++;
                 int id = GetInt(p, "id", -1);
                 int period = GetInt(p, "period", 0);
-                if (period < 0 || period > Core.IndexMax) {
+                if (period < 0 || (period > Core.IndexMax
+                    && period != Core.UnstableAutoPrec4 && period != Core.UnstableAutoPrec8)) {
                     return "{\"error\":\"Invalid unstable period value\"}";
                 }
                 if (id == (int)FuncUnstId.ALL) {

@@ -31,7 +31,7 @@ int ht_trendmode_lookback(void)
     * 31 is for being compatible with Tradestation.
     * See mama_lookback for an explanation of the "32".
     */
-   return 63 + TA_GetUnstablePeriod(TA_FUNC_UNST_HT_TRENDMODE);
+   return 63 + TA_UNSTABLE( TA_FUNC_UNST_HT_TRENDMODE, ta_warmup_hilbert(X) );
 }
 
 TA_RetCode ht_trendmode(int startIdx, int endIdx,
@@ -131,7 +131,7 @@ TA_RetCode ht_trendmode(int startIdx, int endIdx,
    /* Identify the minimum number of price bar needed
     * to calculate at least one output.
     */
-   lookbackTotal = 63 + TA_GetUnstablePeriod(TA_FUNC_UNST_HT_TRENDMODE);
+   lookbackTotal = ht_trendmode_lookback();
 
    /* Move up the start index if there is not
     * enough initial data.

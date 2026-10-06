@@ -63,15 +63,13 @@
  *  092826 MF,CC   #466 Drop the period-1 copy-through; the range starts at 2.
  */
 
-TA_LIB_API int TA_CMO_Lookback( int optInTimePeriod )
+TA_NOINLINE TA_LIB_API int TA_CMO_Lookback( int optInTimePeriod )
 {
-   int retValue;
    if( (int)optInTimePeriod == TA_INTEGER_DEFAULT )
       optInTimePeriod = 14;
    else if( (int)optInTimePeriod < 2 || (int)optInTimePeriod > 100000 )
       return -1;
-   retValue = optInTimePeriod + TA_GLOBALS_UNSTABLE_PERIOD(TA_FUNC_UNST_CMO,Cmo);
-   return retValue;
+   return optInTimePeriod + TA_GLOBALS_UNSTABLE(TA_FUNC_UNST_CMO,Cmo,((optInTimePeriod > 1) ? 10 * optInTimePeriod : 0),((optInTimePeriod > 1) ? 19 * optInTimePeriod : 0));
 }
 
 TA_LIB_API int TA_CMO_DisplayShift( int optInTimePeriod, int outputIdx )

@@ -3632,7 +3632,9 @@ fn strip_ta_prefix(name: &str) -> String {
 
 /// Transform function names: strip TA_ prefix and handle special mappings.
 fn transform_func_name(name: &str) -> String {
-    if name == "TA_GetUnstablePeriod" {
+    // The tokenizer strips `TA_` from an all-caps name in some statement
+    // contexts and not in others, so both spellings arrive here.
+    if name == "TA_GetUnstablePeriod" || name == "TA_UNSTABLE" || name == "UNSTABLE" {
         return "UNSTABLE_PERIOD".to_string();
     }
     if let Some(rest) = name.strip_prefix("TA_") {
@@ -6402,6 +6404,8 @@ TA_RetCode test_func(int startIdx, int *outBegIdx)
     #[test]
     fn test_transform_func_name() {
         assert_eq!(transform_func_name("TA_GetUnstablePeriod"), "UNSTABLE_PERIOD");
+        assert_eq!(transform_func_name("TA_UNSTABLE"), "UNSTABLE_PERIOD");
+        assert_eq!(transform_func_name("UNSTABLE"), "UNSTABLE_PERIOD");
         assert_eq!(transform_func_name("TA_SMA"), "SMA");
         assert_eq!(transform_func_name("plain_func"), "plain_func");
     }

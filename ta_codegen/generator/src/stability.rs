@@ -113,7 +113,7 @@ fn takes_matype(func: &FuncDef) -> bool {
 /// predicated on an MAType parameter.
 ///
 /// The lookback, not the body, is what matters: an unstable period manifests as lookback
-/// growth (`ema_lookback` = `period + TA_GetUnstablePeriod(TA_FUNC_UNST_EMA) - 1`), so a
+/// growth (`ema_lookback` = `period - 1 + TA_UNSTABLE(TA_FUNC_UNST_EMA, ...)`), so a
 /// function inherits instability exactly when its own lookback defers to another's. Two
 /// consequences this gets right that a body scan does not:
 ///
@@ -300,9 +300,8 @@ fn walk_stmt(stmt: &Statement, out: &mut BTreeSet<String>) {
     }
 }
 
-/// The function, upper-case, whose unstable-period id a `TA_GetUnstablePeriod(...)` call
-/// reads. A lookback that reads another function's id (EFI reads EMA's) grows with that id
-/// exactly as one that calls its lookback.
+/// The function, upper-case, whose unstable-period id a `TA_UNSTABLE(...)` call
+/// reads.
 pub(crate) fn unstable_period_owner(expr: &Expr) -> Option<String> {
     let Expr::FuncCall(name, args) = expr else { return None };
     if !matches!(SpecialBuiltin::from_name(name), Some(SpecialBuiltin::UnstablePeriod)) {
@@ -346,4 +345,120 @@ fn walk_expr(expr: &Expr, out: &mut BTreeSet<String>) {
         | Expr::PreDecrement(e) => walk_expr(e, out),
         Expr::Literal(_) | Expr::IntLiteral(_) | Expr::Var(_) | Expr::PointerDeref(_) => {}
     }
+}
+
+/// Refuse an unstable-period read anywhere but the lookback of the function that owns
+/// the id.
+///
+/// A count that depends on the call's parameters is one number only while it is read in
+/// one place; a second site that disagrees with the lookback reads bars the lookback
+/// did not reserve, with no error. `funcs` must be the whole corpus: the check that every
+/// live id has a reader is wrong over a subset.
+pub fn validate_unstable_reads(
+    funcs: &[FuncDef],
+    helpers: &crate::helper_registry::HelperRegistry,
+    enums: &HashMap<String, crate::ir::EnumDef>,
+) -> Result<(), Vec<String>> {
+    // Counted in the IR's debug text, not with a walker: a walker that skips one
+    // statement kind would pass a read placed there.
+    fn count<T: std::fmt::Debug>(tree: &T) -> usize {
+        format!("{tree:?}").matches("FuncCall(\"UNSTABLE_PERIOD\"").count()
+    }
+    fn ids(e: &Expr, out: &mut Vec<String>) {
+        let Expr::FuncCall(name, args) = e else { return };
+        if matches!(SpecialBuiltin::from_name(name), Some(SpecialBuiltin::UnstablePeriod)) {
+            // The second argument is the id's Auto rule: a read without one would
+            // resolve an Auto level to nothing.
+            out.push(match unstable_period_owner(e) {
+                Some(id) if args.len() == 2 => id,
+                _ => format!("<{} argument(s)>", args.len()),
+            });
+        }
+    }
+
+    let mut errors = Vec::new();
+    let mut read_by_owner = BTreeSet::new();
+    for f in funcs {
+        let name = f.name.to_uppercase();
+        let mut outside = vec![("the body", count(&f.body))];
+        if f.has_explicit_private {
+            outside.push(("the private body", count(&f.private_body)));
+        }
+        outside.push(("the display shift", count(&f.display_shift)));
+        outside.push(("an alternate body", count(&f.alternates)));
+        outside.push(("a private parameter initializer", count(&f.private_param_init)));
+        for (place, n) in outside {
+            if n > 0 {
+                errors.push(format!(
+                    "{name}: {place} reads an unstable period; take the count from the function's own lookback instead"
+                ));
+            }
+        }
+
+        let mut in_lookback = Vec::new();
+        if let Some(LookbackExpr::Code(stmts)) = &f.lookback {
+            for s in stmts {
+                crate::streaming::walk_stmt_exprs(s, &mut |top| {
+                    let before = in_lookback.len();
+                    crate::streaming::walk_expr(top, &mut |e| ids(e, &mut in_lookback));
+                    if in_lookback.len() - before > 1 {
+                        errors.push(format!("{name}: one lookback expression reads an unstable id more than once"));
+                    }
+                });
+            }
+            if in_lookback.len() != count(stmts) {
+                errors.push(format!("{name}: the lookback reads an unstable id where the gate cannot name it"));
+            }
+            // One read per path, held by shape: every read sits in its own return, or
+            // there is one read and no return holds it.
+            fn in_returns(stmts: &[Statement], count: &dyn Fn(&Statement) -> usize) -> usize {
+                stmts
+                    .iter()
+                    .map(|s| match s {
+                        Statement::Return { .. } => count(s),
+                        _ => crate::streaming::nested_bodies(s).0.into_iter().map(|b| in_returns(b, count)).sum(),
+                    })
+                    .sum()
+            }
+            let returned = in_returns(stmts, &|s| count(s));
+            let elsewhere = count(stmts) - returned;
+            if elsewhere > 1 || (elsewhere == 1 && returned > 0) {
+                errors.push(format!(
+                    "{name}: the lookback reads an unstable id more than once on a path; read it once, or once in each return"
+                ));
+            }
+        }
+        for id in &in_lookback {
+            if *id != name {
+                errors.push(format!(
+                    "{name}: the lookback reads TA_FUNC_UNST_{id}; write TA_UNSTABLE( TA_FUNC_UNST_{name}, <Auto count> ), or call the owner's lookback"
+                ));
+            }
+        }
+        let flagged = f.flags.iter().any(|x| x == "unstable_period");
+        let owns = in_lookback.iter().any(|id| *id == name);
+        if owns {
+            read_by_owner.insert(name.clone());
+        }
+        if flagged && !owns {
+            errors.push(format!("{name}: flagged unstable_period, but its lookback does not read TA_FUNC_UNST_{name}"));
+        }
+        if owns && !flagged {
+            errors.push(format!("{name}: its lookback reads TA_FUNC_UNST_{name}, but it is not flagged unstable_period"));
+        }
+    }
+    for helper in helpers.iter() {
+        if count(&helper.body) > 0 {
+            errors.push(format!("helpers/{}: reads an unstable period; only a lookback may", helper.name));
+        }
+    }
+    if let Some(def) = enums.get("FuncUnstId") {
+        for v in &def.variants {
+            if !v.name.starts_with("UNUSED_") && !read_by_owner.contains(&v.name.to_uppercase()) {
+                errors.push(format!("TA_FUNC_UNST_{}: no lookback reads this id", v.name));
+            }
+        }
+    }
+    errors.sort();
+    if errors.is_empty() { Ok(()) } else { Err(errors) }
 }

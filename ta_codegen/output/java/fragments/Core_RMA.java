@@ -34,7 +34,7 @@
       } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
          return -1;
       }
-      return optInTimePeriod - 1 + this.unstablePeriod[FuncUnstId.RMA.ordinal()] ;
+      return optInTimePeriod - 1 + this.unstableCount(FuncUnstId.RMA.ordinal(), ((optInTimePeriod > 1) ? 10 * optInTimePeriod : 0), ((optInTimePeriod > 1) ? 19 * optInTimePeriod : 0)) ;
 
    }
    /**
@@ -126,7 +126,7 @@
       }
       prevRMA = periodTotal / optInTimePeriod;
       /* Skip the unstable period. */
-      i = this.unstablePeriod[FuncUnstId.RMA.ordinal()];
+      i = lookbackTotal - (optInTimePeriod - 1);
       while( i != 0 ) {
          prevRMA = Math.fma(wBeta, prevRMA, wAlpha * inReal[today]);
          today += 1;
@@ -195,7 +195,7 @@
          today += 1;
       }
       prevRMA = periodTotal / optInTimePeriod;
-      i = this.unstablePeriod[FuncUnstId.RMA.ordinal()];
+      i = lookbackTotal - (optInTimePeriod - 1);
       while( i != 0 ) {
          prevRMA = Math.fma(wBeta, prevRMA, wAlpha * (double)inReal[today]);
          today += 1;
@@ -604,7 +604,7 @@
       }
       prevRMA = periodTotal / optInTimePeriod;
       /* Skip the unstable period. */
-      i = this.unstablePeriod[FuncUnstId.RMA.ordinal()];
+      i = lookbackTotal - (optInTimePeriod - 1);
       while( i != 0 ) {
          prevRMA = Math.fma(wBeta, prevRMA, wAlpha * inReal[today]);
          today += 1;

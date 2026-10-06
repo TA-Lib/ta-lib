@@ -56,8 +56,9 @@
  *  092926 MF,CC  First version (issue #474).
  */
 
-TA_LIB_API int TA_VIDYA_Lookback( int optInTimePeriod, int optInCMOPeriod )
+TA_NOINLINE TA_LIB_API int TA_VIDYA_Lookback( int optInTimePeriod, int optInCMOPeriod )
 {
+   int root;
    if( (int)optInTimePeriod == TA_INTEGER_DEFAULT )
       optInTimePeriod = 12;
    else if( (int)optInTimePeriod < 1 || (int)optInTimePeriod > 100000 )
@@ -66,11 +67,12 @@ TA_LIB_API int TA_VIDYA_Lookback( int optInTimePeriod, int optInCMOPeriod )
       optInCMOPeriod = 9;
    else if( (int)optInCMOPeriod < 2 || (int)optInCMOPeriod > 100000 )
       return -1;
+   root = (int)sqrt((double)optInCMOPeriod);
    if( optInTimePeriod == 1 )
    {
-      return TA_GLOBALS_UNSTABLE_PERIOD(TA_FUNC_UNST_VIDYA,Vidya);
+      return TA_GLOBALS_UNSTABLE(TA_FUNC_UNST_VIDYA,Vidya,0,0);
    }
-   return optInCMOPeriod + TA_GLOBALS_UNSTABLE_PERIOD(TA_FUNC_UNST_VIDYA,Vidya);
+   return optInCMOPeriod + TA_GLOBALS_UNSTABLE(TA_FUNC_UNST_VIDYA,Vidya,((2 * 4 * (optInTimePeriod + 1) * root > 100000000) ? 100000000 : 2 * 4 * (optInTimePeriod + 1) * root),((2 * 8 * (optInTimePeriod + 1) * root > 100000000) ? 100000000 : 2 * 8 * (optInTimePeriod + 1) * root));
 }
 
 TA_LIB_API int TA_VIDYA_DisplayShift( int optInTimePeriod, int optInCMOPeriod, int outputIdx )
@@ -136,7 +138,7 @@ TA_LIB_API TA_RetCode TA_VIDYA( int    startIdx,
     */
    if( optInTimePeriod == 1 )
    {
-      lookbackTotal = TA_GLOBALS_UNSTABLE_PERIOD(TA_FUNC_UNST_VIDYA,Vidya);
+      lookbackTotal = TA_VIDYA_Lookback(optInTimePeriod,optInCMOPeriod);
       if( startIdx < lookbackTotal )
       {
          startIdx = lookbackTotal;
@@ -364,7 +366,7 @@ TA_RetCode TA_S_VIDYA( int    startIdx,
    *outNBElement= 0;
    if( optInTimePeriod == 1 )
    {
-      lookbackTotal = TA_GLOBALS_UNSTABLE_PERIOD(TA_FUNC_UNST_VIDYA,Vidya);
+      lookbackTotal = TA_VIDYA_Lookback(optInTimePeriod,optInCMOPeriod);
       if( startIdx < lookbackTotal )
       {
          startIdx = lookbackTotal;

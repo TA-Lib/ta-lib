@@ -40,9 +40,7 @@
       } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
          return -1;
       }
-      int retValue;
-      retValue = optInTimePeriod + this.unstablePeriod[FuncUnstId.CMO.ordinal()];
-      return retValue ;
+      return optInTimePeriod + this.unstableCount(FuncUnstId.CMO.ordinal(), ((optInTimePeriod > 1) ? 10 * optInTimePeriod : 0), ((optInTimePeriod > 1) ? 19 * optInTimePeriod : 0)) ;
 
    }
    /**

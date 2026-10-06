@@ -57,7 +57,7 @@
  *  092226 MF,CC  #434 the three variance steps follow var.c.
  */
 
-TA_LIB_API int TA_RVI_Lookback( int optInTimePeriod, int optInStdDevPeriod )
+TA_NOINLINE TA_LIB_API int TA_RVI_Lookback( int optInTimePeriod, int optInStdDevPeriod )
 {
    if( (int)optInTimePeriod == TA_INTEGER_DEFAULT )
       optInTimePeriod = 14;
@@ -67,7 +67,7 @@ TA_LIB_API int TA_RVI_Lookback( int optInTimePeriod, int optInStdDevPeriod )
       optInStdDevPeriod = 10;
    else if( (int)optInStdDevPeriod < 2 || (int)optInStdDevPeriod > 100000 )
       return -1;
-   return optInStdDevPeriod - 1 + (optInTimePeriod - 1) + TA_GLOBALS_UNSTABLE_PERIOD(TA_FUNC_UNST_RVI,Rvi);
+   return optInStdDevPeriod - 1 + (optInTimePeriod - 1) + TA_GLOBALS_UNSTABLE(TA_FUNC_UNST_RVI,Rvi,((optInTimePeriod > 1) ? 10 * optInTimePeriod : 0),((optInTimePeriod > 1) ? 19 * optInTimePeriod : 0));
 }
 
 TA_LIB_API int TA_RVI_DisplayShift( int optInTimePeriod, int optInStdDevPeriod, int outputIdx )
@@ -261,7 +261,7 @@ TA_LIB_API TA_RetCode TA_RVI( int    startIdx,
    prevUp = upTotal / optInTimePeriod;
    prevDn = dnTotal / optInTimePeriod;
    /* Skip the unstable period. Same step, smoothed but not stored. */
-   i = TA_GLOBALS_UNSTABLE_PERIOD(TA_FUNC_UNST_RVI,Rvi);
+   i = lookbackTotal - (optInStdDevPeriod - 1 + (optInTimePeriod - 1));
    while( i != 0 )
    {
       tempReal = inReal[today] - shift;
@@ -596,7 +596,7 @@ TA_RetCode TA_S_RVI( int    startIdx,
    }
    prevUp = upTotal / optInTimePeriod;
    prevDn = dnTotal / optInTimePeriod;
-   i = TA_GLOBALS_UNSTABLE_PERIOD(TA_FUNC_UNST_RVI,Rvi);
+   i = lookbackTotal - (optInStdDevPeriod - 1 + (optInTimePeriod - 1));
    while( i != 0 )
    {
       tempReal = (double)inReal[today] - shift;
@@ -1074,7 +1074,7 @@ static TA_RetCode TA_RVI_OpenImpl( struct TA_RVI_Stream **stream, const double i
       prevUp = upTotal / optInTimePeriod;
       prevDn = dnTotal / optInTimePeriod;
       /* Skip the unstable period. Same step, smoothed but not stored. */
-      i = TA_GLOBALS_UNSTABLE_PERIOD(TA_FUNC_UNST_RVI,Rvi);
+      i = lookbackTotal - (optInStdDevPeriod - 1 + (optInTimePeriod - 1));
       while( i != 0 )
       {
          tempReal = inReal[today] - shift;

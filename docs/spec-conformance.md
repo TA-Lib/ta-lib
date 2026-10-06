@@ -147,7 +147,7 @@ emitted bodies, and drives a NULL handle and a NULL out-pointer through
 | Rule | Topic | C | Rust | Java | C# |
 |---|---|:---:|:---:|:---:|:---:|
 | rT2 | [target](https://ta-lib.org/spec/settings-threads/#rt2) | ✅ | ✅<br>[13] | ✅<br>[13] | ✅ |
-| rT3 | [unstable period bound](https://ta-lib.org/spec/settings-threads/#rt3) | ✅ | ✅ | ✅ | ✅ |
+| rT3 | [unstable period values](https://ta-lib.org/spec/settings-threads/#rt3) | ✅ | ✅ | ✅ | ✅ |
 | rT4 | [reading](https://ta-lib.org/spec/settings-threads/#rt4) | ⚠️<br>[14] | ✅ | ✅ | ✅ |
 | rT5 | [range type](https://ta-lib.org/spec/settings-threads/#rt5) | ✅ | — | — | ✅ |
 | rT6 | [average period bound](https://ta-lib.org/spec/settings-threads/#rt6) | ✅ | ✅ | ✅ | ✅ |
@@ -155,6 +155,7 @@ emitted bodies, and drives a NULL handle and a NULL out-pointer through
 | rT8 | [no change on refusal](https://ta-lib.org/spec/settings-threads/#rt8) | ✅ | ✅<br>[16] | ✅ | ✅ |
 | rT10 | [initial state](https://ta-lib.org/spec/settings-threads/#rt10) | ✅ | — | — | — |
 | rT11 | [threads in C](https://ta-lib.org/spec/settings-threads/#rt11) | ✅ | — | — | — |
+| rT12 | [a getter returns what was set](https://ta-lib.org/spec/settings-threads/#rt12) | ✅ | ✅ | ✅ | ✅ |
 
 [13] The wildcard is a declared member, so it is rejected by value; a target
 outside the declared set is unrepresentable.
@@ -179,8 +180,9 @@ What enters a lookback, in C, in a bare run:
 - rL1's first bar: `checkNoBarBeforeTheFirst` (`test_abstract.c`) overwrites
   every bar below `max(startIdx, lookback) - lookback` in every input of every
   function, with NaN and with a large finite value, at unstable periods 0 and
-  5, and requires the same answer bit for bit. Its control overwrites one bar
-  more, which most functions read.
+  5 and under each Auto level, and requires the same answer bit for bit. Its
+  control overwrites one bar more, which most functions read. A lookback
+  under a level that does not fit the series is a failure, not a skip.
 - rL6: `test_func_unstable_shift` (`test_codegen.c`) raises each owner's id by
   5, at the default parameters and with every integer parameter at its
   minimum, and requires five more bars of lookback and the same remaining
@@ -191,6 +193,19 @@ What enters a lookback, in C, in a bare run:
   not move. `test_adx.c` pins the DI/DM rows,
   `test_period_boundary.c` the DEMA, TEMA and period-1 MA stage counts, and
   `test_kc.c` KC's longer path over a grid of two unstable periods.
+- rL8 under an Auto level: `test_auto_warmup.c` asks every function flagged
+  identity at a period of 1, owner of an id or not, for its lookback at a
+  period of 1 with every id on each level, and requires 0.
+- rL6 under an Auto level: the count leg of `test_auto_warmup.c`. With one id
+  on a level, its owner's lookback minus its lookback at 0 must equal the
+  rule, computed from the file's own copy of the rule table, and the owner
+  must report the bits it reports at 0, starting that many bars later. It
+  runs at the defaults, with every integer parameter at its minimum and
+  tripled, and at the real parameters a rule reads (SWAK_BP's delta, MAMA's
+  limits). A function flagged as owning an id that the file has no rule for
+  fails. `test_stc.c` holds the STC line to `TA_EMA(fast) - TA_EMA(slow)` bit
+  for bit under each level: the fast leg is placed by its own lookback, which
+  under a level is not the slow leg's.
 - rL5, rL7 and rL9: `abstract_lookback_under_settings` (`test_abstract.c`), for
   every function at its default parameters: another range type and factor on
   every candle setting moves no lookback; seven more bars on every averaging
@@ -206,7 +221,12 @@ rL4 under settings: `server_verify_lookback_value` compares each server's
 lookback with C's, for every function with every unstable period raised
 (`test_func_unstable_shift`) and for every candlestick function under each row
 of the candle settings matrix (`test_candlestick.c`), under regtest
-`--codegen`. The ports' display-shift calls are compared with C's at default
+`--codegen`. Under each Auto level: `xlang_auto_lookback_leg` (regtest
+`--xlang-hash`), with every id on the level, on every accepted vector of the
+lookback leg plus one with every integer parameter at its maximum, the only
+way into VIDYA's saturating arm. An Auto count depends on the parameters, so
+this is the one check that the four renderings of every rule agree; it fails
+when too few of its cases are lengthened by a level. The ports' display-shift calls are compared with C's at default
 settings only.
 
 ### rL11
@@ -465,6 +485,13 @@ flags no function carries.
 
 ### Settings rules
 
+rT3's levels and rT12: `testUnstablePeriodBounds` (`test_internals.c`) sets
+each level per id and through the wildcard, reads it back as itself, and
+requires `TA_INDEX_MAX + 5` and `+ 9` refused with nothing written;
+`test_unstable_bounds` (`test_codegen.c`) sends the same values to every
+server; the ports' own suites read both levels back from a built `Core`
+(the Rust template's tests, `CoreApiTest`, `CoreBuilderTest`).
+
 rT4's C getter: `test_internals.c`. rT8's Rust latch: verified by probe
 (footnote [16]). rT8's candle setter in Java: `aRejectedCandleSettingWritesNothing`
 (`CoreApiTest`), through CDLDOJI since Java's `Core` has no candle getter. rT2,
@@ -491,6 +518,50 @@ every thread, so comparing answers finds neither. Not run on several threads:
 the `Update`, `Peek`, `Advance` and accessors of the functions outside that
 spread, and
 the fused clones gcc builds, since under clang the FMA dispatch compiles away.
+
+### Auto levels
+
+What the specification states about a level is mapped above: rT3 and rT12
+under Settings rules, rL1, rL4 and rL6 under Lookback rules. Two more legs run
+under each level.
+
+Stream against batch: `stream_verify`'s unstable-period leg runs one more pass
+per level, in each language server, on the default vector of a function an
+unstable id reaches, on every list-parameter vector and on the below-default boundary
+vectors. MACDEXT gains an all-EMA vector at periods (7, 8, 2): its batch
+delegates to MACD while its stream composes three MAs, each placed by its own
+lookback, and under a level the two agree only if MACD places its fast leg the
+same way: shorter periods forget a misplaced seed before the first bar
+compared at `PREC_8`. The default all-EMA vector reports too few bars on the 240-bar
+series to show it. A floor on the output bars compared under a level keeps
+the passes from comparing nothing.
+
+Two starts: the second leg of `test_auto_warmup.c`, in a bare run. It holds
+what the [Unstable Period](https://ta-lib.org/api/unstable-period/) page says
+a level means, which is not a specification rule. Every function runs on three
+synthetic 8192-bar series (a random walk, alternating trends, a range), from
+bar 0 and from six later starts, at the defaults, with every integer parameter
+at its minimum and tripled, at every MA type, and at the real parameters a
+rule reads. Compared at every bar both runs report:
+
+- a call whose lookback no level moves: within `T = max(1e-10, 1e-7 * range)`,
+  integer outputs equal;
+- a converging call: with `S` the largest difference at a setting of 0, within
+  `max(e^-(K-3) * S, T)` at `PREC_4` and within `max(e^-(K-3) * S, F)` at
+  `PREC_8`, with `F` a committed floor per function and output, for the
+  outputs whose own rounding is above that threshold. A call whose `S` is
+  under `T` is not a comparison;
+- a function flagged `path_dependent` is not compared, and fails if it meets
+  the converging criterion on every series and start.
+
+Not compared: KAMA, FRAMA, VIDYA and the KAMA and VIDYA MA types on the range
+series, which their counts are not sized for; STOCHRSI with the MAMA or VIDYA
+type, whose FastK rests at 0 or 100; CRSI when a level lengthens its lookback,
+its streak being a state machine. MAXINDEX, MININDEX and MINMAXINDEX are
+compared after rebasing the later start's index, which counts from the first
+bar handed in. One counter per class and a floor on the bars compared, per
+series for a window and per call for a converging one, keep the leg from
+passing on nothing; a call that fails or reports no lookback is a failure.
 
 ### Versions and determinism
 
@@ -870,6 +941,26 @@ the lookback overflows negative and the function indexes far past the end of its
 input while still reporting success. `INDEX_MAX` is the ceiling the index domain
 already enforces, and a warm-up longer than the largest addressable series could
 never produce output, so nothing legitimate is refused.
+
+An Auto level is `INDEX_MAX` plus its digit count. Above `INDEX_MAX`, so no
+count is a level. Below 2^31, so a Java or C# `int` holds one and a negative C
+`int` stays above it and refused. Not `INT_MAX`, which the C regtest server
+uses to saturate an oversized integer on the wire. Close to the ceiling, so
+that code reading a level as a count gets no output or
+`TA_INSUFFICIENT_HISTORY`, never an index out of range. The offsets between
+and beside the levels stay refused. A level's lookback fits an `int` at every
+parameter's maximum: VIDYA's rule, the one product of two periods, saturates
+at `INDEX_MAX`.
+
+### rT12: the getter returns the level
+
+A getter that answered 0, or the resolved count, under a level would turn the
+level off, or into a fixed count, in a caller that saves a setting and restores
+it. A caller that adds the getter's value to a lookback of its own gets a
+number that is plainly wrong, not one that is quietly short. No call returns
+the count a level resolves to: it is the lookback under the level minus the
+lookback at 0, and it depends on the call's parameters, which a getter does
+not take.
 
 ### rT7: finite and not negative
 

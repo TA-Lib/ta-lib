@@ -2361,6 +2361,7 @@ typedef struct {
     int               streamSkipped;
     int               streamRejectArms;
     int               streamFillFunctions; /* funcs whose OpenAndFill == batch(0,n-1) bitwise */
+    long long         streamAutoFillBars[2]; /* output bars fill-compared under PREC_4, PREC_8, where the level moved the first bar */
     int               streamPeekFunctions; /* funcs that ran the peek non-commit leg */
     long long         streamPeekProbes;    /* peeks run by that leg */
     int               streamPeekRepFunctions; /* funcs that ran the repeat probe */
@@ -3313,6 +3314,9 @@ static void sweep_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
 /* Stream-leg variants: 0 = ambient defaults, 1 = unstable period, then one per
  * data shape from MONO_UP up (FUZZ_NSHAPES - 1 of them). */
 #define STREAM_NVARIANT (2 + FUZZ_NSHAPES - 1)
+/* Two more passes of the unstable-period leg, one per Auto level, numbered
+ * after the shape variants. */
+#define STREAM_NAUTO 2
 
 static int stream_flag(const char *resp, const char *key)
 {
@@ -3655,6 +3659,19 @@ static int stream_build_vectors(const TA_FuncInfo *fi,
             }
         }
     }
+    /* The all-EMA MACDEXT whose three periods differ and fit the series under
+     * an Auto level: its batch delegates to MACD while its stream composes
+     * three MAs, each placed by its own lookback. */
+    if( strcmp(fi->name, "MACDEXT") == 0 && fi->nbOptInput == 6 && nvec >= STREAM_MAX_VEC )
+        (*overflow)++;
+    else if( strcmp(fi->name, "MACDEXT") == 0 && fi->nbOptInput == 6 )
+    {
+        static const double fit[6] = { 7, TA_MAType_EMA, 8, TA_MAType_EMA, 2, TA_MAType_EMA };
+        unsigned int j;
+        for( j = 0; j < 6; j++ ) vec[nvec][j] = fit[j];
+        vecIsEnum[nvec] = 1;
+        nvec++;
+    }
     return nvec;
 }
 
@@ -3713,16 +3730,18 @@ static void stream_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
 
     for( v = 0; v < nvec; v++ )
     {
+        int begAtZero = -1;
         /* Variants: ambient defaults; plus (defaults vector only) one
          * unstable-period leg and the remaining data shapes so ALL fuzz
          * shapes (incl. CONSTANT, TIE_HEAVY, and FUZZ_CANDLE — the
          * pattern-rich inside-bar shape that makes the candlestick streams
          * non-vacuous) are exercised every run. */
-        for( variant = 0; variant < STREAM_NVARIANT; variant++ )
+        for( variant = 0; variant < STREAM_NVARIANT + STREAM_NAUTO; variant++ )
         {
             int K = 0, shape;
             ErrorNumber pipeErr;
-            if( variant == 1 )
+            int autoPass = variant >= STREAM_NVARIANT;
+            if( variant == 1 || autoPass )
             {
                 /* K-leg: defaults vector when the function is unstable, plus
                  * every enum-sweep vector — the selected sub-stream may be
@@ -3734,6 +3753,13 @@ static void stream_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
                 if( !( (v == 0 && isUnstable) || vecIsEnum[v]
                        || (vecIsMin[v] && isUnstable) ) ) continue;
                 K = 3;
+                /* Under a level the count follows the periods, so stream and
+                 * batch are held together where two legs of one function resolve
+                 * different counts. Most default vectors report nothing on this
+                 * series; the minimum-period ones do. */
+                if( autoPass )
+                    K = variant == STREAM_NVARIANT ? (int)TA_UNSTABLE_AUTO_PREC_4
+                                                   : (int)TA_UNSTABLE_AUTO_PREC_8;
             }
             else if( variant >= 2 )
             {
@@ -3768,7 +3794,7 @@ static void stream_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
              * MONO_DOWN, and the MONO_DOWN leg is the one that caught a
              * one-bar ring rotation for it. g_streamShapeSeen is the standing
              * floor on that: the mapping below must reach every shape. */
-            shape = (variant >= 2) ? (variant - 1) : (v + variant) % 7;
+            shape = autoPass ? (v + 1) % 7 : (variant >= 2) ? (variant - 1) : (v + variant) % 7;
             if( shape >= 0 && shape < FUZZ_NSHAPES )
                 g_streamShapeSeen[shape] = 1;
             stream_build_request(ctx->requestBuf, funcInfo, vec[v],
@@ -3818,6 +3844,15 @@ static void stream_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
             {
                 int bars = stream_flag(ctx->responseBuf, "\"fill_bars\":");
                 fillChecked = 1;
+                /* "nb", not "fill_bars": only the C server reports the latter. A
+                 * leg the level did not move proves nothing about the level. */
+                if( variant == 0 )
+                    begAtZero = stream_flag(ctx->responseBuf, "\"beg\":");
+                if( autoPass && begAtZero >= 0
+                    && stream_flag(ctx->responseBuf, "\"beg\":") > begAtZero
+                    && stream_flag(ctx->responseBuf, "\"nb\":") > 0 )
+                    ctx->streamAutoFillBars[variant - STREAM_NVARIANT] +=
+                        stream_flag(ctx->responseBuf, "\"nb\":");
                 if( stream_flag(ctx->responseBuf, "\"fill_ok\":") != 1 )
                 {
                     printf("STREAM FILL MISMATCH [TA_%s] vector=%d K=%d shape=%d "
@@ -4495,8 +4530,10 @@ static ErrorNumber test_unstable_bounds(CodegenPipe *cp, const CodegenLanguage *
     #define UB_SLOW  10
     TA_Real h[UB_NBBAR], l[UB_NBBAR], c[UB_NBBAR], v[UB_NBBAR];
     /* Values every backend must refuse. TA_INDEX_MAX+1 is the first one past the
-     * ceiling; 2^31-1 is the value that overflowed the lookback negative. */
-    const long long rejects[2] = { (long long)TA_INDEX_MAX + 1, 2147483647LL };
+     * ceiling; 2^31-1 is the value that overflowed the lookback negative; the
+     * two offsets sit beside the Auto levels and name none. */
+    const long long rejects[4] = { (long long)TA_INDEX_MAX + 1, 2147483647LL,
+                                   (long long)TA_INDEX_MAX + 5, (long long)TA_INDEX_MAX + 9 };
     const int ids[2] = { (int)TA_FUNC_UNST_EMA, (int)TA_FUNC_UNST_ALL };
     const int marker = 4;   /* the good value a rejected call must not disturb */
     int expected, i, k, r;
@@ -4525,6 +4562,21 @@ static ErrorNumber test_unstable_bounds(CodegenPipe *cp, const CodegenLanguage *
         }
     }
 
+    /* Above the ceiling the Auto levels, and only they, are values. */
+    for( k = 0; k < 2; k++ )
+    {
+        codegen_appendf(reqBuf, JSON_BUF_SIZE, 0,
+                "{\"method\":\"set_unstable_period\",\"params\":{\"id\":%d,\"period\":%u}}",
+                ids[k], k == 0 ? TA_UNSTABLE_AUTO_PREC_4 : TA_UNSTABLE_AUTO_PREC_8);
+        if( codegen_pipe_call(cp, reqBuf, respBuf, JSON_BUF_SIZE) != TA_TEST_PASS
+            || json_is_error(respBuf) )
+        {
+            printf("  UNSTABLE BOUND [%s]: id %d rejected an Auto level, which C accepts: %s\n",
+                   lang->display, ids[k], respBuf);
+            return TA_UNSTABLE_BOUND_CEILING;
+        }
+    }
+
     /* Park a known-good value so step (3) has something to observe. */
     codegen_appendf(reqBuf, JSON_BUF_SIZE, 0,
             "{\"method\":\"set_unstable_period\",\"params\":{\"id\":%d,\"period\":%d}}",
@@ -4542,7 +4594,7 @@ static ErrorNumber test_unstable_bounds(CodegenPipe *cp, const CodegenLanguage *
     TA_SetUnstablePeriod(TA_FUNC_UNST_ALL, 0);
 
     /* (2) and (3): each out-of-range value is refused, and leaves the marker. */
-    for( r = 0; r < 2; r++ )
+    for( r = 0; r < 4; r++ )
     {
         for( k = 0; k < 2; k++ )
         {
@@ -4897,6 +4949,7 @@ static ErrorNumber test_codegen_for_language(
             ctx.streamSkipped       = 0;
             ctx.streamRejectArms    = 0;
             ctx.streamFillFunctions = 0;
+            ctx.streamAutoFillBars[0] = ctx.streamAutoFillBars[1] = 0;
             ctx.streamPeekFunctions = 0;
             ctx.streamPeekProbes = 0;
             ctx.streamPeekRepFunctions = 0;
@@ -4927,6 +4980,18 @@ static ErrorNumber test_codegen_for_language(
                        "verified OpenAndFill — every streamable function must also "
                        "gate-verify its fill array\n",
                        ctx.streamFillFunctions, ctx.streamFunctions);
+                ctx.error = TA_CODEGEN_STREAM_MISMATCH;
+            }
+            /* An Auto lookback longer than the series compares nothing. */
+            printf("  stream under Auto levels (#492): %lld / %lld output bar(s) compared "
+                   "past a moved first bar\n",
+                   ctx.streamAutoFillBars[0], ctx.streamAutoFillBars[1]);
+            if( ctx.error == TA_TEST_PASS && ctx.functionFilter == NULL && ctx.streamFunctions > 0 &&
+                ( ctx.streamAutoFillBars[0] < 40000 || ctx.streamAutoFillBars[1] < 30000 ) )
+            {
+                printf("STREAM AUTO VACUOUS: %lld / %lld output bar(s) compared under the two "
+                       "Auto unstable levels\n",
+                       ctx.streamAutoFillBars[0], ctx.streamAutoFillBars[1]);
                 ctx.error = TA_CODEGEN_STREAM_MISMATCH;
             }
             /* Shape floor: the variant->shape mapping is three coupled
@@ -6770,6 +6835,8 @@ typedef struct {
                                       * printed so it cannot go quiet unnoticed  */
     long long    unstFuncs;          /* functions that carried an unstable leg     */
     long long    lbCases;            /* per-server lookback-tier comparisons       */
+    long long    autoLbCases;        /* ... of which under an Auto level           */
+    long long    autoLbMoved;        /* ... whose lookback the level lengthened    */
     long long    lbOorCases;         /* ... of which on an out-of-range vector     */
     long long    lbSentCases;        /* ... of which on a default-sentinel vector  */
 
@@ -8401,6 +8468,101 @@ static void xlang_lookback_leg(const TA_FuncInfo *funcInfo, XlangCtx *ctx,
     }
 }
 
+/* The lookback under each Auto level of the unstable period, every server
+ * against C, on every accepted vector plus one with every integer period at its
+ * maximum (the only way into VIDYA's saturating arm). An Auto count depends on
+ * the parameters, so this is the one check that the four renderings of every
+ * rule agree: the leg above pins every id at 0.
+ */
+static void xlang_auto_lookback_leg(const TA_FuncInfo *funcInfo, XlangCtx *ctx,
+                                    TA_ParamHolder *paramHolder,
+                                    const double vec[FUZZ_MAX_VEC][FUZZ_MAX_OPT],
+                                    const char *kind, int nvec)
+{
+    static const unsigned int level[2] = { TA_UNSTABLE_AUTO_PREC_4, TA_UNSTABLE_AUTO_PREC_8 };
+    double atMax[FUZZ_MAX_OPT];
+
+    for( unsigned int i = 0; i < funcInfo->nbOptInput && i < FUZZ_MAX_OPT; i++ )
+    {
+        const TA_OptInputParameterInfo *oi;
+        TA_GetOptInputParameterInfo(funcInfo->handle, i, &oi);
+        atMax[i] = vec[0][i];
+        if( oi->type == TA_OptInput_IntegerRange )
+            atMax[i] = (double)((const TA_IntegerRange *)oi->dataSet)->max;
+    }
+
+    for( int l = 0; l <= 2; l++ )
+    {
+        /* The third pass puts every server back at 0, as the legs below expect. */
+        unsigned int setting = l < 2 ? level[l] : 0;
+        TA_SetUnstablePeriod(TA_FUNC_UNST_ALL, setting);
+        codegen_appendf(ctx->reqBuf, JSON_BUF_SIZE, 0,
+            "{\"method\":\"set_unstable_period\",\"params\":{\"id\":%d,\"period\":%u}}",
+            (int)TA_FUNC_UNST_ALL, setting);
+        for( int sIdx = 0; sIdx < ctx->nsv; sIdx++ )
+        {
+            XlangServer *sv = &ctx->sv[sIdx];
+            if( !sv->open ) continue;
+            if( !xlang_call(sv, ctx->reqBuf, ctx->respBuf) || json_is_error(ctx->respBuf) )
+            {
+                printf("  XLANG AUTO LOOKBACK [%s] TA_%s: set_unstable_period(%u) refused: %.120s\n",
+                       sv->display, funcInfo->name, setting, ctx->respBuf);
+                if( ctx->error == TA_TEST_PASS ) ctx->error = TA_CODEGEN_OUTPUT_MISMATCH;
+                sv->mism++;
+            }
+        }
+        if( l == 2 ) break;
+
+        for( int k = 0; k <= nvec; k++ )
+        {
+            const double *v = k < nvec ? vec[k] : atMax;
+            if( k < nvec && kind[k] != FUZZ_VEC_NORMAL ) continue;
+
+            xlang_set_opt_params(paramHolder, funcInfo, v);
+            TA_Integer goldRaw = -1;
+            if( TA_GetLookback(paramHolder, &goldRaw) != TA_SUCCESS ) continue;
+            long long gold = (long long)goldRaw;
+
+            TA_SetUnstablePeriod(TA_FUNC_UNST_ALL, 0);
+            TA_Integer at0 = -1;
+            if( TA_GetLookback(paramHolder, &at0) != TA_SUCCESS ) at0 = goldRaw;
+            TA_SetUnstablePeriod(TA_FUNC_UNST_ALL, setting);
+
+            xlang_build_lookback_request(ctx->reqBuf, funcInfo, v);
+            for( int sIdx = 0; sIdx < ctx->nsv; sIdx++ )
+            {
+                XlangServer *sv = &ctx->sv[sIdx];
+                if( !sv->open ) continue;
+                if( !xlang_call(sv, ctx->reqBuf, ctx->respBuf) )
+                {
+                    if( ctx->error == TA_TEST_PASS ) ctx->error = TA_CODEGEN_PIPE_READ_FAILED;
+                    sv->mism++;
+                    continue;
+                }
+                int present = 0;
+                long long srv = xlang_lookback_norm(ctx->respBuf, &present);
+                sv->cases++;
+                ctx->autoLbCases++;
+                if( goldRaw != at0 ) ctx->autoLbMoved++;
+                if( !present || srv != gold )
+                {
+                    sv->mism++;
+                    if( ctx->error == TA_TEST_PASS ) ctx->error = TA_CODEGEN_OUTPUT_MISMATCH;
+                    if( ctx->reportedThisFunc < 3 )
+                    {
+                        ctx->reportedThisFunc++;
+                        printf("  XLANG AUTO LOOKBACK MISMATCH TA_%s at TA_INDEX_MAX+%u  C %lld vs %s %lld  params:",
+                               funcInfo->name, setting - (unsigned int)TA_INDEX_MAX, gold, sv->display,
+                               present ? srv : -2LL);
+                        xlang_print_params(funcInfo, v);
+                        printf("\n");
+                    }
+                }
+            }
+        }
+    }
+}
+
 static int xlang_period_selector(const TA_FuncInfo *fi)
 {
     int realIndex = 0;
@@ -8570,6 +8732,8 @@ static void xlang_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
     /* Lookback tier first — same vectors, no data needed (issue #148). */
     xlang_lookback_leg(funcInfo, ctx, paramHolder, (const double (*)[FUZZ_MAX_OPT])vec,
                        kind, nvec);
+    xlang_auto_lookback_leg(funcInfo, ctx, paramHolder, (const double (*)[FUZZ_MAX_OPT])vec,
+                            kind, nvec);
     /* xlang_lookback_leg's native Batch check (xlang_tier_native_check, #256)
      * rebinds paramHolder's INPUT pointers to the tier buffers
      * for the duration of that check. Restore them to `hist` (g_fzBuf) before
@@ -9161,6 +9325,14 @@ ErrorNumber xlang_hash(const char *functionFilter, const char *languageFilter)
                "%lld batch / %lld lookback — no vector any language had to reject or "
                "resolve, so the parameter contract is not gated at all.\n",
                ctx.oorCases, ctx.lbOorCases, ctx.sentCases, ctx.lbSentCases);
+        return TA_CODEGEN_OUTPUT_MISMATCH;
+    }
+    printf("auto levels (#492): %lld lookback case(s), %lld of them lengthened by the level\n",
+           ctx.autoLbCases, ctx.autoLbMoved);
+    if( !functionFilter && ctx.comparisons > 0 && ctx.autoLbMoved < 1000 )
+    {
+        printf("FAIL — VACUOUS AUTO LOOKBACK LEG: %lld case(s), %lld lengthened by a level.\n",
+               ctx.autoLbCases, ctx.autoLbMoved);
         return TA_CODEGEN_OUTPUT_MISMATCH;
     }
     /* The unstable-period axis needs a floor of its own for the same reason: it

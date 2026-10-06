@@ -85,10 +85,12 @@ public partial class Core
       } else if( optInCMOPeriod < 2 || optInCMOPeriod > 100000 ) {
          return -1;
       }
+      int root = 0;
+      root = (int)Math.Sqrt((double)optInCMOPeriod);
       if( optInTimePeriod == 1 ) {
-         return this._unstablePeriod[(int)FuncUnstId.VIDYA] ;
+         return this.UnstableCount((int)FuncUnstId.VIDYA, 0, 0) ;
       }
-      return optInCMOPeriod + this._unstablePeriod[(int)FuncUnstId.VIDYA] ;
+      return optInCMOPeriod + this.UnstableCount((int)FuncUnstId.VIDYA, ((2 * 4 * (optInTimePeriod + 1) * root > 100000000) ? 100000000 : 2 * 4 * (optInTimePeriod + 1) * root), ((2 * 8 * (optInTimePeriod + 1) * root > 100000000) ? 100000000 : 2 * 8 * (optInTimePeriod + 1) * root)) ;
 
    }
    /// <summary>
@@ -167,7 +169,7 @@ public partial class Core
        * for every MAType. The unstable period still delays the first output.
        */
       if( optInTimePeriod == 1 ) {
-         lookbackTotal = this._unstablePeriod[(int)FuncUnstId.VIDYA];
+         lookbackTotal = VidyaLookback(optInTimePeriod, optInCMOPeriod);
          if( startIdx < lookbackTotal ) {
             startIdx = lookbackTotal;
          }
@@ -360,7 +362,7 @@ public partial class Core
       outBegIdx = 0;
       outNBElement = 0;
       if( optInTimePeriod == 1 ) {
-         lookbackTotal = this._unstablePeriod[(int)FuncUnstId.VIDYA];
+         lookbackTotal = VidyaLookback(optInTimePeriod, optInCMOPeriod);
          if( startIdx < lookbackTotal ) {
             startIdx = lookbackTotal;
          }

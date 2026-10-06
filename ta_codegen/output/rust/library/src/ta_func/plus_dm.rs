@@ -88,7 +88,7 @@ impl Core {
             return Err(RetCode::BadParam);
         }
         if optInTimePeriod > 1 {
-            return Ok((optInTimePeriod + self.unstable_period[FuncUnstId::PLUS_DM as usize] - 1) as usize);
+            return Ok((optInTimePeriod + self.unstable_count(FuncUnstId::PLUS_DM, (if optInTimePeriod > 1 { 10 * optInTimePeriod } else { 0 }), (if optInTimePeriod > 1 { 19 * optInTimePeriod } else { 0 })) - 1) as usize);
         } else {
             return Ok((1) as usize);
         }
@@ -223,11 +223,7 @@ impl Core {
         //
         // Reference:
         //    New Concepts In Technical Trading Systems, J. Welles Wilder Jr
-        if optInTimePeriod > 1 {
-            lookbackTotal = (optInTimePeriod + self.unstable_period[FuncUnstId::PLUS_DM as usize] - 1) as usize;
-        } else {
-            lookbackTotal = 1;
-        }
+        lookbackTotal = self.plus_dm_lookback(optInTimePeriod).unwrap_or(usize::MAX);
         // Adjust startIdx to account for the lookback period.
         if startIdx < lookbackTotal {
             startIdx = lookbackTotal;
@@ -313,7 +309,7 @@ impl Core {
         }
         // Process subsequent DM
         // Skip the unstable period.
-        i = (self.unstable_period[FuncUnstId::PLUS_DM as usize]) as usize;
+        i = lookbackTotal - (((optInTimePeriod - 1)) as usize);
         if i > 0 {
             let _wn: usize = i;
             let _w0 = &inHigh[today + 1..][.._wn];
@@ -661,11 +657,7 @@ impl Core {
             //
             // Reference:
             //    New Concepts In Technical Trading Systems, J. Welles Wilder Jr
-            if optInTimePeriod > 1 {
-                lookbackTotal = (optInTimePeriod + self.unstable_period[FuncUnstId::PLUS_DM as usize] - 1) as usize;
-            } else {
-                lookbackTotal = 1;
-            }
+            lookbackTotal = self.plus_dm_lookback(optInTimePeriod)?;
             // Adjust startIdx to account for the lookback period.
             if startIdx < lookbackTotal {
                 startIdx = lookbackTotal;
@@ -789,11 +781,7 @@ impl Core {
             //
             // Reference:
             //    New Concepts In Technical Trading Systems, J. Welles Wilder Jr
-            if optInTimePeriod > 1 {
-                lookbackTotal = (optInTimePeriod + self.unstable_period[FuncUnstId::PLUS_DM as usize] - 1) as usize;
-            } else {
-                lookbackTotal = 1;
-            }
+            lookbackTotal = self.plus_dm_lookback(optInTimePeriod)?;
             // Adjust startIdx to account for the lookback period.
             if startIdx < lookbackTotal {
                 startIdx = lookbackTotal;
@@ -837,7 +825,7 @@ impl Core {
             }
             // Process subsequent DM
             // Skip the unstable period.
-            i = (self.unstable_period[FuncUnstId::PLUS_DM as usize]) as usize;
+            i = lookbackTotal - (((optInTimePeriod - 1)) as usize);
             while { let _v = i; i = i.wrapping_sub(1); _v } != 0 {
                 today += 1;
                 tempReal = inHigh[today];

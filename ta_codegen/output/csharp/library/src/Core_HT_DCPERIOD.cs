@@ -73,7 +73,7 @@ public partial class Core
    public int HtDcperiodLookback( )
    {
       /* See mama_lookback for an explanation of these */
-      return 32 + this._unstablePeriod[(int)FuncUnstId.HT_DCPERIOD] ;
+      return 32 + this.UnstableCount((int)FuncUnstId.HT_DCPERIOD, (80 + 50 * 4), (80 + 50 * 8)) ;
 
    }
    /// <summary>
@@ -178,7 +178,7 @@ public partial class Core
       /* Identify the minimum number of price bar needed
        * to calculate at least one output.
        */
-      lookbackTotal = 32 + this._unstablePeriod[(int)FuncUnstId.HT_DCPERIOD];
+      lookbackTotal = HtDcperiodLookback();
       /* Move up the start index if there is not
        * enough initial data.
        */
@@ -517,7 +517,7 @@ public partial class Core
       a = 0.0962;
       b = 0.5769;
       rad2Deg = 180.0 / (4.0 * Math.Atan(1));
-      lookbackTotal = 32 + this._unstablePeriod[(int)FuncUnstId.HT_DCPERIOD];
+      lookbackTotal = HtDcperiodLookback();
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
       }
@@ -1528,7 +1528,7 @@ public partial class Core
       /* Identify the minimum number of price bar needed
        * to calculate at least one output.
        */
-      lookbackTotal = 32 + this._unstablePeriod[(int)FuncUnstId.HT_DCPERIOD];
+      lookbackTotal = HtDcperiodLookback();
       /* Move up the start index if there is not
        * enough initial data.
        */

@@ -21,11 +21,8 @@
 
 int cmo_lookback(int optInTimePeriod)
 {
-   int retValue;
-
-   retValue = optInTimePeriod + TA_GetUnstablePeriod(TA_FUNC_UNST_CMO);
-
-   return retValue;
+   return optInTimePeriod
+   + TA_UNSTABLE( TA_FUNC_UNST_CMO, ta_warmup_wilder(K, optInTimePeriod) );
 }
 
 TA_RetCode cmo(int startIdx, int endIdx,

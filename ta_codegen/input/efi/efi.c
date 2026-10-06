@@ -14,12 +14,8 @@
 
 int efi_lookback(int optInTimePeriod)
 {
-   /* One bar is consumed forming the first close-to-close change, then the
-    * EMA's own warm-up on top:
-    *    1 + ema_lookback(optInTimePeriod)
-    *  = 1 + (optInTimePeriod - 1) + TA_GetUnstablePeriod(TA_FUNC_UNST_EMA)
-    */
-   return optInTimePeriod + TA_GetUnstablePeriod(TA_FUNC_UNST_EMA);
+   /* One bar forms the first close-to-close change. */
+   return 1 + ema_lookback( optInTimePeriod );
 }
 
 TA_RetCode efi(int startIdx, int endIdx,
@@ -29,12 +25,9 @@ TA_RetCode efi(int startIdx, int endIdx,
    int *outBegIdx, int *outNBElement,
    double outReal[])
 {
-   double emaBeta = ((double)(optInTimePeriod - 1)) / ((double)(optInTimePeriod + 1));
-   double optInK_1 = 1.0 - emaBeta;
+   double emaBeta, optInK_1;
    double tempReal, prevMA, prevClose, force;
    int i, today, outIdx, lookbackTotal;
-
-   emaBeta = 1.0 - optInK_1;
 
    /* Alexander Elder's Force Index (Trading for a Living, 1993): the one-bar
     * close-to-close move weighted by that bar's volume, then smoothed with an
@@ -67,6 +60,14 @@ TA_RetCode efi(int startIdx, int endIdx,
     * to calculate at least one output.
     */
    lookbackTotal = efi_lookback( optInTimePeriod );
+
+   /* After the lookback call: a double live across a call is saved and
+    * restored around every fma call of the loops below, one more instruction
+    * per bar.
+    */
+   emaBeta = ((double)(optInTimePeriod - 1)) / ((double)(optInTimePeriod + 1));
+   optInK_1 = 1.0 - emaBeta;
+   emaBeta = 1.0 - optInK_1;
 
    /* Move up the start index if there is not
     * enough initial data.

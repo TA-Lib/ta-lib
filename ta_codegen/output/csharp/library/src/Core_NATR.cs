@@ -94,7 +94,7 @@ public partial class Core
        * (optInTimePeriod-1) is for the simple
        * moving average.
        */
-      return optInTimePeriod + this._unstablePeriod[(int)FuncUnstId.NATR] ;
+      return optInTimePeriod + this.UnstableCount((int)FuncUnstId.NATR, ((optInTimePeriod > 1) ? 10 * optInTimePeriod : 0), ((optInTimePeriod > 1) ? 19 * optInTimePeriod : 0)) ;
 
    }
    /// <summary>
@@ -252,7 +252,7 @@ public partial class Core
       }
       prevATR = periodTotal / optInTimePeriod;
       /* Skip the unstable period. */
-      i = this._unstablePeriod[(int)FuncUnstId.NATR];
+      i = lookbackTotal - optInTimePeriod;
       while( i != 0 ) {
          /* Find the greatest of the 3 values. */
          tempLT = inLow[today];
@@ -390,7 +390,7 @@ public partial class Core
          today += 1;
       }
       prevATR = periodTotal / optInTimePeriod;
-      i = this._unstablePeriod[(int)FuncUnstId.NATR];
+      i = lookbackTotal - optInTimePeriod;
       while( i != 0 ) {
          tempLT = (double)inLow[today];
          tempHT = (double)inHigh[today];
@@ -954,7 +954,7 @@ public partial class Core
       }
       prevATR = periodTotal / optInTimePeriod;
       /* Skip the unstable period. */
-      i = this._unstablePeriod[(int)FuncUnstId.NATR];
+      i = lookbackTotal - optInTimePeriod;
       while( i != 0 ) {
          /* Find the greatest of the 3 values. */
          tempLT = inLow[today];

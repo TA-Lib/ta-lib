@@ -56,13 +56,13 @@
  *  090426 MF,CC  First version (issue #348).
  */
 
-TA_LIB_API int TA_RMA_Lookback( int optInTimePeriod )
+TA_NOINLINE TA_LIB_API int TA_RMA_Lookback( int optInTimePeriod )
 {
    if( (int)optInTimePeriod == TA_INTEGER_DEFAULT )
       optInTimePeriod = 30;
    else if( (int)optInTimePeriod < 1 || (int)optInTimePeriod > 100000 )
       return -1;
-   return optInTimePeriod - 1 + TA_GLOBALS_UNSTABLE_PERIOD(TA_FUNC_UNST_RMA,Rma);
+   return optInTimePeriod - 1 + TA_GLOBALS_UNSTABLE(TA_FUNC_UNST_RMA,Rma,((optInTimePeriod > 1) ? 10 * optInTimePeriod : 0),((optInTimePeriod > 1) ? 19 * optInTimePeriod : 0));
 }
 
 TA_LIB_API int TA_RMA_DisplayShift( int optInTimePeriod, int outputIdx )
@@ -150,7 +150,7 @@ TA_LIB_API TA_RetCode TA_RMA( int    startIdx,
    }
    prevRMA = periodTotal / optInTimePeriod;
    /* Skip the unstable period. */
-   i = TA_GLOBALS_UNSTABLE_PERIOD(TA_FUNC_UNST_RMA,Rma);
+   i = lookbackTotal - (optInTimePeriod - 1);
    while( i != 0 )
    {
       prevRMA = fma(wBeta, prevRMA, wAlpha * inReal[today]);
@@ -232,7 +232,7 @@ TA_RetCode TA_S_RMA( int    startIdx,
       today += 1;
    }
    prevRMA = periodTotal / optInTimePeriod;
-   i = TA_GLOBALS_UNSTABLE_PERIOD(TA_FUNC_UNST_RMA,Rma);
+   i = lookbackTotal - (optInTimePeriod - 1);
    while( i != 0 )
    {
       prevRMA = fma(wBeta, prevRMA, wAlpha * (double)inReal[today]);
@@ -350,7 +350,7 @@ static TA_RetCode TA_RMA_OpenImpl( struct TA_RMA_Stream **stream, const double i
       }
       prevRMA = periodTotal / optInTimePeriod;
       /* Skip the unstable period. */
-      i = TA_GLOBALS_UNSTABLE_PERIOD(TA_FUNC_UNST_RMA,Rma);
+      i = lookbackTotal - (optInTimePeriod - 1);
       while( i != 0 )
       {
          prevRMA = fma(wBeta, prevRMA, wAlpha * inReal[today]);

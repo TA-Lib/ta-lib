@@ -178,13 +178,55 @@ generator recognizes and maps per language:
 | Construct | Meaning |
 |---|---|
 | `TA_IS_ZERO(x)` / `TA_IS_ZERO_OR_NEG(x)` | epsilon comparison against zero |
-| `TA_GetUnstablePeriod(TA_FUNC_UNST_<NAME>)` | this function's configured unstable period |
+| `TA_UNSTABLE( TA_FUNC_UNST_<NAME>, <count> )` | this function's unstable period: the stored count, or under an Auto level `<count>`, written with the free names `K` and `X` that each level supplies. Only in the owner's lookback, once per path |
 | candle-settings access (CDL* patterns) | resolved via the generated candle helpers |
 | `TA_OPAQUE(a, b, …);` | statement: the listed locals keep their values, but Rust's optimizer may not see through them there (`core::hint::black_box`; every other language emits nothing). Place it after each loop whose float accumulators LLVM would otherwise carry packed in one vector register through a later loop; see `cti.c` |
 | `CIRCBUF_PROLOG_CLASS` / `CIRCBUF_INIT_CLASS` / `CIRCBUF_NEXT` / `CIRCBUF_DESTROY` | circular scratch buffer over a local `typedef struct` element type (`src/ta_common/ta_memory.h`); see `cmf.c` or `ultosc.c` for usage |
 
 Standard math functions (`sqrt`, `floor`, `ceil`, `fabs`, `sin`, `cos`, `atan`,
 `atan2`, `log`, `exp`, `pow`, `fmod`, …) are mapped to each language's math library.
+
+## An unstable id and its Auto rule
+
+A function that owns `TA_FUNC_UNST_<NAME>` reads it in its own lookback and
+nowhere else. The read's second argument is the id's rule: the bars an Auto
+level discards for this call.
+
+```c
+int ema_lookback(int optInTimePeriod)
+{
+   return optInTimePeriod - 1
+        + TA_UNSTABLE( TA_FUNC_UNST_EMA, ta_warmup_ema(K, optInTimePeriod) );
+}
+```
+
+- **`K` and `X`** exist only inside the read. `K` is the level's number of
+  e-folds (10 at `PREC_4`, 19 at `PREC_8`), `X` its digit count (4, 8).
+- **Tier.** A proven rule is written in `K` and bounds the seed's weight by
+  `e^-K` for any input. A calibrated rule is sized by measurement, where the
+  recursion gives no usable bound, and for an adaptive average is a multiple
+  of `X`, with a period term where the need grows with the period. The rule and its tier go in the table of
+  `website/src/api/unstable-period/README.md`.
+- **Helper.** A kernel several ids share is a helper in
+  `ta_codegen/input/helpers/warmup.c` that takes `K` or `X` as an argument. Use
+  the existing one when the kernel is the same (`ta_warmup_ema`,
+  `ta_warmup_wilder`); a rule only one function has is written in the read, unless
+  it needs a saturating form (`ta_warmup_vidya`).
+- **One read per path.** Once in the lookback, or once in each of its
+  `return`s. The body takes the count from its own lookback (`lookbackTotal`
+  minus the structural part). A function that runs another's recursion calls
+  that function's lookback and never reads its id.
+- **Non-decreasing in every period.** MAVP, APO, PPO, PVO, MACD, STC, ADOSC
+  and MACDFIX place a shorter-period leg on that; a rule that shrinks as a
+  period grows makes them read before a buffer with no error.
+- **0 where the function does no smoothing**, a period of 1.
+- **The same integer in every backend.** No `log`, `exp` or trigonometric
+  call; `ceil`, a division and `sqrt` are safe. Keep an `(int)` of a `double`
+  the whole right-hand side of an assignment to an `int` local placed before
+  the read, one local per level when `K` is inside the cast (`kama.c`,
+  `swak_bp.c`).
+- **Test.** `test_auto_warmup.c` keeps its own copy of every rule and its own
+  list of owners: add the id to both.
 
 ## Cross-indicator calls
 

@@ -475,6 +475,23 @@ public class CoreApiTest {
         check(ceiling.unstablePeriod(FuncUnstId.RSI) == Core.INDEX_MAX,
             "the INDEX_MAX ceiling is accepted, not rejected");
 
+        // Above INDEX_MAX only the Auto levels are values: each is read back as
+        // itself, resolves to the function's own count in its lookback, and an
+        // offset that names no level is refused.
+        check(Core.UNSTABLE_AUTO_PREC_4 == Core.INDEX_MAX + 4 && Core.UNSTABLE_AUTO_PREC_8 == Core.INDEX_MAX + 8,
+            "the Auto levels are INDEX_MAX + 4 and + 8");
+        final Core auto = Core.builder()
+            .unstablePeriod(FuncUnstId.ALL, Core.UNSTABLE_AUTO_PREC_8)
+            .unstablePeriod(FuncUnstId.EMA, Core.UNSTABLE_AUTO_PREC_4).build();
+        check(auto.unstablePeriod(FuncUnstId.EMA) == Core.UNSTABLE_AUTO_PREC_4
+            && auto.unstablePeriod(FuncUnstId.RSI) == Core.UNSTABLE_AUTO_PREC_8,
+            "a level is read back as the level, per id and through the wildcard");
+        check(auto.emaLookback(30) == 184 && auto.rsiLookback(14) == 280,
+            "under a level the lookback adds the id's own count");
+        checkThrows(IllegalArgumentException.class,
+            () -> Core.builder().unstablePeriod(FuncUnstId.EMA, Core.INDEX_MAX + 5),
+            "an offset above INDEX_MAX that names no level -> IAE");
+
         // A rejected call writes nothing: set a good value, have the next call be
         // refused, and the good value must survive untouched.
         final CoreBuilder b = Core.builder().unstablePeriod(FuncUnstId.EMA, 7);

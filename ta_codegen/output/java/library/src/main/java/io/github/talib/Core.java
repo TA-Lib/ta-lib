@@ -223,6 +223,26 @@ public final class Core {
    public static final int INDEX_MAX = 100000000;
 
    /**
+    * Auto level of {@link CoreBuilder#unstablePeriod(FuncUnstId, int)}, passed in
+    * place of a count: each function discards output until its first 4
+    * significant digits no longer depend on where the data starts (C's
+    * {@code TA_UNSTABLE_AUTO_PREC_4}).
+    */
+   public static final int UNSTABLE_AUTO_PREC_4 = INDEX_MAX + 4;
+
+   /** As {@link #UNSTABLE_AUTO_PREC_4}, to 8 significant digits. */
+   public static final int UNSTABLE_AUTO_PREC_8 = INDEX_MAX + 8;
+
+   /* The unstable period of one id for one call: the stored count, or under an
+    * Auto level that level's count. The builder stores nothing else above
+    * INDEX_MAX, so the last arm needs no test.
+    */
+   int unstableCount(int slot, int prec4, int prec8) {
+      int stored = unstablePeriod[slot];
+      return stored <= INDEX_MAX ? stored : stored == UNSTABLE_AUTO_PREC_4 ? prec4 : prec8;
+   }
+
+   /**
     * Translates an internal core's {@link RetCode} into the exception the public
     * API documents. Called only on a non-{@code Success} code.
     *
@@ -5860,7 +5880,7 @@ public final class Core {
       } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
          return -1;
       }
-      return 2 * optInTimePeriod + this.unstablePeriod[FuncUnstId.ADX.ordinal()] - 1 ;
+      return 2 * optInTimePeriod + this.unstableCount(FuncUnstId.ADX.ordinal(), (10 + 6) * optInTimePeriod, (19 + 6) * optInTimePeriod) - 1 ;
 
    }
    /**
@@ -6042,7 +6062,7 @@ public final class Core {
        * TA-Lib does not do the rounding. Still, if you want to reproduce Wilder's examples,
        * you can comment out the following #undef/#define and rebuild the library.
        */
-      lookbackTotal = 2 * optInTimePeriod + this.unstablePeriod[FuncUnstId.ADX.ordinal()] - 1;
+      lookbackTotal = adxLookback(optInTimePeriod);
       /* Adjust startIdx to account for the lookback period. */
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
@@ -6171,7 +6191,7 @@ public final class Core {
       /* Calculate the first ADX */
       prevADX = (sumDX / optInTimePeriod);
       /* Skip the unstable period */
-      i = this.unstablePeriod[FuncUnstId.ADX.ordinal()];
+      i = lookbackTotal - (2 * optInTimePeriod - 1);
       while( i-- > 0 ) {
          /* Calculate the prevMinusDM and prevPlusDM */
          today += 1;
@@ -6316,7 +6336,7 @@ public final class Core {
       } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
          return RetCode.BAD_PARAM;
       }
-      lookbackTotal = 2 * optInTimePeriod + this.unstablePeriod[FuncUnstId.ADX.ordinal()] - 1;
+      lookbackTotal = adxLookback(optInTimePeriod);
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
       }
@@ -6408,7 +6428,7 @@ public final class Core {
          }
       }
       prevADX = (sumDX / optInTimePeriod);
-      i = this.unstablePeriod[FuncUnstId.ADX.ordinal()];
+      i = lookbackTotal - (2 * optInTimePeriod - 1);
       while( i-- > 0 ) {
          today += 1;
          tempReal = (double)inHigh[today];
@@ -7077,7 +7097,7 @@ public final class Core {
        * TA-Lib does not do the rounding. Still, if you want to reproduce Wilder's examples,
        * you can comment out the following #undef/#define and rebuild the library.
        */
-      lookbackTotal = 2 * optInTimePeriod + this.unstablePeriod[FuncUnstId.ADX.ordinal()] - 1;
+      lookbackTotal = adxLookback(optInTimePeriod);
       /* Adjust startIdx to account for the lookback period. */
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
@@ -7206,7 +7226,7 @@ public final class Core {
       /* Calculate the first ADX */
       prevADX = (sumDX / optInTimePeriod);
       /* Skip the unstable period */
-      i = this.unstablePeriod[FuncUnstId.ADX.ordinal()];
+      i = lookbackTotal - (2 * optInTimePeriod - 1);
       while( i-- > 0 ) {
          /* Calculate the prevMinusDM and prevPlusDM */
          today += 1;
@@ -14484,7 +14504,7 @@ public final class Core {
        * (optInTimePeriod-1) is for the simple
        * moving average.
        */
-      return optInTimePeriod + this.unstablePeriod[FuncUnstId.ATR.ordinal()] ;
+      return optInTimePeriod + this.unstableCount(FuncUnstId.ATR.ordinal(), ((optInTimePeriod > 1) ? 10 * optInTimePeriod : 0), ((optInTimePeriod > 1) ? 19 * optInTimePeriod : 0)) ;
 
    }
    /**
@@ -14624,7 +14644,7 @@ public final class Core {
       }
       prevATR = periodTotal / optInTimePeriod;
       /* Skip the unstable period. */
-      i = this.unstablePeriod[FuncUnstId.ATR.ordinal()];
+      i = lookbackTotal - optInTimePeriod;
       while( i != 0 ) {
          /* Find the greatest of the 3 values. */
          tempLT = inLow[today];
@@ -14741,7 +14761,7 @@ public final class Core {
          today += 1;
       }
       prevATR = periodTotal / optInTimePeriod;
-      i = this.unstablePeriod[FuncUnstId.ATR.ordinal()];
+      i = lookbackTotal - optInTimePeriod;
       while( i != 0 ) {
          tempLT = (double)inLow[today];
          tempHT = (double)inHigh[today];
@@ -15227,7 +15247,7 @@ public final class Core {
       }
       prevATR = periodTotal / optInTimePeriod;
       /* Skip the unstable period. */
-      i = this.unstablePeriod[FuncUnstId.ATR.ordinal()];
+      i = lookbackTotal - optInTimePeriod;
       while( i != 0 ) {
          /* Find the greatest of the 3 values. */
          tempLT = inLow[today];
@@ -81883,9 +81903,7 @@ public final class Core {
       } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
          return -1;
       }
-      int retValue;
-      retValue = optInTimePeriod + this.unstablePeriod[FuncUnstId.CMO.ordinal()];
-      return retValue ;
+      return optInTimePeriod + this.unstableCount(FuncUnstId.CMO.ordinal(), ((optInTimePeriod > 1) ? 10 * optInTimePeriod : 0), ((optInTimePeriod > 1) ? 19 * optInTimePeriod : 0)) ;
 
    }
    /**
@@ -93821,7 +93839,7 @@ public final class Core {
          return -1;
       }
       if( optInTimePeriod > 1 ) {
-         return optInTimePeriod + this.unstablePeriod[FuncUnstId.DX.ordinal()] ;
+         return optInTimePeriod + this.unstableCount(FuncUnstId.DX.ordinal(), ((optInTimePeriod > 1) ? 10 * optInTimePeriod : 0), ((optInTimePeriod > 1) ? 19 * optInTimePeriod : 0)) ;
       } else {
          return 2 ;
       }
@@ -93989,11 +94007,7 @@ public final class Core {
        * TA-Lib does not do the rounding. Still, if you want to reproduce Wilder's examples,
        * you can comment out the following #undef/#define and rebuild the library.
        */
-      if( optInTimePeriod > 1 ) {
-         lookbackTotal = optInTimePeriod + this.unstablePeriod[FuncUnstId.DX.ordinal()];
-      } else {
-         lookbackTotal = 2;
-      }
+      lookbackTotal = dxLookback(optInTimePeriod);
       /* Adjust startIdx to account for the lookback period. */
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
@@ -94063,8 +94077,7 @@ public final class Core {
       /* Skip the unstable period. Note that this loop must be executed
        * at least ONCE to calculate the first DI.
        */
-      i = this.unstablePeriod[FuncUnstId.DX.ordinal()] + 1;
-      while( i-- != 0 ) {
+      while( today < startIdx ) {
          /* Calculate the prevMinusDM and prevPlusDM */
          today += 1;
          tempReal = inHigh[today];
@@ -94217,11 +94230,7 @@ public final class Core {
       } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
          return RetCode.BAD_PARAM;
       }
-      if( optInTimePeriod > 1 ) {
-         lookbackTotal = optInTimePeriod + this.unstablePeriod[FuncUnstId.DX.ordinal()];
-      } else {
-         lookbackTotal = 2;
-      }
+      lookbackTotal = dxLookback(optInTimePeriod);
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
       }
@@ -94271,8 +94280,7 @@ public final class Core {
          prevTR += tempReal;
          prevClose = (double)inClose[today];
       }
-      i = this.unstablePeriod[FuncUnstId.DX.ordinal()] + 1;
-      while( i-- != 0 ) {
+      while( today < startIdx ) {
          today += 1;
          tempReal = (double)inHigh[today];
          diffP = tempReal - prevHigh;
@@ -94929,11 +94937,7 @@ public final class Core {
        * TA-Lib does not do the rounding. Still, if you want to reproduce Wilder's examples,
        * you can comment out the following #undef/#define and rebuild the library.
        */
-      if( optInTimePeriod > 1 ) {
-         lookbackTotal = optInTimePeriod + this.unstablePeriod[FuncUnstId.DX.ordinal()];
-      } else {
-         lookbackTotal = 2;
-      }
+      lookbackTotal = dxLookback(optInTimePeriod);
       /* Adjust startIdx to account for the lookback period. */
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
@@ -95003,8 +95007,7 @@ public final class Core {
       /* Skip the unstable period. Note that this loop must be executed
        * at least ONCE to calculate the first DI.
        */
-      i = this.unstablePeriod[FuncUnstId.DX.ordinal()] + 1;
-      while( i-- != 0 ) {
+      while( today < startIdx ) {
          /* Calculate the prevMinusDM and prevPlusDM */
          today += 1;
          tempReal = inHigh[today];
@@ -95242,12 +95245,8 @@ public final class Core {
       } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
          return -1;
       }
-      /* One bar is consumed forming the first close-to-close change, then the
-       * EMA's own warm-up on top:
-       *    1 + ema_lookback(optInTimePeriod)
-       *  = 1 + (optInTimePeriod - 1) + TA_GetUnstablePeriod(TA_FUNC_UNST_EMA)
-       */
-      return optInTimePeriod + this.unstablePeriod[FuncUnstId.EMA.ordinal()] ;
+      /* One bar forms the first close-to-close change. */
+      return 1 + emaLookback(optInTimePeriod) ;
 
    }
    /**
@@ -95302,9 +95301,6 @@ public final class Core {
       } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
          return RetCode.BAD_PARAM;
       }
-      emaBeta = (double)(optInTimePeriod - 1) / (double)(optInTimePeriod + 1);
-      optInK_1 = 1.0 - emaBeta;
-      emaBeta = 1.0 - optInK_1;
       /* Alexander Elder's Force Index (Trading for a Living, 1993): the one-bar
        * close-to-close move weighted by that bar's volume, then smoothed with an
        * EMA. Elder's 2-period reading is the short-term form and 13 the
@@ -95335,6 +95331,13 @@ public final class Core {
        * to calculate at least one output.
        */
       lookbackTotal = efiLookback(optInTimePeriod);
+      /* After the lookback call: a double live across a call is saved and
+       * restored around every fma call of the loops below, one more instruction
+       * per bar.
+       */
+      emaBeta = (double)(optInTimePeriod - 1) / (double)(optInTimePeriod + 1);
+      optInK_1 = 1.0 - emaBeta;
+      emaBeta = 1.0 - optInK_1;
       /* Move up the start index if there is not
        * enough initial data.
        */
@@ -95431,10 +95434,10 @@ public final class Core {
       } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
          return RetCode.BAD_PARAM;
       }
+      lookbackTotal = efiLookback(optInTimePeriod);
       emaBeta = (double)(optInTimePeriod - 1) / (double)(optInTimePeriod + 1);
       optInK_1 = 1.0 - emaBeta;
       emaBeta = 1.0 - optInK_1;
-      lookbackTotal = efiLookback(optInTimePeriod);
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
       }
@@ -95842,9 +95845,6 @@ public final class Core {
          int today = 0;
          int outIdx = 0;
          int lookbackTotal = 0;
-         emaBeta = (double)(optInTimePeriod - 1) / (double)(optInTimePeriod + 1);
-         optInK_1 = 1.0 - emaBeta;
-         emaBeta = 1.0 - optInK_1;
          /* Alexander Elder's Force Index (Trading for a Living, 1993): the one-bar
           * close-to-close move weighted by that bar's volume, then smoothed with an
           * EMA. Elder's 2-period reading is the short-term form and 13 the
@@ -95875,6 +95875,13 @@ public final class Core {
           * to calculate at least one output.
           */
          lookbackTotal = efiLookback(optInTimePeriod);
+         /* After the lookback call: a double live across a call is saved and
+          * restored around every fma call of the loops below, one more instruction
+          * per bar.
+          */
+         emaBeta = (double)(optInTimePeriod - 1) / (double)(optInTimePeriod + 1);
+         optInK_1 = 1.0 - emaBeta;
+         emaBeta = 1.0 - optInK_1;
          /* Move up the start index if there is not
           * enough initial data.
           */
@@ -95922,9 +95929,6 @@ public final class Core {
          int today = 0;
          int outIdx = 0;
          int lookbackTotal = 0;
-         emaBeta = (double)(optInTimePeriod - 1) / (double)(optInTimePeriod + 1);
-         optInK_1 = 1.0 - emaBeta;
-         emaBeta = 1.0 - optInK_1;
          /* Alexander Elder's Force Index (Trading for a Living, 1993): the one-bar
           * close-to-close move weighted by that bar's volume, then smoothed with an
           * EMA. Elder's 2-period reading is the short-term form and 13 the
@@ -95955,6 +95959,13 @@ public final class Core {
           * to calculate at least one output.
           */
          lookbackTotal = efiLookback(optInTimePeriod);
+         /* After the lookback call: a double live across a call is saved and
+          * restored around every fma call of the loops below, one more instruction
+          * per bar.
+          */
+         emaBeta = (double)(optInTimePeriod - 1) / (double)(optInTimePeriod + 1);
+         optInK_1 = 1.0 - emaBeta;
+         emaBeta = 1.0 - optInK_1;
          /* Move up the start index if there is not
           * enough initial data.
           */
@@ -96133,7 +96144,7 @@ public final class Core {
       } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
          return -1;
       }
-      return optInTimePeriod - 1 + this.unstablePeriod[FuncUnstId.EMA.ordinal()] ;
+      return optInTimePeriod - 1 + this.unstableCount(FuncUnstId.EMA.ordinal(), ((optInTimePeriod > 1) ? (10 * (optInTimePeriod + 1) + 1) / 2 : 0), ((optInTimePeriod > 1) ? (19 * (optInTimePeriod + 1) + 1) / 2 : 0)) ;
 
    }
    /**
@@ -96186,17 +96197,21 @@ public final class Core {
       } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
          return RetCode.BAD_PARAM;
       }
-      emaBeta = (double)(optInTimePeriod - 1) / (double)(optInTimePeriod + 1);
-      optInK_1 = 1.0 - emaBeta;
-      /* emaBeta + optInK_1 must be exactly 1.0, or a flat input drifts off
-       * its level. Each subtraction is exact only from an operand in
-       * [0.5,1): at a period of 2 that is optInK_1, above it emaBeta.
-       */
-      emaBeta = 1.0 - optInK_1;
       /* Identify the minimum number of price bar needed
        * to calculate at least one output.
        */
       lookbackTotal = emaLookback(optInTimePeriod);
+      /* After the lookback call: a double live across a call is saved and
+       * restored around every fma call of the loops below, one more instruction
+       * per bar.
+       *
+       * emaBeta + optInK_1 must be exactly 1.0, or a flat input drifts off
+       * its level. Each subtraction is exact only from an operand in
+       * [0.5,1): at a period of 2 that is optInK_1, above it emaBeta.
+       */
+      emaBeta = (double)(optInTimePeriod - 1) / (double)(optInTimePeriod + 1);
+      optInK_1 = 1.0 - emaBeta;
+      emaBeta = 1.0 - optInK_1;
       /* Move up the start index if there is not
        * enough initial data.
        */
@@ -96273,10 +96288,10 @@ public final class Core {
       } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
          return RetCode.BAD_PARAM;
       }
+      lookbackTotal = emaLookback(optInTimePeriod);
       emaBeta = (double)(optInTimePeriod - 1) / (double)(optInTimePeriod + 1);
       optInK_1 = 1.0 - emaBeta;
       emaBeta = 1.0 - optInK_1;
-      lookbackTotal = emaLookback(optInTimePeriod);
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
       }
@@ -96661,17 +96676,21 @@ public final class Core {
          sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
          return RetCode.SUCCESS;
       }
-      emaBeta = (double)(optInTimePeriod - 1) / (double)(optInTimePeriod + 1);
-      optInK_1 = 1.0 - emaBeta;
-      /* emaBeta + optInK_1 must be exactly 1.0, or a flat input drifts off
-       * its level. Each subtraction is exact only from an operand in
-       * [0.5,1): at a period of 2 that is optInK_1, above it emaBeta.
-       */
-      emaBeta = 1.0 - optInK_1;
       /* Identify the minimum number of price bar needed
        * to calculate at least one output.
        */
       lookbackTotal = emaLookback(optInTimePeriod);
+      /* After the lookback call: a double live across a call is saved and
+       * restored around every fma call of the loops below, one more instruction
+       * per bar.
+       *
+       * emaBeta + optInK_1 must be exactly 1.0, or a flat input drifts off
+       * its level. Each subtraction is exact only from an operand in
+       * [0.5,1): at a period of 2 that is optInK_1, above it emaBeta.
+       */
+      emaBeta = (double)(optInTimePeriod - 1) / (double)(optInTimePeriod + 1);
+      optInK_1 = 1.0 - emaBeta;
+      emaBeta = 1.0 - optInK_1;
       /* Move up the start index if there is not
        * enough initial data.
        */
@@ -102296,7 +102315,7 @@ public final class Core {
       if( optInTimePeriod % 2 != 0 ) {
          return -1 ;
       }
-      return optInTimePeriod + this.unstablePeriod[FuncUnstId.FRAMA.ordinal()] ;
+      return optInTimePeriod + this.unstableCount(FuncUnstId.FRAMA.ordinal(), 80 * 4, 80 * 8) ;
 
    }
    /**
@@ -102378,7 +102397,7 @@ public final class Core {
       }
       outBegIdx.value = 0;
       outNBElement.value = 0;
-      lookbackTotal = optInTimePeriod + this.unstablePeriod[FuncUnstId.FRAMA.ordinal()];
+      lookbackTotal = framaLookback(optInTimePeriod);
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
       }
@@ -102404,7 +102423,7 @@ public final class Core {
       maxIdx_slot = (half)-1;
       slot_Idx = 0;
       today = startIdx - lookbackTotal + 1;
-      seedIdx = startIdx - this.unstablePeriod[FuncUnstId.FRAMA.ordinal()] - 1;
+      seedIdx = startIdx - (lookbackTotal - optInTimePeriod) - 1;
       /* The first block's suffix reads must see a bar inside the window. */
       i = 0;
       while( i < half ) {
@@ -102593,7 +102612,7 @@ public final class Core {
       }
       outBegIdx.value = 0;
       outNBElement.value = 0;
-      lookbackTotal = optInTimePeriod + this.unstablePeriod[FuncUnstId.FRAMA.ordinal()];
+      lookbackTotal = framaLookback(optInTimePeriod);
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
       }
@@ -102610,7 +102629,7 @@ public final class Core {
       maxIdx_slot = (half)-1;
       slot_Idx = 0;
       today = startIdx - lookbackTotal + 1;
-      seedIdx = startIdx - this.unstablePeriod[FuncUnstId.FRAMA.ordinal()] - 1;
+      seedIdx = startIdx - (lookbackTotal - optInTimePeriod) - 1;
       i = 0;
       while( i < half ) {
          slot_sufHigh[i] = (double)inHigh[today];
@@ -103234,7 +103253,7 @@ public final class Core {
       }
       outBegIdx.value = 0;
       outNBElement.value = 0;
-      lookbackTotal = optInTimePeriod + this.unstablePeriod[FuncUnstId.FRAMA.ordinal()];
+      lookbackTotal = framaLookback(optInTimePeriod);
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
       }
@@ -103260,7 +103279,7 @@ public final class Core {
       maxIdx_slot = (half)-1;
       slot_Idx = 0;
       today = startIdx - lookbackTotal + 1;
-      seedIdx = startIdx - this.unstablePeriod[FuncUnstId.FRAMA.ordinal()] - 1;
+      seedIdx = startIdx - (lookbackTotal - optInTimePeriod) - 1;
       /* The first block's suffix reads must see a bar inside the window. */
       i = 0;
       while( i < half ) {
@@ -103522,7 +103541,7 @@ public final class Core {
     */
    public int haLookback( )
    {
-      return this.unstablePeriod[FuncUnstId.HA.ordinal()] ;
+      return this.unstableCount(FuncUnstId.HA.ordinal(), 2 * 10, 2 * 19) ;
 
    }
    /**
@@ -103797,7 +103816,7 @@ public final class Core {
     * <ul>
     * <li>The first candle has no predecessor, so its open is seeded with the midpoint of the raw open and close. Other conventions exist — ta4j emits the raw bar unchanged as its first candle — and they differ only while the seed still carries weight.</li>
     * <li>Both divisors are exact powers of two, so implementations that scale by {@code 0.5} and {@code 0.25} produce the same doubles as those that divide by 2 and 4.</li>
-    * <li>The unstable period discards that many candles of warm-up before the first output, trading history for a smaller residual difference between two requests that start at different bars.</li>
+    * <li>The unstable period discards candles of warm-up before the first output, trading history for a smaller residual difference between two requests that start at different bars.</li>
     * <li>Averaging four prices of one bar is also what <a href="https://ta-lib.org/functions/avgprice">{@code AVGPRICE}</a> computes, but it sums them in a different order, so the two can differ in the last bits.</li>
     * </ul>
     * <p>Values are written only where the indicator is defined. The returned
@@ -103894,7 +103913,7 @@ public final class Core {
     * <ul>
     * <li>The first candle has no predecessor, so its open is seeded with the midpoint of the raw open and close. Other conventions exist — ta4j emits the raw bar unchanged as its first candle — and they differ only while the seed still carries weight.</li>
     * <li>Both divisors are exact powers of two, so implementations that scale by {@code 0.5} and {@code 0.25} produce the same doubles as those that divide by 2 and 4.</li>
-    * <li>The unstable period discards that many candles of warm-up before the first output, trading history for a smaller residual difference between two requests that start at different bars.</li>
+    * <li>The unstable period discards candles of warm-up before the first output, trading history for a smaller residual difference between two requests that start at different bars.</li>
     * <li>Averaging four prices of one bar is also what <a href="https://ta-lib.org/functions/avgprice">{@code AVGPRICE}</a> computes, but it sums them in a different order, so the two can differ in the last bits.</li>
     * </ul>
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
@@ -106829,7 +106848,7 @@ public final class Core {
    public int htDcperiodLookback( )
    {
       /* See mama_lookback for an explanation of these */
-      return 32 + this.unstablePeriod[FuncUnstId.HT_DCPERIOD.ordinal()] ;
+      return 32 + this.unstableCount(FuncUnstId.HT_DCPERIOD.ordinal(), (80 + 50 * 4), (80 + 50 * 8)) ;
 
    }
    /**
@@ -106929,7 +106948,7 @@ public final class Core {
       /* Identify the minimum number of price bar needed
        * to calculate at least one output.
        */
-      lookbackTotal = 32 + this.unstablePeriod[FuncUnstId.HT_DCPERIOD.ordinal()];
+      lookbackTotal = htDcperiodLookback();
       /* Move up the start index if there is not
        * enough initial data.
        */
@@ -107263,7 +107282,7 @@ public final class Core {
       a = 0.0962;
       b = 0.5769;
       rad2Deg = 180.0 / (4.0 * Math.atan(1));
-      lookbackTotal = 32 + this.unstablePeriod[FuncUnstId.HT_DCPERIOD.ordinal()];
+      lookbackTotal = htDcperiodLookback();
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
       }
@@ -108227,7 +108246,7 @@ public final class Core {
       /* Identify the minimum number of price bar needed
        * to calculate at least one output.
        */
-      lookbackTotal = 32 + this.unstablePeriod[FuncUnstId.HT_DCPERIOD.ordinal()];
+      lookbackTotal = htDcperiodLookback();
       /* Move up the start index if there is not
        * enough initial data.
        */
@@ -108652,7 +108671,7 @@ public final class Core {
        * 31 is for being compatible with Tradestation.
        * See mama_lookback for an explanation of the "32".
        */
-      return 63 + this.unstablePeriod[FuncUnstId.HT_DCPHASE.ordinal()] ;
+      return 63 + this.unstableCount(FuncUnstId.HT_DCPHASE.ordinal(), (80 + 50 * 4), (80 + 50 * 8)) ;
 
    }
    /**
@@ -108771,7 +108790,7 @@ public final class Core {
       /* Identify the minimum number of price bar needed
        * to calculate at least one output.
        */
-      lookbackTotal = 63 + this.unstablePeriod[FuncUnstId.HT_DCPHASE.ordinal()];
+      lookbackTotal = htDcphaseLookback();
       /* Move up the start index if there is not
        * enough initial data.
        */
@@ -109167,7 +109186,7 @@ public final class Core {
       tempReal = Math.atan(1);
       rad2Deg = 45.0 / tempReal;
       constDeg2RadBy360 = tempReal * 8.0;
-      lookbackTotal = 63 + this.unstablePeriod[FuncUnstId.HT_DCPHASE.ordinal()];
+      lookbackTotal = htDcphaseLookback();
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
       }
@@ -110313,7 +110332,7 @@ public final class Core {
       /* Identify the minimum number of price bar needed
        * to calculate at least one output.
        */
-      lookbackTotal = 63 + this.unstablePeriod[FuncUnstId.HT_DCPHASE.ordinal()];
+      lookbackTotal = htDcphaseLookback();
       /* Move up the start index if there is not
        * enough initial data.
        */
@@ -110790,7 +110809,7 @@ public final class Core {
    public int htPhasorLookback( )
    {
       /* See mama_lookback for an explanation of these */
-      return 32 + this.unstablePeriod[FuncUnstId.HT_PHASOR.ordinal()] ;
+      return 32 + this.unstableCount(FuncUnstId.HT_PHASOR.ordinal(), (80 + 50 * 4), (80 + 50 * 8)) ;
 
    }
    /**
@@ -110893,7 +110912,7 @@ public final class Core {
       /* Identify the minimum number of price bar needed
        * to calculate at least one output.
        */
-      lookbackTotal = 32 + this.unstablePeriod[FuncUnstId.HT_PHASOR.ordinal()];
+      lookbackTotal = htPhasorLookback();
       /* Move up the start index if there is not
        * enough initial data.
        */
@@ -111234,7 +111253,7 @@ public final class Core {
       a = 0.0962;
       b = 0.5769;
       rad2Deg = 180.0 / (4.0 * Math.atan(1));
-      lookbackTotal = 32 + this.unstablePeriod[FuncUnstId.HT_PHASOR.ordinal()];
+      lookbackTotal = htPhasorLookback();
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
       }
@@ -112190,7 +112209,7 @@ public final class Core {
       /* Identify the minimum number of price bar needed
        * to calculate at least one output.
        */
-      lookbackTotal = 32 + this.unstablePeriod[FuncUnstId.HT_PHASOR.ordinal()];
+      lookbackTotal = htPhasorLookback();
       /* Move up the start index if there is not
        * enough initial data.
        */
@@ -112621,7 +112640,7 @@ public final class Core {
        * 31 is for being compatible with Tradestation.
        * See mama_lookback for an explanation of the "32".
        */
-      return 63 + this.unstablePeriod[FuncUnstId.HT_SINE.ordinal()] ;
+      return 63 + this.unstableCount(FuncUnstId.HT_SINE.ordinal(), (80 + 50 * 4), (80 + 50 * 8)) ;
 
    }
    /**
@@ -112746,7 +112765,7 @@ public final class Core {
       /* Identify the minimum number of price bar needed
        * to calculate at least one output.
        */
-      lookbackTotal = 63 + this.unstablePeriod[FuncUnstId.HT_SINE.ordinal()];
+      lookbackTotal = htSineLookback();
       /* Move up the start index if there is not
        * enough initial data.
        */
@@ -113149,7 +113168,7 @@ public final class Core {
       rad2Deg = 45.0 / tempReal;
       deg2Rad = 1.0 / rad2Deg;
       constDeg2RadBy360 = tempReal * 8.0;
-      lookbackTotal = 63 + this.unstablePeriod[FuncUnstId.HT_SINE.ordinal()];
+      lookbackTotal = htSineLookback();
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
       }
@@ -114339,7 +114358,7 @@ public final class Core {
       /* Identify the minimum number of price bar needed
        * to calculate at least one output.
        */
-      lookbackTotal = 63 + this.unstablePeriod[FuncUnstId.HT_SINE.ordinal()];
+      lookbackTotal = htSineLookback();
       /* Move up the start index if there is not
        * enough initial data.
        */
@@ -114839,7 +114858,7 @@ public final class Core {
        * 31 is for being compatible with Tradestation.
        * See mama_lookback for an explanation of the "32".
        */
-      return 63 + this.unstablePeriod[FuncUnstId.HT_TRENDLINE.ordinal()] ;
+      return 63 + this.unstableCount(FuncUnstId.HT_TRENDLINE.ordinal(), (80 + 50 * 4), (80 + 50 * 8)) ;
 
    }
    /**
@@ -114951,7 +114970,7 @@ public final class Core {
       /* Identify the minimum number of price bar needed
        * to calculate at least one output.
        */
-      lookbackTotal = 63 + this.unstablePeriod[FuncUnstId.HT_TRENDLINE.ordinal()];
+      lookbackTotal = htTrendlineLookback();
       /* Move up the start index if there is not
        * enough initial data.
        */
@@ -115322,7 +115341,7 @@ public final class Core {
       iTrend1 = iTrend2;
       tempReal = Math.atan(1);
       rad2Deg = 45.0 / tempReal;
-      lookbackTotal = 63 + this.unstablePeriod[FuncUnstId.HT_TRENDLINE.ordinal()];
+      lookbackTotal = htTrendlineLookback();
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
       }
@@ -116395,7 +116414,7 @@ public final class Core {
       /* Identify the minimum number of price bar needed
        * to calculate at least one output.
        */
-      lookbackTotal = 63 + this.unstablePeriod[FuncUnstId.HT_TRENDLINE.ordinal()];
+      lookbackTotal = htTrendlineLookback();
       /* Move up the start index if there is not
        * enough initial data.
        */
@@ -116868,7 +116887,7 @@ public final class Core {
        * 31 is for being compatible with Tradestation.
        * See mama_lookback for an explanation of the "32".
        */
-      return 63 + this.unstablePeriod[FuncUnstId.HT_TRENDMODE.ordinal()] ;
+      return 63 + this.unstableCount(FuncUnstId.HT_TRENDMODE.ordinal(), (80 + 50 * 4), (80 + 50 * 8)) ;
 
    }
    /**
@@ -117013,7 +117032,7 @@ public final class Core {
       /* Identify the minimum number of price bar needed
        * to calculate at least one output.
        */
-      lookbackTotal = 63 + this.unstablePeriod[FuncUnstId.HT_TRENDMODE.ordinal()];
+      lookbackTotal = htTrendmodeLookback();
       /* Move up the start index if there is not
        * enough initial data.
        */
@@ -117486,7 +117505,7 @@ public final class Core {
       rad2Deg = 45.0 / tempReal;
       deg2Rad = 1.0 / rad2Deg;
       constDeg2RadBy360 = tempReal * 8.0;
-      lookbackTotal = 63 + this.unstablePeriod[FuncUnstId.HT_TRENDMODE.ordinal()];
+      lookbackTotal = htTrendmodeLookback();
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
       }
@@ -118844,7 +118863,7 @@ public final class Core {
       /* Identify the minimum number of price bar needed
        * to calculate at least one output.
        */
-      lookbackTotal = 63 + this.unstablePeriod[FuncUnstId.HT_TRENDMODE.ordinal()];
+      lookbackTotal = htTrendmodeLookback();
       /* Move up the start index if there is not
        * enough initial data.
        */
@@ -120617,10 +120636,12 @@ public final class Core {
       } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
          return -1;
       }
+      int root;
+      root = (int)Math.sqrt((double)optInTimePeriod);
       if( optInTimePeriod == 1 ) {
-         return this.unstablePeriod[FuncUnstId.KAMA.ordinal()] ;
+         return this.unstableCount(FuncUnstId.KAMA.ordinal(), 0, 0) ;
       }
-      return optInTimePeriod + this.unstablePeriod[FuncUnstId.KAMA.ordinal()] ;
+      return optInTimePeriod + this.unstableCount(FuncUnstId.KAMA.ordinal(), 25 * 4 * root, 25 * 8 * root) ;
 
    }
    /**
@@ -120688,7 +120709,7 @@ public final class Core {
        * still delays the first output for API consistency.
        */
       if( optInTimePeriod == 1 ) {
-         lookbackTotal = this.unstablePeriod[FuncUnstId.KAMA.ordinal()];
+         lookbackTotal = kamaLookback(optInTimePeriod);
          if( startIdx < lookbackTotal ) {
             startIdx = lookbackTotal;
          }
@@ -120707,7 +120728,7 @@ public final class Core {
       /* Identify the minimum number of price bar needed
        * to calculate at least one output.
        */
-      lookbackTotal = optInTimePeriod + this.unstablePeriod[FuncUnstId.KAMA.ordinal()];
+      lookbackTotal = kamaLookback(optInTimePeriod);
       /* Move up the start index if there is not
        * enough initial data.
        */
@@ -120930,7 +120951,7 @@ public final class Core {
       outBegIdx.value = 0;
       outNBElement.value = 0;
       if( optInTimePeriod == 1 ) {
-         lookbackTotal = this.unstablePeriod[FuncUnstId.KAMA.ordinal()];
+         lookbackTotal = kamaLookback(optInTimePeriod);
          if( startIdx < lookbackTotal ) {
             startIdx = lookbackTotal;
          }
@@ -120946,7 +120967,7 @@ public final class Core {
          outNBElement.value = outIdx;
          return RetCode.SUCCESS ;
       }
-      lookbackTotal = optInTimePeriod + this.unstablePeriod[FuncUnstId.KAMA.ordinal()];
+      lookbackTotal = kamaLookback(optInTimePeriod);
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
       }
@@ -121529,7 +121550,7 @@ public final class Core {
       /* Identify the minimum number of price bar needed
        * to calculate at least one output.
        */
-      lookbackTotal = optInTimePeriod + this.unstablePeriod[FuncUnstId.KAMA.ordinal()];
+      lookbackTotal = kamaLookback(optInTimePeriod);
       /* Move up the start index if there is not
        * enough initial data.
        */
@@ -135287,6 +135308,8 @@ public final class Core {
       int tempInteger = 0;
       int lookbackTotal = 0;
       int lookbackSignal = 0;
+      int lookbackSlow = 0;
+      int fastToday = 0;
       if( (startIdx < 0) || (startIdx > INDEX_MAX) ) {
          return RetCode.OUT_OF_RANGE_START_INDEX ;
       }
@@ -135353,8 +135376,8 @@ public final class Core {
       /* Move up the start index if there is not
        * enough initial data.
        */
-      lookbackTotal = lookbackSignal;
-      lookbackTotal += emaLookback(optInSlowPeriod);
+      lookbackSlow = emaLookback(optInSlowPeriod);
+      lookbackTotal = lookbackSignal + lookbackSlow;
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
       }
@@ -135374,8 +135397,7 @@ public final class Core {
        *  - EMA recursion: k*x + beta*prev, with ema.c's k and beta.
        *  - Each EMA is seeded with the sum of its first 'period'
        *    inputs, accumulated from 0.0 in input order, divided by
-       *    the period. The fast and slow seed windows end on the
-       *    same bar. The signal EMA is seeded the same way from the
+       *    the period. The signal EMA is seeded the same way from the
        *    first 'signal period' MACD-line values.
        *
        * In-place (an output == inReal) is supported: outputs at
@@ -135383,24 +135405,33 @@ public final class Core {
        * read.
        */
       /* Seed each price EMA with a simple average of its first
-       * 'period' price bars. The fast window is the tail of the
-       * slow window: consume the leading slow-only bars first,
-       * then accumulate both over the shared bars.
+       * 'period' price bars, each window placed by that EMA's own
+       * lookback, so that the line is TA_EMA(fast) - TA_EMA(slow) bit
+       * for bit. The slow EMA then runs alone to the end of the fast
+       * window.
+       *
+       * ema_lookback(n) - n must never decrease as n grows: a fast
+       * window ending before the slow one would skip bars of the fast
+       * EMA, and one starting before it would read below the lookback.
        */
       today = startIdx - lookbackTotal;
       tempReal = 0.0;
-      i = optInSlowPeriod - optInFastPeriod;
+      i = optInSlowPeriod;
       while( i-- > 0 ) {
-         tempReal += inReal[today++];
-      }
-      prevFast = 0.0;
-      i = optInFastPeriod;
-      while( i-- > 0 ) {
-         prevFast += inReal[today];
          tempReal += inReal[today++];
       }
       prevSlow = tempReal / optInSlowPeriod;
+      fastToday = startIdx - lookbackTotal + (lookbackSlow - emaLookback(optInFastPeriod));
+      prevFast = 0.0;
+      i = optInFastPeriod;
+      while( i-- > 0 ) {
+         prevFast += inReal[fastToday++];
+      }
       prevFast = prevFast / optInFastPeriod;
+      while( today < fastToday ) {
+         tempReal = inReal[today++];
+         prevSlow = Math.fma(slowBeta, prevSlow, slowK * tempReal);
+      }
       /* Advance both EMA through their unstable period, up to the
        * first MACD-line bar.
        */
@@ -135495,6 +135526,8 @@ public final class Core {
       int tempInteger = 0;
       int lookbackTotal = 0;
       int lookbackSignal = 0;
+      int lookbackSlow = 0;
+      int fastToday = 0;
       if( (startIdx < 0) || (startIdx > INDEX_MAX) ) {
          return RetCode.OUT_OF_RANGE_START_INDEX ;
       }
@@ -135544,8 +135577,8 @@ public final class Core {
       signalK = 1.0 - signalBeta;
       signalBeta = 1.0 - signalK;
       lookbackSignal = emaLookback(optInSignalPeriod);
-      lookbackTotal = lookbackSignal;
-      lookbackTotal += emaLookback(optInSlowPeriod);
+      lookbackSlow = emaLookback(optInSlowPeriod);
+      lookbackTotal = lookbackSignal + lookbackSlow;
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
       }
@@ -135556,18 +135589,22 @@ public final class Core {
       }
       today = startIdx - lookbackTotal;
       tempReal = 0.0;
-      i = optInSlowPeriod - optInFastPeriod;
+      i = optInSlowPeriod;
       while( i-- > 0 ) {
-         tempReal += (double)inReal[today++];
-      }
-      prevFast = 0.0;
-      i = optInFastPeriod;
-      while( i-- > 0 ) {
-         prevFast += (double)inReal[today];
          tempReal += (double)inReal[today++];
       }
       prevSlow = tempReal / optInSlowPeriod;
+      fastToday = startIdx - lookbackTotal + (lookbackSlow - emaLookback(optInFastPeriod));
+      prevFast = 0.0;
+      i = optInFastPeriod;
+      while( i-- > 0 ) {
+         prevFast += (double)inReal[fastToday++];
+      }
       prevFast = prevFast / optInFastPeriod;
+      while( today < fastToday ) {
+         tempReal = (double)inReal[today++];
+         prevSlow = Math.fma(slowBeta, prevSlow, slowK * tempReal);
+      }
       while( today <= startIdx - lookbackSignal ) {
          tempReal = (double)inReal[today++];
          prevFast = Math.fma(fastBeta, prevFast, fastK * tempReal);
@@ -136035,6 +136072,8 @@ public final class Core {
       int tempInteger = 0;
       int lookbackTotal = 0;
       int lookbackSignal = 0;
+      int lookbackSlow = 0;
+      int fastToday = 0;
       int historyLen = inReal.length;
       int endIdx = historyLen - 1;
       if( historyLen < 1 ) {
@@ -136105,8 +136144,8 @@ public final class Core {
       /* Move up the start index if there is not
        * enough initial data.
        */
-      lookbackTotal = lookbackSignal;
-      lookbackTotal += emaLookback(optInSlowPeriod);
+      lookbackSlow = emaLookback(optInSlowPeriod);
+      lookbackTotal = lookbackSignal + lookbackSlow;
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
       }
@@ -136126,8 +136165,7 @@ public final class Core {
        *  - EMA recursion: k*x + beta*prev, with ema.c's k and beta.
        *  - Each EMA is seeded with the sum of its first 'period'
        *    inputs, accumulated from 0.0 in input order, divided by
-       *    the period. The fast and slow seed windows end on the
-       *    same bar. The signal EMA is seeded the same way from the
+       *    the period. The signal EMA is seeded the same way from the
        *    first 'signal period' MACD-line values.
        *
        * In-place (an output == inReal) is supported: outputs at
@@ -136135,24 +136173,33 @@ public final class Core {
        * read.
        */
       /* Seed each price EMA with a simple average of its first
-       * 'period' price bars. The fast window is the tail of the
-       * slow window: consume the leading slow-only bars first,
-       * then accumulate both over the shared bars.
+       * 'period' price bars, each window placed by that EMA's own
+       * lookback, so that the line is TA_EMA(fast) - TA_EMA(slow) bit
+       * for bit. The slow EMA then runs alone to the end of the fast
+       * window.
+       *
+       * ema_lookback(n) - n must never decrease as n grows: a fast
+       * window ending before the slow one would skip bars of the fast
+       * EMA, and one starting before it would read below the lookback.
        */
       today = startIdx - lookbackTotal;
       tempReal = 0.0;
-      i = optInSlowPeriod - optInFastPeriod;
+      i = optInSlowPeriod;
       while( i-- > 0 ) {
-         tempReal += inReal[today++];
-      }
-      prevFast = 0.0;
-      i = optInFastPeriod;
-      while( i-- > 0 ) {
-         prevFast += inReal[today];
          tempReal += inReal[today++];
       }
       prevSlow = tempReal / optInSlowPeriod;
+      fastToday = startIdx - lookbackTotal + (lookbackSlow - emaLookback(optInFastPeriod));
+      prevFast = 0.0;
+      i = optInFastPeriod;
+      while( i-- > 0 ) {
+         prevFast += inReal[fastToday++];
+      }
       prevFast = prevFast / optInFastPeriod;
+      while( today < fastToday ) {
+         tempReal = inReal[today++];
+         prevSlow = Math.fma(slowBeta, prevSlow, slowK * tempReal);
+      }
       /* Advance both EMA through their unstable period, up to the
        * first MACD-line bar.
        */
@@ -138469,10 +138516,15 @@ public final class Core {
       } else if( !(optInSlowLimit >= 1e-2 && optInSlowLimit <= 9.9e-1) ) {
          return -1;
       }
-      /* The two parameters are not a factor to determine
-       * the lookback, but are still requested for
-       * consistency with all other Lookback functions.
+      double limit;
+      int count4;
+      int count8;
+      /* ceil( 2*K / max(fast, slow) ) per level, in this order of operations: the
+       * count is defined as this double expression, not as the real quotient.
        */
+      limit = (optInFastLimit > optInSlowLimit) ? optInFastLimit : optInSlowLimit;
+      count4 = (int)Math.ceil(20.0 / limit);
+      count8 = (int)Math.ceil(38.0 / limit);
       /* Lookback is a fix amount + the unstable period.
        *
        *
@@ -138489,7 +138541,7 @@ public final class Core {
        *        -------
        *         32 Total
        */
-      return 32 + this.unstablePeriod[FuncUnstId.MAMA.ordinal()] ;
+      return 32 + this.unstableCount(FuncUnstId.MAMA.ordinal(), (80 + 50 * 4) + count4, (80 + 50 * 8) + count8) ;
 
    }
    /**
@@ -138616,7 +138668,7 @@ public final class Core {
       /* Identify the minimum number of price bar needed
        * to calculate at least one output.
        */
-      lookbackTotal = 32 + this.unstablePeriod[FuncUnstId.MAMA.ordinal()];
+      lookbackTotal = mamaLookback(optInFastLimit, optInSlowLimit);
       /* Move up the start index if there is not
        * enough initial data.
        */
@@ -139006,7 +139058,7 @@ public final class Core {
       a = 0.0962;
       b = 0.5769;
       rad2Deg = 180.0 / (4.0 * Math.atan(1));
-      lookbackTotal = 32 + this.unstablePeriod[FuncUnstId.MAMA.ordinal()];
+      lookbackTotal = mamaLookback(optInFastLimit, optInSlowLimit);
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
       }
@@ -140091,7 +140143,7 @@ public final class Core {
       /* Identify the minimum number of price bar needed
        * to calculate at least one output.
        */
-      lookbackTotal = 32 + this.unstablePeriod[FuncUnstId.MAMA.ordinal()];
+      lookbackTotal = mamaLookback(optInFastLimit, optInSlowLimit);
       /* Move up the start index if there is not
        * enough initial data.
        */
@@ -141855,7 +141907,7 @@ public final class Core {
     * <li>The two periods are not interchangeable and are never swapped: {@code optInFastPeriod} is the length of both exponential averages, {@code optInSlowPeriod} the length of the summation window. Some implementations reorder them when the summation window is the shorter of the two; this one does not.</li>
     * <li>A window in which every bar is exactly flat, high equal to low, leaves both averages at zero. The ratio is reported as 1 there, its continuous limit, so a flat market yields exactly {@code optInSlowPeriod} rather than a spurious zero.</li>
     * <li>Implementations disagree on how the exponential averages are seeded. TA-Lib uses its own EMA convention, the simple average of the first {@code optInFastPeriod} inputs, where Tulip Indicators, ta4j and trading-signals seed from a single raw value and converge to these values only after many bars. Published sample vectors, including the one in Achelis, are seeded that way and match only in the tail.</li>
-    * <li>MASSI inherits EMA's unstable period rather than owning one, and inherits it twice: {@code TA_SetUnstablePeriod(TA_FUNC_UNST_EMA, u)} moves the first output by 2u.</li>
+    * <li>MASSI inherits EMA's unstable period rather than owning one, and inherits it twice: when {@code TA_FUNC_UNST_EMA}, set to a count or to an Auto level, discards {@code u} bars from an EMA of {@code optInFastPeriod}, MASSI's first output moves by 2u.</li>
     * </ul>
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are, and the
@@ -141938,7 +141990,7 @@ public final class Core {
     * <li>The two periods are not interchangeable and are never swapped: {@code optInFastPeriod} is the length of both exponential averages, {@code optInSlowPeriod} the length of the summation window. Some implementations reorder them when the summation window is the shorter of the two; this one does not.</li>
     * <li>A window in which every bar is exactly flat, high equal to low, leaves both averages at zero. The ratio is reported as 1 there, its continuous limit, so a flat market yields exactly {@code optInSlowPeriod} rather than a spurious zero.</li>
     * <li>Implementations disagree on how the exponential averages are seeded. TA-Lib uses its own EMA convention, the simple average of the first {@code optInFastPeriod} inputs, where Tulip Indicators, ta4j and trading-signals seed from a single raw value and converge to these values only after many bars. Published sample vectors, including the one in Achelis, are seeded that way and match only in the tail.</li>
-    * <li>MASSI inherits EMA's unstable period rather than owning one, and inherits it twice: {@code TA_SetUnstablePeriod(TA_FUNC_UNST_EMA, u)} moves the first output by 2u.</li>
+    * <li>MASSI inherits EMA's unstable period rather than owning one, and inherits it twice: when {@code TA_FUNC_UNST_EMA}, set to a count or to an Auto level, discards {@code u} bars from an EMA of {@code optInFastPeriod}, MASSI's first output moves by 2u.</li>
     * </ul>
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a
@@ -145436,7 +145488,7 @@ public final class Core {
       } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
          return -1;
       }
-      return optInTimePeriod - 1 + this.unstablePeriod[FuncUnstId.MCGD.ordinal()] ;
+      return optInTimePeriod - 1 + this.unstableCount(FuncUnstId.MCGD.ordinal(), 5 * 4 * optInTimePeriod, 5 * 8 * optInTimePeriod) ;
 
    }
    /**
@@ -155238,7 +155290,7 @@ public final class Core {
          return -1;
       }
       if( optInTimePeriod > 1 ) {
-         return optInTimePeriod + this.unstablePeriod[FuncUnstId.MINUS_DI.ordinal()] ;
+         return optInTimePeriod + this.unstableCount(FuncUnstId.MINUS_DI.ordinal(), ((optInTimePeriod > 1) ? 10 * optInTimePeriod : 0), ((optInTimePeriod > 1) ? 19 * optInTimePeriod : 0)) ;
       } else {
          return 1 ;
       }
@@ -155393,11 +155445,7 @@ public final class Core {
        * TA-Lib does not do the rounding. Still, if you want to reproduce Wilder's examples,
        * you can comment out the following #undef/#define and rebuild the library.
        */
-      if( optInTimePeriod > 1 ) {
-         lookbackTotal = optInTimePeriod + this.unstablePeriod[FuncUnstId.MINUS_DI.ordinal()];
-      } else {
-         lookbackTotal = 1;
-      }
+      lookbackTotal = minusDiLookback(optInTimePeriod);
       /* Adjust startIdx to account for the lookback period. */
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
@@ -155516,7 +155564,7 @@ public final class Core {
       /* Skip the unstable period. Note that this loop must be executed
        * at least ONCE to calculate the first DI.
        */
-      i = this.unstablePeriod[FuncUnstId.MINUS_DI.ordinal()] + 1;
+      i = lookbackTotal - (optInTimePeriod - 1);
       while( i-- != 0 ) {
          /* Calculate the prevMinusDM */
          today += 1;
@@ -155641,11 +155689,7 @@ public final class Core {
       } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
          return RetCode.BAD_PARAM;
       }
-      if( optInTimePeriod > 1 ) {
-         lookbackTotal = optInTimePeriod + this.unstablePeriod[FuncUnstId.MINUS_DI.ordinal()];
-      } else {
-         lookbackTotal = 1;
-      }
+      lookbackTotal = minusDiLookback(optInTimePeriod);
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
       }
@@ -155732,7 +155776,7 @@ public final class Core {
          prevTR += tempReal;
          prevClose = (double)inClose[today];
       }
-      i = this.unstablePeriod[FuncUnstId.MINUS_DI.ordinal()] + 1;
+      i = lookbackTotal - (optInTimePeriod - 1);
       while( i-- != 0 ) {
          today += 1;
          tempReal = (double)inHigh[today];
@@ -156385,11 +156429,7 @@ public final class Core {
           * TA-Lib does not do the rounding. Still, if you want to reproduce Wilder's examples,
           * you can comment out the following #undef/#define and rebuild the library.
           */
-         if( optInTimePeriod > 1 ) {
-            lookbackTotal = optInTimePeriod + this.unstablePeriod[FuncUnstId.MINUS_DI.ordinal()];
-         } else {
-            lookbackTotal = 1;
-         }
+         lookbackTotal = minusDiLookback(optInTimePeriod);
          /* Adjust startIdx to account for the lookback period. */
          if( startIdx < lookbackTotal ) {
             startIdx = lookbackTotal;
@@ -156568,11 +156608,7 @@ public final class Core {
           * TA-Lib does not do the rounding. Still, if you want to reproduce Wilder's examples,
           * you can comment out the following #undef/#define and rebuild the library.
           */
-         if( optInTimePeriod > 1 ) {
-            lookbackTotal = optInTimePeriod + this.unstablePeriod[FuncUnstId.MINUS_DI.ordinal()];
-         } else {
-            lookbackTotal = 1;
-         }
+         lookbackTotal = minusDiLookback(optInTimePeriod);
          /* Adjust startIdx to account for the lookback period. */
          if( startIdx < lookbackTotal ) {
             startIdx = lookbackTotal;
@@ -156642,7 +156678,7 @@ public final class Core {
          /* Skip the unstable period. Note that this loop must be executed
           * at least ONCE to calculate the first DI.
           */
-         i = this.unstablePeriod[FuncUnstId.MINUS_DI.ordinal()] + 1;
+         i = lookbackTotal - (optInTimePeriod - 1);
          while( i-- != 0 ) {
             /* Calculate the prevMinusDM */
             today += 1;
@@ -156864,7 +156900,7 @@ public final class Core {
          return -1;
       }
       if( optInTimePeriod > 1 ) {
-         return optInTimePeriod + this.unstablePeriod[FuncUnstId.MINUS_DM.ordinal()] - 1 ;
+         return optInTimePeriod + this.unstableCount(FuncUnstId.MINUS_DM.ordinal(), ((optInTimePeriod > 1) ? 10 * optInTimePeriod : 0), ((optInTimePeriod > 1) ? 19 * optInTimePeriod : 0)) - 1 ;
       } else {
          return 1 ;
       }
@@ -156989,11 +157025,7 @@ public final class Core {
        * Reference:
        *    New Concepts In Technical Trading Systems, J. Welles Wilder Jr
        */
-      if( optInTimePeriod > 1 ) {
-         lookbackTotal = optInTimePeriod + this.unstablePeriod[FuncUnstId.MINUS_DM.ordinal()] - 1;
-      } else {
-         lookbackTotal = 1;
-      }
+      lookbackTotal = minusDmLookback(optInTimePeriod);
       /* Adjust startIdx to account for the lookback period. */
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
@@ -157064,7 +157096,7 @@ public final class Core {
       }
       /* Process subsequent DM */
       /* Skip the unstable period. */
-      i = this.unstablePeriod[FuncUnstId.MINUS_DM.ordinal()];
+      i = lookbackTotal - (optInTimePeriod - 1);
       while( i-- != 0 ) {
          today += 1;
          tempReal = inHigh[today];
@@ -157138,11 +157170,7 @@ public final class Core {
       } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
          return RetCode.BAD_PARAM;
       }
-      if( optInTimePeriod > 1 ) {
-         lookbackTotal = optInTimePeriod + this.unstablePeriod[FuncUnstId.MINUS_DM.ordinal()] - 1;
-      } else {
-         lookbackTotal = 1;
-      }
+      lookbackTotal = minusDmLookback(optInTimePeriod);
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
       }
@@ -157192,7 +157220,7 @@ public final class Core {
          tempReal = prevMinusDM + minusDM1;
          prevMinusDM = (prevMinusDM > tempReal) ? prevMinusDM : tempReal;
       }
-      i = this.unstablePeriod[FuncUnstId.MINUS_DM.ordinal()];
+      i = lookbackTotal - (optInTimePeriod - 1);
       while( i-- != 0 ) {
          today += 1;
          tempReal = (double)inHigh[today];
@@ -157679,11 +157707,7 @@ public final class Core {
           * Reference:
           *    New Concepts In Technical Trading Systems, J. Welles Wilder Jr
           */
-         if( optInTimePeriod > 1 ) {
-            lookbackTotal = optInTimePeriod + this.unstablePeriod[FuncUnstId.MINUS_DM.ordinal()] - 1;
-         } else {
-            lookbackTotal = 1;
-         }
+         lookbackTotal = minusDmLookback(optInTimePeriod);
          /* Adjust startIdx to account for the lookback period. */
          if( startIdx < lookbackTotal ) {
             startIdx = lookbackTotal;
@@ -157807,11 +157831,7 @@ public final class Core {
           * Reference:
           *    New Concepts In Technical Trading Systems, J. Welles Wilder Jr
           */
-         if( optInTimePeriod > 1 ) {
-            lookbackTotal = optInTimePeriod + this.unstablePeriod[FuncUnstId.MINUS_DM.ordinal()] - 1;
-         } else {
-            lookbackTotal = 1;
-         }
+         lookbackTotal = minusDmLookback(optInTimePeriod);
          /* Adjust startIdx to account for the lookback period. */
          if( startIdx < lookbackTotal ) {
             startIdx = lookbackTotal;
@@ -157857,7 +157877,7 @@ public final class Core {
          }
          /* Process subsequent DM */
          /* Skip the unstable period. */
-         i = this.unstablePeriod[FuncUnstId.MINUS_DM.ordinal()];
+         i = lookbackTotal - (optInTimePeriod - 1);
          while( i-- != 0 ) {
             today += 1;
             tempReal = inHigh[today];
@@ -159127,7 +159147,7 @@ public final class Core {
        * (optInTimePeriod-1) is for the simple
        * moving average.
        */
-      return optInTimePeriod + this.unstablePeriod[FuncUnstId.NATR.ordinal()] ;
+      return optInTimePeriod + this.unstableCount(FuncUnstId.NATR.ordinal(), ((optInTimePeriod > 1) ? 10 * optInTimePeriod : 0), ((optInTimePeriod > 1) ? 19 * optInTimePeriod : 0)) ;
 
    }
    /**
@@ -159285,7 +159305,7 @@ public final class Core {
       }
       prevATR = periodTotal / optInTimePeriod;
       /* Skip the unstable period. */
-      i = this.unstablePeriod[FuncUnstId.NATR.ordinal()];
+      i = lookbackTotal - optInTimePeriod;
       while( i != 0 ) {
          /* Find the greatest of the 3 values. */
          tempLT = inLow[today];
@@ -159430,7 +159450,7 @@ public final class Core {
          today += 1;
       }
       prevATR = periodTotal / optInTimePeriod;
-      i = this.unstablePeriod[FuncUnstId.NATR.ordinal()];
+      i = lookbackTotal - optInTimePeriod;
       while( i != 0 ) {
          tempLT = (double)inLow[today];
          tempHT = (double)inHigh[today];
@@ -159974,7 +159994,7 @@ public final class Core {
       }
       prevATR = periodTotal / optInTimePeriod;
       /* Skip the unstable period. */
-      i = this.unstablePeriod[FuncUnstId.NATR.ordinal()];
+      i = lookbackTotal - optInTimePeriod;
       while( i != 0 ) {
          /* Find the greatest of the 3 values. */
          tempLT = inLow[today];
@@ -164327,7 +164347,7 @@ public final class Core {
          return -1;
       }
       if( optInTimePeriod > 1 ) {
-         return optInTimePeriod + this.unstablePeriod[FuncUnstId.PLUS_DI.ordinal()] ;
+         return optInTimePeriod + this.unstableCount(FuncUnstId.PLUS_DI.ordinal(), ((optInTimePeriod > 1) ? 10 * optInTimePeriod : 0), ((optInTimePeriod > 1) ? 19 * optInTimePeriod : 0)) ;
       } else {
          return 1 ;
       }
@@ -164482,11 +164502,7 @@ public final class Core {
        * TA-Lib does not do the rounding. Still, if you want to reproduce Wilder's examples,
        * you can comment out the following #undef/#define and rebuild the library.
        */
-      if( optInTimePeriod > 1 ) {
-         lookbackTotal = optInTimePeriod + this.unstablePeriod[FuncUnstId.PLUS_DI.ordinal()];
-      } else {
-         lookbackTotal = 1;
-      }
+      lookbackTotal = plusDiLookback(optInTimePeriod);
       /* Adjust startIdx to account for the lookback period. */
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
@@ -164605,7 +164621,7 @@ public final class Core {
       /* Skip the unstable period. Note that this loop must be executed
        * at least ONCE to calculate the first DI.
        */
-      i = this.unstablePeriod[FuncUnstId.PLUS_DI.ordinal()] + 1;
+      i = lookbackTotal - (optInTimePeriod - 1);
       while( i-- != 0 ) {
          /* Calculate the prevPlusDM */
          today += 1;
@@ -164730,11 +164746,7 @@ public final class Core {
       } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
          return RetCode.BAD_PARAM;
       }
-      if( optInTimePeriod > 1 ) {
-         lookbackTotal = optInTimePeriod + this.unstablePeriod[FuncUnstId.PLUS_DI.ordinal()];
-      } else {
-         lookbackTotal = 1;
-      }
+      lookbackTotal = plusDiLookback(optInTimePeriod);
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
       }
@@ -164821,7 +164833,7 @@ public final class Core {
          prevTR += tempReal;
          prevClose = (double)inClose[today];
       }
-      i = this.unstablePeriod[FuncUnstId.PLUS_DI.ordinal()] + 1;
+      i = lookbackTotal - (optInTimePeriod - 1);
       while( i-- != 0 ) {
          today += 1;
          tempReal = (double)inHigh[today];
@@ -165474,11 +165486,7 @@ public final class Core {
           * TA-Lib does not do the rounding. Still, if you want to reproduce Wilder's examples,
           * you can comment out the following #undef/#define and rebuild the library.
           */
-         if( optInTimePeriod > 1 ) {
-            lookbackTotal = optInTimePeriod + this.unstablePeriod[FuncUnstId.PLUS_DI.ordinal()];
-         } else {
-            lookbackTotal = 1;
-         }
+         lookbackTotal = plusDiLookback(optInTimePeriod);
          /* Adjust startIdx to account for the lookback period. */
          if( startIdx < lookbackTotal ) {
             startIdx = lookbackTotal;
@@ -165657,11 +165665,7 @@ public final class Core {
           * TA-Lib does not do the rounding. Still, if you want to reproduce Wilder's examples,
           * you can comment out the following #undef/#define and rebuild the library.
           */
-         if( optInTimePeriod > 1 ) {
-            lookbackTotal = optInTimePeriod + this.unstablePeriod[FuncUnstId.PLUS_DI.ordinal()];
-         } else {
-            lookbackTotal = 1;
-         }
+         lookbackTotal = plusDiLookback(optInTimePeriod);
          /* Adjust startIdx to account for the lookback period. */
          if( startIdx < lookbackTotal ) {
             startIdx = lookbackTotal;
@@ -165731,7 +165735,7 @@ public final class Core {
          /* Skip the unstable period. Note that this loop must be executed
           * at least ONCE to calculate the first DI.
           */
-         i = this.unstablePeriod[FuncUnstId.PLUS_DI.ordinal()] + 1;
+         i = lookbackTotal - (optInTimePeriod - 1);
          while( i-- != 0 ) {
             /* Calculate the prevPlusDM */
             today += 1;
@@ -165955,7 +165959,7 @@ public final class Core {
          return -1;
       }
       if( optInTimePeriod > 1 ) {
-         return optInTimePeriod + this.unstablePeriod[FuncUnstId.PLUS_DM.ordinal()] - 1 ;
+         return optInTimePeriod + this.unstableCount(FuncUnstId.PLUS_DM.ordinal(), ((optInTimePeriod > 1) ? 10 * optInTimePeriod : 0), ((optInTimePeriod > 1) ? 19 * optInTimePeriod : 0)) - 1 ;
       } else {
          return 1 ;
       }
@@ -166080,11 +166084,7 @@ public final class Core {
        * Reference:
        *    New Concepts In Technical Trading Systems, J. Welles Wilder Jr
        */
-      if( optInTimePeriod > 1 ) {
-         lookbackTotal = optInTimePeriod + this.unstablePeriod[FuncUnstId.PLUS_DM.ordinal()] - 1;
-      } else {
-         lookbackTotal = 1;
-      }
+      lookbackTotal = plusDmLookback(optInTimePeriod);
       /* Adjust startIdx to account for the lookback period. */
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
@@ -166155,7 +166155,7 @@ public final class Core {
       }
       /* Process subsequent DM */
       /* Skip the unstable period. */
-      i = this.unstablePeriod[FuncUnstId.PLUS_DM.ordinal()];
+      i = lookbackTotal - (optInTimePeriod - 1);
       while( i-- != 0 ) {
          today += 1;
          tempReal = inHigh[today];
@@ -166229,11 +166229,7 @@ public final class Core {
       } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
          return RetCode.BAD_PARAM;
       }
-      if( optInTimePeriod > 1 ) {
-         lookbackTotal = optInTimePeriod + this.unstablePeriod[FuncUnstId.PLUS_DM.ordinal()] - 1;
-      } else {
-         lookbackTotal = 1;
-      }
+      lookbackTotal = plusDmLookback(optInTimePeriod);
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
       }
@@ -166283,7 +166279,7 @@ public final class Core {
          tempReal = prevPlusDM + plusDM1;
          prevPlusDM = (prevPlusDM > tempReal) ? prevPlusDM : tempReal;
       }
-      i = this.unstablePeriod[FuncUnstId.PLUS_DM.ordinal()];
+      i = lookbackTotal - (optInTimePeriod - 1);
       while( i-- != 0 ) {
          today += 1;
          tempReal = (double)inHigh[today];
@@ -166770,11 +166766,7 @@ public final class Core {
           * Reference:
           *    New Concepts In Technical Trading Systems, J. Welles Wilder Jr
           */
-         if( optInTimePeriod > 1 ) {
-            lookbackTotal = optInTimePeriod + this.unstablePeriod[FuncUnstId.PLUS_DM.ordinal()] - 1;
-         } else {
-            lookbackTotal = 1;
-         }
+         lookbackTotal = plusDmLookback(optInTimePeriod);
          /* Adjust startIdx to account for the lookback period. */
          if( startIdx < lookbackTotal ) {
             startIdx = lookbackTotal;
@@ -166898,11 +166890,7 @@ public final class Core {
           * Reference:
           *    New Concepts In Technical Trading Systems, J. Welles Wilder Jr
           */
-         if( optInTimePeriod > 1 ) {
-            lookbackTotal = optInTimePeriod + this.unstablePeriod[FuncUnstId.PLUS_DM.ordinal()] - 1;
-         } else {
-            lookbackTotal = 1;
-         }
+         lookbackTotal = plusDmLookback(optInTimePeriod);
          /* Adjust startIdx to account for the lookback period. */
          if( startIdx < lookbackTotal ) {
             startIdx = lookbackTotal;
@@ -166948,7 +166936,7 @@ public final class Core {
          }
          /* Process subsequent DM */
          /* Skip the unstable period. */
-         i = this.unstablePeriod[FuncUnstId.PLUS_DM.ordinal()];
+         i = lookbackTotal - (optInTimePeriod - 1);
          while( i-- != 0 ) {
             today += 1;
             tempReal = inHigh[today];
@@ -171442,7 +171430,7 @@ public final class Core {
       } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
          return -1;
       }
-      return optInTimePeriod - 1 + this.unstablePeriod[FuncUnstId.RMA.ordinal()] ;
+      return optInTimePeriod - 1 + this.unstableCount(FuncUnstId.RMA.ordinal(), ((optInTimePeriod > 1) ? 10 * optInTimePeriod : 0), ((optInTimePeriod > 1) ? 19 * optInTimePeriod : 0)) ;
 
    }
    /**
@@ -171534,7 +171522,7 @@ public final class Core {
       }
       prevRMA = periodTotal / optInTimePeriod;
       /* Skip the unstable period. */
-      i = this.unstablePeriod[FuncUnstId.RMA.ordinal()];
+      i = lookbackTotal - (optInTimePeriod - 1);
       while( i != 0 ) {
          prevRMA = Math.fma(wBeta, prevRMA, wAlpha * inReal[today]);
          today += 1;
@@ -171603,7 +171591,7 @@ public final class Core {
          today += 1;
       }
       prevRMA = periodTotal / optInTimePeriod;
-      i = this.unstablePeriod[FuncUnstId.RMA.ordinal()];
+      i = lookbackTotal - (optInTimePeriod - 1);
       while( i != 0 ) {
          prevRMA = Math.fma(wBeta, prevRMA, wAlpha * (double)inReal[today]);
          today += 1;
@@ -172012,7 +172000,7 @@ public final class Core {
       }
       prevRMA = periodTotal / optInTimePeriod;
       /* Skip the unstable period. */
-      i = this.unstablePeriod[FuncUnstId.RMA.ordinal()];
+      i = lookbackTotal - (optInTimePeriod - 1);
       while( i != 0 ) {
          prevRMA = Math.fma(wBeta, prevRMA, wAlpha * inReal[today]);
          today += 1;
@@ -175931,9 +175919,7 @@ public final class Core {
       } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
          return -1;
       }
-      int retValue;
-      retValue = optInTimePeriod + this.unstablePeriod[FuncUnstId.RSI.ordinal()];
-      return retValue ;
+      return optInTimePeriod + this.unstableCount(FuncUnstId.RSI.ordinal(), ((optInTimePeriod > 1) ? 10 * optInTimePeriod : 0), ((optInTimePeriod > 1) ? 19 * optInTimePeriod : 0)) ;
 
    }
    /**
@@ -176805,7 +176791,7 @@ public final class Core {
       } else if( optInStdDevPeriod < 2 || optInStdDevPeriod > 100000 ) {
          return -1;
       }
-      return optInStdDevPeriod - 1 + (optInTimePeriod - 1) + this.unstablePeriod[FuncUnstId.RVI.ordinal()] ;
+      return optInStdDevPeriod - 1 + (optInTimePeriod - 1) + this.unstableCount(FuncUnstId.RVI.ordinal(), ((optInTimePeriod > 1) ? 10 * optInTimePeriod : 0), ((optInTimePeriod > 1) ? 19 * optInTimePeriod : 0)) ;
 
    }
    /**
@@ -176998,7 +176984,7 @@ public final class Core {
       prevUp = upTotal / optInTimePeriod;
       prevDn = dnTotal / optInTimePeriod;
       /* Skip the unstable period. Same step, smoothed but not stored. */
-      i = this.unstablePeriod[FuncUnstId.RVI.ordinal()];
+      i = lookbackTotal - (optInStdDevPeriod - 1 + (optInTimePeriod - 1));
       while( i != 0 ) {
          tempReal = inReal[today] - shift;
          periodTotal1 += tempReal;
@@ -177296,7 +177282,7 @@ public final class Core {
       }
       prevUp = upTotal / optInTimePeriod;
       prevDn = dnTotal / optInTimePeriod;
-      i = this.unstablePeriod[FuncUnstId.RVI.ordinal()];
+      i = lookbackTotal - (optInStdDevPeriod - 1 + (optInTimePeriod - 1));
       while( i != 0 ) {
          tempReal = (double)inReal[today] - shift;
          periodTotal1 += tempReal;
@@ -178103,7 +178089,7 @@ public final class Core {
       prevUp = upTotal / optInTimePeriod;
       prevDn = dnTotal / optInTimePeriod;
       /* Skip the unstable period. Same step, smoothed but not stored. */
-      i = this.unstablePeriod[FuncUnstId.RVI.ordinal()];
+      i = lookbackTotal - (optInStdDevPeriod - 1 + (optInTimePeriod - 1));
       while( i != 0 ) {
          tempReal = inReal[today] - shift;
          periodTotal1 += tempReal;
@@ -187425,7 +187411,7 @@ public final class Core {
        * then one window per stochastic stage. The two 0.5 smoothers seed on
        * their first input, so they add only the unstable period.
        */
-      return emaLookback(optInSlowPeriod) + 2 * (optInCyclePeriod - 1) + this.unstablePeriod[FuncUnstId.STC.ordinal()] ;
+      return emaLookback(optInSlowPeriod) + 2 * (optInCyclePeriod - 1) + this.unstableCount(FuncUnstId.STC.ordinal(), 2 * 10 + 3 * (optInSlowPeriod + 1), 2 * 19 + 3 * (optInSlowPeriod + 1)) ;
 
    }
    /**
@@ -187505,10 +187491,12 @@ public final class Core {
       double sufLo = 0;
       int i = 0;
       int today = 0;
+      int fastToday = 0;
       int lineStart = 0;
       int outIdx = 0;
       int tempInteger = 0;
       int lookbackTotal = 0;
+      int lookbackSlow = 0;
       int lastIdx = 0;
       int nLine = 0;
       int nPF = 0;
@@ -187584,28 +187572,35 @@ public final class Core {
       maxIdx_pfSufLo = (optInCyclePeriod)-1;
       pfSufLo_Idx = 0;
       lastIdx = optInCyclePeriod - 1;
-      /* The line is TA_MACD's: co-terminal SMA seeds, then both EMAs advanced
-       * through TA_FUNC_UNST_EMA to lineStart, so that from lineStart on it is
-       * TA_EMA(fast) - TA_EMA(slow) bit for bit. The chain is fed from
+      /* The line is TA_MACD's: each SMA seed placed by its own EMA lookback, then
+       * both EMAs advanced to lineStart, so that from lineStart on it is
+       * TA_EMA(fast) - TA_EMA(slow) bit for bit. That placement reads out of
+       * bounds or skips bars unless ema_lookback(n) - n never decreases as n
+       * grows. The chain is fed from
        * lineStart, not from the EMA seed: TA_FUNC_UNST_EMA then reaches only the
        * line, while TA_FUNC_UNST_STC moves the whole chain back and so warms the
        * line and both smoothers.
        */
-      lineStart = startIdx - (lookbackTotal - emaLookback(optInSlowPeriod));
+      lookbackSlow = emaLookback(optInSlowPeriod);
+      lineStart = startIdx - (lookbackTotal - lookbackSlow);
       today = startIdx - lookbackTotal;
       tempReal = 0.0;
-      i = optInSlowPeriod - optInFastPeriod;
+      i = optInSlowPeriod;
       while( i-- > 0 ) {
-         tempReal += inReal[today++];
-      }
-      prevFast = 0.0;
-      i = optInFastPeriod;
-      while( i-- > 0 ) {
-         prevFast += inReal[today];
          tempReal += inReal[today++];
       }
       prevSlow = tempReal / optInSlowPeriod;
+      fastToday = startIdx - lookbackTotal + (lookbackSlow - emaLookback(optInFastPeriod));
+      prevFast = 0.0;
+      i = optInFastPeriod;
+      while( i-- > 0 ) {
+         prevFast += inReal[fastToday++];
+      }
       prevFast = prevFast / optInFastPeriod;
+      while( today < fastToday ) {
+         tempReal = inReal[today++];
+         prevSlow = Math.fma(slowBeta, prevSlow, slowK * tempReal);
+      }
       while( today <= lineStart ) {
          tempReal = inReal[today++];
          prevFast = Math.fma(fastBeta, prevFast, fastK * tempReal);
@@ -187917,10 +187912,12 @@ public final class Core {
       double sufLo = 0;
       int i = 0;
       int today = 0;
+      int fastToday = 0;
       int lineStart = 0;
       int outIdx = 0;
       int tempInteger = 0;
       int lookbackTotal = 0;
+      int lookbackSlow = 0;
       int lastIdx = 0;
       int nLine = 0;
       int nPF = 0;
@@ -187991,21 +187988,26 @@ public final class Core {
       maxIdx_pfSufLo = (optInCyclePeriod)-1;
       pfSufLo_Idx = 0;
       lastIdx = optInCyclePeriod - 1;
-      lineStart = startIdx - (lookbackTotal - emaLookback(optInSlowPeriod));
+      lookbackSlow = emaLookback(optInSlowPeriod);
+      lineStart = startIdx - (lookbackTotal - lookbackSlow);
       today = startIdx - lookbackTotal;
       tempReal = 0.0;
-      i = optInSlowPeriod - optInFastPeriod;
+      i = optInSlowPeriod;
       while( i-- > 0 ) {
-         tempReal += (double)inReal[today++];
-      }
-      prevFast = 0.0;
-      i = optInFastPeriod;
-      while( i-- > 0 ) {
-         prevFast += (double)inReal[today];
          tempReal += (double)inReal[today++];
       }
       prevSlow = tempReal / optInSlowPeriod;
+      fastToday = startIdx - lookbackTotal + (lookbackSlow - emaLookback(optInFastPeriod));
+      prevFast = 0.0;
+      i = optInFastPeriod;
+      while( i-- > 0 ) {
+         prevFast += (double)inReal[fastToday++];
+      }
       prevFast = prevFast / optInFastPeriod;
+      while( today < fastToday ) {
+         tempReal = (double)inReal[today++];
+         prevSlow = Math.fma(slowBeta, prevSlow, slowK * tempReal);
+      }
       while( today <= lineStart ) {
          tempReal = (double)inReal[today++];
          prevFast = Math.fma(fastBeta, prevFast, fastK * tempReal);
@@ -188915,10 +188917,12 @@ public final class Core {
       double sufLo = 0;
       int i = 0;
       int today = 0;
+      int fastToday = 0;
       int lineStart = 0;
       int outIdx = 0;
       int tempInteger = 0;
       int lookbackTotal = 0;
+      int lookbackSlow = 0;
       int lastIdx = 0;
       int nLine = 0;
       int nPF = 0;
@@ -189001,28 +189005,35 @@ public final class Core {
       maxIdx_pfSufLo = (optInCyclePeriod)-1;
       pfSufLo_Idx = 0;
       lastIdx = optInCyclePeriod - 1;
-      /* The line is TA_MACD's: co-terminal SMA seeds, then both EMAs advanced
-       * through TA_FUNC_UNST_EMA to lineStart, so that from lineStart on it is
-       * TA_EMA(fast) - TA_EMA(slow) bit for bit. The chain is fed from
+      /* The line is TA_MACD's: each SMA seed placed by its own EMA lookback, then
+       * both EMAs advanced to lineStart, so that from lineStart on it is
+       * TA_EMA(fast) - TA_EMA(slow) bit for bit. That placement reads out of
+       * bounds or skips bars unless ema_lookback(n) - n never decreases as n
+       * grows. The chain is fed from
        * lineStart, not from the EMA seed: TA_FUNC_UNST_EMA then reaches only the
        * line, while TA_FUNC_UNST_STC moves the whole chain back and so warms the
        * line and both smoothers.
        */
-      lineStart = startIdx - (lookbackTotal - emaLookback(optInSlowPeriod));
+      lookbackSlow = emaLookback(optInSlowPeriod);
+      lineStart = startIdx - (lookbackTotal - lookbackSlow);
       today = startIdx - lookbackTotal;
       tempReal = 0.0;
-      i = optInSlowPeriod - optInFastPeriod;
+      i = optInSlowPeriod;
       while( i-- > 0 ) {
-         tempReal += inReal[today++];
-      }
-      prevFast = 0.0;
-      i = optInFastPeriod;
-      while( i-- > 0 ) {
-         prevFast += inReal[today];
          tempReal += inReal[today++];
       }
       prevSlow = tempReal / optInSlowPeriod;
+      fastToday = startIdx - lookbackTotal + (lookbackSlow - emaLookback(optInFastPeriod));
+      prevFast = 0.0;
+      i = optInFastPeriod;
+      while( i-- > 0 ) {
+         prevFast += inReal[fastToday++];
+      }
       prevFast = prevFast / optInFastPeriod;
+      while( today < fastToday ) {
+         tempReal = inReal[today++];
+         prevSlow = Math.fma(slowBeta, prevSlow, slowK * tempReal);
+      }
       while( today <= lineStart ) {
          tempReal = inReal[today++];
          prevFast = Math.fma(fastBeta, prevFast, fastK * tempReal);
@@ -195987,7 +195998,7 @@ public final class Core {
        * seeded from the first bar rather than read from before it, and there is
        * no callee whose lookback could be inherited.
        */
-      return this.unstablePeriod[FuncUnstId.SWAK_2PHP.ordinal()] ;
+      return this.unstableCount(FuncUnstId.SWAK_2PHP.ordinal(), (((10 + 5) * (optInTimePeriod + 2) + 8) / 9), (((19 + 5) * (optInTimePeriod + 2) + 8) / 9)) ;
 
    }
    /**
@@ -196769,11 +196780,18 @@ public final class Core {
       } else if( !(optInDelta >= 5e-2 && optInDelta <= 5e-1) ) {
          return -1;
       }
+      int count4;
+      int count8;
+      /* ceil( (K+1)*P / (6*delta) ) per level, in this order of operations: the
+       * count is defined as this double expression, not as the real quotient.
+       */
+      count4 = (int)Math.ceil((double)(11 * optInTimePeriod) / (6.0 * optInDelta));
+      count8 = (int)Math.ceil((double)(20 * optInTimePeriod) / (6.0 * optInDelta));
       /* No structural lookback: the two input slots and the two output slots are
        * seeded from the first bar rather than read from before it, and there is
        * no callee whose lookback could be inherited.
        */
-      return this.unstablePeriod[FuncUnstId.SWAK_BP.ordinal()] ;
+      return this.unstableCount(FuncUnstId.SWAK_BP.ordinal(), count4, count8) ;
 
    }
    /**
@@ -197592,7 +197610,7 @@ public final class Core {
        * no callee whose lookback could be inherited, so the function's own
        * unstable period is the whole of it.
        */
-      return this.unstablePeriod[FuncUnstId.SWAK_BUTTER.ordinal()] ;
+      return this.unstableCount(FuncUnstId.SWAK_BUTTER.ordinal(), (((10 + 5) * (optInTimePeriod + 2) + 8) / 9), (((19 + 5) * (optInTimePeriod + 2) + 8) / 9)) ;
 
    }
    /**
@@ -198377,7 +198395,7 @@ public final class Core {
        * from before it -- and there is no callee whose lookback could be
        * inherited, so the function's own unstable period is the whole of it.
        */
-      return this.unstablePeriod[FuncUnstId.SWAK_GAUSS.ordinal()] ;
+      return this.unstableCount(FuncUnstId.SWAK_GAUSS.ordinal(), (((10 + 5) * (optInTimePeriod + 2) + 8) / 9), (((19 + 5) * (optInTimePeriod + 2) + 8) / 9)) ;
 
    }
    /**
@@ -199109,7 +199127,7 @@ public final class Core {
        * seeded from the first bar rather than read from before it, and there is
        * no callee whose lookback could be inherited.
        */
-      return this.unstablePeriod[FuncUnstId.SWAK_HP.ordinal()] ;
+      return this.unstableCount(FuncUnstId.SWAK_HP.ordinal(), (10 * optInTimePeriod + 5) / 6, (19 * optInTimePeriod + 5) / 6) ;
 
    }
    /**
@@ -199864,7 +199882,7 @@ public final class Core {
       } else if( !(optInVFactor >= 0e0 && optInVFactor <= 1e0) ) {
          return -1;
       }
-      return 6 * (optInTimePeriod - 1) + this.unstablePeriod[FuncUnstId.T3.ordinal()] ;
+      return 6 * (optInTimePeriod - 1) + this.unstableCount(FuncUnstId.T3.ordinal(), (optInTimePeriod > 1) ? ((10 + 20) * (optInTimePeriod + 1) + 1) / 2 : 0, (optInTimePeriod > 1) ? ((19 + 20) * (optInTimePeriod + 1) + 1) / 2 : 0) ;
 
    }
    /**
@@ -199950,7 +199968,7 @@ public final class Core {
        * Do not confuse a T3 with EMA3. Both are called "Triple EMA"
        * in the litterature.
        */
-      lookbackTotal = 6 * (optInTimePeriod - 1) + this.unstablePeriod[FuncUnstId.T3.ordinal()];
+      lookbackTotal = t3Lookback(optInTimePeriod, optInVFactor);
       if( startIdx <= lookbackTotal ) {
          startIdx = lookbackTotal;
       }
@@ -200107,7 +200125,7 @@ public final class Core {
       } else if( !(optInVFactor >= 0e0 && optInVFactor <= 1e0) ) {
          return RetCode.BAD_PARAM;
       }
-      lookbackTotal = 6 * (optInTimePeriod - 1) + this.unstablePeriod[FuncUnstId.T3.ordinal()];
+      lookbackTotal = t3Lookback(optInTimePeriod, optInVFactor);
       if( startIdx <= lookbackTotal ) {
          startIdx = lookbackTotal;
       }
@@ -200623,7 +200641,7 @@ public final class Core {
        * Do not confuse a T3 with EMA3. Both are called "Triple EMA"
        * in the litterature.
        */
-      lookbackTotal = 6 * (optInTimePeriod - 1) + this.unstablePeriod[FuncUnstId.T3.ordinal()];
+      lookbackTotal = t3Lookback(optInTimePeriod, optInVFactor);
       if( startIdx <= lookbackTotal ) {
          startIdx = lookbackTotal;
       }
@@ -211656,10 +211674,12 @@ public final class Core {
       } else if( optInCMOPeriod < 2 || optInCMOPeriod > 100000 ) {
          return -1;
       }
+      int root;
+      root = (int)Math.sqrt((double)optInCMOPeriod);
       if( optInTimePeriod == 1 ) {
-         return this.unstablePeriod[FuncUnstId.VIDYA.ordinal()] ;
+         return this.unstableCount(FuncUnstId.VIDYA.ordinal(), 0, 0) ;
       }
-      return optInCMOPeriod + this.unstablePeriod[FuncUnstId.VIDYA.ordinal()] ;
+      return optInCMOPeriod + this.unstableCount(FuncUnstId.VIDYA.ordinal(), ((2 * 4 * (optInTimePeriod + 1) * root > 100000000) ? 100000000 : 2 * 4 * (optInTimePeriod + 1) * root), ((2 * 8 * (optInTimePeriod + 1) * root > 100000000) ? 100000000 : 2 * 8 * (optInTimePeriod + 1) * root)) ;
 
    }
    /**
@@ -211733,7 +211753,7 @@ public final class Core {
        * for every MAType. The unstable period still delays the first output.
        */
       if( optInTimePeriod == 1 ) {
-         lookbackTotal = this.unstablePeriod[FuncUnstId.VIDYA.ordinal()];
+         lookbackTotal = vidyaLookback(optInTimePeriod, optInCMOPeriod);
          if( startIdx < lookbackTotal ) {
             startIdx = lookbackTotal;
          }
@@ -211921,7 +211941,7 @@ public final class Core {
       outBegIdx.value = 0;
       outNBElement.value = 0;
       if( optInTimePeriod == 1 ) {
-         lookbackTotal = this.unstablePeriod[FuncUnstId.VIDYA.ordinal()];
+         lookbackTotal = vidyaLookback(optInTimePeriod, optInCMOPeriod);
          if( startIdx < lookbackTotal ) {
             startIdx = lookbackTotal;
          }
