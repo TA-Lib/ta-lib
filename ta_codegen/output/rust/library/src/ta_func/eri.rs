@@ -484,6 +484,24 @@ impl Core {
     /// The single whole-history transcription behind [`Core::eri_open_internal`]
     /// (stride 0, scalar sink) and [`Core::eri_open_and_fill`] (stride 1, caller slices).
     pub(crate) fn eri_open_impl(
+        &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize, optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outBullPower: &mut [f64], outBearPower: &mut [f64], outStride: usize,
+    ) -> Result<EriStream, RetCode> {
+        #[cfg(target_arch = "x86_64")]
+        return ta_lib_dispatch::dispatch_fma!(self, eri_open_impl_fma, eri_open_impl_scalar, (inHigh, inLow, inClose, startIdx, optInTimePeriod, outBegIdx, outNBElement, outBullPower, outBearPower, outStride));
+        #[cfg(not(target_arch = "x86_64"))]
+        self.eri_open_impl_scalar(inHigh, inLow, inClose, startIdx, optInTimePeriod, outBegIdx, outNBElement, outBullPower, outBearPower, outStride)
+    }
+
+    #[cfg(target_arch = "x86_64")]
+    #[target_feature(enable = "fma")]
+    fn eri_open_impl_fma(
+        &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize, optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outBullPower: &mut [f64], outBearPower: &mut [f64], outStride: usize,
+    ) -> Result<EriStream, RetCode> {
+        self.eri_open_impl_scalar(inHigh, inLow, inClose, startIdx, optInTimePeriod, outBegIdx, outNBElement, outBullPower, outBearPower, outStride)
+    }
+
+    #[inline(always)]
+    fn eri_open_impl_scalar(
         &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize, mut optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outBullPower: &mut [f64], outBearPower: &mut [f64], outStride: usize,
     ) -> Result<EriStream, RetCode> {
         if inHigh.is_empty() {

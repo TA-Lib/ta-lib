@@ -317,7 +317,7 @@ static TA_FMA_STEP_INLINE void TA_SWAK_HP_StepImpl( struct TA_SWAK_HP_Stream *sp
    sp->cur_outReal = *outReal;
 }
 
-static TA_RetCode TA_SWAK_HP_OpenImpl( struct TA_SWAK_HP_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInTimePeriod, int *outBegIdx, int *outNBElement, double outReal[], int outStride )
+static TA_FMA_STEP_INLINE TA_RetCode TA_SWAK_HP_OpenImpl( struct TA_SWAK_HP_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInTimePeriod, int *outBegIdx, int *outNBElement, double outReal[], int outStride )
 {
    struct TA_SWAK_HP_Stream *sp;
    int endIdx;
@@ -445,6 +445,16 @@ static TA_RetCode TA_SWAK_HP_OpenImpl( struct TA_SWAK_HP_Stream **stream, const 
    }
 }
 
+TA_FMA_OPEN_CLONE static TA_RetCode TA_SWAK_HP_OpenImplFma( struct TA_SWAK_HP_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInTimePeriod, int *outBegIdx, int *outNBElement, double outReal[], int outStride )
+{
+   return TA_SWAK_HP_OpenImpl( stream, inReal, startIdx, historyLen, optInTimePeriod, outBegIdx, outNBElement, outReal, outStride );
+}
+
+TA_FMA_OPEN_PLAIN static TA_RetCode TA_SWAK_HP_OpenImplPlain( struct TA_SWAK_HP_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInTimePeriod, int *outBegIdx, int *outNBElement, double outReal[], int outStride )
+{
+   return TA_SWAK_HP_OpenImpl( stream, inReal, startIdx, historyLen, optInTimePeriod, outBegIdx, outNBElement, outReal, outStride );
+}
+
 /* Private function, not in public API. */
 TA_RetCode TA_SWAK_HP_OpenInternal( struct TA_SWAK_HP_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInTimePeriod, double *outReal )
 {
@@ -452,7 +462,7 @@ TA_RetCode TA_SWAK_HP_OpenInternal( struct TA_SWAK_HP_Stream **stream, const dou
    int dummyBegIdx = 0;
    int dummyNBElement = 0;
    double sink_outReal = 0.0;
-   retCode = TA_SWAK_HP_OpenImpl( stream, inReal, startIdx, historyLen, optInTimePeriod, &dummyBegIdx, &dummyNBElement, &sink_outReal, 0 );
+   retCode = TA_FMA_AVAILABLE ? TA_SWAK_HP_OpenImplFma( stream, inReal, startIdx, historyLen, optInTimePeriod, &dummyBegIdx, &dummyNBElement, &sink_outReal, 0 ) : TA_SWAK_HP_OpenImplPlain( stream, inReal, startIdx, historyLen, optInTimePeriod, &dummyBegIdx, &dummyNBElement, &sink_outReal, 0 );
    if( retCode == TA_SUCCESS )
    {
       *outReal = sink_outReal;
@@ -484,7 +494,7 @@ TA_LIB_API TA_RetCode TA_SWAK_HP_OpenAndFill( TA_SWAK_HP_Stream **stream, const 
 /* Private function, not in public API. */
 TA_RetCode TA_SWAK_HP_OpenAndFillInternal( struct TA_SWAK_HP_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInTimePeriod, int *outBegIdx, int *outNBElement, double outReal[] )
 {
-   return TA_SWAK_HP_OpenImpl( stream, inReal, startIdx, historyLen, optInTimePeriod, outBegIdx, outNBElement, outReal, 1 );
+   return TA_FMA_AVAILABLE ? TA_SWAK_HP_OpenImplFma( stream, inReal, startIdx, historyLen, optInTimePeriod, outBegIdx, outNBElement, outReal, 1 ) : TA_SWAK_HP_OpenImplPlain( stream, inReal, startIdx, historyLen, optInTimePeriod, outBegIdx, outNBElement, outReal, 1 );
 }
 
 TA_FMA_MULTIVERSION

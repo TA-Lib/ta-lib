@@ -1203,7 +1203,7 @@ static TA_FMA_STEP_INLINE void TA_HT_DCPHASE_StepImpl( struct TA_HT_DCPHASE_Stre
    sp->streamParity = 1 - sp->streamParity;
 }
 
-static TA_RetCode TA_HT_DCPHASE_OpenImpl( struct TA_HT_DCPHASE_Stream **stream, const double inReal[], int startIdx, int historyLen, int *outBegIdx, int *outNBElement, double outReal[], int outStride )
+static TA_FMA_STEP_INLINE TA_RetCode TA_HT_DCPHASE_OpenImpl( struct TA_HT_DCPHASE_Stream **stream, const double inReal[], int startIdx, int historyLen, int *outBegIdx, int *outNBElement, double outReal[], int outStride )
 {
    struct TA_HT_DCPHASE_Stream *sp;
    double local_smoothPrice[50];
@@ -1713,6 +1713,16 @@ static TA_RetCode TA_HT_DCPHASE_OpenImpl( struct TA_HT_DCPHASE_Stream **stream, 
    }
 }
 
+TA_FMA_OPEN_CLONE static TA_RetCode TA_HT_DCPHASE_OpenImplFma( struct TA_HT_DCPHASE_Stream **stream, const double inReal[], int startIdx, int historyLen, int *outBegIdx, int *outNBElement, double outReal[], int outStride )
+{
+   return TA_HT_DCPHASE_OpenImpl( stream, inReal, startIdx, historyLen, outBegIdx, outNBElement, outReal, outStride );
+}
+
+TA_FMA_OPEN_PLAIN static TA_RetCode TA_HT_DCPHASE_OpenImplPlain( struct TA_HT_DCPHASE_Stream **stream, const double inReal[], int startIdx, int historyLen, int *outBegIdx, int *outNBElement, double outReal[], int outStride )
+{
+   return TA_HT_DCPHASE_OpenImpl( stream, inReal, startIdx, historyLen, outBegIdx, outNBElement, outReal, outStride );
+}
+
 /* Private function, not in public API. */
 TA_RetCode TA_HT_DCPHASE_OpenInternal( struct TA_HT_DCPHASE_Stream **stream, const double inReal[], int startIdx, int historyLen, double *outReal )
 {
@@ -1720,7 +1730,7 @@ TA_RetCode TA_HT_DCPHASE_OpenInternal( struct TA_HT_DCPHASE_Stream **stream, con
    int dummyBegIdx = 0;
    int dummyNBElement = 0;
    double sink_outReal = 0.0;
-   retCode = TA_HT_DCPHASE_OpenImpl( stream, inReal, startIdx, historyLen, &dummyBegIdx, &dummyNBElement, &sink_outReal, 0 );
+   retCode = TA_FMA_AVAILABLE ? TA_HT_DCPHASE_OpenImplFma( stream, inReal, startIdx, historyLen, &dummyBegIdx, &dummyNBElement, &sink_outReal, 0 ) : TA_HT_DCPHASE_OpenImplPlain( stream, inReal, startIdx, historyLen, &dummyBegIdx, &dummyNBElement, &sink_outReal, 0 );
    if( retCode == TA_SUCCESS )
    {
       *outReal = sink_outReal;
@@ -1752,7 +1762,7 @@ TA_LIB_API TA_RetCode TA_HT_DCPHASE_OpenAndFill( TA_HT_DCPHASE_Stream **stream, 
 /* Private function, not in public API. */
 TA_RetCode TA_HT_DCPHASE_OpenAndFillInternal( struct TA_HT_DCPHASE_Stream **stream, const double inReal[], int startIdx, int historyLen, int *outBegIdx, int *outNBElement, double outReal[] )
 {
-   return TA_HT_DCPHASE_OpenImpl( stream, inReal, startIdx, historyLen, outBegIdx, outNBElement, outReal, 1 );
+   return TA_FMA_AVAILABLE ? TA_HT_DCPHASE_OpenImplFma( stream, inReal, startIdx, historyLen, outBegIdx, outNBElement, outReal, 1 ) : TA_HT_DCPHASE_OpenImplPlain( stream, inReal, startIdx, historyLen, outBegIdx, outNBElement, outReal, 1 );
 }
 
 TA_FMA_MULTIVERSION

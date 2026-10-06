@@ -902,6 +902,24 @@ impl Core {
     pub(crate) fn ht_trendline_open_impl(
         &self, inReal: &[f64], startIdx: usize, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64], outStride: usize,
     ) -> Result<HtTrendlineStream, RetCode> {
+        #[cfg(target_arch = "x86_64")]
+        return ta_lib_dispatch::dispatch_fma!(self, ht_trendline_open_impl_fma, ht_trendline_open_impl_scalar, (inReal, startIdx, outBegIdx, outNBElement, outReal, outStride));
+        #[cfg(not(target_arch = "x86_64"))]
+        self.ht_trendline_open_impl_scalar(inReal, startIdx, outBegIdx, outNBElement, outReal, outStride)
+    }
+
+    #[cfg(target_arch = "x86_64")]
+    #[target_feature(enable = "fma")]
+    fn ht_trendline_open_impl_fma(
+        &self, inReal: &[f64], startIdx: usize, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64], outStride: usize,
+    ) -> Result<HtTrendlineStream, RetCode> {
+        self.ht_trendline_open_impl_scalar(inReal, startIdx, outBegIdx, outNBElement, outReal, outStride)
+    }
+
+    #[inline(always)]
+    fn ht_trendline_open_impl_scalar(
+        &self, inReal: &[f64], startIdx: usize, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64], outStride: usize,
+    ) -> Result<HtTrendlineStream, RetCode> {
         if inReal.is_empty() {
             return Err(RetCode::OutOfRangeStartIndex);
         }

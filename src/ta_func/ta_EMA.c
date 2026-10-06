@@ -296,7 +296,7 @@ static TA_FMA_STEP_INLINE void TA_EMA_StepImpl( struct TA_EMA_Stream *sp, double
    sp->cur_outReal = *outReal;
 }
 
-static TA_RetCode TA_EMA_OpenImpl( struct TA_EMA_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInTimePeriod, int *outBegIdx, int *outNBElement, double outReal[], int outStride )
+static TA_FMA_STEP_INLINE TA_RetCode TA_EMA_OpenImpl( struct TA_EMA_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInTimePeriod, int *outBegIdx, int *outNBElement, double outReal[], int outStride )
 {
    struct TA_EMA_Stream *sp;
    int endIdx;
@@ -433,6 +433,16 @@ static TA_RetCode TA_EMA_OpenImpl( struct TA_EMA_Stream **stream, const double i
    }
 }
 
+TA_FMA_OPEN_CLONE static TA_RetCode TA_EMA_OpenImplFma( struct TA_EMA_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInTimePeriod, int *outBegIdx, int *outNBElement, double outReal[], int outStride )
+{
+   return TA_EMA_OpenImpl( stream, inReal, startIdx, historyLen, optInTimePeriod, outBegIdx, outNBElement, outReal, outStride );
+}
+
+TA_FMA_OPEN_PLAIN static TA_RetCode TA_EMA_OpenImplPlain( struct TA_EMA_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInTimePeriod, int *outBegIdx, int *outNBElement, double outReal[], int outStride )
+{
+   return TA_EMA_OpenImpl( stream, inReal, startIdx, historyLen, optInTimePeriod, outBegIdx, outNBElement, outReal, outStride );
+}
+
 /* Private function, not in public API. */
 TA_RetCode TA_EMA_OpenInternal( struct TA_EMA_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInTimePeriod, double *outReal )
 {
@@ -440,7 +450,7 @@ TA_RetCode TA_EMA_OpenInternal( struct TA_EMA_Stream **stream, const double inRe
    int dummyBegIdx = 0;
    int dummyNBElement = 0;
    double sink_outReal = 0.0;
-   retCode = TA_EMA_OpenImpl( stream, inReal, startIdx, historyLen, optInTimePeriod, &dummyBegIdx, &dummyNBElement, &sink_outReal, 0 );
+   retCode = TA_FMA_AVAILABLE ? TA_EMA_OpenImplFma( stream, inReal, startIdx, historyLen, optInTimePeriod, &dummyBegIdx, &dummyNBElement, &sink_outReal, 0 ) : TA_EMA_OpenImplPlain( stream, inReal, startIdx, historyLen, optInTimePeriod, &dummyBegIdx, &dummyNBElement, &sink_outReal, 0 );
    if( retCode == TA_SUCCESS )
    {
       *outReal = sink_outReal;
@@ -472,7 +482,7 @@ TA_LIB_API TA_RetCode TA_EMA_OpenAndFill( TA_EMA_Stream **stream, const double i
 /* Private function, not in public API. */
 TA_RetCode TA_EMA_OpenAndFillInternal( struct TA_EMA_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInTimePeriod, int *outBegIdx, int *outNBElement, double outReal[] )
 {
-   return TA_EMA_OpenImpl( stream, inReal, startIdx, historyLen, optInTimePeriod, outBegIdx, outNBElement, outReal, 1 );
+   return TA_FMA_AVAILABLE ? TA_EMA_OpenImplFma( stream, inReal, startIdx, historyLen, optInTimePeriod, outBegIdx, outNBElement, outReal, 1 ) : TA_EMA_OpenImplPlain( stream, inReal, startIdx, historyLen, optInTimePeriod, outBegIdx, outNBElement, outReal, 1 );
 }
 
 TA_FMA_MULTIVERSION

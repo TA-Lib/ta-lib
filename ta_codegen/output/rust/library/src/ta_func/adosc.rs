@@ -519,6 +519,24 @@ impl Core {
     /// The single whole-history transcription behind [`Core::adosc_open_internal`]
     /// (stride 0, scalar sink) and [`Core::adosc_open_and_fill`] (stride 1, caller slices).
     pub(crate) fn adosc_open_impl(
+        &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], inVolume: &[f64], startIdx: usize, optInFastPeriod: i32, optInSlowPeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64], outStride: usize,
+    ) -> Result<AdoscStream, RetCode> {
+        #[cfg(target_arch = "x86_64")]
+        return ta_lib_dispatch::dispatch_fma!(self, adosc_open_impl_fma, adosc_open_impl_scalar, (inHigh, inLow, inClose, inVolume, startIdx, optInFastPeriod, optInSlowPeriod, outBegIdx, outNBElement, outReal, outStride));
+        #[cfg(not(target_arch = "x86_64"))]
+        self.adosc_open_impl_scalar(inHigh, inLow, inClose, inVolume, startIdx, optInFastPeriod, optInSlowPeriod, outBegIdx, outNBElement, outReal, outStride)
+    }
+
+    #[cfg(target_arch = "x86_64")]
+    #[target_feature(enable = "fma")]
+    fn adosc_open_impl_fma(
+        &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], inVolume: &[f64], startIdx: usize, optInFastPeriod: i32, optInSlowPeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64], outStride: usize,
+    ) -> Result<AdoscStream, RetCode> {
+        self.adosc_open_impl_scalar(inHigh, inLow, inClose, inVolume, startIdx, optInFastPeriod, optInSlowPeriod, outBegIdx, outNBElement, outReal, outStride)
+    }
+
+    #[inline(always)]
+    fn adosc_open_impl_scalar(
         &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], inVolume: &[f64], startIdx: usize, mut optInFastPeriod: i32, mut optInSlowPeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64], outStride: usize,
     ) -> Result<AdoscStream, RetCode> {
         if inHigh.is_empty() {

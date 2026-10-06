@@ -685,6 +685,24 @@ impl Core {
     /// The single whole-history transcription behind [`Core::sar_open_internal`]
     /// (stride 0, scalar sink) and [`Core::sar_open_and_fill`] (stride 1, caller slices).
     pub(crate) fn sar_open_impl(
+        &self, inHigh: &[f64], inLow: &[f64], startIdx: usize, optInAcceleration: f64, optInMaximum: f64, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64], outStride: usize,
+    ) -> Result<SarStream, RetCode> {
+        #[cfg(target_arch = "x86_64")]
+        return ta_lib_dispatch::dispatch_fma!(self, sar_open_impl_fma, sar_open_impl_scalar, (inHigh, inLow, startIdx, optInAcceleration, optInMaximum, outBegIdx, outNBElement, outReal, outStride));
+        #[cfg(not(target_arch = "x86_64"))]
+        self.sar_open_impl_scalar(inHigh, inLow, startIdx, optInAcceleration, optInMaximum, outBegIdx, outNBElement, outReal, outStride)
+    }
+
+    #[cfg(target_arch = "x86_64")]
+    #[target_feature(enable = "fma")]
+    fn sar_open_impl_fma(
+        &self, inHigh: &[f64], inLow: &[f64], startIdx: usize, optInAcceleration: f64, optInMaximum: f64, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64], outStride: usize,
+    ) -> Result<SarStream, RetCode> {
+        self.sar_open_impl_scalar(inHigh, inLow, startIdx, optInAcceleration, optInMaximum, outBegIdx, outNBElement, outReal, outStride)
+    }
+
+    #[inline(always)]
+    fn sar_open_impl_scalar(
         &self, inHigh: &[f64], inLow: &[f64], startIdx: usize, mut optInAcceleration: f64, mut optInMaximum: f64, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64], outStride: usize,
     ) -> Result<SarStream, RetCode> {
         if inHigh.is_empty() {

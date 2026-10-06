@@ -25,12 +25,21 @@
  * Rust/Java backends. */
 #if defined( __x86_64__ ) && defined( __GLIBC__ ) && defined( __GNUC__ ) && !defined( __clang__ )
    #define TA_FMA_MULTIVERSION __attribute__((target_clones("default","fma")))
-   /* A fused stream step, inlined into each clone of its multiversioned caller:
-    * a clone runs its callees at the ISA they were compiled for. */
+   /* A fused body, inlined into each clone of its caller: a clone runs its
+    * callees at the ISA they were compiled for. */
    #define TA_FMA_STEP_INLINE __inline__ __attribute__((always_inline))
+   /* The open tier's two frames around one fused body, picked per call by
+    * TA_FMA_AVAILABLE. Its seams are private and a target_clones symbol is
+    * exported whatever its visibility, so they dispatch by hand. */
+   #define TA_FMA_OPEN_CLONE __attribute__((target("fma")))
+   #define TA_FMA_OPEN_PLAIN __attribute__((cold,noinline))
+   #define TA_FMA_AVAILABLE __builtin_cpu_supports("fma")
 #else
    #define TA_FMA_MULTIVERSION
    #define TA_FMA_STEP_INLINE
+   #define TA_FMA_OPEN_CLONE
+   #define TA_FMA_OPEN_PLAIN
+   #define TA_FMA_AVAILABLE 0
 #endif
 
 /* Provides an equivalent to standard "math.h" functions. */

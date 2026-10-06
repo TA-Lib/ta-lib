@@ -940,6 +940,24 @@ impl Core {
     /// The single whole-history transcription behind [`Core::cksp_open_internal`]
     /// (stride 0, scalar sink) and [`Core::cksp_open_and_fill`] (stride 1, caller slices).
     pub(crate) fn cksp_open_impl(
+        &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize, optInTimePeriod: i32, optInMultiplier: f64, optInStopPeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outHighStop: &mut [f64], outLowStop: &mut [f64], outStride: usize,
+    ) -> Result<CkspStream, RetCode> {
+        #[cfg(target_arch = "x86_64")]
+        return ta_lib_dispatch::dispatch_fma!(self, cksp_open_impl_fma, cksp_open_impl_scalar, (inHigh, inLow, inClose, startIdx, optInTimePeriod, optInMultiplier, optInStopPeriod, outBegIdx, outNBElement, outHighStop, outLowStop, outStride));
+        #[cfg(not(target_arch = "x86_64"))]
+        self.cksp_open_impl_scalar(inHigh, inLow, inClose, startIdx, optInTimePeriod, optInMultiplier, optInStopPeriod, outBegIdx, outNBElement, outHighStop, outLowStop, outStride)
+    }
+
+    #[cfg(target_arch = "x86_64")]
+    #[target_feature(enable = "fma")]
+    fn cksp_open_impl_fma(
+        &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize, optInTimePeriod: i32, optInMultiplier: f64, optInStopPeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outHighStop: &mut [f64], outLowStop: &mut [f64], outStride: usize,
+    ) -> Result<CkspStream, RetCode> {
+        self.cksp_open_impl_scalar(inHigh, inLow, inClose, startIdx, optInTimePeriod, optInMultiplier, optInStopPeriod, outBegIdx, outNBElement, outHighStop, outLowStop, outStride)
+    }
+
+    #[inline(always)]
+    fn cksp_open_impl_scalar(
         &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize, mut optInTimePeriod: i32, mut optInMultiplier: f64, mut optInStopPeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outHighStop: &mut [f64], outLowStop: &mut [f64], outStride: usize,
     ) -> Result<CkspStream, RetCode> {
         if inHigh.is_empty() {

@@ -795,7 +795,7 @@ static TA_FMA_STEP_INLINE void TA_FRAMA_StepImpl( struct TA_FRAMA_Stream *sp, do
    sp->cur_outReal = *outReal;
 }
 
-static TA_RetCode TA_FRAMA_OpenImpl( struct TA_FRAMA_Stream **stream, const double inHigh[], const double inLow[], int startIdx, int historyLen, int optInTimePeriod, int *outBegIdx, int *outNBElement, double outReal[], int outStride )
+static TA_FMA_STEP_INLINE TA_RetCode TA_FRAMA_OpenImpl( struct TA_FRAMA_Stream **stream, const double inHigh[], const double inLow[], int startIdx, int historyLen, int optInTimePeriod, int *outBegIdx, int *outNBElement, double outReal[], int outStride )
 {
    struct TA_FRAMA_Stream *sp;
    double local_slot_sufHigh[32];
@@ -1118,6 +1118,16 @@ static TA_RetCode TA_FRAMA_OpenImpl( struct TA_FRAMA_Stream **stream, const doub
    }
 }
 
+TA_FMA_OPEN_CLONE static TA_RetCode TA_FRAMA_OpenImplFma( struct TA_FRAMA_Stream **stream, const double inHigh[], const double inLow[], int startIdx, int historyLen, int optInTimePeriod, int *outBegIdx, int *outNBElement, double outReal[], int outStride )
+{
+   return TA_FRAMA_OpenImpl( stream, inHigh, inLow, startIdx, historyLen, optInTimePeriod, outBegIdx, outNBElement, outReal, outStride );
+}
+
+TA_FMA_OPEN_PLAIN static TA_RetCode TA_FRAMA_OpenImplPlain( struct TA_FRAMA_Stream **stream, const double inHigh[], const double inLow[], int startIdx, int historyLen, int optInTimePeriod, int *outBegIdx, int *outNBElement, double outReal[], int outStride )
+{
+   return TA_FRAMA_OpenImpl( stream, inHigh, inLow, startIdx, historyLen, optInTimePeriod, outBegIdx, outNBElement, outReal, outStride );
+}
+
 /* Private function, not in public API. */
 TA_RetCode TA_FRAMA_OpenInternal( struct TA_FRAMA_Stream **stream, const double inHigh[], const double inLow[], int startIdx, int historyLen, int optInTimePeriod, double *outReal )
 {
@@ -1125,7 +1135,7 @@ TA_RetCode TA_FRAMA_OpenInternal( struct TA_FRAMA_Stream **stream, const double 
    int dummyBegIdx = 0;
    int dummyNBElement = 0;
    double sink_outReal = 0.0;
-   retCode = TA_FRAMA_OpenImpl( stream, inHigh, inLow, startIdx, historyLen, optInTimePeriod, &dummyBegIdx, &dummyNBElement, &sink_outReal, 0 );
+   retCode = TA_FMA_AVAILABLE ? TA_FRAMA_OpenImplFma( stream, inHigh, inLow, startIdx, historyLen, optInTimePeriod, &dummyBegIdx, &dummyNBElement, &sink_outReal, 0 ) : TA_FRAMA_OpenImplPlain( stream, inHigh, inLow, startIdx, historyLen, optInTimePeriod, &dummyBegIdx, &dummyNBElement, &sink_outReal, 0 );
    if( retCode == TA_SUCCESS )
    {
       *outReal = sink_outReal;
@@ -1157,7 +1167,7 @@ TA_LIB_API TA_RetCode TA_FRAMA_OpenAndFill( TA_FRAMA_Stream **stream, const doub
 /* Private function, not in public API. */
 TA_RetCode TA_FRAMA_OpenAndFillInternal( struct TA_FRAMA_Stream **stream, const double inHigh[], const double inLow[], int startIdx, int historyLen, int optInTimePeriod, int *outBegIdx, int *outNBElement, double outReal[] )
 {
-   return TA_FRAMA_OpenImpl( stream, inHigh, inLow, startIdx, historyLen, optInTimePeriod, outBegIdx, outNBElement, outReal, 1 );
+   return TA_FMA_AVAILABLE ? TA_FRAMA_OpenImplFma( stream, inHigh, inLow, startIdx, historyLen, optInTimePeriod, outBegIdx, outNBElement, outReal, 1 ) : TA_FRAMA_OpenImplPlain( stream, inHigh, inLow, startIdx, historyLen, optInTimePeriod, outBegIdx, outNBElement, outReal, 1 );
 }
 
 TA_FMA_MULTIVERSION

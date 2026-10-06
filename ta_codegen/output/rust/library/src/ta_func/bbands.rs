@@ -766,6 +766,24 @@ impl Core {
     /// The single whole-history transcription behind [`Core::bbands_open_internal`]
     /// (stride 0, scalar sink) and [`Core::bbands_open_and_fill`] (stride 1, caller slices).
     pub(crate) fn bbands_open_impl(
+        &self, inReal: &[f64], startIdx: usize, optInTimePeriod: i32, optInNbDevUp: f64, optInNbDevDn: f64, optInMAType: MAType, outBegIdx: &mut usize, outNBElement: &mut usize, outRealUpperBand: &mut [f64], outRealMiddleBand: &mut [f64], outRealLowerBand: &mut [f64], outStride: usize,
+    ) -> Result<BbandsStream, RetCode> {
+        #[cfg(target_arch = "x86_64")]
+        return ta_lib_dispatch::dispatch_fma!(self, bbands_open_impl_fma, bbands_open_impl_scalar, (inReal, startIdx, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, outBegIdx, outNBElement, outRealUpperBand, outRealMiddleBand, outRealLowerBand, outStride));
+        #[cfg(not(target_arch = "x86_64"))]
+        self.bbands_open_impl_scalar(inReal, startIdx, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, outBegIdx, outNBElement, outRealUpperBand, outRealMiddleBand, outRealLowerBand, outStride)
+    }
+
+    #[cfg(target_arch = "x86_64")]
+    #[target_feature(enable = "fma")]
+    fn bbands_open_impl_fma(
+        &self, inReal: &[f64], startIdx: usize, optInTimePeriod: i32, optInNbDevUp: f64, optInNbDevDn: f64, optInMAType: MAType, outBegIdx: &mut usize, outNBElement: &mut usize, outRealUpperBand: &mut [f64], outRealMiddleBand: &mut [f64], outRealLowerBand: &mut [f64], outStride: usize,
+    ) -> Result<BbandsStream, RetCode> {
+        self.bbands_open_impl_scalar(inReal, startIdx, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, outBegIdx, outNBElement, outRealUpperBand, outRealMiddleBand, outRealLowerBand, outStride)
+    }
+
+    #[inline(always)]
+    fn bbands_open_impl_scalar(
         &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32, mut optInNbDevUp: f64, mut optInNbDevDn: f64, mut optInMAType: MAType, outBegIdx: &mut usize, outNBElement: &mut usize, outRealUpperBand: &mut [f64], outRealMiddleBand: &mut [f64], outRealLowerBand: &mut [f64], outStride: usize,
     ) -> Result<BbandsStream, RetCode> {
         if inReal.is_empty() {

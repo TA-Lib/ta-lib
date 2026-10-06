@@ -470,6 +470,24 @@ impl Core {
     /// The single whole-history transcription behind [`Core::swak_bp_open_internal`]
     /// (stride 0, scalar sink) and [`Core::swak_bp_open_and_fill`] (stride 1, caller slices).
     pub(crate) fn swak_bp_open_impl(
+        &self, inReal: &[f64], startIdx: usize, optInTimePeriod: i32, optInDelta: f64, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64], outStride: usize,
+    ) -> Result<SwakBpStream, RetCode> {
+        #[cfg(target_arch = "x86_64")]
+        return ta_lib_dispatch::dispatch_fma!(self, swak_bp_open_impl_fma, swak_bp_open_impl_scalar, (inReal, startIdx, optInTimePeriod, optInDelta, outBegIdx, outNBElement, outReal, outStride));
+        #[cfg(not(target_arch = "x86_64"))]
+        self.swak_bp_open_impl_scalar(inReal, startIdx, optInTimePeriod, optInDelta, outBegIdx, outNBElement, outReal, outStride)
+    }
+
+    #[cfg(target_arch = "x86_64")]
+    #[target_feature(enable = "fma")]
+    fn swak_bp_open_impl_fma(
+        &self, inReal: &[f64], startIdx: usize, optInTimePeriod: i32, optInDelta: f64, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64], outStride: usize,
+    ) -> Result<SwakBpStream, RetCode> {
+        self.swak_bp_open_impl_scalar(inReal, startIdx, optInTimePeriod, optInDelta, outBegIdx, outNBElement, outReal, outStride)
+    }
+
+    #[inline(always)]
+    fn swak_bp_open_impl_scalar(
         &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32, mut optInDelta: f64, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64], outStride: usize,
     ) -> Result<SwakBpStream, RetCode> {
         if inReal.is_empty() {

@@ -167,7 +167,7 @@ static TA_FMA_STEP_INLINE void TA_WCLPRICE_StepImpl( struct TA_WCLPRICE_Stream *
    sp->cur_outReal = *outReal;
 }
 
-static TA_RetCode TA_WCLPRICE_OpenImpl( struct TA_WCLPRICE_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, int *outBegIdx, int *outNBElement, double outReal[], int outStride )
+static TA_FMA_STEP_INLINE TA_RetCode TA_WCLPRICE_OpenImpl( struct TA_WCLPRICE_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, int *outBegIdx, int *outNBElement, double outReal[], int outStride )
 {
    struct TA_WCLPRICE_Stream *sp;
    int endIdx;
@@ -210,6 +210,16 @@ static TA_RetCode TA_WCLPRICE_OpenImpl( struct TA_WCLPRICE_Stream **stream, cons
    }
 }
 
+TA_FMA_OPEN_CLONE static TA_RetCode TA_WCLPRICE_OpenImplFma( struct TA_WCLPRICE_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, int *outBegIdx, int *outNBElement, double outReal[], int outStride )
+{
+   return TA_WCLPRICE_OpenImpl( stream, inHigh, inLow, inClose, startIdx, historyLen, outBegIdx, outNBElement, outReal, outStride );
+}
+
+TA_FMA_OPEN_PLAIN static TA_RetCode TA_WCLPRICE_OpenImplPlain( struct TA_WCLPRICE_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, int *outBegIdx, int *outNBElement, double outReal[], int outStride )
+{
+   return TA_WCLPRICE_OpenImpl( stream, inHigh, inLow, inClose, startIdx, historyLen, outBegIdx, outNBElement, outReal, outStride );
+}
+
 /* Private function, not in public API. */
 TA_RetCode TA_WCLPRICE_OpenInternal( struct TA_WCLPRICE_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, double *outReal )
 {
@@ -217,7 +227,7 @@ TA_RetCode TA_WCLPRICE_OpenInternal( struct TA_WCLPRICE_Stream **stream, const d
    int dummyBegIdx = 0;
    int dummyNBElement = 0;
    double sink_outReal = 0.0;
-   retCode = TA_WCLPRICE_OpenImpl( stream, inHigh, inLow, inClose, startIdx, historyLen, &dummyBegIdx, &dummyNBElement, &sink_outReal, 0 );
+   retCode = TA_FMA_AVAILABLE ? TA_WCLPRICE_OpenImplFma( stream, inHigh, inLow, inClose, startIdx, historyLen, &dummyBegIdx, &dummyNBElement, &sink_outReal, 0 ) : TA_WCLPRICE_OpenImplPlain( stream, inHigh, inLow, inClose, startIdx, historyLen, &dummyBegIdx, &dummyNBElement, &sink_outReal, 0 );
    if( retCode == TA_SUCCESS )
    {
       *outReal = sink_outReal;
@@ -249,7 +259,7 @@ TA_LIB_API TA_RetCode TA_WCLPRICE_OpenAndFill( TA_WCLPRICE_Stream **stream, cons
 /* Private function, not in public API. */
 TA_RetCode TA_WCLPRICE_OpenAndFillInternal( struct TA_WCLPRICE_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, int *outBegIdx, int *outNBElement, double outReal[] )
 {
-   return TA_WCLPRICE_OpenImpl( stream, inHigh, inLow, inClose, startIdx, historyLen, outBegIdx, outNBElement, outReal, 1 );
+   return TA_FMA_AVAILABLE ? TA_WCLPRICE_OpenImplFma( stream, inHigh, inLow, inClose, startIdx, historyLen, outBegIdx, outNBElement, outReal, 1 ) : TA_WCLPRICE_OpenImplPlain( stream, inHigh, inLow, inClose, startIdx, historyLen, outBegIdx, outNBElement, outReal, 1 );
 }
 
 TA_FMA_MULTIVERSION

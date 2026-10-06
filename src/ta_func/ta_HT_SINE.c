@@ -1226,7 +1226,7 @@ static TA_FMA_STEP_INLINE void TA_HT_SINE_StepImpl( struct TA_HT_SINE_Stream *sp
    sp->DCPhase = DCPhase;
 }
 
-static TA_RetCode TA_HT_SINE_OpenImpl( struct TA_HT_SINE_Stream **stream, const double inReal[], int startIdx, int historyLen, int *outBegIdx, int *outNBElement, double outSine[], double outLeadSine[], int outStride )
+static TA_FMA_STEP_INLINE TA_RetCode TA_HT_SINE_OpenImpl( struct TA_HT_SINE_Stream **stream, const double inReal[], int startIdx, int historyLen, int *outBegIdx, int *outNBElement, double outSine[], double outLeadSine[], int outStride )
 {
    struct TA_HT_SINE_Stream *sp;
    double local_smoothPrice[50];
@@ -1741,6 +1741,16 @@ static TA_RetCode TA_HT_SINE_OpenImpl( struct TA_HT_SINE_Stream **stream, const 
    }
 }
 
+TA_FMA_OPEN_CLONE static TA_RetCode TA_HT_SINE_OpenImplFma( struct TA_HT_SINE_Stream **stream, const double inReal[], int startIdx, int historyLen, int *outBegIdx, int *outNBElement, double outSine[], double outLeadSine[], int outStride )
+{
+   return TA_HT_SINE_OpenImpl( stream, inReal, startIdx, historyLen, outBegIdx, outNBElement, outSine, outLeadSine, outStride );
+}
+
+TA_FMA_OPEN_PLAIN static TA_RetCode TA_HT_SINE_OpenImplPlain( struct TA_HT_SINE_Stream **stream, const double inReal[], int startIdx, int historyLen, int *outBegIdx, int *outNBElement, double outSine[], double outLeadSine[], int outStride )
+{
+   return TA_HT_SINE_OpenImpl( stream, inReal, startIdx, historyLen, outBegIdx, outNBElement, outSine, outLeadSine, outStride );
+}
+
 /* Private function, not in public API. */
 TA_RetCode TA_HT_SINE_OpenInternal( struct TA_HT_SINE_Stream **stream, const double inReal[], int startIdx, int historyLen, double *outSine, double *outLeadSine )
 {
@@ -1749,7 +1759,7 @@ TA_RetCode TA_HT_SINE_OpenInternal( struct TA_HT_SINE_Stream **stream, const dou
    int dummyNBElement = 0;
    double sink_outSine = 0.0;
    double sink_outLeadSine = 0.0;
-   retCode = TA_HT_SINE_OpenImpl( stream, inReal, startIdx, historyLen, &dummyBegIdx, &dummyNBElement, &sink_outSine, &sink_outLeadSine, 0 );
+   retCode = TA_FMA_AVAILABLE ? TA_HT_SINE_OpenImplFma( stream, inReal, startIdx, historyLen, &dummyBegIdx, &dummyNBElement, &sink_outSine, &sink_outLeadSine, 0 ) : TA_HT_SINE_OpenImplPlain( stream, inReal, startIdx, historyLen, &dummyBegIdx, &dummyNBElement, &sink_outSine, &sink_outLeadSine, 0 );
    if( retCode == TA_SUCCESS )
    {
       *outSine = sink_outSine;
@@ -1782,7 +1792,7 @@ TA_LIB_API TA_RetCode TA_HT_SINE_OpenAndFill( TA_HT_SINE_Stream **stream, const 
 /* Private function, not in public API. */
 TA_RetCode TA_HT_SINE_OpenAndFillInternal( struct TA_HT_SINE_Stream **stream, const double inReal[], int startIdx, int historyLen, int *outBegIdx, int *outNBElement, double outSine[], double outLeadSine[] )
 {
-   return TA_HT_SINE_OpenImpl( stream, inReal, startIdx, historyLen, outBegIdx, outNBElement, outSine, outLeadSine, 1 );
+   return TA_FMA_AVAILABLE ? TA_HT_SINE_OpenImplFma( stream, inReal, startIdx, historyLen, outBegIdx, outNBElement, outSine, outLeadSine, 1 ) : TA_HT_SINE_OpenImplPlain( stream, inReal, startIdx, historyLen, outBegIdx, outNBElement, outSine, outLeadSine, 1 );
 }
 
 TA_FMA_MULTIVERSION

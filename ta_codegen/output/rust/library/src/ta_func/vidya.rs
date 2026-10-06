@@ -612,6 +612,24 @@ impl Core {
     /// The single whole-history transcription behind [`Core::vidya_open_internal`]
     /// (stride 0, scalar sink) and [`Core::vidya_open_and_fill`] (stride 1, caller slices).
     pub(crate) fn vidya_open_impl(
+        &self, inReal: &[f64], startIdx: usize, optInTimePeriod: i32, optInCMOPeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64], outStride: usize,
+    ) -> Result<VidyaStream, RetCode> {
+        #[cfg(target_arch = "x86_64")]
+        return ta_lib_dispatch::dispatch_fma!(self, vidya_open_impl_fma, vidya_open_impl_scalar, (inReal, startIdx, optInTimePeriod, optInCMOPeriod, outBegIdx, outNBElement, outReal, outStride));
+        #[cfg(not(target_arch = "x86_64"))]
+        self.vidya_open_impl_scalar(inReal, startIdx, optInTimePeriod, optInCMOPeriod, outBegIdx, outNBElement, outReal, outStride)
+    }
+
+    #[cfg(target_arch = "x86_64")]
+    #[target_feature(enable = "fma")]
+    fn vidya_open_impl_fma(
+        &self, inReal: &[f64], startIdx: usize, optInTimePeriod: i32, optInCMOPeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64], outStride: usize,
+    ) -> Result<VidyaStream, RetCode> {
+        self.vidya_open_impl_scalar(inReal, startIdx, optInTimePeriod, optInCMOPeriod, outBegIdx, outNBElement, outReal, outStride)
+    }
+
+    #[inline(always)]
+    fn vidya_open_impl_scalar(
         &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32, mut optInCMOPeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64], outStride: usize,
     ) -> Result<VidyaStream, RetCode> {
         if inReal.is_empty() {

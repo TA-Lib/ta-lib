@@ -854,6 +854,24 @@ impl Core {
     /// The single whole-history transcription behind [`Core::cdlabandonedbaby_open_internal`]
     /// (stride 0, scalar sink) and [`Core::cdlabandonedbaby_open_and_fill`] (stride 1, caller slices).
     pub(crate) fn cdlabandonedbaby_open_impl(
+        &self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize, optInPenetration: f64, outBegIdx: &mut usize, outNBElement: &mut usize, outInteger: &mut [i32], outStride: usize,
+    ) -> Result<CdlabandonedbabyStream, RetCode> {
+        #[cfg(target_arch = "x86_64")]
+        return ta_lib_dispatch::dispatch_fma!(self, cdlabandonedbaby_open_impl_fma, cdlabandonedbaby_open_impl_scalar, (inOpen, inHigh, inLow, inClose, startIdx, optInPenetration, outBegIdx, outNBElement, outInteger, outStride));
+        #[cfg(not(target_arch = "x86_64"))]
+        self.cdlabandonedbaby_open_impl_scalar(inOpen, inHigh, inLow, inClose, startIdx, optInPenetration, outBegIdx, outNBElement, outInteger, outStride)
+    }
+
+    #[cfg(target_arch = "x86_64")]
+    #[target_feature(enable = "fma")]
+    fn cdlabandonedbaby_open_impl_fma(
+        &self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize, optInPenetration: f64, outBegIdx: &mut usize, outNBElement: &mut usize, outInteger: &mut [i32], outStride: usize,
+    ) -> Result<CdlabandonedbabyStream, RetCode> {
+        self.cdlabandonedbaby_open_impl_scalar(inOpen, inHigh, inLow, inClose, startIdx, optInPenetration, outBegIdx, outNBElement, outInteger, outStride)
+    }
+
+    #[inline(always)]
+    fn cdlabandonedbaby_open_impl_scalar(
         &self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize, mut optInPenetration: f64, outBegIdx: &mut usize, outNBElement: &mut usize, outInteger: &mut [i32], outStride: usize,
     ) -> Result<CdlabandonedbabyStream, RetCode> {
         if inOpen.is_empty() {

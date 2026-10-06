@@ -480,6 +480,24 @@ impl Core {
     /// The single whole-history transcription behind [`Core::cvi_open_internal`]
     /// (stride 0, scalar sink) and [`Core::cvi_open_and_fill`] (stride 1, caller slices).
     pub(crate) fn cvi_open_impl(
+        &self, inHigh: &[f64], inLow: &[f64], startIdx: usize, optInTimePeriod: i32, optInROCPeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64], outStride: usize,
+    ) -> Result<CviStream, RetCode> {
+        #[cfg(target_arch = "x86_64")]
+        return ta_lib_dispatch::dispatch_fma!(self, cvi_open_impl_fma, cvi_open_impl_scalar, (inHigh, inLow, startIdx, optInTimePeriod, optInROCPeriod, outBegIdx, outNBElement, outReal, outStride));
+        #[cfg(not(target_arch = "x86_64"))]
+        self.cvi_open_impl_scalar(inHigh, inLow, startIdx, optInTimePeriod, optInROCPeriod, outBegIdx, outNBElement, outReal, outStride)
+    }
+
+    #[cfg(target_arch = "x86_64")]
+    #[target_feature(enable = "fma")]
+    fn cvi_open_impl_fma(
+        &self, inHigh: &[f64], inLow: &[f64], startIdx: usize, optInTimePeriod: i32, optInROCPeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64], outStride: usize,
+    ) -> Result<CviStream, RetCode> {
+        self.cvi_open_impl_scalar(inHigh, inLow, startIdx, optInTimePeriod, optInROCPeriod, outBegIdx, outNBElement, outReal, outStride)
+    }
+
+    #[inline(always)]
+    fn cvi_open_impl_scalar(
         &self, inHigh: &[f64], inLow: &[f64], startIdx: usize, mut optInTimePeriod: i32, mut optInROCPeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64], outStride: usize,
     ) -> Result<CviStream, RetCode> {
         if inHigh.is_empty() {

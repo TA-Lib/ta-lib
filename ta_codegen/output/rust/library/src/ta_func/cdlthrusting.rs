@@ -688,6 +688,24 @@ impl Core {
     pub(crate) fn cdlthrusting_open_impl(
         &self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize, outBegIdx: &mut usize, outNBElement: &mut usize, outInteger: &mut [i32], outStride: usize,
     ) -> Result<CdlthrustingStream, RetCode> {
+        #[cfg(target_arch = "x86_64")]
+        return ta_lib_dispatch::dispatch_fma!(self, cdlthrusting_open_impl_fma, cdlthrusting_open_impl_scalar, (inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, outStride));
+        #[cfg(not(target_arch = "x86_64"))]
+        self.cdlthrusting_open_impl_scalar(inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, outStride)
+    }
+
+    #[cfg(target_arch = "x86_64")]
+    #[target_feature(enable = "fma")]
+    fn cdlthrusting_open_impl_fma(
+        &self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize, outBegIdx: &mut usize, outNBElement: &mut usize, outInteger: &mut [i32], outStride: usize,
+    ) -> Result<CdlthrustingStream, RetCode> {
+        self.cdlthrusting_open_impl_scalar(inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, outStride)
+    }
+
+    #[inline(always)]
+    fn cdlthrusting_open_impl_scalar(
+        &self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize, outBegIdx: &mut usize, outNBElement: &mut usize, outInteger: &mut [i32], outStride: usize,
+    ) -> Result<CdlthrustingStream, RetCode> {
         if inOpen.is_empty() {
             return Err(RetCode::OutOfRangeStartIndex);
         }

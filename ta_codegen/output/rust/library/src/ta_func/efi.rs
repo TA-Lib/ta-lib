@@ -481,6 +481,24 @@ impl Core {
     /// The single whole-history transcription behind [`Core::efi_open_internal`]
     /// (stride 0, scalar sink) and [`Core::efi_open_and_fill`] (stride 1, caller slices).
     pub(crate) fn efi_open_impl(
+        &self, inClose: &[f64], inVolume: &[f64], startIdx: usize, optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64], outStride: usize,
+    ) -> Result<EfiStream, RetCode> {
+        #[cfg(target_arch = "x86_64")]
+        return ta_lib_dispatch::dispatch_fma!(self, efi_open_impl_fma, efi_open_impl_scalar, (inClose, inVolume, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, outStride));
+        #[cfg(not(target_arch = "x86_64"))]
+        self.efi_open_impl_scalar(inClose, inVolume, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, outStride)
+    }
+
+    #[cfg(target_arch = "x86_64")]
+    #[target_feature(enable = "fma")]
+    fn efi_open_impl_fma(
+        &self, inClose: &[f64], inVolume: &[f64], startIdx: usize, optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64], outStride: usize,
+    ) -> Result<EfiStream, RetCode> {
+        self.efi_open_impl_scalar(inClose, inVolume, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, outStride)
+    }
+
+    #[inline(always)]
+    fn efi_open_impl_scalar(
         &self, inClose: &[f64], inVolume: &[f64], startIdx: usize, mut optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64], outStride: usize,
     ) -> Result<EfiStream, RetCode> {
         if inClose.is_empty() {

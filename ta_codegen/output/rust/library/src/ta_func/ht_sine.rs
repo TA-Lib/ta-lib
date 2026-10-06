@@ -961,6 +961,24 @@ impl Core {
     pub(crate) fn ht_sine_open_impl(
         &self, inReal: &[f64], startIdx: usize, outBegIdx: &mut usize, outNBElement: &mut usize, outSine: &mut [f64], outLeadSine: &mut [f64], outStride: usize,
     ) -> Result<HtSineStream, RetCode> {
+        #[cfg(target_arch = "x86_64")]
+        return ta_lib_dispatch::dispatch_fma!(self, ht_sine_open_impl_fma, ht_sine_open_impl_scalar, (inReal, startIdx, outBegIdx, outNBElement, outSine, outLeadSine, outStride));
+        #[cfg(not(target_arch = "x86_64"))]
+        self.ht_sine_open_impl_scalar(inReal, startIdx, outBegIdx, outNBElement, outSine, outLeadSine, outStride)
+    }
+
+    #[cfg(target_arch = "x86_64")]
+    #[target_feature(enable = "fma")]
+    fn ht_sine_open_impl_fma(
+        &self, inReal: &[f64], startIdx: usize, outBegIdx: &mut usize, outNBElement: &mut usize, outSine: &mut [f64], outLeadSine: &mut [f64], outStride: usize,
+    ) -> Result<HtSineStream, RetCode> {
+        self.ht_sine_open_impl_scalar(inReal, startIdx, outBegIdx, outNBElement, outSine, outLeadSine, outStride)
+    }
+
+    #[inline(always)]
+    fn ht_sine_open_impl_scalar(
+        &self, inReal: &[f64], startIdx: usize, outBegIdx: &mut usize, outNBElement: &mut usize, outSine: &mut [f64], outLeadSine: &mut [f64], outStride: usize,
+    ) -> Result<HtSineStream, RetCode> {
         if inReal.is_empty() {
             return Err(RetCode::OutOfRangeStartIndex);
         }

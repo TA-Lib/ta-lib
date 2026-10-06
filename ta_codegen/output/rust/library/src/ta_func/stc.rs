@@ -898,6 +898,24 @@ impl Core {
     /// The single whole-history transcription behind [`Core::stc_open_internal`]
     /// (stride 0, scalar sink) and [`Core::stc_open_and_fill`] (stride 1, caller slices).
     pub(crate) fn stc_open_impl(
+        &self, inReal: &[f64], startIdx: usize, optInFastPeriod: i32, optInSlowPeriod: i32, optInCyclePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64], outStride: usize,
+    ) -> Result<StcStream, RetCode> {
+        #[cfg(target_arch = "x86_64")]
+        return ta_lib_dispatch::dispatch_fma!(self, stc_open_impl_fma, stc_open_impl_scalar, (inReal, startIdx, optInFastPeriod, optInSlowPeriod, optInCyclePeriod, outBegIdx, outNBElement, outReal, outStride));
+        #[cfg(not(target_arch = "x86_64"))]
+        self.stc_open_impl_scalar(inReal, startIdx, optInFastPeriod, optInSlowPeriod, optInCyclePeriod, outBegIdx, outNBElement, outReal, outStride)
+    }
+
+    #[cfg(target_arch = "x86_64")]
+    #[target_feature(enable = "fma")]
+    fn stc_open_impl_fma(
+        &self, inReal: &[f64], startIdx: usize, optInFastPeriod: i32, optInSlowPeriod: i32, optInCyclePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64], outStride: usize,
+    ) -> Result<StcStream, RetCode> {
+        self.stc_open_impl_scalar(inReal, startIdx, optInFastPeriod, optInSlowPeriod, optInCyclePeriod, outBegIdx, outNBElement, outReal, outStride)
+    }
+
+    #[inline(always)]
+    fn stc_open_impl_scalar(
         &self, inReal: &[f64], startIdx: usize, mut optInFastPeriod: i32, mut optInSlowPeriod: i32, mut optInCyclePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64], outStride: usize,
     ) -> Result<StcStream, RetCode> {
         if inReal.is_empty() {

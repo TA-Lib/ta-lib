@@ -1100,6 +1100,24 @@ impl Core {
     /// The single whole-history transcription behind [`Core::kst_open_internal`]
     /// (stride 0, scalar sink) and [`Core::kst_open_and_fill`] (stride 1, caller slices).
     pub(crate) fn kst_open_impl(
+        &self, inReal: &[f64], startIdx: usize, optInROC1Period: i32, optInROC2Period: i32, optInROC3Period: i32, optInROC4Period: i32, optInSMA1Period: i32, optInSMA2Period: i32, optInSMA3Period: i32, optInSMA4Period: i32, optInSignalPeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outKST: &mut [f64], outKSTSignal: &mut [f64], outStride: usize,
+    ) -> Result<KstStream, RetCode> {
+        #[cfg(target_arch = "x86_64")]
+        return ta_lib_dispatch::dispatch_fma!(self, kst_open_impl_fma, kst_open_impl_scalar, (inReal, startIdx, optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInSMA1Period, optInSMA2Period, optInSMA3Period, optInSMA4Period, optInSignalPeriod, outBegIdx, outNBElement, outKST, outKSTSignal, outStride));
+        #[cfg(not(target_arch = "x86_64"))]
+        self.kst_open_impl_scalar(inReal, startIdx, optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInSMA1Period, optInSMA2Period, optInSMA3Period, optInSMA4Period, optInSignalPeriod, outBegIdx, outNBElement, outKST, outKSTSignal, outStride)
+    }
+
+    #[cfg(target_arch = "x86_64")]
+    #[target_feature(enable = "fma")]
+    fn kst_open_impl_fma(
+        &self, inReal: &[f64], startIdx: usize, optInROC1Period: i32, optInROC2Period: i32, optInROC3Period: i32, optInROC4Period: i32, optInSMA1Period: i32, optInSMA2Period: i32, optInSMA3Period: i32, optInSMA4Period: i32, optInSignalPeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outKST: &mut [f64], outKSTSignal: &mut [f64], outStride: usize,
+    ) -> Result<KstStream, RetCode> {
+        self.kst_open_impl_scalar(inReal, startIdx, optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInSMA1Period, optInSMA2Period, optInSMA3Period, optInSMA4Period, optInSignalPeriod, outBegIdx, outNBElement, outKST, outKSTSignal, outStride)
+    }
+
+    #[inline(always)]
+    fn kst_open_impl_scalar(
         &self, inReal: &[f64], startIdx: usize, mut optInROC1Period: i32, mut optInROC2Period: i32, mut optInROC3Period: i32, mut optInROC4Period: i32, mut optInSMA1Period: i32, mut optInSMA2Period: i32, mut optInSMA3Period: i32, mut optInSMA4Period: i32, mut optInSignalPeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outKST: &mut [f64], outKSTSignal: &mut [f64], outStride: usize,
     ) -> Result<KstStream, RetCode> {
         if inReal.is_empty() {

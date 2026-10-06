@@ -111,6 +111,10 @@ PKG  <N>_OpenAndFillInternal(in, sIdx, ..)  -> <N>_OpenImpl(.., 1)
 PRV  <N>_OpenImpl(sp, in, sIdx, params, outBeg, outNb, outs, outStride)
 ```
 
+A fused `_OpenImpl` (C, Rust) runs as one of two private frames, one compiled
+for hardware FMA, picked per call on the running CPU. Kept on one path: C
+candlesticks; Rust stateless maps and `HT_TRENDMODE`.
+
 Both public entries delegate at anchor 0, so **no seam is emitted unreachable**.
 The guard sits on the public frame because that is the only one handed an array
 it did not vet: the plain open sinks into fresh arrays, and a composed call's

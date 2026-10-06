@@ -655,16 +655,24 @@ fn every_open_pass_rejects_an_anchor_past_the_history() {
     /// line. And in Java and C# the two exempt tiers (MA, MAVP) wear the same
     /// name over a hand-rolled body that is not the strided numerics and owns no
     /// anchor of its own, so the parameter list must carry `outStride`.
-    fn open_impls<'a>(src: &'a str, def_kw: &str, needle: &str) -> Vec<&'a str> {
+    /// A fused body's FMA dispatcher wears the definition's name over a body
+    /// that only forwards, so it is dropped here and the `_scalar` it forwards
+    /// to is matched instead.
+    fn open_impls<'a>(src: &'a str, shapes: &[(&str, &str)]) -> Vec<&'a str> {
         let mut out = Vec::new();
-        let mut at = 0;
-        while let Some(i) = src[at..].find(needle) {
-            let abs = at + i;
-            at = abs + needle.len();
-            let line_start = src[..abs].rfind('\n').map_or(0, |n| n + 1);
-            let params_end = src[abs..].find('{').map_or(src.len(), |b| abs + b);
-            if src[line_start..abs].contains(def_kw) && src[abs..params_end].contains("outStride") {
-                out.push(body_after(src, abs));
+        for (def_kw, needle) in shapes {
+            let mut at = 0;
+            while let Some(i) = src[at..].find(needle) {
+                let abs = at + i;
+                at = abs + needle.len();
+                let line_start = src[..abs].rfind('\n').map_or(0, |n| n + 1);
+                let params_end = src[abs..].find('{').map_or(src.len(), |b| abs + b);
+                if src[line_start..abs].contains(def_kw) && src[abs..params_end].contains("outStride") {
+                    let body = body_after(src, abs);
+                    if !body.contains("dispatch_fma!(") {
+                        out.push(body);
+                    }
+                }
             }
         }
         out
@@ -681,12 +689,17 @@ fn every_open_pass_rejects_an_anchor_past_the_history() {
         ("Java", "if( startIdx > endIdx ) {", "historyLen < 1"),
         ("C#", "if( startIdx > endIdx ) {", "historyLen < 1"),
     ];
-    // The definition keyword, which is what tells a definition from a call site.
-    let def_kws = ["static TA_RetCode", "pub(crate) fn", "private RetCode", "private RetCode"];
-    // The `_OpenImpl` marker in this backend's own casing (issue #278): C keeps
-    // `_OpenImpl(`, Rust lower-cases the whole family to `_open_impl(`, and
-    // Java/C# dropped the underscore joiner but kept `OpenImpl(` PascalCase.
-    let open_impl_needles = ["_OpenImpl(", "_open_impl(", "OpenImpl(", "OpenImpl("];
+    // Per backend: the definition keyword, which is what tells a definition
+    // from a call site, and the `_OpenImpl` marker in that backend's own casing
+    // (issue #278): C keeps `_OpenImpl(`, Rust lower-cases the whole family to
+    // `_open_impl(`, and Java/C# dropped the underscore joiner but kept
+    // `OpenImpl(` PascalCase.
+    let shapes: [&[(&str, &str)]; 4] = [
+        &[("static ", "_OpenImpl(")],
+        &[("pub(crate) fn", "_open_impl("), ("    fn ", "_open_impl_scalar(")],
+        &[("private RetCode", "OpenImpl(")],
+        &[("private RetCode", "OpenImpl(")],
+    ];
 
     let mut checked = 0usize;
     let mut per_backend = [0usize; 4];
@@ -702,7 +715,7 @@ fn every_open_pass_rejects_an_anchor_past_the_history() {
 
         for (b, src) in sources.iter().enumerate() {
             let (lang, guard, empty_check) = specs[b];
-            for body in open_impls(src, def_kws[b], open_impl_needles[b]) {
+            for body in open_impls(src, shapes[b]) {
                 if body.is_empty() {
                     continue;
                 }
@@ -751,6 +764,10 @@ fn every_open_pass_rejects_an_anchor_past_the_history() {
         );
     }
     assert!(checked > 600, "only {checked} bodies checked across four backends");
+    assert!(
+        per_backend.iter().all(|n| *n == per_backend[0]),
+        "the backends disagree on how many _OpenImpl bodies exist: {per_backend:?}"
+    );
 }
 
 /// A C# opener refuses the same buffer ahead of the history check, as every

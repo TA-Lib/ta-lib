@@ -589,7 +589,7 @@ static TA_FMA_STEP_INLINE void TA_MACD_StepImpl( struct TA_MACD_Stream *sp, doub
    sp->prevSignal = prevSignal;
 }
 
-static TA_RetCode TA_MACD_OpenImpl( struct TA_MACD_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod, int *outBegIdx, int *outNBElement, double outMACD[], double outMACDSignal[], double outMACDHist[], int outStride )
+static TA_FMA_STEP_INLINE TA_RetCode TA_MACD_OpenImpl( struct TA_MACD_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod, int *outBegIdx, int *outNBElement, double outMACD[], double outMACDSignal[], double outMACDHist[], int outStride )
 {
    struct TA_MACD_Stream *sp;
    int endIdx;
@@ -846,6 +846,16 @@ static TA_RetCode TA_MACD_OpenImpl( struct TA_MACD_Stream **stream, const double
    }
 }
 
+TA_FMA_OPEN_CLONE static TA_RetCode TA_MACD_OpenImplFma( struct TA_MACD_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod, int *outBegIdx, int *outNBElement, double outMACD[], double outMACDSignal[], double outMACDHist[], int outStride )
+{
+   return TA_MACD_OpenImpl( stream, inReal, startIdx, historyLen, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outBegIdx, outNBElement, outMACD, outMACDSignal, outMACDHist, outStride );
+}
+
+TA_FMA_OPEN_PLAIN static TA_RetCode TA_MACD_OpenImplPlain( struct TA_MACD_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod, int *outBegIdx, int *outNBElement, double outMACD[], double outMACDSignal[], double outMACDHist[], int outStride )
+{
+   return TA_MACD_OpenImpl( stream, inReal, startIdx, historyLen, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outBegIdx, outNBElement, outMACD, outMACDSignal, outMACDHist, outStride );
+}
+
 /* Private function, not in public API. */
 TA_RetCode TA_MACD_OpenInternal( struct TA_MACD_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod, double *outMACD, double *outMACDSignal, double *outMACDHist )
 {
@@ -855,7 +865,7 @@ TA_RetCode TA_MACD_OpenInternal( struct TA_MACD_Stream **stream, const double in
    double sink_outMACD = 0.0;
    double sink_outMACDSignal = 0.0;
    double sink_outMACDHist = 0.0;
-   retCode = TA_MACD_OpenImpl( stream, inReal, startIdx, historyLen, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, &dummyBegIdx, &dummyNBElement, &sink_outMACD, &sink_outMACDSignal, &sink_outMACDHist, 0 );
+   retCode = TA_FMA_AVAILABLE ? TA_MACD_OpenImplFma( stream, inReal, startIdx, historyLen, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, &dummyBegIdx, &dummyNBElement, &sink_outMACD, &sink_outMACDSignal, &sink_outMACDHist, 0 ) : TA_MACD_OpenImplPlain( stream, inReal, startIdx, historyLen, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, &dummyBegIdx, &dummyNBElement, &sink_outMACD, &sink_outMACDSignal, &sink_outMACDHist, 0 );
    if( retCode == TA_SUCCESS )
    {
       *outMACD = sink_outMACD;
@@ -889,7 +899,7 @@ TA_LIB_API TA_RetCode TA_MACD_OpenAndFill( TA_MACD_Stream **stream, const double
 /* Private function, not in public API. */
 TA_RetCode TA_MACD_OpenAndFillInternal( struct TA_MACD_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod, int *outBegIdx, int *outNBElement, double outMACD[], double outMACDSignal[], double outMACDHist[] )
 {
-   return TA_MACD_OpenImpl( stream, inReal, startIdx, historyLen, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outBegIdx, outNBElement, outMACD, outMACDSignal, outMACDHist, 1 );
+   return TA_FMA_AVAILABLE ? TA_MACD_OpenImplFma( stream, inReal, startIdx, historyLen, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outBegIdx, outNBElement, outMACD, outMACDSignal, outMACDHist, 1 ) : TA_MACD_OpenImplPlain( stream, inReal, startIdx, historyLen, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outBegIdx, outNBElement, outMACD, outMACDSignal, outMACDHist, 1 );
 }
 
 TA_FMA_MULTIVERSION

@@ -523,6 +523,24 @@ impl Core {
     /// The single whole-history transcription behind [`Core::tsi_open_internal`]
     /// (stride 0, scalar sink) and [`Core::tsi_open_and_fill`] (stride 1, caller slices).
     pub(crate) fn tsi_open_impl(
+        &self, inReal: &[f64], startIdx: usize, optInFirstPeriod: i32, optInSecondPeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64], outStride: usize,
+    ) -> Result<TsiStream, RetCode> {
+        #[cfg(target_arch = "x86_64")]
+        return ta_lib_dispatch::dispatch_fma!(self, tsi_open_impl_fma, tsi_open_impl_scalar, (inReal, startIdx, optInFirstPeriod, optInSecondPeriod, outBegIdx, outNBElement, outReal, outStride));
+        #[cfg(not(target_arch = "x86_64"))]
+        self.tsi_open_impl_scalar(inReal, startIdx, optInFirstPeriod, optInSecondPeriod, outBegIdx, outNBElement, outReal, outStride)
+    }
+
+    #[cfg(target_arch = "x86_64")]
+    #[target_feature(enable = "fma")]
+    fn tsi_open_impl_fma(
+        &self, inReal: &[f64], startIdx: usize, optInFirstPeriod: i32, optInSecondPeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64], outStride: usize,
+    ) -> Result<TsiStream, RetCode> {
+        self.tsi_open_impl_scalar(inReal, startIdx, optInFirstPeriod, optInSecondPeriod, outBegIdx, outNBElement, outReal, outStride)
+    }
+
+    #[inline(always)]
+    fn tsi_open_impl_scalar(
         &self, inReal: &[f64], startIdx: usize, mut optInFirstPeriod: i32, mut optInSecondPeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64], outStride: usize,
     ) -> Result<TsiStream, RetCode> {
         if inReal.is_empty() {

@@ -798,7 +798,7 @@ static TA_FMA_STEP_INLINE TA_RetCode TA_PERCENTB_StepImpl( struct TA_PERCENTB_St
    return TA_SUCCESS;
 }
 
-static TA_RetCode TA_PERCENTB_OpenImpl( struct TA_PERCENTB_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInTimePeriod, double optInNbDevUp, double optInNbDevDn, TA_MAType optInMAType, int *outBegIdx, int *outNBElement, double outReal[], int outStride )
+static TA_FMA_STEP_INLINE TA_RetCode TA_PERCENTB_OpenImpl( struct TA_PERCENTB_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInTimePeriod, double optInNbDevUp, double optInNbDevDn, TA_MAType optInMAType, int *outBegIdx, int *outNBElement, double outReal[], int outStride )
 {
    struct TA_PERCENTB_Stream *sp;
    int endIdx;
@@ -1003,6 +1003,16 @@ static TA_RetCode TA_PERCENTB_OpenImpl( struct TA_PERCENTB_Stream **stream, cons
    }
 }
 
+TA_FMA_OPEN_CLONE static TA_RetCode TA_PERCENTB_OpenImplFma( struct TA_PERCENTB_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInTimePeriod, double optInNbDevUp, double optInNbDevDn, TA_MAType optInMAType, int *outBegIdx, int *outNBElement, double outReal[], int outStride )
+{
+   return TA_PERCENTB_OpenImpl( stream, inReal, startIdx, historyLen, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, outBegIdx, outNBElement, outReal, outStride );
+}
+
+TA_FMA_OPEN_PLAIN static TA_RetCode TA_PERCENTB_OpenImplPlain( struct TA_PERCENTB_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInTimePeriod, double optInNbDevUp, double optInNbDevDn, TA_MAType optInMAType, int *outBegIdx, int *outNBElement, double outReal[], int outStride )
+{
+   return TA_PERCENTB_OpenImpl( stream, inReal, startIdx, historyLen, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, outBegIdx, outNBElement, outReal, outStride );
+}
+
 /* Private function, not in public API. */
 TA_RetCode TA_PERCENTB_OpenInternal( struct TA_PERCENTB_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInTimePeriod, double optInNbDevUp, double optInNbDevDn, TA_MAType optInMAType, double *outReal )
 {
@@ -1010,7 +1020,7 @@ TA_RetCode TA_PERCENTB_OpenInternal( struct TA_PERCENTB_Stream **stream, const d
    int dummyBegIdx = 0;
    int dummyNBElement = 0;
    double sink_outReal = 0.0;
-   retCode = TA_PERCENTB_OpenImpl( stream, inReal, startIdx, historyLen, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, &dummyBegIdx, &dummyNBElement, &sink_outReal, 0 );
+   retCode = TA_FMA_AVAILABLE ? TA_PERCENTB_OpenImplFma( stream, inReal, startIdx, historyLen, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, &dummyBegIdx, &dummyNBElement, &sink_outReal, 0 ) : TA_PERCENTB_OpenImplPlain( stream, inReal, startIdx, historyLen, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, &dummyBegIdx, &dummyNBElement, &sink_outReal, 0 );
    if( retCode == TA_SUCCESS )
    {
       *outReal = sink_outReal;
@@ -1042,7 +1052,7 @@ TA_LIB_API TA_RetCode TA_PERCENTB_OpenAndFill( TA_PERCENTB_Stream **stream, cons
 /* Private function, not in public API. */
 TA_RetCode TA_PERCENTB_OpenAndFillInternal( struct TA_PERCENTB_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInTimePeriod, double optInNbDevUp, double optInNbDevDn, TA_MAType optInMAType, int *outBegIdx, int *outNBElement, double outReal[] )
 {
-   return TA_PERCENTB_OpenImpl( stream, inReal, startIdx, historyLen, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, outBegIdx, outNBElement, outReal, 1 );
+   return TA_FMA_AVAILABLE ? TA_PERCENTB_OpenImplFma( stream, inReal, startIdx, historyLen, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, outBegIdx, outNBElement, outReal, 1 ) : TA_PERCENTB_OpenImplPlain( stream, inReal, startIdx, historyLen, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, outBegIdx, outNBElement, outReal, 1 );
 }
 
 TA_FMA_MULTIVERSION

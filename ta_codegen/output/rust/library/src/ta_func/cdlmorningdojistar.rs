@@ -830,6 +830,24 @@ impl Core {
     /// The single whole-history transcription behind [`Core::cdlmorningdojistar_open_internal`]
     /// (stride 0, scalar sink) and [`Core::cdlmorningdojistar_open_and_fill`] (stride 1, caller slices).
     pub(crate) fn cdlmorningdojistar_open_impl(
+        &self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize, optInPenetration: f64, outBegIdx: &mut usize, outNBElement: &mut usize, outInteger: &mut [i32], outStride: usize,
+    ) -> Result<CdlmorningdojistarStream, RetCode> {
+        #[cfg(target_arch = "x86_64")]
+        return ta_lib_dispatch::dispatch_fma!(self, cdlmorningdojistar_open_impl_fma, cdlmorningdojistar_open_impl_scalar, (inOpen, inHigh, inLow, inClose, startIdx, optInPenetration, outBegIdx, outNBElement, outInteger, outStride));
+        #[cfg(not(target_arch = "x86_64"))]
+        self.cdlmorningdojistar_open_impl_scalar(inOpen, inHigh, inLow, inClose, startIdx, optInPenetration, outBegIdx, outNBElement, outInteger, outStride)
+    }
+
+    #[cfg(target_arch = "x86_64")]
+    #[target_feature(enable = "fma")]
+    fn cdlmorningdojistar_open_impl_fma(
+        &self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize, optInPenetration: f64, outBegIdx: &mut usize, outNBElement: &mut usize, outInteger: &mut [i32], outStride: usize,
+    ) -> Result<CdlmorningdojistarStream, RetCode> {
+        self.cdlmorningdojistar_open_impl_scalar(inOpen, inHigh, inLow, inClose, startIdx, optInPenetration, outBegIdx, outNBElement, outInteger, outStride)
+    }
+
+    #[inline(always)]
+    fn cdlmorningdojistar_open_impl_scalar(
         &self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize, mut optInPenetration: f64, outBegIdx: &mut usize, outNBElement: &mut usize, outInteger: &mut [i32], outStride: usize,
     ) -> Result<CdlmorningdojistarStream, RetCode> {
         if inOpen.is_empty() {

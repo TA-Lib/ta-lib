@@ -656,6 +656,24 @@ impl Core {
     /// The single whole-history transcription behind [`Core::bbw_open_internal`]
     /// (stride 0, scalar sink) and [`Core::bbw_open_and_fill`] (stride 1, caller slices).
     pub(crate) fn bbw_open_impl(
+        &self, inReal: &[f64], startIdx: usize, optInTimePeriod: i32, optInNbDevUp: f64, optInNbDevDn: f64, optInMAType: MAType, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64], outStride: usize,
+    ) -> Result<BbwStream, RetCode> {
+        #[cfg(target_arch = "x86_64")]
+        return ta_lib_dispatch::dispatch_fma!(self, bbw_open_impl_fma, bbw_open_impl_scalar, (inReal, startIdx, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, outBegIdx, outNBElement, outReal, outStride));
+        #[cfg(not(target_arch = "x86_64"))]
+        self.bbw_open_impl_scalar(inReal, startIdx, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, outBegIdx, outNBElement, outReal, outStride)
+    }
+
+    #[cfg(target_arch = "x86_64")]
+    #[target_feature(enable = "fma")]
+    fn bbw_open_impl_fma(
+        &self, inReal: &[f64], startIdx: usize, optInTimePeriod: i32, optInNbDevUp: f64, optInNbDevDn: f64, optInMAType: MAType, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64], outStride: usize,
+    ) -> Result<BbwStream, RetCode> {
+        self.bbw_open_impl_scalar(inReal, startIdx, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, outBegIdx, outNBElement, outReal, outStride)
+    }
+
+    #[inline(always)]
+    fn bbw_open_impl_scalar(
         &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32, mut optInNbDevUp: f64, mut optInNbDevDn: f64, mut optInMAType: MAType, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64], outStride: usize,
     ) -> Result<BbwStream, RetCode> {
         if inReal.is_empty() {

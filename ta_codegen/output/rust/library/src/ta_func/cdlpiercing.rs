@@ -607,6 +607,24 @@ impl Core {
     pub(crate) fn cdlpiercing_open_impl(
         &self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize, outBegIdx: &mut usize, outNBElement: &mut usize, outInteger: &mut [i32], outStride: usize,
     ) -> Result<CdlpiercingStream, RetCode> {
+        #[cfg(target_arch = "x86_64")]
+        return ta_lib_dispatch::dispatch_fma!(self, cdlpiercing_open_impl_fma, cdlpiercing_open_impl_scalar, (inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, outStride));
+        #[cfg(not(target_arch = "x86_64"))]
+        self.cdlpiercing_open_impl_scalar(inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, outStride)
+    }
+
+    #[cfg(target_arch = "x86_64")]
+    #[target_feature(enable = "fma")]
+    fn cdlpiercing_open_impl_fma(
+        &self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize, outBegIdx: &mut usize, outNBElement: &mut usize, outInteger: &mut [i32], outStride: usize,
+    ) -> Result<CdlpiercingStream, RetCode> {
+        self.cdlpiercing_open_impl_scalar(inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, outStride)
+    }
+
+    #[inline(always)]
+    fn cdlpiercing_open_impl_scalar(
+        &self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize, outBegIdx: &mut usize, outNBElement: &mut usize, outInteger: &mut [i32], outStride: usize,
+    ) -> Result<CdlpiercingStream, RetCode> {
         if inOpen.is_empty() {
             return Err(RetCode::OutOfRangeStartIndex);
         }

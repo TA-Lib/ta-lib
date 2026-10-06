@@ -865,16 +865,18 @@ fn no_peek_frame_reads_a_field_it_has_bound() {
     assert!(offenders.is_empty(), "a peek frame reads what it has bound:\n{}", offenders.join("\n"));
 }
 
-/// The hardware-FMA clones on `Peek` and `Update` are attached by a TEXT search
-/// (`c_stream::mark_fma_multiversion`) that returns silently when a signature
-/// or a closing brace moves, so a rename drops a clone with every value gate
-/// still green -- the tier keeps calling libm and only a benchmark would notice.
-/// Pinned both ways: Peek is attributed exactly when it fuses, Update exactly
-/// when its step does, and that step is force-inlined into it exactly then.
+/// The hardware-FMA clones on `Peek`, `Update` and the open tier are attached
+/// by a TEXT search (`c_stream::mark_fma_multiversion`) that returns silently
+/// when a signature or a closing brace moves, so a rename drops a clone with
+/// every value gate still green -- the tier keeps calling libm and only a
+/// benchmark would notice. Pinned both ways: Peek is attributed exactly when it
+/// fuses, Update exactly when its step does, and that step is force-inlined
+/// into it exactly then; a fused `_OpenImpl` outside the candlesticks is
+/// force-inlined and reached only through its two frames, from both seams.
 #[test]
 fn a_fused_per_bar_tier_carries_the_fma_multiversion_attribute() {
-    let (mut peeks, mut steps) = (0usize, 0usize);
-    let (mut fused_peeks, mut fused_steps) = (0usize, 0usize);
+    let (mut peeks, mut steps, mut opens, mut one_path_opens) = (0usize, 0usize, 0usize, 0usize);
+    let (mut fused_peeks, mut fused_steps, mut fused_opens) = (0usize, 0usize, 0usize);
     let mut drifted: Vec<String> = Vec::new();
     let attributed = |src: &str, at: usize| {
         let line = src[..at].rfind('\n').map_or(0, |i| i + 1);
@@ -912,9 +914,37 @@ fn a_fused_per_bar_tier_carries_the_fma_multiversion_attribute() {
                 ));
             }
         }
+
+        let open = format!(" TA_{upper}_OpenImpl(");
+        if let (Some(at), Some(body)) = (src.find(&open), body_of(&src, &open)) {
+            opens += 1;
+            let framed_tier = ta_codegen_lib::backends::c_stream::open_takes_fma_frames(&func);
+            one_path_opens += usize::from(body.contains("fma(") && !framed_tier);
+            let fuses = body.contains("fma(") && framed_tier;
+            let line = &src[src[..at].rfind('\n').map_or(0, |i| i + 1)..at];
+            let inlined = line.starts_with("static TA_FMA_STEP_INLINE ");
+            // The definition, then one frame each; a seam names both frames.
+            let direct = src.matches(&open).count();
+            let framed = |suffix: &str| src.matches(&format!(" TA_{upper}_OpenImpl{suffix}(")).count();
+            let shape = (direct, framed("Fma"), framed("Plain"));
+            let attributed = src.contains(&format!("\nTA_FMA_OPEN_CLONE static TA_RetCode TA_{upper}_OpenImplFma("))
+                && src.contains(&format!("\nTA_FMA_OPEN_PLAIN static TA_RetCode TA_{upper}_OpenImplPlain("));
+            let picked = src.matches(&format!(" TA_FMA_AVAILABLE ? TA_{upper}_OpenImplFma(")).count();
+            fused_opens += usize::from(fuses);
+            if fuses != inlined
+                || fuses != attributed
+                || picked != if fuses { 2 } else { 0 }
+                || shape != if fuses { (3, 3, 3) } else { (3, 0, 0) }
+            {
+                drifted.push(format!("{upper} Open (fuses={fuses}, inlined={inlined}, calls={shape:?})"));
+            }
+        }
     }
 
     assert!(drifted.is_empty(), "TA_FMA_MULTIVERSION drifted from the fused tiers: {drifted:?}");
+    assert!(opens >= 150, "only {opens} `_OpenImpl` rendered -- the signature moved");
+    assert!(fused_opens > 0, "no `_OpenImpl` fuses, so this sweep proved nothing about the open tier");
+    assert!(one_path_opens > 0, "no fused open keeps one path: the exemption admits nothing");
     assert!(peeks >= 200, "only {peeks} peek frame(s) rendered -- the signature moved");
     assert!(steps >= 200, "only {steps} step(s) paired with an Update -- a signature moved");
     assert!(fused_peeks > 0, "no peek fuses, so this sweep proved nothing about Peek");

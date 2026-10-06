@@ -780,13 +780,40 @@ fn apo_family_period_swap_is_a_write_bound_precondition() {
 /// every value gate still green: both arms are bit-identical and only a
 /// benchmark would see the calls come back. Pinned both ways: `update` is
 /// dispatched, and its step force-inlined, exactly when the step pays for it;
-/// `peek` never is.
+/// `<n>_open_impl` exactly when it fuses and does not keep one path; `peek`
+/// never is.
 #[test]
 fn a_fused_stream_update_is_fma_dispatched() {
     let (mut dispatched, mut declined) = (0usize, 0usize);
+    let (mut opens, mut fused_opens) = (0usize, 0usize);
+    let (mut one_path_maps, mut one_path_named) = (0usize, 0usize);
     let mut drifted: Vec<String> = Vec::new();
     for name in streaming_indicators() {
         let s = rust_stream_section(&name);
+        let open = format!("fn {name}_open_impl");
+        if s.contains(&format!("{open}(")) {
+            opens += 1;
+            let fused = s.contains(&format!(
+                "    #[target_feature(enable = \"fma\")]\n    fn {name}_open_impl_fma("
+            ));
+            let body = if fused { format!("{open}_scalar(") } else { format!("{open}(") };
+            let fuses = body_of(&s, &body).contains(".mul_add(");
+            let routed = s.contains(&format!("dispatch_fma!(self, {name}_open_impl_fma, {name}_open_impl_scalar,"))
+                && s.contains(&format!("    #[inline(always)]\n    {open}_scalar("));
+            let (func, _) = load_indicator(&name);
+            let func = func.resolved_for(ir::Lang::Rust);
+            let plan = ta_codegen_lib::streaming::validate_streamable(&func, common::make_registry())
+                .unwrap_or_else(|e| panic!("{name}: {e}"));
+            let kept = backends::rust_stream::open_keeps_one_path(&func, &plan);
+            let is_map = matches!(&plan, ta_codegen_lib::streaming::StreamPlan::Loop(m) if m.tier == ir::StreamTier::T1);
+            one_path_maps += usize::from(fuses && kept && is_map);
+            one_path_named += usize::from(fuses && kept && !is_map);
+            let fuses = fuses && !kept;
+            fused_opens += usize::from(fuses);
+            if fuses != fused || fuses != routed {
+                drifted.push(format!("{name} open: fuses={fuses}, clone={fused}, dispatched={routed}"));
+            }
+        }
         let step_sig = format!("    fn {name}_step_impl(");
         if !s.contains(&step_sig) {
             continue;
@@ -804,6 +831,10 @@ fn a_fused_stream_update_is_fma_dispatched() {
         declined += usize::from(!pays && step.contains(".mul_add("));
     }
     assert!(drifted.is_empty(), "stream FMA dispatch drifted:\n{}", drifted.join("\n"));
+    assert!(opens >= 150, "only {opens} `open_impl` rendered: the signature moved");
+    assert!(fused_opens > 0, "no `open_impl` fuses, so this proved nothing about the open tier");
+    assert!(one_path_maps > 0, "no fused stateless map keeps one path: that exemption admits nothing");
+    assert!(one_path_named > 0, "no fused open keeps one path by name: that exemption admits nothing");
     assert!(dispatched > 0, "no update dispatched: the rule admits nothing");
     assert!(declined > 0, "every fused step dispatched: the rule declines nothing");
 }

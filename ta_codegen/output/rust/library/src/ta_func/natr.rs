@@ -565,6 +565,24 @@ impl Core {
     /// The single whole-history transcription behind [`Core::natr_open_internal`]
     /// (stride 0, scalar sink) and [`Core::natr_open_and_fill`] (stride 1, caller slices).
     pub(crate) fn natr_open_impl(
+        &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize, optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64], outStride: usize,
+    ) -> Result<NatrStream, RetCode> {
+        #[cfg(target_arch = "x86_64")]
+        return ta_lib_dispatch::dispatch_fma!(self, natr_open_impl_fma, natr_open_impl_scalar, (inHigh, inLow, inClose, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, outStride));
+        #[cfg(not(target_arch = "x86_64"))]
+        self.natr_open_impl_scalar(inHigh, inLow, inClose, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, outStride)
+    }
+
+    #[cfg(target_arch = "x86_64")]
+    #[target_feature(enable = "fma")]
+    fn natr_open_impl_fma(
+        &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize, optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64], outStride: usize,
+    ) -> Result<NatrStream, RetCode> {
+        self.natr_open_impl_scalar(inHigh, inLow, inClose, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, outStride)
+    }
+
+    #[inline(always)]
+    fn natr_open_impl_scalar(
         &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize, mut optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64], outStride: usize,
     ) -> Result<NatrStream, RetCode> {
         if inHigh.is_empty() {

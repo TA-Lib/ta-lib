@@ -1448,7 +1448,7 @@ static TA_FMA_STEP_INLINE void TA_HT_TRENDMODE_StepImpl( struct TA_HT_TRENDMODE_
    sp->streamParity = 1 - sp->streamParity;
 }
 
-static TA_RetCode TA_HT_TRENDMODE_OpenImpl( struct TA_HT_TRENDMODE_Stream **stream, const double inReal[], int startIdx, int historyLen, int *outBegIdx, int *outNBElement, int outInteger[], int outStride )
+static TA_FMA_STEP_INLINE TA_RetCode TA_HT_TRENDMODE_OpenImpl( struct TA_HT_TRENDMODE_Stream **stream, const double inReal[], int startIdx, int historyLen, int *outBegIdx, int *outNBElement, int outInteger[], int outStride )
 {
    struct TA_HT_TRENDMODE_Stream *sp;
    double local_smoothPrice[50];
@@ -2057,6 +2057,16 @@ static TA_RetCode TA_HT_TRENDMODE_OpenImpl( struct TA_HT_TRENDMODE_Stream **stre
    }
 }
 
+TA_FMA_OPEN_CLONE static TA_RetCode TA_HT_TRENDMODE_OpenImplFma( struct TA_HT_TRENDMODE_Stream **stream, const double inReal[], int startIdx, int historyLen, int *outBegIdx, int *outNBElement, int outInteger[], int outStride )
+{
+   return TA_HT_TRENDMODE_OpenImpl( stream, inReal, startIdx, historyLen, outBegIdx, outNBElement, outInteger, outStride );
+}
+
+TA_FMA_OPEN_PLAIN static TA_RetCode TA_HT_TRENDMODE_OpenImplPlain( struct TA_HT_TRENDMODE_Stream **stream, const double inReal[], int startIdx, int historyLen, int *outBegIdx, int *outNBElement, int outInteger[], int outStride )
+{
+   return TA_HT_TRENDMODE_OpenImpl( stream, inReal, startIdx, historyLen, outBegIdx, outNBElement, outInteger, outStride );
+}
+
 /* Private function, not in public API. */
 TA_RetCode TA_HT_TRENDMODE_OpenInternal( struct TA_HT_TRENDMODE_Stream **stream, const double inReal[], int startIdx, int historyLen, int *outInteger )
 {
@@ -2064,7 +2074,7 @@ TA_RetCode TA_HT_TRENDMODE_OpenInternal( struct TA_HT_TRENDMODE_Stream **stream,
    int dummyBegIdx = 0;
    int dummyNBElement = 0;
    int sink_outInteger = 0;
-   retCode = TA_HT_TRENDMODE_OpenImpl( stream, inReal, startIdx, historyLen, &dummyBegIdx, &dummyNBElement, &sink_outInteger, 0 );
+   retCode = TA_FMA_AVAILABLE ? TA_HT_TRENDMODE_OpenImplFma( stream, inReal, startIdx, historyLen, &dummyBegIdx, &dummyNBElement, &sink_outInteger, 0 ) : TA_HT_TRENDMODE_OpenImplPlain( stream, inReal, startIdx, historyLen, &dummyBegIdx, &dummyNBElement, &sink_outInteger, 0 );
    if( retCode == TA_SUCCESS )
    {
       *outInteger = sink_outInteger;
@@ -2096,7 +2106,7 @@ TA_LIB_API TA_RetCode TA_HT_TRENDMODE_OpenAndFill( TA_HT_TRENDMODE_Stream **stre
 /* Private function, not in public API. */
 TA_RetCode TA_HT_TRENDMODE_OpenAndFillInternal( struct TA_HT_TRENDMODE_Stream **stream, const double inReal[], int startIdx, int historyLen, int *outBegIdx, int *outNBElement, int outInteger[] )
 {
-   return TA_HT_TRENDMODE_OpenImpl( stream, inReal, startIdx, historyLen, outBegIdx, outNBElement, outInteger, 1 );
+   return TA_FMA_AVAILABLE ? TA_HT_TRENDMODE_OpenImplFma( stream, inReal, startIdx, historyLen, outBegIdx, outNBElement, outInteger, 1 ) : TA_HT_TRENDMODE_OpenImplPlain( stream, inReal, startIdx, historyLen, outBegIdx, outNBElement, outInteger, 1 );
 }
 
 TA_FMA_MULTIVERSION

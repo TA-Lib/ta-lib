@@ -1241,7 +1241,7 @@ pub fn generate(
     o
 }
 
-/// FMA runtime CPU dispatch for the two per-bar tiers, `Peek` and `Update`.
+/// FMA runtime CPU dispatch for `Peek`, `Update` and the open tier.
 ///
 /// `target_clones` only pays when the fused arithmetic is inside the attributed
 /// function. `Peek` inlines its own copy of the step. `Update` delegates to the
@@ -1249,7 +1249,6 @@ pub fn generate(
 /// step is marked `TA_FMA_STEP_INLINE` (force-inline wherever the attribute is
 /// real) and every caller, the tape step included, carries its own copy.
 /// Attributing the static itself would put an IFUNC hop on every bar.
-/// `_OpenImpl` stays single-path: it runs once per handle.
 fn mark_fma_multiversion(o: &mut String, func: &FuncDef) {
     if !fma::EMIT_FMA {
         return;
@@ -1272,6 +1271,61 @@ fn mark_fma_multiversion(o: &mut String, func: &FuncDef) {
     if let Some(line) = fuses_at(o, &peek_signature(func)) {
         o.insert_str(line, "TA_FMA_MULTIVERSION\n");
     }
+    if open_takes_fma_frames(func) {
+        dispatch_fused_open(o, &n);
+    }
+}
+
+/// A candlestick's fused site sits behind its pattern's conditions and few
+/// bars reach it, so the frames buy nothing there.
+pub fn open_takes_fma_frames(func: &FuncDef) -> bool {
+    !func.is_candlestick()
+}
+
+/// The open tier's hardware-FMA clone: a fused `_OpenImpl` is force-inlined
+/// into two file-static frames and each seam picks one on the running CPU.
+fn dispatch_fused_open(o: &mut String, n: &str) {
+    let sig = format!("static TA_RetCode TA_{n}_OpenImpl(");
+    let Some(line) = fuses_at(o, &sig) else {
+        return;
+    };
+    let end = line + o[line..].find("\n}\n").expect("fuses_at found the body") + 3;
+    let params_from = line + sig.len();
+    let params_to = params_from + o[params_from..].find(" )\n").expect("an `_OpenImpl` signature closes its line");
+    let params = o[params_from..params_to].trim().to_string();
+    let args: Vec<&str> = params
+        .split(", ")
+        .map(|p| p.rsplit([' ', '*']).next().unwrap_or(p).trim_end_matches("[]"))
+        .collect();
+    let args = args.join(", ");
+    let mut frames = String::new();
+    for (attr, suffix) in [("TA_FMA_OPEN_CLONE", "Fma"), ("TA_FMA_OPEN_PLAIN", "Plain")] {
+        let _ = write!(
+            frames,
+            "\n{attr} static TA_RetCode TA_{n}_OpenImpl{suffix}( {params} )\n{{\n   return TA_{n}_OpenImpl( {args} );\n}}\n"
+        );
+    }
+    let tail = o.split_off(end);
+    let mut calls = 0;
+    let seams = tail.replace(&format!(" TA_{n}_OpenImpl( "), "\u{0}");
+    let mut rewritten = String::with_capacity(tail.len());
+    for (i, piece) in seams.split('\u{0}').enumerate() {
+        if i > 0 {
+            // `<lead> TA_<N>_OpenImpl( <args> );` to the end of its line.
+            let (call_args, rest) = piece.split_once(" );\n").expect("an `_OpenImpl` call closes its line");
+            let _ = write!(
+                rewritten,
+                " TA_FMA_AVAILABLE ? TA_{n}_OpenImplFma( {call_args} ) : TA_{n}_OpenImplPlain( {call_args} );\n{rest}"
+            );
+            calls += 1;
+        } else {
+            rewritten.push_str(piece);
+        }
+    }
+    assert!(calls == 2, "{n}: {calls} call(s) of a fused _OpenImpl were routed to its FMA frames, not both seams");
+    o.push_str(&frames);
+    o.push_str(&rewritten);
+    o.replace_range(line..line + "static ".len(), "static TA_FMA_STEP_INLINE ");
 }
 
 /// Start of the line holding the definition that begins with `sig`.

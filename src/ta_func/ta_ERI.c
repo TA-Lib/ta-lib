@@ -379,7 +379,7 @@ static TA_FMA_STEP_INLINE void TA_ERI_StepImpl( struct TA_ERI_Stream *sp, double
    }
 }
 
-static TA_RetCode TA_ERI_OpenImpl( struct TA_ERI_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, int optInTimePeriod, int *outBegIdx, int *outNBElement, double outBullPower[], double outBearPower[], int outStride )
+static TA_FMA_STEP_INLINE TA_RetCode TA_ERI_OpenImpl( struct TA_ERI_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, int optInTimePeriod, int *outBegIdx, int *outNBElement, double outBullPower[], double outBearPower[], int outStride )
 {
    struct TA_ERI_Stream *sp;
    int endIdx;
@@ -582,6 +582,16 @@ static TA_RetCode TA_ERI_OpenImpl( struct TA_ERI_Stream **stream, const double i
    return TA_INTERNAL_ERROR(425);
 }
 
+TA_FMA_OPEN_CLONE static TA_RetCode TA_ERI_OpenImplFma( struct TA_ERI_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, int optInTimePeriod, int *outBegIdx, int *outNBElement, double outBullPower[], double outBearPower[], int outStride )
+{
+   return TA_ERI_OpenImpl( stream, inHigh, inLow, inClose, startIdx, historyLen, optInTimePeriod, outBegIdx, outNBElement, outBullPower, outBearPower, outStride );
+}
+
+TA_FMA_OPEN_PLAIN static TA_RetCode TA_ERI_OpenImplPlain( struct TA_ERI_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, int optInTimePeriod, int *outBegIdx, int *outNBElement, double outBullPower[], double outBearPower[], int outStride )
+{
+   return TA_ERI_OpenImpl( stream, inHigh, inLow, inClose, startIdx, historyLen, optInTimePeriod, outBegIdx, outNBElement, outBullPower, outBearPower, outStride );
+}
+
 /* Private function, not in public API. */
 TA_RetCode TA_ERI_OpenInternal( struct TA_ERI_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, int optInTimePeriod, double *outBullPower, double *outBearPower )
 {
@@ -590,7 +600,7 @@ TA_RetCode TA_ERI_OpenInternal( struct TA_ERI_Stream **stream, const double inHi
    int dummyNBElement = 0;
    double sink_outBullPower = 0.0;
    double sink_outBearPower = 0.0;
-   retCode = TA_ERI_OpenImpl( stream, inHigh, inLow, inClose, startIdx, historyLen, optInTimePeriod, &dummyBegIdx, &dummyNBElement, &sink_outBullPower, &sink_outBearPower, 0 );
+   retCode = TA_FMA_AVAILABLE ? TA_ERI_OpenImplFma( stream, inHigh, inLow, inClose, startIdx, historyLen, optInTimePeriod, &dummyBegIdx, &dummyNBElement, &sink_outBullPower, &sink_outBearPower, 0 ) : TA_ERI_OpenImplPlain( stream, inHigh, inLow, inClose, startIdx, historyLen, optInTimePeriod, &dummyBegIdx, &dummyNBElement, &sink_outBullPower, &sink_outBearPower, 0 );
    if( retCode == TA_SUCCESS )
    {
       *outBullPower = sink_outBullPower;
@@ -623,7 +633,7 @@ TA_LIB_API TA_RetCode TA_ERI_OpenAndFill( TA_ERI_Stream **stream, const double i
 /* Private function, not in public API. */
 TA_RetCode TA_ERI_OpenAndFillInternal( struct TA_ERI_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, int optInTimePeriod, int *outBegIdx, int *outNBElement, double outBullPower[], double outBearPower[] )
 {
-   return TA_ERI_OpenImpl( stream, inHigh, inLow, inClose, startIdx, historyLen, optInTimePeriod, outBegIdx, outNBElement, outBullPower, outBearPower, 1 );
+   return TA_FMA_AVAILABLE ? TA_ERI_OpenImplFma( stream, inHigh, inLow, inClose, startIdx, historyLen, optInTimePeriod, outBegIdx, outNBElement, outBullPower, outBearPower, 1 ) : TA_ERI_OpenImplPlain( stream, inHigh, inLow, inClose, startIdx, historyLen, optInTimePeriod, outBegIdx, outNBElement, outBullPower, outBearPower, 1 );
 }
 
 TA_FMA_MULTIVERSION

@@ -557,9 +557,21 @@ pub fn generate(
             emit_composed(&mut o, func, cp, enums, registry, helpers, &counter);
         }
     }
-    fma_dispatch_stream(&mut o, func);
+    fma_dispatch_stream(&mut o, func, open_keeps_one_path(func, &plan));
 
     o
+}
+
+/// A stateless map's scalar-sink open needs only its last bar, and the
+/// optimizer reduces it to that once the stride of 0 reaches the loop. An FMA
+/// clone cannot inline into the seam, so the stride would stay a runtime value
+/// and the open would walk the whole history.
+///
+/// `HT_TRENDMODE` is here by measurement: its clone runs the open 37% slower
+/// on an i7-13700K and no faster on a Ryzen 7 8840U.
+pub fn open_keeps_one_path(func: &FuncDef, plan: &StreamPlan) -> bool {
+    func.name.eq_ignore_ascii_case("HT_TRENDMODE")
+        || matches!(plan, StreamPlan::Loop(model) if model.tier == crate::ir::StreamTier::T1)
 }
 
 /// Fused sites a step needs before `update` is FMA-dispatched.
@@ -578,9 +590,12 @@ pub const STREAM_FMA_MIN_SITES: usize = 3;
 /// `peek` stays single-path: a peek frame can fuse arithmetic whose result it
 /// never returns (SAR's next stop), so its fused-site count says nothing about
 /// what dispatch would save.
-fn fma_dispatch_stream(o: &mut String, func: &FuncDef) {
+fn fma_dispatch_stream(o: &mut String, func: &FuncDef, open_keeps_one_path: bool) {
     if !fma::EMIT_FMA {
         return;
+    }
+    if !open_keeps_one_path {
+        fma_dispatch_open(o, func);
     }
     let Some((line, end)) = method_at(o, &format!("    fn {}_step_impl(", snake(func))) else {
         return;
@@ -594,6 +609,45 @@ fn fma_dispatch_stream(o: &mut String, func: &FuncDef) {
     };
     let trio = dispatch_trio(&o[line..end], "update");
     o.replace_range(line..end, &trio);
+}
+
+/// FMA runtime dispatch for `<n>_open_impl`: it runs the whole history per
+/// call, so the one call that cannot inline is paid once per open.
+fn fma_dispatch_open(o: &mut String, func: &FuncDef) {
+    let verb = format!("{}_open_impl", snake(func));
+    let open = format!("    pub(crate) fn {verb}(\n");
+    let Some((line, end)) = method_at(o, open.trim_end()) else {
+        return;
+    };
+    let method = &o[line..end];
+    if !method.contains(".mul_add(") {
+        return;
+    }
+    let (params, tail) = method[open.len()..]
+        .split_once(",\n    ) -> ")
+        .unwrap_or_else(|| panic!("`{verb}` signature no longer matches: FMA dispatch would silently vanish"));
+    let (ret, body) = tail.split_once(" {\n").expect("a method has a body");
+    let params = params.trim_start();
+    let clean: Vec<String> = params.split(", ").map(|p| p.strip_prefix("mut ").unwrap_or(p).to_string()).collect();
+    let args: Vec<&str> =
+        clean.iter().skip(1).map(|p| p.split_once(": ").map_or(p.as_str(), |(name, _)| name)).collect();
+    let (clean, args) = (clean.join(", "), args.join(", "));
+    let mut t = String::new();
+    let _ = writeln!(t, "    pub(crate) fn {verb}(\n        {clean},\n    ) -> {ret} {{");
+    let _ = writeln!(t, "        #[cfg(target_arch = \"x86_64\")]");
+    let _ = writeln!(t, "        return ta_lib_dispatch::dispatch_fma!(self, {verb}_fma, {verb}_scalar, ({args}));");
+    let _ = writeln!(t, "        #[cfg(not(target_arch = \"x86_64\"))]");
+    let _ = writeln!(t, "        self.{verb}_scalar({args})");
+    let _ = writeln!(t, "    }}\n");
+    let _ = writeln!(t, "    #[cfg(target_arch = \"x86_64\")]");
+    let _ = writeln!(t, "    #[target_feature(enable = \"fma\")]");
+    let _ = writeln!(t, "    fn {verb}_fma(\n        {clean},\n    ) -> {ret} {{");
+    let _ = writeln!(t, "        self.{verb}_scalar({args})");
+    let _ = writeln!(t, "    }}\n");
+    let _ = writeln!(t, "    #[inline(always)]");
+    let _ = writeln!(t, "    fn {verb}_scalar(\n        {params},\n    ) -> {ret} {{");
+    t.push_str(body);
+    o.replace_range(line..end, &t);
 }
 
 /// [`STREAM_FMA_MIN_SITES`] fused sites, and no loop.

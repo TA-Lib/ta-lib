@@ -706,6 +706,24 @@ impl Core {
     /// The single whole-history transcription behind [`Core::kstext_open_internal`]
     /// (stride 0, scalar sink) and [`Core::kstext_open_and_fill`] (stride 1, caller slices).
     pub(crate) fn kstext_open_impl(
+        &self, inReal: &[f64], startIdx: usize, optInROC1Period: i32, optInROC2Period: i32, optInROC3Period: i32, optInROC4Period: i32, optInMA1Period: i32, optInMA2Period: i32, optInMA3Period: i32, optInMA4Period: i32, optInSignalPeriod: i32, optInROCMAType: MAType, optInSignalMAType: MAType, outBegIdx: &mut usize, outNBElement: &mut usize, outKST: &mut [f64], outKSTSignal: &mut [f64], outStride: usize,
+    ) -> Result<KstextStream, RetCode> {
+        #[cfg(target_arch = "x86_64")]
+        return ta_lib_dispatch::dispatch_fma!(self, kstext_open_impl_fma, kstext_open_impl_scalar, (inReal, startIdx, optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInMA1Period, optInMA2Period, optInMA3Period, optInMA4Period, optInSignalPeriod, optInROCMAType, optInSignalMAType, outBegIdx, outNBElement, outKST, outKSTSignal, outStride));
+        #[cfg(not(target_arch = "x86_64"))]
+        self.kstext_open_impl_scalar(inReal, startIdx, optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInMA1Period, optInMA2Period, optInMA3Period, optInMA4Period, optInSignalPeriod, optInROCMAType, optInSignalMAType, outBegIdx, outNBElement, outKST, outKSTSignal, outStride)
+    }
+
+    #[cfg(target_arch = "x86_64")]
+    #[target_feature(enable = "fma")]
+    fn kstext_open_impl_fma(
+        &self, inReal: &[f64], startIdx: usize, optInROC1Period: i32, optInROC2Period: i32, optInROC3Period: i32, optInROC4Period: i32, optInMA1Period: i32, optInMA2Period: i32, optInMA3Period: i32, optInMA4Period: i32, optInSignalPeriod: i32, optInROCMAType: MAType, optInSignalMAType: MAType, outBegIdx: &mut usize, outNBElement: &mut usize, outKST: &mut [f64], outKSTSignal: &mut [f64], outStride: usize,
+    ) -> Result<KstextStream, RetCode> {
+        self.kstext_open_impl_scalar(inReal, startIdx, optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInMA1Period, optInMA2Period, optInMA3Period, optInMA4Period, optInSignalPeriod, optInROCMAType, optInSignalMAType, outBegIdx, outNBElement, outKST, outKSTSignal, outStride)
+    }
+
+    #[inline(always)]
+    fn kstext_open_impl_scalar(
         &self, inReal: &[f64], startIdx: usize, mut optInROC1Period: i32, mut optInROC2Period: i32, mut optInROC3Period: i32, mut optInROC4Period: i32, mut optInMA1Period: i32, mut optInMA2Period: i32, mut optInMA3Period: i32, mut optInMA4Period: i32, mut optInSignalPeriod: i32, mut optInROCMAType: MAType, mut optInSignalMAType: MAType, outBegIdx: &mut usize, outNBElement: &mut usize, outKST: &mut [f64], outKSTSignal: &mut [f64], outStride: usize,
     ) -> Result<KstextStream, RetCode> {
         if inReal.is_empty() {

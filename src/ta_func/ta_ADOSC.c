@@ -425,7 +425,7 @@ static TA_FMA_STEP_INLINE void TA_ADOSC_StepImpl( struct TA_ADOSC_Stream *sp, do
    sp->cur_outReal = *outReal;
 }
 
-static TA_RetCode TA_ADOSC_OpenImpl( struct TA_ADOSC_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], const double inVolume[], int startIdx, int historyLen, int optInFastPeriod, int optInSlowPeriod, int *outBegIdx, int *outNBElement, double outReal[], int outStride )
+static TA_FMA_STEP_INLINE TA_RetCode TA_ADOSC_OpenImpl( struct TA_ADOSC_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], const double inVolume[], int startIdx, int historyLen, int optInFastPeriod, int optInSlowPeriod, int *outBegIdx, int *outNBElement, double outReal[], int outStride )
 {
    struct TA_ADOSC_Stream *sp;
    int endIdx;
@@ -598,6 +598,16 @@ static TA_RetCode TA_ADOSC_OpenImpl( struct TA_ADOSC_Stream **stream, const doub
    }
 }
 
+TA_FMA_OPEN_CLONE static TA_RetCode TA_ADOSC_OpenImplFma( struct TA_ADOSC_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], const double inVolume[], int startIdx, int historyLen, int optInFastPeriod, int optInSlowPeriod, int *outBegIdx, int *outNBElement, double outReal[], int outStride )
+{
+   return TA_ADOSC_OpenImpl( stream, inHigh, inLow, inClose, inVolume, startIdx, historyLen, optInFastPeriod, optInSlowPeriod, outBegIdx, outNBElement, outReal, outStride );
+}
+
+TA_FMA_OPEN_PLAIN static TA_RetCode TA_ADOSC_OpenImplPlain( struct TA_ADOSC_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], const double inVolume[], int startIdx, int historyLen, int optInFastPeriod, int optInSlowPeriod, int *outBegIdx, int *outNBElement, double outReal[], int outStride )
+{
+   return TA_ADOSC_OpenImpl( stream, inHigh, inLow, inClose, inVolume, startIdx, historyLen, optInFastPeriod, optInSlowPeriod, outBegIdx, outNBElement, outReal, outStride );
+}
+
 /* Private function, not in public API. */
 TA_RetCode TA_ADOSC_OpenInternal( struct TA_ADOSC_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], const double inVolume[], int startIdx, int historyLen, int optInFastPeriod, int optInSlowPeriod, double *outReal )
 {
@@ -605,7 +615,7 @@ TA_RetCode TA_ADOSC_OpenInternal( struct TA_ADOSC_Stream **stream, const double 
    int dummyBegIdx = 0;
    int dummyNBElement = 0;
    double sink_outReal = 0.0;
-   retCode = TA_ADOSC_OpenImpl( stream, inHigh, inLow, inClose, inVolume, startIdx, historyLen, optInFastPeriod, optInSlowPeriod, &dummyBegIdx, &dummyNBElement, &sink_outReal, 0 );
+   retCode = TA_FMA_AVAILABLE ? TA_ADOSC_OpenImplFma( stream, inHigh, inLow, inClose, inVolume, startIdx, historyLen, optInFastPeriod, optInSlowPeriod, &dummyBegIdx, &dummyNBElement, &sink_outReal, 0 ) : TA_ADOSC_OpenImplPlain( stream, inHigh, inLow, inClose, inVolume, startIdx, historyLen, optInFastPeriod, optInSlowPeriod, &dummyBegIdx, &dummyNBElement, &sink_outReal, 0 );
    if( retCode == TA_SUCCESS )
    {
       *outReal = sink_outReal;
@@ -637,7 +647,7 @@ TA_LIB_API TA_RetCode TA_ADOSC_OpenAndFill( TA_ADOSC_Stream **stream, const doub
 /* Private function, not in public API. */
 TA_RetCode TA_ADOSC_OpenAndFillInternal( struct TA_ADOSC_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], const double inVolume[], int startIdx, int historyLen, int optInFastPeriod, int optInSlowPeriod, int *outBegIdx, int *outNBElement, double outReal[] )
 {
-   return TA_ADOSC_OpenImpl( stream, inHigh, inLow, inClose, inVolume, startIdx, historyLen, optInFastPeriod, optInSlowPeriod, outBegIdx, outNBElement, outReal, 1 );
+   return TA_FMA_AVAILABLE ? TA_ADOSC_OpenImplFma( stream, inHigh, inLow, inClose, inVolume, startIdx, historyLen, optInFastPeriod, optInSlowPeriod, outBegIdx, outNBElement, outReal, 1 ) : TA_ADOSC_OpenImplPlain( stream, inHigh, inLow, inClose, inVolume, startIdx, historyLen, optInFastPeriod, optInSlowPeriod, outBegIdx, outNBElement, outReal, 1 );
 }
 
 TA_FMA_MULTIVERSION

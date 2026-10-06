@@ -531,6 +531,24 @@ impl Core {
     /// The single whole-history transcription behind [`Core::massi_open_internal`]
     /// (stride 0, scalar sink) and [`Core::massi_open_and_fill`] (stride 1, caller slices).
     pub(crate) fn massi_open_impl(
+        &self, inHigh: &[f64], inLow: &[f64], startIdx: usize, optInFastPeriod: i32, optInSlowPeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64], outStride: usize,
+    ) -> Result<MassiStream, RetCode> {
+        #[cfg(target_arch = "x86_64")]
+        return ta_lib_dispatch::dispatch_fma!(self, massi_open_impl_fma, massi_open_impl_scalar, (inHigh, inLow, startIdx, optInFastPeriod, optInSlowPeriod, outBegIdx, outNBElement, outReal, outStride));
+        #[cfg(not(target_arch = "x86_64"))]
+        self.massi_open_impl_scalar(inHigh, inLow, startIdx, optInFastPeriod, optInSlowPeriod, outBegIdx, outNBElement, outReal, outStride)
+    }
+
+    #[cfg(target_arch = "x86_64")]
+    #[target_feature(enable = "fma")]
+    fn massi_open_impl_fma(
+        &self, inHigh: &[f64], inLow: &[f64], startIdx: usize, optInFastPeriod: i32, optInSlowPeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64], outStride: usize,
+    ) -> Result<MassiStream, RetCode> {
+        self.massi_open_impl_scalar(inHigh, inLow, startIdx, optInFastPeriod, optInSlowPeriod, outBegIdx, outNBElement, outReal, outStride)
+    }
+
+    #[inline(always)]
+    fn massi_open_impl_scalar(
         &self, inHigh: &[f64], inLow: &[f64], startIdx: usize, mut optInFastPeriod: i32, mut optInSlowPeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64], outStride: usize,
     ) -> Result<MassiStream, RetCode> {
         if inHigh.is_empty() {

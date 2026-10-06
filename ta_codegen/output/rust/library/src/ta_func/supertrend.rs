@@ -626,6 +626,24 @@ impl Core {
     /// The single whole-history transcription behind [`Core::supertrend_open_internal`]
     /// (stride 0, scalar sink) and [`Core::supertrend_open_and_fill`] (stride 1, caller slices).
     pub(crate) fn supertrend_open_impl(
+        &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize, optInTimePeriod: i32, optInMultiplier: f64, outBegIdx: &mut usize, outNBElement: &mut usize, outSupertrend: &mut [f64], outTrend: &mut [i32], outStride: usize,
+    ) -> Result<SupertrendStream, RetCode> {
+        #[cfg(target_arch = "x86_64")]
+        return ta_lib_dispatch::dispatch_fma!(self, supertrend_open_impl_fma, supertrend_open_impl_scalar, (inHigh, inLow, inClose, startIdx, optInTimePeriod, optInMultiplier, outBegIdx, outNBElement, outSupertrend, outTrend, outStride));
+        #[cfg(not(target_arch = "x86_64"))]
+        self.supertrend_open_impl_scalar(inHigh, inLow, inClose, startIdx, optInTimePeriod, optInMultiplier, outBegIdx, outNBElement, outSupertrend, outTrend, outStride)
+    }
+
+    #[cfg(target_arch = "x86_64")]
+    #[target_feature(enable = "fma")]
+    fn supertrend_open_impl_fma(
+        &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize, optInTimePeriod: i32, optInMultiplier: f64, outBegIdx: &mut usize, outNBElement: &mut usize, outSupertrend: &mut [f64], outTrend: &mut [i32], outStride: usize,
+    ) -> Result<SupertrendStream, RetCode> {
+        self.supertrend_open_impl_scalar(inHigh, inLow, inClose, startIdx, optInTimePeriod, optInMultiplier, outBegIdx, outNBElement, outSupertrend, outTrend, outStride)
+    }
+
+    #[inline(always)]
+    fn supertrend_open_impl_scalar(
         &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize, mut optInTimePeriod: i32, mut optInMultiplier: f64, outBegIdx: &mut usize, outNBElement: &mut usize, outSupertrend: &mut [f64], outTrend: &mut [i32], outStride: usize,
     ) -> Result<SupertrendStream, RetCode> {
         if inHigh.is_empty() {

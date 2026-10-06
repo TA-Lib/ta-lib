@@ -534,6 +534,24 @@ impl Core {
     /// The single whole-history transcription behind [`Core::atr_open_internal`]
     /// (stride 0, scalar sink) and [`Core::atr_open_and_fill`] (stride 1, caller slices).
     pub(crate) fn atr_open_impl(
+        &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize, optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64], outStride: usize,
+    ) -> Result<AtrStream, RetCode> {
+        #[cfg(target_arch = "x86_64")]
+        return ta_lib_dispatch::dispatch_fma!(self, atr_open_impl_fma, atr_open_impl_scalar, (inHigh, inLow, inClose, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, outStride));
+        #[cfg(not(target_arch = "x86_64"))]
+        self.atr_open_impl_scalar(inHigh, inLow, inClose, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, outStride)
+    }
+
+    #[cfg(target_arch = "x86_64")]
+    #[target_feature(enable = "fma")]
+    fn atr_open_impl_fma(
+        &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize, optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64], outStride: usize,
+    ) -> Result<AtrStream, RetCode> {
+        self.atr_open_impl_scalar(inHigh, inLow, inClose, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, outStride)
+    }
+
+    #[inline(always)]
+    fn atr_open_impl_scalar(
         &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize, mut optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64], outStride: usize,
     ) -> Result<AtrStream, RetCode> {
         if inHigh.is_empty() {

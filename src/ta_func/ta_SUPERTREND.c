@@ -609,7 +609,7 @@ static TA_FMA_STEP_INLINE void TA_SUPERTREND_StepImpl( struct TA_SUPERTREND_Stre
    sp->lag1_inClose = inClose;
 }
 
-static TA_RetCode TA_SUPERTREND_OpenImpl( struct TA_SUPERTREND_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, int optInTimePeriod, double optInMultiplier, int *outBegIdx, int *outNBElement, double outSupertrend[], int outTrend[], int outStride )
+static TA_FMA_STEP_INLINE TA_RetCode TA_SUPERTREND_OpenImpl( struct TA_SUPERTREND_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, int optInTimePeriod, double optInMultiplier, int *outBegIdx, int *outNBElement, double outSupertrend[], int outTrend[], int outStride )
 {
    struct TA_SUPERTREND_Stream *sp;
    int endIdx;
@@ -845,6 +845,16 @@ static TA_RetCode TA_SUPERTREND_OpenImpl( struct TA_SUPERTREND_Stream **stream, 
    }
 }
 
+TA_FMA_OPEN_CLONE static TA_RetCode TA_SUPERTREND_OpenImplFma( struct TA_SUPERTREND_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, int optInTimePeriod, double optInMultiplier, int *outBegIdx, int *outNBElement, double outSupertrend[], int outTrend[], int outStride )
+{
+   return TA_SUPERTREND_OpenImpl( stream, inHigh, inLow, inClose, startIdx, historyLen, optInTimePeriod, optInMultiplier, outBegIdx, outNBElement, outSupertrend, outTrend, outStride );
+}
+
+TA_FMA_OPEN_PLAIN static TA_RetCode TA_SUPERTREND_OpenImplPlain( struct TA_SUPERTREND_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, int optInTimePeriod, double optInMultiplier, int *outBegIdx, int *outNBElement, double outSupertrend[], int outTrend[], int outStride )
+{
+   return TA_SUPERTREND_OpenImpl( stream, inHigh, inLow, inClose, startIdx, historyLen, optInTimePeriod, optInMultiplier, outBegIdx, outNBElement, outSupertrend, outTrend, outStride );
+}
+
 /* Private function, not in public API. */
 TA_RetCode TA_SUPERTREND_OpenInternal( struct TA_SUPERTREND_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, int optInTimePeriod, double optInMultiplier, double *outSupertrend, int *outTrend )
 {
@@ -853,7 +863,7 @@ TA_RetCode TA_SUPERTREND_OpenInternal( struct TA_SUPERTREND_Stream **stream, con
    int dummyNBElement = 0;
    double sink_outSupertrend = 0.0;
    int sink_outTrend = 0;
-   retCode = TA_SUPERTREND_OpenImpl( stream, inHigh, inLow, inClose, startIdx, historyLen, optInTimePeriod, optInMultiplier, &dummyBegIdx, &dummyNBElement, &sink_outSupertrend, &sink_outTrend, 0 );
+   retCode = TA_FMA_AVAILABLE ? TA_SUPERTREND_OpenImplFma( stream, inHigh, inLow, inClose, startIdx, historyLen, optInTimePeriod, optInMultiplier, &dummyBegIdx, &dummyNBElement, &sink_outSupertrend, &sink_outTrend, 0 ) : TA_SUPERTREND_OpenImplPlain( stream, inHigh, inLow, inClose, startIdx, historyLen, optInTimePeriod, optInMultiplier, &dummyBegIdx, &dummyNBElement, &sink_outSupertrend, &sink_outTrend, 0 );
    if( retCode == TA_SUCCESS )
    {
       *outSupertrend = sink_outSupertrend;
@@ -886,7 +896,7 @@ TA_LIB_API TA_RetCode TA_SUPERTREND_OpenAndFill( TA_SUPERTREND_Stream **stream, 
 /* Private function, not in public API. */
 TA_RetCode TA_SUPERTREND_OpenAndFillInternal( struct TA_SUPERTREND_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, int optInTimePeriod, double optInMultiplier, int *outBegIdx, int *outNBElement, double outSupertrend[], int outTrend[] )
 {
-   return TA_SUPERTREND_OpenImpl( stream, inHigh, inLow, inClose, startIdx, historyLen, optInTimePeriod, optInMultiplier, outBegIdx, outNBElement, outSupertrend, outTrend, 1 );
+   return TA_FMA_AVAILABLE ? TA_SUPERTREND_OpenImplFma( stream, inHigh, inLow, inClose, startIdx, historyLen, optInTimePeriod, optInMultiplier, outBegIdx, outNBElement, outSupertrend, outTrend, 1 ) : TA_SUPERTREND_OpenImplPlain( stream, inHigh, inLow, inClose, startIdx, historyLen, optInTimePeriod, optInMultiplier, outBegIdx, outNBElement, outSupertrend, outTrend, 1 );
 }
 
 TA_FMA_MULTIVERSION

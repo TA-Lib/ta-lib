@@ -526,6 +526,24 @@ impl Core {
     /// The single whole-history transcription behind [`Core::macdfix_open_internal`]
     /// (stride 0, scalar sink) and [`Core::macdfix_open_and_fill`] (stride 1, caller slices).
     pub(crate) fn macdfix_open_impl(
+        &self, inReal: &[f64], startIdx: usize, optInSignalPeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outMACD: &mut [f64], outMACDSignal: &mut [f64], outMACDHist: &mut [f64], outStride: usize,
+    ) -> Result<MacdfixStream, RetCode> {
+        #[cfg(target_arch = "x86_64")]
+        return ta_lib_dispatch::dispatch_fma!(self, macdfix_open_impl_fma, macdfix_open_impl_scalar, (inReal, startIdx, optInSignalPeriod, outBegIdx, outNBElement, outMACD, outMACDSignal, outMACDHist, outStride));
+        #[cfg(not(target_arch = "x86_64"))]
+        self.macdfix_open_impl_scalar(inReal, startIdx, optInSignalPeriod, outBegIdx, outNBElement, outMACD, outMACDSignal, outMACDHist, outStride)
+    }
+
+    #[cfg(target_arch = "x86_64")]
+    #[target_feature(enable = "fma")]
+    fn macdfix_open_impl_fma(
+        &self, inReal: &[f64], startIdx: usize, optInSignalPeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outMACD: &mut [f64], outMACDSignal: &mut [f64], outMACDHist: &mut [f64], outStride: usize,
+    ) -> Result<MacdfixStream, RetCode> {
+        self.macdfix_open_impl_scalar(inReal, startIdx, optInSignalPeriod, outBegIdx, outNBElement, outMACD, outMACDSignal, outMACDHist, outStride)
+    }
+
+    #[inline(always)]
+    fn macdfix_open_impl_scalar(
         &self, inReal: &[f64], startIdx: usize, mut optInSignalPeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outMACD: &mut [f64], outMACDSignal: &mut [f64], outMACDHist: &mut [f64], outStride: usize,
     ) -> Result<MacdfixStream, RetCode> {
         if inReal.is_empty() {

@@ -781,6 +781,24 @@ impl Core {
     /// The single whole-history transcription behind [`Core::smi_open_internal`]
     /// (stride 0, scalar sink) and [`Core::smi_open_and_fill`] (stride 1, caller slices).
     pub(crate) fn smi_open_impl(
+        &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize, optInTimePeriod: i32, optInFastPeriod: i32, optInSlowPeriod: i32, optInSignalPeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outSMI: &mut [f64], outSMISignal: &mut [f64], outStride: usize,
+    ) -> Result<SmiStream, RetCode> {
+        #[cfg(target_arch = "x86_64")]
+        return ta_lib_dispatch::dispatch_fma!(self, smi_open_impl_fma, smi_open_impl_scalar, (inHigh, inLow, inClose, startIdx, optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outBegIdx, outNBElement, outSMI, outSMISignal, outStride));
+        #[cfg(not(target_arch = "x86_64"))]
+        self.smi_open_impl_scalar(inHigh, inLow, inClose, startIdx, optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outBegIdx, outNBElement, outSMI, outSMISignal, outStride)
+    }
+
+    #[cfg(target_arch = "x86_64")]
+    #[target_feature(enable = "fma")]
+    fn smi_open_impl_fma(
+        &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize, optInTimePeriod: i32, optInFastPeriod: i32, optInSlowPeriod: i32, optInSignalPeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outSMI: &mut [f64], outSMISignal: &mut [f64], outStride: usize,
+    ) -> Result<SmiStream, RetCode> {
+        self.smi_open_impl_scalar(inHigh, inLow, inClose, startIdx, optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outBegIdx, outNBElement, outSMI, outSMISignal, outStride)
+    }
+
+    #[inline(always)]
+    fn smi_open_impl_scalar(
         &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize, mut optInTimePeriod: i32, mut optInFastPeriod: i32, mut optInSlowPeriod: i32, mut optInSignalPeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outSMI: &mut [f64], outSMISignal: &mut [f64], outStride: usize,
     ) -> Result<SmiStream, RetCode> {
         if inHigh.is_empty() {

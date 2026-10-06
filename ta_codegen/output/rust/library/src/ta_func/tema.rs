@@ -475,6 +475,24 @@ impl Core {
     /// The single whole-history transcription behind [`Core::tema_open_internal`]
     /// (stride 0, scalar sink) and [`Core::tema_open_and_fill`] (stride 1, caller slices).
     pub(crate) fn tema_open_impl(
+        &self, inReal: &[f64], startIdx: usize, optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64], outStride: usize,
+    ) -> Result<TemaStream, RetCode> {
+        #[cfg(target_arch = "x86_64")]
+        return ta_lib_dispatch::dispatch_fma!(self, tema_open_impl_fma, tema_open_impl_scalar, (inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, outStride));
+        #[cfg(not(target_arch = "x86_64"))]
+        self.tema_open_impl_scalar(inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, outStride)
+    }
+
+    #[cfg(target_arch = "x86_64")]
+    #[target_feature(enable = "fma")]
+    fn tema_open_impl_fma(
+        &self, inReal: &[f64], startIdx: usize, optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64], outStride: usize,
+    ) -> Result<TemaStream, RetCode> {
+        self.tema_open_impl_scalar(inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, outStride)
+    }
+
+    #[inline(always)]
+    fn tema_open_impl_scalar(
         &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64], outStride: usize,
     ) -> Result<TemaStream, RetCode> {
         if inReal.is_empty() {

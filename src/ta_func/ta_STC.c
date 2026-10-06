@@ -1431,7 +1431,7 @@ static TA_FMA_STEP_INLINE void TA_STC_StepImpl( struct TA_STC_Stream *sp, double
    sp->pf = pf;
 }
 
-static TA_RetCode TA_STC_OpenImpl( struct TA_STC_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInFastPeriod, int optInSlowPeriod, int optInCyclePeriod, int *outBegIdx, int *outNBElement, double outReal[], int outStride )
+static TA_FMA_STEP_INLINE TA_RetCode TA_STC_OpenImpl( struct TA_STC_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInFastPeriod, int optInSlowPeriod, int optInCyclePeriod, int *outBegIdx, int *outNBElement, double outReal[], int outStride )
 {
    struct TA_STC_Stream *sp;
    double local_lineRing[30];
@@ -2075,6 +2075,16 @@ static TA_RetCode TA_STC_OpenImpl( struct TA_STC_Stream **stream, const double i
    }
 }
 
+TA_FMA_OPEN_CLONE static TA_RetCode TA_STC_OpenImplFma( struct TA_STC_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInFastPeriod, int optInSlowPeriod, int optInCyclePeriod, int *outBegIdx, int *outNBElement, double outReal[], int outStride )
+{
+   return TA_STC_OpenImpl( stream, inReal, startIdx, historyLen, optInFastPeriod, optInSlowPeriod, optInCyclePeriod, outBegIdx, outNBElement, outReal, outStride );
+}
+
+TA_FMA_OPEN_PLAIN static TA_RetCode TA_STC_OpenImplPlain( struct TA_STC_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInFastPeriod, int optInSlowPeriod, int optInCyclePeriod, int *outBegIdx, int *outNBElement, double outReal[], int outStride )
+{
+   return TA_STC_OpenImpl( stream, inReal, startIdx, historyLen, optInFastPeriod, optInSlowPeriod, optInCyclePeriod, outBegIdx, outNBElement, outReal, outStride );
+}
+
 /* Private function, not in public API. */
 TA_RetCode TA_STC_OpenInternal( struct TA_STC_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInFastPeriod, int optInSlowPeriod, int optInCyclePeriod, double *outReal )
 {
@@ -2082,7 +2092,7 @@ TA_RetCode TA_STC_OpenInternal( struct TA_STC_Stream **stream, const double inRe
    int dummyBegIdx = 0;
    int dummyNBElement = 0;
    double sink_outReal = 0.0;
-   retCode = TA_STC_OpenImpl( stream, inReal, startIdx, historyLen, optInFastPeriod, optInSlowPeriod, optInCyclePeriod, &dummyBegIdx, &dummyNBElement, &sink_outReal, 0 );
+   retCode = TA_FMA_AVAILABLE ? TA_STC_OpenImplFma( stream, inReal, startIdx, historyLen, optInFastPeriod, optInSlowPeriod, optInCyclePeriod, &dummyBegIdx, &dummyNBElement, &sink_outReal, 0 ) : TA_STC_OpenImplPlain( stream, inReal, startIdx, historyLen, optInFastPeriod, optInSlowPeriod, optInCyclePeriod, &dummyBegIdx, &dummyNBElement, &sink_outReal, 0 );
    if( retCode == TA_SUCCESS )
    {
       *outReal = sink_outReal;
@@ -2114,7 +2124,7 @@ TA_LIB_API TA_RetCode TA_STC_OpenAndFill( TA_STC_Stream **stream, const double i
 /* Private function, not in public API. */
 TA_RetCode TA_STC_OpenAndFillInternal( struct TA_STC_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInFastPeriod, int optInSlowPeriod, int optInCyclePeriod, int *outBegIdx, int *outNBElement, double outReal[] )
 {
-   return TA_STC_OpenImpl( stream, inReal, startIdx, historyLen, optInFastPeriod, optInSlowPeriod, optInCyclePeriod, outBegIdx, outNBElement, outReal, 1 );
+   return TA_FMA_AVAILABLE ? TA_STC_OpenImplFma( stream, inReal, startIdx, historyLen, optInFastPeriod, optInSlowPeriod, optInCyclePeriod, outBegIdx, outNBElement, outReal, 1 ) : TA_STC_OpenImplPlain( stream, inReal, startIdx, historyLen, optInFastPeriod, optInSlowPeriod, optInCyclePeriod, outBegIdx, outNBElement, outReal, 1 );
 }
 
 TA_FMA_MULTIVERSION

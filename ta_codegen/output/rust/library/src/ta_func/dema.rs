@@ -449,6 +449,24 @@ impl Core {
     /// The single whole-history transcription behind [`Core::dema_open_internal`]
     /// (stride 0, scalar sink) and [`Core::dema_open_and_fill`] (stride 1, caller slices).
     pub(crate) fn dema_open_impl(
+        &self, inReal: &[f64], startIdx: usize, optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64], outStride: usize,
+    ) -> Result<DemaStream, RetCode> {
+        #[cfg(target_arch = "x86_64")]
+        return ta_lib_dispatch::dispatch_fma!(self, dema_open_impl_fma, dema_open_impl_scalar, (inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, outStride));
+        #[cfg(not(target_arch = "x86_64"))]
+        self.dema_open_impl_scalar(inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, outStride)
+    }
+
+    #[cfg(target_arch = "x86_64")]
+    #[target_feature(enable = "fma")]
+    fn dema_open_impl_fma(
+        &self, inReal: &[f64], startIdx: usize, optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64], outStride: usize,
+    ) -> Result<DemaStream, RetCode> {
+        self.dema_open_impl_scalar(inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, outStride)
+    }
+
+    #[inline(always)]
+    fn dema_open_impl_scalar(
         &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64], outStride: usize,
     ) -> Result<DemaStream, RetCode> {
         if inReal.is_empty() {

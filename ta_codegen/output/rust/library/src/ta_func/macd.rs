@@ -601,6 +601,24 @@ impl Core {
     /// The single whole-history transcription behind [`Core::macd_open_internal`]
     /// (stride 0, scalar sink) and [`Core::macd_open_and_fill`] (stride 1, caller slices).
     pub(crate) fn macd_open_impl(
+        &self, inReal: &[f64], startIdx: usize, optInFastPeriod: i32, optInSlowPeriod: i32, optInSignalPeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outMACD: &mut [f64], outMACDSignal: &mut [f64], outMACDHist: &mut [f64], outStride: usize,
+    ) -> Result<MacdStream, RetCode> {
+        #[cfg(target_arch = "x86_64")]
+        return ta_lib_dispatch::dispatch_fma!(self, macd_open_impl_fma, macd_open_impl_scalar, (inReal, startIdx, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outBegIdx, outNBElement, outMACD, outMACDSignal, outMACDHist, outStride));
+        #[cfg(not(target_arch = "x86_64"))]
+        self.macd_open_impl_scalar(inReal, startIdx, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outBegIdx, outNBElement, outMACD, outMACDSignal, outMACDHist, outStride)
+    }
+
+    #[cfg(target_arch = "x86_64")]
+    #[target_feature(enable = "fma")]
+    fn macd_open_impl_fma(
+        &self, inReal: &[f64], startIdx: usize, optInFastPeriod: i32, optInSlowPeriod: i32, optInSignalPeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outMACD: &mut [f64], outMACDSignal: &mut [f64], outMACDHist: &mut [f64], outStride: usize,
+    ) -> Result<MacdStream, RetCode> {
+        self.macd_open_impl_scalar(inReal, startIdx, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outBegIdx, outNBElement, outMACD, outMACDSignal, outMACDHist, outStride)
+    }
+
+    #[inline(always)]
+    fn macd_open_impl_scalar(
         &self, inReal: &[f64], startIdx: usize, mut optInFastPeriod: i32, mut optInSlowPeriod: i32, mut optInSignalPeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outMACD: &mut [f64], outMACDSignal: &mut [f64], outMACDHist: &mut [f64], outStride: usize,
     ) -> Result<MacdStream, RetCode> {
         if inReal.is_empty() {

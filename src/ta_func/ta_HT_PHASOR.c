@@ -997,7 +997,7 @@ static TA_FMA_STEP_INLINE void TA_HT_PHASOR_StepImpl( struct TA_HT_PHASOR_Stream
    sp->streamParity = 1 - sp->streamParity;
 }
 
-static TA_RetCode TA_HT_PHASOR_OpenImpl( struct TA_HT_PHASOR_Stream **stream, const double inReal[], int startIdx, int historyLen, int *outBegIdx, int *outNBElement, double outInPhase[], double outQuadrature[], int outStride )
+static TA_FMA_STEP_INLINE TA_RetCode TA_HT_PHASOR_OpenImpl( struct TA_HT_PHASOR_Stream **stream, const double inReal[], int startIdx, int historyLen, int *outBegIdx, int *outNBElement, double outInPhase[], double outQuadrature[], int outStride )
 {
    struct TA_HT_PHASOR_Stream *sp;
    int endIdx;
@@ -1420,6 +1420,16 @@ static TA_RetCode TA_HT_PHASOR_OpenImpl( struct TA_HT_PHASOR_Stream **stream, co
    }
 }
 
+TA_FMA_OPEN_CLONE static TA_RetCode TA_HT_PHASOR_OpenImplFma( struct TA_HT_PHASOR_Stream **stream, const double inReal[], int startIdx, int historyLen, int *outBegIdx, int *outNBElement, double outInPhase[], double outQuadrature[], int outStride )
+{
+   return TA_HT_PHASOR_OpenImpl( stream, inReal, startIdx, historyLen, outBegIdx, outNBElement, outInPhase, outQuadrature, outStride );
+}
+
+TA_FMA_OPEN_PLAIN static TA_RetCode TA_HT_PHASOR_OpenImplPlain( struct TA_HT_PHASOR_Stream **stream, const double inReal[], int startIdx, int historyLen, int *outBegIdx, int *outNBElement, double outInPhase[], double outQuadrature[], int outStride )
+{
+   return TA_HT_PHASOR_OpenImpl( stream, inReal, startIdx, historyLen, outBegIdx, outNBElement, outInPhase, outQuadrature, outStride );
+}
+
 /* Private function, not in public API. */
 TA_RetCode TA_HT_PHASOR_OpenInternal( struct TA_HT_PHASOR_Stream **stream, const double inReal[], int startIdx, int historyLen, double *outInPhase, double *outQuadrature )
 {
@@ -1428,7 +1438,7 @@ TA_RetCode TA_HT_PHASOR_OpenInternal( struct TA_HT_PHASOR_Stream **stream, const
    int dummyNBElement = 0;
    double sink_outInPhase = 0.0;
    double sink_outQuadrature = 0.0;
-   retCode = TA_HT_PHASOR_OpenImpl( stream, inReal, startIdx, historyLen, &dummyBegIdx, &dummyNBElement, &sink_outInPhase, &sink_outQuadrature, 0 );
+   retCode = TA_FMA_AVAILABLE ? TA_HT_PHASOR_OpenImplFma( stream, inReal, startIdx, historyLen, &dummyBegIdx, &dummyNBElement, &sink_outInPhase, &sink_outQuadrature, 0 ) : TA_HT_PHASOR_OpenImplPlain( stream, inReal, startIdx, historyLen, &dummyBegIdx, &dummyNBElement, &sink_outInPhase, &sink_outQuadrature, 0 );
    if( retCode == TA_SUCCESS )
    {
       *outInPhase = sink_outInPhase;
@@ -1461,7 +1471,7 @@ TA_LIB_API TA_RetCode TA_HT_PHASOR_OpenAndFill( TA_HT_PHASOR_Stream **stream, co
 /* Private function, not in public API. */
 TA_RetCode TA_HT_PHASOR_OpenAndFillInternal( struct TA_HT_PHASOR_Stream **stream, const double inReal[], int startIdx, int historyLen, int *outBegIdx, int *outNBElement, double outInPhase[], double outQuadrature[] )
 {
-   return TA_HT_PHASOR_OpenImpl( stream, inReal, startIdx, historyLen, outBegIdx, outNBElement, outInPhase, outQuadrature, 1 );
+   return TA_FMA_AVAILABLE ? TA_HT_PHASOR_OpenImplFma( stream, inReal, startIdx, historyLen, outBegIdx, outNBElement, outInPhase, outQuadrature, 1 ) : TA_HT_PHASOR_OpenImplPlain( stream, inReal, startIdx, historyLen, outBegIdx, outNBElement, outInPhase, outQuadrature, 1 );
 }
 
 TA_FMA_MULTIVERSION

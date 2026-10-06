@@ -482,7 +482,7 @@ static TA_FMA_STEP_INLINE void TA_T3_StepImpl( struct TA_T3_Stream *sp, double i
    sp->cur_outReal = *outReal;
 }
 
-static TA_RetCode TA_T3_OpenImpl( struct TA_T3_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInTimePeriod, double optInVFactor, int *outBegIdx, int *outNBElement, double outReal[], int outStride )
+static TA_FMA_STEP_INLINE TA_RetCode TA_T3_OpenImpl( struct TA_T3_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInTimePeriod, double optInVFactor, int *outBegIdx, int *outNBElement, double outReal[], int outStride )
 {
    struct TA_T3_Stream *sp;
    int endIdx;
@@ -716,6 +716,16 @@ static TA_RetCode TA_T3_OpenImpl( struct TA_T3_Stream **stream, const double inR
    }
 }
 
+TA_FMA_OPEN_CLONE static TA_RetCode TA_T3_OpenImplFma( struct TA_T3_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInTimePeriod, double optInVFactor, int *outBegIdx, int *outNBElement, double outReal[], int outStride )
+{
+   return TA_T3_OpenImpl( stream, inReal, startIdx, historyLen, optInTimePeriod, optInVFactor, outBegIdx, outNBElement, outReal, outStride );
+}
+
+TA_FMA_OPEN_PLAIN static TA_RetCode TA_T3_OpenImplPlain( struct TA_T3_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInTimePeriod, double optInVFactor, int *outBegIdx, int *outNBElement, double outReal[], int outStride )
+{
+   return TA_T3_OpenImpl( stream, inReal, startIdx, historyLen, optInTimePeriod, optInVFactor, outBegIdx, outNBElement, outReal, outStride );
+}
+
 /* Private function, not in public API. */
 TA_RetCode TA_T3_OpenInternal( struct TA_T3_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInTimePeriod, double optInVFactor, double *outReal )
 {
@@ -723,7 +733,7 @@ TA_RetCode TA_T3_OpenInternal( struct TA_T3_Stream **stream, const double inReal
    int dummyBegIdx = 0;
    int dummyNBElement = 0;
    double sink_outReal = 0.0;
-   retCode = TA_T3_OpenImpl( stream, inReal, startIdx, historyLen, optInTimePeriod, optInVFactor, &dummyBegIdx, &dummyNBElement, &sink_outReal, 0 );
+   retCode = TA_FMA_AVAILABLE ? TA_T3_OpenImplFma( stream, inReal, startIdx, historyLen, optInTimePeriod, optInVFactor, &dummyBegIdx, &dummyNBElement, &sink_outReal, 0 ) : TA_T3_OpenImplPlain( stream, inReal, startIdx, historyLen, optInTimePeriod, optInVFactor, &dummyBegIdx, &dummyNBElement, &sink_outReal, 0 );
    if( retCode == TA_SUCCESS )
    {
       *outReal = sink_outReal;
@@ -755,7 +765,7 @@ TA_LIB_API TA_RetCode TA_T3_OpenAndFill( TA_T3_Stream **stream, const double inR
 /* Private function, not in public API. */
 TA_RetCode TA_T3_OpenAndFillInternal( struct TA_T3_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInTimePeriod, double optInVFactor, int *outBegIdx, int *outNBElement, double outReal[] )
 {
-   return TA_T3_OpenImpl( stream, inReal, startIdx, historyLen, optInTimePeriod, optInVFactor, outBegIdx, outNBElement, outReal, 1 );
+   return TA_FMA_AVAILABLE ? TA_T3_OpenImplFma( stream, inReal, startIdx, historyLen, optInTimePeriod, optInVFactor, outBegIdx, outNBElement, outReal, 1 ) : TA_T3_OpenImplPlain( stream, inReal, startIdx, historyLen, optInTimePeriod, optInVFactor, outBegIdx, outNBElement, outReal, 1 );
 }
 
 TA_FMA_MULTIVERSION

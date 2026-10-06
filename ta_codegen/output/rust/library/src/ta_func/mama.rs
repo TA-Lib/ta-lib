@@ -1145,6 +1145,24 @@ impl Core {
     /// The single whole-history transcription behind [`Core::mama_open_internal`]
     /// (stride 0, scalar sink) and [`Core::mama_open_and_fill`] (stride 1, caller slices).
     pub(crate) fn mama_open_impl(
+        &self, inReal: &[f64], startIdx: usize, optInFastLimit: f64, optInSlowLimit: f64, outBegIdx: &mut usize, outNBElement: &mut usize, outMAMA: &mut [f64], outFAMA: Option<&mut [f64]>, outStride: usize,
+    ) -> Result<MamaStream, RetCode> {
+        #[cfg(target_arch = "x86_64")]
+        return ta_lib_dispatch::dispatch_fma!(self, mama_open_impl_fma, mama_open_impl_scalar, (inReal, startIdx, optInFastLimit, optInSlowLimit, outBegIdx, outNBElement, outMAMA, outFAMA, outStride));
+        #[cfg(not(target_arch = "x86_64"))]
+        self.mama_open_impl_scalar(inReal, startIdx, optInFastLimit, optInSlowLimit, outBegIdx, outNBElement, outMAMA, outFAMA, outStride)
+    }
+
+    #[cfg(target_arch = "x86_64")]
+    #[target_feature(enable = "fma")]
+    fn mama_open_impl_fma(
+        &self, inReal: &[f64], startIdx: usize, optInFastLimit: f64, optInSlowLimit: f64, outBegIdx: &mut usize, outNBElement: &mut usize, outMAMA: &mut [f64], outFAMA: Option<&mut [f64]>, outStride: usize,
+    ) -> Result<MamaStream, RetCode> {
+        self.mama_open_impl_scalar(inReal, startIdx, optInFastLimit, optInSlowLimit, outBegIdx, outNBElement, outMAMA, outFAMA, outStride)
+    }
+
+    #[inline(always)]
+    fn mama_open_impl_scalar(
         &self, inReal: &[f64], startIdx: usize, mut optInFastLimit: f64, mut optInSlowLimit: f64, outBegIdx: &mut usize, outNBElement: &mut usize, outMAMA: &mut [f64], mut outFAMA: Option<&mut [f64]>, outStride: usize,
     ) -> Result<MamaStream, RetCode> {
         if inReal.is_empty() {

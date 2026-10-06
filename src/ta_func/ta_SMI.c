@@ -890,7 +890,7 @@ static TA_FMA_STEP_INLINE void TA_SMI_StepImpl( struct TA_SMI_Stream *sp, double
    sp->prevSignal = prevSignal;
 }
 
-static TA_RetCode TA_SMI_OpenImpl( struct TA_SMI_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, int optInTimePeriod, int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod, int *outBegIdx, int *outNBElement, double outSMI[], double outSMISignal[], int outStride )
+static TA_FMA_STEP_INLINE TA_RetCode TA_SMI_OpenImpl( struct TA_SMI_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, int optInTimePeriod, int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod, int *outBegIdx, int *outNBElement, double outSMI[], double outSMISignal[], int outStride )
 {
    struct TA_SMI_Stream *sp;
    int endIdx;
@@ -1279,6 +1279,16 @@ static TA_RetCode TA_SMI_OpenImpl( struct TA_SMI_Stream **stream, const double i
    }
 }
 
+TA_FMA_OPEN_CLONE static TA_RetCode TA_SMI_OpenImplFma( struct TA_SMI_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, int optInTimePeriod, int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod, int *outBegIdx, int *outNBElement, double outSMI[], double outSMISignal[], int outStride )
+{
+   return TA_SMI_OpenImpl( stream, inHigh, inLow, inClose, startIdx, historyLen, optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outBegIdx, outNBElement, outSMI, outSMISignal, outStride );
+}
+
+TA_FMA_OPEN_PLAIN static TA_RetCode TA_SMI_OpenImplPlain( struct TA_SMI_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, int optInTimePeriod, int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod, int *outBegIdx, int *outNBElement, double outSMI[], double outSMISignal[], int outStride )
+{
+   return TA_SMI_OpenImpl( stream, inHigh, inLow, inClose, startIdx, historyLen, optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outBegIdx, outNBElement, outSMI, outSMISignal, outStride );
+}
+
 /* Private function, not in public API. */
 TA_RetCode TA_SMI_OpenInternal( struct TA_SMI_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, int optInTimePeriod, int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod, double *outSMI, double *outSMISignal )
 {
@@ -1287,7 +1297,7 @@ TA_RetCode TA_SMI_OpenInternal( struct TA_SMI_Stream **stream, const double inHi
    int dummyNBElement = 0;
    double sink_outSMI = 0.0;
    double sink_outSMISignal = 0.0;
-   retCode = TA_SMI_OpenImpl( stream, inHigh, inLow, inClose, startIdx, historyLen, optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, &dummyBegIdx, &dummyNBElement, &sink_outSMI, &sink_outSMISignal, 0 );
+   retCode = TA_FMA_AVAILABLE ? TA_SMI_OpenImplFma( stream, inHigh, inLow, inClose, startIdx, historyLen, optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, &dummyBegIdx, &dummyNBElement, &sink_outSMI, &sink_outSMISignal, 0 ) : TA_SMI_OpenImplPlain( stream, inHigh, inLow, inClose, startIdx, historyLen, optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, &dummyBegIdx, &dummyNBElement, &sink_outSMI, &sink_outSMISignal, 0 );
    if( retCode == TA_SUCCESS )
    {
       *outSMI = sink_outSMI;
@@ -1320,7 +1330,7 @@ TA_LIB_API TA_RetCode TA_SMI_OpenAndFill( TA_SMI_Stream **stream, const double i
 /* Private function, not in public API. */
 TA_RetCode TA_SMI_OpenAndFillInternal( struct TA_SMI_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, int optInTimePeriod, int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod, int *outBegIdx, int *outNBElement, double outSMI[], double outSMISignal[] )
 {
-   return TA_SMI_OpenImpl( stream, inHigh, inLow, inClose, startIdx, historyLen, optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outBegIdx, outNBElement, outSMI, outSMISignal, 1 );
+   return TA_FMA_AVAILABLE ? TA_SMI_OpenImplFma( stream, inHigh, inLow, inClose, startIdx, historyLen, optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outBegIdx, outNBElement, outSMI, outSMISignal, 1 ) : TA_SMI_OpenImplPlain( stream, inHigh, inLow, inClose, startIdx, historyLen, optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outBegIdx, outNBElement, outSMI, outSMISignal, 1 );
 }
 
 TA_FMA_MULTIVERSION

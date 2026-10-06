@@ -437,6 +437,24 @@ impl Core {
     /// The single whole-history transcription behind [`Core::trix_open_internal`]
     /// (stride 0, scalar sink) and [`Core::trix_open_and_fill`] (stride 1, caller slices).
     pub(crate) fn trix_open_impl(
+        &self, inReal: &[f64], startIdx: usize, optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64], outStride: usize,
+    ) -> Result<TrixStream, RetCode> {
+        #[cfg(target_arch = "x86_64")]
+        return ta_lib_dispatch::dispatch_fma!(self, trix_open_impl_fma, trix_open_impl_scalar, (inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, outStride));
+        #[cfg(not(target_arch = "x86_64"))]
+        self.trix_open_impl_scalar(inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, outStride)
+    }
+
+    #[cfg(target_arch = "x86_64")]
+    #[target_feature(enable = "fma")]
+    fn trix_open_impl_fma(
+        &self, inReal: &[f64], startIdx: usize, optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64], outStride: usize,
+    ) -> Result<TrixStream, RetCode> {
+        self.trix_open_impl_scalar(inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, outStride)
+    }
+
+    #[inline(always)]
+    fn trix_open_impl_scalar(
         &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64], outStride: usize,
     ) -> Result<TrixStream, RetCode> {
         if inReal.is_empty() {

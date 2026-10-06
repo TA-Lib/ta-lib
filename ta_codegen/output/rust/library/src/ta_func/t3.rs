@@ -534,6 +534,24 @@ impl Core {
     /// The single whole-history transcription behind [`Core::t3_open_internal`]
     /// (stride 0, scalar sink) and [`Core::t3_open_and_fill`] (stride 1, caller slices).
     pub(crate) fn t3_open_impl(
+        &self, inReal: &[f64], startIdx: usize, optInTimePeriod: i32, optInVFactor: f64, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64], outStride: usize,
+    ) -> Result<T3Stream, RetCode> {
+        #[cfg(target_arch = "x86_64")]
+        return ta_lib_dispatch::dispatch_fma!(self, t3_open_impl_fma, t3_open_impl_scalar, (inReal, startIdx, optInTimePeriod, optInVFactor, outBegIdx, outNBElement, outReal, outStride));
+        #[cfg(not(target_arch = "x86_64"))]
+        self.t3_open_impl_scalar(inReal, startIdx, optInTimePeriod, optInVFactor, outBegIdx, outNBElement, outReal, outStride)
+    }
+
+    #[cfg(target_arch = "x86_64")]
+    #[target_feature(enable = "fma")]
+    fn t3_open_impl_fma(
+        &self, inReal: &[f64], startIdx: usize, optInTimePeriod: i32, optInVFactor: f64, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64], outStride: usize,
+    ) -> Result<T3Stream, RetCode> {
+        self.t3_open_impl_scalar(inReal, startIdx, optInTimePeriod, optInVFactor, outBegIdx, outNBElement, outReal, outStride)
+    }
+
+    #[inline(always)]
+    fn t3_open_impl_scalar(
         &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32, mut optInVFactor: f64, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64], outStride: usize,
     ) -> Result<T3Stream, RetCode> {
         if inReal.is_empty() {

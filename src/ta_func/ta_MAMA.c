@@ -1183,7 +1183,7 @@ static TA_FMA_STEP_INLINE void TA_MAMA_StepImpl( struct TA_MAMA_Stream *sp, doub
    sp->fama = fama;
 }
 
-static TA_RetCode TA_MAMA_OpenImpl( struct TA_MAMA_Stream **stream, const double inReal[], int startIdx, int historyLen, double optInFastLimit, double optInSlowLimit, int *outBegIdx, int *outNBElement, double outMAMA[], double outFAMA[], int outStride )
+static TA_FMA_STEP_INLINE TA_RetCode TA_MAMA_OpenImpl( struct TA_MAMA_Stream **stream, const double inReal[], int startIdx, int historyLen, double optInFastLimit, double optInSlowLimit, int *outBegIdx, int *outNBElement, double outMAMA[], double outFAMA[], int outStride )
 {
    struct TA_MAMA_Stream *sp;
    int endIdx;
@@ -1665,6 +1665,16 @@ static TA_RetCode TA_MAMA_OpenImpl( struct TA_MAMA_Stream **stream, const double
    }
 }
 
+TA_FMA_OPEN_CLONE static TA_RetCode TA_MAMA_OpenImplFma( struct TA_MAMA_Stream **stream, const double inReal[], int startIdx, int historyLen, double optInFastLimit, double optInSlowLimit, int *outBegIdx, int *outNBElement, double outMAMA[], double outFAMA[], int outStride )
+{
+   return TA_MAMA_OpenImpl( stream, inReal, startIdx, historyLen, optInFastLimit, optInSlowLimit, outBegIdx, outNBElement, outMAMA, outFAMA, outStride );
+}
+
+TA_FMA_OPEN_PLAIN static TA_RetCode TA_MAMA_OpenImplPlain( struct TA_MAMA_Stream **stream, const double inReal[], int startIdx, int historyLen, double optInFastLimit, double optInSlowLimit, int *outBegIdx, int *outNBElement, double outMAMA[], double outFAMA[], int outStride )
+{
+   return TA_MAMA_OpenImpl( stream, inReal, startIdx, historyLen, optInFastLimit, optInSlowLimit, outBegIdx, outNBElement, outMAMA, outFAMA, outStride );
+}
+
 /* Private function, not in public API. */
 TA_RetCode TA_MAMA_OpenInternal( struct TA_MAMA_Stream **stream, const double inReal[], int startIdx, int historyLen, double optInFastLimit, double optInSlowLimit, double *outMAMA, double *outFAMA )
 {
@@ -1673,7 +1683,7 @@ TA_RetCode TA_MAMA_OpenInternal( struct TA_MAMA_Stream **stream, const double in
    int dummyNBElement = 0;
    double sink_outMAMA = 0.0;
    double sink_outFAMA = 0.0;
-   retCode = TA_MAMA_OpenImpl( stream, inReal, startIdx, historyLen, optInFastLimit, optInSlowLimit, &dummyBegIdx, &dummyNBElement, &sink_outMAMA, outFAMA ? &sink_outFAMA : NULL, 0 );
+   retCode = TA_FMA_AVAILABLE ? TA_MAMA_OpenImplFma( stream, inReal, startIdx, historyLen, optInFastLimit, optInSlowLimit, &dummyBegIdx, &dummyNBElement, &sink_outMAMA, outFAMA ? &sink_outFAMA : NULL, 0 ) : TA_MAMA_OpenImplPlain( stream, inReal, startIdx, historyLen, optInFastLimit, optInSlowLimit, &dummyBegIdx, &dummyNBElement, &sink_outMAMA, outFAMA ? &sink_outFAMA : NULL, 0 );
    if( retCode == TA_SUCCESS )
    {
       *outMAMA = sink_outMAMA;
@@ -1706,7 +1716,7 @@ TA_LIB_API TA_RetCode TA_MAMA_OpenAndFill( TA_MAMA_Stream **stream, const double
 /* Private function, not in public API. */
 TA_RetCode TA_MAMA_OpenAndFillInternal( struct TA_MAMA_Stream **stream, const double inReal[], int startIdx, int historyLen, double optInFastLimit, double optInSlowLimit, int *outBegIdx, int *outNBElement, double outMAMA[], double outFAMA[] )
 {
-   return TA_MAMA_OpenImpl( stream, inReal, startIdx, historyLen, optInFastLimit, optInSlowLimit, outBegIdx, outNBElement, outMAMA, outFAMA, 1 );
+   return TA_FMA_AVAILABLE ? TA_MAMA_OpenImplFma( stream, inReal, startIdx, historyLen, optInFastLimit, optInSlowLimit, outBegIdx, outNBElement, outMAMA, outFAMA, 1 ) : TA_MAMA_OpenImplPlain( stream, inReal, startIdx, historyLen, optInFastLimit, optInSlowLimit, outBegIdx, outNBElement, outMAMA, outFAMA, 1 );
 }
 
 TA_FMA_MULTIVERSION

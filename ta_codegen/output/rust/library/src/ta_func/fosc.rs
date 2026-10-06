@@ -487,6 +487,24 @@ impl Core {
     /// The single whole-history transcription behind [`Core::fosc_open_internal`]
     /// (stride 0, scalar sink) and [`Core::fosc_open_and_fill`] (stride 1, caller slices).
     pub(crate) fn fosc_open_impl(
+        &self, inReal: &[f64], startIdx: usize, optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64], outStride: usize,
+    ) -> Result<FoscStream, RetCode> {
+        #[cfg(target_arch = "x86_64")]
+        return ta_lib_dispatch::dispatch_fma!(self, fosc_open_impl_fma, fosc_open_impl_scalar, (inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, outStride));
+        #[cfg(not(target_arch = "x86_64"))]
+        self.fosc_open_impl_scalar(inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, outStride)
+    }
+
+    #[cfg(target_arch = "x86_64")]
+    #[target_feature(enable = "fma")]
+    fn fosc_open_impl_fma(
+        &self, inReal: &[f64], startIdx: usize, optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64], outStride: usize,
+    ) -> Result<FoscStream, RetCode> {
+        self.fosc_open_impl_scalar(inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, outStride)
+    }
+
+    #[inline(always)]
+    fn fosc_open_impl_scalar(
         &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64], outStride: usize,
     ) -> Result<FoscStream, RetCode> {
         if inReal.is_empty() {
