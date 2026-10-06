@@ -202,10 +202,16 @@ TA_LIB_API TA_RetCode TA_STC( int    startIdx,
    *outBegIdx= startIdx;
    fastBeta = (double)(optInFastPeriod - 1) / (double)(optInFastPeriod + 1);
    fastK = 1.0 - fastBeta;
-   fastBeta = 1.0 - fastK;
+   if( fastBeta < 0.5 )
+   {
+      fastBeta = 1.0 - fastK;
+   }
    slowBeta = (double)(optInSlowPeriod - 1) / (double)(optInSlowPeriod + 1);
    slowK = 1.0 - slowBeta;
-   slowBeta = 1.0 - slowK;
+   if( slowBeta < 0.5 )
+   {
+      slowBeta = 1.0 - slowK;
+   }
    /* Rolling extrema, van Herk / Gil-Werman: the window ending in slot j is
     * the current block's prefix extremum joined with the previous block's
     * suffix extremum from slot j+1. The extrema are exact, so the output must
@@ -769,10 +775,16 @@ TA_RetCode TA_S_STC( int    startIdx,
    *outBegIdx= startIdx;
    fastBeta = (double)(optInFastPeriod - 1) / (double)(optInFastPeriod + 1);
    fastK = 1.0 - fastBeta;
-   fastBeta = 1.0 - fastK;
+   if( fastBeta < 0.5 )
+   {
+      fastBeta = 1.0 - fastK;
+   }
    slowBeta = (double)(optInSlowPeriod - 1) / (double)(optInSlowPeriod + 1);
    slowK = 1.0 - slowBeta;
-   slowBeta = 1.0 - slowK;
+   if( slowBeta < 0.5 )
+   {
+      slowBeta = 1.0 - slowK;
+   }
    if( optInCyclePeriod < 1 ) return TA_INTERNAL_ERROR(462);
    if( (int)optInCyclePeriod > (int)(sizeof(local_lineRing)/sizeof(double)) )
    {
@@ -1539,10 +1551,16 @@ static TA_FMA_STEP_INLINE TA_RetCode TA_STC_OpenImpl( struct TA_STC_Stream **str
       *outBegIdx= startIdx;
       fastBeta = (double)(optInFastPeriod - 1) / (double)(optInFastPeriod + 1);
       fastK = 1.0 - fastBeta;
-      fastBeta = 1.0 - fastK;
+      if( fastBeta < 0.5 )
+      {
+         fastBeta = 1.0 - fastK;
+      }
       slowBeta = (double)(optInSlowPeriod - 1) / (double)(optInSlowPeriod + 1);
       slowK = 1.0 - slowBeta;
-      slowBeta = 1.0 - slowK;
+      if( slowBeta < 0.5 )
+      {
+         slowBeta = 1.0 - slowK;
+      }
       /* Rolling extrema, van Herk / Gil-Werman: the window ending in slot j is
        * the current block's prefix extremum joined with the previous block's
        * suffix extremum from slot j+1. The extrema are exact, so the output must

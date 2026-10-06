@@ -66,7 +66,7 @@ TA_RetCode massi(int startIdx, int endIdx,
     */
    emaBeta = ((double)(optInFastPeriod - 1)) / ((double)(optInFastPeriod + 1));
    optInK_1 = 1.0 - emaBeta;
-   emaBeta = 1.0 - optInK_1;
+   if( emaBeta < 0.5 ) emaBeta = 1.0 - optInK_1;
 
    ema1     = 0.0;
    ema2     = 0.0;

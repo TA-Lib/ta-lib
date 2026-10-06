@@ -122,10 +122,17 @@ TA_LIB_API TA_RetCode TA_EMA( int    startIdx,
     * emaBeta + optInK_1 must be exactly 1.0, or a flat input drifts off
     * its level. Each subtraction is exact only from an operand in
     * [0.5,1): at a period of 2 that is optInK_1, above it emaBeta.
+    *
+    * Above it emaBeta stays as the divide wrote it: the second subtraction
+    * would not change a bit, and a register last written by a subtraction
+    * costs each FMA reading it one more cycle on Intel P-cores.
     */
    emaBeta = (double)(optInTimePeriod - 1) / (double)(optInTimePeriod + 1);
    optInK_1 = 1.0 - emaBeta;
-   emaBeta = 1.0 - optInK_1;
+   if( emaBeta < 0.5 )
+   {
+      emaBeta = 1.0 - optInK_1;
+   }
    /* Move up the start index if there is not
     * enough initial data.
     */
@@ -220,7 +227,10 @@ TA_RetCode TA_S_EMA( int    startIdx,
    lookbackTotal = TA_EMA_Lookback(optInTimePeriod);
    emaBeta = (double)(optInTimePeriod - 1) / (double)(optInTimePeriod + 1);
    optInK_1 = 1.0 - emaBeta;
-   emaBeta = 1.0 - optInK_1;
+   if( emaBeta < 0.5 )
+   {
+      emaBeta = 1.0 - optInK_1;
+   }
    if( startIdx < lookbackTotal )
    {
       startIdx = lookbackTotal;
@@ -376,10 +386,17 @@ static TA_FMA_STEP_INLINE TA_RetCode TA_EMA_OpenImpl( struct TA_EMA_Stream **str
        * emaBeta + optInK_1 must be exactly 1.0, or a flat input drifts off
        * its level. Each subtraction is exact only from an operand in
        * [0.5,1): at a period of 2 that is optInK_1, above it emaBeta.
+       *
+       * Above it emaBeta stays as the divide wrote it: the second subtraction
+       * would not change a bit, and a register last written by a subtraction
+       * costs each FMA reading it one more cycle on Intel P-cores.
        */
       emaBeta = (double)(optInTimePeriod - 1) / (double)(optInTimePeriod + 1);
       optInK_1 = 1.0 - emaBeta;
-      emaBeta = 1.0 - optInK_1;
+      if( emaBeta < 0.5 )
+      {
+         emaBeta = 1.0 - optInK_1;
+      }
       /* Move up the start index if there is not
        * enough initial data.
        */

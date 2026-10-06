@@ -305,13 +305,19 @@ impl Core {
         // order; do not reorder or fuse them (0.0+x is not x for x=-0.0).
         betaSlow = ((optInSlowPeriod - 1) as f64) / ((optInSlowPeriod + 1) as f64);
         kSlow = 1.0 - betaSlow;
-        betaSlow = 1.0 - kSlow;
+        if betaSlow < 0.5 {
+            betaSlow = 1.0 - kSlow;
+        }
         betaFast = ((optInFastPeriod - 1) as f64) / ((optInFastPeriod + 1) as f64);
         kFast = 1.0 - betaFast;
-        betaFast = 1.0 - kFast;
+        if betaFast < 0.5 {
+            betaFast = 1.0 - kFast;
+        }
         betaSignal = ((optInSignalPeriod - 1) as f64) / ((optInSignalPeriod + 1) as f64);
         kSignal = 1.0 - betaSignal;
-        betaSignal = 1.0 - kSignal;
+        if betaSignal < 0.5 {
+            betaSignal = 1.0 - kSignal;
+        }
         lookbackSlow = self.ema_lookback(optInSlowPeriod).unwrap_or(usize::MAX);
         lookbackFast = self.ema_lookback(optInFastPeriod).unwrap_or(usize::MAX);
         emaSlowNum = 0.0;
@@ -903,13 +909,19 @@ impl Core {
         // order; do not reorder or fuse them (0.0+x is not x for x=-0.0).
         betaSlow = ((optInSlowPeriod - 1) as f64) / ((optInSlowPeriod + 1) as f64);
         kSlow = 1.0 - betaSlow;
-        betaSlow = 1.0 - kSlow;
+        if betaSlow < 0.5 {
+            betaSlow = 1.0 - kSlow;
+        }
         betaFast = ((optInFastPeriod - 1) as f64) / ((optInFastPeriod + 1) as f64);
         kFast = 1.0 - betaFast;
-        betaFast = 1.0 - kFast;
+        if betaFast < 0.5 {
+            betaFast = 1.0 - kFast;
+        }
         betaSignal = ((optInSignalPeriod - 1) as f64) / ((optInSignalPeriod + 1) as f64);
         kSignal = 1.0 - betaSignal;
-        betaSignal = 1.0 - kSignal;
+        if betaSignal < 0.5 {
+            betaSignal = 1.0 - kSignal;
+        }
         lookbackSlow = self.ema_lookback(optInSlowPeriod)?;
         lookbackFast = self.ema_lookback(optInFastPeriod)?;
         emaSlowNum = 0.0;

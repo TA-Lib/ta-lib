@@ -164,7 +164,9 @@
        */
       emaBeta = (double)(optInTimePeriod - 1) / (double)(optInTimePeriod + 1);
       optInK_1 = 1.0 - emaBeta;
-      emaBeta = 1.0 - optInK_1;
+      if( emaBeta < 0.5 ) {
+         emaBeta = 1.0 - optInK_1;
+      }
       /* Seed EMA1 with a simple average of the first
        * 'period' price bars.
        */
@@ -288,7 +290,9 @@
       }
       emaBeta = (double)(optInTimePeriod - 1) / (double)(optInTimePeriod + 1);
       optInK_1 = 1.0 - emaBeta;
-      emaBeta = 1.0 - optInK_1;
+      if( emaBeta < 0.5 ) {
+         emaBeta = 1.0 - optInK_1;
+      }
       today = startIdx - lookbackTotal;
       i = optInTimePeriod;
       tempReal = 0.0;
@@ -742,7 +746,9 @@
        */
       emaBeta = (double)(optInTimePeriod - 1) / (double)(optInTimePeriod + 1);
       optInK_1 = 1.0 - emaBeta;
-      emaBeta = 1.0 - optInK_1;
+      if( emaBeta < 0.5 ) {
+         emaBeta = 1.0 - optInK_1;
+      }
       /* Seed EMA1 with a simple average of the first
        * 'period' price bars.
        */

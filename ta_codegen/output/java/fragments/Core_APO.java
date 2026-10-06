@@ -255,10 +255,14 @@
          }
          _eFastBeta = (double)(optInFastPeriod - 1) / (double)(optInFastPeriod + 1);
          _eFastK = 1.0 - _eFastBeta;
-         _eFastBeta = 1.0 - _eFastK;
+         if( _eFastBeta < 0.5 ) {
+            _eFastBeta = 1.0 - _eFastK;
+         }
          _eSlowBeta = (double)(optInSlowPeriod - 1) / (double)(optInSlowPeriod + 1);
          _eSlowK = 1.0 - _eSlowBeta;
-         _eSlowBeta = 1.0 - _eSlowK;
+         if( _eSlowBeta < 0.5 ) {
+            _eSlowBeta = 1.0 - _eSlowK;
+         }
          _eFastToday = emaLookback(optInFastPeriod);
          if( _eFastToday < startIdx ) {
             _eFastToday = startIdx;
@@ -451,10 +455,14 @@
          }
          _eFastBeta = (double)(optInFastPeriod - 1) / (double)(optInFastPeriod + 1);
          _eFastK = 1.0 - _eFastBeta;
-         _eFastBeta = 1.0 - _eFastK;
+         if( _eFastBeta < 0.5 ) {
+            _eFastBeta = 1.0 - _eFastK;
+         }
          _eSlowBeta = (double)(optInSlowPeriod - 1) / (double)(optInSlowPeriod + 1);
          _eSlowK = 1.0 - _eSlowBeta;
-         _eSlowBeta = 1.0 - _eSlowK;
+         if( _eSlowBeta < 0.5 ) {
+            _eSlowBeta = 1.0 - _eSlowK;
+         }
          _eFastToday = emaLookback(optInFastPeriod);
          if( _eFastToday < startIdx ) {
             _eFastToday = startIdx;

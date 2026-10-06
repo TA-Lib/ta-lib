@@ -237,7 +237,9 @@ impl Core {
         emaRing_Idx = 0;
         emaBeta = ((optInTimePeriod - 1) as f64) / ((optInTimePeriod + 1) as f64);
         optInK_1 = 1.0 - emaBeta;
-        emaBeta = 1.0 - ((optInK_1) as f64);
+        if emaBeta < 0.5 {
+            emaBeta = 1.0 - ((optInK_1) as f64);
+        }
         today = startIdx - lookbackTotal;
         i = (optInTimePeriod) as usize;
         tempReal = 0.0;
@@ -569,7 +571,9 @@ impl Core {
         emaRing_Idx = 0;
         emaBeta = ((optInTimePeriod - 1) as f64) / ((optInTimePeriod + 1) as f64);
         optInK_1 = 1.0 - emaBeta;
-        emaBeta = 1.0 - ((optInK_1) as f64);
+        if emaBeta < 0.5 {
+            emaBeta = 1.0 - ((optInK_1) as f64);
+        }
         today = startIdx - lookbackTotal;
         i = (optInTimePeriod) as usize;
         tempReal = 0.0;

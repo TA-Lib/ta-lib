@@ -121,7 +121,9 @@
        */
       emaBeta = (double)(optInTimePeriod - 1) / (double)(optInTimePeriod + 1);
       optInK_1 = 1.0 - emaBeta;
-      emaBeta = 1.0 - optInK_1;
+      if( emaBeta < 0.5 ) {
+         emaBeta = 1.0 - optInK_1;
+      }
       /* Move up the start index if there is not
        * enough initial data.
        */
@@ -221,7 +223,9 @@
       lookbackTotal = efiLookback(optInTimePeriod);
       emaBeta = (double)(optInTimePeriod - 1) / (double)(optInTimePeriod + 1);
       optInK_1 = 1.0 - emaBeta;
-      emaBeta = 1.0 - optInK_1;
+      if( emaBeta < 0.5 ) {
+         emaBeta = 1.0 - optInK_1;
+      }
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
       }
@@ -665,7 +669,9 @@
           */
          emaBeta = (double)(optInTimePeriod - 1) / (double)(optInTimePeriod + 1);
          optInK_1 = 1.0 - emaBeta;
-         emaBeta = 1.0 - optInK_1;
+         if( emaBeta < 0.5 ) {
+            emaBeta = 1.0 - optInK_1;
+         }
          /* Move up the start index if there is not
           * enough initial data.
           */
@@ -749,7 +755,9 @@
           */
          emaBeta = (double)(optInTimePeriod - 1) / (double)(optInTimePeriod + 1);
          optInK_1 = 1.0 - emaBeta;
-         emaBeta = 1.0 - optInK_1;
+         if( emaBeta < 0.5 ) {
+            emaBeta = 1.0 - optInK_1;
+         }
          /* Move up the start index if there is not
           * enough initial data.
           */

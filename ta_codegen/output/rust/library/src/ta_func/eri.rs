@@ -252,7 +252,9 @@ impl Core {
         }
         beta = ((optInTimePeriod - 1) as f64) / ((optInTimePeriod + 1) as f64);
         k = 1.0 - beta;
-        beta = 1.0 - k;
+        if beta < 0.5 {
+            beta = 1.0 - k;
+        }
         // Seed: ema.c's DEFAULT arm, op for op.
         today = startIdx - lookbackTotal;
         i = (optInTimePeriod) as usize;
@@ -636,7 +638,9 @@ impl Core {
             // output, through the shared lookback above.
             beta = ((optInTimePeriod - 1) as f64) / ((optInTimePeriod + 1) as f64);
             k = 1.0 - beta;
-            beta = 1.0 - k;
+            if beta < 0.5 {
+                beta = 1.0 - k;
+            }
             // Seed: ema.c's DEFAULT arm, op for op.
             today = startIdx - lookbackTotal;
             i = (optInTimePeriod) as usize;

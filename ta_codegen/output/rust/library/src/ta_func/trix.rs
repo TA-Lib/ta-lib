@@ -212,7 +212,9 @@ impl Core {
         // inReal[startIdx+outIdx] was read.
         emaBeta = ((optInTimePeriod - 1) as f64) / ((optInTimePeriod + 1) as f64);
         optInK_1 = 1.0 - emaBeta;
-        emaBeta = 1.0 - ((optInK_1) as f64);
+        if emaBeta < 0.5 {
+            emaBeta = 1.0 - ((optInK_1) as f64);
+        }
         // Seed EMA1 with a simple average of the first
         // 'period' price bars.
         today = startIdx - lookbackTotal;
@@ -512,7 +514,9 @@ impl Core {
         // inReal[startIdx+outIdx] was read.
         emaBeta = ((optInTimePeriod - 1) as f64) / ((optInTimePeriod + 1) as f64);
         optInK_1 = 1.0 - emaBeta;
-        emaBeta = 1.0 - ((optInK_1) as f64);
+        if emaBeta < 0.5 {
+            emaBeta = 1.0 - ((optInK_1) as f64);
+        }
         // Seed EMA1 with a simple average of the first
         // 'period' price bars.
         today = startIdx - lookbackTotal;

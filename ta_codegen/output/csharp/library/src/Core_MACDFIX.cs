@@ -177,7 +177,9 @@ public partial class Core
        */
       signalBeta = (double)(optInSignalPeriod - 1) / (double)(optInSignalPeriod + 1);
       signalK = 1.0 - signalBeta;
-      signalBeta = 1.0 - signalK;
+      if( signalBeta < 0.5 ) {
+         signalBeta = 1.0 - signalK;
+      }
       lookbackSignal = EmaLookback(optInSignalPeriod);
       /* Move up the start index if there is not
        * enough initial data.
@@ -353,7 +355,9 @@ public partial class Core
       slowK = 1.0 - slowBeta;
       signalBeta = (double)(optInSignalPeriod - 1) / (double)(optInSignalPeriod + 1);
       signalK = 1.0 - signalBeta;
-      signalBeta = 1.0 - signalK;
+      if( signalBeta < 0.5 ) {
+         signalBeta = 1.0 - signalK;
+      }
       lookbackSignal = EmaLookback(optInSignalPeriod);
       lookbackTotal = lookbackSignal;
       lookbackTotal += EmaLookback(26);
@@ -888,7 +892,9 @@ public partial class Core
        */
       signalBeta = (double)(optInSignalPeriod - 1) / (double)(optInSignalPeriod + 1);
       signalK = 1.0 - signalBeta;
-      signalBeta = 1.0 - signalK;
+      if( signalBeta < 0.5 ) {
+         signalBeta = 1.0 - signalK;
+      }
       lookbackSignal = EmaLookback(optInSignalPeriod);
       /* Move up the start index if there is not
        * enough initial data.

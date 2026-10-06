@@ -91,7 +91,9 @@
       }
       emaBeta = (double)(optInTimePeriod - 1) / (double)(optInTimePeriod + 1);
       optInK_1 = 1.0 - emaBeta;
-      emaBeta = 1.0 - optInK_1;
+      if( emaBeta < 0.5 ) {
+         emaBeta = 1.0 - optInK_1;
+      }
       /* KEEP THIS ARITHMETIC EXACTLY AS WRITTEN -- the de-lag in one rounding
        * (2.0*c - l, not c + (c - l)), the seed sum accumulating from 0.0, and
        * k*v + beta*prevMA with ema.c's k and beta. Together they make ZLEMA
@@ -192,7 +194,9 @@
       }
       emaBeta = (double)(optInTimePeriod - 1) / (double)(optInTimePeriod + 1);
       optInK_1 = 1.0 - emaBeta;
-      emaBeta = 1.0 - optInK_1;
+      if( emaBeta < 0.5 ) {
+         emaBeta = 1.0 - optInK_1;
+      }
       lag = (optInTimePeriod - 1) / 2;
       lookbackTotal = zlemaLookback(optInTimePeriod);
       if( startIdx < lookbackTotal ) {
@@ -643,7 +647,9 @@
       }
       emaBeta = (double)(optInTimePeriod - 1) / (double)(optInTimePeriod + 1);
       optInK_1 = 1.0 - emaBeta;
-      emaBeta = 1.0 - optInK_1;
+      if( emaBeta < 0.5 ) {
+         emaBeta = 1.0 - optInK_1;
+      }
       /* KEEP THIS ARITHMETIC EXACTLY AS WRITTEN -- the de-lag in one rounding
        * (2.0*c - l, not c + (c - l)), the seed sum accumulating from 0.0, and
        * k*v + beta*prevMA with ema.c's k and beta. Together they make ZLEMA

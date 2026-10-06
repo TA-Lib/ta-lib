@@ -32,7 +32,7 @@ TA_RetCode zlema(int startIdx, int endIdx,
    double tempReal, prevMA;
    int i, today, trailingIdx, outIdx, lag, lookbackTotal;
 
-   emaBeta = 1.0 - optInK_1;
+   if( emaBeta < 0.5 ) emaBeta = 1.0 - optInK_1;
 
    /* KEEP THIS ARITHMETIC EXACTLY AS WRITTEN -- the de-lag in one rounding
     * (2.0*c - l, not c + (c - l)), the seed sum accumulating from 0.0, and

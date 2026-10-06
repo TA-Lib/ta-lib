@@ -248,7 +248,9 @@ impl Core {
         // reorder or fuse them (0.0+x is not x for x=-0.0).
         emaBeta = ((optInFastPeriod - 1) as f64) / ((optInFastPeriod + 1) as f64);
         optInK_1 = 1.0 - emaBeta;
-        emaBeta = 1.0 - ((optInK_1) as f64);
+        if emaBeta < 0.5 {
+            emaBeta = 1.0 - ((optInK_1) as f64);
+        }
         ema1 = 0.0;
         ema2 = 0.0;
         sum1 = 0.0;
@@ -628,7 +630,9 @@ impl Core {
         // reorder or fuse them (0.0+x is not x for x=-0.0).
         emaBeta = ((optInFastPeriod - 1) as f64) / ((optInFastPeriod + 1) as f64);
         optInK_1 = 1.0 - emaBeta;
-        emaBeta = 1.0 - ((optInK_1) as f64);
+        if emaBeta < 0.5 {
+            emaBeta = 1.0 - ((optInK_1) as f64);
+        }
         ema1 = 0.0;
         ema2 = 0.0;
         sum1 = 0.0;

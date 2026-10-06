@@ -115,7 +115,10 @@ TA_LIB_API TA_RetCode TA_ZLEMA( int    startIdx,
 
    emaBeta = (double)(optInTimePeriod - 1) / (double)(optInTimePeriod + 1);
    optInK_1 = 1.0 - emaBeta;
-   emaBeta = 1.0 - optInK_1;
+   if( emaBeta < 0.5 )
+   {
+      emaBeta = 1.0 - optInK_1;
+   }
    /* KEEP THIS ARITHMETIC EXACTLY AS WRITTEN -- the de-lag in one rounding
     * (2.0*c - l, not c + (c - l)), the seed sum accumulating from 0.0, and
     * k*v + beta*prevMA with ema.c's k and beta. Together they make ZLEMA
@@ -231,7 +234,10 @@ TA_RetCode TA_S_ZLEMA( int    startIdx,
 
    emaBeta = (double)(optInTimePeriod - 1) / (double)(optInTimePeriod + 1);
    optInK_1 = 1.0 - emaBeta;
-   emaBeta = 1.0 - optInK_1;
+   if( emaBeta < 0.5 )
+   {
+      emaBeta = 1.0 - optInK_1;
+   }
    lag = (optInTimePeriod - 1) / 2;
    lookbackTotal = TA_ZLEMA_Lookback(optInTimePeriod);
    if( startIdx < lookbackTotal )
@@ -415,7 +421,10 @@ static TA_FMA_STEP_INLINE TA_RetCode TA_ZLEMA_OpenImpl( struct TA_ZLEMA_Stream *
       int outIdx;
       int lag;
       int lookbackTotal;
-      emaBeta = 1.0 - optInK_1;
+      if( emaBeta < 0.5 )
+      {
+         emaBeta = 1.0 - optInK_1;
+      }
       /* KEEP THIS ARITHMETIC EXACTLY AS WRITTEN -- the de-lag in one rounding
        * (2.0*c - l, not c + (c - l)), the seed sum accumulating from 0.0, and
        * k*v + beta*prevMA with ema.c's k and beta. Together they make ZLEMA

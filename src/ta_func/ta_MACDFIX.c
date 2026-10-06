@@ -157,7 +157,10 @@ TA_LIB_API TA_RetCode TA_MACDFIX( int    startIdx,
     */
    signalBeta = (double)(optInSignalPeriod - 1) / (double)(optInSignalPeriod + 1);
    signalK = 1.0 - signalBeta;
-   signalBeta = 1.0 - signalK;
+   if( signalBeta < 0.5 )
+   {
+      signalBeta = 1.0 - signalK;
+   }
    lookbackSignal = TA_EMA_Lookback(optInSignalPeriod);
    /* Move up the start index if there is not
     * enough initial data.
@@ -351,7 +354,10 @@ TA_RetCode TA_S_MACDFIX( int    startIdx,
    slowK = 1.0 - slowBeta;
    signalBeta = (double)(optInSignalPeriod - 1) / (double)(optInSignalPeriod + 1);
    signalK = 1.0 - signalBeta;
-   signalBeta = 1.0 - signalK;
+   if( signalBeta < 0.5 )
+   {
+      signalBeta = 1.0 - signalK;
+   }
    lookbackSignal = TA_EMA_Lookback(optInSignalPeriod);
    lookbackTotal = lookbackSignal;
    lookbackTotal += TA_EMA_Lookback(26);
@@ -554,7 +560,10 @@ static TA_FMA_STEP_INLINE TA_RetCode TA_MACDFIX_OpenImpl( struct TA_MACDFIX_Stre
        */
       signalBeta = (double)(optInSignalPeriod - 1) / (double)(optInSignalPeriod + 1);
       signalK = 1.0 - signalBeta;
-      signalBeta = 1.0 - signalK;
+      if( signalBeta < 0.5 )
+      {
+         signalBeta = 1.0 - signalK;
+      }
       lookbackSignal = TA_EMA_Lookback(optInSignalPeriod);
       /* Move up the start index if there is not
        * enough initial data.

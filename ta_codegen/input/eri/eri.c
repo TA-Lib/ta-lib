@@ -91,7 +91,7 @@ TA_RetCode eri(int startIdx, int endIdx,
 
    beta = ((double)(optInTimePeriod - 1)) / ((double)(optInTimePeriod + 1));
    k = 1.0 - beta;
-   beta = 1.0 - k;
+   if( beta < 0.5 ) beta = 1.0 - k;
 
    /* Seed: ema.c's DEFAULT arm, op for op. */
    today = startIdx - lookbackTotal;

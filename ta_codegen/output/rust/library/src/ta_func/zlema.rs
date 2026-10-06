@@ -183,7 +183,9 @@ impl Core {
         let mut lookbackTotal: usize = 0_usize;
         emaBeta = ((optInTimePeriod - 1) as f64) / ((optInTimePeriod + 1) as f64);
         optInK_1 = 1.0 - emaBeta;
-        emaBeta = 1.0 - ((optInK_1) as f64);
+        if emaBeta < 0.5 {
+            emaBeta = 1.0 - ((optInK_1) as f64);
+        }
         // KEEP THIS ARITHMETIC EXACTLY AS WRITTEN -- the de-lag in one rounding
         // (2.0*c - l, not c + (c - l)), the seed sum accumulating from 0.0, and
         // k*v + beta*prevMA with ema.c's k and beta. Together they make ZLEMA
@@ -536,7 +538,9 @@ impl Core {
         let mut lookbackTotal: usize = 0_usize;
         emaBeta = ((optInTimePeriod - 1) as f64) / ((optInTimePeriod + 1) as f64);
         optInK_1 = 1.0 - emaBeta;
-        emaBeta = 1.0 - ((optInK_1) as f64);
+        if emaBeta < 0.5 {
+            emaBeta = 1.0 - ((optInK_1) as f64);
+        }
         // KEEP THIS ARITHMETIC EXACTLY AS WRITTEN -- the de-lag in one rounding
         // (2.0*c - l, not c + (c - l)), the seed sum accumulating from 0.0, and
         // k*v + beta*prevMA with ema.c's k and beta. Together they make ZLEMA

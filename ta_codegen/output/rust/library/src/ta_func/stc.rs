@@ -281,10 +281,14 @@ impl Core {
         (*outBegIdx) = startIdx;
         fastBeta = ((optInFastPeriod - 1) as f64) / ((optInFastPeriod + 1) as f64);
         fastK = 1.0 - fastBeta;
-        fastBeta = 1.0 - fastK;
+        if fastBeta < 0.5 {
+            fastBeta = 1.0 - fastK;
+        }
         slowBeta = ((optInSlowPeriod - 1) as f64) / ((optInSlowPeriod + 1) as f64);
         slowK = 1.0 - slowBeta;
-        slowBeta = 1.0 - slowK;
+        if slowBeta < 0.5 {
+            slowBeta = 1.0 - slowK;
+        }
         // Rolling extrema, van Herk / Gil-Werman: the window ending in slot j is
         // the current block's prefix extremum joined with the previous block's
         // suffix extremum from slot j+1. The extrema are exact, so the output must
@@ -1016,10 +1020,14 @@ impl Core {
         (*outBegIdx) = startIdx;
         fastBeta = ((optInFastPeriod - 1) as f64) / ((optInFastPeriod + 1) as f64);
         fastK = 1.0 - fastBeta;
-        fastBeta = 1.0 - fastK;
+        if fastBeta < 0.5 {
+            fastBeta = 1.0 - fastK;
+        }
         slowBeta = ((optInSlowPeriod - 1) as f64) / ((optInSlowPeriod + 1) as f64);
         slowK = 1.0 - slowBeta;
-        slowBeta = 1.0 - slowK;
+        if slowBeta < 0.5 {
+            slowBeta = 1.0 - slowK;
+        }
         // Rolling extrema, van Herk / Gil-Werman: the window ending in slot j is
         // the current block's prefix extremum joined with the previous block's
         // suffix extremum from slot j+1. The extrema are exact, so the output must

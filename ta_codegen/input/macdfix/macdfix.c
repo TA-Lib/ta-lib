@@ -65,7 +65,7 @@ TA_RetCode macdfix(int startIdx, int endIdx,
     */
    signalBeta = ((double)(optInSignalPeriod - 1)) / ((double)(optInSignalPeriod + 1));
    signalK = 1.0 - signalBeta;
-   signalBeta = 1.0 - signalK;
+   if( signalBeta < 0.5 ) signalBeta = 1.0 - signalK;
    lookbackSignal = ema_lookback( optInSignalPeriod );
 
    /* Move up the start index if there is not

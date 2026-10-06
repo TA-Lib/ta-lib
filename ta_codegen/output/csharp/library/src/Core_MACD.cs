@@ -219,7 +219,9 @@ public partial class Core
          slowBeta = (double)(optInSlowPeriod - 1) / (double)(optInSlowPeriod + 1);
       }
       slowK = 1.0 - slowBeta;
-      slowBeta = 1.0 - slowK;
+      if( slowBeta < 0.5 ) {
+         slowBeta = 1.0 - slowK;
+      }
       if( optInFastPeriod == 0 ) {
          /* Fix 12 */
          optInFastPeriod = 12;
@@ -228,7 +230,9 @@ public partial class Core
          fastBeta = (double)(optInFastPeriod - 1) / (double)(optInFastPeriod + 1);
       }
       fastK = 1.0 - fastBeta;
-      fastBeta = 1.0 - fastK;
+      if( fastBeta < 0.5 ) {
+         fastBeta = 1.0 - fastK;
+      }
       /* A signal period of 1 disables signal-line smoothing: the signal IS the
        * MACD line and the histogram is exactly zero. The recursion
        * below, at a k of 1.0 and a beta of 0.0, does not keep the sign of a
@@ -236,7 +240,9 @@ public partial class Core
        */
       signalBeta = (double)(optInSignalPeriod - 1) / (double)(optInSignalPeriod + 1);
       signalK = 1.0 - signalBeta;
-      signalBeta = 1.0 - signalK;
+      if( signalBeta < 0.5 ) {
+         signalBeta = 1.0 - signalK;
+      }
       lookbackSignal = EmaLookback(optInSignalPeriod);
       /* Move up the start index if there is not
        * enough initial data.
@@ -434,7 +440,9 @@ public partial class Core
          slowBeta = (double)(optInSlowPeriod - 1) / (double)(optInSlowPeriod + 1);
       }
       slowK = 1.0 - slowBeta;
-      slowBeta = 1.0 - slowK;
+      if( slowBeta < 0.5 ) {
+         slowBeta = 1.0 - slowK;
+      }
       if( optInFastPeriod == 0 ) {
          optInFastPeriod = 12;
          fastBeta = 1.0 - 0.15;
@@ -442,10 +450,14 @@ public partial class Core
          fastBeta = (double)(optInFastPeriod - 1) / (double)(optInFastPeriod + 1);
       }
       fastK = 1.0 - fastBeta;
-      fastBeta = 1.0 - fastK;
+      if( fastBeta < 0.5 ) {
+         fastBeta = 1.0 - fastK;
+      }
       signalBeta = (double)(optInSignalPeriod - 1) / (double)(optInSignalPeriod + 1);
       signalK = 1.0 - signalBeta;
-      signalBeta = 1.0 - signalK;
+      if( signalBeta < 0.5 ) {
+         signalBeta = 1.0 - signalK;
+      }
       lookbackSignal = EmaLookback(optInSignalPeriod);
       lookbackSlow = EmaLookback(optInSlowPeriod);
       lookbackTotal = lookbackSignal + lookbackSlow;
@@ -1013,7 +1025,9 @@ public partial class Core
          slowBeta = (double)(optInSlowPeriod - 1) / (double)(optInSlowPeriod + 1);
       }
       slowK = 1.0 - slowBeta;
-      slowBeta = 1.0 - slowK;
+      if( slowBeta < 0.5 ) {
+         slowBeta = 1.0 - slowK;
+      }
       if( optInFastPeriod == 0 ) {
          /* Fix 12 */
          optInFastPeriod = 12;
@@ -1022,7 +1036,9 @@ public partial class Core
          fastBeta = (double)(optInFastPeriod - 1) / (double)(optInFastPeriod + 1);
       }
       fastK = 1.0 - fastBeta;
-      fastBeta = 1.0 - fastK;
+      if( fastBeta < 0.5 ) {
+         fastBeta = 1.0 - fastK;
+      }
       /* A signal period of 1 disables signal-line smoothing: the signal IS the
        * MACD line and the histogram is exactly zero. The recursion
        * below, at a k of 1.0 and a beta of 0.0, does not keep the sign of a
@@ -1030,7 +1046,9 @@ public partial class Core
        */
       signalBeta = (double)(optInSignalPeriod - 1) / (double)(optInSignalPeriod + 1);
       signalK = 1.0 - signalBeta;
-      signalBeta = 1.0 - signalK;
+      if( signalBeta < 0.5 ) {
+         signalBeta = 1.0 - signalK;
+      }
       lookbackSignal = EmaLookback(optInSignalPeriod);
       /* Move up the start index if there is not
        * enough initial data.

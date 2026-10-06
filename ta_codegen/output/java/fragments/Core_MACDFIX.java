@@ -128,7 +128,9 @@
        */
       signalBeta = (double)(optInSignalPeriod - 1) / (double)(optInSignalPeriod + 1);
       signalK = 1.0 - signalBeta;
-      signalBeta = 1.0 - signalK;
+      if( signalBeta < 0.5 ) {
+         signalBeta = 1.0 - signalK;
+      }
       lookbackSignal = emaLookback(optInSignalPeriod);
       /* Move up the start index if there is not
        * enough initial data.
@@ -299,7 +301,9 @@
       slowK = 1.0 - slowBeta;
       signalBeta = (double)(optInSignalPeriod - 1) / (double)(optInSignalPeriod + 1);
       signalK = 1.0 - signalBeta;
-      signalBeta = 1.0 - signalK;
+      if( signalBeta < 0.5 ) {
+         signalBeta = 1.0 - signalK;
+      }
       lookbackSignal = emaLookback(optInSignalPeriod);
       lookbackTotal = lookbackSignal;
       lookbackTotal += emaLookback(26);
@@ -813,7 +817,9 @@
        */
       signalBeta = (double)(optInSignalPeriod - 1) / (double)(optInSignalPeriod + 1);
       signalK = 1.0 - signalBeta;
-      signalBeta = 1.0 - signalK;
+      if( signalBeta < 0.5 ) {
+         signalBeta = 1.0 - signalK;
+      }
       lookbackSignal = emaLookback(optInSignalPeriod);
       /* Move up the start index if there is not
        * enough initial data.

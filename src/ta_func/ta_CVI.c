@@ -167,7 +167,10 @@ TA_LIB_API TA_RetCode TA_CVI( int    startIdx,
    emaRing_Idx = 0;
    emaBeta = (double)(optInTimePeriod - 1) / (double)(optInTimePeriod + 1);
    optInK_1 = 1.0 - emaBeta;
-   emaBeta = 1.0 - optInK_1;
+   if( emaBeta < 0.5 )
+   {
+      emaBeta = 1.0 - optInK_1;
+   }
    today = startIdx - lookbackTotal;
    i = optInTimePeriod;
    tempReal = 0.0;
@@ -295,7 +298,10 @@ TA_RetCode TA_S_CVI( int    startIdx,
    emaRing_Idx = 0;
    emaBeta = (double)(optInTimePeriod - 1) / (double)(optInTimePeriod + 1);
    optInK_1 = 1.0 - emaBeta;
-   emaBeta = 1.0 - optInK_1;
+   if( emaBeta < 0.5 )
+   {
+      emaBeta = 1.0 - optInK_1;
+   }
    today = startIdx - lookbackTotal;
    i = optInTimePeriod;
    tempReal = 0.0;
@@ -480,7 +486,10 @@ static TA_FMA_STEP_INLINE TA_RetCode TA_CVI_OpenImpl( struct TA_CVI_Stream **str
       emaRing_Idx = 0;
       emaBeta = (double)(optInTimePeriod - 1) / (double)(optInTimePeriod + 1);
       optInK_1 = 1.0 - emaBeta;
-      emaBeta = 1.0 - optInK_1;
+      if( emaBeta < 0.5 )
+      {
+         emaBeta = 1.0 - optInK_1;
+      }
       today = startIdx - lookbackTotal;
       i = optInTimePeriod;
       tempReal = 0.0;

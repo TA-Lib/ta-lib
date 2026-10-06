@@ -195,10 +195,14 @@ public partial class Core
        */
       betaFirst = (double)(optInFirstPeriod - 1) / (double)(optInFirstPeriod + 1);
       kFirst = 1.0 - betaFirst;
-      betaFirst = 1.0 - kFirst;
+      if( betaFirst < 0.5 ) {
+         betaFirst = 1.0 - kFirst;
+      }
       betaSecond = (double)(optInSecondPeriod - 1) / (double)(optInSecondPeriod + 1);
       kSecond = 1.0 - betaSecond;
-      betaSecond = 1.0 - kSecond;
+      if( betaSecond < 0.5 ) {
+         betaSecond = 1.0 - kSecond;
+      }
       lookbackFirst = EmaLookback(optInFirstPeriod);
       emaFirstNum = 0.0;
       emaFirstDen = 0.0;
@@ -360,10 +364,14 @@ public partial class Core
       outBegIdx = startIdx;
       betaFirst = (double)(optInFirstPeriod - 1) / (double)(optInFirstPeriod + 1);
       kFirst = 1.0 - betaFirst;
-      betaFirst = 1.0 - kFirst;
+      if( betaFirst < 0.5 ) {
+         betaFirst = 1.0 - kFirst;
+      }
       betaSecond = (double)(optInSecondPeriod - 1) / (double)(optInSecondPeriod + 1);
       kSecond = 1.0 - betaSecond;
-      betaSecond = 1.0 - kSecond;
+      if( betaSecond < 0.5 ) {
+         betaSecond = 1.0 - kSecond;
+      }
       lookbackFirst = EmaLookback(optInFirstPeriod);
       emaFirstNum = 0.0;
       emaFirstDen = 0.0;
@@ -906,10 +914,14 @@ public partial class Core
        */
       betaFirst = (double)(optInFirstPeriod - 1) / (double)(optInFirstPeriod + 1);
       kFirst = 1.0 - betaFirst;
-      betaFirst = 1.0 - kFirst;
+      if( betaFirst < 0.5 ) {
+         betaFirst = 1.0 - kFirst;
+      }
       betaSecond = (double)(optInSecondPeriod - 1) / (double)(optInSecondPeriod + 1);
       kSecond = 1.0 - betaSecond;
-      betaSecond = 1.0 - kSecond;
+      if( betaSecond < 0.5 ) {
+         betaSecond = 1.0 - kSecond;
+      }
       lookbackFirst = EmaLookback(optInFirstPeriod);
       emaFirstNum = 0.0;
       emaFirstDen = 0.0;

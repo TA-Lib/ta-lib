@@ -224,7 +224,9 @@ impl Core {
         // -0.0 line value; hence the explicit arm at each step.
         signalBeta = ((optInSignalPeriod - 1) as f64) / ((optInSignalPeriod + 1) as f64);
         signalK = 1.0 - signalBeta;
-        signalBeta = 1.0 - signalK;
+        if signalBeta < 0.5 {
+            signalBeta = 1.0 - signalK;
+        }
         lookbackSignal = self.ema_lookback(optInSignalPeriod).unwrap_or(usize::MAX);
         // Move up the start index if there is not
         // enough initial data.
@@ -605,7 +607,9 @@ impl Core {
         // -0.0 line value; hence the explicit arm at each step.
         signalBeta = ((optInSignalPeriod - 1) as f64) / ((optInSignalPeriod + 1) as f64);
         signalK = 1.0 - signalBeta;
-        signalBeta = 1.0 - signalK;
+        if signalBeta < 0.5 {
+            signalBeta = 1.0 - signalK;
+        }
         lookbackSignal = self.ema_lookback(optInSignalPeriod)?;
         // Move up the start index if there is not
         // enough initial data.

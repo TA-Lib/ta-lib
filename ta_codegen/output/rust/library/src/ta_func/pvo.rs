@@ -382,10 +382,14 @@ impl Core {
             }
             _eFastBeta = ((optInFastPeriod - 1) as f64) / ((optInFastPeriod + 1) as f64);
             _eFastK = 1.0 - _eFastBeta;
-            _eFastBeta = 1.0 - _eFastK;
+            if _eFastBeta < 0.5 {
+                _eFastBeta = 1.0 - _eFastK;
+            }
             _eSlowBeta = ((optInSlowPeriod - 1) as f64) / ((optInSlowPeriod + 1) as f64);
             _eSlowK = 1.0 - _eSlowBeta;
-            _eSlowBeta = 1.0 - _eSlowK;
+            if _eSlowBeta < 0.5 {
+                _eSlowBeta = 1.0 - _eSlowK;
+            }
             _eFastToday = self.ema_lookback(optInFastPeriod).unwrap_or(usize::MAX);
             if _eFastToday < startIdx {
                 _eFastToday = startIdx;

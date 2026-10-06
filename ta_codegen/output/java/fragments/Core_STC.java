@@ -189,10 +189,14 @@
       outBegIdx.value = startIdx;
       fastBeta = (double)(optInFastPeriod - 1) / (double)(optInFastPeriod + 1);
       fastK = 1.0 - fastBeta;
-      fastBeta = 1.0 - fastK;
+      if( fastBeta < 0.5 ) {
+         fastBeta = 1.0 - fastK;
+      }
       slowBeta = (double)(optInSlowPeriod - 1) / (double)(optInSlowPeriod + 1);
       slowK = 1.0 - slowBeta;
-      slowBeta = 1.0 - slowK;
+      if( slowBeta < 0.5 ) {
+         slowBeta = 1.0 - slowK;
+      }
       /* Rolling extrema, van Herk / Gil-Werman: the window ending in slot j is
        * the current block's prefix extremum joined with the previous block's
        * suffix extremum from slot j+1. The extrema are exact, so the output must
@@ -610,10 +614,14 @@
       outBegIdx.value = startIdx;
       fastBeta = (double)(optInFastPeriod - 1) / (double)(optInFastPeriod + 1);
       fastK = 1.0 - fastBeta;
-      fastBeta = 1.0 - fastK;
+      if( fastBeta < 0.5 ) {
+         fastBeta = 1.0 - fastK;
+      }
       slowBeta = (double)(optInSlowPeriod - 1) / (double)(optInSlowPeriod + 1);
       slowK = 1.0 - slowBeta;
-      slowBeta = 1.0 - slowK;
+      if( slowBeta < 0.5 ) {
+         slowBeta = 1.0 - slowK;
+      }
       if( optInCyclePeriod < 1 ) return RetCode.INTERNAL_ERROR;
       lineRing = new double[optInCyclePeriod];
       maxIdx_lineRing = (optInCyclePeriod)-1;
@@ -1622,10 +1630,14 @@
       outBegIdx.value = startIdx;
       fastBeta = (double)(optInFastPeriod - 1) / (double)(optInFastPeriod + 1);
       fastK = 1.0 - fastBeta;
-      fastBeta = 1.0 - fastK;
+      if( fastBeta < 0.5 ) {
+         fastBeta = 1.0 - fastK;
+      }
       slowBeta = (double)(optInSlowPeriod - 1) / (double)(optInSlowPeriod + 1);
       slowK = 1.0 - slowBeta;
-      slowBeta = 1.0 - slowK;
+      if( slowBeta < 0.5 ) {
+         slowBeta = 1.0 - slowK;
+      }
       /* Rolling extrema, van Herk / Gil-Werman: the window ending in slot j is
        * the current block's prefix extremum joined with the previous block's
        * suffix extremum from slot j+1. The extrema are exact, so the output must

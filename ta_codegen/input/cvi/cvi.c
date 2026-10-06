@@ -60,7 +60,7 @@ TA_RetCode cvi(int startIdx, int endIdx,
 
    emaBeta = ((double)(optInTimePeriod - 1)) / ((double)(optInTimePeriod + 1));
    optInK_1 = 1.0 - emaBeta;
-   emaBeta = 1.0 - optInK_1;
+   if( emaBeta < 0.5 ) emaBeta = 1.0 - optInK_1;
 
    today = startIdx-lookbackTotal;
    i = optInTimePeriod;

@@ -168,10 +168,16 @@ TA_LIB_API TA_RetCode TA_TSI( int    startIdx,
     */
    betaFirst = (double)(optInFirstPeriod - 1) / (double)(optInFirstPeriod + 1);
    kFirst = 1.0 - betaFirst;
-   betaFirst = 1.0 - kFirst;
+   if( betaFirst < 0.5 )
+   {
+      betaFirst = 1.0 - kFirst;
+   }
    betaSecond = (double)(optInSecondPeriod - 1) / (double)(optInSecondPeriod + 1);
    kSecond = 1.0 - betaSecond;
-   betaSecond = 1.0 - kSecond;
+   if( betaSecond < 0.5 )
+   {
+      betaSecond = 1.0 - kSecond;
+   }
    lookbackFirst = TA_EMA_Lookback(optInFirstPeriod);
    emaFirstNum = 0.0;
    emaFirstDen = 0.0;
@@ -350,10 +356,16 @@ TA_RetCode TA_S_TSI( int    startIdx,
    *outBegIdx= startIdx;
    betaFirst = (double)(optInFirstPeriod - 1) / (double)(optInFirstPeriod + 1);
    kFirst = 1.0 - betaFirst;
-   betaFirst = 1.0 - kFirst;
+   if( betaFirst < 0.5 )
+   {
+      betaFirst = 1.0 - kFirst;
+   }
    betaSecond = (double)(optInSecondPeriod - 1) / (double)(optInSecondPeriod + 1);
    kSecond = 1.0 - betaSecond;
-   betaSecond = 1.0 - kSecond;
+   if( betaSecond < 0.5 )
+   {
+      betaSecond = 1.0 - kSecond;
+   }
    lookbackFirst = TA_EMA_Lookback(optInFirstPeriod);
    emaFirstNum = 0.0;
    emaFirstDen = 0.0;
@@ -568,10 +580,16 @@ static TA_FMA_STEP_INLINE TA_RetCode TA_TSI_OpenImpl( struct TA_TSI_Stream **str
        */
       betaFirst = (double)(optInFirstPeriod - 1) / (double)(optInFirstPeriod + 1);
       kFirst = 1.0 - betaFirst;
-      betaFirst = 1.0 - kFirst;
+      if( betaFirst < 0.5 )
+      {
+         betaFirst = 1.0 - kFirst;
+      }
       betaSecond = (double)(optInSecondPeriod - 1) / (double)(optInSecondPeriod + 1);
       kSecond = 1.0 - betaSecond;
-      betaSecond = 1.0 - kSecond;
+      if( betaSecond < 0.5 )
+      {
+         betaSecond = 1.0 - kSecond;
+      }
       lookbackFirst = TA_EMA_Lookback(optInFirstPeriod);
       emaFirstNum = 0.0;
       emaFirstDen = 0.0;

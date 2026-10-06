@@ -248,13 +248,19 @@ public partial class Core
        */
       betaSlow = (double)(optInSlowPeriod - 1) / (double)(optInSlowPeriod + 1);
       kSlow = 1.0 - betaSlow;
-      betaSlow = 1.0 - kSlow;
+      if( betaSlow < 0.5 ) {
+         betaSlow = 1.0 - kSlow;
+      }
       betaFast = (double)(optInFastPeriod - 1) / (double)(optInFastPeriod + 1);
       kFast = 1.0 - betaFast;
-      betaFast = 1.0 - kFast;
+      if( betaFast < 0.5 ) {
+         betaFast = 1.0 - kFast;
+      }
       betaSignal = (double)(optInSignalPeriod - 1) / (double)(optInSignalPeriod + 1);
       kSignal = 1.0 - betaSignal;
-      betaSignal = 1.0 - kSignal;
+      if( betaSignal < 0.5 ) {
+         betaSignal = 1.0 - kSignal;
+      }
       lookbackSlow = EmaLookback(optInSlowPeriod);
       lookbackFast = EmaLookback(optInFastPeriod);
       emaSlowNum = 0.0;
@@ -543,13 +549,19 @@ public partial class Core
       outBegIdx = startIdx;
       betaSlow = (double)(optInSlowPeriod - 1) / (double)(optInSlowPeriod + 1);
       kSlow = 1.0 - betaSlow;
-      betaSlow = 1.0 - kSlow;
+      if( betaSlow < 0.5 ) {
+         betaSlow = 1.0 - kSlow;
+      }
       betaFast = (double)(optInFastPeriod - 1) / (double)(optInFastPeriod + 1);
       kFast = 1.0 - betaFast;
-      betaFast = 1.0 - kFast;
+      if( betaFast < 0.5 ) {
+         betaFast = 1.0 - kFast;
+      }
       betaSignal = (double)(optInSignalPeriod - 1) / (double)(optInSignalPeriod + 1);
       kSignal = 1.0 - betaSignal;
-      betaSignal = 1.0 - kSignal;
+      if( betaSignal < 0.5 ) {
+         betaSignal = 1.0 - kSignal;
+      }
       lookbackSlow = EmaLookback(optInSlowPeriod);
       lookbackFast = EmaLookback(optInFastPeriod);
       emaSlowNum = 0.0;
@@ -1407,13 +1419,19 @@ public partial class Core
        */
       betaSlow = (double)(optInSlowPeriod - 1) / (double)(optInSlowPeriod + 1);
       kSlow = 1.0 - betaSlow;
-      betaSlow = 1.0 - kSlow;
+      if( betaSlow < 0.5 ) {
+         betaSlow = 1.0 - kSlow;
+      }
       betaFast = (double)(optInFastPeriod - 1) / (double)(optInFastPeriod + 1);
       kFast = 1.0 - betaFast;
-      betaFast = 1.0 - kFast;
+      if( betaFast < 0.5 ) {
+         betaFast = 1.0 - kFast;
+      }
       betaSignal = (double)(optInSignalPeriod - 1) / (double)(optInSignalPeriod + 1);
       kSignal = 1.0 - betaSignal;
-      betaSignal = 1.0 - kSignal;
+      if( betaSignal < 0.5 ) {
+         betaSignal = 1.0 - kSignal;
+      }
       lookbackSlow = EmaLookback(optInSlowPeriod);
       lookbackFast = EmaLookback(optInFastPeriod);
       emaSlowNum = 0.0;

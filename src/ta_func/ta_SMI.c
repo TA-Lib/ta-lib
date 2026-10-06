@@ -214,13 +214,22 @@ TA_LIB_API TA_RetCode TA_SMI( int    startIdx,
     */
    betaSlow = (double)(optInSlowPeriod - 1) / (double)(optInSlowPeriod + 1);
    kSlow = 1.0 - betaSlow;
-   betaSlow = 1.0 - kSlow;
+   if( betaSlow < 0.5 )
+   {
+      betaSlow = 1.0 - kSlow;
+   }
    betaFast = (double)(optInFastPeriod - 1) / (double)(optInFastPeriod + 1);
    kFast = 1.0 - betaFast;
-   betaFast = 1.0 - kFast;
+   if( betaFast < 0.5 )
+   {
+      betaFast = 1.0 - kFast;
+   }
    betaSignal = (double)(optInSignalPeriod - 1) / (double)(optInSignalPeriod + 1);
    kSignal = 1.0 - betaSignal;
-   betaSignal = 1.0 - kSignal;
+   if( betaSignal < 0.5 )
+   {
+      betaSignal = 1.0 - kSignal;
+   }
    lookbackSlow = TA_EMA_Lookback(optInSlowPeriod);
    lookbackFast = TA_EMA_Lookback(optInFastPeriod);
    emaSlowNum = 0.0;
@@ -549,13 +558,22 @@ TA_RetCode TA_S_SMI( int    startIdx,
    *outBegIdx= startIdx;
    betaSlow = (double)(optInSlowPeriod - 1) / (double)(optInSlowPeriod + 1);
    kSlow = 1.0 - betaSlow;
-   betaSlow = 1.0 - kSlow;
+   if( betaSlow < 0.5 )
+   {
+      betaSlow = 1.0 - kSlow;
+   }
    betaFast = (double)(optInFastPeriod - 1) / (double)(optInFastPeriod + 1);
    kFast = 1.0 - betaFast;
-   betaFast = 1.0 - kFast;
+   if( betaFast < 0.5 )
+   {
+      betaFast = 1.0 - kFast;
+   }
    betaSignal = (double)(optInSignalPeriod - 1) / (double)(optInSignalPeriod + 1);
    kSignal = 1.0 - betaSignal;
-   betaSignal = 1.0 - kSignal;
+   if( betaSignal < 0.5 )
+   {
+      betaSignal = 1.0 - kSignal;
+   }
    lookbackSlow = TA_EMA_Lookback(optInSlowPeriod);
    lookbackFast = TA_EMA_Lookback(optInFastPeriod);
    emaSlowNum = 0.0;
@@ -993,13 +1011,22 @@ static TA_FMA_STEP_INLINE TA_RetCode TA_SMI_OpenImpl( struct TA_SMI_Stream **str
        */
       betaSlow = (double)(optInSlowPeriod - 1) / (double)(optInSlowPeriod + 1);
       kSlow = 1.0 - betaSlow;
-      betaSlow = 1.0 - kSlow;
+      if( betaSlow < 0.5 )
+      {
+         betaSlow = 1.0 - kSlow;
+      }
       betaFast = (double)(optInFastPeriod - 1) / (double)(optInFastPeriod + 1);
       kFast = 1.0 - betaFast;
-      betaFast = 1.0 - kFast;
+      if( betaFast < 0.5 )
+      {
+         betaFast = 1.0 - kFast;
+      }
       betaSignal = (double)(optInSignalPeriod - 1) / (double)(optInSignalPeriod + 1);
       kSignal = 1.0 - betaSignal;
-      betaSignal = 1.0 - kSignal;
+      if( betaSignal < 0.5 )
+      {
+         betaSignal = 1.0 - kSignal;
+      }
       lookbackSlow = TA_EMA_Lookback(optInSlowPeriod);
       lookbackFast = TA_EMA_Lookback(optInFastPeriod);
       emaSlowNum = 0.0;

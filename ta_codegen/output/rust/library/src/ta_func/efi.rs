@@ -216,7 +216,9 @@ impl Core {
         // per bar.
         emaBeta = ((optInTimePeriod - 1) as f64) / ((optInTimePeriod + 1) as f64);
         optInK_1 = 1.0 - emaBeta;
-        emaBeta = 1.0 - ((optInK_1) as f64);
+        if emaBeta < 0.5 {
+            emaBeta = 1.0 - ((optInK_1) as f64);
+        }
         // Move up the start index if there is not
         // enough initial data.
         if startIdx < lookbackTotal {
@@ -569,7 +571,9 @@ impl Core {
             // per bar.
             emaBeta = ((optInTimePeriod - 1) as f64) / ((optInTimePeriod + 1) as f64);
             optInK_1 = 1.0 - emaBeta;
-            emaBeta = 1.0 - ((optInK_1) as f64);
+            if emaBeta < 0.5 {
+                emaBeta = 1.0 - ((optInK_1) as f64);
+            }
             // Move up the start index if there is not
             // enough initial data.
             if startIdx < lookbackTotal {
@@ -651,7 +655,9 @@ impl Core {
             // per bar.
             emaBeta = ((optInTimePeriod - 1) as f64) / ((optInTimePeriod + 1) as f64);
             optInK_1 = 1.0 - emaBeta;
-            emaBeta = 1.0 - ((optInK_1) as f64);
+            if emaBeta < 0.5 {
+                emaBeta = 1.0 - ((optInK_1) as f64);
+            }
             // Move up the start index if there is not
             // enough initial data.
             if startIdx < lookbackTotal {

@@ -190,9 +190,15 @@ impl Core {
         // emaBeta + optInK_1 must be exactly 1.0, or a flat input drifts off
         // its level. Each subtraction is exact only from an operand in
         // [0.5,1): at a period of 2 that is optInK_1, above it emaBeta.
+        //
+        // Above it emaBeta stays as the divide wrote it: the second subtraction
+        // would not change a bit, and a register last written by a subtraction
+        // costs each FMA reading it one more cycle on Intel P-cores.
         emaBeta = ((optInTimePeriod - 1) as f64) / ((optInTimePeriod + 1) as f64);
         optInK_1 = 1.0 - emaBeta;
-        emaBeta = 1.0 - ((optInK_1) as f64);
+        if emaBeta < 0.5 {
+            emaBeta = 1.0 - ((optInK_1) as f64);
+        }
         // Move up the start index if there is not
         // enough initial data.
         if startIdx < lookbackTotal {
@@ -475,9 +481,15 @@ impl Core {
         // emaBeta + optInK_1 must be exactly 1.0, or a flat input drifts off
         // its level. Each subtraction is exact only from an operand in
         // [0.5,1): at a period of 2 that is optInK_1, above it emaBeta.
+        //
+        // Above it emaBeta stays as the divide wrote it: the second subtraction
+        // would not change a bit, and a register last written by a subtraction
+        // costs each FMA reading it one more cycle on Intel P-cores.
         emaBeta = ((optInTimePeriod - 1) as f64) / ((optInTimePeriod + 1) as f64);
         optInK_1 = 1.0 - emaBeta;
-        emaBeta = 1.0 - ((optInK_1) as f64);
+        if emaBeta < 0.5 {
+            emaBeta = 1.0 - ((optInK_1) as f64);
+        }
         // Move up the start index if there is not
         // enough initial data.
         if startIdx < lookbackTotal {

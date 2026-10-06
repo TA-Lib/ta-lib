@@ -10212,10 +10212,14 @@ public final class Core {
          }
          _eFastBeta = (double)(optInFastPeriod - 1) / (double)(optInFastPeriod + 1);
          _eFastK = 1.0 - _eFastBeta;
-         _eFastBeta = 1.0 - _eFastK;
+         if( _eFastBeta < 0.5 ) {
+            _eFastBeta = 1.0 - _eFastK;
+         }
          _eSlowBeta = (double)(optInSlowPeriod - 1) / (double)(optInSlowPeriod + 1);
          _eSlowK = 1.0 - _eSlowBeta;
-         _eSlowBeta = 1.0 - _eSlowK;
+         if( _eSlowBeta < 0.5 ) {
+            _eSlowBeta = 1.0 - _eSlowK;
+         }
          _eFastToday = emaLookback(optInFastPeriod);
          if( _eFastToday < startIdx ) {
             _eFastToday = startIdx;
@@ -10408,10 +10412,14 @@ public final class Core {
          }
          _eFastBeta = (double)(optInFastPeriod - 1) / (double)(optInFastPeriod + 1);
          _eFastK = 1.0 - _eFastBeta;
-         _eFastBeta = 1.0 - _eFastK;
+         if( _eFastBeta < 0.5 ) {
+            _eFastBeta = 1.0 - _eFastK;
+         }
          _eSlowBeta = (double)(optInSlowPeriod - 1) / (double)(optInSlowPeriod + 1);
          _eSlowK = 1.0 - _eSlowBeta;
-         _eSlowBeta = 1.0 - _eSlowK;
+         if( _eSlowBeta < 0.5 ) {
+            _eSlowBeta = 1.0 - _eSlowK;
+         }
          _eFastToday = emaLookback(optInFastPeriod);
          if( _eFastToday < startIdx ) {
             _eFastToday = startIdx;
@@ -90096,7 +90104,9 @@ public final class Core {
       emaRing_Idx = 0;
       emaBeta = (double)(optInTimePeriod - 1) / (double)(optInTimePeriod + 1);
       optInK_1 = 1.0 - emaBeta;
-      emaBeta = 1.0 - optInK_1;
+      if( emaBeta < 0.5 ) {
+         emaBeta = 1.0 - optInK_1;
+      }
       today = startIdx - lookbackTotal;
       i = optInTimePeriod;
       tempReal = 0.0;
@@ -90195,7 +90205,9 @@ public final class Core {
       emaRing_Idx = 0;
       emaBeta = (double)(optInTimePeriod - 1) / (double)(optInTimePeriod + 1);
       optInK_1 = 1.0 - emaBeta;
-      emaBeta = 1.0 - optInK_1;
+      if( emaBeta < 0.5 ) {
+         emaBeta = 1.0 - optInK_1;
+      }
       today = startIdx - lookbackTotal;
       i = optInTimePeriod;
       tempReal = 0.0;
@@ -90659,7 +90671,9 @@ public final class Core {
       emaRing_Idx = 0;
       emaBeta = (double)(optInTimePeriod - 1) / (double)(optInTimePeriod + 1);
       optInK_1 = 1.0 - emaBeta;
-      emaBeta = 1.0 - optInK_1;
+      if( emaBeta < 0.5 ) {
+         emaBeta = 1.0 - optInK_1;
+      }
       today = startIdx - lookbackTotal;
       i = optInTimePeriod;
       tempReal = 0.0;
@@ -90964,7 +90978,9 @@ public final class Core {
        */
       emaBeta = (double)(optInTimePeriod - 1) / (double)(optInTimePeriod + 1);
       optInK_1 = 1.0 - emaBeta;
-      emaBeta = 1.0 - optInK_1;
+      if( emaBeta < 0.5 ) {
+         emaBeta = 1.0 - optInK_1;
+      }
       /* Seed EMA1 with a simple average of the first
        * 'period' price bars.
        */
@@ -91067,7 +91083,9 @@ public final class Core {
       }
       emaBeta = (double)(optInTimePeriod - 1) / (double)(optInTimePeriod + 1);
       optInK_1 = 1.0 - emaBeta;
-      emaBeta = 1.0 - optInK_1;
+      if( emaBeta < 0.5 ) {
+         emaBeta = 1.0 - optInK_1;
+      }
       today = startIdx - lookbackTotal;
       i = optInTimePeriod;
       tempReal = 0.0;
@@ -91495,7 +91513,9 @@ public final class Core {
        */
       emaBeta = (double)(optInTimePeriod - 1) / (double)(optInTimePeriod + 1);
       optInK_1 = 1.0 - emaBeta;
-      emaBeta = 1.0 - optInK_1;
+      if( emaBeta < 0.5 ) {
+         emaBeta = 1.0 - optInK_1;
+      }
       /* Seed EMA1 with a simple average of the first
        * 'period' price bars.
        */
@@ -95337,7 +95357,9 @@ public final class Core {
        */
       emaBeta = (double)(optInTimePeriod - 1) / (double)(optInTimePeriod + 1);
       optInK_1 = 1.0 - emaBeta;
-      emaBeta = 1.0 - optInK_1;
+      if( emaBeta < 0.5 ) {
+         emaBeta = 1.0 - optInK_1;
+      }
       /* Move up the start index if there is not
        * enough initial data.
        */
@@ -95437,7 +95459,9 @@ public final class Core {
       lookbackTotal = efiLookback(optInTimePeriod);
       emaBeta = (double)(optInTimePeriod - 1) / (double)(optInTimePeriod + 1);
       optInK_1 = 1.0 - emaBeta;
-      emaBeta = 1.0 - optInK_1;
+      if( emaBeta < 0.5 ) {
+         emaBeta = 1.0 - optInK_1;
+      }
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
       }
@@ -95881,7 +95905,9 @@ public final class Core {
           */
          emaBeta = (double)(optInTimePeriod - 1) / (double)(optInTimePeriod + 1);
          optInK_1 = 1.0 - emaBeta;
-         emaBeta = 1.0 - optInK_1;
+         if( emaBeta < 0.5 ) {
+            emaBeta = 1.0 - optInK_1;
+         }
          /* Move up the start index if there is not
           * enough initial data.
           */
@@ -95965,7 +95991,9 @@ public final class Core {
           */
          emaBeta = (double)(optInTimePeriod - 1) / (double)(optInTimePeriod + 1);
          optInK_1 = 1.0 - emaBeta;
-         emaBeta = 1.0 - optInK_1;
+         if( emaBeta < 0.5 ) {
+            emaBeta = 1.0 - optInK_1;
+         }
          /* Move up the start index if there is not
           * enough initial data.
           */
@@ -96208,10 +96236,16 @@ public final class Core {
        * emaBeta + optInK_1 must be exactly 1.0, or a flat input drifts off
        * its level. Each subtraction is exact only from an operand in
        * [0.5,1): at a period of 2 that is optInK_1, above it emaBeta.
+       *
+       * Above it emaBeta stays as the divide wrote it: the second subtraction
+       * would not change a bit, and a register last written by a subtraction
+       * costs each FMA reading it one more cycle on Intel P-cores.
        */
       emaBeta = (double)(optInTimePeriod - 1) / (double)(optInTimePeriod + 1);
       optInK_1 = 1.0 - emaBeta;
-      emaBeta = 1.0 - optInK_1;
+      if( emaBeta < 0.5 ) {
+         emaBeta = 1.0 - optInK_1;
+      }
       /* Move up the start index if there is not
        * enough initial data.
        */
@@ -96291,7 +96325,9 @@ public final class Core {
       lookbackTotal = emaLookback(optInTimePeriod);
       emaBeta = (double)(optInTimePeriod - 1) / (double)(optInTimePeriod + 1);
       optInK_1 = 1.0 - emaBeta;
-      emaBeta = 1.0 - optInK_1;
+      if( emaBeta < 0.5 ) {
+         emaBeta = 1.0 - optInK_1;
+      }
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
       }
@@ -96687,10 +96723,16 @@ public final class Core {
        * emaBeta + optInK_1 must be exactly 1.0, or a flat input drifts off
        * its level. Each subtraction is exact only from an operand in
        * [0.5,1): at a period of 2 that is optInK_1, above it emaBeta.
+       *
+       * Above it emaBeta stays as the divide wrote it: the second subtraction
+       * would not change a bit, and a register last written by a subtraction
+       * costs each FMA reading it one more cycle on Intel P-cores.
        */
       emaBeta = (double)(optInTimePeriod - 1) / (double)(optInTimePeriod + 1);
       optInK_1 = 1.0 - emaBeta;
-      emaBeta = 1.0 - optInK_1;
+      if( emaBeta < 0.5 ) {
+         emaBeta = 1.0 - optInK_1;
+      }
       /* Move up the start index if there is not
        * enough initial data.
        */
@@ -98788,7 +98830,9 @@ public final class Core {
       }
       beta = (double)(optInTimePeriod - 1) / (double)(optInTimePeriod + 1);
       k = 1.0 - beta;
-      beta = 1.0 - k;
+      if( beta < 0.5 ) {
+         beta = 1.0 - k;
+      }
       /* Seed: ema.c's DEFAULT arm, op for op. */
       today = startIdx - lookbackTotal;
       i = optInTimePeriod;
@@ -98886,7 +98930,9 @@ public final class Core {
       }
       beta = (double)(optInTimePeriod - 1) / (double)(optInTimePeriod + 1);
       k = 1.0 - beta;
-      beta = 1.0 - k;
+      if( beta < 0.5 ) {
+         beta = 1.0 - k;
+      }
       today = startIdx - lookbackTotal;
       i = optInTimePeriod;
       tempReal = 0.0;
@@ -99411,7 +99457,9 @@ public final class Core {
           */
          beta = (double)(optInTimePeriod - 1) / (double)(optInTimePeriod + 1);
          k = 1.0 - beta;
-         beta = 1.0 - k;
+         if( beta < 0.5 ) {
+            beta = 1.0 - k;
+         }
          /* Seed: ema.c's DEFAULT arm, op for op. */
          today = startIdx - lookbackTotal;
          i = optInTimePeriod;
@@ -135354,7 +135402,9 @@ public final class Core {
          slowBeta = (double)(optInSlowPeriod - 1) / (double)(optInSlowPeriod + 1);
       }
       slowK = 1.0 - slowBeta;
-      slowBeta = 1.0 - slowK;
+      if( slowBeta < 0.5 ) {
+         slowBeta = 1.0 - slowK;
+      }
       if( optInFastPeriod == 0 ) {
          /* Fix 12 */
          optInFastPeriod = 12;
@@ -135363,7 +135413,9 @@ public final class Core {
          fastBeta = (double)(optInFastPeriod - 1) / (double)(optInFastPeriod + 1);
       }
       fastK = 1.0 - fastBeta;
-      fastBeta = 1.0 - fastK;
+      if( fastBeta < 0.5 ) {
+         fastBeta = 1.0 - fastK;
+      }
       /* A signal period of 1 disables signal-line smoothing: the signal IS the
        * MACD line and the histogram is exactly zero. The recursion
        * below, at a k of 1.0 and a beta of 0.0, does not keep the sign of a
@@ -135371,7 +135423,9 @@ public final class Core {
        */
       signalBeta = (double)(optInSignalPeriod - 1) / (double)(optInSignalPeriod + 1);
       signalK = 1.0 - signalBeta;
-      signalBeta = 1.0 - signalK;
+      if( signalBeta < 0.5 ) {
+         signalBeta = 1.0 - signalK;
+      }
       lookbackSignal = emaLookback(optInSignalPeriod);
       /* Move up the start index if there is not
        * enough initial data.
@@ -135564,7 +135618,9 @@ public final class Core {
          slowBeta = (double)(optInSlowPeriod - 1) / (double)(optInSlowPeriod + 1);
       }
       slowK = 1.0 - slowBeta;
-      slowBeta = 1.0 - slowK;
+      if( slowBeta < 0.5 ) {
+         slowBeta = 1.0 - slowK;
+      }
       if( optInFastPeriod == 0 ) {
          optInFastPeriod = 12;
          fastBeta = 1.0 - 0.15;
@@ -135572,10 +135628,14 @@ public final class Core {
          fastBeta = (double)(optInFastPeriod - 1) / (double)(optInFastPeriod + 1);
       }
       fastK = 1.0 - fastBeta;
-      fastBeta = 1.0 - fastK;
+      if( fastBeta < 0.5 ) {
+         fastBeta = 1.0 - fastK;
+      }
       signalBeta = (double)(optInSignalPeriod - 1) / (double)(optInSignalPeriod + 1);
       signalK = 1.0 - signalBeta;
-      signalBeta = 1.0 - signalK;
+      if( signalBeta < 0.5 ) {
+         signalBeta = 1.0 - signalK;
+      }
       lookbackSignal = emaLookback(optInSignalPeriod);
       lookbackSlow = emaLookback(optInSlowPeriod);
       lookbackTotal = lookbackSignal + lookbackSlow;
@@ -136122,7 +136182,9 @@ public final class Core {
          slowBeta = (double)(optInSlowPeriod - 1) / (double)(optInSlowPeriod + 1);
       }
       slowK = 1.0 - slowBeta;
-      slowBeta = 1.0 - slowK;
+      if( slowBeta < 0.5 ) {
+         slowBeta = 1.0 - slowK;
+      }
       if( optInFastPeriod == 0 ) {
          /* Fix 12 */
          optInFastPeriod = 12;
@@ -136131,7 +136193,9 @@ public final class Core {
          fastBeta = (double)(optInFastPeriod - 1) / (double)(optInFastPeriod + 1);
       }
       fastK = 1.0 - fastBeta;
-      fastBeta = 1.0 - fastK;
+      if( fastBeta < 0.5 ) {
+         fastBeta = 1.0 - fastK;
+      }
       /* A signal period of 1 disables signal-line smoothing: the signal IS the
        * MACD line and the histogram is exactly zero. The recursion
        * below, at a k of 1.0 and a beta of 0.0, does not keep the sign of a
@@ -136139,7 +136203,9 @@ public final class Core {
        */
       signalBeta = (double)(optInSignalPeriod - 1) / (double)(optInSignalPeriod + 1);
       signalK = 1.0 - signalBeta;
-      signalBeta = 1.0 - signalK;
+      if( signalBeta < 0.5 ) {
+         signalBeta = 1.0 - signalK;
+      }
       lookbackSignal = emaLookback(optInSignalPeriod);
       /* Move up the start index if there is not
        * enough initial data.
@@ -137572,7 +137638,9 @@ public final class Core {
        */
       signalBeta = (double)(optInSignalPeriod - 1) / (double)(optInSignalPeriod + 1);
       signalK = 1.0 - signalBeta;
-      signalBeta = 1.0 - signalK;
+      if( signalBeta < 0.5 ) {
+         signalBeta = 1.0 - signalK;
+      }
       lookbackSignal = emaLookback(optInSignalPeriod);
       /* Move up the start index if there is not
        * enough initial data.
@@ -137743,7 +137811,9 @@ public final class Core {
       slowK = 1.0 - slowBeta;
       signalBeta = (double)(optInSignalPeriod - 1) / (double)(optInSignalPeriod + 1);
       signalK = 1.0 - signalBeta;
-      signalBeta = 1.0 - signalK;
+      if( signalBeta < 0.5 ) {
+         signalBeta = 1.0 - signalK;
+      }
       lookbackSignal = emaLookback(optInSignalPeriod);
       lookbackTotal = lookbackSignal;
       lookbackTotal += emaLookback(26);
@@ -138257,7 +138327,9 @@ public final class Core {
        */
       signalBeta = (double)(optInSignalPeriod - 1) / (double)(optInSignalPeriod + 1);
       signalK = 1.0 - signalBeta;
-      signalBeta = 1.0 - signalK;
+      if( signalBeta < 0.5 ) {
+         signalBeta = 1.0 - signalK;
+      }
       lookbackSignal = emaLookback(optInSignalPeriod);
       /* Move up the start index if there is not
        * enough initial data.
@@ -141658,7 +141730,9 @@ public final class Core {
        */
       emaBeta = (double)(optInFastPeriod - 1) / (double)(optInFastPeriod + 1);
       optInK_1 = 1.0 - emaBeta;
-      emaBeta = 1.0 - optInK_1;
+      if( emaBeta < 0.5 ) {
+         emaBeta = 1.0 - optInK_1;
+      }
       ema1 = 0.0;
       ema2 = 0.0;
       sum1 = 0.0;
@@ -141816,7 +141890,9 @@ public final class Core {
       outBegIdx.value = startIdx;
       emaBeta = (double)(optInFastPeriod - 1) / (double)(optInFastPeriod + 1);
       optInK_1 = 1.0 - emaBeta;
-      emaBeta = 1.0 - optInK_1;
+      if( emaBeta < 0.5 ) {
+         emaBeta = 1.0 - optInK_1;
+      }
       ema1 = 0.0;
       ema2 = 0.0;
       sum1 = 0.0;
@@ -142341,7 +142417,9 @@ public final class Core {
        */
       emaBeta = (double)(optInFastPeriod - 1) / (double)(optInFastPeriod + 1);
       optInK_1 = 1.0 - emaBeta;
-      emaBeta = 1.0 - optInK_1;
+      if( emaBeta < 0.5 ) {
+         emaBeta = 1.0 - optInK_1;
+      }
       ema1 = 0.0;
       ema2 = 0.0;
       sum1 = 0.0;
@@ -167351,10 +167429,14 @@ public final class Core {
          }
          _eFastBeta = (double)(optInFastPeriod - 1) / (double)(optInFastPeriod + 1);
          _eFastK = 1.0 - _eFastBeta;
-         _eFastBeta = 1.0 - _eFastK;
+         if( _eFastBeta < 0.5 ) {
+            _eFastBeta = 1.0 - _eFastK;
+         }
          _eSlowBeta = (double)(optInSlowPeriod - 1) / (double)(optInSlowPeriod + 1);
          _eSlowK = 1.0 - _eSlowBeta;
-         _eSlowBeta = 1.0 - _eSlowK;
+         if( _eSlowBeta < 0.5 ) {
+            _eSlowBeta = 1.0 - _eSlowK;
+         }
          _eFastToday = emaLookback(optInFastPeriod);
          if( _eFastToday < startIdx ) {
             _eFastToday = startIdx;
@@ -167607,10 +167689,14 @@ public final class Core {
          }
          _eFastBeta = (double)(optInFastPeriod - 1) / (double)(optInFastPeriod + 1);
          _eFastK = 1.0 - _eFastBeta;
-         _eFastBeta = 1.0 - _eFastK;
+         if( _eFastBeta < 0.5 ) {
+            _eFastBeta = 1.0 - _eFastK;
+         }
          _eSlowBeta = (double)(optInSlowPeriod - 1) / (double)(optInSlowPeriod + 1);
          _eSlowK = 1.0 - _eSlowBeta;
-         _eSlowBeta = 1.0 - _eSlowK;
+         if( _eSlowBeta < 0.5 ) {
+            _eSlowBeta = 1.0 - _eSlowK;
+         }
          _eFastToday = emaLookback(optInFastPeriod);
          if( _eFastToday < startIdx ) {
             _eFastToday = startIdx;
@@ -169195,10 +169281,14 @@ public final class Core {
          }
          _eFastBeta = (double)(optInFastPeriod - 1) / (double)(optInFastPeriod + 1);
          _eFastK = 1.0 - _eFastBeta;
-         _eFastBeta = 1.0 - _eFastK;
+         if( _eFastBeta < 0.5 ) {
+            _eFastBeta = 1.0 - _eFastK;
+         }
          _eSlowBeta = (double)(optInSlowPeriod - 1) / (double)(optInSlowPeriod + 1);
          _eSlowK = 1.0 - _eSlowBeta;
-         _eSlowBeta = 1.0 - _eSlowK;
+         if( _eSlowBeta < 0.5 ) {
+            _eSlowBeta = 1.0 - _eSlowK;
+         }
          _eFastToday = emaLookback(optInFastPeriod);
          if( _eFastToday < startIdx ) {
             _eFastToday = startIdx;
@@ -169451,10 +169541,14 @@ public final class Core {
          }
          _eFastBeta = (double)(optInFastPeriod - 1) / (double)(optInFastPeriod + 1);
          _eFastK = 1.0 - _eFastBeta;
-         _eFastBeta = 1.0 - _eFastK;
+         if( _eFastBeta < 0.5 ) {
+            _eFastBeta = 1.0 - _eFastK;
+         }
          _eSlowBeta = (double)(optInSlowPeriod - 1) / (double)(optInSlowPeriod + 1);
          _eSlowK = 1.0 - _eSlowBeta;
-         _eSlowBeta = 1.0 - _eSlowK;
+         if( _eSlowBeta < 0.5 ) {
+            _eSlowBeta = 1.0 - _eSlowK;
+         }
          _eFastToday = emaLookback(optInFastPeriod);
          if( _eFastToday < startIdx ) {
             _eFastToday = startIdx;
@@ -185451,13 +185545,19 @@ public final class Core {
        */
       betaSlow = (double)(optInSlowPeriod - 1) / (double)(optInSlowPeriod + 1);
       kSlow = 1.0 - betaSlow;
-      betaSlow = 1.0 - kSlow;
+      if( betaSlow < 0.5 ) {
+         betaSlow = 1.0 - kSlow;
+      }
       betaFast = (double)(optInFastPeriod - 1) / (double)(optInFastPeriod + 1);
       kFast = 1.0 - betaFast;
-      betaFast = 1.0 - kFast;
+      if( betaFast < 0.5 ) {
+         betaFast = 1.0 - kFast;
+      }
       betaSignal = (double)(optInSignalPeriod - 1) / (double)(optInSignalPeriod + 1);
       kSignal = 1.0 - betaSignal;
-      betaSignal = 1.0 - kSignal;
+      if( betaSignal < 0.5 ) {
+         betaSignal = 1.0 - kSignal;
+      }
       lookbackSlow = emaLookback(optInSlowPeriod);
       lookbackFast = emaLookback(optInFastPeriod);
       emaSlowNum = 0.0;
@@ -185741,13 +185841,19 @@ public final class Core {
       outBegIdx.value = startIdx;
       betaSlow = (double)(optInSlowPeriod - 1) / (double)(optInSlowPeriod + 1);
       kSlow = 1.0 - betaSlow;
-      betaSlow = 1.0 - kSlow;
+      if( betaSlow < 0.5 ) {
+         betaSlow = 1.0 - kSlow;
+      }
       betaFast = (double)(optInFastPeriod - 1) / (double)(optInFastPeriod + 1);
       kFast = 1.0 - betaFast;
-      betaFast = 1.0 - kFast;
+      if( betaFast < 0.5 ) {
+         betaFast = 1.0 - kFast;
+      }
       betaSignal = (double)(optInSignalPeriod - 1) / (double)(optInSignalPeriod + 1);
       kSignal = 1.0 - betaSignal;
-      betaSignal = 1.0 - kSignal;
+      if( betaSignal < 0.5 ) {
+         betaSignal = 1.0 - kSignal;
+      }
       lookbackSlow = emaLookback(optInSlowPeriod);
       lookbackFast = emaLookback(optInFastPeriod);
       emaSlowNum = 0.0;
@@ -186579,13 +186685,19 @@ public final class Core {
        */
       betaSlow = (double)(optInSlowPeriod - 1) / (double)(optInSlowPeriod + 1);
       kSlow = 1.0 - betaSlow;
-      betaSlow = 1.0 - kSlow;
+      if( betaSlow < 0.5 ) {
+         betaSlow = 1.0 - kSlow;
+      }
       betaFast = (double)(optInFastPeriod - 1) / (double)(optInFastPeriod + 1);
       kFast = 1.0 - betaFast;
-      betaFast = 1.0 - kFast;
+      if( betaFast < 0.5 ) {
+         betaFast = 1.0 - kFast;
+      }
       betaSignal = (double)(optInSignalPeriod - 1) / (double)(optInSignalPeriod + 1);
       kSignal = 1.0 - betaSignal;
-      betaSignal = 1.0 - kSignal;
+      if( betaSignal < 0.5 ) {
+         betaSignal = 1.0 - kSignal;
+      }
       lookbackSlow = emaLookback(optInSlowPeriod);
       lookbackFast = emaLookback(optInFastPeriod);
       emaSlowNum = 0.0;
@@ -187538,10 +187650,14 @@ public final class Core {
       outBegIdx.value = startIdx;
       fastBeta = (double)(optInFastPeriod - 1) / (double)(optInFastPeriod + 1);
       fastK = 1.0 - fastBeta;
-      fastBeta = 1.0 - fastK;
+      if( fastBeta < 0.5 ) {
+         fastBeta = 1.0 - fastK;
+      }
       slowBeta = (double)(optInSlowPeriod - 1) / (double)(optInSlowPeriod + 1);
       slowK = 1.0 - slowBeta;
-      slowBeta = 1.0 - slowK;
+      if( slowBeta < 0.5 ) {
+         slowBeta = 1.0 - slowK;
+      }
       /* Rolling extrema, van Herk / Gil-Werman: the window ending in slot j is
        * the current block's prefix extremum joined with the previous block's
        * suffix extremum from slot j+1. The extrema are exact, so the output must
@@ -187959,10 +188075,14 @@ public final class Core {
       outBegIdx.value = startIdx;
       fastBeta = (double)(optInFastPeriod - 1) / (double)(optInFastPeriod + 1);
       fastK = 1.0 - fastBeta;
-      fastBeta = 1.0 - fastK;
+      if( fastBeta < 0.5 ) {
+         fastBeta = 1.0 - fastK;
+      }
       slowBeta = (double)(optInSlowPeriod - 1) / (double)(optInSlowPeriod + 1);
       slowK = 1.0 - slowBeta;
-      slowBeta = 1.0 - slowK;
+      if( slowBeta < 0.5 ) {
+         slowBeta = 1.0 - slowK;
+      }
       if( optInCyclePeriod < 1 ) return RetCode.INTERNAL_ERROR;
       lineRing = new double[optInCyclePeriod];
       maxIdx_lineRing = (optInCyclePeriod)-1;
@@ -188971,10 +189091,14 @@ public final class Core {
       outBegIdx.value = startIdx;
       fastBeta = (double)(optInFastPeriod - 1) / (double)(optInFastPeriod + 1);
       fastK = 1.0 - fastBeta;
-      fastBeta = 1.0 - fastK;
+      if( fastBeta < 0.5 ) {
+         fastBeta = 1.0 - fastK;
+      }
       slowBeta = (double)(optInSlowPeriod - 1) / (double)(optInSlowPeriod + 1);
       slowK = 1.0 - slowBeta;
-      slowBeta = 1.0 - slowK;
+      if( slowBeta < 0.5 ) {
+         slowBeta = 1.0 - slowK;
+      }
       /* Rolling extrema, van Herk / Gil-Werman: the window ending in slot j is
        * the current block's prefix extremum joined with the previous block's
        * suffix extremum from slot j+1. The extrema are exact, so the output must
@@ -201889,7 +202013,9 @@ public final class Core {
        */
       emaBeta = (double)(optInTimePeriod - 1) / (double)(optInTimePeriod + 1);
       optInK_1 = 1.0 - emaBeta;
-      emaBeta = 1.0 - optInK_1;
+      if( emaBeta < 0.5 ) {
+         emaBeta = 1.0 - optInK_1;
+      }
       /* Seed EMA1 with a simple average of the first
        * 'period' price bars.
        */
@@ -202013,7 +202139,9 @@ public final class Core {
       }
       emaBeta = (double)(optInTimePeriod - 1) / (double)(optInTimePeriod + 1);
       optInK_1 = 1.0 - emaBeta;
-      emaBeta = 1.0 - optInK_1;
+      if( emaBeta < 0.5 ) {
+         emaBeta = 1.0 - optInK_1;
+      }
       today = startIdx - lookbackTotal;
       i = optInTimePeriod;
       tempReal = 0.0;
@@ -202467,7 +202595,9 @@ public final class Core {
        */
       emaBeta = (double)(optInTimePeriod - 1) / (double)(optInTimePeriod + 1);
       optInK_1 = 1.0 - emaBeta;
-      emaBeta = 1.0 - optInK_1;
+      if( emaBeta < 0.5 ) {
+         emaBeta = 1.0 - optInK_1;
+      }
       /* Seed EMA1 with a simple average of the first
        * 'period' price bars.
        */
@@ -204908,7 +205038,9 @@ public final class Core {
        */
       emaBeta = (double)(optInTimePeriod - 1) / (double)(optInTimePeriod + 1);
       optInK_1 = 1.0 - emaBeta;
-      emaBeta = 1.0 - optInK_1;
+      if( emaBeta < 0.5 ) {
+         emaBeta = 1.0 - optInK_1;
+      }
       /* Seed EMA1 with a simple average of the first
        * 'period' price bars.
        */
@@ -205027,7 +205159,9 @@ public final class Core {
       }
       emaBeta = (double)(optInTimePeriod - 1) / (double)(optInTimePeriod + 1);
       optInK_1 = 1.0 - emaBeta;
-      emaBeta = 1.0 - optInK_1;
+      if( emaBeta < 0.5 ) {
+         emaBeta = 1.0 - optInK_1;
+      }
       today = startIdx - lookbackTotal;
       i = optInTimePeriod;
       tempReal = 0.0;
@@ -205441,7 +205575,9 @@ public final class Core {
        */
       emaBeta = (double)(optInTimePeriod - 1) / (double)(optInTimePeriod + 1);
       optInK_1 = 1.0 - emaBeta;
-      emaBeta = 1.0 - optInK_1;
+      if( emaBeta < 0.5 ) {
+         emaBeta = 1.0 - optInK_1;
+      }
       /* Seed EMA1 with a simple average of the first
        * 'period' price bars.
        */
@@ -206890,10 +207026,14 @@ public final class Core {
        */
       betaFirst = (double)(optInFirstPeriod - 1) / (double)(optInFirstPeriod + 1);
       kFirst = 1.0 - betaFirst;
-      betaFirst = 1.0 - kFirst;
+      if( betaFirst < 0.5 ) {
+         betaFirst = 1.0 - kFirst;
+      }
       betaSecond = (double)(optInSecondPeriod - 1) / (double)(optInSecondPeriod + 1);
       kSecond = 1.0 - betaSecond;
-      betaSecond = 1.0 - kSecond;
+      if( betaSecond < 0.5 ) {
+         betaSecond = 1.0 - kSecond;
+      }
       lookbackFirst = emaLookback(optInFirstPeriod);
       emaFirstNum = 0.0;
       emaFirstDen = 0.0;
@@ -207050,10 +207190,14 @@ public final class Core {
       outBegIdx.value = startIdx;
       betaFirst = (double)(optInFirstPeriod - 1) / (double)(optInFirstPeriod + 1);
       kFirst = 1.0 - betaFirst;
-      betaFirst = 1.0 - kFirst;
+      if( betaFirst < 0.5 ) {
+         betaFirst = 1.0 - kFirst;
+      }
       betaSecond = (double)(optInSecondPeriod - 1) / (double)(optInSecondPeriod + 1);
       kSecond = 1.0 - betaSecond;
-      betaSecond = 1.0 - kSecond;
+      if( betaSecond < 0.5 ) {
+         betaSecond = 1.0 - kSecond;
+      }
       lookbackFirst = emaLookback(optInFirstPeriod);
       emaFirstNum = 0.0;
       emaFirstDen = 0.0;
@@ -207564,10 +207708,14 @@ public final class Core {
        */
       betaFirst = (double)(optInFirstPeriod - 1) / (double)(optInFirstPeriod + 1);
       kFirst = 1.0 - betaFirst;
-      betaFirst = 1.0 - kFirst;
+      if( betaFirst < 0.5 ) {
+         betaFirst = 1.0 - kFirst;
+      }
       betaSecond = (double)(optInSecondPeriod - 1) / (double)(optInSecondPeriod + 1);
       kSecond = 1.0 - betaSecond;
-      betaSecond = 1.0 - kSecond;
+      if( betaSecond < 0.5 ) {
+         betaSecond = 1.0 - kSecond;
+      }
       lookbackFirst = emaLookback(optInFirstPeriod);
       emaFirstNum = 0.0;
       emaFirstDen = 0.0;
@@ -220034,7 +220182,9 @@ public final class Core {
       }
       emaBeta = (double)(optInTimePeriod - 1) / (double)(optInTimePeriod + 1);
       optInK_1 = 1.0 - emaBeta;
-      emaBeta = 1.0 - optInK_1;
+      if( emaBeta < 0.5 ) {
+         emaBeta = 1.0 - optInK_1;
+      }
       /* KEEP THIS ARITHMETIC EXACTLY AS WRITTEN -- the de-lag in one rounding
        * (2.0*c - l, not c + (c - l)), the seed sum accumulating from 0.0, and
        * k*v + beta*prevMA with ema.c's k and beta. Together they make ZLEMA
@@ -220135,7 +220285,9 @@ public final class Core {
       }
       emaBeta = (double)(optInTimePeriod - 1) / (double)(optInTimePeriod + 1);
       optInK_1 = 1.0 - emaBeta;
-      emaBeta = 1.0 - optInK_1;
+      if( emaBeta < 0.5 ) {
+         emaBeta = 1.0 - optInK_1;
+      }
       lag = (optInTimePeriod - 1) / 2;
       lookbackTotal = zlemaLookback(optInTimePeriod);
       if( startIdx < lookbackTotal ) {
@@ -220586,7 +220738,9 @@ public final class Core {
       }
       emaBeta = (double)(optInTimePeriod - 1) / (double)(optInTimePeriod + 1);
       optInK_1 = 1.0 - emaBeta;
-      emaBeta = 1.0 - optInK_1;
+      if( emaBeta < 0.5 ) {
+         emaBeta = 1.0 - optInK_1;
+      }
       /* KEEP THIS ARITHMETIC EXACTLY AS WRITTEN -- the de-lag in one rounding
        * (2.0*c - l, not c + (c - l)), the seed sum accumulating from 0.0, and
        * k*v + beta*prevMA with ema.c's k and beta. Together they make ZLEMA

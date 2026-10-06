@@ -149,7 +149,10 @@ TA_LIB_API TA_RetCode TA_EFI( int    startIdx,
     */
    emaBeta = (double)(optInTimePeriod - 1) / (double)(optInTimePeriod + 1);
    optInK_1 = 1.0 - emaBeta;
-   emaBeta = 1.0 - optInK_1;
+   if( emaBeta < 0.5 )
+   {
+      emaBeta = 1.0 - optInK_1;
+   }
    /* Move up the start index if there is not
     * enough initial data.
     */
@@ -266,7 +269,10 @@ TA_RetCode TA_S_EFI( int    startIdx,
    lookbackTotal = TA_EFI_Lookback(optInTimePeriod);
    emaBeta = (double)(optInTimePeriod - 1) / (double)(optInTimePeriod + 1);
    optInK_1 = 1.0 - emaBeta;
-   emaBeta = 1.0 - optInK_1;
+   if( emaBeta < 0.5 )
+   {
+      emaBeta = 1.0 - optInK_1;
+   }
    if( startIdx < lookbackTotal )
    {
       startIdx = lookbackTotal;
@@ -440,7 +446,10 @@ static TA_FMA_STEP_INLINE TA_RetCode TA_EFI_OpenImpl( struct TA_EFI_Stream **str
        */
       emaBeta = (double)(optInTimePeriod - 1) / (double)(optInTimePeriod + 1);
       optInK_1 = 1.0 - emaBeta;
-      emaBeta = 1.0 - optInK_1;
+      if( emaBeta < 0.5 )
+      {
+         emaBeta = 1.0 - optInK_1;
+      }
       /* Move up the start index if there is not
        * enough initial data.
        */
@@ -536,7 +545,10 @@ static TA_FMA_STEP_INLINE TA_RetCode TA_EFI_OpenImpl( struct TA_EFI_Stream **str
        */
       emaBeta = (double)(optInTimePeriod - 1) / (double)(optInTimePeriod + 1);
       optInK_1 = 1.0 - emaBeta;
-      emaBeta = 1.0 - optInK_1;
+      if( emaBeta < 0.5 )
+      {
+         emaBeta = 1.0 - optInK_1;
+      }
       /* Move up the start index if there is not
        * enough initial data.
        */

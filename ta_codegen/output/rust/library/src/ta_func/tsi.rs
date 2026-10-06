@@ -242,10 +242,14 @@ impl Core {
         // hold an output written a bar earlier.
         betaFirst = ((optInFirstPeriod - 1) as f64) / ((optInFirstPeriod + 1) as f64);
         kFirst = 1.0 - betaFirst;
-        betaFirst = 1.0 - kFirst;
+        if betaFirst < 0.5 {
+            betaFirst = 1.0 - kFirst;
+        }
         betaSecond = ((optInSecondPeriod - 1) as f64) / ((optInSecondPeriod + 1) as f64);
         kSecond = 1.0 - betaSecond;
-        betaSecond = 1.0 - kSecond;
+        if betaSecond < 0.5 {
+            betaSecond = 1.0 - kSecond;
+        }
         lookbackFirst = self.ema_lookback(optInFirstPeriod).unwrap_or(usize::MAX);
         emaFirstNum = 0.0;
         emaFirstDen = 0.0;
@@ -620,10 +624,14 @@ impl Core {
         // hold an output written a bar earlier.
         betaFirst = ((optInFirstPeriod - 1) as f64) / ((optInFirstPeriod + 1) as f64);
         kFirst = 1.0 - betaFirst;
-        betaFirst = 1.0 - kFirst;
+        if betaFirst < 0.5 {
+            betaFirst = 1.0 - kFirst;
+        }
         betaSecond = ((optInSecondPeriod - 1) as f64) / ((optInSecondPeriod + 1) as f64);
         kSecond = 1.0 - betaSecond;
-        betaSecond = 1.0 - kSecond;
+        if betaSecond < 0.5 {
+            betaSecond = 1.0 - kSecond;
+        }
         lookbackFirst = self.ema_lookback(optInFirstPeriod)?;
         emaFirstNum = 0.0;
         emaFirstDen = 0.0;

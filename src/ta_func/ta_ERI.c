@@ -177,7 +177,10 @@ TA_LIB_API TA_RetCode TA_ERI( int    startIdx,
    }
    beta = (double)(optInTimePeriod - 1) / (double)(optInTimePeriod + 1);
    k = 1.0 - beta;
-   beta = 1.0 - k;
+   if( beta < 0.5 )
+   {
+      beta = 1.0 - k;
+   }
    /* Seed: ema.c's DEFAULT arm, op for op. */
    today = startIdx - lookbackTotal;
    i = optInTimePeriod;
@@ -295,7 +298,10 @@ TA_RetCode TA_S_ERI( int    startIdx,
    }
    beta = (double)(optInTimePeriod - 1) / (double)(optInTimePeriod + 1);
    k = 1.0 - beta;
-   beta = 1.0 - k;
+   if( beta < 0.5 )
+   {
+      beta = 1.0 - k;
+   }
    today = startIdx - lookbackTotal;
    i = optInTimePeriod;
    tempReal = 0.0;
@@ -524,7 +530,10 @@ static TA_FMA_STEP_INLINE TA_RetCode TA_ERI_OpenImpl( struct TA_ERI_Stream **str
        */
       beta = (double)(optInTimePeriod - 1) / (double)(optInTimePeriod + 1);
       k = 1.0 - beta;
-      beta = 1.0 - k;
+      if( beta < 0.5 )
+      {
+         beta = 1.0 - k;
+      }
       /* Seed: ema.c's DEFAULT arm, op for op. */
       today = startIdx - lookbackTotal;
       i = optInTimePeriod;

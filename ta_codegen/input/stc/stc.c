@@ -82,10 +82,10 @@ TA_RetCode stc(int startIdx, int endIdx,
 
    fastBeta = ((double)(optInFastPeriod - 1)) / ((double)(optInFastPeriod + 1));
    fastK = 1.0 - fastBeta;
-   fastBeta = 1.0 - fastK;
+   if( fastBeta < 0.5 ) fastBeta = 1.0 - fastK;
    slowBeta = ((double)(optInSlowPeriod - 1)) / ((double)(optInSlowPeriod + 1));
    slowK = 1.0 - slowBeta;
-   slowBeta = 1.0 - slowK;
+   if( slowBeta < 0.5 ) slowBeta = 1.0 - slowK;
 
    /* Rolling extrema, van Herk / Gil-Werman: the window ending in slot j is
     * the current block's prefix extremum joined with the previous block's

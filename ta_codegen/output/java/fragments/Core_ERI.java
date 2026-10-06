@@ -142,7 +142,9 @@
       }
       beta = (double)(optInTimePeriod - 1) / (double)(optInTimePeriod + 1);
       k = 1.0 - beta;
-      beta = 1.0 - k;
+      if( beta < 0.5 ) {
+         beta = 1.0 - k;
+      }
       /* Seed: ema.c's DEFAULT arm, op for op. */
       today = startIdx - lookbackTotal;
       i = optInTimePeriod;
@@ -240,7 +242,9 @@
       }
       beta = (double)(optInTimePeriod - 1) / (double)(optInTimePeriod + 1);
       k = 1.0 - beta;
-      beta = 1.0 - k;
+      if( beta < 0.5 ) {
+         beta = 1.0 - k;
+      }
       today = startIdx - lookbackTotal;
       i = optInTimePeriod;
       tempReal = 0.0;
@@ -765,7 +769,9 @@
           */
          beta = (double)(optInTimePeriod - 1) / (double)(optInTimePeriod + 1);
          k = 1.0 - beta;
-         beta = 1.0 - k;
+         if( beta < 0.5 ) {
+            beta = 1.0 - k;
+         }
          /* Seed: ema.c's DEFAULT arm, op for op. */
          today = startIdx - lookbackTotal;
          i = optInTimePeriod;
