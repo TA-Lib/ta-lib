@@ -369,16 +369,13 @@ the window extrema, O(1) while the cached extremum sits away from the trailing
 edge and O(period) while it sits on it — **not** amortized O(1).
 
 That last one is deliberate. The extrema streams run a cached-index automaton
-over a ring, rescans and all. It is batch's own, except in the functions whose
-source carries `PRAGMA TA_ALT={STREAM,...}`, where batch runs a block scan. A
-monotonic deque would be amortized O(1), but the automaton uses different tie
-rules on its two paths (strict `<` on rescan, `<=` on the incoming side), so the
-selected INDEX is path-dependent and no single deque discipline reproduces it:
-MININDEX at period 2 on `[3,3]` diverges on the first output. That rules a deque
-out for every function that outputs an index or computes from one. It would be
-legal for the value-output subset within
-[rH1](https://ta-lib.org/spec/streaming/#rh1), and substituting one there is still
-open.
+over a ring, rescans and all. It is batch's own wherever the source carries no
+`PRAGMA TA_ALT` giving the two tiers different bodies. A monotonic deque would be
+amortized O(1), and substituting one is still open. It has to name the bar the
+automaton names: the most recent of tied bars in the functions that output an
+index or compute from one ([rW4](https://ta-lib.org/spec/inputs-outputs/#rw4)).
+The value-output subset holds it only to
+[rH1](https://ta-lib.org/spec/streaming/#rh1).
 
 One ring-order constraint survives from the same family: some batch code sums its
 circular buffer IN BUFFER ORDER, so the FP summation order depends on the ring's

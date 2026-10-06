@@ -48,6 +48,10 @@ typedef struct
 /* Opt param `name` of the case, or `dflt` when the function has none. */
 double ta_ref_opt( const TaRefCase *c, const char *name, double dflt );
 
+/* Whether MAXINDEX, MININDEX or MINMAXINDEX (c->func) has, somewhere in the
+ * case's range, a window holding the extreme it indexes on more than one bar. */
+int ta_ref_index_tie( const TaRefCase *c );
+
 typedef struct
 {
    const char        *commit;      /* the release tag's commit, 40 hex digits    */

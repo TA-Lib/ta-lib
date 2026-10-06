@@ -45,16 +45,21 @@
  *  Initial  Name/description
  *  -------------------------------------------------------------------
  *  AC       Angelo Ciceri
+ *  MF       Mario Fortier
+ *  CC       Claude Code (AI assistant)
  *
  * Change history:
  *
  *  MMDDYY BY   Description
  *  -------------------------------------------------------------------
  *  120806 AC   Creation (equal to MIN but outputs index)
+ *  100526 MF,CC A tie names the newest bar from any start (#503)
  */
 
 // Import types from parent module
 use super::*;
+
+/* Using minindex_ALT1 for TA_ALT={BATCH,RUST} */
 
 // Allow non-snake-case names to maintain TA-Lib API compatibility
 #[allow(non_snake_case)]
@@ -146,25 +151,16 @@ impl Core {
         let mut lowestIdx: i32 = 0_i32;
         let mut today: usize = 0_usize;
         let mut i: usize = 0_usize;
-        // Identify the minimum number of price bar needed
-        // to identify at least one output over the specified
-        // period.
         nbInitialElementNeeded = (optInTimePeriod - 1) as usize;
-        // Move up the start index if there is not
-        // enough initial data.
         if startIdx < nbInitialElementNeeded {
             startIdx = nbInitialElementNeeded;
         }
-        // Make sure there is still something to evaluate.
         if startIdx > endIdx {
             (*outBegIdx) = 0;
             (*outNBElement) = 0;
             return RetCode::Success;
         }
         let inReal = &inReal[..=endIdx];
-        // Proceed with the calculation for the requested range.
-        // (The integer output can never share the real input's buffer —
-        // different element type; issue #130.)
         outIdx = 0;
         today = startIdx;
         trailingIdx = startIdx - nbInitialElementNeeded;
@@ -173,10 +169,13 @@ impl Core {
         while today <= endIdx {
             tmp = inReal[today];
             if lowestIdx < ((trailingIdx) as i32) {
-                lowestIdx = (trailingIdx) as i32;
-                lowest = inReal[(lowestIdx) as usize];
-                i = (lowestIdx) as usize;
-                while { i += 1; i } <= today {
+                // Newest bar first, and only a strictly better bar replaces it: a tie
+                // names the newest bar.
+                lowestIdx = (today) as i32;
+                lowest = tmp;
+                i = today;
+                while i > trailingIdx {
+                    i -= 1;
                     tmp = inReal[i];
                     if tmp < lowest {
                         lowestIdx = (i) as i32;
@@ -192,8 +191,6 @@ impl Core {
             trailingIdx += 1;
             today += 1;
         }
-        // Keep the outBegIdx relative to the
-        // caller input before returning.
         (*outBegIdx) = startIdx;
         (*outNBElement) = outIdx;
         return RetCode::Success;
@@ -351,7 +348,7 @@ impl Core {
             sp.i = sp.lowestIdx;
             while (({ sp.i += 1; sp.i }) as i32) <= sp.today {
                 tmp = sp.x_inReal[(sp.i & sp.xMask) as usize];
-                if tmp < sp.lowest {
+                if tmp <= sp.lowest {
                     sp.lowestIdx = sp.i;
                     sp.lowest = tmp;
                 }
@@ -431,7 +428,7 @@ impl Core {
                 i = (lowestIdx) as usize;
                 while { i += 1; i } <= today {
                     tmp = inReal[i];
-                    if tmp < lowest {
+                    if tmp <= lowest {
                         lowestIdx = (i) as i32;
                         lowest = tmp;
                     }
@@ -655,7 +652,7 @@ impl MinindexStream {
                 i = lowestIdx;
                 while (({ i += 1; i }) as i32) <= sp.today {
                     tmp = (if ((i & sp.xMask) as usize) != pkSlot0 { sp.x_inReal[(i & sp.xMask) as usize] } else { pkVal0 });
-                    if tmp < lowest {
+                    if tmp <= lowest {
                         lowestIdx = i;
                         lowest = tmp;
                     }

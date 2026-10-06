@@ -11,7 +11,7 @@ how the value at a bar computed from a later start approaches the value computed
 | `analyze.py` | Folds those rows into one line per output, worst case over series and starts, and a class per function |
 | `rules_vs_need.py` | Evaluates the design's rule for each unstable id, at both levels, against the measured need |
 | `rules_check.py` | Checks the one-pole, SWAK and T3 rules against the kernels' decay laws at seven values of K and a grid of periods, with no library involved. The calibrated rules are not in it: section 3 of `results.txt` holds those |
-| `tie_break.c` | Shows MAXINDEX and MININDEX answering differently from two starts when the window holds equal extremes |
+| `tie_break.c` | Compares MAXINDEX and MININDEX from two starts on a series full of equal extremes. It counted mismatches at the commit `results.txt` names, and counts none since a tie names the most recent bar (#503) |
 | `results.txt` | The output of all of the above at the commit named on its first line |
 
 ## Running it
@@ -72,8 +72,8 @@ Section 2 is the table to read: every output that is not bit-identical, at the d
 periods tripled, and with each MA type. A `-1` in an `A` or `B` column means the tolerance was
 never held to the end.
 
-- `MAXINDEX` and `MINMAXINDEX` appear as `CONV` because of the tie-break in section 5, not
-  because they carry state.
+- `MAXINDEX` and `MINMAXINDEX` appear as `CONV` because of the tie-break in section 5, which
+  #503 has since made independent of the start, not because they carry state.
 - `CRSI` is `ROUND` at its defaults because its rank window is longer than its RSI legs need.
 - `CORREL` at a period of 90 is classed `NEVER`: its rounding difference is 3.5e-8 of a narrow
   range, above the 1e-9 line `analyze.py` draws for `ROUND`. It carries no state.

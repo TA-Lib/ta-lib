@@ -89,7 +89,7 @@ static const TaRefTol TOL[] = {
 
 /* Each ceiling sits halfway between the largest share measured on one function
  * and 1. */
-enum { W_TRIX_NATR, W_VARIANCE, W_CORREL_BETA, W_MFI, W_KAMA, W_ULTOSC, W_MAVP, W_RSI };
+enum { W_TRIX_NATR, W_VARIANCE, W_CORREL_BETA, W_MFI, W_KAMA, W_ULTOSC, W_MAVP, W_RSI, W_INDEX_TIE };
 static const TaRefWaiver WAIVERS[] = {
    [W_TRIX_NATR]   = { "trix_natr_98",
                        "TRIX/NATR with startIdx past the lookback, and NATR over a zero close (#98)", 0.77 },
@@ -107,6 +107,8 @@ static const TaRefWaiver WAIVERS[] = {
                        "MAVP with its minimum period above its maximum, where 0.6.4 read uninitialized results (#94)", 0.53 },
    [W_RSI]         = { "rsi_flat_480",
                        "RSI with no change from the first bar read to the first output, where 0.6.4 answers 0 for 0/0 (#480)", 0.56 },
+   [W_INDEX_TIE]   = { "index_tie_503",
+                       "MAXINDEX/MININDEX/MINMAXINDEX over a window that holds its extreme on several bars, where 0.6.4 names the oldest or the newest of them by where the call started (#503)", 0.71 },
 };
 
 /* 0.6.4 computes variance as E[x^2] - mean^2, losing about log10(kappa)
@@ -401,6 +403,8 @@ static int waive( const TaRefCase *c )
       return smooths_with_kama( c ) ? W_KAMA : -1;
    if( strcmp( f, "RSI" ) == 0 )
       return rsi_flat_start( c->close, n, s, e, c->lookback ) ? W_RSI : -1;
+   if( strcmp( f, "MAXINDEX" ) == 0 || strcmp( f, "MININDEX" ) == 0 || strcmp( f, "MINMAXINDEX" ) == 0 )
+      return ta_ref_index_tie( c ) ? W_INDEX_TIE : -1;
    if( strcmp( f, "MAVP" ) == 0 )
       return ta_ref_opt( c, "optInMinPeriod", 0 ) > ta_ref_opt( c, "optInMaxPeriod", 0 ) ? W_MAVP : -1;
    if( strcmp( f, "ULTOSC" ) == 0 )

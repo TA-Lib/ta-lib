@@ -10,7 +10,7 @@ outInteger[i] = index of min(inReal[i-optInTimePeriod+1 .. i])
 
 ## Notes
 
-- When several bars in a window share the lowest value, the index of one of them is returned — not necessarily the first or the last.
+- When several bars in a window share the lowest value, the index of the most recent of them is returned.
 
 ## Inputs
 

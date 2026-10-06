@@ -335,7 +335,7 @@ pages carry the rule.
 | `MASSI` | Composed | 2*E(fast) (through EMA) | inherited | converges |
 | `MAVP` | MA dispatch | M(maxPeriod, type) | inherited | rounding only |
 | `MAX` | Window | 0 |  | bit-identical |
-| `MAXINDEX` | Window | 0 |  | bit-identical except on ties |
+| `MAXINDEX` | Window | 0 |  | bit-identical |
 | `MCGD` | Leaf | 5*X*n | calibrated | converges |
 | `MEDIAN` | Window | 0 |  | bit-identical |
 | `MEDPRICE` | Pointwise | 0 |  | bit-identical |
@@ -343,9 +343,9 @@ pages carry the rule.
 | `MIDPOINT` | Window | 0 |  | bit-identical |
 | `MIDPRICE` | Window | 0 |  | bit-identical |
 | `MIN` | Window | 0 |  | bit-identical |
-| `MININDEX` | Window | 0 |  | bit-identical except on ties |
+| `MININDEX` | Window | 0 |  | bit-identical |
 | `MINMAX` | Window | 0 |  | bit-identical |
-| `MINMAXINDEX` | Window | 0 |  | bit-identical except on ties |
+| `MINMAXINDEX` | Window | 0 |  | bit-identical |
 | `MINUS_DI` | Leaf | W(n) | proven, ratio | converges |
 | `MINUS_DM` | Leaf | W(n) | proven | converges |
 | `MOM` | Window | 0 |  | bit-identical |
@@ -420,8 +420,7 @@ pages carry the rule.
 ### 3.5 What the classification found
 
 Where the reading and the measurement differ, and facts the tree states differently today.
-The index tie-break is scheduled in section 8. The period-1 item is part of the rules of
-section 3.2. The rest are separate decisions.
+The period-1 item is part of the rules of section 3.2. The rest are separate decisions.
 
 - **SUPERTREND inherits ATR's id but its bands do not converge by decay.** The unstable period
   warms the ATR; the trend flag and both bands are seeded on the first reported bar at every
@@ -434,9 +433,6 @@ section 3.2. The rest are separate decisions.
   not these three.
 - **VWAP is neither.** The difference between two starts shrinks as the early segment's share of
   cumulative volume, roughly as `1/t`. Not a constant offset, not an `e^-K` kernel, no rule.
-- **MAXINDEX, MININDEX and MINMAXINDEX depend on the start when the window holds a tie.** A call
-  that starts at a bar reports the first of two equal extremes; a call that slid there from an
-  earlier bar reports the last. Reproduced on tie-heavy data (`tie_break.c` in the study).
 - **Some windows measure bit-identical although they keep running totals.** ADR, CMOU, ER,
   QSTICK, ULTOSC and VORTEX sum price differences and RVOL sums integer volumes, all exactly on
   the study's two-decimal series; ULTOSC already differs by rounding at tripled periods. The
@@ -712,9 +708,7 @@ compare at every bar both report.
   0. PVO with the KAMA or the VIDYA type is compared only if the corpus's volume itself trends or
   wanders: on volume drawn as noise those arms are range-bound on every series. CRSI is not
   compared when its Auto count is above 0: its streak is a short-lived state machine (section 3.5)
-  that restarts a difference at the first reversal, whatever the warm-up. MAXINDEX, MININDEX and
-  MINMAXINDEX are compared on bars whose window holds its extreme once, until their tie-break is
-  start-independent.
+  that restarts a difference at the first reversal, whatever the warm-up.
 - **Vectors.** Defaults; every integer period at its minimum; every integer period tripled;
   every MA type on every MA-type parameter; and the real parameters a rule reads: SWAK_BP's
   delta at 0.05 and 0.5, and MAMA's limits at (0.01, 0.01), (0.99, 0.99), (0.99, 0.01) and
@@ -816,9 +810,6 @@ rules for the mechanics (section 9, D5).
 Steps 1, 4 and 5 each leave the tree releasable. Steps 2 and 3 are one releasable unit: a
 lookback is what callers size history by, so either they land together or step 2 keeps every
 setter refusing `TA_UNSTABLE_AUTO` until the leg is green.
-
-The tie-break of the index functions either
-lands before step 3, or the leg names it as an exemption that the later change removes.
 
 ## 9. Rulings
 

@@ -144335,12 +144335,15 @@ class Core {
      *  Initial  Name/description
      *  -------------------------------------------------------------------
      *  AC       Angelo Ciceri
+     *  MF       Mario Fortier
+     *  CC       Claude Code (AI assistant)
      *
      * Change history:
      *
      *  MMDDYY BY   Description
      *  -------------------------------------------------------------------
      *  120806 AC   Creation (equal to MAX but outputs index)
+     *  100526 MF,CC A tie names the newest bar from any start (#503)
      */
 
        /**
@@ -144449,7 +144452,7 @@ class Core {
                 i = highestIdx;
                 while( ++i <= today ) {
                    tmp = inReal[i];
-                   if( tmp > highest ) {
+                   if( tmp >= highest ) {
                       highestIdx = i;
                       highest = tmp;
                    }
@@ -144518,7 +144521,7 @@ class Core {
                 i = highestIdx;
                 while( ++i <= today ) {
                    tmp = (double)inReal[i];
-                   if( tmp > highest ) {
+                   if( tmp >= highest ) {
                       highestIdx = i;
                       highest = tmp;
                    }
@@ -144543,7 +144546,7 @@ class Core {
         * href="https://ta-lib.org/functions/maxindex">ta-lib.org/functions/maxindex</a>.
         * <p><b>Notes</b>
         * <ul>
-        * <li>When several bars in a window share the highest value, the index of one of them is returned — not necessarily the first or the last.</li>
+        * <li>When several bars in a window share the highest value, the index of the most recent of them is returned.</li>
         * </ul>
         * <p>Values are written only where the indicator is defined. The returned
         * {@link OutRange} says where they start and how many there are, and the
@@ -144608,7 +144611,7 @@ class Core {
         * href="https://ta-lib.org/functions/maxindex">ta-lib.org/functions/maxindex</a>.
         * <p><b>Notes</b>
         * <ul>
-        * <li>When several bars in a window share the highest value, the index of one of them is returned — not necessarily the first or the last.</li>
+        * <li>When several bars in a window share the highest value, the index of the most recent of them is returned.</li>
         * </ul>
         * <p>This is the {@code float[]} overload. The arithmetic is performed in
         * {@code double} before being written to the {@code double[]} output, so a
@@ -144805,7 +144808,7 @@ class Core {
                 i = highestIdx;
                 while( ++i <= sp.today ) {
                    tmp = ((i & sp.xMask) != pkSlot0) ? sp.x_inReal[i & sp.xMask] : pkVal0;
-                   if( tmp > highest ) {
+                   if( tmp >= highest ) {
                       highestIdx = i;
                       highest = tmp;
                    }
@@ -144855,7 +144858,7 @@ class Core {
              sp.i = sp.highestIdx;
              while( ++sp.i <= sp.today ) {
                 tmp = sp.x_inReal[sp.i & sp.xMask];
-                if( tmp > sp.highest ) {
+                if( tmp >= sp.highest ) {
                    sp.highestIdx = sp.i;
                    sp.highest = tmp;
                 }
@@ -144930,7 +144933,7 @@ class Core {
                 i = highestIdx;
                 while( ++i <= today ) {
                    tmp = inReal[i];
-                   if( tmp > highest ) {
+                   if( tmp >= highest ) {
                       highestIdx = i;
                       highest = tmp;
                    }
@@ -151964,12 +151967,15 @@ class Core {
      *  Initial  Name/description
      *  -------------------------------------------------------------------
      *  AC       Angelo Ciceri
+     *  MF       Mario Fortier
+     *  CC       Claude Code (AI assistant)
      *
      * Change history:
      *
      *  MMDDYY BY   Description
      *  -------------------------------------------------------------------
      *  120806 AC   Creation (equal to MIN but outputs index)
+     *  100526 MF,CC A tie names the newest bar from any start (#503)
      */
 
        /**
@@ -152078,7 +152084,7 @@ class Core {
                 i = lowestIdx;
                 while( ++i <= today ) {
                    tmp = inReal[i];
-                   if( tmp < lowest ) {
+                   if( tmp <= lowest ) {
                       lowestIdx = i;
                       lowest = tmp;
                    }
@@ -152147,7 +152153,7 @@ class Core {
                 i = lowestIdx;
                 while( ++i <= today ) {
                    tmp = (double)inReal[i];
-                   if( tmp < lowest ) {
+                   if( tmp <= lowest ) {
                       lowestIdx = i;
                       lowest = tmp;
                    }
@@ -152172,7 +152178,7 @@ class Core {
         * href="https://ta-lib.org/functions/minindex">ta-lib.org/functions/minindex</a>.
         * <p><b>Notes</b>
         * <ul>
-        * <li>When several bars in a window share the lowest value, the index of one of them is returned — not necessarily the first or the last.</li>
+        * <li>When several bars in a window share the lowest value, the index of the most recent of them is returned.</li>
         * </ul>
         * <p>Values are written only where the indicator is defined. The returned
         * {@link OutRange} says where they start and how many there are, and the
@@ -152237,7 +152243,7 @@ class Core {
         * href="https://ta-lib.org/functions/minindex">ta-lib.org/functions/minindex</a>.
         * <p><b>Notes</b>
         * <ul>
-        * <li>When several bars in a window share the lowest value, the index of one of them is returned — not necessarily the first or the last.</li>
+        * <li>When several bars in a window share the lowest value, the index of the most recent of them is returned.</li>
         * </ul>
         * <p>This is the {@code float[]} overload. The arithmetic is performed in
         * {@code double} before being written to the {@code double[]} output, so a
@@ -152434,7 +152440,7 @@ class Core {
                 i = lowestIdx;
                 while( ++i <= sp.today ) {
                    tmp = ((i & sp.xMask) != pkSlot0) ? sp.x_inReal[i & sp.xMask] : pkVal0;
-                   if( tmp < lowest ) {
+                   if( tmp <= lowest ) {
                       lowestIdx = i;
                       lowest = tmp;
                    }
@@ -152484,7 +152490,7 @@ class Core {
              sp.i = sp.lowestIdx;
              while( ++sp.i <= sp.today ) {
                 tmp = sp.x_inReal[sp.i & sp.xMask];
-                if( tmp < sp.lowest ) {
+                if( tmp <= sp.lowest ) {
                    sp.lowestIdx = sp.i;
                    sp.lowest = tmp;
                 }
@@ -152559,7 +152565,7 @@ class Core {
                 i = lowestIdx;
                 while( ++i <= today ) {
                    tmp = inReal[i];
-                   if( tmp < lowest ) {
+                   if( tmp <= lowest ) {
                       lowestIdx = i;
                       lowest = tmp;
                    }
@@ -153960,12 +153966,15 @@ class Core {
      *  Initial  Name/description
      *  -------------------------------------------------------------------
      *  AC       Angelo Ciceri
+     *  MF       Mario Fortier
+     *  CC       Claude Code (AI assistant)
      *
      * Change history:
      *
      *  MMDDYY BY   Description
      *  -------------------------------------------------------------------
      *  120906 AC   Creation (equal to MINMAX but outputs index)
+     *  100526 MF,CC A tie names the newest bar from any start (#503)
      */
 
        /**
@@ -154082,7 +154091,7 @@ class Core {
                 i = highestIdx;
                 while( ++i <= today ) {
                    tmpHigh = inReal[i];
-                   if( tmpHigh > highest ) {
+                   if( tmpHigh >= highest ) {
                       highestIdx = i;
                       highest = tmpHigh;
                    }
@@ -154097,7 +154106,7 @@ class Core {
                 i = lowestIdx;
                 while( ++i <= today ) {
                    tmpLow = inReal[i];
-                   if( tmpLow < lowest ) {
+                   if( tmpLow <= lowest ) {
                       lowestIdx = i;
                       lowest = tmpLow;
                    }
@@ -154178,7 +154187,7 @@ class Core {
                 i = highestIdx;
                 while( ++i <= today ) {
                    tmpHigh = (double)inReal[i];
-                   if( tmpHigh > highest ) {
+                   if( tmpHigh >= highest ) {
                       highestIdx = i;
                       highest = tmpHigh;
                    }
@@ -154193,7 +154202,7 @@ class Core {
                 i = lowestIdx;
                 while( ++i <= today ) {
                    tmpLow = (double)inReal[i];
-                   if( tmpLow < lowest ) {
+                   if( tmpLow <= lowest ) {
                       lowestIdx = i;
                       lowest = tmpLow;
                    }
@@ -154219,7 +154228,7 @@ class Core {
         * href="https://ta-lib.org/functions/minmaxindex">ta-lib.org/functions/minmaxindex</a>.
         * <p><b>Notes</b>
         * <ul>
-        * <li>When several bars in a window share the extreme value, the index of one of them is returned — not necessarily the first or the last.</li>
+        * <li>When several bars in a window share the extreme value, the index of the most recent of them is returned.</li>
         * </ul>
         * <p>Values are written only where the indicator is defined. The returned
         * {@link OutRange} says where they start and how many there are, and the
@@ -154287,7 +154296,7 @@ class Core {
         * href="https://ta-lib.org/functions/minmaxindex">ta-lib.org/functions/minmaxindex</a>.
         * <p><b>Notes</b>
         * <ul>
-        * <li>When several bars in a window share the extreme value, the index of one of them is returned — not necessarily the first or the last.</li>
+        * <li>When several bars in a window share the extreme value, the index of the most recent of them is returned.</li>
         * </ul>
         * <p>This is the {@code float[]} overload. The arithmetic is performed in
         * {@code double} before being written to the {@code double[]} output, so a
@@ -154502,7 +154511,7 @@ class Core {
                 i = highestIdx;
                 while( ++i <= sp.today ) {
                    tmpHigh = ((i & sp.xMask) != pkSlot0) ? sp.x_inReal[i & sp.xMask] : pkVal0;
-                   if( tmpHigh > highest ) {
+                   if( tmpHigh >= highest ) {
                       highestIdx = i;
                       highest = tmpHigh;
                    }
@@ -154517,7 +154526,7 @@ class Core {
                 i = lowestIdx;
                 while( ++i <= sp.today ) {
                    tmpLow = ((i & sp.xMask) != pkSlot0) ? sp.x_inReal[i & sp.xMask] : pkVal0;
-                   if( tmpLow < lowest ) {
+                   if( tmpLow <= lowest ) {
                       lowestIdx = i;
                       lowest = tmpLow;
                    }
@@ -154595,7 +154604,7 @@ class Core {
              sp.i = sp.highestIdx;
              while( ++sp.i <= sp.today ) {
                 tmpHigh = sp.x_inReal[sp.i & sp.xMask];
-                if( tmpHigh > sp.highest ) {
+                if( tmpHigh >= sp.highest ) {
                    sp.highestIdx = sp.i;
                    sp.highest = tmpHigh;
                 }
@@ -154610,7 +154619,7 @@ class Core {
              sp.i = sp.lowestIdx;
              while( ++sp.i <= sp.today ) {
                 tmpLow = sp.x_inReal[sp.i & sp.xMask];
-                if( tmpLow < sp.lowest ) {
+                if( tmpLow <= sp.lowest ) {
                    sp.lowestIdx = sp.i;
                    sp.lowest = tmpLow;
                 }
@@ -154692,7 +154701,7 @@ class Core {
                 i = highestIdx;
                 while( ++i <= today ) {
                    tmpHigh = inReal[i];
-                   if( tmpHigh > highest ) {
+                   if( tmpHigh >= highest ) {
                       highestIdx = i;
                       highest = tmpHigh;
                    }
@@ -154707,7 +154716,7 @@ class Core {
                 i = lowestIdx;
                 while( ++i <= today ) {
                    tmpLow = inReal[i];
-                   if( tmpLow < lowest ) {
+                   if( tmpLow <= lowest ) {
                       lowestIdx = i;
                       lowest = tmpLow;
                    }
@@ -220385,7 +220394,7 @@ class Core {
 
 public class TaCodegenServe {
     static Core core = new Core();
-    static final String SPLICED_GENCODE_DIGEST = "1c1e576c6bf1291c";
+    static final String SPLICED_GENCODE_DIGEST = "9c966b6dbb029cf2";
     static final int MAX_ARRAY_SIZE = 200000;
     static double[] refOpen = new double[MAX_ARRAY_SIZE];
     static double[] refHigh = new double[MAX_ARRAY_SIZE];

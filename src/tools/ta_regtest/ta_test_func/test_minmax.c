@@ -248,12 +248,8 @@ static TA_Test tableTest[] =
    { 1, TA_MININDEX_TEST, 0, 251, 14, TA_SUCCESS, 0, 0,  13,  252-13 },
    { 1, TA_MAXINDEX_TEST, 0, 251, 14, TA_SUCCESS, 0, 0,  13,  252-13 },
 
-   /* No range test of the minimum at period 2: closes 100 and 101 tie below
-    * close 99, and which of them an index names depends on where the call
-    * started.
-    */
-   { 0, TA_MINMAXINDEX_TEST, 0, 251, 2, TA_SUCCESS, 0, 0,  1,  252-1 },
-   { 0, TA_MININDEX_TEST, 0, 251, 2, TA_SUCCESS, 0, 0,  1,  252-1 },
+   { 1, TA_MINMAXINDEX_TEST, 0, 251, 2, TA_SUCCESS, 0, 0,  1,  252-1 },
+   { 1, TA_MININDEX_TEST, 0, 251, 2, TA_SUCCESS, 0, 0,  1,  252-1 },
    { 1, TA_MAXINDEX_TEST, 0, 251, 2, TA_SUCCESS, 0, 0,  1,  252-1 },
 
    { 0, TA_MINMAXINDEX_TEST, 20, 99, 14, TA_SUCCESS, 0, 0,  20,  80 },
@@ -1198,15 +1194,15 @@ static ErrorNumber testCompareToReference( const TA_Real *input, int nbElement )
 
 /* Holds one index output to the input it was computed from: the index lies in
  * its bar's window, counted in `in` and not from startIdx, and the input there
- * equals the window's extremum. By value: a window holding its extremum twice
- * has two right answers. `tied`, when given, receives which bars had one.
+ * is the most recent of the window's bars holding its extremum (rW4). `tied`,
+ * when given, receives which bars had a window holding it more than once.
  */
 static ErrorNumber checkIndexOutput( int site, int which, const TA_Real *in,
                                      int startIdx, int endIdx, int period,
                                      int outBegIdx, int outNbElement,
                                      const TA_Integer *out, unsigned char *tied )
 {
-   int j, k, bar, first, idx, nbExtremum;
+   int j, k, bar, first, idx, nbExtremum, newest;
    int isMax = (which == IDX_MAXINDEX) || (which == IDX_MINMAX_MAX);
    TA_IdxCount *count = &gIdx[site][which];
    TA_Real extremum;
@@ -1236,14 +1232,19 @@ static ErrorNumber checkIndexOutput( int site, int which, const TA_Real *in,
 
       extremum   = in[first];
       nbExtremum = 1;
+      newest     = first;
       for( k=first+1; k <= bar; k++ )
       {
          if( in[k] == extremum )
+         {
             nbExtremum++;
+            newest = k;
+         }
          else if( isMax ? (in[k] > extremum) : (in[k] < extremum) )
          {
             extremum   = in[k];
             nbExtremum = 1;
+            newest     = k;
          }
       }
 
@@ -1254,6 +1255,12 @@ static ErrorNumber checkIndexOutput( int site, int which, const TA_Real *in,
          return TA_REGTEST_INDEX_NOT_EXTREMUM;
       }
       count->value++;
+      if( idx != newest )
+      {
+         printf( "Failure: %s period=%d startIdx=%d bar=%d names %d, the most recent bar holding %.17g is %d\n",
+                 idxName[which], period, startIdx, bar, idx, extremum, newest );
+         return TA_REGTEST_INDEX_NOT_NEWEST;
+      }
       if( nbExtremum > 1 )                count->tied++;
       if( startIdx > period-1 )           count->pastLookback++;
       if( period == IDX_SMALLEST_PERIOD ) count->smallest++;
@@ -1265,8 +1272,7 @@ static ErrorNumber checkIndexOutput( int site, int which, const TA_Real *in,
 }
 
 /* One range and period through all three functions: each output against the
- * input, then MINMAXINDEX against the other two. Where the window is tied that
- * last step pins more than rule rW4 promises: the three share one tie-break.
+ * input, then MINMAXINDEX against the other two.
  */
 static ErrorNumber verifyIndexCall( int site, const TA_Real *in,
                                     int startIdx, int endIdx, int period )
@@ -1406,9 +1412,8 @@ static ErrorNumber testIndexSweep( const TA_Real *in, int nbElement, int exhaust
    return TA_TEST_PASS;
 }
 
-/* Each place is held to what it can reach: the range test runs the smallest
- * period for MAXINDEX alone, the table calls no second function, and only the
- * short series are built to tie.
+/* Each place is held to what it can reach: the table calls no second function,
+ * and only the short series are built to tie.
  */
 static ErrorNumber checkIndexFloors( void )
 {
@@ -1421,11 +1426,10 @@ static ErrorNumber checkIndexFloors( void )
       {
          int isSweep  = (site == IDX_AT_LONG) || (site == IDX_AT_SHORT);
          int hasAgree = isSweep && (which >= IDX_MINMAX_MIN);
-         int hasSmallest = (site != IDX_AT_RANGE) || (which == IDX_MAXINDEX);
          count = &gIdx[site][which];
 
          if( !count->window || !count->value || !count->pastLookback ||
-             ( hasSmallest && !count->smallest ) ||
+             !count->smallest ||
              ( site == IDX_AT_SHORT && !count->tied ) ||
              ( hasAgree && !count->agree ) ||
              ( hasAgree && site == IDX_AT_SHORT && !count->agreeTied ) )

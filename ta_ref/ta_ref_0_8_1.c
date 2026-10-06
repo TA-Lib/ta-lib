@@ -2,7 +2,8 @@
  *
  * Compared from period 1 and over every MAType. The rows cover the value
  * changes made since, each sized at 3x its measured maximum; the waivers cover
- * the flat-start 0/0 (#480) and TRIX at a period of 1 (#505). */
+ * the flat-start 0/0 (#480), TRIX at a period of 1 (#505) and the index named
+ * on a tie (#503). */
 
 #include <stddef.h>
 #include <string.h>
@@ -62,12 +63,14 @@ static const TaRefTol TOL[] = {
 
 /* Each ceiling sits halfway between the largest share measured on one function
  * and 1. */
-enum { W_RSI, W_TRIX1 };
+enum { W_RSI, W_TRIX1, W_INDEX_TIE };
 static const TaRefWaiver WAIVERS[] = {
    [W_RSI] = { "rsi_flat_480",
                "RSI with no change from the first bar read to the first output, where 0.8.1 answers 0 for 0/0, and STOCHRSI once a move follows (#480)", 0.56 },
    [W_TRIX1] = { "trix_period_1",
                  "TRIX at a period of 1 over a bar where (x-prev)+prev is not x: 0.8.1 takes three such steps and loses the input, the one-FMA step copies it (#505)", 0.51 },
+   [W_INDEX_TIE] = { "index_tie_503",
+               "MAXINDEX/MININDEX/MINMAXINDEX over a window that holds its extreme on several bars, where 0.8.1 names the oldest or the newest of them by where the call started (#503)", 0.71 },
 };
 
 /* RSI's gain and loss sums are both zero while nothing has moved since the
@@ -103,6 +106,9 @@ static int waive( const TaRefCase *c )
             return W_TRIX1;
       return -1;
    }
+   if( strcmp( c->func, "MAXINDEX" ) == 0 || strcmp( c->func, "MININDEX" ) == 0 ||
+       strcmp( c->func, "MINMAXINDEX" ) == 0 )
+      return ta_ref_index_tie( c ) ? W_INDEX_TIE : -1;
    if( !isRsi && strcmp( c->func, "STOCHRSI" ) != 0 ) return -1;
    if( c->lookback < 1 ) return -1;
    first = (c->startIdx > c->lookback) ? c->startIdx : c->lookback;

@@ -47,12 +47,15 @@ public partial class Core
     *  Initial  Name/description
     *  -------------------------------------------------------------------
     *  AC       Angelo Ciceri
+    *  MF       Mario Fortier
+    *  CC       Claude Code (AI assistant)
     *
     * Change history:
     *
     *  MMDDYY BY   Description
     *  -------------------------------------------------------------------
     *  120906 AC   Creation (equal to MINMAX but outputs index)
+    *  100526 MF,CC A tie names the newest bar from any start (#503)
     */
    /// <summary>
    /// Number of leading input bars <c>Minmaxindex</c> consumes before it can
@@ -174,7 +177,7 @@ public partial class Core
             i = highestIdx;
             while( ++i <= today ) {
                tmpHigh = inReal[i];
-               if( tmpHigh > highest ) {
+               if( tmpHigh >= highest ) {
                   highestIdx = i;
                   highest = tmpHigh;
                }
@@ -189,7 +192,7 @@ public partial class Core
             i = lowestIdx;
             while( ++i <= today ) {
                tmpLow = inReal[i];
-               if( tmpLow < lowest ) {
+               if( tmpLow <= lowest ) {
                   lowestIdx = i;
                   lowest = tmpLow;
                }
@@ -275,7 +278,7 @@ public partial class Core
             i = highestIdx;
             while( ++i <= today ) {
                tmpHigh = (double)inReal[i];
-               if( tmpHigh > highest ) {
+               if( tmpHigh >= highest ) {
                   highestIdx = i;
                   highest = tmpHigh;
                }
@@ -290,7 +293,7 @@ public partial class Core
             i = lowestIdx;
             while( ++i <= today ) {
                tmpLow = (double)inReal[i];
-               if( tmpLow < lowest ) {
+               if( tmpLow <= lowest ) {
                   lowestIdx = i;
                   lowest = tmpLow;
                }
@@ -319,7 +322,7 @@ public partial class Core
    /// <see href="https://ta-lib.org/functions/minmaxindex">ta-lib.org/functions/minmaxindex</see>.
    /// </para>
    /// <list type="bullet">
-   /// <item><description>When several bars in a window share the extreme value, the index of one of them is returned — not necessarily the first or the last.</description></item>
+   /// <item><description>When several bars in a window share the extreme value, the index of the most recent of them is returned.</description></item>
    /// </list>
    /// <para>
    /// Values are written only where the indicator is defined. The returned
@@ -403,7 +406,7 @@ public partial class Core
    /// <see href="https://ta-lib.org/functions/minmaxindex">ta-lib.org/functions/minmaxindex</see>.
    /// </para>
    /// <list type="bullet">
-   /// <item><description>When several bars in a window share the extreme value, the index of one of them is returned — not necessarily the first or the last.</description></item>
+   /// <item><description>When several bars in a window share the extreme value, the index of the most recent of them is returned.</description></item>
    /// </list>
    /// <para>
    /// This is the <c>float[]</c> overload: input elements are widened to
@@ -658,7 +661,7 @@ public partial class Core
             i = highestIdx;
             while( ++i <= sp.today ) {
                tmpHigh = ((i & sp.xMask) != pkSlot0) ? sp.x_inReal[i & sp.xMask] : pkVal0;
-               if( tmpHigh > highest ) {
+               if( tmpHigh >= highest ) {
                   highestIdx = i;
                   highest = tmpHigh;
                }
@@ -673,7 +676,7 @@ public partial class Core
             i = lowestIdx;
             while( ++i <= sp.today ) {
                tmpLow = ((i & sp.xMask) != pkSlot0) ? sp.x_inReal[i & sp.xMask] : pkVal0;
-               if( tmpLow < lowest ) {
+               if( tmpLow <= lowest ) {
                   lowestIdx = i;
                   lowest = tmpLow;
                }
@@ -717,7 +720,7 @@ public partial class Core
          sp.i = sp.highestIdx;
          while( ++sp.i <= sp.today ) {
             tmpHigh = sp.x_inReal[sp.i & sp.xMask];
-            if( tmpHigh > sp.highest ) {
+            if( tmpHigh >= sp.highest ) {
                sp.highestIdx = sp.i;
                sp.highest = tmpHigh;
             }
@@ -732,7 +735,7 @@ public partial class Core
          sp.i = sp.lowestIdx;
          while( ++sp.i <= sp.today ) {
             tmpLow = sp.x_inReal[sp.i & sp.xMask];
-            if( tmpLow < sp.lowest ) {
+            if( tmpLow <= sp.lowest ) {
                sp.lowestIdx = sp.i;
                sp.lowest = tmpLow;
             }
@@ -817,7 +820,7 @@ public partial class Core
             i = highestIdx;
             while( ++i <= today ) {
                tmpHigh = inReal[i];
-               if( tmpHigh > highest ) {
+               if( tmpHigh >= highest ) {
                   highestIdx = i;
                   highest = tmpHigh;
                }
@@ -832,7 +835,7 @@ public partial class Core
             i = lowestIdx;
             while( ++i <= today ) {
                tmpLow = inReal[i];
-               if( tmpLow < lowest ) {
+               if( tmpLow <= lowest ) {
                   lowestIdx = i;
                   lowest = tmpLow;
                }

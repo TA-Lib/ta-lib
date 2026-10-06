@@ -603,6 +603,7 @@ typedef enum
   TA_REGTEST_INDEX_NOT_EXTREMUM      = 1716,
   TA_REGTEST_INDEX_DISAGREE          = 1717,
   TA_REGTEST_INDEX_VACUOUS           = 1718,
+  TA_REGTEST_INDEX_NOT_NEWEST        = 1719,
 
   /* Error code related to bug fix documentented on SourceForge. */
   TA_TEST_FAIL_BUG1359452_1  = 2000,

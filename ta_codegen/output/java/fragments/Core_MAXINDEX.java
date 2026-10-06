@@ -3,12 +3,15 @@
  *  Initial  Name/description
  *  -------------------------------------------------------------------
  *  AC       Angelo Ciceri
+ *  MF       Mario Fortier
+ *  CC       Claude Code (AI assistant)
  *
  * Change history:
  *
  *  MMDDYY BY   Description
  *  -------------------------------------------------------------------
  *  120806 AC   Creation (equal to MAX but outputs index)
+ *  100526 MF,CC A tie names the newest bar from any start (#503)
  */
 
    /**
@@ -117,7 +120,7 @@
             i = highestIdx;
             while( ++i <= today ) {
                tmp = inReal[i];
-               if( tmp > highest ) {
+               if( tmp >= highest ) {
                   highestIdx = i;
                   highest = tmp;
                }
@@ -186,7 +189,7 @@
             i = highestIdx;
             while( ++i <= today ) {
                tmp = (double)inReal[i];
-               if( tmp > highest ) {
+               if( tmp >= highest ) {
                   highestIdx = i;
                   highest = tmp;
                }
@@ -211,7 +214,7 @@
     * href="https://ta-lib.org/functions/maxindex">ta-lib.org/functions/maxindex</a>.
     * <p><b>Notes</b>
     * <ul>
-    * <li>When several bars in a window share the highest value, the index of one of them is returned — not necessarily the first or the last.</li>
+    * <li>When several bars in a window share the highest value, the index of the most recent of them is returned.</li>
     * </ul>
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are, and the
@@ -276,7 +279,7 @@
     * href="https://ta-lib.org/functions/maxindex">ta-lib.org/functions/maxindex</a>.
     * <p><b>Notes</b>
     * <ul>
-    * <li>When several bars in a window share the highest value, the index of one of them is returned — not necessarily the first or the last.</li>
+    * <li>When several bars in a window share the highest value, the index of the most recent of them is returned.</li>
     * </ul>
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a
@@ -473,7 +476,7 @@
             i = highestIdx;
             while( ++i <= sp.today ) {
                tmp = ((i & sp.xMask) != pkSlot0) ? sp.x_inReal[i & sp.xMask] : pkVal0;
-               if( tmp > highest ) {
+               if( tmp >= highest ) {
                   highestIdx = i;
                   highest = tmp;
                }
@@ -523,7 +526,7 @@
          sp.i = sp.highestIdx;
          while( ++sp.i <= sp.today ) {
             tmp = sp.x_inReal[sp.i & sp.xMask];
-            if( tmp > sp.highest ) {
+            if( tmp >= sp.highest ) {
                sp.highestIdx = sp.i;
                sp.highest = tmp;
             }
@@ -598,7 +601,7 @@
             i = highestIdx;
             while( ++i <= today ) {
                tmp = inReal[i];
-               if( tmp > highest ) {
+               if( tmp >= highest ) {
                   highestIdx = i;
                   highest = tmp;
                }

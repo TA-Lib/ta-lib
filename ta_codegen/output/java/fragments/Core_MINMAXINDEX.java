@@ -3,12 +3,15 @@
  *  Initial  Name/description
  *  -------------------------------------------------------------------
  *  AC       Angelo Ciceri
+ *  MF       Mario Fortier
+ *  CC       Claude Code (AI assistant)
  *
  * Change history:
  *
  *  MMDDYY BY   Description
  *  -------------------------------------------------------------------
  *  120906 AC   Creation (equal to MINMAX but outputs index)
+ *  100526 MF,CC A tie names the newest bar from any start (#503)
  */
 
    /**
@@ -125,7 +128,7 @@
             i = highestIdx;
             while( ++i <= today ) {
                tmpHigh = inReal[i];
-               if( tmpHigh > highest ) {
+               if( tmpHigh >= highest ) {
                   highestIdx = i;
                   highest = tmpHigh;
                }
@@ -140,7 +143,7 @@
             i = lowestIdx;
             while( ++i <= today ) {
                tmpLow = inReal[i];
-               if( tmpLow < lowest ) {
+               if( tmpLow <= lowest ) {
                   lowestIdx = i;
                   lowest = tmpLow;
                }
@@ -221,7 +224,7 @@
             i = highestIdx;
             while( ++i <= today ) {
                tmpHigh = (double)inReal[i];
-               if( tmpHigh > highest ) {
+               if( tmpHigh >= highest ) {
                   highestIdx = i;
                   highest = tmpHigh;
                }
@@ -236,7 +239,7 @@
             i = lowestIdx;
             while( ++i <= today ) {
                tmpLow = (double)inReal[i];
-               if( tmpLow < lowest ) {
+               if( tmpLow <= lowest ) {
                   lowestIdx = i;
                   lowest = tmpLow;
                }
@@ -262,7 +265,7 @@
     * href="https://ta-lib.org/functions/minmaxindex">ta-lib.org/functions/minmaxindex</a>.
     * <p><b>Notes</b>
     * <ul>
-    * <li>When several bars in a window share the extreme value, the index of one of them is returned — not necessarily the first or the last.</li>
+    * <li>When several bars in a window share the extreme value, the index of the most recent of them is returned.</li>
     * </ul>
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are, and the
@@ -330,7 +333,7 @@
     * href="https://ta-lib.org/functions/minmaxindex">ta-lib.org/functions/minmaxindex</a>.
     * <p><b>Notes</b>
     * <ul>
-    * <li>When several bars in a window share the extreme value, the index of one of them is returned — not necessarily the first or the last.</li>
+    * <li>When several bars in a window share the extreme value, the index of the most recent of them is returned.</li>
     * </ul>
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a
@@ -545,7 +548,7 @@
             i = highestIdx;
             while( ++i <= sp.today ) {
                tmpHigh = ((i & sp.xMask) != pkSlot0) ? sp.x_inReal[i & sp.xMask] : pkVal0;
-               if( tmpHigh > highest ) {
+               if( tmpHigh >= highest ) {
                   highestIdx = i;
                   highest = tmpHigh;
                }
@@ -560,7 +563,7 @@
             i = lowestIdx;
             while( ++i <= sp.today ) {
                tmpLow = ((i & sp.xMask) != pkSlot0) ? sp.x_inReal[i & sp.xMask] : pkVal0;
-               if( tmpLow < lowest ) {
+               if( tmpLow <= lowest ) {
                   lowestIdx = i;
                   lowest = tmpLow;
                }
@@ -638,7 +641,7 @@
          sp.i = sp.highestIdx;
          while( ++sp.i <= sp.today ) {
             tmpHigh = sp.x_inReal[sp.i & sp.xMask];
-            if( tmpHigh > sp.highest ) {
+            if( tmpHigh >= sp.highest ) {
                sp.highestIdx = sp.i;
                sp.highest = tmpHigh;
             }
@@ -653,7 +656,7 @@
          sp.i = sp.lowestIdx;
          while( ++sp.i <= sp.today ) {
             tmpLow = sp.x_inReal[sp.i & sp.xMask];
-            if( tmpLow < sp.lowest ) {
+            if( tmpLow <= sp.lowest ) {
                sp.lowestIdx = sp.i;
                sp.lowest = tmpLow;
             }
@@ -735,7 +738,7 @@
             i = highestIdx;
             while( ++i <= today ) {
                tmpHigh = inReal[i];
-               if( tmpHigh > highest ) {
+               if( tmpHigh >= highest ) {
                   highestIdx = i;
                   highest = tmpHigh;
                }
@@ -750,7 +753,7 @@
             i = lowestIdx;
             while( ++i <= today ) {
                tmpLow = inReal[i];
-               if( tmpLow < lowest ) {
+               if( tmpLow <= lowest ) {
                   lowestIdx = i;
                   lowest = tmpLow;
                }

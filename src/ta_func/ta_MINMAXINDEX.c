@@ -47,13 +47,18 @@
  *  Initial  Name/description
  *  -------------------------------------------------------------------
  *  AC       Angelo Ciceri
+ *  MF       Mario Fortier
+ *  CC       Claude Code (AI assistant)
  *
  * Change history:
  *
  *  MMDDYY BY   Description
  *  -------------------------------------------------------------------
  *  120906 AC   Creation (equal to MINMAX but outputs index)
+ *  100526 MF,CC A tie names the newest bar from any start (#503)
  */
+
+/* Using minmaxindex_ALT1 for TA_ALT={BATCH,C} */
 
 TA_LIB_API int TA_MINMAXINDEX_Lookback( int optInTimePeriod )
 {
@@ -114,29 +119,17 @@ TA_LIB_API TA_RetCode TA_MINMAXINDEX( int    startIdx,
    if( outMinIdx == outMaxIdx )
       return TA_BAD_PARAM;
 
-   /* Identify the minimum number of price bar needed
-    * to identify at least one output over the specified
-    * period.
-    */
    nbInitialElementNeeded = optInTimePeriod - 1;
-   /* Move up the start index if there is not
-    * enough initial data.
-    */
    if( startIdx < nbInitialElementNeeded )
    {
       startIdx = nbInitialElementNeeded;
    }
-   /* Make sure there is still something to evaluate. */
    if( startIdx > endIdx )
    {
       *outBegIdx= 0;
       *outNBElement= 0;
       return TA_SUCCESS;
    }
-   /* Proceed with the calculation for the requested range.
-    * (The integer outputs can never share the real input's buffer —
-    * different element type; issue #130.)
-    */
    outIdx = 0;
    today = startIdx;
    trailingIdx = startIdx - nbInitialElementNeeded;
@@ -150,12 +143,16 @@ TA_LIB_API TA_RetCode TA_MINMAXINDEX( int    startIdx,
       tmpLow = tmpHigh;
       if( highestIdx < trailingIdx )
       {
-         highestIdx = trailingIdx;
-         highest = inReal[highestIdx];
-         i = highestIdx;
+         /* Newest bar first, and only a strictly better bar replaces it: a tie
+          * names the newest bar.
+          */
+         highestIdx = today;
+         highest = tmpHigh;
+         i = today;
          TA_UNROLL(4)
-         while( ++i <= today )
+         while( i > trailingIdx )
          {
+            i -= 1;
             tmpHigh = inReal[i];
             if( tmpHigh > highest )
             {
@@ -170,12 +167,16 @@ TA_LIB_API TA_RetCode TA_MINMAXINDEX( int    startIdx,
       }
       if( lowestIdx < trailingIdx )
       {
-         lowestIdx = trailingIdx;
-         lowest = inReal[lowestIdx];
-         i = lowestIdx;
+         /* Newest bar first, and only a strictly better bar replaces it: a tie
+          * names the newest bar.
+          */
+         lowestIdx = today;
+         lowest = tmpLow;
+         i = today;
          TA_UNROLL(4)
-         while( ++i <= today )
+         while( i > trailingIdx )
          {
+            i -= 1;
             tmpLow = inReal[i];
             if( tmpLow < lowest )
             {
@@ -194,9 +195,6 @@ TA_LIB_API TA_RetCode TA_MINMAXINDEX( int    startIdx,
       trailingIdx += 1;
       today += 1;
    }
-   /* Keep the outBegIdx relative to the
-    * caller input before returning.
-    */
    *outBegIdx= startIdx;
    *outNBElement= outIdx;
    return TA_SUCCESS;
@@ -267,12 +265,13 @@ TA_RetCode TA_S_MINMAXINDEX( int    startIdx,
       tmpLow = tmpHigh;
       if( highestIdx < trailingIdx )
       {
-         highestIdx = trailingIdx;
-         highest = (double)inReal[highestIdx];
-         i = highestIdx;
+         highestIdx = today;
+         highest = tmpHigh;
+         i = today;
          TA_UNROLL(4)
-         while( ++i <= today )
+         while( i > trailingIdx )
          {
+            i -= 1;
             tmpHigh = (double)inReal[i];
             if( tmpHigh > highest )
             {
@@ -287,12 +286,13 @@ TA_RetCode TA_S_MINMAXINDEX( int    startIdx,
       }
       if( lowestIdx < trailingIdx )
       {
-         lowestIdx = trailingIdx;
-         lowest = (double)inReal[lowestIdx];
-         i = lowestIdx;
+         lowestIdx = today;
+         lowest = tmpLow;
+         i = today;
          TA_UNROLL(4)
-         while( ++i <= today )
+         while( i > trailingIdx )
          {
+            i -= 1;
             tmpLow = (double)inReal[i];
             if( tmpLow < lowest )
             {
@@ -365,7 +365,7 @@ static void TA_MINMAXINDEX_StepImpl( struct TA_MINMAXINDEX_Stream *sp, double in
       while( ++sp->i <= sp->today )
       {
          tmpHigh = sp->x_inReal[sp->i & sp->xMask];
-         if( tmpHigh > sp->highest )
+         if( tmpHigh >= sp->highest )
          {
             sp->highestIdx = sp->i;
             sp->highest = tmpHigh;
@@ -385,7 +385,7 @@ static void TA_MINMAXINDEX_StepImpl( struct TA_MINMAXINDEX_Stream *sp, double in
       while( ++sp->i <= sp->today )
       {
          tmpLow = sp->x_inReal[sp->i & sp->xMask];
-         if( tmpLow < sp->lowest )
+         if( tmpLow <= sp->lowest )
          {
             sp->lowestIdx = sp->i;
             sp->lowest = tmpLow;
@@ -482,7 +482,7 @@ static TA_RetCode TA_MINMAXINDEX_OpenImpl( struct TA_MINMAXINDEX_Stream **stream
             while( ++i <= today )
             {
                tmpHigh = inReal[i];
-               if( tmpHigh > highest )
+               if( tmpHigh >= highest )
                {
                   highestIdx = i;
                   highest = tmpHigh;
@@ -502,7 +502,7 @@ static TA_RetCode TA_MINMAXINDEX_OpenImpl( struct TA_MINMAXINDEX_Stream **stream
             while( ++i <= today )
             {
                tmpLow = inReal[i];
-               if( tmpLow < lowest )
+               if( tmpLow <= lowest )
                {
                   lowestIdx = i;
                   lowest = tmpLow;
@@ -650,7 +650,7 @@ TA_LIB_API TA_RetCode TA_MINMAXINDEX_Peek( const TA_MINMAXINDEX_Stream *stream, 
       while( ++i <= sp->today )
       {
          tmpHigh = ((i & sp->xMask) != pkSlot0) ? x_inReal[i & sp->xMask] : pkVal0;
-         if( tmpHigh > highest )
+         if( tmpHigh >= highest )
          {
             highestIdx = i;
             highest = tmpHigh;
@@ -670,7 +670,7 @@ TA_LIB_API TA_RetCode TA_MINMAXINDEX_Peek( const TA_MINMAXINDEX_Stream *stream, 
       while( ++i <= sp->today )
       {
          tmpLow = ((i & sp->xMask) != pkSlot0) ? x_inReal[i & sp->xMask] : pkVal0;
-         if( tmpLow < lowest )
+         if( tmpLow <= lowest )
          {
             lowestIdx = i;
             lowest = tmpLow;

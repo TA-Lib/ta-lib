@@ -47,12 +47,15 @@ public partial class Core
     *  Initial  Name/description
     *  -------------------------------------------------------------------
     *  AC       Angelo Ciceri
+    *  MF       Mario Fortier
+    *  CC       Claude Code (AI assistant)
     *
     * Change history:
     *
     *  MMDDYY BY   Description
     *  -------------------------------------------------------------------
     *  120806 AC   Creation (equal to MIN but outputs index)
+    *  100526 MF,CC A tie names the newest bar from any start (#503)
     */
    /// <summary>
    /// Number of leading input bars <c>Minindex</c> consumes before it can
@@ -164,7 +167,7 @@ public partial class Core
             i = lowestIdx;
             while( ++i <= today ) {
                tmp = inReal[i];
-               if( tmp < lowest ) {
+               if( tmp <= lowest ) {
                   lowestIdx = i;
                   lowest = tmp;
                }
@@ -238,7 +241,7 @@ public partial class Core
             i = lowestIdx;
             while( ++i <= today ) {
                tmp = (double)inReal[i];
-               if( tmp < lowest ) {
+               if( tmp <= lowest ) {
                   lowestIdx = i;
                   lowest = tmp;
                }
@@ -266,7 +269,7 @@ public partial class Core
    /// <see href="https://ta-lib.org/functions/minindex">ta-lib.org/functions/minindex</see>.
    /// </para>
    /// <list type="bullet">
-   /// <item><description>When several bars in a window share the lowest value, the index of one of them is returned — not necessarily the first or the last.</description></item>
+   /// <item><description>When several bars in a window share the lowest value, the index of the most recent of them is returned.</description></item>
    /// </list>
    /// <para>
    /// Values are written only where the indicator is defined. The returned
@@ -344,7 +347,7 @@ public partial class Core
    /// <see href="https://ta-lib.org/functions/minindex">ta-lib.org/functions/minindex</see>.
    /// </para>
    /// <list type="bullet">
-   /// <item><description>When several bars in a window share the lowest value, the index of one of them is returned — not necessarily the first or the last.</description></item>
+   /// <item><description>When several bars in a window share the lowest value, the index of the most recent of them is returned.</description></item>
    /// </list>
    /// <para>
    /// This is the <c>float[]</c> overload: input elements are widened to
@@ -568,7 +571,7 @@ public partial class Core
             i = lowestIdx;
             while( ++i <= sp.today ) {
                tmp = ((i & sp.xMask) != pkSlot0) ? sp.x_inReal[i & sp.xMask] : pkVal0;
-               if( tmp < lowest ) {
+               if( tmp <= lowest ) {
                   lowestIdx = i;
                   lowest = tmp;
                }
@@ -609,7 +612,7 @@ public partial class Core
          sp.i = sp.lowestIdx;
          while( ++sp.i <= sp.today ) {
             tmp = sp.x_inReal[sp.i & sp.xMask];
-            if( tmp < sp.lowest ) {
+            if( tmp <= sp.lowest ) {
                sp.lowestIdx = sp.i;
                sp.lowest = tmp;
             }
@@ -687,7 +690,7 @@ public partial class Core
             i = lowestIdx;
             while( ++i <= today ) {
                tmp = inReal[i];
-               if( tmp < lowest ) {
+               if( tmp <= lowest ) {
                   lowestIdx = i;
                   lowest = tmp;
                }

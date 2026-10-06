@@ -47,13 +47,18 @@
  *  Initial  Name/description
  *  -------------------------------------------------------------------
  *  AC       Angelo Ciceri
+ *  MF       Mario Fortier
+ *  CC       Claude Code (AI assistant)
  *
  * Change history:
  *
  *  MMDDYY BY   Description
  *  -------------------------------------------------------------------
  *  120806 AC   Creation (equal to MAX but outputs index)
+ *  100526 MF,CC A tie names the newest bar from any start (#503)
  */
+
+/* Using maxindex_ALT1 for TA_ALT={BATCH,C} */
 
 TA_LIB_API int TA_MAXINDEX_Lookback( int optInTimePeriod )
 {
@@ -106,29 +111,17 @@ TA_LIB_API TA_RetCode TA_MAXINDEX( int    startIdx,
    if( !outInteger )
       return TA_BAD_PARAM;
 
-   /* Identify the minimum number of price bar needed
-    * to identify at least one output over the specified
-    * period.
-    */
    nbInitialElementNeeded = optInTimePeriod - 1;
-   /* Move up the start index if there is not
-    * enough initial data.
-    */
    if( startIdx < nbInitialElementNeeded )
    {
       startIdx = nbInitialElementNeeded;
    }
-   /* Make sure there is still something to evaluate. */
    if( startIdx > endIdx )
    {
       *outBegIdx= 0;
       *outNBElement= 0;
       return TA_SUCCESS;
    }
-   /* Proceed with the calculation for the requested range.
-    * (The integer output can never share the real input's buffer —
-    * different element type; issue #130.)
-    */
    outIdx = 0;
    today = startIdx;
    trailingIdx = startIdx - nbInitialElementNeeded;
@@ -139,12 +132,16 @@ TA_LIB_API TA_RetCode TA_MAXINDEX( int    startIdx,
       tmp = inReal[today];
       if( highestIdx < trailingIdx )
       {
-         highestIdx = trailingIdx;
-         highest = inReal[highestIdx];
-         i = highestIdx;
+         /* Newest bar first, and only a strictly better bar replaces it: a tie
+          * names the newest bar.
+          */
+         highestIdx = today;
+         highest = tmp;
+         i = today;
          TA_UNROLL(4)
-         while( ++i <= today )
+         while( i > trailingIdx )
          {
+            i -= 1;
             tmp = inReal[i];
             if( tmp > highest )
             {
@@ -161,9 +158,6 @@ TA_LIB_API TA_RetCode TA_MAXINDEX( int    startIdx,
       trailingIdx += 1;
       today += 1;
    }
-   /* Keep the outBegIdx relative to the
-    * caller input before returning.
-    */
    *outBegIdx= startIdx;
    *outNBElement= outIdx;
    return TA_SUCCESS;
@@ -223,12 +217,13 @@ TA_RetCode TA_S_MAXINDEX( int    startIdx,
       tmp = (double)inReal[today];
       if( highestIdx < trailingIdx )
       {
-         highestIdx = trailingIdx;
-         highest = (double)inReal[highestIdx];
-         i = highestIdx;
+         highestIdx = today;
+         highest = tmp;
+         i = today;
          TA_UNROLL(4)
-         while( ++i <= today )
+         while( i > trailingIdx )
          {
+            i -= 1;
             tmp = (double)inReal[i];
             if( tmp > highest )
             {
@@ -294,7 +289,7 @@ static void TA_MAXINDEX_StepImpl( struct TA_MAXINDEX_Stream *sp, double inReal, 
       while( ++sp->i <= sp->today )
       {
          tmp = sp->x_inReal[sp->i & sp->xMask];
-         if( tmp > sp->highest )
+         if( tmp >= sp->highest )
          {
             sp->highestIdx = sp->i;
             sp->highest = tmp;
@@ -383,7 +378,7 @@ static TA_RetCode TA_MAXINDEX_OpenImpl( struct TA_MAXINDEX_Stream **stream, cons
             while( ++i <= today )
             {
                tmp = inReal[i];
-               if( tmp > highest )
+               if( tmp >= highest )
                {
                   highestIdx = i;
                   highest = tmp;
@@ -518,7 +513,7 @@ TA_LIB_API TA_RetCode TA_MAXINDEX_Peek( const TA_MAXINDEX_Stream *stream, double
       while( ++i <= sp->today )
       {
          tmp = ((i & sp->xMask) != pkSlot0) ? x_inReal[i & sp->xMask] : pkVal0;
-         if( tmp > highest )
+         if( tmp >= highest )
          {
             highestIdx = i;
             highest = tmp;
