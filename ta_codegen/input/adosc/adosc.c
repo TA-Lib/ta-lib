@@ -99,12 +99,16 @@ TA_RetCode adosc(int startIdx, int endIdx,
     */
    ad = 0.0;
 
-   /* Constants for EMA */
-   fastk = (2.0 / ((double)( optInFastPeriod ) + 1.0));
-   one_minus_fastk = 1.0 - fastk;
+   /* Constants for EMA. Each pair must sum to exactly 1.0, or a flat A/D
+    * line drifts off its level.
+    */
+   one_minus_fastk = ((double)(optInFastPeriod - 1)) / ((double)(optInFastPeriod + 1));
+   fastk = 1.0 - one_minus_fastk;
+   if( one_minus_fastk < 0.5 ) one_minus_fastk = 1.0 - fastk;
 
-   slowk = (2.0 / ((double)( optInSlowPeriod ) + 1.0));
-   one_minus_slowk = 1.0 - slowk;
+   one_minus_slowk = ((double)(optInSlowPeriod - 1)) / ((double)(optInSlowPeriod + 1));
+   slowk = 1.0 - one_minus_slowk;
+   if( one_minus_slowk < 0.5 ) one_minus_slowk = 1.0 - slowk;
 
    /* Initialize the two EMA
     *

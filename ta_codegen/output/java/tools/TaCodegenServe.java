@@ -4004,11 +4004,19 @@ class Core {
            * calculate the "ad".
            */
           ad = 0.0;
-          /* Constants for EMA */
-          fastk = 2.0 / ((double)optInFastPeriod + 1.0);
-          one_minus_fastk = 1.0 - fastk;
-          slowk = 2.0 / ((double)optInSlowPeriod + 1.0);
-          one_minus_slowk = 1.0 - slowk;
+          /* Constants for EMA. Each pair must sum to exactly 1.0, or a flat A/D
+           * line drifts off its level.
+           */
+          one_minus_fastk = (double)(optInFastPeriod - 1) / (double)(optInFastPeriod + 1);
+          fastk = 1.0 - one_minus_fastk;
+          if( one_minus_fastk < 0.5 ) {
+             one_minus_fastk = 1.0 - fastk;
+          }
+          one_minus_slowk = (double)(optInSlowPeriod - 1) / (double)(optInSlowPeriod + 1);
+          slowk = 1.0 - one_minus_slowk;
+          if( one_minus_slowk < 0.5 ) {
+             one_minus_slowk = 1.0 - slowk;
+          }
           /* Initialize the two EMA
            *
            * Use the same range of initialization inputs for
@@ -4117,10 +4125,16 @@ class Core {
           outBegIdx.value = startIdx;
           today = startIdx - lookbackTotal;
           ad = 0.0;
-          fastk = 2.0 / ((double)optInFastPeriod + 1.0);
-          one_minus_fastk = 1.0 - fastk;
-          slowk = 2.0 / ((double)optInSlowPeriod + 1.0);
-          one_minus_slowk = 1.0 - slowk;
+          one_minus_fastk = (double)(optInFastPeriod - 1) / (double)(optInFastPeriod + 1);
+          fastk = 1.0 - one_minus_fastk;
+          if( one_minus_fastk < 0.5 ) {
+             one_minus_fastk = 1.0 - fastk;
+          }
+          one_minus_slowk = (double)(optInSlowPeriod - 1) / (double)(optInSlowPeriod + 1);
+          slowk = 1.0 - one_minus_slowk;
+          if( one_minus_slowk < 0.5 ) {
+             one_minus_slowk = 1.0 - slowk;
+          }
           high = (double)inHigh[today];
           low = (double)inLow[today];
           tmp = high - low;
@@ -4581,11 +4595,19 @@ class Core {
            * calculate the "ad".
            */
           ad = 0.0;
-          /* Constants for EMA */
-          fastk = 2.0 / ((double)optInFastPeriod + 1.0);
-          one_minus_fastk = 1.0 - fastk;
-          slowk = 2.0 / ((double)optInSlowPeriod + 1.0);
-          one_minus_slowk = 1.0 - slowk;
+          /* Constants for EMA. Each pair must sum to exactly 1.0, or a flat A/D
+           * line drifts off its level.
+           */
+          one_minus_fastk = (double)(optInFastPeriod - 1) / (double)(optInFastPeriod + 1);
+          fastk = 1.0 - one_minus_fastk;
+          if( one_minus_fastk < 0.5 ) {
+             one_minus_fastk = 1.0 - fastk;
+          }
+          one_minus_slowk = (double)(optInSlowPeriod - 1) / (double)(optInSlowPeriod + 1);
+          slowk = 1.0 - one_minus_slowk;
+          if( one_minus_slowk < 0.5 ) {
+             one_minus_slowk = 1.0 - slowk;
+          }
           /* Initialize the two EMA
            *
            * Use the same range of initialization inputs for
@@ -220554,7 +220576,7 @@ class Core {
 
 public class TaCodegenServe {
     static Core core = new Core();
-    static final String SPLICED_GENCODE_DIGEST = "eb62277054ef9a11";
+    static final String SPLICED_GENCODE_DIGEST = "11b11120aa121f65";
     static final int MAX_ARRAY_SIZE = 200000;
     static double[] refOpen = new double[MAX_ARRAY_SIZE];
     static double[] refHigh = new double[MAX_ARRAY_SIZE];

@@ -267,11 +267,18 @@ impl Core {
         // The following variables are used to
         // calculate the "ad".
         ad = 0.0;
-        // Constants for EMA
-        fastk = 2.0 / ((optInFastPeriod as f64) + 1.0);
-        one_minus_fastk = 1.0 - fastk;
-        slowk = 2.0 / ((optInSlowPeriod as f64) + 1.0);
-        one_minus_slowk = 1.0 - slowk;
+        // Constants for EMA. Each pair must sum to exactly 1.0, or a flat A/D
+        // line drifts off its level.
+        one_minus_fastk = ((optInFastPeriod - 1) as f64) / ((optInFastPeriod + 1) as f64);
+        fastk = 1.0 - one_minus_fastk;
+        if one_minus_fastk < 0.5 {
+            one_minus_fastk = 1.0 - fastk;
+        }
+        one_minus_slowk = ((optInSlowPeriod - 1) as f64) / ((optInSlowPeriod + 1) as f64);
+        slowk = 1.0 - one_minus_slowk;
+        if one_minus_slowk < 0.5 {
+            one_minus_slowk = 1.0 - slowk;
+        }
         // Initialize the two EMA
         //
         // Use the same range of initialization inputs for
@@ -628,11 +635,18 @@ impl Core {
         // The following variables are used to
         // calculate the "ad".
         ad = 0.0;
-        // Constants for EMA
-        fastk = 2.0 / ((optInFastPeriod as f64) + 1.0);
-        one_minus_fastk = 1.0 - fastk;
-        slowk = 2.0 / ((optInSlowPeriod as f64) + 1.0);
-        one_minus_slowk = 1.0 - slowk;
+        // Constants for EMA. Each pair must sum to exactly 1.0, or a flat A/D
+        // line drifts off its level.
+        one_minus_fastk = ((optInFastPeriod - 1) as f64) / ((optInFastPeriod + 1) as f64);
+        fastk = 1.0 - one_minus_fastk;
+        if one_minus_fastk < 0.5 {
+            one_minus_fastk = 1.0 - fastk;
+        }
+        one_minus_slowk = ((optInSlowPeriod - 1) as f64) / ((optInSlowPeriod + 1) as f64);
+        slowk = 1.0 - one_minus_slowk;
+        if one_minus_slowk < 0.5 {
+            one_minus_slowk = 1.0 - slowk;
+        }
         // Initialize the two EMA
         //
         // Use the same range of initialization inputs for

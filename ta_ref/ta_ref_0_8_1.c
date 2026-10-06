@@ -59,6 +59,10 @@ static const TaRefTol TOL[] = {
    { "KDJ",      TA_REF_TOL_ABS,             6e-13, 0.0 }, /* measured 1.99e-13 */
    { "STOCHRSI", TA_REF_TOL_ABS,             3e-13, 0.0 }, /* measured 9.95e-14 */
    { "MASSI",    TA_REF_TOL_ABS,             3e-13, 0.0 }, /* measured 7.11e-14 */
+   /* #507 ADOSC takes the EMA coefficients of #505. Volume x a ratio: it does
+    * not scale with price, so no input floor applies, and the row is sized by
+    * its zero crossings. */
+   { "ADOSC",    TA_REF_TOL_REL_OUT,         2e-9,  0.0 }, /* measured 5.77e-10 */
 };
 
 /* Each ceiling sits halfway between the largest share measured on one function

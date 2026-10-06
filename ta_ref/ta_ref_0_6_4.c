@@ -52,6 +52,10 @@ static const TaRefTol TOL[] = {
     * looser, cannot swallow a real ATR regression; NATR divides by a close. */
    { "ATR",                 TA_REF_TOL_REL_IN,  3e-15, 0.0 }, /* measured 7.78e-16 */
    { "NATR",                TA_REF_TOL_REL_OUT, 4e-15, 0.0 }, /* measured 1.32e-15 */
+   /* #507 ADOSC takes the EMA coefficients of #505. Volume x a ratio: it does
+    * not scale with price, so no input floor applies, and the row is sized by
+    * its zero crossings. */
+   { "ADOSC",               TA_REF_TOL_REL_OUT, 3e-9,  0.0 }, /* measured 7.7e-10 */
    /* #395 %R is a bounded dimensionless oscillator: its floor is a ULP of 100
     * whatever the input magnitude. */
    { "WILLR",               TA_REF_TOL_ABS,     5e-14, 0.0 }, /* measured 1.42e-14 */

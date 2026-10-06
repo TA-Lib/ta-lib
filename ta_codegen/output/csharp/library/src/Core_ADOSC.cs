@@ -213,11 +213,19 @@ public partial class Core
        * calculate the "ad".
        */
       ad = 0.0;
-      /* Constants for EMA */
-      fastk = 2.0 / ((double)optInFastPeriod + 1.0);
-      one_minus_fastk = 1.0 - fastk;
-      slowk = 2.0 / ((double)optInSlowPeriod + 1.0);
-      one_minus_slowk = 1.0 - slowk;
+      /* Constants for EMA. Each pair must sum to exactly 1.0, or a flat A/D
+       * line drifts off its level.
+       */
+      one_minus_fastk = (double)(optInFastPeriod - 1) / (double)(optInFastPeriod + 1);
+      fastk = 1.0 - one_minus_fastk;
+      if( one_minus_fastk < 0.5 ) {
+         one_minus_fastk = 1.0 - fastk;
+      }
+      one_minus_slowk = (double)(optInSlowPeriod - 1) / (double)(optInSlowPeriod + 1);
+      slowk = 1.0 - one_minus_slowk;
+      if( one_minus_slowk < 0.5 ) {
+         one_minus_slowk = 1.0 - slowk;
+      }
       /* Initialize the two EMA
        *
        * Use the same range of initialization inputs for
@@ -331,10 +339,16 @@ public partial class Core
       outBegIdx = startIdx;
       today = startIdx - lookbackTotal;
       ad = 0.0;
-      fastk = 2.0 / ((double)optInFastPeriod + 1.0);
-      one_minus_fastk = 1.0 - fastk;
-      slowk = 2.0 / ((double)optInSlowPeriod + 1.0);
-      one_minus_slowk = 1.0 - slowk;
+      one_minus_fastk = (double)(optInFastPeriod - 1) / (double)(optInFastPeriod + 1);
+      fastk = 1.0 - one_minus_fastk;
+      if( one_minus_fastk < 0.5 ) {
+         one_minus_fastk = 1.0 - fastk;
+      }
+      one_minus_slowk = (double)(optInSlowPeriod - 1) / (double)(optInSlowPeriod + 1);
+      slowk = 1.0 - one_minus_slowk;
+      if( one_minus_slowk < 0.5 ) {
+         one_minus_slowk = 1.0 - slowk;
+      }
       high = (double)inHigh[today];
       low = (double)inLow[today];
       tmp = high - low;
@@ -839,11 +853,19 @@ public partial class Core
        * calculate the "ad".
        */
       ad = 0.0;
-      /* Constants for EMA */
-      fastk = 2.0 / ((double)optInFastPeriod + 1.0);
-      one_minus_fastk = 1.0 - fastk;
-      slowk = 2.0 / ((double)optInSlowPeriod + 1.0);
-      one_minus_slowk = 1.0 - slowk;
+      /* Constants for EMA. Each pair must sum to exactly 1.0, or a flat A/D
+       * line drifts off its level.
+       */
+      one_minus_fastk = (double)(optInFastPeriod - 1) / (double)(optInFastPeriod + 1);
+      fastk = 1.0 - one_minus_fastk;
+      if( one_minus_fastk < 0.5 ) {
+         one_minus_fastk = 1.0 - fastk;
+      }
+      one_minus_slowk = (double)(optInSlowPeriod - 1) / (double)(optInSlowPeriod + 1);
+      slowk = 1.0 - one_minus_slowk;
+      if( one_minus_slowk < 0.5 ) {
+         one_minus_slowk = 1.0 - slowk;
+      }
       /* Initialize the two EMA
        *
        * Use the same range of initialization inputs for
