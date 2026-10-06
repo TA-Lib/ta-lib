@@ -117,6 +117,9 @@ pub(crate) struct CsRenderCtx<'a> {
     /// [`FmaVarSets::recurrent_select_targets`] name, whose selects stay
     /// branches.
     pub(crate) plain_selects: Cell<bool>,
+    /// The batch tier, the only one the shift copy rewrites: in a stream body it
+    /// read slower on one CPU.
+    pub(crate) batch: bool,
 }
 
 /// Words this backend cannot render as an identifier (see [`crate::naming`]):
@@ -1065,6 +1068,7 @@ fn gen_func_inner(
         fma: Some(&fma_sets),
         matype_map: build_matype_map(enums),
         plain_selects: Cell::new(false),
+        batch: true,
     };
 
     // Emit VarDecl initializations
@@ -1374,6 +1378,30 @@ impl CsStmt<'_> {
         out
     }
 
+    fn plain_while(&self, condition: &Expr, body: &[Statement], indent: usize) -> String {
+        let pad = " ".repeat(indent);
+        let mut hoisted = Vec::new();
+        let mut cnt = self.ctx.inline_counter.get();
+        let new_condition =
+            hoist_block_helpers(condition, self.helpers, &mut hoisted, &mut cnt, CANDLE_FNS);
+        self.ctx.inline_counter.set(cnt);
+        let mut out = render_hoisted_blocks(
+            &hoisted, indent, self.ctx, self.enums, self.registry, self.helpers,
+        );
+        let cond_str = render_expr(&new_condition, self.ctx, self.registry, self.helpers);
+        let cond_cs = if is_boolean_expr(&new_condition, self.helpers) {
+            cond_str
+        } else {
+            format!("({cond_str}) != 0")
+        };
+        out.push_str(&format!("{pad}while( {cond_cs} ) {{\n"));
+        for s in body {
+            out.push_str(&self.walk_stmt(s, indent + 3));
+        }
+        out.push_str(&format!("{pad}}}\n"));
+        out
+    }
+
     /// Shared `if` tail (then-body + else branch with `} else if` collapse).
     fn render_if_tail(
         &self,
@@ -1532,27 +1560,25 @@ impl StatementEmitter for CsStmt<'_> {
     }
 
     fn while_loop(&self, condition: &Expr, body: &[Statement], indent: usize) -> String {
-        let pad = " ".repeat(indent);
-        let mut hoisted = Vec::new();
-        let mut cnt = self.ctx.inline_counter.get();
-        let new_condition =
-            hoist_block_helpers(condition, self.helpers, &mut hoisted, &mut cnt, CANDLE_FNS);
-        self.ctx.inline_counter.set(cnt);
-        let mut out = render_hoisted_blocks(
-            &hoisted, indent, self.ctx, self.enums, self.registry, self.helpers,
-        );
-        let cond_str = render_expr(&new_condition, self.ctx, self.registry, self.helpers);
-        let cond_cs = if is_boolean_expr(&new_condition, self.helpers) {
-            cond_str
-        } else {
-            format!("({cond_str}) != 0")
+        let Some((helper, j, bound)) = shift_run(condition, body).filter(|_| self.ctx.batch) else {
+            return self.plain_while(condition, body, indent);
         };
-        out.push_str(&format!("{pad}while( {cond_cs} ) {{\n"));
-        for s in body {
-            out.push_str(&self.walk_stmt(s, indent + 3));
-        }
-        out.push_str(&format!("{pad}}}\n"));
-        out
+        let Some(Statement::Assign { target, .. }) = body.iter().find(|s| !matches!(s, Statement::Comment(_))) else {
+            return self.plain_while(condition, body, indent);
+        };
+        let j = render_expr(&Expr::Var(j.to_string()), self.ctx, self.registry, self.helpers);
+        let store = render_expr(target, self.ctx, self.registry, self.helpers);
+        let Some(array) = store.strip_suffix(&format!("[{j}]")) else {
+            return self.plain_while(condition, body, indent);
+        };
+        let e = render_expr(bound, self.ctx, self.registry, self.helpers);
+        let pad = " ".repeat(indent);
+        let term = if matches!(bound, Expr::Var(_) | Expr::IntLiteral(_)) { e.clone() } else { format!("({e})") };
+        let run = if helper == "ShiftDown" { format!("{term} - {j}") } else { format!("{j} - {term}") };
+        format!(
+            "{pad}if( {run} >= {SHIFT_COPY_MIN} ) {{\n{pad}   {helper}({array}, {j}, {e});\n{pad}   {j} = {e};\n{pad}}} else {{\n{}{pad}}}\n",
+            self.plain_while(condition, body, indent + 3)
+        )
     }
 
     fn do_while(&self, condition: &Expr, body: &[Statement], indent: usize) -> String {
@@ -2167,6 +2193,7 @@ impl ExprEmitter for CsExpr<'_> {
                     fma: self.ctx.fma,
                     matype_map: self.ctx.matype_map.clone(),
                     plain_selects: Cell::new(self.ctx.plain_selects.get()),
+                    batch: self.ctx.batch,
                 };
                 render_expr(inner, &inner_ctx, self.registry, self.helpers)
             }
@@ -2272,6 +2299,58 @@ fn fp_select<'e>(
         return Some((if gt { "ZeroIfGt" } else { "ZeroIfLt" }, vec![l, r, else_expr]));
     }
     None
+}
+
+/// Runs shorter than this stay a loop: a copy is a call, and RyuJIT moves a few
+/// elements faster in line.
+const SHIFT_COPY_MIN: usize = 16;
+
+/// `while( j < e ) { a[j] = a[j + 1]; j++; }` or its mirror image
+/// `while( j > e ) { a[j] = a[j - 1]; j--; }`, which RyuJIT leaves as an
+/// element loop where gcc emits `memmove`: the `ShiftRun.cs` helper that does
+/// it as one copy, the index and the bound.
+///
+/// The bound is plain index arithmetic over other names, so it reads neither
+/// the index nor the array being shifted.
+fn shift_run<'e>(condition: &'e Expr, body: &'e [Statement]) -> Option<(&'static str, &'e str, &'e Expr)> {
+    fn plain_index(e: &Expr, j: &str, array: &str) -> bool {
+        match e {
+            Expr::IntLiteral(_) => true,
+            Expr::Var(n) => n != j && n != array,
+            Expr::BinOp(l, BinOp::Add | BinOp::Sub, r) => plain_index(l, j, array) && plain_index(r, j, array),
+            _ => false,
+        }
+    }
+    let Expr::BinOp(idx, cmp @ (BinOp::Less | BinOp::Greater), bound) = condition else { return None };
+    let Expr::Var(j) = idx.as_ref() else { return None };
+    let (helper, step) = if matches!(cmp, BinOp::Less) { ("ShiftDown", BinOp::Add) } else { ("ShiftUp", BinOp::Sub) };
+    let stepped = |e: &Expr| {
+        matches!(e, Expr::BinOp(l, op, r)
+            if *op == step
+                && matches!(l.as_ref(), Expr::Var(n) if n == j)
+                && matches!(r.as_ref(), Expr::IntLiteral(1)))
+    };
+    let mut code = body.iter().filter(|s| !matches!(s, Statement::Comment(_)));
+    let (Some(store), Some(advance), None) = (code.next(), code.next(), code.next()) else { return None };
+    let Statement::Assign { target: Expr::ArrayAccess(dst, at), value: Expr::ArrayAccess(src, from), compound: false } =
+        store
+    else {
+        return None;
+    };
+    if dst != src || !matches!(at.as_ref(), Expr::Var(n) if n == j) || !stepped(from) {
+        return None;
+    }
+    let advances = match advance {
+        Statement::Assign { target: Expr::Var(n), value, .. } => n == j && stepped(value),
+        Statement::Expr(Expr::PostIncrement(e) | Expr::PreIncrement(e)) => {
+            step == BinOp::Add && matches!(e.as_ref(), Expr::Var(n) if n == j)
+        }
+        Statement::Expr(Expr::PostDecrement(e) | Expr::PreDecrement(e)) => {
+            step == BinOp::Sub && matches!(e.as_ref(), Expr::Var(n) if n == j)
+        }
+        _ => false,
+    };
+    (advances && plain_index(bound, j, dst)).then_some((helper, j.as_str(), bound.as_ref()))
 }
 
 /// Replaces the array-element operand of each `sqrt`, `floor` and `ceil` in
@@ -2687,6 +2766,7 @@ fn render_lookback_code(
         fma: None,
         matype_map: build_matype_map(enums),
         plain_selects: Cell::new(false),
+        batch: false,
     };
 
     // Declare local variables (initialized: locals assigned only inside a

@@ -194,9 +194,14 @@ public partial class Core
                }
             }
             j = nbSorted;
-            while( j > lo ) {
-               sorted[j] = sorted[j - 1];
-               j -= 1;
+            if( j - lo >= 16 ) {
+               ShiftUp(sorted, j, lo);
+               j = lo;
+            } else {
+               while( j > lo ) {
+                  sorted[j] = sorted[j - 1];
+                  j -= 1;
+               }
             }
          }
          sorted[j] = newValue;
@@ -296,15 +301,25 @@ public partial class Core
           * them.
           */
          if( j < pos ) {
-            while( j < pos - 1 ) {
-               sorted[j] = sorted[j + 1];
-               j += 1;
+            if( (pos - 1) - j >= 16 ) {
+               ShiftDown(sorted, j, pos - 1);
+               j = pos - 1;
+            } else {
+               while( j < pos - 1 ) {
+                  sorted[j] = sorted[j + 1];
+                  j += 1;
+               }
             }
             sorted[pos - 1] = newValue;
          } else {
-            while( j > pos ) {
-               sorted[j] = sorted[j - 1];
-               j -= 1;
+            if( j - pos >= 16 ) {
+               ShiftUp(sorted, j, pos);
+               j = pos;
+            } else {
+               while( j > pos ) {
+                  sorted[j] = sorted[j - 1];
+                  j -= 1;
+               }
             }
             sorted[pos] = newValue;
          }
@@ -402,9 +417,14 @@ public partial class Core
                }
             }
             j = nbSorted;
-            while( j > lo ) {
-               sorted[j] = sorted[j - 1];
-               j -= 1;
+            if( j - lo >= 16 ) {
+               ShiftUp(sorted, j, lo);
+               j = lo;
+            } else {
+               while( j > lo ) {
+                  sorted[j] = sorted[j - 1];
+                  j -= 1;
+               }
             }
          }
          sorted[j] = newValue;
@@ -479,15 +499,25 @@ public partial class Core
             j = lo;
          }
          if( j < pos ) {
-            while( j < pos - 1 ) {
-               sorted[j] = sorted[j + 1];
-               j += 1;
+            if( (pos - 1) - j >= 16 ) {
+               ShiftDown(sorted, j, pos - 1);
+               j = pos - 1;
+            } else {
+               while( j < pos - 1 ) {
+                  sorted[j] = sorted[j + 1];
+                  j += 1;
+               }
             }
             sorted[pos - 1] = newValue;
          } else {
-            while( j > pos ) {
-               sorted[j] = sorted[j - 1];
-               j -= 1;
+            if( j - pos >= 16 ) {
+               ShiftUp(sorted, j, pos);
+               j = pos;
+            } else {
+               while( j > pos ) {
+                  sorted[j] = sorted[j - 1];
+                  j -= 1;
+               }
             }
             sorted[pos] = newValue;
          }
