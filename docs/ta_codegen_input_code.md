@@ -196,7 +196,7 @@ level discards for this call.
 int ema_lookback(int optInTimePeriod)
 {
    return optInTimePeriod - 1
-        + TA_UNSTABLE( TA_FUNC_UNST_EMA, ta_warmup_ema(K, optInTimePeriod) );
+        + TA_UNSTABLE( TA_FUNC_UNST_EMA, ta_auto_stabilization_ema(K, optInTimePeriod) );
 }
 ```
 
@@ -208,10 +208,10 @@ int ema_lookback(int optInTimePeriod)
   of `X`, with a period term where the need grows with the period. The rule and its tier go in the table of
   `website/src/api/unstable-period/README.md`.
 - **Helper.** A kernel several ids share is a helper in
-  `ta_codegen/input/helpers/warmup.c` that takes `K` or `X` as an argument. Use
-  the existing one when the kernel is the same (`ta_warmup_ema`,
-  `ta_warmup_wilder`); a rule only one function has is written in the read, unless
-  it needs a saturating form (`ta_warmup_vidya`).
+  `ta_codegen/input/helpers/auto_stabilization.c` that takes `K` or `X` as an argument. Use
+  the existing one when the kernel is the same (`ta_auto_stabilization_ema`,
+  `ta_auto_stabilization_wilder`); a rule only one function has is written in the read, unless
+  it needs a saturating form (`ta_auto_stabilization_vidya`).
 - **One read per path.** Once in the lookback, or once in each of its
   `return`s. The body takes the count from its own lookback (`lookbackTotal`
   minus the structural part). A function that runs another's recursion calls
@@ -225,7 +225,7 @@ int ema_lookback(int optInTimePeriod)
   the whole right-hand side of an assignment to an `int` local placed before
   the read, one local per level when `K` is inside the cast (`kama.c`,
   `swak_bp.c`).
-- **Test.** `test_auto_warmup.c` keeps its own copy of every rule and its own
+- **Test.** `test_auto_stabilization.c` keeps its own copy of every rule and its own
   list of owners: add the id to both.
 
 ## Cross-indicator calls

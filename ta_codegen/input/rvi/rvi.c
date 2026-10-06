@@ -16,7 +16,7 @@
 int rvi_lookback(int optInTimePeriod, int optInStdDevPeriod)
 {
    return (optInStdDevPeriod-1) + (optInTimePeriod-1)
-   + TA_UNSTABLE( TA_FUNC_UNST_RVI, ta_warmup_wilder(K, optInTimePeriod) );
+   + TA_UNSTABLE( TA_FUNC_UNST_RVI, ta_auto_stabilization_wilder(K, optInTimePeriod) );
 }
 
 TA_RetCode rvi(int startIdx, int endIdx,

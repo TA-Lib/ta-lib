@@ -1,4 +1,4 @@
-Auto warm-up probe: results at commit 86285a0a9, warmup_probe 40000, gcc 14, x86_64 Linux.
+Auto-Stabilization probe: results at commit 86285a0a9, auto_stabilization_probe 40000, gcc 14, x86_64 Linux.
 
 == 1. Classes at the default parameters (analyze.py summary) ==
 Counter({'EXACT': 122, 'CONV': 59, 'ROUND': 38, 'NEVER': 9})
@@ -669,7 +669,7 @@ MAXINDEX period 2 bar 115: from startIdx 0 -> 115, from startIdx 114 -> 114 (val
 MAXINDEX period 2 bar 142: from startIdx 0 -> 142, from startIdx 142 -> 141 (values 2 and 2)
 mismatching bars: MAXINDEX 8732, MININDEX 7963
 
-== 6. MAMA by limits (OVR=FastLimit=..,SlowLimit=.. warmup_probe 40000 MAMA): worst need over series and starts ==
+== 6. MAMA by limits (OVR=FastLimit=..,SlowLimit=.. auto_stabilization_probe 40000 MAMA): worst need over series and starts ==
 fast  slow   need(e^-10)  need(e^-19)   count PREC_4 / PREC_8 = 80+50X + ceil(2K/max(fast,slow))
 0.5   0.05       138          290        320 / 556
 0.5   0.01       153          306        320 / 556

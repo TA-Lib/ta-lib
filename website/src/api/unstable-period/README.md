@@ -70,7 +70,7 @@ There are three distinct approaches, from the most common to the most rigorous:
 
 2. **Scrub it yourself.** TA-Lib stays at its default (unstable period `0`) and returns everything it can compute; your code decides how many leading outputs to drop.
 
-3. **Let TA-Lib do it.** Set an unstable period and the function stops emitting the leading values the seed still distorts. The setting is either an [Auto level](/api/unstable-period/#auto), which sizes the warm-up from each call's parameters, or a fixed number of bars.
+3. **Let TA-Lib do it.** Set an unstable period and the function stops emitting the leading values the seed still distorts. The setting is either [Auto-Stabilization](/api/unstable-period/#auto), a level that sizes the count from each call's parameters, or a fixed number of bars.
 
 ## API
 
@@ -167,9 +167,9 @@ In C, the unstable period and the candle settings are process-wide. Change them
 only while no TA function is running and no stream is open
 ([specification](/spec/settings-threads/#idle-settings)).
 
-## Auto levels {#auto}
+## Auto-Stabilization {#auto}
 
-`PREC_n`: once the warm-up is discarded, the first `n` significant digits of a value no
+`PREC_n`: once the unstable outputs are discarded, the first `n` significant digits of a value no
 longer depend on where the data starts. Significant digits, not decimals: at `PREC_4`
 that is `45.67y`, `1.234y` or `0.0001234y`, with `y` the first digit that can still move.
 

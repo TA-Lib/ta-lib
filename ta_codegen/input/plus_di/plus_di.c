@@ -26,7 +26,7 @@
 int plus_di_lookback(int optInTimePeriod)
 {
    if( optInTimePeriod > 1 )
-      return optInTimePeriod + TA_UNSTABLE( TA_FUNC_UNST_PLUS_DI, ta_warmup_wilder(K, optInTimePeriod) );
+      return optInTimePeriod + TA_UNSTABLE( TA_FUNC_UNST_PLUS_DI, ta_auto_stabilization_wilder(K, optInTimePeriod) );
    else
       return 1;
 }

@@ -17,7 +17,7 @@
 int ht_phasor_lookback(void)
 {
    /* See mama_lookback for an explanation of these */
-   return 32 + TA_UNSTABLE( TA_FUNC_UNST_HT_PHASOR, ta_warmup_hilbert(X) );
+   return 32 + TA_UNSTABLE( TA_FUNC_UNST_HT_PHASOR, ta_auto_stabilization_hilbert(X) );
 }
 
 TA_RetCode ht_phasor(int startIdx, int endIdx,

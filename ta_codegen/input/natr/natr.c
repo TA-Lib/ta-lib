@@ -30,7 +30,7 @@ int natr_lookback(int optInTimePeriod)
     * (optInTimePeriod-1) is for the simple
     * moving average.
     */
-   return optInTimePeriod + TA_UNSTABLE( TA_FUNC_UNST_NATR, ta_warmup_wilder(K, optInTimePeriod) );
+   return optInTimePeriod + TA_UNSTABLE( TA_FUNC_UNST_NATR, ta_auto_stabilization_wilder(K, optInTimePeriod) );
 }
 
 TA_RetCode natr(int startIdx, int endIdx,

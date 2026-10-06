@@ -193,10 +193,10 @@ What enters a lookback, in C, in a bare run:
   not move. `test_adx.c` pins the DI/DM rows,
   `test_period_boundary.c` the DEMA, TEMA and period-1 MA stage counts, and
   `test_kc.c` KC's longer path over a grid of two unstable periods.
-- rL8 under an Auto level: `test_auto_warmup.c` asks every function flagged
+- rL8 under an Auto level: `test_auto_stabilization.c` asks every function flagged
   identity at a period of 1, owner of an id or not, for its lookback at a
   period of 1 with every id on each level, and requires 0.
-- rL6 under an Auto level: the count leg of `test_auto_warmup.c`. With one id
+- rL6 under an Auto level: the count leg of `test_auto_stabilization.c`. With one id
   on a level, its owner's lookback minus its lookback at 0 must equal the
   rule, computed from the file's own copy of the rule table, and the owner
   must report the bits it reports at 0, starting that many bars later. It
@@ -536,7 +536,7 @@ compared at `PREC_8`. The default all-EMA vector reports too few bars on the 240
 series to show it. A floor on the output bars compared under a level keeps
 the passes from comparing nothing.
 
-Two starts: the second leg of `test_auto_warmup.c`, in a bare run. It holds
+Two starts: the second leg of `test_auto_stabilization.c`, in a bare run. It holds
 what the [Unstable Period](https://ta-lib.org/api/unstable-period/) page says
 a level means, which is not a specification rule. Every function runs on three
 synthetic 8192-bar series (a random walk, alternating trends, a range), from

@@ -27,7 +27,7 @@ int atr_lookback(int optInTimePeriod)
     * (optInTimePeriod-1) is for the simple
     * moving average.
     */
-   return optInTimePeriod + TA_UNSTABLE( TA_FUNC_UNST_ATR, ta_warmup_wilder(K, optInTimePeriod) );
+   return optInTimePeriod + TA_UNSTABLE( TA_FUNC_UNST_ATR, ta_auto_stabilization_wilder(K, optInTimePeriod) );
 }
 
 TA_RetCode atr(int startIdx, int endIdx,

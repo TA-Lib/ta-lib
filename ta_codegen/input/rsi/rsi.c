@@ -26,7 +26,7 @@
 int rsi_lookback(int optInTimePeriod)
 {
    return optInTimePeriod
-   + TA_UNSTABLE( TA_FUNC_UNST_RSI, ta_warmup_wilder(K, optInTimePeriod) );
+   + TA_UNSTABLE( TA_FUNC_UNST_RSI, ta_auto_stabilization_wilder(K, optInTimePeriod) );
 }
 
 TA_RetCode rsi(int startIdx, int endIdx,

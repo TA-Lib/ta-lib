@@ -19,7 +19,7 @@
 int ema_lookback(int optInTimePeriod)
 {
    return optInTimePeriod - 1
-   + TA_UNSTABLE( TA_FUNC_UNST_EMA, ta_warmup_ema(K, optInTimePeriod) );
+   + TA_UNSTABLE( TA_FUNC_UNST_EMA, ta_auto_stabilization_ema(K, optInTimePeriod) );
 }
 
 TA_RetCode ema(int startIdx, int endIdx,

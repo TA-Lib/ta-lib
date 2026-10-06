@@ -606,8 +606,8 @@ typedef enum
   TA_REGTEST_INDEX_NOT_NEWEST        = 1719,
 
   /* The Auto levels of the unstable period: counts and two-start agreement. */
-  TA_AUTO_WARMUP_FAIL                = 1720,
-  TA_AUTO_WARMUP_VACUOUS             = 1721,
+  TA_AUTO_STABILIZATION_FAIL                = 1720,
+  TA_AUTO_STABILIZATION_VACUOUS             = 1721,
 
   /* Error code related to bug fix documentented on SourceForge. */
   TA_TEST_FAIL_BUG1359452_1  = 2000,

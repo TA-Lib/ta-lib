@@ -1,9 +1,9 @@
-# Auto warm-up: an "Auto" unstable period
+# Auto-Stabilization: an "Auto" unstable period
 
 **Status:** design for [#492](https://github.com/TA-Lib/ta-lib/issues/492), with its decisions
 ruled by the owner (section 9). Implemented in this tree, except the function-page row of section 7;
 sections 5 and 8 describe the change, and "today" there is the tree before it. The measurements are reproducible from
-[`studies/auto-warm-up/`](studies/auto-warm-up/README.md).
+[`studies/auto-stabilization/`](studies/auto-stabilization/README.md).
 
 ## 1. Summary
 
@@ -576,7 +576,7 @@ The dialect's read gains a second argument, the Auto count for this call as an e
 int ema_lookback(int optInTimePeriod)
 {
    return optInTimePeriod - 1
-        + TA_UNSTABLE( TA_FUNC_UNST_EMA, ta_warmup_ema(K, optInTimePeriod) );
+        + TA_UNSTABLE( TA_FUNC_UNST_EMA, ta_auto_stabilization_ema(K, optInTimePeriod) );
 }
 ```
 
@@ -585,7 +585,7 @@ int ema_lookback(int optInTimePeriod)
 expression per level and a select on the stored value. With every read in the owner's lookback,
 the rule is written once per id, in the helper its reads name.
 
-- **The formulas are helpers.** `ta_warmup_ema`, `ta_warmup_wilder` and the per-function ones
+- **The formulas are helpers.** `ta_auto_stabilization_ema`, `ta_auto_stabilization_wilder` and the per-function ones
   live in `ta_codegen/input/helpers/`, where single-return `int` and `double` functions are
   inlined into all four backends. Every helper takes `K` or `X` as an argument, and the read
   supplies them from the stored level: the dialect has no named constants. No lookback calls a
@@ -973,7 +973,7 @@ no function page carries a rule, a count or a direct link to the rule table.
 
 ## 10. Evidence
 
-[`studies/auto-warm-up/`](studies/auto-warm-up/README.md) holds the probe, its analysis and the
+[`studies/auto-stabilization/`](studies/auto-stabilization/README.md) holds the probe, its analysis and the
 results. In short:
 
 - **Method.** Every function through the abstraction layer, on 40000 bars of three synthetic
