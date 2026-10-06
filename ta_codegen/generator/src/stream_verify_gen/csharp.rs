@@ -788,8 +788,8 @@ fn emit_csharp_sv_func(
     }
     s.push_str("                        }\n");
     let _ = writeln!(s, "                        Core.{class} sB = sA.Clone();");
-    // One counted bar on the fork -- see the C server for why.
-    s.push_str("                        sB.Advance();\n");
+    // Two counted bars on the fork -- see the C server for why.
+    s.push_str("                        sB.Advance();\n                        sB.Advance();\n");
     let _ = writeln!(s, "                        var fk = new {up_ty}[svN];");
     s.push_str("                        for (int t = mid; t < svN; t++) {\n");
     let _ = writeln!(s, "                            fk[t] = sB.Update({bars_t});");
@@ -813,7 +813,7 @@ fn emit_csharp_sv_func(
     }
     s.push_str("                        }\n");
     // Both handles have now consumed bars [p0-1, svN-1], so the original
-    // reports what batch(0, svN-1) did and the fork one bar more, the one it
+    // reports what batch(0, svN-1) did and the fork two bars more, the two it
     // counted. The original is the control: a failure on sA alone says the
     // leg's own bookkeeping broke rather than Clone().
     // Only when the value leg passed: a diverged handle is not one whose range
@@ -825,7 +825,7 @@ fn emit_csharp_sv_func(
         sv_range_bit(SvRangeSite::Copy, SV_RANGE_MASK_CSHARP)
     );
     s.push_str("                            if (sA.OutRange.BegIdx != beg || sA.OutRange.Count != nb) { rangeOk = false; if (diag.Length == 0) diag = \",\\\"copyRangeSrc\\\":1\"; }\n");
-    s.push_str("                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 1) { rangeOk = false; if (diag.Length == 0) diag = \",\\\"copyRange\\\":1\"; }\n");
+    s.push_str("                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 2) { rangeOk = false; if (diag.Length == 0) diag = \",\\\"copyRange\\\":1\"; }\n");
     s.push_str("                        }\n");
     s.push_str("                    } catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = \",\\\"copyOpenReject\\\":1\"; }\n");
     s.push_str("                }\n");

@@ -1360,6 +1360,7 @@ public class TaCodegenServe {
                         }
                         Core.AcStream sB = sA.Clone();
                         sB.Advance();
+                        sB.Advance();
                         var fk = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             fk[t] = sB.Update(fz_h[t], fz_l[t]);
@@ -1372,7 +1373,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.OutRange.BegIdx != beg || sA.OutRange.Count != nb) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 1) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
+                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 2) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
                         }
                     } catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -1630,6 +1631,7 @@ public class TaCodegenServe {
                         }
                         Core.AccbandsStream sB = sA.Clone();
                         sB.Advance();
+                        sB.Advance();
                         var fk = new Core.AccbandsValue[svN];
                         for (int t = mid; t < svN; t++) {
                             fk[t] = sB.Update(fz_h[t], fz_l[t], fz_c[t]);
@@ -1646,7 +1648,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.OutRange.BegIdx != beg || sA.OutRange.Count != nb) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 1) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
+                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 2) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
                         }
                     } catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -1844,6 +1846,7 @@ public class TaCodegenServe {
                         }
                         Core.AcosStream sB = sA.Clone();
                         sB.Advance();
+                        sB.Advance();
                         var fk = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             fk[t] = sB.Update(fz_c[t]);
@@ -1856,7 +1859,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.OutRange.BegIdx != beg || sA.OutRange.Count != nb) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 1) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
+                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 2) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
                         }
                     } catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -2047,6 +2050,7 @@ public class TaCodegenServe {
                         }
                         Core.AdStream sB = sA.Clone();
                         sB.Advance();
+                        sB.Advance();
                         var fk = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             fk[t] = sB.Update(fz_h[t], fz_l[t], fz_c[t], fz_v[t]);
@@ -2059,7 +2063,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.OutRange.BegIdx != beg || sA.OutRange.Count != nb) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 1) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
+                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 2) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
                         }
                     } catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -2246,6 +2250,7 @@ public class TaCodegenServe {
                         }
                         Core.AddStream sB = sA.Clone();
                         sB.Advance();
+                        sB.Advance();
                         var fk = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             fk[t] = sB.Update(fz_c[t], fz_v[t]);
@@ -2258,7 +2263,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.OutRange.BegIdx != beg || sA.OutRange.Count != nb) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 1) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
+                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 2) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
                         }
                     } catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -2452,6 +2457,7 @@ public class TaCodegenServe {
                         }
                         Core.AdoscStream sB = sA.Clone();
                         sB.Advance();
+                        sB.Advance();
                         var fk = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             fk[t] = sB.Update(fz_h[t], fz_l[t], fz_c[t], fz_v[t]);
@@ -2464,7 +2470,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.OutRange.BegIdx != beg || sA.OutRange.Count != nb) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 1) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
+                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 2) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
                         }
                     } catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -2659,6 +2665,7 @@ public class TaCodegenServe {
                         }
                         Core.AdrStream sB = sA.Clone();
                         sB.Advance();
+                        sB.Advance();
                         var fk = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             fk[t] = sB.Update(fz_h[t], fz_l[t]);
@@ -2671,7 +2678,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.OutRange.BegIdx != beg || sA.OutRange.Count != nb) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 1) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
+                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 2) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
                         }
                     } catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -2869,6 +2876,7 @@ public class TaCodegenServe {
                         }
                         Core.AdxStream sB = sA.Clone();
                         sB.Advance();
+                        sB.Advance();
                         var fk = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             fk[t] = sB.Update(fz_h[t], fz_l[t], fz_c[t]);
@@ -2881,7 +2889,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.OutRange.BegIdx != beg || sA.OutRange.Count != nb) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 1) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
+                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 2) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
                         }
                     } catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -3079,6 +3087,7 @@ public class TaCodegenServe {
                         }
                         Core.AdxrStream sB = sA.Clone();
                         sB.Advance();
+                        sB.Advance();
                         var fk = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             fk[t] = sB.Update(fz_h[t], fz_l[t], fz_c[t]);
@@ -3091,7 +3100,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.OutRange.BegIdx != beg || sA.OutRange.Count != nb) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 1) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
+                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 2) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
                         }
                     } catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -3286,6 +3295,7 @@ public class TaCodegenServe {
                         }
                         Core.AlmaStream sB = sA.Clone();
                         sB.Advance();
+                        sB.Advance();
                         var fk = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             fk[t] = sB.Update(fz_c[t]);
@@ -3298,7 +3308,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.OutRange.BegIdx != beg || sA.OutRange.Count != nb) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 1) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
+                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 2) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
                         }
                     } catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -3494,6 +3504,7 @@ public class TaCodegenServe {
                         }
                         Core.AoStream sB = sA.Clone();
                         sB.Advance();
+                        sB.Advance();
                         var fk = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             fk[t] = sB.Update(fz_h[t], fz_l[t]);
@@ -3506,7 +3517,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.OutRange.BegIdx != beg || sA.OutRange.Count != nb) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 1) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
+                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 2) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
                         }
                     } catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -3720,6 +3731,7 @@ public class TaCodegenServe {
                         }
                         Core.ApoStream sB = sA.Clone();
                         sB.Advance();
+                        sB.Advance();
                         var fk = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             fk[t] = sB.Update(fz_c[t]);
@@ -3732,7 +3744,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.OutRange.BegIdx != beg || sA.OutRange.Count != nb) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 1) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
+                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 2) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
                         }
                     } catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -3953,6 +3965,7 @@ public class TaCodegenServe {
                         }
                         Core.AroonStream sB = sA.Clone();
                         sB.Advance();
+                        sB.Advance();
                         var fk = new Core.AroonValue[svN];
                         for (int t = mid; t < svN; t++) {
                             fk[t] = sB.Update(fz_h[t], fz_l[t]);
@@ -3967,7 +3980,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.OutRange.BegIdx != beg || sA.OutRange.Count != nb) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 1) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
+                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 2) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
                         }
                     } catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -4165,6 +4178,7 @@ public class TaCodegenServe {
                         }
                         Core.AroonoscStream sB = sA.Clone();
                         sB.Advance();
+                        sB.Advance();
                         var fk = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             fk[t] = sB.Update(fz_h[t], fz_l[t]);
@@ -4177,7 +4191,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.OutRange.BegIdx != beg || sA.OutRange.Count != nb) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 1) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
+                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 2) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
                         }
                     } catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -4376,6 +4390,7 @@ public class TaCodegenServe {
                         }
                         Core.AsiStream sB = sA.Clone();
                         sB.Advance();
+                        sB.Advance();
                         var fk = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             fk[t] = sB.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -4388,7 +4403,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.OutRange.BegIdx != beg || sA.OutRange.Count != nb) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 1) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
+                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 2) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
                         }
                     } catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -4573,6 +4588,7 @@ public class TaCodegenServe {
                         }
                         Core.AsinStream sB = sA.Clone();
                         sB.Advance();
+                        sB.Advance();
                         var fk = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             fk[t] = sB.Update(fz_c[t]);
@@ -4585,7 +4601,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.OutRange.BegIdx != beg || sA.OutRange.Count != nb) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 1) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
+                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 2) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
                         }
                     } catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -4770,6 +4786,7 @@ public class TaCodegenServe {
                         }
                         Core.AtanStream sB = sA.Clone();
                         sB.Advance();
+                        sB.Advance();
                         var fk = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             fk[t] = sB.Update(fz_c[t]);
@@ -4782,7 +4799,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.OutRange.BegIdx != beg || sA.OutRange.Count != nb) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 1) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
+                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 2) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
                         }
                     } catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -4973,6 +4990,7 @@ public class TaCodegenServe {
                         }
                         Core.AtrStream sB = sA.Clone();
                         sB.Advance();
+                        sB.Advance();
                         var fk = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             fk[t] = sB.Update(fz_h[t], fz_l[t], fz_c[t]);
@@ -4985,7 +5003,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.OutRange.BegIdx != beg || sA.OutRange.Count != nb) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 1) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
+                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 2) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
                         }
                     } catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -5178,6 +5196,7 @@ public class TaCodegenServe {
                         }
                         Core.AvgdevStream sB = sA.Clone();
                         sB.Advance();
+                        sB.Advance();
                         var fk = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             fk[t] = sB.Update(fz_c[t]);
@@ -5190,7 +5209,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.OutRange.BegIdx != beg || sA.OutRange.Count != nb) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 1) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
+                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 2) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
                         }
                     } catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -5388,6 +5407,7 @@ public class TaCodegenServe {
                         }
                         Core.AvgpriceStream sB = sA.Clone();
                         sB.Advance();
+                        sB.Advance();
                         var fk = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             fk[t] = sB.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -5400,7 +5420,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.OutRange.BegIdx != beg || sA.OutRange.Count != nb) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 1) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
+                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 2) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
                         }
                     } catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -5665,6 +5685,7 @@ public class TaCodegenServe {
                         }
                         Core.BbandsStream sB = sA.Clone();
                         sB.Advance();
+                        sB.Advance();
                         var fk = new Core.BbandsValue[svN];
                         for (int t = mid; t < svN; t++) {
                             fk[t] = sB.Update(fz_c[t]);
@@ -5681,7 +5702,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.OutRange.BegIdx != beg || sA.OutRange.Count != nb) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 1) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
+                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 2) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
                         }
                     } catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -5902,6 +5923,7 @@ public class TaCodegenServe {
                         }
                         Core.BbwStream sB = sA.Clone();
                         sB.Advance();
+                        sB.Advance();
                         var fk = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             fk[t] = sB.Update(fz_c[t]);
@@ -5914,7 +5936,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.OutRange.BegIdx != beg || sA.OutRange.Count != nb) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 1) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
+                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 2) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
                         }
                     } catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -6109,6 +6131,7 @@ public class TaCodegenServe {
                         }
                         Core.BetaStream sB = sA.Clone();
                         sB.Advance();
+                        sB.Advance();
                         var fk = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             fk[t] = sB.Update(fz_c[t], fz_v[t]);
@@ -6121,7 +6144,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.OutRange.BegIdx != beg || sA.OutRange.Count != nb) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 1) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
+                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 2) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
                         }
                     } catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -6319,6 +6342,7 @@ public class TaCodegenServe {
                         }
                         Core.BopStream sB = sA.Clone();
                         sB.Advance();
+                        sB.Advance();
                         var fk = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             fk[t] = sB.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -6331,7 +6355,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.OutRange.BegIdx != beg || sA.OutRange.Count != nb) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 1) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
+                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 2) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
                         }
                     } catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -6521,6 +6545,7 @@ public class TaCodegenServe {
                         }
                         Core.CciStream sB = sA.Clone();
                         sB.Advance();
+                        sB.Advance();
                         var fk = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             fk[t] = sB.Update(fz_h[t], fz_l[t], fz_c[t]);
@@ -6533,7 +6558,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.OutRange.BegIdx != beg || sA.OutRange.Count != nb) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 1) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
+                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 2) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
                         }
                     } catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -6726,6 +6751,7 @@ public class TaCodegenServe {
                         }
                         Core.Cdl2crowsStream sB = sA.Clone();
                         sB.Advance();
+                        sB.Advance();
                         var fk = new int[svN];
                         for (int t = mid; t < svN; t++) {
                             fk[t] = sB.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -6738,7 +6764,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.OutRange.BegIdx != beg || sA.OutRange.Count != nb) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 1) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
+                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 2) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
                         }
                     } catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -6951,6 +6977,7 @@ public class TaCodegenServe {
                         }
                         Core.Cdl3blackcrowsStream sB = sA.Clone();
                         sB.Advance();
+                        sB.Advance();
                         var fk = new int[svN];
                         for (int t = mid; t < svN; t++) {
                             fk[t] = sB.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -6963,7 +6990,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.OutRange.BegIdx != beg || sA.OutRange.Count != nb) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 1) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
+                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 2) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
                         }
                     } catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -7176,6 +7203,7 @@ public class TaCodegenServe {
                         }
                         Core.Cdl3insideStream sB = sA.Clone();
                         sB.Advance();
+                        sB.Advance();
                         var fk = new int[svN];
                         for (int t = mid; t < svN; t++) {
                             fk[t] = sB.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -7188,7 +7216,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.OutRange.BegIdx != beg || sA.OutRange.Count != nb) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 1) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
+                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 2) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
                         }
                     } catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -7401,6 +7429,7 @@ public class TaCodegenServe {
                         }
                         Core.Cdl3linestrikeStream sB = sA.Clone();
                         sB.Advance();
+                        sB.Advance();
                         var fk = new int[svN];
                         for (int t = mid; t < svN; t++) {
                             fk[t] = sB.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -7413,7 +7442,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.OutRange.BegIdx != beg || sA.OutRange.Count != nb) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 1) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
+                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 2) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
                         }
                     } catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -7626,6 +7655,7 @@ public class TaCodegenServe {
                         }
                         Core.Cdl3outsideStream sB = sA.Clone();
                         sB.Advance();
+                        sB.Advance();
                         var fk = new int[svN];
                         for (int t = mid; t < svN; t++) {
                             fk[t] = sB.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -7638,7 +7668,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.OutRange.BegIdx != beg || sA.OutRange.Count != nb) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 1) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
+                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 2) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
                         }
                     } catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -7851,6 +7881,7 @@ public class TaCodegenServe {
                         }
                         Core.Cdl3starsinsouthStream sB = sA.Clone();
                         sB.Advance();
+                        sB.Advance();
                         var fk = new int[svN];
                         for (int t = mid; t < svN; t++) {
                             fk[t] = sB.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -7863,7 +7894,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.OutRange.BegIdx != beg || sA.OutRange.Count != nb) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 1) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
+                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 2) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
                         }
                     } catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -8076,6 +8107,7 @@ public class TaCodegenServe {
                         }
                         Core.Cdl3whitesoldiersStream sB = sA.Clone();
                         sB.Advance();
+                        sB.Advance();
                         var fk = new int[svN];
                         for (int t = mid; t < svN; t++) {
                             fk[t] = sB.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -8088,7 +8120,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.OutRange.BegIdx != beg || sA.OutRange.Count != nb) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 1) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
+                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 2) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
                         }
                     } catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -8302,6 +8334,7 @@ public class TaCodegenServe {
                         }
                         Core.CdlabandonedbabyStream sB = sA.Clone();
                         sB.Advance();
+                        sB.Advance();
                         var fk = new int[svN];
                         for (int t = mid; t < svN; t++) {
                             fk[t] = sB.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -8314,7 +8347,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.OutRange.BegIdx != beg || sA.OutRange.Count != nb) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 1) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
+                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 2) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
                         }
                     } catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -8527,6 +8560,7 @@ public class TaCodegenServe {
                         }
                         Core.CdladvanceblockStream sB = sA.Clone();
                         sB.Advance();
+                        sB.Advance();
                         var fk = new int[svN];
                         for (int t = mid; t < svN; t++) {
                             fk[t] = sB.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -8539,7 +8573,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.OutRange.BegIdx != beg || sA.OutRange.Count != nb) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 1) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
+                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 2) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
                         }
                     } catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -8752,6 +8786,7 @@ public class TaCodegenServe {
                         }
                         Core.CdlbeltholdStream sB = sA.Clone();
                         sB.Advance();
+                        sB.Advance();
                         var fk = new int[svN];
                         for (int t = mid; t < svN; t++) {
                             fk[t] = sB.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -8764,7 +8799,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.OutRange.BegIdx != beg || sA.OutRange.Count != nb) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 1) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
+                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 2) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
                         }
                     } catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -8977,6 +9012,7 @@ public class TaCodegenServe {
                         }
                         Core.CdlbreakawayStream sB = sA.Clone();
                         sB.Advance();
+                        sB.Advance();
                         var fk = new int[svN];
                         for (int t = mid; t < svN; t++) {
                             fk[t] = sB.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -8989,7 +9025,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.OutRange.BegIdx != beg || sA.OutRange.Count != nb) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 1) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
+                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 2) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
                         }
                     } catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -9202,6 +9238,7 @@ public class TaCodegenServe {
                         }
                         Core.CdlclosingmarubozuStream sB = sA.Clone();
                         sB.Advance();
+                        sB.Advance();
                         var fk = new int[svN];
                         for (int t = mid; t < svN; t++) {
                             fk[t] = sB.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -9214,7 +9251,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.OutRange.BegIdx != beg || sA.OutRange.Count != nb) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 1) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
+                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 2) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
                         }
                     } catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -9427,6 +9464,7 @@ public class TaCodegenServe {
                         }
                         Core.CdlconcealbabyswallStream sB = sA.Clone();
                         sB.Advance();
+                        sB.Advance();
                         var fk = new int[svN];
                         for (int t = mid; t < svN; t++) {
                             fk[t] = sB.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -9439,7 +9477,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.OutRange.BegIdx != beg || sA.OutRange.Count != nb) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 1) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
+                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 2) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
                         }
                     } catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -9652,6 +9690,7 @@ public class TaCodegenServe {
                         }
                         Core.CdlcounterattackStream sB = sA.Clone();
                         sB.Advance();
+                        sB.Advance();
                         var fk = new int[svN];
                         for (int t = mid; t < svN; t++) {
                             fk[t] = sB.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -9664,7 +9703,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.OutRange.BegIdx != beg || sA.OutRange.Count != nb) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 1) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
+                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 2) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
                         }
                     } catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -9878,6 +9917,7 @@ public class TaCodegenServe {
                         }
                         Core.CdldarkcloudcoverStream sB = sA.Clone();
                         sB.Advance();
+                        sB.Advance();
                         var fk = new int[svN];
                         for (int t = mid; t < svN; t++) {
                             fk[t] = sB.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -9890,7 +9930,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.OutRange.BegIdx != beg || sA.OutRange.Count != nb) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 1) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
+                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 2) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
                         }
                     } catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -10103,6 +10143,7 @@ public class TaCodegenServe {
                         }
                         Core.CdldojiStream sB = sA.Clone();
                         sB.Advance();
+                        sB.Advance();
                         var fk = new int[svN];
                         for (int t = mid; t < svN; t++) {
                             fk[t] = sB.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -10115,7 +10156,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.OutRange.BegIdx != beg || sA.OutRange.Count != nb) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 1) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
+                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 2) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
                         }
                     } catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -10328,6 +10369,7 @@ public class TaCodegenServe {
                         }
                         Core.CdldojistarStream sB = sA.Clone();
                         sB.Advance();
+                        sB.Advance();
                         var fk = new int[svN];
                         for (int t = mid; t < svN; t++) {
                             fk[t] = sB.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -10340,7 +10382,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.OutRange.BegIdx != beg || sA.OutRange.Count != nb) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 1) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
+                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 2) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
                         }
                     } catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -10553,6 +10595,7 @@ public class TaCodegenServe {
                         }
                         Core.CdldragonflydojiStream sB = sA.Clone();
                         sB.Advance();
+                        sB.Advance();
                         var fk = new int[svN];
                         for (int t = mid; t < svN; t++) {
                             fk[t] = sB.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -10565,7 +10608,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.OutRange.BegIdx != beg || sA.OutRange.Count != nb) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 1) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
+                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 2) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
                         }
                     } catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -10778,6 +10821,7 @@ public class TaCodegenServe {
                         }
                         Core.CdlengulfingStream sB = sA.Clone();
                         sB.Advance();
+                        sB.Advance();
                         var fk = new int[svN];
                         for (int t = mid; t < svN; t++) {
                             fk[t] = sB.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -10790,7 +10834,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.OutRange.BegIdx != beg || sA.OutRange.Count != nb) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 1) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
+                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 2) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
                         }
                     } catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -11004,6 +11048,7 @@ public class TaCodegenServe {
                         }
                         Core.CdleveningdojistarStream sB = sA.Clone();
                         sB.Advance();
+                        sB.Advance();
                         var fk = new int[svN];
                         for (int t = mid; t < svN; t++) {
                             fk[t] = sB.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -11016,7 +11061,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.OutRange.BegIdx != beg || sA.OutRange.Count != nb) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 1) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
+                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 2) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
                         }
                     } catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -11230,6 +11275,7 @@ public class TaCodegenServe {
                         }
                         Core.CdleveningstarStream sB = sA.Clone();
                         sB.Advance();
+                        sB.Advance();
                         var fk = new int[svN];
                         for (int t = mid; t < svN; t++) {
                             fk[t] = sB.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -11242,7 +11288,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.OutRange.BegIdx != beg || sA.OutRange.Count != nb) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 1) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
+                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 2) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
                         }
                     } catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -11455,6 +11501,7 @@ public class TaCodegenServe {
                         }
                         Core.CdlgapsidesidewhiteStream sB = sA.Clone();
                         sB.Advance();
+                        sB.Advance();
                         var fk = new int[svN];
                         for (int t = mid; t < svN; t++) {
                             fk[t] = sB.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -11467,7 +11514,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.OutRange.BegIdx != beg || sA.OutRange.Count != nb) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 1) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
+                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 2) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
                         }
                     } catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -11680,6 +11727,7 @@ public class TaCodegenServe {
                         }
                         Core.CdlgravestonedojiStream sB = sA.Clone();
                         sB.Advance();
+                        sB.Advance();
                         var fk = new int[svN];
                         for (int t = mid; t < svN; t++) {
                             fk[t] = sB.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -11692,7 +11740,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.OutRange.BegIdx != beg || sA.OutRange.Count != nb) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 1) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
+                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 2) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
                         }
                     } catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -11905,6 +11953,7 @@ public class TaCodegenServe {
                         }
                         Core.CdlhammerStream sB = sA.Clone();
                         sB.Advance();
+                        sB.Advance();
                         var fk = new int[svN];
                         for (int t = mid; t < svN; t++) {
                             fk[t] = sB.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -11917,7 +11966,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.OutRange.BegIdx != beg || sA.OutRange.Count != nb) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 1) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
+                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 2) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
                         }
                     } catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -12130,6 +12179,7 @@ public class TaCodegenServe {
                         }
                         Core.CdlhangingmanStream sB = sA.Clone();
                         sB.Advance();
+                        sB.Advance();
                         var fk = new int[svN];
                         for (int t = mid; t < svN; t++) {
                             fk[t] = sB.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -12142,7 +12192,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.OutRange.BegIdx != beg || sA.OutRange.Count != nb) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 1) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
+                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 2) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
                         }
                     } catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -12355,6 +12405,7 @@ public class TaCodegenServe {
                         }
                         Core.CdlharamiStream sB = sA.Clone();
                         sB.Advance();
+                        sB.Advance();
                         var fk = new int[svN];
                         for (int t = mid; t < svN; t++) {
                             fk[t] = sB.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -12367,7 +12418,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.OutRange.BegIdx != beg || sA.OutRange.Count != nb) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 1) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
+                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 2) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
                         }
                     } catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -12580,6 +12631,7 @@ public class TaCodegenServe {
                         }
                         Core.CdlharamicrossStream sB = sA.Clone();
                         sB.Advance();
+                        sB.Advance();
                         var fk = new int[svN];
                         for (int t = mid; t < svN; t++) {
                             fk[t] = sB.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -12592,7 +12644,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.OutRange.BegIdx != beg || sA.OutRange.Count != nb) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 1) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
+                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 2) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
                         }
                     } catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -12805,6 +12857,7 @@ public class TaCodegenServe {
                         }
                         Core.CdlhighwaveStream sB = sA.Clone();
                         sB.Advance();
+                        sB.Advance();
                         var fk = new int[svN];
                         for (int t = mid; t < svN; t++) {
                             fk[t] = sB.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -12817,7 +12870,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.OutRange.BegIdx != beg || sA.OutRange.Count != nb) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 1) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
+                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 2) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
                         }
                     } catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -13030,6 +13083,7 @@ public class TaCodegenServe {
                         }
                         Core.CdlhikkakeStream sB = sA.Clone();
                         sB.Advance();
+                        sB.Advance();
                         var fk = new int[svN];
                         for (int t = mid; t < svN; t++) {
                             fk[t] = sB.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -13042,7 +13096,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.OutRange.BegIdx != beg || sA.OutRange.Count != nb) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 1) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
+                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 2) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
                         }
                     } catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -13255,6 +13309,7 @@ public class TaCodegenServe {
                         }
                         Core.CdlhikkakemodStream sB = sA.Clone();
                         sB.Advance();
+                        sB.Advance();
                         var fk = new int[svN];
                         for (int t = mid; t < svN; t++) {
                             fk[t] = sB.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -13267,7 +13322,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.OutRange.BegIdx != beg || sA.OutRange.Count != nb) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 1) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
+                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 2) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
                         }
                     } catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -13480,6 +13535,7 @@ public class TaCodegenServe {
                         }
                         Core.CdlhomingpigeonStream sB = sA.Clone();
                         sB.Advance();
+                        sB.Advance();
                         var fk = new int[svN];
                         for (int t = mid; t < svN; t++) {
                             fk[t] = sB.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -13492,7 +13548,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.OutRange.BegIdx != beg || sA.OutRange.Count != nb) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 1) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
+                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 2) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
                         }
                     } catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -13705,6 +13761,7 @@ public class TaCodegenServe {
                         }
                         Core.Cdlidentical3crowsStream sB = sA.Clone();
                         sB.Advance();
+                        sB.Advance();
                         var fk = new int[svN];
                         for (int t = mid; t < svN; t++) {
                             fk[t] = sB.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -13717,7 +13774,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.OutRange.BegIdx != beg || sA.OutRange.Count != nb) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 1) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
+                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 2) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
                         }
                     } catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -13930,6 +13987,7 @@ public class TaCodegenServe {
                         }
                         Core.CdlinneckStream sB = sA.Clone();
                         sB.Advance();
+                        sB.Advance();
                         var fk = new int[svN];
                         for (int t = mid; t < svN; t++) {
                             fk[t] = sB.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -13942,7 +14000,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.OutRange.BegIdx != beg || sA.OutRange.Count != nb) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 1) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
+                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 2) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
                         }
                     } catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -14155,6 +14213,7 @@ public class TaCodegenServe {
                         }
                         Core.CdlinvertedhammerStream sB = sA.Clone();
                         sB.Advance();
+                        sB.Advance();
                         var fk = new int[svN];
                         for (int t = mid; t < svN; t++) {
                             fk[t] = sB.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -14167,7 +14226,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.OutRange.BegIdx != beg || sA.OutRange.Count != nb) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 1) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
+                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 2) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
                         }
                     } catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -14380,6 +14439,7 @@ public class TaCodegenServe {
                         }
                         Core.CdlkickingStream sB = sA.Clone();
                         sB.Advance();
+                        sB.Advance();
                         var fk = new int[svN];
                         for (int t = mid; t < svN; t++) {
                             fk[t] = sB.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -14392,7 +14452,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.OutRange.BegIdx != beg || sA.OutRange.Count != nb) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 1) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
+                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 2) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
                         }
                     } catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -14605,6 +14665,7 @@ public class TaCodegenServe {
                         }
                         Core.CdlkickingbylengthStream sB = sA.Clone();
                         sB.Advance();
+                        sB.Advance();
                         var fk = new int[svN];
                         for (int t = mid; t < svN; t++) {
                             fk[t] = sB.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -14617,7 +14678,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.OutRange.BegIdx != beg || sA.OutRange.Count != nb) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 1) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
+                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 2) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
                         }
                     } catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -14830,6 +14891,7 @@ public class TaCodegenServe {
                         }
                         Core.CdlladderbottomStream sB = sA.Clone();
                         sB.Advance();
+                        sB.Advance();
                         var fk = new int[svN];
                         for (int t = mid; t < svN; t++) {
                             fk[t] = sB.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -14842,7 +14904,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.OutRange.BegIdx != beg || sA.OutRange.Count != nb) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 1) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
+                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 2) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
                         }
                     } catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -15055,6 +15117,7 @@ public class TaCodegenServe {
                         }
                         Core.CdllongleggeddojiStream sB = sA.Clone();
                         sB.Advance();
+                        sB.Advance();
                         var fk = new int[svN];
                         for (int t = mid; t < svN; t++) {
                             fk[t] = sB.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -15067,7 +15130,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.OutRange.BegIdx != beg || sA.OutRange.Count != nb) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 1) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
+                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 2) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
                         }
                     } catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -15280,6 +15343,7 @@ public class TaCodegenServe {
                         }
                         Core.CdllonglineStream sB = sA.Clone();
                         sB.Advance();
+                        sB.Advance();
                         var fk = new int[svN];
                         for (int t = mid; t < svN; t++) {
                             fk[t] = sB.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -15292,7 +15356,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.OutRange.BegIdx != beg || sA.OutRange.Count != nb) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 1) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
+                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 2) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
                         }
                     } catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -15505,6 +15569,7 @@ public class TaCodegenServe {
                         }
                         Core.CdlmarubozuStream sB = sA.Clone();
                         sB.Advance();
+                        sB.Advance();
                         var fk = new int[svN];
                         for (int t = mid; t < svN; t++) {
                             fk[t] = sB.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -15517,7 +15582,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.OutRange.BegIdx != beg || sA.OutRange.Count != nb) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 1) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
+                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 2) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
                         }
                     } catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -15730,6 +15795,7 @@ public class TaCodegenServe {
                         }
                         Core.CdlmatchinglowStream sB = sA.Clone();
                         sB.Advance();
+                        sB.Advance();
                         var fk = new int[svN];
                         for (int t = mid; t < svN; t++) {
                             fk[t] = sB.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -15742,7 +15808,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.OutRange.BegIdx != beg || sA.OutRange.Count != nb) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 1) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
+                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 2) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
                         }
                     } catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -15956,6 +16022,7 @@ public class TaCodegenServe {
                         }
                         Core.CdlmatholdStream sB = sA.Clone();
                         sB.Advance();
+                        sB.Advance();
                         var fk = new int[svN];
                         for (int t = mid; t < svN; t++) {
                             fk[t] = sB.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -15968,7 +16035,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.OutRange.BegIdx != beg || sA.OutRange.Count != nb) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 1) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
+                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 2) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
                         }
                     } catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -16182,6 +16249,7 @@ public class TaCodegenServe {
                         }
                         Core.CdlmorningdojistarStream sB = sA.Clone();
                         sB.Advance();
+                        sB.Advance();
                         var fk = new int[svN];
                         for (int t = mid; t < svN; t++) {
                             fk[t] = sB.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -16194,7 +16262,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.OutRange.BegIdx != beg || sA.OutRange.Count != nb) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 1) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
+                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 2) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
                         }
                     } catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -16408,6 +16476,7 @@ public class TaCodegenServe {
                         }
                         Core.CdlmorningstarStream sB = sA.Clone();
                         sB.Advance();
+                        sB.Advance();
                         var fk = new int[svN];
                         for (int t = mid; t < svN; t++) {
                             fk[t] = sB.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -16420,7 +16489,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.OutRange.BegIdx != beg || sA.OutRange.Count != nb) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 1) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
+                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 2) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
                         }
                     } catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -16633,6 +16702,7 @@ public class TaCodegenServe {
                         }
                         Core.CdlonneckStream sB = sA.Clone();
                         sB.Advance();
+                        sB.Advance();
                         var fk = new int[svN];
                         for (int t = mid; t < svN; t++) {
                             fk[t] = sB.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -16645,7 +16715,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.OutRange.BegIdx != beg || sA.OutRange.Count != nb) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 1) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
+                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 2) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
                         }
                     } catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -16858,6 +16928,7 @@ public class TaCodegenServe {
                         }
                         Core.CdlpiercingStream sB = sA.Clone();
                         sB.Advance();
+                        sB.Advance();
                         var fk = new int[svN];
                         for (int t = mid; t < svN; t++) {
                             fk[t] = sB.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -16870,7 +16941,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.OutRange.BegIdx != beg || sA.OutRange.Count != nb) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 1) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
+                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 2) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
                         }
                     } catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -17083,6 +17154,7 @@ public class TaCodegenServe {
                         }
                         Core.CdlrickshawmanStream sB = sA.Clone();
                         sB.Advance();
+                        sB.Advance();
                         var fk = new int[svN];
                         for (int t = mid; t < svN; t++) {
                             fk[t] = sB.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -17095,7 +17167,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.OutRange.BegIdx != beg || sA.OutRange.Count != nb) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 1) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
+                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 2) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
                         }
                     } catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -17308,6 +17380,7 @@ public class TaCodegenServe {
                         }
                         Core.Cdlrisefall3methodsStream sB = sA.Clone();
                         sB.Advance();
+                        sB.Advance();
                         var fk = new int[svN];
                         for (int t = mid; t < svN; t++) {
                             fk[t] = sB.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -17320,7 +17393,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.OutRange.BegIdx != beg || sA.OutRange.Count != nb) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 1) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
+                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 2) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
                         }
                     } catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -17533,6 +17606,7 @@ public class TaCodegenServe {
                         }
                         Core.CdlseparatinglinesStream sB = sA.Clone();
                         sB.Advance();
+                        sB.Advance();
                         var fk = new int[svN];
                         for (int t = mid; t < svN; t++) {
                             fk[t] = sB.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -17545,7 +17619,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.OutRange.BegIdx != beg || sA.OutRange.Count != nb) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 1) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
+                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 2) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
                         }
                     } catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -17758,6 +17832,7 @@ public class TaCodegenServe {
                         }
                         Core.CdlshootingstarStream sB = sA.Clone();
                         sB.Advance();
+                        sB.Advance();
                         var fk = new int[svN];
                         for (int t = mid; t < svN; t++) {
                             fk[t] = sB.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -17770,7 +17845,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.OutRange.BegIdx != beg || sA.OutRange.Count != nb) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 1) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
+                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 2) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
                         }
                     } catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -17983,6 +18058,7 @@ public class TaCodegenServe {
                         }
                         Core.CdlshortlineStream sB = sA.Clone();
                         sB.Advance();
+                        sB.Advance();
                         var fk = new int[svN];
                         for (int t = mid; t < svN; t++) {
                             fk[t] = sB.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -17995,7 +18071,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.OutRange.BegIdx != beg || sA.OutRange.Count != nb) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 1) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
+                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 2) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
                         }
                     } catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -18208,6 +18284,7 @@ public class TaCodegenServe {
                         }
                         Core.CdlspinningtopStream sB = sA.Clone();
                         sB.Advance();
+                        sB.Advance();
                         var fk = new int[svN];
                         for (int t = mid; t < svN; t++) {
                             fk[t] = sB.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -18220,7 +18297,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.OutRange.BegIdx != beg || sA.OutRange.Count != nb) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 1) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
+                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 2) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
                         }
                     } catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -18433,6 +18510,7 @@ public class TaCodegenServe {
                         }
                         Core.CdlstalledpatternStream sB = sA.Clone();
                         sB.Advance();
+                        sB.Advance();
                         var fk = new int[svN];
                         for (int t = mid; t < svN; t++) {
                             fk[t] = sB.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -18445,7 +18523,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.OutRange.BegIdx != beg || sA.OutRange.Count != nb) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 1) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
+                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 2) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
                         }
                     } catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -18658,6 +18736,7 @@ public class TaCodegenServe {
                         }
                         Core.CdlsticksandwichStream sB = sA.Clone();
                         sB.Advance();
+                        sB.Advance();
                         var fk = new int[svN];
                         for (int t = mid; t < svN; t++) {
                             fk[t] = sB.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -18670,7 +18749,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.OutRange.BegIdx != beg || sA.OutRange.Count != nb) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 1) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
+                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 2) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
                         }
                     } catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -18883,6 +18962,7 @@ public class TaCodegenServe {
                         }
                         Core.CdltakuriStream sB = sA.Clone();
                         sB.Advance();
+                        sB.Advance();
                         var fk = new int[svN];
                         for (int t = mid; t < svN; t++) {
                             fk[t] = sB.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -18895,7 +18975,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.OutRange.BegIdx != beg || sA.OutRange.Count != nb) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 1) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
+                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 2) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
                         }
                     } catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -19108,6 +19188,7 @@ public class TaCodegenServe {
                         }
                         Core.CdltasukigapStream sB = sA.Clone();
                         sB.Advance();
+                        sB.Advance();
                         var fk = new int[svN];
                         for (int t = mid; t < svN; t++) {
                             fk[t] = sB.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -19120,7 +19201,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.OutRange.BegIdx != beg || sA.OutRange.Count != nb) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 1) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
+                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 2) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
                         }
                     } catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -19333,6 +19414,7 @@ public class TaCodegenServe {
                         }
                         Core.CdlthrustingStream sB = sA.Clone();
                         sB.Advance();
+                        sB.Advance();
                         var fk = new int[svN];
                         for (int t = mid; t < svN; t++) {
                             fk[t] = sB.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -19345,7 +19427,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.OutRange.BegIdx != beg || sA.OutRange.Count != nb) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 1) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
+                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 2) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
                         }
                     } catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -19558,6 +19640,7 @@ public class TaCodegenServe {
                         }
                         Core.CdltristarStream sB = sA.Clone();
                         sB.Advance();
+                        sB.Advance();
                         var fk = new int[svN];
                         for (int t = mid; t < svN; t++) {
                             fk[t] = sB.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -19570,7 +19653,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.OutRange.BegIdx != beg || sA.OutRange.Count != nb) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 1) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
+                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 2) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
                         }
                     } catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -19783,6 +19866,7 @@ public class TaCodegenServe {
                         }
                         Core.Cdlunique3riverStream sB = sA.Clone();
                         sB.Advance();
+                        sB.Advance();
                         var fk = new int[svN];
                         for (int t = mid; t < svN; t++) {
                             fk[t] = sB.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -19795,7 +19879,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.OutRange.BegIdx != beg || sA.OutRange.Count != nb) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 1) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
+                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 2) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
                         }
                     } catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -20008,6 +20092,7 @@ public class TaCodegenServe {
                         }
                         Core.Cdlupsidegap2crowsStream sB = sA.Clone();
                         sB.Advance();
+                        sB.Advance();
                         var fk = new int[svN];
                         for (int t = mid; t < svN; t++) {
                             fk[t] = sB.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -20020,7 +20105,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.OutRange.BegIdx != beg || sA.OutRange.Count != nb) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 1) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
+                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 2) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
                         }
                     } catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -20233,6 +20318,7 @@ public class TaCodegenServe {
                         }
                         Core.Cdlxsidegap3methodsStream sB = sA.Clone();
                         sB.Advance();
+                        sB.Advance();
                         var fk = new int[svN];
                         for (int t = mid; t < svN; t++) {
                             fk[t] = sB.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -20245,7 +20331,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.OutRange.BegIdx != beg || sA.OutRange.Count != nb) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 1) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
+                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 2) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
                         }
                     } catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -20457,6 +20543,7 @@ public class TaCodegenServe {
                         }
                         Core.CeilStream sB = sA.Clone();
                         sB.Advance();
+                        sB.Advance();
                         var fk = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             fk[t] = sB.Update(fz_c[t]);
@@ -20469,7 +20556,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.OutRange.BegIdx != beg || sA.OutRange.Count != nb) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 1) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
+                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 2) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
                         }
                     } catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -20655,6 +20742,7 @@ public class TaCodegenServe {
                         }
                         Core.CgStream sB = sA.Clone();
                         sB.Advance();
+                        sB.Advance();
                         var fk = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             fk[t] = sB.Update(fz_c[t]);
@@ -20667,7 +20755,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.OutRange.BegIdx != beg || sA.OutRange.Count != nb) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 1) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
+                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 2) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
                         }
                     } catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -20864,6 +20952,7 @@ public class TaCodegenServe {
                         }
                         Core.ChopStream sB = sA.Clone();
                         sB.Advance();
+                        sB.Advance();
                         var fk = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             fk[t] = sB.Update(fz_h[t], fz_l[t], fz_c[t]);
@@ -20876,7 +20965,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.OutRange.BegIdx != beg || sA.OutRange.Count != nb) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 1) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
+                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 2) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
                         }
                     } catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -21073,6 +21162,7 @@ public class TaCodegenServe {
                         }
                         Core.ChoptrStream sB = sA.Clone();
                         sB.Advance();
+                        sB.Advance();
                         var fk = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             fk[t] = sB.Update(fz_h[t], fz_l[t], fz_c[t]);
@@ -21085,7 +21175,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.OutRange.BegIdx != beg || sA.OutRange.Count != nb) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 1) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
+                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 2) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
                         }
                     } catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -21313,6 +21403,7 @@ public class TaCodegenServe {
                         }
                         Core.CkspStream sB = sA.Clone();
                         sB.Advance();
+                        sB.Advance();
                         var fk = new Core.CkspValue[svN];
                         for (int t = mid; t < svN; t++) {
                             fk[t] = sB.Update(fz_h[t], fz_l[t], fz_c[t]);
@@ -21327,7 +21418,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.OutRange.BegIdx != beg || sA.OutRange.Count != nb) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 1) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
+                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 2) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
                         }
                     } catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -21529,6 +21620,7 @@ public class TaCodegenServe {
                         }
                         Core.CmfStream sB = sA.Clone();
                         sB.Advance();
+                        sB.Advance();
                         var fk = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             fk[t] = sB.Update(fz_h[t], fz_l[t], fz_c[t], fz_v[t]);
@@ -21541,7 +21633,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.OutRange.BegIdx != beg || sA.OutRange.Count != nb) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 1) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
+                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 2) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
                         }
                     } catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -21735,6 +21827,7 @@ public class TaCodegenServe {
                         }
                         Core.CmoStream sB = sA.Clone();
                         sB.Advance();
+                        sB.Advance();
                         var fk = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             fk[t] = sB.Update(fz_c[t]);
@@ -21747,7 +21840,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.OutRange.BegIdx != beg || sA.OutRange.Count != nb) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 1) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
+                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 2) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
                         }
                     } catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -21940,6 +22033,7 @@ public class TaCodegenServe {
                         }
                         Core.CmouStream sB = sA.Clone();
                         sB.Advance();
+                        sB.Advance();
                         var fk = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             fk[t] = sB.Update(fz_c[t]);
@@ -21952,7 +22046,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.OutRange.BegIdx != beg || sA.OutRange.Count != nb) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 1) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
+                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 2) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
                         }
                     } catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -22147,6 +22241,7 @@ public class TaCodegenServe {
                         }
                         Core.CoppockStream sB = sA.Clone();
                         sB.Advance();
+                        sB.Advance();
                         var fk = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             fk[t] = sB.Update(fz_c[t]);
@@ -22159,7 +22254,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.OutRange.BegIdx != beg || sA.OutRange.Count != nb) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 1) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
+                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 2) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
                         }
                     } catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -22354,6 +22449,7 @@ public class TaCodegenServe {
                         }
                         Core.CorrelStream sB = sA.Clone();
                         sB.Advance();
+                        sB.Advance();
                         var fk = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             fk[t] = sB.Update(fz_c[t], fz_v[t]);
@@ -22366,7 +22462,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.OutRange.BegIdx != beg || sA.OutRange.Count != nb) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 1) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
+                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 2) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
                         }
                     } catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -22558,6 +22654,7 @@ public class TaCodegenServe {
                         }
                         Core.CosStream sB = sA.Clone();
                         sB.Advance();
+                        sB.Advance();
                         var fk = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             fk[t] = sB.Update(fz_c[t]);
@@ -22570,7 +22667,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.OutRange.BegIdx != beg || sA.OutRange.Count != nb) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 1) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
+                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 2) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
                         }
                     } catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -22755,6 +22852,7 @@ public class TaCodegenServe {
                         }
                         Core.CoshStream sB = sA.Clone();
                         sB.Advance();
+                        sB.Advance();
                         var fk = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             fk[t] = sB.Update(fz_c[t]);
@@ -22767,7 +22865,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.OutRange.BegIdx != beg || sA.OutRange.Count != nb) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 1) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
+                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 2) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
                         }
                     } catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -22956,6 +23054,7 @@ public class TaCodegenServe {
                         }
                         Core.CrsiStream sB = sA.Clone();
                         sB.Advance();
+                        sB.Advance();
                         var fk = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             fk[t] = sB.Update(fz_c[t]);
@@ -22968,7 +23067,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.OutRange.BegIdx != beg || sA.OutRange.Count != nb) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 1) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
+                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 2) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
                         }
                     } catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -23161,6 +23260,7 @@ public class TaCodegenServe {
                         }
                         Core.CtiStream sB = sA.Clone();
                         sB.Advance();
+                        sB.Advance();
                         var fk = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             fk[t] = sB.Update(fz_c[t]);
@@ -23173,7 +23273,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.OutRange.BegIdx != beg || sA.OutRange.Count != nb) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 1) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
+                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 2) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
                         }
                     } catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -23365,6 +23465,7 @@ public class TaCodegenServe {
                         }
                         Core.CumsumStream sB = sA.Clone();
                         sB.Advance();
+                        sB.Advance();
                         var fk = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             fk[t] = sB.Update(fz_c[t]);
@@ -23377,7 +23478,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.OutRange.BegIdx != beg || sA.OutRange.Count != nb) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 1) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
+                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 2) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
                         }
                     } catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -23567,6 +23668,7 @@ public class TaCodegenServe {
                         }
                         Core.CviStream sB = sA.Clone();
                         sB.Advance();
+                        sB.Advance();
                         var fk = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             fk[t] = sB.Update(fz_h[t], fz_l[t]);
@@ -23579,7 +23681,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.OutRange.BegIdx != beg || sA.OutRange.Count != nb) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 1) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
+                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 2) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
                         }
                     } catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -23773,6 +23875,7 @@ public class TaCodegenServe {
                         }
                         Core.DemaStream sB = sA.Clone();
                         sB.Advance();
+                        sB.Advance();
                         var fk = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             fk[t] = sB.Update(fz_c[t]);
@@ -23785,7 +23888,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.OutRange.BegIdx != beg || sA.OutRange.Count != nb) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 1) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
+                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 2) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
                         }
                     } catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -23979,6 +24082,7 @@ public class TaCodegenServe {
                         }
                         Core.DivStream sB = sA.Clone();
                         sB.Advance();
+                        sB.Advance();
                         var fk = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             fk[t] = sB.Update(fz_c[t], fz_v[t]);
@@ -23991,7 +24095,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.OutRange.BegIdx != beg || sA.OutRange.Count != nb) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 1) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
+                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 2) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
                         }
                     } catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -24236,6 +24340,7 @@ public class TaCodegenServe {
                         }
                         Core.DonchianStream sB = sA.Clone();
                         sB.Advance();
+                        sB.Advance();
                         var fk = new Core.DonchianValue[svN];
                         for (int t = mid; t < svN; t++) {
                             fk[t] = sB.Update(fz_h[t], fz_l[t]);
@@ -24252,7 +24357,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.OutRange.BegIdx != beg || sA.OutRange.Count != nb) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 1) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
+                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 2) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
                         }
                     } catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -24451,6 +24556,7 @@ public class TaCodegenServe {
                         }
                         Core.DpoStream sB = sA.Clone();
                         sB.Advance();
+                        sB.Advance();
                         var fk = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             fk[t] = sB.Update(fz_c[t]);
@@ -24463,7 +24569,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.OutRange.BegIdx != beg || sA.OutRange.Count != nb) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 1) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
+                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 2) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
                         }
                     } catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -24661,6 +24767,7 @@ public class TaCodegenServe {
                         }
                         Core.DxStream sB = sA.Clone();
                         sB.Advance();
+                        sB.Advance();
                         var fk = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             fk[t] = sB.Update(fz_h[t], fz_l[t], fz_c[t]);
@@ -24673,7 +24780,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.OutRange.BegIdx != beg || sA.OutRange.Count != nb) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 1) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
+                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 2) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
                         }
                     } catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -24869,6 +24976,7 @@ public class TaCodegenServe {
                         }
                         Core.EfiStream sB = sA.Clone();
                         sB.Advance();
+                        sB.Advance();
                         var fk = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             fk[t] = sB.Update(fz_c[t], fz_v[t]);
@@ -24881,7 +24989,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.OutRange.BegIdx != beg || sA.OutRange.Count != nb) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 1) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
+                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 2) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
                         }
                     } catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -25075,6 +25183,7 @@ public class TaCodegenServe {
                         }
                         Core.EmaStream sB = sA.Clone();
                         sB.Advance();
+                        sB.Advance();
                         var fk = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             fk[t] = sB.Update(fz_c[t]);
@@ -25087,7 +25196,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.OutRange.BegIdx != beg || sA.OutRange.Count != nb) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 1) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
+                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 2) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
                         }
                     } catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -25285,6 +25394,7 @@ public class TaCodegenServe {
                         }
                         Core.EmvStream sB = sA.Clone();
                         sB.Advance();
+                        sB.Advance();
                         var fk = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             fk[t] = sB.Update(fz_h[t], fz_l[t], fz_v[t]);
@@ -25297,7 +25407,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.OutRange.BegIdx != beg || sA.OutRange.Count != nb) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 1) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
+                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 2) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
                         }
                     } catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -25490,6 +25600,7 @@ public class TaCodegenServe {
                         }
                         Core.ErStream sB = sA.Clone();
                         sB.Advance();
+                        sB.Advance();
                         var fk = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             fk[t] = sB.Update(fz_c[t]);
@@ -25502,7 +25613,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.OutRange.BegIdx != beg || sA.OutRange.Count != nb) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 1) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
+                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 2) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
                         }
                     } catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -25728,6 +25839,7 @@ public class TaCodegenServe {
                         }
                         Core.EriStream sB = sA.Clone();
                         sB.Advance();
+                        sB.Advance();
                         var fk = new Core.EriValue[svN];
                         for (int t = mid; t < svN; t++) {
                             fk[t] = sB.Update(fz_h[t], fz_l[t], fz_c[t]);
@@ -25742,7 +25854,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.OutRange.BegIdx != beg || sA.OutRange.Count != nb) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 1) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
+                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 2) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
                         }
                     } catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -25937,6 +26049,7 @@ public class TaCodegenServe {
                         }
                         Core.ExpStream sB = sA.Clone();
                         sB.Advance();
+                        sB.Advance();
                         var fk = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             fk[t] = sB.Update(fz_c[t]);
@@ -25949,7 +26062,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.OutRange.BegIdx != beg || sA.OutRange.Count != nb) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 1) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
+                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 2) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
                         }
                     } catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -26134,6 +26247,7 @@ public class TaCodegenServe {
                         }
                         Core.FloorStream sB = sA.Clone();
                         sB.Advance();
+                        sB.Advance();
                         var fk = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             fk[t] = sB.Update(fz_c[t]);
@@ -26146,7 +26260,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.OutRange.BegIdx != beg || sA.OutRange.Count != nb) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 1) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
+                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 2) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
                         }
                     } catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -26332,6 +26446,7 @@ public class TaCodegenServe {
                         }
                         Core.FoscStream sB = sA.Clone();
                         sB.Advance();
+                        sB.Advance();
                         var fk = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             fk[t] = sB.Update(fz_c[t]);
@@ -26344,7 +26459,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.OutRange.BegIdx != beg || sA.OutRange.Count != nb) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 1) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
+                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 2) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
                         }
                     } catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -26552,6 +26667,7 @@ public class TaCodegenServe {
                         }
                         Core.FractalStream sB = sA.Clone();
                         sB.Advance();
+                        sB.Advance();
                         var fk = new Core.FractalValue[svN];
                         for (int t = mid; t < svN; t++) {
                             fk[t] = sB.Update(fz_h[t], fz_l[t]);
@@ -26566,7 +26682,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.OutRange.BegIdx != beg || sA.OutRange.Count != nb) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 1) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
+                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 2) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
                         }
                     } catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -26765,6 +26881,7 @@ public class TaCodegenServe {
                         }
                         Core.FramaStream sB = sA.Clone();
                         sB.Advance();
+                        sB.Advance();
                         var fk = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             fk[t] = sB.Update(fz_h[t], fz_l[t]);
@@ -26777,7 +26894,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.OutRange.BegIdx != beg || sA.OutRange.Count != nb) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 1) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
+                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 2) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
                         }
                     } catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -27082,6 +27199,7 @@ public class TaCodegenServe {
                         }
                         Core.HaStream sB = sA.Clone();
                         sB.Advance();
+                        sB.Advance();
                         var fk = new Core.HaValue[svN];
                         for (int t = mid; t < svN; t++) {
                             fk[t] = sB.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -27100,7 +27218,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.OutRange.BegIdx != beg || sA.OutRange.Count != nb) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 1) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
+                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 2) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
                         }
                     } catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -27292,6 +27410,7 @@ public class TaCodegenServe {
                         }
                         Core.HmaStream sB = sA.Clone();
                         sB.Advance();
+                        sB.Advance();
                         var fk = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             fk[t] = sB.Update(fz_c[t]);
@@ -27304,7 +27423,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.OutRange.BegIdx != beg || sA.OutRange.Count != nb) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 1) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
+                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 2) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
                         }
                     } catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -27497,6 +27616,7 @@ public class TaCodegenServe {
                         }
                         Core.HtDcperiodStream sB = sA.Clone();
                         sB.Advance();
+                        sB.Advance();
                         var fk = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             fk[t] = sB.Update(fz_c[t]);
@@ -27509,7 +27629,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.OutRange.BegIdx != beg || sA.OutRange.Count != nb) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 1) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
+                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 2) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
                         }
                     } catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -27695,6 +27815,7 @@ public class TaCodegenServe {
                         }
                         Core.HtDcphaseStream sB = sA.Clone();
                         sB.Advance();
+                        sB.Advance();
                         var fk = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             fk[t] = sB.Update(fz_c[t]);
@@ -27707,7 +27828,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.OutRange.BegIdx != beg || sA.OutRange.Count != nb) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 1) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
+                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 2) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
                         }
                     } catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -27917,6 +28038,7 @@ public class TaCodegenServe {
                         }
                         Core.HtPhasorStream sB = sA.Clone();
                         sB.Advance();
+                        sB.Advance();
                         var fk = new Core.HtPhasorValue[svN];
                         for (int t = mid; t < svN; t++) {
                             fk[t] = sB.Update(fz_c[t]);
@@ -27931,7 +28053,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.OutRange.BegIdx != beg || sA.OutRange.Count != nb) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 1) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
+                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 2) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
                         }
                     } catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -28143,6 +28265,7 @@ public class TaCodegenServe {
                         }
                         Core.HtSineStream sB = sA.Clone();
                         sB.Advance();
+                        sB.Advance();
                         var fk = new Core.HtSineValue[svN];
                         for (int t = mid; t < svN; t++) {
                             fk[t] = sB.Update(fz_c[t]);
@@ -28157,7 +28280,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.OutRange.BegIdx != beg || sA.OutRange.Count != nb) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 1) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
+                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 2) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
                         }
                     } catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -28345,6 +28468,7 @@ public class TaCodegenServe {
                         }
                         Core.HtTrendlineStream sB = sA.Clone();
                         sB.Advance();
+                        sB.Advance();
                         var fk = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             fk[t] = sB.Update(fz_c[t]);
@@ -28357,7 +28481,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.OutRange.BegIdx != beg || sA.OutRange.Count != nb) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 1) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
+                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 2) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
                         }
                     } catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -28537,6 +28661,7 @@ public class TaCodegenServe {
                         }
                         Core.HtTrendmodeStream sB = sA.Clone();
                         sB.Advance();
+                        sB.Advance();
                         var fk = new int[svN];
                         for (int t = mid; t < svN; t++) {
                             fk[t] = sB.Update(fz_c[t]);
@@ -28549,7 +28674,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.OutRange.BegIdx != beg || sA.OutRange.Count != nb) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 1) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
+                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 2) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
                         }
                     } catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -28738,6 +28863,7 @@ public class TaCodegenServe {
                         }
                         Core.IbsStream sB = sA.Clone();
                         sB.Advance();
+                        sB.Advance();
                         var fk = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             fk[t] = sB.Update(fz_h[t], fz_l[t], fz_c[t]);
@@ -28750,7 +28876,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.OutRange.BegIdx != beg || sA.OutRange.Count != nb) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 1) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
+                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 2) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
                         }
                     } catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -28938,6 +29064,7 @@ public class TaCodegenServe {
                         }
                         Core.ImiStream sB = sA.Clone();
                         sB.Advance();
+                        sB.Advance();
                         var fk = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             fk[t] = sB.Update(fz_o[t], fz_c[t]);
@@ -28950,7 +29077,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.OutRange.BegIdx != beg || sA.OutRange.Count != nb) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 1) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
+                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 2) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
                         }
                     } catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -29144,6 +29271,7 @@ public class TaCodegenServe {
                         }
                         Core.KamaStream sB = sA.Clone();
                         sB.Advance();
+                        sB.Advance();
                         var fk = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             fk[t] = sB.Update(fz_c[t]);
@@ -29156,7 +29284,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.OutRange.BegIdx != beg || sA.OutRange.Count != nb) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 1) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
+                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 2) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
                         }
                     } catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -29418,6 +29546,7 @@ public class TaCodegenServe {
                         }
                         Core.KcStream sB = sA.Clone();
                         sB.Advance();
+                        sB.Advance();
                         var fk = new Core.KcValue[svN];
                         for (int t = mid; t < svN; t++) {
                             fk[t] = sB.Update(fz_h[t], fz_l[t], fz_c[t]);
@@ -29434,7 +29563,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.OutRange.BegIdx != beg || sA.OutRange.Count != nb) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 1) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
+                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 2) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
                         }
                     } catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -29726,6 +29855,7 @@ public class TaCodegenServe {
                         }
                         Core.KdjStream sB = sA.Clone();
                         sB.Advance();
+                        sB.Advance();
                         var fk = new Core.KdjValue[svN];
                         for (int t = mid; t < svN; t++) {
                             fk[t] = sB.Update(fz_h[t], fz_l[t], fz_c[t]);
@@ -29742,7 +29872,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.OutRange.BegIdx != beg || sA.OutRange.Count != nb) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 1) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
+                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 2) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
                         }
                     } catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -29973,6 +30103,7 @@ public class TaCodegenServe {
                         }
                         Core.KstStream sB = sA.Clone();
                         sB.Advance();
+                        sB.Advance();
                         var fk = new Core.KstValue[svN];
                         for (int t = mid; t < svN; t++) {
                             fk[t] = sB.Update(fz_c[t]);
@@ -29987,7 +30118,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.OutRange.BegIdx != beg || sA.OutRange.Count != nb) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 1) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
+                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 2) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
                         }
                     } catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -30239,6 +30370,7 @@ public class TaCodegenServe {
                         }
                         Core.KstextStream sB = sA.Clone();
                         sB.Advance();
+                        sB.Advance();
                         var fk = new Core.KstextValue[svN];
                         for (int t = mid; t < svN; t++) {
                             fk[t] = sB.Update(fz_c[t]);
@@ -30253,7 +30385,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.OutRange.BegIdx != beg || sA.OutRange.Count != nb) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 1) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
+                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 2) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
                         }
                     } catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -30449,6 +30581,7 @@ public class TaCodegenServe {
                         }
                         Core.KurtosisStream sB = sA.Clone();
                         sB.Advance();
+                        sB.Advance();
                         var fk = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             fk[t] = sB.Update(fz_c[t]);
@@ -30461,7 +30594,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.OutRange.BegIdx != beg || sA.OutRange.Count != nb) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 1) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
+                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 2) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
                         }
                     } catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -30654,6 +30787,7 @@ public class TaCodegenServe {
                         }
                         Core.LinearregStream sB = sA.Clone();
                         sB.Advance();
+                        sB.Advance();
                         var fk = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             fk[t] = sB.Update(fz_c[t]);
@@ -30666,7 +30800,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.OutRange.BegIdx != beg || sA.OutRange.Count != nb) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 1) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
+                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 2) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
                         }
                     } catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -30859,6 +30993,7 @@ public class TaCodegenServe {
                         }
                         Core.LinearregAngleStream sB = sA.Clone();
                         sB.Advance();
+                        sB.Advance();
                         var fk = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             fk[t] = sB.Update(fz_c[t]);
@@ -30871,7 +31006,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.OutRange.BegIdx != beg || sA.OutRange.Count != nb) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 1) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
+                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 2) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
                         }
                     } catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -31064,6 +31199,7 @@ public class TaCodegenServe {
                         }
                         Core.LinearregInterceptStream sB = sA.Clone();
                         sB.Advance();
+                        sB.Advance();
                         var fk = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             fk[t] = sB.Update(fz_c[t]);
@@ -31076,7 +31212,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.OutRange.BegIdx != beg || sA.OutRange.Count != nb) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 1) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
+                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 2) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
                         }
                     } catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -31269,6 +31405,7 @@ public class TaCodegenServe {
                         }
                         Core.LinearregSlopeStream sB = sA.Clone();
                         sB.Advance();
+                        sB.Advance();
                         var fk = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             fk[t] = sB.Update(fz_c[t]);
@@ -31281,7 +31418,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.OutRange.BegIdx != beg || sA.OutRange.Count != nb) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 1) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
+                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 2) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
                         }
                     } catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -31473,6 +31610,7 @@ public class TaCodegenServe {
                         }
                         Core.LnStream sB = sA.Clone();
                         sB.Advance();
+                        sB.Advance();
                         var fk = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             fk[t] = sB.Update(fz_c[t]);
@@ -31485,7 +31623,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.OutRange.BegIdx != beg || sA.OutRange.Count != nb) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 1) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
+                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 2) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
                         }
                     } catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -31670,6 +31808,7 @@ public class TaCodegenServe {
                         }
                         Core.Log10Stream sB = sA.Clone();
                         sB.Advance();
+                        sB.Advance();
                         var fk = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             fk[t] = sB.Update(fz_c[t]);
@@ -31682,7 +31821,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.OutRange.BegIdx != beg || sA.OutRange.Count != nb) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 1) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
+                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 2) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
                         }
                     } catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -31888,6 +32027,7 @@ public class TaCodegenServe {
                         }
                         Core.MaStream sB = sA.Clone();
                         sB.Advance();
+                        sB.Advance();
                         var fk = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             fk[t] = sB.Update(fz_c[t]);
@@ -31900,7 +32040,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.OutRange.BegIdx != beg || sA.OutRange.Count != nb) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 1) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
+                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 2) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
                         }
                     } catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -32149,6 +32289,7 @@ public class TaCodegenServe {
                         }
                         Core.MacdStream sB = sA.Clone();
                         sB.Advance();
+                        sB.Advance();
                         var fk = new Core.MacdValue[svN];
                         for (int t = mid; t < svN; t++) {
                             fk[t] = sB.Update(fz_c[t]);
@@ -32165,7 +32306,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.OutRange.BegIdx != beg || sA.OutRange.Count != nb) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 1) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
+                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 2) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
                         }
                     } catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -32447,6 +32588,7 @@ public class TaCodegenServe {
                         }
                         Core.MacdextStream sB = sA.Clone();
                         sB.Advance();
+                        sB.Advance();
                         var fk = new Core.MacdextValue[svN];
                         for (int t = mid; t < svN; t++) {
                             fk[t] = sB.Update(fz_c[t]);
@@ -32463,7 +32605,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.OutRange.BegIdx != beg || sA.OutRange.Count != nb) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 1) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
+                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 2) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
                         }
                     } catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -32716,6 +32858,7 @@ public class TaCodegenServe {
                         }
                         Core.MacdfixStream sB = sA.Clone();
                         sB.Advance();
+                        sB.Advance();
                         var fk = new Core.MacdfixValue[svN];
                         for (int t = mid; t < svN; t++) {
                             fk[t] = sB.Update(fz_c[t]);
@@ -32732,7 +32875,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.OutRange.BegIdx != beg || sA.OutRange.Count != nb) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 1) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
+                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 2) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
                         }
                     } catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -32957,6 +33100,7 @@ public class TaCodegenServe {
                         }
                         Core.MamaStream sB = sA.Clone();
                         sB.Advance();
+                        sB.Advance();
                         var fk = new Core.MamaValue[svN];
                         for (int t = mid; t < svN; t++) {
                             fk[t] = sB.Update(fz_c[t]);
@@ -32971,7 +33115,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.OutRange.BegIdx != beg || sA.OutRange.Count != nb) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 1) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
+                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 2) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
                         }
                     } catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -33162,6 +33306,7 @@ public class TaCodegenServe {
                         }
                         Core.MarketfiStream sB = sA.Clone();
                         sB.Advance();
+                        sB.Advance();
                         var fk = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             fk[t] = sB.Update(fz_h[t], fz_l[t], fz_v[t]);
@@ -33174,7 +33319,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.OutRange.BegIdx != beg || sA.OutRange.Count != nb) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 1) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
+                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 2) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
                         }
                     } catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -33364,6 +33509,7 @@ public class TaCodegenServe {
                         }
                         Core.MassiStream sB = sA.Clone();
                         sB.Advance();
+                        sB.Advance();
                         var fk = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             fk[t] = sB.Update(fz_h[t], fz_l[t]);
@@ -33376,7 +33522,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.OutRange.BegIdx != beg || sA.OutRange.Count != nb) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 1) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
+                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 2) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
                         }
                     } catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -33593,6 +33739,7 @@ public class TaCodegenServe {
                         }
                         Core.MavpStream sB = sA.Clone();
                         sB.Advance();
+                        sB.Advance();
                         var fk = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             fk[t] = sB.Update(fz_c[t], fz_v[t]);
@@ -33605,7 +33752,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.OutRange.BegIdx != beg || sA.OutRange.Count != nb) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 1) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
+                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 2) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
                         }
                     } catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -33798,6 +33945,7 @@ public class TaCodegenServe {
                         }
                         Core.MaxStream sB = sA.Clone();
                         sB.Advance();
+                        sB.Advance();
                         var fk = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             fk[t] = sB.Update(fz_c[t]);
@@ -33810,7 +33958,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.OutRange.BegIdx != beg || sA.OutRange.Count != nb) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 1) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
+                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 2) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
                         }
                     } catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -33997,6 +34145,7 @@ public class TaCodegenServe {
                         }
                         Core.MaxindexStream sB = sA.Clone();
                         sB.Advance();
+                        sB.Advance();
                         var fk = new int[svN];
                         for (int t = mid; t < svN; t++) {
                             fk[t] = sB.Update(fz_c[t]);
@@ -34009,7 +34158,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.OutRange.BegIdx != beg || sA.OutRange.Count != nb) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 1) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
+                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 2) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
                         }
                     } catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -34203,6 +34352,7 @@ public class TaCodegenServe {
                         }
                         Core.McgdStream sB = sA.Clone();
                         sB.Advance();
+                        sB.Advance();
                         var fk = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             fk[t] = sB.Update(fz_c[t]);
@@ -34215,7 +34365,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.OutRange.BegIdx != beg || sA.OutRange.Count != nb) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 1) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
+                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 2) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
                         }
                     } catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -34408,6 +34558,7 @@ public class TaCodegenServe {
                         }
                         Core.MedianStream sB = sA.Clone();
                         sB.Advance();
+                        sB.Advance();
                         var fk = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             fk[t] = sB.Update(fz_c[t]);
@@ -34420,7 +34571,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.OutRange.BegIdx != beg || sA.OutRange.Count != nb) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 1) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
+                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 2) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
                         }
                     } catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -34614,6 +34765,7 @@ public class TaCodegenServe {
                         }
                         Core.MedpriceStream sB = sA.Clone();
                         sB.Advance();
+                        sB.Advance();
                         var fk = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             fk[t] = sB.Update(fz_h[t], fz_l[t]);
@@ -34626,7 +34778,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.OutRange.BegIdx != beg || sA.OutRange.Count != nb) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 1) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
+                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 2) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
                         }
                     } catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -34818,6 +34970,7 @@ public class TaCodegenServe {
                         }
                         Core.MfiStream sB = sA.Clone();
                         sB.Advance();
+                        sB.Advance();
                         var fk = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             fk[t] = sB.Update(fz_h[t], fz_l[t], fz_c[t], fz_v[t]);
@@ -34830,7 +34983,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.OutRange.BegIdx != beg || sA.OutRange.Count != nb) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 1) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
+                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 2) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
                         }
                     } catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -35023,6 +35176,7 @@ public class TaCodegenServe {
                         }
                         Core.MidpointStream sB = sA.Clone();
                         sB.Advance();
+                        sB.Advance();
                         var fk = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             fk[t] = sB.Update(fz_c[t]);
@@ -35035,7 +35189,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.OutRange.BegIdx != beg || sA.OutRange.Count != nb) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 1) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
+                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 2) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
                         }
                     } catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -35230,6 +35384,7 @@ public class TaCodegenServe {
                         }
                         Core.MidpriceStream sB = sA.Clone();
                         sB.Advance();
+                        sB.Advance();
                         var fk = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             fk[t] = sB.Update(fz_h[t], fz_l[t]);
@@ -35242,7 +35397,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.OutRange.BegIdx != beg || sA.OutRange.Count != nb) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 1) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
+                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 2) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
                         }
                     } catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -35435,6 +35590,7 @@ public class TaCodegenServe {
                         }
                         Core.MinStream sB = sA.Clone();
                         sB.Advance();
+                        sB.Advance();
                         var fk = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             fk[t] = sB.Update(fz_c[t]);
@@ -35447,7 +35603,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.OutRange.BegIdx != beg || sA.OutRange.Count != nb) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 1) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
+                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 2) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
                         }
                     } catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -35634,6 +35790,7 @@ public class TaCodegenServe {
                         }
                         Core.MinindexStream sB = sA.Clone();
                         sB.Advance();
+                        sB.Advance();
                         var fk = new int[svN];
                         for (int t = mid; t < svN; t++) {
                             fk[t] = sB.Update(fz_c[t]);
@@ -35646,7 +35803,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.OutRange.BegIdx != beg || sA.OutRange.Count != nb) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 1) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
+                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 2) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
                         }
                     } catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -35863,6 +36020,7 @@ public class TaCodegenServe {
                         }
                         Core.MinmaxStream sB = sA.Clone();
                         sB.Advance();
+                        sB.Advance();
                         var fk = new Core.MinmaxValue[svN];
                         for (int t = mid; t < svN; t++) {
                             fk[t] = sB.Update(fz_c[t]);
@@ -35877,7 +36035,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.OutRange.BegIdx != beg || sA.OutRange.Count != nb) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 1) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
+                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 2) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
                         }
                     } catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -36087,6 +36245,7 @@ public class TaCodegenServe {
                         }
                         Core.MinmaxindexStream sB = sA.Clone();
                         sB.Advance();
+                        sB.Advance();
                         var fk = new Core.MinmaxindexValue[svN];
                         for (int t = mid; t < svN; t++) {
                             fk[t] = sB.Update(fz_c[t]);
@@ -36101,7 +36260,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.OutRange.BegIdx != beg || sA.OutRange.Count != nb) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 1) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
+                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 2) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
                         }
                     } catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -36302,6 +36461,7 @@ public class TaCodegenServe {
                         }
                         Core.MinusDiStream sB = sA.Clone();
                         sB.Advance();
+                        sB.Advance();
                         var fk = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             fk[t] = sB.Update(fz_h[t], fz_l[t], fz_c[t]);
@@ -36314,7 +36474,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.OutRange.BegIdx != beg || sA.OutRange.Count != nb) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 1) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
+                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 2) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
                         }
                     } catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -36510,6 +36670,7 @@ public class TaCodegenServe {
                         }
                         Core.MinusDmStream sB = sA.Clone();
                         sB.Advance();
+                        sB.Advance();
                         var fk = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             fk[t] = sB.Update(fz_h[t], fz_l[t]);
@@ -36522,7 +36683,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.OutRange.BegIdx != beg || sA.OutRange.Count != nb) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 1) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
+                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 2) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
                         }
                     } catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -36715,6 +36876,7 @@ public class TaCodegenServe {
                         }
                         Core.MomStream sB = sA.Clone();
                         sB.Advance();
+                        sB.Advance();
                         var fk = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             fk[t] = sB.Update(fz_c[t]);
@@ -36727,7 +36889,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.OutRange.BegIdx != beg || sA.OutRange.Count != nb) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 1) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
+                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 2) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
                         }
                     } catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -36921,6 +37083,7 @@ public class TaCodegenServe {
                         }
                         Core.MultStream sB = sA.Clone();
                         sB.Advance();
+                        sB.Advance();
                         var fk = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             fk[t] = sB.Update(fz_c[t], fz_v[t]);
@@ -36933,7 +37096,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.OutRange.BegIdx != beg || sA.OutRange.Count != nb) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 1) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
+                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 2) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
                         }
                     } catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -37124,6 +37287,7 @@ public class TaCodegenServe {
                         }
                         Core.NatrStream sB = sA.Clone();
                         sB.Advance();
+                        sB.Advance();
                         var fk = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             fk[t] = sB.Update(fz_h[t], fz_l[t], fz_c[t]);
@@ -37136,7 +37300,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.OutRange.BegIdx != beg || sA.OutRange.Count != nb) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 1) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
+                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 2) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
                         }
                     } catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -37330,6 +37494,7 @@ public class TaCodegenServe {
                         }
                         Core.NviStream sB = sA.Clone();
                         sB.Advance();
+                        sB.Advance();
                         var fk = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             fk[t] = sB.Update(fz_c[t], fz_v[t]);
@@ -37342,7 +37507,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.OutRange.BegIdx != beg || sA.OutRange.Count != nb) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 1) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
+                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 2) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
                         }
                     } catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -37529,6 +37694,7 @@ public class TaCodegenServe {
                         }
                         Core.ObvStream sB = sA.Clone();
                         sB.Advance();
+                        sB.Advance();
                         var fk = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             fk[t] = sB.Update(fz_c[t], fz_v[t]);
@@ -37541,7 +37707,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.OutRange.BegIdx != beg || sA.OutRange.Count != nb) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 1) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
+                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 2) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
                         }
                     } catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -37749,6 +37915,7 @@ public class TaCodegenServe {
                         }
                         Core.PercentbStream sB = sA.Clone();
                         sB.Advance();
+                        sB.Advance();
                         var fk = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             fk[t] = sB.Update(fz_c[t]);
@@ -37761,7 +37928,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.OutRange.BegIdx != beg || sA.OutRange.Count != nb) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 1) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
+                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 2) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
                         }
                     } catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -37955,6 +38122,7 @@ public class TaCodegenServe {
                         }
                         Core.PercentileStream sB = sA.Clone();
                         sB.Advance();
+                        sB.Advance();
                         var fk = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             fk[t] = sB.Update(fz_c[t]);
@@ -37967,7 +38135,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.OutRange.BegIdx != beg || sA.OutRange.Count != nb) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 1) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
+                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 2) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
                         }
                     } catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -38160,6 +38328,7 @@ public class TaCodegenServe {
                         }
                         Core.PercentrankStream sB = sA.Clone();
                         sB.Advance();
+                        sB.Advance();
                         var fk = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             fk[t] = sB.Update(fz_c[t]);
@@ -38172,7 +38341,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.OutRange.BegIdx != beg || sA.OutRange.Count != nb) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 1) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
+                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 2) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
                         }
                     } catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -38370,6 +38539,7 @@ public class TaCodegenServe {
                         }
                         Core.PlusDiStream sB = sA.Clone();
                         sB.Advance();
+                        sB.Advance();
                         var fk = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             fk[t] = sB.Update(fz_h[t], fz_l[t], fz_c[t]);
@@ -38382,7 +38552,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.OutRange.BegIdx != beg || sA.OutRange.Count != nb) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 1) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
+                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 2) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
                         }
                     } catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -38578,6 +38748,7 @@ public class TaCodegenServe {
                         }
                         Core.PlusDmStream sB = sA.Clone();
                         sB.Advance();
+                        sB.Advance();
                         var fk = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             fk[t] = sB.Update(fz_h[t], fz_l[t]);
@@ -38590,7 +38761,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.OutRange.BegIdx != beg || sA.OutRange.Count != nb) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 1) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
+                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 2) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
                         }
                     } catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -38804,6 +38975,7 @@ public class TaCodegenServe {
                         }
                         Core.PpoStream sB = sA.Clone();
                         sB.Advance();
+                        sB.Advance();
                         var fk = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             fk[t] = sB.Update(fz_c[t]);
@@ -38816,7 +38988,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.OutRange.BegIdx != beg || sA.OutRange.Count != nb) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 1) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
+                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 2) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
                         }
                     } catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -39010,6 +39182,7 @@ public class TaCodegenServe {
                         }
                         Core.PviStream sB = sA.Clone();
                         sB.Advance();
+                        sB.Advance();
                         var fk = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             fk[t] = sB.Update(fz_c[t], fz_v[t]);
@@ -39022,7 +39195,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.OutRange.BegIdx != beg || sA.OutRange.Count != nb) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 1) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
+                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 2) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
                         }
                     } catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -39229,6 +39402,7 @@ public class TaCodegenServe {
                         }
                         Core.PvoStream sB = sA.Clone();
                         sB.Advance();
+                        sB.Advance();
                         var fk = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             fk[t] = sB.Update(fz_v[t]);
@@ -39241,7 +39415,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.OutRange.BegIdx != beg || sA.OutRange.Count != nb) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 1) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
+                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 2) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
                         }
                     } catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -39435,6 +39609,7 @@ public class TaCodegenServe {
                         }
                         Core.PvtStream sB = sA.Clone();
                         sB.Advance();
+                        sB.Advance();
                         var fk = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             fk[t] = sB.Update(fz_c[t], fz_v[t]);
@@ -39447,7 +39622,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.OutRange.BegIdx != beg || sA.OutRange.Count != nb) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 1) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
+                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 2) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
                         }
                     } catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -39635,6 +39810,7 @@ public class TaCodegenServe {
                         }
                         Core.QstickStream sB = sA.Clone();
                         sB.Advance();
+                        sB.Advance();
                         var fk = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             fk[t] = sB.Update(fz_o[t], fz_c[t]);
@@ -39647,7 +39823,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.OutRange.BegIdx != beg || sA.OutRange.Count != nb) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 1) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
+                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 2) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
                         }
                     } catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -39841,6 +40017,7 @@ public class TaCodegenServe {
                         }
                         Core.RmaStream sB = sA.Clone();
                         sB.Advance();
+                        sB.Advance();
                         var fk = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             fk[t] = sB.Update(fz_c[t]);
@@ -39853,7 +40030,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.OutRange.BegIdx != beg || sA.OutRange.Count != nb) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 1) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
+                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 2) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
                         }
                     } catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -40046,6 +40223,7 @@ public class TaCodegenServe {
                         }
                         Core.RocStream sB = sA.Clone();
                         sB.Advance();
+                        sB.Advance();
                         var fk = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             fk[t] = sB.Update(fz_c[t]);
@@ -40058,7 +40236,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.OutRange.BegIdx != beg || sA.OutRange.Count != nb) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 1) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
+                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 2) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
                         }
                     } catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -40251,6 +40429,7 @@ public class TaCodegenServe {
                         }
                         Core.RocpStream sB = sA.Clone();
                         sB.Advance();
+                        sB.Advance();
                         var fk = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             fk[t] = sB.Update(fz_c[t]);
@@ -40263,7 +40442,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.OutRange.BegIdx != beg || sA.OutRange.Count != nb) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 1) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
+                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 2) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
                         }
                     } catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -40456,6 +40635,7 @@ public class TaCodegenServe {
                         }
                         Core.RocrStream sB = sA.Clone();
                         sB.Advance();
+                        sB.Advance();
                         var fk = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             fk[t] = sB.Update(fz_c[t]);
@@ -40468,7 +40648,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.OutRange.BegIdx != beg || sA.OutRange.Count != nb) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 1) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
+                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 2) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
                         }
                     } catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -40661,6 +40841,7 @@ public class TaCodegenServe {
                         }
                         Core.Rocr100Stream sB = sA.Clone();
                         sB.Advance();
+                        sB.Advance();
                         var fk = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             fk[t] = sB.Update(fz_c[t]);
@@ -40673,7 +40854,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.OutRange.BegIdx != beg || sA.OutRange.Count != nb) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 1) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
+                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 2) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
                         }
                     } catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -40873,6 +41054,7 @@ public class TaCodegenServe {
                         }
                         Core.RogerssatchellStream sB = sA.Clone();
                         sB.Advance();
+                        sB.Advance();
                         var fk = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             fk[t] = sB.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -40885,7 +41067,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.OutRange.BegIdx != beg || sA.OutRange.Count != nb) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 1) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
+                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 2) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
                         }
                     } catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -41079,6 +41261,7 @@ public class TaCodegenServe {
                         }
                         Core.RsiStream sB = sA.Clone();
                         sB.Advance();
+                        sB.Advance();
                         var fk = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             fk[t] = sB.Update(fz_c[t]);
@@ -41091,7 +41274,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.OutRange.BegIdx != beg || sA.OutRange.Count != nb) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 1) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
+                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 2) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
                         }
                     } catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -41286,6 +41469,7 @@ public class TaCodegenServe {
                         }
                         Core.RviStream sB = sA.Clone();
                         sB.Advance();
+                        sB.Advance();
                         var fk = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             fk[t] = sB.Update(fz_c[t]);
@@ -41298,7 +41482,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.OutRange.BegIdx != beg || sA.OutRange.Count != nb) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 1) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
+                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 2) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
                         }
                     } catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -41495,6 +41679,7 @@ public class TaCodegenServe {
                         }
                         Core.RvirStream sB = sA.Clone();
                         sB.Advance();
+                        sB.Advance();
                         var fk = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             fk[t] = sB.Update(fz_h[t], fz_l[t]);
@@ -41507,7 +41692,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.OutRange.BegIdx != beg || sA.OutRange.Count != nb) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 1) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
+                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 2) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
                         }
                     } catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -41700,6 +41885,7 @@ public class TaCodegenServe {
                         }
                         Core.RvolStream sB = sA.Clone();
                         sB.Advance();
+                        sB.Advance();
                         var fk = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             fk[t] = sB.Update(fz_v[t]);
@@ -41712,7 +41898,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.OutRange.BegIdx != beg || sA.OutRange.Count != nb) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 1) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
+                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 2) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
                         }
                     } catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -41908,6 +42094,7 @@ public class TaCodegenServe {
                         }
                         Core.SarStream sB = sA.Clone();
                         sB.Advance();
+                        sB.Advance();
                         var fk = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             fk[t] = sB.Update(fz_h[t], fz_l[t]);
@@ -41920,7 +42107,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.OutRange.BegIdx != beg || sA.OutRange.Count != nb) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 1) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
+                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 2) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
                         }
                     } catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -42115,6 +42302,7 @@ public class TaCodegenServe {
                         }
                         Core.SarextStream sB = sA.Clone();
                         sB.Advance();
+                        sB.Advance();
                         var fk = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             fk[t] = sB.Update(fz_h[t], fz_l[t]);
@@ -42127,7 +42315,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.OutRange.BegIdx != beg || sA.OutRange.Count != nb) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 1) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
+                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 2) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
                         }
                     } catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -42319,6 +42507,7 @@ public class TaCodegenServe {
                         }
                         Core.SiStream sB = sA.Clone();
                         sB.Advance();
+                        sB.Advance();
                         var fk = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             fk[t] = sB.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -42331,7 +42520,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.OutRange.BegIdx != beg || sA.OutRange.Count != nb) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 1) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
+                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 2) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
                         }
                     } catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -42516,6 +42705,7 @@ public class TaCodegenServe {
                         }
                         Core.SinStream sB = sA.Clone();
                         sB.Advance();
+                        sB.Advance();
                         var fk = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             fk[t] = sB.Update(fz_c[t]);
@@ -42528,7 +42718,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.OutRange.BegIdx != beg || sA.OutRange.Count != nb) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 1) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
+                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 2) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
                         }
                     } catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -42713,6 +42903,7 @@ public class TaCodegenServe {
                         }
                         Core.SinhStream sB = sA.Clone();
                         sB.Advance();
+                        sB.Advance();
                         var fk = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             fk[t] = sB.Update(fz_c[t]);
@@ -42725,7 +42916,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.OutRange.BegIdx != beg || sA.OutRange.Count != nb) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 1) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
+                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 2) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
                         }
                     } catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -42911,6 +43102,7 @@ public class TaCodegenServe {
                         }
                         Core.SmaStream sB = sA.Clone();
                         sB.Advance();
+                        sB.Advance();
                         var fk = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             fk[t] = sB.Update(fz_c[t]);
@@ -42923,7 +43115,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.OutRange.BegIdx != beg || sA.OutRange.Count != nb) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 1) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
+                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 2) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
                         }
                     } catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -43152,6 +43344,7 @@ public class TaCodegenServe {
                         }
                         Core.SmiStream sB = sA.Clone();
                         sB.Advance();
+                        sB.Advance();
                         var fk = new Core.SmiValue[svN];
                         for (int t = mid; t < svN; t++) {
                             fk[t] = sB.Update(fz_h[t], fz_l[t], fz_c[t]);
@@ -43166,7 +43359,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.OutRange.BegIdx != beg || sA.OutRange.Count != nb) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 1) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
+                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 2) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
                         }
                     } catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -43361,6 +43554,7 @@ public class TaCodegenServe {
                         }
                         Core.SqrtStream sB = sA.Clone();
                         sB.Advance();
+                        sB.Advance();
                         var fk = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             fk[t] = sB.Update(fz_c[t]);
@@ -43373,7 +43567,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.OutRange.BegIdx != beg || sA.OutRange.Count != nb) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 1) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
+                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 2) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
                         }
                     } catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -43563,6 +43757,7 @@ public class TaCodegenServe {
                         }
                         Core.StcStream sB = sA.Clone();
                         sB.Advance();
+                        sB.Advance();
                         var fk = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             fk[t] = sB.Update(fz_c[t]);
@@ -43575,7 +43770,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.OutRange.BegIdx != beg || sA.OutRange.Count != nb) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 1) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
+                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 2) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
                         }
                     } catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -43769,6 +43964,7 @@ public class TaCodegenServe {
                         }
                         Core.StddevStream sB = sA.Clone();
                         sB.Advance();
+                        sB.Advance();
                         var fk = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             fk[t] = sB.Update(fz_c[t]);
@@ -43781,7 +43977,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.OutRange.BegIdx != beg || sA.OutRange.Count != nb) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 1) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
+                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 2) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
                         }
                     } catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -44032,6 +44228,7 @@ public class TaCodegenServe {
                         }
                         Core.StochStream sB = sA.Clone();
                         sB.Advance();
+                        sB.Advance();
                         var fk = new Core.StochValue[svN];
                         for (int t = mid; t < svN; t++) {
                             fk[t] = sB.Update(fz_h[t], fz_l[t], fz_c[t]);
@@ -44046,7 +44243,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.OutRange.BegIdx != beg || sA.OutRange.Count != nb) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 1) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
+                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 2) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
                         }
                     } catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -44297,6 +44494,7 @@ public class TaCodegenServe {
                         }
                         Core.StochfStream sB = sA.Clone();
                         sB.Advance();
+                        sB.Advance();
                         var fk = new Core.StochfValue[svN];
                         for (int t = mid; t < svN; t++) {
                             fk[t] = sB.Update(fz_h[t], fz_l[t], fz_c[t]);
@@ -44311,7 +44509,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.OutRange.BegIdx != beg || sA.OutRange.Count != nb) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 1) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
+                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 2) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
                         }
                     } catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -44556,6 +44754,7 @@ public class TaCodegenServe {
                         }
                         Core.StochrsiStream sB = sA.Clone();
                         sB.Advance();
+                        sB.Advance();
                         var fk = new Core.StochrsiValue[svN];
                         for (int t = mid; t < svN; t++) {
                             fk[t] = sB.Update(fz_c[t]);
@@ -44570,7 +44769,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.OutRange.BegIdx != beg || sA.OutRange.Count != nb) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 1) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
+                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 2) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
                         }
                     } catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -44767,6 +44966,7 @@ public class TaCodegenServe {
                         }
                         Core.SubStream sB = sA.Clone();
                         sB.Advance();
+                        sB.Advance();
                         var fk = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             fk[t] = sB.Update(fz_c[t], fz_v[t]);
@@ -44779,7 +44979,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.OutRange.BegIdx != beg || sA.OutRange.Count != nb) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 1) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
+                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 2) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
                         }
                     } catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -44965,6 +45165,7 @@ public class TaCodegenServe {
                         }
                         Core.SumStream sB = sA.Clone();
                         sB.Advance();
+                        sB.Advance();
                         var fk = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             fk[t] = sB.Update(fz_c[t]);
@@ -44977,7 +45178,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.OutRange.BegIdx != beg || sA.OutRange.Count != nb) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 1) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
+                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 2) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
                         }
                     } catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -45189,6 +45390,7 @@ public class TaCodegenServe {
                         }
                         Core.SupertrendStream sB = sA.Clone();
                         sB.Advance();
+                        sB.Advance();
                         var fk = new Core.SupertrendValue[svN];
                         for (int t = mid; t < svN; t++) {
                             fk[t] = sB.Update(fz_h[t], fz_l[t], fz_c[t]);
@@ -45203,7 +45405,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.OutRange.BegIdx != beg || sA.OutRange.Count != nb) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 1) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
+                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 2) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
                         }
                     } catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -45400,6 +45602,7 @@ public class TaCodegenServe {
                         }
                         Core.Swak2phpStream sB = sA.Clone();
                         sB.Advance();
+                        sB.Advance();
                         var fk = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             fk[t] = sB.Update(fz_c[t]);
@@ -45412,7 +45615,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.OutRange.BegIdx != beg || sA.OutRange.Count != nb) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 1) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
+                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 2) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
                         }
                     } catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -45607,6 +45810,7 @@ public class TaCodegenServe {
                         }
                         Core.SwakBpStream sB = sA.Clone();
                         sB.Advance();
+                        sB.Advance();
                         var fk = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             fk[t] = sB.Update(fz_c[t]);
@@ -45619,7 +45823,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.OutRange.BegIdx != beg || sA.OutRange.Count != nb) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 1) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
+                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 2) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
                         }
                     } catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -45813,6 +46017,7 @@ public class TaCodegenServe {
                         }
                         Core.SwakButterStream sB = sA.Clone();
                         sB.Advance();
+                        sB.Advance();
                         var fk = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             fk[t] = sB.Update(fz_c[t]);
@@ -45825,7 +46030,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.OutRange.BegIdx != beg || sA.OutRange.Count != nb) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 1) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
+                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 2) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
                         }
                     } catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -46019,6 +46224,7 @@ public class TaCodegenServe {
                         }
                         Core.SwakGaussStream sB = sA.Clone();
                         sB.Advance();
+                        sB.Advance();
                         var fk = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             fk[t] = sB.Update(fz_c[t]);
@@ -46031,7 +46237,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.OutRange.BegIdx != beg || sA.OutRange.Count != nb) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 1) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
+                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 2) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
                         }
                     } catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -46225,6 +46431,7 @@ public class TaCodegenServe {
                         }
                         Core.SwakHpStream sB = sA.Clone();
                         sB.Advance();
+                        sB.Advance();
                         var fk = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             fk[t] = sB.Update(fz_c[t]);
@@ -46237,7 +46444,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.OutRange.BegIdx != beg || sA.OutRange.Count != nb) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 1) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
+                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 2) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
                         }
                     } catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -46432,6 +46639,7 @@ public class TaCodegenServe {
                         }
                         Core.T3Stream sB = sA.Clone();
                         sB.Advance();
+                        sB.Advance();
                         var fk = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             fk[t] = sB.Update(fz_c[t]);
@@ -46444,7 +46652,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.OutRange.BegIdx != beg || sA.OutRange.Count != nb) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 1) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
+                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 2) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
                         }
                     } catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -46636,6 +46844,7 @@ public class TaCodegenServe {
                         }
                         Core.TanStream sB = sA.Clone();
                         sB.Advance();
+                        sB.Advance();
                         var fk = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             fk[t] = sB.Update(fz_c[t]);
@@ -46648,7 +46857,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.OutRange.BegIdx != beg || sA.OutRange.Count != nb) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 1) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
+                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 2) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
                         }
                     } catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -46833,6 +47042,7 @@ public class TaCodegenServe {
                         }
                         Core.TanhStream sB = sA.Clone();
                         sB.Advance();
+                        sB.Advance();
                         var fk = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             fk[t] = sB.Update(fz_c[t]);
@@ -46845,7 +47055,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.OutRange.BegIdx != beg || sA.OutRange.Count != nb) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 1) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
+                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 2) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
                         }
                     } catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -47032,6 +47242,7 @@ public class TaCodegenServe {
                         }
                         Core.TemaStream sB = sA.Clone();
                         sB.Advance();
+                        sB.Advance();
                         var fk = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             fk[t] = sB.Update(fz_c[t]);
@@ -47044,7 +47255,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.OutRange.BegIdx != beg || sA.OutRange.Count != nb) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 1) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
+                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 2) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
                         }
                     } catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -47240,6 +47451,7 @@ public class TaCodegenServe {
                         }
                         Core.TrangeStream sB = sA.Clone();
                         sB.Advance();
+                        sB.Advance();
                         var fk = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             fk[t] = sB.Update(fz_h[t], fz_l[t], fz_c[t]);
@@ -47252,7 +47464,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.OutRange.BegIdx != beg || sA.OutRange.Count != nb) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 1) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
+                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 2) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
                         }
                     } catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -47438,6 +47650,7 @@ public class TaCodegenServe {
                         }
                         Core.TrimaStream sB = sA.Clone();
                         sB.Advance();
+                        sB.Advance();
                         var fk = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             fk[t] = sB.Update(fz_c[t]);
@@ -47450,7 +47663,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.OutRange.BegIdx != beg || sA.OutRange.Count != nb) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 1) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
+                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 2) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
                         }
                     } catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -47644,6 +47857,7 @@ public class TaCodegenServe {
                         }
                         Core.TrixStream sB = sA.Clone();
                         sB.Advance();
+                        sB.Advance();
                         var fk = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             fk[t] = sB.Update(fz_c[t]);
@@ -47656,7 +47870,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.OutRange.BegIdx != beg || sA.OutRange.Count != nb) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 1) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
+                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 2) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
                         }
                     } catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -47849,6 +48063,7 @@ public class TaCodegenServe {
                         }
                         Core.TsfStream sB = sA.Clone();
                         sB.Advance();
+                        sB.Advance();
                         var fk = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             fk[t] = sB.Update(fz_c[t]);
@@ -47861,7 +48076,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.OutRange.BegIdx != beg || sA.OutRange.Count != nb) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 1) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
+                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 2) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
                         }
                     } catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -48056,6 +48271,7 @@ public class TaCodegenServe {
                         }
                         Core.TsiStream sB = sA.Clone();
                         sB.Advance();
+                        sB.Advance();
                         var fk = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             fk[t] = sB.Update(fz_c[t]);
@@ -48068,7 +48284,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.OutRange.BegIdx != beg || sA.OutRange.Count != nb) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 1) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
+                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 2) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
                         }
                     } catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -48264,6 +48480,7 @@ public class TaCodegenServe {
                         }
                         Core.TyppriceStream sB = sA.Clone();
                         sB.Advance();
+                        sB.Advance();
                         var fk = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             fk[t] = sB.Update(fz_h[t], fz_l[t], fz_c[t]);
@@ -48276,7 +48493,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.OutRange.BegIdx != beg || sA.OutRange.Count != nb) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 1) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
+                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 2) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
                         }
                     } catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -48468,6 +48685,7 @@ public class TaCodegenServe {
                         }
                         Core.UltoscStream sB = sA.Clone();
                         sB.Advance();
+                        sB.Advance();
                         var fk = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             fk[t] = sB.Update(fz_h[t], fz_l[t], fz_c[t]);
@@ -48480,7 +48698,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.OutRange.BegIdx != beg || sA.OutRange.Count != nb) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 1) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
+                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 2) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
                         }
                     } catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -48674,6 +48892,7 @@ public class TaCodegenServe {
                         }
                         Core.VarStream sB = sA.Clone();
                         sB.Advance();
+                        sB.Advance();
                         var fk = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             fk[t] = sB.Update(fz_c[t]);
@@ -48686,7 +48905,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.OutRange.BegIdx != beg || sA.OutRange.Count != nb) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 1) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
+                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 2) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
                         }
                     } catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -48879,6 +49098,7 @@ public class TaCodegenServe {
                         }
                         Core.VhfStream sB = sA.Clone();
                         sB.Advance();
+                        sB.Advance();
                         var fk = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             fk[t] = sB.Update(fz_c[t]);
@@ -48891,7 +49111,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.OutRange.BegIdx != beg || sA.OutRange.Count != nb) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 1) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
+                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 2) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
                         }
                     } catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -49086,6 +49306,7 @@ public class TaCodegenServe {
                         }
                         Core.VidyaStream sB = sA.Clone();
                         sB.Advance();
+                        sB.Advance();
                         var fk = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             fk[t] = sB.Update(fz_c[t]);
@@ -49098,7 +49319,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.OutRange.BegIdx != beg || sA.OutRange.Count != nb) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 1) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
+                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 2) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
                         }
                     } catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -49323,6 +49544,7 @@ public class TaCodegenServe {
                         }
                         Core.VortexStream sB = sA.Clone();
                         sB.Advance();
+                        sB.Advance();
                         var fk = new Core.VortexValue[svN];
                         for (int t = mid; t < svN; t++) {
                             fk[t] = sB.Update(fz_h[t], fz_l[t], fz_c[t]);
@@ -49337,7 +49559,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.OutRange.BegIdx != beg || sA.OutRange.Count != nb) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 1) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
+                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 2) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
                         }
                     } catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -49538,6 +49760,7 @@ public class TaCodegenServe {
                         }
                         Core.VwapStream sB = sA.Clone();
                         sB.Advance();
+                        sB.Advance();
                         var fk = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             fk[t] = sB.Update(fz_h[t], fz_l[t], fz_c[t], fz_v[t]);
@@ -49550,7 +49773,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.OutRange.BegIdx != beg || sA.OutRange.Count != nb) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 1) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
+                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 2) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
                         }
                     } catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -49738,6 +49961,7 @@ public class TaCodegenServe {
                         }
                         Core.VwmaStream sB = sA.Clone();
                         sB.Advance();
+                        sB.Advance();
                         var fk = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             fk[t] = sB.Update(fz_c[t], fz_v[t]);
@@ -49750,7 +49974,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.OutRange.BegIdx != beg || sA.OutRange.Count != nb) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 1) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
+                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 2) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
                         }
                     } catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -49946,6 +50170,7 @@ public class TaCodegenServe {
                         }
                         Core.WadStream sB = sA.Clone();
                         sB.Advance();
+                        sB.Advance();
                         var fk = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             fk[t] = sB.Update(fz_h[t], fz_l[t], fz_c[t]);
@@ -49958,7 +50183,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.OutRange.BegIdx != beg || sA.OutRange.Count != nb) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 1) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
+                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 2) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
                         }
                     } catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -50147,6 +50372,7 @@ public class TaCodegenServe {
                         }
                         Core.WclpriceStream sB = sA.Clone();
                         sB.Advance();
+                        sB.Advance();
                         var fk = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             fk[t] = sB.Update(fz_h[t], fz_l[t], fz_c[t]);
@@ -50159,7 +50385,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.OutRange.BegIdx != beg || sA.OutRange.Count != nb) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 1) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
+                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 2) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
                         }
                     } catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -50349,6 +50575,7 @@ public class TaCodegenServe {
                         }
                         Core.WillrStream sB = sA.Clone();
                         sB.Advance();
+                        sB.Advance();
                         var fk = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             fk[t] = sB.Update(fz_h[t], fz_l[t], fz_c[t]);
@@ -50361,7 +50588,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.OutRange.BegIdx != beg || sA.OutRange.Count != nb) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 1) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
+                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 2) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
                         }
                     } catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -50554,6 +50781,7 @@ public class TaCodegenServe {
                         }
                         Core.WmaStream sB = sA.Clone();
                         sB.Advance();
+                        sB.Advance();
                         var fk = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             fk[t] = sB.Update(fz_c[t]);
@@ -50566,7 +50794,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.OutRange.BegIdx != beg || sA.OutRange.Count != nb) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 1) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
+                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 2) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
                         }
                     } catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -50760,6 +50988,7 @@ public class TaCodegenServe {
                         }
                         Core.ZlemaStream sB = sA.Clone();
                         sB.Advance();
+                        sB.Advance();
                         var fk = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             fk[t] = sB.Update(fz_c[t]);
@@ -50772,7 +51001,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.OutRange.BegIdx != beg || sA.OutRange.Count != nb) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 1) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
+                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 2) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
                         }
                     } catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"copyOpenReject\":1"; }
                 }

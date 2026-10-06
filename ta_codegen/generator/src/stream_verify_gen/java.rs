@@ -543,8 +543,8 @@ fn emit_java_sv_func(func: &FuncDef, funcs: &[FuncDef], enums: &HashMap<String, 
     }
     s.push_str("                        }\n");
     let _ = writeln!(s, "                        Core.{class} sB = sA.clone();");
-    // One counted bar on the fork -- see the C server for why.
-    s.push_str("                        sB.advance();\n");
+    // Two counted bars on the fork -- see the C server for why.
+    s.push_str("                        sB.advance();\n                        sB.advance();\n");
     for (i, is_int) in out_is_int.iter().enumerate() {
         let ty = if *is_int { "int" } else { "double" };
         let _ = writeln!(s, "                        {ty}[] fk{i} = new {ty}[svN];");
@@ -572,7 +572,7 @@ fn emit_java_sv_func(func: &FuncDef, funcs: &[FuncDef], enums: &HashMap<String, 
     }
     s.push_str("                        }\n");
     // Both handles have now consumed bars [p0-1, svN-1], so the original
-    // reports what batch(0, svN-1) did and the fork one bar more, the one it
+    // reports what batch(0, svN-1) did and the fork two bars more, the two it
     // counted. The original is the control: a failure on sA alone says the
     // leg's own bookkeeping broke rather than copy().
     // Only when the value leg passed: a diverged handle is not one whose range
@@ -584,7 +584,7 @@ fn emit_java_sv_func(func: &FuncDef, funcs: &[FuncDef], enums: &HashMap<String, 
         sv_range_bit(SvRangeSite::Copy, SV_RANGE_MASK_JAVA)
     );
     s.push_str("                            if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = \",\\\"copyRangeSrc\\\":1\"; }\n");
-    s.push_str("                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = \",\\\"copyRange\\\":1\"; }\n");
+    s.push_str("                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 2) { rangeOk = false; if (diag.isEmpty()) diag = \",\\\"copyRange\\\":1\"; }\n");
     s.push_str("                        }\n");
     s.push_str("                    } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = \",\\\"copyOpenReject\\\":1\"; }\n");
     s.push_str("                }\n");

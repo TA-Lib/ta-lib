@@ -257502,6 +257502,7 @@ public class TaCodegenServe {
                         }
                         Core.AcStream sB = sA.clone();
                         sB.advance();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_h[t], fz_l[t]);
@@ -257515,7 +257516,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 2) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -257704,6 +257705,7 @@ public class TaCodegenServe {
                         }
                         Core.AccbandsStream sB = sA.clone();
                         sB.advance();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         double[] fk1 = new double[svN];
                         double[] fk2 = new double[svN];
@@ -257725,7 +257727,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 2) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -257888,6 +257890,7 @@ public class TaCodegenServe {
                         }
                         Core.AcosStream sB = sA.clone();
                         sB.advance();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_c[t]);
@@ -257901,7 +257904,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 2) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -258051,6 +258054,7 @@ public class TaCodegenServe {
                         }
                         Core.AdStream sB = sA.clone();
                         sB.advance();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_h[t], fz_l[t], fz_c[t], fz_v[t]);
@@ -258064,7 +258068,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 2) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -258214,6 +258218,7 @@ public class TaCodegenServe {
                         }
                         Core.AddStream sB = sA.clone();
                         sB.advance();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_c[t], fz_v[t]);
@@ -258227,7 +258232,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 2) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -258380,6 +258385,7 @@ public class TaCodegenServe {
                         }
                         Core.AdoscStream sB = sA.clone();
                         sB.advance();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_h[t], fz_l[t], fz_c[t], fz_v[t]);
@@ -258393,7 +258399,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 2) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -258549,6 +258555,7 @@ public class TaCodegenServe {
                         }
                         Core.AdrStream sB = sA.clone();
                         sB.advance();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_h[t], fz_l[t]);
@@ -258562,7 +258569,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 2) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -258719,6 +258726,7 @@ public class TaCodegenServe {
                         }
                         Core.AdxStream sB = sA.clone();
                         sB.advance();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_h[t], fz_l[t], fz_c[t]);
@@ -258732,7 +258740,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 2) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -258889,6 +258897,7 @@ public class TaCodegenServe {
                         }
                         Core.AdxrStream sB = sA.clone();
                         sB.advance();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_h[t], fz_l[t], fz_c[t]);
@@ -258902,7 +258911,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 2) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -259060,6 +259069,7 @@ public class TaCodegenServe {
                         }
                         Core.AlmaStream sB = sA.clone();
                         sB.advance();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_c[t]);
@@ -259073,7 +259083,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 2) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -259230,6 +259240,7 @@ public class TaCodegenServe {
                         }
                         Core.AoStream sB = sA.clone();
                         sB.advance();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_h[t], fz_l[t]);
@@ -259243,7 +259254,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 2) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -259413,6 +259424,7 @@ public class TaCodegenServe {
                         }
                         Core.ApoStream sB = sA.clone();
                         sB.advance();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_c[t]);
@@ -259426,7 +259438,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 2) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -259602,6 +259614,7 @@ public class TaCodegenServe {
                         }
                         Core.AroonStream sB = sA.clone();
                         sB.advance();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         double[] fk1 = new double[svN];
                         for (int t = mid; t < svN; t++) {
@@ -259619,7 +259632,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 2) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -259780,6 +259793,7 @@ public class TaCodegenServe {
                         }
                         Core.AroonoscStream sB = sA.clone();
                         sB.advance();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_h[t], fz_l[t]);
@@ -259793,7 +259807,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 2) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -259949,6 +259963,7 @@ public class TaCodegenServe {
                         }
                         Core.AsiStream sB = sA.clone();
                         sB.advance();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -259962,7 +259977,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 2) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -260112,6 +260127,7 @@ public class TaCodegenServe {
                         }
                         Core.AsinStream sB = sA.clone();
                         sB.advance();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_c[t]);
@@ -260125,7 +260141,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 2) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -260275,6 +260291,7 @@ public class TaCodegenServe {
                         }
                         Core.AtanStream sB = sA.clone();
                         sB.advance();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_c[t]);
@@ -260288,7 +260305,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 2) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -260440,6 +260457,7 @@ public class TaCodegenServe {
                         }
                         Core.AtrStream sB = sA.clone();
                         sB.advance();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_h[t], fz_l[t], fz_c[t]);
@@ -260453,7 +260471,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 2) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -260609,6 +260627,7 @@ public class TaCodegenServe {
                         }
                         Core.AvgdevStream sB = sA.clone();
                         sB.advance();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_c[t]);
@@ -260622,7 +260641,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 2) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -260777,6 +260796,7 @@ public class TaCodegenServe {
                         }
                         Core.AvgpriceStream sB = sA.clone();
                         sB.advance();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -260790,7 +260810,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 2) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -260989,6 +261009,7 @@ public class TaCodegenServe {
                         }
                         Core.BbandsStream sB = sA.clone();
                         sB.advance();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         double[] fk1 = new double[svN];
                         double[] fk2 = new double[svN];
@@ -261010,7 +261031,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 2) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -261189,6 +261210,7 @@ public class TaCodegenServe {
                         }
                         Core.BbwStream sB = sA.clone();
                         sB.advance();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_c[t]);
@@ -261202,7 +261224,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 2) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -261358,6 +261380,7 @@ public class TaCodegenServe {
                         }
                         Core.BetaStream sB = sA.clone();
                         sB.advance();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_c[t], fz_v[t]);
@@ -261371,7 +261394,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 2) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -261526,6 +261549,7 @@ public class TaCodegenServe {
                         }
                         Core.BopStream sB = sA.clone();
                         sB.advance();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -261539,7 +261563,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 2) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -261690,6 +261714,7 @@ public class TaCodegenServe {
                         }
                         Core.CciStream sB = sA.clone();
                         sB.advance();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_h[t], fz_l[t], fz_c[t]);
@@ -261703,7 +261728,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 2) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -261861,6 +261886,7 @@ public class TaCodegenServe {
                         }
                         Core.Cdl2crowsStream sB = sA.clone();
                         sB.advance();
+                        sB.advance();
                         int[] fk0 = new int[svN];
                         for (int t = mid; t < svN; t++) {
                             int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -261874,7 +261900,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 2) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -262027,6 +262053,7 @@ public class TaCodegenServe {
                         }
                         Core.Cdl3blackcrowsStream sB = sA.clone();
                         sB.advance();
+                        sB.advance();
                         int[] fk0 = new int[svN];
                         for (int t = mid; t < svN; t++) {
                             int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -262040,7 +262067,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 2) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -262193,6 +262220,7 @@ public class TaCodegenServe {
                         }
                         Core.Cdl3insideStream sB = sA.clone();
                         sB.advance();
+                        sB.advance();
                         int[] fk0 = new int[svN];
                         for (int t = mid; t < svN; t++) {
                             int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -262206,7 +262234,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 2) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -262359,6 +262387,7 @@ public class TaCodegenServe {
                         }
                         Core.Cdl3linestrikeStream sB = sA.clone();
                         sB.advance();
+                        sB.advance();
                         int[] fk0 = new int[svN];
                         for (int t = mid; t < svN; t++) {
                             int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -262372,7 +262401,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 2) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -262525,6 +262554,7 @@ public class TaCodegenServe {
                         }
                         Core.Cdl3outsideStream sB = sA.clone();
                         sB.advance();
+                        sB.advance();
                         int[] fk0 = new int[svN];
                         for (int t = mid; t < svN; t++) {
                             int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -262538,7 +262568,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 2) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -262691,6 +262721,7 @@ public class TaCodegenServe {
                         }
                         Core.Cdl3starsinsouthStream sB = sA.clone();
                         sB.advance();
+                        sB.advance();
                         int[] fk0 = new int[svN];
                         for (int t = mid; t < svN; t++) {
                             int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -262704,7 +262735,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 2) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -262857,6 +262888,7 @@ public class TaCodegenServe {
                         }
                         Core.Cdl3whitesoldiersStream sB = sA.clone();
                         sB.advance();
+                        sB.advance();
                         int[] fk0 = new int[svN];
                         for (int t = mid; t < svN; t++) {
                             int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -262870,7 +262902,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 2) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -263024,6 +263056,7 @@ public class TaCodegenServe {
                         }
                         Core.CdlabandonedbabyStream sB = sA.clone();
                         sB.advance();
+                        sB.advance();
                         int[] fk0 = new int[svN];
                         for (int t = mid; t < svN; t++) {
                             int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -263037,7 +263070,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 2) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -263190,6 +263223,7 @@ public class TaCodegenServe {
                         }
                         Core.CdladvanceblockStream sB = sA.clone();
                         sB.advance();
+                        sB.advance();
                         int[] fk0 = new int[svN];
                         for (int t = mid; t < svN; t++) {
                             int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -263203,7 +263237,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 2) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -263356,6 +263390,7 @@ public class TaCodegenServe {
                         }
                         Core.CdlbeltholdStream sB = sA.clone();
                         sB.advance();
+                        sB.advance();
                         int[] fk0 = new int[svN];
                         for (int t = mid; t < svN; t++) {
                             int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -263369,7 +263404,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 2) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -263522,6 +263557,7 @@ public class TaCodegenServe {
                         }
                         Core.CdlbreakawayStream sB = sA.clone();
                         sB.advance();
+                        sB.advance();
                         int[] fk0 = new int[svN];
                         for (int t = mid; t < svN; t++) {
                             int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -263535,7 +263571,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 2) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -263688,6 +263724,7 @@ public class TaCodegenServe {
                         }
                         Core.CdlclosingmarubozuStream sB = sA.clone();
                         sB.advance();
+                        sB.advance();
                         int[] fk0 = new int[svN];
                         for (int t = mid; t < svN; t++) {
                             int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -263701,7 +263738,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 2) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -263854,6 +263891,7 @@ public class TaCodegenServe {
                         }
                         Core.CdlconcealbabyswallStream sB = sA.clone();
                         sB.advance();
+                        sB.advance();
                         int[] fk0 = new int[svN];
                         for (int t = mid; t < svN; t++) {
                             int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -263867,7 +263905,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 2) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -264020,6 +264058,7 @@ public class TaCodegenServe {
                         }
                         Core.CdlcounterattackStream sB = sA.clone();
                         sB.advance();
+                        sB.advance();
                         int[] fk0 = new int[svN];
                         for (int t = mid; t < svN; t++) {
                             int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -264033,7 +264072,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 2) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -264187,6 +264226,7 @@ public class TaCodegenServe {
                         }
                         Core.CdldarkcloudcoverStream sB = sA.clone();
                         sB.advance();
+                        sB.advance();
                         int[] fk0 = new int[svN];
                         for (int t = mid; t < svN; t++) {
                             int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -264200,7 +264240,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 2) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -264353,6 +264393,7 @@ public class TaCodegenServe {
                         }
                         Core.CdldojiStream sB = sA.clone();
                         sB.advance();
+                        sB.advance();
                         int[] fk0 = new int[svN];
                         for (int t = mid; t < svN; t++) {
                             int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -264366,7 +264407,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 2) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -264519,6 +264560,7 @@ public class TaCodegenServe {
                         }
                         Core.CdldojistarStream sB = sA.clone();
                         sB.advance();
+                        sB.advance();
                         int[] fk0 = new int[svN];
                         for (int t = mid; t < svN; t++) {
                             int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -264532,7 +264574,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 2) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -264685,6 +264727,7 @@ public class TaCodegenServe {
                         }
                         Core.CdldragonflydojiStream sB = sA.clone();
                         sB.advance();
+                        sB.advance();
                         int[] fk0 = new int[svN];
                         for (int t = mid; t < svN; t++) {
                             int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -264698,7 +264741,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 2) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -264851,6 +264894,7 @@ public class TaCodegenServe {
                         }
                         Core.CdlengulfingStream sB = sA.clone();
                         sB.advance();
+                        sB.advance();
                         int[] fk0 = new int[svN];
                         for (int t = mid; t < svN; t++) {
                             int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -264864,7 +264908,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 2) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -265018,6 +265062,7 @@ public class TaCodegenServe {
                         }
                         Core.CdleveningdojistarStream sB = sA.clone();
                         sB.advance();
+                        sB.advance();
                         int[] fk0 = new int[svN];
                         for (int t = mid; t < svN; t++) {
                             int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -265031,7 +265076,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 2) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -265185,6 +265230,7 @@ public class TaCodegenServe {
                         }
                         Core.CdleveningstarStream sB = sA.clone();
                         sB.advance();
+                        sB.advance();
                         int[] fk0 = new int[svN];
                         for (int t = mid; t < svN; t++) {
                             int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -265198,7 +265244,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 2) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -265351,6 +265397,7 @@ public class TaCodegenServe {
                         }
                         Core.CdlgapsidesidewhiteStream sB = sA.clone();
                         sB.advance();
+                        sB.advance();
                         int[] fk0 = new int[svN];
                         for (int t = mid; t < svN; t++) {
                             int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -265364,7 +265411,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 2) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -265517,6 +265564,7 @@ public class TaCodegenServe {
                         }
                         Core.CdlgravestonedojiStream sB = sA.clone();
                         sB.advance();
+                        sB.advance();
                         int[] fk0 = new int[svN];
                         for (int t = mid; t < svN; t++) {
                             int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -265530,7 +265578,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 2) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -265683,6 +265731,7 @@ public class TaCodegenServe {
                         }
                         Core.CdlhammerStream sB = sA.clone();
                         sB.advance();
+                        sB.advance();
                         int[] fk0 = new int[svN];
                         for (int t = mid; t < svN; t++) {
                             int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -265696,7 +265745,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 2) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -265849,6 +265898,7 @@ public class TaCodegenServe {
                         }
                         Core.CdlhangingmanStream sB = sA.clone();
                         sB.advance();
+                        sB.advance();
                         int[] fk0 = new int[svN];
                         for (int t = mid; t < svN; t++) {
                             int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -265862,7 +265912,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 2) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -266015,6 +266065,7 @@ public class TaCodegenServe {
                         }
                         Core.CdlharamiStream sB = sA.clone();
                         sB.advance();
+                        sB.advance();
                         int[] fk0 = new int[svN];
                         for (int t = mid; t < svN; t++) {
                             int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -266028,7 +266079,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 2) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -266181,6 +266232,7 @@ public class TaCodegenServe {
                         }
                         Core.CdlharamicrossStream sB = sA.clone();
                         sB.advance();
+                        sB.advance();
                         int[] fk0 = new int[svN];
                         for (int t = mid; t < svN; t++) {
                             int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -266194,7 +266246,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 2) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -266347,6 +266399,7 @@ public class TaCodegenServe {
                         }
                         Core.CdlhighwaveStream sB = sA.clone();
                         sB.advance();
+                        sB.advance();
                         int[] fk0 = new int[svN];
                         for (int t = mid; t < svN; t++) {
                             int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -266360,7 +266413,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 2) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -266513,6 +266566,7 @@ public class TaCodegenServe {
                         }
                         Core.CdlhikkakeStream sB = sA.clone();
                         sB.advance();
+                        sB.advance();
                         int[] fk0 = new int[svN];
                         for (int t = mid; t < svN; t++) {
                             int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -266526,7 +266580,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 2) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -266679,6 +266733,7 @@ public class TaCodegenServe {
                         }
                         Core.CdlhikkakemodStream sB = sA.clone();
                         sB.advance();
+                        sB.advance();
                         int[] fk0 = new int[svN];
                         for (int t = mid; t < svN; t++) {
                             int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -266692,7 +266747,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 2) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -266845,6 +266900,7 @@ public class TaCodegenServe {
                         }
                         Core.CdlhomingpigeonStream sB = sA.clone();
                         sB.advance();
+                        sB.advance();
                         int[] fk0 = new int[svN];
                         for (int t = mid; t < svN; t++) {
                             int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -266858,7 +266914,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 2) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -267011,6 +267067,7 @@ public class TaCodegenServe {
                         }
                         Core.Cdlidentical3crowsStream sB = sA.clone();
                         sB.advance();
+                        sB.advance();
                         int[] fk0 = new int[svN];
                         for (int t = mid; t < svN; t++) {
                             int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -267024,7 +267081,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 2) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -267177,6 +267234,7 @@ public class TaCodegenServe {
                         }
                         Core.CdlinneckStream sB = sA.clone();
                         sB.advance();
+                        sB.advance();
                         int[] fk0 = new int[svN];
                         for (int t = mid; t < svN; t++) {
                             int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -267190,7 +267248,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 2) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -267343,6 +267401,7 @@ public class TaCodegenServe {
                         }
                         Core.CdlinvertedhammerStream sB = sA.clone();
                         sB.advance();
+                        sB.advance();
                         int[] fk0 = new int[svN];
                         for (int t = mid; t < svN; t++) {
                             int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -267356,7 +267415,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 2) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -267509,6 +267568,7 @@ public class TaCodegenServe {
                         }
                         Core.CdlkickingStream sB = sA.clone();
                         sB.advance();
+                        sB.advance();
                         int[] fk0 = new int[svN];
                         for (int t = mid; t < svN; t++) {
                             int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -267522,7 +267582,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 2) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -267675,6 +267735,7 @@ public class TaCodegenServe {
                         }
                         Core.CdlkickingbylengthStream sB = sA.clone();
                         sB.advance();
+                        sB.advance();
                         int[] fk0 = new int[svN];
                         for (int t = mid; t < svN; t++) {
                             int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -267688,7 +267749,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 2) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -267841,6 +267902,7 @@ public class TaCodegenServe {
                         }
                         Core.CdlladderbottomStream sB = sA.clone();
                         sB.advance();
+                        sB.advance();
                         int[] fk0 = new int[svN];
                         for (int t = mid; t < svN; t++) {
                             int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -267854,7 +267916,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 2) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -268007,6 +268069,7 @@ public class TaCodegenServe {
                         }
                         Core.CdllongleggeddojiStream sB = sA.clone();
                         sB.advance();
+                        sB.advance();
                         int[] fk0 = new int[svN];
                         for (int t = mid; t < svN; t++) {
                             int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -268020,7 +268083,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 2) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -268173,6 +268236,7 @@ public class TaCodegenServe {
                         }
                         Core.CdllonglineStream sB = sA.clone();
                         sB.advance();
+                        sB.advance();
                         int[] fk0 = new int[svN];
                         for (int t = mid; t < svN; t++) {
                             int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -268186,7 +268250,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 2) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -268339,6 +268403,7 @@ public class TaCodegenServe {
                         }
                         Core.CdlmarubozuStream sB = sA.clone();
                         sB.advance();
+                        sB.advance();
                         int[] fk0 = new int[svN];
                         for (int t = mid; t < svN; t++) {
                             int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -268352,7 +268417,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 2) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -268505,6 +268570,7 @@ public class TaCodegenServe {
                         }
                         Core.CdlmatchinglowStream sB = sA.clone();
                         sB.advance();
+                        sB.advance();
                         int[] fk0 = new int[svN];
                         for (int t = mid; t < svN; t++) {
                             int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -268518,7 +268584,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 2) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -268672,6 +268738,7 @@ public class TaCodegenServe {
                         }
                         Core.CdlmatholdStream sB = sA.clone();
                         sB.advance();
+                        sB.advance();
                         int[] fk0 = new int[svN];
                         for (int t = mid; t < svN; t++) {
                             int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -268685,7 +268752,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 2) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -268839,6 +268906,7 @@ public class TaCodegenServe {
                         }
                         Core.CdlmorningdojistarStream sB = sA.clone();
                         sB.advance();
+                        sB.advance();
                         int[] fk0 = new int[svN];
                         for (int t = mid; t < svN; t++) {
                             int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -268852,7 +268920,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 2) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -269006,6 +269074,7 @@ public class TaCodegenServe {
                         }
                         Core.CdlmorningstarStream sB = sA.clone();
                         sB.advance();
+                        sB.advance();
                         int[] fk0 = new int[svN];
                         for (int t = mid; t < svN; t++) {
                             int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -269019,7 +269088,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 2) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -269172,6 +269241,7 @@ public class TaCodegenServe {
                         }
                         Core.CdlonneckStream sB = sA.clone();
                         sB.advance();
+                        sB.advance();
                         int[] fk0 = new int[svN];
                         for (int t = mid; t < svN; t++) {
                             int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -269185,7 +269255,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 2) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -269338,6 +269408,7 @@ public class TaCodegenServe {
                         }
                         Core.CdlpiercingStream sB = sA.clone();
                         sB.advance();
+                        sB.advance();
                         int[] fk0 = new int[svN];
                         for (int t = mid; t < svN; t++) {
                             int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -269351,7 +269422,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 2) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -269504,6 +269575,7 @@ public class TaCodegenServe {
                         }
                         Core.CdlrickshawmanStream sB = sA.clone();
                         sB.advance();
+                        sB.advance();
                         int[] fk0 = new int[svN];
                         for (int t = mid; t < svN; t++) {
                             int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -269517,7 +269589,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 2) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -269670,6 +269742,7 @@ public class TaCodegenServe {
                         }
                         Core.Cdlrisefall3methodsStream sB = sA.clone();
                         sB.advance();
+                        sB.advance();
                         int[] fk0 = new int[svN];
                         for (int t = mid; t < svN; t++) {
                             int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -269683,7 +269756,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 2) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -269836,6 +269909,7 @@ public class TaCodegenServe {
                         }
                         Core.CdlseparatinglinesStream sB = sA.clone();
                         sB.advance();
+                        sB.advance();
                         int[] fk0 = new int[svN];
                         for (int t = mid; t < svN; t++) {
                             int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -269849,7 +269923,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 2) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -270002,6 +270076,7 @@ public class TaCodegenServe {
                         }
                         Core.CdlshootingstarStream sB = sA.clone();
                         sB.advance();
+                        sB.advance();
                         int[] fk0 = new int[svN];
                         for (int t = mid; t < svN; t++) {
                             int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -270015,7 +270090,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 2) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -270168,6 +270243,7 @@ public class TaCodegenServe {
                         }
                         Core.CdlshortlineStream sB = sA.clone();
                         sB.advance();
+                        sB.advance();
                         int[] fk0 = new int[svN];
                         for (int t = mid; t < svN; t++) {
                             int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -270181,7 +270257,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 2) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -270334,6 +270410,7 @@ public class TaCodegenServe {
                         }
                         Core.CdlspinningtopStream sB = sA.clone();
                         sB.advance();
+                        sB.advance();
                         int[] fk0 = new int[svN];
                         for (int t = mid; t < svN; t++) {
                             int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -270347,7 +270424,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 2) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -270500,6 +270577,7 @@ public class TaCodegenServe {
                         }
                         Core.CdlstalledpatternStream sB = sA.clone();
                         sB.advance();
+                        sB.advance();
                         int[] fk0 = new int[svN];
                         for (int t = mid; t < svN; t++) {
                             int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -270513,7 +270591,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 2) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -270666,6 +270744,7 @@ public class TaCodegenServe {
                         }
                         Core.CdlsticksandwichStream sB = sA.clone();
                         sB.advance();
+                        sB.advance();
                         int[] fk0 = new int[svN];
                         for (int t = mid; t < svN; t++) {
                             int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -270679,7 +270758,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 2) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -270832,6 +270911,7 @@ public class TaCodegenServe {
                         }
                         Core.CdltakuriStream sB = sA.clone();
                         sB.advance();
+                        sB.advance();
                         int[] fk0 = new int[svN];
                         for (int t = mid; t < svN; t++) {
                             int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -270845,7 +270925,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 2) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -270998,6 +271078,7 @@ public class TaCodegenServe {
                         }
                         Core.CdltasukigapStream sB = sA.clone();
                         sB.advance();
+                        sB.advance();
                         int[] fk0 = new int[svN];
                         for (int t = mid; t < svN; t++) {
                             int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -271011,7 +271092,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 2) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -271164,6 +271245,7 @@ public class TaCodegenServe {
                         }
                         Core.CdlthrustingStream sB = sA.clone();
                         sB.advance();
+                        sB.advance();
                         int[] fk0 = new int[svN];
                         for (int t = mid; t < svN; t++) {
                             int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -271177,7 +271259,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 2) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -271330,6 +271412,7 @@ public class TaCodegenServe {
                         }
                         Core.CdltristarStream sB = sA.clone();
                         sB.advance();
+                        sB.advance();
                         int[] fk0 = new int[svN];
                         for (int t = mid; t < svN; t++) {
                             int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -271343,7 +271426,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 2) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -271496,6 +271579,7 @@ public class TaCodegenServe {
                         }
                         Core.Cdlunique3riverStream sB = sA.clone();
                         sB.advance();
+                        sB.advance();
                         int[] fk0 = new int[svN];
                         for (int t = mid; t < svN; t++) {
                             int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -271509,7 +271593,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 2) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -271662,6 +271746,7 @@ public class TaCodegenServe {
                         }
                         Core.Cdlupsidegap2crowsStream sB = sA.clone();
                         sB.advance();
+                        sB.advance();
                         int[] fk0 = new int[svN];
                         for (int t = mid; t < svN; t++) {
                             int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -271675,7 +271760,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 2) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -271828,6 +271913,7 @@ public class TaCodegenServe {
                         }
                         Core.Cdlxsidegap3methodsStream sB = sA.clone();
                         sB.advance();
+                        sB.advance();
                         int[] fk0 = new int[svN];
                         for (int t = mid; t < svN; t++) {
                             int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -271841,7 +271927,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 2) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -271991,6 +272077,7 @@ public class TaCodegenServe {
                         }
                         Core.CeilStream sB = sA.clone();
                         sB.advance();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_c[t]);
@@ -272004,7 +272091,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 2) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -272155,6 +272242,7 @@ public class TaCodegenServe {
                         }
                         Core.CgStream sB = sA.clone();
                         sB.advance();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_c[t]);
@@ -272168,7 +272256,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 2) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -272324,6 +272412,7 @@ public class TaCodegenServe {
                         }
                         Core.ChopStream sB = sA.clone();
                         sB.advance();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_h[t], fz_l[t], fz_c[t]);
@@ -272337,7 +272426,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 2) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -272493,6 +272582,7 @@ public class TaCodegenServe {
                         }
                         Core.ChoptrStream sB = sA.clone();
                         sB.advance();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_h[t], fz_l[t], fz_c[t]);
@@ -272506,7 +272596,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 2) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -272685,6 +272775,7 @@ public class TaCodegenServe {
                         }
                         Core.CkspStream sB = sA.clone();
                         sB.advance();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         double[] fk1 = new double[svN];
                         for (int t = mid; t < svN; t++) {
@@ -272702,7 +272793,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 2) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -272863,6 +272954,7 @@ public class TaCodegenServe {
                         }
                         Core.CmfStream sB = sA.clone();
                         sB.advance();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_h[t], fz_l[t], fz_c[t], fz_v[t]);
@@ -272876,7 +272968,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 2) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -273033,6 +273125,7 @@ public class TaCodegenServe {
                         }
                         Core.CmoStream sB = sA.clone();
                         sB.advance();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_c[t]);
@@ -273046,7 +273139,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 2) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -273202,6 +273295,7 @@ public class TaCodegenServe {
                         }
                         Core.CmouStream sB = sA.clone();
                         sB.advance();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_c[t]);
@@ -273215,7 +273309,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 2) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -273373,6 +273467,7 @@ public class TaCodegenServe {
                         }
                         Core.CoppockStream sB = sA.clone();
                         sB.advance();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_c[t]);
@@ -273386,7 +273481,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 2) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -273542,6 +273637,7 @@ public class TaCodegenServe {
                         }
                         Core.CorrelStream sB = sA.clone();
                         sB.advance();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_c[t], fz_v[t]);
@@ -273555,7 +273651,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 2) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -273710,6 +273806,7 @@ public class TaCodegenServe {
                         }
                         Core.CosStream sB = sA.clone();
                         sB.advance();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_c[t]);
@@ -273723,7 +273820,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 2) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -273873,6 +273970,7 @@ public class TaCodegenServe {
                         }
                         Core.CoshStream sB = sA.clone();
                         sB.advance();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_c[t]);
@@ -273886,7 +273984,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 2) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -274040,6 +274138,7 @@ public class TaCodegenServe {
                         }
                         Core.CrsiStream sB = sA.clone();
                         sB.advance();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_c[t]);
@@ -274053,7 +274152,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 2) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -274209,6 +274308,7 @@ public class TaCodegenServe {
                         }
                         Core.CtiStream sB = sA.clone();
                         sB.advance();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_c[t]);
@@ -274222,7 +274322,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 2) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -274377,6 +274477,7 @@ public class TaCodegenServe {
                         }
                         Core.CumsumStream sB = sA.clone();
                         sB.advance();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_c[t]);
@@ -274390,7 +274491,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 2) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -274543,6 +274644,7 @@ public class TaCodegenServe {
                         }
                         Core.CviStream sB = sA.clone();
                         sB.advance();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_h[t], fz_l[t]);
@@ -274556,7 +274658,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 2) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -274713,6 +274815,7 @@ public class TaCodegenServe {
                         }
                         Core.DemaStream sB = sA.clone();
                         sB.advance();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_c[t]);
@@ -274726,7 +274829,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 2) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -274881,6 +274984,7 @@ public class TaCodegenServe {
                         }
                         Core.DivStream sB = sA.clone();
                         sB.advance();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_c[t], fz_v[t]);
@@ -274894,7 +274998,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 2) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -275078,6 +275182,7 @@ public class TaCodegenServe {
                         }
                         Core.DonchianStream sB = sA.clone();
                         sB.advance();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         double[] fk1 = new double[svN];
                         double[] fk2 = new double[svN];
@@ -275099,7 +275204,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 2) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -275263,6 +275368,7 @@ public class TaCodegenServe {
                         }
                         Core.DpoStream sB = sA.clone();
                         sB.advance();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_c[t]);
@@ -275276,7 +275382,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 2) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -275433,6 +275539,7 @@ public class TaCodegenServe {
                         }
                         Core.DxStream sB = sA.clone();
                         sB.advance();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_h[t], fz_l[t], fz_c[t]);
@@ -275446,7 +275553,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 2) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -275603,6 +275710,7 @@ public class TaCodegenServe {
                         }
                         Core.EfiStream sB = sA.clone();
                         sB.advance();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_c[t], fz_v[t]);
@@ -275616,7 +275724,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 2) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -275773,6 +275881,7 @@ public class TaCodegenServe {
                         }
                         Core.EmaStream sB = sA.clone();
                         sB.advance();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_c[t]);
@@ -275786,7 +275895,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 2) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -275943,6 +276052,7 @@ public class TaCodegenServe {
                         }
                         Core.EmvStream sB = sA.clone();
                         sB.advance();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_h[t], fz_l[t], fz_v[t]);
@@ -275956,7 +276066,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 2) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -276112,6 +276222,7 @@ public class TaCodegenServe {
                         }
                         Core.ErStream sB = sA.clone();
                         sB.advance();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_c[t]);
@@ -276125,7 +276236,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 2) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -276302,6 +276413,7 @@ public class TaCodegenServe {
                         }
                         Core.EriStream sB = sA.clone();
                         sB.advance();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         double[] fk1 = new double[svN];
                         for (int t = mid; t < svN; t++) {
@@ -276319,7 +276431,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 2) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -276479,6 +276591,7 @@ public class TaCodegenServe {
                         }
                         Core.ExpStream sB = sA.clone();
                         sB.advance();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_c[t]);
@@ -276492,7 +276605,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 2) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -276642,6 +276755,7 @@ public class TaCodegenServe {
                         }
                         Core.FloorStream sB = sA.clone();
                         sB.advance();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_c[t]);
@@ -276655,7 +276769,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 2) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -276806,6 +276920,7 @@ public class TaCodegenServe {
                         }
                         Core.FoscStream sB = sA.clone();
                         sB.advance();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_c[t]);
@@ -276819,7 +276934,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 2) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -276994,6 +277109,7 @@ public class TaCodegenServe {
                         }
                         Core.FractalStream sB = sA.clone();
                         sB.advance();
+                        sB.advance();
                         int[] fk0 = new int[svN];
                         int[] fk1 = new int[svN];
                         for (int t = mid; t < svN; t++) {
@@ -277011,7 +277127,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 2) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -277173,6 +277289,7 @@ public class TaCodegenServe {
                         }
                         Core.FramaStream sB = sA.clone();
                         sB.advance();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_h[t], fz_l[t]);
@@ -277186,7 +277303,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 2) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -277388,6 +277505,7 @@ public class TaCodegenServe {
                         }
                         Core.HaStream sB = sA.clone();
                         sB.advance();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         double[] fk1 = new double[svN];
                         double[] fk2 = new double[svN];
@@ -277413,7 +277531,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 2) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -277570,6 +277688,7 @@ public class TaCodegenServe {
                         }
                         Core.HmaStream sB = sA.clone();
                         sB.advance();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_c[t]);
@@ -277583,7 +277702,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 2) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -277739,6 +277858,7 @@ public class TaCodegenServe {
                         }
                         Core.HtDcperiodStream sB = sA.clone();
                         sB.advance();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_c[t]);
@@ -277752,7 +277872,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 2) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -277903,6 +278023,7 @@ public class TaCodegenServe {
                         }
                         Core.HtDcphaseStream sB = sA.clone();
                         sB.advance();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_c[t]);
@@ -277916,7 +278037,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 2) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -278087,6 +278208,7 @@ public class TaCodegenServe {
                         }
                         Core.HtPhasorStream sB = sA.clone();
                         sB.advance();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         double[] fk1 = new double[svN];
                         for (int t = mid; t < svN; t++) {
@@ -278104,7 +278226,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 2) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -278277,6 +278399,7 @@ public class TaCodegenServe {
                         }
                         Core.HtSineStream sB = sA.clone();
                         sB.advance();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         double[] fk1 = new double[svN];
                         for (int t = mid; t < svN; t++) {
@@ -278294,7 +278417,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 2) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -278447,6 +278570,7 @@ public class TaCodegenServe {
                         }
                         Core.HtTrendlineStream sB = sA.clone();
                         sB.advance();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_c[t]);
@@ -278460,7 +278584,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 2) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -278610,6 +278734,7 @@ public class TaCodegenServe {
                         }
                         Core.HtTrendmodeStream sB = sA.clone();
                         sB.advance();
+                        sB.advance();
                         int[] fk0 = new int[svN];
                         for (int t = mid; t < svN; t++) {
                             int uB = sB.update(fz_c[t]);
@@ -278623,7 +278748,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 2) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -278773,6 +278898,7 @@ public class TaCodegenServe {
                         }
                         Core.IbsStream sB = sA.clone();
                         sB.advance();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_h[t], fz_l[t], fz_c[t]);
@@ -278786,7 +278912,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 2) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -278937,6 +279063,7 @@ public class TaCodegenServe {
                         }
                         Core.ImiStream sB = sA.clone();
                         sB.advance();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_o[t], fz_c[t]);
@@ -278950,7 +279077,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 2) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -279107,6 +279234,7 @@ public class TaCodegenServe {
                         }
                         Core.KamaStream sB = sA.clone();
                         sB.advance();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_c[t]);
@@ -279120,7 +279248,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 2) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -279313,6 +279441,7 @@ public class TaCodegenServe {
                         }
                         Core.KcStream sB = sA.clone();
                         sB.advance();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         double[] fk1 = new double[svN];
                         double[] fk2 = new double[svN];
@@ -279334,7 +279463,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 2) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -279553,6 +279682,7 @@ public class TaCodegenServe {
                         }
                         Core.KdjStream sB = sA.clone();
                         sB.advance();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         double[] fk1 = new double[svN];
                         double[] fk2 = new double[svN];
@@ -279574,7 +279704,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 2) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -279766,6 +279896,7 @@ public class TaCodegenServe {
                         }
                         Core.KstStream sB = sA.clone();
                         sB.advance();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         double[] fk1 = new double[svN];
                         for (int t = mid; t < svN; t++) {
@@ -279783,7 +279914,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 2) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -279992,6 +280123,7 @@ public class TaCodegenServe {
                         }
                         Core.KstextStream sB = sA.clone();
                         sB.advance();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         double[] fk1 = new double[svN];
                         for (int t = mid; t < svN; t++) {
@@ -280009,7 +280141,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 2) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -280170,6 +280302,7 @@ public class TaCodegenServe {
                         }
                         Core.KurtosisStream sB = sA.clone();
                         sB.advance();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_c[t]);
@@ -280183,7 +280316,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 2) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -280339,6 +280472,7 @@ public class TaCodegenServe {
                         }
                         Core.LinearregStream sB = sA.clone();
                         sB.advance();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_c[t]);
@@ -280352,7 +280486,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 2) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -280508,6 +280642,7 @@ public class TaCodegenServe {
                         }
                         Core.LinearregAngleStream sB = sA.clone();
                         sB.advance();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_c[t]);
@@ -280521,7 +280656,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 2) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -280677,6 +280812,7 @@ public class TaCodegenServe {
                         }
                         Core.LinearregInterceptStream sB = sA.clone();
                         sB.advance();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_c[t]);
@@ -280690,7 +280826,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 2) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -280846,6 +280982,7 @@ public class TaCodegenServe {
                         }
                         Core.LinearregSlopeStream sB = sA.clone();
                         sB.advance();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_c[t]);
@@ -280859,7 +280996,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 2) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -281014,6 +281151,7 @@ public class TaCodegenServe {
                         }
                         Core.LnStream sB = sA.clone();
                         sB.advance();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_c[t]);
@@ -281027,7 +281165,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 2) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -281177,6 +281315,7 @@ public class TaCodegenServe {
                         }
                         Core.Log10Stream sB = sA.clone();
                         sB.advance();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_c[t]);
@@ -281190,7 +281329,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 2) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -281354,6 +281493,7 @@ public class TaCodegenServe {
                         }
                         Core.MaStream sB = sA.clone();
                         sB.advance();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_c[t]);
@@ -281367,7 +281507,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 2) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -281559,6 +281699,7 @@ public class TaCodegenServe {
                         }
                         Core.MacdStream sB = sA.clone();
                         sB.advance();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         double[] fk1 = new double[svN];
                         double[] fk2 = new double[svN];
@@ -281580,7 +281721,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 2) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -281806,6 +281947,7 @@ public class TaCodegenServe {
                         }
                         Core.MacdextStream sB = sA.clone();
                         sB.advance();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         double[] fk1 = new double[svN];
                         double[] fk2 = new double[svN];
@@ -281827,7 +281969,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 2) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -282025,6 +282167,7 @@ public class TaCodegenServe {
                         }
                         Core.MacdfixStream sB = sA.clone();
                         sB.advance();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         double[] fk1 = new double[svN];
                         double[] fk2 = new double[svN];
@@ -282046,7 +282189,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 2) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -282232,6 +282375,7 @@ public class TaCodegenServe {
                         }
                         Core.MamaStream sB = sA.clone();
                         sB.advance();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         double[] fk1 = new double[svN];
                         for (int t = mid; t < svN; t++) {
@@ -282249,7 +282393,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 2) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -282401,6 +282545,7 @@ public class TaCodegenServe {
                         }
                         Core.MarketfiStream sB = sA.clone();
                         sB.advance();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_h[t], fz_l[t], fz_v[t]);
@@ -282414,7 +282559,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 2) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -282567,6 +282712,7 @@ public class TaCodegenServe {
                         }
                         Core.MassiStream sB = sA.clone();
                         sB.advance();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_h[t], fz_l[t]);
@@ -282580,7 +282726,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 2) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -282751,6 +282897,7 @@ public class TaCodegenServe {
                         }
                         Core.MavpStream sB = sA.clone();
                         sB.advance();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_c[t], fz_v[t]);
@@ -282764,7 +282911,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 2) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -282920,6 +283067,7 @@ public class TaCodegenServe {
                         }
                         Core.MaxStream sB = sA.clone();
                         sB.advance();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_c[t]);
@@ -282933,7 +283081,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 2) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -283088,6 +283236,7 @@ public class TaCodegenServe {
                         }
                         Core.MaxindexStream sB = sA.clone();
                         sB.advance();
+                        sB.advance();
                         int[] fk0 = new int[svN];
                         for (int t = mid; t < svN; t++) {
                             int uB = sB.update(fz_c[t]);
@@ -283101,7 +283250,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 2) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -283258,6 +283407,7 @@ public class TaCodegenServe {
                         }
                         Core.McgdStream sB = sA.clone();
                         sB.advance();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_c[t]);
@@ -283271,7 +283421,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 2) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -283427,6 +283577,7 @@ public class TaCodegenServe {
                         }
                         Core.MedianStream sB = sA.clone();
                         sB.advance();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_c[t]);
@@ -283440,7 +283591,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 2) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -283595,6 +283746,7 @@ public class TaCodegenServe {
                         }
                         Core.MedpriceStream sB = sA.clone();
                         sB.advance();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_h[t], fz_l[t]);
@@ -283608,7 +283760,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 2) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -283759,6 +283911,7 @@ public class TaCodegenServe {
                         }
                         Core.MfiStream sB = sA.clone();
                         sB.advance();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_h[t], fz_l[t], fz_c[t], fz_v[t]);
@@ -283772,7 +283925,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 2) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -283928,6 +284081,7 @@ public class TaCodegenServe {
                         }
                         Core.MidpointStream sB = sA.clone();
                         sB.advance();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_c[t]);
@@ -283941,7 +284095,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 2) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -284097,6 +284251,7 @@ public class TaCodegenServe {
                         }
                         Core.MidpriceStream sB = sA.clone();
                         sB.advance();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_h[t], fz_l[t]);
@@ -284110,7 +284265,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 2) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -284266,6 +284421,7 @@ public class TaCodegenServe {
                         }
                         Core.MinStream sB = sA.clone();
                         sB.advance();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_c[t]);
@@ -284279,7 +284435,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 2) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -284434,6 +284590,7 @@ public class TaCodegenServe {
                         }
                         Core.MinindexStream sB = sA.clone();
                         sB.advance();
+                        sB.advance();
                         int[] fk0 = new int[svN];
                         for (int t = mid; t < svN; t++) {
                             int uB = sB.update(fz_c[t]);
@@ -284447,7 +284604,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 2) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -284623,6 +284780,7 @@ public class TaCodegenServe {
                         }
                         Core.MinmaxStream sB = sA.clone();
                         sB.advance();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         double[] fk1 = new double[svN];
                         for (int t = mid; t < svN; t++) {
@@ -284640,7 +284798,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 2) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -284819,6 +284977,7 @@ public class TaCodegenServe {
                         }
                         Core.MinmaxindexStream sB = sA.clone();
                         sB.advance();
+                        sB.advance();
                         int[] fk0 = new int[svN];
                         int[] fk1 = new int[svN];
                         for (int t = mid; t < svN; t++) {
@@ -284836,7 +284995,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 2) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -284998,6 +285157,7 @@ public class TaCodegenServe {
                         }
                         Core.MinusDiStream sB = sA.clone();
                         sB.advance();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_h[t], fz_l[t], fz_c[t]);
@@ -285011,7 +285171,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 2) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -285168,6 +285328,7 @@ public class TaCodegenServe {
                         }
                         Core.MinusDmStream sB = sA.clone();
                         sB.advance();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_h[t], fz_l[t]);
@@ -285181,7 +285342,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 2) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -285337,6 +285498,7 @@ public class TaCodegenServe {
                         }
                         Core.MomStream sB = sA.clone();
                         sB.advance();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_c[t]);
@@ -285350,7 +285512,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 2) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -285505,6 +285667,7 @@ public class TaCodegenServe {
                         }
                         Core.MultStream sB = sA.clone();
                         sB.advance();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_c[t], fz_v[t]);
@@ -285518,7 +285681,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 2) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -285670,6 +285833,7 @@ public class TaCodegenServe {
                         }
                         Core.NatrStream sB = sA.clone();
                         sB.advance();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_h[t], fz_l[t], fz_c[t]);
@@ -285683,7 +285847,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 2) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -285838,6 +286002,7 @@ public class TaCodegenServe {
                         }
                         Core.NviStream sB = sA.clone();
                         sB.advance();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_c[t], fz_v[t]);
@@ -285851,7 +286016,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 2) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -286001,6 +286166,7 @@ public class TaCodegenServe {
                         }
                         Core.ObvStream sB = sA.clone();
                         sB.advance();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_c[t], fz_v[t]);
@@ -286014,7 +286180,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 2) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -286180,6 +286346,7 @@ public class TaCodegenServe {
                         }
                         Core.PercentbStream sB = sA.clone();
                         sB.advance();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_c[t]);
@@ -286193,7 +286360,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 2) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -286350,6 +286517,7 @@ public class TaCodegenServe {
                         }
                         Core.PercentileStream sB = sA.clone();
                         sB.advance();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_c[t]);
@@ -286363,7 +286531,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 2) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -286519,6 +286687,7 @@ public class TaCodegenServe {
                         }
                         Core.PercentrankStream sB = sA.clone();
                         sB.advance();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_c[t]);
@@ -286532,7 +286701,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 2) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -286689,6 +286858,7 @@ public class TaCodegenServe {
                         }
                         Core.PlusDiStream sB = sA.clone();
                         sB.advance();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_h[t], fz_l[t], fz_c[t]);
@@ -286702,7 +286872,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 2) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -286859,6 +287029,7 @@ public class TaCodegenServe {
                         }
                         Core.PlusDmStream sB = sA.clone();
                         sB.advance();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_h[t], fz_l[t]);
@@ -286872,7 +287043,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 2) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -287042,6 +287213,7 @@ public class TaCodegenServe {
                         }
                         Core.PpoStream sB = sA.clone();
                         sB.advance();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_c[t]);
@@ -287055,7 +287227,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 2) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -287210,6 +287382,7 @@ public class TaCodegenServe {
                         }
                         Core.PviStream sB = sA.clone();
                         sB.advance();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_c[t], fz_v[t]);
@@ -287223,7 +287396,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 2) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -287388,6 +287561,7 @@ public class TaCodegenServe {
                         }
                         Core.PvoStream sB = sA.clone();
                         sB.advance();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_v[t]);
@@ -287401,7 +287575,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 2) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -287556,6 +287730,7 @@ public class TaCodegenServe {
                         }
                         Core.PvtStream sB = sA.clone();
                         sB.advance();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_c[t], fz_v[t]);
@@ -287569,7 +287744,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 2) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -287720,6 +287895,7 @@ public class TaCodegenServe {
                         }
                         Core.QstickStream sB = sA.clone();
                         sB.advance();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_o[t], fz_c[t]);
@@ -287733,7 +287909,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 2) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -287890,6 +288066,7 @@ public class TaCodegenServe {
                         }
                         Core.RmaStream sB = sA.clone();
                         sB.advance();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_c[t]);
@@ -287903,7 +288080,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 2) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -288059,6 +288236,7 @@ public class TaCodegenServe {
                         }
                         Core.RocStream sB = sA.clone();
                         sB.advance();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_c[t]);
@@ -288072,7 +288250,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 2) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -288228,6 +288406,7 @@ public class TaCodegenServe {
                         }
                         Core.RocpStream sB = sA.clone();
                         sB.advance();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_c[t]);
@@ -288241,7 +288420,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 2) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -288397,6 +288576,7 @@ public class TaCodegenServe {
                         }
                         Core.RocrStream sB = sA.clone();
                         sB.advance();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_c[t]);
@@ -288410,7 +288590,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 2) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -288566,6 +288746,7 @@ public class TaCodegenServe {
                         }
                         Core.Rocr100Stream sB = sA.clone();
                         sB.advance();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_c[t]);
@@ -288579,7 +288760,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 2) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -288736,6 +288917,7 @@ public class TaCodegenServe {
                         }
                         Core.RogerssatchellStream sB = sA.clone();
                         sB.advance();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -288749,7 +288931,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 2) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -288906,6 +289088,7 @@ public class TaCodegenServe {
                         }
                         Core.RsiStream sB = sA.clone();
                         sB.advance();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_c[t]);
@@ -288919,7 +289102,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 2) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -289077,6 +289260,7 @@ public class TaCodegenServe {
                         }
                         Core.RviStream sB = sA.clone();
                         sB.advance();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_c[t]);
@@ -289090,7 +289274,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 2) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -289248,6 +289432,7 @@ public class TaCodegenServe {
                         }
                         Core.RvirStream sB = sA.clone();
                         sB.advance();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_h[t], fz_l[t]);
@@ -289261,7 +289446,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 2) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -289417,6 +289602,7 @@ public class TaCodegenServe {
                         }
                         Core.RvolStream sB = sA.clone();
                         sB.advance();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_v[t]);
@@ -289430,7 +289616,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 2) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -289587,6 +289773,7 @@ public class TaCodegenServe {
                         }
                         Core.SarStream sB = sA.clone();
                         sB.advance();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_h[t], fz_l[t]);
@@ -289600,7 +289787,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 2) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -289758,6 +289945,7 @@ public class TaCodegenServe {
                         }
                         Core.SarextStream sB = sA.clone();
                         sB.advance();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_h[t], fz_l[t]);
@@ -289771,7 +289959,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 2) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -289922,6 +290110,7 @@ public class TaCodegenServe {
                         }
                         Core.SiStream sB = sA.clone();
                         sB.advance();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -289935,7 +290124,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 2) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -290085,6 +290274,7 @@ public class TaCodegenServe {
                         }
                         Core.SinStream sB = sA.clone();
                         sB.advance();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_c[t]);
@@ -290098,7 +290288,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 2) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -290248,6 +290438,7 @@ public class TaCodegenServe {
                         }
                         Core.SinhStream sB = sA.clone();
                         sB.advance();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_c[t]);
@@ -290261,7 +290452,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 2) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -290412,6 +290603,7 @@ public class TaCodegenServe {
                         }
                         Core.SmaStream sB = sA.clone();
                         sB.advance();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_c[t]);
@@ -290425,7 +290617,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 2) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -290605,6 +290797,7 @@ public class TaCodegenServe {
                         }
                         Core.SmiStream sB = sA.clone();
                         sB.advance();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         double[] fk1 = new double[svN];
                         for (int t = mid; t < svN; t++) {
@@ -290622,7 +290815,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 2) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -290782,6 +290975,7 @@ public class TaCodegenServe {
                         }
                         Core.SqrtStream sB = sA.clone();
                         sB.advance();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_c[t]);
@@ -290795,7 +290989,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 2) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -290950,6 +291144,7 @@ public class TaCodegenServe {
                         }
                         Core.StcStream sB = sA.clone();
                         sB.advance();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_c[t]);
@@ -290963,7 +291158,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 2) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -291120,6 +291315,7 @@ public class TaCodegenServe {
                         }
                         Core.StddevStream sB = sA.clone();
                         sB.advance();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_c[t]);
@@ -291133,7 +291329,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 2) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -291331,6 +291527,7 @@ public class TaCodegenServe {
                         }
                         Core.StochStream sB = sA.clone();
                         sB.advance();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         double[] fk1 = new double[svN];
                         for (int t = mid; t < svN; t++) {
@@ -291348,7 +291545,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 2) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -291543,6 +291740,7 @@ public class TaCodegenServe {
                         }
                         Core.StochfStream sB = sA.clone();
                         sB.advance();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         double[] fk1 = new double[svN];
                         for (int t = mid; t < svN; t++) {
@@ -291560,7 +291758,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 2) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -291757,6 +291955,7 @@ public class TaCodegenServe {
                         }
                         Core.StochrsiStream sB = sA.clone();
                         sB.advance();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         double[] fk1 = new double[svN];
                         for (int t = mid; t < svN; t++) {
@@ -291774,7 +291973,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 2) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -291934,6 +292133,7 @@ public class TaCodegenServe {
                         }
                         Core.SubStream sB = sA.clone();
                         sB.advance();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_c[t], fz_v[t]);
@@ -291947,7 +292147,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 2) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -292098,6 +292298,7 @@ public class TaCodegenServe {
                         }
                         Core.SumStream sB = sA.clone();
                         sB.advance();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_c[t]);
@@ -292111,7 +292312,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 2) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -292288,6 +292489,7 @@ public class TaCodegenServe {
                         }
                         Core.SupertrendStream sB = sA.clone();
                         sB.advance();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         int[] fk1 = new int[svN];
                         for (int t = mid; t < svN; t++) {
@@ -292305,7 +292507,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 2) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -292467,6 +292669,7 @@ public class TaCodegenServe {
                         }
                         Core.Swak2phpStream sB = sA.clone();
                         sB.advance();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_c[t]);
@@ -292480,7 +292683,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 2) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -292638,6 +292841,7 @@ public class TaCodegenServe {
                         }
                         Core.SwakBpStream sB = sA.clone();
                         sB.advance();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_c[t]);
@@ -292651,7 +292855,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 2) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -292808,6 +293012,7 @@ public class TaCodegenServe {
                         }
                         Core.SwakButterStream sB = sA.clone();
                         sB.advance();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_c[t]);
@@ -292821,7 +293026,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 2) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -292978,6 +293183,7 @@ public class TaCodegenServe {
                         }
                         Core.SwakGaussStream sB = sA.clone();
                         sB.advance();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_c[t]);
@@ -292991,7 +293197,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 2) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -293148,6 +293354,7 @@ public class TaCodegenServe {
                         }
                         Core.SwakHpStream sB = sA.clone();
                         sB.advance();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_c[t]);
@@ -293161,7 +293368,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 2) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -293319,6 +293526,7 @@ public class TaCodegenServe {
                         }
                         Core.T3Stream sB = sA.clone();
                         sB.advance();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_c[t]);
@@ -293332,7 +293540,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 2) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -293487,6 +293695,7 @@ public class TaCodegenServe {
                         }
                         Core.TanStream sB = sA.clone();
                         sB.advance();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_c[t]);
@@ -293500,7 +293709,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 2) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -293650,6 +293859,7 @@ public class TaCodegenServe {
                         }
                         Core.TanhStream sB = sA.clone();
                         sB.advance();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_c[t]);
@@ -293663,7 +293873,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 2) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -293815,6 +294025,7 @@ public class TaCodegenServe {
                         }
                         Core.TemaStream sB = sA.clone();
                         sB.advance();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_c[t]);
@@ -293828,7 +294039,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 2) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -293983,6 +294194,7 @@ public class TaCodegenServe {
                         }
                         Core.TrangeStream sB = sA.clone();
                         sB.advance();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_h[t], fz_l[t], fz_c[t]);
@@ -293996,7 +294208,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 2) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -294147,6 +294359,7 @@ public class TaCodegenServe {
                         }
                         Core.TrimaStream sB = sA.clone();
                         sB.advance();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_c[t]);
@@ -294160,7 +294373,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 2) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -294317,6 +294530,7 @@ public class TaCodegenServe {
                         }
                         Core.TrixStream sB = sA.clone();
                         sB.advance();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_c[t]);
@@ -294330,7 +294544,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 2) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -294486,6 +294700,7 @@ public class TaCodegenServe {
                         }
                         Core.TsfStream sB = sA.clone();
                         sB.advance();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_c[t]);
@@ -294499,7 +294714,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 2) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -294657,6 +294872,7 @@ public class TaCodegenServe {
                         }
                         Core.TsiStream sB = sA.clone();
                         sB.advance();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_c[t]);
@@ -294670,7 +294886,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 2) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -294825,6 +295041,7 @@ public class TaCodegenServe {
                         }
                         Core.TyppriceStream sB = sA.clone();
                         sB.advance();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_h[t], fz_l[t], fz_c[t]);
@@ -294838,7 +295055,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 2) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -294991,6 +295208,7 @@ public class TaCodegenServe {
                         }
                         Core.UltoscStream sB = sA.clone();
                         sB.advance();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_h[t], fz_l[t], fz_c[t]);
@@ -295004,7 +295222,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 2) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -295161,6 +295379,7 @@ public class TaCodegenServe {
                         }
                         Core.VarStream sB = sA.clone();
                         sB.advance();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_c[t]);
@@ -295174,7 +295393,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 2) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -295330,6 +295549,7 @@ public class TaCodegenServe {
                         }
                         Core.VhfStream sB = sA.clone();
                         sB.advance();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_c[t]);
@@ -295343,7 +295563,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 2) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -295501,6 +295721,7 @@ public class TaCodegenServe {
                         }
                         Core.VidyaStream sB = sA.clone();
                         sB.advance();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_c[t]);
@@ -295514,7 +295735,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 2) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -295690,6 +295911,7 @@ public class TaCodegenServe {
                         }
                         Core.VortexStream sB = sA.clone();
                         sB.advance();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         double[] fk1 = new double[svN];
                         for (int t = mid; t < svN; t++) {
@@ -295707,7 +295929,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 2) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -295867,6 +296089,7 @@ public class TaCodegenServe {
                         }
                         Core.VwapStream sB = sA.clone();
                         sB.advance();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_h[t], fz_l[t], fz_c[t], fz_v[t]);
@@ -295880,7 +296103,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 2) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -296031,6 +296254,7 @@ public class TaCodegenServe {
                         }
                         Core.VwmaStream sB = sA.clone();
                         sB.advance();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_c[t], fz_v[t]);
@@ -296044,7 +296268,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 2) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -296199,6 +296423,7 @@ public class TaCodegenServe {
                         }
                         Core.WadStream sB = sA.clone();
                         sB.advance();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_h[t], fz_l[t], fz_c[t]);
@@ -296212,7 +296437,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 2) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -296362,6 +296587,7 @@ public class TaCodegenServe {
                         }
                         Core.WclpriceStream sB = sA.clone();
                         sB.advance();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_h[t], fz_l[t], fz_c[t]);
@@ -296375,7 +296601,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 2) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -296526,6 +296752,7 @@ public class TaCodegenServe {
                         }
                         Core.WillrStream sB = sA.clone();
                         sB.advance();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_h[t], fz_l[t], fz_c[t]);
@@ -296539,7 +296766,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 2) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -296695,6 +296922,7 @@ public class TaCodegenServe {
                         }
                         Core.WmaStream sB = sA.clone();
                         sB.advance();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_c[t]);
@@ -296708,7 +296936,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 2) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }
@@ -296865,6 +297093,7 @@ public class TaCodegenServe {
                         }
                         Core.ZlemaStream sB = sA.clone();
                         sB.advance();
+                        sB.advance();
                         double[] fk0 = new double[svN];
                         for (int t = mid; t < svN; t++) {
                             double uB = sB.update(fz_c[t]);
@@ -296878,7 +297107,7 @@ public class TaCodegenServe {
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 1) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 2) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
                         }
                     } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
                 }

@@ -1077,9 +1077,10 @@ fn emit_sv_clone_leg(
         let _ = writeln!(s, "                    if( cOk && ({cmp}) ) {{ cOk = 0; cloneBad = \"the fork's Value is not the bar it forked at\"; }}");
     }
     s.push_str("                }\n");
-    // The fork counts one bar it never computed. Every bar it is fed afterwards
+    // The fork counts two bars it never computed. Every bar it is fed afterwards
     // must still match batch and the original: a counted bar reaches no state a
     // step reads.
+    let _ = writeln!(s, "                if( cOk && TA_{name}_Advance(cB) != TA_SUCCESS ) {{ cOk = 0; cloneBad = \"Advance rejected the fork\"; }}");
     let _ = writeln!(s, "                if( cOk && TA_{name}_Advance(cB) != TA_SUCCESS ) {{ cOk = 0; cloneBad = \"Advance rejected the fork\"; }}");
     // The fork to the end, then the original. A shared buffer diverges here and
     // nowhere earlier.
@@ -1123,7 +1124,7 @@ fn emit_sv_clone_leg(
     s.push_str("                cloneChecked = 1; cloneLegs++;\n");
     s.push_str("                if( !cOk ) cloneOk = 0;\n");
     // Both consumed bars [cp0-1, svN-1], so the original reports the batch range
-    // and the fork one bar more, the one it counted. The original is the
+    // and the fork two bars more, the two it counted. The original is the
     // control: a failure on cA alone is the leg's own bookkeeping, not the fork.
     s.push_str("                if( cOk )\n                {\n");
     s.push_str("                    int rbA = -1, rnA = -1, rbB = -1, rnB = -1;\n");
@@ -1133,7 +1134,7 @@ fn emit_sv_clone_leg(
         sv_range_bit(SvRangeSite::Copy, SV_RANGE_MASK_C)
     );
     let _ = writeln!(s, "                    if( TA_{name}_OutRange( cA, &rbA, &rnA ) != TA_SUCCESS || rbA != svBeg || rnA != svNb ) {{ rangeOk = 0; cloneBad = \"the original's range moved\"; }}");
-    let _ = writeln!(s, "                    if( TA_{name}_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 1 ) {{ rangeOk = 0; cloneBad = \"the fork's range is not the batch range plus the bar it counted\"; }}");
+    let _ = writeln!(s, "                    if( TA_{name}_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 2 ) {{ rangeOk = 0; cloneBad = \"the fork's range is not the batch range plus the two bars it counted\"; }}");
     s.push_str("                }\n");
     let _ = writeln!(s, "                if( cA ) TA_{name}_Close(cA);");
     let _ = writeln!(s, "                if( cB ) TA_{name}_Close(cB);");

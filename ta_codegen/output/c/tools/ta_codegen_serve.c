@@ -7219,6 +7219,7 @@ static SV_NOINLINE void sv_verify_AC(const char *json, char *resp, int resp_size
                 if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
             }
             if( cOk && TA_AC_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
+            if( cOk && TA_AC_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
             if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             for( t = cmid; cOk && t < svN; t++ )
             {
@@ -7240,7 +7241,7 @@ static SV_NOINLINE void sv_verify_AC(const char *json, char *resp, int resp_size
                 int rbA = -1, rnA = -1, rbB = -1, rnB = -1;
                 rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                 if( TA_AC_OutRange( cA, &rbA, &rnA ) != TA_SUCCESS || rbA != svBeg || rnA != svNb ) { rangeOk = 0; cloneBad = "the original's range moved"; }
-                if( TA_AC_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 1 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the bar it counted"; }
+                if( TA_AC_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 2 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the two bars it counted"; }
             }
             if( cA ) TA_AC_Close(cA);
             if( cB ) TA_AC_Close(cB);
@@ -7518,6 +7519,7 @@ static SV_NOINLINE void sv_verify_ACCBANDS(const char *json, char *resp, int res
                 if( cOk && (sv_bitne(cv2, ca2)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
             }
             if( cOk && TA_ACCBANDS_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
+            if( cOk && TA_ACCBANDS_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
             if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             if( cOk && !(fk1 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             if( cOk && !(fk2 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
@@ -7551,7 +7553,7 @@ static SV_NOINLINE void sv_verify_ACCBANDS(const char *json, char *resp, int res
                 int rbA = -1, rnA = -1, rbB = -1, rnB = -1;
                 rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                 if( TA_ACCBANDS_OutRange( cA, &rbA, &rnA ) != TA_SUCCESS || rbA != svBeg || rnA != svNb ) { rangeOk = 0; cloneBad = "the original's range moved"; }
-                if( TA_ACCBANDS_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 1 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the bar it counted"; }
+                if( TA_ACCBANDS_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 2 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the two bars it counted"; }
             }
             if( cA ) TA_ACCBANDS_Close(cA);
             if( cB ) TA_ACCBANDS_Close(cB);
@@ -7801,6 +7803,7 @@ static SV_NOINLINE void sv_verify_ACOS(const char *json, char *resp, int resp_si
                 if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
             }
             if( cOk && TA_ACOS_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
+            if( cOk && TA_ACOS_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
             if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             for( t = cmid; cOk && t < svN; t++ )
             {
@@ -7822,7 +7825,7 @@ static SV_NOINLINE void sv_verify_ACOS(const char *json, char *resp, int resp_si
                 int rbA = -1, rnA = -1, rbB = -1, rnB = -1;
                 rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                 if( TA_ACOS_OutRange( cA, &rbA, &rnA ) != TA_SUCCESS || rbA != svBeg || rnA != svNb ) { rangeOk = 0; cloneBad = "the original's range moved"; }
-                if( TA_ACOS_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 1 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the bar it counted"; }
+                if( TA_ACOS_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 2 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the two bars it counted"; }
             }
             if( cA ) TA_ACOS_Close(cA);
             if( cB ) TA_ACOS_Close(cB);
@@ -8068,6 +8071,7 @@ static SV_NOINLINE void sv_verify_AD(const char *json, char *resp, int resp_size
                 if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
             }
             if( cOk && TA_AD_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
+            if( cOk && TA_AD_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
             if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             for( t = cmid; cOk && t < svN; t++ )
             {
@@ -8089,7 +8093,7 @@ static SV_NOINLINE void sv_verify_AD(const char *json, char *resp, int resp_size
                 int rbA = -1, rnA = -1, rbB = -1, rnB = -1;
                 rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                 if( TA_AD_OutRange( cA, &rbA, &rnA ) != TA_SUCCESS || rbA != svBeg || rnA != svNb ) { rangeOk = 0; cloneBad = "the original's range moved"; }
-                if( TA_AD_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 1 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the bar it counted"; }
+                if( TA_AD_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 2 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the two bars it counted"; }
             }
             if( cA ) TA_AD_Close(cA);
             if( cB ) TA_AD_Close(cB);
@@ -8335,6 +8339,7 @@ static SV_NOINLINE void sv_verify_ADD(const char *json, char *resp, int resp_siz
                 if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
             }
             if( cOk && TA_ADD_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
+            if( cOk && TA_ADD_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
             if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             for( t = cmid; cOk && t < svN; t++ )
             {
@@ -8356,7 +8361,7 @@ static SV_NOINLINE void sv_verify_ADD(const char *json, char *resp, int resp_siz
                 int rbA = -1, rnA = -1, rbB = -1, rnB = -1;
                 rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                 if( TA_ADD_OutRange( cA, &rbA, &rnA ) != TA_SUCCESS || rbA != svBeg || rnA != svNb ) { rangeOk = 0; cloneBad = "the original's range moved"; }
-                if( TA_ADD_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 1 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the bar it counted"; }
+                if( TA_ADD_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 2 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the two bars it counted"; }
             }
             if( cA ) TA_ADD_Close(cA);
             if( cB ) TA_ADD_Close(cB);
@@ -8605,6 +8610,7 @@ static SV_NOINLINE void sv_verify_ADOSC(const char *json, char *resp, int resp_s
                 if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
             }
             if( cOk && TA_ADOSC_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
+            if( cOk && TA_ADOSC_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
             if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             for( t = cmid; cOk && t < svN; t++ )
             {
@@ -8626,7 +8632,7 @@ static SV_NOINLINE void sv_verify_ADOSC(const char *json, char *resp, int resp_s
                 int rbA = -1, rnA = -1, rbB = -1, rnB = -1;
                 rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                 if( TA_ADOSC_OutRange( cA, &rbA, &rnA ) != TA_SUCCESS || rbA != svBeg || rnA != svNb ) { rangeOk = 0; cloneBad = "the original's range moved"; }
-                if( TA_ADOSC_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 1 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the bar it counted"; }
+                if( TA_ADOSC_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 2 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the two bars it counted"; }
             }
             if( cA ) TA_ADOSC_Close(cA);
             if( cB ) TA_ADOSC_Close(cB);
@@ -8874,6 +8880,7 @@ static SV_NOINLINE void sv_verify_ADR(const char *json, char *resp, int resp_siz
                 if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
             }
             if( cOk && TA_ADR_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
+            if( cOk && TA_ADR_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
             if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             for( t = cmid; cOk && t < svN; t++ )
             {
@@ -8895,7 +8902,7 @@ static SV_NOINLINE void sv_verify_ADR(const char *json, char *resp, int resp_siz
                 int rbA = -1, rnA = -1, rbB = -1, rnB = -1;
                 rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                 if( TA_ADR_OutRange( cA, &rbA, &rnA ) != TA_SUCCESS || rbA != svBeg || rnA != svNb ) { rangeOk = 0; cloneBad = "the original's range moved"; }
-                if( TA_ADR_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 1 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the bar it counted"; }
+                if( TA_ADR_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 2 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the two bars it counted"; }
             }
             if( cA ) TA_ADR_Close(cA);
             if( cB ) TA_ADR_Close(cB);
@@ -9143,6 +9150,7 @@ static SV_NOINLINE void sv_verify_ADX(const char *json, char *resp, int resp_siz
                 if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
             }
             if( cOk && TA_ADX_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
+            if( cOk && TA_ADX_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
             if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             for( t = cmid; cOk && t < svN; t++ )
             {
@@ -9164,7 +9172,7 @@ static SV_NOINLINE void sv_verify_ADX(const char *json, char *resp, int resp_siz
                 int rbA = -1, rnA = -1, rbB = -1, rnB = -1;
                 rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                 if( TA_ADX_OutRange( cA, &rbA, &rnA ) != TA_SUCCESS || rbA != svBeg || rnA != svNb ) { rangeOk = 0; cloneBad = "the original's range moved"; }
-                if( TA_ADX_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 1 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the bar it counted"; }
+                if( TA_ADX_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 2 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the two bars it counted"; }
             }
             if( cA ) TA_ADX_Close(cA);
             if( cB ) TA_ADX_Close(cB);
@@ -9413,6 +9421,7 @@ static SV_NOINLINE void sv_verify_ADXR(const char *json, char *resp, int resp_si
                 if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
             }
             if( cOk && TA_ADXR_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
+            if( cOk && TA_ADXR_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
             if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             for( t = cmid; cOk && t < svN; t++ )
             {
@@ -9434,7 +9443,7 @@ static SV_NOINLINE void sv_verify_ADXR(const char *json, char *resp, int resp_si
                 int rbA = -1, rnA = -1, rbB = -1, rnB = -1;
                 rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                 if( TA_ADXR_OutRange( cA, &rbA, &rnA ) != TA_SUCCESS || rbA != svBeg || rnA != svNb ) { rangeOk = 0; cloneBad = "the original's range moved"; }
-                if( TA_ADXR_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 1 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the bar it counted"; }
+                if( TA_ADXR_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 2 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the two bars it counted"; }
             }
             if( cA ) TA_ADXR_Close(cA);
             if( cB ) TA_ADXR_Close(cB);
@@ -9684,6 +9693,7 @@ static SV_NOINLINE void sv_verify_ALMA(const char *json, char *resp, int resp_si
                 if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
             }
             if( cOk && TA_ALMA_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
+            if( cOk && TA_ALMA_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
             if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             for( t = cmid; cOk && t < svN; t++ )
             {
@@ -9705,7 +9715,7 @@ static SV_NOINLINE void sv_verify_ALMA(const char *json, char *resp, int resp_si
                 int rbA = -1, rnA = -1, rbB = -1, rnB = -1;
                 rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                 if( TA_ALMA_OutRange( cA, &rbA, &rnA ) != TA_SUCCESS || rbA != svBeg || rnA != svNb ) { rangeOk = 0; cloneBad = "the original's range moved"; }
-                if( TA_ALMA_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 1 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the bar it counted"; }
+                if( TA_ALMA_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 2 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the two bars it counted"; }
             }
             if( cA ) TA_ALMA_Close(cA);
             if( cB ) TA_ALMA_Close(cB);
@@ -9953,6 +9963,7 @@ static SV_NOINLINE void sv_verify_AO(const char *json, char *resp, int resp_size
                 if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
             }
             if( cOk && TA_AO_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
+            if( cOk && TA_AO_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
             if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             for( t = cmid; cOk && t < svN; t++ )
             {
@@ -9974,7 +9985,7 @@ static SV_NOINLINE void sv_verify_AO(const char *json, char *resp, int resp_size
                 int rbA = -1, rnA = -1, rbB = -1, rnB = -1;
                 rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                 if( TA_AO_OutRange( cA, &rbA, &rnA ) != TA_SUCCESS || rbA != svBeg || rnA != svNb ) { rangeOk = 0; cloneBad = "the original's range moved"; }
-                if( TA_AO_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 1 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the bar it counted"; }
+                if( TA_AO_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 2 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the two bars it counted"; }
             }
             if( cA ) TA_AO_Close(cA);
             if( cB ) TA_AO_Close(cB);
@@ -10234,6 +10245,7 @@ static SV_NOINLINE void sv_verify_APO(const char *json, char *resp, int resp_siz
                 if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
             }
             if( cOk && TA_APO_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
+            if( cOk && TA_APO_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
             if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             for( t = cmid; cOk && t < svN; t++ )
             {
@@ -10255,7 +10267,7 @@ static SV_NOINLINE void sv_verify_APO(const char *json, char *resp, int resp_siz
                 int rbA = -1, rnA = -1, rbB = -1, rnB = -1;
                 rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                 if( TA_APO_OutRange( cA, &rbA, &rnA ) != TA_SUCCESS || rbA != svBeg || rnA != svNb ) { rangeOk = 0; cloneBad = "the original's range moved"; }
-                if( TA_APO_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 1 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the bar it counted"; }
+                if( TA_APO_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 2 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the two bars it counted"; }
             }
             if( cA ) TA_APO_Close(cA);
             if( cB ) TA_APO_Close(cB);
@@ -10527,6 +10539,7 @@ static SV_NOINLINE void sv_verify_AROON(const char *json, char *resp, int resp_s
                 if( cOk && (sv_bitne(cv1, ca1)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
             }
             if( cOk && TA_AROON_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
+            if( cOk && TA_AROON_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
             if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             if( cOk && !(fk1 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             for( t = cmid; cOk && t < svN; t++ )
@@ -10554,7 +10567,7 @@ static SV_NOINLINE void sv_verify_AROON(const char *json, char *resp, int resp_s
                 int rbA = -1, rnA = -1, rbB = -1, rnB = -1;
                 rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                 if( TA_AROON_OutRange( cA, &rbA, &rnA ) != TA_SUCCESS || rbA != svBeg || rnA != svNb ) { rangeOk = 0; cloneBad = "the original's range moved"; }
-                if( TA_AROON_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 1 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the bar it counted"; }
+                if( TA_AROON_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 2 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the two bars it counted"; }
             }
             if( cA ) TA_AROON_Close(cA);
             if( cB ) TA_AROON_Close(cB);
@@ -10803,6 +10816,7 @@ static SV_NOINLINE void sv_verify_AROONOSC(const char *json, char *resp, int res
                 if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
             }
             if( cOk && TA_AROONOSC_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
+            if( cOk && TA_AROONOSC_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
             if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             for( t = cmid; cOk && t < svN; t++ )
             {
@@ -10824,7 +10838,7 @@ static SV_NOINLINE void sv_verify_AROONOSC(const char *json, char *resp, int res
                 int rbA = -1, rnA = -1, rbB = -1, rnB = -1;
                 rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                 if( TA_AROONOSC_OutRange( cA, &rbA, &rnA ) != TA_SUCCESS || rbA != svBeg || rnA != svNb ) { rangeOk = 0; cloneBad = "the original's range moved"; }
-                if( TA_AROONOSC_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 1 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the bar it counted"; }
+                if( TA_AROONOSC_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 2 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the two bars it counted"; }
             }
             if( cA ) TA_AROONOSC_Close(cA);
             if( cB ) TA_AROONOSC_Close(cB);
@@ -11071,6 +11085,7 @@ static SV_NOINLINE void sv_verify_ASI(const char *json, char *resp, int resp_siz
                 if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
             }
             if( cOk && TA_ASI_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
+            if( cOk && TA_ASI_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
             if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             for( t = cmid; cOk && t < svN; t++ )
             {
@@ -11092,7 +11107,7 @@ static SV_NOINLINE void sv_verify_ASI(const char *json, char *resp, int resp_siz
                 int rbA = -1, rnA = -1, rbB = -1, rnB = -1;
                 rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                 if( TA_ASI_OutRange( cA, &rbA, &rnA ) != TA_SUCCESS || rbA != svBeg || rnA != svNb ) { rangeOk = 0; cloneBad = "the original's range moved"; }
-                if( TA_ASI_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 1 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the bar it counted"; }
+                if( TA_ASI_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 2 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the two bars it counted"; }
             }
             if( cA ) TA_ASI_Close(cA);
             if( cB ) TA_ASI_Close(cB);
@@ -11338,6 +11353,7 @@ static SV_NOINLINE void sv_verify_ASIN(const char *json, char *resp, int resp_si
                 if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
             }
             if( cOk && TA_ASIN_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
+            if( cOk && TA_ASIN_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
             if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             for( t = cmid; cOk && t < svN; t++ )
             {
@@ -11359,7 +11375,7 @@ static SV_NOINLINE void sv_verify_ASIN(const char *json, char *resp, int resp_si
                 int rbA = -1, rnA = -1, rbB = -1, rnB = -1;
                 rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                 if( TA_ASIN_OutRange( cA, &rbA, &rnA ) != TA_SUCCESS || rbA != svBeg || rnA != svNb ) { rangeOk = 0; cloneBad = "the original's range moved"; }
-                if( TA_ASIN_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 1 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the bar it counted"; }
+                if( TA_ASIN_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 2 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the two bars it counted"; }
             }
             if( cA ) TA_ASIN_Close(cA);
             if( cB ) TA_ASIN_Close(cB);
@@ -11605,6 +11621,7 @@ static SV_NOINLINE void sv_verify_ATAN(const char *json, char *resp, int resp_si
                 if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
             }
             if( cOk && TA_ATAN_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
+            if( cOk && TA_ATAN_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
             if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             for( t = cmid; cOk && t < svN; t++ )
             {
@@ -11626,7 +11643,7 @@ static SV_NOINLINE void sv_verify_ATAN(const char *json, char *resp, int resp_si
                 int rbA = -1, rnA = -1, rbB = -1, rnB = -1;
                 rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                 if( TA_ATAN_OutRange( cA, &rbA, &rnA ) != TA_SUCCESS || rbA != svBeg || rnA != svNb ) { rangeOk = 0; cloneBad = "the original's range moved"; }
-                if( TA_ATAN_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 1 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the bar it counted"; }
+                if( TA_ATAN_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 2 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the two bars it counted"; }
             }
             if( cA ) TA_ATAN_Close(cA);
             if( cB ) TA_ATAN_Close(cB);
@@ -11874,6 +11891,7 @@ static SV_NOINLINE void sv_verify_ATR(const char *json, char *resp, int resp_siz
                 if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
             }
             if( cOk && TA_ATR_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
+            if( cOk && TA_ATR_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
             if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             for( t = cmid; cOk && t < svN; t++ )
             {
@@ -11895,7 +11913,7 @@ static SV_NOINLINE void sv_verify_ATR(const char *json, char *resp, int resp_siz
                 int rbA = -1, rnA = -1, rbB = -1, rnB = -1;
                 rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                 if( TA_ATR_OutRange( cA, &rbA, &rnA ) != TA_SUCCESS || rbA != svBeg || rnA != svNb ) { rangeOk = 0; cloneBad = "the original's range moved"; }
-                if( TA_ATR_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 1 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the bar it counted"; }
+                if( TA_ATR_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 2 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the two bars it counted"; }
             }
             if( cA ) TA_ATR_Close(cA);
             if( cB ) TA_ATR_Close(cB);
@@ -12143,6 +12161,7 @@ static SV_NOINLINE void sv_verify_AVGDEV(const char *json, char *resp, int resp_
                 if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
             }
             if( cOk && TA_AVGDEV_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
+            if( cOk && TA_AVGDEV_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
             if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             for( t = cmid; cOk && t < svN; t++ )
             {
@@ -12164,7 +12183,7 @@ static SV_NOINLINE void sv_verify_AVGDEV(const char *json, char *resp, int resp_
                 int rbA = -1, rnA = -1, rbB = -1, rnB = -1;
                 rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                 if( TA_AVGDEV_OutRange( cA, &rbA, &rnA ) != TA_SUCCESS || rbA != svBeg || rnA != svNb ) { rangeOk = 0; cloneBad = "the original's range moved"; }
-                if( TA_AVGDEV_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 1 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the bar it counted"; }
+                if( TA_AVGDEV_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 2 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the two bars it counted"; }
             }
             if( cA ) TA_AVGDEV_Close(cA);
             if( cB ) TA_AVGDEV_Close(cB);
@@ -12410,6 +12429,7 @@ static SV_NOINLINE void sv_verify_AVGPRICE(const char *json, char *resp, int res
                 if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
             }
             if( cOk && TA_AVGPRICE_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
+            if( cOk && TA_AVGPRICE_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
             if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             for( t = cmid; cOk && t < svN; t++ )
             {
@@ -12431,7 +12451,7 @@ static SV_NOINLINE void sv_verify_AVGPRICE(const char *json, char *resp, int res
                 int rbA = -1, rnA = -1, rbB = -1, rnB = -1;
                 rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                 if( TA_AVGPRICE_OutRange( cA, &rbA, &rnA ) != TA_SUCCESS || rbA != svBeg || rnA != svNb ) { rangeOk = 0; cloneBad = "the original's range moved"; }
-                if( TA_AVGPRICE_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 1 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the bar it counted"; }
+                if( TA_AVGPRICE_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 2 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the two bars it counted"; }
             }
             if( cA ) TA_AVGPRICE_Close(cA);
             if( cB ) TA_AVGPRICE_Close(cB);
@@ -12723,6 +12743,7 @@ static SV_NOINLINE void sv_verify_BBANDS(const char *json, char *resp, int resp_
                 if( cOk && (sv_bitne(cv2, ca2)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
             }
             if( cOk && TA_BBANDS_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
+            if( cOk && TA_BBANDS_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
             if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             if( cOk && !(fk1 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             if( cOk && !(fk2 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
@@ -12756,7 +12777,7 @@ static SV_NOINLINE void sv_verify_BBANDS(const char *json, char *resp, int resp_
                 int rbA = -1, rnA = -1, rbB = -1, rnB = -1;
                 rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                 if( TA_BBANDS_OutRange( cA, &rbA, &rnA ) != TA_SUCCESS || rbA != svBeg || rnA != svNb ) { rangeOk = 0; cloneBad = "the original's range moved"; }
-                if( TA_BBANDS_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 1 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the bar it counted"; }
+                if( TA_BBANDS_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 2 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the two bars it counted"; }
             }
             if( cA ) TA_BBANDS_Close(cA);
             if( cB ) TA_BBANDS_Close(cB);
@@ -13027,6 +13048,7 @@ static SV_NOINLINE void sv_verify_BBW(const char *json, char *resp, int resp_siz
                 if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
             }
             if( cOk && TA_BBW_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
+            if( cOk && TA_BBW_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
             if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             for( t = cmid; cOk && t < svN; t++ )
             {
@@ -13048,7 +13070,7 @@ static SV_NOINLINE void sv_verify_BBW(const char *json, char *resp, int resp_siz
                 int rbA = -1, rnA = -1, rbB = -1, rnB = -1;
                 rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                 if( TA_BBW_OutRange( cA, &rbA, &rnA ) != TA_SUCCESS || rbA != svBeg || rnA != svNb ) { rangeOk = 0; cloneBad = "the original's range moved"; }
-                if( TA_BBW_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 1 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the bar it counted"; }
+                if( TA_BBW_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 2 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the two bars it counted"; }
             }
             if( cA ) TA_BBW_Close(cA);
             if( cB ) TA_BBW_Close(cB);
@@ -13301,6 +13323,7 @@ static SV_NOINLINE void sv_verify_BETA(const char *json, char *resp, int resp_si
                 if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
             }
             if( cOk && TA_BETA_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
+            if( cOk && TA_BETA_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
             if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             for( t = cmid; cOk && t < svN; t++ )
             {
@@ -13322,7 +13345,7 @@ static SV_NOINLINE void sv_verify_BETA(const char *json, char *resp, int resp_si
                 int rbA = -1, rnA = -1, rbB = -1, rnB = -1;
                 rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                 if( TA_BETA_OutRange( cA, &rbA, &rnA ) != TA_SUCCESS || rbA != svBeg || rnA != svNb ) { rangeOk = 0; cloneBad = "the original's range moved"; }
-                if( TA_BETA_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 1 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the bar it counted"; }
+                if( TA_BETA_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 2 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the two bars it counted"; }
             }
             if( cA ) TA_BETA_Close(cA);
             if( cB ) TA_BETA_Close(cB);
@@ -13568,6 +13591,7 @@ static SV_NOINLINE void sv_verify_BOP(const char *json, char *resp, int resp_siz
                 if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
             }
             if( cOk && TA_BOP_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
+            if( cOk && TA_BOP_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
             if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             for( t = cmid; cOk && t < svN; t++ )
             {
@@ -13589,7 +13613,7 @@ static SV_NOINLINE void sv_verify_BOP(const char *json, char *resp, int resp_siz
                 int rbA = -1, rnA = -1, rbB = -1, rnB = -1;
                 rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                 if( TA_BOP_OutRange( cA, &rbA, &rnA ) != TA_SUCCESS || rbA != svBeg || rnA != svNb ) { rangeOk = 0; cloneBad = "the original's range moved"; }
-                if( TA_BOP_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 1 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the bar it counted"; }
+                if( TA_BOP_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 2 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the two bars it counted"; }
             }
             if( cA ) TA_BOP_Close(cA);
             if( cB ) TA_BOP_Close(cB);
@@ -13836,6 +13860,7 @@ static SV_NOINLINE void sv_verify_CCI(const char *json, char *resp, int resp_siz
                 if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
             }
             if( cOk && TA_CCI_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
+            if( cOk && TA_CCI_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
             if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             for( t = cmid; cOk && t < svN; t++ )
             {
@@ -13857,7 +13882,7 @@ static SV_NOINLINE void sv_verify_CCI(const char *json, char *resp, int resp_siz
                 int rbA = -1, rnA = -1, rbB = -1, rnB = -1;
                 rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                 if( TA_CCI_OutRange( cA, &rbA, &rnA ) != TA_SUCCESS || rbA != svBeg || rnA != svNb ) { rangeOk = 0; cloneBad = "the original's range moved"; }
-                if( TA_CCI_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 1 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the bar it counted"; }
+                if( TA_CCI_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 2 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the two bars it counted"; }
             }
             if( cA ) TA_CCI_Close(cA);
             if( cB ) TA_CCI_Close(cB);
@@ -14103,6 +14128,7 @@ static SV_NOINLINE void sv_verify_CDL2CROWS(const char *json, char *resp, int re
                 if( cOk && (cv0 != ca0) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
             }
             if( cOk && TA_CDL2CROWS_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
+            if( cOk && TA_CDL2CROWS_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
             if( cOk && !(fk0 = (int *)malloc( sizeof(int) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             for( t = cmid; cOk && t < svN; t++ )
             {
@@ -14124,7 +14150,7 @@ static SV_NOINLINE void sv_verify_CDL2CROWS(const char *json, char *resp, int re
                 int rbA = -1, rnA = -1, rbB = -1, rnB = -1;
                 rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                 if( TA_CDL2CROWS_OutRange( cA, &rbA, &rnA ) != TA_SUCCESS || rbA != svBeg || rnA != svNb ) { rangeOk = 0; cloneBad = "the original's range moved"; }
-                if( TA_CDL2CROWS_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 1 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the bar it counted"; }
+                if( TA_CDL2CROWS_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 2 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the two bars it counted"; }
             }
             if( cA ) TA_CDL2CROWS_Close(cA);
             if( cB ) TA_CDL2CROWS_Close(cB);
@@ -14372,6 +14398,7 @@ static SV_NOINLINE void sv_verify_CDL3BLACKCROWS(const char *json, char *resp, i
                 if( cOk && (cv0 != ca0) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
             }
             if( cOk && TA_CDL3BLACKCROWS_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
+            if( cOk && TA_CDL3BLACKCROWS_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
             if( cOk && !(fk0 = (int *)malloc( sizeof(int) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             for( t = cmid; cOk && t < svN; t++ )
             {
@@ -14393,7 +14420,7 @@ static SV_NOINLINE void sv_verify_CDL3BLACKCROWS(const char *json, char *resp, i
                 int rbA = -1, rnA = -1, rbB = -1, rnB = -1;
                 rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                 if( TA_CDL3BLACKCROWS_OutRange( cA, &rbA, &rnA ) != TA_SUCCESS || rbA != svBeg || rnA != svNb ) { rangeOk = 0; cloneBad = "the original's range moved"; }
-                if( TA_CDL3BLACKCROWS_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 1 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the bar it counted"; }
+                if( TA_CDL3BLACKCROWS_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 2 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the two bars it counted"; }
             }
             if( cA ) TA_CDL3BLACKCROWS_Close(cA);
             if( cB ) TA_CDL3BLACKCROWS_Close(cB);
@@ -14641,6 +14668,7 @@ static SV_NOINLINE void sv_verify_CDL3INSIDE(const char *json, char *resp, int r
                 if( cOk && (cv0 != ca0) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
             }
             if( cOk && TA_CDL3INSIDE_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
+            if( cOk && TA_CDL3INSIDE_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
             if( cOk && !(fk0 = (int *)malloc( sizeof(int) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             for( t = cmid; cOk && t < svN; t++ )
             {
@@ -14662,7 +14690,7 @@ static SV_NOINLINE void sv_verify_CDL3INSIDE(const char *json, char *resp, int r
                 int rbA = -1, rnA = -1, rbB = -1, rnB = -1;
                 rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                 if( TA_CDL3INSIDE_OutRange( cA, &rbA, &rnA ) != TA_SUCCESS || rbA != svBeg || rnA != svNb ) { rangeOk = 0; cloneBad = "the original's range moved"; }
-                if( TA_CDL3INSIDE_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 1 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the bar it counted"; }
+                if( TA_CDL3INSIDE_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 2 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the two bars it counted"; }
             }
             if( cA ) TA_CDL3INSIDE_Close(cA);
             if( cB ) TA_CDL3INSIDE_Close(cB);
@@ -14910,6 +14938,7 @@ static SV_NOINLINE void sv_verify_CDL3LINESTRIKE(const char *json, char *resp, i
                 if( cOk && (cv0 != ca0) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
             }
             if( cOk && TA_CDL3LINESTRIKE_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
+            if( cOk && TA_CDL3LINESTRIKE_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
             if( cOk && !(fk0 = (int *)malloc( sizeof(int) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             for( t = cmid; cOk && t < svN; t++ )
             {
@@ -14931,7 +14960,7 @@ static SV_NOINLINE void sv_verify_CDL3LINESTRIKE(const char *json, char *resp, i
                 int rbA = -1, rnA = -1, rbB = -1, rnB = -1;
                 rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                 if( TA_CDL3LINESTRIKE_OutRange( cA, &rbA, &rnA ) != TA_SUCCESS || rbA != svBeg || rnA != svNb ) { rangeOk = 0; cloneBad = "the original's range moved"; }
-                if( TA_CDL3LINESTRIKE_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 1 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the bar it counted"; }
+                if( TA_CDL3LINESTRIKE_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 2 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the two bars it counted"; }
             }
             if( cA ) TA_CDL3LINESTRIKE_Close(cA);
             if( cB ) TA_CDL3LINESTRIKE_Close(cB);
@@ -15179,6 +15208,7 @@ static SV_NOINLINE void sv_verify_CDL3OUTSIDE(const char *json, char *resp, int 
                 if( cOk && (cv0 != ca0) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
             }
             if( cOk && TA_CDL3OUTSIDE_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
+            if( cOk && TA_CDL3OUTSIDE_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
             if( cOk && !(fk0 = (int *)malloc( sizeof(int) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             for( t = cmid; cOk && t < svN; t++ )
             {
@@ -15200,7 +15230,7 @@ static SV_NOINLINE void sv_verify_CDL3OUTSIDE(const char *json, char *resp, int 
                 int rbA = -1, rnA = -1, rbB = -1, rnB = -1;
                 rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                 if( TA_CDL3OUTSIDE_OutRange( cA, &rbA, &rnA ) != TA_SUCCESS || rbA != svBeg || rnA != svNb ) { rangeOk = 0; cloneBad = "the original's range moved"; }
-                if( TA_CDL3OUTSIDE_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 1 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the bar it counted"; }
+                if( TA_CDL3OUTSIDE_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 2 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the two bars it counted"; }
             }
             if( cA ) TA_CDL3OUTSIDE_Close(cA);
             if( cB ) TA_CDL3OUTSIDE_Close(cB);
@@ -15448,6 +15478,7 @@ static SV_NOINLINE void sv_verify_CDL3STARSINSOUTH(const char *json, char *resp,
                 if( cOk && (cv0 != ca0) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
             }
             if( cOk && TA_CDL3STARSINSOUTH_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
+            if( cOk && TA_CDL3STARSINSOUTH_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
             if( cOk && !(fk0 = (int *)malloc( sizeof(int) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             for( t = cmid; cOk && t < svN; t++ )
             {
@@ -15469,7 +15500,7 @@ static SV_NOINLINE void sv_verify_CDL3STARSINSOUTH(const char *json, char *resp,
                 int rbA = -1, rnA = -1, rbB = -1, rnB = -1;
                 rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                 if( TA_CDL3STARSINSOUTH_OutRange( cA, &rbA, &rnA ) != TA_SUCCESS || rbA != svBeg || rnA != svNb ) { rangeOk = 0; cloneBad = "the original's range moved"; }
-                if( TA_CDL3STARSINSOUTH_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 1 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the bar it counted"; }
+                if( TA_CDL3STARSINSOUTH_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 2 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the two bars it counted"; }
             }
             if( cA ) TA_CDL3STARSINSOUTH_Close(cA);
             if( cB ) TA_CDL3STARSINSOUTH_Close(cB);
@@ -15717,6 +15748,7 @@ static SV_NOINLINE void sv_verify_CDL3WHITESOLDIERS(const char *json, char *resp
                 if( cOk && (cv0 != ca0) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
             }
             if( cOk && TA_CDL3WHITESOLDIERS_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
+            if( cOk && TA_CDL3WHITESOLDIERS_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
             if( cOk && !(fk0 = (int *)malloc( sizeof(int) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             for( t = cmid; cOk && t < svN; t++ )
             {
@@ -15738,7 +15770,7 @@ static SV_NOINLINE void sv_verify_CDL3WHITESOLDIERS(const char *json, char *resp
                 int rbA = -1, rnA = -1, rbB = -1, rnB = -1;
                 rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                 if( TA_CDL3WHITESOLDIERS_OutRange( cA, &rbA, &rnA ) != TA_SUCCESS || rbA != svBeg || rnA != svNb ) { rangeOk = 0; cloneBad = "the original's range moved"; }
-                if( TA_CDL3WHITESOLDIERS_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 1 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the bar it counted"; }
+                if( TA_CDL3WHITESOLDIERS_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 2 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the two bars it counted"; }
             }
             if( cA ) TA_CDL3WHITESOLDIERS_Close(cA);
             if( cB ) TA_CDL3WHITESOLDIERS_Close(cB);
@@ -15987,6 +16019,7 @@ static SV_NOINLINE void sv_verify_CDLABANDONEDBABY(const char *json, char *resp,
                 if( cOk && (cv0 != ca0) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
             }
             if( cOk && TA_CDLABANDONEDBABY_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
+            if( cOk && TA_CDLABANDONEDBABY_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
             if( cOk && !(fk0 = (int *)malloc( sizeof(int) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             for( t = cmid; cOk && t < svN; t++ )
             {
@@ -16008,7 +16041,7 @@ static SV_NOINLINE void sv_verify_CDLABANDONEDBABY(const char *json, char *resp,
                 int rbA = -1, rnA = -1, rbB = -1, rnB = -1;
                 rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                 if( TA_CDLABANDONEDBABY_OutRange( cA, &rbA, &rnA ) != TA_SUCCESS || rbA != svBeg || rnA != svNb ) { rangeOk = 0; cloneBad = "the original's range moved"; }
-                if( TA_CDLABANDONEDBABY_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 1 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the bar it counted"; }
+                if( TA_CDLABANDONEDBABY_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 2 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the two bars it counted"; }
             }
             if( cA ) TA_CDLABANDONEDBABY_Close(cA);
             if( cB ) TA_CDLABANDONEDBABY_Close(cB);
@@ -16256,6 +16289,7 @@ static SV_NOINLINE void sv_verify_CDLADVANCEBLOCK(const char *json, char *resp, 
                 if( cOk && (cv0 != ca0) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
             }
             if( cOk && TA_CDLADVANCEBLOCK_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
+            if( cOk && TA_CDLADVANCEBLOCK_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
             if( cOk && !(fk0 = (int *)malloc( sizeof(int) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             for( t = cmid; cOk && t < svN; t++ )
             {
@@ -16277,7 +16311,7 @@ static SV_NOINLINE void sv_verify_CDLADVANCEBLOCK(const char *json, char *resp, 
                 int rbA = -1, rnA = -1, rbB = -1, rnB = -1;
                 rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                 if( TA_CDLADVANCEBLOCK_OutRange( cA, &rbA, &rnA ) != TA_SUCCESS || rbA != svBeg || rnA != svNb ) { rangeOk = 0; cloneBad = "the original's range moved"; }
-                if( TA_CDLADVANCEBLOCK_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 1 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the bar it counted"; }
+                if( TA_CDLADVANCEBLOCK_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 2 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the two bars it counted"; }
             }
             if( cA ) TA_CDLADVANCEBLOCK_Close(cA);
             if( cB ) TA_CDLADVANCEBLOCK_Close(cB);
@@ -16525,6 +16559,7 @@ static SV_NOINLINE void sv_verify_CDLBELTHOLD(const char *json, char *resp, int 
                 if( cOk && (cv0 != ca0) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
             }
             if( cOk && TA_CDLBELTHOLD_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
+            if( cOk && TA_CDLBELTHOLD_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
             if( cOk && !(fk0 = (int *)malloc( sizeof(int) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             for( t = cmid; cOk && t < svN; t++ )
             {
@@ -16546,7 +16581,7 @@ static SV_NOINLINE void sv_verify_CDLBELTHOLD(const char *json, char *resp, int 
                 int rbA = -1, rnA = -1, rbB = -1, rnB = -1;
                 rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                 if( TA_CDLBELTHOLD_OutRange( cA, &rbA, &rnA ) != TA_SUCCESS || rbA != svBeg || rnA != svNb ) { rangeOk = 0; cloneBad = "the original's range moved"; }
-                if( TA_CDLBELTHOLD_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 1 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the bar it counted"; }
+                if( TA_CDLBELTHOLD_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 2 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the two bars it counted"; }
             }
             if( cA ) TA_CDLBELTHOLD_Close(cA);
             if( cB ) TA_CDLBELTHOLD_Close(cB);
@@ -16794,6 +16829,7 @@ static SV_NOINLINE void sv_verify_CDLBREAKAWAY(const char *json, char *resp, int
                 if( cOk && (cv0 != ca0) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
             }
             if( cOk && TA_CDLBREAKAWAY_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
+            if( cOk && TA_CDLBREAKAWAY_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
             if( cOk && !(fk0 = (int *)malloc( sizeof(int) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             for( t = cmid; cOk && t < svN; t++ )
             {
@@ -16815,7 +16851,7 @@ static SV_NOINLINE void sv_verify_CDLBREAKAWAY(const char *json, char *resp, int
                 int rbA = -1, rnA = -1, rbB = -1, rnB = -1;
                 rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                 if( TA_CDLBREAKAWAY_OutRange( cA, &rbA, &rnA ) != TA_SUCCESS || rbA != svBeg || rnA != svNb ) { rangeOk = 0; cloneBad = "the original's range moved"; }
-                if( TA_CDLBREAKAWAY_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 1 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the bar it counted"; }
+                if( TA_CDLBREAKAWAY_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 2 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the two bars it counted"; }
             }
             if( cA ) TA_CDLBREAKAWAY_Close(cA);
             if( cB ) TA_CDLBREAKAWAY_Close(cB);
@@ -17063,6 +17099,7 @@ static SV_NOINLINE void sv_verify_CDLCLOSINGMARUBOZU(const char *json, char *res
                 if( cOk && (cv0 != ca0) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
             }
             if( cOk && TA_CDLCLOSINGMARUBOZU_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
+            if( cOk && TA_CDLCLOSINGMARUBOZU_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
             if( cOk && !(fk0 = (int *)malloc( sizeof(int) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             for( t = cmid; cOk && t < svN; t++ )
             {
@@ -17084,7 +17121,7 @@ static SV_NOINLINE void sv_verify_CDLCLOSINGMARUBOZU(const char *json, char *res
                 int rbA = -1, rnA = -1, rbB = -1, rnB = -1;
                 rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                 if( TA_CDLCLOSINGMARUBOZU_OutRange( cA, &rbA, &rnA ) != TA_SUCCESS || rbA != svBeg || rnA != svNb ) { rangeOk = 0; cloneBad = "the original's range moved"; }
-                if( TA_CDLCLOSINGMARUBOZU_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 1 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the bar it counted"; }
+                if( TA_CDLCLOSINGMARUBOZU_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 2 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the two bars it counted"; }
             }
             if( cA ) TA_CDLCLOSINGMARUBOZU_Close(cA);
             if( cB ) TA_CDLCLOSINGMARUBOZU_Close(cB);
@@ -17332,6 +17369,7 @@ static SV_NOINLINE void sv_verify_CDLCONCEALBABYSWALL(const char *json, char *re
                 if( cOk && (cv0 != ca0) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
             }
             if( cOk && TA_CDLCONCEALBABYSWALL_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
+            if( cOk && TA_CDLCONCEALBABYSWALL_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
             if( cOk && !(fk0 = (int *)malloc( sizeof(int) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             for( t = cmid; cOk && t < svN; t++ )
             {
@@ -17353,7 +17391,7 @@ static SV_NOINLINE void sv_verify_CDLCONCEALBABYSWALL(const char *json, char *re
                 int rbA = -1, rnA = -1, rbB = -1, rnB = -1;
                 rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                 if( TA_CDLCONCEALBABYSWALL_OutRange( cA, &rbA, &rnA ) != TA_SUCCESS || rbA != svBeg || rnA != svNb ) { rangeOk = 0; cloneBad = "the original's range moved"; }
-                if( TA_CDLCONCEALBABYSWALL_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 1 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the bar it counted"; }
+                if( TA_CDLCONCEALBABYSWALL_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 2 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the two bars it counted"; }
             }
             if( cA ) TA_CDLCONCEALBABYSWALL_Close(cA);
             if( cB ) TA_CDLCONCEALBABYSWALL_Close(cB);
@@ -17601,6 +17639,7 @@ static SV_NOINLINE void sv_verify_CDLCOUNTERATTACK(const char *json, char *resp,
                 if( cOk && (cv0 != ca0) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
             }
             if( cOk && TA_CDLCOUNTERATTACK_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
+            if( cOk && TA_CDLCOUNTERATTACK_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
             if( cOk && !(fk0 = (int *)malloc( sizeof(int) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             for( t = cmid; cOk && t < svN; t++ )
             {
@@ -17622,7 +17661,7 @@ static SV_NOINLINE void sv_verify_CDLCOUNTERATTACK(const char *json, char *resp,
                 int rbA = -1, rnA = -1, rbB = -1, rnB = -1;
                 rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                 if( TA_CDLCOUNTERATTACK_OutRange( cA, &rbA, &rnA ) != TA_SUCCESS || rbA != svBeg || rnA != svNb ) { rangeOk = 0; cloneBad = "the original's range moved"; }
-                if( TA_CDLCOUNTERATTACK_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 1 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the bar it counted"; }
+                if( TA_CDLCOUNTERATTACK_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 2 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the two bars it counted"; }
             }
             if( cA ) TA_CDLCOUNTERATTACK_Close(cA);
             if( cB ) TA_CDLCOUNTERATTACK_Close(cB);
@@ -17871,6 +17910,7 @@ static SV_NOINLINE void sv_verify_CDLDARKCLOUDCOVER(const char *json, char *resp
                 if( cOk && (cv0 != ca0) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
             }
             if( cOk && TA_CDLDARKCLOUDCOVER_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
+            if( cOk && TA_CDLDARKCLOUDCOVER_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
             if( cOk && !(fk0 = (int *)malloc( sizeof(int) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             for( t = cmid; cOk && t < svN; t++ )
             {
@@ -17892,7 +17932,7 @@ static SV_NOINLINE void sv_verify_CDLDARKCLOUDCOVER(const char *json, char *resp
                 int rbA = -1, rnA = -1, rbB = -1, rnB = -1;
                 rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                 if( TA_CDLDARKCLOUDCOVER_OutRange( cA, &rbA, &rnA ) != TA_SUCCESS || rbA != svBeg || rnA != svNb ) { rangeOk = 0; cloneBad = "the original's range moved"; }
-                if( TA_CDLDARKCLOUDCOVER_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 1 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the bar it counted"; }
+                if( TA_CDLDARKCLOUDCOVER_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 2 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the two bars it counted"; }
             }
             if( cA ) TA_CDLDARKCLOUDCOVER_Close(cA);
             if( cB ) TA_CDLDARKCLOUDCOVER_Close(cB);
@@ -18140,6 +18180,7 @@ static SV_NOINLINE void sv_verify_CDLDOJI(const char *json, char *resp, int resp
                 if( cOk && (cv0 != ca0) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
             }
             if( cOk && TA_CDLDOJI_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
+            if( cOk && TA_CDLDOJI_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
             if( cOk && !(fk0 = (int *)malloc( sizeof(int) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             for( t = cmid; cOk && t < svN; t++ )
             {
@@ -18161,7 +18202,7 @@ static SV_NOINLINE void sv_verify_CDLDOJI(const char *json, char *resp, int resp
                 int rbA = -1, rnA = -1, rbB = -1, rnB = -1;
                 rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                 if( TA_CDLDOJI_OutRange( cA, &rbA, &rnA ) != TA_SUCCESS || rbA != svBeg || rnA != svNb ) { rangeOk = 0; cloneBad = "the original's range moved"; }
-                if( TA_CDLDOJI_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 1 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the bar it counted"; }
+                if( TA_CDLDOJI_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 2 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the two bars it counted"; }
             }
             if( cA ) TA_CDLDOJI_Close(cA);
             if( cB ) TA_CDLDOJI_Close(cB);
@@ -18409,6 +18450,7 @@ static SV_NOINLINE void sv_verify_CDLDOJISTAR(const char *json, char *resp, int 
                 if( cOk && (cv0 != ca0) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
             }
             if( cOk && TA_CDLDOJISTAR_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
+            if( cOk && TA_CDLDOJISTAR_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
             if( cOk && !(fk0 = (int *)malloc( sizeof(int) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             for( t = cmid; cOk && t < svN; t++ )
             {
@@ -18430,7 +18472,7 @@ static SV_NOINLINE void sv_verify_CDLDOJISTAR(const char *json, char *resp, int 
                 int rbA = -1, rnA = -1, rbB = -1, rnB = -1;
                 rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                 if( TA_CDLDOJISTAR_OutRange( cA, &rbA, &rnA ) != TA_SUCCESS || rbA != svBeg || rnA != svNb ) { rangeOk = 0; cloneBad = "the original's range moved"; }
-                if( TA_CDLDOJISTAR_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 1 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the bar it counted"; }
+                if( TA_CDLDOJISTAR_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 2 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the two bars it counted"; }
             }
             if( cA ) TA_CDLDOJISTAR_Close(cA);
             if( cB ) TA_CDLDOJISTAR_Close(cB);
@@ -18678,6 +18720,7 @@ static SV_NOINLINE void sv_verify_CDLDRAGONFLYDOJI(const char *json, char *resp,
                 if( cOk && (cv0 != ca0) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
             }
             if( cOk && TA_CDLDRAGONFLYDOJI_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
+            if( cOk && TA_CDLDRAGONFLYDOJI_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
             if( cOk && !(fk0 = (int *)malloc( sizeof(int) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             for( t = cmid; cOk && t < svN; t++ )
             {
@@ -18699,7 +18742,7 @@ static SV_NOINLINE void sv_verify_CDLDRAGONFLYDOJI(const char *json, char *resp,
                 int rbA = -1, rnA = -1, rbB = -1, rnB = -1;
                 rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                 if( TA_CDLDRAGONFLYDOJI_OutRange( cA, &rbA, &rnA ) != TA_SUCCESS || rbA != svBeg || rnA != svNb ) { rangeOk = 0; cloneBad = "the original's range moved"; }
-                if( TA_CDLDRAGONFLYDOJI_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 1 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the bar it counted"; }
+                if( TA_CDLDRAGONFLYDOJI_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 2 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the two bars it counted"; }
             }
             if( cA ) TA_CDLDRAGONFLYDOJI_Close(cA);
             if( cB ) TA_CDLDRAGONFLYDOJI_Close(cB);
@@ -18947,6 +18990,7 @@ static SV_NOINLINE void sv_verify_CDLENGULFING(const char *json, char *resp, int
                 if( cOk && (cv0 != ca0) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
             }
             if( cOk && TA_CDLENGULFING_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
+            if( cOk && TA_CDLENGULFING_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
             if( cOk && !(fk0 = (int *)malloc( sizeof(int) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             for( t = cmid; cOk && t < svN; t++ )
             {
@@ -18968,7 +19012,7 @@ static SV_NOINLINE void sv_verify_CDLENGULFING(const char *json, char *resp, int
                 int rbA = -1, rnA = -1, rbB = -1, rnB = -1;
                 rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                 if( TA_CDLENGULFING_OutRange( cA, &rbA, &rnA ) != TA_SUCCESS || rbA != svBeg || rnA != svNb ) { rangeOk = 0; cloneBad = "the original's range moved"; }
-                if( TA_CDLENGULFING_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 1 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the bar it counted"; }
+                if( TA_CDLENGULFING_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 2 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the two bars it counted"; }
             }
             if( cA ) TA_CDLENGULFING_Close(cA);
             if( cB ) TA_CDLENGULFING_Close(cB);
@@ -19217,6 +19261,7 @@ static SV_NOINLINE void sv_verify_CDLEVENINGDOJISTAR(const char *json, char *res
                 if( cOk && (cv0 != ca0) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
             }
             if( cOk && TA_CDLEVENINGDOJISTAR_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
+            if( cOk && TA_CDLEVENINGDOJISTAR_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
             if( cOk && !(fk0 = (int *)malloc( sizeof(int) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             for( t = cmid; cOk && t < svN; t++ )
             {
@@ -19238,7 +19283,7 @@ static SV_NOINLINE void sv_verify_CDLEVENINGDOJISTAR(const char *json, char *res
                 int rbA = -1, rnA = -1, rbB = -1, rnB = -1;
                 rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                 if( TA_CDLEVENINGDOJISTAR_OutRange( cA, &rbA, &rnA ) != TA_SUCCESS || rbA != svBeg || rnA != svNb ) { rangeOk = 0; cloneBad = "the original's range moved"; }
-                if( TA_CDLEVENINGDOJISTAR_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 1 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the bar it counted"; }
+                if( TA_CDLEVENINGDOJISTAR_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 2 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the two bars it counted"; }
             }
             if( cA ) TA_CDLEVENINGDOJISTAR_Close(cA);
             if( cB ) TA_CDLEVENINGDOJISTAR_Close(cB);
@@ -19487,6 +19532,7 @@ static SV_NOINLINE void sv_verify_CDLEVENINGSTAR(const char *json, char *resp, i
                 if( cOk && (cv0 != ca0) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
             }
             if( cOk && TA_CDLEVENINGSTAR_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
+            if( cOk && TA_CDLEVENINGSTAR_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
             if( cOk && !(fk0 = (int *)malloc( sizeof(int) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             for( t = cmid; cOk && t < svN; t++ )
             {
@@ -19508,7 +19554,7 @@ static SV_NOINLINE void sv_verify_CDLEVENINGSTAR(const char *json, char *resp, i
                 int rbA = -1, rnA = -1, rbB = -1, rnB = -1;
                 rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                 if( TA_CDLEVENINGSTAR_OutRange( cA, &rbA, &rnA ) != TA_SUCCESS || rbA != svBeg || rnA != svNb ) { rangeOk = 0; cloneBad = "the original's range moved"; }
-                if( TA_CDLEVENINGSTAR_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 1 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the bar it counted"; }
+                if( TA_CDLEVENINGSTAR_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 2 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the two bars it counted"; }
             }
             if( cA ) TA_CDLEVENINGSTAR_Close(cA);
             if( cB ) TA_CDLEVENINGSTAR_Close(cB);
@@ -19756,6 +19802,7 @@ static SV_NOINLINE void sv_verify_CDLGAPSIDESIDEWHITE(const char *json, char *re
                 if( cOk && (cv0 != ca0) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
             }
             if( cOk && TA_CDLGAPSIDESIDEWHITE_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
+            if( cOk && TA_CDLGAPSIDESIDEWHITE_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
             if( cOk && !(fk0 = (int *)malloc( sizeof(int) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             for( t = cmid; cOk && t < svN; t++ )
             {
@@ -19777,7 +19824,7 @@ static SV_NOINLINE void sv_verify_CDLGAPSIDESIDEWHITE(const char *json, char *re
                 int rbA = -1, rnA = -1, rbB = -1, rnB = -1;
                 rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                 if( TA_CDLGAPSIDESIDEWHITE_OutRange( cA, &rbA, &rnA ) != TA_SUCCESS || rbA != svBeg || rnA != svNb ) { rangeOk = 0; cloneBad = "the original's range moved"; }
-                if( TA_CDLGAPSIDESIDEWHITE_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 1 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the bar it counted"; }
+                if( TA_CDLGAPSIDESIDEWHITE_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 2 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the two bars it counted"; }
             }
             if( cA ) TA_CDLGAPSIDESIDEWHITE_Close(cA);
             if( cB ) TA_CDLGAPSIDESIDEWHITE_Close(cB);
@@ -20025,6 +20072,7 @@ static SV_NOINLINE void sv_verify_CDLGRAVESTONEDOJI(const char *json, char *resp
                 if( cOk && (cv0 != ca0) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
             }
             if( cOk && TA_CDLGRAVESTONEDOJI_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
+            if( cOk && TA_CDLGRAVESTONEDOJI_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
             if( cOk && !(fk0 = (int *)malloc( sizeof(int) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             for( t = cmid; cOk && t < svN; t++ )
             {
@@ -20046,7 +20094,7 @@ static SV_NOINLINE void sv_verify_CDLGRAVESTONEDOJI(const char *json, char *resp
                 int rbA = -1, rnA = -1, rbB = -1, rnB = -1;
                 rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                 if( TA_CDLGRAVESTONEDOJI_OutRange( cA, &rbA, &rnA ) != TA_SUCCESS || rbA != svBeg || rnA != svNb ) { rangeOk = 0; cloneBad = "the original's range moved"; }
-                if( TA_CDLGRAVESTONEDOJI_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 1 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the bar it counted"; }
+                if( TA_CDLGRAVESTONEDOJI_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 2 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the two bars it counted"; }
             }
             if( cA ) TA_CDLGRAVESTONEDOJI_Close(cA);
             if( cB ) TA_CDLGRAVESTONEDOJI_Close(cB);
@@ -20294,6 +20342,7 @@ static SV_NOINLINE void sv_verify_CDLHAMMER(const char *json, char *resp, int re
                 if( cOk && (cv0 != ca0) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
             }
             if( cOk && TA_CDLHAMMER_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
+            if( cOk && TA_CDLHAMMER_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
             if( cOk && !(fk0 = (int *)malloc( sizeof(int) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             for( t = cmid; cOk && t < svN; t++ )
             {
@@ -20315,7 +20364,7 @@ static SV_NOINLINE void sv_verify_CDLHAMMER(const char *json, char *resp, int re
                 int rbA = -1, rnA = -1, rbB = -1, rnB = -1;
                 rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                 if( TA_CDLHAMMER_OutRange( cA, &rbA, &rnA ) != TA_SUCCESS || rbA != svBeg || rnA != svNb ) { rangeOk = 0; cloneBad = "the original's range moved"; }
-                if( TA_CDLHAMMER_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 1 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the bar it counted"; }
+                if( TA_CDLHAMMER_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 2 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the two bars it counted"; }
             }
             if( cA ) TA_CDLHAMMER_Close(cA);
             if( cB ) TA_CDLHAMMER_Close(cB);
@@ -20563,6 +20612,7 @@ static SV_NOINLINE void sv_verify_CDLHANGINGMAN(const char *json, char *resp, in
                 if( cOk && (cv0 != ca0) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
             }
             if( cOk && TA_CDLHANGINGMAN_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
+            if( cOk && TA_CDLHANGINGMAN_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
             if( cOk && !(fk0 = (int *)malloc( sizeof(int) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             for( t = cmid; cOk && t < svN; t++ )
             {
@@ -20584,7 +20634,7 @@ static SV_NOINLINE void sv_verify_CDLHANGINGMAN(const char *json, char *resp, in
                 int rbA = -1, rnA = -1, rbB = -1, rnB = -1;
                 rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                 if( TA_CDLHANGINGMAN_OutRange( cA, &rbA, &rnA ) != TA_SUCCESS || rbA != svBeg || rnA != svNb ) { rangeOk = 0; cloneBad = "the original's range moved"; }
-                if( TA_CDLHANGINGMAN_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 1 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the bar it counted"; }
+                if( TA_CDLHANGINGMAN_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 2 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the two bars it counted"; }
             }
             if( cA ) TA_CDLHANGINGMAN_Close(cA);
             if( cB ) TA_CDLHANGINGMAN_Close(cB);
@@ -20832,6 +20882,7 @@ static SV_NOINLINE void sv_verify_CDLHARAMI(const char *json, char *resp, int re
                 if( cOk && (cv0 != ca0) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
             }
             if( cOk && TA_CDLHARAMI_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
+            if( cOk && TA_CDLHARAMI_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
             if( cOk && !(fk0 = (int *)malloc( sizeof(int) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             for( t = cmid; cOk && t < svN; t++ )
             {
@@ -20853,7 +20904,7 @@ static SV_NOINLINE void sv_verify_CDLHARAMI(const char *json, char *resp, int re
                 int rbA = -1, rnA = -1, rbB = -1, rnB = -1;
                 rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                 if( TA_CDLHARAMI_OutRange( cA, &rbA, &rnA ) != TA_SUCCESS || rbA != svBeg || rnA != svNb ) { rangeOk = 0; cloneBad = "the original's range moved"; }
-                if( TA_CDLHARAMI_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 1 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the bar it counted"; }
+                if( TA_CDLHARAMI_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 2 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the two bars it counted"; }
             }
             if( cA ) TA_CDLHARAMI_Close(cA);
             if( cB ) TA_CDLHARAMI_Close(cB);
@@ -21101,6 +21152,7 @@ static SV_NOINLINE void sv_verify_CDLHARAMICROSS(const char *json, char *resp, i
                 if( cOk && (cv0 != ca0) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
             }
             if( cOk && TA_CDLHARAMICROSS_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
+            if( cOk && TA_CDLHARAMICROSS_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
             if( cOk && !(fk0 = (int *)malloc( sizeof(int) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             for( t = cmid; cOk && t < svN; t++ )
             {
@@ -21122,7 +21174,7 @@ static SV_NOINLINE void sv_verify_CDLHARAMICROSS(const char *json, char *resp, i
                 int rbA = -1, rnA = -1, rbB = -1, rnB = -1;
                 rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                 if( TA_CDLHARAMICROSS_OutRange( cA, &rbA, &rnA ) != TA_SUCCESS || rbA != svBeg || rnA != svNb ) { rangeOk = 0; cloneBad = "the original's range moved"; }
-                if( TA_CDLHARAMICROSS_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 1 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the bar it counted"; }
+                if( TA_CDLHARAMICROSS_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 2 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the two bars it counted"; }
             }
             if( cA ) TA_CDLHARAMICROSS_Close(cA);
             if( cB ) TA_CDLHARAMICROSS_Close(cB);
@@ -21370,6 +21422,7 @@ static SV_NOINLINE void sv_verify_CDLHIGHWAVE(const char *json, char *resp, int 
                 if( cOk && (cv0 != ca0) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
             }
             if( cOk && TA_CDLHIGHWAVE_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
+            if( cOk && TA_CDLHIGHWAVE_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
             if( cOk && !(fk0 = (int *)malloc( sizeof(int) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             for( t = cmid; cOk && t < svN; t++ )
             {
@@ -21391,7 +21444,7 @@ static SV_NOINLINE void sv_verify_CDLHIGHWAVE(const char *json, char *resp, int 
                 int rbA = -1, rnA = -1, rbB = -1, rnB = -1;
                 rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                 if( TA_CDLHIGHWAVE_OutRange( cA, &rbA, &rnA ) != TA_SUCCESS || rbA != svBeg || rnA != svNb ) { rangeOk = 0; cloneBad = "the original's range moved"; }
-                if( TA_CDLHIGHWAVE_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 1 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the bar it counted"; }
+                if( TA_CDLHIGHWAVE_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 2 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the two bars it counted"; }
             }
             if( cA ) TA_CDLHIGHWAVE_Close(cA);
             if( cB ) TA_CDLHIGHWAVE_Close(cB);
@@ -21639,6 +21692,7 @@ static SV_NOINLINE void sv_verify_CDLHIKKAKE(const char *json, char *resp, int r
                 if( cOk && (cv0 != ca0) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
             }
             if( cOk && TA_CDLHIKKAKE_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
+            if( cOk && TA_CDLHIKKAKE_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
             if( cOk && !(fk0 = (int *)malloc( sizeof(int) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             for( t = cmid; cOk && t < svN; t++ )
             {
@@ -21660,7 +21714,7 @@ static SV_NOINLINE void sv_verify_CDLHIKKAKE(const char *json, char *resp, int r
                 int rbA = -1, rnA = -1, rbB = -1, rnB = -1;
                 rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                 if( TA_CDLHIKKAKE_OutRange( cA, &rbA, &rnA ) != TA_SUCCESS || rbA != svBeg || rnA != svNb ) { rangeOk = 0; cloneBad = "the original's range moved"; }
-                if( TA_CDLHIKKAKE_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 1 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the bar it counted"; }
+                if( TA_CDLHIKKAKE_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 2 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the two bars it counted"; }
             }
             if( cA ) TA_CDLHIKKAKE_Close(cA);
             if( cB ) TA_CDLHIKKAKE_Close(cB);
@@ -21908,6 +21962,7 @@ static SV_NOINLINE void sv_verify_CDLHIKKAKEMOD(const char *json, char *resp, in
                 if( cOk && (cv0 != ca0) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
             }
             if( cOk && TA_CDLHIKKAKEMOD_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
+            if( cOk && TA_CDLHIKKAKEMOD_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
             if( cOk && !(fk0 = (int *)malloc( sizeof(int) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             for( t = cmid; cOk && t < svN; t++ )
             {
@@ -21929,7 +21984,7 @@ static SV_NOINLINE void sv_verify_CDLHIKKAKEMOD(const char *json, char *resp, in
                 int rbA = -1, rnA = -1, rbB = -1, rnB = -1;
                 rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                 if( TA_CDLHIKKAKEMOD_OutRange( cA, &rbA, &rnA ) != TA_SUCCESS || rbA != svBeg || rnA != svNb ) { rangeOk = 0; cloneBad = "the original's range moved"; }
-                if( TA_CDLHIKKAKEMOD_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 1 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the bar it counted"; }
+                if( TA_CDLHIKKAKEMOD_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 2 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the two bars it counted"; }
             }
             if( cA ) TA_CDLHIKKAKEMOD_Close(cA);
             if( cB ) TA_CDLHIKKAKEMOD_Close(cB);
@@ -22177,6 +22232,7 @@ static SV_NOINLINE void sv_verify_CDLHOMINGPIGEON(const char *json, char *resp, 
                 if( cOk && (cv0 != ca0) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
             }
             if( cOk && TA_CDLHOMINGPIGEON_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
+            if( cOk && TA_CDLHOMINGPIGEON_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
             if( cOk && !(fk0 = (int *)malloc( sizeof(int) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             for( t = cmid; cOk && t < svN; t++ )
             {
@@ -22198,7 +22254,7 @@ static SV_NOINLINE void sv_verify_CDLHOMINGPIGEON(const char *json, char *resp, 
                 int rbA = -1, rnA = -1, rbB = -1, rnB = -1;
                 rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                 if( TA_CDLHOMINGPIGEON_OutRange( cA, &rbA, &rnA ) != TA_SUCCESS || rbA != svBeg || rnA != svNb ) { rangeOk = 0; cloneBad = "the original's range moved"; }
-                if( TA_CDLHOMINGPIGEON_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 1 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the bar it counted"; }
+                if( TA_CDLHOMINGPIGEON_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 2 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the two bars it counted"; }
             }
             if( cA ) TA_CDLHOMINGPIGEON_Close(cA);
             if( cB ) TA_CDLHOMINGPIGEON_Close(cB);
@@ -22446,6 +22502,7 @@ static SV_NOINLINE void sv_verify_CDLIDENTICAL3CROWS(const char *json, char *res
                 if( cOk && (cv0 != ca0) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
             }
             if( cOk && TA_CDLIDENTICAL3CROWS_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
+            if( cOk && TA_CDLIDENTICAL3CROWS_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
             if( cOk && !(fk0 = (int *)malloc( sizeof(int) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             for( t = cmid; cOk && t < svN; t++ )
             {
@@ -22467,7 +22524,7 @@ static SV_NOINLINE void sv_verify_CDLIDENTICAL3CROWS(const char *json, char *res
                 int rbA = -1, rnA = -1, rbB = -1, rnB = -1;
                 rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                 if( TA_CDLIDENTICAL3CROWS_OutRange( cA, &rbA, &rnA ) != TA_SUCCESS || rbA != svBeg || rnA != svNb ) { rangeOk = 0; cloneBad = "the original's range moved"; }
-                if( TA_CDLIDENTICAL3CROWS_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 1 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the bar it counted"; }
+                if( TA_CDLIDENTICAL3CROWS_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 2 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the two bars it counted"; }
             }
             if( cA ) TA_CDLIDENTICAL3CROWS_Close(cA);
             if( cB ) TA_CDLIDENTICAL3CROWS_Close(cB);
@@ -22715,6 +22772,7 @@ static SV_NOINLINE void sv_verify_CDLINNECK(const char *json, char *resp, int re
                 if( cOk && (cv0 != ca0) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
             }
             if( cOk && TA_CDLINNECK_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
+            if( cOk && TA_CDLINNECK_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
             if( cOk && !(fk0 = (int *)malloc( sizeof(int) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             for( t = cmid; cOk && t < svN; t++ )
             {
@@ -22736,7 +22794,7 @@ static SV_NOINLINE void sv_verify_CDLINNECK(const char *json, char *resp, int re
                 int rbA = -1, rnA = -1, rbB = -1, rnB = -1;
                 rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                 if( TA_CDLINNECK_OutRange( cA, &rbA, &rnA ) != TA_SUCCESS || rbA != svBeg || rnA != svNb ) { rangeOk = 0; cloneBad = "the original's range moved"; }
-                if( TA_CDLINNECK_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 1 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the bar it counted"; }
+                if( TA_CDLINNECK_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 2 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the two bars it counted"; }
             }
             if( cA ) TA_CDLINNECK_Close(cA);
             if( cB ) TA_CDLINNECK_Close(cB);
@@ -22984,6 +23042,7 @@ static SV_NOINLINE void sv_verify_CDLINVERTEDHAMMER(const char *json, char *resp
                 if( cOk && (cv0 != ca0) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
             }
             if( cOk && TA_CDLINVERTEDHAMMER_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
+            if( cOk && TA_CDLINVERTEDHAMMER_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
             if( cOk && !(fk0 = (int *)malloc( sizeof(int) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             for( t = cmid; cOk && t < svN; t++ )
             {
@@ -23005,7 +23064,7 @@ static SV_NOINLINE void sv_verify_CDLINVERTEDHAMMER(const char *json, char *resp
                 int rbA = -1, rnA = -1, rbB = -1, rnB = -1;
                 rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                 if( TA_CDLINVERTEDHAMMER_OutRange( cA, &rbA, &rnA ) != TA_SUCCESS || rbA != svBeg || rnA != svNb ) { rangeOk = 0; cloneBad = "the original's range moved"; }
-                if( TA_CDLINVERTEDHAMMER_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 1 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the bar it counted"; }
+                if( TA_CDLINVERTEDHAMMER_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 2 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the two bars it counted"; }
             }
             if( cA ) TA_CDLINVERTEDHAMMER_Close(cA);
             if( cB ) TA_CDLINVERTEDHAMMER_Close(cB);
@@ -23253,6 +23312,7 @@ static SV_NOINLINE void sv_verify_CDLKICKING(const char *json, char *resp, int r
                 if( cOk && (cv0 != ca0) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
             }
             if( cOk && TA_CDLKICKING_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
+            if( cOk && TA_CDLKICKING_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
             if( cOk && !(fk0 = (int *)malloc( sizeof(int) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             for( t = cmid; cOk && t < svN; t++ )
             {
@@ -23274,7 +23334,7 @@ static SV_NOINLINE void sv_verify_CDLKICKING(const char *json, char *resp, int r
                 int rbA = -1, rnA = -1, rbB = -1, rnB = -1;
                 rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                 if( TA_CDLKICKING_OutRange( cA, &rbA, &rnA ) != TA_SUCCESS || rbA != svBeg || rnA != svNb ) { rangeOk = 0; cloneBad = "the original's range moved"; }
-                if( TA_CDLKICKING_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 1 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the bar it counted"; }
+                if( TA_CDLKICKING_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 2 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the two bars it counted"; }
             }
             if( cA ) TA_CDLKICKING_Close(cA);
             if( cB ) TA_CDLKICKING_Close(cB);
@@ -23522,6 +23582,7 @@ static SV_NOINLINE void sv_verify_CDLKICKINGBYLENGTH(const char *json, char *res
                 if( cOk && (cv0 != ca0) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
             }
             if( cOk && TA_CDLKICKINGBYLENGTH_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
+            if( cOk && TA_CDLKICKINGBYLENGTH_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
             if( cOk && !(fk0 = (int *)malloc( sizeof(int) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             for( t = cmid; cOk && t < svN; t++ )
             {
@@ -23543,7 +23604,7 @@ static SV_NOINLINE void sv_verify_CDLKICKINGBYLENGTH(const char *json, char *res
                 int rbA = -1, rnA = -1, rbB = -1, rnB = -1;
                 rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                 if( TA_CDLKICKINGBYLENGTH_OutRange( cA, &rbA, &rnA ) != TA_SUCCESS || rbA != svBeg || rnA != svNb ) { rangeOk = 0; cloneBad = "the original's range moved"; }
-                if( TA_CDLKICKINGBYLENGTH_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 1 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the bar it counted"; }
+                if( TA_CDLKICKINGBYLENGTH_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 2 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the two bars it counted"; }
             }
             if( cA ) TA_CDLKICKINGBYLENGTH_Close(cA);
             if( cB ) TA_CDLKICKINGBYLENGTH_Close(cB);
@@ -23791,6 +23852,7 @@ static SV_NOINLINE void sv_verify_CDLLADDERBOTTOM(const char *json, char *resp, 
                 if( cOk && (cv0 != ca0) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
             }
             if( cOk && TA_CDLLADDERBOTTOM_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
+            if( cOk && TA_CDLLADDERBOTTOM_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
             if( cOk && !(fk0 = (int *)malloc( sizeof(int) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             for( t = cmid; cOk && t < svN; t++ )
             {
@@ -23812,7 +23874,7 @@ static SV_NOINLINE void sv_verify_CDLLADDERBOTTOM(const char *json, char *resp, 
                 int rbA = -1, rnA = -1, rbB = -1, rnB = -1;
                 rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                 if( TA_CDLLADDERBOTTOM_OutRange( cA, &rbA, &rnA ) != TA_SUCCESS || rbA != svBeg || rnA != svNb ) { rangeOk = 0; cloneBad = "the original's range moved"; }
-                if( TA_CDLLADDERBOTTOM_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 1 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the bar it counted"; }
+                if( TA_CDLLADDERBOTTOM_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 2 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the two bars it counted"; }
             }
             if( cA ) TA_CDLLADDERBOTTOM_Close(cA);
             if( cB ) TA_CDLLADDERBOTTOM_Close(cB);
@@ -24060,6 +24122,7 @@ static SV_NOINLINE void sv_verify_CDLLONGLEGGEDDOJI(const char *json, char *resp
                 if( cOk && (cv0 != ca0) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
             }
             if( cOk && TA_CDLLONGLEGGEDDOJI_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
+            if( cOk && TA_CDLLONGLEGGEDDOJI_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
             if( cOk && !(fk0 = (int *)malloc( sizeof(int) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             for( t = cmid; cOk && t < svN; t++ )
             {
@@ -24081,7 +24144,7 @@ static SV_NOINLINE void sv_verify_CDLLONGLEGGEDDOJI(const char *json, char *resp
                 int rbA = -1, rnA = -1, rbB = -1, rnB = -1;
                 rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                 if( TA_CDLLONGLEGGEDDOJI_OutRange( cA, &rbA, &rnA ) != TA_SUCCESS || rbA != svBeg || rnA != svNb ) { rangeOk = 0; cloneBad = "the original's range moved"; }
-                if( TA_CDLLONGLEGGEDDOJI_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 1 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the bar it counted"; }
+                if( TA_CDLLONGLEGGEDDOJI_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 2 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the two bars it counted"; }
             }
             if( cA ) TA_CDLLONGLEGGEDDOJI_Close(cA);
             if( cB ) TA_CDLLONGLEGGEDDOJI_Close(cB);
@@ -24329,6 +24392,7 @@ static SV_NOINLINE void sv_verify_CDLLONGLINE(const char *json, char *resp, int 
                 if( cOk && (cv0 != ca0) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
             }
             if( cOk && TA_CDLLONGLINE_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
+            if( cOk && TA_CDLLONGLINE_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
             if( cOk && !(fk0 = (int *)malloc( sizeof(int) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             for( t = cmid; cOk && t < svN; t++ )
             {
@@ -24350,7 +24414,7 @@ static SV_NOINLINE void sv_verify_CDLLONGLINE(const char *json, char *resp, int 
                 int rbA = -1, rnA = -1, rbB = -1, rnB = -1;
                 rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                 if( TA_CDLLONGLINE_OutRange( cA, &rbA, &rnA ) != TA_SUCCESS || rbA != svBeg || rnA != svNb ) { rangeOk = 0; cloneBad = "the original's range moved"; }
-                if( TA_CDLLONGLINE_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 1 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the bar it counted"; }
+                if( TA_CDLLONGLINE_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 2 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the two bars it counted"; }
             }
             if( cA ) TA_CDLLONGLINE_Close(cA);
             if( cB ) TA_CDLLONGLINE_Close(cB);
@@ -24598,6 +24662,7 @@ static SV_NOINLINE void sv_verify_CDLMARUBOZU(const char *json, char *resp, int 
                 if( cOk && (cv0 != ca0) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
             }
             if( cOk && TA_CDLMARUBOZU_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
+            if( cOk && TA_CDLMARUBOZU_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
             if( cOk && !(fk0 = (int *)malloc( sizeof(int) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             for( t = cmid; cOk && t < svN; t++ )
             {
@@ -24619,7 +24684,7 @@ static SV_NOINLINE void sv_verify_CDLMARUBOZU(const char *json, char *resp, int 
                 int rbA = -1, rnA = -1, rbB = -1, rnB = -1;
                 rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                 if( TA_CDLMARUBOZU_OutRange( cA, &rbA, &rnA ) != TA_SUCCESS || rbA != svBeg || rnA != svNb ) { rangeOk = 0; cloneBad = "the original's range moved"; }
-                if( TA_CDLMARUBOZU_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 1 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the bar it counted"; }
+                if( TA_CDLMARUBOZU_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 2 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the two bars it counted"; }
             }
             if( cA ) TA_CDLMARUBOZU_Close(cA);
             if( cB ) TA_CDLMARUBOZU_Close(cB);
@@ -24867,6 +24932,7 @@ static SV_NOINLINE void sv_verify_CDLMATCHINGLOW(const char *json, char *resp, i
                 if( cOk && (cv0 != ca0) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
             }
             if( cOk && TA_CDLMATCHINGLOW_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
+            if( cOk && TA_CDLMATCHINGLOW_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
             if( cOk && !(fk0 = (int *)malloc( sizeof(int) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             for( t = cmid; cOk && t < svN; t++ )
             {
@@ -24888,7 +24954,7 @@ static SV_NOINLINE void sv_verify_CDLMATCHINGLOW(const char *json, char *resp, i
                 int rbA = -1, rnA = -1, rbB = -1, rnB = -1;
                 rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                 if( TA_CDLMATCHINGLOW_OutRange( cA, &rbA, &rnA ) != TA_SUCCESS || rbA != svBeg || rnA != svNb ) { rangeOk = 0; cloneBad = "the original's range moved"; }
-                if( TA_CDLMATCHINGLOW_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 1 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the bar it counted"; }
+                if( TA_CDLMATCHINGLOW_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 2 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the two bars it counted"; }
             }
             if( cA ) TA_CDLMATCHINGLOW_Close(cA);
             if( cB ) TA_CDLMATCHINGLOW_Close(cB);
@@ -25137,6 +25203,7 @@ static SV_NOINLINE void sv_verify_CDLMATHOLD(const char *json, char *resp, int r
                 if( cOk && (cv0 != ca0) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
             }
             if( cOk && TA_CDLMATHOLD_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
+            if( cOk && TA_CDLMATHOLD_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
             if( cOk && !(fk0 = (int *)malloc( sizeof(int) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             for( t = cmid; cOk && t < svN; t++ )
             {
@@ -25158,7 +25225,7 @@ static SV_NOINLINE void sv_verify_CDLMATHOLD(const char *json, char *resp, int r
                 int rbA = -1, rnA = -1, rbB = -1, rnB = -1;
                 rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                 if( TA_CDLMATHOLD_OutRange( cA, &rbA, &rnA ) != TA_SUCCESS || rbA != svBeg || rnA != svNb ) { rangeOk = 0; cloneBad = "the original's range moved"; }
-                if( TA_CDLMATHOLD_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 1 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the bar it counted"; }
+                if( TA_CDLMATHOLD_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 2 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the two bars it counted"; }
             }
             if( cA ) TA_CDLMATHOLD_Close(cA);
             if( cB ) TA_CDLMATHOLD_Close(cB);
@@ -25407,6 +25474,7 @@ static SV_NOINLINE void sv_verify_CDLMORNINGDOJISTAR(const char *json, char *res
                 if( cOk && (cv0 != ca0) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
             }
             if( cOk && TA_CDLMORNINGDOJISTAR_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
+            if( cOk && TA_CDLMORNINGDOJISTAR_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
             if( cOk && !(fk0 = (int *)malloc( sizeof(int) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             for( t = cmid; cOk && t < svN; t++ )
             {
@@ -25428,7 +25496,7 @@ static SV_NOINLINE void sv_verify_CDLMORNINGDOJISTAR(const char *json, char *res
                 int rbA = -1, rnA = -1, rbB = -1, rnB = -1;
                 rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                 if( TA_CDLMORNINGDOJISTAR_OutRange( cA, &rbA, &rnA ) != TA_SUCCESS || rbA != svBeg || rnA != svNb ) { rangeOk = 0; cloneBad = "the original's range moved"; }
-                if( TA_CDLMORNINGDOJISTAR_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 1 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the bar it counted"; }
+                if( TA_CDLMORNINGDOJISTAR_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 2 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the two bars it counted"; }
             }
             if( cA ) TA_CDLMORNINGDOJISTAR_Close(cA);
             if( cB ) TA_CDLMORNINGDOJISTAR_Close(cB);
@@ -25677,6 +25745,7 @@ static SV_NOINLINE void sv_verify_CDLMORNINGSTAR(const char *json, char *resp, i
                 if( cOk && (cv0 != ca0) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
             }
             if( cOk && TA_CDLMORNINGSTAR_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
+            if( cOk && TA_CDLMORNINGSTAR_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
             if( cOk && !(fk0 = (int *)malloc( sizeof(int) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             for( t = cmid; cOk && t < svN; t++ )
             {
@@ -25698,7 +25767,7 @@ static SV_NOINLINE void sv_verify_CDLMORNINGSTAR(const char *json, char *resp, i
                 int rbA = -1, rnA = -1, rbB = -1, rnB = -1;
                 rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                 if( TA_CDLMORNINGSTAR_OutRange( cA, &rbA, &rnA ) != TA_SUCCESS || rbA != svBeg || rnA != svNb ) { rangeOk = 0; cloneBad = "the original's range moved"; }
-                if( TA_CDLMORNINGSTAR_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 1 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the bar it counted"; }
+                if( TA_CDLMORNINGSTAR_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 2 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the two bars it counted"; }
             }
             if( cA ) TA_CDLMORNINGSTAR_Close(cA);
             if( cB ) TA_CDLMORNINGSTAR_Close(cB);
@@ -25946,6 +26015,7 @@ static SV_NOINLINE void sv_verify_CDLONNECK(const char *json, char *resp, int re
                 if( cOk && (cv0 != ca0) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
             }
             if( cOk && TA_CDLONNECK_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
+            if( cOk && TA_CDLONNECK_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
             if( cOk && !(fk0 = (int *)malloc( sizeof(int) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             for( t = cmid; cOk && t < svN; t++ )
             {
@@ -25967,7 +26037,7 @@ static SV_NOINLINE void sv_verify_CDLONNECK(const char *json, char *resp, int re
                 int rbA = -1, rnA = -1, rbB = -1, rnB = -1;
                 rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                 if( TA_CDLONNECK_OutRange( cA, &rbA, &rnA ) != TA_SUCCESS || rbA != svBeg || rnA != svNb ) { rangeOk = 0; cloneBad = "the original's range moved"; }
-                if( TA_CDLONNECK_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 1 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the bar it counted"; }
+                if( TA_CDLONNECK_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 2 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the two bars it counted"; }
             }
             if( cA ) TA_CDLONNECK_Close(cA);
             if( cB ) TA_CDLONNECK_Close(cB);
@@ -26215,6 +26285,7 @@ static SV_NOINLINE void sv_verify_CDLPIERCING(const char *json, char *resp, int 
                 if( cOk && (cv0 != ca0) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
             }
             if( cOk && TA_CDLPIERCING_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
+            if( cOk && TA_CDLPIERCING_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
             if( cOk && !(fk0 = (int *)malloc( sizeof(int) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             for( t = cmid; cOk && t < svN; t++ )
             {
@@ -26236,7 +26307,7 @@ static SV_NOINLINE void sv_verify_CDLPIERCING(const char *json, char *resp, int 
                 int rbA = -1, rnA = -1, rbB = -1, rnB = -1;
                 rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                 if( TA_CDLPIERCING_OutRange( cA, &rbA, &rnA ) != TA_SUCCESS || rbA != svBeg || rnA != svNb ) { rangeOk = 0; cloneBad = "the original's range moved"; }
-                if( TA_CDLPIERCING_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 1 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the bar it counted"; }
+                if( TA_CDLPIERCING_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 2 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the two bars it counted"; }
             }
             if( cA ) TA_CDLPIERCING_Close(cA);
             if( cB ) TA_CDLPIERCING_Close(cB);
@@ -26484,6 +26555,7 @@ static SV_NOINLINE void sv_verify_CDLRICKSHAWMAN(const char *json, char *resp, i
                 if( cOk && (cv0 != ca0) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
             }
             if( cOk && TA_CDLRICKSHAWMAN_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
+            if( cOk && TA_CDLRICKSHAWMAN_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
             if( cOk && !(fk0 = (int *)malloc( sizeof(int) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             for( t = cmid; cOk && t < svN; t++ )
             {
@@ -26505,7 +26577,7 @@ static SV_NOINLINE void sv_verify_CDLRICKSHAWMAN(const char *json, char *resp, i
                 int rbA = -1, rnA = -1, rbB = -1, rnB = -1;
                 rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                 if( TA_CDLRICKSHAWMAN_OutRange( cA, &rbA, &rnA ) != TA_SUCCESS || rbA != svBeg || rnA != svNb ) { rangeOk = 0; cloneBad = "the original's range moved"; }
-                if( TA_CDLRICKSHAWMAN_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 1 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the bar it counted"; }
+                if( TA_CDLRICKSHAWMAN_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 2 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the two bars it counted"; }
             }
             if( cA ) TA_CDLRICKSHAWMAN_Close(cA);
             if( cB ) TA_CDLRICKSHAWMAN_Close(cB);
@@ -26753,6 +26825,7 @@ static SV_NOINLINE void sv_verify_CDLRISEFALL3METHODS(const char *json, char *re
                 if( cOk && (cv0 != ca0) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
             }
             if( cOk && TA_CDLRISEFALL3METHODS_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
+            if( cOk && TA_CDLRISEFALL3METHODS_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
             if( cOk && !(fk0 = (int *)malloc( sizeof(int) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             for( t = cmid; cOk && t < svN; t++ )
             {
@@ -26774,7 +26847,7 @@ static SV_NOINLINE void sv_verify_CDLRISEFALL3METHODS(const char *json, char *re
                 int rbA = -1, rnA = -1, rbB = -1, rnB = -1;
                 rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                 if( TA_CDLRISEFALL3METHODS_OutRange( cA, &rbA, &rnA ) != TA_SUCCESS || rbA != svBeg || rnA != svNb ) { rangeOk = 0; cloneBad = "the original's range moved"; }
-                if( TA_CDLRISEFALL3METHODS_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 1 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the bar it counted"; }
+                if( TA_CDLRISEFALL3METHODS_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 2 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the two bars it counted"; }
             }
             if( cA ) TA_CDLRISEFALL3METHODS_Close(cA);
             if( cB ) TA_CDLRISEFALL3METHODS_Close(cB);
@@ -27022,6 +27095,7 @@ static SV_NOINLINE void sv_verify_CDLSEPARATINGLINES(const char *json, char *res
                 if( cOk && (cv0 != ca0) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
             }
             if( cOk && TA_CDLSEPARATINGLINES_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
+            if( cOk && TA_CDLSEPARATINGLINES_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
             if( cOk && !(fk0 = (int *)malloc( sizeof(int) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             for( t = cmid; cOk && t < svN; t++ )
             {
@@ -27043,7 +27117,7 @@ static SV_NOINLINE void sv_verify_CDLSEPARATINGLINES(const char *json, char *res
                 int rbA = -1, rnA = -1, rbB = -1, rnB = -1;
                 rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                 if( TA_CDLSEPARATINGLINES_OutRange( cA, &rbA, &rnA ) != TA_SUCCESS || rbA != svBeg || rnA != svNb ) { rangeOk = 0; cloneBad = "the original's range moved"; }
-                if( TA_CDLSEPARATINGLINES_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 1 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the bar it counted"; }
+                if( TA_CDLSEPARATINGLINES_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 2 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the two bars it counted"; }
             }
             if( cA ) TA_CDLSEPARATINGLINES_Close(cA);
             if( cB ) TA_CDLSEPARATINGLINES_Close(cB);
@@ -27291,6 +27365,7 @@ static SV_NOINLINE void sv_verify_CDLSHOOTINGSTAR(const char *json, char *resp, 
                 if( cOk && (cv0 != ca0) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
             }
             if( cOk && TA_CDLSHOOTINGSTAR_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
+            if( cOk && TA_CDLSHOOTINGSTAR_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
             if( cOk && !(fk0 = (int *)malloc( sizeof(int) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             for( t = cmid; cOk && t < svN; t++ )
             {
@@ -27312,7 +27387,7 @@ static SV_NOINLINE void sv_verify_CDLSHOOTINGSTAR(const char *json, char *resp, 
                 int rbA = -1, rnA = -1, rbB = -1, rnB = -1;
                 rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                 if( TA_CDLSHOOTINGSTAR_OutRange( cA, &rbA, &rnA ) != TA_SUCCESS || rbA != svBeg || rnA != svNb ) { rangeOk = 0; cloneBad = "the original's range moved"; }
-                if( TA_CDLSHOOTINGSTAR_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 1 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the bar it counted"; }
+                if( TA_CDLSHOOTINGSTAR_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 2 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the two bars it counted"; }
             }
             if( cA ) TA_CDLSHOOTINGSTAR_Close(cA);
             if( cB ) TA_CDLSHOOTINGSTAR_Close(cB);
@@ -27560,6 +27635,7 @@ static SV_NOINLINE void sv_verify_CDLSHORTLINE(const char *json, char *resp, int
                 if( cOk && (cv0 != ca0) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
             }
             if( cOk && TA_CDLSHORTLINE_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
+            if( cOk && TA_CDLSHORTLINE_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
             if( cOk && !(fk0 = (int *)malloc( sizeof(int) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             for( t = cmid; cOk && t < svN; t++ )
             {
@@ -27581,7 +27657,7 @@ static SV_NOINLINE void sv_verify_CDLSHORTLINE(const char *json, char *resp, int
                 int rbA = -1, rnA = -1, rbB = -1, rnB = -1;
                 rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                 if( TA_CDLSHORTLINE_OutRange( cA, &rbA, &rnA ) != TA_SUCCESS || rbA != svBeg || rnA != svNb ) { rangeOk = 0; cloneBad = "the original's range moved"; }
-                if( TA_CDLSHORTLINE_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 1 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the bar it counted"; }
+                if( TA_CDLSHORTLINE_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 2 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the two bars it counted"; }
             }
             if( cA ) TA_CDLSHORTLINE_Close(cA);
             if( cB ) TA_CDLSHORTLINE_Close(cB);
@@ -27829,6 +27905,7 @@ static SV_NOINLINE void sv_verify_CDLSPINNINGTOP(const char *json, char *resp, i
                 if( cOk && (cv0 != ca0) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
             }
             if( cOk && TA_CDLSPINNINGTOP_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
+            if( cOk && TA_CDLSPINNINGTOP_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
             if( cOk && !(fk0 = (int *)malloc( sizeof(int) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             for( t = cmid; cOk && t < svN; t++ )
             {
@@ -27850,7 +27927,7 @@ static SV_NOINLINE void sv_verify_CDLSPINNINGTOP(const char *json, char *resp, i
                 int rbA = -1, rnA = -1, rbB = -1, rnB = -1;
                 rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                 if( TA_CDLSPINNINGTOP_OutRange( cA, &rbA, &rnA ) != TA_SUCCESS || rbA != svBeg || rnA != svNb ) { rangeOk = 0; cloneBad = "the original's range moved"; }
-                if( TA_CDLSPINNINGTOP_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 1 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the bar it counted"; }
+                if( TA_CDLSPINNINGTOP_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 2 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the two bars it counted"; }
             }
             if( cA ) TA_CDLSPINNINGTOP_Close(cA);
             if( cB ) TA_CDLSPINNINGTOP_Close(cB);
@@ -28098,6 +28175,7 @@ static SV_NOINLINE void sv_verify_CDLSTALLEDPATTERN(const char *json, char *resp
                 if( cOk && (cv0 != ca0) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
             }
             if( cOk && TA_CDLSTALLEDPATTERN_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
+            if( cOk && TA_CDLSTALLEDPATTERN_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
             if( cOk && !(fk0 = (int *)malloc( sizeof(int) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             for( t = cmid; cOk && t < svN; t++ )
             {
@@ -28119,7 +28197,7 @@ static SV_NOINLINE void sv_verify_CDLSTALLEDPATTERN(const char *json, char *resp
                 int rbA = -1, rnA = -1, rbB = -1, rnB = -1;
                 rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                 if( TA_CDLSTALLEDPATTERN_OutRange( cA, &rbA, &rnA ) != TA_SUCCESS || rbA != svBeg || rnA != svNb ) { rangeOk = 0; cloneBad = "the original's range moved"; }
-                if( TA_CDLSTALLEDPATTERN_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 1 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the bar it counted"; }
+                if( TA_CDLSTALLEDPATTERN_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 2 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the two bars it counted"; }
             }
             if( cA ) TA_CDLSTALLEDPATTERN_Close(cA);
             if( cB ) TA_CDLSTALLEDPATTERN_Close(cB);
@@ -28367,6 +28445,7 @@ static SV_NOINLINE void sv_verify_CDLSTICKSANDWICH(const char *json, char *resp,
                 if( cOk && (cv0 != ca0) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
             }
             if( cOk && TA_CDLSTICKSANDWICH_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
+            if( cOk && TA_CDLSTICKSANDWICH_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
             if( cOk && !(fk0 = (int *)malloc( sizeof(int) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             for( t = cmid; cOk && t < svN; t++ )
             {
@@ -28388,7 +28467,7 @@ static SV_NOINLINE void sv_verify_CDLSTICKSANDWICH(const char *json, char *resp,
                 int rbA = -1, rnA = -1, rbB = -1, rnB = -1;
                 rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                 if( TA_CDLSTICKSANDWICH_OutRange( cA, &rbA, &rnA ) != TA_SUCCESS || rbA != svBeg || rnA != svNb ) { rangeOk = 0; cloneBad = "the original's range moved"; }
-                if( TA_CDLSTICKSANDWICH_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 1 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the bar it counted"; }
+                if( TA_CDLSTICKSANDWICH_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 2 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the two bars it counted"; }
             }
             if( cA ) TA_CDLSTICKSANDWICH_Close(cA);
             if( cB ) TA_CDLSTICKSANDWICH_Close(cB);
@@ -28636,6 +28715,7 @@ static SV_NOINLINE void sv_verify_CDLTAKURI(const char *json, char *resp, int re
                 if( cOk && (cv0 != ca0) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
             }
             if( cOk && TA_CDLTAKURI_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
+            if( cOk && TA_CDLTAKURI_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
             if( cOk && !(fk0 = (int *)malloc( sizeof(int) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             for( t = cmid; cOk && t < svN; t++ )
             {
@@ -28657,7 +28737,7 @@ static SV_NOINLINE void sv_verify_CDLTAKURI(const char *json, char *resp, int re
                 int rbA = -1, rnA = -1, rbB = -1, rnB = -1;
                 rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                 if( TA_CDLTAKURI_OutRange( cA, &rbA, &rnA ) != TA_SUCCESS || rbA != svBeg || rnA != svNb ) { rangeOk = 0; cloneBad = "the original's range moved"; }
-                if( TA_CDLTAKURI_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 1 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the bar it counted"; }
+                if( TA_CDLTAKURI_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 2 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the two bars it counted"; }
             }
             if( cA ) TA_CDLTAKURI_Close(cA);
             if( cB ) TA_CDLTAKURI_Close(cB);
@@ -28905,6 +28985,7 @@ static SV_NOINLINE void sv_verify_CDLTASUKIGAP(const char *json, char *resp, int
                 if( cOk && (cv0 != ca0) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
             }
             if( cOk && TA_CDLTASUKIGAP_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
+            if( cOk && TA_CDLTASUKIGAP_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
             if( cOk && !(fk0 = (int *)malloc( sizeof(int) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             for( t = cmid; cOk && t < svN; t++ )
             {
@@ -28926,7 +29007,7 @@ static SV_NOINLINE void sv_verify_CDLTASUKIGAP(const char *json, char *resp, int
                 int rbA = -1, rnA = -1, rbB = -1, rnB = -1;
                 rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                 if( TA_CDLTASUKIGAP_OutRange( cA, &rbA, &rnA ) != TA_SUCCESS || rbA != svBeg || rnA != svNb ) { rangeOk = 0; cloneBad = "the original's range moved"; }
-                if( TA_CDLTASUKIGAP_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 1 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the bar it counted"; }
+                if( TA_CDLTASUKIGAP_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 2 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the two bars it counted"; }
             }
             if( cA ) TA_CDLTASUKIGAP_Close(cA);
             if( cB ) TA_CDLTASUKIGAP_Close(cB);
@@ -29174,6 +29255,7 @@ static SV_NOINLINE void sv_verify_CDLTHRUSTING(const char *json, char *resp, int
                 if( cOk && (cv0 != ca0) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
             }
             if( cOk && TA_CDLTHRUSTING_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
+            if( cOk && TA_CDLTHRUSTING_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
             if( cOk && !(fk0 = (int *)malloc( sizeof(int) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             for( t = cmid; cOk && t < svN; t++ )
             {
@@ -29195,7 +29277,7 @@ static SV_NOINLINE void sv_verify_CDLTHRUSTING(const char *json, char *resp, int
                 int rbA = -1, rnA = -1, rbB = -1, rnB = -1;
                 rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                 if( TA_CDLTHRUSTING_OutRange( cA, &rbA, &rnA ) != TA_SUCCESS || rbA != svBeg || rnA != svNb ) { rangeOk = 0; cloneBad = "the original's range moved"; }
-                if( TA_CDLTHRUSTING_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 1 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the bar it counted"; }
+                if( TA_CDLTHRUSTING_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 2 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the two bars it counted"; }
             }
             if( cA ) TA_CDLTHRUSTING_Close(cA);
             if( cB ) TA_CDLTHRUSTING_Close(cB);
@@ -29443,6 +29525,7 @@ static SV_NOINLINE void sv_verify_CDLTRISTAR(const char *json, char *resp, int r
                 if( cOk && (cv0 != ca0) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
             }
             if( cOk && TA_CDLTRISTAR_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
+            if( cOk && TA_CDLTRISTAR_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
             if( cOk && !(fk0 = (int *)malloc( sizeof(int) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             for( t = cmid; cOk && t < svN; t++ )
             {
@@ -29464,7 +29547,7 @@ static SV_NOINLINE void sv_verify_CDLTRISTAR(const char *json, char *resp, int r
                 int rbA = -1, rnA = -1, rbB = -1, rnB = -1;
                 rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                 if( TA_CDLTRISTAR_OutRange( cA, &rbA, &rnA ) != TA_SUCCESS || rbA != svBeg || rnA != svNb ) { rangeOk = 0; cloneBad = "the original's range moved"; }
-                if( TA_CDLTRISTAR_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 1 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the bar it counted"; }
+                if( TA_CDLTRISTAR_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 2 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the two bars it counted"; }
             }
             if( cA ) TA_CDLTRISTAR_Close(cA);
             if( cB ) TA_CDLTRISTAR_Close(cB);
@@ -29712,6 +29795,7 @@ static SV_NOINLINE void sv_verify_CDLUNIQUE3RIVER(const char *json, char *resp, 
                 if( cOk && (cv0 != ca0) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
             }
             if( cOk && TA_CDLUNIQUE3RIVER_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
+            if( cOk && TA_CDLUNIQUE3RIVER_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
             if( cOk && !(fk0 = (int *)malloc( sizeof(int) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             for( t = cmid; cOk && t < svN; t++ )
             {
@@ -29733,7 +29817,7 @@ static SV_NOINLINE void sv_verify_CDLUNIQUE3RIVER(const char *json, char *resp, 
                 int rbA = -1, rnA = -1, rbB = -1, rnB = -1;
                 rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                 if( TA_CDLUNIQUE3RIVER_OutRange( cA, &rbA, &rnA ) != TA_SUCCESS || rbA != svBeg || rnA != svNb ) { rangeOk = 0; cloneBad = "the original's range moved"; }
-                if( TA_CDLUNIQUE3RIVER_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 1 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the bar it counted"; }
+                if( TA_CDLUNIQUE3RIVER_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 2 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the two bars it counted"; }
             }
             if( cA ) TA_CDLUNIQUE3RIVER_Close(cA);
             if( cB ) TA_CDLUNIQUE3RIVER_Close(cB);
@@ -29981,6 +30065,7 @@ static SV_NOINLINE void sv_verify_CDLUPSIDEGAP2CROWS(const char *json, char *res
                 if( cOk && (cv0 != ca0) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
             }
             if( cOk && TA_CDLUPSIDEGAP2CROWS_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
+            if( cOk && TA_CDLUPSIDEGAP2CROWS_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
             if( cOk && !(fk0 = (int *)malloc( sizeof(int) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             for( t = cmid; cOk && t < svN; t++ )
             {
@@ -30002,7 +30087,7 @@ static SV_NOINLINE void sv_verify_CDLUPSIDEGAP2CROWS(const char *json, char *res
                 int rbA = -1, rnA = -1, rbB = -1, rnB = -1;
                 rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                 if( TA_CDLUPSIDEGAP2CROWS_OutRange( cA, &rbA, &rnA ) != TA_SUCCESS || rbA != svBeg || rnA != svNb ) { rangeOk = 0; cloneBad = "the original's range moved"; }
-                if( TA_CDLUPSIDEGAP2CROWS_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 1 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the bar it counted"; }
+                if( TA_CDLUPSIDEGAP2CROWS_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 2 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the two bars it counted"; }
             }
             if( cA ) TA_CDLUPSIDEGAP2CROWS_Close(cA);
             if( cB ) TA_CDLUPSIDEGAP2CROWS_Close(cB);
@@ -30250,6 +30335,7 @@ static SV_NOINLINE void sv_verify_CDLXSIDEGAP3METHODS(const char *json, char *re
                 if( cOk && (cv0 != ca0) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
             }
             if( cOk && TA_CDLXSIDEGAP3METHODS_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
+            if( cOk && TA_CDLXSIDEGAP3METHODS_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
             if( cOk && !(fk0 = (int *)malloc( sizeof(int) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             for( t = cmid; cOk && t < svN; t++ )
             {
@@ -30271,7 +30357,7 @@ static SV_NOINLINE void sv_verify_CDLXSIDEGAP3METHODS(const char *json, char *re
                 int rbA = -1, rnA = -1, rbB = -1, rnB = -1;
                 rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                 if( TA_CDLXSIDEGAP3METHODS_OutRange( cA, &rbA, &rnA ) != TA_SUCCESS || rbA != svBeg || rnA != svNb ) { rangeOk = 0; cloneBad = "the original's range moved"; }
-                if( TA_CDLXSIDEGAP3METHODS_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 1 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the bar it counted"; }
+                if( TA_CDLXSIDEGAP3METHODS_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 2 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the two bars it counted"; }
             }
             if( cA ) TA_CDLXSIDEGAP3METHODS_Close(cA);
             if( cB ) TA_CDLXSIDEGAP3METHODS_Close(cB);
@@ -30519,6 +30605,7 @@ static SV_NOINLINE void sv_verify_CEIL(const char *json, char *resp, int resp_si
                 if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
             }
             if( cOk && TA_CEIL_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
+            if( cOk && TA_CEIL_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
             if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             for( t = cmid; cOk && t < svN; t++ )
             {
@@ -30540,7 +30627,7 @@ static SV_NOINLINE void sv_verify_CEIL(const char *json, char *resp, int resp_si
                 int rbA = -1, rnA = -1, rbB = -1, rnB = -1;
                 rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                 if( TA_CEIL_OutRange( cA, &rbA, &rnA ) != TA_SUCCESS || rbA != svBeg || rnA != svNb ) { rangeOk = 0; cloneBad = "the original's range moved"; }
-                if( TA_CEIL_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 1 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the bar it counted"; }
+                if( TA_CEIL_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 2 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the two bars it counted"; }
             }
             if( cA ) TA_CEIL_Close(cA);
             if( cB ) TA_CEIL_Close(cB);
@@ -30787,6 +30874,7 @@ static SV_NOINLINE void sv_verify_CG(const char *json, char *resp, int resp_size
                 if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
             }
             if( cOk && TA_CG_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
+            if( cOk && TA_CG_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
             if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             for( t = cmid; cOk && t < svN; t++ )
             {
@@ -30808,7 +30896,7 @@ static SV_NOINLINE void sv_verify_CG(const char *json, char *resp, int resp_size
                 int rbA = -1, rnA = -1, rbB = -1, rnB = -1;
                 rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                 if( TA_CG_OutRange( cA, &rbA, &rnA ) != TA_SUCCESS || rbA != svBeg || rnA != svNb ) { rangeOk = 0; cloneBad = "the original's range moved"; }
-                if( TA_CG_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 1 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the bar it counted"; }
+                if( TA_CG_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 2 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the two bars it counted"; }
             }
             if( cA ) TA_CG_Close(cA);
             if( cB ) TA_CG_Close(cB);
@@ -31055,6 +31143,7 @@ static SV_NOINLINE void sv_verify_CHOP(const char *json, char *resp, int resp_si
                 if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
             }
             if( cOk && TA_CHOP_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
+            if( cOk && TA_CHOP_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
             if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             for( t = cmid; cOk && t < svN; t++ )
             {
@@ -31076,7 +31165,7 @@ static SV_NOINLINE void sv_verify_CHOP(const char *json, char *resp, int resp_si
                 int rbA = -1, rnA = -1, rbB = -1, rnB = -1;
                 rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                 if( TA_CHOP_OutRange( cA, &rbA, &rnA ) != TA_SUCCESS || rbA != svBeg || rnA != svNb ) { rangeOk = 0; cloneBad = "the original's range moved"; }
-                if( TA_CHOP_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 1 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the bar it counted"; }
+                if( TA_CHOP_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 2 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the two bars it counted"; }
             }
             if( cA ) TA_CHOP_Close(cA);
             if( cB ) TA_CHOP_Close(cB);
@@ -31323,6 +31412,7 @@ static SV_NOINLINE void sv_verify_CHOPTR(const char *json, char *resp, int resp_
                 if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
             }
             if( cOk && TA_CHOPTR_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
+            if( cOk && TA_CHOPTR_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
             if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             for( t = cmid; cOk && t < svN; t++ )
             {
@@ -31344,7 +31434,7 @@ static SV_NOINLINE void sv_verify_CHOPTR(const char *json, char *resp, int resp_
                 int rbA = -1, rnA = -1, rbB = -1, rnB = -1;
                 rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                 if( TA_CHOPTR_OutRange( cA, &rbA, &rnA ) != TA_SUCCESS || rbA != svBeg || rnA != svNb ) { rangeOk = 0; cloneBad = "the original's range moved"; }
-                if( TA_CHOPTR_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 1 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the bar it counted"; }
+                if( TA_CHOPTR_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 2 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the two bars it counted"; }
             }
             if( cA ) TA_CHOPTR_Close(cA);
             if( cB ) TA_CHOPTR_Close(cB);
@@ -31613,6 +31703,7 @@ static SV_NOINLINE void sv_verify_CKSP(const char *json, char *resp, int resp_si
                 if( cOk && (sv_bitne(cv1, ca1)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
             }
             if( cOk && TA_CKSP_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
+            if( cOk && TA_CKSP_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
             if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             if( cOk && !(fk1 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             for( t = cmid; cOk && t < svN; t++ )
@@ -31640,7 +31731,7 @@ static SV_NOINLINE void sv_verify_CKSP(const char *json, char *resp, int resp_si
                 int rbA = -1, rnA = -1, rbB = -1, rnB = -1;
                 rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                 if( TA_CKSP_OutRange( cA, &rbA, &rnA ) != TA_SUCCESS || rbA != svBeg || rnA != svNb ) { rangeOk = 0; cloneBad = "the original's range moved"; }
-                if( TA_CKSP_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 1 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the bar it counted"; }
+                if( TA_CKSP_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 2 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the two bars it counted"; }
             }
             if( cA ) TA_CKSP_Close(cA);
             if( cB ) TA_CKSP_Close(cB);
@@ -31890,6 +31981,7 @@ static SV_NOINLINE void sv_verify_CMF(const char *json, char *resp, int resp_siz
                 if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
             }
             if( cOk && TA_CMF_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
+            if( cOk && TA_CMF_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
             if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             for( t = cmid; cOk && t < svN; t++ )
             {
@@ -31911,7 +32003,7 @@ static SV_NOINLINE void sv_verify_CMF(const char *json, char *resp, int resp_siz
                 int rbA = -1, rnA = -1, rbB = -1, rnB = -1;
                 rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                 if( TA_CMF_OutRange( cA, &rbA, &rnA ) != TA_SUCCESS || rbA != svBeg || rnA != svNb ) { rangeOk = 0; cloneBad = "the original's range moved"; }
-                if( TA_CMF_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 1 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the bar it counted"; }
+                if( TA_CMF_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 2 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the two bars it counted"; }
             }
             if( cA ) TA_CMF_Close(cA);
             if( cB ) TA_CMF_Close(cB);
@@ -32159,6 +32251,7 @@ static SV_NOINLINE void sv_verify_CMO(const char *json, char *resp, int resp_siz
                 if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
             }
             if( cOk && TA_CMO_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
+            if( cOk && TA_CMO_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
             if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             for( t = cmid; cOk && t < svN; t++ )
             {
@@ -32180,7 +32273,7 @@ static SV_NOINLINE void sv_verify_CMO(const char *json, char *resp, int resp_siz
                 int rbA = -1, rnA = -1, rbB = -1, rnB = -1;
                 rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                 if( TA_CMO_OutRange( cA, &rbA, &rnA ) != TA_SUCCESS || rbA != svBeg || rnA != svNb ) { rangeOk = 0; cloneBad = "the original's range moved"; }
-                if( TA_CMO_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 1 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the bar it counted"; }
+                if( TA_CMO_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 2 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the two bars it counted"; }
             }
             if( cA ) TA_CMO_Close(cA);
             if( cB ) TA_CMO_Close(cB);
@@ -32428,6 +32521,7 @@ static SV_NOINLINE void sv_verify_CMOU(const char *json, char *resp, int resp_si
                 if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
             }
             if( cOk && TA_CMOU_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
+            if( cOk && TA_CMOU_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
             if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             for( t = cmid; cOk && t < svN; t++ )
             {
@@ -32449,7 +32543,7 @@ static SV_NOINLINE void sv_verify_CMOU(const char *json, char *resp, int resp_si
                 int rbA = -1, rnA = -1, rbB = -1, rnB = -1;
                 rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                 if( TA_CMOU_OutRange( cA, &rbA, &rnA ) != TA_SUCCESS || rbA != svBeg || rnA != svNb ) { rangeOk = 0; cloneBad = "the original's range moved"; }
-                if( TA_CMOU_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 1 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the bar it counted"; }
+                if( TA_CMOU_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 2 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the two bars it counted"; }
             }
             if( cA ) TA_CMOU_Close(cA);
             if( cB ) TA_CMOU_Close(cB);
@@ -32698,6 +32792,7 @@ static SV_NOINLINE void sv_verify_COPPOCK(const char *json, char *resp, int resp
                 if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
             }
             if( cOk && TA_COPPOCK_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
+            if( cOk && TA_COPPOCK_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
             if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             for( t = cmid; cOk && t < svN; t++ )
             {
@@ -32719,7 +32814,7 @@ static SV_NOINLINE void sv_verify_COPPOCK(const char *json, char *resp, int resp
                 int rbA = -1, rnA = -1, rbB = -1, rnB = -1;
                 rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                 if( TA_COPPOCK_OutRange( cA, &rbA, &rnA ) != TA_SUCCESS || rbA != svBeg || rnA != svNb ) { rangeOk = 0; cloneBad = "the original's range moved"; }
-                if( TA_COPPOCK_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 1 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the bar it counted"; }
+                if( TA_COPPOCK_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 2 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the two bars it counted"; }
             }
             if( cA ) TA_COPPOCK_Close(cA);
             if( cB ) TA_COPPOCK_Close(cB);
@@ -32966,6 +33061,7 @@ static SV_NOINLINE void sv_verify_CORREL(const char *json, char *resp, int resp_
                 if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
             }
             if( cOk && TA_CORREL_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
+            if( cOk && TA_CORREL_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
             if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             for( t = cmid; cOk && t < svN; t++ )
             {
@@ -32987,7 +33083,7 @@ static SV_NOINLINE void sv_verify_CORREL(const char *json, char *resp, int resp_
                 int rbA = -1, rnA = -1, rbB = -1, rnB = -1;
                 rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                 if( TA_CORREL_OutRange( cA, &rbA, &rnA ) != TA_SUCCESS || rbA != svBeg || rnA != svNb ) { rangeOk = 0; cloneBad = "the original's range moved"; }
-                if( TA_CORREL_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 1 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the bar it counted"; }
+                if( TA_CORREL_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 2 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the two bars it counted"; }
             }
             if( cA ) TA_CORREL_Close(cA);
             if( cB ) TA_CORREL_Close(cB);
@@ -33233,6 +33329,7 @@ static SV_NOINLINE void sv_verify_COS(const char *json, char *resp, int resp_siz
                 if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
             }
             if( cOk && TA_COS_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
+            if( cOk && TA_COS_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
             if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             for( t = cmid; cOk && t < svN; t++ )
             {
@@ -33254,7 +33351,7 @@ static SV_NOINLINE void sv_verify_COS(const char *json, char *resp, int resp_siz
                 int rbA = -1, rnA = -1, rbB = -1, rnB = -1;
                 rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                 if( TA_COS_OutRange( cA, &rbA, &rnA ) != TA_SUCCESS || rbA != svBeg || rnA != svNb ) { rangeOk = 0; cloneBad = "the original's range moved"; }
-                if( TA_COS_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 1 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the bar it counted"; }
+                if( TA_COS_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 2 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the two bars it counted"; }
             }
             if( cA ) TA_COS_Close(cA);
             if( cB ) TA_COS_Close(cB);
@@ -33500,6 +33597,7 @@ static SV_NOINLINE void sv_verify_COSH(const char *json, char *resp, int resp_si
                 if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
             }
             if( cOk && TA_COSH_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
+            if( cOk && TA_COSH_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
             if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             for( t = cmid; cOk && t < svN; t++ )
             {
@@ -33521,7 +33619,7 @@ static SV_NOINLINE void sv_verify_COSH(const char *json, char *resp, int resp_si
                 int rbA = -1, rnA = -1, rbB = -1, rnB = -1;
                 rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                 if( TA_COSH_OutRange( cA, &rbA, &rnA ) != TA_SUCCESS || rbA != svBeg || rnA != svNb ) { rangeOk = 0; cloneBad = "the original's range moved"; }
-                if( TA_COSH_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 1 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the bar it counted"; }
+                if( TA_COSH_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 2 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the two bars it counted"; }
             }
             if( cA ) TA_COSH_Close(cA);
             if( cB ) TA_COSH_Close(cB);
@@ -33771,6 +33869,7 @@ static SV_NOINLINE void sv_verify_CRSI(const char *json, char *resp, int resp_si
                 if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
             }
             if( cOk && TA_CRSI_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
+            if( cOk && TA_CRSI_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
             if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             for( t = cmid; cOk && t < svN; t++ )
             {
@@ -33792,7 +33891,7 @@ static SV_NOINLINE void sv_verify_CRSI(const char *json, char *resp, int resp_si
                 int rbA = -1, rnA = -1, rbB = -1, rnB = -1;
                 rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                 if( TA_CRSI_OutRange( cA, &rbA, &rnA ) != TA_SUCCESS || rbA != svBeg || rnA != svNb ) { rangeOk = 0; cloneBad = "the original's range moved"; }
-                if( TA_CRSI_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 1 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the bar it counted"; }
+                if( TA_CRSI_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 2 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the two bars it counted"; }
             }
             if( cA ) TA_CRSI_Close(cA);
             if( cB ) TA_CRSI_Close(cB);
@@ -34040,6 +34139,7 @@ static SV_NOINLINE void sv_verify_CTI(const char *json, char *resp, int resp_siz
                 if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
             }
             if( cOk && TA_CTI_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
+            if( cOk && TA_CTI_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
             if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             for( t = cmid; cOk && t < svN; t++ )
             {
@@ -34061,7 +34161,7 @@ static SV_NOINLINE void sv_verify_CTI(const char *json, char *resp, int resp_siz
                 int rbA = -1, rnA = -1, rbB = -1, rnB = -1;
                 rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                 if( TA_CTI_OutRange( cA, &rbA, &rnA ) != TA_SUCCESS || rbA != svBeg || rnA != svNb ) { rangeOk = 0; cloneBad = "the original's range moved"; }
-                if( TA_CTI_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 1 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the bar it counted"; }
+                if( TA_CTI_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 2 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the two bars it counted"; }
             }
             if( cA ) TA_CTI_Close(cA);
             if( cB ) TA_CTI_Close(cB);
@@ -34307,6 +34407,7 @@ static SV_NOINLINE void sv_verify_CUMSUM(const char *json, char *resp, int resp_
                 if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
             }
             if( cOk && TA_CUMSUM_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
+            if( cOk && TA_CUMSUM_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
             if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             for( t = cmid; cOk && t < svN; t++ )
             {
@@ -34328,7 +34429,7 @@ static SV_NOINLINE void sv_verify_CUMSUM(const char *json, char *resp, int resp_
                 int rbA = -1, rnA = -1, rbB = -1, rnB = -1;
                 rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                 if( TA_CUMSUM_OutRange( cA, &rbA, &rnA ) != TA_SUCCESS || rbA != svBeg || rnA != svNb ) { rangeOk = 0; cloneBad = "the original's range moved"; }
-                if( TA_CUMSUM_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 1 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the bar it counted"; }
+                if( TA_CUMSUM_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 2 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the two bars it counted"; }
             }
             if( cA ) TA_CUMSUM_Close(cA);
             if( cB ) TA_CUMSUM_Close(cB);
@@ -34577,6 +34678,7 @@ static SV_NOINLINE void sv_verify_CVI(const char *json, char *resp, int resp_siz
                 if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
             }
             if( cOk && TA_CVI_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
+            if( cOk && TA_CVI_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
             if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             for( t = cmid; cOk && t < svN; t++ )
             {
@@ -34598,7 +34700,7 @@ static SV_NOINLINE void sv_verify_CVI(const char *json, char *resp, int resp_siz
                 int rbA = -1, rnA = -1, rbB = -1, rnB = -1;
                 rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                 if( TA_CVI_OutRange( cA, &rbA, &rnA ) != TA_SUCCESS || rbA != svBeg || rnA != svNb ) { rangeOk = 0; cloneBad = "the original's range moved"; }
-                if( TA_CVI_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 1 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the bar it counted"; }
+                if( TA_CVI_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 2 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the two bars it counted"; }
             }
             if( cA ) TA_CVI_Close(cA);
             if( cB ) TA_CVI_Close(cB);
@@ -34847,6 +34949,7 @@ static SV_NOINLINE void sv_verify_DEMA(const char *json, char *resp, int resp_si
                 if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
             }
             if( cOk && TA_DEMA_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
+            if( cOk && TA_DEMA_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
             if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             for( t = cmid; cOk && t < svN; t++ )
             {
@@ -34868,7 +34971,7 @@ static SV_NOINLINE void sv_verify_DEMA(const char *json, char *resp, int resp_si
                 int rbA = -1, rnA = -1, rbB = -1, rnB = -1;
                 rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                 if( TA_DEMA_OutRange( cA, &rbA, &rnA ) != TA_SUCCESS || rbA != svBeg || rnA != svNb ) { rangeOk = 0; cloneBad = "the original's range moved"; }
-                if( TA_DEMA_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 1 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the bar it counted"; }
+                if( TA_DEMA_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 2 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the two bars it counted"; }
             }
             if( cA ) TA_DEMA_Close(cA);
             if( cB ) TA_DEMA_Close(cB);
@@ -35115,6 +35218,7 @@ static SV_NOINLINE void sv_verify_DIV(const char *json, char *resp, int resp_siz
                 if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
             }
             if( cOk && TA_DIV_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
+            if( cOk && TA_DIV_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
             if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             for( t = cmid; cOk && t < svN; t++ )
             {
@@ -35136,7 +35240,7 @@ static SV_NOINLINE void sv_verify_DIV(const char *json, char *resp, int resp_siz
                 int rbA = -1, rnA = -1, rbB = -1, rnB = -1;
                 rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                 if( TA_DIV_OutRange( cA, &rbA, &rnA ) != TA_SUCCESS || rbA != svBeg || rnA != svNb ) { rangeOk = 0; cloneBad = "the original's range moved"; }
-                if( TA_DIV_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 1 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the bar it counted"; }
+                if( TA_DIV_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 2 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the two bars it counted"; }
             }
             if( cA ) TA_DIV_Close(cA);
             if( cB ) TA_DIV_Close(cB);
@@ -35414,6 +35518,7 @@ static SV_NOINLINE void sv_verify_DONCHIAN(const char *json, char *resp, int res
                 if( cOk && (sv_bitne(cv2, ca2)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
             }
             if( cOk && TA_DONCHIAN_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
+            if( cOk && TA_DONCHIAN_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
             if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             if( cOk && !(fk1 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             if( cOk && !(fk2 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
@@ -35447,7 +35552,7 @@ static SV_NOINLINE void sv_verify_DONCHIAN(const char *json, char *resp, int res
                 int rbA = -1, rnA = -1, rbB = -1, rnB = -1;
                 rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                 if( TA_DONCHIAN_OutRange( cA, &rbA, &rnA ) != TA_SUCCESS || rbA != svBeg || rnA != svNb ) { rangeOk = 0; cloneBad = "the original's range moved"; }
-                if( TA_DONCHIAN_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 1 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the bar it counted"; }
+                if( TA_DONCHIAN_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 2 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the two bars it counted"; }
             }
             if( cA ) TA_DONCHIAN_Close(cA);
             if( cB ) TA_DONCHIAN_Close(cB);
@@ -35698,6 +35803,7 @@ static SV_NOINLINE void sv_verify_DPO(const char *json, char *resp, int resp_siz
                 if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
             }
             if( cOk && TA_DPO_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
+            if( cOk && TA_DPO_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
             if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             for( t = cmid; cOk && t < svN; t++ )
             {
@@ -35719,7 +35825,7 @@ static SV_NOINLINE void sv_verify_DPO(const char *json, char *resp, int resp_siz
                 int rbA = -1, rnA = -1, rbB = -1, rnB = -1;
                 rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                 if( TA_DPO_OutRange( cA, &rbA, &rnA ) != TA_SUCCESS || rbA != svBeg || rnA != svNb ) { rangeOk = 0; cloneBad = "the original's range moved"; }
-                if( TA_DPO_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 1 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the bar it counted"; }
+                if( TA_DPO_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 2 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the two bars it counted"; }
             }
             if( cA ) TA_DPO_Close(cA);
             if( cB ) TA_DPO_Close(cB);
@@ -35967,6 +36073,7 @@ static SV_NOINLINE void sv_verify_DX(const char *json, char *resp, int resp_size
                 if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
             }
             if( cOk && TA_DX_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
+            if( cOk && TA_DX_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
             if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             for( t = cmid; cOk && t < svN; t++ )
             {
@@ -35988,7 +36095,7 @@ static SV_NOINLINE void sv_verify_DX(const char *json, char *resp, int resp_size
                 int rbA = -1, rnA = -1, rbB = -1, rnB = -1;
                 rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                 if( TA_DX_OutRange( cA, &rbA, &rnA ) != TA_SUCCESS || rbA != svBeg || rnA != svNb ) { rangeOk = 0; cloneBad = "the original's range moved"; }
-                if( TA_DX_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 1 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the bar it counted"; }
+                if( TA_DX_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 2 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the two bars it counted"; }
             }
             if( cA ) TA_DX_Close(cA);
             if( cB ) TA_DX_Close(cB);
@@ -36237,6 +36344,7 @@ static SV_NOINLINE void sv_verify_EFI(const char *json, char *resp, int resp_siz
                 if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
             }
             if( cOk && TA_EFI_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
+            if( cOk && TA_EFI_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
             if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             for( t = cmid; cOk && t < svN; t++ )
             {
@@ -36258,7 +36366,7 @@ static SV_NOINLINE void sv_verify_EFI(const char *json, char *resp, int resp_siz
                 int rbA = -1, rnA = -1, rbB = -1, rnB = -1;
                 rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                 if( TA_EFI_OutRange( cA, &rbA, &rnA ) != TA_SUCCESS || rbA != svBeg || rnA != svNb ) { rangeOk = 0; cloneBad = "the original's range moved"; }
-                if( TA_EFI_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 1 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the bar it counted"; }
+                if( TA_EFI_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 2 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the two bars it counted"; }
             }
             if( cA ) TA_EFI_Close(cA);
             if( cB ) TA_EFI_Close(cB);
@@ -36507,6 +36615,7 @@ static SV_NOINLINE void sv_verify_EMA(const char *json, char *resp, int resp_siz
                 if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
             }
             if( cOk && TA_EMA_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
+            if( cOk && TA_EMA_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
             if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             for( t = cmid; cOk && t < svN; t++ )
             {
@@ -36528,7 +36637,7 @@ static SV_NOINLINE void sv_verify_EMA(const char *json, char *resp, int resp_siz
                 int rbA = -1, rnA = -1, rbB = -1, rnB = -1;
                 rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                 if( TA_EMA_OutRange( cA, &rbA, &rnA ) != TA_SUCCESS || rbA != svBeg || rnA != svNb ) { rangeOk = 0; cloneBad = "the original's range moved"; }
-                if( TA_EMA_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 1 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the bar it counted"; }
+                if( TA_EMA_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 2 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the two bars it counted"; }
             }
             if( cA ) TA_EMA_Close(cA);
             if( cB ) TA_EMA_Close(cB);
@@ -36777,6 +36886,7 @@ static SV_NOINLINE void sv_verify_EMV(const char *json, char *resp, int resp_siz
                 if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
             }
             if( cOk && TA_EMV_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
+            if( cOk && TA_EMV_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
             if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             for( t = cmid; cOk && t < svN; t++ )
             {
@@ -36798,7 +36908,7 @@ static SV_NOINLINE void sv_verify_EMV(const char *json, char *resp, int resp_siz
                 int rbA = -1, rnA = -1, rbB = -1, rnB = -1;
                 rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                 if( TA_EMV_OutRange( cA, &rbA, &rnA ) != TA_SUCCESS || rbA != svBeg || rnA != svNb ) { rangeOk = 0; cloneBad = "the original's range moved"; }
-                if( TA_EMV_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 1 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the bar it counted"; }
+                if( TA_EMV_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 2 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the two bars it counted"; }
             }
             if( cA ) TA_EMV_Close(cA);
             if( cB ) TA_EMV_Close(cB);
@@ -37045,6 +37155,7 @@ static SV_NOINLINE void sv_verify_ER(const char *json, char *resp, int resp_size
                 if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
             }
             if( cOk && TA_ER_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
+            if( cOk && TA_ER_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
             if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             for( t = cmid; cOk && t < svN; t++ )
             {
@@ -37066,7 +37177,7 @@ static SV_NOINLINE void sv_verify_ER(const char *json, char *resp, int resp_size
                 int rbA = -1, rnA = -1, rbB = -1, rnB = -1;
                 rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                 if( TA_ER_OutRange( cA, &rbA, &rnA ) != TA_SUCCESS || rbA != svBeg || rnA != svNb ) { rangeOk = 0; cloneBad = "the original's range moved"; }
-                if( TA_ER_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 1 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the bar it counted"; }
+                if( TA_ER_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 2 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the two bars it counted"; }
             }
             if( cA ) TA_ER_Close(cA);
             if( cB ) TA_ER_Close(cB);
@@ -37333,6 +37444,7 @@ static SV_NOINLINE void sv_verify_ERI(const char *json, char *resp, int resp_siz
                 if( cOk && (sv_bitne(cv1, ca1)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
             }
             if( cOk && TA_ERI_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
+            if( cOk && TA_ERI_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
             if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             if( cOk && !(fk1 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             for( t = cmid; cOk && t < svN; t++ )
@@ -37360,7 +37472,7 @@ static SV_NOINLINE void sv_verify_ERI(const char *json, char *resp, int resp_siz
                 int rbA = -1, rnA = -1, rbB = -1, rnB = -1;
                 rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                 if( TA_ERI_OutRange( cA, &rbA, &rnA ) != TA_SUCCESS || rbA != svBeg || rnA != svNb ) { rangeOk = 0; cloneBad = "the original's range moved"; }
-                if( TA_ERI_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 1 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the bar it counted"; }
+                if( TA_ERI_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 2 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the two bars it counted"; }
             }
             if( cA ) TA_ERI_Close(cA);
             if( cB ) TA_ERI_Close(cB);
@@ -37609,6 +37721,7 @@ static SV_NOINLINE void sv_verify_EXP(const char *json, char *resp, int resp_siz
                 if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
             }
             if( cOk && TA_EXP_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
+            if( cOk && TA_EXP_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
             if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             for( t = cmid; cOk && t < svN; t++ )
             {
@@ -37630,7 +37743,7 @@ static SV_NOINLINE void sv_verify_EXP(const char *json, char *resp, int resp_siz
                 int rbA = -1, rnA = -1, rbB = -1, rnB = -1;
                 rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                 if( TA_EXP_OutRange( cA, &rbA, &rnA ) != TA_SUCCESS || rbA != svBeg || rnA != svNb ) { rangeOk = 0; cloneBad = "the original's range moved"; }
-                if( TA_EXP_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 1 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the bar it counted"; }
+                if( TA_EXP_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 2 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the two bars it counted"; }
             }
             if( cA ) TA_EXP_Close(cA);
             if( cB ) TA_EXP_Close(cB);
@@ -37876,6 +37989,7 @@ static SV_NOINLINE void sv_verify_FLOOR(const char *json, char *resp, int resp_s
                 if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
             }
             if( cOk && TA_FLOOR_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
+            if( cOk && TA_FLOOR_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
             if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             for( t = cmid; cOk && t < svN; t++ )
             {
@@ -37897,7 +38011,7 @@ static SV_NOINLINE void sv_verify_FLOOR(const char *json, char *resp, int resp_s
                 int rbA = -1, rnA = -1, rbB = -1, rnB = -1;
                 rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                 if( TA_FLOOR_OutRange( cA, &rbA, &rnA ) != TA_SUCCESS || rbA != svBeg || rnA != svNb ) { rangeOk = 0; cloneBad = "the original's range moved"; }
-                if( TA_FLOOR_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 1 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the bar it counted"; }
+                if( TA_FLOOR_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 2 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the two bars it counted"; }
             }
             if( cA ) TA_FLOOR_Close(cA);
             if( cB ) TA_FLOOR_Close(cB);
@@ -38144,6 +38258,7 @@ static SV_NOINLINE void sv_verify_FOSC(const char *json, char *resp, int resp_si
                 if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
             }
             if( cOk && TA_FOSC_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
+            if( cOk && TA_FOSC_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
             if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             for( t = cmid; cOk && t < svN; t++ )
             {
@@ -38165,7 +38280,7 @@ static SV_NOINLINE void sv_verify_FOSC(const char *json, char *resp, int resp_si
                 int rbA = -1, rnA = -1, rbB = -1, rnB = -1;
                 rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                 if( TA_FOSC_OutRange( cA, &rbA, &rnA ) != TA_SUCCESS || rbA != svBeg || rnA != svNb ) { rangeOk = 0; cloneBad = "the original's range moved"; }
-                if( TA_FOSC_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 1 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the bar it counted"; }
+                if( TA_FOSC_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 2 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the two bars it counted"; }
             }
             if( cA ) TA_FOSC_Close(cA);
             if( cB ) TA_FOSC_Close(cB);
@@ -38425,6 +38540,7 @@ static SV_NOINLINE void sv_verify_FRACTAL(const char *json, char *resp, int resp
                 if( cOk && (cv1 != ca1) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
             }
             if( cOk && TA_FRACTAL_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
+            if( cOk && TA_FRACTAL_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
             if( cOk && !(fk0 = (int *)malloc( sizeof(int) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             if( cOk && !(fk1 = (int *)malloc( sizeof(int) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             for( t = cmid; cOk && t < svN; t++ )
@@ -38452,7 +38568,7 @@ static SV_NOINLINE void sv_verify_FRACTAL(const char *json, char *resp, int resp
                 int rbA = -1, rnA = -1, rbB = -1, rnB = -1;
                 rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                 if( TA_FRACTAL_OutRange( cA, &rbA, &rnA ) != TA_SUCCESS || rbA != svBeg || rnA != svNb ) { rangeOk = 0; cloneBad = "the original's range moved"; }
-                if( TA_FRACTAL_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 1 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the bar it counted"; }
+                if( TA_FRACTAL_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 2 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the two bars it counted"; }
             }
             if( cA ) TA_FRACTAL_Close(cA);
             if( cB ) TA_FRACTAL_Close(cB);
@@ -38702,6 +38818,7 @@ static SV_NOINLINE void sv_verify_FRAMA(const char *json, char *resp, int resp_s
                 if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
             }
             if( cOk && TA_FRAMA_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
+            if( cOk && TA_FRAMA_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
             if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             for( t = cmid; cOk && t < svN; t++ )
             {
@@ -38723,7 +38840,7 @@ static SV_NOINLINE void sv_verify_FRAMA(const char *json, char *resp, int resp_s
                 int rbA = -1, rnA = -1, rbB = -1, rnB = -1;
                 rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                 if( TA_FRAMA_OutRange( cA, &rbA, &rnA ) != TA_SUCCESS || rbA != svBeg || rnA != svNb ) { rangeOk = 0; cloneBad = "the original's range moved"; }
-                if( TA_FRAMA_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 1 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the bar it counted"; }
+                if( TA_FRAMA_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 2 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the two bars it counted"; }
             }
             if( cA ) TA_FRAMA_Close(cA);
             if( cB ) TA_FRAMA_Close(cB);
@@ -39014,6 +39131,7 @@ static SV_NOINLINE void sv_verify_HA(const char *json, char *resp, int resp_size
                 if( cOk && (sv_bitne(cv3, ca3)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
             }
             if( cOk && TA_HA_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
+            if( cOk && TA_HA_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
             if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             if( cOk && !(fk1 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             if( cOk && !(fk2 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
@@ -39053,7 +39171,7 @@ static SV_NOINLINE void sv_verify_HA(const char *json, char *resp, int resp_size
                 int rbA = -1, rnA = -1, rbB = -1, rnB = -1;
                 rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                 if( TA_HA_OutRange( cA, &rbA, &rnA ) != TA_SUCCESS || rbA != svBeg || rnA != svNb ) { rangeOk = 0; cloneBad = "the original's range moved"; }
-                if( TA_HA_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 1 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the bar it counted"; }
+                if( TA_HA_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 2 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the two bars it counted"; }
             }
             if( cA ) TA_HA_Close(cA);
             if( cB ) TA_HA_Close(cB);
@@ -39307,6 +39425,7 @@ static SV_NOINLINE void sv_verify_HMA(const char *json, char *resp, int resp_siz
                 if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
             }
             if( cOk && TA_HMA_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
+            if( cOk && TA_HMA_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
             if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             for( t = cmid; cOk && t < svN; t++ )
             {
@@ -39328,7 +39447,7 @@ static SV_NOINLINE void sv_verify_HMA(const char *json, char *resp, int resp_siz
                 int rbA = -1, rnA = -1, rbB = -1, rnB = -1;
                 rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                 if( TA_HMA_OutRange( cA, &rbA, &rnA ) != TA_SUCCESS || rbA != svBeg || rnA != svNb ) { rangeOk = 0; cloneBad = "the original's range moved"; }
-                if( TA_HMA_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 1 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the bar it counted"; }
+                if( TA_HMA_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 2 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the two bars it counted"; }
             }
             if( cA ) TA_HMA_Close(cA);
             if( cB ) TA_HMA_Close(cB);
@@ -39575,6 +39694,7 @@ static SV_NOINLINE void sv_verify_HT_DCPERIOD(const char *json, char *resp, int 
                 if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
             }
             if( cOk && TA_HT_DCPERIOD_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
+            if( cOk && TA_HT_DCPERIOD_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
             if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             for( t = cmid; cOk && t < svN; t++ )
             {
@@ -39596,7 +39716,7 @@ static SV_NOINLINE void sv_verify_HT_DCPERIOD(const char *json, char *resp, int 
                 int rbA = -1, rnA = -1, rbB = -1, rnB = -1;
                 rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                 if( TA_HT_DCPERIOD_OutRange( cA, &rbA, &rnA ) != TA_SUCCESS || rbA != svBeg || rnA != svNb ) { rangeOk = 0; cloneBad = "the original's range moved"; }
-                if( TA_HT_DCPERIOD_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 1 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the bar it counted"; }
+                if( TA_HT_DCPERIOD_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 2 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the two bars it counted"; }
             }
             if( cA ) TA_HT_DCPERIOD_Close(cA);
             if( cB ) TA_HT_DCPERIOD_Close(cB);
@@ -39844,6 +39964,7 @@ static SV_NOINLINE void sv_verify_HT_DCPHASE(const char *json, char *resp, int r
                 if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
             }
             if( cOk && TA_HT_DCPHASE_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
+            if( cOk && TA_HT_DCPHASE_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
             if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             for( t = cmid; cOk && t < svN; t++ )
             {
@@ -39865,7 +39986,7 @@ static SV_NOINLINE void sv_verify_HT_DCPHASE(const char *json, char *resp, int r
                 int rbA = -1, rnA = -1, rbB = -1, rnB = -1;
                 rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                 if( TA_HT_DCPHASE_OutRange( cA, &rbA, &rnA ) != TA_SUCCESS || rbA != svBeg || rnA != svNb ) { rangeOk = 0; cloneBad = "the original's range moved"; }
-                if( TA_HT_DCPHASE_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 1 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the bar it counted"; }
+                if( TA_HT_DCPHASE_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 2 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the two bars it counted"; }
             }
             if( cA ) TA_HT_DCPHASE_Close(cA);
             if( cB ) TA_HT_DCPHASE_Close(cB);
@@ -40132,6 +40253,7 @@ static SV_NOINLINE void sv_verify_HT_PHASOR(const char *json, char *resp, int re
                 if( cOk && (sv_bitne(cv1, ca1)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
             }
             if( cOk && TA_HT_PHASOR_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
+            if( cOk && TA_HT_PHASOR_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
             if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             if( cOk && !(fk1 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             for( t = cmid; cOk && t < svN; t++ )
@@ -40159,7 +40281,7 @@ static SV_NOINLINE void sv_verify_HT_PHASOR(const char *json, char *resp, int re
                 int rbA = -1, rnA = -1, rbB = -1, rnB = -1;
                 rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                 if( TA_HT_PHASOR_OutRange( cA, &rbA, &rnA ) != TA_SUCCESS || rbA != svBeg || rnA != svNb ) { rangeOk = 0; cloneBad = "the original's range moved"; }
-                if( TA_HT_PHASOR_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 1 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the bar it counted"; }
+                if( TA_HT_PHASOR_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 2 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the two bars it counted"; }
             }
             if( cA ) TA_HT_PHASOR_Close(cA);
             if( cB ) TA_HT_PHASOR_Close(cB);
@@ -40428,6 +40550,7 @@ static SV_NOINLINE void sv_verify_HT_SINE(const char *json, char *resp, int resp
                 if( cOk && (sv_bitne(cv1, ca1)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
             }
             if( cOk && TA_HT_SINE_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
+            if( cOk && TA_HT_SINE_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
             if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             if( cOk && !(fk1 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             for( t = cmid; cOk && t < svN; t++ )
@@ -40455,7 +40578,7 @@ static SV_NOINLINE void sv_verify_HT_SINE(const char *json, char *resp, int resp
                 int rbA = -1, rnA = -1, rbB = -1, rnB = -1;
                 rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                 if( TA_HT_SINE_OutRange( cA, &rbA, &rnA ) != TA_SUCCESS || rbA != svBeg || rnA != svNb ) { rangeOk = 0; cloneBad = "the original's range moved"; }
-                if( TA_HT_SINE_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 1 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the bar it counted"; }
+                if( TA_HT_SINE_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 2 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the two bars it counted"; }
             }
             if( cA ) TA_HT_SINE_Close(cA);
             if( cB ) TA_HT_SINE_Close(cB);
@@ -40705,6 +40828,7 @@ static SV_NOINLINE void sv_verify_HT_TRENDLINE(const char *json, char *resp, int
                 if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
             }
             if( cOk && TA_HT_TRENDLINE_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
+            if( cOk && TA_HT_TRENDLINE_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
             if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             for( t = cmid; cOk && t < svN; t++ )
             {
@@ -40726,7 +40850,7 @@ static SV_NOINLINE void sv_verify_HT_TRENDLINE(const char *json, char *resp, int
                 int rbA = -1, rnA = -1, rbB = -1, rnB = -1;
                 rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                 if( TA_HT_TRENDLINE_OutRange( cA, &rbA, &rnA ) != TA_SUCCESS || rbA != svBeg || rnA != svNb ) { rangeOk = 0; cloneBad = "the original's range moved"; }
-                if( TA_HT_TRENDLINE_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 1 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the bar it counted"; }
+                if( TA_HT_TRENDLINE_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 2 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the two bars it counted"; }
             }
             if( cA ) TA_HT_TRENDLINE_Close(cA);
             if( cB ) TA_HT_TRENDLINE_Close(cB);
@@ -40967,6 +41091,7 @@ static SV_NOINLINE void sv_verify_HT_TRENDMODE(const char *json, char *resp, int
                 if( cOk && (cv0 != ca0) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
             }
             if( cOk && TA_HT_TRENDMODE_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
+            if( cOk && TA_HT_TRENDMODE_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
             if( cOk && !(fk0 = (int *)malloc( sizeof(int) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             for( t = cmid; cOk && t < svN; t++ )
             {
@@ -40988,7 +41113,7 @@ static SV_NOINLINE void sv_verify_HT_TRENDMODE(const char *json, char *resp, int
                 int rbA = -1, rnA = -1, rbB = -1, rnB = -1;
                 rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                 if( TA_HT_TRENDMODE_OutRange( cA, &rbA, &rnA ) != TA_SUCCESS || rbA != svBeg || rnA != svNb ) { rangeOk = 0; cloneBad = "the original's range moved"; }
-                if( TA_HT_TRENDMODE_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 1 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the bar it counted"; }
+                if( TA_HT_TRENDMODE_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 2 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the two bars it counted"; }
             }
             if( cA ) TA_HT_TRENDMODE_Close(cA);
             if( cB ) TA_HT_TRENDMODE_Close(cB);
@@ -41235,6 +41360,7 @@ static SV_NOINLINE void sv_verify_IBS(const char *json, char *resp, int resp_siz
                 if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
             }
             if( cOk && TA_IBS_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
+            if( cOk && TA_IBS_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
             if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             for( t = cmid; cOk && t < svN; t++ )
             {
@@ -41256,7 +41382,7 @@ static SV_NOINLINE void sv_verify_IBS(const char *json, char *resp, int resp_siz
                 int rbA = -1, rnA = -1, rbB = -1, rnB = -1;
                 rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                 if( TA_IBS_OutRange( cA, &rbA, &rnA ) != TA_SUCCESS || rbA != svBeg || rnA != svNb ) { rangeOk = 0; cloneBad = "the original's range moved"; }
-                if( TA_IBS_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 1 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the bar it counted"; }
+                if( TA_IBS_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 2 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the two bars it counted"; }
             }
             if( cA ) TA_IBS_Close(cA);
             if( cB ) TA_IBS_Close(cB);
@@ -41503,6 +41629,7 @@ static SV_NOINLINE void sv_verify_IMI(const char *json, char *resp, int resp_siz
                 if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
             }
             if( cOk && TA_IMI_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
+            if( cOk && TA_IMI_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
             if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             for( t = cmid; cOk && t < svN; t++ )
             {
@@ -41524,7 +41651,7 @@ static SV_NOINLINE void sv_verify_IMI(const char *json, char *resp, int resp_siz
                 int rbA = -1, rnA = -1, rbB = -1, rnB = -1;
                 rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                 if( TA_IMI_OutRange( cA, &rbA, &rnA ) != TA_SUCCESS || rbA != svBeg || rnA != svNb ) { rangeOk = 0; cloneBad = "the original's range moved"; }
-                if( TA_IMI_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 1 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the bar it counted"; }
+                if( TA_IMI_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 2 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the two bars it counted"; }
             }
             if( cA ) TA_IMI_Close(cA);
             if( cB ) TA_IMI_Close(cB);
@@ -41772,6 +41899,7 @@ static SV_NOINLINE void sv_verify_KAMA(const char *json, char *resp, int resp_si
                 if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
             }
             if( cOk && TA_KAMA_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
+            if( cOk && TA_KAMA_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
             if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             for( t = cmid; cOk && t < svN; t++ )
             {
@@ -41793,7 +41921,7 @@ static SV_NOINLINE void sv_verify_KAMA(const char *json, char *resp, int resp_si
                 int rbA = -1, rnA = -1, rbB = -1, rnB = -1;
                 rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                 if( TA_KAMA_OutRange( cA, &rbA, &rnA ) != TA_SUCCESS || rbA != svBeg || rnA != svNb ) { rangeOk = 0; cloneBad = "the original's range moved"; }
-                if( TA_KAMA_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 1 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the bar it counted"; }
+                if( TA_KAMA_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 2 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the two bars it counted"; }
             }
             if( cA ) TA_KAMA_Close(cA);
             if( cB ) TA_KAMA_Close(cB);
@@ -42077,6 +42205,7 @@ static SV_NOINLINE void sv_verify_KC(const char *json, char *resp, int resp_size
                 if( cOk && (sv_bitne(cv2, ca2)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
             }
             if( cOk && TA_KC_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
+            if( cOk && TA_KC_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
             if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             if( cOk && !(fk1 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             if( cOk && !(fk2 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
@@ -42110,7 +42239,7 @@ static SV_NOINLINE void sv_verify_KC(const char *json, char *resp, int resp_size
                 int rbA = -1, rnA = -1, rbB = -1, rnB = -1;
                 rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                 if( TA_KC_OutRange( cA, &rbA, &rnA ) != TA_SUCCESS || rbA != svBeg || rnA != svNb ) { rangeOk = 0; cloneBad = "the original's range moved"; }
-                if( TA_KC_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 1 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the bar it counted"; }
+                if( TA_KC_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 2 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the two bars it counted"; }
             }
             if( cA ) TA_KC_Close(cA);
             if( cB ) TA_KC_Close(cB);
@@ -42409,6 +42538,7 @@ static SV_NOINLINE void sv_verify_KDJ(const char *json, char *resp, int resp_siz
                 if( cOk && (sv_bitne(cv2, ca2)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
             }
             if( cOk && TA_KDJ_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
+            if( cOk && TA_KDJ_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
             if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             if( cOk && !(fk1 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             if( cOk && !(fk2 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
@@ -42442,7 +42572,7 @@ static SV_NOINLINE void sv_verify_KDJ(const char *json, char *resp, int resp_siz
                 int rbA = -1, rnA = -1, rbB = -1, rnB = -1;
                 rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                 if( TA_KDJ_OutRange( cA, &rbA, &rnA ) != TA_SUCCESS || rbA != svBeg || rnA != svNb ) { rangeOk = 0; cloneBad = "the original's range moved"; }
-                if( TA_KDJ_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 1 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the bar it counted"; }
+                if( TA_KDJ_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 2 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the two bars it counted"; }
             }
             if( cA ) TA_KDJ_Close(cA);
             if( cB ) TA_KDJ_Close(cB);
@@ -42726,6 +42856,7 @@ static SV_NOINLINE void sv_verify_KST(const char *json, char *resp, int resp_siz
                 if( cOk && (sv_bitne(cv1, ca1)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
             }
             if( cOk && TA_KST_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
+            if( cOk && TA_KST_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
             if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             if( cOk && !(fk1 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             for( t = cmid; cOk && t < svN; t++ )
@@ -42753,7 +42884,7 @@ static SV_NOINLINE void sv_verify_KST(const char *json, char *resp, int resp_siz
                 int rbA = -1, rnA = -1, rbB = -1, rnB = -1;
                 rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                 if( TA_KST_OutRange( cA, &rbA, &rnA ) != TA_SUCCESS || rbA != svBeg || rnA != svNb ) { rangeOk = 0; cloneBad = "the original's range moved"; }
-                if( TA_KST_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 1 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the bar it counted"; }
+                if( TA_KST_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 2 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the two bars it counted"; }
             }
             if( cA ) TA_KST_Close(cA);
             if( cB ) TA_KST_Close(cB);
@@ -43042,6 +43173,7 @@ static SV_NOINLINE void sv_verify_KSTEXT(const char *json, char *resp, int resp_
                 if( cOk && (sv_bitne(cv1, ca1)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
             }
             if( cOk && TA_KSTEXT_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
+            if( cOk && TA_KSTEXT_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
             if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             if( cOk && !(fk1 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             for( t = cmid; cOk && t < svN; t++ )
@@ -43069,7 +43201,7 @@ static SV_NOINLINE void sv_verify_KSTEXT(const char *json, char *resp, int resp_
                 int rbA = -1, rnA = -1, rbB = -1, rnB = -1;
                 rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                 if( TA_KSTEXT_OutRange( cA, &rbA, &rnA ) != TA_SUCCESS || rbA != svBeg || rnA != svNb ) { rangeOk = 0; cloneBad = "the original's range moved"; }
-                if( TA_KSTEXT_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 1 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the bar it counted"; }
+                if( TA_KSTEXT_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 2 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the two bars it counted"; }
             }
             if( cA ) TA_KSTEXT_Close(cA);
             if( cB ) TA_KSTEXT_Close(cB);
@@ -43324,6 +43456,7 @@ static SV_NOINLINE void sv_verify_KURTOSIS(const char *json, char *resp, int res
                 if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
             }
             if( cOk && TA_KURTOSIS_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
+            if( cOk && TA_KURTOSIS_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
             if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             for( t = cmid; cOk && t < svN; t++ )
             {
@@ -43345,7 +43478,7 @@ static SV_NOINLINE void sv_verify_KURTOSIS(const char *json, char *resp, int res
                 int rbA = -1, rnA = -1, rbB = -1, rnB = -1;
                 rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                 if( TA_KURTOSIS_OutRange( cA, &rbA, &rnA ) != TA_SUCCESS || rbA != svBeg || rnA != svNb ) { rangeOk = 0; cloneBad = "the original's range moved"; }
-                if( TA_KURTOSIS_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 1 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the bar it counted"; }
+                if( TA_KURTOSIS_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 2 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the two bars it counted"; }
             }
             if( cA ) TA_KURTOSIS_Close(cA);
             if( cB ) TA_KURTOSIS_Close(cB);
@@ -43592,6 +43725,7 @@ static SV_NOINLINE void sv_verify_LINEARREG(const char *json, char *resp, int re
                 if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
             }
             if( cOk && TA_LINEARREG_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
+            if( cOk && TA_LINEARREG_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
             if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             for( t = cmid; cOk && t < svN; t++ )
             {
@@ -43613,7 +43747,7 @@ static SV_NOINLINE void sv_verify_LINEARREG(const char *json, char *resp, int re
                 int rbA = -1, rnA = -1, rbB = -1, rnB = -1;
                 rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                 if( TA_LINEARREG_OutRange( cA, &rbA, &rnA ) != TA_SUCCESS || rbA != svBeg || rnA != svNb ) { rangeOk = 0; cloneBad = "the original's range moved"; }
-                if( TA_LINEARREG_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 1 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the bar it counted"; }
+                if( TA_LINEARREG_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 2 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the two bars it counted"; }
             }
             if( cA ) TA_LINEARREG_Close(cA);
             if( cB ) TA_LINEARREG_Close(cB);
@@ -43860,6 +43994,7 @@ static SV_NOINLINE void sv_verify_LINEARREG_ANGLE(const char *json, char *resp, 
                 if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
             }
             if( cOk && TA_LINEARREG_ANGLE_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
+            if( cOk && TA_LINEARREG_ANGLE_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
             if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             for( t = cmid; cOk && t < svN; t++ )
             {
@@ -43881,7 +44016,7 @@ static SV_NOINLINE void sv_verify_LINEARREG_ANGLE(const char *json, char *resp, 
                 int rbA = -1, rnA = -1, rbB = -1, rnB = -1;
                 rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                 if( TA_LINEARREG_ANGLE_OutRange( cA, &rbA, &rnA ) != TA_SUCCESS || rbA != svBeg || rnA != svNb ) { rangeOk = 0; cloneBad = "the original's range moved"; }
-                if( TA_LINEARREG_ANGLE_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 1 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the bar it counted"; }
+                if( TA_LINEARREG_ANGLE_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 2 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the two bars it counted"; }
             }
             if( cA ) TA_LINEARREG_ANGLE_Close(cA);
             if( cB ) TA_LINEARREG_ANGLE_Close(cB);
@@ -44128,6 +44263,7 @@ static SV_NOINLINE void sv_verify_LINEARREG_INTERCEPT(const char *json, char *re
                 if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
             }
             if( cOk && TA_LINEARREG_INTERCEPT_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
+            if( cOk && TA_LINEARREG_INTERCEPT_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
             if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             for( t = cmid; cOk && t < svN; t++ )
             {
@@ -44149,7 +44285,7 @@ static SV_NOINLINE void sv_verify_LINEARREG_INTERCEPT(const char *json, char *re
                 int rbA = -1, rnA = -1, rbB = -1, rnB = -1;
                 rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                 if( TA_LINEARREG_INTERCEPT_OutRange( cA, &rbA, &rnA ) != TA_SUCCESS || rbA != svBeg || rnA != svNb ) { rangeOk = 0; cloneBad = "the original's range moved"; }
-                if( TA_LINEARREG_INTERCEPT_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 1 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the bar it counted"; }
+                if( TA_LINEARREG_INTERCEPT_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 2 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the two bars it counted"; }
             }
             if( cA ) TA_LINEARREG_INTERCEPT_Close(cA);
             if( cB ) TA_LINEARREG_INTERCEPT_Close(cB);
@@ -44396,6 +44532,7 @@ static SV_NOINLINE void sv_verify_LINEARREG_SLOPE(const char *json, char *resp, 
                 if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
             }
             if( cOk && TA_LINEARREG_SLOPE_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
+            if( cOk && TA_LINEARREG_SLOPE_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
             if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             for( t = cmid; cOk && t < svN; t++ )
             {
@@ -44417,7 +44554,7 @@ static SV_NOINLINE void sv_verify_LINEARREG_SLOPE(const char *json, char *resp, 
                 int rbA = -1, rnA = -1, rbB = -1, rnB = -1;
                 rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                 if( TA_LINEARREG_SLOPE_OutRange( cA, &rbA, &rnA ) != TA_SUCCESS || rbA != svBeg || rnA != svNb ) { rangeOk = 0; cloneBad = "the original's range moved"; }
-                if( TA_LINEARREG_SLOPE_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 1 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the bar it counted"; }
+                if( TA_LINEARREG_SLOPE_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 2 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the two bars it counted"; }
             }
             if( cA ) TA_LINEARREG_SLOPE_Close(cA);
             if( cB ) TA_LINEARREG_SLOPE_Close(cB);
@@ -44663,6 +44800,7 @@ static SV_NOINLINE void sv_verify_LN(const char *json, char *resp, int resp_size
                 if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
             }
             if( cOk && TA_LN_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
+            if( cOk && TA_LN_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
             if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             for( t = cmid; cOk && t < svN; t++ )
             {
@@ -44684,7 +44822,7 @@ static SV_NOINLINE void sv_verify_LN(const char *json, char *resp, int resp_size
                 int rbA = -1, rnA = -1, rbB = -1, rnB = -1;
                 rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                 if( TA_LN_OutRange( cA, &rbA, &rnA ) != TA_SUCCESS || rbA != svBeg || rnA != svNb ) { rangeOk = 0; cloneBad = "the original's range moved"; }
-                if( TA_LN_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 1 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the bar it counted"; }
+                if( TA_LN_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 2 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the two bars it counted"; }
             }
             if( cA ) TA_LN_Close(cA);
             if( cB ) TA_LN_Close(cB);
@@ -44930,6 +45068,7 @@ static SV_NOINLINE void sv_verify_LOG10(const char *json, char *resp, int resp_s
                 if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
             }
             if( cOk && TA_LOG10_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
+            if( cOk && TA_LOG10_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
             if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             for( t = cmid; cOk && t < svN; t++ )
             {
@@ -44951,7 +45090,7 @@ static SV_NOINLINE void sv_verify_LOG10(const char *json, char *resp, int resp_s
                 int rbA = -1, rnA = -1, rbB = -1, rnB = -1;
                 rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                 if( TA_LOG10_OutRange( cA, &rbA, &rnA ) != TA_SUCCESS || rbA != svBeg || rnA != svNb ) { rangeOk = 0; cloneBad = "the original's range moved"; }
-                if( TA_LOG10_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 1 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the bar it counted"; }
+                if( TA_LOG10_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 2 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the two bars it counted"; }
             }
             if( cA ) TA_LOG10_Close(cA);
             if( cB ) TA_LOG10_Close(cB);
@@ -45210,6 +45349,7 @@ static SV_NOINLINE void sv_verify_MA(const char *json, char *resp, int resp_size
                 if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
             }
             if( cOk && TA_MA_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
+            if( cOk && TA_MA_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
             if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             for( t = cmid; cOk && t < svN; t++ )
             {
@@ -45231,7 +45371,7 @@ static SV_NOINLINE void sv_verify_MA(const char *json, char *resp, int resp_size
                 int rbA = -1, rnA = -1, rbB = -1, rnB = -1;
                 rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                 if( TA_MA_OutRange( cA, &rbA, &rnA ) != TA_SUCCESS || rbA != svBeg || rnA != svNb ) { rangeOk = 0; cloneBad = "the original's range moved"; }
-                if( TA_MA_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 1 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the bar it counted"; }
+                if( TA_MA_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 2 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the two bars it counted"; }
             }
             if( cA ) TA_MA_Close(cA);
             if( cB ) TA_MA_Close(cB);
@@ -45518,6 +45658,7 @@ static SV_NOINLINE void sv_verify_MACD(const char *json, char *resp, int resp_si
                 if( cOk && (sv_bitne(cv2, ca2)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
             }
             if( cOk && TA_MACD_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
+            if( cOk && TA_MACD_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
             if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             if( cOk && !(fk1 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             if( cOk && !(fk2 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
@@ -45551,7 +45692,7 @@ static SV_NOINLINE void sv_verify_MACD(const char *json, char *resp, int resp_si
                 int rbA = -1, rnA = -1, rbB = -1, rnB = -1;
                 rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                 if( TA_MACD_OutRange( cA, &rbA, &rnA ) != TA_SUCCESS || rbA != svBeg || rnA != svNb ) { rangeOk = 0; cloneBad = "the original's range moved"; }
-                if( TA_MACD_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 1 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the bar it counted"; }
+                if( TA_MACD_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 2 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the two bars it counted"; }
             }
             if( cA ) TA_MACD_Close(cA);
             if( cB ) TA_MACD_Close(cB);
@@ -45850,6 +45991,7 @@ static SV_NOINLINE void sv_verify_MACDEXT(const char *json, char *resp, int resp
                 if( cOk && (sv_bitne(cv2, ca2)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
             }
             if( cOk && TA_MACDEXT_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
+            if( cOk && TA_MACDEXT_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
             if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             if( cOk && !(fk1 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             if( cOk && !(fk2 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
@@ -45883,7 +46025,7 @@ static SV_NOINLINE void sv_verify_MACDEXT(const char *json, char *resp, int resp
                 int rbA = -1, rnA = -1, rbB = -1, rnB = -1;
                 rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                 if( TA_MACDEXT_OutRange( cA, &rbA, &rnA ) != TA_SUCCESS || rbA != svBeg || rnA != svNb ) { rangeOk = 0; cloneBad = "the original's range moved"; }
-                if( TA_MACDEXT_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 1 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the bar it counted"; }
+                if( TA_MACDEXT_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 2 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the two bars it counted"; }
             }
             if( cA ) TA_MACDEXT_Close(cA);
             if( cB ) TA_MACDEXT_Close(cB);
@@ -46172,6 +46314,7 @@ static SV_NOINLINE void sv_verify_MACDFIX(const char *json, char *resp, int resp
                 if( cOk && (sv_bitne(cv2, ca2)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
             }
             if( cOk && TA_MACDFIX_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
+            if( cOk && TA_MACDFIX_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
             if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             if( cOk && !(fk1 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             if( cOk && !(fk2 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
@@ -46205,7 +46348,7 @@ static SV_NOINLINE void sv_verify_MACDFIX(const char *json, char *resp, int resp
                 int rbA = -1, rnA = -1, rbB = -1, rnB = -1;
                 rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                 if( TA_MACDFIX_OutRange( cA, &rbA, &rnA ) != TA_SUCCESS || rbA != svBeg || rnA != svNb ) { rangeOk = 0; cloneBad = "the original's range moved"; }
-                if( TA_MACDFIX_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 1 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the bar it counted"; }
+                if( TA_MACDFIX_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 2 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the two bars it counted"; }
             }
             if( cA ) TA_MACDFIX_Close(cA);
             if( cB ) TA_MACDFIX_Close(cB);
@@ -46478,6 +46621,7 @@ static SV_NOINLINE void sv_verify_MAMA(const char *json, char *resp, int resp_si
                 if( cOk && (sv_bitne(cv1, ca1)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
             }
             if( cOk && TA_MAMA_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
+            if( cOk && TA_MAMA_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
             if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             if( cOk && !(fk1 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             for( t = cmid; cOk && t < svN; t++ )
@@ -46505,7 +46649,7 @@ static SV_NOINLINE void sv_verify_MAMA(const char *json, char *resp, int resp_si
                 int rbA = -1, rnA = -1, rbB = -1, rnB = -1;
                 rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                 if( TA_MAMA_OutRange( cA, &rbA, &rnA ) != TA_SUCCESS || rbA != svBeg || rnA != svNb ) { rangeOk = 0; cloneBad = "the original's range moved"; }
-                if( TA_MAMA_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 1 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the bar it counted"; }
+                if( TA_MAMA_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 2 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the two bars it counted"; }
             }
             if( cA ) TA_MAMA_Close(cA);
             if( cB ) TA_MAMA_Close(cB);
@@ -46754,6 +46898,7 @@ static SV_NOINLINE void sv_verify_MARKETFI(const char *json, char *resp, int res
                 if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
             }
             if( cOk && TA_MARKETFI_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
+            if( cOk && TA_MARKETFI_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
             if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             for( t = cmid; cOk && t < svN; t++ )
             {
@@ -46775,7 +46920,7 @@ static SV_NOINLINE void sv_verify_MARKETFI(const char *json, char *resp, int res
                 int rbA = -1, rnA = -1, rbB = -1, rnB = -1;
                 rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                 if( TA_MARKETFI_OutRange( cA, &rbA, &rnA ) != TA_SUCCESS || rbA != svBeg || rnA != svNb ) { rangeOk = 0; cloneBad = "the original's range moved"; }
-                if( TA_MARKETFI_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 1 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the bar it counted"; }
+                if( TA_MARKETFI_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 2 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the two bars it counted"; }
             }
             if( cA ) TA_MARKETFI_Close(cA);
             if( cB ) TA_MARKETFI_Close(cB);
@@ -47024,6 +47169,7 @@ static SV_NOINLINE void sv_verify_MASSI(const char *json, char *resp, int resp_s
                 if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
             }
             if( cOk && TA_MASSI_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
+            if( cOk && TA_MASSI_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
             if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             for( t = cmid; cOk && t < svN; t++ )
             {
@@ -47045,7 +47191,7 @@ static SV_NOINLINE void sv_verify_MASSI(const char *json, char *resp, int resp_s
                 int rbA = -1, rnA = -1, rbB = -1, rnB = -1;
                 rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                 if( TA_MASSI_OutRange( cA, &rbA, &rnA ) != TA_SUCCESS || rbA != svBeg || rnA != svNb ) { rangeOk = 0; cloneBad = "the original's range moved"; }
-                if( TA_MASSI_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 1 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the bar it counted"; }
+                if( TA_MASSI_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 2 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the two bars it counted"; }
             }
             if( cA ) TA_MASSI_Close(cA);
             if( cB ) TA_MASSI_Close(cB);
@@ -47307,6 +47453,7 @@ static SV_NOINLINE void sv_verify_MAVP(const char *json, char *resp, int resp_si
                 if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
             }
             if( cOk && TA_MAVP_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
+            if( cOk && TA_MAVP_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
             if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             for( t = cmid; cOk && t < svN; t++ )
             {
@@ -47328,7 +47475,7 @@ static SV_NOINLINE void sv_verify_MAVP(const char *json, char *resp, int resp_si
                 int rbA = -1, rnA = -1, rbB = -1, rnB = -1;
                 rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                 if( TA_MAVP_OutRange( cA, &rbA, &rnA ) != TA_SUCCESS || rbA != svBeg || rnA != svNb ) { rangeOk = 0; cloneBad = "the original's range moved"; }
-                if( TA_MAVP_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 1 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the bar it counted"; }
+                if( TA_MAVP_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 2 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the two bars it counted"; }
             }
             if( cA ) TA_MAVP_Close(cA);
             if( cB ) TA_MAVP_Close(cB);
@@ -47581,6 +47728,7 @@ static SV_NOINLINE void sv_verify_MAX(const char *json, char *resp, int resp_siz
                 if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
             }
             if( cOk && TA_MAX_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
+            if( cOk && TA_MAX_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
             if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             for( t = cmid; cOk && t < svN; t++ )
             {
@@ -47602,7 +47750,7 @@ static SV_NOINLINE void sv_verify_MAX(const char *json, char *resp, int resp_siz
                 int rbA = -1, rnA = -1, rbB = -1, rnB = -1;
                 rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                 if( TA_MAX_OutRange( cA, &rbA, &rnA ) != TA_SUCCESS || rbA != svBeg || rnA != svNb ) { rangeOk = 0; cloneBad = "the original's range moved"; }
-                if( TA_MAX_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 1 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the bar it counted"; }
+                if( TA_MAX_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 2 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the two bars it counted"; }
             }
             if( cA ) TA_MAX_Close(cA);
             if( cB ) TA_MAX_Close(cB);
@@ -47842,6 +47990,7 @@ static SV_NOINLINE void sv_verify_MAXINDEX(const char *json, char *resp, int res
                 if( cOk && (cv0 != ca0) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
             }
             if( cOk && TA_MAXINDEX_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
+            if( cOk && TA_MAXINDEX_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
             if( cOk && !(fk0 = (int *)malloc( sizeof(int) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             for( t = cmid; cOk && t < svN; t++ )
             {
@@ -47863,7 +48012,7 @@ static SV_NOINLINE void sv_verify_MAXINDEX(const char *json, char *resp, int res
                 int rbA = -1, rnA = -1, rbB = -1, rnB = -1;
                 rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                 if( TA_MAXINDEX_OutRange( cA, &rbA, &rnA ) != TA_SUCCESS || rbA != svBeg || rnA != svNb ) { rangeOk = 0; cloneBad = "the original's range moved"; }
-                if( TA_MAXINDEX_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 1 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the bar it counted"; }
+                if( TA_MAXINDEX_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 2 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the two bars it counted"; }
             }
             if( cA ) TA_MAXINDEX_Close(cA);
             if( cB ) TA_MAXINDEX_Close(cB);
@@ -48111,6 +48260,7 @@ static SV_NOINLINE void sv_verify_MCGD(const char *json, char *resp, int resp_si
                 if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
             }
             if( cOk && TA_MCGD_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
+            if( cOk && TA_MCGD_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
             if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             for( t = cmid; cOk && t < svN; t++ )
             {
@@ -48132,7 +48282,7 @@ static SV_NOINLINE void sv_verify_MCGD(const char *json, char *resp, int resp_si
                 int rbA = -1, rnA = -1, rbB = -1, rnB = -1;
                 rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                 if( TA_MCGD_OutRange( cA, &rbA, &rnA ) != TA_SUCCESS || rbA != svBeg || rnA != svNb ) { rangeOk = 0; cloneBad = "the original's range moved"; }
-                if( TA_MCGD_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 1 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the bar it counted"; }
+                if( TA_MCGD_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 2 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the two bars it counted"; }
             }
             if( cA ) TA_MCGD_Close(cA);
             if( cB ) TA_MCGD_Close(cB);
@@ -48380,6 +48530,7 @@ static SV_NOINLINE void sv_verify_MEDIAN(const char *json, char *resp, int resp_
                 if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
             }
             if( cOk && TA_MEDIAN_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
+            if( cOk && TA_MEDIAN_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
             if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             for( t = cmid; cOk && t < svN; t++ )
             {
@@ -48401,7 +48552,7 @@ static SV_NOINLINE void sv_verify_MEDIAN(const char *json, char *resp, int resp_
                 int rbA = -1, rnA = -1, rbB = -1, rnB = -1;
                 rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                 if( TA_MEDIAN_OutRange( cA, &rbA, &rnA ) != TA_SUCCESS || rbA != svBeg || rnA != svNb ) { rangeOk = 0; cloneBad = "the original's range moved"; }
-                if( TA_MEDIAN_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 1 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the bar it counted"; }
+                if( TA_MEDIAN_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 2 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the two bars it counted"; }
             }
             if( cA ) TA_MEDIAN_Close(cA);
             if( cB ) TA_MEDIAN_Close(cB);
@@ -48647,6 +48798,7 @@ static SV_NOINLINE void sv_verify_MEDPRICE(const char *json, char *resp, int res
                 if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
             }
             if( cOk && TA_MEDPRICE_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
+            if( cOk && TA_MEDPRICE_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
             if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             for( t = cmid; cOk && t < svN; t++ )
             {
@@ -48668,7 +48820,7 @@ static SV_NOINLINE void sv_verify_MEDPRICE(const char *json, char *resp, int res
                 int rbA = -1, rnA = -1, rbB = -1, rnB = -1;
                 rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                 if( TA_MEDPRICE_OutRange( cA, &rbA, &rnA ) != TA_SUCCESS || rbA != svBeg || rnA != svNb ) { rangeOk = 0; cloneBad = "the original's range moved"; }
-                if( TA_MEDPRICE_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 1 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the bar it counted"; }
+                if( TA_MEDPRICE_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 2 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the two bars it counted"; }
             }
             if( cA ) TA_MEDPRICE_Close(cA);
             if( cB ) TA_MEDPRICE_Close(cB);
@@ -48915,6 +49067,7 @@ static SV_NOINLINE void sv_verify_MFI(const char *json, char *resp, int resp_siz
                 if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
             }
             if( cOk && TA_MFI_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
+            if( cOk && TA_MFI_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
             if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             for( t = cmid; cOk && t < svN; t++ )
             {
@@ -48936,7 +49089,7 @@ static SV_NOINLINE void sv_verify_MFI(const char *json, char *resp, int resp_siz
                 int rbA = -1, rnA = -1, rbB = -1, rnB = -1;
                 rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                 if( TA_MFI_OutRange( cA, &rbA, &rnA ) != TA_SUCCESS || rbA != svBeg || rnA != svNb ) { rangeOk = 0; cloneBad = "the original's range moved"; }
-                if( TA_MFI_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 1 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the bar it counted"; }
+                if( TA_MFI_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 2 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the two bars it counted"; }
             }
             if( cA ) TA_MFI_Close(cA);
             if( cB ) TA_MFI_Close(cB);
@@ -49183,6 +49336,7 @@ static SV_NOINLINE void sv_verify_MIDPOINT(const char *json, char *resp, int res
                 if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
             }
             if( cOk && TA_MIDPOINT_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
+            if( cOk && TA_MIDPOINT_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
             if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             for( t = cmid; cOk && t < svN; t++ )
             {
@@ -49204,7 +49358,7 @@ static SV_NOINLINE void sv_verify_MIDPOINT(const char *json, char *resp, int res
                 int rbA = -1, rnA = -1, rbB = -1, rnB = -1;
                 rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                 if( TA_MIDPOINT_OutRange( cA, &rbA, &rnA ) != TA_SUCCESS || rbA != svBeg || rnA != svNb ) { rangeOk = 0; cloneBad = "the original's range moved"; }
-                if( TA_MIDPOINT_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 1 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the bar it counted"; }
+                if( TA_MIDPOINT_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 2 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the two bars it counted"; }
             }
             if( cA ) TA_MIDPOINT_Close(cA);
             if( cB ) TA_MIDPOINT_Close(cB);
@@ -49451,6 +49605,7 @@ static SV_NOINLINE void sv_verify_MIDPRICE(const char *json, char *resp, int res
                 if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
             }
             if( cOk && TA_MIDPRICE_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
+            if( cOk && TA_MIDPRICE_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
             if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             for( t = cmid; cOk && t < svN; t++ )
             {
@@ -49472,7 +49627,7 @@ static SV_NOINLINE void sv_verify_MIDPRICE(const char *json, char *resp, int res
                 int rbA = -1, rnA = -1, rbB = -1, rnB = -1;
                 rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                 if( TA_MIDPRICE_OutRange( cA, &rbA, &rnA ) != TA_SUCCESS || rbA != svBeg || rnA != svNb ) { rangeOk = 0; cloneBad = "the original's range moved"; }
-                if( TA_MIDPRICE_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 1 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the bar it counted"; }
+                if( TA_MIDPRICE_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 2 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the two bars it counted"; }
             }
             if( cA ) TA_MIDPRICE_Close(cA);
             if( cB ) TA_MIDPRICE_Close(cB);
@@ -49719,6 +49874,7 @@ static SV_NOINLINE void sv_verify_MIN(const char *json, char *resp, int resp_siz
                 if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
             }
             if( cOk && TA_MIN_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
+            if( cOk && TA_MIN_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
             if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             for( t = cmid; cOk && t < svN; t++ )
             {
@@ -49740,7 +49896,7 @@ static SV_NOINLINE void sv_verify_MIN(const char *json, char *resp, int resp_siz
                 int rbA = -1, rnA = -1, rbB = -1, rnB = -1;
                 rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                 if( TA_MIN_OutRange( cA, &rbA, &rnA ) != TA_SUCCESS || rbA != svBeg || rnA != svNb ) { rangeOk = 0; cloneBad = "the original's range moved"; }
-                if( TA_MIN_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 1 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the bar it counted"; }
+                if( TA_MIN_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 2 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the two bars it counted"; }
             }
             if( cA ) TA_MIN_Close(cA);
             if( cB ) TA_MIN_Close(cB);
@@ -49980,6 +50136,7 @@ static SV_NOINLINE void sv_verify_MININDEX(const char *json, char *resp, int res
                 if( cOk && (cv0 != ca0) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
             }
             if( cOk && TA_MININDEX_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
+            if( cOk && TA_MININDEX_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
             if( cOk && !(fk0 = (int *)malloc( sizeof(int) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             for( t = cmid; cOk && t < svN; t++ )
             {
@@ -50001,7 +50158,7 @@ static SV_NOINLINE void sv_verify_MININDEX(const char *json, char *resp, int res
                 int rbA = -1, rnA = -1, rbB = -1, rnB = -1;
                 rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                 if( TA_MININDEX_OutRange( cA, &rbA, &rnA ) != TA_SUCCESS || rbA != svBeg || rnA != svNb ) { rangeOk = 0; cloneBad = "the original's range moved"; }
-                if( TA_MININDEX_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 1 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the bar it counted"; }
+                if( TA_MININDEX_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 2 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the two bars it counted"; }
             }
             if( cA ) TA_MININDEX_Close(cA);
             if( cB ) TA_MININDEX_Close(cB);
@@ -50267,6 +50424,7 @@ static SV_NOINLINE void sv_verify_MINMAX(const char *json, char *resp, int resp_
                 if( cOk && (sv_bitne(cv1, ca1)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
             }
             if( cOk && TA_MINMAX_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
+            if( cOk && TA_MINMAX_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
             if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             if( cOk && !(fk1 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             for( t = cmid; cOk && t < svN; t++ )
@@ -50294,7 +50452,7 @@ static SV_NOINLINE void sv_verify_MINMAX(const char *json, char *resp, int resp_
                 int rbA = -1, rnA = -1, rbB = -1, rnB = -1;
                 rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                 if( TA_MINMAX_OutRange( cA, &rbA, &rnA ) != TA_SUCCESS || rbA != svBeg || rnA != svNb ) { rangeOk = 0; cloneBad = "the original's range moved"; }
-                if( TA_MINMAX_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 1 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the bar it counted"; }
+                if( TA_MINMAX_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 2 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the two bars it counted"; }
             }
             if( cA ) TA_MINMAX_Close(cA);
             if( cB ) TA_MINMAX_Close(cB);
@@ -50555,6 +50713,7 @@ static SV_NOINLINE void sv_verify_MINMAXINDEX(const char *json, char *resp, int 
                 if( cOk && (cv1 != ca1) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
             }
             if( cOk && TA_MINMAXINDEX_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
+            if( cOk && TA_MINMAXINDEX_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
             if( cOk && !(fk0 = (int *)malloc( sizeof(int) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             if( cOk && !(fk1 = (int *)malloc( sizeof(int) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             for( t = cmid; cOk && t < svN; t++ )
@@ -50582,7 +50741,7 @@ static SV_NOINLINE void sv_verify_MINMAXINDEX(const char *json, char *resp, int 
                 int rbA = -1, rnA = -1, rbB = -1, rnB = -1;
                 rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                 if( TA_MINMAXINDEX_OutRange( cA, &rbA, &rnA ) != TA_SUCCESS || rbA != svBeg || rnA != svNb ) { rangeOk = 0; cloneBad = "the original's range moved"; }
-                if( TA_MINMAXINDEX_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 1 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the bar it counted"; }
+                if( TA_MINMAXINDEX_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 2 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the two bars it counted"; }
             }
             if( cA ) TA_MINMAXINDEX_Close(cA);
             if( cB ) TA_MINMAXINDEX_Close(cB);
@@ -50832,6 +50991,7 @@ static SV_NOINLINE void sv_verify_MINUS_DI(const char *json, char *resp, int res
                 if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
             }
             if( cOk && TA_MINUS_DI_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
+            if( cOk && TA_MINUS_DI_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
             if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             for( t = cmid; cOk && t < svN; t++ )
             {
@@ -50853,7 +51013,7 @@ static SV_NOINLINE void sv_verify_MINUS_DI(const char *json, char *resp, int res
                 int rbA = -1, rnA = -1, rbB = -1, rnB = -1;
                 rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                 if( TA_MINUS_DI_OutRange( cA, &rbA, &rnA ) != TA_SUCCESS || rbA != svBeg || rnA != svNb ) { rangeOk = 0; cloneBad = "the original's range moved"; }
-                if( TA_MINUS_DI_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 1 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the bar it counted"; }
+                if( TA_MINUS_DI_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 2 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the two bars it counted"; }
             }
             if( cA ) TA_MINUS_DI_Close(cA);
             if( cB ) TA_MINUS_DI_Close(cB);
@@ -51102,6 +51262,7 @@ static SV_NOINLINE void sv_verify_MINUS_DM(const char *json, char *resp, int res
                 if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
             }
             if( cOk && TA_MINUS_DM_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
+            if( cOk && TA_MINUS_DM_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
             if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             for( t = cmid; cOk && t < svN; t++ )
             {
@@ -51123,7 +51284,7 @@ static SV_NOINLINE void sv_verify_MINUS_DM(const char *json, char *resp, int res
                 int rbA = -1, rnA = -1, rbB = -1, rnB = -1;
                 rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                 if( TA_MINUS_DM_OutRange( cA, &rbA, &rnA ) != TA_SUCCESS || rbA != svBeg || rnA != svNb ) { rangeOk = 0; cloneBad = "the original's range moved"; }
-                if( TA_MINUS_DM_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 1 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the bar it counted"; }
+                if( TA_MINUS_DM_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 2 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the two bars it counted"; }
             }
             if( cA ) TA_MINUS_DM_Close(cA);
             if( cB ) TA_MINUS_DM_Close(cB);
@@ -51371,6 +51532,7 @@ static SV_NOINLINE void sv_verify_MOM(const char *json, char *resp, int resp_siz
                 if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
             }
             if( cOk && TA_MOM_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
+            if( cOk && TA_MOM_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
             if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             for( t = cmid; cOk && t < svN; t++ )
             {
@@ -51392,7 +51554,7 @@ static SV_NOINLINE void sv_verify_MOM(const char *json, char *resp, int resp_siz
                 int rbA = -1, rnA = -1, rbB = -1, rnB = -1;
                 rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                 if( TA_MOM_OutRange( cA, &rbA, &rnA ) != TA_SUCCESS || rbA != svBeg || rnA != svNb ) { rangeOk = 0; cloneBad = "the original's range moved"; }
-                if( TA_MOM_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 1 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the bar it counted"; }
+                if( TA_MOM_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 2 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the two bars it counted"; }
             }
             if( cA ) TA_MOM_Close(cA);
             if( cB ) TA_MOM_Close(cB);
@@ -51638,6 +51800,7 @@ static SV_NOINLINE void sv_verify_MULT(const char *json, char *resp, int resp_si
                 if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
             }
             if( cOk && TA_MULT_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
+            if( cOk && TA_MULT_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
             if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             for( t = cmid; cOk && t < svN; t++ )
             {
@@ -51659,7 +51822,7 @@ static SV_NOINLINE void sv_verify_MULT(const char *json, char *resp, int resp_si
                 int rbA = -1, rnA = -1, rbB = -1, rnB = -1;
                 rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                 if( TA_MULT_OutRange( cA, &rbA, &rnA ) != TA_SUCCESS || rbA != svBeg || rnA != svNb ) { rangeOk = 0; cloneBad = "the original's range moved"; }
-                if( TA_MULT_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 1 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the bar it counted"; }
+                if( TA_MULT_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 2 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the two bars it counted"; }
             }
             if( cA ) TA_MULT_Close(cA);
             if( cB ) TA_MULT_Close(cB);
@@ -51907,6 +52070,7 @@ static SV_NOINLINE void sv_verify_NATR(const char *json, char *resp, int resp_si
                 if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
             }
             if( cOk && TA_NATR_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
+            if( cOk && TA_NATR_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
             if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             for( t = cmid; cOk && t < svN; t++ )
             {
@@ -51928,7 +52092,7 @@ static SV_NOINLINE void sv_verify_NATR(const char *json, char *resp, int resp_si
                 int rbA = -1, rnA = -1, rbB = -1, rnB = -1;
                 rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                 if( TA_NATR_OutRange( cA, &rbA, &rnA ) != TA_SUCCESS || rbA != svBeg || rnA != svNb ) { rangeOk = 0; cloneBad = "the original's range moved"; }
-                if( TA_NATR_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 1 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the bar it counted"; }
+                if( TA_NATR_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 2 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the two bars it counted"; }
             }
             if( cA ) TA_NATR_Close(cA);
             if( cB ) TA_NATR_Close(cB);
@@ -52175,6 +52339,7 @@ static SV_NOINLINE void sv_verify_NVI(const char *json, char *resp, int resp_siz
                 if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
             }
             if( cOk && TA_NVI_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
+            if( cOk && TA_NVI_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
             if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             for( t = cmid; cOk && t < svN; t++ )
             {
@@ -52196,7 +52361,7 @@ static SV_NOINLINE void sv_verify_NVI(const char *json, char *resp, int resp_siz
                 int rbA = -1, rnA = -1, rbB = -1, rnB = -1;
                 rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                 if( TA_NVI_OutRange( cA, &rbA, &rnA ) != TA_SUCCESS || rbA != svBeg || rnA != svNb ) { rangeOk = 0; cloneBad = "the original's range moved"; }
-                if( TA_NVI_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 1 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the bar it counted"; }
+                if( TA_NVI_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 2 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the two bars it counted"; }
             }
             if( cA ) TA_NVI_Close(cA);
             if( cB ) TA_NVI_Close(cB);
@@ -52442,6 +52607,7 @@ static SV_NOINLINE void sv_verify_OBV(const char *json, char *resp, int resp_siz
                 if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
             }
             if( cOk && TA_OBV_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
+            if( cOk && TA_OBV_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
             if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             for( t = cmid; cOk && t < svN; t++ )
             {
@@ -52463,7 +52629,7 @@ static SV_NOINLINE void sv_verify_OBV(const char *json, char *resp, int resp_siz
                 int rbA = -1, rnA = -1, rbB = -1, rnB = -1;
                 rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                 if( TA_OBV_OutRange( cA, &rbA, &rnA ) != TA_SUCCESS || rbA != svBeg || rnA != svNb ) { rangeOk = 0; cloneBad = "the original's range moved"; }
-                if( TA_OBV_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 1 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the bar it counted"; }
+                if( TA_OBV_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 2 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the two bars it counted"; }
             }
             if( cA ) TA_OBV_Close(cA);
             if( cB ) TA_OBV_Close(cB);
@@ -52724,6 +52890,7 @@ static SV_NOINLINE void sv_verify_PERCENTB(const char *json, char *resp, int res
                 if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
             }
             if( cOk && TA_PERCENTB_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
+            if( cOk && TA_PERCENTB_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
             if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             for( t = cmid; cOk && t < svN; t++ )
             {
@@ -52745,7 +52912,7 @@ static SV_NOINLINE void sv_verify_PERCENTB(const char *json, char *resp, int res
                 int rbA = -1, rnA = -1, rbB = -1, rnB = -1;
                 rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                 if( TA_PERCENTB_OutRange( cA, &rbA, &rnA ) != TA_SUCCESS || rbA != svBeg || rnA != svNb ) { rangeOk = 0; cloneBad = "the original's range moved"; }
-                if( TA_PERCENTB_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 1 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the bar it counted"; }
+                if( TA_PERCENTB_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 2 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the two bars it counted"; }
             }
             if( cA ) TA_PERCENTB_Close(cA);
             if( cB ) TA_PERCENTB_Close(cB);
@@ -52999,6 +53166,7 @@ static SV_NOINLINE void sv_verify_PERCENTILE(const char *json, char *resp, int r
                 if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
             }
             if( cOk && TA_PERCENTILE_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
+            if( cOk && TA_PERCENTILE_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
             if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             for( t = cmid; cOk && t < svN; t++ )
             {
@@ -53020,7 +53188,7 @@ static SV_NOINLINE void sv_verify_PERCENTILE(const char *json, char *resp, int r
                 int rbA = -1, rnA = -1, rbB = -1, rnB = -1;
                 rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                 if( TA_PERCENTILE_OutRange( cA, &rbA, &rnA ) != TA_SUCCESS || rbA != svBeg || rnA != svNb ) { rangeOk = 0; cloneBad = "the original's range moved"; }
-                if( TA_PERCENTILE_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 1 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the bar it counted"; }
+                if( TA_PERCENTILE_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 2 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the two bars it counted"; }
             }
             if( cA ) TA_PERCENTILE_Close(cA);
             if( cB ) TA_PERCENTILE_Close(cB);
@@ -53267,6 +53435,7 @@ static SV_NOINLINE void sv_verify_PERCENTRANK(const char *json, char *resp, int 
                 if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
             }
             if( cOk && TA_PERCENTRANK_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
+            if( cOk && TA_PERCENTRANK_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
             if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             for( t = cmid; cOk && t < svN; t++ )
             {
@@ -53288,7 +53457,7 @@ static SV_NOINLINE void sv_verify_PERCENTRANK(const char *json, char *resp, int 
                 int rbA = -1, rnA = -1, rbB = -1, rnB = -1;
                 rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                 if( TA_PERCENTRANK_OutRange( cA, &rbA, &rnA ) != TA_SUCCESS || rbA != svBeg || rnA != svNb ) { rangeOk = 0; cloneBad = "the original's range moved"; }
-                if( TA_PERCENTRANK_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 1 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the bar it counted"; }
+                if( TA_PERCENTRANK_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 2 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the two bars it counted"; }
             }
             if( cA ) TA_PERCENTRANK_Close(cA);
             if( cB ) TA_PERCENTRANK_Close(cB);
@@ -53536,6 +53705,7 @@ static SV_NOINLINE void sv_verify_PLUS_DI(const char *json, char *resp, int resp
                 if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
             }
             if( cOk && TA_PLUS_DI_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
+            if( cOk && TA_PLUS_DI_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
             if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             for( t = cmid; cOk && t < svN; t++ )
             {
@@ -53557,7 +53727,7 @@ static SV_NOINLINE void sv_verify_PLUS_DI(const char *json, char *resp, int resp
                 int rbA = -1, rnA = -1, rbB = -1, rnB = -1;
                 rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                 if( TA_PLUS_DI_OutRange( cA, &rbA, &rnA ) != TA_SUCCESS || rbA != svBeg || rnA != svNb ) { rangeOk = 0; cloneBad = "the original's range moved"; }
-                if( TA_PLUS_DI_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 1 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the bar it counted"; }
+                if( TA_PLUS_DI_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 2 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the two bars it counted"; }
             }
             if( cA ) TA_PLUS_DI_Close(cA);
             if( cB ) TA_PLUS_DI_Close(cB);
@@ -53806,6 +53976,7 @@ static SV_NOINLINE void sv_verify_PLUS_DM(const char *json, char *resp, int resp
                 if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
             }
             if( cOk && TA_PLUS_DM_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
+            if( cOk && TA_PLUS_DM_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
             if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             for( t = cmid; cOk && t < svN; t++ )
             {
@@ -53827,7 +53998,7 @@ static SV_NOINLINE void sv_verify_PLUS_DM(const char *json, char *resp, int resp
                 int rbA = -1, rnA = -1, rbB = -1, rnB = -1;
                 rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                 if( TA_PLUS_DM_OutRange( cA, &rbA, &rnA ) != TA_SUCCESS || rbA != svBeg || rnA != svNb ) { rangeOk = 0; cloneBad = "the original's range moved"; }
-                if( TA_PLUS_DM_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 1 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the bar it counted"; }
+                if( TA_PLUS_DM_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 2 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the two bars it counted"; }
             }
             if( cA ) TA_PLUS_DM_Close(cA);
             if( cB ) TA_PLUS_DM_Close(cB);
@@ -54088,6 +54259,7 @@ static SV_NOINLINE void sv_verify_PPO(const char *json, char *resp, int resp_siz
                 if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
             }
             if( cOk && TA_PPO_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
+            if( cOk && TA_PPO_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
             if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             for( t = cmid; cOk && t < svN; t++ )
             {
@@ -54109,7 +54281,7 @@ static SV_NOINLINE void sv_verify_PPO(const char *json, char *resp, int resp_siz
                 int rbA = -1, rnA = -1, rbB = -1, rnB = -1;
                 rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                 if( TA_PPO_OutRange( cA, &rbA, &rnA ) != TA_SUCCESS || rbA != svBeg || rnA != svNb ) { rangeOk = 0; cloneBad = "the original's range moved"; }
-                if( TA_PPO_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 1 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the bar it counted"; }
+                if( TA_PPO_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 2 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the two bars it counted"; }
             }
             if( cA ) TA_PPO_Close(cA);
             if( cB ) TA_PPO_Close(cB);
@@ -54361,6 +54533,7 @@ static SV_NOINLINE void sv_verify_PVI(const char *json, char *resp, int resp_siz
                 if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
             }
             if( cOk && TA_PVI_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
+            if( cOk && TA_PVI_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
             if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             for( t = cmid; cOk && t < svN; t++ )
             {
@@ -54382,7 +54555,7 @@ static SV_NOINLINE void sv_verify_PVI(const char *json, char *resp, int resp_siz
                 int rbA = -1, rnA = -1, rbB = -1, rnB = -1;
                 rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                 if( TA_PVI_OutRange( cA, &rbA, &rnA ) != TA_SUCCESS || rbA != svBeg || rnA != svNb ) { rangeOk = 0; cloneBad = "the original's range moved"; }
-                if( TA_PVI_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 1 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the bar it counted"; }
+                if( TA_PVI_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 2 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the two bars it counted"; }
             }
             if( cA ) TA_PVI_Close(cA);
             if( cB ) TA_PVI_Close(cB);
@@ -54642,6 +54815,7 @@ static SV_NOINLINE void sv_verify_PVO(const char *json, char *resp, int resp_siz
                 if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
             }
             if( cOk && TA_PVO_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
+            if( cOk && TA_PVO_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
             if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             for( t = cmid; cOk && t < svN; t++ )
             {
@@ -54663,7 +54837,7 @@ static SV_NOINLINE void sv_verify_PVO(const char *json, char *resp, int resp_siz
                 int rbA = -1, rnA = -1, rbB = -1, rnB = -1;
                 rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                 if( TA_PVO_OutRange( cA, &rbA, &rnA ) != TA_SUCCESS || rbA != svBeg || rnA != svNb ) { rangeOk = 0; cloneBad = "the original's range moved"; }
-                if( TA_PVO_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 1 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the bar it counted"; }
+                if( TA_PVO_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 2 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the two bars it counted"; }
             }
             if( cA ) TA_PVO_Close(cA);
             if( cB ) TA_PVO_Close(cB);
@@ -54915,6 +55089,7 @@ static SV_NOINLINE void sv_verify_PVT(const char *json, char *resp, int resp_siz
                 if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
             }
             if( cOk && TA_PVT_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
+            if( cOk && TA_PVT_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
             if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             for( t = cmid; cOk && t < svN; t++ )
             {
@@ -54936,7 +55111,7 @@ static SV_NOINLINE void sv_verify_PVT(const char *json, char *resp, int resp_siz
                 int rbA = -1, rnA = -1, rbB = -1, rnB = -1;
                 rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                 if( TA_PVT_OutRange( cA, &rbA, &rnA ) != TA_SUCCESS || rbA != svBeg || rnA != svNb ) { rangeOk = 0; cloneBad = "the original's range moved"; }
-                if( TA_PVT_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 1 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the bar it counted"; }
+                if( TA_PVT_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 2 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the two bars it counted"; }
             }
             if( cA ) TA_PVT_Close(cA);
             if( cB ) TA_PVT_Close(cB);
@@ -55183,6 +55358,7 @@ static SV_NOINLINE void sv_verify_QSTICK(const char *json, char *resp, int resp_
                 if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
             }
             if( cOk && TA_QSTICK_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
+            if( cOk && TA_QSTICK_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
             if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             for( t = cmid; cOk && t < svN; t++ )
             {
@@ -55204,7 +55380,7 @@ static SV_NOINLINE void sv_verify_QSTICK(const char *json, char *resp, int resp_
                 int rbA = -1, rnA = -1, rbB = -1, rnB = -1;
                 rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                 if( TA_QSTICK_OutRange( cA, &rbA, &rnA ) != TA_SUCCESS || rbA != svBeg || rnA != svNb ) { rangeOk = 0; cloneBad = "the original's range moved"; }
-                if( TA_QSTICK_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 1 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the bar it counted"; }
+                if( TA_QSTICK_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 2 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the two bars it counted"; }
             }
             if( cA ) TA_QSTICK_Close(cA);
             if( cB ) TA_QSTICK_Close(cB);
@@ -55452,6 +55628,7 @@ static SV_NOINLINE void sv_verify_RMA(const char *json, char *resp, int resp_siz
                 if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
             }
             if( cOk && TA_RMA_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
+            if( cOk && TA_RMA_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
             if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             for( t = cmid; cOk && t < svN; t++ )
             {
@@ -55473,7 +55650,7 @@ static SV_NOINLINE void sv_verify_RMA(const char *json, char *resp, int resp_siz
                 int rbA = -1, rnA = -1, rbB = -1, rnB = -1;
                 rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                 if( TA_RMA_OutRange( cA, &rbA, &rnA ) != TA_SUCCESS || rbA != svBeg || rnA != svNb ) { rangeOk = 0; cloneBad = "the original's range moved"; }
-                if( TA_RMA_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 1 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the bar it counted"; }
+                if( TA_RMA_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 2 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the two bars it counted"; }
             }
             if( cA ) TA_RMA_Close(cA);
             if( cB ) TA_RMA_Close(cB);
@@ -55721,6 +55898,7 @@ static SV_NOINLINE void sv_verify_ROC(const char *json, char *resp, int resp_siz
                 if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
             }
             if( cOk && TA_ROC_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
+            if( cOk && TA_ROC_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
             if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             for( t = cmid; cOk && t < svN; t++ )
             {
@@ -55742,7 +55920,7 @@ static SV_NOINLINE void sv_verify_ROC(const char *json, char *resp, int resp_siz
                 int rbA = -1, rnA = -1, rbB = -1, rnB = -1;
                 rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                 if( TA_ROC_OutRange( cA, &rbA, &rnA ) != TA_SUCCESS || rbA != svBeg || rnA != svNb ) { rangeOk = 0; cloneBad = "the original's range moved"; }
-                if( TA_ROC_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 1 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the bar it counted"; }
+                if( TA_ROC_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 2 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the two bars it counted"; }
             }
             if( cA ) TA_ROC_Close(cA);
             if( cB ) TA_ROC_Close(cB);
@@ -55989,6 +56167,7 @@ static SV_NOINLINE void sv_verify_ROCP(const char *json, char *resp, int resp_si
                 if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
             }
             if( cOk && TA_ROCP_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
+            if( cOk && TA_ROCP_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
             if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             for( t = cmid; cOk && t < svN; t++ )
             {
@@ -56010,7 +56189,7 @@ static SV_NOINLINE void sv_verify_ROCP(const char *json, char *resp, int resp_si
                 int rbA = -1, rnA = -1, rbB = -1, rnB = -1;
                 rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                 if( TA_ROCP_OutRange( cA, &rbA, &rnA ) != TA_SUCCESS || rbA != svBeg || rnA != svNb ) { rangeOk = 0; cloneBad = "the original's range moved"; }
-                if( TA_ROCP_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 1 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the bar it counted"; }
+                if( TA_ROCP_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 2 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the two bars it counted"; }
             }
             if( cA ) TA_ROCP_Close(cA);
             if( cB ) TA_ROCP_Close(cB);
@@ -56257,6 +56436,7 @@ static SV_NOINLINE void sv_verify_ROCR(const char *json, char *resp, int resp_si
                 if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
             }
             if( cOk && TA_ROCR_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
+            if( cOk && TA_ROCR_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
             if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             for( t = cmid; cOk && t < svN; t++ )
             {
@@ -56278,7 +56458,7 @@ static SV_NOINLINE void sv_verify_ROCR(const char *json, char *resp, int resp_si
                 int rbA = -1, rnA = -1, rbB = -1, rnB = -1;
                 rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                 if( TA_ROCR_OutRange( cA, &rbA, &rnA ) != TA_SUCCESS || rbA != svBeg || rnA != svNb ) { rangeOk = 0; cloneBad = "the original's range moved"; }
-                if( TA_ROCR_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 1 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the bar it counted"; }
+                if( TA_ROCR_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 2 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the two bars it counted"; }
             }
             if( cA ) TA_ROCR_Close(cA);
             if( cB ) TA_ROCR_Close(cB);
@@ -56525,6 +56705,7 @@ static SV_NOINLINE void sv_verify_ROCR100(const char *json, char *resp, int resp
                 if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
             }
             if( cOk && TA_ROCR100_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
+            if( cOk && TA_ROCR100_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
             if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             for( t = cmid; cOk && t < svN; t++ )
             {
@@ -56546,7 +56727,7 @@ static SV_NOINLINE void sv_verify_ROCR100(const char *json, char *resp, int resp
                 int rbA = -1, rnA = -1, rbB = -1, rnB = -1;
                 rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                 if( TA_ROCR100_OutRange( cA, &rbA, &rnA ) != TA_SUCCESS || rbA != svBeg || rnA != svNb ) { rangeOk = 0; cloneBad = "the original's range moved"; }
-                if( TA_ROCR100_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 1 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the bar it counted"; }
+                if( TA_ROCR100_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 2 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the two bars it counted"; }
             }
             if( cA ) TA_ROCR100_Close(cA);
             if( cB ) TA_ROCR100_Close(cB);
@@ -56794,6 +56975,7 @@ static SV_NOINLINE void sv_verify_ROGERSSATCHELL(const char *json, char *resp, i
                 if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
             }
             if( cOk && TA_ROGERSSATCHELL_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
+            if( cOk && TA_ROGERSSATCHELL_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
             if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             for( t = cmid; cOk && t < svN; t++ )
             {
@@ -56815,7 +56997,7 @@ static SV_NOINLINE void sv_verify_ROGERSSATCHELL(const char *json, char *resp, i
                 int rbA = -1, rnA = -1, rbB = -1, rnB = -1;
                 rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                 if( TA_ROGERSSATCHELL_OutRange( cA, &rbA, &rnA ) != TA_SUCCESS || rbA != svBeg || rnA != svNb ) { rangeOk = 0; cloneBad = "the original's range moved"; }
-                if( TA_ROGERSSATCHELL_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 1 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the bar it counted"; }
+                if( TA_ROGERSSATCHELL_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 2 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the two bars it counted"; }
             }
             if( cA ) TA_ROGERSSATCHELL_Close(cA);
             if( cB ) TA_ROGERSSATCHELL_Close(cB);
@@ -57063,6 +57245,7 @@ static SV_NOINLINE void sv_verify_RSI(const char *json, char *resp, int resp_siz
                 if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
             }
             if( cOk && TA_RSI_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
+            if( cOk && TA_RSI_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
             if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             for( t = cmid; cOk && t < svN; t++ )
             {
@@ -57084,7 +57267,7 @@ static SV_NOINLINE void sv_verify_RSI(const char *json, char *resp, int resp_siz
                 int rbA = -1, rnA = -1, rbB = -1, rnB = -1;
                 rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                 if( TA_RSI_OutRange( cA, &rbA, &rnA ) != TA_SUCCESS || rbA != svBeg || rnA != svNb ) { rangeOk = 0; cloneBad = "the original's range moved"; }
-                if( TA_RSI_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 1 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the bar it counted"; }
+                if( TA_RSI_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 2 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the two bars it counted"; }
             }
             if( cA ) TA_RSI_Close(cA);
             if( cB ) TA_RSI_Close(cB);
@@ -57334,6 +57517,7 @@ static SV_NOINLINE void sv_verify_RVI(const char *json, char *resp, int resp_siz
                 if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
             }
             if( cOk && TA_RVI_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
+            if( cOk && TA_RVI_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
             if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             for( t = cmid; cOk && t < svN; t++ )
             {
@@ -57355,7 +57539,7 @@ static SV_NOINLINE void sv_verify_RVI(const char *json, char *resp, int resp_siz
                 int rbA = -1, rnA = -1, rbB = -1, rnB = -1;
                 rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                 if( TA_RVI_OutRange( cA, &rbA, &rnA ) != TA_SUCCESS || rbA != svBeg || rnA != svNb ) { rangeOk = 0; cloneBad = "the original's range moved"; }
-                if( TA_RVI_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 1 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the bar it counted"; }
+                if( TA_RVI_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 2 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the two bars it counted"; }
             }
             if( cA ) TA_RVI_Close(cA);
             if( cB ) TA_RVI_Close(cB);
@@ -57605,6 +57789,7 @@ static SV_NOINLINE void sv_verify_RVIR(const char *json, char *resp, int resp_si
                 if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
             }
             if( cOk && TA_RVIR_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
+            if( cOk && TA_RVIR_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
             if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             for( t = cmid; cOk && t < svN; t++ )
             {
@@ -57626,7 +57811,7 @@ static SV_NOINLINE void sv_verify_RVIR(const char *json, char *resp, int resp_si
                 int rbA = -1, rnA = -1, rbB = -1, rnB = -1;
                 rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                 if( TA_RVIR_OutRange( cA, &rbA, &rnA ) != TA_SUCCESS || rbA != svBeg || rnA != svNb ) { rangeOk = 0; cloneBad = "the original's range moved"; }
-                if( TA_RVIR_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 1 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the bar it counted"; }
+                if( TA_RVIR_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 2 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the two bars it counted"; }
             }
             if( cA ) TA_RVIR_Close(cA);
             if( cB ) TA_RVIR_Close(cB);
@@ -57874,6 +58059,7 @@ static SV_NOINLINE void sv_verify_RVOL(const char *json, char *resp, int resp_si
                 if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
             }
             if( cOk && TA_RVOL_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
+            if( cOk && TA_RVOL_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
             if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             for( t = cmid; cOk && t < svN; t++ )
             {
@@ -57895,7 +58081,7 @@ static SV_NOINLINE void sv_verify_RVOL(const char *json, char *resp, int resp_si
                 int rbA = -1, rnA = -1, rbB = -1, rnB = -1;
                 rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                 if( TA_RVOL_OutRange( cA, &rbA, &rnA ) != TA_SUCCESS || rbA != svBeg || rnA != svNb ) { rangeOk = 0; cloneBad = "the original's range moved"; }
-                if( TA_RVOL_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 1 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the bar it counted"; }
+                if( TA_RVOL_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 2 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the two bars it counted"; }
             }
             if( cA ) TA_RVOL_Close(cA);
             if( cB ) TA_RVOL_Close(cB);
@@ -58143,6 +58329,7 @@ static SV_NOINLINE void sv_verify_SAR(const char *json, char *resp, int resp_siz
                 if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
             }
             if( cOk && TA_SAR_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
+            if( cOk && TA_SAR_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
             if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             for( t = cmid; cOk && t < svN; t++ )
             {
@@ -58164,7 +58351,7 @@ static SV_NOINLINE void sv_verify_SAR(const char *json, char *resp, int resp_siz
                 int rbA = -1, rnA = -1, rbB = -1, rnB = -1;
                 rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                 if( TA_SAR_OutRange( cA, &rbA, &rnA ) != TA_SUCCESS || rbA != svBeg || rnA != svNb ) { rangeOk = 0; cloneBad = "the original's range moved"; }
-                if( TA_SAR_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 1 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the bar it counted"; }
+                if( TA_SAR_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 2 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the two bars it counted"; }
             }
             if( cA ) TA_SAR_Close(cA);
             if( cB ) TA_SAR_Close(cB);
@@ -58418,6 +58605,7 @@ static SV_NOINLINE void sv_verify_SAREXT(const char *json, char *resp, int resp_
                 if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
             }
             if( cOk && TA_SAREXT_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
+            if( cOk && TA_SAREXT_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
             if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             for( t = cmid; cOk && t < svN; t++ )
             {
@@ -58439,7 +58627,7 @@ static SV_NOINLINE void sv_verify_SAREXT(const char *json, char *resp, int resp_
                 int rbA = -1, rnA = -1, rbB = -1, rnB = -1;
                 rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                 if( TA_SAREXT_OutRange( cA, &rbA, &rnA ) != TA_SUCCESS || rbA != svBeg || rnA != svNb ) { rangeOk = 0; cloneBad = "the original's range moved"; }
-                if( TA_SAREXT_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 1 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the bar it counted"; }
+                if( TA_SAREXT_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 2 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the two bars it counted"; }
             }
             if( cA ) TA_SAREXT_Close(cA);
             if( cB ) TA_SAREXT_Close(cB);
@@ -58686,6 +58874,7 @@ static SV_NOINLINE void sv_verify_SI(const char *json, char *resp, int resp_size
                 if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
             }
             if( cOk && TA_SI_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
+            if( cOk && TA_SI_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
             if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             for( t = cmid; cOk && t < svN; t++ )
             {
@@ -58707,7 +58896,7 @@ static SV_NOINLINE void sv_verify_SI(const char *json, char *resp, int resp_size
                 int rbA = -1, rnA = -1, rbB = -1, rnB = -1;
                 rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                 if( TA_SI_OutRange( cA, &rbA, &rnA ) != TA_SUCCESS || rbA != svBeg || rnA != svNb ) { rangeOk = 0; cloneBad = "the original's range moved"; }
-                if( TA_SI_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 1 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the bar it counted"; }
+                if( TA_SI_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 2 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the two bars it counted"; }
             }
             if( cA ) TA_SI_Close(cA);
             if( cB ) TA_SI_Close(cB);
@@ -58953,6 +59142,7 @@ static SV_NOINLINE void sv_verify_SIN(const char *json, char *resp, int resp_siz
                 if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
             }
             if( cOk && TA_SIN_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
+            if( cOk && TA_SIN_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
             if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             for( t = cmid; cOk && t < svN; t++ )
             {
@@ -58974,7 +59164,7 @@ static SV_NOINLINE void sv_verify_SIN(const char *json, char *resp, int resp_siz
                 int rbA = -1, rnA = -1, rbB = -1, rnB = -1;
                 rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                 if( TA_SIN_OutRange( cA, &rbA, &rnA ) != TA_SUCCESS || rbA != svBeg || rnA != svNb ) { rangeOk = 0; cloneBad = "the original's range moved"; }
-                if( TA_SIN_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 1 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the bar it counted"; }
+                if( TA_SIN_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 2 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the two bars it counted"; }
             }
             if( cA ) TA_SIN_Close(cA);
             if( cB ) TA_SIN_Close(cB);
@@ -59220,6 +59410,7 @@ static SV_NOINLINE void sv_verify_SINH(const char *json, char *resp, int resp_si
                 if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
             }
             if( cOk && TA_SINH_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
+            if( cOk && TA_SINH_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
             if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             for( t = cmid; cOk && t < svN; t++ )
             {
@@ -59241,7 +59432,7 @@ static SV_NOINLINE void sv_verify_SINH(const char *json, char *resp, int resp_si
                 int rbA = -1, rnA = -1, rbB = -1, rnB = -1;
                 rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                 if( TA_SINH_OutRange( cA, &rbA, &rnA ) != TA_SUCCESS || rbA != svBeg || rnA != svNb ) { rangeOk = 0; cloneBad = "the original's range moved"; }
-                if( TA_SINH_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 1 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the bar it counted"; }
+                if( TA_SINH_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 2 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the two bars it counted"; }
             }
             if( cA ) TA_SINH_Close(cA);
             if( cB ) TA_SINH_Close(cB);
@@ -59488,6 +59679,7 @@ static SV_NOINLINE void sv_verify_SMA(const char *json, char *resp, int resp_siz
                 if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
             }
             if( cOk && TA_SMA_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
+            if( cOk && TA_SMA_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
             if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             for( t = cmid; cOk && t < svN; t++ )
             {
@@ -59509,7 +59701,7 @@ static SV_NOINLINE void sv_verify_SMA(const char *json, char *resp, int resp_siz
                 int rbA = -1, rnA = -1, rbB = -1, rnB = -1;
                 rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                 if( TA_SMA_OutRange( cA, &rbA, &rnA ) != TA_SUCCESS || rbA != svBeg || rnA != svNb ) { rangeOk = 0; cloneBad = "the original's range moved"; }
-                if( TA_SMA_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 1 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the bar it counted"; }
+                if( TA_SMA_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 2 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the two bars it counted"; }
             }
             if( cA ) TA_SMA_Close(cA);
             if( cB ) TA_SMA_Close(cB);
@@ -59779,6 +59971,7 @@ static SV_NOINLINE void sv_verify_SMI(const char *json, char *resp, int resp_siz
                 if( cOk && (sv_bitne(cv1, ca1)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
             }
             if( cOk && TA_SMI_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
+            if( cOk && TA_SMI_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
             if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             if( cOk && !(fk1 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             for( t = cmid; cOk && t < svN; t++ )
@@ -59806,7 +59999,7 @@ static SV_NOINLINE void sv_verify_SMI(const char *json, char *resp, int resp_siz
                 int rbA = -1, rnA = -1, rbB = -1, rnB = -1;
                 rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                 if( TA_SMI_OutRange( cA, &rbA, &rnA ) != TA_SUCCESS || rbA != svBeg || rnA != svNb ) { rangeOk = 0; cloneBad = "the original's range moved"; }
-                if( TA_SMI_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 1 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the bar it counted"; }
+                if( TA_SMI_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 2 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the two bars it counted"; }
             }
             if( cA ) TA_SMI_Close(cA);
             if( cB ) TA_SMI_Close(cB);
@@ -60055,6 +60248,7 @@ static SV_NOINLINE void sv_verify_SQRT(const char *json, char *resp, int resp_si
                 if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
             }
             if( cOk && TA_SQRT_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
+            if( cOk && TA_SQRT_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
             if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             for( t = cmid; cOk && t < svN; t++ )
             {
@@ -60076,7 +60270,7 @@ static SV_NOINLINE void sv_verify_SQRT(const char *json, char *resp, int resp_si
                 int rbA = -1, rnA = -1, rbB = -1, rnB = -1;
                 rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                 if( TA_SQRT_OutRange( cA, &rbA, &rnA ) != TA_SUCCESS || rbA != svBeg || rnA != svNb ) { rangeOk = 0; cloneBad = "the original's range moved"; }
-                if( TA_SQRT_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 1 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the bar it counted"; }
+                if( TA_SQRT_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 2 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the two bars it counted"; }
             }
             if( cA ) TA_SQRT_Close(cA);
             if( cB ) TA_SQRT_Close(cB);
@@ -60328,6 +60522,7 @@ static SV_NOINLINE void sv_verify_STC(const char *json, char *resp, int resp_siz
                 if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
             }
             if( cOk && TA_STC_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
+            if( cOk && TA_STC_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
             if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             for( t = cmid; cOk && t < svN; t++ )
             {
@@ -60349,7 +60544,7 @@ static SV_NOINLINE void sv_verify_STC(const char *json, char *resp, int resp_siz
                 int rbA = -1, rnA = -1, rbB = -1, rnB = -1;
                 rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                 if( TA_STC_OutRange( cA, &rbA, &rnA ) != TA_SUCCESS || rbA != svBeg || rnA != svNb ) { rangeOk = 0; cloneBad = "the original's range moved"; }
-                if( TA_STC_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 1 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the bar it counted"; }
+                if( TA_STC_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 2 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the two bars it counted"; }
             }
             if( cA ) TA_STC_Close(cA);
             if( cB ) TA_STC_Close(cB);
@@ -60599,6 +60794,7 @@ static SV_NOINLINE void sv_verify_STDDEV(const char *json, char *resp, int resp_
                 if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
             }
             if( cOk && TA_STDDEV_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
+            if( cOk && TA_STDDEV_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
             if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             for( t = cmid; cOk && t < svN; t++ )
             {
@@ -60620,7 +60816,7 @@ static SV_NOINLINE void sv_verify_STDDEV(const char *json, char *resp, int resp_
                 int rbA = -1, rnA = -1, rbB = -1, rnB = -1;
                 rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                 if( TA_STDDEV_OutRange( cA, &rbA, &rnA ) != TA_SUCCESS || rbA != svBeg || rnA != svNb ) { rangeOk = 0; cloneBad = "the original's range moved"; }
-                if( TA_STDDEV_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 1 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the bar it counted"; }
+                if( TA_STDDEV_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 2 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the two bars it counted"; }
             }
             if( cA ) TA_STDDEV_Close(cA);
             if( cB ) TA_STDDEV_Close(cB);
@@ -60901,6 +61097,7 @@ static SV_NOINLINE void sv_verify_STOCH(const char *json, char *resp, int resp_s
                 if( cOk && (sv_bitne(cv1, ca1)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
             }
             if( cOk && TA_STOCH_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
+            if( cOk && TA_STOCH_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
             if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             if( cOk && !(fk1 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             for( t = cmid; cOk && t < svN; t++ )
@@ -60928,7 +61125,7 @@ static SV_NOINLINE void sv_verify_STOCH(const char *json, char *resp, int resp_s
                 int rbA = -1, rnA = -1, rbB = -1, rnB = -1;
                 rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                 if( TA_STOCH_OutRange( cA, &rbA, &rnA ) != TA_SUCCESS || rbA != svBeg || rnA != svNb ) { rangeOk = 0; cloneBad = "the original's range moved"; }
-                if( TA_STOCH_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 1 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the bar it counted"; }
+                if( TA_STOCH_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 2 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the two bars it counted"; }
             }
             if( cA ) TA_STOCH_Close(cA);
             if( cB ) TA_STOCH_Close(cB);
@@ -61215,6 +61412,7 @@ static SV_NOINLINE void sv_verify_STOCHF(const char *json, char *resp, int resp_
                 if( cOk && (sv_bitne(cv1, ca1)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
             }
             if( cOk && TA_STOCHF_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
+            if( cOk && TA_STOCHF_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
             if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             if( cOk && !(fk1 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             for( t = cmid; cOk && t < svN; t++ )
@@ -61242,7 +61440,7 @@ static SV_NOINLINE void sv_verify_STOCHF(const char *json, char *resp, int resp_
                 int rbA = -1, rnA = -1, rbB = -1, rnB = -1;
                 rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                 if( TA_STOCHF_OutRange( cA, &rbA, &rnA ) != TA_SUCCESS || rbA != svBeg || rnA != svNb ) { rangeOk = 0; cloneBad = "the original's range moved"; }
-                if( TA_STOCHF_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 1 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the bar it counted"; }
+                if( TA_STOCHF_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 2 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the two bars it counted"; }
             }
             if( cA ) TA_STOCHF_Close(cA);
             if( cB ) TA_STOCHF_Close(cB);
@@ -61532,6 +61730,7 @@ static SV_NOINLINE void sv_verify_STOCHRSI(const char *json, char *resp, int res
                 if( cOk && (sv_bitne(cv1, ca1)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
             }
             if( cOk && TA_STOCHRSI_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
+            if( cOk && TA_STOCHRSI_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
             if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             if( cOk && !(fk1 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             for( t = cmid; cOk && t < svN; t++ )
@@ -61559,7 +61758,7 @@ static SV_NOINLINE void sv_verify_STOCHRSI(const char *json, char *resp, int res
                 int rbA = -1, rnA = -1, rbB = -1, rnB = -1;
                 rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                 if( TA_STOCHRSI_OutRange( cA, &rbA, &rnA ) != TA_SUCCESS || rbA != svBeg || rnA != svNb ) { rangeOk = 0; cloneBad = "the original's range moved"; }
-                if( TA_STOCHRSI_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 1 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the bar it counted"; }
+                if( TA_STOCHRSI_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 2 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the two bars it counted"; }
             }
             if( cA ) TA_STOCHRSI_Close(cA);
             if( cB ) TA_STOCHRSI_Close(cB);
@@ -61814,6 +62013,7 @@ static SV_NOINLINE void sv_verify_SUB(const char *json, char *resp, int resp_siz
                 if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
             }
             if( cOk && TA_SUB_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
+            if( cOk && TA_SUB_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
             if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             for( t = cmid; cOk && t < svN; t++ )
             {
@@ -61835,7 +62035,7 @@ static SV_NOINLINE void sv_verify_SUB(const char *json, char *resp, int resp_siz
                 int rbA = -1, rnA = -1, rbB = -1, rnB = -1;
                 rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                 if( TA_SUB_OutRange( cA, &rbA, &rnA ) != TA_SUCCESS || rbA != svBeg || rnA != svNb ) { rangeOk = 0; cloneBad = "the original's range moved"; }
-                if( TA_SUB_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 1 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the bar it counted"; }
+                if( TA_SUB_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 2 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the two bars it counted"; }
             }
             if( cA ) TA_SUB_Close(cA);
             if( cB ) TA_SUB_Close(cB);
@@ -62082,6 +62282,7 @@ static SV_NOINLINE void sv_verify_SUM(const char *json, char *resp, int resp_siz
                 if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
             }
             if( cOk && TA_SUM_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
+            if( cOk && TA_SUM_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
             if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             for( t = cmid; cOk && t < svN; t++ )
             {
@@ -62103,7 +62304,7 @@ static SV_NOINLINE void sv_verify_SUM(const char *json, char *resp, int resp_siz
                 int rbA = -1, rnA = -1, rbB = -1, rnB = -1;
                 rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                 if( TA_SUM_OutRange( cA, &rbA, &rnA ) != TA_SUCCESS || rbA != svBeg || rnA != svNb ) { rangeOk = 0; cloneBad = "the original's range moved"; }
-                if( TA_SUM_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 1 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the bar it counted"; }
+                if( TA_SUM_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 2 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the two bars it counted"; }
             }
             if( cA ) TA_SUM_Close(cA);
             if( cB ) TA_SUM_Close(cB);
@@ -62364,6 +62565,7 @@ static SV_NOINLINE void sv_verify_SUPERTREND(const char *json, char *resp, int r
                 if( cOk && (cv1 != ca1) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
             }
             if( cOk && TA_SUPERTREND_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
+            if( cOk && TA_SUPERTREND_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
             if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             if( cOk && !(fk1 = (int *)malloc( sizeof(int) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             for( t = cmid; cOk && t < svN; t++ )
@@ -62391,7 +62593,7 @@ static SV_NOINLINE void sv_verify_SUPERTREND(const char *json, char *resp, int r
                 int rbA = -1, rnA = -1, rbB = -1, rnB = -1;
                 rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                 if( TA_SUPERTREND_OutRange( cA, &rbA, &rnA ) != TA_SUCCESS || rbA != svBeg || rnA != svNb ) { rangeOk = 0; cloneBad = "the original's range moved"; }
-                if( TA_SUPERTREND_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 1 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the bar it counted"; }
+                if( TA_SUPERTREND_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 2 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the two bars it counted"; }
             }
             if( cA ) TA_SUPERTREND_Close(cA);
             if( cB ) TA_SUPERTREND_Close(cB);
@@ -62642,6 +62844,7 @@ static SV_NOINLINE void sv_verify_SWAK_2PHP(const char *json, char *resp, int re
                 if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
             }
             if( cOk && TA_SWAK_2PHP_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
+            if( cOk && TA_SWAK_2PHP_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
             if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             for( t = cmid; cOk && t < svN; t++ )
             {
@@ -62663,7 +62866,7 @@ static SV_NOINLINE void sv_verify_SWAK_2PHP(const char *json, char *resp, int re
                 int rbA = -1, rnA = -1, rbB = -1, rnB = -1;
                 rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                 if( TA_SWAK_2PHP_OutRange( cA, &rbA, &rnA ) != TA_SUCCESS || rbA != svBeg || rnA != svNb ) { rangeOk = 0; cloneBad = "the original's range moved"; }
-                if( TA_SWAK_2PHP_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 1 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the bar it counted"; }
+                if( TA_SWAK_2PHP_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 2 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the two bars it counted"; }
             }
             if( cA ) TA_SWAK_2PHP_Close(cA);
             if( cB ) TA_SWAK_2PHP_Close(cB);
@@ -62913,6 +63116,7 @@ static SV_NOINLINE void sv_verify_SWAK_BP(const char *json, char *resp, int resp
                 if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
             }
             if( cOk && TA_SWAK_BP_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
+            if( cOk && TA_SWAK_BP_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
             if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             for( t = cmid; cOk && t < svN; t++ )
             {
@@ -62934,7 +63138,7 @@ static SV_NOINLINE void sv_verify_SWAK_BP(const char *json, char *resp, int resp
                 int rbA = -1, rnA = -1, rbB = -1, rnB = -1;
                 rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                 if( TA_SWAK_BP_OutRange( cA, &rbA, &rnA ) != TA_SUCCESS || rbA != svBeg || rnA != svNb ) { rangeOk = 0; cloneBad = "the original's range moved"; }
-                if( TA_SWAK_BP_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 1 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the bar it counted"; }
+                if( TA_SWAK_BP_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 2 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the two bars it counted"; }
             }
             if( cA ) TA_SWAK_BP_Close(cA);
             if( cB ) TA_SWAK_BP_Close(cB);
@@ -63183,6 +63387,7 @@ static SV_NOINLINE void sv_verify_SWAK_BUTTER(const char *json, char *resp, int 
                 if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
             }
             if( cOk && TA_SWAK_BUTTER_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
+            if( cOk && TA_SWAK_BUTTER_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
             if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             for( t = cmid; cOk && t < svN; t++ )
             {
@@ -63204,7 +63409,7 @@ static SV_NOINLINE void sv_verify_SWAK_BUTTER(const char *json, char *resp, int 
                 int rbA = -1, rnA = -1, rbB = -1, rnB = -1;
                 rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                 if( TA_SWAK_BUTTER_OutRange( cA, &rbA, &rnA ) != TA_SUCCESS || rbA != svBeg || rnA != svNb ) { rangeOk = 0; cloneBad = "the original's range moved"; }
-                if( TA_SWAK_BUTTER_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 1 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the bar it counted"; }
+                if( TA_SWAK_BUTTER_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 2 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the two bars it counted"; }
             }
             if( cA ) TA_SWAK_BUTTER_Close(cA);
             if( cB ) TA_SWAK_BUTTER_Close(cB);
@@ -63453,6 +63658,7 @@ static SV_NOINLINE void sv_verify_SWAK_GAUSS(const char *json, char *resp, int r
                 if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
             }
             if( cOk && TA_SWAK_GAUSS_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
+            if( cOk && TA_SWAK_GAUSS_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
             if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             for( t = cmid; cOk && t < svN; t++ )
             {
@@ -63474,7 +63680,7 @@ static SV_NOINLINE void sv_verify_SWAK_GAUSS(const char *json, char *resp, int r
                 int rbA = -1, rnA = -1, rbB = -1, rnB = -1;
                 rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                 if( TA_SWAK_GAUSS_OutRange( cA, &rbA, &rnA ) != TA_SUCCESS || rbA != svBeg || rnA != svNb ) { rangeOk = 0; cloneBad = "the original's range moved"; }
-                if( TA_SWAK_GAUSS_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 1 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the bar it counted"; }
+                if( TA_SWAK_GAUSS_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 2 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the two bars it counted"; }
             }
             if( cA ) TA_SWAK_GAUSS_Close(cA);
             if( cB ) TA_SWAK_GAUSS_Close(cB);
@@ -63723,6 +63929,7 @@ static SV_NOINLINE void sv_verify_SWAK_HP(const char *json, char *resp, int resp
                 if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
             }
             if( cOk && TA_SWAK_HP_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
+            if( cOk && TA_SWAK_HP_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
             if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             for( t = cmid; cOk && t < svN; t++ )
             {
@@ -63744,7 +63951,7 @@ static SV_NOINLINE void sv_verify_SWAK_HP(const char *json, char *resp, int resp
                 int rbA = -1, rnA = -1, rbB = -1, rnB = -1;
                 rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                 if( TA_SWAK_HP_OutRange( cA, &rbA, &rnA ) != TA_SUCCESS || rbA != svBeg || rnA != svNb ) { rangeOk = 0; cloneBad = "the original's range moved"; }
-                if( TA_SWAK_HP_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 1 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the bar it counted"; }
+                if( TA_SWAK_HP_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 2 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the two bars it counted"; }
             }
             if( cA ) TA_SWAK_HP_Close(cA);
             if( cB ) TA_SWAK_HP_Close(cB);
@@ -63994,6 +64201,7 @@ static SV_NOINLINE void sv_verify_T3(const char *json, char *resp, int resp_size
                 if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
             }
             if( cOk && TA_T3_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
+            if( cOk && TA_T3_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
             if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             for( t = cmid; cOk && t < svN; t++ )
             {
@@ -64015,7 +64223,7 @@ static SV_NOINLINE void sv_verify_T3(const char *json, char *resp, int resp_size
                 int rbA = -1, rnA = -1, rbB = -1, rnB = -1;
                 rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                 if( TA_T3_OutRange( cA, &rbA, &rnA ) != TA_SUCCESS || rbA != svBeg || rnA != svNb ) { rangeOk = 0; cloneBad = "the original's range moved"; }
-                if( TA_T3_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 1 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the bar it counted"; }
+                if( TA_T3_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 2 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the two bars it counted"; }
             }
             if( cA ) TA_T3_Close(cA);
             if( cB ) TA_T3_Close(cB);
@@ -64262,6 +64470,7 @@ static SV_NOINLINE void sv_verify_TAN(const char *json, char *resp, int resp_siz
                 if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
             }
             if( cOk && TA_TAN_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
+            if( cOk && TA_TAN_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
             if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             for( t = cmid; cOk && t < svN; t++ )
             {
@@ -64283,7 +64492,7 @@ static SV_NOINLINE void sv_verify_TAN(const char *json, char *resp, int resp_siz
                 int rbA = -1, rnA = -1, rbB = -1, rnB = -1;
                 rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                 if( TA_TAN_OutRange( cA, &rbA, &rnA ) != TA_SUCCESS || rbA != svBeg || rnA != svNb ) { rangeOk = 0; cloneBad = "the original's range moved"; }
-                if( TA_TAN_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 1 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the bar it counted"; }
+                if( TA_TAN_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 2 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the two bars it counted"; }
             }
             if( cA ) TA_TAN_Close(cA);
             if( cB ) TA_TAN_Close(cB);
@@ -64529,6 +64738,7 @@ static SV_NOINLINE void sv_verify_TANH(const char *json, char *resp, int resp_si
                 if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
             }
             if( cOk && TA_TANH_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
+            if( cOk && TA_TANH_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
             if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             for( t = cmid; cOk && t < svN; t++ )
             {
@@ -64550,7 +64760,7 @@ static SV_NOINLINE void sv_verify_TANH(const char *json, char *resp, int resp_si
                 int rbA = -1, rnA = -1, rbB = -1, rnB = -1;
                 rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                 if( TA_TANH_OutRange( cA, &rbA, &rnA ) != TA_SUCCESS || rbA != svBeg || rnA != svNb ) { rangeOk = 0; cloneBad = "the original's range moved"; }
-                if( TA_TANH_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 1 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the bar it counted"; }
+                if( TA_TANH_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 2 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the two bars it counted"; }
             }
             if( cA ) TA_TANH_Close(cA);
             if( cB ) TA_TANH_Close(cB);
@@ -64798,6 +65008,7 @@ static SV_NOINLINE void sv_verify_TEMA(const char *json, char *resp, int resp_si
                 if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
             }
             if( cOk && TA_TEMA_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
+            if( cOk && TA_TEMA_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
             if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             for( t = cmid; cOk && t < svN; t++ )
             {
@@ -64819,7 +65030,7 @@ static SV_NOINLINE void sv_verify_TEMA(const char *json, char *resp, int resp_si
                 int rbA = -1, rnA = -1, rbB = -1, rnB = -1;
                 rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                 if( TA_TEMA_OutRange( cA, &rbA, &rnA ) != TA_SUCCESS || rbA != svBeg || rnA != svNb ) { rangeOk = 0; cloneBad = "the original's range moved"; }
-                if( TA_TEMA_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 1 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the bar it counted"; }
+                if( TA_TEMA_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 2 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the two bars it counted"; }
             }
             if( cA ) TA_TEMA_Close(cA);
             if( cB ) TA_TEMA_Close(cB);
@@ -65066,6 +65277,7 @@ static SV_NOINLINE void sv_verify_TRANGE(const char *json, char *resp, int resp_
                 if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
             }
             if( cOk && TA_TRANGE_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
+            if( cOk && TA_TRANGE_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
             if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             for( t = cmid; cOk && t < svN; t++ )
             {
@@ -65087,7 +65299,7 @@ static SV_NOINLINE void sv_verify_TRANGE(const char *json, char *resp, int resp_
                 int rbA = -1, rnA = -1, rbB = -1, rnB = -1;
                 rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                 if( TA_TRANGE_OutRange( cA, &rbA, &rnA ) != TA_SUCCESS || rbA != svBeg || rnA != svNb ) { rangeOk = 0; cloneBad = "the original's range moved"; }
-                if( TA_TRANGE_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 1 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the bar it counted"; }
+                if( TA_TRANGE_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 2 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the two bars it counted"; }
             }
             if( cA ) TA_TRANGE_Close(cA);
             if( cB ) TA_TRANGE_Close(cB);
@@ -65334,6 +65546,7 @@ static SV_NOINLINE void sv_verify_TRIMA(const char *json, char *resp, int resp_s
                 if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
             }
             if( cOk && TA_TRIMA_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
+            if( cOk && TA_TRIMA_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
             if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             for( t = cmid; cOk && t < svN; t++ )
             {
@@ -65355,7 +65568,7 @@ static SV_NOINLINE void sv_verify_TRIMA(const char *json, char *resp, int resp_s
                 int rbA = -1, rnA = -1, rbB = -1, rnB = -1;
                 rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                 if( TA_TRIMA_OutRange( cA, &rbA, &rnA ) != TA_SUCCESS || rbA != svBeg || rnA != svNb ) { rangeOk = 0; cloneBad = "the original's range moved"; }
-                if( TA_TRIMA_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 1 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the bar it counted"; }
+                if( TA_TRIMA_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 2 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the two bars it counted"; }
             }
             if( cA ) TA_TRIMA_Close(cA);
             if( cB ) TA_TRIMA_Close(cB);
@@ -65603,6 +65816,7 @@ static SV_NOINLINE void sv_verify_TRIX(const char *json, char *resp, int resp_si
                 if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
             }
             if( cOk && TA_TRIX_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
+            if( cOk && TA_TRIX_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
             if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             for( t = cmid; cOk && t < svN; t++ )
             {
@@ -65624,7 +65838,7 @@ static SV_NOINLINE void sv_verify_TRIX(const char *json, char *resp, int resp_si
                 int rbA = -1, rnA = -1, rbB = -1, rnB = -1;
                 rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                 if( TA_TRIX_OutRange( cA, &rbA, &rnA ) != TA_SUCCESS || rbA != svBeg || rnA != svNb ) { rangeOk = 0; cloneBad = "the original's range moved"; }
-                if( TA_TRIX_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 1 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the bar it counted"; }
+                if( TA_TRIX_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 2 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the two bars it counted"; }
             }
             if( cA ) TA_TRIX_Close(cA);
             if( cB ) TA_TRIX_Close(cB);
@@ -65872,6 +66086,7 @@ static SV_NOINLINE void sv_verify_TSF(const char *json, char *resp, int resp_siz
                 if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
             }
             if( cOk && TA_TSF_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
+            if( cOk && TA_TSF_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
             if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             for( t = cmid; cOk && t < svN; t++ )
             {
@@ -65893,7 +66108,7 @@ static SV_NOINLINE void sv_verify_TSF(const char *json, char *resp, int resp_siz
                 int rbA = -1, rnA = -1, rbB = -1, rnB = -1;
                 rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                 if( TA_TSF_OutRange( cA, &rbA, &rnA ) != TA_SUCCESS || rbA != svBeg || rnA != svNb ) { rangeOk = 0; cloneBad = "the original's range moved"; }
-                if( TA_TSF_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 1 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the bar it counted"; }
+                if( TA_TSF_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 2 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the two bars it counted"; }
             }
             if( cA ) TA_TSF_Close(cA);
             if( cB ) TA_TSF_Close(cB);
@@ -66142,6 +66357,7 @@ static SV_NOINLINE void sv_verify_TSI(const char *json, char *resp, int resp_siz
                 if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
             }
             if( cOk && TA_TSI_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
+            if( cOk && TA_TSI_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
             if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             for( t = cmid; cOk && t < svN; t++ )
             {
@@ -66163,7 +66379,7 @@ static SV_NOINLINE void sv_verify_TSI(const char *json, char *resp, int resp_siz
                 int rbA = -1, rnA = -1, rbB = -1, rnB = -1;
                 rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                 if( TA_TSI_OutRange( cA, &rbA, &rnA ) != TA_SUCCESS || rbA != svBeg || rnA != svNb ) { rangeOk = 0; cloneBad = "the original's range moved"; }
-                if( TA_TSI_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 1 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the bar it counted"; }
+                if( TA_TSI_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 2 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the two bars it counted"; }
             }
             if( cA ) TA_TSI_Close(cA);
             if( cB ) TA_TSI_Close(cB);
@@ -66410,6 +66626,7 @@ static SV_NOINLINE void sv_verify_TYPPRICE(const char *json, char *resp, int res
                 if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
             }
             if( cOk && TA_TYPPRICE_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
+            if( cOk && TA_TYPPRICE_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
             if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             for( t = cmid; cOk && t < svN; t++ )
             {
@@ -66431,7 +66648,7 @@ static SV_NOINLINE void sv_verify_TYPPRICE(const char *json, char *resp, int res
                 int rbA = -1, rnA = -1, rbB = -1, rnB = -1;
                 rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                 if( TA_TYPPRICE_OutRange( cA, &rbA, &rnA ) != TA_SUCCESS || rbA != svBeg || rnA != svNb ) { rangeOk = 0; cloneBad = "the original's range moved"; }
-                if( TA_TYPPRICE_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 1 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the bar it counted"; }
+                if( TA_TYPPRICE_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 2 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the two bars it counted"; }
             }
             if( cA ) TA_TYPPRICE_Close(cA);
             if( cB ) TA_TYPPRICE_Close(cB);
@@ -66680,6 +66897,7 @@ static SV_NOINLINE void sv_verify_ULTOSC(const char *json, char *resp, int resp_
                 if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
             }
             if( cOk && TA_ULTOSC_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
+            if( cOk && TA_ULTOSC_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
             if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             for( t = cmid; cOk && t < svN; t++ )
             {
@@ -66701,7 +66919,7 @@ static SV_NOINLINE void sv_verify_ULTOSC(const char *json, char *resp, int resp_
                 int rbA = -1, rnA = -1, rbB = -1, rnB = -1;
                 rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                 if( TA_ULTOSC_OutRange( cA, &rbA, &rnA ) != TA_SUCCESS || rbA != svBeg || rnA != svNb ) { rangeOk = 0; cloneBad = "the original's range moved"; }
-                if( TA_ULTOSC_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 1 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the bar it counted"; }
+                if( TA_ULTOSC_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 2 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the two bars it counted"; }
             }
             if( cA ) TA_ULTOSC_Close(cA);
             if( cB ) TA_ULTOSC_Close(cB);
@@ -66949,6 +67167,7 @@ static SV_NOINLINE void sv_verify_VAR(const char *json, char *resp, int resp_siz
                 if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
             }
             if( cOk && TA_VAR_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
+            if( cOk && TA_VAR_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
             if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             for( t = cmid; cOk && t < svN; t++ )
             {
@@ -66970,7 +67189,7 @@ static SV_NOINLINE void sv_verify_VAR(const char *json, char *resp, int resp_siz
                 int rbA = -1, rnA = -1, rbB = -1, rnB = -1;
                 rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                 if( TA_VAR_OutRange( cA, &rbA, &rnA ) != TA_SUCCESS || rbA != svBeg || rnA != svNb ) { rangeOk = 0; cloneBad = "the original's range moved"; }
-                if( TA_VAR_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 1 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the bar it counted"; }
+                if( TA_VAR_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 2 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the two bars it counted"; }
             }
             if( cA ) TA_VAR_Close(cA);
             if( cB ) TA_VAR_Close(cB);
@@ -67217,6 +67436,7 @@ static SV_NOINLINE void sv_verify_VHF(const char *json, char *resp, int resp_siz
                 if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
             }
             if( cOk && TA_VHF_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
+            if( cOk && TA_VHF_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
             if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             for( t = cmid; cOk && t < svN; t++ )
             {
@@ -67238,7 +67458,7 @@ static SV_NOINLINE void sv_verify_VHF(const char *json, char *resp, int resp_siz
                 int rbA = -1, rnA = -1, rbB = -1, rnB = -1;
                 rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                 if( TA_VHF_OutRange( cA, &rbA, &rnA ) != TA_SUCCESS || rbA != svBeg || rnA != svNb ) { rangeOk = 0; cloneBad = "the original's range moved"; }
-                if( TA_VHF_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 1 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the bar it counted"; }
+                if( TA_VHF_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 2 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the two bars it counted"; }
             }
             if( cA ) TA_VHF_Close(cA);
             if( cB ) TA_VHF_Close(cB);
@@ -67487,6 +67707,7 @@ static SV_NOINLINE void sv_verify_VIDYA(const char *json, char *resp, int resp_s
                 if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
             }
             if( cOk && TA_VIDYA_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
+            if( cOk && TA_VIDYA_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
             if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             for( t = cmid; cOk && t < svN; t++ )
             {
@@ -67508,7 +67729,7 @@ static SV_NOINLINE void sv_verify_VIDYA(const char *json, char *resp, int resp_s
                 int rbA = -1, rnA = -1, rbB = -1, rnB = -1;
                 rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                 if( TA_VIDYA_OutRange( cA, &rbA, &rnA ) != TA_SUCCESS || rbA != svBeg || rnA != svNb ) { rangeOk = 0; cloneBad = "the original's range moved"; }
-                if( TA_VIDYA_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 1 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the bar it counted"; }
+                if( TA_VIDYA_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 2 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the two bars it counted"; }
             }
             if( cA ) TA_VIDYA_Close(cA);
             if( cB ) TA_VIDYA_Close(cB);
@@ -67775,6 +67996,7 @@ static SV_NOINLINE void sv_verify_VORTEX(const char *json, char *resp, int resp_
                 if( cOk && (sv_bitne(cv1, ca1)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
             }
             if( cOk && TA_VORTEX_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
+            if( cOk && TA_VORTEX_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
             if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             if( cOk && !(fk1 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             for( t = cmid; cOk && t < svN; t++ )
@@ -67802,7 +68024,7 @@ static SV_NOINLINE void sv_verify_VORTEX(const char *json, char *resp, int resp_
                 int rbA = -1, rnA = -1, rbB = -1, rnB = -1;
                 rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                 if( TA_VORTEX_OutRange( cA, &rbA, &rnA ) != TA_SUCCESS || rbA != svBeg || rnA != svNb ) { rangeOk = 0; cloneBad = "the original's range moved"; }
-                if( TA_VORTEX_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 1 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the bar it counted"; }
+                if( TA_VORTEX_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 2 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the two bars it counted"; }
             }
             if( cA ) TA_VORTEX_Close(cA);
             if( cB ) TA_VORTEX_Close(cB);
@@ -68050,6 +68272,7 @@ static SV_NOINLINE void sv_verify_VWAP(const char *json, char *resp, int resp_si
                 if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
             }
             if( cOk && TA_VWAP_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
+            if( cOk && TA_VWAP_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
             if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             for( t = cmid; cOk && t < svN; t++ )
             {
@@ -68071,7 +68294,7 @@ static SV_NOINLINE void sv_verify_VWAP(const char *json, char *resp, int resp_si
                 int rbA = -1, rnA = -1, rbB = -1, rnB = -1;
                 rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                 if( TA_VWAP_OutRange( cA, &rbA, &rnA ) != TA_SUCCESS || rbA != svBeg || rnA != svNb ) { rangeOk = 0; cloneBad = "the original's range moved"; }
-                if( TA_VWAP_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 1 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the bar it counted"; }
+                if( TA_VWAP_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 2 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the two bars it counted"; }
             }
             if( cA ) TA_VWAP_Close(cA);
             if( cB ) TA_VWAP_Close(cB);
@@ -68318,6 +68541,7 @@ static SV_NOINLINE void sv_verify_VWMA(const char *json, char *resp, int resp_si
                 if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
             }
             if( cOk && TA_VWMA_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
+            if( cOk && TA_VWMA_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
             if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             for( t = cmid; cOk && t < svN; t++ )
             {
@@ -68339,7 +68563,7 @@ static SV_NOINLINE void sv_verify_VWMA(const char *json, char *resp, int resp_si
                 int rbA = -1, rnA = -1, rbB = -1, rnB = -1;
                 rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                 if( TA_VWMA_OutRange( cA, &rbA, &rnA ) != TA_SUCCESS || rbA != svBeg || rnA != svNb ) { rangeOk = 0; cloneBad = "the original's range moved"; }
-                if( TA_VWMA_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 1 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the bar it counted"; }
+                if( TA_VWMA_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 2 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the two bars it counted"; }
             }
             if( cA ) TA_VWMA_Close(cA);
             if( cB ) TA_VWMA_Close(cB);
@@ -68585,6 +68809,7 @@ static SV_NOINLINE void sv_verify_WAD(const char *json, char *resp, int resp_siz
                 if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
             }
             if( cOk && TA_WAD_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
+            if( cOk && TA_WAD_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
             if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             for( t = cmid; cOk && t < svN; t++ )
             {
@@ -68606,7 +68831,7 @@ static SV_NOINLINE void sv_verify_WAD(const char *json, char *resp, int resp_siz
                 int rbA = -1, rnA = -1, rbB = -1, rnB = -1;
                 rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                 if( TA_WAD_OutRange( cA, &rbA, &rnA ) != TA_SUCCESS || rbA != svBeg || rnA != svNb ) { rangeOk = 0; cloneBad = "the original's range moved"; }
-                if( TA_WAD_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 1 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the bar it counted"; }
+                if( TA_WAD_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 2 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the two bars it counted"; }
             }
             if( cA ) TA_WAD_Close(cA);
             if( cB ) TA_WAD_Close(cB);
@@ -68852,6 +69077,7 @@ static SV_NOINLINE void sv_verify_WCLPRICE(const char *json, char *resp, int res
                 if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
             }
             if( cOk && TA_WCLPRICE_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
+            if( cOk && TA_WCLPRICE_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
             if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             for( t = cmid; cOk && t < svN; t++ )
             {
@@ -68873,7 +69099,7 @@ static SV_NOINLINE void sv_verify_WCLPRICE(const char *json, char *resp, int res
                 int rbA = -1, rnA = -1, rbB = -1, rnB = -1;
                 rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                 if( TA_WCLPRICE_OutRange( cA, &rbA, &rnA ) != TA_SUCCESS || rbA != svBeg || rnA != svNb ) { rangeOk = 0; cloneBad = "the original's range moved"; }
-                if( TA_WCLPRICE_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 1 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the bar it counted"; }
+                if( TA_WCLPRICE_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 2 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the two bars it counted"; }
             }
             if( cA ) TA_WCLPRICE_Close(cA);
             if( cB ) TA_WCLPRICE_Close(cB);
@@ -69120,6 +69346,7 @@ static SV_NOINLINE void sv_verify_WILLR(const char *json, char *resp, int resp_s
                 if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
             }
             if( cOk && TA_WILLR_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
+            if( cOk && TA_WILLR_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
             if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             for( t = cmid; cOk && t < svN; t++ )
             {
@@ -69141,7 +69368,7 @@ static SV_NOINLINE void sv_verify_WILLR(const char *json, char *resp, int resp_s
                 int rbA = -1, rnA = -1, rbB = -1, rnB = -1;
                 rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                 if( TA_WILLR_OutRange( cA, &rbA, &rnA ) != TA_SUCCESS || rbA != svBeg || rnA != svNb ) { rangeOk = 0; cloneBad = "the original's range moved"; }
-                if( TA_WILLR_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 1 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the bar it counted"; }
+                if( TA_WILLR_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 2 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the two bars it counted"; }
             }
             if( cA ) TA_WILLR_Close(cA);
             if( cB ) TA_WILLR_Close(cB);
@@ -69388,6 +69615,7 @@ static SV_NOINLINE void sv_verify_WMA(const char *json, char *resp, int resp_siz
                 if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
             }
             if( cOk && TA_WMA_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
+            if( cOk && TA_WMA_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
             if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             for( t = cmid; cOk && t < svN; t++ )
             {
@@ -69409,7 +69637,7 @@ static SV_NOINLINE void sv_verify_WMA(const char *json, char *resp, int resp_siz
                 int rbA = -1, rnA = -1, rbB = -1, rnB = -1;
                 rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                 if( TA_WMA_OutRange( cA, &rbA, &rnA ) != TA_SUCCESS || rbA != svBeg || rnA != svNb ) { rangeOk = 0; cloneBad = "the original's range moved"; }
-                if( TA_WMA_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 1 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the bar it counted"; }
+                if( TA_WMA_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 2 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the two bars it counted"; }
             }
             if( cA ) TA_WMA_Close(cA);
             if( cB ) TA_WMA_Close(cB);
@@ -69657,6 +69885,7 @@ static SV_NOINLINE void sv_verify_ZLEMA(const char *json, char *resp, int resp_s
                 if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
             }
             if( cOk && TA_ZLEMA_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
+            if( cOk && TA_ZLEMA_Advance(cB) != TA_SUCCESS ) { cOk = 0; cloneBad = "Advance rejected the fork"; }
             if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
             for( t = cmid; cOk && t < svN; t++ )
             {
@@ -69678,7 +69907,7 @@ static SV_NOINLINE void sv_verify_ZLEMA(const char *json, char *resp, int resp_s
                 int rbA = -1, rnA = -1, rbB = -1, rnB = -1;
                 rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                 if( TA_ZLEMA_OutRange( cA, &rbA, &rnA ) != TA_SUCCESS || rbA != svBeg || rnA != svNb ) { rangeOk = 0; cloneBad = "the original's range moved"; }
-                if( TA_ZLEMA_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 1 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the bar it counted"; }
+                if( TA_ZLEMA_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb + 2 ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range plus the two bars it counted"; }
             }
             if( cA ) TA_ZLEMA_Close(cA);
             if( cB ) TA_ZLEMA_Close(cB);

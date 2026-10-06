@@ -464,7 +464,7 @@ fn emit_rust_sv_prefix_sweep(
 ///
 /// The range half: `out` is a plain `Copy` field of the derived struct, so the
 /// clone carries it by construction. What the compare can catch today is the
-/// fork's one `advance`; the day the handle grows a hand-written `Clone`, or
+/// fork's `advance` calls; the day the handle grows a hand-written `Clone`, or
 /// `out` stops being a stored pair, it catches that too.
 fn emit_rust_sv_clone_leg(
     s: &mut String,
@@ -523,7 +523,8 @@ fn emit_rust_sv_clone_leg(
     }
     s.push_str("                    }\n");
     s.push_str("                    let mut sb = sa.clone();\n");
-    // One counted bar on the fork -- see the C server for why.
+    // Two counted bars on the fork -- see the C server for why.
+    s.push_str("                    if sb.advance().is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = \",\\\"copyAdvanceRejected\\\":1\".to_string(); } }\n");
     s.push_str("                    if sb.advance().is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = \",\\\"copyAdvanceRejected\\\":1\".to_string(); } }\n");
     // The fork to the end, then the original. A buffer the two shared, written
     // with each bar before it is read, would answer right on both in lockstep.
@@ -580,7 +581,7 @@ fn emit_rust_sv_clone_leg(
     s.push_str("                    }\n");
     s.push_str("                    }\n");
     // Both handles have consumed bars [p-1, svN-1], so the original reports
-    // what batch(0, svN-1) did and the fork one bar more, the one it counted.
+    // what batch(0, svN-1) did and the fork two bars more, the two it counted.
     // The original is the control: a failure on it alone says the leg's
     // bookkeeping broke rather than the fork. Only when the value leg passed,
     // and only when the fork actually ran every bar: a handle short of its bars
@@ -590,7 +591,7 @@ fn emit_rust_sv_clone_leg(
     s.push_str(&sv_range_bit(SvRangeSite::Copy, SV_RANGE_MASK_RUST).to_string());
     s.push_str(";\n");
     s.push_str("                        if sa.out_range().beg_idx != beg || sa.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = \",\\\"copyRangeSrc\\\":1\".to_string(); } }\n");
-    s.push_str("                        if sb.out_range().beg_idx != beg || sb.out_range().count != nb + 1 { range_ok = false; if diag.is_empty() { diag = \",\\\"copyRange\\\":1\".to_string(); } }\n");
+    s.push_str("                        if sb.out_range().beg_idx != beg || sb.out_range().count != nb + 2 { range_ok = false; if diag.is_empty() { diag = \",\\\"copyRange\\\":1\".to_string(); } }\n");
     s.push_str("                    }\n");
     s.push_str("                }\n            }\n        }\n");
 }

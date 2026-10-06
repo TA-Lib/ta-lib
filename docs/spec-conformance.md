@@ -388,12 +388,13 @@ open/update combinations, and the emitted shape is held on the PR gate by
 
 `stream_verify`'s fork leg, in each language server and for every function,
 opens its original with `OpenAndFill` on the shortest history, updates it,
-forks it, calls `Advance` once on the fork, and feeds both to the end. Every
+forks it, calls `Advance` twice on the fork, and feeds both to the end. Every
 bar of both must match batch, so a handle that came from `OpenAndFill` is held
 to rH1 under `Update` (rH3), and a counted bar reaches nothing a step reads
-(rH6); the fork reports one bar more than its original. MININDEX, MAXINDEX and
-MINMAXINDEX ride the same leg: their index after the counted bar is still the
-batch index over the bars fed.
+(rH6); the fork reports two bars more than its original, which is the resume
+recipe's step of one `Advance` per bar counted without being fed. MININDEX,
+MAXINDEX and MINMAXINDEX ride the same leg: their index after the counted bars
+is still the batch index over the bars fed.
 
 rH9: `test_open_contract.c` requires `TA_FUNC_FLG_STREAM` on every function
 `TA_ForEachFunc` lists and as many entries in the stream table.
