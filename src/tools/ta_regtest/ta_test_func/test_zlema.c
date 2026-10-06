@@ -56,7 +56,8 @@
  *     (2) A bitwise differential against the shipped TA_EMA over a materialised
  *         de-lagged series. Proves the fusion, never the formula: both sides
  *         share the de-lag.
- *     (3) Period-1 identity on inputs built to break the naive recursion.
+ *     (3) Period-1 identity, bitwise, on inputs holding a -0.0: the one value
+ *         the recursion does not copy.
  *     (4) Deterministic edges: flat input, empty ranges, the lookback shape,
  *         and in-place aliasing (outReal == inReal) bitwise.
  *     (5) The unstable period is EMA's, and it moves the first output.
@@ -98,9 +99,9 @@
  * kwarg, so pandas-ta's own ewm path runs regardless of whether the talib
  * module is importable in the venv.
  *
- * Measured full-range agreement: max rel 5.7e-16 over 239 bars at period 10,
- * 1.5e-15 over 209 bars at period 30. The 1e-12 tolerance below is the PVO
- * precedent and leaves ~660x headroom at the tighter of the two.
+ * Measured full-range agreement: max rel 5.2e-16 over 239 bars at period 10,
+ * 1.6e-15 over 209 bars at period 30. The 1e-12 tolerance below is the PVO
+ * precedent and leaves ~640x headroom at the tighter of the two.
  *
  * idx is the OUTPUT-array index; add the ORACLE_BEG below for the global bar. */
 static const struct { int idx; double value; } zlemaPandas10[] =
@@ -154,8 +155,9 @@ static const struct { int idx; double value; } zlemaPandas30[] =
  * price input[lag-1], and emits its first value at bar lag-1 instead of at a
  * full EMA lookback. Its warm-up is therefore not comparable to ours at ANY
  * tolerance -- it converges to us rather than rounding to us. Measured, the two
- * become BIT-IDENTICAL at bar 179 and stay so for the remaining 73 bars; the
- * three spots below sit inside that run, and none of them repeats a pandas row.
+ * agree to one ulp (worst 1.3e-16 relative) from bar 179 to the last; the three
+ * spots below sit inside that run, are bit-identical, and are compared at
+ * ZLEMA_ORACLE_TOL like the pandas rows, none of which they repeat.
  *
  * Period 10, not the default 30: at period 30 Tulip has still not converged by
  * the last bar of a 252-bar corpus (measured 1.6e-8 at bar 251), so there is no
@@ -362,8 +364,8 @@ static ErrorNumber test_zlema_oracle( const TA_History *history )
  * This is the strongest gate available and it is bit-exact only because of
  * three choices in zlema.c: the de-lag is 2.0*c - l (one rounding), the seed
  * sum accumulates sequentially from 0.0, and the recursion is
- * ((v - prevMA)*k) + prevMA -- the same three the C emitter then fuses into
- * fma(v - prevMA, k, prevMA), exactly as it fuses TA_EMA's. If this leg ever
+ * k*v + beta*prevMA with ema.c's own k and beta, which the C emitter fuses
+ * into fma(beta, prevMA, k*v) exactly as it fuses TA_EMA's. If this leg ever
  * needs a tolerance the implementation has drifted from the composition; do not
  * paper over it with an epsilon.
  *
@@ -485,10 +487,10 @@ static ErrorNumber test_zlema_differential( const TA_History *history )
 /* (3) Period 1 is a bit-exact copy of the input -- the promise ZLEMA declares
  * with `period1_identity`, and the one zlema.c needs an explicit arm for.
  *
- * The fused recursion at period 1 is (x - prev) + prev, which returns x only
- * while x - prev is exactly representable. The reference close series never
- * breaks it; the two synthetic series below do, which is why they are here and
- * not just the reference one. */
+ * The fused recursion at period 1 is fma(0.0, prev, 1.0*(2.0*x - x)), which
+ * returns every finite x exactly and turns a -0.0 into +0.0. So only the -0.0
+ * bars of the synthetic series, under a BIT compare, can see the arm missing;
+ * the wide moves around them are what a (x - prev)*k + prev step would lose. */
 static ErrorNumber test_zlema_period_one( const TA_History *history )
 {
    static TA_Real in[64];
@@ -516,10 +518,12 @@ static ErrorNumber test_zlema_period_one( const TA_History *history )
          }
          else if( s == 1 )
          {
-            /* Consecutive values more than a factor of two apart: x - prev
-             * rounds, and the naive recursion loses the low bits. */
+            /* Consecutive values more than a factor of two apart, and a
+             * -0.0 every eighth bar: past the unstable period, and behind a
+             * positive value. */
             for( i = 0; i < 32; i++ )
-               in[i] = ( i % 2 ) ? 90.11 + i : 1.23 + 0.01 * i;
+               in[i] = ( i % 8 == 7 ) ? -0.0
+                                      : ( ( i % 2 ) ? 90.11 + i : 1.23 + 0.01 * i );
             src = in;
             len = 32;
          }

@@ -115,6 +115,9 @@
       double slowK = 0;
       double fastK = 0;
       double signalK = 0;
+      double slowBeta = 0;
+      double fastBeta = 0;
+      double signalBeta = 0;
       int i = 0;
       int today = 0;
       int outIdx = 0;
@@ -154,31 +157,35 @@
          optInSlowPeriod = optInFastPeriod;
          optInFastPeriod = tempInteger;
       }
-      /* Catch special case for fix 26/12 MACD.
-       * Use hardcoded k values matching the original algorithm.
+      /* The fixed 26/12 MACD: k of 0.075 and 0.15, as near as a pair summing
+       * to exactly 1.0 comes.
        */
       if( optInSlowPeriod == 0 ) {
          /* Fix 26 */
          optInSlowPeriod = 26;
-         slowK = 0.075;
+         slowBeta = 1.0 - 0.075;
       } else {
-         slowK = 2.0 / (double)(optInSlowPeriod + 1);
+         slowBeta = (double)(optInSlowPeriod - 1) / (double)(optInSlowPeriod + 1);
       }
+      slowK = 1.0 - slowBeta;
+      slowBeta = 1.0 - slowK;
       if( optInFastPeriod == 0 ) {
          /* Fix 12 */
          optInFastPeriod = 12;
-         fastK = 0.15;
+         fastBeta = 1.0 - 0.15;
       } else {
-         fastK = 2.0 / (double)(optInFastPeriod + 1);
+         fastBeta = (double)(optInFastPeriod - 1) / (double)(optInFastPeriod + 1);
       }
+      fastK = 1.0 - fastBeta;
+      fastBeta = 1.0 - fastK;
       /* A signal period of 1 disables signal-line smoothing: the signal IS the
-       * MACD line and the histogram is exactly zero. signalK is then exactly
-       * 1.0, so the recursion below reduces to (x-prev)+prev -- which returns x
-       * only while consecutive MACD-line values stay within a factor of two of
-       * each other. The MACD line oscillates through zero, so it leaves that
-       * window on ordinary data; hence the explicit arm at each step.
+       * MACD line and the histogram is exactly zero. The recursion
+       * below, at a k of 1.0 and a beta of 0.0, does not keep the sign of a
+       * -0.0 line value; hence the explicit arm at each step.
        */
-      signalK = 2.0 / (double)(optInSignalPeriod + 1);
+      signalBeta = (double)(optInSignalPeriod - 1) / (double)(optInSignalPeriod + 1);
+      signalK = 1.0 - signalBeta;
+      signalBeta = 1.0 - signalK;
       lookbackSignal = emaLookback(optInSignalPeriod);
       /* Move up the start index if there is not
        * enough initial data.
@@ -201,7 +208,7 @@
        *
        * The arithmetic order below is the bit-exactness contract
        * (do not reorder or fuse operations):
-       *  - EMA recursion: ((x-prev)*k)+prev.
+       *  - EMA recursion: k*x + beta*prev, with ema.c's k and beta.
        *  - Each EMA is seeded with the sum of its first 'period'
        *    inputs, accumulated from 0.0 in input order, divided by
        *    the period. The fast and slow seed windows end on the
@@ -236,8 +243,8 @@
        */
       while( today <= startIdx - lookbackSignal ) {
          tempReal = inReal[today++];
-         prevFast = Math.fma(tempReal - prevFast, fastK, prevFast);
-         prevSlow = Math.fma(tempReal - prevSlow, slowK, prevSlow);
+         prevFast = Math.fma(fastBeta, prevFast, fastK * tempReal);
+         prevSlow = Math.fma(slowBeta, prevSlow, slowK * tempReal);
       }
       macdValue = prevFast - prevSlow;
       /* Seed the signal EMA with a simple average of the first
@@ -249,8 +256,8 @@
       i = optInSignalPeriod - 1;
       while( i-- > 0 ) {
          tempReal = inReal[today++];
-         prevFast = Math.fma(tempReal - prevFast, fastK, prevFast);
-         prevSlow = Math.fma(tempReal - prevSlow, slowK, prevSlow);
+         prevFast = Math.fma(fastBeta, prevFast, fastK * tempReal);
+         prevSlow = Math.fma(slowBeta, prevSlow, slowK * tempReal);
          macdValue = prevFast - prevSlow;
          prevSignal += macdValue;
       }
@@ -260,13 +267,13 @@
        */
       while( today <= startIdx ) {
          tempReal = inReal[today++];
-         prevFast = Math.fma(tempReal - prevFast, fastK, prevFast);
-         prevSlow = Math.fma(tempReal - prevSlow, slowK, prevSlow);
+         prevFast = Math.fma(fastBeta, prevFast, fastK * tempReal);
+         prevSlow = Math.fma(slowBeta, prevSlow, slowK * tempReal);
          macdValue = prevFast - prevSlow;
          if( optInSignalPeriod == 1 ) {
             prevSignal = macdValue;
          } else {
-            prevSignal = Math.fma(macdValue - prevSignal, signalK, prevSignal);
+            prevSignal = Math.fma(signalBeta, prevSignal, signalK * macdValue);
          }
       }
       /* Stable zone: keep advancing in lockstep and write the three
@@ -278,13 +285,13 @@
       outIdx = 1;
       while( today <= endIdx ) {
          tempReal = inReal[today++];
-         prevFast = Math.fma(tempReal - prevFast, fastK, prevFast);
-         prevSlow = Math.fma(tempReal - prevSlow, slowK, prevSlow);
+         prevFast = Math.fma(fastBeta, prevFast, fastK * tempReal);
+         prevSlow = Math.fma(slowBeta, prevSlow, slowK * tempReal);
          macdValue = prevFast - prevSlow;
          if( optInSignalPeriod == 1 ) {
             prevSignal = macdValue;
          } else {
-            prevSignal = Math.fma(macdValue - prevSignal, signalK, prevSignal);
+            prevSignal = Math.fma(signalBeta, prevSignal, signalK * macdValue);
          }
          outMACD[outIdx] = macdValue;
          outMACDSignal[outIdx] = prevSignal;
@@ -316,6 +323,9 @@
       double slowK = 0;
       double fastK = 0;
       double signalK = 0;
+      double slowBeta = 0;
+      double fastBeta = 0;
+      double signalBeta = 0;
       int i = 0;
       int today = 0;
       int outIdx = 0;
@@ -353,17 +363,23 @@
       }
       if( optInSlowPeriod == 0 ) {
          optInSlowPeriod = 26;
-         slowK = 0.075;
+         slowBeta = 1.0 - 0.075;
       } else {
-         slowK = 2.0 / (double)(optInSlowPeriod + 1);
+         slowBeta = (double)(optInSlowPeriod - 1) / (double)(optInSlowPeriod + 1);
       }
+      slowK = 1.0 - slowBeta;
+      slowBeta = 1.0 - slowK;
       if( optInFastPeriod == 0 ) {
          optInFastPeriod = 12;
-         fastK = 0.15;
+         fastBeta = 1.0 - 0.15;
       } else {
-         fastK = 2.0 / (double)(optInFastPeriod + 1);
+         fastBeta = (double)(optInFastPeriod - 1) / (double)(optInFastPeriod + 1);
       }
-      signalK = 2.0 / (double)(optInSignalPeriod + 1);
+      fastK = 1.0 - fastBeta;
+      fastBeta = 1.0 - fastK;
+      signalBeta = (double)(optInSignalPeriod - 1) / (double)(optInSignalPeriod + 1);
+      signalK = 1.0 - signalBeta;
+      signalBeta = 1.0 - signalK;
       lookbackSignal = emaLookback(optInSignalPeriod);
       lookbackTotal = lookbackSignal;
       lookbackTotal += emaLookback(optInSlowPeriod);
@@ -391,8 +407,8 @@
       prevFast = prevFast / optInFastPeriod;
       while( today <= startIdx - lookbackSignal ) {
          tempReal = (double)inReal[today++];
-         prevFast = Math.fma(tempReal - prevFast, fastK, prevFast);
-         prevSlow = Math.fma(tempReal - prevSlow, slowK, prevSlow);
+         prevFast = Math.fma(fastBeta, prevFast, fastK * tempReal);
+         prevSlow = Math.fma(slowBeta, prevSlow, slowK * tempReal);
       }
       macdValue = prevFast - prevSlow;
       prevSignal = 0.0;
@@ -400,21 +416,21 @@
       i = optInSignalPeriod - 1;
       while( i-- > 0 ) {
          tempReal = (double)inReal[today++];
-         prevFast = Math.fma(tempReal - prevFast, fastK, prevFast);
-         prevSlow = Math.fma(tempReal - prevSlow, slowK, prevSlow);
+         prevFast = Math.fma(fastBeta, prevFast, fastK * tempReal);
+         prevSlow = Math.fma(slowBeta, prevSlow, slowK * tempReal);
          macdValue = prevFast - prevSlow;
          prevSignal += macdValue;
       }
       prevSignal = prevSignal / optInSignalPeriod;
       while( today <= startIdx ) {
          tempReal = (double)inReal[today++];
-         prevFast = Math.fma(tempReal - prevFast, fastK, prevFast);
-         prevSlow = Math.fma(tempReal - prevSlow, slowK, prevSlow);
+         prevFast = Math.fma(fastBeta, prevFast, fastK * tempReal);
+         prevSlow = Math.fma(slowBeta, prevSlow, slowK * tempReal);
          macdValue = prevFast - prevSlow;
          if( optInSignalPeriod == 1 ) {
             prevSignal = macdValue;
          } else {
-            prevSignal = Math.fma(macdValue - prevSignal, signalK, prevSignal);
+            prevSignal = Math.fma(signalBeta, prevSignal, signalK * macdValue);
          }
       }
       outMACD[0] = macdValue;
@@ -423,13 +439,13 @@
       outIdx = 1;
       while( today <= endIdx ) {
          tempReal = (double)inReal[today++];
-         prevFast = Math.fma(tempReal - prevFast, fastK, prevFast);
-         prevSlow = Math.fma(tempReal - prevSlow, slowK, prevSlow);
+         prevFast = Math.fma(fastBeta, prevFast, fastK * tempReal);
+         prevSlow = Math.fma(slowBeta, prevSlow, slowK * tempReal);
          macdValue = prevFast - prevSlow;
          if( optInSignalPeriod == 1 ) {
             prevSignal = macdValue;
          } else {
-            prevSignal = Math.fma(macdValue - prevSignal, signalK, prevSignal);
+            prevSignal = Math.fma(signalBeta, prevSignal, signalK * macdValue);
          }
          outMACD[outIdx] = macdValue;
          outMACDSignal[outIdx] = prevSignal;
@@ -632,6 +648,9 @@
       private double slowK;
       private double fastK;
       private double signalK;
+      private double slowBeta;
+      private double fastBeta;
+      private double signalBeta;
       private double cur_outMACD;
       private double cur_outMACDSignal;
       private double cur_outMACDHist;
@@ -685,6 +704,9 @@
          this.slowK = other.slowK;
          this.fastK = other.fastK;
          this.signalK = other.signalK;
+         this.slowBeta = other.slowBeta;
+         this.fastBeta = other.fastBeta;
+         this.signalBeta = other.signalBeta;
          this.cur_outMACD = other.cur_outMACD;
          this.cur_outMACDSignal = other.cur_outMACDSignal;
          this.cur_outMACDHist = other.cur_outMACDHist;
@@ -745,13 +767,13 @@
          double prevSignal = sp.prevSignal;
          double prevSlow = sp.prevSlow;
          tempReal = inReal;
-         prevFast = Math.fma(tempReal - prevFast, sp.fastK, prevFast);
-         prevSlow = Math.fma(tempReal - prevSlow, sp.slowK, prevSlow);
+         prevFast = Math.fma(sp.fastBeta, prevFast, sp.fastK * tempReal);
+         prevSlow = Math.fma(sp.slowBeta, prevSlow, sp.slowK * tempReal);
          macdValue = prevFast - prevSlow;
          if( sp.optInSignalPeriod == 1 ) {
             prevSignal = macdValue;
          } else {
-            prevSignal = Math.fma(macdValue - prevSignal, sp.signalK, prevSignal);
+            prevSignal = Math.fma(sp.signalBeta, prevSignal, sp.signalK * macdValue);
          }
          cur_outMACD = macdValue;
          cur_outMACDSignal = prevSignal;
@@ -819,13 +841,13 @@
       double macdValue = 0.0;
       double tempReal = 0.0;
       tempReal = inReal;
-      sp.prevFast = Math.fma(tempReal - sp.prevFast, sp.fastK, sp.prevFast);
-      sp.prevSlow = Math.fma(tempReal - sp.prevSlow, sp.slowK, sp.prevSlow);
+      sp.prevFast = Math.fma(sp.fastBeta, sp.prevFast, sp.fastK * tempReal);
+      sp.prevSlow = Math.fma(sp.slowBeta, sp.prevSlow, sp.slowK * tempReal);
       macdValue = sp.prevFast - sp.prevSlow;
       if( sp.optInSignalPeriod == 1 ) {
          sp.prevSignal = macdValue;
       } else {
-         sp.prevSignal = Math.fma(macdValue - sp.prevSignal, sp.signalK, sp.prevSignal);
+         sp.prevSignal = Math.fma(sp.signalBeta, sp.prevSignal, sp.signalK * macdValue);
       }
       sp.cur_outMACD = macdValue;
       sp.cur_outMACDSignal = sp.prevSignal;
@@ -841,6 +863,9 @@
       double slowK = 0;
       double fastK = 0;
       double signalK = 0;
+      double slowBeta = 0;
+      double fastBeta = 0;
+      double signalBeta = 0;
       int i = 0;
       int today = 0;
       int outIdx = 0;
@@ -884,31 +909,35 @@
          optInSlowPeriod = optInFastPeriod;
          optInFastPeriod = tempInteger;
       }
-      /* Catch special case for fix 26/12 MACD.
-       * Use hardcoded k values matching the original algorithm.
+      /* The fixed 26/12 MACD: k of 0.075 and 0.15, as near as a pair summing
+       * to exactly 1.0 comes.
        */
       if( optInSlowPeriod == 0 ) {
          /* Fix 26 */
          optInSlowPeriod = 26;
-         slowK = 0.075;
+         slowBeta = 1.0 - 0.075;
       } else {
-         slowK = 2.0 / (double)(optInSlowPeriod + 1);
+         slowBeta = (double)(optInSlowPeriod - 1) / (double)(optInSlowPeriod + 1);
       }
+      slowK = 1.0 - slowBeta;
+      slowBeta = 1.0 - slowK;
       if( optInFastPeriod == 0 ) {
          /* Fix 12 */
          optInFastPeriod = 12;
-         fastK = 0.15;
+         fastBeta = 1.0 - 0.15;
       } else {
-         fastK = 2.0 / (double)(optInFastPeriod + 1);
+         fastBeta = (double)(optInFastPeriod - 1) / (double)(optInFastPeriod + 1);
       }
+      fastK = 1.0 - fastBeta;
+      fastBeta = 1.0 - fastK;
       /* A signal period of 1 disables signal-line smoothing: the signal IS the
-       * MACD line and the histogram is exactly zero. signalK is then exactly
-       * 1.0, so the recursion below reduces to (x-prev)+prev -- which returns x
-       * only while consecutive MACD-line values stay within a factor of two of
-       * each other. The MACD line oscillates through zero, so it leaves that
-       * window on ordinary data; hence the explicit arm at each step.
+       * MACD line and the histogram is exactly zero. The recursion
+       * below, at a k of 1.0 and a beta of 0.0, does not keep the sign of a
+       * -0.0 line value; hence the explicit arm at each step.
        */
-      signalK = 2.0 / (double)(optInSignalPeriod + 1);
+      signalBeta = (double)(optInSignalPeriod - 1) / (double)(optInSignalPeriod + 1);
+      signalK = 1.0 - signalBeta;
+      signalBeta = 1.0 - signalK;
       lookbackSignal = emaLookback(optInSignalPeriod);
       /* Move up the start index if there is not
        * enough initial data.
@@ -931,7 +960,7 @@
        *
        * The arithmetic order below is the bit-exactness contract
        * (do not reorder or fuse operations):
-       *  - EMA recursion: ((x-prev)*k)+prev.
+       *  - EMA recursion: k*x + beta*prev, with ema.c's k and beta.
        *  - Each EMA is seeded with the sum of its first 'period'
        *    inputs, accumulated from 0.0 in input order, divided by
        *    the period. The fast and slow seed windows end on the
@@ -966,8 +995,8 @@
        */
       while( today <= startIdx - lookbackSignal ) {
          tempReal = inReal[today++];
-         prevFast = Math.fma(tempReal - prevFast, fastK, prevFast);
-         prevSlow = Math.fma(tempReal - prevSlow, slowK, prevSlow);
+         prevFast = Math.fma(fastBeta, prevFast, fastK * tempReal);
+         prevSlow = Math.fma(slowBeta, prevSlow, slowK * tempReal);
       }
       macdValue = prevFast - prevSlow;
       /* Seed the signal EMA with a simple average of the first
@@ -979,8 +1008,8 @@
       i = optInSignalPeriod - 1;
       while( i-- > 0 ) {
          tempReal = inReal[today++];
-         prevFast = Math.fma(tempReal - prevFast, fastK, prevFast);
-         prevSlow = Math.fma(tempReal - prevSlow, slowK, prevSlow);
+         prevFast = Math.fma(fastBeta, prevFast, fastK * tempReal);
+         prevSlow = Math.fma(slowBeta, prevSlow, slowK * tempReal);
          macdValue = prevFast - prevSlow;
          prevSignal += macdValue;
       }
@@ -990,13 +1019,13 @@
        */
       while( today <= startIdx ) {
          tempReal = inReal[today++];
-         prevFast = Math.fma(tempReal - prevFast, fastK, prevFast);
-         prevSlow = Math.fma(tempReal - prevSlow, slowK, prevSlow);
+         prevFast = Math.fma(fastBeta, prevFast, fastK * tempReal);
+         prevSlow = Math.fma(slowBeta, prevSlow, slowK * tempReal);
          macdValue = prevFast - prevSlow;
          if( optInSignalPeriod == 1 ) {
             prevSignal = macdValue;
          } else {
-            prevSignal = Math.fma(macdValue - prevSignal, signalK, prevSignal);
+            prevSignal = Math.fma(signalBeta, prevSignal, signalK * macdValue);
          }
       }
       /* Stable zone: keep advancing in lockstep and write the three
@@ -1008,13 +1037,13 @@
       outIdx = 1;
       while( today <= endIdx ) {
          tempReal = inReal[today++];
-         prevFast = Math.fma(tempReal - prevFast, fastK, prevFast);
-         prevSlow = Math.fma(tempReal - prevSlow, slowK, prevSlow);
+         prevFast = Math.fma(fastBeta, prevFast, fastK * tempReal);
+         prevSlow = Math.fma(slowBeta, prevSlow, slowK * tempReal);
          macdValue = prevFast - prevSlow;
          if( optInSignalPeriod == 1 ) {
             prevSignal = macdValue;
          } else {
-            prevSignal = Math.fma(macdValue - prevSignal, signalK, prevSignal);
+            prevSignal = Math.fma(signalBeta, prevSignal, signalK * macdValue);
          }
          outMACD[outIdx * outStride] = macdValue;
          outMACDSignal[outIdx * outStride] = prevSignal;
@@ -1034,6 +1063,9 @@
       sp.slowK = slowK;
       sp.fastK = fastK;
       sp.signalK = signalK;
+      sp.slowBeta = slowBeta;
+      sp.fastBeta = fastBeta;
+      sp.signalBeta = signalBeta;
       sp.cur_outMACD = outMACD[(outNBElement.value - 1) * outStride];
       sp.cur_outMACDSignal = outMACDSignal[(outNBElement.value - 1) * outStride];
       sp.cur_outMACDHist = outMACDHist[(outNBElement.value - 1) * outStride];

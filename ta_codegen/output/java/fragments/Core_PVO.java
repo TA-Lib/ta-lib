@@ -262,6 +262,8 @@
          double _eFast;
          double _eSlow;
          double _eX;
+         double _eFastBeta;
+         double _eSlowBeta;
          int _eN;
          int _eToday;
          int _eFastToday;
@@ -273,8 +275,12 @@
             optInSlowPeriod = optInFastPeriod;
             optInFastPeriod = tempInteger;
          }
-         _eFastK = 2.0 / (double)(optInFastPeriod + 1);
-         _eSlowK = 2.0 / (double)(optInSlowPeriod + 1);
+         _eFastBeta = (double)(optInFastPeriod - 1) / (double)(optInFastPeriod + 1);
+         _eFastK = 1.0 - _eFastBeta;
+         _eFastBeta = 1.0 - _eFastK;
+         _eSlowBeta = (double)(optInSlowPeriod - 1) / (double)(optInSlowPeriod + 1);
+         _eSlowK = 1.0 - _eSlowBeta;
+         _eSlowBeta = 1.0 - _eSlowK;
          _eFastToday = emaLookback(optInFastPeriod);
          if( _eFastToday < startIdx ) {
             _eFastToday = startIdx;
@@ -291,7 +297,7 @@
          }
          _eFast = _eFast / optInFastPeriod;
          while( _eFastToday <= _eSlowStart ) {
-            _eFast = Math.fma(inVolume[_eFastToday++] - _eFast, _eFastK, _eFast);
+            _eFast = Math.fma(_eFastBeta, _eFast, _eFastK * inVolume[_eFastToday++]);
          }
          _eSlow = 0.0;
          for( _eN = 0; _eN < optInSlowPeriod; _eN += 1 ) {
@@ -299,7 +305,7 @@
          }
          _eSlow = _eSlow / optInSlowPeriod;
          while( _eSlowToday <= _eSlowStart ) {
-            _eSlow = Math.fma(inVolume[_eSlowToday++] - _eSlow, _eSlowK, _eSlow);
+            _eSlow = Math.fma(_eSlowBeta, _eSlow, _eSlowK * inVolume[_eSlowToday++]);
          }
          _eOutIdx = 0;
          if( !((-0.00000000000001 < _eSlow) && (_eSlow < 0.00000000000001)) ) {
@@ -311,8 +317,8 @@
          _eToday = _eSlowStart + 1;
          while( _eToday <= endIdx ) {
             _eX = inVolume[_eToday++];
-            _eFast = Math.fma(_eX - _eFast, _eFastK, _eFast);
-            _eSlow = Math.fma(_eX - _eSlow, _eSlowK, _eSlow);
+            _eFast = Math.fma(_eFastBeta, _eFast, _eFastK * _eX);
+            _eSlow = Math.fma(_eSlowBeta, _eSlow, _eSlowK * _eX);
             if( !((-0.00000000000001 < _eSlow) && (_eSlow < 0.00000000000001)) ) {
                outReal[_eOutIdx] = (_eFast - _eSlow) / _eSlow * 100.0;
             } else {
@@ -512,6 +518,8 @@
          double _eFast;
          double _eSlow;
          double _eX;
+         double _eFastBeta;
+         double _eSlowBeta;
          int _eN;
          int _eToday;
          int _eFastToday;
@@ -523,8 +531,12 @@
             optInSlowPeriod = optInFastPeriod;
             optInFastPeriod = tempInteger;
          }
-         _eFastK = 2.0 / (double)(optInFastPeriod + 1);
-         _eSlowK = 2.0 / (double)(optInSlowPeriod + 1);
+         _eFastBeta = (double)(optInFastPeriod - 1) / (double)(optInFastPeriod + 1);
+         _eFastK = 1.0 - _eFastBeta;
+         _eFastBeta = 1.0 - _eFastK;
+         _eSlowBeta = (double)(optInSlowPeriod - 1) / (double)(optInSlowPeriod + 1);
+         _eSlowK = 1.0 - _eSlowBeta;
+         _eSlowBeta = 1.0 - _eSlowK;
          _eFastToday = emaLookback(optInFastPeriod);
          if( _eFastToday < startIdx ) {
             _eFastToday = startIdx;
@@ -541,7 +553,7 @@
          }
          _eFast = _eFast / optInFastPeriod;
          while( _eFastToday <= _eSlowStart ) {
-            _eFast = Math.fma((double)inVolume[_eFastToday++] - _eFast, _eFastK, _eFast);
+            _eFast = Math.fma(_eFastBeta, _eFast, _eFastK * (double)inVolume[_eFastToday++]);
          }
          _eSlow = 0.0;
          for( _eN = 0; _eN < optInSlowPeriod; _eN += 1 ) {
@@ -549,7 +561,7 @@
          }
          _eSlow = _eSlow / optInSlowPeriod;
          while( _eSlowToday <= _eSlowStart ) {
-            _eSlow = Math.fma((double)inVolume[_eSlowToday++] - _eSlow, _eSlowK, _eSlow);
+            _eSlow = Math.fma(_eSlowBeta, _eSlow, _eSlowK * (double)inVolume[_eSlowToday++]);
          }
          _eOutIdx = 0;
          if( !((-0.00000000000001 < _eSlow) && (_eSlow < 0.00000000000001)) ) {
@@ -561,8 +573,8 @@
          _eToday = _eSlowStart + 1;
          while( _eToday <= endIdx ) {
             _eX = (double)inVolume[_eToday++];
-            _eFast = Math.fma(_eX - _eFast, _eFastK, _eFast);
-            _eSlow = Math.fma(_eX - _eSlow, _eSlowK, _eSlow);
+            _eFast = Math.fma(_eFastBeta, _eFast, _eFastK * _eX);
+            _eSlow = Math.fma(_eSlowBeta, _eSlow, _eSlowK * _eX);
             if( !((-0.00000000000001 < _eSlow) && (_eSlow < 0.00000000000001)) ) {
                outReal[_eOutIdx] = (_eFast - _eSlow) / _eSlow * 100.0;
             } else {

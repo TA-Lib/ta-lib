@@ -112,6 +112,12 @@
 /**** Local declarations. ****/
 #define SMI_CAP 300   /* > MAX_NB_TEST_ELEMENT and > nbBars */
 
+/* TA_EMA against smiRefEma. Worst over the grid: 4.6e-16 relative on the
+ * denominator stages; the numerator stages and the line cross zero, so they
+ * add an absolute term, worst 1.5e-14 beyond the relative one. */
+#define SMI_EMA_REL 1e-15
+#define SMI_EMA_ABS 5e-14
+
 /* Parameter grid. Includes the two published defaults, the smallest legal
  * periods, a fast>slow pair (SMI does not swap them -- the pipeline order is
  * fixed), and a signal period longer than the corpus so the
@@ -173,15 +179,21 @@ static const struct { int q, fast, slow, sig, bar; double smi, signal; } smiPins
  * fused loop matches a composition of our own primitives; both sides of it
  * could share a wrong formula. Tulip is an independent C implementation.
  *
- * BIT-EXACT, and it has to be earned: Tulip seeds each EMA with its first
+ * TO ROUNDING, and it has to be earned: Tulip seeds each EMA with its first
  * sample while TA_SMI seeds with an SMA, so the two only CONVERGE. Measured on
- * this corpus: bit-identical from bar 63 at (10,3,3), bar 71 at (5,3,3), bar 73
- * at (14,3,3) -- and never within 252 bars at slow=25, where the last 30 bars
- * still differ by ~6.7e-06. Every bar below is past its convergence point, so
- * equality is the right assertion; a vector at slow=25 would need a tolerance
- * and would be testing the warm-up, not the formula.
+ * this corpus: the seeding gap is gone from bar 63 at (10,3,3), bar 71 at
+ * (5,3,3), bar 73 at (14,3,3) -- and never within 252 bars at slow=25, where
+ * the last 30 bars still differ by ~6.7e-06. Every bar below is past its
+ * convergence point, and Tulip steps its EMAs as prev + k*(x - prev), so only
+ * rounding is left: worst 7.7e-16 relative over the rows, none of them near
+ * zero. SMI_TULIP_REL is sized for these rows: over every converged bar the gap
+ * reaches 4.0e-15 relative where |SMI| is about 0.5 (set 5/3/3, bar 166), so a
+ * row added near a zero crossing needs an absolute term. A vector at slow=25
+ * would need the warm-up's tolerance and would be testing the warm-up, not the
+ * formula.
  *
  * ti_smi emits ONE output, so this leg says nothing about outSMISignal. */
+#define SMI_TULIP_REL 2e-15
 static const struct { int q, fast, slow, bar; double smi; } smiTulip[] =
 {
    { 10, 3, 3, 100,  -8.6056814147885223 },
@@ -325,6 +337,85 @@ ErrorNumber test_func_composite2( TA_History *history )
 
 /**** Local functions definitions. ****/
 
+/* TA_EMA's contract with the recurrence spelled prev + k*(x - prev). Keep it
+ * independent of the form TA_EMA uses: smiEma holds TA_EMA to it, a check
+ * the compositions built from TA_EMA cannot make. */
+static TA_RetCode smiRefEma( int startIdx, int endIdx, const double *in, int period,
+                             TA_Integer *outBegIdx, TA_Integer *outNBElement, double *out )
+{
+   int lookback = period - 1 + (int)TA_GetUnstablePeriod( TA_FUNC_UNST_EMA );
+   double k = 2.0 / (double)(period + 1), prev = 0.0;
+   int today, i, outIdx = 0;
+
+   *outBegIdx = 0;
+   *outNBElement = 0;
+   if( startIdx < lookback )
+      startIdx = lookback;
+   if( startIdx > endIdx )
+      return TA_SUCCESS;
+   *outBegIdx = startIdx;
+
+   if( period == 1 )
+   {
+      for( today = startIdx; today <= endIdx; today++ )
+         out[outIdx++] = in[today];
+      *outNBElement = outIdx;
+      return TA_SUCCESS;
+   }
+
+   today = startIdx - lookback;
+   for( i = 0; i < period; i++ )
+      prev += in[today++];
+   prev /= period;
+   while( today <= startIdx )
+   {
+      prev = fma( in[today] - prev, k, prev );
+      today++;
+   }
+   out[outIdx++] = prev;
+   while( today <= endIdx )
+   {
+      prev = fma( in[today] - prev, k, prev );
+      today++;
+      out[outIdx++] = prev;
+   }
+   *outNBElement = outIdx;
+   return TA_SUCCESS;
+}
+
+static int g_smiEmaCmp;
+
+static TA_RetCode smiEma( const double *in, int n, int period, double absTol,
+                          TA_Integer *outBegIdx, TA_Integer *outNBElement, double *out )
+{
+   static TA_Real ref[SMI_CAP];
+   TA_Integer begRef, nbRef;
+   TA_RetCode rc;
+   int i;
+
+   rc = TA_EMA( 0, n - 1, in, period, outBegIdx, outNBElement, out );
+   if( rc != TA_SUCCESS )
+      return rc;
+   rc = smiRefEma( 0, n - 1, in, period, &begRef, &nbRef, ref );
+   if( rc != TA_SUCCESS || begRef != *outBegIdx || nbRef != *outNBElement )
+   {
+      printf( "SMI Fail: TA_EMA(%d) range (%d,%d), smiRefEma's rc=%d (%d,%d)\n", period,
+              (int)*outBegIdx, (int)*outNBElement, (int)rc, (int)begRef, (int)nbRef );
+      return TA_UNKNOWN_ERR;
+   }
+   for( i = 0; i < nbRef; i++ )
+   {
+      if( !(fabs( out[i] - ref[i] ) <= SMI_EMA_REL * fabs( ref[i] ) + absTol) )
+      {
+         printf( "SMI Fail: TA_EMA(%d) at %d is %.17g, smiRefEma's %.17g\n",
+                 period, (int)begRef + i, out[i], ref[i] );
+         return TA_UNKNOWN_ERR;
+      }
+   }
+   g_smiEmaCmp += (int)nbRef;
+   return TA_SUCCESS;
+}
+
 /* Build the SMI line and its signal from shipped primitives only.
  *
  * `base` is the first input bar the caller is allowed to consume. Passing
@@ -368,15 +459,15 @@ static ErrorNumber smi_build_reference( const TA_History *history,
    }
 
    /* Slow stage, then fast stage, on numerator and denominator separately. */
-   rc = TA_EMA( 0, nbHH - 1, num, slow, &begE1, &nbE1, e1 );
+   rc = smiEma( num, nbHH, slow, SMI_EMA_ABS, &begE1, &nbE1, e1 );
    if( rc != TA_SUCCESS ) return TA_TESTUTIL_TFRR_BAD_RETCODE;
-   rc = TA_EMA( 0, nbHH - 1, den, slow, &begF1, &nbF1, f1 );
+   rc = smiEma( den, nbHH, slow, 0.0, &begF1, &nbF1, f1 );
    if( rc != TA_SUCCESS || begF1 != begE1 ) return TA_TESTUTIL_TFRR_BAD_BEGIDX;
    if( nbE1 <= 0 ) { *refBeg = 0; *refNb = 0; return TA_TEST_PASS; }
 
-   rc = TA_EMA( 0, nbE1 - 1, e1, fast, &begE2, &nbE2, e2 );
+   rc = smiEma( e1, nbE1, fast, SMI_EMA_ABS, &begE2, &nbE2, e2 );
    if( rc != TA_SUCCESS ) return TA_TESTUTIL_TFRR_BAD_RETCODE;
-   rc = TA_EMA( 0, nbF1 - 1, f1, fast, &begF2, &nbF2, f2 );
+   rc = smiEma( f1, nbF1, fast, 0.0, &begF2, &nbF2, f2 );
    if( rc != TA_SUCCESS || begF2 != begE2 ) return TA_TESTUTIL_TFRR_BAD_BEGIDX;
    if( nbE2 <= 0 ) { *refBeg = 0; *refNb = 0; return TA_TEST_PASS; }
 
@@ -390,7 +481,7 @@ static ErrorNumber smi_build_reference( const TA_History *history,
    }
    lineBar = begHH + begE1 + begE2;   /* absolute bar of line[0] */
 
-   rc = TA_EMA( 0, nbE2 - 1, line, sig, &begSg, &nbSg, outSignal );
+   rc = smiEma( line, nbE2, sig, SMI_EMA_ABS, &begSg, &nbSg, outSignal );
    if( rc != TA_SUCCESS ) return TA_TESTUTIL_TFRR_BAD_RETCODE;
    if( nbSg <= 0 ) { *refBeg = 0; *refNb = 0; return TA_TEST_PASS; }
 
@@ -412,6 +503,7 @@ static ErrorNumber test_smi_differential( const TA_History *history )
    static TA_Real refLine[SMI_CAP], refSig[SMI_CAP];
 
    nbBars = (int)history->nbBars;
+   g_smiEmaCmp = 0;
 
    for( u = 0; u < NB_SMI_UNST; u++ )
    {
@@ -541,10 +633,11 @@ static ErrorNumber test_smi_differential( const TA_History *history )
 
    TA_SetUnstablePeriod( TA_FUNC_UNST_EMA, 0 );
 
-   if( nbChecked < 10000 )
+   if( nbChecked < 10000 || g_smiEmaCmp < 100000 )
    {
-      printf( "SMI differential Fail: only %d value(s) compared; the grid has been "
-              "reduced to the point where this leg is no longer evidence\n", nbChecked );
+      printf( "SMI differential Fail: only %d value(s) and %d TA_EMA value(s) compared; "
+              "the grid has been reduced to the point where this leg is no longer "
+              "evidence\n", nbChecked, g_smiEmaCmp );
       return TA_TESTUTIL_TFRR_BAD_CALCULATION;
    }
    return TA_TEST_PASS;
@@ -776,7 +869,7 @@ static ErrorNumber test_smi_inplace( const TA_History *history )
    return TA_TEST_PASS;
 }
 
-/* (7) EXTERNAL ORACLE, bit-exact past convergence. */
+/* (7) EXTERNAL ORACLE, to SMI_TULIP_REL at the smiTulip[] rows. */
 static ErrorNumber test_smi_tulip_vector( const TA_History *history )
 {
    unsigned int v;
@@ -807,11 +900,11 @@ static ErrorNumber test_smi_tulip_vector( const TA_History *history )
                  smiTulip[v].bar, (int)beg, (int)nb );
          return TA_TESTUTIL_TFRR_BAD_BEGIDX;
       }
-      if( outSMI[idx] != smiTulip[v].smi )
+      if( !(fabs( outSMI[idx] - smiTulip[v].smi ) <= SMI_TULIP_REL * fabs( smiTulip[v].smi )) )
       {
          printf( "SMI tulip Fail [q %d f %d s %d] bar %d: got %.17g, Tulip %.17g "
                  "(delta %.3e). These bars are past the seeding transient, so "
-                 "equality is expected -- see the vector's comment.\n",
+                 "only rounding may separate them -- see the vector's comment.\n",
                  smiTulip[v].q, smiTulip[v].fast, smiTulip[v].slow, smiTulip[v].bar,
                  outSMI[idx], smiTulip[v].smi, outSMI[idx] - smiTulip[v].smi );
          return TA_TESTUTIL_TFRR_BAD_CALCULATION;

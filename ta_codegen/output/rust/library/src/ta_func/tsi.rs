@@ -192,6 +192,8 @@ impl Core {
         let mut startIdx = startIdx;
         let mut kFirst: f64 = 0.0_f64;
         let mut kSecond: f64 = 0.0_f64;
+        let mut betaFirst: f64 = 0.0_f64;
+        let mut betaSecond: f64 = 0.0_f64;
         let mut emaFirstNum: f64 = 0.0_f64;
         let mut emaFirstDen: f64 = 0.0_f64;
         let mut emaSecondNum: f64 = 0.0_f64;
@@ -231,15 +233,19 @@ impl Core {
         // TA_SetUnstablePeriod(TA_FUNC_UNST_EMA) folds in: the second stage then
         // seeds from the values the first would have published. The seed sums
         // accumulate from 0.0 in production order and the recurrence is
-        // ((x-prev)*k)+prev rather than the algebraically equal k*x+(1-k)*prev; do
+        // k*x + beta*prev with ema.c's k and beta; do
         // not reorder or fuse them (0.0+x is not x for x=-0.0). That order IS the
         // bit-exactness contract against the composed reference.
         //
         // prevClose is carried in a scalar rather than re-read from inReal[t-1]
         // because outReal may alias inReal: the slot holding close[t-1] may already
         // hold an output written a bar earlier.
-        kFirst = 2.0 / ((optInFirstPeriod + 1) as f64);
-        kSecond = 2.0 / ((optInSecondPeriod + 1) as f64);
+        betaFirst = ((optInFirstPeriod - 1) as f64) / ((optInFirstPeriod + 1) as f64);
+        kFirst = 1.0 - betaFirst;
+        betaFirst = 1.0 - kFirst;
+        betaSecond = ((optInSecondPeriod - 1) as f64) / ((optInSecondPeriod + 1) as f64);
+        kSecond = 1.0 - betaSecond;
+        betaSecond = 1.0 - kSecond;
         lookbackFirst = self.ema_lookback(optInFirstPeriod).unwrap_or(usize::MAX);
         emaFirstNum = 0.0;
         emaFirstDen = 0.0;
@@ -268,8 +274,8 @@ impl Core {
                     emaFirstDen = sumFirstDen / ((optInFirstPeriod) as f64);
                 }
             } else {
-                emaFirstNum = (mom - emaFirstNum as f64).mul_add(kFirst, emaFirstNum);
-                emaFirstDen = (absMom - emaFirstDen as f64).mul_add(kFirst, emaFirstDen);
+                emaFirstNum = (betaFirst as f64).mul_add(emaFirstNum, kFirst * mom);
+                emaFirstDen = (betaFirst as f64).mul_add(emaFirstDen, kFirst * absMom);
             }
             // Stage 2: the second EMA, over what stage 1 publishes.
             //
@@ -292,8 +298,8 @@ impl Core {
                         emaSecondDen = sumSecondDen / ((optInSecondPeriod) as f64);
                     }
                 } else {
-                    emaSecondNum = (emaFirstNum - emaSecondNum as f64).mul_add(kSecond, emaSecondNum);
-                    emaSecondDen = (emaFirstDen - emaSecondDen as f64).mul_add(kSecond, emaSecondDen);
+                    emaSecondNum = (betaSecond as f64).mul_add(emaSecondNum, kSecond * emaFirstNum);
+                    emaSecondDen = (betaSecond as f64).mul_add(emaSecondDen, kSecond * emaFirstDen);
                 }
             }
             nBar = nBar + 1;
@@ -318,10 +324,10 @@ impl Core {
             mom = inReal[today] - prevClose;
             prevClose = inReal[today];
             absMom = (mom).abs();
-            emaFirstNum = (mom - emaFirstNum as f64).mul_add(kFirst, emaFirstNum);
-            emaFirstDen = (absMom - emaFirstDen as f64).mul_add(kFirst, emaFirstDen);
-            emaSecondNum = (emaFirstNum - emaSecondNum as f64).mul_add(kSecond, emaSecondNum);
-            emaSecondDen = (emaFirstDen - emaSecondDen as f64).mul_add(kSecond, emaSecondDen);
+            emaFirstNum = (betaFirst as f64).mul_add(emaFirstNum, kFirst * mom);
+            emaFirstDen = (betaFirst as f64).mul_add(emaFirstDen, kFirst * absMom);
+            emaSecondNum = (betaSecond as f64).mul_add(emaSecondNum, kSecond * emaFirstNum);
+            emaSecondDen = (betaSecond as f64).mul_add(emaSecondDen, kSecond * emaFirstDen);
             if emaSecondDen > 0.0 {
                 tsiValue = 100.0 * emaSecondNum / emaSecondDen;
             } else {
@@ -477,6 +483,8 @@ struct TsiStreamState {
     optInSecondPeriod: i32,
     kFirst: f64,
     kSecond: f64,
+    betaFirst: f64,
+    betaSecond: f64,
     emaFirstNum: f64,
     emaFirstDen: f64,
     emaSecondNum: f64,
@@ -499,10 +507,10 @@ impl Core {
         mom = inReal - sp.prevClose;
         sp.prevClose = inReal;
         absMom = (mom).abs();
-        sp.emaFirstNum = (mom - sp.emaFirstNum as f64).mul_add(sp.kFirst, sp.emaFirstNum);
-        sp.emaFirstDen = (absMom - sp.emaFirstDen as f64).mul_add(sp.kFirst, sp.emaFirstDen);
-        sp.emaSecondNum = (sp.emaFirstNum - sp.emaSecondNum as f64).mul_add(sp.kSecond, sp.emaSecondNum);
-        sp.emaSecondDen = (sp.emaFirstDen - sp.emaSecondDen as f64).mul_add(sp.kSecond, sp.emaSecondDen);
+        sp.emaFirstNum = (sp.betaFirst as f64).mul_add(sp.emaFirstNum, sp.kFirst * mom);
+        sp.emaFirstDen = (sp.betaFirst as f64).mul_add(sp.emaFirstDen, sp.kFirst * absMom);
+        sp.emaSecondNum = (sp.betaSecond as f64).mul_add(sp.emaSecondNum, sp.kSecond * sp.emaFirstNum);
+        sp.emaSecondDen = (sp.betaSecond as f64).mul_add(sp.emaSecondDen, sp.kSecond * sp.emaFirstDen);
         if sp.emaSecondDen > 0.0 {
             tsiValue = 100.0 * sp.emaSecondNum / sp.emaSecondDen;
         } else {
@@ -545,6 +553,8 @@ impl Core {
         let mut dummyNBElement: usize = 0;
         let mut kFirst: f64 = 0.0_f64;
         let mut kSecond: f64 = 0.0_f64;
+        let mut betaFirst: f64 = 0.0_f64;
+        let mut betaSecond: f64 = 0.0_f64;
         let mut emaFirstNum: f64 = 0.0_f64;
         let mut emaFirstDen: f64 = 0.0_f64;
         let mut emaSecondNum: f64 = 0.0_f64;
@@ -583,15 +593,19 @@ impl Core {
         // TA_SetUnstablePeriod(TA_FUNC_UNST_EMA) folds in: the second stage then
         // seeds from the values the first would have published. The seed sums
         // accumulate from 0.0 in production order and the recurrence is
-        // ((x-prev)*k)+prev rather than the algebraically equal k*x+(1-k)*prev; do
+        // k*x + beta*prev with ema.c's k and beta; do
         // not reorder or fuse them (0.0+x is not x for x=-0.0). That order IS the
         // bit-exactness contract against the composed reference.
         //
         // prevClose is carried in a scalar rather than re-read from inReal[t-1]
         // because outReal may alias inReal: the slot holding close[t-1] may already
         // hold an output written a bar earlier.
-        kFirst = 2.0 / ((optInFirstPeriod + 1) as f64);
-        kSecond = 2.0 / ((optInSecondPeriod + 1) as f64);
+        betaFirst = ((optInFirstPeriod - 1) as f64) / ((optInFirstPeriod + 1) as f64);
+        kFirst = 1.0 - betaFirst;
+        betaFirst = 1.0 - kFirst;
+        betaSecond = ((optInSecondPeriod - 1) as f64) / ((optInSecondPeriod + 1) as f64);
+        kSecond = 1.0 - betaSecond;
+        betaSecond = 1.0 - kSecond;
         lookbackFirst = self.ema_lookback(optInFirstPeriod)?;
         emaFirstNum = 0.0;
         emaFirstDen = 0.0;
@@ -620,8 +634,8 @@ impl Core {
                     emaFirstDen = sumFirstDen / ((optInFirstPeriod) as f64);
                 }
             } else {
-                emaFirstNum = (mom - emaFirstNum as f64).mul_add(kFirst, emaFirstNum);
-                emaFirstDen = (absMom - emaFirstDen as f64).mul_add(kFirst, emaFirstDen);
+                emaFirstNum = (betaFirst as f64).mul_add(emaFirstNum, kFirst * mom);
+                emaFirstDen = (betaFirst as f64).mul_add(emaFirstDen, kFirst * absMom);
             }
             // Stage 2: the second EMA, over what stage 1 publishes.
             //
@@ -644,8 +658,8 @@ impl Core {
                         emaSecondDen = sumSecondDen / ((optInSecondPeriod) as f64);
                     }
                 } else {
-                    emaSecondNum = (emaFirstNum - emaSecondNum as f64).mul_add(kSecond, emaSecondNum);
-                    emaSecondDen = (emaFirstDen - emaSecondDen as f64).mul_add(kSecond, emaSecondDen);
+                    emaSecondNum = (betaSecond as f64).mul_add(emaSecondNum, kSecond * emaFirstNum);
+                    emaSecondDen = (betaSecond as f64).mul_add(emaSecondDen, kSecond * emaFirstDen);
                 }
             }
             nBar = nBar + 1;
@@ -670,10 +684,10 @@ impl Core {
             mom = inReal[today] - prevClose;
             prevClose = inReal[today];
             absMom = (mom).abs();
-            emaFirstNum = (mom - emaFirstNum as f64).mul_add(kFirst, emaFirstNum);
-            emaFirstDen = (absMom - emaFirstDen as f64).mul_add(kFirst, emaFirstDen);
-            emaSecondNum = (emaFirstNum - emaSecondNum as f64).mul_add(kSecond, emaSecondNum);
-            emaSecondDen = (emaFirstDen - emaSecondDen as f64).mul_add(kSecond, emaSecondDen);
+            emaFirstNum = (betaFirst as f64).mul_add(emaFirstNum, kFirst * mom);
+            emaFirstDen = (betaFirst as f64).mul_add(emaFirstDen, kFirst * absMom);
+            emaSecondNum = (betaSecond as f64).mul_add(emaSecondNum, kSecond * emaFirstNum);
+            emaSecondDen = (betaSecond as f64).mul_add(emaSecondDen, kSecond * emaFirstDen);
             if emaSecondDen > 0.0 {
                 tsiValue = 100.0 * emaSecondNum / emaSecondDen;
             } else {
@@ -691,6 +705,8 @@ impl Core {
             optInSecondPeriod,
             kFirst,
             kSecond,
+            betaFirst,
+            betaSecond,
             emaFirstNum,
             emaFirstDen,
             emaSecondNum,
@@ -887,10 +903,10 @@ impl TsiStream {
             mom = inReal - prevClose;
             prevClose = inReal;
             absMom = (mom).abs();
-            emaFirstNum = (mom - emaFirstNum as f64).mul_add(sp.kFirst, emaFirstNum);
-            emaFirstDen = (absMom - emaFirstDen as f64).mul_add(sp.kFirst, emaFirstDen);
-            emaSecondNum = (emaFirstNum - emaSecondNum as f64).mul_add(sp.kSecond, emaSecondNum);
-            emaSecondDen = (emaFirstDen - emaSecondDen as f64).mul_add(sp.kSecond, emaSecondDen);
+            emaFirstNum = (sp.betaFirst as f64).mul_add(emaFirstNum, sp.kFirst * mom);
+            emaFirstDen = (sp.betaFirst as f64).mul_add(emaFirstDen, sp.kFirst * absMom);
+            emaSecondNum = (sp.betaSecond as f64).mul_add(emaSecondNum, sp.kSecond * emaFirstNum);
+            emaSecondDen = (sp.betaSecond as f64).mul_add(emaSecondDen, sp.kSecond * emaFirstDen);
             if emaSecondDen > 0.0 {
                 tsiValue = 100.0 * emaSecondNum / emaSecondDen;
             } else {

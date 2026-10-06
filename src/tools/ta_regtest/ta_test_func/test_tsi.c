@@ -104,11 +104,11 @@
 /**** Local declarations. ****/
 #define TSI_CAP 300   /* > MAX_NB_TEST_ELEMENT and > nbBars */
 
-/* Leg 3. ABSOLUTE, not relative. The oracle and TA_TSI agree to 2.842e-14 over
- * the frozen rows (worst case, measured 2026-09-04 against the live arm), but
- * one of them sits at a zero crossing where the RELATIVE error is 2.9e-13 --
- * within 4x of failing a 1e-12 relative check while saying nothing about
- * correctness. 1e-12 absolute keeps ~35x margin on the measured gap. */
+/* Leg 3. ABSOLUTE, not relative. The oracle and TA_TSI agree to 2.132e-14 over
+ * the frozen rows (worst case, measured 2026-10-05 against the live arm), but
+ * one of them (bar 183) sits at a zero crossing where the RELATIVE error is
+ * 3.0e-13 -- within 4x of failing a 1e-12 relative check while saying nothing
+ * about correctness. 1e-12 absolute keeps ~47x margin on the measured gap. */
 #define TSI_ORACLE_ABS 1e-12
 
 /* Leg 4. Same absolute form, and the same measured order: 2.132e-14 worst over

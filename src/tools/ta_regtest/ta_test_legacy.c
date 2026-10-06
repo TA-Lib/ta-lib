@@ -107,9 +107,9 @@
  *       and CMO also change the step's form, so only DM, DI and DX share RSI's
  *       power-of-two exactness.
  *
- * A blanket contract bound would buy unearned slack: CCI, IMI, KAMA, MACD and
- * MACDEXT are all bit-exact against v0.6.4 on this series, their divergences
- * needing the fuzz corpus's extreme magnitudes to appear.
+ * A blanket contract bound would buy unearned slack: CCI, IMI and KAMA are all
+ * bit-exact against v0.6.4 on this series, their divergences needing the fuzz
+ * corpus's extreme magnitudes to appear.
  *
  * ONE PRINCIPLED EXCEPTION TO "3x MEASURED": a function reaching a libm routine
  * that is not correctly rounded gets a floor of 8 ULP at its own output
@@ -173,21 +173,20 @@ static const TA_LegacyTol LEGACY_TOL[] =
    { "NATR",                2e-15 },  /* #338  measured 4.44e-16             */
 
    /* --- (a) explicit fma() adoption, PR #96 ------------------------------
-    * Verified per row: ADOSC, T3, TEMA, DEMA, SAREXT, EMA, SAR, TRIX, MACDFIX
-    * and MAMA contain fma() directly. MA and MAVP contain none and inherit it
-    * one dispatch hop away -- MA through its EMA/DEMA/TEMA/T3/MAMA arms, MAVP
-    * through MA. */
+    * Verified per row: ADOSC, T3, TEMA, DEMA, SAREXT, SAR, MACD, MACDFIX and
+    * MAMA contain fma() directly; MACDEXT delegates to MACD when every MAType
+    * is EMA. The #505 rows are (a) and (b) at once, like ATR's: the EMA step
+    * changed form, k*x + beta*prev, AND fuses. EMA, TRIX, MA and MAVP take
+    * that step too but measure zero at the frozen samples: no row. */
    { "ADOSC",               3e-08 },  /* measured 7.45e-09, output ~4.3e6    */
    { "T3",                  4e-13 },  /* measured 1.28e-13                   */
-   { "TEMA",                3e-13 },  /* measured 9.95e-14                   */
-   { "DEMA",                2e-13 },  /* measured 4.26e-14                   */
+   { "TEMA",                3e-13 },  /* #505  measured 7.11e-14             */
+   { "DEMA",                9e-14 },  /* #505  measured 2.84e-14             */
    { "SAREXT",              9e-14 },  /* measured 2.84e-14                   */
-   { "EMA",                 5e-14 },  /* measured 1.42e-14                   */
-   { "MA",                  5e-14 },  /* measured 1.42e-14 (EMA/T3 arms)     */
-   { "MAVP",                5e-14 },  /* measured 1.42e-14, via MA->EMA      */
    { "SAR",                 5e-14 },  /* measured 1.42e-14                   */
-   { "TRIX",                4e-14 },  /* measured 1.11e-14                   */
-   { "MACDFIX",             4e-15 },  /* measured 1.33e-15                   */
+   { "MACD",                7e-14 },  /* #505  measured 2.22e-14             */
+   { "MACDEXT",             1e-14 },  /* #505  measured 3.11e-15             */
+   { "MACDFIX",             6e-14 },  /* #505  measured 1.73e-14             */
 
    /* --- (a) plus the 8-ULP libm floor (atan-derived output) -------------- */
    { "MAMA",                3e-13 }   /* measured 2.84e-14, floor 8 ULP(128) */

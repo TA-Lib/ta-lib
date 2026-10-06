@@ -114,6 +114,7 @@ public partial class Core
    {
       outBegIdx = 0;
       outNBElement = 0;
+      double emaBeta = 0;
       double optInK_1 = 0;
       double tempReal = 0;
       double prevMA = 0;
@@ -137,12 +138,14 @@ public partial class Core
       if( (outReal.Overlaps(inReal) && outReal != inReal) ) {
          return RetCode.BadParam ;
       }
-      optInK_1 = 2.0 / (double)(optInTimePeriod + 1);
+      emaBeta = (double)(optInTimePeriod - 1) / (double)(optInTimePeriod + 1);
+      optInK_1 = 1.0 - emaBeta;
+      emaBeta = 1.0 - optInK_1;
       /* KEEP THIS ARITHMETIC EXACTLY AS WRITTEN -- the de-lag in one rounding
        * (2.0*c - l, not c + (c - l)), the seed sum accumulating from 0.0, and
-       * ((v - prevMA)*k) + prevMA. Together they make ZLEMA bit-for-bit equal to
-       * an EMA over a materialised de-lagged series, which is the strongest gate
-       * this function has. Reordering any one breaks that equality silently, and
+       * k*v + beta*prevMA with ema.c's k and beta. Together they make ZLEMA
+       * bit-for-bit equal to an EMA over a materialised de-lagged series, which
+       * is the strongest gate this function has. Reordering any one breaks that equality silently, and
        * the de-lag spelling is worth more than rounding noise: c + (c - l) rounds
        * twice, which is 5e-12 relative where 2c - l cancels.
        */
@@ -162,10 +165,9 @@ public partial class Core
       }
       /* No smoothing at period of 1: the output is a copy of the input, the
        * convention TA_MA applies to every MAType. Explicit, because at period 1
-       * lag is 0 and optInK_1 is exactly 1.0, so the recursion below reduces to
-       * (x-prev)+prev -- which returns x only while consecutive values stay
-       * within a factor of two of each other. The unstable period still delays
-       * the first output.
+       * lag is 0 and the recursion below, at a k of 1.0 and a beta of 0.0, does
+       * not keep the sign of a -0.0 input. The unstable period still delays the
+       * first output.
        */
       if( optInTimePeriod == 1 ) {
          outBegIdx = startIdx;
@@ -193,14 +195,14 @@ public partial class Core
       }
       prevMA = tempReal / optInTimePeriod;
       while( today <= startIdx ) {
-         prevMA = Math.FusedMultiplyAdd(2.0 * inReal[today] - inReal[trailingIdx] - prevMA, optInK_1, prevMA);
+         prevMA = Math.FusedMultiplyAdd(emaBeta, prevMA, optInK_1 * (2.0 * inReal[today] - inReal[trailingIdx]));
          today += 1;
          trailingIdx += 1;
       }
       outReal[0] = prevMA;
       outIdx = 1;
       while( today <= endIdx ) {
-         prevMA = Math.FusedMultiplyAdd(2.0 * inReal[today] - inReal[trailingIdx] - prevMA, optInK_1, prevMA);
+         prevMA = Math.FusedMultiplyAdd(emaBeta, prevMA, optInK_1 * (2.0 * inReal[today] - inReal[trailingIdx]));
          today += 1;
          trailingIdx += 1;
          outReal[outIdx++] = prevMA;
@@ -218,6 +220,7 @@ public partial class Core
    {
       outBegIdx = 0;
       outNBElement = 0;
+      double emaBeta = 0;
       double optInK_1 = 0;
       double tempReal = 0;
       double prevMA = 0;
@@ -241,7 +244,9 @@ public partial class Core
       if( System.Runtime.InteropServices.MemoryMarshal.AsBytes(outReal).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inReal)) ) {
          return RetCode.BadParam ;
       }
-      optInK_1 = 2.0 / (double)(optInTimePeriod + 1);
+      emaBeta = (double)(optInTimePeriod - 1) / (double)(optInTimePeriod + 1);
+      optInK_1 = 1.0 - emaBeta;
+      emaBeta = 1.0 - optInK_1;
       lag = (optInTimePeriod - 1) / 2;
       lookbackTotal = ZlemaLookback(optInTimePeriod);
       if( startIdx < lookbackTotal ) {
@@ -274,14 +279,14 @@ public partial class Core
       }
       prevMA = tempReal / optInTimePeriod;
       while( today <= startIdx ) {
-         prevMA = Math.FusedMultiplyAdd(2.0 * (double)inReal[today] - (double)inReal[trailingIdx] - prevMA, optInK_1, prevMA);
+         prevMA = Math.FusedMultiplyAdd(emaBeta, prevMA, optInK_1 * (2.0 * (double)inReal[today] - (double)inReal[trailingIdx]));
          today += 1;
          trailingIdx += 1;
       }
       outReal[0] = prevMA;
       outIdx = 1;
       while( today <= endIdx ) {
-         prevMA = Math.FusedMultiplyAdd(2.0 * (double)inReal[today] - (double)inReal[trailingIdx] - prevMA, optInK_1, prevMA);
+         prevMA = Math.FusedMultiplyAdd(emaBeta, prevMA, optInK_1 * (2.0 * (double)inReal[today] - (double)inReal[trailingIdx]));
          today += 1;
          trailingIdx += 1;
          outReal[outIdx++] = prevMA;
@@ -515,6 +520,7 @@ public partial class Core
    {
       internal Core core;
       internal int optInTimePeriod;
+      internal double emaBeta;
       internal double optInK_1;
       internal double prevMA;
       internal int ringPos_trailingIdx;
@@ -563,6 +569,7 @@ public partial class Core
       {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
+         this.emaBeta = other.emaBeta;
          this.optInK_1 = other.optInK_1;
          this.prevMA = other.prevMA;
          this.ringPos_trailingIdx = other.ringPos_trailingIdx;
@@ -630,7 +637,7 @@ public partial class Core
             pkSlot0 = 0;
             pkVal0 = inReal;
          }
-         prevMA = Math.FusedMultiplyAdd(2.0 * inReal - ((sp.ringPos_trailingIdx != pkSlot0) ? sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx] : pkVal0) - prevMA, sp.optInK_1, prevMA);
+         prevMA = Math.FusedMultiplyAdd(sp.emaBeta, prevMA, sp.optInK_1 * (2.0 * inReal - ((sp.ringPos_trailingIdx != pkSlot0) ? sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx] : pkVal0)));
          cur_outReal = prevMA;
          return cur_outReal;
       }
@@ -661,7 +668,7 @@ public partial class Core
       if( sp.ringCap_trailingIdx == 0 ) {
          sp.ring_trailingIdx_inReal[0] = inReal;
       }
-      sp.prevMA = Math.FusedMultiplyAdd(2.0 * inReal - sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx] - sp.prevMA, sp.optInK_1, sp.prevMA);
+      sp.prevMA = Math.FusedMultiplyAdd(sp.emaBeta, sp.prevMA, sp.optInK_1 * (2.0 * inReal - sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx]));
       sp.cur_outReal = sp.prevMA;
       sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx] = inReal;
       sp.ringPos_trailingIdx = sp.ringPos_trailingIdx + 1;
@@ -674,6 +681,7 @@ public partial class Core
    {
       outBegIdx = 0;
       outNBElement = 0;
+      double emaBeta = 0;
       double optInK_1 = 0;
       double tempReal = 0;
       double prevMA = 0;
@@ -708,6 +716,7 @@ public partial class Core
             return RetCode.InsufficientHistory;
          }
          sp.optInTimePeriod = optInTimePeriod;
+         sp.emaBeta = 0.0;
          sp.optInK_1 = 0.0;
          sp.prevMA = 0.0;
          sp.ringPos_trailingIdx = 0;
@@ -725,12 +734,14 @@ public partial class Core
          sp.cur_outReal = outReal[(outNBElement - 1) * outStride];
          return RetCode.Success;
       }
-      optInK_1 = 2.0 / (double)(optInTimePeriod + 1);
+      emaBeta = (double)(optInTimePeriod - 1) / (double)(optInTimePeriod + 1);
+      optInK_1 = 1.0 - emaBeta;
+      emaBeta = 1.0 - optInK_1;
       /* KEEP THIS ARITHMETIC EXACTLY AS WRITTEN -- the de-lag in one rounding
        * (2.0*c - l, not c + (c - l)), the seed sum accumulating from 0.0, and
-       * ((v - prevMA)*k) + prevMA. Together they make ZLEMA bit-for-bit equal to
-       * an EMA over a materialised de-lagged series, which is the strongest gate
-       * this function has. Reordering any one breaks that equality silently, and
+       * k*v + beta*prevMA with ema.c's k and beta. Together they make ZLEMA
+       * bit-for-bit equal to an EMA over a materialised de-lagged series, which
+       * is the strongest gate this function has. Reordering any one breaks that equality silently, and
        * the de-lag spelling is worth more than rounding noise: c + (c - l) rounds
        * twice, which is 5e-12 relative where 2c - l cancels.
        */
@@ -764,14 +775,14 @@ public partial class Core
       }
       prevMA = tempReal / optInTimePeriod;
       while( today <= startIdx ) {
-         prevMA = Math.FusedMultiplyAdd(2.0 * inReal[today] - inReal[trailingIdx] - prevMA, optInK_1, prevMA);
+         prevMA = Math.FusedMultiplyAdd(emaBeta, prevMA, optInK_1 * (2.0 * inReal[today] - inReal[trailingIdx]));
          today += 1;
          trailingIdx += 1;
       }
       outReal[0 * outStride] = prevMA;
       outIdx = 1;
       while( today <= endIdx ) {
-         prevMA = Math.FusedMultiplyAdd(2.0 * inReal[today] - inReal[trailingIdx] - prevMA, optInK_1, prevMA);
+         prevMA = Math.FusedMultiplyAdd(emaBeta, prevMA, optInK_1 * (2.0 * inReal[today] - inReal[trailingIdx]));
          today += 1;
          trailingIdx += 1;
          outReal[outIdx++ * outStride] = prevMA;
@@ -786,6 +797,7 @@ public partial class Core
       double[] capRing_trailingIdx_inReal = new double[allocN_trailingIdx];
       inReal.Slice(historyLen - cap_trailingIdx, cap_trailingIdx).CopyTo(capRing_trailingIdx_inReal);
       sp.optInTimePeriod = optInTimePeriod;
+      sp.emaBeta = emaBeta;
       sp.optInK_1 = optInK_1;
       sp.prevMA = prevMA;
       sp.ringPos_trailingIdx = 0;
@@ -898,7 +910,7 @@ public partial class Core
 
    private double ZlemaStepTape( ZlemaStream sp, ReadOnlySpan<double> tape, int tapeBase, int tapeMask, double inReal )
    {
-      sp.prevMA = Math.FusedMultiplyAdd(2.0 * inReal - tape[(tapeBase - sp.ringCap_trailingIdx) & tapeMask] - sp.prevMA, sp.optInK_1, sp.prevMA);
+      sp.prevMA = Math.FusedMultiplyAdd(sp.emaBeta, sp.prevMA, sp.optInK_1 * (2.0 * inReal - tape[(tapeBase - sp.ringCap_trailingIdx) & tapeMask]));
       sp.cur_outReal = sp.prevMA;
       sp.outRangeCount++;
       return sp.cur_outReal;
@@ -912,7 +924,7 @@ public partial class Core
       double pkVal0 = 0.0;
       pkSlot0 = tapeBase & tapeMask;
       pkVal0 = inReal;
-      prevMA = Math.FusedMultiplyAdd(2.0 * inReal - ((((tapeBase - sp.ringCap_trailingIdx) & tapeMask) != pkSlot0) ? tape[(tapeBase - sp.ringCap_trailingIdx) & tapeMask] : pkVal0) - prevMA, sp.optInK_1, prevMA);
+      prevMA = Math.FusedMultiplyAdd(sp.emaBeta, prevMA, sp.optInK_1 * (2.0 * inReal - ((((tapeBase - sp.ringCap_trailingIdx) & tapeMask) != pkSlot0) ? tape[(tapeBase - sp.ringCap_trailingIdx) & tapeMask] : pkVal0)));
       cur_outReal = prevMA;
       return cur_outReal;
    }

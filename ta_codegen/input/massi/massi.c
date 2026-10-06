@@ -29,7 +29,7 @@ TA_RetCode massi(int startIdx, int endIdx,
    int *outBegIdx, int *outNBElement,
    double outReal[])
 {
-   double optInK_1, hl, ema1, ema2, sum1, sum2, ratio, total, tempReal;
+   double optInK_1, emaBeta, hl, ema1, ema2, sum1, sum2, ratio, total, tempReal;
    int lookbackTotal, lookbackEma, lookbackEma2;
    int today, outIdx, nBar, n2;
 
@@ -64,7 +64,9 @@ TA_RetCode massi(int startIdx, int endIdx,
     * is warmed. The seed sums accumulate from 0.0 in production order; do not
     * reorder or fuse them (0.0+x is not x for x=-0.0).
     */
-   optInK_1 = 2.0 / ((double)(optInFastPeriod + 1));
+   emaBeta = ((double)(optInFastPeriod - 1)) / ((double)(optInFastPeriod + 1));
+   optInK_1 = 1.0 - emaBeta;
+   emaBeta = 1.0 - optInK_1;
 
    ema1     = 0.0;
    ema2     = 0.0;
@@ -89,7 +91,7 @@ TA_RetCode massi(int startIdx, int endIdx,
             ema1 = sum1 / optInFastPeriod;
       }
       else
-         ema1 = ((hl - ema1) * optInK_1) + ema1;
+         ema1 = optInK_1 * hl + emaBeta * ema1;
 
       /* The stage counter is compared BEFORE it is subtracted, never after.
        * `n2 = nBar - lookbackEma; if( n2 >= 0 )` is correct in C and broken
@@ -106,7 +108,7 @@ TA_RetCode massi(int startIdx, int endIdx,
                ema2 = sum2 / optInFastPeriod;
          }
          else
-            ema2 = ((ema1 - ema2) * optInK_1) + ema2;
+            ema2 = optInK_1 * ema1 + emaBeta * ema2;
       }
 
       if( nBar >= lookbackEma2 )
@@ -150,8 +152,8 @@ TA_RetCode massi(int startIdx, int endIdx,
    while( today <= endIdx )
    {
       hl = inHigh[today] - inLow[today];
-      ema1 = ((hl - ema1) * optInK_1) + ema1;
-      ema2 = ((ema1 - ema2) * optInK_1) + ema2;
+      ema1 = optInK_1 * hl + emaBeta * ema1;
+      ema2 = optInK_1 * ema1 + emaBeta * ema2;
 
       if( ema2 == 0.0 )
          ratio = 1.0;

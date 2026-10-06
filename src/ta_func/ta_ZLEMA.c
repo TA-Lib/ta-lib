@@ -86,6 +86,7 @@ TA_LIB_API TA_RetCode TA_ZLEMA( int    startIdx,
                                 int          *outNBElement,
                                 double        outReal[] )
 {
+   double emaBeta;
    double optInK_1;
    double tempReal;
    double prevMA;
@@ -112,12 +113,14 @@ TA_LIB_API TA_RetCode TA_ZLEMA( int    startIdx,
    if( !outReal )
       return TA_BAD_PARAM;
 
-   optInK_1 = 2.0 / (double)(optInTimePeriod + 1);
+   emaBeta = (double)(optInTimePeriod - 1) / (double)(optInTimePeriod + 1);
+   optInK_1 = 1.0 - emaBeta;
+   emaBeta = 1.0 - optInK_1;
    /* KEEP THIS ARITHMETIC EXACTLY AS WRITTEN -- the de-lag in one rounding
     * (2.0*c - l, not c + (c - l)), the seed sum accumulating from 0.0, and
-    * ((v - prevMA)*k) + prevMA. Together they make ZLEMA bit-for-bit equal to
-    * an EMA over a materialised de-lagged series, which is the strongest gate
-    * this function has. Reordering any one breaks that equality silently, and
+    * k*v + beta*prevMA with ema.c's k and beta. Together they make ZLEMA
+    * bit-for-bit equal to an EMA over a materialised de-lagged series, which
+    * is the strongest gate this function has. Reordering any one breaks that equality silently, and
     * the de-lag spelling is worth more than rounding noise: c + (c - l) rounds
     * twice, which is 5e-12 relative where 2c - l cancels.
     */
@@ -139,10 +142,9 @@ TA_LIB_API TA_RetCode TA_ZLEMA( int    startIdx,
    }
    /* No smoothing at period of 1: the output is a copy of the input, the
     * convention TA_MA applies to every MAType. Explicit, because at period 1
-    * lag is 0 and optInK_1 is exactly 1.0, so the recursion below reduces to
-    * (x-prev)+prev -- which returns x only while consecutive values stay
-    * within a factor of two of each other. The unstable period still delays
-    * the first output.
+    * lag is 0 and the recursion below, at a k of 1.0 and a beta of 0.0, does
+    * not keep the sign of a -0.0 input. The unstable period still delays the
+    * first output.
     */
    if( optInTimePeriod == 1 )
    {
@@ -174,7 +176,7 @@ TA_LIB_API TA_RetCode TA_ZLEMA( int    startIdx,
    prevMA = tempReal / optInTimePeriod;
    while( today <= startIdx )
    {
-      prevMA = fma(2.0 * inReal[today] - inReal[trailingIdx] - prevMA, optInK_1, prevMA);
+      prevMA = fma(emaBeta, prevMA, optInK_1 * (2.0 * inReal[today] - inReal[trailingIdx]));
       today += 1;
       trailingIdx += 1;
    }
@@ -182,7 +184,7 @@ TA_LIB_API TA_RetCode TA_ZLEMA( int    startIdx,
    outIdx = 1;
    while( today <= endIdx )
    {
-      prevMA = fma(2.0 * inReal[today] - inReal[trailingIdx] - prevMA, optInK_1, prevMA);
+      prevMA = fma(emaBeta, prevMA, optInK_1 * (2.0 * inReal[today] - inReal[trailingIdx]));
       today += 1;
       trailingIdx += 1;
       outReal[outIdx++] = prevMA;
@@ -200,6 +202,7 @@ TA_RetCode TA_S_ZLEMA( int    startIdx,
                        int          *outNBElement,
                        double        outReal[] )
 {
+   double emaBeta;
    double optInK_1;
    double tempReal;
    double prevMA;
@@ -226,7 +229,9 @@ TA_RetCode TA_S_ZLEMA( int    startIdx,
    if( !outReal )
       return TA_BAD_PARAM;
 
-   optInK_1 = 2.0 / (double)(optInTimePeriod + 1);
+   emaBeta = (double)(optInTimePeriod - 1) / (double)(optInTimePeriod + 1);
+   optInK_1 = 1.0 - emaBeta;
+   emaBeta = 1.0 - optInK_1;
    lag = (optInTimePeriod - 1) / 2;
    lookbackTotal = TA_ZLEMA_Lookback(optInTimePeriod);
    if( startIdx < lookbackTotal )
@@ -265,7 +270,7 @@ TA_RetCode TA_S_ZLEMA( int    startIdx,
    prevMA = tempReal / optInTimePeriod;
    while( today <= startIdx )
    {
-      prevMA = fma(2.0 * (double)inReal[today] - (double)inReal[trailingIdx] - prevMA, optInK_1, prevMA);
+      prevMA = fma(emaBeta, prevMA, optInK_1 * (2.0 * (double)inReal[today] - (double)inReal[trailingIdx]));
       today += 1;
       trailingIdx += 1;
    }
@@ -273,7 +278,7 @@ TA_RetCode TA_S_ZLEMA( int    startIdx,
    outIdx = 1;
    while( today <= endIdx )
    {
-      prevMA = fma(2.0 * (double)inReal[today] - (double)inReal[trailingIdx] - prevMA, optInK_1, prevMA);
+      prevMA = fma(emaBeta, prevMA, optInK_1 * (2.0 * (double)inReal[today] - (double)inReal[trailingIdx]));
       today += 1;
       trailingIdx += 1;
       outReal[outIdx++] = prevMA;
@@ -291,6 +296,7 @@ struct TA_ZLEMA_Stream {
    /* The value(s) at the last bar the stream counted (see TA_ZLEMA_Value). */
    double cur_outReal;
    int optInTimePeriod;
+   double emaBeta;
    double optInK_1;
    double pad_0;
    double prevMA;
@@ -320,7 +326,7 @@ static TA_FMA_STEP_INLINE void TA_ZLEMA_StepImpl( struct TA_ZLEMA_Stream *sp, do
    {
       sp->ring_trailingIdx_inReal[0] = inReal;
    }
-   sp->prevMA = fma(2.0 * inReal - sp->ring_trailingIdx_inReal[sp->ringPos_trailingIdx] - sp->prevMA, sp->optInK_1, sp->prevMA);
+   sp->prevMA = fma(sp->emaBeta, sp->prevMA, sp->optInK_1 * (2.0 * inReal - sp->ring_trailingIdx_inReal[sp->ringPos_trailingIdx]));
    *outReal= sp->prevMA;
    sp->cur_outReal = *outReal;
    sp->ring_trailingIdx_inReal[sp->ringPos_trailingIdx] = inReal;
@@ -399,7 +405,8 @@ static TA_RetCode TA_ZLEMA_OpenImpl( struct TA_ZLEMA_Stream **stream, const doub
    }
 
    {
-      double optInK_1 = 2.0 / (double)(optInTimePeriod + 1);
+      double emaBeta = (double)(optInTimePeriod - 1) / (double)(optInTimePeriod + 1);
+      double optInK_1 = 1.0 - emaBeta;
       double tempReal;
       double prevMA = 0.0;
       int i;
@@ -408,11 +415,12 @@ static TA_RetCode TA_ZLEMA_OpenImpl( struct TA_ZLEMA_Stream **stream, const doub
       int outIdx;
       int lag;
       int lookbackTotal;
+      emaBeta = 1.0 - optInK_1;
       /* KEEP THIS ARITHMETIC EXACTLY AS WRITTEN -- the de-lag in one rounding
        * (2.0*c - l, not c + (c - l)), the seed sum accumulating from 0.0, and
-       * ((v - prevMA)*k) + prevMA. Together they make ZLEMA bit-for-bit equal to
-       * an EMA over a materialised de-lagged series, which is the strongest gate
-       * this function has. Reordering any one breaks that equality silently, and
+       * k*v + beta*prevMA with ema.c's k and beta. Together they make ZLEMA
+       * bit-for-bit equal to an EMA over a materialised de-lagged series, which
+       * is the strongest gate this function has. Reordering any one breaks that equality silently, and
        * the de-lag spelling is worth more than rounding noise: c + (c - l) rounds
        * twice, which is 5e-12 relative where 2c - l cancels.
        */
@@ -450,7 +458,7 @@ static TA_RetCode TA_ZLEMA_OpenImpl( struct TA_ZLEMA_Stream **stream, const doub
       prevMA = tempReal / optInTimePeriod;
       while( today <= startIdx )
       {
-         prevMA = fma(2.0 * inReal[today] - inReal[trailingIdx] - prevMA, optInK_1, prevMA);
+         prevMA = fma(emaBeta, prevMA, optInK_1 * (2.0 * inReal[today] - inReal[trailingIdx]));
          today += 1;
          trailingIdx += 1;
       }
@@ -458,7 +466,7 @@ static TA_RetCode TA_ZLEMA_OpenImpl( struct TA_ZLEMA_Stream **stream, const doub
       outIdx = 1;
       while( today <= endIdx )
       {
-         prevMA = fma(2.0 * inReal[today] - inReal[trailingIdx] - prevMA, optInK_1, prevMA);
+         prevMA = fma(emaBeta, prevMA, optInK_1 * (2.0 * inReal[today] - inReal[trailingIdx]));
          today += 1;
          trailingIdx += 1;
          outReal[outIdx++ * outStride] = prevMA;
@@ -470,6 +478,7 @@ static TA_RetCode TA_ZLEMA_OpenImpl( struct TA_ZLEMA_Stream **stream, const doub
       if( !sp ) { return TA_ALLOC_ERR; }
       memset( sp, 0, sizeof(*sp) );
       sp->optInTimePeriod = optInTimePeriod;
+      sp->emaBeta = emaBeta;
       sp->optInK_1 = optInK_1;
       sp->prevMA = prevMA;
       sp->ringCap_trailingIdx = (int)(today - trailingIdx);
@@ -566,7 +575,7 @@ TA_LIB_API TA_RetCode TA_ZLEMA_Peek( const TA_ZLEMA_Stream *stream, double inRea
       pkSlot0 = 0;
       pkVal0 = inReal;
    }
-   prevMA = fma(2.0 * inReal - ((sp->ringPos_trailingIdx != pkSlot0) ? ring_trailingIdx_inReal[sp->ringPos_trailingIdx] : pkVal0) - prevMA, sp->optInK_1, prevMA);
+   prevMA = fma(sp->emaBeta, prevMA, sp->optInK_1 * (2.0 * inReal - ((sp->ringPos_trailingIdx != pkSlot0) ? ring_trailingIdx_inReal[sp->ringPos_trailingIdx] : pkVal0)));
    *outReal= prevMA;
    return TA_SUCCESS;
 }
@@ -580,7 +589,7 @@ TA_LIB_API TA_RetCode TA_ZLEMA_Close( TA_ZLEMA_Stream *stream )
 /* Private function, not in public API. */
 void TA_ZLEMA_StepTape( struct TA_ZLEMA_Stream *sp, const double tape[], int tapeBase, int tapeMask, double inReal, double *outReal )
 {
-   sp->prevMA = fma(2.0 * inReal - tape[(tapeBase - sp->ringCap_trailingIdx) & tapeMask] - sp->prevMA, sp->optInK_1, sp->prevMA);
+   sp->prevMA = fma(sp->emaBeta, sp->prevMA, sp->optInK_1 * (2.0 * inReal - tape[(tapeBase - sp->ringCap_trailingIdx) & tapeMask]));
    *outReal= sp->prevMA;
    sp->cur_outReal = *outReal;
    sp->outRangeCount++;
@@ -596,7 +605,7 @@ void TA_ZLEMA_PeekTape( const struct TA_ZLEMA_Stream *sp, const double tape[], i
    prevMA = sp->prevMA;
    pkSlot0 = tapeBase & tapeMask;
    pkVal0 = inReal;
-   prevMA = fma(2.0 * inReal - ((((tapeBase - sp->ringCap_trailingIdx) & tapeMask) != pkSlot0) ? tape[(tapeBase - sp->ringCap_trailingIdx) & tapeMask] : pkVal0) - prevMA, sp->optInK_1, prevMA);
+   prevMA = fma(sp->emaBeta, prevMA, sp->optInK_1 * (2.0 * inReal - ((((tapeBase - sp->ringCap_trailingIdx) & tapeMask) != pkSlot0) ? tape[(tapeBase - sp->ringCap_trailingIdx) & tapeMask] : pkVal0)));
    *outReal= prevMA;
 }
 

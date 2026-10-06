@@ -171,6 +171,7 @@ impl Core {
         assert!(_assertStart > endIdx || endIdx < inReal.len());
         assert!(_assertStart > endIdx || endIdx - _assertStart < outReal.len());
         let mut startIdx = startIdx;
+        let mut emaBeta: f64 = 0.0_f64;
         let mut optInK_1: f64 = 0.0_f64;
         let mut tempReal: f64 = 0.0_f64;
         let mut prevMA: f64 = 0.0_f64;
@@ -180,12 +181,14 @@ impl Core {
         let mut outIdx: usize = 0_usize;
         let mut lag: usize = 0_usize;
         let mut lookbackTotal: usize = 0_usize;
-        optInK_1 = 2.0 / ((optInTimePeriod + 1) as f64);
+        emaBeta = ((optInTimePeriod - 1) as f64) / ((optInTimePeriod + 1) as f64);
+        optInK_1 = 1.0 - emaBeta;
+        emaBeta = 1.0 - ((optInK_1) as f64);
         // KEEP THIS ARITHMETIC EXACTLY AS WRITTEN -- the de-lag in one rounding
         // (2.0*c - l, not c + (c - l)), the seed sum accumulating from 0.0, and
-        // ((v - prevMA)*k) + prevMA. Together they make ZLEMA bit-for-bit equal to
-        // an EMA over a materialised de-lagged series, which is the strongest gate
-        // this function has. Reordering any one breaks that equality silently, and
+        // k*v + beta*prevMA with ema.c's k and beta. Together they make ZLEMA
+        // bit-for-bit equal to an EMA over a materialised de-lagged series, which
+        // is the strongest gate this function has. Reordering any one breaks that equality silently, and
         // the de-lag spelling is worth more than rounding noise: c + (c - l) rounds
         // twice, which is 5e-12 relative where 2c - l cancels.
         lag = ((optInTimePeriod - 1) / 2) as usize;
@@ -204,10 +207,9 @@ impl Core {
         let inReal = &inReal[..=endIdx];
         // No smoothing at period of 1: the output is a copy of the input, the
         // convention TA_MA applies to every MAType. Explicit, because at period 1
-        // lag is 0 and optInK_1 is exactly 1.0, so the recursion below reduces to
-        // (x-prev)+prev -- which returns x only while consecutive values stay
-        // within a factor of two of each other. The unstable period still delays
-        // the first output.
+        // lag is 0 and the recursion below, at a k of 1.0 and a beta of 0.0, does
+        // not keep the sign of a -0.0 input. The unstable period still delays the
+        // first output.
         if optInTimePeriod == 1 {
             (*outBegIdx) = startIdx;
             outIdx = 0;
@@ -247,7 +249,7 @@ impl Core {
             let _w0 = &inReal[today..][.._wn];
             let _w1 = &inReal[trailingIdx..][.._wn];
             for _wk in 0.._wn {
-                prevMA = (2.0 * _w0[_wk] - _w1[_wk] - prevMA as f64).mul_add(optInK_1, prevMA);
+                prevMA = (emaBeta as f64).mul_add(prevMA, ((optInK_1) as f64) * (2.0 * _w0[_wk] - _w1[_wk]));
                 today += 1;
                 trailingIdx += 1;
             }
@@ -260,7 +262,7 @@ impl Core {
             let _w1 = &inReal[trailingIdx..][.._wn];
             let _w2 = &mut outReal[outIdx..][.._wn];
             for _wk in 0.._wn {
-                prevMA = (2.0 * _w0[_wk] - _w1[_wk] - prevMA as f64).mul_add(optInK_1, prevMA);
+                prevMA = (emaBeta as f64).mul_add(prevMA, ((optInK_1) as f64) * (2.0 * _w0[_wk] - _w1[_wk]));
                 today += 1;
                 trailingIdx += 1;
                 _w2[_wk] = prevMA;
@@ -409,6 +411,7 @@ pub struct ZlemaStream {
 #[allow(non_snake_case, dead_code)]
 struct ZlemaStreamState {
     optInTimePeriod: i32,
+    emaBeta: f64,
     optInK_1: f64,
     prevMA: f64,
     ringPos_trailingIdx: usize,
@@ -432,7 +435,7 @@ impl Core {
         if sp.ringCap_trailingIdx == 0 {
             sp.ring_trailingIdx_inReal[0] = inReal;
         }
-        sp.prevMA = (2.0 * inReal - sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx] - sp.prevMA as f64).mul_add(sp.optInK_1, sp.prevMA);
+        sp.prevMA = (sp.emaBeta as f64).mul_add(sp.prevMA, ((sp.optInK_1) as f64) * (2.0 * inReal - sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx]));
         (*outReal) = sp.prevMA;
         sp.cur_outReal = (*outReal);
         sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx] = inReal;
@@ -443,7 +446,7 @@ impl Core {
     }
 
     fn zlema_step_tape_impl(sp: &mut ZlemaStreamState, tape: &[f64], tapeBase: usize, tapeMask: usize, inReal: f64, outReal: &mut f64) {
-        sp.prevMA = (2.0 * inReal - tape[(tapeBase - sp.ringCap_trailingIdx & tapeMask) as usize] - sp.prevMA as f64).mul_add(sp.optInK_1, sp.prevMA);
+        sp.prevMA = (sp.emaBeta as f64).mul_add(sp.prevMA, ((sp.optInK_1) as f64) * (2.0 * inReal - tape[(tapeBase - sp.ringCap_trailingIdx & tapeMask) as usize]));
         (*outReal) = sp.prevMA;
         sp.cur_outReal = (*outReal);
     }
@@ -483,6 +486,7 @@ impl Core {
             let state = ZlemaStreamState {
                 cur_outReal: inReal[historyLen - 1],
                 optInTimePeriod: optInTimePeriod,
+                emaBeta: 0.0_f64,
                 optInK_1: 0.0_f64,
                 prevMA: 0.0_f64,
                 ringPos_trailingIdx: 0_usize,
@@ -502,6 +506,7 @@ impl Core {
             }
             return Ok(ZlemaStream { state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } });
         }
+        let mut emaBeta: f64 = 0.0_f64;
         let mut optInK_1: f64 = 0.0_f64;
         let mut tempReal: f64 = 0.0_f64;
         let mut prevMA: f64 = 0.0_f64;
@@ -511,12 +516,14 @@ impl Core {
         let mut outIdx: usize = 0_usize;
         let mut lag: usize = 0_usize;
         let mut lookbackTotal: usize = 0_usize;
-        optInK_1 = 2.0 / ((optInTimePeriod + 1) as f64);
+        emaBeta = ((optInTimePeriod - 1) as f64) / ((optInTimePeriod + 1) as f64);
+        optInK_1 = 1.0 - emaBeta;
+        emaBeta = 1.0 - ((optInK_1) as f64);
         // KEEP THIS ARITHMETIC EXACTLY AS WRITTEN -- the de-lag in one rounding
         // (2.0*c - l, not c + (c - l)), the seed sum accumulating from 0.0, and
-        // ((v - prevMA)*k) + prevMA. Together they make ZLEMA bit-for-bit equal to
-        // an EMA over a materialised de-lagged series, which is the strongest gate
-        // this function has. Reordering any one breaks that equality silently, and
+        // k*v + beta*prevMA with ema.c's k and beta. Together they make ZLEMA
+        // bit-for-bit equal to an EMA over a materialised de-lagged series, which
+        // is the strongest gate this function has. Reordering any one breaks that equality silently, and
         // the de-lag spelling is worth more than rounding noise: c + (c - l) rounds
         // twice, which is 5e-12 relative where 2c - l cancels.
         lag = ((optInTimePeriod - 1) / 2) as usize;
@@ -547,14 +554,14 @@ impl Core {
         }
         prevMA = tempReal / ((optInTimePeriod) as f64);
         while today <= startIdx {
-            prevMA = (2.0 * inReal[today] - inReal[trailingIdx] - prevMA as f64).mul_add(optInK_1, prevMA);
+            prevMA = (emaBeta as f64).mul_add(prevMA, ((optInK_1) as f64) * (2.0 * inReal[today] - inReal[trailingIdx]));
             today += 1;
             trailingIdx += 1;
         }
         outReal[(0 * outStride) as usize] = prevMA;
         outIdx = 1;
         while today <= endIdx {
-            prevMA = (2.0 * inReal[today] - inReal[trailingIdx] - prevMA as f64).mul_add(optInK_1, prevMA);
+            prevMA = (emaBeta as f64).mul_add(prevMA, ((optInK_1) as f64) * (2.0 * inReal[today] - inReal[trailingIdx]));
             today += 1;
             trailingIdx += 1;
             outReal[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = prevMA;
@@ -572,6 +579,7 @@ impl Core {
             .copy_from_slice(&inReal[historyLen - cap_trailingIdx as usize..]);
         let state = ZlemaStreamState {
             optInTimePeriod,
+            emaBeta,
             optInK_1,
             prevMA,
             cur_outReal: outReal[(*outNBElement - 1) * outStride],
@@ -754,7 +762,7 @@ impl ZlemaStream {
                 pkSlot0 = 0;
                 pkVal0 = inReal;
             }
-            prevMA = (2.0 * inReal - (if (sp.ringPos_trailingIdx as usize) != pkSlot0 { sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx] } else { pkVal0 }) - prevMA as f64).mul_add(sp.optInK_1, prevMA);
+            prevMA = (sp.emaBeta as f64).mul_add(prevMA, ((sp.optInK_1) as f64) * (2.0 * inReal - (if (sp.ringPos_trailingIdx as usize) != pkSlot0 { sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx] } else { pkVal0 })));
             (*outReal) = prevMA;
         }
         Ok(outReal)
@@ -836,7 +844,7 @@ impl ZlemaStream {
             let mut pkVal0: f64 = 0.0_f64;
             pkSlot0 = (tapeBase & tapeMask) as usize;
             pkVal0 = inReal;
-            prevMA = (2.0 * inReal - (if ((tapeBase - sp.ringCap_trailingIdx & tapeMask) as usize) != pkSlot0 { tape[(tapeBase - sp.ringCap_trailingIdx & tapeMask) as usize] } else { pkVal0 }) - prevMA as f64).mul_add(sp.optInK_1, prevMA);
+            prevMA = (sp.emaBeta as f64).mul_add(prevMA, ((sp.optInK_1) as f64) * (2.0 * inReal - (if ((tapeBase - sp.ringCap_trailingIdx & tapeMask) as usize) != pkSlot0 { tape[(tapeBase - sp.ringCap_trailingIdx & tapeMask) as usize] } else { pkVal0 })));
             (*outReal) = prevMA;
         }
         Ok(outReal)

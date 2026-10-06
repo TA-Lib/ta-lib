@@ -96,6 +96,7 @@ TA_LIB_API TA_RetCode TA_TRIX( int    startIdx,
    double prevEMA3;
    double tempReal;
    double optInK_1;
+   double emaBeta;
    int i;
    int today;
    int outIdx;
@@ -142,7 +143,9 @@ TA_LIB_API TA_RetCode TA_TRIX( int    startIdx,
     * x for x=-0.0). In-place safe: outReal[outIdx] is written after
     * inReal[startIdx+outIdx] was read.
     */
-   optInK_1 = 2.0 / (double)(optInTimePeriod + 1);
+   emaBeta = (double)(optInTimePeriod - 1) / (double)(optInTimePeriod + 1);
+   optInK_1 = 1.0 - emaBeta;
+   emaBeta = 1.0 - optInK_1;
    /* Seed EMA1 with a simple average of the first
     * 'period' price bars.
     */
@@ -159,7 +162,7 @@ TA_LIB_API TA_RetCode TA_TRIX( int    startIdx,
     */
    while( today <= startIdx - (lookbackEMA * 2 + 1) )
    {
-      prevEMA1 = fma(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
+      prevEMA1 = fma(emaBeta, prevEMA1, optInK_1 * inReal[today++]);
    }
    /* Seed EMA2 with a simple average of the first 'period'
     * EMA1 values, accumulated as EMA1 produces them.
@@ -169,7 +172,7 @@ TA_LIB_API TA_RetCode TA_TRIX( int    startIdx,
    i = optInTimePeriod - 1;
    while( i-- > 0 )
    {
-      prevEMA1 = fma(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
+      prevEMA1 = fma(emaBeta, prevEMA1, optInK_1 * inReal[today++]);
       tempReal += prevEMA1;
    }
    prevEMA2 = tempReal / optInTimePeriod;
@@ -178,8 +181,8 @@ TA_LIB_API TA_RetCode TA_TRIX( int    startIdx,
     */
    while( today <= startIdx - (lookbackEMA + 1) )
    {
-      prevEMA1 = fma(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
-      prevEMA2 = fma(prevEMA1 - prevEMA2, optInK_1, prevEMA2);
+      prevEMA1 = fma(emaBeta, prevEMA1, optInK_1 * inReal[today++]);
+      prevEMA2 = fma(emaBeta, prevEMA2, optInK_1 * prevEMA1);
    }
    /* Seed EMA3 with a simple average of the first 'period'
     * EMA2 values, accumulated as EMA2 produces them.
@@ -189,8 +192,8 @@ TA_LIB_API TA_RetCode TA_TRIX( int    startIdx,
    i = optInTimePeriod - 1;
    while( i-- > 0 )
    {
-      prevEMA1 = fma(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
-      prevEMA2 = fma(prevEMA1 - prevEMA2, optInK_1, prevEMA2);
+      prevEMA1 = fma(emaBeta, prevEMA1, optInK_1 * inReal[today++]);
+      prevEMA2 = fma(emaBeta, prevEMA2, optInK_1 * prevEMA1);
       tempReal += prevEMA2;
    }
    prevEMA3 = tempReal / optInTimePeriod;
@@ -199,9 +202,9 @@ TA_LIB_API TA_RetCode TA_TRIX( int    startIdx,
     */
    while( today <= startIdx - 1 )
    {
-      prevEMA1 = fma(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
-      prevEMA2 = fma(prevEMA1 - prevEMA2, optInK_1, prevEMA2);
-      prevEMA3 = fma(prevEMA2 - prevEMA3, optInK_1, prevEMA3);
+      prevEMA1 = fma(emaBeta, prevEMA1, optInK_1 * inReal[today++]);
+      prevEMA2 = fma(emaBeta, prevEMA2, optInK_1 * prevEMA1);
+      prevEMA3 = fma(emaBeta, prevEMA3, optInK_1 * prevEMA2);
    }
    /* Stable zone: keep advancing the three EMA in lockstep and
     * write the 1-day rate-of-change of EMA3 into the output.
@@ -210,9 +213,9 @@ TA_LIB_API TA_RetCode TA_TRIX( int    startIdx,
    while( today <= endIdx )
    {
       tempReal = prevEMA3;
-      prevEMA1 = fma(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
-      prevEMA2 = fma(prevEMA1 - prevEMA2, optInK_1, prevEMA2);
-      prevEMA3 = fma(prevEMA2 - prevEMA3, optInK_1, prevEMA3);
+      prevEMA1 = fma(emaBeta, prevEMA1, optInK_1 * inReal[today++]);
+      prevEMA2 = fma(emaBeta, prevEMA2, optInK_1 * prevEMA1);
+      prevEMA3 = fma(emaBeta, prevEMA3, optInK_1 * prevEMA2);
       if( tempReal != 0.0 )
       {
          outReal[outIdx++] = (prevEMA3 / tempReal - 1.0) * 100.0;
@@ -243,6 +246,7 @@ TA_RetCode TA_S_TRIX( int    startIdx,
    double prevEMA3;
    double tempReal;
    double optInK_1;
+   double emaBeta;
    int i;
    int today;
    int outIdx;
@@ -277,7 +281,9 @@ TA_RetCode TA_S_TRIX( int    startIdx,
    {
       return TA_SUCCESS;
    }
-   optInK_1 = 2.0 / (double)(optInTimePeriod + 1);
+   emaBeta = (double)(optInTimePeriod - 1) / (double)(optInTimePeriod + 1);
+   optInK_1 = 1.0 - emaBeta;
+   emaBeta = 1.0 - optInK_1;
    today = startIdx - lookbackTotal;
    i = optInTimePeriod;
    tempReal = 0.0;
@@ -288,45 +294,45 @@ TA_RetCode TA_S_TRIX( int    startIdx,
    prevEMA1 = tempReal / optInTimePeriod;
    while( today <= startIdx - (lookbackEMA * 2 + 1) )
    {
-      prevEMA1 = fma((double)inReal[today++] - prevEMA1, optInK_1, prevEMA1);
+      prevEMA1 = fma(emaBeta, prevEMA1, optInK_1 * (double)inReal[today++]);
    }
    tempReal = 0.0;
    tempReal += prevEMA1;
    i = optInTimePeriod - 1;
    while( i-- > 0 )
    {
-      prevEMA1 = fma((double)inReal[today++] - prevEMA1, optInK_1, prevEMA1);
+      prevEMA1 = fma(emaBeta, prevEMA1, optInK_1 * (double)inReal[today++]);
       tempReal += prevEMA1;
    }
    prevEMA2 = tempReal / optInTimePeriod;
    while( today <= startIdx - (lookbackEMA + 1) )
    {
-      prevEMA1 = fma((double)inReal[today++] - prevEMA1, optInK_1, prevEMA1);
-      prevEMA2 = fma(prevEMA1 - prevEMA2, optInK_1, prevEMA2);
+      prevEMA1 = fma(emaBeta, prevEMA1, optInK_1 * (double)inReal[today++]);
+      prevEMA2 = fma(emaBeta, prevEMA2, optInK_1 * prevEMA1);
    }
    tempReal = 0.0;
    tempReal += prevEMA2;
    i = optInTimePeriod - 1;
    while( i-- > 0 )
    {
-      prevEMA1 = fma((double)inReal[today++] - prevEMA1, optInK_1, prevEMA1);
-      prevEMA2 = fma(prevEMA1 - prevEMA2, optInK_1, prevEMA2);
+      prevEMA1 = fma(emaBeta, prevEMA1, optInK_1 * (double)inReal[today++]);
+      prevEMA2 = fma(emaBeta, prevEMA2, optInK_1 * prevEMA1);
       tempReal += prevEMA2;
    }
    prevEMA3 = tempReal / optInTimePeriod;
    while( today <= startIdx - 1 )
    {
-      prevEMA1 = fma((double)inReal[today++] - prevEMA1, optInK_1, prevEMA1);
-      prevEMA2 = fma(prevEMA1 - prevEMA2, optInK_1, prevEMA2);
-      prevEMA3 = fma(prevEMA2 - prevEMA3, optInK_1, prevEMA3);
+      prevEMA1 = fma(emaBeta, prevEMA1, optInK_1 * (double)inReal[today++]);
+      prevEMA2 = fma(emaBeta, prevEMA2, optInK_1 * prevEMA1);
+      prevEMA3 = fma(emaBeta, prevEMA3, optInK_1 * prevEMA2);
    }
    outIdx = 0;
    while( today <= endIdx )
    {
       tempReal = prevEMA3;
-      prevEMA1 = fma((double)inReal[today++] - prevEMA1, optInK_1, prevEMA1);
-      prevEMA2 = fma(prevEMA1 - prevEMA2, optInK_1, prevEMA2);
-      prevEMA3 = fma(prevEMA2 - prevEMA3, optInK_1, prevEMA3);
+      prevEMA1 = fma(emaBeta, prevEMA1, optInK_1 * (double)inReal[today++]);
+      prevEMA2 = fma(emaBeta, prevEMA2, optInK_1 * prevEMA1);
+      prevEMA3 = fma(emaBeta, prevEMA3, optInK_1 * prevEMA2);
       if( tempReal != 0.0 )
       {
          outReal[outIdx++] = (prevEMA3 / tempReal - 1.0) * 100.0;
@@ -354,6 +360,7 @@ struct TA_TRIX_Stream {
    double prevEMA3;
    double pad_0;
    double optInK_1;
+   double emaBeta;
 };
 
 /* Private function, not in public API. */
@@ -362,9 +369,9 @@ static TA_FMA_STEP_INLINE void TA_TRIX_StepImpl( struct TA_TRIX_Stream *sp, doub
    double tempReal;
 
    tempReal = sp->prevEMA3;
-   sp->prevEMA1 = fma(inReal - sp->prevEMA1, sp->optInK_1, sp->prevEMA1);
-   sp->prevEMA2 = fma(sp->prevEMA1 - sp->prevEMA2, sp->optInK_1, sp->prevEMA2);
-   sp->prevEMA3 = fma(sp->prevEMA2 - sp->prevEMA3, sp->optInK_1, sp->prevEMA3);
+   sp->prevEMA1 = fma(sp->emaBeta, sp->prevEMA1, sp->optInK_1 * inReal);
+   sp->prevEMA2 = fma(sp->emaBeta, sp->prevEMA2, sp->optInK_1 * sp->prevEMA1);
+   sp->prevEMA3 = fma(sp->emaBeta, sp->prevEMA3, sp->optInK_1 * sp->prevEMA2);
    if( tempReal != 0.0 )
    {
       *outReal= (sp->prevEMA3 / tempReal - 1.0) * 100.0;
@@ -404,6 +411,7 @@ static TA_RetCode TA_TRIX_OpenImpl( struct TA_TRIX_Stream **stream, const double
       double prevEMA3 = 0.0;
       double tempReal;
       double optInK_1 = 0.0;
+      double emaBeta = 0.0;
       int i;
       int today;
       int outIdx;
@@ -433,7 +441,9 @@ static TA_RetCode TA_TRIX_OpenImpl( struct TA_TRIX_Stream **stream, const double
        * x for x=-0.0). In-place safe: outReal[outIdx] is written after
        * inReal[startIdx+outIdx] was read.
        */
-      optInK_1 = 2.0 / (double)(optInTimePeriod + 1);
+      emaBeta = (double)(optInTimePeriod - 1) / (double)(optInTimePeriod + 1);
+      optInK_1 = 1.0 - emaBeta;
+      emaBeta = 1.0 - optInK_1;
       /* Seed EMA1 with a simple average of the first
        * 'period' price bars.
        */
@@ -450,7 +460,7 @@ static TA_RetCode TA_TRIX_OpenImpl( struct TA_TRIX_Stream **stream, const double
        */
       while( today <= startIdx - (lookbackEMA * 2 + 1) )
       {
-         prevEMA1 = fma(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
+         prevEMA1 = fma(emaBeta, prevEMA1, optInK_1 * inReal[today++]);
       }
       /* Seed EMA2 with a simple average of the first 'period'
        * EMA1 values, accumulated as EMA1 produces them.
@@ -460,7 +470,7 @@ static TA_RetCode TA_TRIX_OpenImpl( struct TA_TRIX_Stream **stream, const double
       i = optInTimePeriod - 1;
       while( i-- > 0 )
       {
-         prevEMA1 = fma(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
+         prevEMA1 = fma(emaBeta, prevEMA1, optInK_1 * inReal[today++]);
          tempReal += prevEMA1;
       }
       prevEMA2 = tempReal / optInTimePeriod;
@@ -469,8 +479,8 @@ static TA_RetCode TA_TRIX_OpenImpl( struct TA_TRIX_Stream **stream, const double
        */
       while( today <= startIdx - (lookbackEMA + 1) )
       {
-         prevEMA1 = fma(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
-         prevEMA2 = fma(prevEMA1 - prevEMA2, optInK_1, prevEMA2);
+         prevEMA1 = fma(emaBeta, prevEMA1, optInK_1 * inReal[today++]);
+         prevEMA2 = fma(emaBeta, prevEMA2, optInK_1 * prevEMA1);
       }
       /* Seed EMA3 with a simple average of the first 'period'
        * EMA2 values, accumulated as EMA2 produces them.
@@ -480,8 +490,8 @@ static TA_RetCode TA_TRIX_OpenImpl( struct TA_TRIX_Stream **stream, const double
       i = optInTimePeriod - 1;
       while( i-- > 0 )
       {
-         prevEMA1 = fma(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
-         prevEMA2 = fma(prevEMA1 - prevEMA2, optInK_1, prevEMA2);
+         prevEMA1 = fma(emaBeta, prevEMA1, optInK_1 * inReal[today++]);
+         prevEMA2 = fma(emaBeta, prevEMA2, optInK_1 * prevEMA1);
          tempReal += prevEMA2;
       }
       prevEMA3 = tempReal / optInTimePeriod;
@@ -490,9 +500,9 @@ static TA_RetCode TA_TRIX_OpenImpl( struct TA_TRIX_Stream **stream, const double
        */
       while( today <= startIdx - 1 )
       {
-         prevEMA1 = fma(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
-         prevEMA2 = fma(prevEMA1 - prevEMA2, optInK_1, prevEMA2);
-         prevEMA3 = fma(prevEMA2 - prevEMA3, optInK_1, prevEMA3);
+         prevEMA1 = fma(emaBeta, prevEMA1, optInK_1 * inReal[today++]);
+         prevEMA2 = fma(emaBeta, prevEMA2, optInK_1 * prevEMA1);
+         prevEMA3 = fma(emaBeta, prevEMA3, optInK_1 * prevEMA2);
       }
       /* Stable zone: keep advancing the three EMA in lockstep and
        * write the 1-day rate-of-change of EMA3 into the output.
@@ -501,9 +511,9 @@ static TA_RetCode TA_TRIX_OpenImpl( struct TA_TRIX_Stream **stream, const double
       while( today <= endIdx )
       {
          tempReal = prevEMA3;
-         prevEMA1 = fma(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
-         prevEMA2 = fma(prevEMA1 - prevEMA2, optInK_1, prevEMA2);
-         prevEMA3 = fma(prevEMA2 - prevEMA3, optInK_1, prevEMA3);
+         prevEMA1 = fma(emaBeta, prevEMA1, optInK_1 * inReal[today++]);
+         prevEMA2 = fma(emaBeta, prevEMA2, optInK_1 * prevEMA1);
+         prevEMA3 = fma(emaBeta, prevEMA3, optInK_1 * prevEMA2);
          if( tempReal != 0.0 )
          {
             outReal[outIdx++ * outStride] = (prevEMA3 / tempReal - 1.0) * 100.0;
@@ -527,6 +537,7 @@ static TA_RetCode TA_TRIX_OpenImpl( struct TA_TRIX_Stream **stream, const double
       sp->prevEMA2 = prevEMA2;
       sp->prevEMA3 = prevEMA3;
       sp->optInK_1 = optInK_1;
+      sp->emaBeta = emaBeta;
       sp->outRangeBegIdx = *outBegIdx;
       sp->outRangeCount = *outNBElement;
       sp->cur_outReal = outReal[(*outNBElement - 1) * outStride];
@@ -605,9 +616,9 @@ TA_LIB_API TA_RetCode TA_TRIX_Peek( const TA_TRIX_Stream *stream, double inReal,
    prevEMA2 = sp->prevEMA2;
    prevEMA3 = sp->prevEMA3;
    tempReal = prevEMA3;
-   prevEMA1 = fma(inReal - prevEMA1, sp->optInK_1, prevEMA1);
-   prevEMA2 = fma(prevEMA1 - prevEMA2, sp->optInK_1, prevEMA2);
-   prevEMA3 = fma(prevEMA2 - prevEMA3, sp->optInK_1, prevEMA3);
+   prevEMA1 = fma(sp->emaBeta, prevEMA1, sp->optInK_1 * inReal);
+   prevEMA2 = fma(sp->emaBeta, prevEMA2, sp->optInK_1 * prevEMA1);
+   prevEMA3 = fma(sp->emaBeta, prevEMA3, sp->optInK_1 * prevEMA2);
    if( tempReal != 0.0 )
    {
       *outReal= (prevEMA3 / tempReal - 1.0) * 100.0;

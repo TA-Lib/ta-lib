@@ -75,6 +75,7 @@
       double prevMA = 0;
       double tempReal = 0;
       double k = 0;
+      double beta = 0;
       double tempHT = 0;
       double tempLT = 0;
       if( (startIdx < 0) || (startIdx > INDEX_MAX) ) {
@@ -118,9 +119,8 @@
          return RetCode.SUCCESS ;
       }
       /* Period 1: ema.c's explicit copy arm, kept here for the same reason it
-       * exists there. At n == 1 the recursion below is fl(fl(x-prev)+prev),
-       * which returns x only while consecutive closes stay within a factor of
-       * two (Sterbenz), so without this arm `High - TA_EMA(Close, 1)` is not
+       * exists there. At n == 1 the recursion below does not keep the sign
+       * of a -0.0 close, so without this arm `High - TA_EMA(Close, 1)` is not
        * what this function returns. The unstable period still delays the first
        * output, through the shared lookback above.
        */
@@ -140,7 +140,9 @@
          outNBElement.value = outIdx;
          return RetCode.SUCCESS ;
       }
-      k = 2.0 / ((double)optInTimePeriod + 1.0);
+      beta = (double)(optInTimePeriod - 1) / (double)(optInTimePeriod + 1);
+      k = 1.0 - beta;
+      beta = 1.0 - k;
       /* Seed: ema.c's DEFAULT arm, op for op. */
       today = startIdx - lookbackTotal;
       i = optInTimePeriod;
@@ -151,7 +153,7 @@
       prevMA = tempReal / optInTimePeriod;
       /* The warm-up also consumes the EMA unstable period. */
       while( today <= startIdx ) {
-         prevMA = Math.fma(inClose[today++] - prevMA, k, prevMA);
+         prevMA = Math.fma(beta, prevMA, k * inClose[today++]);
       }
       /* prevMA is the EMA at bar startIdx; today == startIdx + 1. Load the
        * extremes into temps BEFORE writing either output: with two outputs
@@ -164,7 +166,7 @@
       outBearPower[0] = tempLT - prevMA;
       outIdx = 1;
       while( today <= endIdx ) {
-         prevMA = Math.fma(inClose[today] - prevMA, k, prevMA);
+         prevMA = Math.fma(beta, prevMA, k * inClose[today]);
          tempHT = inHigh[today];
          tempLT = inLow[today];
          outBullPower[outIdx] = tempHT - prevMA;
@@ -194,6 +196,7 @@
       double prevMA = 0;
       double tempReal = 0;
       double k = 0;
+      double beta = 0;
       double tempHT = 0;
       double tempLT = 0;
       if( (startIdx < 0) || (startIdx > INDEX_MAX) ) {
@@ -235,7 +238,9 @@
          outNBElement.value = outIdx;
          return RetCode.SUCCESS ;
       }
-      k = 2.0 / ((double)optInTimePeriod + 1.0);
+      beta = (double)(optInTimePeriod - 1) / (double)(optInTimePeriod + 1);
+      k = 1.0 - beta;
+      beta = 1.0 - k;
       today = startIdx - lookbackTotal;
       i = optInTimePeriod;
       tempReal = 0.0;
@@ -244,7 +249,7 @@
       }
       prevMA = tempReal / optInTimePeriod;
       while( today <= startIdx ) {
-         prevMA = Math.fma((double)inClose[today++] - prevMA, k, prevMA);
+         prevMA = Math.fma(beta, prevMA, k * (double)inClose[today++]);
       }
       tempHT = (double)inHigh[startIdx];
       tempLT = (double)inLow[startIdx];
@@ -252,7 +257,7 @@
       outBearPower[0] = tempLT - prevMA;
       outIdx = 1;
       while( today <= endIdx ) {
-         prevMA = Math.fma((double)inClose[today] - prevMA, k, prevMA);
+         prevMA = Math.fma(beta, prevMA, k * (double)inClose[today]);
          tempHT = (double)inHigh[today];
          tempLT = (double)inLow[today];
          outBullPower[outIdx] = tempHT - prevMA;
@@ -440,6 +445,7 @@
       private int optInTimePeriod;
       private double prevMA;
       private double k;
+      private double beta;
       private double cur_outBullPower;
       private double cur_outBearPower;
       private int outRangeBegIdx;
@@ -486,6 +492,7 @@
          this.optInTimePeriod = other.optInTimePeriod;
          this.prevMA = other.prevMA;
          this.k = other.k;
+         this.beta = other.beta;
          this.cur_outBullPower = other.cur_outBullPower;
          this.cur_outBearPower = other.cur_outBearPower;
          this.outRangeBegIdx = other.outRangeBegIdx;
@@ -550,7 +557,7 @@
             double tempHT = 0.0;
             double tempLT = 0.0;
             double prevMA = sp.prevMA;
-            prevMA = Math.fma(inClose - prevMA, sp.k, prevMA);
+            prevMA = Math.fma(sp.beta, prevMA, sp.k * inClose);
             tempHT = inHigh;
             tempLT = inLow;
             cur_outBullPower = tempHT - prevMA;
@@ -624,7 +631,7 @@
       } else {
          double tempHT = 0.0;
          double tempLT = 0.0;
-         sp.prevMA = Math.fma(inClose - sp.prevMA, sp.k, sp.prevMA);
+         sp.prevMA = Math.fma(sp.beta, sp.prevMA, sp.k * inClose);
          tempHT = inHigh;
          tempLT = inLow;
          sp.cur_outBullPower = tempHT - sp.prevMA;
@@ -657,6 +664,7 @@
          double prevMA = 0;
          double tempReal = 0;
          double k = 0;
+         double beta = 0;
          double tempHT = 0;
          double tempLT = 0;
          /* Elder Ray Index (Alexander Elder, Trading for a Living, 1993): how far
@@ -686,9 +694,8 @@
             return RetCode.INSUFFICIENT_HISTORY ;
          }
          /* Period 1: ema.c's explicit copy arm, kept here for the same reason it
-          * exists there. At n == 1 the recursion below is fl(fl(x-prev)+prev),
-          * which returns x only while consecutive closes stay within a factor of
-          * two (Sterbenz), so without this arm `High - TA_EMA(Close, 1)` is not
+          * exists there. At n == 1 the recursion below does not keep the sign
+          * of a -0.0 close, so without this arm `High - TA_EMA(Close, 1)` is not
           * what this function returns. The unstable period still delays the first
           * output, through the shared lookback above.
           */
@@ -709,6 +716,7 @@
          sp.optInTimePeriod = optInTimePeriod;
          sp.prevMA = prevMA;
          sp.k = k;
+         sp.beta = beta;
          sp.cur_outBullPower = outBullPower[(outNBElement.value - 1) * outStride];
          sp.cur_outBearPower = outBearPower[(outNBElement.value - 1) * outStride];
          return RetCode.SUCCESS;
@@ -720,6 +728,7 @@
          double prevMA = 0;
          double tempReal = 0;
          double k = 0;
+         double beta = 0;
          double tempHT = 0;
          double tempLT = 0;
          /* Elder Ray Index (Alexander Elder, Trading for a Living, 1993): how far
@@ -749,13 +758,14 @@
             return RetCode.INSUFFICIENT_HISTORY ;
          }
          /* Period 1: ema.c's explicit copy arm, kept here for the same reason it
-          * exists there. At n == 1 the recursion below is fl(fl(x-prev)+prev),
-          * which returns x only while consecutive closes stay within a factor of
-          * two (Sterbenz), so without this arm `High - TA_EMA(Close, 1)` is not
+          * exists there. At n == 1 the recursion below does not keep the sign
+          * of a -0.0 close, so without this arm `High - TA_EMA(Close, 1)` is not
           * what this function returns. The unstable period still delays the first
           * output, through the shared lookback above.
           */
-         k = 2.0 / ((double)optInTimePeriod + 1.0);
+         beta = (double)(optInTimePeriod - 1) / (double)(optInTimePeriod + 1);
+         k = 1.0 - beta;
+         beta = 1.0 - k;
          /* Seed: ema.c's DEFAULT arm, op for op. */
          today = startIdx - lookbackTotal;
          i = optInTimePeriod;
@@ -766,7 +776,7 @@
          prevMA = tempReal / optInTimePeriod;
          /* The warm-up also consumes the EMA unstable period. */
          while( today <= startIdx ) {
-            prevMA = Math.fma(inClose[today++] - prevMA, k, prevMA);
+            prevMA = Math.fma(beta, prevMA, k * inClose[today++]);
          }
          /* prevMA is the EMA at bar startIdx; today == startIdx + 1. Load the
           * extremes into temps BEFORE writing either output: with two outputs
@@ -779,7 +789,7 @@
          outBearPower[0 * outStride] = tempLT - prevMA;
          outIdx = 1;
          while( today <= endIdx ) {
-            prevMA = Math.fma(inClose[today] - prevMA, k, prevMA);
+            prevMA = Math.fma(beta, prevMA, k * inClose[today]);
             tempHT = inHigh[today];
             tempLT = inLow[today];
             outBullPower[outIdx * outStride] = tempHT - prevMA;
@@ -793,6 +803,7 @@
          sp.optInTimePeriod = optInTimePeriod;
          sp.prevMA = prevMA;
          sp.k = k;
+         sp.beta = beta;
          sp.cur_outBullPower = outBullPower[(outNBElement.value - 1) * outStride];
          sp.cur_outBearPower = outBearPower[(outNBElement.value - 1) * outStride];
          return RetCode.SUCCESS;

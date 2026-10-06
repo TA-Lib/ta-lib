@@ -172,6 +172,8 @@ public partial class Core
       double slowK = 0;
       double tempReal = 0;
       double lineValue = 0;
+      double fastBeta = 0;
+      double slowBeta = 0;
       double lowest = 0;
       double highest = 0;
       double range = 0;
@@ -233,8 +235,12 @@ public partial class Core
          return RetCode.Success ;
       }
       outBegIdx = startIdx;
-      fastK = 2.0 / (double)(optInFastPeriod + 1);
-      slowK = 2.0 / (double)(optInSlowPeriod + 1);
+      fastBeta = (double)(optInFastPeriod - 1) / (double)(optInFastPeriod + 1);
+      fastK = 1.0 - fastBeta;
+      fastBeta = 1.0 - fastK;
+      slowBeta = (double)(optInSlowPeriod - 1) / (double)(optInSlowPeriod + 1);
+      slowK = 1.0 - slowBeta;
+      slowBeta = 1.0 - slowK;
       /* Rolling extrema, van Herk / Gil-Werman: the window ending in slot j is
        * the current block's prefix extremum joined with the previous block's
        * suffix extremum from slot j+1. The extrema are exact, so the output must
@@ -289,8 +295,8 @@ public partial class Core
       prevFast = prevFast / optInFastPeriod;
       while( today <= lineStart ) {
          tempReal = inReal[today++];
-         prevFast = Math.FusedMultiplyAdd(tempReal - prevFast, fastK, prevFast);
-         prevSlow = Math.FusedMultiplyAdd(tempReal - prevSlow, slowK, prevSlow);
+         prevFast = Math.FusedMultiplyAdd(fastBeta, prevFast, fastK * tempReal);
+         prevSlow = Math.FusedMultiplyAdd(slowBeta, prevSlow, slowK * tempReal);
       }
       /* A zero range holds the previous fraction (0.0 before any), and the test
        * is exact: in a sustained trend PF saturates at 100 and the second
@@ -315,8 +321,8 @@ public partial class Core
        */
       while( today <= startIdx ) {
          tempReal = inReal[today];
-         prevFast = Math.FusedMultiplyAdd(tempReal - prevFast, fastK, prevFast);
-         prevSlow = Math.FusedMultiplyAdd(tempReal - prevSlow, slowK, prevSlow);
+         prevFast = Math.FusedMultiplyAdd(fastBeta, prevFast, fastK * tempReal);
+         prevSlow = Math.FusedMultiplyAdd(slowBeta, prevSlow, slowK * tempReal);
          lineValue = prevFast - prevSlow;
          nLine = nLine + 1;
          lineRing[lineRing_Idx] = lineValue;
@@ -414,8 +420,8 @@ public partial class Core
       outIdx = 1;
       while( today <= endIdx ) {
          tempReal = inReal[today];
-         prevFast = Math.FusedMultiplyAdd(tempReal - prevFast, fastK, prevFast);
-         prevSlow = Math.FusedMultiplyAdd(tempReal - prevSlow, slowK, prevSlow);
+         prevFast = Math.FusedMultiplyAdd(fastBeta, prevFast, fastK * tempReal);
+         prevSlow = Math.FusedMultiplyAdd(slowBeta, prevSlow, slowK * tempReal);
          lineValue = prevFast - prevSlow;
          lineRing[lineRing_Idx] = lineValue;
          if( lineRing_Idx == 0 ) {
@@ -535,6 +541,8 @@ public partial class Core
       double slowK = 0;
       double tempReal = 0;
       double lineValue = 0;
+      double fastBeta = 0;
+      double slowBeta = 0;
       double lowest = 0;
       double highest = 0;
       double range = 0;
@@ -596,8 +604,12 @@ public partial class Core
          return RetCode.Success ;
       }
       outBegIdx = startIdx;
-      fastK = 2.0 / (double)(optInFastPeriod + 1);
-      slowK = 2.0 / (double)(optInSlowPeriod + 1);
+      fastBeta = (double)(optInFastPeriod - 1) / (double)(optInFastPeriod + 1);
+      fastK = 1.0 - fastBeta;
+      fastBeta = 1.0 - fastK;
+      slowBeta = (double)(optInSlowPeriod - 1) / (double)(optInSlowPeriod + 1);
+      slowK = 1.0 - slowBeta;
+      slowBeta = 1.0 - slowK;
       if( optInCyclePeriod < 1 ) return RetCode.InternalError;
       lineRing = new double[optInCyclePeriod];
       maxIdx_lineRing = (optInCyclePeriod)-1;
@@ -640,8 +652,8 @@ public partial class Core
       prevFast = prevFast / optInFastPeriod;
       while( today <= lineStart ) {
          tempReal = (double)inReal[today++];
-         prevFast = Math.FusedMultiplyAdd(tempReal - prevFast, fastK, prevFast);
-         prevSlow = Math.FusedMultiplyAdd(tempReal - prevSlow, slowK, prevSlow);
+         prevFast = Math.FusedMultiplyAdd(fastBeta, prevFast, fastK * tempReal);
+         prevSlow = Math.FusedMultiplyAdd(slowBeta, prevSlow, slowK * tempReal);
       }
       frac1 = 0.0;
       frac2 = 0.0;
@@ -659,8 +671,8 @@ public partial class Core
       nLine = 1;
       while( today <= startIdx ) {
          tempReal = (double)inReal[today];
-         prevFast = Math.FusedMultiplyAdd(tempReal - prevFast, fastK, prevFast);
-         prevSlow = Math.FusedMultiplyAdd(tempReal - prevSlow, slowK, prevSlow);
+         prevFast = Math.FusedMultiplyAdd(fastBeta, prevFast, fastK * tempReal);
+         prevSlow = Math.FusedMultiplyAdd(slowBeta, prevSlow, slowK * tempReal);
          lineValue = prevFast - prevSlow;
          nLine = nLine + 1;
          lineRing[lineRing_Idx] = lineValue;
@@ -758,8 +770,8 @@ public partial class Core
       outIdx = 1;
       while( today <= endIdx ) {
          tempReal = (double)inReal[today];
-         prevFast = Math.FusedMultiplyAdd(tempReal - prevFast, fastK, prevFast);
-         prevSlow = Math.FusedMultiplyAdd(tempReal - prevSlow, slowK, prevSlow);
+         prevFast = Math.FusedMultiplyAdd(fastBeta, prevFast, fastK * tempReal);
+         prevSlow = Math.FusedMultiplyAdd(slowBeta, prevSlow, slowK * tempReal);
          lineValue = prevFast - prevSlow;
          lineRing[lineRing_Idx] = lineValue;
          if( lineRing_Idx == 0 ) {
@@ -1053,6 +1065,8 @@ public partial class Core
       internal double prevSlow;
       internal double fastK;
       internal double slowK;
+      internal double fastBeta;
+      internal double slowBeta;
       internal double frac1;
       internal double frac2;
       internal double pf;
@@ -1135,6 +1149,8 @@ public partial class Core
          this.prevSlow = other.prevSlow;
          this.fastK = other.fastK;
          this.slowK = other.slowK;
+         this.fastBeta = other.fastBeta;
+         this.slowBeta = other.slowBeta;
          this.frac1 = other.frac1;
          this.frac2 = other.frac2;
          this.pf = other.pf;
@@ -1249,8 +1265,8 @@ public partial class Core
          int pkSlot1 = -1;
          double pkVal1 = 0.0;
          tempReal = inReal;
-         prevFast = Math.FusedMultiplyAdd(tempReal - prevFast, sp.fastK, prevFast);
-         prevSlow = Math.FusedMultiplyAdd(tempReal - prevSlow, sp.slowK, prevSlow);
+         prevFast = Math.FusedMultiplyAdd(sp.fastBeta, prevFast, sp.fastK * tempReal);
+         prevSlow = Math.FusedMultiplyAdd(sp.slowBeta, prevSlow, sp.slowK * tempReal);
          lineValue = prevFast - prevSlow;
          pkSlot0 = lineRing_Idx;
          pkVal0 = lineValue;
@@ -1358,8 +1374,8 @@ public partial class Core
       double sufLo = 0.0;
       int i = 0;
       tempReal = inReal;
-      sp.prevFast = Math.FusedMultiplyAdd(tempReal - sp.prevFast, sp.fastK, sp.prevFast);
-      sp.prevSlow = Math.FusedMultiplyAdd(tempReal - sp.prevSlow, sp.slowK, sp.prevSlow);
+      sp.prevFast = Math.FusedMultiplyAdd(sp.fastBeta, sp.prevFast, sp.fastK * tempReal);
+      sp.prevSlow = Math.FusedMultiplyAdd(sp.slowBeta, sp.prevSlow, sp.slowK * tempReal);
       lineValue = sp.prevFast - sp.prevSlow;
       sp.cb_lineRing[sp.lineRing_Idx] = lineValue;
       if( sp.lineRing_Idx == 0 ) {
@@ -1472,6 +1488,8 @@ public partial class Core
       double slowK = 0;
       double tempReal = 0;
       double lineValue = 0;
+      double fastBeta = 0;
+      double slowBeta = 0;
       double lowest = 0;
       double highest = 0;
       double range = 0;
@@ -1537,8 +1555,12 @@ public partial class Core
          return RetCode.InsufficientHistory ;
       }
       outBegIdx = startIdx;
-      fastK = 2.0 / (double)(optInFastPeriod + 1);
-      slowK = 2.0 / (double)(optInSlowPeriod + 1);
+      fastBeta = (double)(optInFastPeriod - 1) / (double)(optInFastPeriod + 1);
+      fastK = 1.0 - fastBeta;
+      fastBeta = 1.0 - fastK;
+      slowBeta = (double)(optInSlowPeriod - 1) / (double)(optInSlowPeriod + 1);
+      slowK = 1.0 - slowBeta;
+      slowBeta = 1.0 - slowK;
       /* Rolling extrema, van Herk / Gil-Werman: the window ending in slot j is
        * the current block's prefix extremum joined with the previous block's
        * suffix extremum from slot j+1. The extrema are exact, so the output must
@@ -1593,8 +1615,8 @@ public partial class Core
       prevFast = prevFast / optInFastPeriod;
       while( today <= lineStart ) {
          tempReal = inReal[today++];
-         prevFast = Math.FusedMultiplyAdd(tempReal - prevFast, fastK, prevFast);
-         prevSlow = Math.FusedMultiplyAdd(tempReal - prevSlow, slowK, prevSlow);
+         prevFast = Math.FusedMultiplyAdd(fastBeta, prevFast, fastK * tempReal);
+         prevSlow = Math.FusedMultiplyAdd(slowBeta, prevSlow, slowK * tempReal);
       }
       /* A zero range holds the previous fraction (0.0 before any), and the test
        * is exact: in a sustained trend PF saturates at 100 and the second
@@ -1619,8 +1641,8 @@ public partial class Core
        */
       while( today <= startIdx ) {
          tempReal = inReal[today];
-         prevFast = Math.FusedMultiplyAdd(tempReal - prevFast, fastK, prevFast);
-         prevSlow = Math.FusedMultiplyAdd(tempReal - prevSlow, slowK, prevSlow);
+         prevFast = Math.FusedMultiplyAdd(fastBeta, prevFast, fastK * tempReal);
+         prevSlow = Math.FusedMultiplyAdd(slowBeta, prevSlow, slowK * tempReal);
          lineValue = prevFast - prevSlow;
          nLine = nLine + 1;
          lineRing[lineRing_Idx] = lineValue;
@@ -1718,8 +1740,8 @@ public partial class Core
       outIdx = 1;
       while( today <= endIdx ) {
          tempReal = inReal[today];
-         prevFast = Math.FusedMultiplyAdd(tempReal - prevFast, fastK, prevFast);
-         prevSlow = Math.FusedMultiplyAdd(tempReal - prevSlow, slowK, prevSlow);
+         prevFast = Math.FusedMultiplyAdd(fastBeta, prevFast, fastK * tempReal);
+         prevSlow = Math.FusedMultiplyAdd(slowBeta, prevSlow, slowK * tempReal);
          lineValue = prevFast - prevSlow;
          lineRing[lineRing_Idx] = lineValue;
          if( lineRing_Idx == 0 ) {
@@ -1833,6 +1855,8 @@ public partial class Core
       sp.prevSlow = prevSlow;
       sp.fastK = fastK;
       sp.slowK = slowK;
+      sp.fastBeta = fastBeta;
+      sp.slowBeta = slowBeta;
       sp.frac1 = frac1;
       sp.frac2 = frac2;
       sp.pf = pf;

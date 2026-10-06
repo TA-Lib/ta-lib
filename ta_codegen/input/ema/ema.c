@@ -27,9 +27,16 @@ TA_RetCode ema(int startIdx, int endIdx,
    int *outBegIdx, int *outNBElement,
    double *outReal)
 {
-   double optInK_1 = 2.0 / ((double)(optInTimePeriod + 1));
+   double emaBeta = ((double)(optInTimePeriod - 1)) / ((double)(optInTimePeriod + 1));
+   double optInK_1 = 1.0 - emaBeta;
    double tempReal, prevMA;
    int i, today, outIdx, lookbackTotal;
+
+   /* emaBeta + optInK_1 must be exactly 1.0, or a flat input drifts off
+    * its level. Each subtraction is exact only from an operand in
+    * [0.5,1): at a period of 2 that is optInK_1, above it emaBeta.
+    */
+   emaBeta = 1.0 - optInK_1;
 
    /* Identify the minimum number of price bar needed
     * to calculate at least one output.
@@ -51,12 +58,10 @@ TA_RetCode ema(int startIdx, int endIdx,
    }
 
    /* No smoothing at period of 1: the output is a copy of the input
-    * (same convention as TA_MA for every MAType). Explicit because at
-    * period 1 optInK_1 is exactly 1.0, so the recursion below reduces to
-    * (x-prev)+prev -- which returns x only while consecutive values stay
-    * within a factor of two of each other. Two-decimal prices already
-    * spend a full mantissa, so a single 3x move breaks it. The unstable
-    * period still delays the first output.
+    * (same convention as TA_MA for every MAType). Explicit because the
+    * recursion below, at a k of 1.0 and a beta of 0.0, does not keep the
+    * sign of a -0.0 input. The unstable period still delays the first
+    * output.
     */
    if( optInTimePeriod == 1 )
    {
@@ -82,14 +87,14 @@ TA_RetCode ema(int startIdx, int endIdx,
    prevMA = tempReal / optInTimePeriod;
 
    while( today <= startIdx )
-      prevMA = ((inReal[today++]-prevMA)*optInK_1) + prevMA;
+      prevMA = optInK_1 * inReal[today++] + emaBeta * prevMA;
 
    outReal[0] = prevMA;
    outIdx = 1;
 
    while( today <= endIdx )
    {
-      prevMA = ((inReal[today++]-prevMA)*optInK_1) + prevMA;
+      prevMA = optInK_1 * inReal[today++] + emaBeta * prevMA;
       outReal[outIdx++] = prevMA;
    }
 

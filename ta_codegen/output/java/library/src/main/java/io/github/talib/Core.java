@@ -10177,6 +10177,8 @@ public final class Core {
          double _eFast;
          double _eSlow;
          double _eX;
+         double _eFastBeta;
+         double _eSlowBeta;
          int _eN;
          int _eToday;
          int _eFastToday;
@@ -10188,8 +10190,12 @@ public final class Core {
             optInSlowPeriod = optInFastPeriod;
             optInFastPeriod = tempInteger;
          }
-         _eFastK = 2.0 / (double)(optInFastPeriod + 1);
-         _eSlowK = 2.0 / (double)(optInSlowPeriod + 1);
+         _eFastBeta = (double)(optInFastPeriod - 1) / (double)(optInFastPeriod + 1);
+         _eFastK = 1.0 - _eFastBeta;
+         _eFastBeta = 1.0 - _eFastK;
+         _eSlowBeta = (double)(optInSlowPeriod - 1) / (double)(optInSlowPeriod + 1);
+         _eSlowK = 1.0 - _eSlowBeta;
+         _eSlowBeta = 1.0 - _eSlowK;
          _eFastToday = emaLookback(optInFastPeriod);
          if( _eFastToday < startIdx ) {
             _eFastToday = startIdx;
@@ -10206,7 +10212,7 @@ public final class Core {
          }
          _eFast = _eFast / optInFastPeriod;
          while( _eFastToday <= _eSlowStart ) {
-            _eFast = Math.fma(inReal[_eFastToday++] - _eFast, _eFastK, _eFast);
+            _eFast = Math.fma(_eFastBeta, _eFast, _eFastK * inReal[_eFastToday++]);
          }
          _eSlow = 0.0;
          for( _eN = 0; _eN < optInSlowPeriod; _eN += 1 ) {
@@ -10214,7 +10220,7 @@ public final class Core {
          }
          _eSlow = _eSlow / optInSlowPeriod;
          while( _eSlowToday <= _eSlowStart ) {
-            _eSlow = Math.fma(inReal[_eSlowToday++] - _eSlow, _eSlowK, _eSlow);
+            _eSlow = Math.fma(_eSlowBeta, _eSlow, _eSlowK * inReal[_eSlowToday++]);
          }
          _eOutIdx = 0;
          outReal[_eOutIdx] = _eFast - _eSlow;
@@ -10222,8 +10228,8 @@ public final class Core {
          _eToday = _eSlowStart + 1;
          while( _eToday <= endIdx ) {
             _eX = inReal[_eToday++];
-            _eFast = Math.fma(_eX - _eFast, _eFastK, _eFast);
-            _eSlow = Math.fma(_eX - _eSlow, _eSlowK, _eSlow);
+            _eFast = Math.fma(_eFastBeta, _eFast, _eFastK * _eX);
+            _eSlow = Math.fma(_eSlowBeta, _eSlow, _eSlowK * _eX);
             outReal[_eOutIdx] = _eFast - _eSlow;
             _eOutIdx += 1;
          }
@@ -10367,6 +10373,8 @@ public final class Core {
          double _eFast;
          double _eSlow;
          double _eX;
+         double _eFastBeta;
+         double _eSlowBeta;
          int _eN;
          int _eToday;
          int _eFastToday;
@@ -10378,8 +10386,12 @@ public final class Core {
             optInSlowPeriod = optInFastPeriod;
             optInFastPeriod = tempInteger;
          }
-         _eFastK = 2.0 / (double)(optInFastPeriod + 1);
-         _eSlowK = 2.0 / (double)(optInSlowPeriod + 1);
+         _eFastBeta = (double)(optInFastPeriod - 1) / (double)(optInFastPeriod + 1);
+         _eFastK = 1.0 - _eFastBeta;
+         _eFastBeta = 1.0 - _eFastK;
+         _eSlowBeta = (double)(optInSlowPeriod - 1) / (double)(optInSlowPeriod + 1);
+         _eSlowK = 1.0 - _eSlowBeta;
+         _eSlowBeta = 1.0 - _eSlowK;
          _eFastToday = emaLookback(optInFastPeriod);
          if( _eFastToday < startIdx ) {
             _eFastToday = startIdx;
@@ -10396,7 +10408,7 @@ public final class Core {
          }
          _eFast = _eFast / optInFastPeriod;
          while( _eFastToday <= _eSlowStart ) {
-            _eFast = Math.fma((double)inReal[_eFastToday++] - _eFast, _eFastK, _eFast);
+            _eFast = Math.fma(_eFastBeta, _eFast, _eFastK * (double)inReal[_eFastToday++]);
          }
          _eSlow = 0.0;
          for( _eN = 0; _eN < optInSlowPeriod; _eN += 1 ) {
@@ -10404,7 +10416,7 @@ public final class Core {
          }
          _eSlow = _eSlow / optInSlowPeriod;
          while( _eSlowToday <= _eSlowStart ) {
-            _eSlow = Math.fma((double)inReal[_eSlowToday++] - _eSlow, _eSlowK, _eSlow);
+            _eSlow = Math.fma(_eSlowBeta, _eSlow, _eSlowK * (double)inReal[_eSlowToday++]);
          }
          _eOutIdx = 0;
          outReal[_eOutIdx] = _eFast - _eSlow;
@@ -10412,8 +10424,8 @@ public final class Core {
          _eToday = _eSlowStart + 1;
          while( _eToday <= endIdx ) {
             _eX = (double)inReal[_eToday++];
-            _eFast = Math.fma(_eX - _eFast, _eFastK, _eFast);
-            _eSlow = Math.fma(_eX - _eSlow, _eSlowK, _eSlow);
+            _eFast = Math.fma(_eFastBeta, _eFast, _eFastK * _eX);
+            _eSlow = Math.fma(_eSlowBeta, _eSlow, _eSlowK * _eX);
             outReal[_eOutIdx] = _eFast - _eSlow;
             _eOutIdx += 1;
          }
@@ -90013,6 +90025,7 @@ public final class Core {
       double laggedEMA = 0;
       double tempReal = 0;
       double optInK_1 = 0;
+      double emaBeta = 0;
       int i = 0;
       int today = 0;
       int outIdx = 0;
@@ -90041,7 +90054,7 @@ public final class Core {
        * EMA is anchored optInROCPeriod bars behind startIdx.
        *
        * The arithmetic below is TA_EMA's and TA_ROCP's verbatim -- seed sum
-       * accumulated from 0.0 in ascending bar order, ((x-prev)*k)+prev, and
+       * accumulated from 0.0 in ascending bar order, k*x + beta*prev, and
        * 100*((a-b)/b) under an exact zero test. That is what makes this fused pass
        * bit-identical to composing TA_SUB, TA_EMA and TA_ROCP, which test_cvi.c
        * holds it to memcmp-exact; reshaping any of it breaks that silently. The
@@ -90063,7 +90076,9 @@ public final class Core {
       emaRing = new double[optInROCPeriod];
       maxIdx_emaRing = (optInROCPeriod)-1;
       emaRing_Idx = 0;
-      optInK_1 = 2.0 / (double)(optInTimePeriod + 1);
+      emaBeta = (double)(optInTimePeriod - 1) / (double)(optInTimePeriod + 1);
+      optInK_1 = 1.0 - emaBeta;
+      emaBeta = 1.0 - optInK_1;
       today = startIdx - lookbackTotal;
       i = optInTimePeriod;
       tempReal = 0.0;
@@ -90081,7 +90096,7 @@ public final class Core {
       if( emaRing_Idx > maxIdx_emaRing ) { emaRing_Idx = 0; }
       while( today < startIdx ) {
          tempReal = inHigh[today] - inLow[today];
-         prevEMA = Math.fma(tempReal - prevEMA, optInK_1, prevEMA);
+         prevEMA = Math.fma(emaBeta, prevEMA, optInK_1 * tempReal);
          today += 1;
          emaRing[emaRing_Idx] = prevEMA;
          emaRing_Idx++;
@@ -90093,7 +90108,7 @@ public final class Core {
       outIdx = 0;
       while( today <= endIdx ) {
          tempReal = inHigh[today] - inLow[today];
-         prevEMA = Math.fma(tempReal - prevEMA, optInK_1, prevEMA);
+         prevEMA = Math.fma(emaBeta, prevEMA, optInK_1 * tempReal);
          today += 1;
          laggedEMA = emaRing[emaRing_Idx];
          emaRing[emaRing_Idx] = prevEMA;
@@ -90123,6 +90138,7 @@ public final class Core {
       double laggedEMA = 0;
       double tempReal = 0;
       double optInK_1 = 0;
+      double emaBeta = 0;
       int i = 0;
       int today = 0;
       int outIdx = 0;
@@ -90159,7 +90175,9 @@ public final class Core {
       emaRing = new double[optInROCPeriod];
       maxIdx_emaRing = (optInROCPeriod)-1;
       emaRing_Idx = 0;
-      optInK_1 = 2.0 / (double)(optInTimePeriod + 1);
+      emaBeta = (double)(optInTimePeriod - 1) / (double)(optInTimePeriod + 1);
+      optInK_1 = 1.0 - emaBeta;
+      emaBeta = 1.0 - optInK_1;
       today = startIdx - lookbackTotal;
       i = optInTimePeriod;
       tempReal = 0.0;
@@ -90173,7 +90191,7 @@ public final class Core {
       if( emaRing_Idx > maxIdx_emaRing ) { emaRing_Idx = 0; }
       while( today < startIdx ) {
          tempReal = (double)inHigh[today] - (double)inLow[today];
-         prevEMA = Math.fma(tempReal - prevEMA, optInK_1, prevEMA);
+         prevEMA = Math.fma(emaBeta, prevEMA, optInK_1 * tempReal);
          today += 1;
          emaRing[emaRing_Idx] = prevEMA;
          emaRing_Idx++;
@@ -90182,7 +90200,7 @@ public final class Core {
       outIdx = 0;
       while( today <= endIdx ) {
          tempReal = (double)inHigh[today] - (double)inLow[today];
-         prevEMA = Math.fma(tempReal - prevEMA, optInK_1, prevEMA);
+         prevEMA = Math.fma(emaBeta, prevEMA, optInK_1 * tempReal);
          today += 1;
          laggedEMA = emaRing[emaRing_Idx];
          emaRing[emaRing_Idx] = prevEMA;
@@ -90389,6 +90407,7 @@ public final class Core {
       private int optInROCPeriod;
       private double prevEMA;
       private double optInK_1;
+      private double emaBeta;
       private int emaRing_Idx;
       private int maxIdx_emaRing;
       private int cbSize_emaRing;
@@ -90439,6 +90458,7 @@ public final class Core {
          this.optInROCPeriod = other.optInROCPeriod;
          this.prevEMA = other.prevEMA;
          this.optInK_1 = other.optInK_1;
+         this.emaBeta = other.emaBeta;
          this.emaRing_Idx = other.emaRing_Idx;
          this.maxIdx_emaRing = other.maxIdx_emaRing;
          this.cbSize_emaRing = other.cbSize_emaRing;
@@ -90494,7 +90514,7 @@ public final class Core {
          int emaRing_Idx = sp.emaRing_Idx;
          double prevEMA = sp.prevEMA;
          tempReal = inHigh - inLow;
-         prevEMA = Math.fma(tempReal - prevEMA, sp.optInK_1, prevEMA);
+         prevEMA = Math.fma(sp.emaBeta, prevEMA, sp.optInK_1 * tempReal);
          laggedEMA = sp.cb_emaRing[emaRing_Idx];
          emaRing_Idx = emaRing_Idx + 1;
          if( emaRing_Idx > sp.maxIdx_emaRing ) {
@@ -90539,7 +90559,7 @@ public final class Core {
       double laggedEMA = 0.0;
       double tempReal = 0.0;
       tempReal = inHigh - inLow;
-      sp.prevEMA = Math.fma(tempReal - sp.prevEMA, sp.optInK_1, sp.prevEMA);
+      sp.prevEMA = Math.fma(sp.emaBeta, sp.prevEMA, sp.optInK_1 * tempReal);
       laggedEMA = sp.cb_emaRing[sp.emaRing_Idx];
       sp.cb_emaRing[sp.emaRing_Idx] = sp.prevEMA;
       sp.emaRing_Idx = sp.emaRing_Idx + 1;
@@ -90558,6 +90578,7 @@ public final class Core {
       double laggedEMA = 0;
       double tempReal = 0;
       double optInK_1 = 0;
+      double emaBeta = 0;
       int i = 0;
       int today = 0;
       int outIdx = 0;
@@ -90596,7 +90617,7 @@ public final class Core {
        * EMA is anchored optInROCPeriod bars behind startIdx.
        *
        * The arithmetic below is TA_EMA's and TA_ROCP's verbatim -- seed sum
-       * accumulated from 0.0 in ascending bar order, ((x-prev)*k)+prev, and
+       * accumulated from 0.0 in ascending bar order, k*x + beta*prev, and
        * 100*((a-b)/b) under an exact zero test. That is what makes this fused pass
        * bit-identical to composing TA_SUB, TA_EMA and TA_ROCP, which test_cvi.c
        * holds it to memcmp-exact; reshaping any of it breaks that silently. The
@@ -90618,7 +90639,9 @@ public final class Core {
       emaRing = new double[optInROCPeriod];
       maxIdx_emaRing = (optInROCPeriod)-1;
       emaRing_Idx = 0;
-      optInK_1 = 2.0 / (double)(optInTimePeriod + 1);
+      emaBeta = (double)(optInTimePeriod - 1) / (double)(optInTimePeriod + 1);
+      optInK_1 = 1.0 - emaBeta;
+      emaBeta = 1.0 - optInK_1;
       today = startIdx - lookbackTotal;
       i = optInTimePeriod;
       tempReal = 0.0;
@@ -90636,7 +90659,7 @@ public final class Core {
       if( emaRing_Idx > maxIdx_emaRing ) { emaRing_Idx = 0; }
       while( today < startIdx ) {
          tempReal = inHigh[today] - inLow[today];
-         prevEMA = Math.fma(tempReal - prevEMA, optInK_1, prevEMA);
+         prevEMA = Math.fma(emaBeta, prevEMA, optInK_1 * tempReal);
          today += 1;
          emaRing[emaRing_Idx] = prevEMA;
          emaRing_Idx++;
@@ -90648,7 +90671,7 @@ public final class Core {
       outIdx = 0;
       while( today <= endIdx ) {
          tempReal = inHigh[today] - inLow[today];
-         prevEMA = Math.fma(tempReal - prevEMA, optInK_1, prevEMA);
+         prevEMA = Math.fma(emaBeta, prevEMA, optInK_1 * tempReal);
          today += 1;
          laggedEMA = emaRing[emaRing_Idx];
          emaRing[emaRing_Idx] = prevEMA;
@@ -90671,6 +90694,7 @@ public final class Core {
       sp.optInROCPeriod = optInROCPeriod;
       sp.prevEMA = prevEMA;
       sp.optInK_1 = optInK_1;
+      sp.emaBeta = emaBeta;
       sp.emaRing_Idx = emaRing_Idx;
       sp.maxIdx_emaRing = maxIdx_emaRing;
       sp.cbSize_emaRing = capCb_emaRing;
@@ -90834,6 +90858,7 @@ public final class Core {
       double prevEMA2 = 0;
       double tempReal = 0;
       double optInK_1 = 0;
+      double emaBeta = 0;
       int i = 0;
       int today = 0;
       int outIdx = 0;
@@ -90889,12 +90914,11 @@ public final class Core {
       /* No smoothing at period of 1: the output is a copy of the input
        * (same convention as TA_MA for every MAType). Explicit and separate
        * from TA_EMA's own copy because the two EMA below are inlined here,
-       * not delegated -- at period 1 they reduce to (x-prev)+prev, which
-       * loses the input as soon as consecutive values differ by more than a
-       * factor of two, and 2*e1 - e2 then propagates the residue rather
-       * than cancelling it. The unstable period still delays the first
-       * output, and at twice EMA's rate: TA_MA reports lookback 0 at period
-       * 1, so the two disagree on alignment when it is non-zero.
+       * not delegated -- at period 1 they run at a k of 1.0 and a beta of
+       * 0.0, which does not keep the sign of a -0.0 input. The unstable
+       * period still delays the first output, and at twice EMA's rate: TA_MA
+       * reports lookback 0 at period 1, so the two disagree on alignment when
+       * it is non-zero.
        */
       if( optInTimePeriod == 1 ) {
          outBegIdx.value = startIdx;
@@ -90912,7 +90936,7 @@ public final class Core {
        *
        * The arithmetic order below is the bit-exactness contract
        * (do not reorder or fuse operations):
-       *  - EMA recursion: ((x-prev)*k)+prev.
+       *  - EMA recursion: k*x + beta*prev, with ema.c's k and beta.
        *  - Each EMA is seeded with the sum of its first 'period'
        *    inputs, accumulated from 0.0 in input order (0.0+x is
        *    not x for x=-0.0), divided by the period.
@@ -90920,7 +90944,9 @@ public final class Core {
        * In-place (inReal == outReal) is supported: outReal[outIdx]
        * is written only after inReal[startIdx+outIdx] was read.
        */
-      optInK_1 = 2.0 / (double)(optInTimePeriod + 1);
+      emaBeta = (double)(optInTimePeriod - 1) / (double)(optInTimePeriod + 1);
+      optInK_1 = 1.0 - emaBeta;
+      emaBeta = 1.0 - optInK_1;
       /* Seed EMA1 with a simple average of the first
        * 'period' price bars.
        */
@@ -90935,7 +90961,7 @@ public final class Core {
        * the bar where EMA2 seeding begins.
        */
       while( today <= startIdx - lookbackEMA ) {
-         prevEMA1 = Math.fma(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
+         prevEMA1 = Math.fma(emaBeta, prevEMA1, optInK_1 * inReal[today++]);
       }
       /* Seed EMA2 with a simple average of the first 'period'
        * EMA1 values, accumulated as EMA1 produces them.
@@ -90944,7 +90970,7 @@ public final class Core {
       tempReal += prevEMA1;
       i = optInTimePeriod - 1;
       while( i-- > 0 ) {
-         prevEMA1 = Math.fma(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
+         prevEMA1 = Math.fma(emaBeta, prevEMA1, optInK_1 * inReal[today++]);
          tempReal += prevEMA1;
       }
       prevEMA2 = tempReal / optInTimePeriod;
@@ -90952,8 +90978,8 @@ public final class Core {
        * of EMA2, up to the first output bar.
        */
       while( today <= startIdx ) {
-         prevEMA1 = Math.fma(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
-         prevEMA2 = Math.fma(prevEMA1 - prevEMA2, optInK_1, prevEMA2);
+         prevEMA1 = Math.fma(emaBeta, prevEMA1, optInK_1 * inReal[today++]);
+         prevEMA2 = Math.fma(emaBeta, prevEMA2, optInK_1 * prevEMA1);
       }
       /* Stable zone: keep advancing both EMA in lockstep and
        * write the DEMA into the output.
@@ -90961,8 +90987,8 @@ public final class Core {
       outReal[0] = 2.0 * prevEMA1 - prevEMA2;
       outIdx = 1;
       while( today <= endIdx ) {
-         prevEMA1 = Math.fma(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
-         prevEMA2 = Math.fma(prevEMA1 - prevEMA2, optInK_1, prevEMA2);
+         prevEMA1 = Math.fma(emaBeta, prevEMA1, optInK_1 * inReal[today++]);
+         prevEMA2 = Math.fma(emaBeta, prevEMA2, optInK_1 * prevEMA1);
          outReal[outIdx++] = 2.0 * prevEMA1 - prevEMA2;
       }
       /* Succeed. Indicate where the output starts relative to
@@ -90984,6 +91010,7 @@ public final class Core {
       double prevEMA2 = 0;
       double tempReal = 0;
       double optInK_1 = 0;
+      double emaBeta = 0;
       int i = 0;
       int today = 0;
       int outIdx = 0;
@@ -91020,7 +91047,9 @@ public final class Core {
          outNBElement.value = outIdx;
          return RetCode.SUCCESS ;
       }
-      optInK_1 = 2.0 / (double)(optInTimePeriod + 1);
+      emaBeta = (double)(optInTimePeriod - 1) / (double)(optInTimePeriod + 1);
+      optInK_1 = 1.0 - emaBeta;
+      emaBeta = 1.0 - optInK_1;
       today = startIdx - lookbackTotal;
       i = optInTimePeriod;
       tempReal = 0.0;
@@ -91029,25 +91058,25 @@ public final class Core {
       }
       prevEMA1 = tempReal / optInTimePeriod;
       while( today <= startIdx - lookbackEMA ) {
-         prevEMA1 = Math.fma((double)inReal[today++] - prevEMA1, optInK_1, prevEMA1);
+         prevEMA1 = Math.fma(emaBeta, prevEMA1, optInK_1 * (double)inReal[today++]);
       }
       tempReal = 0.0;
       tempReal += prevEMA1;
       i = optInTimePeriod - 1;
       while( i-- > 0 ) {
-         prevEMA1 = Math.fma((double)inReal[today++] - prevEMA1, optInK_1, prevEMA1);
+         prevEMA1 = Math.fma(emaBeta, prevEMA1, optInK_1 * (double)inReal[today++]);
          tempReal += prevEMA1;
       }
       prevEMA2 = tempReal / optInTimePeriod;
       while( today <= startIdx ) {
-         prevEMA1 = Math.fma((double)inReal[today++] - prevEMA1, optInK_1, prevEMA1);
-         prevEMA2 = Math.fma(prevEMA1 - prevEMA2, optInK_1, prevEMA2);
+         prevEMA1 = Math.fma(emaBeta, prevEMA1, optInK_1 * (double)inReal[today++]);
+         prevEMA2 = Math.fma(emaBeta, prevEMA2, optInK_1 * prevEMA1);
       }
       outReal[0] = 2.0 * prevEMA1 - prevEMA2;
       outIdx = 1;
       while( today <= endIdx ) {
-         prevEMA1 = Math.fma((double)inReal[today++] - prevEMA1, optInK_1, prevEMA1);
-         prevEMA2 = Math.fma(prevEMA1 - prevEMA2, optInK_1, prevEMA2);
+         prevEMA1 = Math.fma(emaBeta, prevEMA1, optInK_1 * (double)inReal[today++]);
+         prevEMA2 = Math.fma(emaBeta, prevEMA2, optInK_1 * prevEMA1);
          outReal[outIdx++] = 2.0 * prevEMA1 - prevEMA2;
       }
       outBegIdx.value = startIdx;
@@ -91201,6 +91230,7 @@ public final class Core {
       private double prevEMA1;
       private double prevEMA2;
       private double optInK_1;
+      private double emaBeta;
       private double cur_outReal;
       private int outRangeBegIdx;
       private int outRangeCount;
@@ -91247,6 +91277,7 @@ public final class Core {
          this.prevEMA1 = other.prevEMA1;
          this.prevEMA2 = other.prevEMA2;
          this.optInK_1 = other.optInK_1;
+         this.emaBeta = other.emaBeta;
          this.cur_outReal = other.cur_outReal;
          this.outRangeBegIdx = other.outRangeBegIdx;
          this.outRangeCount = other.outRangeCount;
@@ -91299,8 +91330,8 @@ public final class Core {
             cur_outReal = inReal;
             return cur_outReal ;
          }
-         prevEMA1 = Math.fma(inReal - prevEMA1, sp.optInK_1, prevEMA1);
-         prevEMA2 = Math.fma(prevEMA1 - prevEMA2, sp.optInK_1, prevEMA2);
+         prevEMA1 = Math.fma(sp.emaBeta, prevEMA1, sp.optInK_1 * inReal);
+         prevEMA2 = Math.fma(sp.emaBeta, prevEMA2, sp.optInK_1 * prevEMA1);
          cur_outReal = 2.0 * prevEMA1 - prevEMA2;
          return cur_outReal;
       }
@@ -91337,8 +91368,8 @@ public final class Core {
          sp.cur_outReal = inReal;
          return ;
       }
-      sp.prevEMA1 = Math.fma(inReal - sp.prevEMA1, sp.optInK_1, sp.prevEMA1);
-      sp.prevEMA2 = Math.fma(sp.prevEMA1 - sp.prevEMA2, sp.optInK_1, sp.prevEMA2);
+      sp.prevEMA1 = Math.fma(sp.emaBeta, sp.prevEMA1, sp.optInK_1 * inReal);
+      sp.prevEMA2 = Math.fma(sp.emaBeta, sp.prevEMA2, sp.optInK_1 * sp.prevEMA1);
       sp.cur_outReal = 2.0 * sp.prevEMA1 - sp.prevEMA2;
    }
    private RetCode demaOpenImpl( DemaStream sp, double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
@@ -91347,6 +91378,7 @@ public final class Core {
       double prevEMA2 = 0;
       double tempReal = 0;
       double optInK_1 = 0;
+      double emaBeta = 0;
       int i = 0;
       int today = 0;
       int outIdx = 0;
@@ -91380,6 +91412,7 @@ public final class Core {
          sp.prevEMA1 = 0.0;
          sp.prevEMA2 = 0.0;
          sp.optInK_1 = 0.0;
+         sp.emaBeta = 0.0;
          outBegIdx.value = fillLb;
          outNBElement.value = historyLen - fillLb;
          if( outStride == 0 ) {
@@ -91434,7 +91467,7 @@ public final class Core {
        *
        * The arithmetic order below is the bit-exactness contract
        * (do not reorder or fuse operations):
-       *  - EMA recursion: ((x-prev)*k)+prev.
+       *  - EMA recursion: k*x + beta*prev, with ema.c's k and beta.
        *  - Each EMA is seeded with the sum of its first 'period'
        *    inputs, accumulated from 0.0 in input order (0.0+x is
        *    not x for x=-0.0), divided by the period.
@@ -91442,7 +91475,9 @@ public final class Core {
        * In-place (inReal == outReal) is supported: outReal[outIdx]
        * is written only after inReal[startIdx+outIdx] was read.
        */
-      optInK_1 = 2.0 / (double)(optInTimePeriod + 1);
+      emaBeta = (double)(optInTimePeriod - 1) / (double)(optInTimePeriod + 1);
+      optInK_1 = 1.0 - emaBeta;
+      emaBeta = 1.0 - optInK_1;
       /* Seed EMA1 with a simple average of the first
        * 'period' price bars.
        */
@@ -91457,7 +91492,7 @@ public final class Core {
        * the bar where EMA2 seeding begins.
        */
       while( today <= startIdx - lookbackEMA ) {
-         prevEMA1 = Math.fma(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
+         prevEMA1 = Math.fma(emaBeta, prevEMA1, optInK_1 * inReal[today++]);
       }
       /* Seed EMA2 with a simple average of the first 'period'
        * EMA1 values, accumulated as EMA1 produces them.
@@ -91466,7 +91501,7 @@ public final class Core {
       tempReal += prevEMA1;
       i = optInTimePeriod - 1;
       while( i-- > 0 ) {
-         prevEMA1 = Math.fma(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
+         prevEMA1 = Math.fma(emaBeta, prevEMA1, optInK_1 * inReal[today++]);
          tempReal += prevEMA1;
       }
       prevEMA2 = tempReal / optInTimePeriod;
@@ -91474,8 +91509,8 @@ public final class Core {
        * of EMA2, up to the first output bar.
        */
       while( today <= startIdx ) {
-         prevEMA1 = Math.fma(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
-         prevEMA2 = Math.fma(prevEMA1 - prevEMA2, optInK_1, prevEMA2);
+         prevEMA1 = Math.fma(emaBeta, prevEMA1, optInK_1 * inReal[today++]);
+         prevEMA2 = Math.fma(emaBeta, prevEMA2, optInK_1 * prevEMA1);
       }
       /* Stable zone: keep advancing both EMA in lockstep and
        * write the DEMA into the output.
@@ -91483,8 +91518,8 @@ public final class Core {
       outReal[0 * outStride] = 2.0 * prevEMA1 - prevEMA2;
       outIdx = 1;
       while( today <= endIdx ) {
-         prevEMA1 = Math.fma(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
-         prevEMA2 = Math.fma(prevEMA1 - prevEMA2, optInK_1, prevEMA2);
+         prevEMA1 = Math.fma(emaBeta, prevEMA1, optInK_1 * inReal[today++]);
+         prevEMA2 = Math.fma(emaBeta, prevEMA2, optInK_1 * prevEMA1);
          outReal[outIdx++ * outStride] = 2.0 * prevEMA1 - prevEMA2;
       }
       /* Succeed. Indicate where the output starts relative to
@@ -91497,6 +91532,7 @@ public final class Core {
       sp.prevEMA1 = prevEMA1;
       sp.prevEMA2 = prevEMA2;
       sp.optInK_1 = optInK_1;
+      sp.emaBeta = emaBeta;
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.SUCCESS;
    }
@@ -95245,6 +95281,7 @@ public final class Core {
                     MInteger outNBElement,
                     double outReal[] )
    {
+      double emaBeta = 0;
       double optInK_1 = 0;
       double tempReal = 0;
       double prevMA = 0;
@@ -95265,7 +95302,9 @@ public final class Core {
       } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
          return RetCode.BAD_PARAM;
       }
-      optInK_1 = 2.0 / (double)(optInTimePeriod + 1);
+      emaBeta = (double)(optInTimePeriod - 1) / (double)(optInTimePeriod + 1);
+      optInK_1 = 1.0 - emaBeta;
+      emaBeta = 1.0 - optInK_1;
       /* Alexander Elder's Force Index (Trading for a Living, 1993): the one-bar
        * close-to-close move weighted by that bar's volume, then smoothed with an
        * EMA. Elder's 2-period reading is the short-term form and 13 the
@@ -95276,10 +95315,10 @@ public final class Core {
        *
        * The arithmetic below is ema.c's with inReal[t] replaced by force[t], kept
        * in exactly that shape on purpose: the seed accumulates from 0.0 in the
-       * same order, and the recurrence is (x - prevMA)*k + prevMA rather than the
-       * algebraically equal k*x + (1-k)*prevMA. That order IS the bit-exactness
-       * contract against the composed reference in test_composite.c -- MOM, then
-       * MULT, then EMA -- so do not tidy it. TRIX carries the same warning.
+       * same order, and the recurrence is k*x + beta*prevMA with ema.c's k and
+       * beta. That order IS the bit-exactness contract against the composed
+       * reference in test_composite.c -- MOM, then MULT, then EMA -- so do not
+       * tidy it. TRIX carries the same warning.
        *
        * Nothing on the data path divides by an input, so issue #112 is satisfied
        * structurally: a flat close gives force exactly 0.0 and output exactly
@@ -95309,11 +95348,8 @@ public final class Core {
          return RetCode.SUCCESS ;
       }
       /* No smoothing at a period of 1: the output is the raw Force Index.
-       * Explicit for the reason spelled out in ema.c -- at period 1 optInK_1 is
-       * exactly 1.0, so the recursion reduces to (x-prev)+prev, which returns x
-       * only while consecutive values stay within a factor of two of each other.
-       * Force values swing by orders of magnitude, far more than the prices EMA
-       * warns about.
+       * Explicit because the recursion, at a k of 1.0 and a beta of 0.0, does
+       * not keep the sign of a -0.0 force: a down bar on zero volume.
        */
       if( optInTimePeriod == 1 ) {
          outBegIdx.value = startIdx;
@@ -95349,7 +95385,7 @@ public final class Core {
       while( today <= startIdx ) {
          force = (inClose[today] - prevClose) * inVolume[today];
          prevClose = inClose[today];
-         prevMA = Math.fma(force - prevMA, optInK_1, prevMA);
+         prevMA = Math.fma(emaBeta, prevMA, optInK_1 * force);
          today = today + 1;
       }
       outReal[0] = prevMA;
@@ -95357,7 +95393,7 @@ public final class Core {
       while( today <= endIdx ) {
          force = (inClose[today] - prevClose) * inVolume[today];
          prevClose = inClose[today];
-         prevMA = Math.fma(force - prevMA, optInK_1, prevMA);
+         prevMA = Math.fma(emaBeta, prevMA, optInK_1 * force);
          outReal[outIdx] = prevMA;
          outIdx = outIdx + 1;
          today = today + 1;
@@ -95374,6 +95410,7 @@ public final class Core {
                     MInteger outNBElement,
                     double outReal[] )
    {
+      double emaBeta = 0;
       double optInK_1 = 0;
       double tempReal = 0;
       double prevMA = 0;
@@ -95394,7 +95431,9 @@ public final class Core {
       } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
          return RetCode.BAD_PARAM;
       }
-      optInK_1 = 2.0 / (double)(optInTimePeriod + 1);
+      emaBeta = (double)(optInTimePeriod - 1) / (double)(optInTimePeriod + 1);
+      optInK_1 = 1.0 - emaBeta;
+      emaBeta = 1.0 - optInK_1;
       lookbackTotal = efiLookback(optInTimePeriod);
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
@@ -95434,7 +95473,7 @@ public final class Core {
       while( today <= startIdx ) {
          force = ((double)inClose[today] - prevClose) * (double)inVolume[today];
          prevClose = (double)inClose[today];
-         prevMA = Math.fma(force - prevMA, optInK_1, prevMA);
+         prevMA = Math.fma(emaBeta, prevMA, optInK_1 * force);
          today = today + 1;
       }
       outReal[0] = prevMA;
@@ -95442,7 +95481,7 @@ public final class Core {
       while( today <= endIdx ) {
          force = ((double)inClose[today] - prevClose) * (double)inVolume[today];
          prevClose = (double)inClose[today];
-         prevMA = Math.fma(force - prevMA, optInK_1, prevMA);
+         prevMA = Math.fma(emaBeta, prevMA, optInK_1 * force);
          outReal[outIdx] = prevMA;
          outIdx = outIdx + 1;
          today = today + 1;
@@ -95619,6 +95658,7 @@ public final class Core {
       private Core core;
       private int optInTimePeriod;
       private double prevClose;
+      private double emaBeta;
       private double optInK_1;
       private double prevMA;
       private double cur_outReal;
@@ -95665,6 +95705,7 @@ public final class Core {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.prevClose = other.prevClose;
+         this.emaBeta = other.emaBeta;
          this.optInK_1 = other.optInK_1;
          this.prevMA = other.prevMA;
          this.cur_outReal = other.cur_outReal;
@@ -95725,7 +95766,7 @@ public final class Core {
             double prevMA = sp.prevMA;
             force = (inClose - prevClose) * inVolume;
             prevClose = inClose;
-            prevMA = Math.fma(force - prevMA, sp.optInK_1, prevMA);
+            prevMA = Math.fma(sp.emaBeta, prevMA, sp.optInK_1 * force);
             cur_outReal = prevMA;
          }
          return cur_outReal;
@@ -95768,7 +95809,7 @@ public final class Core {
          double force = 0.0;
          force = (inClose - sp.prevClose) * inVolume;
          sp.prevClose = inClose;
-         sp.prevMA = Math.fma(force - sp.prevMA, sp.optInK_1, sp.prevMA);
+         sp.prevMA = Math.fma(sp.emaBeta, sp.prevMA, sp.optInK_1 * force);
          sp.cur_outReal = sp.prevMA;
       }
    }
@@ -95791,6 +95832,7 @@ public final class Core {
          return RetCode.BAD_PARAM;
       }
       if( optInTimePeriod == 1 ) {
+         double emaBeta = 0;
          double optInK_1 = 0;
          double tempReal = 0;
          double prevMA = 0;
@@ -95800,7 +95842,9 @@ public final class Core {
          int today = 0;
          int outIdx = 0;
          int lookbackTotal = 0;
-         optInK_1 = 2.0 / (double)(optInTimePeriod + 1);
+         emaBeta = (double)(optInTimePeriod - 1) / (double)(optInTimePeriod + 1);
+         optInK_1 = 1.0 - emaBeta;
+         emaBeta = 1.0 - optInK_1;
          /* Alexander Elder's Force Index (Trading for a Living, 1993): the one-bar
           * close-to-close move weighted by that bar's volume, then smoothed with an
           * EMA. Elder's 2-period reading is the short-term form and 13 the
@@ -95811,10 +95855,10 @@ public final class Core {
           *
           * The arithmetic below is ema.c's with inReal[t] replaced by force[t], kept
           * in exactly that shape on purpose: the seed accumulates from 0.0 in the
-          * same order, and the recurrence is (x - prevMA)*k + prevMA rather than the
-          * algebraically equal k*x + (1-k)*prevMA. That order IS the bit-exactness
-          * contract against the composed reference in test_composite.c -- MOM, then
-          * MULT, then EMA -- so do not tidy it. TRIX carries the same warning.
+          * same order, and the recurrence is k*x + beta*prevMA with ema.c's k and
+          * beta. That order IS the bit-exactness contract against the composed
+          * reference in test_composite.c -- MOM, then MULT, then EMA -- so do not
+          * tidy it. TRIX carries the same warning.
           *
           * Nothing on the data path divides by an input, so issue #112 is satisfied
           * structurally: a flat close gives force exactly 0.0 and output exactly
@@ -95844,11 +95888,8 @@ public final class Core {
             return RetCode.INSUFFICIENT_HISTORY ;
          }
          /* No smoothing at a period of 1: the output is the raw Force Index.
-          * Explicit for the reason spelled out in ema.c -- at period 1 optInK_1 is
-          * exactly 1.0, so the recursion reduces to (x-prev)+prev, which returns x
-          * only while consecutive values stay within a factor of two of each other.
-          * Force values swing by orders of magnitude, far more than the prices EMA
-          * warns about.
+          * Explicit because the recursion, at a k of 1.0 and a beta of 0.0, does
+          * not keep the sign of a -0.0 force: a down bar on zero volume.
           */
          outBegIdx.value = startIdx;
          outIdx = 0;
@@ -95865,11 +95906,13 @@ public final class Core {
          /* Capture the live batch state into the handle. */
          sp.optInTimePeriod = optInTimePeriod;
          sp.prevClose = prevClose;
+         sp.emaBeta = emaBeta;
          sp.optInK_1 = optInK_1;
          sp.prevMA = prevMA;
          sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
          return RetCode.SUCCESS;
       } else {
+         double emaBeta = 0;
          double optInK_1 = 0;
          double tempReal = 0;
          double prevMA = 0;
@@ -95879,7 +95922,9 @@ public final class Core {
          int today = 0;
          int outIdx = 0;
          int lookbackTotal = 0;
-         optInK_1 = 2.0 / (double)(optInTimePeriod + 1);
+         emaBeta = (double)(optInTimePeriod - 1) / (double)(optInTimePeriod + 1);
+         optInK_1 = 1.0 - emaBeta;
+         emaBeta = 1.0 - optInK_1;
          /* Alexander Elder's Force Index (Trading for a Living, 1993): the one-bar
           * close-to-close move weighted by that bar's volume, then smoothed with an
           * EMA. Elder's 2-period reading is the short-term form and 13 the
@@ -95890,10 +95935,10 @@ public final class Core {
           *
           * The arithmetic below is ema.c's with inReal[t] replaced by force[t], kept
           * in exactly that shape on purpose: the seed accumulates from 0.0 in the
-          * same order, and the recurrence is (x - prevMA)*k + prevMA rather than the
-          * algebraically equal k*x + (1-k)*prevMA. That order IS the bit-exactness
-          * contract against the composed reference in test_composite.c -- MOM, then
-          * MULT, then EMA -- so do not tidy it. TRIX carries the same warning.
+          * same order, and the recurrence is k*x + beta*prevMA with ema.c's k and
+          * beta. That order IS the bit-exactness contract against the composed
+          * reference in test_composite.c -- MOM, then MULT, then EMA -- so do not
+          * tidy it. TRIX carries the same warning.
           *
           * Nothing on the data path divides by an input, so issue #112 is satisfied
           * structurally: a flat close gives force exactly 0.0 and output exactly
@@ -95923,11 +95968,8 @@ public final class Core {
             return RetCode.INSUFFICIENT_HISTORY ;
          }
          /* No smoothing at a period of 1: the output is the raw Force Index.
-          * Explicit for the reason spelled out in ema.c -- at period 1 optInK_1 is
-          * exactly 1.0, so the recursion reduces to (x-prev)+prev, which returns x
-          * only while consecutive values stay within a factor of two of each other.
-          * Force values swing by orders of magnitude, far more than the prices EMA
-          * warns about.
+          * Explicit because the recursion, at a k of 1.0 and a beta of 0.0, does
+          * not keep the sign of a -0.0 force: a down bar on zero volume.
           */
          outBegIdx.value = startIdx;
          /* The first EMA value is a simple average of the first 'period' force
@@ -95948,7 +95990,7 @@ public final class Core {
          while( today <= startIdx ) {
             force = (inClose[today] - prevClose) * inVolume[today];
             prevClose = inClose[today];
-            prevMA = Math.fma(force - prevMA, optInK_1, prevMA);
+            prevMA = Math.fma(emaBeta, prevMA, optInK_1 * force);
             today = today + 1;
          }
          outReal[0 * outStride] = prevMA;
@@ -95956,7 +95998,7 @@ public final class Core {
          while( today <= endIdx ) {
             force = (inClose[today] - prevClose) * inVolume[today];
             prevClose = inClose[today];
-            prevMA = Math.fma(force - prevMA, optInK_1, prevMA);
+            prevMA = Math.fma(emaBeta, prevMA, optInK_1 * force);
             outReal[outIdx * outStride] = prevMA;
             outIdx = outIdx + 1;
             today = today + 1;
@@ -95965,6 +96007,7 @@ public final class Core {
          /* Capture the live batch state into the handle. */
          sp.optInTimePeriod = optInTimePeriod;
          sp.prevClose = prevClose;
+         sp.emaBeta = emaBeta;
          sp.optInK_1 = optInK_1;
          sp.prevMA = prevMA;
          sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
@@ -96124,6 +96167,7 @@ public final class Core {
                     MInteger outNBElement,
                     double outReal[] )
    {
+      double emaBeta = 0;
       double optInK_1 = 0;
       double tempReal = 0;
       double prevMA = 0;
@@ -96142,7 +96186,13 @@ public final class Core {
       } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
          return RetCode.BAD_PARAM;
       }
-      optInK_1 = 2.0 / (double)(optInTimePeriod + 1);
+      emaBeta = (double)(optInTimePeriod - 1) / (double)(optInTimePeriod + 1);
+      optInK_1 = 1.0 - emaBeta;
+      /* emaBeta + optInK_1 must be exactly 1.0, or a flat input drifts off
+       * its level. Each subtraction is exact only from an operand in
+       * [0.5,1): at a period of 2 that is optInK_1, above it emaBeta.
+       */
+      emaBeta = 1.0 - optInK_1;
       /* Identify the minimum number of price bar needed
        * to calculate at least one output.
        */
@@ -96160,12 +96210,10 @@ public final class Core {
          return RetCode.SUCCESS ;
       }
       /* No smoothing at period of 1: the output is a copy of the input
-       * (same convention as TA_MA for every MAType). Explicit because at
-       * period 1 optInK_1 is exactly 1.0, so the recursion below reduces to
-       * (x-prev)+prev -- which returns x only while consecutive values stay
-       * within a factor of two of each other. Two-decimal prices already
-       * spend a full mantissa, so a single 3x move breaks it. The unstable
-       * period still delays the first output.
+       * (same convention as TA_MA for every MAType). Explicit because the
+       * recursion below, at a k of 1.0 and a beta of 0.0, does not keep the
+       * sign of a -0.0 input. The unstable period still delays the first
+       * output.
        */
       if( optInTimePeriod == 1 ) {
          outBegIdx.value = startIdx;
@@ -96187,12 +96235,12 @@ public final class Core {
       }
       prevMA = tempReal / optInTimePeriod;
       while( today <= startIdx ) {
-         prevMA = Math.fma(inReal[today++] - prevMA, optInK_1, prevMA);
+         prevMA = Math.fma(emaBeta, prevMA, optInK_1 * inReal[today++]);
       }
       outReal[0] = prevMA;
       outIdx = 1;
       while( today <= endIdx ) {
-         prevMA = Math.fma(inReal[today++] - prevMA, optInK_1, prevMA);
+         prevMA = Math.fma(emaBeta, prevMA, optInK_1 * inReal[today++]);
          outReal[outIdx++] = prevMA;
       }
       outNBElement.value = outIdx;
@@ -96206,6 +96254,7 @@ public final class Core {
                     MInteger outNBElement,
                     double outReal[] )
    {
+      double emaBeta = 0;
       double optInK_1 = 0;
       double tempReal = 0;
       double prevMA = 0;
@@ -96224,7 +96273,9 @@ public final class Core {
       } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
          return RetCode.BAD_PARAM;
       }
-      optInK_1 = 2.0 / (double)(optInTimePeriod + 1);
+      emaBeta = (double)(optInTimePeriod - 1) / (double)(optInTimePeriod + 1);
+      optInK_1 = 1.0 - emaBeta;
+      emaBeta = 1.0 - optInK_1;
       lookbackTotal = emaLookback(optInTimePeriod);
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
@@ -96253,12 +96304,12 @@ public final class Core {
       }
       prevMA = tempReal / optInTimePeriod;
       while( today <= startIdx ) {
-         prevMA = Math.fma((double)inReal[today++] - prevMA, optInK_1, prevMA);
+         prevMA = Math.fma(emaBeta, prevMA, optInK_1 * (double)inReal[today++]);
       }
       outReal[0] = prevMA;
       outIdx = 1;
       while( today <= endIdx ) {
-         prevMA = Math.fma((double)inReal[today++] - prevMA, optInK_1, prevMA);
+         prevMA = Math.fma(emaBeta, prevMA, optInK_1 * (double)inReal[today++]);
          outReal[outIdx++] = prevMA;
       }
       outNBElement.value = outIdx;
@@ -96420,6 +96471,7 @@ public final class Core {
    public static final class EmaStream {
       private Core core;
       private int optInTimePeriod;
+      private double emaBeta;
       private double optInK_1;
       private double prevMA;
       private double cur_outReal;
@@ -96465,6 +96517,7 @@ public final class Core {
       private EmaStream( EmaStream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
+         this.emaBeta = other.emaBeta;
          this.optInK_1 = other.optInK_1;
          this.prevMA = other.prevMA;
          this.cur_outReal = other.cur_outReal;
@@ -96518,7 +96571,7 @@ public final class Core {
             cur_outReal = inReal;
             return cur_outReal ;
          }
-         prevMA = Math.fma(inReal - prevMA, sp.optInK_1, prevMA);
+         prevMA = Math.fma(sp.emaBeta, prevMA, sp.optInK_1 * inReal);
          cur_outReal = prevMA;
          return cur_outReal;
       }
@@ -96555,11 +96608,12 @@ public final class Core {
          sp.cur_outReal = inReal;
          return ;
       }
-      sp.prevMA = Math.fma(inReal - sp.prevMA, sp.optInK_1, sp.prevMA);
+      sp.prevMA = Math.fma(sp.emaBeta, sp.prevMA, sp.optInK_1 * inReal);
       sp.cur_outReal = sp.prevMA;
    }
    private RetCode emaOpenImpl( EmaStream sp, double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
+      double emaBeta = 0;
       double optInK_1 = 0;
       double tempReal = 0;
       double prevMA = 0;
@@ -96592,6 +96646,7 @@ public final class Core {
             return RetCode.INSUFFICIENT_HISTORY;
          }
          sp.optInTimePeriod = optInTimePeriod;
+         sp.emaBeta = 0.0;
          sp.optInK_1 = 0.0;
          sp.prevMA = 0.0;
          outBegIdx.value = fillLb;
@@ -96606,7 +96661,13 @@ public final class Core {
          sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
          return RetCode.SUCCESS;
       }
-      optInK_1 = 2.0 / (double)(optInTimePeriod + 1);
+      emaBeta = (double)(optInTimePeriod - 1) / (double)(optInTimePeriod + 1);
+      optInK_1 = 1.0 - emaBeta;
+      /* emaBeta + optInK_1 must be exactly 1.0, or a flat input drifts off
+       * its level. Each subtraction is exact only from an operand in
+       * [0.5,1): at a period of 2 that is optInK_1, above it emaBeta.
+       */
+      emaBeta = 1.0 - optInK_1;
       /* Identify the minimum number of price bar needed
        * to calculate at least one output.
        */
@@ -96633,17 +96694,18 @@ public final class Core {
       }
       prevMA = tempReal / optInTimePeriod;
       while( today <= startIdx ) {
-         prevMA = Math.fma(inReal[today++] - prevMA, optInK_1, prevMA);
+         prevMA = Math.fma(emaBeta, prevMA, optInK_1 * inReal[today++]);
       }
       outReal[0 * outStride] = prevMA;
       outIdx = 1;
       while( today <= endIdx ) {
-         prevMA = Math.fma(inReal[today++] - prevMA, optInK_1, prevMA);
+         prevMA = Math.fma(emaBeta, prevMA, optInK_1 * inReal[today++]);
          outReal[outIdx++ * outStride] = prevMA;
       }
       outNBElement.value = outIdx;
       /* Capture the live batch state into the handle. */
       sp.optInTimePeriod = optInTimePeriod;
+      sp.emaBeta = emaBeta;
       sp.optInK_1 = optInK_1;
       sp.prevMA = prevMA;
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
@@ -98640,6 +98702,7 @@ public final class Core {
       double prevMA = 0;
       double tempReal = 0;
       double k = 0;
+      double beta = 0;
       double tempHT = 0;
       double tempLT = 0;
       if( (startIdx < 0) || (startIdx > INDEX_MAX) ) {
@@ -98683,9 +98746,8 @@ public final class Core {
          return RetCode.SUCCESS ;
       }
       /* Period 1: ema.c's explicit copy arm, kept here for the same reason it
-       * exists there. At n == 1 the recursion below is fl(fl(x-prev)+prev),
-       * which returns x only while consecutive closes stay within a factor of
-       * two (Sterbenz), so without this arm `High - TA_EMA(Close, 1)` is not
+       * exists there. At n == 1 the recursion below does not keep the sign
+       * of a -0.0 close, so without this arm `High - TA_EMA(Close, 1)` is not
        * what this function returns. The unstable period still delays the first
        * output, through the shared lookback above.
        */
@@ -98705,7 +98767,9 @@ public final class Core {
          outNBElement.value = outIdx;
          return RetCode.SUCCESS ;
       }
-      k = 2.0 / ((double)optInTimePeriod + 1.0);
+      beta = (double)(optInTimePeriod - 1) / (double)(optInTimePeriod + 1);
+      k = 1.0 - beta;
+      beta = 1.0 - k;
       /* Seed: ema.c's DEFAULT arm, op for op. */
       today = startIdx - lookbackTotal;
       i = optInTimePeriod;
@@ -98716,7 +98780,7 @@ public final class Core {
       prevMA = tempReal / optInTimePeriod;
       /* The warm-up also consumes the EMA unstable period. */
       while( today <= startIdx ) {
-         prevMA = Math.fma(inClose[today++] - prevMA, k, prevMA);
+         prevMA = Math.fma(beta, prevMA, k * inClose[today++]);
       }
       /* prevMA is the EMA at bar startIdx; today == startIdx + 1. Load the
        * extremes into temps BEFORE writing either output: with two outputs
@@ -98729,7 +98793,7 @@ public final class Core {
       outBearPower[0] = tempLT - prevMA;
       outIdx = 1;
       while( today <= endIdx ) {
-         prevMA = Math.fma(inClose[today] - prevMA, k, prevMA);
+         prevMA = Math.fma(beta, prevMA, k * inClose[today]);
          tempHT = inHigh[today];
          tempLT = inLow[today];
          outBullPower[outIdx] = tempHT - prevMA;
@@ -98759,6 +98823,7 @@ public final class Core {
       double prevMA = 0;
       double tempReal = 0;
       double k = 0;
+      double beta = 0;
       double tempHT = 0;
       double tempLT = 0;
       if( (startIdx < 0) || (startIdx > INDEX_MAX) ) {
@@ -98800,7 +98865,9 @@ public final class Core {
          outNBElement.value = outIdx;
          return RetCode.SUCCESS ;
       }
-      k = 2.0 / ((double)optInTimePeriod + 1.0);
+      beta = (double)(optInTimePeriod - 1) / (double)(optInTimePeriod + 1);
+      k = 1.0 - beta;
+      beta = 1.0 - k;
       today = startIdx - lookbackTotal;
       i = optInTimePeriod;
       tempReal = 0.0;
@@ -98809,7 +98876,7 @@ public final class Core {
       }
       prevMA = tempReal / optInTimePeriod;
       while( today <= startIdx ) {
-         prevMA = Math.fma((double)inClose[today++] - prevMA, k, prevMA);
+         prevMA = Math.fma(beta, prevMA, k * (double)inClose[today++]);
       }
       tempHT = (double)inHigh[startIdx];
       tempLT = (double)inLow[startIdx];
@@ -98817,7 +98884,7 @@ public final class Core {
       outBearPower[0] = tempLT - prevMA;
       outIdx = 1;
       while( today <= endIdx ) {
-         prevMA = Math.fma((double)inClose[today] - prevMA, k, prevMA);
+         prevMA = Math.fma(beta, prevMA, k * (double)inClose[today]);
          tempHT = (double)inHigh[today];
          tempLT = (double)inLow[today];
          outBullPower[outIdx] = tempHT - prevMA;
@@ -99005,6 +99072,7 @@ public final class Core {
       private int optInTimePeriod;
       private double prevMA;
       private double k;
+      private double beta;
       private double cur_outBullPower;
       private double cur_outBearPower;
       private int outRangeBegIdx;
@@ -99051,6 +99119,7 @@ public final class Core {
          this.optInTimePeriod = other.optInTimePeriod;
          this.prevMA = other.prevMA;
          this.k = other.k;
+         this.beta = other.beta;
          this.cur_outBullPower = other.cur_outBullPower;
          this.cur_outBearPower = other.cur_outBearPower;
          this.outRangeBegIdx = other.outRangeBegIdx;
@@ -99115,7 +99184,7 @@ public final class Core {
             double tempHT = 0.0;
             double tempLT = 0.0;
             double prevMA = sp.prevMA;
-            prevMA = Math.fma(inClose - prevMA, sp.k, prevMA);
+            prevMA = Math.fma(sp.beta, prevMA, sp.k * inClose);
             tempHT = inHigh;
             tempLT = inLow;
             cur_outBullPower = tempHT - prevMA;
@@ -99189,7 +99258,7 @@ public final class Core {
       } else {
          double tempHT = 0.0;
          double tempLT = 0.0;
-         sp.prevMA = Math.fma(inClose - sp.prevMA, sp.k, sp.prevMA);
+         sp.prevMA = Math.fma(sp.beta, sp.prevMA, sp.k * inClose);
          tempHT = inHigh;
          tempLT = inLow;
          sp.cur_outBullPower = tempHT - sp.prevMA;
@@ -99222,6 +99291,7 @@ public final class Core {
          double prevMA = 0;
          double tempReal = 0;
          double k = 0;
+         double beta = 0;
          double tempHT = 0;
          double tempLT = 0;
          /* Elder Ray Index (Alexander Elder, Trading for a Living, 1993): how far
@@ -99251,9 +99321,8 @@ public final class Core {
             return RetCode.INSUFFICIENT_HISTORY ;
          }
          /* Period 1: ema.c's explicit copy arm, kept here for the same reason it
-          * exists there. At n == 1 the recursion below is fl(fl(x-prev)+prev),
-          * which returns x only while consecutive closes stay within a factor of
-          * two (Sterbenz), so without this arm `High - TA_EMA(Close, 1)` is not
+          * exists there. At n == 1 the recursion below does not keep the sign
+          * of a -0.0 close, so without this arm `High - TA_EMA(Close, 1)` is not
           * what this function returns. The unstable period still delays the first
           * output, through the shared lookback above.
           */
@@ -99274,6 +99343,7 @@ public final class Core {
          sp.optInTimePeriod = optInTimePeriod;
          sp.prevMA = prevMA;
          sp.k = k;
+         sp.beta = beta;
          sp.cur_outBullPower = outBullPower[(outNBElement.value - 1) * outStride];
          sp.cur_outBearPower = outBearPower[(outNBElement.value - 1) * outStride];
          return RetCode.SUCCESS;
@@ -99285,6 +99355,7 @@ public final class Core {
          double prevMA = 0;
          double tempReal = 0;
          double k = 0;
+         double beta = 0;
          double tempHT = 0;
          double tempLT = 0;
          /* Elder Ray Index (Alexander Elder, Trading for a Living, 1993): how far
@@ -99314,13 +99385,14 @@ public final class Core {
             return RetCode.INSUFFICIENT_HISTORY ;
          }
          /* Period 1: ema.c's explicit copy arm, kept here for the same reason it
-          * exists there. At n == 1 the recursion below is fl(fl(x-prev)+prev),
-          * which returns x only while consecutive closes stay within a factor of
-          * two (Sterbenz), so without this arm `High - TA_EMA(Close, 1)` is not
+          * exists there. At n == 1 the recursion below does not keep the sign
+          * of a -0.0 close, so without this arm `High - TA_EMA(Close, 1)` is not
           * what this function returns. The unstable period still delays the first
           * output, through the shared lookback above.
           */
-         k = 2.0 / ((double)optInTimePeriod + 1.0);
+         beta = (double)(optInTimePeriod - 1) / (double)(optInTimePeriod + 1);
+         k = 1.0 - beta;
+         beta = 1.0 - k;
          /* Seed: ema.c's DEFAULT arm, op for op. */
          today = startIdx - lookbackTotal;
          i = optInTimePeriod;
@@ -99331,7 +99403,7 @@ public final class Core {
          prevMA = tempReal / optInTimePeriod;
          /* The warm-up also consumes the EMA unstable period. */
          while( today <= startIdx ) {
-            prevMA = Math.fma(inClose[today++] - prevMA, k, prevMA);
+            prevMA = Math.fma(beta, prevMA, k * inClose[today++]);
          }
          /* prevMA is the EMA at bar startIdx; today == startIdx + 1. Load the
           * extremes into temps BEFORE writing either output: with two outputs
@@ -99344,7 +99416,7 @@ public final class Core {
          outBearPower[0 * outStride] = tempLT - prevMA;
          outIdx = 1;
          while( today <= endIdx ) {
-            prevMA = Math.fma(inClose[today] - prevMA, k, prevMA);
+            prevMA = Math.fma(beta, prevMA, k * inClose[today]);
             tempHT = inHigh[today];
             tempLT = inLow[today];
             outBullPower[outIdx * outStride] = tempHT - prevMA;
@@ -99358,6 +99430,7 @@ public final class Core {
          sp.optInTimePeriod = optInTimePeriod;
          sp.prevMA = prevMA;
          sp.k = k;
+         sp.beta = beta;
          sp.cur_outBullPower = outBullPower[(outNBElement.value - 1) * outStride];
          sp.cur_outBearPower = outBearPower[(outNBElement.value - 1) * outStride];
          return RetCode.SUCCESS;
@@ -135205,6 +135278,9 @@ public final class Core {
       double slowK = 0;
       double fastK = 0;
       double signalK = 0;
+      double slowBeta = 0;
+      double fastBeta = 0;
+      double signalBeta = 0;
       int i = 0;
       int today = 0;
       int outIdx = 0;
@@ -135244,31 +135320,35 @@ public final class Core {
          optInSlowPeriod = optInFastPeriod;
          optInFastPeriod = tempInteger;
       }
-      /* Catch special case for fix 26/12 MACD.
-       * Use hardcoded k values matching the original algorithm.
+      /* The fixed 26/12 MACD: k of 0.075 and 0.15, as near as a pair summing
+       * to exactly 1.0 comes.
        */
       if( optInSlowPeriod == 0 ) {
          /* Fix 26 */
          optInSlowPeriod = 26;
-         slowK = 0.075;
+         slowBeta = 1.0 - 0.075;
       } else {
-         slowK = 2.0 / (double)(optInSlowPeriod + 1);
+         slowBeta = (double)(optInSlowPeriod - 1) / (double)(optInSlowPeriod + 1);
       }
+      slowK = 1.0 - slowBeta;
+      slowBeta = 1.0 - slowK;
       if( optInFastPeriod == 0 ) {
          /* Fix 12 */
          optInFastPeriod = 12;
-         fastK = 0.15;
+         fastBeta = 1.0 - 0.15;
       } else {
-         fastK = 2.0 / (double)(optInFastPeriod + 1);
+         fastBeta = (double)(optInFastPeriod - 1) / (double)(optInFastPeriod + 1);
       }
+      fastK = 1.0 - fastBeta;
+      fastBeta = 1.0 - fastK;
       /* A signal period of 1 disables signal-line smoothing: the signal IS the
-       * MACD line and the histogram is exactly zero. signalK is then exactly
-       * 1.0, so the recursion below reduces to (x-prev)+prev -- which returns x
-       * only while consecutive MACD-line values stay within a factor of two of
-       * each other. The MACD line oscillates through zero, so it leaves that
-       * window on ordinary data; hence the explicit arm at each step.
+       * MACD line and the histogram is exactly zero. The recursion
+       * below, at a k of 1.0 and a beta of 0.0, does not keep the sign of a
+       * -0.0 line value; hence the explicit arm at each step.
        */
-      signalK = 2.0 / (double)(optInSignalPeriod + 1);
+      signalBeta = (double)(optInSignalPeriod - 1) / (double)(optInSignalPeriod + 1);
+      signalK = 1.0 - signalBeta;
+      signalBeta = 1.0 - signalK;
       lookbackSignal = emaLookback(optInSignalPeriod);
       /* Move up the start index if there is not
        * enough initial data.
@@ -135291,7 +135371,7 @@ public final class Core {
        *
        * The arithmetic order below is the bit-exactness contract
        * (do not reorder or fuse operations):
-       *  - EMA recursion: ((x-prev)*k)+prev.
+       *  - EMA recursion: k*x + beta*prev, with ema.c's k and beta.
        *  - Each EMA is seeded with the sum of its first 'period'
        *    inputs, accumulated from 0.0 in input order, divided by
        *    the period. The fast and slow seed windows end on the
@@ -135326,8 +135406,8 @@ public final class Core {
        */
       while( today <= startIdx - lookbackSignal ) {
          tempReal = inReal[today++];
-         prevFast = Math.fma(tempReal - prevFast, fastK, prevFast);
-         prevSlow = Math.fma(tempReal - prevSlow, slowK, prevSlow);
+         prevFast = Math.fma(fastBeta, prevFast, fastK * tempReal);
+         prevSlow = Math.fma(slowBeta, prevSlow, slowK * tempReal);
       }
       macdValue = prevFast - prevSlow;
       /* Seed the signal EMA with a simple average of the first
@@ -135339,8 +135419,8 @@ public final class Core {
       i = optInSignalPeriod - 1;
       while( i-- > 0 ) {
          tempReal = inReal[today++];
-         prevFast = Math.fma(tempReal - prevFast, fastK, prevFast);
-         prevSlow = Math.fma(tempReal - prevSlow, slowK, prevSlow);
+         prevFast = Math.fma(fastBeta, prevFast, fastK * tempReal);
+         prevSlow = Math.fma(slowBeta, prevSlow, slowK * tempReal);
          macdValue = prevFast - prevSlow;
          prevSignal += macdValue;
       }
@@ -135350,13 +135430,13 @@ public final class Core {
        */
       while( today <= startIdx ) {
          tempReal = inReal[today++];
-         prevFast = Math.fma(tempReal - prevFast, fastK, prevFast);
-         prevSlow = Math.fma(tempReal - prevSlow, slowK, prevSlow);
+         prevFast = Math.fma(fastBeta, prevFast, fastK * tempReal);
+         prevSlow = Math.fma(slowBeta, prevSlow, slowK * tempReal);
          macdValue = prevFast - prevSlow;
          if( optInSignalPeriod == 1 ) {
             prevSignal = macdValue;
          } else {
-            prevSignal = Math.fma(macdValue - prevSignal, signalK, prevSignal);
+            prevSignal = Math.fma(signalBeta, prevSignal, signalK * macdValue);
          }
       }
       /* Stable zone: keep advancing in lockstep and write the three
@@ -135368,13 +135448,13 @@ public final class Core {
       outIdx = 1;
       while( today <= endIdx ) {
          tempReal = inReal[today++];
-         prevFast = Math.fma(tempReal - prevFast, fastK, prevFast);
-         prevSlow = Math.fma(tempReal - prevSlow, slowK, prevSlow);
+         prevFast = Math.fma(fastBeta, prevFast, fastK * tempReal);
+         prevSlow = Math.fma(slowBeta, prevSlow, slowK * tempReal);
          macdValue = prevFast - prevSlow;
          if( optInSignalPeriod == 1 ) {
             prevSignal = macdValue;
          } else {
-            prevSignal = Math.fma(macdValue - prevSignal, signalK, prevSignal);
+            prevSignal = Math.fma(signalBeta, prevSignal, signalK * macdValue);
          }
          outMACD[outIdx] = macdValue;
          outMACDSignal[outIdx] = prevSignal;
@@ -135406,6 +135486,9 @@ public final class Core {
       double slowK = 0;
       double fastK = 0;
       double signalK = 0;
+      double slowBeta = 0;
+      double fastBeta = 0;
+      double signalBeta = 0;
       int i = 0;
       int today = 0;
       int outIdx = 0;
@@ -135443,17 +135526,23 @@ public final class Core {
       }
       if( optInSlowPeriod == 0 ) {
          optInSlowPeriod = 26;
-         slowK = 0.075;
+         slowBeta = 1.0 - 0.075;
       } else {
-         slowK = 2.0 / (double)(optInSlowPeriod + 1);
+         slowBeta = (double)(optInSlowPeriod - 1) / (double)(optInSlowPeriod + 1);
       }
+      slowK = 1.0 - slowBeta;
+      slowBeta = 1.0 - slowK;
       if( optInFastPeriod == 0 ) {
          optInFastPeriod = 12;
-         fastK = 0.15;
+         fastBeta = 1.0 - 0.15;
       } else {
-         fastK = 2.0 / (double)(optInFastPeriod + 1);
+         fastBeta = (double)(optInFastPeriod - 1) / (double)(optInFastPeriod + 1);
       }
-      signalK = 2.0 / (double)(optInSignalPeriod + 1);
+      fastK = 1.0 - fastBeta;
+      fastBeta = 1.0 - fastK;
+      signalBeta = (double)(optInSignalPeriod - 1) / (double)(optInSignalPeriod + 1);
+      signalK = 1.0 - signalBeta;
+      signalBeta = 1.0 - signalK;
       lookbackSignal = emaLookback(optInSignalPeriod);
       lookbackTotal = lookbackSignal;
       lookbackTotal += emaLookback(optInSlowPeriod);
@@ -135481,8 +135570,8 @@ public final class Core {
       prevFast = prevFast / optInFastPeriod;
       while( today <= startIdx - lookbackSignal ) {
          tempReal = (double)inReal[today++];
-         prevFast = Math.fma(tempReal - prevFast, fastK, prevFast);
-         prevSlow = Math.fma(tempReal - prevSlow, slowK, prevSlow);
+         prevFast = Math.fma(fastBeta, prevFast, fastK * tempReal);
+         prevSlow = Math.fma(slowBeta, prevSlow, slowK * tempReal);
       }
       macdValue = prevFast - prevSlow;
       prevSignal = 0.0;
@@ -135490,21 +135579,21 @@ public final class Core {
       i = optInSignalPeriod - 1;
       while( i-- > 0 ) {
          tempReal = (double)inReal[today++];
-         prevFast = Math.fma(tempReal - prevFast, fastK, prevFast);
-         prevSlow = Math.fma(tempReal - prevSlow, slowK, prevSlow);
+         prevFast = Math.fma(fastBeta, prevFast, fastK * tempReal);
+         prevSlow = Math.fma(slowBeta, prevSlow, slowK * tempReal);
          macdValue = prevFast - prevSlow;
          prevSignal += macdValue;
       }
       prevSignal = prevSignal / optInSignalPeriod;
       while( today <= startIdx ) {
          tempReal = (double)inReal[today++];
-         prevFast = Math.fma(tempReal - prevFast, fastK, prevFast);
-         prevSlow = Math.fma(tempReal - prevSlow, slowK, prevSlow);
+         prevFast = Math.fma(fastBeta, prevFast, fastK * tempReal);
+         prevSlow = Math.fma(slowBeta, prevSlow, slowK * tempReal);
          macdValue = prevFast - prevSlow;
          if( optInSignalPeriod == 1 ) {
             prevSignal = macdValue;
          } else {
-            prevSignal = Math.fma(macdValue - prevSignal, signalK, prevSignal);
+            prevSignal = Math.fma(signalBeta, prevSignal, signalK * macdValue);
          }
       }
       outMACD[0] = macdValue;
@@ -135513,13 +135602,13 @@ public final class Core {
       outIdx = 1;
       while( today <= endIdx ) {
          tempReal = (double)inReal[today++];
-         prevFast = Math.fma(tempReal - prevFast, fastK, prevFast);
-         prevSlow = Math.fma(tempReal - prevSlow, slowK, prevSlow);
+         prevFast = Math.fma(fastBeta, prevFast, fastK * tempReal);
+         prevSlow = Math.fma(slowBeta, prevSlow, slowK * tempReal);
          macdValue = prevFast - prevSlow;
          if( optInSignalPeriod == 1 ) {
             prevSignal = macdValue;
          } else {
-            prevSignal = Math.fma(macdValue - prevSignal, signalK, prevSignal);
+            prevSignal = Math.fma(signalBeta, prevSignal, signalK * macdValue);
          }
          outMACD[outIdx] = macdValue;
          outMACDSignal[outIdx] = prevSignal;
@@ -135722,6 +135811,9 @@ public final class Core {
       private double slowK;
       private double fastK;
       private double signalK;
+      private double slowBeta;
+      private double fastBeta;
+      private double signalBeta;
       private double cur_outMACD;
       private double cur_outMACDSignal;
       private double cur_outMACDHist;
@@ -135775,6 +135867,9 @@ public final class Core {
          this.slowK = other.slowK;
          this.fastK = other.fastK;
          this.signalK = other.signalK;
+         this.slowBeta = other.slowBeta;
+         this.fastBeta = other.fastBeta;
+         this.signalBeta = other.signalBeta;
          this.cur_outMACD = other.cur_outMACD;
          this.cur_outMACDSignal = other.cur_outMACDSignal;
          this.cur_outMACDHist = other.cur_outMACDHist;
@@ -135835,13 +135930,13 @@ public final class Core {
          double prevSignal = sp.prevSignal;
          double prevSlow = sp.prevSlow;
          tempReal = inReal;
-         prevFast = Math.fma(tempReal - prevFast, sp.fastK, prevFast);
-         prevSlow = Math.fma(tempReal - prevSlow, sp.slowK, prevSlow);
+         prevFast = Math.fma(sp.fastBeta, prevFast, sp.fastK * tempReal);
+         prevSlow = Math.fma(sp.slowBeta, prevSlow, sp.slowK * tempReal);
          macdValue = prevFast - prevSlow;
          if( sp.optInSignalPeriod == 1 ) {
             prevSignal = macdValue;
          } else {
-            prevSignal = Math.fma(macdValue - prevSignal, sp.signalK, prevSignal);
+            prevSignal = Math.fma(sp.signalBeta, prevSignal, sp.signalK * macdValue);
          }
          cur_outMACD = macdValue;
          cur_outMACDSignal = prevSignal;
@@ -135909,13 +136004,13 @@ public final class Core {
       double macdValue = 0.0;
       double tempReal = 0.0;
       tempReal = inReal;
-      sp.prevFast = Math.fma(tempReal - sp.prevFast, sp.fastK, sp.prevFast);
-      sp.prevSlow = Math.fma(tempReal - sp.prevSlow, sp.slowK, sp.prevSlow);
+      sp.prevFast = Math.fma(sp.fastBeta, sp.prevFast, sp.fastK * tempReal);
+      sp.prevSlow = Math.fma(sp.slowBeta, sp.prevSlow, sp.slowK * tempReal);
       macdValue = sp.prevFast - sp.prevSlow;
       if( sp.optInSignalPeriod == 1 ) {
          sp.prevSignal = macdValue;
       } else {
-         sp.prevSignal = Math.fma(macdValue - sp.prevSignal, sp.signalK, sp.prevSignal);
+         sp.prevSignal = Math.fma(sp.signalBeta, sp.prevSignal, sp.signalK * macdValue);
       }
       sp.cur_outMACD = macdValue;
       sp.cur_outMACDSignal = sp.prevSignal;
@@ -135931,6 +136026,9 @@ public final class Core {
       double slowK = 0;
       double fastK = 0;
       double signalK = 0;
+      double slowBeta = 0;
+      double fastBeta = 0;
+      double signalBeta = 0;
       int i = 0;
       int today = 0;
       int outIdx = 0;
@@ -135974,31 +136072,35 @@ public final class Core {
          optInSlowPeriod = optInFastPeriod;
          optInFastPeriod = tempInteger;
       }
-      /* Catch special case for fix 26/12 MACD.
-       * Use hardcoded k values matching the original algorithm.
+      /* The fixed 26/12 MACD: k of 0.075 and 0.15, as near as a pair summing
+       * to exactly 1.0 comes.
        */
       if( optInSlowPeriod == 0 ) {
          /* Fix 26 */
          optInSlowPeriod = 26;
-         slowK = 0.075;
+         slowBeta = 1.0 - 0.075;
       } else {
-         slowK = 2.0 / (double)(optInSlowPeriod + 1);
+         slowBeta = (double)(optInSlowPeriod - 1) / (double)(optInSlowPeriod + 1);
       }
+      slowK = 1.0 - slowBeta;
+      slowBeta = 1.0 - slowK;
       if( optInFastPeriod == 0 ) {
          /* Fix 12 */
          optInFastPeriod = 12;
-         fastK = 0.15;
+         fastBeta = 1.0 - 0.15;
       } else {
-         fastK = 2.0 / (double)(optInFastPeriod + 1);
+         fastBeta = (double)(optInFastPeriod - 1) / (double)(optInFastPeriod + 1);
       }
+      fastK = 1.0 - fastBeta;
+      fastBeta = 1.0 - fastK;
       /* A signal period of 1 disables signal-line smoothing: the signal IS the
-       * MACD line and the histogram is exactly zero. signalK is then exactly
-       * 1.0, so the recursion below reduces to (x-prev)+prev -- which returns x
-       * only while consecutive MACD-line values stay within a factor of two of
-       * each other. The MACD line oscillates through zero, so it leaves that
-       * window on ordinary data; hence the explicit arm at each step.
+       * MACD line and the histogram is exactly zero. The recursion
+       * below, at a k of 1.0 and a beta of 0.0, does not keep the sign of a
+       * -0.0 line value; hence the explicit arm at each step.
        */
-      signalK = 2.0 / (double)(optInSignalPeriod + 1);
+      signalBeta = (double)(optInSignalPeriod - 1) / (double)(optInSignalPeriod + 1);
+      signalK = 1.0 - signalBeta;
+      signalBeta = 1.0 - signalK;
       lookbackSignal = emaLookback(optInSignalPeriod);
       /* Move up the start index if there is not
        * enough initial data.
@@ -136021,7 +136123,7 @@ public final class Core {
        *
        * The arithmetic order below is the bit-exactness contract
        * (do not reorder or fuse operations):
-       *  - EMA recursion: ((x-prev)*k)+prev.
+       *  - EMA recursion: k*x + beta*prev, with ema.c's k and beta.
        *  - Each EMA is seeded with the sum of its first 'period'
        *    inputs, accumulated from 0.0 in input order, divided by
        *    the period. The fast and slow seed windows end on the
@@ -136056,8 +136158,8 @@ public final class Core {
        */
       while( today <= startIdx - lookbackSignal ) {
          tempReal = inReal[today++];
-         prevFast = Math.fma(tempReal - prevFast, fastK, prevFast);
-         prevSlow = Math.fma(tempReal - prevSlow, slowK, prevSlow);
+         prevFast = Math.fma(fastBeta, prevFast, fastK * tempReal);
+         prevSlow = Math.fma(slowBeta, prevSlow, slowK * tempReal);
       }
       macdValue = prevFast - prevSlow;
       /* Seed the signal EMA with a simple average of the first
@@ -136069,8 +136171,8 @@ public final class Core {
       i = optInSignalPeriod - 1;
       while( i-- > 0 ) {
          tempReal = inReal[today++];
-         prevFast = Math.fma(tempReal - prevFast, fastK, prevFast);
-         prevSlow = Math.fma(tempReal - prevSlow, slowK, prevSlow);
+         prevFast = Math.fma(fastBeta, prevFast, fastK * tempReal);
+         prevSlow = Math.fma(slowBeta, prevSlow, slowK * tempReal);
          macdValue = prevFast - prevSlow;
          prevSignal += macdValue;
       }
@@ -136080,13 +136182,13 @@ public final class Core {
        */
       while( today <= startIdx ) {
          tempReal = inReal[today++];
-         prevFast = Math.fma(tempReal - prevFast, fastK, prevFast);
-         prevSlow = Math.fma(tempReal - prevSlow, slowK, prevSlow);
+         prevFast = Math.fma(fastBeta, prevFast, fastK * tempReal);
+         prevSlow = Math.fma(slowBeta, prevSlow, slowK * tempReal);
          macdValue = prevFast - prevSlow;
          if( optInSignalPeriod == 1 ) {
             prevSignal = macdValue;
          } else {
-            prevSignal = Math.fma(macdValue - prevSignal, signalK, prevSignal);
+            prevSignal = Math.fma(signalBeta, prevSignal, signalK * macdValue);
          }
       }
       /* Stable zone: keep advancing in lockstep and write the three
@@ -136098,13 +136200,13 @@ public final class Core {
       outIdx = 1;
       while( today <= endIdx ) {
          tempReal = inReal[today++];
-         prevFast = Math.fma(tempReal - prevFast, fastK, prevFast);
-         prevSlow = Math.fma(tempReal - prevSlow, slowK, prevSlow);
+         prevFast = Math.fma(fastBeta, prevFast, fastK * tempReal);
+         prevSlow = Math.fma(slowBeta, prevSlow, slowK * tempReal);
          macdValue = prevFast - prevSlow;
          if( optInSignalPeriod == 1 ) {
             prevSignal = macdValue;
          } else {
-            prevSignal = Math.fma(macdValue - prevSignal, signalK, prevSignal);
+            prevSignal = Math.fma(signalBeta, prevSignal, signalK * macdValue);
          }
          outMACD[outIdx * outStride] = macdValue;
          outMACDSignal[outIdx * outStride] = prevSignal;
@@ -136124,6 +136226,9 @@ public final class Core {
       sp.slowK = slowK;
       sp.fastK = fastK;
       sp.signalK = signalK;
+      sp.slowBeta = slowBeta;
+      sp.fastBeta = fastBeta;
+      sp.signalBeta = signalBeta;
       sp.cur_outMACD = outMACD[(outNBElement.value - 1) * outStride];
       sp.cur_outMACDSignal = outMACDSignal[(outNBElement.value - 1) * outStride];
       sp.cur_outMACDHist = outMACDHist[(outNBElement.value - 1) * outStride];
@@ -137374,6 +137479,9 @@ public final class Core {
       double slowK = 0;
       double fastK = 0;
       double signalK = 0;
+      double slowBeta = 0;
+      double fastBeta = 0;
+      double signalBeta = 0;
       int i = 0;
       int today = 0;
       int outIdx = 0;
@@ -137405,15 +137513,19 @@ public final class Core {
        *    Fix 26 -> slowK = 0.075
        */
       fastK = 0.15;
+      fastBeta = 1.0 - fastK;
+      fastK = 1.0 - fastBeta;
       slowK = 0.075;
+      slowBeta = 1.0 - slowK;
+      slowK = 1.0 - slowBeta;
       /* A signal period of 1 disables signal-line smoothing: the signal IS the
-       * MACD line and the histogram is exactly zero. signalK is then exactly
-       * 1.0, so the recursion below reduces to (x-prev)+prev -- which returns x
-       * only while consecutive MACD-line values stay within a factor of two of
-       * each other. The MACD line oscillates through zero, so it leaves that
-       * window on ordinary data; hence the explicit arm at each step.
+       * MACD line and the histogram is exactly zero. The recursion
+       * below, at a k of 1.0 and a beta of 0.0, does not keep the sign of a
+       * -0.0 line value; hence the explicit arm at each step.
        */
-      signalK = 2.0 / (double)(optInSignalPeriod + 1);
+      signalBeta = (double)(optInSignalPeriod - 1) / (double)(optInSignalPeriod + 1);
+      signalK = 1.0 - signalBeta;
+      signalBeta = 1.0 - signalK;
       lookbackSignal = emaLookback(optInSignalPeriod);
       /* Move up the start index if there is not
        * enough initial data.
@@ -137437,7 +137549,7 @@ public final class Core {
        *
        * The arithmetic order below is the bit-exactness contract
        * (do not reorder or fuse operations):
-       *  - EMA recursion: ((x-prev)*k)+prev.
+       *  - EMA recursion: k*x + beta*prev, with ema.c's k and beta.
        *  - Each EMA is seeded with the sum of its first 'period'
        *    inputs, accumulated from 0.0 in input order, divided by
        *    the period. The fast and slow seed windows end on the
@@ -137472,8 +137584,8 @@ public final class Core {
        */
       while( today <= startIdx - lookbackSignal ) {
          tempReal = inReal[today++];
-         prevFast = Math.fma(tempReal - prevFast, fastK, prevFast);
-         prevSlow = Math.fma(tempReal - prevSlow, slowK, prevSlow);
+         prevFast = Math.fma(fastBeta, prevFast, fastK * tempReal);
+         prevSlow = Math.fma(slowBeta, prevSlow, slowK * tempReal);
       }
       macdValue = prevFast - prevSlow;
       /* Seed the signal EMA with a simple average of the first
@@ -137485,8 +137597,8 @@ public final class Core {
       i = optInSignalPeriod - 1;
       while( i-- > 0 ) {
          tempReal = inReal[today++];
-         prevFast = Math.fma(tempReal - prevFast, fastK, prevFast);
-         prevSlow = Math.fma(tempReal - prevSlow, slowK, prevSlow);
+         prevFast = Math.fma(fastBeta, prevFast, fastK * tempReal);
+         prevSlow = Math.fma(slowBeta, prevSlow, slowK * tempReal);
          macdValue = prevFast - prevSlow;
          prevSignal += macdValue;
       }
@@ -137496,13 +137608,13 @@ public final class Core {
        */
       while( today <= startIdx ) {
          tempReal = inReal[today++];
-         prevFast = Math.fma(tempReal - prevFast, fastK, prevFast);
-         prevSlow = Math.fma(tempReal - prevSlow, slowK, prevSlow);
+         prevFast = Math.fma(fastBeta, prevFast, fastK * tempReal);
+         prevSlow = Math.fma(slowBeta, prevSlow, slowK * tempReal);
          macdValue = prevFast - prevSlow;
          if( optInSignalPeriod == 1 ) {
             prevSignal = macdValue;
          } else {
-            prevSignal = Math.fma(macdValue - prevSignal, signalK, prevSignal);
+            prevSignal = Math.fma(signalBeta, prevSignal, signalK * macdValue);
          }
       }
       /* Stable zone: keep advancing in lockstep and write the three
@@ -137514,13 +137626,13 @@ public final class Core {
       outIdx = 1;
       while( today <= endIdx ) {
          tempReal = inReal[today++];
-         prevFast = Math.fma(tempReal - prevFast, fastK, prevFast);
-         prevSlow = Math.fma(tempReal - prevSlow, slowK, prevSlow);
+         prevFast = Math.fma(fastBeta, prevFast, fastK * tempReal);
+         prevSlow = Math.fma(slowBeta, prevSlow, slowK * tempReal);
          macdValue = prevFast - prevSlow;
          if( optInSignalPeriod == 1 ) {
             prevSignal = macdValue;
          } else {
-            prevSignal = Math.fma(macdValue - prevSignal, signalK, prevSignal);
+            prevSignal = Math.fma(signalBeta, prevSignal, signalK * macdValue);
          }
          outMACD[outIdx] = macdValue;
          outMACDSignal[outIdx] = prevSignal;
@@ -137550,6 +137662,9 @@ public final class Core {
       double slowK = 0;
       double fastK = 0;
       double signalK = 0;
+      double slowBeta = 0;
+      double fastBeta = 0;
+      double signalBeta = 0;
       int i = 0;
       int today = 0;
       int outIdx = 0;
@@ -137574,8 +137689,14 @@ public final class Core {
       optInFastPeriod = 12;
       optInSlowPeriod = 26;
       fastK = 0.15;
+      fastBeta = 1.0 - fastK;
+      fastK = 1.0 - fastBeta;
       slowK = 0.075;
-      signalK = 2.0 / (double)(optInSignalPeriod + 1);
+      slowBeta = 1.0 - slowK;
+      slowK = 1.0 - slowBeta;
+      signalBeta = (double)(optInSignalPeriod - 1) / (double)(optInSignalPeriod + 1);
+      signalK = 1.0 - signalBeta;
+      signalBeta = 1.0 - signalK;
       lookbackSignal = emaLookback(optInSignalPeriod);
       lookbackTotal = lookbackSignal;
       lookbackTotal += emaLookback(26);
@@ -137603,8 +137724,8 @@ public final class Core {
       prevFast = prevFast / optInFastPeriod;
       while( today <= startIdx - lookbackSignal ) {
          tempReal = (double)inReal[today++];
-         prevFast = Math.fma(tempReal - prevFast, fastK, prevFast);
-         prevSlow = Math.fma(tempReal - prevSlow, slowK, prevSlow);
+         prevFast = Math.fma(fastBeta, prevFast, fastK * tempReal);
+         prevSlow = Math.fma(slowBeta, prevSlow, slowK * tempReal);
       }
       macdValue = prevFast - prevSlow;
       prevSignal = 0.0;
@@ -137612,21 +137733,21 @@ public final class Core {
       i = optInSignalPeriod - 1;
       while( i-- > 0 ) {
          tempReal = (double)inReal[today++];
-         prevFast = Math.fma(tempReal - prevFast, fastK, prevFast);
-         prevSlow = Math.fma(tempReal - prevSlow, slowK, prevSlow);
+         prevFast = Math.fma(fastBeta, prevFast, fastK * tempReal);
+         prevSlow = Math.fma(slowBeta, prevSlow, slowK * tempReal);
          macdValue = prevFast - prevSlow;
          prevSignal += macdValue;
       }
       prevSignal = prevSignal / optInSignalPeriod;
       while( today <= startIdx ) {
          tempReal = (double)inReal[today++];
-         prevFast = Math.fma(tempReal - prevFast, fastK, prevFast);
-         prevSlow = Math.fma(tempReal - prevSlow, slowK, prevSlow);
+         prevFast = Math.fma(fastBeta, prevFast, fastK * tempReal);
+         prevSlow = Math.fma(slowBeta, prevSlow, slowK * tempReal);
          macdValue = prevFast - prevSlow;
          if( optInSignalPeriod == 1 ) {
             prevSignal = macdValue;
          } else {
-            prevSignal = Math.fma(macdValue - prevSignal, signalK, prevSignal);
+            prevSignal = Math.fma(signalBeta, prevSignal, signalK * macdValue);
          }
       }
       outMACD[0] = macdValue;
@@ -137635,13 +137756,13 @@ public final class Core {
       outIdx = 1;
       while( today <= endIdx ) {
          tempReal = (double)inReal[today++];
-         prevFast = Math.fma(tempReal - prevFast, fastK, prevFast);
-         prevSlow = Math.fma(tempReal - prevSlow, slowK, prevSlow);
+         prevFast = Math.fma(fastBeta, prevFast, fastK * tempReal);
+         prevSlow = Math.fma(slowBeta, prevSlow, slowK * tempReal);
          macdValue = prevFast - prevSlow;
          if( optInSignalPeriod == 1 ) {
             prevSignal = macdValue;
          } else {
-            prevSignal = Math.fma(macdValue - prevSignal, signalK, prevSignal);
+            prevSignal = Math.fma(signalBeta, prevSignal, signalK * macdValue);
          }
          outMACD[outIdx] = macdValue;
          outMACDSignal[outIdx] = prevSignal;
@@ -137826,6 +137947,9 @@ public final class Core {
       private double slowK;
       private double fastK;
       private double signalK;
+      private double slowBeta;
+      private double fastBeta;
+      private double signalBeta;
       private double cur_outMACD;
       private double cur_outMACDSignal;
       private double cur_outMACDHist;
@@ -137877,6 +138001,9 @@ public final class Core {
          this.slowK = other.slowK;
          this.fastK = other.fastK;
          this.signalK = other.signalK;
+         this.slowBeta = other.slowBeta;
+         this.fastBeta = other.fastBeta;
+         this.signalBeta = other.signalBeta;
          this.cur_outMACD = other.cur_outMACD;
          this.cur_outMACDSignal = other.cur_outMACDSignal;
          this.cur_outMACDHist = other.cur_outMACDHist;
@@ -137937,13 +138064,13 @@ public final class Core {
          double prevSignal = sp.prevSignal;
          double prevSlow = sp.prevSlow;
          tempReal = inReal;
-         prevFast = Math.fma(tempReal - prevFast, sp.fastK, prevFast);
-         prevSlow = Math.fma(tempReal - prevSlow, sp.slowK, prevSlow);
+         prevFast = Math.fma(sp.fastBeta, prevFast, sp.fastK * tempReal);
+         prevSlow = Math.fma(sp.slowBeta, prevSlow, sp.slowK * tempReal);
          macdValue = prevFast - prevSlow;
          if( sp.optInSignalPeriod == 1 ) {
             prevSignal = macdValue;
          } else {
-            prevSignal = Math.fma(macdValue - prevSignal, sp.signalK, prevSignal);
+            prevSignal = Math.fma(sp.signalBeta, prevSignal, sp.signalK * macdValue);
          }
          cur_outMACD = macdValue;
          cur_outMACDSignal = prevSignal;
@@ -138011,13 +138138,13 @@ public final class Core {
       double macdValue = 0.0;
       double tempReal = 0.0;
       tempReal = inReal;
-      sp.prevFast = Math.fma(tempReal - sp.prevFast, sp.fastK, sp.prevFast);
-      sp.prevSlow = Math.fma(tempReal - sp.prevSlow, sp.slowK, sp.prevSlow);
+      sp.prevFast = Math.fma(sp.fastBeta, sp.prevFast, sp.fastK * tempReal);
+      sp.prevSlow = Math.fma(sp.slowBeta, sp.prevSlow, sp.slowK * tempReal);
       macdValue = sp.prevFast - sp.prevSlow;
       if( sp.optInSignalPeriod == 1 ) {
          sp.prevSignal = macdValue;
       } else {
-         sp.prevSignal = Math.fma(macdValue - sp.prevSignal, sp.signalK, sp.prevSignal);
+         sp.prevSignal = Math.fma(sp.signalBeta, sp.prevSignal, sp.signalK * macdValue);
       }
       sp.cur_outMACD = macdValue;
       sp.cur_outMACDSignal = sp.prevSignal;
@@ -138033,6 +138160,9 @@ public final class Core {
       double slowK = 0;
       double fastK = 0;
       double signalK = 0;
+      double slowBeta = 0;
+      double fastBeta = 0;
+      double signalBeta = 0;
       int i = 0;
       int today = 0;
       int outIdx = 0;
@@ -138068,15 +138198,19 @@ public final class Core {
        *    Fix 26 -> slowK = 0.075
        */
       fastK = 0.15;
+      fastBeta = 1.0 - fastK;
+      fastK = 1.0 - fastBeta;
       slowK = 0.075;
+      slowBeta = 1.0 - slowK;
+      slowK = 1.0 - slowBeta;
       /* A signal period of 1 disables signal-line smoothing: the signal IS the
-       * MACD line and the histogram is exactly zero. signalK is then exactly
-       * 1.0, so the recursion below reduces to (x-prev)+prev -- which returns x
-       * only while consecutive MACD-line values stay within a factor of two of
-       * each other. The MACD line oscillates through zero, so it leaves that
-       * window on ordinary data; hence the explicit arm at each step.
+       * MACD line and the histogram is exactly zero. The recursion
+       * below, at a k of 1.0 and a beta of 0.0, does not keep the sign of a
+       * -0.0 line value; hence the explicit arm at each step.
        */
-      signalK = 2.0 / (double)(optInSignalPeriod + 1);
+      signalBeta = (double)(optInSignalPeriod - 1) / (double)(optInSignalPeriod + 1);
+      signalK = 1.0 - signalBeta;
+      signalBeta = 1.0 - signalK;
       lookbackSignal = emaLookback(optInSignalPeriod);
       /* Move up the start index if there is not
        * enough initial data.
@@ -138100,7 +138234,7 @@ public final class Core {
        *
        * The arithmetic order below is the bit-exactness contract
        * (do not reorder or fuse operations):
-       *  - EMA recursion: ((x-prev)*k)+prev.
+       *  - EMA recursion: k*x + beta*prev, with ema.c's k and beta.
        *  - Each EMA is seeded with the sum of its first 'period'
        *    inputs, accumulated from 0.0 in input order, divided by
        *    the period. The fast and slow seed windows end on the
@@ -138135,8 +138269,8 @@ public final class Core {
        */
       while( today <= startIdx - lookbackSignal ) {
          tempReal = inReal[today++];
-         prevFast = Math.fma(tempReal - prevFast, fastK, prevFast);
-         prevSlow = Math.fma(tempReal - prevSlow, slowK, prevSlow);
+         prevFast = Math.fma(fastBeta, prevFast, fastK * tempReal);
+         prevSlow = Math.fma(slowBeta, prevSlow, slowK * tempReal);
       }
       macdValue = prevFast - prevSlow;
       /* Seed the signal EMA with a simple average of the first
@@ -138148,8 +138282,8 @@ public final class Core {
       i = optInSignalPeriod - 1;
       while( i-- > 0 ) {
          tempReal = inReal[today++];
-         prevFast = Math.fma(tempReal - prevFast, fastK, prevFast);
-         prevSlow = Math.fma(tempReal - prevSlow, slowK, prevSlow);
+         prevFast = Math.fma(fastBeta, prevFast, fastK * tempReal);
+         prevSlow = Math.fma(slowBeta, prevSlow, slowK * tempReal);
          macdValue = prevFast - prevSlow;
          prevSignal += macdValue;
       }
@@ -138159,13 +138293,13 @@ public final class Core {
        */
       while( today <= startIdx ) {
          tempReal = inReal[today++];
-         prevFast = Math.fma(tempReal - prevFast, fastK, prevFast);
-         prevSlow = Math.fma(tempReal - prevSlow, slowK, prevSlow);
+         prevFast = Math.fma(fastBeta, prevFast, fastK * tempReal);
+         prevSlow = Math.fma(slowBeta, prevSlow, slowK * tempReal);
          macdValue = prevFast - prevSlow;
          if( optInSignalPeriod == 1 ) {
             prevSignal = macdValue;
          } else {
-            prevSignal = Math.fma(macdValue - prevSignal, signalK, prevSignal);
+            prevSignal = Math.fma(signalBeta, prevSignal, signalK * macdValue);
          }
       }
       /* Stable zone: keep advancing in lockstep and write the three
@@ -138177,13 +138311,13 @@ public final class Core {
       outIdx = 1;
       while( today <= endIdx ) {
          tempReal = inReal[today++];
-         prevFast = Math.fma(tempReal - prevFast, fastK, prevFast);
-         prevSlow = Math.fma(tempReal - prevSlow, slowK, prevSlow);
+         prevFast = Math.fma(fastBeta, prevFast, fastK * tempReal);
+         prevSlow = Math.fma(slowBeta, prevSlow, slowK * tempReal);
          macdValue = prevFast - prevSlow;
          if( optInSignalPeriod == 1 ) {
             prevSignal = macdValue;
          } else {
-            prevSignal = Math.fma(macdValue - prevSignal, signalK, prevSignal);
+            prevSignal = Math.fma(signalBeta, prevSignal, signalK * macdValue);
          }
          outMACD[outIdx * outStride] = macdValue;
          outMACDSignal[outIdx * outStride] = prevSignal;
@@ -138201,6 +138335,9 @@ public final class Core {
       sp.slowK = slowK;
       sp.fastK = fastK;
       sp.signalK = signalK;
+      sp.slowBeta = slowBeta;
+      sp.fastBeta = fastBeta;
+      sp.signalBeta = signalBeta;
       sp.cur_outMACD = outMACD[(outNBElement.value - 1) * outStride];
       sp.cur_outMACDSignal = outMACDSignal[(outNBElement.value - 1) * outStride];
       sp.cur_outMACDHist = outMACDHist[(outNBElement.value - 1) * outStride];
@@ -141405,6 +141542,7 @@ public final class Core {
                       double outReal[] )
    {
       double optInK_1 = 0;
+      double emaBeta = 0;
       double hl = 0;
       double ema1 = 0;
       double ema2 = 0;
@@ -141466,7 +141604,9 @@ public final class Core {
        * is warmed. The seed sums accumulate from 0.0 in production order; do not
        * reorder or fuse them (0.0+x is not x for x=-0.0).
        */
-      optInK_1 = 2.0 / (double)(optInFastPeriod + 1);
+      emaBeta = (double)(optInFastPeriod - 1) / (double)(optInFastPeriod + 1);
+      optInK_1 = 1.0 - emaBeta;
+      emaBeta = 1.0 - optInK_1;
       ema1 = 0.0;
       ema2 = 0.0;
       sum1 = 0.0;
@@ -141486,7 +141626,7 @@ public final class Core {
                ema1 = sum1 / optInFastPeriod;
             }
          } else {
-            ema1 = Math.fma(hl - ema1, optInK_1, ema1);
+            ema1 = Math.fma(emaBeta, ema1, optInK_1 * hl);
          }
          /* The stage counter is compared BEFORE it is subtracted, never after.
           * `n2 = nBar - lookbackEma; if( n2 >= 0 )` is correct in C and broken
@@ -141501,7 +141641,7 @@ public final class Core {
                   ema2 = sum2 / optInFastPeriod;
                }
             } else {
-               ema2 = Math.fma(ema1 - ema2, optInK_1, ema2);
+               ema2 = Math.fma(emaBeta, ema2, optInK_1 * ema1);
             }
          }
          if( nBar >= lookbackEma2 ) {
@@ -141540,8 +141680,8 @@ public final class Core {
       outIdx = 1;
       while( today <= endIdx ) {
          hl = inHigh[today] - inLow[today];
-         ema1 = Math.fma(hl - ema1, optInK_1, ema1);
-         ema2 = Math.fma(ema1 - ema2, optInK_1, ema2);
+         ema1 = Math.fma(emaBeta, ema1, optInK_1 * hl);
+         ema2 = Math.fma(emaBeta, ema2, optInK_1 * ema1);
          if( ema2 == 0.0 ) {
             ratio = 1.0;
          } else {
@@ -141571,6 +141711,7 @@ public final class Core {
                       double outReal[] )
    {
       double optInK_1 = 0;
+      double emaBeta = 0;
       double hl = 0;
       double ema1 = 0;
       double ema2 = 0;
@@ -141621,7 +141762,9 @@ public final class Core {
       maxIdx_ratioRing = (optInSlowPeriod)-1;
       ratioRing_Idx = 0;
       outBegIdx.value = startIdx;
-      optInK_1 = 2.0 / (double)(optInFastPeriod + 1);
+      emaBeta = (double)(optInFastPeriod - 1) / (double)(optInFastPeriod + 1);
+      optInK_1 = 1.0 - emaBeta;
+      emaBeta = 1.0 - optInK_1;
       ema1 = 0.0;
       ema2 = 0.0;
       sum1 = 0.0;
@@ -141638,7 +141781,7 @@ public final class Core {
                ema1 = sum1 / optInFastPeriod;
             }
          } else {
-            ema1 = Math.fma(hl - ema1, optInK_1, ema1);
+            ema1 = Math.fma(emaBeta, ema1, optInK_1 * hl);
          }
          if( nBar >= lookbackEma ) {
             n2 = nBar - lookbackEma;
@@ -141648,7 +141791,7 @@ public final class Core {
                   ema2 = sum2 / optInFastPeriod;
                }
             } else {
-               ema2 = Math.fma(ema1 - ema2, optInK_1, ema2);
+               ema2 = Math.fma(emaBeta, ema2, optInK_1 * ema1);
             }
          }
          if( nBar >= lookbackEma2 ) {
@@ -141673,8 +141816,8 @@ public final class Core {
       outIdx = 1;
       while( today <= endIdx ) {
          hl = (double)inHigh[today] - (double)inLow[today];
-         ema1 = Math.fma(hl - ema1, optInK_1, ema1);
-         ema2 = Math.fma(ema1 - ema2, optInK_1, ema2);
+         ema1 = Math.fma(emaBeta, ema1, optInK_1 * hl);
+         ema2 = Math.fma(emaBeta, ema2, optInK_1 * ema1);
          if( ema2 == 0.0 ) {
             ratio = 1.0;
          } else {
@@ -141883,6 +142026,7 @@ public final class Core {
       private int optInFastPeriod;
       private int optInSlowPeriod;
       private double optInK_1;
+      private double emaBeta;
       private double ema1;
       private double ema2;
       private double total;
@@ -141935,6 +142079,7 @@ public final class Core {
          this.optInFastPeriod = other.optInFastPeriod;
          this.optInSlowPeriod = other.optInSlowPeriod;
          this.optInK_1 = other.optInK_1;
+         this.emaBeta = other.emaBeta;
          this.ema1 = other.ema1;
          this.ema2 = other.ema2;
          this.total = other.total;
@@ -141998,8 +142143,8 @@ public final class Core {
          int pkSlot0 = -1;
          double pkVal0 = 0.0;
          hl = inHigh - inLow;
-         ema1 = Math.fma(hl - ema1, sp.optInK_1, ema1);
-         ema2 = Math.fma(ema1 - ema2, sp.optInK_1, ema2);
+         ema1 = Math.fma(sp.emaBeta, ema1, sp.optInK_1 * hl);
+         ema2 = Math.fma(sp.emaBeta, ema2, sp.optInK_1 * ema1);
          if( ema2 == 0.0 ) {
             ratio = 1.0;
          } else {
@@ -142050,8 +142195,8 @@ public final class Core {
       double ratio = 0.0;
       double tempReal = 0.0;
       hl = inHigh - inLow;
-      sp.ema1 = Math.fma(hl - sp.ema1, sp.optInK_1, sp.ema1);
-      sp.ema2 = Math.fma(sp.ema1 - sp.ema2, sp.optInK_1, sp.ema2);
+      sp.ema1 = Math.fma(sp.emaBeta, sp.ema1, sp.optInK_1 * hl);
+      sp.ema2 = Math.fma(sp.emaBeta, sp.ema2, sp.optInK_1 * sp.ema1);
       if( sp.ema2 == 0.0 ) {
          ratio = 1.0;
       } else {
@@ -142070,6 +142215,7 @@ public final class Core {
    private RetCode massiOpenImpl( MassiStream sp, double inHigh[], double inLow[], int startIdx, int optInFastPeriod, int optInSlowPeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       double optInK_1 = 0;
+      double emaBeta = 0;
       double hl = 0;
       double ema1 = 0;
       double ema2 = 0;
@@ -142141,7 +142287,9 @@ public final class Core {
        * is warmed. The seed sums accumulate from 0.0 in production order; do not
        * reorder or fuse them (0.0+x is not x for x=-0.0).
        */
-      optInK_1 = 2.0 / (double)(optInFastPeriod + 1);
+      emaBeta = (double)(optInFastPeriod - 1) / (double)(optInFastPeriod + 1);
+      optInK_1 = 1.0 - emaBeta;
+      emaBeta = 1.0 - optInK_1;
       ema1 = 0.0;
       ema2 = 0.0;
       sum1 = 0.0;
@@ -142161,7 +142309,7 @@ public final class Core {
                ema1 = sum1 / optInFastPeriod;
             }
          } else {
-            ema1 = Math.fma(hl - ema1, optInK_1, ema1);
+            ema1 = Math.fma(emaBeta, ema1, optInK_1 * hl);
          }
          /* The stage counter is compared BEFORE it is subtracted, never after.
           * `n2 = nBar - lookbackEma; if( n2 >= 0 )` is correct in C and broken
@@ -142176,7 +142324,7 @@ public final class Core {
                   ema2 = sum2 / optInFastPeriod;
                }
             } else {
-               ema2 = Math.fma(ema1 - ema2, optInK_1, ema2);
+               ema2 = Math.fma(emaBeta, ema2, optInK_1 * ema1);
             }
          }
          if( nBar >= lookbackEma2 ) {
@@ -142215,8 +142363,8 @@ public final class Core {
       outIdx = 1;
       while( today <= endIdx ) {
          hl = inHigh[today] - inLow[today];
-         ema1 = Math.fma(hl - ema1, optInK_1, ema1);
-         ema2 = Math.fma(ema1 - ema2, optInK_1, ema2);
+         ema1 = Math.fma(emaBeta, ema1, optInK_1 * hl);
+         ema2 = Math.fma(emaBeta, ema2, optInK_1 * ema1);
          if( ema2 == 0.0 ) {
             ratio = 1.0;
          } else {
@@ -142241,6 +142389,7 @@ public final class Core {
       sp.optInFastPeriod = optInFastPeriod;
       sp.optInSlowPeriod = optInSlowPeriod;
       sp.optInK_1 = optInK_1;
+      sp.emaBeta = emaBeta;
       sp.ema1 = ema1;
       sp.ema2 = ema2;
       sp.total = total;
@@ -167190,6 +167339,8 @@ public final class Core {
          double _eFast;
          double _eSlow;
          double _eX;
+         double _eFastBeta;
+         double _eSlowBeta;
          int _eN;
          int _eToday;
          int _eFastToday;
@@ -167201,8 +167352,12 @@ public final class Core {
             optInSlowPeriod = optInFastPeriod;
             optInFastPeriod = tempInteger;
          }
-         _eFastK = 2.0 / (double)(optInFastPeriod + 1);
-         _eSlowK = 2.0 / (double)(optInSlowPeriod + 1);
+         _eFastBeta = (double)(optInFastPeriod - 1) / (double)(optInFastPeriod + 1);
+         _eFastK = 1.0 - _eFastBeta;
+         _eFastBeta = 1.0 - _eFastK;
+         _eSlowBeta = (double)(optInSlowPeriod - 1) / (double)(optInSlowPeriod + 1);
+         _eSlowK = 1.0 - _eSlowBeta;
+         _eSlowBeta = 1.0 - _eSlowK;
          _eFastToday = emaLookback(optInFastPeriod);
          if( _eFastToday < startIdx ) {
             _eFastToday = startIdx;
@@ -167219,7 +167374,7 @@ public final class Core {
          }
          _eFast = _eFast / optInFastPeriod;
          while( _eFastToday <= _eSlowStart ) {
-            _eFast = Math.fma(inReal[_eFastToday++] - _eFast, _eFastK, _eFast);
+            _eFast = Math.fma(_eFastBeta, _eFast, _eFastK * inReal[_eFastToday++]);
          }
          _eSlow = 0.0;
          for( _eN = 0; _eN < optInSlowPeriod; _eN += 1 ) {
@@ -167227,7 +167382,7 @@ public final class Core {
          }
          _eSlow = _eSlow / optInSlowPeriod;
          while( _eSlowToday <= _eSlowStart ) {
-            _eSlow = Math.fma(inReal[_eSlowToday++] - _eSlow, _eSlowK, _eSlow);
+            _eSlow = Math.fma(_eSlowBeta, _eSlow, _eSlowK * inReal[_eSlowToday++]);
          }
          _eOutIdx = 0;
          if( !((-0.00000000000001 < _eSlow) && (_eSlow < 0.00000000000001)) ) {
@@ -167239,8 +167394,8 @@ public final class Core {
          _eToday = _eSlowStart + 1;
          while( _eToday <= endIdx ) {
             _eX = inReal[_eToday++];
-            _eFast = Math.fma(_eX - _eFast, _eFastK, _eFast);
-            _eSlow = Math.fma(_eX - _eSlow, _eSlowK, _eSlow);
+            _eFast = Math.fma(_eFastBeta, _eFast, _eFastK * _eX);
+            _eSlow = Math.fma(_eSlowBeta, _eSlow, _eSlowK * _eX);
             if( !((-0.00000000000001 < _eSlow) && (_eSlow < 0.00000000000001)) ) {
                outReal[_eOutIdx] = (_eFast - _eSlow) / _eSlow * 100.0;
             } else {
@@ -167440,6 +167595,8 @@ public final class Core {
          double _eFast;
          double _eSlow;
          double _eX;
+         double _eFastBeta;
+         double _eSlowBeta;
          int _eN;
          int _eToday;
          int _eFastToday;
@@ -167451,8 +167608,12 @@ public final class Core {
             optInSlowPeriod = optInFastPeriod;
             optInFastPeriod = tempInteger;
          }
-         _eFastK = 2.0 / (double)(optInFastPeriod + 1);
-         _eSlowK = 2.0 / (double)(optInSlowPeriod + 1);
+         _eFastBeta = (double)(optInFastPeriod - 1) / (double)(optInFastPeriod + 1);
+         _eFastK = 1.0 - _eFastBeta;
+         _eFastBeta = 1.0 - _eFastK;
+         _eSlowBeta = (double)(optInSlowPeriod - 1) / (double)(optInSlowPeriod + 1);
+         _eSlowK = 1.0 - _eSlowBeta;
+         _eSlowBeta = 1.0 - _eSlowK;
          _eFastToday = emaLookback(optInFastPeriod);
          if( _eFastToday < startIdx ) {
             _eFastToday = startIdx;
@@ -167469,7 +167630,7 @@ public final class Core {
          }
          _eFast = _eFast / optInFastPeriod;
          while( _eFastToday <= _eSlowStart ) {
-            _eFast = Math.fma((double)inReal[_eFastToday++] - _eFast, _eFastK, _eFast);
+            _eFast = Math.fma(_eFastBeta, _eFast, _eFastK * (double)inReal[_eFastToday++]);
          }
          _eSlow = 0.0;
          for( _eN = 0; _eN < optInSlowPeriod; _eN += 1 ) {
@@ -167477,7 +167638,7 @@ public final class Core {
          }
          _eSlow = _eSlow / optInSlowPeriod;
          while( _eSlowToday <= _eSlowStart ) {
-            _eSlow = Math.fma((double)inReal[_eSlowToday++] - _eSlow, _eSlowK, _eSlow);
+            _eSlow = Math.fma(_eSlowBeta, _eSlow, _eSlowK * (double)inReal[_eSlowToday++]);
          }
          _eOutIdx = 0;
          if( !((-0.00000000000001 < _eSlow) && (_eSlow < 0.00000000000001)) ) {
@@ -167489,8 +167650,8 @@ public final class Core {
          _eToday = _eSlowStart + 1;
          while( _eToday <= endIdx ) {
             _eX = (double)inReal[_eToday++];
-            _eFast = Math.fma(_eX - _eFast, _eFastK, _eFast);
-            _eSlow = Math.fma(_eX - _eSlow, _eSlowK, _eSlow);
+            _eFast = Math.fma(_eFastBeta, _eFast, _eFastK * _eX);
+            _eSlow = Math.fma(_eSlowBeta, _eSlow, _eSlowK * _eX);
             if( !((-0.00000000000001 < _eSlow) && (_eSlow < 0.00000000000001)) ) {
                outReal[_eOutIdx] = (_eFast - _eSlow) / _eSlow * 100.0;
             } else {
@@ -169022,6 +169183,8 @@ public final class Core {
          double _eFast;
          double _eSlow;
          double _eX;
+         double _eFastBeta;
+         double _eSlowBeta;
          int _eN;
          int _eToday;
          int _eFastToday;
@@ -169033,8 +169196,12 @@ public final class Core {
             optInSlowPeriod = optInFastPeriod;
             optInFastPeriod = tempInteger;
          }
-         _eFastK = 2.0 / (double)(optInFastPeriod + 1);
-         _eSlowK = 2.0 / (double)(optInSlowPeriod + 1);
+         _eFastBeta = (double)(optInFastPeriod - 1) / (double)(optInFastPeriod + 1);
+         _eFastK = 1.0 - _eFastBeta;
+         _eFastBeta = 1.0 - _eFastK;
+         _eSlowBeta = (double)(optInSlowPeriod - 1) / (double)(optInSlowPeriod + 1);
+         _eSlowK = 1.0 - _eSlowBeta;
+         _eSlowBeta = 1.0 - _eSlowK;
          _eFastToday = emaLookback(optInFastPeriod);
          if( _eFastToday < startIdx ) {
             _eFastToday = startIdx;
@@ -169051,7 +169218,7 @@ public final class Core {
          }
          _eFast = _eFast / optInFastPeriod;
          while( _eFastToday <= _eSlowStart ) {
-            _eFast = Math.fma(inVolume[_eFastToday++] - _eFast, _eFastK, _eFast);
+            _eFast = Math.fma(_eFastBeta, _eFast, _eFastK * inVolume[_eFastToday++]);
          }
          _eSlow = 0.0;
          for( _eN = 0; _eN < optInSlowPeriod; _eN += 1 ) {
@@ -169059,7 +169226,7 @@ public final class Core {
          }
          _eSlow = _eSlow / optInSlowPeriod;
          while( _eSlowToday <= _eSlowStart ) {
-            _eSlow = Math.fma(inVolume[_eSlowToday++] - _eSlow, _eSlowK, _eSlow);
+            _eSlow = Math.fma(_eSlowBeta, _eSlow, _eSlowK * inVolume[_eSlowToday++]);
          }
          _eOutIdx = 0;
          if( !((-0.00000000000001 < _eSlow) && (_eSlow < 0.00000000000001)) ) {
@@ -169071,8 +169238,8 @@ public final class Core {
          _eToday = _eSlowStart + 1;
          while( _eToday <= endIdx ) {
             _eX = inVolume[_eToday++];
-            _eFast = Math.fma(_eX - _eFast, _eFastK, _eFast);
-            _eSlow = Math.fma(_eX - _eSlow, _eSlowK, _eSlow);
+            _eFast = Math.fma(_eFastBeta, _eFast, _eFastK * _eX);
+            _eSlow = Math.fma(_eSlowBeta, _eSlow, _eSlowK * _eX);
             if( !((-0.00000000000001 < _eSlow) && (_eSlow < 0.00000000000001)) ) {
                outReal[_eOutIdx] = (_eFast - _eSlow) / _eSlow * 100.0;
             } else {
@@ -169272,6 +169439,8 @@ public final class Core {
          double _eFast;
          double _eSlow;
          double _eX;
+         double _eFastBeta;
+         double _eSlowBeta;
          int _eN;
          int _eToday;
          int _eFastToday;
@@ -169283,8 +169452,12 @@ public final class Core {
             optInSlowPeriod = optInFastPeriod;
             optInFastPeriod = tempInteger;
          }
-         _eFastK = 2.0 / (double)(optInFastPeriod + 1);
-         _eSlowK = 2.0 / (double)(optInSlowPeriod + 1);
+         _eFastBeta = (double)(optInFastPeriod - 1) / (double)(optInFastPeriod + 1);
+         _eFastK = 1.0 - _eFastBeta;
+         _eFastBeta = 1.0 - _eFastK;
+         _eSlowBeta = (double)(optInSlowPeriod - 1) / (double)(optInSlowPeriod + 1);
+         _eSlowK = 1.0 - _eSlowBeta;
+         _eSlowBeta = 1.0 - _eSlowK;
          _eFastToday = emaLookback(optInFastPeriod);
          if( _eFastToday < startIdx ) {
             _eFastToday = startIdx;
@@ -169301,7 +169474,7 @@ public final class Core {
          }
          _eFast = _eFast / optInFastPeriod;
          while( _eFastToday <= _eSlowStart ) {
-            _eFast = Math.fma((double)inVolume[_eFastToday++] - _eFast, _eFastK, _eFast);
+            _eFast = Math.fma(_eFastBeta, _eFast, _eFastK * (double)inVolume[_eFastToday++]);
          }
          _eSlow = 0.0;
          for( _eN = 0; _eN < optInSlowPeriod; _eN += 1 ) {
@@ -169309,7 +169482,7 @@ public final class Core {
          }
          _eSlow = _eSlow / optInSlowPeriod;
          while( _eSlowToday <= _eSlowStart ) {
-            _eSlow = Math.fma((double)inVolume[_eSlowToday++] - _eSlow, _eSlowK, _eSlow);
+            _eSlow = Math.fma(_eSlowBeta, _eSlow, _eSlowK * (double)inVolume[_eSlowToday++]);
          }
          _eOutIdx = 0;
          if( !((-0.00000000000001 < _eSlow) && (_eSlow < 0.00000000000001)) ) {
@@ -169321,8 +169494,8 @@ public final class Core {
          _eToday = _eSlowStart + 1;
          while( _eToday <= endIdx ) {
             _eX = (double)inVolume[_eToday++];
-            _eFast = Math.fma(_eX - _eFast, _eFastK, _eFast);
-            _eSlow = Math.fma(_eX - _eSlow, _eSlowK, _eSlow);
+            _eFast = Math.fma(_eFastBeta, _eFast, _eFastK * _eX);
+            _eSlow = Math.fma(_eSlowBeta, _eSlow, _eSlowK * _eX);
             if( !((-0.00000000000001 < _eSlow) && (_eSlow < 0.00000000000001)) ) {
                outReal[_eOutIdx] = (_eFast - _eSlow) / _eSlow * 100.0;
             } else {
@@ -185192,12 +185365,15 @@ public final class Core {
       double kSlow = 0;
       double kFast = 0;
       double kSignal = 0;
+      double betaSlow = 0;
+      double betaFast = 0;
+      double betaSignal = 0;
       double highest = 0;
       double lowest = 0;
       double tmp = 0;
       double emaSlowNum = 0;
-      double emaSlowDen = 0;
       double emaFastNum = 0;
+      double emaSlowDen = 0;
       double emaFastDen = 0;
       double sumSlowNum = 0;
       double sumSlowDen = 0;
@@ -185250,6 +185426,10 @@ public final class Core {
       if( outSMI == outSMISignal ) {
          return RetCode.BAD_PARAM ;
       }
+      /* Declared Num, Num, Den, Den: the stream state keeps this order, and with
+       * each stage's pair adjacent gcc 13 packs the steps two by two and then
+       * reads 16 bytes across two of its own stores, which cannot be forwarded.
+       */
       lookbackTotal = smiLookback(optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod);
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
@@ -185274,9 +185454,15 @@ public final class Core {
        * composed form does. The seed sums accumulate from 0.0 in production
        * order; do not reorder or fuse them (0.0+x is not x for x=-0.0).
        */
-      kSlow = 2.0 / (double)(optInSlowPeriod + 1);
-      kFast = 2.0 / (double)(optInFastPeriod + 1);
-      kSignal = 2.0 / (double)(optInSignalPeriod + 1);
+      betaSlow = (double)(optInSlowPeriod - 1) / (double)(optInSlowPeriod + 1);
+      kSlow = 1.0 - betaSlow;
+      betaSlow = 1.0 - kSlow;
+      betaFast = (double)(optInFastPeriod - 1) / (double)(optInFastPeriod + 1);
+      kFast = 1.0 - betaFast;
+      betaFast = 1.0 - kFast;
+      betaSignal = (double)(optInSignalPeriod - 1) / (double)(optInSignalPeriod + 1);
+      kSignal = 1.0 - betaSignal;
+      betaSignal = 1.0 - kSignal;
       lookbackSlow = emaLookback(optInSlowPeriod);
       lookbackFast = emaLookback(optInFastPeriod);
       emaSlowNum = 0.0;
@@ -185347,8 +185533,8 @@ public final class Core {
                emaSlowDen = sumSlowDen / optInSlowPeriod;
             }
          } else {
-            emaSlowNum = Math.fma(num - emaSlowNum, kSlow, emaSlowNum);
-            emaSlowDen = Math.fma(den - emaSlowDen, kSlow, emaSlowDen);
+            emaSlowNum = Math.fma(betaSlow, emaSlowNum, kSlow * num);
+            emaSlowDen = Math.fma(betaSlow, emaSlowDen, kSlow * den);
          }
          /* Stage 2: the fast EMA, over what stage 1 publishes.
           *
@@ -185372,8 +185558,8 @@ public final class Core {
                   emaFastDen = sumFastDen / optInFastPeriod;
                }
             } else {
-               emaFastNum = Math.fma(emaSlowNum - emaFastNum, kFast, emaFastNum);
-               emaFastDen = Math.fma(emaSlowDen - emaFastDen, kFast, emaFastDen);
+               emaFastNum = Math.fma(betaFast, emaFastNum, kFast * emaSlowNum);
+               emaFastDen = Math.fma(betaFast, emaFastDen, kFast * emaSlowDen);
             }
          }
          /* Stage 3: the SMI line, then the signal EMA over it. */
@@ -185391,7 +185577,7 @@ public final class Core {
                   prevSignal = sumSignal / optInSignalPeriod;
                }
             } else {
-               prevSignal = Math.fma(smiValue - prevSignal, kSignal, prevSignal);
+               prevSignal = Math.fma(betaSignal, prevSignal, kSignal * smiValue);
             }
          }
          nBar = nBar + 1;
@@ -185439,10 +185625,10 @@ public final class Core {
          }
          den = highest - lowest;
          num = inClose[today] - (highest + lowest) * 0.5;
-         emaSlowNum = Math.fma(num - emaSlowNum, kSlow, emaSlowNum);
-         emaSlowDen = Math.fma(den - emaSlowDen, kSlow, emaSlowDen);
-         emaFastNum = Math.fma(emaSlowNum - emaFastNum, kFast, emaFastNum);
-         emaFastDen = Math.fma(emaSlowDen - emaFastDen, kFast, emaFastDen);
+         emaSlowNum = Math.fma(betaSlow, emaSlowNum, kSlow * num);
+         emaSlowDen = Math.fma(betaSlow, emaSlowDen, kSlow * den);
+         emaFastNum = Math.fma(betaFast, emaFastNum, kFast * emaSlowNum);
+         emaFastDen = Math.fma(betaFast, emaFastDen, kFast * emaSlowDen);
          /* The denominator is an EMA of an EMA of the high-low range: every term
           * is non-negative and every weight is positive, so it carries no
           * cancellation residue and is zero only when every range that reached it
@@ -185460,7 +185646,7 @@ public final class Core {
          } else {
             smiValue = 0.0;
          }
-         prevSignal = Math.fma(smiValue - prevSignal, kSignal, prevSignal);
+         prevSignal = Math.fma(betaSignal, prevSignal, kSignal * smiValue);
          outSMI[outIdx] = smiValue;
          outSMISignal[outIdx] = prevSignal;
          outIdx = outIdx + 1;
@@ -185487,12 +185673,15 @@ public final class Core {
       double kSlow = 0;
       double kFast = 0;
       double kSignal = 0;
+      double betaSlow = 0;
+      double betaFast = 0;
+      double betaSignal = 0;
       double highest = 0;
       double lowest = 0;
       double tmp = 0;
       double emaSlowNum = 0;
-      double emaSlowDen = 0;
       double emaFastNum = 0;
+      double emaSlowDen = 0;
       double emaFastDen = 0;
       double sumSlowNum = 0;
       double sumSlowDen = 0;
@@ -185555,9 +185744,15 @@ public final class Core {
          return RetCode.SUCCESS ;
       }
       outBegIdx.value = startIdx;
-      kSlow = 2.0 / (double)(optInSlowPeriod + 1);
-      kFast = 2.0 / (double)(optInFastPeriod + 1);
-      kSignal = 2.0 / (double)(optInSignalPeriod + 1);
+      betaSlow = (double)(optInSlowPeriod - 1) / (double)(optInSlowPeriod + 1);
+      kSlow = 1.0 - betaSlow;
+      betaSlow = 1.0 - kSlow;
+      betaFast = (double)(optInFastPeriod - 1) / (double)(optInFastPeriod + 1);
+      kFast = 1.0 - betaFast;
+      betaFast = 1.0 - kFast;
+      betaSignal = (double)(optInSignalPeriod - 1) / (double)(optInSignalPeriod + 1);
+      kSignal = 1.0 - betaSignal;
+      betaSignal = 1.0 - kSignal;
       lookbackSlow = emaLookback(optInSlowPeriod);
       lookbackFast = emaLookback(optInFastPeriod);
       emaSlowNum = 0.0;
@@ -185621,8 +185816,8 @@ public final class Core {
                emaSlowDen = sumSlowDen / optInSlowPeriod;
             }
          } else {
-            emaSlowNum = Math.fma(num - emaSlowNum, kSlow, emaSlowNum);
-            emaSlowDen = Math.fma(den - emaSlowDen, kSlow, emaSlowDen);
+            emaSlowNum = Math.fma(betaSlow, emaSlowNum, kSlow * num);
+            emaSlowDen = Math.fma(betaSlow, emaSlowDen, kSlow * den);
          }
          if( nBar >= lookbackSlow ) {
             nFast = nBar - lookbackSlow;
@@ -185634,8 +185829,8 @@ public final class Core {
                   emaFastDen = sumFastDen / optInFastPeriod;
                }
             } else {
-               emaFastNum = Math.fma(emaSlowNum - emaFastNum, kFast, emaFastNum);
-               emaFastDen = Math.fma(emaSlowDen - emaFastDen, kFast, emaFastDen);
+               emaFastNum = Math.fma(betaFast, emaFastNum, kFast * emaSlowNum);
+               emaFastDen = Math.fma(betaFast, emaFastDen, kFast * emaSlowDen);
             }
          }
          if( nBar >= lookbackSlow + lookbackFast ) {
@@ -185652,7 +185847,7 @@ public final class Core {
                   prevSignal = sumSignal / optInSignalPeriod;
                }
             } else {
-               prevSignal = Math.fma(smiValue - prevSignal, kSignal, prevSignal);
+               prevSignal = Math.fma(betaSignal, prevSignal, kSignal * smiValue);
             }
          }
          nBar = nBar + 1;
@@ -185697,17 +185892,17 @@ public final class Core {
          }
          den = highest - lowest;
          num = (double)inClose[today] - (highest + lowest) * 0.5;
-         emaSlowNum = Math.fma(num - emaSlowNum, kSlow, emaSlowNum);
-         emaSlowDen = Math.fma(den - emaSlowDen, kSlow, emaSlowDen);
-         emaFastNum = Math.fma(emaSlowNum - emaFastNum, kFast, emaFastNum);
-         emaFastDen = Math.fma(emaSlowDen - emaFastDen, kFast, emaFastDen);
+         emaSlowNum = Math.fma(betaSlow, emaSlowNum, kSlow * num);
+         emaSlowDen = Math.fma(betaSlow, emaSlowDen, kSlow * den);
+         emaFastNum = Math.fma(betaFast, emaFastNum, kFast * emaSlowNum);
+         emaFastDen = Math.fma(betaFast, emaFastDen, kFast * emaSlowDen);
          halfDen = 0.5 * emaFastDen;
          if( halfDen > 0.0 ) {
             smiValue = 100.0 * emaFastNum / halfDen;
          } else {
             smiValue = 0.0;
          }
-         prevSignal = Math.fma(smiValue - prevSignal, kSignal, prevSignal);
+         prevSignal = Math.fma(betaSignal, prevSignal, kSignal * smiValue);
          outSMI[outIdx] = smiValue;
          outSMISignal[outIdx] = prevSignal;
          outIdx = outIdx + 1;
@@ -185933,11 +186128,14 @@ public final class Core {
       private double kSlow;
       private double kFast;
       private double kSignal;
+      private double betaSlow;
+      private double betaFast;
+      private double betaSignal;
       private double highest;
       private double lowest;
       private double emaSlowNum;
-      private double emaSlowDen;
       private double emaFastNum;
+      private double emaSlowDen;
       private double emaFastDen;
       private double prevSignal;
       private int trailingIdx;
@@ -185999,11 +186197,14 @@ public final class Core {
          this.kSlow = other.kSlow;
          this.kFast = other.kFast;
          this.kSignal = other.kSignal;
+         this.betaSlow = other.betaSlow;
+         this.betaFast = other.betaFast;
+         this.betaSignal = other.betaSignal;
          this.highest = other.highest;
          this.lowest = other.lowest;
          this.emaSlowNum = other.emaSlowNum;
-         this.emaSlowDen = other.emaSlowDen;
          this.emaFastNum = other.emaFastNum;
+         this.emaSlowDen = other.emaSlowDen;
          this.emaFastDen = other.emaFastDen;
          this.prevSignal = other.prevSignal;
          this.trailingIdx = other.trailingIdx;
@@ -186129,10 +186330,10 @@ public final class Core {
          }
          den = highest - lowest;
          num = (((sp.today & sp.xMask) != pkSlot2) ? sp.x_inClose[sp.today & sp.xMask] : pkVal2) - (highest + lowest) * 0.5;
-         emaSlowNum = Math.fma(num - emaSlowNum, sp.kSlow, emaSlowNum);
-         emaSlowDen = Math.fma(den - emaSlowDen, sp.kSlow, emaSlowDen);
-         emaFastNum = Math.fma(emaSlowNum - emaFastNum, sp.kFast, emaFastNum);
-         emaFastDen = Math.fma(emaSlowDen - emaFastDen, sp.kFast, emaFastDen);
+         emaSlowNum = Math.fma(sp.betaSlow, emaSlowNum, sp.kSlow * num);
+         emaSlowDen = Math.fma(sp.betaSlow, emaSlowDen, sp.kSlow * den);
+         emaFastNum = Math.fma(sp.betaFast, emaFastNum, sp.kFast * emaSlowNum);
+         emaFastDen = Math.fma(sp.betaFast, emaFastDen, sp.kFast * emaSlowDen);
          /* The denominator is an EMA of an EMA of the high-low range: every term
           * is non-negative and every weight is positive, so it carries no
           * cancellation residue and is zero only when every range that reached it
@@ -186150,7 +186351,7 @@ public final class Core {
          } else {
             smiValue = 0.0;
          }
-         prevSignal = Math.fma(smiValue - prevSignal, sp.kSignal, prevSignal);
+         prevSignal = Math.fma(sp.betaSignal, prevSignal, sp.kSignal * smiValue);
          cur_outSMI = smiValue;
          cur_outSMISignal = prevSignal;
          out.smi = cur_outSMI;
@@ -186253,10 +186454,10 @@ public final class Core {
       }
       den = sp.highest - sp.lowest;
       num = sp.x_inClose[sp.today & sp.xMask] - (sp.highest + sp.lowest) * 0.5;
-      sp.emaSlowNum = Math.fma(num - sp.emaSlowNum, sp.kSlow, sp.emaSlowNum);
-      sp.emaSlowDen = Math.fma(den - sp.emaSlowDen, sp.kSlow, sp.emaSlowDen);
-      sp.emaFastNum = Math.fma(sp.emaSlowNum - sp.emaFastNum, sp.kFast, sp.emaFastNum);
-      sp.emaFastDen = Math.fma(sp.emaSlowDen - sp.emaFastDen, sp.kFast, sp.emaFastDen);
+      sp.emaSlowNum = Math.fma(sp.betaSlow, sp.emaSlowNum, sp.kSlow * num);
+      sp.emaSlowDen = Math.fma(sp.betaSlow, sp.emaSlowDen, sp.kSlow * den);
+      sp.emaFastNum = Math.fma(sp.betaFast, sp.emaFastNum, sp.kFast * sp.emaSlowNum);
+      sp.emaFastDen = Math.fma(sp.betaFast, sp.emaFastDen, sp.kFast * sp.emaSlowDen);
       /* The denominator is an EMA of an EMA of the high-low range: every term
        * is non-negative and every weight is positive, so it carries no
        * cancellation residue and is zero only when every range that reached it
@@ -186274,7 +186475,7 @@ public final class Core {
       } else {
          smiValue = 0.0;
       }
-      sp.prevSignal = Math.fma(smiValue - sp.prevSignal, sp.kSignal, sp.prevSignal);
+      sp.prevSignal = Math.fma(sp.betaSignal, sp.prevSignal, sp.kSignal * smiValue);
       sp.cur_outSMI = smiValue;
       sp.cur_outSMISignal = sp.prevSignal;
       sp.trailingIdx = sp.trailingIdx + 1;
@@ -186285,12 +186486,15 @@ public final class Core {
       double kSlow = 0;
       double kFast = 0;
       double kSignal = 0;
+      double betaSlow = 0;
+      double betaFast = 0;
+      double betaSignal = 0;
       double highest = 0;
       double lowest = 0;
       double tmp = 0;
       double emaSlowNum = 0;
-      double emaSlowDen = 0;
       double emaFastNum = 0;
+      double emaSlowDen = 0;
       double emaFastDen = 0;
       double sumSlowNum = 0;
       double sumSlowDen = 0;
@@ -186350,6 +186554,10 @@ public final class Core {
          outNBElement.value = 0;
          return RetCode.INSUFFICIENT_HISTORY;
       }
+      /* Declared Num, Num, Den, Den: the stream state keeps this order, and with
+       * each stage's pair adjacent gcc 13 packs the steps two by two and then
+       * reads 16 bytes across two of its own stores, which cannot be forwarded.
+       */
       lookbackTotal = smiLookback(optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod);
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
@@ -186374,9 +186582,15 @@ public final class Core {
        * composed form does. The seed sums accumulate from 0.0 in production
        * order; do not reorder or fuse them (0.0+x is not x for x=-0.0).
        */
-      kSlow = 2.0 / (double)(optInSlowPeriod + 1);
-      kFast = 2.0 / (double)(optInFastPeriod + 1);
-      kSignal = 2.0 / (double)(optInSignalPeriod + 1);
+      betaSlow = (double)(optInSlowPeriod - 1) / (double)(optInSlowPeriod + 1);
+      kSlow = 1.0 - betaSlow;
+      betaSlow = 1.0 - kSlow;
+      betaFast = (double)(optInFastPeriod - 1) / (double)(optInFastPeriod + 1);
+      kFast = 1.0 - betaFast;
+      betaFast = 1.0 - kFast;
+      betaSignal = (double)(optInSignalPeriod - 1) / (double)(optInSignalPeriod + 1);
+      kSignal = 1.0 - betaSignal;
+      betaSignal = 1.0 - kSignal;
       lookbackSlow = emaLookback(optInSlowPeriod);
       lookbackFast = emaLookback(optInFastPeriod);
       emaSlowNum = 0.0;
@@ -186447,8 +186661,8 @@ public final class Core {
                emaSlowDen = sumSlowDen / optInSlowPeriod;
             }
          } else {
-            emaSlowNum = Math.fma(num - emaSlowNum, kSlow, emaSlowNum);
-            emaSlowDen = Math.fma(den - emaSlowDen, kSlow, emaSlowDen);
+            emaSlowNum = Math.fma(betaSlow, emaSlowNum, kSlow * num);
+            emaSlowDen = Math.fma(betaSlow, emaSlowDen, kSlow * den);
          }
          /* Stage 2: the fast EMA, over what stage 1 publishes.
           *
@@ -186472,8 +186686,8 @@ public final class Core {
                   emaFastDen = sumFastDen / optInFastPeriod;
                }
             } else {
-               emaFastNum = Math.fma(emaSlowNum - emaFastNum, kFast, emaFastNum);
-               emaFastDen = Math.fma(emaSlowDen - emaFastDen, kFast, emaFastDen);
+               emaFastNum = Math.fma(betaFast, emaFastNum, kFast * emaSlowNum);
+               emaFastDen = Math.fma(betaFast, emaFastDen, kFast * emaSlowDen);
             }
          }
          /* Stage 3: the SMI line, then the signal EMA over it. */
@@ -186491,7 +186705,7 @@ public final class Core {
                   prevSignal = sumSignal / optInSignalPeriod;
                }
             } else {
-               prevSignal = Math.fma(smiValue - prevSignal, kSignal, prevSignal);
+               prevSignal = Math.fma(betaSignal, prevSignal, kSignal * smiValue);
             }
          }
          nBar = nBar + 1;
@@ -186539,10 +186753,10 @@ public final class Core {
          }
          den = highest - lowest;
          num = inClose[today] - (highest + lowest) * 0.5;
-         emaSlowNum = Math.fma(num - emaSlowNum, kSlow, emaSlowNum);
-         emaSlowDen = Math.fma(den - emaSlowDen, kSlow, emaSlowDen);
-         emaFastNum = Math.fma(emaSlowNum - emaFastNum, kFast, emaFastNum);
-         emaFastDen = Math.fma(emaSlowDen - emaFastDen, kFast, emaFastDen);
+         emaSlowNum = Math.fma(betaSlow, emaSlowNum, kSlow * num);
+         emaSlowDen = Math.fma(betaSlow, emaSlowDen, kSlow * den);
+         emaFastNum = Math.fma(betaFast, emaFastNum, kFast * emaSlowNum);
+         emaFastDen = Math.fma(betaFast, emaFastDen, kFast * emaSlowDen);
          /* The denominator is an EMA of an EMA of the high-low range: every term
           * is non-negative and every weight is positive, so it carries no
           * cancellation residue and is zero only when every range that reached it
@@ -186560,7 +186774,7 @@ public final class Core {
          } else {
             smiValue = 0.0;
          }
-         prevSignal = Math.fma(smiValue - prevSignal, kSignal, prevSignal);
+         prevSignal = Math.fma(betaSignal, prevSignal, kSignal * smiValue);
          outSMI[outIdx * outStride] = smiValue;
          outSMISignal[outIdx * outStride] = prevSignal;
          outIdx = outIdx + 1;
@@ -186592,11 +186806,14 @@ public final class Core {
       sp.kSlow = kSlow;
       sp.kFast = kFast;
       sp.kSignal = kSignal;
+      sp.betaSlow = betaSlow;
+      sp.betaFast = betaFast;
+      sp.betaSignal = betaSignal;
       sp.highest = highest;
       sp.lowest = lowest;
       sp.emaSlowNum = emaSlowNum;
-      sp.emaSlowDen = emaSlowDen;
       sp.emaFastNum = emaFastNum;
+      sp.emaSlowDen = emaSlowDen;
       sp.emaFastDen = emaFastDen;
       sp.prevSignal = prevSignal;
       sp.trailingIdx = trailingIdx;
@@ -187262,6 +187479,8 @@ public final class Core {
       double slowK = 0;
       double tempReal = 0;
       double lineValue = 0;
+      double fastBeta = 0;
+      double slowBeta = 0;
       double lowest = 0;
       double highest = 0;
       double range = 0;
@@ -187320,8 +187539,12 @@ public final class Core {
          return RetCode.SUCCESS ;
       }
       outBegIdx.value = startIdx;
-      fastK = 2.0 / (double)(optInFastPeriod + 1);
-      slowK = 2.0 / (double)(optInSlowPeriod + 1);
+      fastBeta = (double)(optInFastPeriod - 1) / (double)(optInFastPeriod + 1);
+      fastK = 1.0 - fastBeta;
+      fastBeta = 1.0 - fastK;
+      slowBeta = (double)(optInSlowPeriod - 1) / (double)(optInSlowPeriod + 1);
+      slowK = 1.0 - slowBeta;
+      slowBeta = 1.0 - slowK;
       /* Rolling extrema, van Herk / Gil-Werman: the window ending in slot j is
        * the current block's prefix extremum joined with the previous block's
        * suffix extremum from slot j+1. The extrema are exact, so the output must
@@ -187376,8 +187599,8 @@ public final class Core {
       prevFast = prevFast / optInFastPeriod;
       while( today <= lineStart ) {
          tempReal = inReal[today++];
-         prevFast = Math.fma(tempReal - prevFast, fastK, prevFast);
-         prevSlow = Math.fma(tempReal - prevSlow, slowK, prevSlow);
+         prevFast = Math.fma(fastBeta, prevFast, fastK * tempReal);
+         prevSlow = Math.fma(slowBeta, prevSlow, slowK * tempReal);
       }
       /* A zero range holds the previous fraction (0.0 before any), and the test
        * is exact: in a sustained trend PF saturates at 100 and the second
@@ -187402,8 +187625,8 @@ public final class Core {
        */
       while( today <= startIdx ) {
          tempReal = inReal[today];
-         prevFast = Math.fma(tempReal - prevFast, fastK, prevFast);
-         prevSlow = Math.fma(tempReal - prevSlow, slowK, prevSlow);
+         prevFast = Math.fma(fastBeta, prevFast, fastK * tempReal);
+         prevSlow = Math.fma(slowBeta, prevSlow, slowK * tempReal);
          lineValue = prevFast - prevSlow;
          nLine = nLine + 1;
          lineRing[lineRing_Idx] = lineValue;
@@ -187525,8 +187748,8 @@ public final class Core {
       outIdx = 1;
       while( today <= endIdx ) {
          tempReal = inReal[today];
-         prevFast = Math.fma(tempReal - prevFast, fastK, prevFast);
-         prevSlow = Math.fma(tempReal - prevSlow, slowK, prevSlow);
+         prevFast = Math.fma(fastBeta, prevFast, fastK * tempReal);
+         prevSlow = Math.fma(slowBeta, prevSlow, slowK * tempReal);
          lineValue = prevFast - prevSlow;
          lineRing[lineRing_Idx] = lineValue;
          if( lineRing_Idx == 0 ) {
@@ -187668,6 +187891,8 @@ public final class Core {
       double slowK = 0;
       double tempReal = 0;
       double lineValue = 0;
+      double fastBeta = 0;
+      double slowBeta = 0;
       double lowest = 0;
       double highest = 0;
       double range = 0;
@@ -187726,8 +187951,12 @@ public final class Core {
          return RetCode.SUCCESS ;
       }
       outBegIdx.value = startIdx;
-      fastK = 2.0 / (double)(optInFastPeriod + 1);
-      slowK = 2.0 / (double)(optInSlowPeriod + 1);
+      fastBeta = (double)(optInFastPeriod - 1) / (double)(optInFastPeriod + 1);
+      fastK = 1.0 - fastBeta;
+      fastBeta = 1.0 - fastK;
+      slowBeta = (double)(optInSlowPeriod - 1) / (double)(optInSlowPeriod + 1);
+      slowK = 1.0 - slowBeta;
+      slowBeta = 1.0 - slowK;
       if( optInCyclePeriod < 1 ) return RetCode.INTERNAL_ERROR;
       lineRing = new double[optInCyclePeriod];
       maxIdx_lineRing = (optInCyclePeriod)-1;
@@ -187770,8 +187999,8 @@ public final class Core {
       prevFast = prevFast / optInFastPeriod;
       while( today <= lineStart ) {
          tempReal = (double)inReal[today++];
-         prevFast = Math.fma(tempReal - prevFast, fastK, prevFast);
-         prevSlow = Math.fma(tempReal - prevSlow, slowK, prevSlow);
+         prevFast = Math.fma(fastBeta, prevFast, fastK * tempReal);
+         prevSlow = Math.fma(slowBeta, prevSlow, slowK * tempReal);
       }
       frac1 = 0.0;
       frac2 = 0.0;
@@ -187789,8 +188018,8 @@ public final class Core {
       nLine = 1;
       while( today <= startIdx ) {
          tempReal = (double)inReal[today];
-         prevFast = Math.fma(tempReal - prevFast, fastK, prevFast);
-         prevSlow = Math.fma(tempReal - prevSlow, slowK, prevSlow);
+         prevFast = Math.fma(fastBeta, prevFast, fastK * tempReal);
+         prevSlow = Math.fma(slowBeta, prevSlow, slowK * tempReal);
          lineValue = prevFast - prevSlow;
          nLine = nLine + 1;
          lineRing[lineRing_Idx] = lineValue;
@@ -187912,8 +188141,8 @@ public final class Core {
       outIdx = 1;
       while( today <= endIdx ) {
          tempReal = (double)inReal[today];
-         prevFast = Math.fma(tempReal - prevFast, fastK, prevFast);
-         prevSlow = Math.fma(tempReal - prevSlow, slowK, prevSlow);
+         prevFast = Math.fma(fastBeta, prevFast, fastK * tempReal);
+         prevSlow = Math.fma(slowBeta, prevSlow, slowK * tempReal);
          lineValue = prevFast - prevSlow;
          lineRing[lineRing_Idx] = lineValue;
          if( lineRing_Idx == 0 ) {
@@ -188193,6 +188422,8 @@ public final class Core {
       private double prevSlow;
       private double fastK;
       private double slowK;
+      private double fastBeta;
+      private double slowBeta;
       private double frac1;
       private double frac2;
       private double pf;
@@ -188275,6 +188506,8 @@ public final class Core {
          this.prevSlow = other.prevSlow;
          this.fastK = other.fastK;
          this.slowK = other.slowK;
+         this.fastBeta = other.fastBeta;
+         this.slowBeta = other.slowBeta;
          this.frac1 = other.frac1;
          this.frac2 = other.frac2;
          this.pf = other.pf;
@@ -188379,8 +188612,8 @@ public final class Core {
          int pkSlot1 = -1;
          double pkVal1 = 0.0;
          tempReal = inReal;
-         prevFast = Math.fma(tempReal - prevFast, sp.fastK, prevFast);
-         prevSlow = Math.fma(tempReal - prevSlow, sp.slowK, prevSlow);
+         prevFast = Math.fma(sp.fastBeta, prevFast, sp.fastK * tempReal);
+         prevSlow = Math.fma(sp.slowBeta, prevSlow, sp.slowK * tempReal);
          lineValue = prevFast - prevSlow;
          pkSlot0 = lineRing_Idx;
          pkVal0 = lineValue;
@@ -188521,8 +188754,8 @@ public final class Core {
       double sufLo = 0.0;
       int i = 0;
       tempReal = inReal;
-      sp.prevFast = Math.fma(tempReal - sp.prevFast, sp.fastK, sp.prevFast);
-      sp.prevSlow = Math.fma(tempReal - sp.prevSlow, sp.slowK, sp.prevSlow);
+      sp.prevFast = Math.fma(sp.fastBeta, sp.prevFast, sp.fastK * tempReal);
+      sp.prevSlow = Math.fma(sp.slowBeta, sp.prevSlow, sp.slowK * tempReal);
       lineValue = sp.prevFast - sp.prevSlow;
       sp.cb_lineRing[sp.lineRing_Idx] = lineValue;
       if( sp.lineRing_Idx == 0 ) {
@@ -188656,6 +188889,8 @@ public final class Core {
       double slowK = 0;
       double tempReal = 0;
       double lineValue = 0;
+      double fastBeta = 0;
+      double slowBeta = 0;
       double lowest = 0;
       double highest = 0;
       double range = 0;
@@ -188721,8 +188956,12 @@ public final class Core {
          return RetCode.INSUFFICIENT_HISTORY ;
       }
       outBegIdx.value = startIdx;
-      fastK = 2.0 / (double)(optInFastPeriod + 1);
-      slowK = 2.0 / (double)(optInSlowPeriod + 1);
+      fastBeta = (double)(optInFastPeriod - 1) / (double)(optInFastPeriod + 1);
+      fastK = 1.0 - fastBeta;
+      fastBeta = 1.0 - fastK;
+      slowBeta = (double)(optInSlowPeriod - 1) / (double)(optInSlowPeriod + 1);
+      slowK = 1.0 - slowBeta;
+      slowBeta = 1.0 - slowK;
       /* Rolling extrema, van Herk / Gil-Werman: the window ending in slot j is
        * the current block's prefix extremum joined with the previous block's
        * suffix extremum from slot j+1. The extrema are exact, so the output must
@@ -188777,8 +189016,8 @@ public final class Core {
       prevFast = prevFast / optInFastPeriod;
       while( today <= lineStart ) {
          tempReal = inReal[today++];
-         prevFast = Math.fma(tempReal - prevFast, fastK, prevFast);
-         prevSlow = Math.fma(tempReal - prevSlow, slowK, prevSlow);
+         prevFast = Math.fma(fastBeta, prevFast, fastK * tempReal);
+         prevSlow = Math.fma(slowBeta, prevSlow, slowK * tempReal);
       }
       /* A zero range holds the previous fraction (0.0 before any), and the test
        * is exact: in a sustained trend PF saturates at 100 and the second
@@ -188803,8 +189042,8 @@ public final class Core {
        */
       while( today <= startIdx ) {
          tempReal = inReal[today];
-         prevFast = Math.fma(tempReal - prevFast, fastK, prevFast);
-         prevSlow = Math.fma(tempReal - prevSlow, slowK, prevSlow);
+         prevFast = Math.fma(fastBeta, prevFast, fastK * tempReal);
+         prevSlow = Math.fma(slowBeta, prevSlow, slowK * tempReal);
          lineValue = prevFast - prevSlow;
          nLine = nLine + 1;
          lineRing[lineRing_Idx] = lineValue;
@@ -188926,8 +189165,8 @@ public final class Core {
       outIdx = 1;
       while( today <= endIdx ) {
          tempReal = inReal[today];
-         prevFast = Math.fma(tempReal - prevFast, fastK, prevFast);
-         prevSlow = Math.fma(tempReal - prevSlow, slowK, prevSlow);
+         prevFast = Math.fma(fastBeta, prevFast, fastK * tempReal);
+         prevSlow = Math.fma(slowBeta, prevSlow, slowK * tempReal);
          lineValue = prevFast - prevSlow;
          lineRing[lineRing_Idx] = lineValue;
          if( lineRing_Idx == 0 ) {
@@ -189065,6 +189304,8 @@ public final class Core {
       sp.prevSlow = prevSlow;
       sp.fastK = fastK;
       sp.slowK = slowK;
+      sp.fastBeta = fastBeta;
+      sp.slowBeta = slowBeta;
       sp.frac1 = frac1;
       sp.frac2 = frac2;
       sp.pf = pf;
@@ -201536,6 +201777,7 @@ public final class Core {
       double prevEMA3 = 0;
       double tempReal = 0;
       double optInK_1 = 0;
+      double emaBeta = 0;
       int i = 0;
       int today = 0;
       int outIdx = 0;
@@ -201608,7 +201850,7 @@ public final class Core {
        *
        * The arithmetic order below is the bit-exactness contract
        * (do not reorder or fuse operations):
-       *  - EMA recursion: ((x-prev)*k)+prev.
+       *  - EMA recursion: k*x + beta*prev, with ema.c's k and beta.
        *  - Each EMA is seeded with the sum of its first 'period'
        *    inputs, accumulated from 0.0 in input order (0.0+x is
        *    not x for x=-0.0), divided by the period.
@@ -201618,7 +201860,9 @@ public final class Core {
        * In-place (inReal == outReal) is supported: outReal[outIdx]
        * is written only after inReal[startIdx+outIdx] was read.
        */
-      optInK_1 = 2.0 / (double)(optInTimePeriod + 1);
+      emaBeta = (double)(optInTimePeriod - 1) / (double)(optInTimePeriod + 1);
+      optInK_1 = 1.0 - emaBeta;
+      emaBeta = 1.0 - optInK_1;
       /* Seed EMA1 with a simple average of the first
        * 'period' price bars.
        */
@@ -201633,7 +201877,7 @@ public final class Core {
        * the bar where EMA2 seeding begins.
        */
       while( today <= startIdx - lookbackEMA * 2 ) {
-         prevEMA1 = Math.fma(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
+         prevEMA1 = Math.fma(emaBeta, prevEMA1, optInK_1 * inReal[today++]);
       }
       /* Seed EMA2 with a simple average of the first 'period'
        * EMA1 values, accumulated as EMA1 produces them.
@@ -201642,7 +201886,7 @@ public final class Core {
       tempReal += prevEMA1;
       i = optInTimePeriod - 1;
       while( i-- > 0 ) {
-         prevEMA1 = Math.fma(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
+         prevEMA1 = Math.fma(emaBeta, prevEMA1, optInK_1 * inReal[today++]);
          tempReal += prevEMA1;
       }
       prevEMA2 = tempReal / optInTimePeriod;
@@ -201650,8 +201894,8 @@ public final class Core {
        * period of EMA2, up to the bar where EMA3 seeding begins.
        */
       while( today <= startIdx - lookbackEMA ) {
-         prevEMA1 = Math.fma(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
-         prevEMA2 = Math.fma(prevEMA1 - prevEMA2, optInK_1, prevEMA2);
+         prevEMA1 = Math.fma(emaBeta, prevEMA1, optInK_1 * inReal[today++]);
+         prevEMA2 = Math.fma(emaBeta, prevEMA2, optInK_1 * prevEMA1);
       }
       /* Seed EMA3 with a simple average of the first 'period'
        * EMA2 values, accumulated as EMA2 produces them.
@@ -201660,8 +201904,8 @@ public final class Core {
       tempReal += prevEMA2;
       i = optInTimePeriod - 1;
       while( i-- > 0 ) {
-         prevEMA1 = Math.fma(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
-         prevEMA2 = Math.fma(prevEMA1 - prevEMA2, optInK_1, prevEMA2);
+         prevEMA1 = Math.fma(emaBeta, prevEMA1, optInK_1 * inReal[today++]);
+         prevEMA2 = Math.fma(emaBeta, prevEMA2, optInK_1 * prevEMA1);
          tempReal += prevEMA2;
       }
       prevEMA3 = tempReal / optInTimePeriod;
@@ -201669,9 +201913,9 @@ public final class Core {
        * period of EMA3, up to the first output bar.
        */
       while( today <= startIdx ) {
-         prevEMA1 = Math.fma(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
-         prevEMA2 = Math.fma(prevEMA1 - prevEMA2, optInK_1, prevEMA2);
-         prevEMA3 = Math.fma(prevEMA2 - prevEMA3, optInK_1, prevEMA3);
+         prevEMA1 = Math.fma(emaBeta, prevEMA1, optInK_1 * inReal[today++]);
+         prevEMA2 = Math.fma(emaBeta, prevEMA2, optInK_1 * prevEMA1);
+         prevEMA3 = Math.fma(emaBeta, prevEMA3, optInK_1 * prevEMA2);
       }
       /* Stable zone: keep advancing the three EMA in lockstep and
        * write the TEMA into the output.
@@ -201679,9 +201923,9 @@ public final class Core {
       outReal[0] = prevEMA3 + (3.0 * prevEMA1 - 3.0 * prevEMA2);
       outIdx = 1;
       while( today <= endIdx ) {
-         prevEMA1 = Math.fma(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
-         prevEMA2 = Math.fma(prevEMA1 - prevEMA2, optInK_1, prevEMA2);
-         prevEMA3 = Math.fma(prevEMA2 - prevEMA3, optInK_1, prevEMA3);
+         prevEMA1 = Math.fma(emaBeta, prevEMA1, optInK_1 * inReal[today++]);
+         prevEMA2 = Math.fma(emaBeta, prevEMA2, optInK_1 * prevEMA1);
+         prevEMA3 = Math.fma(emaBeta, prevEMA3, optInK_1 * prevEMA2);
          outReal[outIdx++] = prevEMA3 + (3.0 * prevEMA1 - 3.0 * prevEMA2);
       }
       /* Succeed. Indicate where the output starts relative to
@@ -201704,6 +201948,7 @@ public final class Core {
       double prevEMA3 = 0;
       double tempReal = 0;
       double optInK_1 = 0;
+      double emaBeta = 0;
       int i = 0;
       int today = 0;
       int outIdx = 0;
@@ -201739,7 +201984,9 @@ public final class Core {
          outNBElement.value = outIdx;
          return RetCode.SUCCESS ;
       }
-      optInK_1 = 2.0 / (double)(optInTimePeriod + 1);
+      emaBeta = (double)(optInTimePeriod - 1) / (double)(optInTimePeriod + 1);
+      optInK_1 = 1.0 - emaBeta;
+      emaBeta = 1.0 - optInK_1;
       today = startIdx - lookbackTotal;
       i = optInTimePeriod;
       tempReal = 0.0;
@@ -201748,40 +201995,40 @@ public final class Core {
       }
       prevEMA1 = tempReal / optInTimePeriod;
       while( today <= startIdx - lookbackEMA * 2 ) {
-         prevEMA1 = Math.fma((double)inReal[today++] - prevEMA1, optInK_1, prevEMA1);
+         prevEMA1 = Math.fma(emaBeta, prevEMA1, optInK_1 * (double)inReal[today++]);
       }
       tempReal = 0.0;
       tempReal += prevEMA1;
       i = optInTimePeriod - 1;
       while( i-- > 0 ) {
-         prevEMA1 = Math.fma((double)inReal[today++] - prevEMA1, optInK_1, prevEMA1);
+         prevEMA1 = Math.fma(emaBeta, prevEMA1, optInK_1 * (double)inReal[today++]);
          tempReal += prevEMA1;
       }
       prevEMA2 = tempReal / optInTimePeriod;
       while( today <= startIdx - lookbackEMA ) {
-         prevEMA1 = Math.fma((double)inReal[today++] - prevEMA1, optInK_1, prevEMA1);
-         prevEMA2 = Math.fma(prevEMA1 - prevEMA2, optInK_1, prevEMA2);
+         prevEMA1 = Math.fma(emaBeta, prevEMA1, optInK_1 * (double)inReal[today++]);
+         prevEMA2 = Math.fma(emaBeta, prevEMA2, optInK_1 * prevEMA1);
       }
       tempReal = 0.0;
       tempReal += prevEMA2;
       i = optInTimePeriod - 1;
       while( i-- > 0 ) {
-         prevEMA1 = Math.fma((double)inReal[today++] - prevEMA1, optInK_1, prevEMA1);
-         prevEMA2 = Math.fma(prevEMA1 - prevEMA2, optInK_1, prevEMA2);
+         prevEMA1 = Math.fma(emaBeta, prevEMA1, optInK_1 * (double)inReal[today++]);
+         prevEMA2 = Math.fma(emaBeta, prevEMA2, optInK_1 * prevEMA1);
          tempReal += prevEMA2;
       }
       prevEMA3 = tempReal / optInTimePeriod;
       while( today <= startIdx ) {
-         prevEMA1 = Math.fma((double)inReal[today++] - prevEMA1, optInK_1, prevEMA1);
-         prevEMA2 = Math.fma(prevEMA1 - prevEMA2, optInK_1, prevEMA2);
-         prevEMA3 = Math.fma(prevEMA2 - prevEMA3, optInK_1, prevEMA3);
+         prevEMA1 = Math.fma(emaBeta, prevEMA1, optInK_1 * (double)inReal[today++]);
+         prevEMA2 = Math.fma(emaBeta, prevEMA2, optInK_1 * prevEMA1);
+         prevEMA3 = Math.fma(emaBeta, prevEMA3, optInK_1 * prevEMA2);
       }
       outReal[0] = prevEMA3 + (3.0 * prevEMA1 - 3.0 * prevEMA2);
       outIdx = 1;
       while( today <= endIdx ) {
-         prevEMA1 = Math.fma((double)inReal[today++] - prevEMA1, optInK_1, prevEMA1);
-         prevEMA2 = Math.fma(prevEMA1 - prevEMA2, optInK_1, prevEMA2);
-         prevEMA3 = Math.fma(prevEMA2 - prevEMA3, optInK_1, prevEMA3);
+         prevEMA1 = Math.fma(emaBeta, prevEMA1, optInK_1 * (double)inReal[today++]);
+         prevEMA2 = Math.fma(emaBeta, prevEMA2, optInK_1 * prevEMA1);
+         prevEMA3 = Math.fma(emaBeta, prevEMA3, optInK_1 * prevEMA2);
          outReal[outIdx++] = prevEMA3 + (3.0 * prevEMA1 - 3.0 * prevEMA2);
       }
       outBegIdx.value = startIdx;
@@ -201938,6 +202185,7 @@ public final class Core {
       private double prevEMA2;
       private double prevEMA3;
       private double optInK_1;
+      private double emaBeta;
       private double cur_outReal;
       private int outRangeBegIdx;
       private int outRangeCount;
@@ -201985,6 +202233,7 @@ public final class Core {
          this.prevEMA2 = other.prevEMA2;
          this.prevEMA3 = other.prevEMA3;
          this.optInK_1 = other.optInK_1;
+         this.emaBeta = other.emaBeta;
          this.cur_outReal = other.cur_outReal;
          this.outRangeBegIdx = other.outRangeBegIdx;
          this.outRangeCount = other.outRangeCount;
@@ -202038,9 +202287,9 @@ public final class Core {
             cur_outReal = inReal;
             return cur_outReal ;
          }
-         prevEMA1 = Math.fma(inReal - prevEMA1, sp.optInK_1, prevEMA1);
-         prevEMA2 = Math.fma(prevEMA1 - prevEMA2, sp.optInK_1, prevEMA2);
-         prevEMA3 = Math.fma(prevEMA2 - prevEMA3, sp.optInK_1, prevEMA3);
+         prevEMA1 = Math.fma(sp.emaBeta, prevEMA1, sp.optInK_1 * inReal);
+         prevEMA2 = Math.fma(sp.emaBeta, prevEMA2, sp.optInK_1 * prevEMA1);
+         prevEMA3 = Math.fma(sp.emaBeta, prevEMA3, sp.optInK_1 * prevEMA2);
          cur_outReal = prevEMA3 + (3.0 * prevEMA1 - 3.0 * prevEMA2);
          return cur_outReal;
       }
@@ -202077,9 +202326,9 @@ public final class Core {
          sp.cur_outReal = inReal;
          return ;
       }
-      sp.prevEMA1 = Math.fma(inReal - sp.prevEMA1, sp.optInK_1, sp.prevEMA1);
-      sp.prevEMA2 = Math.fma(sp.prevEMA1 - sp.prevEMA2, sp.optInK_1, sp.prevEMA2);
-      sp.prevEMA3 = Math.fma(sp.prevEMA2 - sp.prevEMA3, sp.optInK_1, sp.prevEMA3);
+      sp.prevEMA1 = Math.fma(sp.emaBeta, sp.prevEMA1, sp.optInK_1 * inReal);
+      sp.prevEMA2 = Math.fma(sp.emaBeta, sp.prevEMA2, sp.optInK_1 * sp.prevEMA1);
+      sp.prevEMA3 = Math.fma(sp.emaBeta, sp.prevEMA3, sp.optInK_1 * sp.prevEMA2);
       sp.cur_outReal = sp.prevEMA3 + (3.0 * sp.prevEMA1 - 3.0 * sp.prevEMA2);
    }
    private RetCode temaOpenImpl( TemaStream sp, double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
@@ -202089,6 +202338,7 @@ public final class Core {
       double prevEMA3 = 0;
       double tempReal = 0;
       double optInK_1 = 0;
+      double emaBeta = 0;
       int i = 0;
       int today = 0;
       int outIdx = 0;
@@ -202123,6 +202373,7 @@ public final class Core {
          sp.prevEMA2 = 0.0;
          sp.prevEMA3 = 0.0;
          sp.optInK_1 = 0.0;
+         sp.emaBeta = 0.0;
          outBegIdx.value = fillLb;
          outNBElement.value = historyLen - fillLb;
          if( outStride == 0 ) {
@@ -202177,7 +202428,7 @@ public final class Core {
        *
        * The arithmetic order below is the bit-exactness contract
        * (do not reorder or fuse operations):
-       *  - EMA recursion: ((x-prev)*k)+prev.
+       *  - EMA recursion: k*x + beta*prev, with ema.c's k and beta.
        *  - Each EMA is seeded with the sum of its first 'period'
        *    inputs, accumulated from 0.0 in input order (0.0+x is
        *    not x for x=-0.0), divided by the period.
@@ -202187,7 +202438,9 @@ public final class Core {
        * In-place (inReal == outReal) is supported: outReal[outIdx]
        * is written only after inReal[startIdx+outIdx] was read.
        */
-      optInK_1 = 2.0 / (double)(optInTimePeriod + 1);
+      emaBeta = (double)(optInTimePeriod - 1) / (double)(optInTimePeriod + 1);
+      optInK_1 = 1.0 - emaBeta;
+      emaBeta = 1.0 - optInK_1;
       /* Seed EMA1 with a simple average of the first
        * 'period' price bars.
        */
@@ -202202,7 +202455,7 @@ public final class Core {
        * the bar where EMA2 seeding begins.
        */
       while( today <= startIdx - lookbackEMA * 2 ) {
-         prevEMA1 = Math.fma(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
+         prevEMA1 = Math.fma(emaBeta, prevEMA1, optInK_1 * inReal[today++]);
       }
       /* Seed EMA2 with a simple average of the first 'period'
        * EMA1 values, accumulated as EMA1 produces them.
@@ -202211,7 +202464,7 @@ public final class Core {
       tempReal += prevEMA1;
       i = optInTimePeriod - 1;
       while( i-- > 0 ) {
-         prevEMA1 = Math.fma(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
+         prevEMA1 = Math.fma(emaBeta, prevEMA1, optInK_1 * inReal[today++]);
          tempReal += prevEMA1;
       }
       prevEMA2 = tempReal / optInTimePeriod;
@@ -202219,8 +202472,8 @@ public final class Core {
        * period of EMA2, up to the bar where EMA3 seeding begins.
        */
       while( today <= startIdx - lookbackEMA ) {
-         prevEMA1 = Math.fma(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
-         prevEMA2 = Math.fma(prevEMA1 - prevEMA2, optInK_1, prevEMA2);
+         prevEMA1 = Math.fma(emaBeta, prevEMA1, optInK_1 * inReal[today++]);
+         prevEMA2 = Math.fma(emaBeta, prevEMA2, optInK_1 * prevEMA1);
       }
       /* Seed EMA3 with a simple average of the first 'period'
        * EMA2 values, accumulated as EMA2 produces them.
@@ -202229,8 +202482,8 @@ public final class Core {
       tempReal += prevEMA2;
       i = optInTimePeriod - 1;
       while( i-- > 0 ) {
-         prevEMA1 = Math.fma(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
-         prevEMA2 = Math.fma(prevEMA1 - prevEMA2, optInK_1, prevEMA2);
+         prevEMA1 = Math.fma(emaBeta, prevEMA1, optInK_1 * inReal[today++]);
+         prevEMA2 = Math.fma(emaBeta, prevEMA2, optInK_1 * prevEMA1);
          tempReal += prevEMA2;
       }
       prevEMA3 = tempReal / optInTimePeriod;
@@ -202238,9 +202491,9 @@ public final class Core {
        * period of EMA3, up to the first output bar.
        */
       while( today <= startIdx ) {
-         prevEMA1 = Math.fma(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
-         prevEMA2 = Math.fma(prevEMA1 - prevEMA2, optInK_1, prevEMA2);
-         prevEMA3 = Math.fma(prevEMA2 - prevEMA3, optInK_1, prevEMA3);
+         prevEMA1 = Math.fma(emaBeta, prevEMA1, optInK_1 * inReal[today++]);
+         prevEMA2 = Math.fma(emaBeta, prevEMA2, optInK_1 * prevEMA1);
+         prevEMA3 = Math.fma(emaBeta, prevEMA3, optInK_1 * prevEMA2);
       }
       /* Stable zone: keep advancing the three EMA in lockstep and
        * write the TEMA into the output.
@@ -202248,9 +202501,9 @@ public final class Core {
       outReal[0 * outStride] = prevEMA3 + (3.0 * prevEMA1 - 3.0 * prevEMA2);
       outIdx = 1;
       while( today <= endIdx ) {
-         prevEMA1 = Math.fma(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
-         prevEMA2 = Math.fma(prevEMA1 - prevEMA2, optInK_1, prevEMA2);
-         prevEMA3 = Math.fma(prevEMA2 - prevEMA3, optInK_1, prevEMA3);
+         prevEMA1 = Math.fma(emaBeta, prevEMA1, optInK_1 * inReal[today++]);
+         prevEMA2 = Math.fma(emaBeta, prevEMA2, optInK_1 * prevEMA1);
+         prevEMA3 = Math.fma(emaBeta, prevEMA3, optInK_1 * prevEMA2);
          outReal[outIdx++ * outStride] = prevEMA3 + (3.0 * prevEMA1 - 3.0 * prevEMA2);
       }
       /* Succeed. Indicate where the output starts relative to
@@ -202264,6 +202517,7 @@ public final class Core {
       sp.prevEMA2 = prevEMA2;
       sp.prevEMA3 = prevEMA3;
       sp.optInK_1 = optInK_1;
+      sp.emaBeta = emaBeta;
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.SUCCESS;
    }
@@ -204586,6 +204840,7 @@ public final class Core {
       double prevEMA3 = 0;
       double tempReal = 0;
       double optInK_1 = 0;
+      double emaBeta = 0;
       int i = 0;
       int today = 0;
       int outIdx = 0;
@@ -204624,7 +204879,9 @@ public final class Core {
        * x for x=-0.0). In-place safe: outReal[outIdx] is written after
        * inReal[startIdx+outIdx] was read.
        */
-      optInK_1 = 2.0 / (double)(optInTimePeriod + 1);
+      emaBeta = (double)(optInTimePeriod - 1) / (double)(optInTimePeriod + 1);
+      optInK_1 = 1.0 - emaBeta;
+      emaBeta = 1.0 - optInK_1;
       /* Seed EMA1 with a simple average of the first
        * 'period' price bars.
        */
@@ -204639,7 +204896,7 @@ public final class Core {
        * the bar where EMA2 seeding begins.
        */
       while( today <= startIdx - (lookbackEMA * 2 + 1) ) {
-         prevEMA1 = Math.fma(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
+         prevEMA1 = Math.fma(emaBeta, prevEMA1, optInK_1 * inReal[today++]);
       }
       /* Seed EMA2 with a simple average of the first 'period'
        * EMA1 values, accumulated as EMA1 produces them.
@@ -204648,7 +204905,7 @@ public final class Core {
       tempReal += prevEMA1;
       i = optInTimePeriod - 1;
       while( i-- > 0 ) {
-         prevEMA1 = Math.fma(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
+         prevEMA1 = Math.fma(emaBeta, prevEMA1, optInK_1 * inReal[today++]);
          tempReal += prevEMA1;
       }
       prevEMA2 = tempReal / optInTimePeriod;
@@ -204656,8 +204913,8 @@ public final class Core {
        * period of EMA2, up to the bar where EMA3 seeding begins.
        */
       while( today <= startIdx - (lookbackEMA + 1) ) {
-         prevEMA1 = Math.fma(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
-         prevEMA2 = Math.fma(prevEMA1 - prevEMA2, optInK_1, prevEMA2);
+         prevEMA1 = Math.fma(emaBeta, prevEMA1, optInK_1 * inReal[today++]);
+         prevEMA2 = Math.fma(emaBeta, prevEMA2, optInK_1 * prevEMA1);
       }
       /* Seed EMA3 with a simple average of the first 'period'
        * EMA2 values, accumulated as EMA2 produces them.
@@ -204666,8 +204923,8 @@ public final class Core {
       tempReal += prevEMA2;
       i = optInTimePeriod - 1;
       while( i-- > 0 ) {
-         prevEMA1 = Math.fma(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
-         prevEMA2 = Math.fma(prevEMA1 - prevEMA2, optInK_1, prevEMA2);
+         prevEMA1 = Math.fma(emaBeta, prevEMA1, optInK_1 * inReal[today++]);
+         prevEMA2 = Math.fma(emaBeta, prevEMA2, optInK_1 * prevEMA1);
          tempReal += prevEMA2;
       }
       prevEMA3 = tempReal / optInTimePeriod;
@@ -204675,9 +204932,9 @@ public final class Core {
        * period of EMA3, up to the bar before the first output.
        */
       while( today <= startIdx - 1 ) {
-         prevEMA1 = Math.fma(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
-         prevEMA2 = Math.fma(prevEMA1 - prevEMA2, optInK_1, prevEMA2);
-         prevEMA3 = Math.fma(prevEMA2 - prevEMA3, optInK_1, prevEMA3);
+         prevEMA1 = Math.fma(emaBeta, prevEMA1, optInK_1 * inReal[today++]);
+         prevEMA2 = Math.fma(emaBeta, prevEMA2, optInK_1 * prevEMA1);
+         prevEMA3 = Math.fma(emaBeta, prevEMA3, optInK_1 * prevEMA2);
       }
       /* Stable zone: keep advancing the three EMA in lockstep and
        * write the 1-day rate-of-change of EMA3 into the output.
@@ -204685,9 +204942,9 @@ public final class Core {
       outIdx = 0;
       while( today <= endIdx ) {
          tempReal = prevEMA3;
-         prevEMA1 = Math.fma(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
-         prevEMA2 = Math.fma(prevEMA1 - prevEMA2, optInK_1, prevEMA2);
-         prevEMA3 = Math.fma(prevEMA2 - prevEMA3, optInK_1, prevEMA3);
+         prevEMA1 = Math.fma(emaBeta, prevEMA1, optInK_1 * inReal[today++]);
+         prevEMA2 = Math.fma(emaBeta, prevEMA2, optInK_1 * prevEMA1);
+         prevEMA3 = Math.fma(emaBeta, prevEMA3, optInK_1 * prevEMA2);
          if( tempReal != 0.0 ) {
             outReal[outIdx++] = (prevEMA3 / tempReal - 1.0) * 100.0;
          } else {
@@ -204714,6 +204971,7 @@ public final class Core {
       double prevEMA3 = 0;
       double tempReal = 0;
       double optInK_1 = 0;
+      double emaBeta = 0;
       int i = 0;
       int today = 0;
       int outIdx = 0;
@@ -204740,7 +204998,9 @@ public final class Core {
       if( startIdx > endIdx ) {
          return RetCode.SUCCESS ;
       }
-      optInK_1 = 2.0 / (double)(optInTimePeriod + 1);
+      emaBeta = (double)(optInTimePeriod - 1) / (double)(optInTimePeriod + 1);
+      optInK_1 = 1.0 - emaBeta;
+      emaBeta = 1.0 - optInK_1;
       today = startIdx - lookbackTotal;
       i = optInTimePeriod;
       tempReal = 0.0;
@@ -204749,40 +205009,40 @@ public final class Core {
       }
       prevEMA1 = tempReal / optInTimePeriod;
       while( today <= startIdx - (lookbackEMA * 2 + 1) ) {
-         prevEMA1 = Math.fma((double)inReal[today++] - prevEMA1, optInK_1, prevEMA1);
+         prevEMA1 = Math.fma(emaBeta, prevEMA1, optInK_1 * (double)inReal[today++]);
       }
       tempReal = 0.0;
       tempReal += prevEMA1;
       i = optInTimePeriod - 1;
       while( i-- > 0 ) {
-         prevEMA1 = Math.fma((double)inReal[today++] - prevEMA1, optInK_1, prevEMA1);
+         prevEMA1 = Math.fma(emaBeta, prevEMA1, optInK_1 * (double)inReal[today++]);
          tempReal += prevEMA1;
       }
       prevEMA2 = tempReal / optInTimePeriod;
       while( today <= startIdx - (lookbackEMA + 1) ) {
-         prevEMA1 = Math.fma((double)inReal[today++] - prevEMA1, optInK_1, prevEMA1);
-         prevEMA2 = Math.fma(prevEMA1 - prevEMA2, optInK_1, prevEMA2);
+         prevEMA1 = Math.fma(emaBeta, prevEMA1, optInK_1 * (double)inReal[today++]);
+         prevEMA2 = Math.fma(emaBeta, prevEMA2, optInK_1 * prevEMA1);
       }
       tempReal = 0.0;
       tempReal += prevEMA2;
       i = optInTimePeriod - 1;
       while( i-- > 0 ) {
-         prevEMA1 = Math.fma((double)inReal[today++] - prevEMA1, optInK_1, prevEMA1);
-         prevEMA2 = Math.fma(prevEMA1 - prevEMA2, optInK_1, prevEMA2);
+         prevEMA1 = Math.fma(emaBeta, prevEMA1, optInK_1 * (double)inReal[today++]);
+         prevEMA2 = Math.fma(emaBeta, prevEMA2, optInK_1 * prevEMA1);
          tempReal += prevEMA2;
       }
       prevEMA3 = tempReal / optInTimePeriod;
       while( today <= startIdx - 1 ) {
-         prevEMA1 = Math.fma((double)inReal[today++] - prevEMA1, optInK_1, prevEMA1);
-         prevEMA2 = Math.fma(prevEMA1 - prevEMA2, optInK_1, prevEMA2);
-         prevEMA3 = Math.fma(prevEMA2 - prevEMA3, optInK_1, prevEMA3);
+         prevEMA1 = Math.fma(emaBeta, prevEMA1, optInK_1 * (double)inReal[today++]);
+         prevEMA2 = Math.fma(emaBeta, prevEMA2, optInK_1 * prevEMA1);
+         prevEMA3 = Math.fma(emaBeta, prevEMA3, optInK_1 * prevEMA2);
       }
       outIdx = 0;
       while( today <= endIdx ) {
          tempReal = prevEMA3;
-         prevEMA1 = Math.fma((double)inReal[today++] - prevEMA1, optInK_1, prevEMA1);
-         prevEMA2 = Math.fma(prevEMA1 - prevEMA2, optInK_1, prevEMA2);
-         prevEMA3 = Math.fma(prevEMA2 - prevEMA3, optInK_1, prevEMA3);
+         prevEMA1 = Math.fma(emaBeta, prevEMA1, optInK_1 * (double)inReal[today++]);
+         prevEMA2 = Math.fma(emaBeta, prevEMA2, optInK_1 * prevEMA1);
+         prevEMA3 = Math.fma(emaBeta, prevEMA3, optInK_1 * prevEMA2);
          if( tempReal != 0.0 ) {
             outReal[outIdx++] = (prevEMA3 / tempReal - 1.0) * 100.0;
          } else {
@@ -204949,6 +205209,7 @@ public final class Core {
       private double prevEMA2;
       private double prevEMA3;
       private double optInK_1;
+      private double emaBeta;
       private double cur_outReal;
       private int outRangeBegIdx;
       private int outRangeCount;
@@ -204996,6 +205257,7 @@ public final class Core {
          this.prevEMA2 = other.prevEMA2;
          this.prevEMA3 = other.prevEMA3;
          this.optInK_1 = other.optInK_1;
+         this.emaBeta = other.emaBeta;
          this.cur_outReal = other.cur_outReal;
          this.outRangeBegIdx = other.outRangeBegIdx;
          this.outRangeCount = other.outRangeCount;
@@ -205047,9 +205309,9 @@ public final class Core {
          double prevEMA2 = sp.prevEMA2;
          double prevEMA3 = sp.prevEMA3;
          tempReal = prevEMA3;
-         prevEMA1 = Math.fma(inReal - prevEMA1, sp.optInK_1, prevEMA1);
-         prevEMA2 = Math.fma(prevEMA1 - prevEMA2, sp.optInK_1, prevEMA2);
-         prevEMA3 = Math.fma(prevEMA2 - prevEMA3, sp.optInK_1, prevEMA3);
+         prevEMA1 = Math.fma(sp.emaBeta, prevEMA1, sp.optInK_1 * inReal);
+         prevEMA2 = Math.fma(sp.emaBeta, prevEMA2, sp.optInK_1 * prevEMA1);
+         prevEMA3 = Math.fma(sp.emaBeta, prevEMA3, sp.optInK_1 * prevEMA2);
          if( tempReal != 0.0 ) {
             cur_outReal = (prevEMA3 / tempReal - 1.0) * 100.0;
          } else {
@@ -205088,9 +205350,9 @@ public final class Core {
    {
       double tempReal = 0.0;
       tempReal = sp.prevEMA3;
-      sp.prevEMA1 = Math.fma(inReal - sp.prevEMA1, sp.optInK_1, sp.prevEMA1);
-      sp.prevEMA2 = Math.fma(sp.prevEMA1 - sp.prevEMA2, sp.optInK_1, sp.prevEMA2);
-      sp.prevEMA3 = Math.fma(sp.prevEMA2 - sp.prevEMA3, sp.optInK_1, sp.prevEMA3);
+      sp.prevEMA1 = Math.fma(sp.emaBeta, sp.prevEMA1, sp.optInK_1 * inReal);
+      sp.prevEMA2 = Math.fma(sp.emaBeta, sp.prevEMA2, sp.optInK_1 * sp.prevEMA1);
+      sp.prevEMA3 = Math.fma(sp.emaBeta, sp.prevEMA3, sp.optInK_1 * sp.prevEMA2);
       if( tempReal != 0.0 ) {
          sp.cur_outReal = (sp.prevEMA3 / tempReal - 1.0) * 100.0;
       } else {
@@ -205104,6 +205366,7 @@ public final class Core {
       double prevEMA3 = 0;
       double tempReal = 0;
       double optInK_1 = 0;
+      double emaBeta = 0;
       int i = 0;
       int today = 0;
       int outIdx = 0;
@@ -205149,7 +205412,9 @@ public final class Core {
        * x for x=-0.0). In-place safe: outReal[outIdx] is written after
        * inReal[startIdx+outIdx] was read.
        */
-      optInK_1 = 2.0 / (double)(optInTimePeriod + 1);
+      emaBeta = (double)(optInTimePeriod - 1) / (double)(optInTimePeriod + 1);
+      optInK_1 = 1.0 - emaBeta;
+      emaBeta = 1.0 - optInK_1;
       /* Seed EMA1 with a simple average of the first
        * 'period' price bars.
        */
@@ -205164,7 +205429,7 @@ public final class Core {
        * the bar where EMA2 seeding begins.
        */
       while( today <= startIdx - (lookbackEMA * 2 + 1) ) {
-         prevEMA1 = Math.fma(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
+         prevEMA1 = Math.fma(emaBeta, prevEMA1, optInK_1 * inReal[today++]);
       }
       /* Seed EMA2 with a simple average of the first 'period'
        * EMA1 values, accumulated as EMA1 produces them.
@@ -205173,7 +205438,7 @@ public final class Core {
       tempReal += prevEMA1;
       i = optInTimePeriod - 1;
       while( i-- > 0 ) {
-         prevEMA1 = Math.fma(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
+         prevEMA1 = Math.fma(emaBeta, prevEMA1, optInK_1 * inReal[today++]);
          tempReal += prevEMA1;
       }
       prevEMA2 = tempReal / optInTimePeriod;
@@ -205181,8 +205446,8 @@ public final class Core {
        * period of EMA2, up to the bar where EMA3 seeding begins.
        */
       while( today <= startIdx - (lookbackEMA + 1) ) {
-         prevEMA1 = Math.fma(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
-         prevEMA2 = Math.fma(prevEMA1 - prevEMA2, optInK_1, prevEMA2);
+         prevEMA1 = Math.fma(emaBeta, prevEMA1, optInK_1 * inReal[today++]);
+         prevEMA2 = Math.fma(emaBeta, prevEMA2, optInK_1 * prevEMA1);
       }
       /* Seed EMA3 with a simple average of the first 'period'
        * EMA2 values, accumulated as EMA2 produces them.
@@ -205191,8 +205456,8 @@ public final class Core {
       tempReal += prevEMA2;
       i = optInTimePeriod - 1;
       while( i-- > 0 ) {
-         prevEMA1 = Math.fma(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
-         prevEMA2 = Math.fma(prevEMA1 - prevEMA2, optInK_1, prevEMA2);
+         prevEMA1 = Math.fma(emaBeta, prevEMA1, optInK_1 * inReal[today++]);
+         prevEMA2 = Math.fma(emaBeta, prevEMA2, optInK_1 * prevEMA1);
          tempReal += prevEMA2;
       }
       prevEMA3 = tempReal / optInTimePeriod;
@@ -205200,9 +205465,9 @@ public final class Core {
        * period of EMA3, up to the bar before the first output.
        */
       while( today <= startIdx - 1 ) {
-         prevEMA1 = Math.fma(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
-         prevEMA2 = Math.fma(prevEMA1 - prevEMA2, optInK_1, prevEMA2);
-         prevEMA3 = Math.fma(prevEMA2 - prevEMA3, optInK_1, prevEMA3);
+         prevEMA1 = Math.fma(emaBeta, prevEMA1, optInK_1 * inReal[today++]);
+         prevEMA2 = Math.fma(emaBeta, prevEMA2, optInK_1 * prevEMA1);
+         prevEMA3 = Math.fma(emaBeta, prevEMA3, optInK_1 * prevEMA2);
       }
       /* Stable zone: keep advancing the three EMA in lockstep and
        * write the 1-day rate-of-change of EMA3 into the output.
@@ -205210,9 +205475,9 @@ public final class Core {
       outIdx = 0;
       while( today <= endIdx ) {
          tempReal = prevEMA3;
-         prevEMA1 = Math.fma(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
-         prevEMA2 = Math.fma(prevEMA1 - prevEMA2, optInK_1, prevEMA2);
-         prevEMA3 = Math.fma(prevEMA2 - prevEMA3, optInK_1, prevEMA3);
+         prevEMA1 = Math.fma(emaBeta, prevEMA1, optInK_1 * inReal[today++]);
+         prevEMA2 = Math.fma(emaBeta, prevEMA2, optInK_1 * prevEMA1);
+         prevEMA3 = Math.fma(emaBeta, prevEMA3, optInK_1 * prevEMA2);
          if( tempReal != 0.0 ) {
             outReal[outIdx++ * outStride] = (prevEMA3 / tempReal - 1.0) * 100.0;
          } else {
@@ -205230,6 +205495,7 @@ public final class Core {
       sp.prevEMA2 = prevEMA2;
       sp.prevEMA3 = prevEMA3;
       sp.optInK_1 = optInK_1;
+      sp.emaBeta = emaBeta;
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.SUCCESS;
    }
@@ -206531,6 +206797,8 @@ public final class Core {
    {
       double kFirst = 0;
       double kSecond = 0;
+      double betaFirst = 0;
+      double betaSecond = 0;
       double emaFirstNum = 0;
       double emaFirstDen = 0;
       double emaSecondNum = 0;
@@ -206585,7 +206853,7 @@ public final class Core {
        * TA_SetUnstablePeriod(TA_FUNC_UNST_EMA) folds in: the second stage then
        * seeds from the values the first would have published. The seed sums
        * accumulate from 0.0 in production order and the recurrence is
-       * ((x-prev)*k)+prev rather than the algebraically equal k*x+(1-k)*prev; do
+       * k*x + beta*prev with ema.c's k and beta; do
        * not reorder or fuse them (0.0+x is not x for x=-0.0). That order IS the
        * bit-exactness contract against the composed reference.
        *
@@ -206593,8 +206861,12 @@ public final class Core {
        * because outReal may alias inReal: the slot holding close[t-1] may already
        * hold an output written a bar earlier.
        */
-      kFirst = 2.0 / (double)(optInFirstPeriod + 1);
-      kSecond = 2.0 / (double)(optInSecondPeriod + 1);
+      betaFirst = (double)(optInFirstPeriod - 1) / (double)(optInFirstPeriod + 1);
+      kFirst = 1.0 - betaFirst;
+      betaFirst = 1.0 - kFirst;
+      betaSecond = (double)(optInSecondPeriod - 1) / (double)(optInSecondPeriod + 1);
+      kSecond = 1.0 - betaSecond;
+      betaSecond = 1.0 - kSecond;
       lookbackFirst = emaLookback(optInFirstPeriod);
       emaFirstNum = 0.0;
       emaFirstDen = 0.0;
@@ -206624,8 +206896,8 @@ public final class Core {
                emaFirstDen = sumFirstDen / optInFirstPeriod;
             }
          } else {
-            emaFirstNum = Math.fma(mom - emaFirstNum, kFirst, emaFirstNum);
-            emaFirstDen = Math.fma(absMom - emaFirstDen, kFirst, emaFirstDen);
+            emaFirstNum = Math.fma(betaFirst, emaFirstNum, kFirst * mom);
+            emaFirstDen = Math.fma(betaFirst, emaFirstDen, kFirst * absMom);
          }
          /* Stage 2: the second EMA, over what stage 1 publishes.
           *
@@ -206649,8 +206921,8 @@ public final class Core {
                   emaSecondDen = sumSecondDen / optInSecondPeriod;
                }
             } else {
-               emaSecondNum = Math.fma(emaFirstNum - emaSecondNum, kSecond, emaSecondNum);
-               emaSecondDen = Math.fma(emaFirstDen - emaSecondDen, kSecond, emaSecondDen);
+               emaSecondNum = Math.fma(betaSecond, emaSecondNum, kSecond * emaFirstNum);
+               emaSecondDen = Math.fma(betaSecond, emaSecondDen, kSecond * emaFirstDen);
             }
          }
          nBar = nBar + 1;
@@ -206676,10 +206948,10 @@ public final class Core {
          mom = inReal[today] - prevClose;
          prevClose = inReal[today];
          absMom = Math.abs(mom);
-         emaFirstNum = Math.fma(mom - emaFirstNum, kFirst, emaFirstNum);
-         emaFirstDen = Math.fma(absMom - emaFirstDen, kFirst, emaFirstDen);
-         emaSecondNum = Math.fma(emaFirstNum - emaSecondNum, kSecond, emaSecondNum);
-         emaSecondDen = Math.fma(emaFirstDen - emaSecondDen, kSecond, emaSecondDen);
+         emaFirstNum = Math.fma(betaFirst, emaFirstNum, kFirst * mom);
+         emaFirstDen = Math.fma(betaFirst, emaFirstDen, kFirst * absMom);
+         emaSecondNum = Math.fma(betaSecond, emaSecondNum, kSecond * emaFirstNum);
+         emaSecondDen = Math.fma(betaSecond, emaSecondDen, kSecond * emaFirstDen);
          if( emaSecondDen > 0.0 ) {
             tsiValue = 100.0 * emaSecondNum / emaSecondDen;
          } else {
@@ -206703,6 +206975,8 @@ public final class Core {
    {
       double kFirst = 0;
       double kSecond = 0;
+      double betaFirst = 0;
+      double betaSecond = 0;
       double emaFirstNum = 0;
       double emaFirstDen = 0;
       double emaSecondNum = 0;
@@ -206747,8 +207021,12 @@ public final class Core {
          return RetCode.SUCCESS ;
       }
       outBegIdx.value = startIdx;
-      kFirst = 2.0 / (double)(optInFirstPeriod + 1);
-      kSecond = 2.0 / (double)(optInSecondPeriod + 1);
+      betaFirst = (double)(optInFirstPeriod - 1) / (double)(optInFirstPeriod + 1);
+      kFirst = 1.0 - betaFirst;
+      betaFirst = 1.0 - kFirst;
+      betaSecond = (double)(optInSecondPeriod - 1) / (double)(optInSecondPeriod + 1);
+      kSecond = 1.0 - betaSecond;
+      betaSecond = 1.0 - kSecond;
       lookbackFirst = emaLookback(optInFirstPeriod);
       emaFirstNum = 0.0;
       emaFirstDen = 0.0;
@@ -206773,8 +207051,8 @@ public final class Core {
                emaFirstDen = sumFirstDen / optInFirstPeriod;
             }
          } else {
-            emaFirstNum = Math.fma(mom - emaFirstNum, kFirst, emaFirstNum);
-            emaFirstDen = Math.fma(absMom - emaFirstDen, kFirst, emaFirstDen);
+            emaFirstNum = Math.fma(betaFirst, emaFirstNum, kFirst * mom);
+            emaFirstDen = Math.fma(betaFirst, emaFirstDen, kFirst * absMom);
          }
          if( nBar >= lookbackFirst ) {
             nSecond = nBar - lookbackFirst;
@@ -206786,8 +207064,8 @@ public final class Core {
                   emaSecondDen = sumSecondDen / optInSecondPeriod;
                }
             } else {
-               emaSecondNum = Math.fma(emaFirstNum - emaSecondNum, kSecond, emaSecondNum);
-               emaSecondDen = Math.fma(emaFirstDen - emaSecondDen, kSecond, emaSecondDen);
+               emaSecondNum = Math.fma(betaSecond, emaSecondNum, kSecond * emaFirstNum);
+               emaSecondDen = Math.fma(betaSecond, emaSecondDen, kSecond * emaFirstDen);
             }
          }
          nBar = nBar + 1;
@@ -206804,10 +207082,10 @@ public final class Core {
          mom = (double)inReal[today] - prevClose;
          prevClose = (double)inReal[today];
          absMom = Math.abs(mom);
-         emaFirstNum = Math.fma(mom - emaFirstNum, kFirst, emaFirstNum);
-         emaFirstDen = Math.fma(absMom - emaFirstDen, kFirst, emaFirstDen);
-         emaSecondNum = Math.fma(emaFirstNum - emaSecondNum, kSecond, emaSecondNum);
-         emaSecondDen = Math.fma(emaFirstDen - emaSecondDen, kSecond, emaSecondDen);
+         emaFirstNum = Math.fma(betaFirst, emaFirstNum, kFirst * mom);
+         emaFirstDen = Math.fma(betaFirst, emaFirstDen, kFirst * absMom);
+         emaSecondNum = Math.fma(betaSecond, emaSecondNum, kSecond * emaFirstNum);
+         emaSecondDen = Math.fma(betaSecond, emaSecondDen, kSecond * emaFirstDen);
          if( emaSecondDen > 0.0 ) {
             tsiValue = 100.0 * emaSecondNum / emaSecondDen;
          } else {
@@ -207007,6 +207285,8 @@ public final class Core {
       private int optInSecondPeriod;
       private double kFirst;
       private double kSecond;
+      private double betaFirst;
+      private double betaSecond;
       private double emaFirstNum;
       private double emaFirstDen;
       private double emaSecondNum;
@@ -207058,6 +207338,8 @@ public final class Core {
          this.optInSecondPeriod = other.optInSecondPeriod;
          this.kFirst = other.kFirst;
          this.kSecond = other.kSecond;
+         this.betaFirst = other.betaFirst;
+         this.betaSecond = other.betaSecond;
          this.emaFirstNum = other.emaFirstNum;
          this.emaFirstDen = other.emaFirstDen;
          this.emaSecondNum = other.emaSecondNum;
@@ -207120,10 +207402,10 @@ public final class Core {
          mom = inReal - prevClose;
          prevClose = inReal;
          absMom = Math.abs(mom);
-         emaFirstNum = Math.fma(mom - emaFirstNum, sp.kFirst, emaFirstNum);
-         emaFirstDen = Math.fma(absMom - emaFirstDen, sp.kFirst, emaFirstDen);
-         emaSecondNum = Math.fma(emaFirstNum - emaSecondNum, sp.kSecond, emaSecondNum);
-         emaSecondDen = Math.fma(emaFirstDen - emaSecondDen, sp.kSecond, emaSecondDen);
+         emaFirstNum = Math.fma(sp.betaFirst, emaFirstNum, sp.kFirst * mom);
+         emaFirstDen = Math.fma(sp.betaFirst, emaFirstDen, sp.kFirst * absMom);
+         emaSecondNum = Math.fma(sp.betaSecond, emaSecondNum, sp.kSecond * emaFirstNum);
+         emaSecondDen = Math.fma(sp.betaSecond, emaSecondDen, sp.kSecond * emaFirstDen);
          if( emaSecondDen > 0.0 ) {
             tsiValue = 100.0 * emaSecondNum / emaSecondDen;
          } else {
@@ -207167,10 +207449,10 @@ public final class Core {
       mom = inReal - sp.prevClose;
       sp.prevClose = inReal;
       absMom = Math.abs(mom);
-      sp.emaFirstNum = Math.fma(mom - sp.emaFirstNum, sp.kFirst, sp.emaFirstNum);
-      sp.emaFirstDen = Math.fma(absMom - sp.emaFirstDen, sp.kFirst, sp.emaFirstDen);
-      sp.emaSecondNum = Math.fma(sp.emaFirstNum - sp.emaSecondNum, sp.kSecond, sp.emaSecondNum);
-      sp.emaSecondDen = Math.fma(sp.emaFirstDen - sp.emaSecondDen, sp.kSecond, sp.emaSecondDen);
+      sp.emaFirstNum = Math.fma(sp.betaFirst, sp.emaFirstNum, sp.kFirst * mom);
+      sp.emaFirstDen = Math.fma(sp.betaFirst, sp.emaFirstDen, sp.kFirst * absMom);
+      sp.emaSecondNum = Math.fma(sp.betaSecond, sp.emaSecondNum, sp.kSecond * sp.emaFirstNum);
+      sp.emaSecondDen = Math.fma(sp.betaSecond, sp.emaSecondDen, sp.kSecond * sp.emaFirstDen);
       if( sp.emaSecondDen > 0.0 ) {
          tsiValue = 100.0 * sp.emaSecondNum / sp.emaSecondDen;
       } else {
@@ -207182,6 +207464,8 @@ public final class Core {
    {
       double kFirst = 0;
       double kSecond = 0;
+      double betaFirst = 0;
+      double betaSecond = 0;
       double emaFirstNum = 0;
       double emaFirstDen = 0;
       double emaSecondNum = 0;
@@ -207243,7 +207527,7 @@ public final class Core {
        * TA_SetUnstablePeriod(TA_FUNC_UNST_EMA) folds in: the second stage then
        * seeds from the values the first would have published. The seed sums
        * accumulate from 0.0 in production order and the recurrence is
-       * ((x-prev)*k)+prev rather than the algebraically equal k*x+(1-k)*prev; do
+       * k*x + beta*prev with ema.c's k and beta; do
        * not reorder or fuse them (0.0+x is not x for x=-0.0). That order IS the
        * bit-exactness contract against the composed reference.
        *
@@ -207251,8 +207535,12 @@ public final class Core {
        * because outReal may alias inReal: the slot holding close[t-1] may already
        * hold an output written a bar earlier.
        */
-      kFirst = 2.0 / (double)(optInFirstPeriod + 1);
-      kSecond = 2.0 / (double)(optInSecondPeriod + 1);
+      betaFirst = (double)(optInFirstPeriod - 1) / (double)(optInFirstPeriod + 1);
+      kFirst = 1.0 - betaFirst;
+      betaFirst = 1.0 - kFirst;
+      betaSecond = (double)(optInSecondPeriod - 1) / (double)(optInSecondPeriod + 1);
+      kSecond = 1.0 - betaSecond;
+      betaSecond = 1.0 - kSecond;
       lookbackFirst = emaLookback(optInFirstPeriod);
       emaFirstNum = 0.0;
       emaFirstDen = 0.0;
@@ -207282,8 +207570,8 @@ public final class Core {
                emaFirstDen = sumFirstDen / optInFirstPeriod;
             }
          } else {
-            emaFirstNum = Math.fma(mom - emaFirstNum, kFirst, emaFirstNum);
-            emaFirstDen = Math.fma(absMom - emaFirstDen, kFirst, emaFirstDen);
+            emaFirstNum = Math.fma(betaFirst, emaFirstNum, kFirst * mom);
+            emaFirstDen = Math.fma(betaFirst, emaFirstDen, kFirst * absMom);
          }
          /* Stage 2: the second EMA, over what stage 1 publishes.
           *
@@ -207307,8 +207595,8 @@ public final class Core {
                   emaSecondDen = sumSecondDen / optInSecondPeriod;
                }
             } else {
-               emaSecondNum = Math.fma(emaFirstNum - emaSecondNum, kSecond, emaSecondNum);
-               emaSecondDen = Math.fma(emaFirstDen - emaSecondDen, kSecond, emaSecondDen);
+               emaSecondNum = Math.fma(betaSecond, emaSecondNum, kSecond * emaFirstNum);
+               emaSecondDen = Math.fma(betaSecond, emaSecondDen, kSecond * emaFirstDen);
             }
          }
          nBar = nBar + 1;
@@ -207334,10 +207622,10 @@ public final class Core {
          mom = inReal[today] - prevClose;
          prevClose = inReal[today];
          absMom = Math.abs(mom);
-         emaFirstNum = Math.fma(mom - emaFirstNum, kFirst, emaFirstNum);
-         emaFirstDen = Math.fma(absMom - emaFirstDen, kFirst, emaFirstDen);
-         emaSecondNum = Math.fma(emaFirstNum - emaSecondNum, kSecond, emaSecondNum);
-         emaSecondDen = Math.fma(emaFirstDen - emaSecondDen, kSecond, emaSecondDen);
+         emaFirstNum = Math.fma(betaFirst, emaFirstNum, kFirst * mom);
+         emaFirstDen = Math.fma(betaFirst, emaFirstDen, kFirst * absMom);
+         emaSecondNum = Math.fma(betaSecond, emaSecondNum, kSecond * emaFirstNum);
+         emaSecondDen = Math.fma(betaSecond, emaSecondDen, kSecond * emaFirstDen);
          if( emaSecondDen > 0.0 ) {
             tsiValue = 100.0 * emaSecondNum / emaSecondDen;
          } else {
@@ -207353,6 +207641,8 @@ public final class Core {
       sp.optInSecondPeriod = optInSecondPeriod;
       sp.kFirst = kFirst;
       sp.kSecond = kSecond;
+      sp.betaFirst = betaFirst;
+      sp.betaSecond = betaSecond;
       sp.emaFirstNum = emaFirstNum;
       sp.emaFirstDen = emaFirstDen;
       sp.emaSecondNum = emaSecondNum;
@@ -219692,6 +219982,7 @@ public final class Core {
                       MInteger outNBElement,
                       double outReal[] )
    {
+      double emaBeta = 0;
       double optInK_1 = 0;
       double tempReal = 0;
       double prevMA = 0;
@@ -219712,12 +220003,14 @@ public final class Core {
       } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
          return RetCode.BAD_PARAM;
       }
-      optInK_1 = 2.0 / (double)(optInTimePeriod + 1);
+      emaBeta = (double)(optInTimePeriod - 1) / (double)(optInTimePeriod + 1);
+      optInK_1 = 1.0 - emaBeta;
+      emaBeta = 1.0 - optInK_1;
       /* KEEP THIS ARITHMETIC EXACTLY AS WRITTEN -- the de-lag in one rounding
        * (2.0*c - l, not c + (c - l)), the seed sum accumulating from 0.0, and
-       * ((v - prevMA)*k) + prevMA. Together they make ZLEMA bit-for-bit equal to
-       * an EMA over a materialised de-lagged series, which is the strongest gate
-       * this function has. Reordering any one breaks that equality silently, and
+       * k*v + beta*prevMA with ema.c's k and beta. Together they make ZLEMA
+       * bit-for-bit equal to an EMA over a materialised de-lagged series, which
+       * is the strongest gate this function has. Reordering any one breaks that equality silently, and
        * the de-lag spelling is worth more than rounding noise: c + (c - l) rounds
        * twice, which is 5e-12 relative where 2c - l cancels.
        */
@@ -219737,10 +220030,9 @@ public final class Core {
       }
       /* No smoothing at period of 1: the output is a copy of the input, the
        * convention TA_MA applies to every MAType. Explicit, because at period 1
-       * lag is 0 and optInK_1 is exactly 1.0, so the recursion below reduces to
-       * (x-prev)+prev -- which returns x only while consecutive values stay
-       * within a factor of two of each other. The unstable period still delays
-       * the first output.
+       * lag is 0 and the recursion below, at a k of 1.0 and a beta of 0.0, does
+       * not keep the sign of a -0.0 input. The unstable period still delays the
+       * first output.
        */
       if( optInTimePeriod == 1 ) {
          outBegIdx.value = startIdx;
@@ -219768,14 +220060,14 @@ public final class Core {
       }
       prevMA = tempReal / optInTimePeriod;
       while( today <= startIdx ) {
-         prevMA = Math.fma(2.0 * inReal[today] - inReal[trailingIdx] - prevMA, optInK_1, prevMA);
+         prevMA = Math.fma(emaBeta, prevMA, optInK_1 * (2.0 * inReal[today] - inReal[trailingIdx]));
          today += 1;
          trailingIdx += 1;
       }
       outReal[0] = prevMA;
       outIdx = 1;
       while( today <= endIdx ) {
-         prevMA = Math.fma(2.0 * inReal[today] - inReal[trailingIdx] - prevMA, optInK_1, prevMA);
+         prevMA = Math.fma(emaBeta, prevMA, optInK_1 * (2.0 * inReal[today] - inReal[trailingIdx]));
          today += 1;
          trailingIdx += 1;
          outReal[outIdx++] = prevMA;
@@ -219791,6 +220083,7 @@ public final class Core {
                       MInteger outNBElement,
                       double outReal[] )
    {
+      double emaBeta = 0;
       double optInK_1 = 0;
       double tempReal = 0;
       double prevMA = 0;
@@ -219811,7 +220104,9 @@ public final class Core {
       } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
          return RetCode.BAD_PARAM;
       }
-      optInK_1 = 2.0 / (double)(optInTimePeriod + 1);
+      emaBeta = (double)(optInTimePeriod - 1) / (double)(optInTimePeriod + 1);
+      optInK_1 = 1.0 - emaBeta;
+      emaBeta = 1.0 - optInK_1;
       lag = (optInTimePeriod - 1) / 2;
       lookbackTotal = zlemaLookback(optInTimePeriod);
       if( startIdx < lookbackTotal ) {
@@ -219844,14 +220139,14 @@ public final class Core {
       }
       prevMA = tempReal / optInTimePeriod;
       while( today <= startIdx ) {
-         prevMA = Math.fma(2.0 * (double)inReal[today] - (double)inReal[trailingIdx] - prevMA, optInK_1, prevMA);
+         prevMA = Math.fma(emaBeta, prevMA, optInK_1 * (2.0 * (double)inReal[today] - (double)inReal[trailingIdx]));
          today += 1;
          trailingIdx += 1;
       }
       outReal[0] = prevMA;
       outIdx = 1;
       while( today <= endIdx ) {
-         prevMA = Math.fma(2.0 * (double)inReal[today] - (double)inReal[trailingIdx] - prevMA, optInK_1, prevMA);
+         prevMA = Math.fma(emaBeta, prevMA, optInK_1 * (2.0 * (double)inReal[today] - (double)inReal[trailingIdx]));
          today += 1;
          trailingIdx += 1;
          outReal[outIdx++] = prevMA;
@@ -220045,6 +220340,7 @@ public final class Core {
    public static final class ZlemaStream {
       private Core core;
       private int optInTimePeriod;
+      private double emaBeta;
       private double optInK_1;
       private double prevMA;
       private int ringPos_trailingIdx;
@@ -220093,6 +220389,7 @@ public final class Core {
       private ZlemaStream( ZlemaStream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
+         this.emaBeta = other.emaBeta;
          this.optInK_1 = other.optInK_1;
          this.prevMA = other.prevMA;
          this.ringPos_trailingIdx = other.ringPos_trailingIdx;
@@ -220155,7 +220452,7 @@ public final class Core {
             pkSlot0 = 0;
             pkVal0 = inReal;
          }
-         prevMA = Math.fma(2.0 * inReal - ((sp.ringPos_trailingIdx != pkSlot0) ? sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx] : pkVal0) - prevMA, sp.optInK_1, prevMA);
+         prevMA = Math.fma(sp.emaBeta, prevMA, sp.optInK_1 * (2.0 * inReal - ((sp.ringPos_trailingIdx != pkSlot0) ? sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx] : pkVal0)));
          cur_outReal = prevMA;
          return cur_outReal;
       }
@@ -220195,7 +220492,7 @@ public final class Core {
       if( sp.ringCap_trailingIdx == 0 ) {
          sp.ring_trailingIdx_inReal[0] = inReal;
       }
-      sp.prevMA = Math.fma(2.0 * inReal - sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx] - sp.prevMA, sp.optInK_1, sp.prevMA);
+      sp.prevMA = Math.fma(sp.emaBeta, sp.prevMA, sp.optInK_1 * (2.0 * inReal - sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx]));
       sp.cur_outReal = sp.prevMA;
       sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx] = inReal;
       sp.ringPos_trailingIdx = sp.ringPos_trailingIdx + 1;
@@ -220205,6 +220502,7 @@ public final class Core {
    }
    private RetCode zlemaOpenImpl( ZlemaStream sp, double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
+      double emaBeta = 0;
       double optInK_1 = 0;
       double tempReal = 0;
       double prevMA = 0;
@@ -220239,6 +220537,7 @@ public final class Core {
             return RetCode.INSUFFICIENT_HISTORY;
          }
          sp.optInTimePeriod = optInTimePeriod;
+         sp.emaBeta = 0.0;
          sp.optInK_1 = 0.0;
          sp.prevMA = 0.0;
          sp.ringPos_trailingIdx = 0;
@@ -220256,12 +220555,14 @@ public final class Core {
          sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
          return RetCode.SUCCESS;
       }
-      optInK_1 = 2.0 / (double)(optInTimePeriod + 1);
+      emaBeta = (double)(optInTimePeriod - 1) / (double)(optInTimePeriod + 1);
+      optInK_1 = 1.0 - emaBeta;
+      emaBeta = 1.0 - optInK_1;
       /* KEEP THIS ARITHMETIC EXACTLY AS WRITTEN -- the de-lag in one rounding
        * (2.0*c - l, not c + (c - l)), the seed sum accumulating from 0.0, and
-       * ((v - prevMA)*k) + prevMA. Together they make ZLEMA bit-for-bit equal to
-       * an EMA over a materialised de-lagged series, which is the strongest gate
-       * this function has. Reordering any one breaks that equality silently, and
+       * k*v + beta*prevMA with ema.c's k and beta. Together they make ZLEMA
+       * bit-for-bit equal to an EMA over a materialised de-lagged series, which
+       * is the strongest gate this function has. Reordering any one breaks that equality silently, and
        * the de-lag spelling is worth more than rounding noise: c + (c - l) rounds
        * twice, which is 5e-12 relative where 2c - l cancels.
        */
@@ -220295,14 +220596,14 @@ public final class Core {
       }
       prevMA = tempReal / optInTimePeriod;
       while( today <= startIdx ) {
-         prevMA = Math.fma(2.0 * inReal[today] - inReal[trailingIdx] - prevMA, optInK_1, prevMA);
+         prevMA = Math.fma(emaBeta, prevMA, optInK_1 * (2.0 * inReal[today] - inReal[trailingIdx]));
          today += 1;
          trailingIdx += 1;
       }
       outReal[0 * outStride] = prevMA;
       outIdx = 1;
       while( today <= endIdx ) {
-         prevMA = Math.fma(2.0 * inReal[today] - inReal[trailingIdx] - prevMA, optInK_1, prevMA);
+         prevMA = Math.fma(emaBeta, prevMA, optInK_1 * (2.0 * inReal[today] - inReal[trailingIdx]));
          today += 1;
          trailingIdx += 1;
          outReal[outIdx++ * outStride] = prevMA;
@@ -220317,6 +220618,7 @@ public final class Core {
       double[] capRing_trailingIdx_inReal = new double[allocN_trailingIdx];
       System.arraycopy(inReal, historyLen - cap_trailingIdx, capRing_trailingIdx_inReal, 0, cap_trailingIdx);
       sp.optInTimePeriod = optInTimePeriod;
+      sp.emaBeta = emaBeta;
       sp.optInK_1 = optInK_1;
       sp.prevMA = prevMA;
       sp.ringPos_trailingIdx = 0;
@@ -220403,7 +220705,7 @@ public final class Core {
    }
    private double zlemaStepTape( ZlemaStream sp, double[] tape, int tapeBase, int tapeMask, double inReal )
    {
-      sp.prevMA = Math.fma(2.0 * inReal - tape[(tapeBase - sp.ringCap_trailingIdx) & tapeMask] - sp.prevMA, sp.optInK_1, sp.prevMA);
+      sp.prevMA = Math.fma(sp.emaBeta, sp.prevMA, sp.optInK_1 * (2.0 * inReal - tape[(tapeBase - sp.ringCap_trailingIdx) & tapeMask]));
       sp.cur_outReal = sp.prevMA;
       sp.outRangeCount++;
       return sp.cur_outReal;
@@ -220416,7 +220718,7 @@ public final class Core {
       double pkVal0 = 0.0;
       pkSlot0 = tapeBase & tapeMask;
       pkVal0 = inReal;
-      prevMA = Math.fma(2.0 * inReal - ((((tapeBase - sp.ringCap_trailingIdx) & tapeMask) != pkSlot0) ? tape[(tapeBase - sp.ringCap_trailingIdx) & tapeMask] : pkVal0) - prevMA, sp.optInK_1, prevMA);
+      prevMA = Math.fma(sp.emaBeta, prevMA, sp.optInK_1 * (2.0 * inReal - ((((tapeBase - sp.ringCap_trailingIdx) & tapeMask) != pkSlot0) ? tape[(tapeBase - sp.ringCap_trailingIdx) & tapeMask] : pkVal0)));
       cur_outReal = prevMA;
       return cur_outReal;
    }

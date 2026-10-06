@@ -38,6 +38,7 @@ TA_RetCode macdfix(int startIdx, int endIdx,
 {
    double prevFast, prevSlow, prevSignal, macdValue, tempReal;
    double slowK, fastK, signalK;
+   double slowBeta, fastBeta, signalBeta;
    int i, today, outIdx;
    int lookbackTotal, lookbackSignal;
 
@@ -51,16 +52,20 @@ TA_RetCode macdfix(int startIdx, int endIdx,
    int optInFastPeriod = 12;
    int optInSlowPeriod = 26;
    fastK = 0.15;
+   fastBeta = 1.0 - fastK;
+   fastK = 1.0 - fastBeta;
    slowK = 0.075;
+   slowBeta = 1.0 - slowK;
+   slowK = 1.0 - slowBeta;
 
    /* A signal period of 1 disables signal-line smoothing: the signal IS the
-    * MACD line and the histogram is exactly zero. signalK is then exactly
-    * 1.0, so the recursion below reduces to (x-prev)+prev -- which returns x
-    * only while consecutive MACD-line values stay within a factor of two of
-    * each other. The MACD line oscillates through zero, so it leaves that
-    * window on ordinary data; hence the explicit arm at each step.
+    * MACD line and the histogram is exactly zero. The recursion
+    * below, at a k of 1.0 and a beta of 0.0, does not keep the sign of a
+    * -0.0 line value; hence the explicit arm at each step.
     */
-   signalK = 2.0 / ((double)(optInSignalPeriod + 1));
+   signalBeta = ((double)(optInSignalPeriod - 1)) / ((double)(optInSignalPeriod + 1));
+   signalK = 1.0 - signalBeta;
+   signalBeta = 1.0 - signalK;
    lookbackSignal = ema_lookback( optInSignalPeriod );
 
    /* Move up the start index if there is not
@@ -87,7 +92,7 @@ TA_RetCode macdfix(int startIdx, int endIdx,
     *
     * The arithmetic order below is the bit-exactness contract
     * (do not reorder or fuse operations):
-    *  - EMA recursion: ((x-prev)*k)+prev.
+    *  - EMA recursion: k*x + beta*prev, with ema.c's k and beta.
     *  - Each EMA is seeded with the sum of its first 'period'
     *    inputs, accumulated from 0.0 in input order, divided by
     *    the period. The fast and slow seed windows end on the
@@ -126,8 +131,8 @@ TA_RetCode macdfix(int startIdx, int endIdx,
    while( today <= startIdx-lookbackSignal )
    {
       tempReal = inReal[today++];
-      prevFast = ((tempReal-prevFast)*fastK) + prevFast;
-      prevSlow = ((tempReal-prevSlow)*slowK) + prevSlow;
+      prevFast = fastK * tempReal + fastBeta * prevFast;
+      prevSlow = slowK * tempReal + slowBeta * prevSlow;
    }
    macdValue = prevFast - prevSlow;
 
@@ -141,8 +146,8 @@ TA_RetCode macdfix(int startIdx, int endIdx,
    while( i-- > 0 )
    {
       tempReal = inReal[today++];
-      prevFast = ((tempReal-prevFast)*fastK) + prevFast;
-      prevSlow = ((tempReal-prevSlow)*slowK) + prevSlow;
+      prevFast = fastK * tempReal + fastBeta * prevFast;
+      prevSlow = slowK * tempReal + slowBeta * prevSlow;
       macdValue = prevFast - prevSlow;
       prevSignal += macdValue;
    }
@@ -154,13 +159,13 @@ TA_RetCode macdfix(int startIdx, int endIdx,
    while( today <= startIdx )
    {
       tempReal = inReal[today++];
-      prevFast = ((tempReal-prevFast)*fastK) + prevFast;
-      prevSlow = ((tempReal-prevSlow)*slowK) + prevSlow;
+      prevFast = fastK * tempReal + fastBeta * prevFast;
+      prevSlow = slowK * tempReal + slowBeta * prevSlow;
       macdValue = prevFast - prevSlow;
       if( optInSignalPeriod == 1 )
          prevSignal = macdValue;
       else
-         prevSignal = ((macdValue-prevSignal)*signalK) + prevSignal;
+         prevSignal = signalK * macdValue + signalBeta * prevSignal;
    }
 
    /* Stable zone: keep advancing in lockstep and write the three
@@ -173,13 +178,13 @@ TA_RetCode macdfix(int startIdx, int endIdx,
    while( today <= endIdx )
    {
       tempReal = inReal[today++];
-      prevFast = ((tempReal-prevFast)*fastK) + prevFast;
-      prevSlow = ((tempReal-prevSlow)*slowK) + prevSlow;
+      prevFast = fastK * tempReal + fastBeta * prevFast;
+      prevSlow = slowK * tempReal + slowBeta * prevSlow;
       macdValue = prevFast - prevSlow;
       if( optInSignalPeriod == 1 )
          prevSignal = macdValue;
       else
-         prevSignal = ((macdValue-prevSignal)*signalK) + prevSignal;
+         prevSignal = signalK * macdValue + signalBeta * prevSignal;
       outMACD[outIdx] = macdValue;
       outMACDSignal[outIdx] = prevSignal;
       outMACDHist[outIdx] = macdValue - prevSignal;

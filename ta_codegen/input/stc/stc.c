@@ -53,6 +53,7 @@ TA_RetCode stc(int startIdx, int endIdx,
    CIRCBUF_PROLOG(pfSufHi,double,30);
    CIRCBUF_PROLOG(pfSufLo,double,30);
    double prevFast, prevSlow, fastK, slowK, tempReal, lineValue;
+   double fastBeta, slowBeta;
    double lowest, highest, range, frac1, frac2, pf, pff;
    double lineHi, lineLo, pfHi, pfLo, sufHi, sufLo;
    int i, today, lineStart, outIdx, tempInteger, lookbackTotal, lastIdx;
@@ -79,8 +80,12 @@ TA_RetCode stc(int startIdx, int endIdx,
 
    *outBegIdx = startIdx;
 
-   fastK = 2.0 / ((double)(optInFastPeriod + 1));
-   slowK = 2.0 / ((double)(optInSlowPeriod + 1));
+   fastBeta = ((double)(optInFastPeriod - 1)) / ((double)(optInFastPeriod + 1));
+   fastK = 1.0 - fastBeta;
+   fastBeta = 1.0 - fastK;
+   slowBeta = ((double)(optInSlowPeriod - 1)) / ((double)(optInSlowPeriod + 1));
+   slowK = 1.0 - slowBeta;
+   slowBeta = 1.0 - slowK;
 
    /* Rolling extrema, van Herk / Gil-Werman: the window ending in slot j is
     * the current block's prefix extremum joined with the previous block's
@@ -123,8 +128,8 @@ TA_RetCode stc(int startIdx, int endIdx,
    while( today <= lineStart )
    {
       tempReal = inReal[today++];
-      prevFast = ((tempReal-prevFast)*fastK) + prevFast;
-      prevSlow = ((tempReal-prevSlow)*slowK) + prevSlow;
+      prevFast = fastK * tempReal + fastBeta * prevFast;
+      prevSlow = slowK * tempReal + slowBeta * prevSlow;
    }
 
    /* A zero range holds the previous fraction (0.0 before any), and the test
@@ -152,8 +157,8 @@ TA_RetCode stc(int startIdx, int endIdx,
    while( today <= startIdx )
    {
       tempReal = inReal[today];
-      prevFast = ((tempReal-prevFast)*fastK) + prevFast;
-      prevSlow = ((tempReal-prevSlow)*slowK) + prevSlow;
+      prevFast = fastK * tempReal + fastBeta * prevFast;
+      prevSlow = slowK * tempReal + slowBeta * prevSlow;
       lineValue = prevFast - prevSlow;
       nLine = nLine + 1;
       lineRing[lineRing_Idx] = lineValue;
@@ -279,8 +284,8 @@ TA_RetCode stc(int startIdx, int endIdx,
    while( today <= endIdx )
    {
       tempReal = inReal[today];
-      prevFast = ((tempReal-prevFast)*fastK) + prevFast;
-      prevSlow = ((tempReal-prevSlow)*slowK) + prevSlow;
+      prevFast = fastK * tempReal + fastBeta * prevFast;
+      prevSlow = slowK * tempReal + slowBeta * prevSlow;
       lineValue = prevFast - prevSlow;
       lineRing[lineRing_Idx] = lineValue;
       if( lineRing_Idx == 0 )

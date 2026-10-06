@@ -95,6 +95,7 @@ TA_LIB_API TA_RetCode TA_ERI( int    startIdx,
    double prevMA;
    double tempReal;
    double k;
+   double beta;
    double tempHT;
    double tempLT;
 
@@ -151,9 +152,8 @@ TA_LIB_API TA_RetCode TA_ERI( int    startIdx,
       return TA_SUCCESS;
    }
    /* Period 1: ema.c's explicit copy arm, kept here for the same reason it
-    * exists there. At n == 1 the recursion below is fl(fl(x-prev)+prev),
-    * which returns x only while consecutive closes stay within a factor of
-    * two (Sterbenz), so without this arm `High - TA_EMA(Close, 1)` is not
+    * exists there. At n == 1 the recursion below does not keep the sign
+    * of a -0.0 close, so without this arm `High - TA_EMA(Close, 1)` is not
     * what this function returns. The unstable period still delays the first
     * output, through the shared lookback above.
     */
@@ -175,7 +175,9 @@ TA_LIB_API TA_RetCode TA_ERI( int    startIdx,
       *outNBElement= outIdx;
       return TA_SUCCESS;
    }
-   k = 2.0 / ((double)optInTimePeriod + 1.0);
+   beta = (double)(optInTimePeriod - 1) / (double)(optInTimePeriod + 1);
+   k = 1.0 - beta;
+   beta = 1.0 - k;
    /* Seed: ema.c's DEFAULT arm, op for op. */
    today = startIdx - lookbackTotal;
    i = optInTimePeriod;
@@ -188,7 +190,7 @@ TA_LIB_API TA_RetCode TA_ERI( int    startIdx,
    /* The warm-up also consumes the EMA unstable period. */
    while( today <= startIdx )
    {
-      prevMA = fma(inClose[today++] - prevMA, k, prevMA);
+      prevMA = fma(beta, prevMA, k * inClose[today++]);
    }
    /* prevMA is the EMA at bar startIdx; today == startIdx + 1. Load the
     * extremes into temps BEFORE writing either output: with two outputs
@@ -202,7 +204,7 @@ TA_LIB_API TA_RetCode TA_ERI( int    startIdx,
    outIdx = 1;
    while( today <= endIdx )
    {
-      prevMA = fma(inClose[today] - prevMA, k, prevMA);
+      prevMA = fma(beta, prevMA, k * inClose[today]);
       tempHT = inHigh[today];
       tempLT = inLow[today];
       outBullPower[outIdx] = tempHT - prevMA;
@@ -234,6 +236,7 @@ TA_RetCode TA_S_ERI( int    startIdx,
    double prevMA;
    double tempReal;
    double k;
+   double beta;
    double tempHT;
    double tempLT;
 
@@ -290,7 +293,9 @@ TA_RetCode TA_S_ERI( int    startIdx,
       *outNBElement= outIdx;
       return TA_SUCCESS;
    }
-   k = 2.0 / ((double)optInTimePeriod + 1.0);
+   beta = (double)(optInTimePeriod - 1) / (double)(optInTimePeriod + 1);
+   k = 1.0 - beta;
+   beta = 1.0 - k;
    today = startIdx - lookbackTotal;
    i = optInTimePeriod;
    tempReal = 0.0;
@@ -301,7 +306,7 @@ TA_RetCode TA_S_ERI( int    startIdx,
    prevMA = tempReal / optInTimePeriod;
    while( today <= startIdx )
    {
-      prevMA = fma((double)inClose[today++] - prevMA, k, prevMA);
+      prevMA = fma(beta, prevMA, k * (double)inClose[today++]);
    }
    tempHT = (double)inHigh[startIdx];
    tempLT = (double)inLow[startIdx];
@@ -310,7 +315,7 @@ TA_RetCode TA_S_ERI( int    startIdx,
    outIdx = 1;
    while( today <= endIdx )
    {
-      prevMA = fma((double)inClose[today] - prevMA, k, prevMA);
+      prevMA = fma(beta, prevMA, k * (double)inClose[today]);
       tempHT = (double)inHigh[today];
       tempLT = (double)inLow[today];
       outBullPower[outIdx] = tempHT - prevMA;
@@ -336,6 +341,7 @@ struct TA_ERI_Stream {
    double prevMA;
    double pad_0;
    double k;
+   double beta;
 };
 
 /* Private function, not in public API. */
@@ -362,7 +368,7 @@ static TA_FMA_STEP_INLINE void TA_ERI_StepImpl( struct TA_ERI_Stream *sp, double
       double prevMA;
 
       prevMA = sp->prevMA;
-      prevMA = fma(inClose - prevMA, sp->k, prevMA);
+      prevMA = fma(sp->beta, prevMA, sp->k * inClose);
       tempHT = inHigh;
       tempLT = inLow;
       *outBullPower= tempHT - prevMA;
@@ -435,9 +441,8 @@ static TA_RetCode TA_ERI_OpenImpl( struct TA_ERI_Stream **stream, const double i
          return TA_INSUFFICIENT_HISTORY;
       }
       /* Period 1: ema.c's explicit copy arm, kept here for the same reason it
-       * exists there. At n == 1 the recursion below is fl(fl(x-prev)+prev),
-       * which returns x only while consecutive closes stay within a factor of
-       * two (Sterbenz), so without this arm `High - TA_EMA(Close, 1)` is not
+       * exists there. At n == 1 the recursion below does not keep the sign
+       * of a -0.0 close, so without this arm `High - TA_EMA(Close, 1)` is not
        * what this function returns. The unstable period still delays the first
        * output, through the shared lookback above.
        */
@@ -480,6 +485,7 @@ static TA_RetCode TA_ERI_OpenImpl( struct TA_ERI_Stream **stream, const double i
       double prevMA = 0.0;
       double tempReal;
       double k = 0.0;
+      double beta = 0.0;
       double tempHT;
       double tempLT;
       /* Elder Ray Index (Alexander Elder, Trading for a Living, 1993): how far
@@ -511,13 +517,14 @@ static TA_RetCode TA_ERI_OpenImpl( struct TA_ERI_Stream **stream, const double i
          return TA_INSUFFICIENT_HISTORY;
       }
       /* Period 1: ema.c's explicit copy arm, kept here for the same reason it
-       * exists there. At n == 1 the recursion below is fl(fl(x-prev)+prev),
-       * which returns x only while consecutive closes stay within a factor of
-       * two (Sterbenz), so without this arm `High - TA_EMA(Close, 1)` is not
+       * exists there. At n == 1 the recursion below does not keep the sign
+       * of a -0.0 close, so without this arm `High - TA_EMA(Close, 1)` is not
        * what this function returns. The unstable period still delays the first
        * output, through the shared lookback above.
        */
-      k = 2.0 / ((double)optInTimePeriod + 1.0);
+      beta = (double)(optInTimePeriod - 1) / (double)(optInTimePeriod + 1);
+      k = 1.0 - beta;
+      beta = 1.0 - k;
       /* Seed: ema.c's DEFAULT arm, op for op. */
       today = startIdx - lookbackTotal;
       i = optInTimePeriod;
@@ -530,7 +537,7 @@ static TA_RetCode TA_ERI_OpenImpl( struct TA_ERI_Stream **stream, const double i
       /* The warm-up also consumes the EMA unstable period. */
       while( today <= startIdx )
       {
-         prevMA = fma(inClose[today++] - prevMA, k, prevMA);
+         prevMA = fma(beta, prevMA, k * inClose[today++]);
       }
       /* prevMA is the EMA at bar startIdx; today == startIdx + 1. Load the
        * extremes into temps BEFORE writing either output: with two outputs
@@ -544,7 +551,7 @@ static TA_RetCode TA_ERI_OpenImpl( struct TA_ERI_Stream **stream, const double i
       outIdx = 1;
       while( today <= endIdx )
       {
-         prevMA = fma(inClose[today] - prevMA, k, prevMA);
+         prevMA = fma(beta, prevMA, k * inClose[today]);
          tempHT = inHigh[today];
          tempLT = inLow[today];
          outBullPower[outIdx * outStride] = tempHT - prevMA;
@@ -562,6 +569,7 @@ static TA_RetCode TA_ERI_OpenImpl( struct TA_ERI_Stream **stream, const double i
       sp->optInTimePeriod = optInTimePeriod;
       sp->prevMA = prevMA;
       sp->k = k;
+      sp->beta = beta;
       sp->outRangeBegIdx = *outBegIdx;
       sp->outRangeCount = *outNBElement;
       sp->cur_outBullPower = outBullPower[(*outNBElement - 1) * outStride];
@@ -657,7 +665,7 @@ TA_LIB_API TA_RetCode TA_ERI_Peek( const TA_ERI_Stream *stream, double inHigh, d
       double prevMA;
 
       prevMA = sp->prevMA;
-      prevMA = fma(inClose - prevMA, sp->k, prevMA);
+      prevMA = fma(sp->beta, prevMA, sp->k * inClose);
       tempHT = inHigh;
       tempLT = inLow;
       *outBullPower= tempHT - prevMA;

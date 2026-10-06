@@ -71,6 +71,7 @@
                     MInteger outNBElement,
                     double outReal[] )
    {
+      double emaBeta = 0;
       double optInK_1 = 0;
       double tempReal = 0;
       double prevMA = 0;
@@ -89,7 +90,13 @@
       } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
          return RetCode.BAD_PARAM;
       }
-      optInK_1 = 2.0 / (double)(optInTimePeriod + 1);
+      emaBeta = (double)(optInTimePeriod - 1) / (double)(optInTimePeriod + 1);
+      optInK_1 = 1.0 - emaBeta;
+      /* emaBeta + optInK_1 must be exactly 1.0, or a flat input drifts off
+       * its level. Each subtraction is exact only from an operand in
+       * [0.5,1): at a period of 2 that is optInK_1, above it emaBeta.
+       */
+      emaBeta = 1.0 - optInK_1;
       /* Identify the minimum number of price bar needed
        * to calculate at least one output.
        */
@@ -107,12 +114,10 @@
          return RetCode.SUCCESS ;
       }
       /* No smoothing at period of 1: the output is a copy of the input
-       * (same convention as TA_MA for every MAType). Explicit because at
-       * period 1 optInK_1 is exactly 1.0, so the recursion below reduces to
-       * (x-prev)+prev -- which returns x only while consecutive values stay
-       * within a factor of two of each other. Two-decimal prices already
-       * spend a full mantissa, so a single 3x move breaks it. The unstable
-       * period still delays the first output.
+       * (same convention as TA_MA for every MAType). Explicit because the
+       * recursion below, at a k of 1.0 and a beta of 0.0, does not keep the
+       * sign of a -0.0 input. The unstable period still delays the first
+       * output.
        */
       if( optInTimePeriod == 1 ) {
          outBegIdx.value = startIdx;
@@ -134,12 +139,12 @@
       }
       prevMA = tempReal / optInTimePeriod;
       while( today <= startIdx ) {
-         prevMA = Math.fma(inReal[today++] - prevMA, optInK_1, prevMA);
+         prevMA = Math.fma(emaBeta, prevMA, optInK_1 * inReal[today++]);
       }
       outReal[0] = prevMA;
       outIdx = 1;
       while( today <= endIdx ) {
-         prevMA = Math.fma(inReal[today++] - prevMA, optInK_1, prevMA);
+         prevMA = Math.fma(emaBeta, prevMA, optInK_1 * inReal[today++]);
          outReal[outIdx++] = prevMA;
       }
       outNBElement.value = outIdx;
@@ -153,6 +158,7 @@
                     MInteger outNBElement,
                     double outReal[] )
    {
+      double emaBeta = 0;
       double optInK_1 = 0;
       double tempReal = 0;
       double prevMA = 0;
@@ -171,7 +177,9 @@
       } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
          return RetCode.BAD_PARAM;
       }
-      optInK_1 = 2.0 / (double)(optInTimePeriod + 1);
+      emaBeta = (double)(optInTimePeriod - 1) / (double)(optInTimePeriod + 1);
+      optInK_1 = 1.0 - emaBeta;
+      emaBeta = 1.0 - optInK_1;
       lookbackTotal = emaLookback(optInTimePeriod);
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
@@ -200,12 +208,12 @@
       }
       prevMA = tempReal / optInTimePeriod;
       while( today <= startIdx ) {
-         prevMA = Math.fma((double)inReal[today++] - prevMA, optInK_1, prevMA);
+         prevMA = Math.fma(emaBeta, prevMA, optInK_1 * (double)inReal[today++]);
       }
       outReal[0] = prevMA;
       outIdx = 1;
       while( today <= endIdx ) {
-         prevMA = Math.fma((double)inReal[today++] - prevMA, optInK_1, prevMA);
+         prevMA = Math.fma(emaBeta, prevMA, optInK_1 * (double)inReal[today++]);
          outReal[outIdx++] = prevMA;
       }
       outNBElement.value = outIdx;
@@ -367,6 +375,7 @@
    public static final class EmaStream {
       private Core core;
       private int optInTimePeriod;
+      private double emaBeta;
       private double optInK_1;
       private double prevMA;
       private double cur_outReal;
@@ -412,6 +421,7 @@
       private EmaStream( EmaStream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
+         this.emaBeta = other.emaBeta;
          this.optInK_1 = other.optInK_1;
          this.prevMA = other.prevMA;
          this.cur_outReal = other.cur_outReal;
@@ -465,7 +475,7 @@
             cur_outReal = inReal;
             return cur_outReal ;
          }
-         prevMA = Math.fma(inReal - prevMA, sp.optInK_1, prevMA);
+         prevMA = Math.fma(sp.emaBeta, prevMA, sp.optInK_1 * inReal);
          cur_outReal = prevMA;
          return cur_outReal;
       }
@@ -502,11 +512,12 @@
          sp.cur_outReal = inReal;
          return ;
       }
-      sp.prevMA = Math.fma(inReal - sp.prevMA, sp.optInK_1, sp.prevMA);
+      sp.prevMA = Math.fma(sp.emaBeta, sp.prevMA, sp.optInK_1 * inReal);
       sp.cur_outReal = sp.prevMA;
    }
    private RetCode emaOpenImpl( EmaStream sp, double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
+      double emaBeta = 0;
       double optInK_1 = 0;
       double tempReal = 0;
       double prevMA = 0;
@@ -539,6 +550,7 @@
             return RetCode.INSUFFICIENT_HISTORY;
          }
          sp.optInTimePeriod = optInTimePeriod;
+         sp.emaBeta = 0.0;
          sp.optInK_1 = 0.0;
          sp.prevMA = 0.0;
          outBegIdx.value = fillLb;
@@ -553,7 +565,13 @@
          sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
          return RetCode.SUCCESS;
       }
-      optInK_1 = 2.0 / (double)(optInTimePeriod + 1);
+      emaBeta = (double)(optInTimePeriod - 1) / (double)(optInTimePeriod + 1);
+      optInK_1 = 1.0 - emaBeta;
+      /* emaBeta + optInK_1 must be exactly 1.0, or a flat input drifts off
+       * its level. Each subtraction is exact only from an operand in
+       * [0.5,1): at a period of 2 that is optInK_1, above it emaBeta.
+       */
+      emaBeta = 1.0 - optInK_1;
       /* Identify the minimum number of price bar needed
        * to calculate at least one output.
        */
@@ -580,17 +598,18 @@
       }
       prevMA = tempReal / optInTimePeriod;
       while( today <= startIdx ) {
-         prevMA = Math.fma(inReal[today++] - prevMA, optInK_1, prevMA);
+         prevMA = Math.fma(emaBeta, prevMA, optInK_1 * inReal[today++]);
       }
       outReal[0 * outStride] = prevMA;
       outIdx = 1;
       while( today <= endIdx ) {
-         prevMA = Math.fma(inReal[today++] - prevMA, optInK_1, prevMA);
+         prevMA = Math.fma(emaBeta, prevMA, optInK_1 * inReal[today++]);
          outReal[outIdx++ * outStride] = prevMA;
       }
       outNBElement.value = outIdx;
       /* Capture the live batch state into the handle. */
       sp.optInTimePeriod = optInTimePeriod;
+      sp.emaBeta = emaBeta;
       sp.optInK_1 = optInK_1;
       sp.prevMA = prevMA;
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];

@@ -84,6 +84,8 @@
    {
       double kFirst = 0;
       double kSecond = 0;
+      double betaFirst = 0;
+      double betaSecond = 0;
       double emaFirstNum = 0;
       double emaFirstDen = 0;
       double emaSecondNum = 0;
@@ -138,7 +140,7 @@
        * TA_SetUnstablePeriod(TA_FUNC_UNST_EMA) folds in: the second stage then
        * seeds from the values the first would have published. The seed sums
        * accumulate from 0.0 in production order and the recurrence is
-       * ((x-prev)*k)+prev rather than the algebraically equal k*x+(1-k)*prev; do
+       * k*x + beta*prev with ema.c's k and beta; do
        * not reorder or fuse them (0.0+x is not x for x=-0.0). That order IS the
        * bit-exactness contract against the composed reference.
        *
@@ -146,8 +148,12 @@
        * because outReal may alias inReal: the slot holding close[t-1] may already
        * hold an output written a bar earlier.
        */
-      kFirst = 2.0 / (double)(optInFirstPeriod + 1);
-      kSecond = 2.0 / (double)(optInSecondPeriod + 1);
+      betaFirst = (double)(optInFirstPeriod - 1) / (double)(optInFirstPeriod + 1);
+      kFirst = 1.0 - betaFirst;
+      betaFirst = 1.0 - kFirst;
+      betaSecond = (double)(optInSecondPeriod - 1) / (double)(optInSecondPeriod + 1);
+      kSecond = 1.0 - betaSecond;
+      betaSecond = 1.0 - kSecond;
       lookbackFirst = emaLookback(optInFirstPeriod);
       emaFirstNum = 0.0;
       emaFirstDen = 0.0;
@@ -177,8 +183,8 @@
                emaFirstDen = sumFirstDen / optInFirstPeriod;
             }
          } else {
-            emaFirstNum = Math.fma(mom - emaFirstNum, kFirst, emaFirstNum);
-            emaFirstDen = Math.fma(absMom - emaFirstDen, kFirst, emaFirstDen);
+            emaFirstNum = Math.fma(betaFirst, emaFirstNum, kFirst * mom);
+            emaFirstDen = Math.fma(betaFirst, emaFirstDen, kFirst * absMom);
          }
          /* Stage 2: the second EMA, over what stage 1 publishes.
           *
@@ -202,8 +208,8 @@
                   emaSecondDen = sumSecondDen / optInSecondPeriod;
                }
             } else {
-               emaSecondNum = Math.fma(emaFirstNum - emaSecondNum, kSecond, emaSecondNum);
-               emaSecondDen = Math.fma(emaFirstDen - emaSecondDen, kSecond, emaSecondDen);
+               emaSecondNum = Math.fma(betaSecond, emaSecondNum, kSecond * emaFirstNum);
+               emaSecondDen = Math.fma(betaSecond, emaSecondDen, kSecond * emaFirstDen);
             }
          }
          nBar = nBar + 1;
@@ -229,10 +235,10 @@
          mom = inReal[today] - prevClose;
          prevClose = inReal[today];
          absMom = Math.abs(mom);
-         emaFirstNum = Math.fma(mom - emaFirstNum, kFirst, emaFirstNum);
-         emaFirstDen = Math.fma(absMom - emaFirstDen, kFirst, emaFirstDen);
-         emaSecondNum = Math.fma(emaFirstNum - emaSecondNum, kSecond, emaSecondNum);
-         emaSecondDen = Math.fma(emaFirstDen - emaSecondDen, kSecond, emaSecondDen);
+         emaFirstNum = Math.fma(betaFirst, emaFirstNum, kFirst * mom);
+         emaFirstDen = Math.fma(betaFirst, emaFirstDen, kFirst * absMom);
+         emaSecondNum = Math.fma(betaSecond, emaSecondNum, kSecond * emaFirstNum);
+         emaSecondDen = Math.fma(betaSecond, emaSecondDen, kSecond * emaFirstDen);
          if( emaSecondDen > 0.0 ) {
             tsiValue = 100.0 * emaSecondNum / emaSecondDen;
          } else {
@@ -256,6 +262,8 @@
    {
       double kFirst = 0;
       double kSecond = 0;
+      double betaFirst = 0;
+      double betaSecond = 0;
       double emaFirstNum = 0;
       double emaFirstDen = 0;
       double emaSecondNum = 0;
@@ -300,8 +308,12 @@
          return RetCode.SUCCESS ;
       }
       outBegIdx.value = startIdx;
-      kFirst = 2.0 / (double)(optInFirstPeriod + 1);
-      kSecond = 2.0 / (double)(optInSecondPeriod + 1);
+      betaFirst = (double)(optInFirstPeriod - 1) / (double)(optInFirstPeriod + 1);
+      kFirst = 1.0 - betaFirst;
+      betaFirst = 1.0 - kFirst;
+      betaSecond = (double)(optInSecondPeriod - 1) / (double)(optInSecondPeriod + 1);
+      kSecond = 1.0 - betaSecond;
+      betaSecond = 1.0 - kSecond;
       lookbackFirst = emaLookback(optInFirstPeriod);
       emaFirstNum = 0.0;
       emaFirstDen = 0.0;
@@ -326,8 +338,8 @@
                emaFirstDen = sumFirstDen / optInFirstPeriod;
             }
          } else {
-            emaFirstNum = Math.fma(mom - emaFirstNum, kFirst, emaFirstNum);
-            emaFirstDen = Math.fma(absMom - emaFirstDen, kFirst, emaFirstDen);
+            emaFirstNum = Math.fma(betaFirst, emaFirstNum, kFirst * mom);
+            emaFirstDen = Math.fma(betaFirst, emaFirstDen, kFirst * absMom);
          }
          if( nBar >= lookbackFirst ) {
             nSecond = nBar - lookbackFirst;
@@ -339,8 +351,8 @@
                   emaSecondDen = sumSecondDen / optInSecondPeriod;
                }
             } else {
-               emaSecondNum = Math.fma(emaFirstNum - emaSecondNum, kSecond, emaSecondNum);
-               emaSecondDen = Math.fma(emaFirstDen - emaSecondDen, kSecond, emaSecondDen);
+               emaSecondNum = Math.fma(betaSecond, emaSecondNum, kSecond * emaFirstNum);
+               emaSecondDen = Math.fma(betaSecond, emaSecondDen, kSecond * emaFirstDen);
             }
          }
          nBar = nBar + 1;
@@ -357,10 +369,10 @@
          mom = (double)inReal[today] - prevClose;
          prevClose = (double)inReal[today];
          absMom = Math.abs(mom);
-         emaFirstNum = Math.fma(mom - emaFirstNum, kFirst, emaFirstNum);
-         emaFirstDen = Math.fma(absMom - emaFirstDen, kFirst, emaFirstDen);
-         emaSecondNum = Math.fma(emaFirstNum - emaSecondNum, kSecond, emaSecondNum);
-         emaSecondDen = Math.fma(emaFirstDen - emaSecondDen, kSecond, emaSecondDen);
+         emaFirstNum = Math.fma(betaFirst, emaFirstNum, kFirst * mom);
+         emaFirstDen = Math.fma(betaFirst, emaFirstDen, kFirst * absMom);
+         emaSecondNum = Math.fma(betaSecond, emaSecondNum, kSecond * emaFirstNum);
+         emaSecondDen = Math.fma(betaSecond, emaSecondDen, kSecond * emaFirstDen);
          if( emaSecondDen > 0.0 ) {
             tsiValue = 100.0 * emaSecondNum / emaSecondDen;
          } else {
@@ -560,6 +572,8 @@
       private int optInSecondPeriod;
       private double kFirst;
       private double kSecond;
+      private double betaFirst;
+      private double betaSecond;
       private double emaFirstNum;
       private double emaFirstDen;
       private double emaSecondNum;
@@ -611,6 +625,8 @@
          this.optInSecondPeriod = other.optInSecondPeriod;
          this.kFirst = other.kFirst;
          this.kSecond = other.kSecond;
+         this.betaFirst = other.betaFirst;
+         this.betaSecond = other.betaSecond;
          this.emaFirstNum = other.emaFirstNum;
          this.emaFirstDen = other.emaFirstDen;
          this.emaSecondNum = other.emaSecondNum;
@@ -673,10 +689,10 @@
          mom = inReal - prevClose;
          prevClose = inReal;
          absMom = Math.abs(mom);
-         emaFirstNum = Math.fma(mom - emaFirstNum, sp.kFirst, emaFirstNum);
-         emaFirstDen = Math.fma(absMom - emaFirstDen, sp.kFirst, emaFirstDen);
-         emaSecondNum = Math.fma(emaFirstNum - emaSecondNum, sp.kSecond, emaSecondNum);
-         emaSecondDen = Math.fma(emaFirstDen - emaSecondDen, sp.kSecond, emaSecondDen);
+         emaFirstNum = Math.fma(sp.betaFirst, emaFirstNum, sp.kFirst * mom);
+         emaFirstDen = Math.fma(sp.betaFirst, emaFirstDen, sp.kFirst * absMom);
+         emaSecondNum = Math.fma(sp.betaSecond, emaSecondNum, sp.kSecond * emaFirstNum);
+         emaSecondDen = Math.fma(sp.betaSecond, emaSecondDen, sp.kSecond * emaFirstDen);
          if( emaSecondDen > 0.0 ) {
             tsiValue = 100.0 * emaSecondNum / emaSecondDen;
          } else {
@@ -720,10 +736,10 @@
       mom = inReal - sp.prevClose;
       sp.prevClose = inReal;
       absMom = Math.abs(mom);
-      sp.emaFirstNum = Math.fma(mom - sp.emaFirstNum, sp.kFirst, sp.emaFirstNum);
-      sp.emaFirstDen = Math.fma(absMom - sp.emaFirstDen, sp.kFirst, sp.emaFirstDen);
-      sp.emaSecondNum = Math.fma(sp.emaFirstNum - sp.emaSecondNum, sp.kSecond, sp.emaSecondNum);
-      sp.emaSecondDen = Math.fma(sp.emaFirstDen - sp.emaSecondDen, sp.kSecond, sp.emaSecondDen);
+      sp.emaFirstNum = Math.fma(sp.betaFirst, sp.emaFirstNum, sp.kFirst * mom);
+      sp.emaFirstDen = Math.fma(sp.betaFirst, sp.emaFirstDen, sp.kFirst * absMom);
+      sp.emaSecondNum = Math.fma(sp.betaSecond, sp.emaSecondNum, sp.kSecond * sp.emaFirstNum);
+      sp.emaSecondDen = Math.fma(sp.betaSecond, sp.emaSecondDen, sp.kSecond * sp.emaFirstDen);
       if( sp.emaSecondDen > 0.0 ) {
          tsiValue = 100.0 * sp.emaSecondNum / sp.emaSecondDen;
       } else {
@@ -735,6 +751,8 @@
    {
       double kFirst = 0;
       double kSecond = 0;
+      double betaFirst = 0;
+      double betaSecond = 0;
       double emaFirstNum = 0;
       double emaFirstDen = 0;
       double emaSecondNum = 0;
@@ -796,7 +814,7 @@
        * TA_SetUnstablePeriod(TA_FUNC_UNST_EMA) folds in: the second stage then
        * seeds from the values the first would have published. The seed sums
        * accumulate from 0.0 in production order and the recurrence is
-       * ((x-prev)*k)+prev rather than the algebraically equal k*x+(1-k)*prev; do
+       * k*x + beta*prev with ema.c's k and beta; do
        * not reorder or fuse them (0.0+x is not x for x=-0.0). That order IS the
        * bit-exactness contract against the composed reference.
        *
@@ -804,8 +822,12 @@
        * because outReal may alias inReal: the slot holding close[t-1] may already
        * hold an output written a bar earlier.
        */
-      kFirst = 2.0 / (double)(optInFirstPeriod + 1);
-      kSecond = 2.0 / (double)(optInSecondPeriod + 1);
+      betaFirst = (double)(optInFirstPeriod - 1) / (double)(optInFirstPeriod + 1);
+      kFirst = 1.0 - betaFirst;
+      betaFirst = 1.0 - kFirst;
+      betaSecond = (double)(optInSecondPeriod - 1) / (double)(optInSecondPeriod + 1);
+      kSecond = 1.0 - betaSecond;
+      betaSecond = 1.0 - kSecond;
       lookbackFirst = emaLookback(optInFirstPeriod);
       emaFirstNum = 0.0;
       emaFirstDen = 0.0;
@@ -835,8 +857,8 @@
                emaFirstDen = sumFirstDen / optInFirstPeriod;
             }
          } else {
-            emaFirstNum = Math.fma(mom - emaFirstNum, kFirst, emaFirstNum);
-            emaFirstDen = Math.fma(absMom - emaFirstDen, kFirst, emaFirstDen);
+            emaFirstNum = Math.fma(betaFirst, emaFirstNum, kFirst * mom);
+            emaFirstDen = Math.fma(betaFirst, emaFirstDen, kFirst * absMom);
          }
          /* Stage 2: the second EMA, over what stage 1 publishes.
           *
@@ -860,8 +882,8 @@
                   emaSecondDen = sumSecondDen / optInSecondPeriod;
                }
             } else {
-               emaSecondNum = Math.fma(emaFirstNum - emaSecondNum, kSecond, emaSecondNum);
-               emaSecondDen = Math.fma(emaFirstDen - emaSecondDen, kSecond, emaSecondDen);
+               emaSecondNum = Math.fma(betaSecond, emaSecondNum, kSecond * emaFirstNum);
+               emaSecondDen = Math.fma(betaSecond, emaSecondDen, kSecond * emaFirstDen);
             }
          }
          nBar = nBar + 1;
@@ -887,10 +909,10 @@
          mom = inReal[today] - prevClose;
          prevClose = inReal[today];
          absMom = Math.abs(mom);
-         emaFirstNum = Math.fma(mom - emaFirstNum, kFirst, emaFirstNum);
-         emaFirstDen = Math.fma(absMom - emaFirstDen, kFirst, emaFirstDen);
-         emaSecondNum = Math.fma(emaFirstNum - emaSecondNum, kSecond, emaSecondNum);
-         emaSecondDen = Math.fma(emaFirstDen - emaSecondDen, kSecond, emaSecondDen);
+         emaFirstNum = Math.fma(betaFirst, emaFirstNum, kFirst * mom);
+         emaFirstDen = Math.fma(betaFirst, emaFirstDen, kFirst * absMom);
+         emaSecondNum = Math.fma(betaSecond, emaSecondNum, kSecond * emaFirstNum);
+         emaSecondDen = Math.fma(betaSecond, emaSecondDen, kSecond * emaFirstDen);
          if( emaSecondDen > 0.0 ) {
             tsiValue = 100.0 * emaSecondNum / emaSecondDen;
          } else {
@@ -906,6 +928,8 @@
       sp.optInSecondPeriod = optInSecondPeriod;
       sp.kFirst = kFirst;
       sp.kSecond = kSecond;
+      sp.betaFirst = betaFirst;
+      sp.betaSecond = betaSecond;
       sp.emaFirstNum = emaFirstNum;
       sp.emaFirstDen = emaFirstDen;
       sp.emaSecondNum = emaSecondNum;

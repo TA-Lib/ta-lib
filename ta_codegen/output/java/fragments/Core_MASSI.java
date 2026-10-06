@@ -81,6 +81,7 @@
                       double outReal[] )
    {
       double optInK_1 = 0;
+      double emaBeta = 0;
       double hl = 0;
       double ema1 = 0;
       double ema2 = 0;
@@ -142,7 +143,9 @@
        * is warmed. The seed sums accumulate from 0.0 in production order; do not
        * reorder or fuse them (0.0+x is not x for x=-0.0).
        */
-      optInK_1 = 2.0 / (double)(optInFastPeriod + 1);
+      emaBeta = (double)(optInFastPeriod - 1) / (double)(optInFastPeriod + 1);
+      optInK_1 = 1.0 - emaBeta;
+      emaBeta = 1.0 - optInK_1;
       ema1 = 0.0;
       ema2 = 0.0;
       sum1 = 0.0;
@@ -162,7 +165,7 @@
                ema1 = sum1 / optInFastPeriod;
             }
          } else {
-            ema1 = Math.fma(hl - ema1, optInK_1, ema1);
+            ema1 = Math.fma(emaBeta, ema1, optInK_1 * hl);
          }
          /* The stage counter is compared BEFORE it is subtracted, never after.
           * `n2 = nBar - lookbackEma; if( n2 >= 0 )` is correct in C and broken
@@ -177,7 +180,7 @@
                   ema2 = sum2 / optInFastPeriod;
                }
             } else {
-               ema2 = Math.fma(ema1 - ema2, optInK_1, ema2);
+               ema2 = Math.fma(emaBeta, ema2, optInK_1 * ema1);
             }
          }
          if( nBar >= lookbackEma2 ) {
@@ -216,8 +219,8 @@
       outIdx = 1;
       while( today <= endIdx ) {
          hl = inHigh[today] - inLow[today];
-         ema1 = Math.fma(hl - ema1, optInK_1, ema1);
-         ema2 = Math.fma(ema1 - ema2, optInK_1, ema2);
+         ema1 = Math.fma(emaBeta, ema1, optInK_1 * hl);
+         ema2 = Math.fma(emaBeta, ema2, optInK_1 * ema1);
          if( ema2 == 0.0 ) {
             ratio = 1.0;
          } else {
@@ -247,6 +250,7 @@
                       double outReal[] )
    {
       double optInK_1 = 0;
+      double emaBeta = 0;
       double hl = 0;
       double ema1 = 0;
       double ema2 = 0;
@@ -297,7 +301,9 @@
       maxIdx_ratioRing = (optInSlowPeriod)-1;
       ratioRing_Idx = 0;
       outBegIdx.value = startIdx;
-      optInK_1 = 2.0 / (double)(optInFastPeriod + 1);
+      emaBeta = (double)(optInFastPeriod - 1) / (double)(optInFastPeriod + 1);
+      optInK_1 = 1.0 - emaBeta;
+      emaBeta = 1.0 - optInK_1;
       ema1 = 0.0;
       ema2 = 0.0;
       sum1 = 0.0;
@@ -314,7 +320,7 @@
                ema1 = sum1 / optInFastPeriod;
             }
          } else {
-            ema1 = Math.fma(hl - ema1, optInK_1, ema1);
+            ema1 = Math.fma(emaBeta, ema1, optInK_1 * hl);
          }
          if( nBar >= lookbackEma ) {
             n2 = nBar - lookbackEma;
@@ -324,7 +330,7 @@
                   ema2 = sum2 / optInFastPeriod;
                }
             } else {
-               ema2 = Math.fma(ema1 - ema2, optInK_1, ema2);
+               ema2 = Math.fma(emaBeta, ema2, optInK_1 * ema1);
             }
          }
          if( nBar >= lookbackEma2 ) {
@@ -349,8 +355,8 @@
       outIdx = 1;
       while( today <= endIdx ) {
          hl = (double)inHigh[today] - (double)inLow[today];
-         ema1 = Math.fma(hl - ema1, optInK_1, ema1);
-         ema2 = Math.fma(ema1 - ema2, optInK_1, ema2);
+         ema1 = Math.fma(emaBeta, ema1, optInK_1 * hl);
+         ema2 = Math.fma(emaBeta, ema2, optInK_1 * ema1);
          if( ema2 == 0.0 ) {
             ratio = 1.0;
          } else {
@@ -559,6 +565,7 @@
       private int optInFastPeriod;
       private int optInSlowPeriod;
       private double optInK_1;
+      private double emaBeta;
       private double ema1;
       private double ema2;
       private double total;
@@ -611,6 +618,7 @@
          this.optInFastPeriod = other.optInFastPeriod;
          this.optInSlowPeriod = other.optInSlowPeriod;
          this.optInK_1 = other.optInK_1;
+         this.emaBeta = other.emaBeta;
          this.ema1 = other.ema1;
          this.ema2 = other.ema2;
          this.total = other.total;
@@ -674,8 +682,8 @@
          int pkSlot0 = -1;
          double pkVal0 = 0.0;
          hl = inHigh - inLow;
-         ema1 = Math.fma(hl - ema1, sp.optInK_1, ema1);
-         ema2 = Math.fma(ema1 - ema2, sp.optInK_1, ema2);
+         ema1 = Math.fma(sp.emaBeta, ema1, sp.optInK_1 * hl);
+         ema2 = Math.fma(sp.emaBeta, ema2, sp.optInK_1 * ema1);
          if( ema2 == 0.0 ) {
             ratio = 1.0;
          } else {
@@ -726,8 +734,8 @@
       double ratio = 0.0;
       double tempReal = 0.0;
       hl = inHigh - inLow;
-      sp.ema1 = Math.fma(hl - sp.ema1, sp.optInK_1, sp.ema1);
-      sp.ema2 = Math.fma(sp.ema1 - sp.ema2, sp.optInK_1, sp.ema2);
+      sp.ema1 = Math.fma(sp.emaBeta, sp.ema1, sp.optInK_1 * hl);
+      sp.ema2 = Math.fma(sp.emaBeta, sp.ema2, sp.optInK_1 * sp.ema1);
       if( sp.ema2 == 0.0 ) {
          ratio = 1.0;
       } else {
@@ -746,6 +754,7 @@
    private RetCode massiOpenImpl( MassiStream sp, double inHigh[], double inLow[], int startIdx, int optInFastPeriod, int optInSlowPeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       double optInK_1 = 0;
+      double emaBeta = 0;
       double hl = 0;
       double ema1 = 0;
       double ema2 = 0;
@@ -817,7 +826,9 @@
        * is warmed. The seed sums accumulate from 0.0 in production order; do not
        * reorder or fuse them (0.0+x is not x for x=-0.0).
        */
-      optInK_1 = 2.0 / (double)(optInFastPeriod + 1);
+      emaBeta = (double)(optInFastPeriod - 1) / (double)(optInFastPeriod + 1);
+      optInK_1 = 1.0 - emaBeta;
+      emaBeta = 1.0 - optInK_1;
       ema1 = 0.0;
       ema2 = 0.0;
       sum1 = 0.0;
@@ -837,7 +848,7 @@
                ema1 = sum1 / optInFastPeriod;
             }
          } else {
-            ema1 = Math.fma(hl - ema1, optInK_1, ema1);
+            ema1 = Math.fma(emaBeta, ema1, optInK_1 * hl);
          }
          /* The stage counter is compared BEFORE it is subtracted, never after.
           * `n2 = nBar - lookbackEma; if( n2 >= 0 )` is correct in C and broken
@@ -852,7 +863,7 @@
                   ema2 = sum2 / optInFastPeriod;
                }
             } else {
-               ema2 = Math.fma(ema1 - ema2, optInK_1, ema2);
+               ema2 = Math.fma(emaBeta, ema2, optInK_1 * ema1);
             }
          }
          if( nBar >= lookbackEma2 ) {
@@ -891,8 +902,8 @@
       outIdx = 1;
       while( today <= endIdx ) {
          hl = inHigh[today] - inLow[today];
-         ema1 = Math.fma(hl - ema1, optInK_1, ema1);
-         ema2 = Math.fma(ema1 - ema2, optInK_1, ema2);
+         ema1 = Math.fma(emaBeta, ema1, optInK_1 * hl);
+         ema2 = Math.fma(emaBeta, ema2, optInK_1 * ema1);
          if( ema2 == 0.0 ) {
             ratio = 1.0;
          } else {
@@ -917,6 +928,7 @@
       sp.optInFastPeriod = optInFastPeriod;
       sp.optInSlowPeriod = optInSlowPeriod;
       sp.optInK_1 = optInK_1;
+      sp.emaBeta = emaBeta;
       sp.ema1 = ema1;
       sp.ema2 = ema2;
       sp.total = total;

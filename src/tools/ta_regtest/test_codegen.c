@@ -5552,7 +5552,7 @@ static TA_Integer g_fzRefInt[MAX_OUTPUTS][MAX_NB_TEST_ELEMENT];
 #define REF_MAX_EXCLUDED 16
 
 /* Same order as ta_ref.h's TaRefTolMode; the wire carries the names. */
-enum { TOL_ABS = 0, TOL_REL_IN, TOL_REL_OUT, TOL_REL_OUT_INFLOOR, TOL_NAN_TO };
+enum { TOL_ABS = 0, TOL_REL_IN, TOL_REL_OUT, TOL_REL_OUT_INFLOOR, TOL_REL_OUT_FLOOR1, TOL_NAN_TO };
 
 typedef struct {
     char      func[32];
@@ -5910,7 +5910,7 @@ static int ref_query(CodegenPipe *cp, char *req, char *resp, const char *method,
  * requested release, or whose tables do not fit. */
 static int ref_load(CodegenPipe *cp, char *req, char *resp, const char *version, RefMember *m)
 {
-    static const char *const modes[] = { "abs", "rel_in", "rel_out", "rel_out_infloor", "nan_to" };
+    static const char *const modes[] = { "abs", "rel_in", "rel_out", "rel_out_infloor", "rel_out_floor1", "nan_to" };
     char expectLib[32];
     int i;
 
@@ -6079,6 +6079,9 @@ static int fuzz_classify_and_report(FuzzContext *ctx, const TA_FuncInfo *fi,
             case TOL_REL_OUT_INFLOOR:
                 if( inScale > mag ) mag = inScale;
                 bound = row->tol * mag; unit = mag; break;
+            case TOL_REL_OUT_FLOOR1:
+                if( mag < 1.0 ) mag = 1.0;
+                bound = row->tol * mag; unit = mag; break;
             }
             if( row && unit > 0.0 && d <= bound )
             {
@@ -6127,6 +6130,7 @@ static void fuzz_print_bound(const RefTol *r)
     case TOL_REL_IN:          printf("%g * max|input|%s", r->tol, r->cap > 0.0 ? " (capped)" : ""); break;
     case TOL_REL_OUT:         printf("%g relative", r->tol); break;
     case TOL_REL_OUT_INFLOOR: printf("%g relative, floored at max|input|", r->tol); break;
+    case TOL_REL_OUT_FLOOR1:  printf("%g relative, floored at 1", r->tol); break;
     case TOL_NAN_TO:          printf("NaN -> %g", r->tol); break;
     }
 }

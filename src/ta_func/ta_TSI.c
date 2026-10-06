@@ -95,6 +95,8 @@ TA_LIB_API TA_RetCode TA_TSI( int    startIdx,
 {
    double kFirst;
    double kSecond;
+   double betaFirst;
+   double betaSecond;
    double emaFirstNum;
    double emaFirstDen;
    double emaSecondNum;
@@ -156,7 +158,7 @@ TA_LIB_API TA_RetCode TA_TSI( int    startIdx,
     * TA_SetUnstablePeriod(TA_FUNC_UNST_EMA) folds in: the second stage then
     * seeds from the values the first would have published. The seed sums
     * accumulate from 0.0 in production order and the recurrence is
-    * ((x-prev)*k)+prev rather than the algebraically equal k*x+(1-k)*prev; do
+    * k*x + beta*prev with ema.c's k and beta; do
     * not reorder or fuse them (0.0+x is not x for x=-0.0). That order IS the
     * bit-exactness contract against the composed reference.
     *
@@ -164,8 +166,12 @@ TA_LIB_API TA_RetCode TA_TSI( int    startIdx,
     * because outReal may alias inReal: the slot holding close[t-1] may already
     * hold an output written a bar earlier.
     */
-   kFirst = 2.0 / (double)(optInFirstPeriod + 1);
-   kSecond = 2.0 / (double)(optInSecondPeriod + 1);
+   betaFirst = (double)(optInFirstPeriod - 1) / (double)(optInFirstPeriod + 1);
+   kFirst = 1.0 - betaFirst;
+   betaFirst = 1.0 - kFirst;
+   betaSecond = (double)(optInSecondPeriod - 1) / (double)(optInSecondPeriod + 1);
+   kSecond = 1.0 - betaSecond;
+   betaSecond = 1.0 - kSecond;
    lookbackFirst = TA_EMA_Lookback(optInFirstPeriod);
    emaFirstNum = 0.0;
    emaFirstDen = 0.0;
@@ -199,8 +205,8 @@ TA_LIB_API TA_RetCode TA_TSI( int    startIdx,
          }
       } else 
       {
-         emaFirstNum = fma(mom - emaFirstNum, kFirst, emaFirstNum);
-         emaFirstDen = fma(absMom - emaFirstDen, kFirst, emaFirstDen);
+         emaFirstNum = fma(betaFirst, emaFirstNum, kFirst * mom);
+         emaFirstDen = fma(betaFirst, emaFirstDen, kFirst * absMom);
       }
       /* Stage 2: the second EMA, over what stage 1 publishes.
        *
@@ -228,8 +234,8 @@ TA_LIB_API TA_RetCode TA_TSI( int    startIdx,
             }
          } else 
          {
-            emaSecondNum = fma(emaFirstNum - emaSecondNum, kSecond, emaSecondNum);
-            emaSecondDen = fma(emaFirstDen - emaSecondDen, kSecond, emaSecondDen);
+            emaSecondNum = fma(betaSecond, emaSecondNum, kSecond * emaFirstNum);
+            emaSecondDen = fma(betaSecond, emaSecondDen, kSecond * emaFirstDen);
          }
       }
       nBar = nBar + 1;
@@ -258,10 +264,10 @@ TA_LIB_API TA_RetCode TA_TSI( int    startIdx,
       mom = inReal[today] - prevClose;
       prevClose = inReal[today];
       absMom = fabs(mom);
-      emaFirstNum = fma(mom - emaFirstNum, kFirst, emaFirstNum);
-      emaFirstDen = fma(absMom - emaFirstDen, kFirst, emaFirstDen);
-      emaSecondNum = fma(emaFirstNum - emaSecondNum, kSecond, emaSecondNum);
-      emaSecondDen = fma(emaFirstDen - emaSecondDen, kSecond, emaSecondDen);
+      emaFirstNum = fma(betaFirst, emaFirstNum, kFirst * mom);
+      emaFirstDen = fma(betaFirst, emaFirstDen, kFirst * absMom);
+      emaSecondNum = fma(betaSecond, emaSecondNum, kSecond * emaFirstNum);
+      emaSecondDen = fma(betaSecond, emaSecondDen, kSecond * emaFirstDen);
       if( emaSecondDen > 0.0 )
       {
          tsiValue = 100.0 * emaSecondNum / emaSecondDen;
@@ -289,6 +295,8 @@ TA_RetCode TA_S_TSI( int    startIdx,
 {
    double kFirst;
    double kSecond;
+   double betaFirst;
+   double betaSecond;
    double emaFirstNum;
    double emaFirstDen;
    double emaSecondNum;
@@ -340,8 +348,12 @@ TA_RetCode TA_S_TSI( int    startIdx,
       return TA_SUCCESS;
    }
    *outBegIdx= startIdx;
-   kFirst = 2.0 / (double)(optInFirstPeriod + 1);
-   kSecond = 2.0 / (double)(optInSecondPeriod + 1);
+   betaFirst = (double)(optInFirstPeriod - 1) / (double)(optInFirstPeriod + 1);
+   kFirst = 1.0 - betaFirst;
+   betaFirst = 1.0 - kFirst;
+   betaSecond = (double)(optInSecondPeriod - 1) / (double)(optInSecondPeriod + 1);
+   kSecond = 1.0 - betaSecond;
+   betaSecond = 1.0 - kSecond;
    lookbackFirst = TA_EMA_Lookback(optInFirstPeriod);
    emaFirstNum = 0.0;
    emaFirstDen = 0.0;
@@ -370,8 +382,8 @@ TA_RetCode TA_S_TSI( int    startIdx,
          }
       } else 
       {
-         emaFirstNum = fma(mom - emaFirstNum, kFirst, emaFirstNum);
-         emaFirstDen = fma(absMom - emaFirstDen, kFirst, emaFirstDen);
+         emaFirstNum = fma(betaFirst, emaFirstNum, kFirst * mom);
+         emaFirstDen = fma(betaFirst, emaFirstDen, kFirst * absMom);
       }
       if( nBar >= lookbackFirst )
       {
@@ -387,8 +399,8 @@ TA_RetCode TA_S_TSI( int    startIdx,
             }
          } else 
          {
-            emaSecondNum = fma(emaFirstNum - emaSecondNum, kSecond, emaSecondNum);
-            emaSecondDen = fma(emaFirstDen - emaSecondDen, kSecond, emaSecondDen);
+            emaSecondNum = fma(betaSecond, emaSecondNum, kSecond * emaFirstNum);
+            emaSecondDen = fma(betaSecond, emaSecondDen, kSecond * emaFirstDen);
          }
       }
       nBar = nBar + 1;
@@ -408,10 +420,10 @@ TA_RetCode TA_S_TSI( int    startIdx,
       mom = (double)inReal[today] - prevClose;
       prevClose = (double)inReal[today];
       absMom = fabs(mom);
-      emaFirstNum = fma(mom - emaFirstNum, kFirst, emaFirstNum);
-      emaFirstDen = fma(absMom - emaFirstDen, kFirst, emaFirstDen);
-      emaSecondNum = fma(emaFirstNum - emaSecondNum, kSecond, emaSecondNum);
-      emaSecondDen = fma(emaFirstDen - emaSecondDen, kSecond, emaSecondDen);
+      emaFirstNum = fma(betaFirst, emaFirstNum, kFirst * mom);
+      emaFirstDen = fma(betaFirst, emaFirstDen, kFirst * absMom);
+      emaSecondNum = fma(betaSecond, emaSecondNum, kSecond * emaFirstNum);
+      emaSecondDen = fma(betaSecond, emaSecondDen, kSecond * emaFirstDen);
       if( emaSecondDen > 0.0 )
       {
          tsiValue = 100.0 * emaSecondNum / emaSecondDen;
@@ -439,6 +451,8 @@ struct TA_TSI_Stream {
    int optInSecondPeriod;
    double kFirst;
    double kSecond;
+   double betaFirst;
+   double betaSecond;
    double pad_0;
    double emaFirstNum;
    double emaFirstDen;
@@ -457,10 +471,10 @@ static TA_FMA_STEP_INLINE void TA_TSI_StepImpl( struct TA_TSI_Stream *sp, double
    mom = inReal - sp->prevClose;
    sp->prevClose = inReal;
    absMom = fabs(mom);
-   sp->emaFirstNum = fma(mom - sp->emaFirstNum, sp->kFirst, sp->emaFirstNum);
-   sp->emaFirstDen = fma(absMom - sp->emaFirstDen, sp->kFirst, sp->emaFirstDen);
-   sp->emaSecondNum = fma(sp->emaFirstNum - sp->emaSecondNum, sp->kSecond, sp->emaSecondNum);
-   sp->emaSecondDen = fma(sp->emaFirstDen - sp->emaSecondDen, sp->kSecond, sp->emaSecondDen);
+   sp->emaFirstNum = fma(sp->betaFirst, sp->emaFirstNum, sp->kFirst * mom);
+   sp->emaFirstDen = fma(sp->betaFirst, sp->emaFirstDen, sp->kFirst * absMom);
+   sp->emaSecondNum = fma(sp->betaSecond, sp->emaSecondNum, sp->kSecond * sp->emaFirstNum);
+   sp->emaSecondDen = fma(sp->betaSecond, sp->emaSecondDen, sp->kSecond * sp->emaFirstDen);
    if( sp->emaSecondDen > 0.0 )
    {
       tsiValue = 100.0 * sp->emaSecondNum / sp->emaSecondDen;
@@ -502,6 +516,8 @@ static TA_RetCode TA_TSI_OpenImpl( struct TA_TSI_Stream **stream, const double i
    {
       double kFirst = 0.0;
       double kSecond = 0.0;
+      double betaFirst = 0.0;
+      double betaSecond = 0.0;
       double emaFirstNum = 0.0;
       double emaFirstDen = 0.0;
       double emaSecondNum = 0.0;
@@ -542,7 +558,7 @@ static TA_RetCode TA_TSI_OpenImpl( struct TA_TSI_Stream **stream, const double i
        * TA_SetUnstablePeriod(TA_FUNC_UNST_EMA) folds in: the second stage then
        * seeds from the values the first would have published. The seed sums
        * accumulate from 0.0 in production order and the recurrence is
-       * ((x-prev)*k)+prev rather than the algebraically equal k*x+(1-k)*prev; do
+       * k*x + beta*prev with ema.c's k and beta; do
        * not reorder or fuse them (0.0+x is not x for x=-0.0). That order IS the
        * bit-exactness contract against the composed reference.
        *
@@ -550,8 +566,12 @@ static TA_RetCode TA_TSI_OpenImpl( struct TA_TSI_Stream **stream, const double i
        * because outReal may alias inReal: the slot holding close[t-1] may already
        * hold an output written a bar earlier.
        */
-      kFirst = 2.0 / (double)(optInFirstPeriod + 1);
-      kSecond = 2.0 / (double)(optInSecondPeriod + 1);
+      betaFirst = (double)(optInFirstPeriod - 1) / (double)(optInFirstPeriod + 1);
+      kFirst = 1.0 - betaFirst;
+      betaFirst = 1.0 - kFirst;
+      betaSecond = (double)(optInSecondPeriod - 1) / (double)(optInSecondPeriod + 1);
+      kSecond = 1.0 - betaSecond;
+      betaSecond = 1.0 - kSecond;
       lookbackFirst = TA_EMA_Lookback(optInFirstPeriod);
       emaFirstNum = 0.0;
       emaFirstDen = 0.0;
@@ -585,8 +605,8 @@ static TA_RetCode TA_TSI_OpenImpl( struct TA_TSI_Stream **stream, const double i
             }
          } else 
          {
-            emaFirstNum = fma(mom - emaFirstNum, kFirst, emaFirstNum);
-            emaFirstDen = fma(absMom - emaFirstDen, kFirst, emaFirstDen);
+            emaFirstNum = fma(betaFirst, emaFirstNum, kFirst * mom);
+            emaFirstDen = fma(betaFirst, emaFirstDen, kFirst * absMom);
          }
          /* Stage 2: the second EMA, over what stage 1 publishes.
           *
@@ -614,8 +634,8 @@ static TA_RetCode TA_TSI_OpenImpl( struct TA_TSI_Stream **stream, const double i
                }
             } else 
             {
-               emaSecondNum = fma(emaFirstNum - emaSecondNum, kSecond, emaSecondNum);
-               emaSecondDen = fma(emaFirstDen - emaSecondDen, kSecond, emaSecondDen);
+               emaSecondNum = fma(betaSecond, emaSecondNum, kSecond * emaFirstNum);
+               emaSecondDen = fma(betaSecond, emaSecondDen, kSecond * emaFirstDen);
             }
          }
          nBar = nBar + 1;
@@ -644,10 +664,10 @@ static TA_RetCode TA_TSI_OpenImpl( struct TA_TSI_Stream **stream, const double i
          mom = inReal[today] - prevClose;
          prevClose = inReal[today];
          absMom = fabs(mom);
-         emaFirstNum = fma(mom - emaFirstNum, kFirst, emaFirstNum);
-         emaFirstDen = fma(absMom - emaFirstDen, kFirst, emaFirstDen);
-         emaSecondNum = fma(emaFirstNum - emaSecondNum, kSecond, emaSecondNum);
-         emaSecondDen = fma(emaFirstDen - emaSecondDen, kSecond, emaSecondDen);
+         emaFirstNum = fma(betaFirst, emaFirstNum, kFirst * mom);
+         emaFirstDen = fma(betaFirst, emaFirstDen, kFirst * absMom);
+         emaSecondNum = fma(betaSecond, emaSecondNum, kSecond * emaFirstNum);
+         emaSecondDen = fma(betaSecond, emaSecondDen, kSecond * emaFirstDen);
          if( emaSecondDen > 0.0 )
          {
             tsiValue = 100.0 * emaSecondNum / emaSecondDen;
@@ -669,6 +689,8 @@ static TA_RetCode TA_TSI_OpenImpl( struct TA_TSI_Stream **stream, const double i
       sp->optInSecondPeriod = optInSecondPeriod;
       sp->kFirst = kFirst;
       sp->kSecond = kSecond;
+      sp->betaFirst = betaFirst;
+      sp->betaSecond = betaSecond;
       sp->emaFirstNum = emaFirstNum;
       sp->emaFirstDen = emaFirstDen;
       sp->emaSecondNum = emaSecondNum;
@@ -760,10 +782,10 @@ TA_LIB_API TA_RetCode TA_TSI_Peek( const TA_TSI_Stream *stream, double inReal, d
    mom = inReal - prevClose;
    prevClose = inReal;
    absMom = fabs(mom);
-   emaFirstNum = fma(mom - emaFirstNum, sp->kFirst, emaFirstNum);
-   emaFirstDen = fma(absMom - emaFirstDen, sp->kFirst, emaFirstDen);
-   emaSecondNum = fma(emaFirstNum - emaSecondNum, sp->kSecond, emaSecondNum);
-   emaSecondDen = fma(emaFirstDen - emaSecondDen, sp->kSecond, emaSecondDen);
+   emaFirstNum = fma(sp->betaFirst, emaFirstNum, sp->kFirst * mom);
+   emaFirstDen = fma(sp->betaFirst, emaFirstDen, sp->kFirst * absMom);
+   emaSecondNum = fma(sp->betaSecond, emaSecondNum, sp->kSecond * emaFirstNum);
+   emaSecondDen = fma(sp->betaSecond, emaSecondDen, sp->kSecond * emaFirstDen);
    if( emaSecondDen > 0.0 )
    {
       tsiValue = 100.0 * emaSecondNum / emaSecondDen;

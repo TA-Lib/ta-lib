@@ -43,8 +43,13 @@ TA_RetCode smi(int startIdx, int endIdx,
    double outSMISignal[])
 {
    double kSlow, kFast, kSignal;
+   double betaSlow, betaFast, betaSignal;
    double highest, lowest, tmp;
-   double emaSlowNum, emaSlowDen, emaFastNum, emaFastDen;
+   /* Declared Num, Num, Den, Den: the stream state keeps this order, and with
+    * each stage's pair adjacent gcc 13 packs the steps two by two and then
+    * reads 16 bytes across two of its own stores, which cannot be forwarded.
+    */
+   double emaSlowNum, emaFastNum, emaSlowDen, emaFastDen;
    double sumSlowNum, sumSlowDen, sumFastNum, sumFastDen, sumSignal;
    double num, den, halfDen, smiValue, prevSignal;
    int lookbackTotal, lookbackSlow, lookbackFast;
@@ -79,9 +84,15 @@ TA_RetCode smi(int startIdx, int endIdx,
     * composed form does. The seed sums accumulate from 0.0 in production
     * order; do not reorder or fuse them (0.0+x is not x for x=-0.0).
     */
-   kSlow   = 2.0 / ((double)(optInSlowPeriod + 1));
-   kFast   = 2.0 / ((double)(optInFastPeriod + 1));
-   kSignal = 2.0 / ((double)(optInSignalPeriod + 1));
+   betaSlow = ((double)(optInSlowPeriod - 1)) / ((double)(optInSlowPeriod + 1));
+   kSlow   = 1.0 - betaSlow;
+   betaSlow = 1.0 - kSlow;
+   betaFast = ((double)(optInFastPeriod - 1)) / ((double)(optInFastPeriod + 1));
+   kFast   = 1.0 - betaFast;
+   betaFast = 1.0 - kFast;
+   betaSignal = ((double)(optInSignalPeriod - 1)) / ((double)(optInSignalPeriod + 1));
+   kSignal = 1.0 - betaSignal;
+   betaSignal = 1.0 - kSignal;
 
    lookbackSlow = ema_lookback( optInSlowPeriod );
    lookbackFast = ema_lookback( optInFastPeriod );
@@ -175,8 +186,8 @@ TA_RetCode smi(int startIdx, int endIdx,
       }
       else
       {
-         emaSlowNum = ((num - emaSlowNum) * kSlow) + emaSlowNum;
-         emaSlowDen = ((den - emaSlowDen) * kSlow) + emaSlowDen;
+         emaSlowNum = kSlow * num + betaSlow * emaSlowNum;
+         emaSlowDen = kSlow * den + betaSlow * emaSlowDen;
       }
 
       /* Stage 2: the fast EMA, over what stage 1 publishes.
@@ -205,8 +216,8 @@ TA_RetCode smi(int startIdx, int endIdx,
          }
          else
          {
-            emaFastNum = ((emaSlowNum - emaFastNum) * kFast) + emaFastNum;
-            emaFastDen = ((emaSlowDen - emaFastDen) * kFast) + emaFastDen;
+            emaFastNum = kFast * emaSlowNum + betaFast * emaFastNum;
+            emaFastDen = kFast * emaSlowDen + betaFast * emaFastDen;
          }
       }
 
@@ -227,7 +238,7 @@ TA_RetCode smi(int startIdx, int endIdx,
                prevSignal = sumSignal / optInSignalPeriod;
          }
          else
-            prevSignal = ((smiValue - prevSignal) * kSignal) + prevSignal;
+            prevSignal = kSignal * smiValue + betaSignal * prevSignal;
       }
 
       nBar = nBar + 1;
@@ -291,10 +302,10 @@ TA_RetCode smi(int startIdx, int endIdx,
       den = highest - lowest;
       num = inClose[today] - ((highest + lowest) * 0.5);
 
-      emaSlowNum = ((num - emaSlowNum) * kSlow) + emaSlowNum;
-      emaSlowDen = ((den - emaSlowDen) * kSlow) + emaSlowDen;
-      emaFastNum = ((emaSlowNum - emaFastNum) * kFast) + emaFastNum;
-      emaFastDen = ((emaSlowDen - emaFastDen) * kFast) + emaFastDen;
+      emaSlowNum = kSlow * num + betaSlow * emaSlowNum;
+      emaSlowDen = kSlow * den + betaSlow * emaSlowDen;
+      emaFastNum = kFast * emaSlowNum + betaFast * emaFastNum;
+      emaFastDen = kFast * emaSlowDen + betaFast * emaFastDen;
 
       /* The denominator is an EMA of an EMA of the high-low range: every term
        * is non-negative and every weight is positive, so it carries no
@@ -313,7 +324,7 @@ TA_RetCode smi(int startIdx, int endIdx,
       else
          smiValue = 0.0;
 
-      prevSignal = ((smiValue - prevSignal) * kSignal) + prevSignal;
+      prevSignal = kSignal * smiValue + betaSignal * prevSignal;
 
       outSMI[outIdx] = smiValue;
       outSMISignal[outIdx] = prevSignal;

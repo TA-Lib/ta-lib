@@ -31,6 +31,7 @@ TA_RetCode eri(int startIdx, int endIdx,
 {
    int outIdx, today, lookbackTotal, i;
    double prevMA, tempReal, k;
+   double beta;
    double tempHT, tempLT;
 
    /* Elder Ray Index (Alexander Elder, Trading for a Living, 1993): how far
@@ -64,9 +65,8 @@ TA_RetCode eri(int startIdx, int endIdx,
    }
 
    /* Period 1: ema.c's explicit copy arm, kept here for the same reason it
-    * exists there. At n == 1 the recursion below is fl(fl(x-prev)+prev),
-    * which returns x only while consecutive closes stay within a factor of
-    * two (Sterbenz), so without this arm `High - TA_EMA(Close, 1)` is not
+    * exists there. At n == 1 the recursion below does not keep the sign
+    * of a -0.0 close, so without this arm `High - TA_EMA(Close, 1)` is not
     * what this function returns. The unstable period still delays the first
     * output, through the shared lookback above.
     */
@@ -89,7 +89,9 @@ TA_RetCode eri(int startIdx, int endIdx,
       return TA_SUCCESS;
    }
 
-   k = 2.0 / ( (double)optInTimePeriod + 1.0 );
+   beta = ((double)(optInTimePeriod - 1)) / ((double)(optInTimePeriod + 1));
+   k = 1.0 - beta;
+   beta = 1.0 - k;
 
    /* Seed: ema.c's DEFAULT arm, op for op. */
    today = startIdx - lookbackTotal;
@@ -101,7 +103,7 @@ TA_RetCode eri(int startIdx, int endIdx,
 
    /* The warm-up also consumes the EMA unstable period. */
    while( today <= startIdx )
-      prevMA = ((inClose[today++]-prevMA)*k) + prevMA;
+      prevMA = k * inClose[today++] + beta * prevMA;
 
    /* prevMA is the EMA at bar startIdx; today == startIdx + 1. Load the
     * extremes into temps BEFORE writing either output: with two outputs
@@ -116,7 +118,7 @@ TA_RetCode eri(int startIdx, int endIdx,
 
    while( today <= endIdx )
    {
-      prevMA = ((inClose[today]-prevMA)*k) + prevMA;
+      prevMA = k * inClose[today] + beta * prevMA;
       tempHT = inHigh[today];
       tempLT = inLow[today];
       outBullPower[outIdx] = tempHT - prevMA;

@@ -30,6 +30,7 @@ TA_RetCode tsi(int startIdx, int endIdx,
    double outReal[])
 {
    double kFirst, kSecond;
+   double betaFirst, betaSecond;
    double emaFirstNum, emaFirstDen, emaSecondNum, emaSecondDen;
    double sumFirstNum, sumFirstDen, sumSecondNum, sumSecondDen;
    double prevClose, mom, absMom, tsiValue;
@@ -60,7 +61,7 @@ TA_RetCode tsi(int startIdx, int endIdx,
     * TA_SetUnstablePeriod(TA_FUNC_UNST_EMA) folds in: the second stage then
     * seeds from the values the first would have published. The seed sums
     * accumulate from 0.0 in production order and the recurrence is
-    * ((x-prev)*k)+prev rather than the algebraically equal k*x+(1-k)*prev; do
+    * k*x + beta*prev with ema.c's k and beta; do
     * not reorder or fuse them (0.0+x is not x for x=-0.0). That order IS the
     * bit-exactness contract against the composed reference.
     *
@@ -68,8 +69,12 @@ TA_RetCode tsi(int startIdx, int endIdx,
     * because outReal may alias inReal: the slot holding close[t-1] may already
     * hold an output written a bar earlier.
     */
-   kFirst  = 2.0 / ((double)(optInFirstPeriod + 1));
-   kSecond = 2.0 / ((double)(optInSecondPeriod + 1));
+   betaFirst = ((double)(optInFirstPeriod - 1)) / ((double)(optInFirstPeriod + 1));
+   kFirst  = 1.0 - betaFirst;
+   betaFirst = 1.0 - kFirst;
+   betaSecond = ((double)(optInSecondPeriod - 1)) / ((double)(optInSecondPeriod + 1));
+   kSecond = 1.0 - betaSecond;
+   betaSecond = 1.0 - kSecond;
 
    lookbackFirst = ema_lookback( optInFirstPeriod );
 
@@ -109,8 +114,8 @@ TA_RetCode tsi(int startIdx, int endIdx,
       }
       else
       {
-         emaFirstNum = ((mom - emaFirstNum) * kFirst) + emaFirstNum;
-         emaFirstDen = ((absMom - emaFirstDen) * kFirst) + emaFirstDen;
+         emaFirstNum = kFirst * mom + betaFirst * emaFirstNum;
+         emaFirstDen = kFirst * absMom + betaFirst * emaFirstDen;
       }
 
       /* Stage 2: the second EMA, over what stage 1 publishes.
@@ -139,8 +144,8 @@ TA_RetCode tsi(int startIdx, int endIdx,
          }
          else
          {
-            emaSecondNum = ((emaFirstNum - emaSecondNum) * kSecond) + emaSecondNum;
-            emaSecondDen = ((emaFirstDen - emaSecondDen) * kSecond) + emaSecondDen;
+            emaSecondNum = kSecond * emaFirstNum + betaSecond * emaSecondNum;
+            emaSecondDen = kSecond * emaFirstDen + betaSecond * emaSecondDen;
          }
       }
 
@@ -171,10 +176,10 @@ TA_RetCode tsi(int startIdx, int endIdx,
       prevClose = inReal[today];
       absMom = fabs( mom );
 
-      emaFirstNum = ((mom - emaFirstNum) * kFirst) + emaFirstNum;
-      emaFirstDen = ((absMom - emaFirstDen) * kFirst) + emaFirstDen;
-      emaSecondNum = ((emaFirstNum - emaSecondNum) * kSecond) + emaSecondNum;
-      emaSecondDen = ((emaFirstDen - emaSecondDen) * kSecond) + emaSecondDen;
+      emaFirstNum = kFirst * mom + betaFirst * emaFirstNum;
+      emaFirstDen = kFirst * absMom + betaFirst * emaFirstDen;
+      emaSecondNum = kSecond * emaFirstNum + betaSecond * emaSecondNum;
+      emaSecondDen = kSecond * emaFirstDen + betaSecond * emaSecondDen;
 
       if( emaSecondDen > 0.0 )
          tsiValue = (100.0 * emaSecondNum) / emaSecondDen;

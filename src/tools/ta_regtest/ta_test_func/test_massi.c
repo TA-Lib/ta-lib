@@ -107,9 +107,9 @@ extern double gDataLow[];
 #define MASSI_GD_NB  1000
 
 /* Leg 3. Measured worst agreement of TA_MASSI with the rows below, on this
- * platform: 9.0e-16 relative against pandas over EVERY bar of all four
- * parameter pairs, and 2.5e-15 against the two raw-seed arms over every bar at
- * or past 175. So three decimal orders of headroom, for cross-platform
+ * platform: 1.1e-15 relative against pandas over EVERY bar of all four
+ * parameter pairs, and 2.8e-15 against the two raw-seed arms on their rows,
+ * all at or past 175. So three decimal orders of headroom, for cross-platform
  * rounding of the two recursions rather than for a measured gap. MASSI is a
  * sum of optInSlowPeriod ratios each near 1, so it never approaches zero and
  * the relative term is always the binding one; the absolute floor is here only
@@ -130,8 +130,8 @@ typedef struct { int fast; int slow; int bar; double want; const char *src; } Ma
  *   1. pandas-ta-classic 0.6.52 (pandas 3.0.3, numpy 2.5.1) -- Python,
  *      `ta.massi`. The only arm that exposes BOTH periods, and the only one
  *      that seeds its EMA the way TA-Lib does (overlap/ema.py defaults
- *      sma=True). It spells the step (1-k)*prev + k*x rather than
- *      ((x-prev)*k)+prev, so it is close rather than bit-identical.
+ *      sma=True). It rounds (1-k)*prev + k*x twice where TA-Lib fuses it
+ *      into one fma, so it is close rather than bit-identical.
  *   2. Tulip Indicators 0.9.2, pinned be18abb -- C, `ti_mass`.
  *   3. trading-signals 8.3.0 -- TypeScript, `ts.MassIndex`. It is the arm that
  *      corroborates the flat-market answer: `double === 0 ? 1 : single/double`.
@@ -738,13 +738,6 @@ static ErrorNumber test_massi_edges( void )
 }
 
 /* (5) Parameter rejection, and the lookback asymmetry.
- *
- * Both declared ranges start at 2. For the EMA period that is load-bearing
- * rather than cosmetic: at 1 the recursion reduces to (x-prev)+prev, which is
- * NOT a copy of x once consecutive values leave a factor of two of each other,
- * so a period-1 MASSI would silently stop matching a composed TA_EMA -- and it
- * would still read green on this corpus, whose ranges never move that far in
- * one bar.
  *
  * The lookback asymmetry is what says the two periods are not
  * interchangeable: pandas-ta-classic swaps them when slow < fast, and a MASSI

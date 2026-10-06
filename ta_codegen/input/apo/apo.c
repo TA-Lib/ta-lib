@@ -159,6 +159,7 @@ TA_RetCode apo(int startIdx, int endIdx,
        * slow one, and a shared seed bar would change every output.
        */
       double _eFastK, _eSlowK, _eFast, _eSlow, _eX;
+      double _eFastBeta, _eSlowBeta;
       int _eN, _eToday, _eFastToday, _eSlowToday, _eSlowStart, _eOutIdx;
 
       if( optInSlowPeriod < optInFastPeriod )
@@ -168,8 +169,12 @@ TA_RetCode apo(int startIdx, int endIdx,
          optInFastPeriod = tempInteger;
       }
 
-      _eFastK = 2.0 / ((double)(optInFastPeriod + 1));
-      _eSlowK = 2.0 / ((double)(optInSlowPeriod + 1));
+      _eFastBeta = ((double)(optInFastPeriod - 1)) / ((double)(optInFastPeriod + 1));
+      _eFastK = 1.0 - _eFastBeta;
+      _eFastBeta = 1.0 - _eFastK;
+      _eSlowBeta = ((double)(optInSlowPeriod - 1)) / ((double)(optInSlowPeriod + 1));
+      _eSlowK = 1.0 - _eSlowBeta;
+      _eSlowBeta = 1.0 - _eSlowK;
 
       _eFastToday = ema_lookback( optInFastPeriod );
       if( _eFastToday < startIdx )
@@ -185,14 +190,14 @@ TA_RetCode apo(int startIdx, int endIdx,
          _eFast += inReal[_eFastToday++];
       _eFast = _eFast / optInFastPeriod;
       while( _eFastToday <= _eSlowStart )
-         _eFast = ((inReal[_eFastToday++]-_eFast)*_eFastK) + _eFast;
+         _eFast = _eFastK * inReal[_eFastToday++] + _eFastBeta * _eFast;
 
       _eSlow = 0.0;
       for( _eN = 0; _eN < optInSlowPeriod; _eN++ )
          _eSlow += inReal[_eSlowToday++];
       _eSlow = _eSlow / optInSlowPeriod;
       while( _eSlowToday <= _eSlowStart )
-         _eSlow = ((inReal[_eSlowToday++]-_eSlow)*_eSlowK) + _eSlow;
+         _eSlow = _eSlowK * inReal[_eSlowToday++] + _eSlowBeta * _eSlow;
 
       _eOutIdx = 0;
       outReal[_eOutIdx] = _eFast - _eSlow;
@@ -201,8 +206,8 @@ TA_RetCode apo(int startIdx, int endIdx,
       while( _eToday <= endIdx )
       {
          _eX = inReal[_eToday++];
-         _eFast = ((_eX-_eFast)*_eFastK) + _eFast;
-         _eSlow = ((_eX-_eSlow)*_eSlowK) + _eSlow;
+         _eFast = _eFastK * _eX + _eFastBeta * _eFast;
+         _eSlow = _eSlowK * _eX + _eSlowBeta * _eSlow;
          outReal[_eOutIdx] = _eFast - _eSlow;
          _eOutIdx++;
       }

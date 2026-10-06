@@ -237,6 +237,8 @@ impl Core {
         let mut slowK: f64 = 0.0_f64;
         let mut tempReal: f64 = 0.0_f64;
         let mut lineValue: f64 = 0.0_f64;
+        let mut fastBeta: f64 = 0.0_f64;
+        let mut slowBeta: f64 = 0.0_f64;
         let mut lowest: f64 = 0.0_f64;
         let mut highest: f64 = 0.0_f64;
         let mut range: f64 = 0.0_f64;
@@ -275,8 +277,12 @@ impl Core {
         }
         let inReal = &inReal[..=endIdx];
         (*outBegIdx) = startIdx;
-        fastK = 2.0 / ((optInFastPeriod + 1) as f64);
-        slowK = 2.0 / ((optInSlowPeriod + 1) as f64);
+        fastBeta = ((optInFastPeriod - 1) as f64) / ((optInFastPeriod + 1) as f64);
+        fastK = 1.0 - fastBeta;
+        fastBeta = 1.0 - fastK;
+        slowBeta = ((optInSlowPeriod - 1) as f64) / ((optInSlowPeriod + 1) as f64);
+        slowK = 1.0 - slowBeta;
+        slowBeta = 1.0 - slowK;
         // Rolling extrema, van Herk / Gil-Werman: the window ending in slot j is
         // the current block's prefix extremum joined with the previous block's
         // suffix extremum from slot j+1. The extrema are exact, so the output must
@@ -349,8 +355,8 @@ impl Core {
         prevFast = prevFast / ((optInFastPeriod) as f64);
         while today <= lineStart {
             tempReal = inReal[{ let _v = today; today += 1; _v }];
-            prevFast = (tempReal - prevFast as f64).mul_add(fastK, prevFast);
-            prevSlow = (tempReal - prevSlow as f64).mul_add(slowK, prevSlow);
+            prevFast = (fastBeta as f64).mul_add(prevFast, fastK * tempReal);
+            prevSlow = (slowBeta as f64).mul_add(prevSlow, slowK * tempReal);
         }
         // A zero range holds the previous fraction (0.0 before any), and the test
         // is exact: in a sustained trend PF saturates at 100 and the second
@@ -373,8 +379,8 @@ impl Core {
         // window is full, and each smoother is seeded on its first input.
         while today <= startIdx {
             tempReal = inReal[today];
-            prevFast = (tempReal - prevFast as f64).mul_add(fastK, prevFast);
-            prevSlow = (tempReal - prevSlow as f64).mul_add(slowK, prevSlow);
+            prevFast = (fastBeta as f64).mul_add(prevFast, fastK * tempReal);
+            prevSlow = (slowBeta as f64).mul_add(prevSlow, slowK * tempReal);
             lineValue = prevFast - prevSlow;
             nLine = nLine + 1;
             lineRing[lineRing_Idx] = lineValue;
@@ -488,8 +494,8 @@ impl Core {
         outIdx = 1;
         while today <= endIdx {
             tempReal = inReal[today];
-            prevFast = (tempReal - prevFast as f64).mul_add(fastK, prevFast);
-            prevSlow = (tempReal - prevSlow as f64).mul_add(slowK, prevSlow);
+            prevFast = (fastBeta as f64).mul_add(prevFast, fastK * tempReal);
+            prevSlow = (slowBeta as f64).mul_add(prevSlow, slowK * tempReal);
             lineValue = prevFast - prevSlow;
             lineRing[lineRing_Idx] = lineValue;
             if lineRing_Idx == 0 {
@@ -741,6 +747,8 @@ struct StcStreamScalars {
     prevSlow: f64,
     fastK: f64,
     slowK: f64,
+    fastBeta: f64,
+    slowBeta: f64,
     frac1: f64,
     frac2: f64,
     pf: f64,
@@ -787,8 +795,8 @@ impl Core {
         let mut sufLo: f64 = 0.0_f64;
         let mut i: usize = 0_usize;
         tempReal = inReal;
-        sp.prevFast = (tempReal - sp.prevFast as f64).mul_add(sp.fastK, sp.prevFast);
-        sp.prevSlow = (tempReal - sp.prevSlow as f64).mul_add(sp.slowK, sp.prevSlow);
+        sp.prevFast = (sp.fastBeta as f64).mul_add(sp.prevFast, sp.fastK * tempReal);
+        sp.prevSlow = (sp.slowBeta as f64).mul_add(sp.prevSlow, sp.slowK * tempReal);
         lineValue = sp.prevFast - sp.prevSlow;
         cb_lineRing[sp.lineRing_Idx] = lineValue;
         if sp.lineRing_Idx == 0 {
@@ -938,6 +946,8 @@ impl Core {
         let mut slowK: f64 = 0.0_f64;
         let mut tempReal: f64 = 0.0_f64;
         let mut lineValue: f64 = 0.0_f64;
+        let mut fastBeta: f64 = 0.0_f64;
+        let mut slowBeta: f64 = 0.0_f64;
         let mut lowest: f64 = 0.0_f64;
         let mut highest: f64 = 0.0_f64;
         let mut range: f64 = 0.0_f64;
@@ -975,8 +985,12 @@ impl Core {
             return Err(RetCode::InsufficientHistory);
         }
         (*outBegIdx) = startIdx;
-        fastK = 2.0 / ((optInFastPeriod + 1) as f64);
-        slowK = 2.0 / ((optInSlowPeriod + 1) as f64);
+        fastBeta = ((optInFastPeriod - 1) as f64) / ((optInFastPeriod + 1) as f64);
+        fastK = 1.0 - fastBeta;
+        fastBeta = 1.0 - fastK;
+        slowBeta = ((optInSlowPeriod - 1) as f64) / ((optInSlowPeriod + 1) as f64);
+        slowK = 1.0 - slowBeta;
+        slowBeta = 1.0 - slowK;
         // Rolling extrema, van Herk / Gil-Werman: the window ending in slot j is
         // the current block's prefix extremum joined with the previous block's
         // suffix extremum from slot j+1. The extrema are exact, so the output must
@@ -1029,8 +1043,8 @@ impl Core {
         prevFast = prevFast / ((optInFastPeriod) as f64);
         while today <= lineStart {
             tempReal = inReal[{ let _v = today; today += 1; _v }];
-            prevFast = (tempReal - prevFast as f64).mul_add(fastK, prevFast);
-            prevSlow = (tempReal - prevSlow as f64).mul_add(slowK, prevSlow);
+            prevFast = (fastBeta as f64).mul_add(prevFast, fastK * tempReal);
+            prevSlow = (slowBeta as f64).mul_add(prevSlow, slowK * tempReal);
         }
         // A zero range holds the previous fraction (0.0 before any), and the test
         // is exact: in a sustained trend PF saturates at 100 and the second
@@ -1053,8 +1067,8 @@ impl Core {
         // window is full, and each smoother is seeded on its first input.
         while today <= startIdx {
             tempReal = inReal[today];
-            prevFast = (tempReal - prevFast as f64).mul_add(fastK, prevFast);
-            prevSlow = (tempReal - prevSlow as f64).mul_add(slowK, prevSlow);
+            prevFast = (fastBeta as f64).mul_add(prevFast, fastK * tempReal);
+            prevSlow = (slowBeta as f64).mul_add(prevSlow, slowK * tempReal);
             lineValue = prevFast - prevSlow;
             nLine = nLine + 1;
             lineRing[lineRing_Idx] = lineValue;
@@ -1156,8 +1170,8 @@ impl Core {
         outIdx = 1;
         while today <= endIdx {
             tempReal = inReal[today];
-            prevFast = (tempReal - prevFast as f64).mul_add(fastK, prevFast);
-            prevSlow = (tempReal - prevSlow as f64).mul_add(slowK, prevSlow);
+            prevFast = (fastBeta as f64).mul_add(prevFast, fastK * tempReal);
+            prevSlow = (slowBeta as f64).mul_add(prevSlow, slowK * tempReal);
             lineValue = prevFast - prevSlow;
             lineRing[lineRing_Idx] = lineValue;
             if lineRing_Idx == 0 {
@@ -1278,6 +1292,8 @@ impl Core {
                 prevSlow,
                 fastK,
                 slowK,
+                fastBeta,
+                slowBeta,
                 frac1,
                 frac2,
                 pf,
@@ -1509,8 +1525,8 @@ impl StcStream {
             let mut pkSlot1: usize = usize::MAX;
             let mut pkVal1: f64 = 0.0_f64;
             tempReal = inReal;
-            prevFast = (tempReal - prevFast as f64).mul_add(sp.fastK, prevFast);
-            prevSlow = (tempReal - prevSlow as f64).mul_add(sp.slowK, prevSlow);
+            prevFast = (sp.fastBeta as f64).mul_add(prevFast, sp.fastK * tempReal);
+            prevSlow = (sp.slowBeta as f64).mul_add(prevSlow, sp.slowK * tempReal);
             lineValue = prevFast - prevSlow;
             pkSlot0 = lineRing_Idx as usize;
             pkVal0 = lineValue;

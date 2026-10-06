@@ -99,6 +99,7 @@ TA_LIB_API TA_RetCode TA_TEMA( int    startIdx,
    double prevEMA3;
    double tempReal;
    double optInK_1;
+   double emaBeta;
    int i;
    int today;
    int outIdx;
@@ -181,7 +182,7 @@ TA_LIB_API TA_RetCode TA_TEMA( int    startIdx,
     *
     * The arithmetic order below is the bit-exactness contract
     * (do not reorder or fuse operations):
-    *  - EMA recursion: ((x-prev)*k)+prev.
+    *  - EMA recursion: k*x + beta*prev, with ema.c's k and beta.
     *  - Each EMA is seeded with the sum of its first 'period'
     *    inputs, accumulated from 0.0 in input order (0.0+x is
     *    not x for x=-0.0), divided by the period.
@@ -191,7 +192,9 @@ TA_LIB_API TA_RetCode TA_TEMA( int    startIdx,
     * In-place (inReal == outReal) is supported: outReal[outIdx]
     * is written only after inReal[startIdx+outIdx] was read.
     */
-   optInK_1 = 2.0 / (double)(optInTimePeriod + 1);
+   emaBeta = (double)(optInTimePeriod - 1) / (double)(optInTimePeriod + 1);
+   optInK_1 = 1.0 - emaBeta;
+   emaBeta = 1.0 - optInK_1;
    /* Seed EMA1 with a simple average of the first
     * 'period' price bars.
     */
@@ -208,7 +211,7 @@ TA_LIB_API TA_RetCode TA_TEMA( int    startIdx,
     */
    while( today <= startIdx - lookbackEMA * 2 )
    {
-      prevEMA1 = fma(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
+      prevEMA1 = fma(emaBeta, prevEMA1, optInK_1 * inReal[today++]);
    }
    /* Seed EMA2 with a simple average of the first 'period'
     * EMA1 values, accumulated as EMA1 produces them.
@@ -218,7 +221,7 @@ TA_LIB_API TA_RetCode TA_TEMA( int    startIdx,
    i = optInTimePeriod - 1;
    while( i-- > 0 )
    {
-      prevEMA1 = fma(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
+      prevEMA1 = fma(emaBeta, prevEMA1, optInK_1 * inReal[today++]);
       tempReal += prevEMA1;
    }
    prevEMA2 = tempReal / optInTimePeriod;
@@ -227,8 +230,8 @@ TA_LIB_API TA_RetCode TA_TEMA( int    startIdx,
     */
    while( today <= startIdx - lookbackEMA )
    {
-      prevEMA1 = fma(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
-      prevEMA2 = fma(prevEMA1 - prevEMA2, optInK_1, prevEMA2);
+      prevEMA1 = fma(emaBeta, prevEMA1, optInK_1 * inReal[today++]);
+      prevEMA2 = fma(emaBeta, prevEMA2, optInK_1 * prevEMA1);
    }
    /* Seed EMA3 with a simple average of the first 'period'
     * EMA2 values, accumulated as EMA2 produces them.
@@ -238,8 +241,8 @@ TA_LIB_API TA_RetCode TA_TEMA( int    startIdx,
    i = optInTimePeriod - 1;
    while( i-- > 0 )
    {
-      prevEMA1 = fma(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
-      prevEMA2 = fma(prevEMA1 - prevEMA2, optInK_1, prevEMA2);
+      prevEMA1 = fma(emaBeta, prevEMA1, optInK_1 * inReal[today++]);
+      prevEMA2 = fma(emaBeta, prevEMA2, optInK_1 * prevEMA1);
       tempReal += prevEMA2;
    }
    prevEMA3 = tempReal / optInTimePeriod;
@@ -248,9 +251,9 @@ TA_LIB_API TA_RetCode TA_TEMA( int    startIdx,
     */
    while( today <= startIdx )
    {
-      prevEMA1 = fma(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
-      prevEMA2 = fma(prevEMA1 - prevEMA2, optInK_1, prevEMA2);
-      prevEMA3 = fma(prevEMA2 - prevEMA3, optInK_1, prevEMA3);
+      prevEMA1 = fma(emaBeta, prevEMA1, optInK_1 * inReal[today++]);
+      prevEMA2 = fma(emaBeta, prevEMA2, optInK_1 * prevEMA1);
+      prevEMA3 = fma(emaBeta, prevEMA3, optInK_1 * prevEMA2);
    }
    /* Stable zone: keep advancing the three EMA in lockstep and
     * write the TEMA into the output.
@@ -259,9 +262,9 @@ TA_LIB_API TA_RetCode TA_TEMA( int    startIdx,
    outIdx = 1;
    while( today <= endIdx )
    {
-      prevEMA1 = fma(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
-      prevEMA2 = fma(prevEMA1 - prevEMA2, optInK_1, prevEMA2);
-      prevEMA3 = fma(prevEMA2 - prevEMA3, optInK_1, prevEMA3);
+      prevEMA1 = fma(emaBeta, prevEMA1, optInK_1 * inReal[today++]);
+      prevEMA2 = fma(emaBeta, prevEMA2, optInK_1 * prevEMA1);
+      prevEMA3 = fma(emaBeta, prevEMA3, optInK_1 * prevEMA2);
       outReal[outIdx++] = prevEMA3 + (3.0 * prevEMA1 - 3.0 * prevEMA2);
    }
    /* Succeed. Indicate where the output starts relative to
@@ -286,6 +289,7 @@ TA_RetCode TA_S_TEMA( int    startIdx,
    double prevEMA3;
    double tempReal;
    double optInK_1;
+   double emaBeta;
    int i;
    int today;
    int outIdx;
@@ -331,7 +335,9 @@ TA_RetCode TA_S_TEMA( int    startIdx,
       *outNBElement= outIdx;
       return TA_SUCCESS;
    }
-   optInK_1 = 2.0 / (double)(optInTimePeriod + 1);
+   emaBeta = (double)(optInTimePeriod - 1) / (double)(optInTimePeriod + 1);
+   optInK_1 = 1.0 - emaBeta;
+   emaBeta = 1.0 - optInK_1;
    today = startIdx - lookbackTotal;
    i = optInTimePeriod;
    tempReal = 0.0;
@@ -342,45 +348,45 @@ TA_RetCode TA_S_TEMA( int    startIdx,
    prevEMA1 = tempReal / optInTimePeriod;
    while( today <= startIdx - lookbackEMA * 2 )
    {
-      prevEMA1 = fma((double)inReal[today++] - prevEMA1, optInK_1, prevEMA1);
+      prevEMA1 = fma(emaBeta, prevEMA1, optInK_1 * (double)inReal[today++]);
    }
    tempReal = 0.0;
    tempReal += prevEMA1;
    i = optInTimePeriod - 1;
    while( i-- > 0 )
    {
-      prevEMA1 = fma((double)inReal[today++] - prevEMA1, optInK_1, prevEMA1);
+      prevEMA1 = fma(emaBeta, prevEMA1, optInK_1 * (double)inReal[today++]);
       tempReal += prevEMA1;
    }
    prevEMA2 = tempReal / optInTimePeriod;
    while( today <= startIdx - lookbackEMA )
    {
-      prevEMA1 = fma((double)inReal[today++] - prevEMA1, optInK_1, prevEMA1);
-      prevEMA2 = fma(prevEMA1 - prevEMA2, optInK_1, prevEMA2);
+      prevEMA1 = fma(emaBeta, prevEMA1, optInK_1 * (double)inReal[today++]);
+      prevEMA2 = fma(emaBeta, prevEMA2, optInK_1 * prevEMA1);
    }
    tempReal = 0.0;
    tempReal += prevEMA2;
    i = optInTimePeriod - 1;
    while( i-- > 0 )
    {
-      prevEMA1 = fma((double)inReal[today++] - prevEMA1, optInK_1, prevEMA1);
-      prevEMA2 = fma(prevEMA1 - prevEMA2, optInK_1, prevEMA2);
+      prevEMA1 = fma(emaBeta, prevEMA1, optInK_1 * (double)inReal[today++]);
+      prevEMA2 = fma(emaBeta, prevEMA2, optInK_1 * prevEMA1);
       tempReal += prevEMA2;
    }
    prevEMA3 = tempReal / optInTimePeriod;
    while( today <= startIdx )
    {
-      prevEMA1 = fma((double)inReal[today++] - prevEMA1, optInK_1, prevEMA1);
-      prevEMA2 = fma(prevEMA1 - prevEMA2, optInK_1, prevEMA2);
-      prevEMA3 = fma(prevEMA2 - prevEMA3, optInK_1, prevEMA3);
+      prevEMA1 = fma(emaBeta, prevEMA1, optInK_1 * (double)inReal[today++]);
+      prevEMA2 = fma(emaBeta, prevEMA2, optInK_1 * prevEMA1);
+      prevEMA3 = fma(emaBeta, prevEMA3, optInK_1 * prevEMA2);
    }
    outReal[0] = prevEMA3 + (3.0 * prevEMA1 - 3.0 * prevEMA2);
    outIdx = 1;
    while( today <= endIdx )
    {
-      prevEMA1 = fma((double)inReal[today++] - prevEMA1, optInK_1, prevEMA1);
-      prevEMA2 = fma(prevEMA1 - prevEMA2, optInK_1, prevEMA2);
-      prevEMA3 = fma(prevEMA2 - prevEMA3, optInK_1, prevEMA3);
+      prevEMA1 = fma(emaBeta, prevEMA1, optInK_1 * (double)inReal[today++]);
+      prevEMA2 = fma(emaBeta, prevEMA2, optInK_1 * prevEMA1);
+      prevEMA3 = fma(emaBeta, prevEMA3, optInK_1 * prevEMA2);
       outReal[outIdx++] = prevEMA3 + (3.0 * prevEMA1 - 3.0 * prevEMA2);
    }
    *outBegIdx= startIdx;
@@ -402,6 +408,7 @@ struct TA_TEMA_Stream {
    double prevEMA3;
    double pad_0;
    double optInK_1;
+   double emaBeta;
 };
 
 /* Private function, not in public API. */
@@ -413,9 +420,9 @@ static TA_FMA_STEP_INLINE void TA_TEMA_StepImpl( struct TA_TEMA_Stream *sp, doub
       sp->cur_outReal = *outReal;
       return;
    }
-   sp->prevEMA1 = fma(inReal - sp->prevEMA1, sp->optInK_1, sp->prevEMA1);
-   sp->prevEMA2 = fma(sp->prevEMA1 - sp->prevEMA2, sp->optInK_1, sp->prevEMA2);
-   sp->prevEMA3 = fma(sp->prevEMA2 - sp->prevEMA3, sp->optInK_1, sp->prevEMA3);
+   sp->prevEMA1 = fma(sp->emaBeta, sp->prevEMA1, sp->optInK_1 * inReal);
+   sp->prevEMA2 = fma(sp->emaBeta, sp->prevEMA2, sp->optInK_1 * sp->prevEMA1);
+   sp->prevEMA3 = fma(sp->emaBeta, sp->prevEMA3, sp->optInK_1 * sp->prevEMA2);
    *outReal= sp->prevEMA3 + (3.0 * sp->prevEMA1 - 3.0 * sp->prevEMA2);
    sp->cur_outReal = *outReal;
 }
@@ -486,6 +493,7 @@ static TA_RetCode TA_TEMA_OpenImpl( struct TA_TEMA_Stream **stream, const double
       double prevEMA3 = 0.0;
       double tempReal;
       double optInK_1 = 0.0;
+      double emaBeta = 0.0;
       int i;
       int today;
       int outIdx;
@@ -535,7 +543,7 @@ static TA_RetCode TA_TEMA_OpenImpl( struct TA_TEMA_Stream **stream, const double
        *
        * The arithmetic order below is the bit-exactness contract
        * (do not reorder or fuse operations):
-       *  - EMA recursion: ((x-prev)*k)+prev.
+       *  - EMA recursion: k*x + beta*prev, with ema.c's k and beta.
        *  - Each EMA is seeded with the sum of its first 'period'
        *    inputs, accumulated from 0.0 in input order (0.0+x is
        *    not x for x=-0.0), divided by the period.
@@ -545,7 +553,9 @@ static TA_RetCode TA_TEMA_OpenImpl( struct TA_TEMA_Stream **stream, const double
        * In-place (inReal == outReal) is supported: outReal[outIdx]
        * is written only after inReal[startIdx+outIdx] was read.
        */
-      optInK_1 = 2.0 / (double)(optInTimePeriod + 1);
+      emaBeta = (double)(optInTimePeriod - 1) / (double)(optInTimePeriod + 1);
+      optInK_1 = 1.0 - emaBeta;
+      emaBeta = 1.0 - optInK_1;
       /* Seed EMA1 with a simple average of the first
        * 'period' price bars.
        */
@@ -562,7 +572,7 @@ static TA_RetCode TA_TEMA_OpenImpl( struct TA_TEMA_Stream **stream, const double
        */
       while( today <= startIdx - lookbackEMA * 2 )
       {
-         prevEMA1 = fma(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
+         prevEMA1 = fma(emaBeta, prevEMA1, optInK_1 * inReal[today++]);
       }
       /* Seed EMA2 with a simple average of the first 'period'
        * EMA1 values, accumulated as EMA1 produces them.
@@ -572,7 +582,7 @@ static TA_RetCode TA_TEMA_OpenImpl( struct TA_TEMA_Stream **stream, const double
       i = optInTimePeriod - 1;
       while( i-- > 0 )
       {
-         prevEMA1 = fma(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
+         prevEMA1 = fma(emaBeta, prevEMA1, optInK_1 * inReal[today++]);
          tempReal += prevEMA1;
       }
       prevEMA2 = tempReal / optInTimePeriod;
@@ -581,8 +591,8 @@ static TA_RetCode TA_TEMA_OpenImpl( struct TA_TEMA_Stream **stream, const double
        */
       while( today <= startIdx - lookbackEMA )
       {
-         prevEMA1 = fma(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
-         prevEMA2 = fma(prevEMA1 - prevEMA2, optInK_1, prevEMA2);
+         prevEMA1 = fma(emaBeta, prevEMA1, optInK_1 * inReal[today++]);
+         prevEMA2 = fma(emaBeta, prevEMA2, optInK_1 * prevEMA1);
       }
       /* Seed EMA3 with a simple average of the first 'period'
        * EMA2 values, accumulated as EMA2 produces them.
@@ -592,8 +602,8 @@ static TA_RetCode TA_TEMA_OpenImpl( struct TA_TEMA_Stream **stream, const double
       i = optInTimePeriod - 1;
       while( i-- > 0 )
       {
-         prevEMA1 = fma(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
-         prevEMA2 = fma(prevEMA1 - prevEMA2, optInK_1, prevEMA2);
+         prevEMA1 = fma(emaBeta, prevEMA1, optInK_1 * inReal[today++]);
+         prevEMA2 = fma(emaBeta, prevEMA2, optInK_1 * prevEMA1);
          tempReal += prevEMA2;
       }
       prevEMA3 = tempReal / optInTimePeriod;
@@ -602,9 +612,9 @@ static TA_RetCode TA_TEMA_OpenImpl( struct TA_TEMA_Stream **stream, const double
        */
       while( today <= startIdx )
       {
-         prevEMA1 = fma(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
-         prevEMA2 = fma(prevEMA1 - prevEMA2, optInK_1, prevEMA2);
-         prevEMA3 = fma(prevEMA2 - prevEMA3, optInK_1, prevEMA3);
+         prevEMA1 = fma(emaBeta, prevEMA1, optInK_1 * inReal[today++]);
+         prevEMA2 = fma(emaBeta, prevEMA2, optInK_1 * prevEMA1);
+         prevEMA3 = fma(emaBeta, prevEMA3, optInK_1 * prevEMA2);
       }
       /* Stable zone: keep advancing the three EMA in lockstep and
        * write the TEMA into the output.
@@ -613,9 +623,9 @@ static TA_RetCode TA_TEMA_OpenImpl( struct TA_TEMA_Stream **stream, const double
       outIdx = 1;
       while( today <= endIdx )
       {
-         prevEMA1 = fma(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
-         prevEMA2 = fma(prevEMA1 - prevEMA2, optInK_1, prevEMA2);
-         prevEMA3 = fma(prevEMA2 - prevEMA3, optInK_1, prevEMA3);
+         prevEMA1 = fma(emaBeta, prevEMA1, optInK_1 * inReal[today++]);
+         prevEMA2 = fma(emaBeta, prevEMA2, optInK_1 * prevEMA1);
+         prevEMA3 = fma(emaBeta, prevEMA3, optInK_1 * prevEMA2);
          outReal[outIdx++ * outStride] = prevEMA3 + (3.0 * prevEMA1 - 3.0 * prevEMA2);
       }
       /* Succeed. Indicate where the output starts relative to
@@ -633,6 +643,7 @@ static TA_RetCode TA_TEMA_OpenImpl( struct TA_TEMA_Stream **stream, const double
       sp->prevEMA2 = prevEMA2;
       sp->prevEMA3 = prevEMA3;
       sp->optInK_1 = optInK_1;
+      sp->emaBeta = emaBeta;
       sp->outRangeBegIdx = *outBegIdx;
       sp->outRangeCount = *outNBElement;
       sp->cur_outReal = outReal[(*outNBElement - 1) * outStride];
@@ -714,9 +725,9 @@ TA_LIB_API TA_RetCode TA_TEMA_Peek( const TA_TEMA_Stream *stream, double inReal,
       *outReal= inReal;
       return TA_SUCCESS;
    }
-   prevEMA1 = fma(inReal - prevEMA1, sp->optInK_1, prevEMA1);
-   prevEMA2 = fma(prevEMA1 - prevEMA2, sp->optInK_1, prevEMA2);
-   prevEMA3 = fma(prevEMA2 - prevEMA3, sp->optInK_1, prevEMA3);
+   prevEMA1 = fma(sp->emaBeta, prevEMA1, sp->optInK_1 * inReal);
+   prevEMA2 = fma(sp->emaBeta, prevEMA2, sp->optInK_1 * prevEMA1);
+   prevEMA3 = fma(sp->emaBeta, prevEMA3, sp->optInK_1 * prevEMA2);
    *outReal= prevEMA3 + (3.0 * prevEMA1 - 3.0 * prevEMA2);
    return TA_SUCCESS;
 }

@@ -82,6 +82,7 @@
       double laggedEMA = 0;
       double tempReal = 0;
       double optInK_1 = 0;
+      double emaBeta = 0;
       int i = 0;
       int today = 0;
       int outIdx = 0;
@@ -110,7 +111,7 @@
        * EMA is anchored optInROCPeriod bars behind startIdx.
        *
        * The arithmetic below is TA_EMA's and TA_ROCP's verbatim -- seed sum
-       * accumulated from 0.0 in ascending bar order, ((x-prev)*k)+prev, and
+       * accumulated from 0.0 in ascending bar order, k*x + beta*prev, and
        * 100*((a-b)/b) under an exact zero test. That is what makes this fused pass
        * bit-identical to composing TA_SUB, TA_EMA and TA_ROCP, which test_cvi.c
        * holds it to memcmp-exact; reshaping any of it breaks that silently. The
@@ -132,7 +133,9 @@
       emaRing = new double[optInROCPeriod];
       maxIdx_emaRing = (optInROCPeriod)-1;
       emaRing_Idx = 0;
-      optInK_1 = 2.0 / (double)(optInTimePeriod + 1);
+      emaBeta = (double)(optInTimePeriod - 1) / (double)(optInTimePeriod + 1);
+      optInK_1 = 1.0 - emaBeta;
+      emaBeta = 1.0 - optInK_1;
       today = startIdx - lookbackTotal;
       i = optInTimePeriod;
       tempReal = 0.0;
@@ -150,7 +153,7 @@
       if( emaRing_Idx > maxIdx_emaRing ) { emaRing_Idx = 0; }
       while( today < startIdx ) {
          tempReal = inHigh[today] - inLow[today];
-         prevEMA = Math.fma(tempReal - prevEMA, optInK_1, prevEMA);
+         prevEMA = Math.fma(emaBeta, prevEMA, optInK_1 * tempReal);
          today += 1;
          emaRing[emaRing_Idx] = prevEMA;
          emaRing_Idx++;
@@ -162,7 +165,7 @@
       outIdx = 0;
       while( today <= endIdx ) {
          tempReal = inHigh[today] - inLow[today];
-         prevEMA = Math.fma(tempReal - prevEMA, optInK_1, prevEMA);
+         prevEMA = Math.fma(emaBeta, prevEMA, optInK_1 * tempReal);
          today += 1;
          laggedEMA = emaRing[emaRing_Idx];
          emaRing[emaRing_Idx] = prevEMA;
@@ -192,6 +195,7 @@
       double laggedEMA = 0;
       double tempReal = 0;
       double optInK_1 = 0;
+      double emaBeta = 0;
       int i = 0;
       int today = 0;
       int outIdx = 0;
@@ -228,7 +232,9 @@
       emaRing = new double[optInROCPeriod];
       maxIdx_emaRing = (optInROCPeriod)-1;
       emaRing_Idx = 0;
-      optInK_1 = 2.0 / (double)(optInTimePeriod + 1);
+      emaBeta = (double)(optInTimePeriod - 1) / (double)(optInTimePeriod + 1);
+      optInK_1 = 1.0 - emaBeta;
+      emaBeta = 1.0 - optInK_1;
       today = startIdx - lookbackTotal;
       i = optInTimePeriod;
       tempReal = 0.0;
@@ -242,7 +248,7 @@
       if( emaRing_Idx > maxIdx_emaRing ) { emaRing_Idx = 0; }
       while( today < startIdx ) {
          tempReal = (double)inHigh[today] - (double)inLow[today];
-         prevEMA = Math.fma(tempReal - prevEMA, optInK_1, prevEMA);
+         prevEMA = Math.fma(emaBeta, prevEMA, optInK_1 * tempReal);
          today += 1;
          emaRing[emaRing_Idx] = prevEMA;
          emaRing_Idx++;
@@ -251,7 +257,7 @@
       outIdx = 0;
       while( today <= endIdx ) {
          tempReal = (double)inHigh[today] - (double)inLow[today];
-         prevEMA = Math.fma(tempReal - prevEMA, optInK_1, prevEMA);
+         prevEMA = Math.fma(emaBeta, prevEMA, optInK_1 * tempReal);
          today += 1;
          laggedEMA = emaRing[emaRing_Idx];
          emaRing[emaRing_Idx] = prevEMA;
@@ -458,6 +464,7 @@
       private int optInROCPeriod;
       private double prevEMA;
       private double optInK_1;
+      private double emaBeta;
       private int emaRing_Idx;
       private int maxIdx_emaRing;
       private int cbSize_emaRing;
@@ -508,6 +515,7 @@
          this.optInROCPeriod = other.optInROCPeriod;
          this.prevEMA = other.prevEMA;
          this.optInK_1 = other.optInK_1;
+         this.emaBeta = other.emaBeta;
          this.emaRing_Idx = other.emaRing_Idx;
          this.maxIdx_emaRing = other.maxIdx_emaRing;
          this.cbSize_emaRing = other.cbSize_emaRing;
@@ -563,7 +571,7 @@
          int emaRing_Idx = sp.emaRing_Idx;
          double prevEMA = sp.prevEMA;
          tempReal = inHigh - inLow;
-         prevEMA = Math.fma(tempReal - prevEMA, sp.optInK_1, prevEMA);
+         prevEMA = Math.fma(sp.emaBeta, prevEMA, sp.optInK_1 * tempReal);
          laggedEMA = sp.cb_emaRing[emaRing_Idx];
          emaRing_Idx = emaRing_Idx + 1;
          if( emaRing_Idx > sp.maxIdx_emaRing ) {
@@ -608,7 +616,7 @@
       double laggedEMA = 0.0;
       double tempReal = 0.0;
       tempReal = inHigh - inLow;
-      sp.prevEMA = Math.fma(tempReal - sp.prevEMA, sp.optInK_1, sp.prevEMA);
+      sp.prevEMA = Math.fma(sp.emaBeta, sp.prevEMA, sp.optInK_1 * tempReal);
       laggedEMA = sp.cb_emaRing[sp.emaRing_Idx];
       sp.cb_emaRing[sp.emaRing_Idx] = sp.prevEMA;
       sp.emaRing_Idx = sp.emaRing_Idx + 1;
@@ -627,6 +635,7 @@
       double laggedEMA = 0;
       double tempReal = 0;
       double optInK_1 = 0;
+      double emaBeta = 0;
       int i = 0;
       int today = 0;
       int outIdx = 0;
@@ -665,7 +674,7 @@
        * EMA is anchored optInROCPeriod bars behind startIdx.
        *
        * The arithmetic below is TA_EMA's and TA_ROCP's verbatim -- seed sum
-       * accumulated from 0.0 in ascending bar order, ((x-prev)*k)+prev, and
+       * accumulated from 0.0 in ascending bar order, k*x + beta*prev, and
        * 100*((a-b)/b) under an exact zero test. That is what makes this fused pass
        * bit-identical to composing TA_SUB, TA_EMA and TA_ROCP, which test_cvi.c
        * holds it to memcmp-exact; reshaping any of it breaks that silently. The
@@ -687,7 +696,9 @@
       emaRing = new double[optInROCPeriod];
       maxIdx_emaRing = (optInROCPeriod)-1;
       emaRing_Idx = 0;
-      optInK_1 = 2.0 / (double)(optInTimePeriod + 1);
+      emaBeta = (double)(optInTimePeriod - 1) / (double)(optInTimePeriod + 1);
+      optInK_1 = 1.0 - emaBeta;
+      emaBeta = 1.0 - optInK_1;
       today = startIdx - lookbackTotal;
       i = optInTimePeriod;
       tempReal = 0.0;
@@ -705,7 +716,7 @@
       if( emaRing_Idx > maxIdx_emaRing ) { emaRing_Idx = 0; }
       while( today < startIdx ) {
          tempReal = inHigh[today] - inLow[today];
-         prevEMA = Math.fma(tempReal - prevEMA, optInK_1, prevEMA);
+         prevEMA = Math.fma(emaBeta, prevEMA, optInK_1 * tempReal);
          today += 1;
          emaRing[emaRing_Idx] = prevEMA;
          emaRing_Idx++;
@@ -717,7 +728,7 @@
       outIdx = 0;
       while( today <= endIdx ) {
          tempReal = inHigh[today] - inLow[today];
-         prevEMA = Math.fma(tempReal - prevEMA, optInK_1, prevEMA);
+         prevEMA = Math.fma(emaBeta, prevEMA, optInK_1 * tempReal);
          today += 1;
          laggedEMA = emaRing[emaRing_Idx];
          emaRing[emaRing_Idx] = prevEMA;
@@ -740,6 +751,7 @@
       sp.optInROCPeriod = optInROCPeriod;
       sp.prevEMA = prevEMA;
       sp.optInK_1 = optInK_1;
+      sp.emaBeta = emaBeta;
       sp.emaRing_Idx = emaRing_Idx;
       sp.maxIdx_emaRing = maxIdx_emaRing;
       sp.cbSize_emaRing = capCb_emaRing;

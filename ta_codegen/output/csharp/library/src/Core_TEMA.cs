@@ -125,6 +125,7 @@ public partial class Core
       double prevEMA3 = 0;
       double tempReal = 0;
       double optInK_1 = 0;
+      double emaBeta = 0;
       int i = 0;
       int today = 0;
       int outIdx = 0;
@@ -200,7 +201,7 @@ public partial class Core
        *
        * The arithmetic order below is the bit-exactness contract
        * (do not reorder or fuse operations):
-       *  - EMA recursion: ((x-prev)*k)+prev.
+       *  - EMA recursion: k*x + beta*prev, with ema.c's k and beta.
        *  - Each EMA is seeded with the sum of its first 'period'
        *    inputs, accumulated from 0.0 in input order (0.0+x is
        *    not x for x=-0.0), divided by the period.
@@ -210,7 +211,9 @@ public partial class Core
        * In-place (inReal == outReal) is supported: outReal[outIdx]
        * is written only after inReal[startIdx+outIdx] was read.
        */
-      optInK_1 = 2.0 / (double)(optInTimePeriod + 1);
+      emaBeta = (double)(optInTimePeriod - 1) / (double)(optInTimePeriod + 1);
+      optInK_1 = 1.0 - emaBeta;
+      emaBeta = 1.0 - optInK_1;
       /* Seed EMA1 with a simple average of the first
        * 'period' price bars.
        */
@@ -225,7 +228,7 @@ public partial class Core
        * the bar where EMA2 seeding begins.
        */
       while( today <= startIdx - lookbackEMA * 2 ) {
-         prevEMA1 = Math.FusedMultiplyAdd(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
+         prevEMA1 = Math.FusedMultiplyAdd(emaBeta, prevEMA1, optInK_1 * inReal[today++]);
       }
       /* Seed EMA2 with a simple average of the first 'period'
        * EMA1 values, accumulated as EMA1 produces them.
@@ -234,7 +237,7 @@ public partial class Core
       tempReal += prevEMA1;
       i = optInTimePeriod - 1;
       while( i-- > 0 ) {
-         prevEMA1 = Math.FusedMultiplyAdd(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
+         prevEMA1 = Math.FusedMultiplyAdd(emaBeta, prevEMA1, optInK_1 * inReal[today++]);
          tempReal += prevEMA1;
       }
       prevEMA2 = tempReal / optInTimePeriod;
@@ -242,8 +245,8 @@ public partial class Core
        * period of EMA2, up to the bar where EMA3 seeding begins.
        */
       while( today <= startIdx - lookbackEMA ) {
-         prevEMA1 = Math.FusedMultiplyAdd(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
-         prevEMA2 = Math.FusedMultiplyAdd(prevEMA1 - prevEMA2, optInK_1, prevEMA2);
+         prevEMA1 = Math.FusedMultiplyAdd(emaBeta, prevEMA1, optInK_1 * inReal[today++]);
+         prevEMA2 = Math.FusedMultiplyAdd(emaBeta, prevEMA2, optInK_1 * prevEMA1);
       }
       /* Seed EMA3 with a simple average of the first 'period'
        * EMA2 values, accumulated as EMA2 produces them.
@@ -252,8 +255,8 @@ public partial class Core
       tempReal += prevEMA2;
       i = optInTimePeriod - 1;
       while( i-- > 0 ) {
-         prevEMA1 = Math.FusedMultiplyAdd(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
-         prevEMA2 = Math.FusedMultiplyAdd(prevEMA1 - prevEMA2, optInK_1, prevEMA2);
+         prevEMA1 = Math.FusedMultiplyAdd(emaBeta, prevEMA1, optInK_1 * inReal[today++]);
+         prevEMA2 = Math.FusedMultiplyAdd(emaBeta, prevEMA2, optInK_1 * prevEMA1);
          tempReal += prevEMA2;
       }
       prevEMA3 = tempReal / optInTimePeriod;
@@ -261,9 +264,9 @@ public partial class Core
        * period of EMA3, up to the first output bar.
        */
       while( today <= startIdx ) {
-         prevEMA1 = Math.FusedMultiplyAdd(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
-         prevEMA2 = Math.FusedMultiplyAdd(prevEMA1 - prevEMA2, optInK_1, prevEMA2);
-         prevEMA3 = Math.FusedMultiplyAdd(prevEMA2 - prevEMA3, optInK_1, prevEMA3);
+         prevEMA1 = Math.FusedMultiplyAdd(emaBeta, prevEMA1, optInK_1 * inReal[today++]);
+         prevEMA2 = Math.FusedMultiplyAdd(emaBeta, prevEMA2, optInK_1 * prevEMA1);
+         prevEMA3 = Math.FusedMultiplyAdd(emaBeta, prevEMA3, optInK_1 * prevEMA2);
       }
       /* Stable zone: keep advancing the three EMA in lockstep and
        * write the TEMA into the output.
@@ -271,9 +274,9 @@ public partial class Core
       outReal[0] = prevEMA3 + (3.0 * prevEMA1 - 3.0 * prevEMA2);
       outIdx = 1;
       while( today <= endIdx ) {
-         prevEMA1 = Math.FusedMultiplyAdd(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
-         prevEMA2 = Math.FusedMultiplyAdd(prevEMA1 - prevEMA2, optInK_1, prevEMA2);
-         prevEMA3 = Math.FusedMultiplyAdd(prevEMA2 - prevEMA3, optInK_1, prevEMA3);
+         prevEMA1 = Math.FusedMultiplyAdd(emaBeta, prevEMA1, optInK_1 * inReal[today++]);
+         prevEMA2 = Math.FusedMultiplyAdd(emaBeta, prevEMA2, optInK_1 * prevEMA1);
+         prevEMA3 = Math.FusedMultiplyAdd(emaBeta, prevEMA3, optInK_1 * prevEMA2);
          outReal[outIdx++] = prevEMA3 + (3.0 * prevEMA1 - 3.0 * prevEMA2);
       }
       /* Succeed. Indicate where the output starts relative to
@@ -298,6 +301,7 @@ public partial class Core
       double prevEMA3 = 0;
       double tempReal = 0;
       double optInK_1 = 0;
+      double emaBeta = 0;
       int i = 0;
       int today = 0;
       int outIdx = 0;
@@ -336,7 +340,9 @@ public partial class Core
          outNBElement = outIdx;
          return RetCode.Success ;
       }
-      optInK_1 = 2.0 / (double)(optInTimePeriod + 1);
+      emaBeta = (double)(optInTimePeriod - 1) / (double)(optInTimePeriod + 1);
+      optInK_1 = 1.0 - emaBeta;
+      emaBeta = 1.0 - optInK_1;
       today = startIdx - lookbackTotal;
       i = optInTimePeriod;
       tempReal = 0.0;
@@ -345,40 +351,40 @@ public partial class Core
       }
       prevEMA1 = tempReal / optInTimePeriod;
       while( today <= startIdx - lookbackEMA * 2 ) {
-         prevEMA1 = Math.FusedMultiplyAdd((double)inReal[today++] - prevEMA1, optInK_1, prevEMA1);
+         prevEMA1 = Math.FusedMultiplyAdd(emaBeta, prevEMA1, optInK_1 * (double)inReal[today++]);
       }
       tempReal = 0.0;
       tempReal += prevEMA1;
       i = optInTimePeriod - 1;
       while( i-- > 0 ) {
-         prevEMA1 = Math.FusedMultiplyAdd((double)inReal[today++] - prevEMA1, optInK_1, prevEMA1);
+         prevEMA1 = Math.FusedMultiplyAdd(emaBeta, prevEMA1, optInK_1 * (double)inReal[today++]);
          tempReal += prevEMA1;
       }
       prevEMA2 = tempReal / optInTimePeriod;
       while( today <= startIdx - lookbackEMA ) {
-         prevEMA1 = Math.FusedMultiplyAdd((double)inReal[today++] - prevEMA1, optInK_1, prevEMA1);
-         prevEMA2 = Math.FusedMultiplyAdd(prevEMA1 - prevEMA2, optInK_1, prevEMA2);
+         prevEMA1 = Math.FusedMultiplyAdd(emaBeta, prevEMA1, optInK_1 * (double)inReal[today++]);
+         prevEMA2 = Math.FusedMultiplyAdd(emaBeta, prevEMA2, optInK_1 * prevEMA1);
       }
       tempReal = 0.0;
       tempReal += prevEMA2;
       i = optInTimePeriod - 1;
       while( i-- > 0 ) {
-         prevEMA1 = Math.FusedMultiplyAdd((double)inReal[today++] - prevEMA1, optInK_1, prevEMA1);
-         prevEMA2 = Math.FusedMultiplyAdd(prevEMA1 - prevEMA2, optInK_1, prevEMA2);
+         prevEMA1 = Math.FusedMultiplyAdd(emaBeta, prevEMA1, optInK_1 * (double)inReal[today++]);
+         prevEMA2 = Math.FusedMultiplyAdd(emaBeta, prevEMA2, optInK_1 * prevEMA1);
          tempReal += prevEMA2;
       }
       prevEMA3 = tempReal / optInTimePeriod;
       while( today <= startIdx ) {
-         prevEMA1 = Math.FusedMultiplyAdd((double)inReal[today++] - prevEMA1, optInK_1, prevEMA1);
-         prevEMA2 = Math.FusedMultiplyAdd(prevEMA1 - prevEMA2, optInK_1, prevEMA2);
-         prevEMA3 = Math.FusedMultiplyAdd(prevEMA2 - prevEMA3, optInK_1, prevEMA3);
+         prevEMA1 = Math.FusedMultiplyAdd(emaBeta, prevEMA1, optInK_1 * (double)inReal[today++]);
+         prevEMA2 = Math.FusedMultiplyAdd(emaBeta, prevEMA2, optInK_1 * prevEMA1);
+         prevEMA3 = Math.FusedMultiplyAdd(emaBeta, prevEMA3, optInK_1 * prevEMA2);
       }
       outReal[0] = prevEMA3 + (3.0 * prevEMA1 - 3.0 * prevEMA2);
       outIdx = 1;
       while( today <= endIdx ) {
-         prevEMA1 = Math.FusedMultiplyAdd((double)inReal[today++] - prevEMA1, optInK_1, prevEMA1);
-         prevEMA2 = Math.FusedMultiplyAdd(prevEMA1 - prevEMA2, optInK_1, prevEMA2);
-         prevEMA3 = Math.FusedMultiplyAdd(prevEMA2 - prevEMA3, optInK_1, prevEMA3);
+         prevEMA1 = Math.FusedMultiplyAdd(emaBeta, prevEMA1, optInK_1 * (double)inReal[today++]);
+         prevEMA2 = Math.FusedMultiplyAdd(emaBeta, prevEMA2, optInK_1 * prevEMA1);
+         prevEMA3 = Math.FusedMultiplyAdd(emaBeta, prevEMA3, optInK_1 * prevEMA2);
          outReal[outIdx++] = prevEMA3 + (3.0 * prevEMA1 - 3.0 * prevEMA2);
       }
       outBegIdx = startIdx;
@@ -573,6 +579,7 @@ public partial class Core
       internal double prevEMA2;
       internal double prevEMA3;
       internal double optInK_1;
+      internal double emaBeta;
       internal double cur_outReal;
       internal int outRangeBegIdx;
       internal int outRangeCount;
@@ -620,6 +627,7 @@ public partial class Core
          this.prevEMA2 = other.prevEMA2;
          this.prevEMA3 = other.prevEMA3;
          this.optInK_1 = other.optInK_1;
+         this.emaBeta = other.emaBeta;
          this.cur_outReal = other.cur_outReal;
          this.outRangeBegIdx = other.outRangeBegIdx;
          this.outRangeCount = other.outRangeCount;
@@ -677,9 +685,9 @@ public partial class Core
             cur_outReal = inReal;
             return cur_outReal ;
          }
-         prevEMA1 = Math.FusedMultiplyAdd(inReal - prevEMA1, sp.optInK_1, prevEMA1);
-         prevEMA2 = Math.FusedMultiplyAdd(prevEMA1 - prevEMA2, sp.optInK_1, prevEMA2);
-         prevEMA3 = Math.FusedMultiplyAdd(prevEMA2 - prevEMA3, sp.optInK_1, prevEMA3);
+         prevEMA1 = Math.FusedMultiplyAdd(sp.emaBeta, prevEMA1, sp.optInK_1 * inReal);
+         prevEMA2 = Math.FusedMultiplyAdd(sp.emaBeta, prevEMA2, sp.optInK_1 * prevEMA1);
+         prevEMA3 = Math.FusedMultiplyAdd(sp.emaBeta, prevEMA3, sp.optInK_1 * prevEMA2);
          cur_outReal = prevEMA3 + (3.0 * prevEMA1 - 3.0 * prevEMA2);
          return cur_outReal;
       }
@@ -707,9 +715,9 @@ public partial class Core
          sp.cur_outReal = inReal;
          return ;
       }
-      sp.prevEMA1 = Math.FusedMultiplyAdd(inReal - sp.prevEMA1, sp.optInK_1, sp.prevEMA1);
-      sp.prevEMA2 = Math.FusedMultiplyAdd(sp.prevEMA1 - sp.prevEMA2, sp.optInK_1, sp.prevEMA2);
-      sp.prevEMA3 = Math.FusedMultiplyAdd(sp.prevEMA2 - sp.prevEMA3, sp.optInK_1, sp.prevEMA3);
+      sp.prevEMA1 = Math.FusedMultiplyAdd(sp.emaBeta, sp.prevEMA1, sp.optInK_1 * inReal);
+      sp.prevEMA2 = Math.FusedMultiplyAdd(sp.emaBeta, sp.prevEMA2, sp.optInK_1 * sp.prevEMA1);
+      sp.prevEMA3 = Math.FusedMultiplyAdd(sp.emaBeta, sp.prevEMA3, sp.optInK_1 * sp.prevEMA2);
       sp.cur_outReal = sp.prevEMA3 + (3.0 * sp.prevEMA1 - 3.0 * sp.prevEMA2);
    }
 
@@ -722,6 +730,7 @@ public partial class Core
       double prevEMA3 = 0;
       double tempReal = 0;
       double optInK_1 = 0;
+      double emaBeta = 0;
       int i = 0;
       int today = 0;
       int outIdx = 0;
@@ -756,6 +765,7 @@ public partial class Core
          sp.prevEMA2 = 0.0;
          sp.prevEMA3 = 0.0;
          sp.optInK_1 = 0.0;
+         sp.emaBeta = 0.0;
          outBegIdx = fillLb;
          outNBElement = historyLen - fillLb;
          if( outStride == 0 ) {
@@ -810,7 +820,7 @@ public partial class Core
        *
        * The arithmetic order below is the bit-exactness contract
        * (do not reorder or fuse operations):
-       *  - EMA recursion: ((x-prev)*k)+prev.
+       *  - EMA recursion: k*x + beta*prev, with ema.c's k and beta.
        *  - Each EMA is seeded with the sum of its first 'period'
        *    inputs, accumulated from 0.0 in input order (0.0+x is
        *    not x for x=-0.0), divided by the period.
@@ -820,7 +830,9 @@ public partial class Core
        * In-place (inReal == outReal) is supported: outReal[outIdx]
        * is written only after inReal[startIdx+outIdx] was read.
        */
-      optInK_1 = 2.0 / (double)(optInTimePeriod + 1);
+      emaBeta = (double)(optInTimePeriod - 1) / (double)(optInTimePeriod + 1);
+      optInK_1 = 1.0 - emaBeta;
+      emaBeta = 1.0 - optInK_1;
       /* Seed EMA1 with a simple average of the first
        * 'period' price bars.
        */
@@ -835,7 +847,7 @@ public partial class Core
        * the bar where EMA2 seeding begins.
        */
       while( today <= startIdx - lookbackEMA * 2 ) {
-         prevEMA1 = Math.FusedMultiplyAdd(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
+         prevEMA1 = Math.FusedMultiplyAdd(emaBeta, prevEMA1, optInK_1 * inReal[today++]);
       }
       /* Seed EMA2 with a simple average of the first 'period'
        * EMA1 values, accumulated as EMA1 produces them.
@@ -844,7 +856,7 @@ public partial class Core
       tempReal += prevEMA1;
       i = optInTimePeriod - 1;
       while( i-- > 0 ) {
-         prevEMA1 = Math.FusedMultiplyAdd(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
+         prevEMA1 = Math.FusedMultiplyAdd(emaBeta, prevEMA1, optInK_1 * inReal[today++]);
          tempReal += prevEMA1;
       }
       prevEMA2 = tempReal / optInTimePeriod;
@@ -852,8 +864,8 @@ public partial class Core
        * period of EMA2, up to the bar where EMA3 seeding begins.
        */
       while( today <= startIdx - lookbackEMA ) {
-         prevEMA1 = Math.FusedMultiplyAdd(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
-         prevEMA2 = Math.FusedMultiplyAdd(prevEMA1 - prevEMA2, optInK_1, prevEMA2);
+         prevEMA1 = Math.FusedMultiplyAdd(emaBeta, prevEMA1, optInK_1 * inReal[today++]);
+         prevEMA2 = Math.FusedMultiplyAdd(emaBeta, prevEMA2, optInK_1 * prevEMA1);
       }
       /* Seed EMA3 with a simple average of the first 'period'
        * EMA2 values, accumulated as EMA2 produces them.
@@ -862,8 +874,8 @@ public partial class Core
       tempReal += prevEMA2;
       i = optInTimePeriod - 1;
       while( i-- > 0 ) {
-         prevEMA1 = Math.FusedMultiplyAdd(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
-         prevEMA2 = Math.FusedMultiplyAdd(prevEMA1 - prevEMA2, optInK_1, prevEMA2);
+         prevEMA1 = Math.FusedMultiplyAdd(emaBeta, prevEMA1, optInK_1 * inReal[today++]);
+         prevEMA2 = Math.FusedMultiplyAdd(emaBeta, prevEMA2, optInK_1 * prevEMA1);
          tempReal += prevEMA2;
       }
       prevEMA3 = tempReal / optInTimePeriod;
@@ -871,9 +883,9 @@ public partial class Core
        * period of EMA3, up to the first output bar.
        */
       while( today <= startIdx ) {
-         prevEMA1 = Math.FusedMultiplyAdd(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
-         prevEMA2 = Math.FusedMultiplyAdd(prevEMA1 - prevEMA2, optInK_1, prevEMA2);
-         prevEMA3 = Math.FusedMultiplyAdd(prevEMA2 - prevEMA3, optInK_1, prevEMA3);
+         prevEMA1 = Math.FusedMultiplyAdd(emaBeta, prevEMA1, optInK_1 * inReal[today++]);
+         prevEMA2 = Math.FusedMultiplyAdd(emaBeta, prevEMA2, optInK_1 * prevEMA1);
+         prevEMA3 = Math.FusedMultiplyAdd(emaBeta, prevEMA3, optInK_1 * prevEMA2);
       }
       /* Stable zone: keep advancing the three EMA in lockstep and
        * write the TEMA into the output.
@@ -881,9 +893,9 @@ public partial class Core
       outReal[0 * outStride] = prevEMA3 + (3.0 * prevEMA1 - 3.0 * prevEMA2);
       outIdx = 1;
       while( today <= endIdx ) {
-         prevEMA1 = Math.FusedMultiplyAdd(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
-         prevEMA2 = Math.FusedMultiplyAdd(prevEMA1 - prevEMA2, optInK_1, prevEMA2);
-         prevEMA3 = Math.FusedMultiplyAdd(prevEMA2 - prevEMA3, optInK_1, prevEMA3);
+         prevEMA1 = Math.FusedMultiplyAdd(emaBeta, prevEMA1, optInK_1 * inReal[today++]);
+         prevEMA2 = Math.FusedMultiplyAdd(emaBeta, prevEMA2, optInK_1 * prevEMA1);
+         prevEMA3 = Math.FusedMultiplyAdd(emaBeta, prevEMA3, optInK_1 * prevEMA2);
          outReal[outIdx++ * outStride] = prevEMA3 + (3.0 * prevEMA1 - 3.0 * prevEMA2);
       }
       /* Succeed. Indicate where the output starts relative to
@@ -897,6 +909,7 @@ public partial class Core
       sp.prevEMA2 = prevEMA2;
       sp.prevEMA3 = prevEMA3;
       sp.optInK_1 = optInK_1;
+      sp.emaBeta = emaBeta;
       sp.cur_outReal = outReal[(outNBElement - 1) * outStride];
       return RetCode.Success;
    }

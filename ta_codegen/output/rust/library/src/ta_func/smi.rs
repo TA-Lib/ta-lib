@@ -242,12 +242,15 @@ impl Core {
         let mut kSlow: f64 = 0.0_f64;
         let mut kFast: f64 = 0.0_f64;
         let mut kSignal: f64 = 0.0_f64;
+        let mut betaSlow: f64 = 0.0_f64;
+        let mut betaFast: f64 = 0.0_f64;
+        let mut betaSignal: f64 = 0.0_f64;
         let mut highest: f64 = 0.0_f64;
         let mut lowest: f64 = 0.0_f64;
         let mut tmp: f64 = 0.0_f64;
         let mut emaSlowNum: f64 = 0.0_f64;
-        let mut emaSlowDen: f64 = 0.0_f64;
         let mut emaFastNum: f64 = 0.0_f64;
+        let mut emaSlowDen: f64 = 0.0_f64;
         let mut emaFastDen: f64 = 0.0_f64;
         let mut sumSlowNum: f64 = 0.0_f64;
         let mut sumSlowDen: f64 = 0.0_f64;
@@ -271,6 +274,9 @@ impl Core {
         let mut nBar: usize = 0_usize;
         let mut nFast: usize = 0_usize;
         let mut nSignal: usize = 0_usize;
+        // Declared Num, Num, Den, Den: the stream state keeps this order, and with
+        // each stage's pair adjacent gcc 13 packs the steps two by two and then
+        // reads 16 bytes across two of its own stores, which cannot be forwarded.
         lookbackTotal = self.smi_lookback(optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod).unwrap_or(usize::MAX);
         if startIdx < lookbackTotal {
             startIdx = lookbackTotal;
@@ -297,9 +303,15 @@ impl Core {
         // from the values its predecessor would have published, exactly as the
         // composed form does. The seed sums accumulate from 0.0 in production
         // order; do not reorder or fuse them (0.0+x is not x for x=-0.0).
-        kSlow = 2.0 / ((optInSlowPeriod + 1) as f64);
-        kFast = 2.0 / ((optInFastPeriod + 1) as f64);
-        kSignal = 2.0 / ((optInSignalPeriod + 1) as f64);
+        betaSlow = ((optInSlowPeriod - 1) as f64) / ((optInSlowPeriod + 1) as f64);
+        kSlow = 1.0 - betaSlow;
+        betaSlow = 1.0 - kSlow;
+        betaFast = ((optInFastPeriod - 1) as f64) / ((optInFastPeriod + 1) as f64);
+        kFast = 1.0 - betaFast;
+        betaFast = 1.0 - kFast;
+        betaSignal = ((optInSignalPeriod - 1) as f64) / ((optInSignalPeriod + 1) as f64);
+        kSignal = 1.0 - betaSignal;
+        betaSignal = 1.0 - kSignal;
         lookbackSlow = self.ema_lookback(optInSlowPeriod).unwrap_or(usize::MAX);
         lookbackFast = self.ema_lookback(optInFastPeriod).unwrap_or(usize::MAX);
         emaSlowNum = 0.0;
@@ -369,8 +381,8 @@ impl Core {
                     emaSlowDen = sumSlowDen / ((optInSlowPeriod) as f64);
                 }
             } else {
-                emaSlowNum = (num - emaSlowNum as f64).mul_add(kSlow, emaSlowNum);
-                emaSlowDen = (den - emaSlowDen as f64).mul_add(kSlow, emaSlowDen);
+                emaSlowNum = (betaSlow as f64).mul_add(emaSlowNum, kSlow * num);
+                emaSlowDen = (betaSlow as f64).mul_add(emaSlowDen, kSlow * den);
             }
             // Stage 2: the fast EMA, over what stage 1 publishes.
             //
@@ -393,8 +405,8 @@ impl Core {
                         emaFastDen = sumFastDen / ((optInFastPeriod) as f64);
                     }
                 } else {
-                    emaFastNum = (emaSlowNum - emaFastNum as f64).mul_add(kFast, emaFastNum);
-                    emaFastDen = (emaSlowDen - emaFastDen as f64).mul_add(kFast, emaFastDen);
+                    emaFastNum = (betaFast as f64).mul_add(emaFastNum, kFast * emaSlowNum);
+                    emaFastDen = (betaFast as f64).mul_add(emaFastDen, kFast * emaSlowDen);
                 }
             }
             // Stage 3: the SMI line, then the signal EMA over it.
@@ -412,7 +424,7 @@ impl Core {
                         prevSignal = sumSignal / ((optInSignalPeriod) as f64);
                     }
                 } else {
-                    prevSignal = (smiValue - prevSignal as f64).mul_add(kSignal, prevSignal);
+                    prevSignal = (betaSignal as f64).mul_add(prevSignal, kSignal * smiValue);
                 }
             }
             nBar = nBar + 1;
@@ -460,10 +472,10 @@ impl Core {
             }
             den = highest - lowest;
             num = inClose[today] - (highest + lowest) * 0.5;
-            emaSlowNum = (num - emaSlowNum as f64).mul_add(kSlow, emaSlowNum);
-            emaSlowDen = (den - emaSlowDen as f64).mul_add(kSlow, emaSlowDen);
-            emaFastNum = (emaSlowNum - emaFastNum as f64).mul_add(kFast, emaFastNum);
-            emaFastDen = (emaSlowDen - emaFastDen as f64).mul_add(kFast, emaFastDen);
+            emaSlowNum = (betaSlow as f64).mul_add(emaSlowNum, kSlow * num);
+            emaSlowDen = (betaSlow as f64).mul_add(emaSlowDen, kSlow * den);
+            emaFastNum = (betaFast as f64).mul_add(emaFastNum, kFast * emaSlowNum);
+            emaFastDen = (betaFast as f64).mul_add(emaFastDen, kFast * emaSlowDen);
             // The denominator is an EMA of an EMA of the high-low range: every term
             // is non-negative and every weight is positive, so it carries no
             // cancellation residue and is zero only when every range that reached it
@@ -480,7 +492,7 @@ impl Core {
             } else {
                 smiValue = 0.0;
             }
-            prevSignal = (smiValue - prevSignal as f64).mul_add(kSignal, prevSignal);
+            prevSignal = (betaSignal as f64).mul_add(prevSignal, kSignal * smiValue);
             outSMI[outIdx] = smiValue;
             outSMISignal[outIdx] = prevSignal;
             outIdx = outIdx + 1;
@@ -663,11 +675,14 @@ struct SmiStreamState {
     kSlow: f64,
     kFast: f64,
     kSignal: f64,
+    betaSlow: f64,
+    betaFast: f64,
+    betaSignal: f64,
     highest: f64,
     lowest: f64,
     emaSlowNum: f64,
-    emaSlowDen: f64,
     emaFastNum: f64,
+    emaSlowDen: f64,
     emaFastDen: f64,
     prevSignal: f64,
     trailingIdx: i32,
@@ -734,10 +749,10 @@ impl Core {
         }
         den = sp.highest - sp.lowest;
         num = sp.x_inClose[(sp.today & sp.xMask) as usize] - (sp.highest + sp.lowest) * 0.5;
-        sp.emaSlowNum = (num - sp.emaSlowNum as f64).mul_add(sp.kSlow, sp.emaSlowNum);
-        sp.emaSlowDen = (den - sp.emaSlowDen as f64).mul_add(sp.kSlow, sp.emaSlowDen);
-        sp.emaFastNum = (sp.emaSlowNum - sp.emaFastNum as f64).mul_add(sp.kFast, sp.emaFastNum);
-        sp.emaFastDen = (sp.emaSlowDen - sp.emaFastDen as f64).mul_add(sp.kFast, sp.emaFastDen);
+        sp.emaSlowNum = (sp.betaSlow as f64).mul_add(sp.emaSlowNum, sp.kSlow * num);
+        sp.emaSlowDen = (sp.betaSlow as f64).mul_add(sp.emaSlowDen, sp.kSlow * den);
+        sp.emaFastNum = (sp.betaFast as f64).mul_add(sp.emaFastNum, sp.kFast * sp.emaSlowNum);
+        sp.emaFastDen = (sp.betaFast as f64).mul_add(sp.emaFastDen, sp.kFast * sp.emaSlowDen);
         // The denominator is an EMA of an EMA of the high-low range: every term
         // is non-negative and every weight is positive, so it carries no
         // cancellation residue and is zero only when every range that reached it
@@ -754,7 +769,7 @@ impl Core {
         } else {
             smiValue = 0.0;
         }
-        sp.prevSignal = (smiValue - sp.prevSignal as f64).mul_add(sp.kSignal, sp.prevSignal);
+        sp.prevSignal = (sp.betaSignal as f64).mul_add(sp.prevSignal, sp.kSignal * smiValue);
         (*outSMI) = smiValue;
         (*outSMISignal) = sp.prevSignal;
         sp.trailingIdx = sp.trailingIdx + 1;
@@ -810,12 +825,15 @@ impl Core {
         let mut kSlow: f64 = 0.0_f64;
         let mut kFast: f64 = 0.0_f64;
         let mut kSignal: f64 = 0.0_f64;
+        let mut betaSlow: f64 = 0.0_f64;
+        let mut betaFast: f64 = 0.0_f64;
+        let mut betaSignal: f64 = 0.0_f64;
         let mut highest: f64 = 0.0_f64;
         let mut lowest: f64 = 0.0_f64;
         let mut tmp: f64 = 0.0_f64;
         let mut emaSlowNum: f64 = 0.0_f64;
-        let mut emaSlowDen: f64 = 0.0_f64;
         let mut emaFastNum: f64 = 0.0_f64;
+        let mut emaSlowDen: f64 = 0.0_f64;
         let mut emaFastDen: f64 = 0.0_f64;
         let mut sumSlowNum: f64 = 0.0_f64;
         let mut sumSlowDen: f64 = 0.0_f64;
@@ -839,6 +857,9 @@ impl Core {
         let mut nBar: usize = 0_usize;
         let mut nFast: usize = 0_usize;
         let mut nSignal: usize = 0_usize;
+        // Declared Num, Num, Den, Den: the stream state keeps this order, and with
+        // each stage's pair adjacent gcc 13 packs the steps two by two and then
+        // reads 16 bytes across two of its own stores, which cannot be forwarded.
         lookbackTotal = self.smi_lookback(optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod)?;
         if startIdx < lookbackTotal {
             startIdx = lookbackTotal;
@@ -862,9 +883,15 @@ impl Core {
         // from the values its predecessor would have published, exactly as the
         // composed form does. The seed sums accumulate from 0.0 in production
         // order; do not reorder or fuse them (0.0+x is not x for x=-0.0).
-        kSlow = 2.0 / ((optInSlowPeriod + 1) as f64);
-        kFast = 2.0 / ((optInFastPeriod + 1) as f64);
-        kSignal = 2.0 / ((optInSignalPeriod + 1) as f64);
+        betaSlow = ((optInSlowPeriod - 1) as f64) / ((optInSlowPeriod + 1) as f64);
+        kSlow = 1.0 - betaSlow;
+        betaSlow = 1.0 - kSlow;
+        betaFast = ((optInFastPeriod - 1) as f64) / ((optInFastPeriod + 1) as f64);
+        kFast = 1.0 - betaFast;
+        betaFast = 1.0 - kFast;
+        betaSignal = ((optInSignalPeriod - 1) as f64) / ((optInSignalPeriod + 1) as f64);
+        kSignal = 1.0 - betaSignal;
+        betaSignal = 1.0 - kSignal;
         lookbackSlow = self.ema_lookback(optInSlowPeriod)?;
         lookbackFast = self.ema_lookback(optInFastPeriod)?;
         emaSlowNum = 0.0;
@@ -934,8 +961,8 @@ impl Core {
                     emaSlowDen = sumSlowDen / ((optInSlowPeriod) as f64);
                 }
             } else {
-                emaSlowNum = (num - emaSlowNum as f64).mul_add(kSlow, emaSlowNum);
-                emaSlowDen = (den - emaSlowDen as f64).mul_add(kSlow, emaSlowDen);
+                emaSlowNum = (betaSlow as f64).mul_add(emaSlowNum, kSlow * num);
+                emaSlowDen = (betaSlow as f64).mul_add(emaSlowDen, kSlow * den);
             }
             // Stage 2: the fast EMA, over what stage 1 publishes.
             //
@@ -958,8 +985,8 @@ impl Core {
                         emaFastDen = sumFastDen / ((optInFastPeriod) as f64);
                     }
                 } else {
-                    emaFastNum = (emaSlowNum - emaFastNum as f64).mul_add(kFast, emaFastNum);
-                    emaFastDen = (emaSlowDen - emaFastDen as f64).mul_add(kFast, emaFastDen);
+                    emaFastNum = (betaFast as f64).mul_add(emaFastNum, kFast * emaSlowNum);
+                    emaFastDen = (betaFast as f64).mul_add(emaFastDen, kFast * emaSlowDen);
                 }
             }
             // Stage 3: the SMI line, then the signal EMA over it.
@@ -977,7 +1004,7 @@ impl Core {
                         prevSignal = sumSignal / ((optInSignalPeriod) as f64);
                     }
                 } else {
-                    prevSignal = (smiValue - prevSignal as f64).mul_add(kSignal, prevSignal);
+                    prevSignal = (betaSignal as f64).mul_add(prevSignal, kSignal * smiValue);
                 }
             }
             nBar = nBar + 1;
@@ -1025,10 +1052,10 @@ impl Core {
             }
             den = highest - lowest;
             num = inClose[today] - (highest + lowest) * 0.5;
-            emaSlowNum = (num - emaSlowNum as f64).mul_add(kSlow, emaSlowNum);
-            emaSlowDen = (den - emaSlowDen as f64).mul_add(kSlow, emaSlowDen);
-            emaFastNum = (emaSlowNum - emaFastNum as f64).mul_add(kFast, emaFastNum);
-            emaFastDen = (emaSlowDen - emaFastDen as f64).mul_add(kFast, emaFastDen);
+            emaSlowNum = (betaSlow as f64).mul_add(emaSlowNum, kSlow * num);
+            emaSlowDen = (betaSlow as f64).mul_add(emaSlowDen, kSlow * den);
+            emaFastNum = (betaFast as f64).mul_add(emaFastNum, kFast * emaSlowNum);
+            emaFastDen = (betaFast as f64).mul_add(emaFastDen, kFast * emaSlowDen);
             // The denominator is an EMA of an EMA of the high-low range: every term
             // is non-negative and every weight is positive, so it carries no
             // cancellation residue and is zero only when every range that reached it
@@ -1045,7 +1072,7 @@ impl Core {
             } else {
                 smiValue = 0.0;
             }
-            prevSignal = (smiValue - prevSignal as f64).mul_add(kSignal, prevSignal);
+            prevSignal = (betaSignal as f64).mul_add(prevSignal, kSignal * smiValue);
             outSMI[(outIdx * outStride) as usize] = smiValue;
             outSMISignal[(outIdx * outStride) as usize] = prevSignal;
             outIdx = outIdx + 1;
@@ -1083,11 +1110,14 @@ impl Core {
             kSlow,
             kFast,
             kSignal,
+            betaSlow,
+            betaFast,
+            betaSignal,
             highest,
             lowest,
             emaSlowNum,
-            emaSlowDen,
             emaFastNum,
+            emaSlowDen,
             emaFastDen,
             prevSignal,
             trailingIdx: (trailingIdx) as i32,
@@ -1352,10 +1382,10 @@ impl SmiStream {
             }
             den = highest - lowest;
             num = (if ((sp.today & sp.xMask) as usize) != pkSlot2 { sp.x_inClose[(sp.today & sp.xMask) as usize] } else { pkVal2 }) - (highest + lowest) * 0.5;
-            emaSlowNum = (num - emaSlowNum as f64).mul_add(sp.kSlow, emaSlowNum);
-            emaSlowDen = (den - emaSlowDen as f64).mul_add(sp.kSlow, emaSlowDen);
-            emaFastNum = (emaSlowNum - emaFastNum as f64).mul_add(sp.kFast, emaFastNum);
-            emaFastDen = (emaSlowDen - emaFastDen as f64).mul_add(sp.kFast, emaFastDen);
+            emaSlowNum = (sp.betaSlow as f64).mul_add(emaSlowNum, sp.kSlow * num);
+            emaSlowDen = (sp.betaSlow as f64).mul_add(emaSlowDen, sp.kSlow * den);
+            emaFastNum = (sp.betaFast as f64).mul_add(emaFastNum, sp.kFast * emaSlowNum);
+            emaFastDen = (sp.betaFast as f64).mul_add(emaFastDen, sp.kFast * emaSlowDen);
             // The denominator is an EMA of an EMA of the high-low range: every term
             // is non-negative and every weight is positive, so it carries no
             // cancellation residue and is zero only when every range that reached it
@@ -1372,7 +1402,7 @@ impl SmiStream {
             } else {
                 smiValue = 0.0;
             }
-            prevSignal = (smiValue - prevSignal as f64).mul_add(sp.kSignal, prevSignal);
+            prevSignal = (sp.betaSignal as f64).mul_add(prevSignal, sp.kSignal * smiValue);
             (*outSMI) = smiValue;
             (*outSMISignal) = prevSignal;
         }

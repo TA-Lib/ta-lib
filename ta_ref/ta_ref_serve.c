@@ -52,6 +52,7 @@ static const char *ta_ref_mode_name( TaRefTolMode m )
    case TA_REF_TOL_REL_IN:          return "rel_in";
    case TA_REF_TOL_REL_OUT:         return "rel_out";
    case TA_REF_TOL_REL_OUT_INFLOOR: return "rel_out_infloor";
+   case TA_REF_TOL_REL_OUT_FLOOR1:  return "rel_out_floor1";
    case TA_REF_TOL_NAN_TO:          return "nan_to";
    }
    return "?";

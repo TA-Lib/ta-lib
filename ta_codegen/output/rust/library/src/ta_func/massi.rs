@@ -194,6 +194,7 @@ impl Core {
         assert!(_assertStart > endIdx || endIdx - _assertStart < outReal.len());
         let mut startIdx = startIdx;
         let mut optInK_1: f64 = 0.0_f64;
+        let mut emaBeta: f64 = 0.0_f64;
         let mut hl: f64 = 0.0_f64;
         let mut ema1: f64 = 0.0_f64;
         let mut ema2: f64 = 0.0_f64;
@@ -245,7 +246,9 @@ impl Core {
         // confusing them is invisible until TA_SetUnstablePeriod(TA_FUNC_UNST_EMA)
         // is warmed. The seed sums accumulate from 0.0 in production order; do not
         // reorder or fuse them (0.0+x is not x for x=-0.0).
-        optInK_1 = 2.0 / ((optInFastPeriod + 1) as f64);
+        emaBeta = ((optInFastPeriod - 1) as f64) / ((optInFastPeriod + 1) as f64);
+        optInK_1 = 1.0 - emaBeta;
+        emaBeta = 1.0 - ((optInK_1) as f64);
         ema1 = 0.0;
         ema2 = 0.0;
         sum1 = 0.0;
@@ -264,7 +267,7 @@ impl Core {
                     ema1 = sum1 / ((optInFastPeriod) as f64);
                 }
             } else {
-                ema1 = (hl - ema1 as f64).mul_add(optInK_1, ema1);
+                ema1 = (emaBeta as f64).mul_add(ema1, ((optInK_1) as f64) * hl);
             }
             // The stage counter is compared BEFORE it is subtracted, never after.
             // `n2 = nBar - lookbackEma; if( n2 >= 0 )` is correct in C and broken
@@ -278,7 +281,7 @@ impl Core {
                         ema2 = sum2 / ((optInFastPeriod) as f64);
                     }
                 } else {
-                    ema2 = (ema1 - ema2 as f64).mul_add(optInK_1, ema2);
+                    ema2 = (emaBeta as f64).mul_add(ema2, ((optInK_1) as f64) * ema1);
                 }
             }
             if nBar >= lookbackEma2 {
@@ -314,8 +317,8 @@ impl Core {
         outIdx = 1;
         while today <= endIdx {
             hl = inHigh[today] - inLow[today];
-            ema1 = (hl - ema1 as f64).mul_add(optInK_1, ema1);
-            ema2 = (ema1 - ema2 as f64).mul_add(optInK_1, ema2);
+            ema1 = (emaBeta as f64).mul_add(ema1, ((optInK_1) as f64) * hl);
+            ema2 = (emaBeta as f64).mul_add(ema2, ((optInK_1) as f64) * ema1);
             if ema2 == 0.0 {
                 ratio = 1.0;
             } else {
@@ -484,6 +487,7 @@ struct MassiStreamState {
     optInFastPeriod: i32,
     optInSlowPeriod: i32,
     optInK_1: f64,
+    emaBeta: f64,
     ema1: f64,
     ema2: f64,
     total: f64,
@@ -505,8 +509,8 @@ impl Core {
         let mut ratio: f64 = 0.0_f64;
         let mut tempReal: f64 = 0.0_f64;
         hl = inHigh - inLow;
-        sp.ema1 = (hl - sp.ema1 as f64).mul_add(sp.optInK_1, sp.ema1);
-        sp.ema2 = (sp.ema1 - sp.ema2 as f64).mul_add(sp.optInK_1, sp.ema2);
+        sp.ema1 = (sp.emaBeta as f64).mul_add(sp.ema1, ((sp.optInK_1) as f64) * hl);
+        sp.ema2 = (sp.emaBeta as f64).mul_add(sp.ema2, ((sp.optInK_1) as f64) * sp.ema1);
         if sp.ema2 == 0.0 {
             ratio = 1.0;
         } else {
@@ -559,6 +563,7 @@ impl Core {
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
         let mut optInK_1: f64 = 0.0_f64;
+        let mut emaBeta: f64 = 0.0_f64;
         let mut hl: f64 = 0.0_f64;
         let mut ema1: f64 = 0.0_f64;
         let mut ema2: f64 = 0.0_f64;
@@ -603,7 +608,9 @@ impl Core {
         // confusing them is invisible until TA_SetUnstablePeriod(TA_FUNC_UNST_EMA)
         // is warmed. The seed sums accumulate from 0.0 in production order; do not
         // reorder or fuse them (0.0+x is not x for x=-0.0).
-        optInK_1 = 2.0 / ((optInFastPeriod + 1) as f64);
+        emaBeta = ((optInFastPeriod - 1) as f64) / ((optInFastPeriod + 1) as f64);
+        optInK_1 = 1.0 - emaBeta;
+        emaBeta = 1.0 - ((optInK_1) as f64);
         ema1 = 0.0;
         ema2 = 0.0;
         sum1 = 0.0;
@@ -622,7 +629,7 @@ impl Core {
                     ema1 = sum1 / ((optInFastPeriod) as f64);
                 }
             } else {
-                ema1 = (hl - ema1 as f64).mul_add(optInK_1, ema1);
+                ema1 = (emaBeta as f64).mul_add(ema1, ((optInK_1) as f64) * hl);
             }
             // The stage counter is compared BEFORE it is subtracted, never after.
             // `n2 = nBar - lookbackEma; if( n2 >= 0 )` is correct in C and broken
@@ -636,7 +643,7 @@ impl Core {
                         ema2 = sum2 / ((optInFastPeriod) as f64);
                     }
                 } else {
-                    ema2 = (ema1 - ema2 as f64).mul_add(optInK_1, ema2);
+                    ema2 = (emaBeta as f64).mul_add(ema2, ((optInK_1) as f64) * ema1);
                 }
             }
             if nBar >= lookbackEma2 {
@@ -672,8 +679,8 @@ impl Core {
         outIdx = 1;
         while today <= endIdx {
             hl = inHigh[today] - inLow[today];
-            ema1 = (hl - ema1 as f64).mul_add(optInK_1, ema1);
-            ema2 = (ema1 - ema2 as f64).mul_add(optInK_1, ema2);
+            ema1 = (emaBeta as f64).mul_add(ema1, ((optInK_1) as f64) * hl);
+            ema2 = (emaBeta as f64).mul_add(ema2, ((optInK_1) as f64) * ema1);
             if ema2 == 0.0 {
                 ratio = 1.0;
             } else {
@@ -700,6 +707,7 @@ impl Core {
             optInFastPeriod,
             optInSlowPeriod,
             optInK_1,
+            emaBeta,
             ema1,
             ema2,
             total,
@@ -888,8 +896,8 @@ impl MassiStream {
             let mut pkSlot0: usize = usize::MAX;
             let mut pkVal0: f64 = 0.0_f64;
             hl = inHigh - inLow;
-            ema1 = (hl - ema1 as f64).mul_add(sp.optInK_1, ema1);
-            ema2 = (ema1 - ema2 as f64).mul_add(sp.optInK_1, ema2);
+            ema1 = (sp.emaBeta as f64).mul_add(ema1, ((sp.optInK_1) as f64) * hl);
+            ema2 = (sp.emaBeta as f64).mul_add(ema2, ((sp.optInK_1) as f64) * ema1);
             if ema2 == 0.0 {
                 ratio = 1.0;
             } else {

@@ -94,6 +94,7 @@ TA_LIB_API TA_RetCode TA_MASSI( int    startIdx,
                                 double        outReal[] )
 {
    double optInK_1;
+   double emaBeta;
    double hl;
    double ema1;
    double ema2;
@@ -176,7 +177,9 @@ TA_LIB_API TA_RetCode TA_MASSI( int    startIdx,
     * is warmed. The seed sums accumulate from 0.0 in production order; do not
     * reorder or fuse them (0.0+x is not x for x=-0.0).
     */
-   optInK_1 = 2.0 / (double)(optInFastPeriod + 1);
+   emaBeta = (double)(optInFastPeriod - 1) / (double)(optInFastPeriod + 1);
+   optInK_1 = 1.0 - emaBeta;
+   emaBeta = 1.0 - optInK_1;
    ema1 = 0.0;
    ema2 = 0.0;
    sum1 = 0.0;
@@ -200,7 +203,7 @@ TA_LIB_API TA_RetCode TA_MASSI( int    startIdx,
          }
       } else 
       {
-         ema1 = fma(hl - ema1, optInK_1, ema1);
+         ema1 = fma(emaBeta, ema1, optInK_1 * hl);
       }
       /* The stage counter is compared BEFORE it is subtracted, never after.
        * `n2 = nBar - lookbackEma; if( n2 >= 0 )` is correct in C and broken
@@ -219,7 +222,7 @@ TA_LIB_API TA_RetCode TA_MASSI( int    startIdx,
             }
          } else 
          {
-            ema2 = fma(ema1 - ema2, optInK_1, ema2);
+            ema2 = fma(emaBeta, ema2, optInK_1 * ema1);
          }
       }
       if( nBar >= lookbackEma2 )
@@ -263,8 +266,8 @@ TA_LIB_API TA_RetCode TA_MASSI( int    startIdx,
    while( today <= endIdx )
    {
       hl = inHigh[today] - inLow[today];
-      ema1 = fma(hl - ema1, optInK_1, ema1);
-      ema2 = fma(ema1 - ema2, optInK_1, ema2);
+      ema1 = fma(emaBeta, ema1, optInK_1 * hl);
+      ema2 = fma(emaBeta, ema2, optInK_1 * ema1);
       if( ema2 == 0.0 )
       {
          ratio = 1.0;
@@ -299,6 +302,7 @@ TA_RetCode TA_S_MASSI( int    startIdx,
                        double        outReal[] )
 {
    double optInK_1;
+   double emaBeta;
    double hl;
    double ema1;
    double ema2;
@@ -370,7 +374,9 @@ TA_RetCode TA_S_MASSI( int    startIdx,
    maxIdx_ratioRing = (optInSlowPeriod-1);
    ratioRing_Idx = 0;
    *outBegIdx= startIdx;
-   optInK_1 = 2.0 / (double)(optInFastPeriod + 1);
+   emaBeta = (double)(optInFastPeriod - 1) / (double)(optInFastPeriod + 1);
+   optInK_1 = 1.0 - emaBeta;
+   emaBeta = 1.0 - optInK_1;
    ema1 = 0.0;
    ema2 = 0.0;
    sum1 = 0.0;
@@ -391,7 +397,7 @@ TA_RetCode TA_S_MASSI( int    startIdx,
          }
       } else 
       {
-         ema1 = fma(hl - ema1, optInK_1, ema1);
+         ema1 = fma(emaBeta, ema1, optInK_1 * hl);
       }
       if( nBar >= lookbackEma )
       {
@@ -405,7 +411,7 @@ TA_RetCode TA_S_MASSI( int    startIdx,
             }
          } else 
          {
-            ema2 = fma(ema1 - ema2, optInK_1, ema2);
+            ema2 = fma(emaBeta, ema2, optInK_1 * ema1);
          }
       }
       if( nBar >= lookbackEma2 )
@@ -435,8 +441,8 @@ TA_RetCode TA_S_MASSI( int    startIdx,
    while( today <= endIdx )
    {
       hl = (double)inHigh[today] - (double)inLow[today];
-      ema1 = fma(hl - ema1, optInK_1, ema1);
-      ema2 = fma(ema1 - ema2, optInK_1, ema2);
+      ema1 = fma(emaBeta, ema1, optInK_1 * hl);
+      ema2 = fma(emaBeta, ema2, optInK_1 * ema1);
       if( ema2 == 0.0 )
       {
          ratio = 1.0;
@@ -470,6 +476,7 @@ struct TA_MASSI_Stream {
    int optInFastPeriod;
    int optInSlowPeriod;
    double optInK_1;
+   double emaBeta;
    double pad_0;
    double ema1;
    double ema2;
@@ -496,8 +503,8 @@ static TA_FMA_STEP_INLINE void TA_MASSI_StepImpl( struct TA_MASSI_Stream *sp, do
    double tempReal;
 
    hl = inHigh - inLow;
-   sp->ema1 = fma(hl - sp->ema1, sp->optInK_1, sp->ema1);
-   sp->ema2 = fma(sp->ema1 - sp->ema2, sp->optInK_1, sp->ema2);
+   sp->ema1 = fma(sp->emaBeta, sp->ema1, sp->optInK_1 * hl);
+   sp->ema2 = fma(sp->emaBeta, sp->ema2, sp->optInK_1 * sp->ema1);
    if( sp->ema2 == 0.0 )
    {
       ratio = 1.0;
@@ -551,6 +558,7 @@ static TA_RetCode TA_MASSI_OpenImpl( struct TA_MASSI_Stream **stream, const doub
 
    {
       double optInK_1 = 0.0;
+      double emaBeta = 0.0;
       double hl;
       double ema1 = 0.0;
       double ema2 = 0.0;
@@ -606,7 +614,9 @@ static TA_RetCode TA_MASSI_OpenImpl( struct TA_MASSI_Stream **stream, const doub
        * is warmed. The seed sums accumulate from 0.0 in production order; do not
        * reorder or fuse them (0.0+x is not x for x=-0.0).
        */
-      optInK_1 = 2.0 / (double)(optInFastPeriod + 1);
+      emaBeta = (double)(optInFastPeriod - 1) / (double)(optInFastPeriod + 1);
+      optInK_1 = 1.0 - emaBeta;
+      emaBeta = 1.0 - optInK_1;
       ema1 = 0.0;
       ema2 = 0.0;
       sum1 = 0.0;
@@ -630,7 +640,7 @@ static TA_RetCode TA_MASSI_OpenImpl( struct TA_MASSI_Stream **stream, const doub
             }
          } else 
          {
-            ema1 = fma(hl - ema1, optInK_1, ema1);
+            ema1 = fma(emaBeta, ema1, optInK_1 * hl);
          }
          /* The stage counter is compared BEFORE it is subtracted, never after.
           * `n2 = nBar - lookbackEma; if( n2 >= 0 )` is correct in C and broken
@@ -649,7 +659,7 @@ static TA_RetCode TA_MASSI_OpenImpl( struct TA_MASSI_Stream **stream, const doub
                }
             } else 
             {
-               ema2 = fma(ema1 - ema2, optInK_1, ema2);
+               ema2 = fma(emaBeta, ema2, optInK_1 * ema1);
             }
          }
          if( nBar >= lookbackEma2 )
@@ -693,8 +703,8 @@ static TA_RetCode TA_MASSI_OpenImpl( struct TA_MASSI_Stream **stream, const doub
       while( today <= endIdx )
       {
          hl = inHigh[today] - inLow[today];
-         ema1 = fma(hl - ema1, optInK_1, ema1);
-         ema2 = fma(ema1 - ema2, optInK_1, ema2);
+         ema1 = fma(emaBeta, ema1, optInK_1 * hl);
+         ema2 = fma(emaBeta, ema2, optInK_1 * ema1);
          if( ema2 == 0.0 )
          {
             ratio = 1.0;
@@ -721,6 +731,7 @@ static TA_RetCode TA_MASSI_OpenImpl( struct TA_MASSI_Stream **stream, const doub
       sp->optInFastPeriod = optInFastPeriod;
       sp->optInSlowPeriod = optInSlowPeriod;
       sp->optInK_1 = optInK_1;
+      sp->emaBeta = emaBeta;
       sp->ema1 = ema1;
       sp->ema2 = ema2;
       sp->total = total;
@@ -818,8 +829,8 @@ TA_LIB_API TA_RetCode TA_MASSI_Peek( const TA_MASSI_Stream *stream, double inHig
    total = sp->total;
    cb_ratioRing = sp->cb_ratioRing;
    hl = inHigh - inLow;
-   ema1 = fma(hl - ema1, sp->optInK_1, ema1);
-   ema2 = fma(ema1 - ema2, sp->optInK_1, ema2);
+   ema1 = fma(sp->emaBeta, ema1, sp->optInK_1 * hl);
+   ema2 = fma(sp->emaBeta, ema2, sp->optInK_1 * ema1);
    if( ema2 == 0.0 )
    {
       ratio = 1.0;

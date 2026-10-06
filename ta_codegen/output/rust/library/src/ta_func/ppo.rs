@@ -373,6 +373,8 @@ impl Core {
             let mut _eFast: f64 = 0.0_f64;
             let mut _eSlow: f64 = 0.0_f64;
             let mut _eX: f64 = 0.0_f64;
+            let mut _eFastBeta: f64 = 0.0_f64;
+            let mut _eSlowBeta: f64 = 0.0_f64;
             let mut _eN: usize = 0_usize;
             let mut _eToday: usize = 0_usize;
             let mut _eFastToday: usize = 0_usize;
@@ -384,8 +386,12 @@ impl Core {
                 optInSlowPeriod = optInFastPeriod;
                 optInFastPeriod = (tempInteger) as i32;
             }
-            _eFastK = 2.0 / ((optInFastPeriod + 1) as f64);
-            _eSlowK = 2.0 / ((optInSlowPeriod + 1) as f64);
+            _eFastBeta = ((optInFastPeriod - 1) as f64) / ((optInFastPeriod + 1) as f64);
+            _eFastK = 1.0 - _eFastBeta;
+            _eFastBeta = 1.0 - _eFastK;
+            _eSlowBeta = ((optInSlowPeriod - 1) as f64) / ((optInSlowPeriod + 1) as f64);
+            _eSlowK = 1.0 - _eSlowBeta;
+            _eSlowBeta = 1.0 - _eSlowK;
             _eFastToday = self.ema_lookback(optInFastPeriod).unwrap_or(usize::MAX);
             if _eFastToday < startIdx {
                 _eFastToday = startIdx;
@@ -405,7 +411,7 @@ impl Core {
             }
             _eFast = _eFast / ((optInFastPeriod) as f64);
             while _eFastToday <= _eSlowStart {
-                _eFast = (inReal[{ let _v = _eFastToday; _eFastToday += 1; _v }] - _eFast as f64).mul_add(_eFastK, _eFast);
+                _eFast = (_eFastBeta as f64).mul_add(_eFast, _eFastK * inReal[{ let _v = _eFastToday; _eFastToday += 1; _v }]);
             }
             _eSlow = 0.0;
             // for( _eN = 0; _eN < ((optInSlowPeriod) as usize); _eN += 1 )
@@ -416,7 +422,7 @@ impl Core {
             }
             _eSlow = _eSlow / ((optInSlowPeriod) as f64);
             while _eSlowToday <= _eSlowStart {
-                _eSlow = (inReal[{ let _v = _eSlowToday; _eSlowToday += 1; _v }] - _eSlow as f64).mul_add(_eSlowK, _eSlow);
+                _eSlow = (_eSlowBeta as f64).mul_add(_eSlow, _eSlowK * inReal[{ let _v = _eSlowToday; _eSlowToday += 1; _v }]);
             }
             _eOutIdx = 0;
             if !((_eSlow).abs() < 1e-14) {
@@ -428,8 +434,8 @@ impl Core {
             _eToday = _eSlowStart + 1;
             while _eToday <= endIdx {
                 _eX = inReal[{ let _v = _eToday; _eToday += 1; _v }];
-                _eFast = (_eX - _eFast as f64).mul_add(_eFastK, _eFast);
-                _eSlow = (_eX - _eSlow as f64).mul_add(_eSlowK, _eSlow);
+                _eFast = (_eFastBeta as f64).mul_add(_eFast, _eFastK * _eX);
+                _eSlow = (_eSlowBeta as f64).mul_add(_eSlow, _eSlowK * _eX);
                 if !((_eSlow).abs() < 1e-14) {
                     outReal[_eOutIdx] = (_eFast - _eSlow) / _eSlow * 100.0;
                 } else {

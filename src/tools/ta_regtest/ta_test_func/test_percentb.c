@@ -1259,7 +1259,7 @@ static ErrorNumber test_pctb_all( void )
       { "degenerate",            90638, &g_pctbDegenCmp    },
       { "sub-ulp width",           570, &g_pctbSubUlpCmp   },
       { "stream",                47696, &g_pctbStreamCmp   },
-      { "stream near 1e15",         49, &g_pctbStreamHuge  },
+      { "stream near 1e15",         50, &g_pctbStreamHuge  },
    };
    ErrorNumber err;
    unsigned int c;

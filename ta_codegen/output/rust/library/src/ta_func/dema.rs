@@ -177,6 +177,7 @@ impl Core {
         let mut prevEMA2: f64 = 0.0_f64;
         let mut tempReal: f64 = 0.0_f64;
         let mut optInK_1: f64 = 0.0_f64;
+        let mut emaBeta: f64 = 0.0_f64;
         let mut i: usize = 0_usize;
         let mut today: usize = 0_usize;
         let mut outIdx: usize = 0_usize;
@@ -221,12 +222,11 @@ impl Core {
         // No smoothing at period of 1: the output is a copy of the input
         // (same convention as TA_MA for every MAType). Explicit and separate
         // from TA_EMA's own copy because the two EMA below are inlined here,
-        // not delegated -- at period 1 they reduce to (x-prev)+prev, which
-        // loses the input as soon as consecutive values differ by more than a
-        // factor of two, and 2*e1 - e2 then propagates the residue rather
-        // than cancelling it. The unstable period still delays the first
-        // output, and at twice EMA's rate: TA_MA reports lookback 0 at period
-        // 1, so the two disagree on alignment when it is non-zero.
+        // not delegated -- at period 1 they run at a k of 1.0 and a beta of
+        // 0.0, which does not keep the sign of a -0.0 input. The unstable
+        // period still delays the first output, and at twice EMA's rate: TA_MA
+        // reports lookback 0 at period 1, so the two disagree on alignment when
+        // it is non-zero.
         if optInTimePeriod == 1 {
             (*outBegIdx) = startIdx;
             outIdx = 0;
@@ -244,14 +244,16 @@ impl Core {
         //
         // The arithmetic order below is the bit-exactness contract
         // (do not reorder or fuse operations):
-        //  - EMA recursion: ((x-prev)*k)+prev.
+        //  - EMA recursion: k*x + beta*prev, with ema.c's k and beta.
         //  - Each EMA is seeded with the sum of its first 'period'
         //    inputs, accumulated from 0.0 in input order (0.0+x is
         //    not x for x=-0.0), divided by the period.
         //
         // In-place (inReal == outReal) is supported: outReal[outIdx]
         // is written only after inReal[startIdx+outIdx] was read.
-        optInK_1 = 2.0 / ((optInTimePeriod + 1) as f64);
+        emaBeta = ((optInTimePeriod - 1) as f64) / ((optInTimePeriod + 1) as f64);
+        optInK_1 = 1.0 - emaBeta;
+        emaBeta = 1.0 - ((optInK_1) as f64);
         // Seed EMA1 with a simple average of the first
         // 'period' price bars.
         today = startIdx - lookbackTotal;
@@ -264,7 +266,7 @@ impl Core {
         // Advance EMA1 alone through its unstable period, up to
         // the bar where EMA2 seeding begins.
         while today <= startIdx - lookbackEMA {
-            prevEMA1 = (inReal[{ let _v = today; today += 1; _v }] - prevEMA1 as f64).mul_add(optInK_1, prevEMA1);
+            prevEMA1 = (emaBeta as f64).mul_add(prevEMA1, ((optInK_1) as f64) * inReal[{ let _v = today; today += 1; _v }]);
         }
         // Seed EMA2 with a simple average of the first 'period'
         // EMA1 values, accumulated as EMA1 produces them.
@@ -272,23 +274,23 @@ impl Core {
         tempReal += prevEMA1;
         i = (optInTimePeriod - 1) as usize;
         while { let _v = i; i = i.wrapping_sub(1); _v } > 0 {
-            prevEMA1 = (inReal[{ let _v = today; today += 1; _v }] - prevEMA1 as f64).mul_add(optInK_1, prevEMA1);
+            prevEMA1 = (emaBeta as f64).mul_add(prevEMA1, ((optInK_1) as f64) * inReal[{ let _v = today; today += 1; _v }]);
             tempReal += prevEMA1;
         }
         prevEMA2 = tempReal / ((optInTimePeriod) as f64);
         // Advance both EMA in lockstep through the unstable period
         // of EMA2, up to the first output bar.
         while today <= startIdx {
-            prevEMA1 = (inReal[{ let _v = today; today += 1; _v }] - prevEMA1 as f64).mul_add(optInK_1, prevEMA1);
-            prevEMA2 = (prevEMA1 - prevEMA2 as f64).mul_add(optInK_1, prevEMA2);
+            prevEMA1 = (emaBeta as f64).mul_add(prevEMA1, ((optInK_1) as f64) * inReal[{ let _v = today; today += 1; _v }]);
+            prevEMA2 = (emaBeta as f64).mul_add(prevEMA2, ((optInK_1) as f64) * prevEMA1);
         }
         // Stable zone: keep advancing both EMA in lockstep and
         // write the DEMA into the output.
         outReal[0] = 2.0 * prevEMA1 - prevEMA2;
         outIdx = 1;
         while today <= endIdx {
-            prevEMA1 = (inReal[{ let _v = today; today += 1; _v }] - prevEMA1 as f64).mul_add(optInK_1, prevEMA1);
-            prevEMA2 = (prevEMA1 - prevEMA2 as f64).mul_add(optInK_1, prevEMA2);
+            prevEMA1 = (emaBeta as f64).mul_add(prevEMA1, ((optInK_1) as f64) * inReal[{ let _v = today; today += 1; _v }]);
+            prevEMA2 = (emaBeta as f64).mul_add(prevEMA2, ((optInK_1) as f64) * prevEMA1);
             outReal[outIdx] = 2.0 * prevEMA1 - prevEMA2;
             outIdx += 1;
         }
@@ -422,6 +424,7 @@ struct DemaStreamState {
     prevEMA1: f64,
     prevEMA2: f64,
     optInK_1: f64,
+    emaBeta: f64,
     cur_outReal: f64,
 }
 
@@ -437,8 +440,8 @@ impl Core {
             sp.cur_outReal = (*outReal);
             return;
         }
-        sp.prevEMA1 = (inReal - sp.prevEMA1 as f64).mul_add(sp.optInK_1, sp.prevEMA1);
-        sp.prevEMA2 = (sp.prevEMA1 - sp.prevEMA2 as f64).mul_add(sp.optInK_1, sp.prevEMA2);
+        sp.prevEMA1 = (sp.emaBeta as f64).mul_add(sp.prevEMA1, ((sp.optInK_1) as f64) * inReal);
+        sp.prevEMA2 = (sp.emaBeta as f64).mul_add(sp.prevEMA2, ((sp.optInK_1) as f64) * sp.prevEMA1);
         (*outReal) = 2.0 * sp.prevEMA1 - sp.prevEMA2;
         sp.cur_outReal = (*outReal);
     }
@@ -481,6 +484,7 @@ impl Core {
                 prevEMA1: 0.0_f64,
                 prevEMA2: 0.0_f64,
                 optInK_1: 0.0_f64,
+                emaBeta: 0.0_f64,
             };
             (*outBegIdx) = fillLb;
             (*outNBElement) = historyLen - fillLb;
@@ -499,6 +503,7 @@ impl Core {
         let mut prevEMA2: f64 = 0.0_f64;
         let mut tempReal: f64 = 0.0_f64;
         let mut optInK_1: f64 = 0.0_f64;
+        let mut emaBeta: f64 = 0.0_f64;
         let mut i: usize = 0_usize;
         let mut today: usize = 0_usize;
         let mut outIdx: usize = 0_usize;
@@ -545,14 +550,16 @@ impl Core {
         //
         // The arithmetic order below is the bit-exactness contract
         // (do not reorder or fuse operations):
-        //  - EMA recursion: ((x-prev)*k)+prev.
+        //  - EMA recursion: k*x + beta*prev, with ema.c's k and beta.
         //  - Each EMA is seeded with the sum of its first 'period'
         //    inputs, accumulated from 0.0 in input order (0.0+x is
         //    not x for x=-0.0), divided by the period.
         //
         // In-place (inReal == outReal) is supported: outReal[outIdx]
         // is written only after inReal[startIdx+outIdx] was read.
-        optInK_1 = 2.0 / ((optInTimePeriod + 1) as f64);
+        emaBeta = ((optInTimePeriod - 1) as f64) / ((optInTimePeriod + 1) as f64);
+        optInK_1 = 1.0 - emaBeta;
+        emaBeta = 1.0 - ((optInK_1) as f64);
         // Seed EMA1 with a simple average of the first
         // 'period' price bars.
         today = startIdx - lookbackTotal;
@@ -565,7 +572,7 @@ impl Core {
         // Advance EMA1 alone through its unstable period, up to
         // the bar where EMA2 seeding begins.
         while today <= startIdx - lookbackEMA {
-            prevEMA1 = (inReal[{ let _v = today; today += 1; _v }] - prevEMA1 as f64).mul_add(optInK_1, prevEMA1);
+            prevEMA1 = (emaBeta as f64).mul_add(prevEMA1, ((optInK_1) as f64) * inReal[{ let _v = today; today += 1; _v }]);
         }
         // Seed EMA2 with a simple average of the first 'period'
         // EMA1 values, accumulated as EMA1 produces them.
@@ -573,23 +580,23 @@ impl Core {
         tempReal += prevEMA1;
         i = (optInTimePeriod - 1) as usize;
         while { let _v = i; i = i.wrapping_sub(1); _v } > 0 {
-            prevEMA1 = (inReal[{ let _v = today; today += 1; _v }] - prevEMA1 as f64).mul_add(optInK_1, prevEMA1);
+            prevEMA1 = (emaBeta as f64).mul_add(prevEMA1, ((optInK_1) as f64) * inReal[{ let _v = today; today += 1; _v }]);
             tempReal += prevEMA1;
         }
         prevEMA2 = tempReal / ((optInTimePeriod) as f64);
         // Advance both EMA in lockstep through the unstable period
         // of EMA2, up to the first output bar.
         while today <= startIdx {
-            prevEMA1 = (inReal[{ let _v = today; today += 1; _v }] - prevEMA1 as f64).mul_add(optInK_1, prevEMA1);
-            prevEMA2 = (prevEMA1 - prevEMA2 as f64).mul_add(optInK_1, prevEMA2);
+            prevEMA1 = (emaBeta as f64).mul_add(prevEMA1, ((optInK_1) as f64) * inReal[{ let _v = today; today += 1; _v }]);
+            prevEMA2 = (emaBeta as f64).mul_add(prevEMA2, ((optInK_1) as f64) * prevEMA1);
         }
         // Stable zone: keep advancing both EMA in lockstep and
         // write the DEMA into the output.
         outReal[(0 * outStride) as usize] = 2.0 * prevEMA1 - prevEMA2;
         outIdx = 1;
         while today <= endIdx {
-            prevEMA1 = (inReal[{ let _v = today; today += 1; _v }] - prevEMA1 as f64).mul_add(optInK_1, prevEMA1);
-            prevEMA2 = (prevEMA1 - prevEMA2 as f64).mul_add(optInK_1, prevEMA2);
+            prevEMA1 = (emaBeta as f64).mul_add(prevEMA1, ((optInK_1) as f64) * inReal[{ let _v = today; today += 1; _v }]);
+            prevEMA2 = (emaBeta as f64).mul_add(prevEMA2, ((optInK_1) as f64) * prevEMA1);
             outReal[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = 2.0 * prevEMA1 - prevEMA2;
         }
         // Succeed. Indicate where the output starts relative to
@@ -603,6 +610,7 @@ impl Core {
             prevEMA1,
             prevEMA2,
             optInK_1,
+            emaBeta,
             cur_outReal: outReal[(*outNBElement - 1) * outStride],
         };
         Ok(DemaStream { state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
@@ -775,8 +783,8 @@ impl DemaStream {
                 (*outReal) = inReal;
                 return Ok((*outReal));
             }
-            prevEMA1 = (inReal - prevEMA1 as f64).mul_add(sp.optInK_1, prevEMA1);
-            prevEMA2 = (prevEMA1 - prevEMA2 as f64).mul_add(sp.optInK_1, prevEMA2);
+            prevEMA1 = (sp.emaBeta as f64).mul_add(prevEMA1, ((sp.optInK_1) as f64) * inReal);
+            prevEMA2 = (sp.emaBeta as f64).mul_add(prevEMA2, ((sp.optInK_1) as f64) * prevEMA1);
             (*outReal) = 2.0 * prevEMA1 - prevEMA2;
         }
         Ok(outReal)

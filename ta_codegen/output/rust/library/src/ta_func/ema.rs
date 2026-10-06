@@ -172,6 +172,7 @@ impl Core {
         assert!(_assertStart > endIdx || endIdx < inReal.len());
         assert!(_assertStart > endIdx || endIdx - _assertStart < outReal.len());
         let mut startIdx = startIdx;
+        let mut emaBeta: f64 = 0.0_f64;
         let mut optInK_1: f64 = 0.0_f64;
         let mut tempReal: f64 = 0.0_f64;
         let mut prevMA: f64 = 0.0_f64;
@@ -179,7 +180,12 @@ impl Core {
         let mut today: usize = 0_usize;
         let mut outIdx: usize = 0_usize;
         let mut lookbackTotal: usize = 0_usize;
-        optInK_1 = 2.0 / ((optInTimePeriod + 1) as f64);
+        emaBeta = ((optInTimePeriod - 1) as f64) / ((optInTimePeriod + 1) as f64);
+        optInK_1 = 1.0 - emaBeta;
+        // emaBeta + optInK_1 must be exactly 1.0, or a flat input drifts off
+        // its level. Each subtraction is exact only from an operand in
+        // [0.5,1): at a period of 2 that is optInK_1, above it emaBeta.
+        emaBeta = 1.0 - ((optInK_1) as f64);
         // Identify the minimum number of price bar needed
         // to calculate at least one output.
         lookbackTotal = self.ema_lookback(optInTimePeriod).unwrap_or(usize::MAX);
@@ -196,12 +202,10 @@ impl Core {
         }
         let inReal = &inReal[..=endIdx];
         // No smoothing at period of 1: the output is a copy of the input
-        // (same convention as TA_MA for every MAType). Explicit because at
-        // period 1 optInK_1 is exactly 1.0, so the recursion below reduces to
-        // (x-prev)+prev -- which returns x only while consecutive values stay
-        // within a factor of two of each other. Two-decimal prices already
-        // spend a full mantissa, so a single 3x move breaks it. The unstable
-        // period still delays the first output.
+        // (same convention as TA_MA for every MAType). Explicit because the
+        // recursion below, at a k of 1.0 and a beta of 0.0, does not keep the
+        // sign of a -0.0 input. The unstable period still delays the first
+        // output.
         if optInTimePeriod == 1 {
             (*outBegIdx) = startIdx;
             outIdx = 0;
@@ -223,12 +227,12 @@ impl Core {
         }
         prevMA = tempReal / ((optInTimePeriod) as f64);
         while today <= startIdx {
-            prevMA = (inReal[{ let _v = today; today += 1; _v }] - prevMA as f64).mul_add(optInK_1, prevMA);
+            prevMA = (emaBeta as f64).mul_add(prevMA, ((optInK_1) as f64) * inReal[{ let _v = today; today += 1; _v }]);
         }
         outReal[0] = prevMA;
         outIdx = 1;
         while today <= endIdx {
-            prevMA = (inReal[{ let _v = today; today += 1; _v }] - prevMA as f64).mul_add(optInK_1, prevMA);
+            prevMA = (emaBeta as f64).mul_add(prevMA, ((optInK_1) as f64) * inReal[{ let _v = today; today += 1; _v }]);
             outReal[outIdx] = prevMA;
             outIdx += 1;
         }
@@ -356,6 +360,7 @@ pub struct EmaStream {
 #[allow(non_snake_case, dead_code)]
 struct EmaStreamState {
     optInTimePeriod: i32,
+    emaBeta: f64,
     optInK_1: f64,
     prevMA: f64,
     cur_outReal: f64,
@@ -373,7 +378,7 @@ impl Core {
             sp.cur_outReal = (*outReal);
             return;
         }
-        sp.prevMA = (inReal - sp.prevMA as f64).mul_add(sp.optInK_1, sp.prevMA);
+        sp.prevMA = (sp.emaBeta as f64).mul_add(sp.prevMA, ((sp.optInK_1) as f64) * inReal);
         (*outReal) = sp.prevMA;
         sp.cur_outReal = (*outReal);
     }
@@ -413,6 +418,7 @@ impl Core {
             let state = EmaStreamState {
                 cur_outReal: inReal[historyLen - 1],
                 optInTimePeriod: optInTimePeriod,
+                emaBeta: 0.0_f64,
                 optInK_1: 0.0_f64,
                 prevMA: 0.0_f64,
             };
@@ -429,6 +435,7 @@ impl Core {
             }
             return Ok(EmaStream { state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } });
         }
+        let mut emaBeta: f64 = 0.0_f64;
         let mut optInK_1: f64 = 0.0_f64;
         let mut tempReal: f64 = 0.0_f64;
         let mut prevMA: f64 = 0.0_f64;
@@ -436,7 +443,12 @@ impl Core {
         let mut today: usize = 0_usize;
         let mut outIdx: usize = 0_usize;
         let mut lookbackTotal: usize = 0_usize;
-        optInK_1 = 2.0 / ((optInTimePeriod + 1) as f64);
+        emaBeta = ((optInTimePeriod - 1) as f64) / ((optInTimePeriod + 1) as f64);
+        optInK_1 = 1.0 - emaBeta;
+        // emaBeta + optInK_1 must be exactly 1.0, or a flat input drifts off
+        // its level. Each subtraction is exact only from an operand in
+        // [0.5,1): at a period of 2 that is optInK_1, above it emaBeta.
+        emaBeta = 1.0 - ((optInK_1) as f64);
         // Identify the minimum number of price bar needed
         // to calculate at least one output.
         lookbackTotal = self.ema_lookback(optInTimePeriod)?;
@@ -461,12 +473,12 @@ impl Core {
         }
         prevMA = tempReal / ((optInTimePeriod) as f64);
         while today <= startIdx {
-            prevMA = (inReal[{ let _v = today; today += 1; _v }] - prevMA as f64).mul_add(optInK_1, prevMA);
+            prevMA = (emaBeta as f64).mul_add(prevMA, ((optInK_1) as f64) * inReal[{ let _v = today; today += 1; _v }]);
         }
         outReal[(0 * outStride) as usize] = prevMA;
         outIdx = 1;
         while today <= endIdx {
-            prevMA = (inReal[{ let _v = today; today += 1; _v }] - prevMA as f64).mul_add(optInK_1, prevMA);
+            prevMA = (emaBeta as f64).mul_add(prevMA, ((optInK_1) as f64) * inReal[{ let _v = today; today += 1; _v }]);
             outReal[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = prevMA;
         }
         (*outNBElement) = outIdx;
@@ -474,6 +486,7 @@ impl Core {
         // Capture the live batch state into the handle.
         let state = EmaStreamState {
             optInTimePeriod,
+            emaBeta,
             optInK_1,
             prevMA,
             cur_outReal: outReal[(*outNBElement - 1) * outStride],
@@ -647,7 +660,7 @@ impl EmaStream {
                 (*outReal) = inReal;
                 return Ok((*outReal));
             }
-            prevMA = (inReal - prevMA as f64).mul_add(sp.optInK_1, prevMA);
+            prevMA = (sp.emaBeta as f64).mul_add(prevMA, ((sp.optInK_1) as f64) * inReal);
             (*outReal) = prevMA;
         }
         Ok(outReal)

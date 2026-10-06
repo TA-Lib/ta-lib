@@ -67,7 +67,13 @@
  *    MA(period=1, every MAType) must return the input unchanged.
  *  - The same rule, enumerated instead of hand-listed: every function
  *    named by the TA_MAType metadata, plus every function declaring
- *    TA_FUNC_FLG_PERIOD1_IDENTITY, must be a bit-exact copy at period 1.
+ *    TA_FUNC_FLG_PERIOD1_IDENTITY, must equal its input at period 1 by
+ *    VALUE, at no tolerance. The sign of a zero is not part of that: SMA,
+ *    RMA and TRIMA return +0.0 for a -0.0 input.
+ *  - The sign of a zero IS held, by bit compare, where an EMA-step copy
+ *    arm decides it: EMA, DEMA, TEMA and ZLEMA (batch and stream), the
+ *    ERI and EFI streams, and the signal=1 line of MACD and MACDFIX
+ *    (batch and stream).
  *  - MACD family with signalPeriod=1: the signal line equals the
  *    MACD line, the histogram is zero, and the output is aligned
  *    and complete (the #59 "repaint" regression pins).
@@ -286,8 +292,8 @@ ErrorNumber test_func_period_boundary( TA_History *history )
       } \
    }
 
-/* Compare two output series bit-exactly (period=1 semantics are exact
- * copies/differences, so no tolerance is appropriate here).
+/* Compare two output series by VALUE, at no tolerance: -0.0 passes for +0.0.
+ * pbCheckSameBits is the one that tells them apart.
  */
 static ErrorNumber pbCheckSameSeries( const char *label,
                                       const TA_Real *actual,
@@ -1039,20 +1045,54 @@ static ErrorNumber pbFillRoundTripHostileHistory( TA_History *h )
    return TA_TEST_PASS;
 }
 
-/* An input the EMA-family recursion cannot round-trip.
+/* An input neither period-1 recursion can round-trip.
  *
- * At a period of 1 the EMA factor k = 2/(1+1) is exactly 1.0, so the recursion
- * reduces to (x - prev) + prev. That returns x only while (x - prev) is exactly
- * representable -- guaranteed by Sterbenz's lemma while prev/2 <= x <= 2*prev,
- * and easily lost outside it. Two-decimal prices are not dyadic, so they already
- * spend a full mantissa and a single 3x move is enough; the round-trip-hostile
- * series above cannot show this because its bar-to-bar moves are small.
+ * A `(x - prev)*k + prev` step at k == 1.0 returns x only while (x - prev) is
+ * exactly representable -- guaranteed by Sterbenz's lemma while
+ * prev/2 <= x <= 2*prev, and easily lost outside it. Two-decimal prices are not
+ * dyadic, so they already spend a full mantissa and a single 3x move is enough;
+ * the round-trip-hostile series above cannot show this because its bar-to-bar
+ * moves are small.
  *
- * Like that series, the hostility is ASSERTED, not claimed: soften the moves (or
- * pick dyadic values, which is exactly how this went unnoticed) and this fails
- * rather than quietly becoming a third benign sweep.
+ * The EMA step is fma(beta, prev, k*x) instead. At a period of 1 that returns
+ * every finite x exactly, EXCEPT a -0.0 following a value whose sign bit is
+ * clear, which comes out +0.0. So a -0.0 close after a positive one is the only
+ * bar that separates an EMA-family copy arm from its recursion, and only under
+ * a BIT compare: -0.0 == +0.0.
+ *
+ * Both hostilities are ASSERTED, not claimed: soften the moves, pick dyadic
+ * values or drop the -0.0 bars and a leg fails rather than quietly going benign.
  */
 #define PB_STERBENZ_MIN_DIVERGENT 32
+
+/* How many bars of in[from..n-1] are a -0.0 right after a clear sign bit. */
+static int pbCountNegZeroAfterPositive( const TA_Real *in, int from, int n )
+{
+   int i, nb = 0;
+
+   for( i = (from < 1 ? 1 : from); i < n; i++ )
+      if( in[i] == 0.0 && signbit( in[i] ) && !signbit( in[i-1] ) )
+         nb++;
+   return nb;
+}
+
+static ErrorNumber pbCheckSameBits( const char *label, const TA_Real *actual,
+                                    const TA_Real *expected, int nbElement )
+{
+   int i;
+
+   for( i = 0; i < nbElement; i++ )
+   {
+      if( memcmp( &actual[i], &expected[i], sizeof(TA_Real) ) != 0 )
+      {
+         printf( "\nFail: %s: [%d] got %.17g (sign bit %d), expected %.17g "
+                 "(sign bit %d)\n", label, i, actual[i], signbit( actual[i] ) != 0,
+                 expected[i], signbit( expected[i] ) != 0 );
+         return TA_REGTEST_OPTIMIZATION_REF_ERROR;
+      }
+   }
+   return TA_TEST_PASS;
+}
 
 static ErrorNumber pbFillSterbenzHostileHistory( TA_History *h )
 {
@@ -1063,16 +1103,18 @@ static ErrorNumber pbFillSterbenzHostileHistory( TA_History *h )
 
    for( i = 0; i < PB_DATA_SIZE; i++ )
    {
-      /* Alternating ~3x, two-decimal, never dyadic. */
-      close[i]  = (i & 1) ? 41.37 : 124.11;
+      /* Alternating ~3x, two-decimal, never dyadic; every 16th bar a -0.0
+       * behind a positive close. */
+      close[i]  = (i % 16 == 15) ? -0.0 : ((i & 1) ? 41.37 : 124.11);
       open[i]   = (i & 1) ? 41.53 : 123.67;
       high[i]   = (close[i] > open[i] ? close[i] : open[i]) + 0.11;
       low[i]    = (close[i] < open[i] ? close[i] : open[i]) - 0.11;
       volume[i] = (TA_Real)(100003 + (i * 104729) % 899993);
    }
 
-   /* The naive period-1 EMA step, spelled out: a bar where it does not give
-    * back the input is a bar on which the sweep has something to say. */
+   /* The (x - prev)*k + prev step at k == 1.0, spelled out: a bar where it
+    * does not give back the input is a bar on which the sweep has something
+    * to say. */
    prev = close[0];
    for( i = 1; i < PB_DATA_SIZE; i++ )
    {
@@ -1083,10 +1125,16 @@ static ErrorNumber pbFillSterbenzHostileHistory( TA_History *h )
 
    if( nbDivergent < PB_STERBENZ_MIN_DIVERGENT )
    {
-      printf( "\nFail: the Sterbenz-hostile series is not hostile: the period-1 "
-              "EMA step returns its input on all but %d of %d bars (need at "
-              "least %d divergent)\n",
+      printf( "\nFail: the Sterbenz-hostile series is not hostile: "
+              "(x - prev) + prev returns its input on all but %d of %d bars "
+              "(need at least %d divergent)\n",
               nbDivergent, PB_DATA_SIZE - 1, PB_STERBENZ_MIN_DIVERGENT );
+      return TA_REGTEST_OPTIMIZATION_REF_ERROR;
+   }
+   if( pbCountNegZeroAfterPositive( close, 0, PB_DATA_SIZE ) == 0 )
+   {
+      printf( "\nFail: the Sterbenz-hostile series holds no -0.0 close behind a "
+              "positive one, so no leg can see an EMA-family copy arm\n" );
       return TA_REGTEST_OPTIMIZATION_REF_ERROR;
    }
 
@@ -1203,20 +1251,15 @@ static ErrorNumber pbSweepMaIdentity( const TA_History *history, const char *wha
    return TA_TEST_PASS;
 }
 
-/* The period-1 copy on the STREAMING surfaces, on hostile data.
+/* The EMA-family period-1 copy arms, held to the BITS of the hostile series.
  *
- * pbSweepMaIdentity above reaches only the double batch entry point. The
- * streaming surfaces are covered by stream_verify, which compares stream
- * against batch on its own seed-generated shapes -- and those are benign at
- * period 1, so an arm deleted from the step leaves batch(copy) and
- * stream(recursion) numerically equal and the gate green. Sabotage-proven:
- * removing the arm from TA_EMA_StepImpl alone passes ta_regtest and
- * 15908 stream_verify legs; removing it from TA_S_EMA instead is caught (by
- * the VARIANT gate), so only the streaming half needs this.
- *
- * EMA and DEMA only, and deliberately: they are the two whose period-1 value
- * comes from an EMA recursion rather than a window, i.e. the two the arm
- * actually rescues. The other arms are copies either way.
+ * pbSweepMaIdentity compares values, and not every flagged average keeps the
+ * sign of a -0.0 input, so it cannot be made bitwise; with `==` it passes with
+ * these arms deleted. stream_verify compares stream against batch on shapes
+ * holding no -0.0, where arm and recursion agree. That leaves the legs below as
+ * the only ones holding the double batch and the streaming arms. The TA_S_ arms
+ * of EMA, DEMA, TEMA, ZLEMA and EFI are held by the VARIANT gate's with-zeros
+ * shape, ERI's by test_eri.c; nothing holds MACD's or MACDFIX's.
  */
 static ErrorNumber pbCheckStreamCopy( const char *label, TA_RetCode rc,
                                       double got, double want )
@@ -1226,12 +1269,157 @@ static ErrorNumber pbCheckStreamCopy( const char *label, TA_RetCode rc,
       printf( "\nFail: %s: retCode %d\n", label, (int)rc );
       return TA_REGTEST_OPTIMIZATION_REF_ERROR;
    }
-   if( got != want )
+   return pbCheckSameBits( label, &got, &want, 1 );
+}
+
+static ErrorNumber testBatchBitsAtPeriodOne( const TA_History *hostile )
+{
+   static TA_Real out[PB_DATA_SIZE];
+   static const char * const name[4] = { "EMA(1) bits", "DEMA(1) bits",
+                                         "TEMA(1) bits", "ZLEMA(1) bits" };
+   const TA_Real *in = hostile->close;
+   int n = (int)hostile->nbBars;
+   TA_Integer beg, nb;
+   TA_RetCode rc;
+   ErrorNumber errNb;
+   int w;
+
+   for( w = 0; w < 4; w++ )
    {
-      printf( "\nFail: %s: got %.17g, expected %.17g\n", label, got, want );
-      return TA_REGTEST_OPTIMIZATION_REF_ERROR;
+      switch( w )
+      {
+      case 0:  rc = TA_EMA( 0, n-1, in, 1, &beg, &nb, out );   break;
+      case 1:  rc = TA_DEMA( 0, n-1, in, 1, &beg, &nb, out );  break;
+      case 2:  rc = TA_TEMA( 0, n-1, in, 1, &beg, &nb, out );  break;
+      default: rc = TA_ZLEMA( 0, n-1, in, 1, &beg, &nb, out ); break;
+      }
+      if( rc != TA_SUCCESS || beg != 0 || nb != n )
+      {
+         printf( "\nFail: %s: rc=%d beg=%d nb=%d expected 0/0/%d\n",
+                 name[w], (int)rc, (int)beg, (int)nb, n );
+         return TA_REGTEST_OPTIMIZATION_REF_ERROR;
+      }
+      errNb = pbCheckSameBits( name[w], out, in, nb );
+      if( errNb != TA_TEST_PASS )
+         return errNb;
    }
    return TA_TEST_PASS;
+}
+
+/* Open on `warm` bars, Peek and Update the rest, then OpenAndFill the lot:
+ * every surface must return the bits of in[]. */
+#define PB_STREAM_COPY_AT_PERIOD_ONE( NAME ) \
+   { \
+      TA_##NAME##_Stream *sp = NULL; \
+      rc = TA_##NAME##_Open( &sp, in, warm, 1, &v ); \
+      errNb = pbCheckStreamCopy( #NAME "(1) stream Open", rc, v, in[warm-1] ); \
+      for( i = warm; errNb == TA_TEST_PASS && i < n; i++ ) \
+      { \
+         rc = TA_##NAME##_Peek( sp, in[i], &v ); \
+         errNb = pbCheckStreamCopy( #NAME "(1) stream Peek", rc, v, in[i] ); \
+         if( errNb != TA_TEST_PASS ) break; \
+         rc = TA_##NAME##_Update( sp, in[i], &v ); \
+         errNb = pbCheckStreamCopy( #NAME "(1) stream Update", rc, v, in[i] ); \
+      } \
+      TA_##NAME##_Close( sp ); \
+      if( errNb != TA_TEST_PASS ) return errNb; \
+      sp = NULL; \
+      rc = TA_##NAME##_OpenAndFill( &sp, in, n, 1, &beg, &nb, fill ); \
+      TA_##NAME##_Close( sp ); \
+      if( rc != TA_SUCCESS || beg != 0 || nb != n ) \
+      { \
+         printf( "\nFail: " #NAME "(1) OpenAndFill: rc=%d beg=%d nb=%d " \
+                 "expected 0/0/%d\n", (int)rc, (int)beg, (int)nb, n ); \
+         return TA_REGTEST_OPTIMIZATION_REF_ERROR; \
+      } \
+      errNb = pbCheckSameBits( #NAME "(1) OpenAndFill", fill, in, nb ); \
+      if( errNb != TA_TEST_PASS ) return errNb; \
+   }
+
+/* ERI and EFI at period 1, stream against batch. Each gets the one bar its own
+ * arm decides: a bar whose high, low and close are all -0.0 behind a positive
+ * close, and a down bar on zero volume behind a positive force. */
+#define PB_P1_STREAM_N 32
+
+static ErrorNumber testEriEfiStreamAtPeriodOne( void )
+{
+   static TA_Real hi[PB_P1_STREAM_N], lo[PB_P1_STREAM_N], cl[PB_P1_STREAM_N];
+   static TA_Real vol[PB_P1_STREAM_N];
+   static TA_Real bull[PB_P1_STREAM_N], bear[PB_P1_STREAM_N], efi[PB_P1_STREAM_N];
+   const int n = PB_P1_STREAM_N, warm = 6;
+   TA_ERI_Stream *eri = NULL;
+   TA_EFI_Stream *efs = NULL;
+   TA_Integer beg, nb;
+   TA_RetCode rc;
+   ErrorNumber errNb = TA_TEST_PASS;
+   double v, w;
+   int i, nbEri = 0;
+
+   for( i = 0; i < n; i++ )
+   {
+      cl[i]  = i == 0 ? 50.13 : cl[i-1] + ( i % 4 == 3 ? -0.37 : 1.21 );
+      vol[i] = i % 4 == 3 ? 0.0 : 1000.0 + 17.0 * i;
+   }
+
+   rc = TA_EFI( 0, n-1, cl, vol, 1, &beg, &nb, efi );
+   if( rc != TA_SUCCESS || beg != 1 || nb != n-1
+       || pbCountNegZeroAfterPositive( efi, warm, nb ) == 0 )
+   {
+      printf( "\nFail: EFI(1) stream leg: rc=%d beg=%d nb=%d, or no -0.0 force "
+              "behind a positive one past the warm-up\n", (int)rc, (int)beg, (int)nb );
+      return TA_REGTEST_OPTIMIZATION_REF_ERROR;
+   }
+   rc = TA_EFI_Open( &efs, cl, vol, warm, 1, &v );
+   errNb = pbCheckStreamCopy( "EFI(1) stream Open", rc, v, efi[warm-2] );
+   for( i = warm; errNb == TA_TEST_PASS && i < n; i++ )
+   {
+      rc = TA_EFI_Peek( efs, cl[i], vol[i], &v );
+      errNb = pbCheckStreamCopy( "EFI(1) stream Peek", rc, v, efi[i-1] );
+      if( errNb != TA_TEST_PASS ) break;
+      rc = TA_EFI_Update( efs, cl[i], vol[i], &v );
+      errNb = pbCheckStreamCopy( "EFI(1) stream Update", rc, v, efi[i-1] );
+   }
+   TA_EFI_Close( efs );
+   if( errNb != TA_TEST_PASS ) return errNb;
+
+   for( i = 0; i < n; i++ )
+   {
+      if( i >= warm && i % 4 == 3 )
+      {
+         nbEri += cl[i-1] > 0.0;
+         hi[i] = lo[i] = cl[i] = -0.0;
+      }
+      else
+      {
+         hi[i] = cl[i] + 1.5;
+         lo[i] = cl[i] - 1.5;
+      }
+   }
+   rc = TA_ERI( 0, n-1, hi, lo, cl, 1, &beg, &nb, bull, bear );
+   if( rc != TA_SUCCESS || beg != 0 || nb != n || nbEri == 0 )
+   {
+      printf( "\nFail: ERI(1) stream leg: rc=%d beg=%d nb=%d, %d all -0.0 "
+              "bar(s) behind a positive close\n", (int)rc, (int)beg, (int)nb, nbEri );
+      return TA_REGTEST_OPTIMIZATION_REF_ERROR;
+   }
+   rc = TA_ERI_Open( &eri, hi, lo, cl, warm, 1, &v, &w );
+   errNb = pbCheckStreamCopy( "ERI(1) stream Open bull", rc, v, bull[warm-1] );
+   if( errNb == TA_TEST_PASS )
+      errNb = pbCheckStreamCopy( "ERI(1) stream Open bear", rc, w, bear[warm-1] );
+   for( i = warm; errNb == TA_TEST_PASS && i < n; i++ )
+   {
+      rc = TA_ERI_Peek( eri, hi[i], lo[i], cl[i], &v, &w );
+      errNb = pbCheckStreamCopy( "ERI(1) stream Peek bull", rc, v, bull[i] );
+      if( errNb != TA_TEST_PASS ) break;
+      errNb = pbCheckStreamCopy( "ERI(1) stream Peek bear", rc, w, bear[i] );
+      if( errNb != TA_TEST_PASS ) break;
+      rc = TA_ERI_Update( eri, hi[i], lo[i], cl[i], &v, &w );
+      errNb = pbCheckStreamCopy( "ERI(1) stream Update bull", rc, v, bull[i] );
+      if( errNb != TA_TEST_PASS ) break;
+      errNb = pbCheckStreamCopy( "ERI(1) stream Update bear", rc, w, bear[i] );
+   }
+   TA_ERI_Close( eri );
+   return errNb;
 }
 
 static ErrorNumber testStreamIdentityAtPeriodOne( const TA_History *hostile )
@@ -1240,67 +1428,26 @@ static ErrorNumber testStreamIdentityAtPeriodOne( const TA_History *hostile )
    const TA_Real *in = hostile->close;
    int n = (int)hostile->nbBars;
    int warm = 8;                 /* bars consumed by Open; the rest via Update */
-   TA_EMA_Stream *es = NULL;
-   TA_DEMA_Stream *ds = NULL;
    TA_Integer beg, nb;
    TA_RetCode rc;
    ErrorNumber errNb;
    double v;
    int i;
 
-   /* --- EMA: Open, then Peek/Update bar by bar --- */
-   rc = TA_EMA_Open( &es, in, warm, 1, &v );
-   errNb = pbCheckStreamCopy( "EMA(1) stream Open", rc, v, in[warm-1] );
-   if( errNb != TA_TEST_PASS ) { TA_EMA_Close( es ); return errNb; }
-   for( i = warm; i < n; i++ )
+   if( pbCountNegZeroAfterPositive( in, warm, n ) == 0 )
    {
-      rc = TA_EMA_Peek( es, in[i], &v );
-      errNb = pbCheckStreamCopy( "EMA(1) stream Peek", rc, v, in[i] );
-      if( errNb != TA_TEST_PASS ) { TA_EMA_Close( es ); return errNb; }
-      rc = TA_EMA_Update( es, in[i], &v );
-      errNb = pbCheckStreamCopy( "EMA(1) stream Update", rc, v, in[i] );
-      if( errNb != TA_TEST_PASS ) { TA_EMA_Close( es ); return errNb; }
-   }
-   TA_EMA_Close( es );
-
-   /* --- EMA: OpenAndFill over the whole history --- */
-   rc = TA_EMA_OpenAndFill( &es, in, n, 1, &beg, &nb, fill );
-   if( rc != TA_SUCCESS || beg != 0 || nb != n )
-   {
-      printf( "\nFail: EMA(1) OpenAndFill: rc=%d beg=%d nb=%d expected 0/0/%d\n",
-              (int)rc, (int)beg, (int)nb, n );
-      TA_EMA_Close( es );
+      printf( "\nFail: period-1 stream copy: no -0.0 behind a positive value "
+              "past the %d warm-up bars, so Peek and Update compare nothing "
+              "the arm decides\n", warm );
       return TA_REGTEST_OPTIMIZATION_REF_ERROR;
    }
-   TA_EMA_Close( es );
-   errNb = pbCheckSameSeries( "EMA(1) OpenAndFill", fill, in, nb );
-   if( errNb != TA_TEST_PASS ) return errNb;
 
-   /* --- DEMA: same three surfaces --- */
-   rc = TA_DEMA_Open( &ds, in, warm, 1, &v );
-   errNb = pbCheckStreamCopy( "DEMA(1) stream Open", rc, v, in[warm-1] );
-   if( errNb != TA_TEST_PASS ) { TA_DEMA_Close( ds ); return errNb; }
-   for( i = warm; i < n; i++ )
-   {
-      rc = TA_DEMA_Update( ds, in[i], &v );
-      errNb = pbCheckStreamCopy( "DEMA(1) stream Update", rc, v, in[i] );
-      if( errNb != TA_TEST_PASS ) { TA_DEMA_Close( ds ); return errNb; }
-   }
-   TA_DEMA_Close( ds );
+   PB_STREAM_COPY_AT_PERIOD_ONE( EMA )
+   PB_STREAM_COPY_AT_PERIOD_ONE( DEMA )
+   PB_STREAM_COPY_AT_PERIOD_ONE( TEMA )
+   PB_STREAM_COPY_AT_PERIOD_ONE( ZLEMA )
 
-   rc = TA_DEMA_OpenAndFill( &ds, in, n, 1, &beg, &nb, fill );
-   if( rc != TA_SUCCESS || beg != 0 || nb != n )
-   {
-      printf( "\nFail: DEMA(1) OpenAndFill: rc=%d beg=%d nb=%d expected 0/0/%d\n",
-              (int)rc, (int)beg, (int)nb, n );
-      TA_DEMA_Close( ds );
-      return TA_REGTEST_OPTIMIZATION_REF_ERROR;
-   }
-   TA_DEMA_Close( ds );
-   errNb = pbCheckSameSeries( "DEMA(1) OpenAndFill", fill, in, nb );
-   if( errNb != TA_TEST_PASS ) return errNb;
-
-   return TA_TEST_PASS;
+   return testEriEfiStreamAtPeriodOne();
 }
 
 static ErrorNumber testEveryMovingAverageIdentity( const TA_History *history )
@@ -1325,6 +1472,10 @@ static ErrorNumber testEveryMovingAverageIdentity( const TA_History *history )
    if( errNb != TA_TEST_PASS )
       return errNb;
    errNb = pbSweepMaIdentity( &hostile, "Sterbenz-hostile series" );
+   if( errNb != TA_TEST_PASS )
+      return errNb;
+
+   errNb = testBatchBitsAtPeriodOne( &hostile );
    if( errNb != TA_TEST_PASS )
       return errNb;
 
@@ -1566,69 +1717,143 @@ static ErrorNumber testMacdFamilySignalOne( const TA_History *history )
    return TA_TEST_PASS;
 }
 
-/* The signal=1 contract on inputs the signal recursion cannot round-trip.
+/* The signal=1 contract, held to the bits.
  *
- * "signal == MACD line, histogram == 0" is asserted bit-exactly above, but the
- * reference close series can never break it: at a signal period of 1 the EMA
- * factor is exactly 1.0, so the signal step is (x - prev) + prev, which returns
- * x only while consecutive MACD-LINE values stay within a factor of two of each
- * other. The MACD line is a difference of two EMAs decaying toward zero inside
- * a flat run, so it leaves that window on inputs a price series never does --
- * which is why this defect outlived the sub-test above.
+ * At a signal period of 1 the signal step is fma(0.0, prev, 1.0*x): exact for
+ * every finite MACD-line value, except that a -0.0 line value behind a signal
+ * whose sign bit is clear comes out +0.0, and the histogram -0.0. So the copy
+ * arm is visible only on such a bar and only to a bit compare.
  *
- * A GRID, not one series, and deliberately so: the divergence is delicate (a
- * few bars out of 226) and each function has its own MACD line -- MACDFIX's
- * fixed 0.15/0.075 factors put its line somewhere else entirely, so the series
- * that breaks MACD leaves MACDFIX untouched. That is not hypothetical; the
- * first version of this leg hardcoded one series and its own self-check caught
- * it being vacuous for MACDFIX. Sweeping run lengths x levels means no single
- * shape going benign can disarm the gate.
+ * A price series does not put a -0.0 on the MACD line by itself: the line is
+ * fast - slow, which is -0.0 only for (-0.0) - (+0.0). The series below gets
+ * there through underflow: after a run of +0.0, a bar of five times the
+ * smallest subnormal leaves the fast EMA at that subnormal and the slow one at
+ * +0.0, and the same bar negated rounds the fast EMA to -0.0. The count of such
+ * bars is asserted per function from the RETURNED line, so a coefficient change
+ * that moves the underflow fails here rather than leaving the leg green and
+ * blind.
  *
- * Hostility is asserted from the RETURNED MACD line, replaying the naive step
- * over it, accumulated per function across the whole grid. The fix does not
- * touch the MACD line, so the assertion keeps its meaning afterwards.
+ * The square-wave grid stays as the wide-range half: consecutive line values
+ * far more than a factor of two apart, which is what a signal step of the
+ * (x - prev)*k + prev form cannot copy.
  */
 #define MH_N        252
-#define MH_MIN_NAIVE  1   /* per function, summed over the grid */
+#define MH_NEG_ZERO_BAR 61   /* past every lookback */
 
 static const int    pbMacdRuns[]   = { 24, 30, 36, 39, 45 };
 static const TA_Real pbMacdLo[]    = { 470.3574516572389, 0.87 };
 static const TA_Real pbMacdHi[]    = { 6515.901813836415, 913.71 };
 
-/* Assert the contract, and return how many bars the naive step would have
- * lost (the caller accumulates it as the non-vacuity evidence). */
+static void pbMacdNegZeroSeries( TA_Real *in )
+{
+   int i;
+
+   for( i = 0; i < MH_N; i++ )
+      in[i] = 0.0;
+   in[MH_NEG_ZERO_BAR-1] =  ldexp( 5.0, -1074 );
+   in[MH_NEG_ZERO_BAR]   = -ldexp( 5.0, -1074 );
+}
+
 static ErrorNumber pbCheckMacdSignalIsLine( const char *label,
                                             const TA_Real *macd,
                                             const TA_Real *signal,
                                             const TA_Real *hist,
-                                            int nb, int *nbNaive )
+                                            int nb )
 {
+   static const TA_Real zero = 0.0;
    int i;
-   TA_Real prev;
-
-   prev = macd[0];
-   for( i = 1; i < nb; i++ )
-   {
-      prev = ((macd[i] - prev) * 1.0) + prev;
-      if( prev != macd[i] )
-         (*nbNaive)++;
-   }
 
    for( i = 0; i < nb; i++ )
    {
-      if( signal[i] != macd[i] )
+      if( memcmp( &signal[i], &macd[i], sizeof(TA_Real) ) != 0 )
       {
-         printf( "\nFail: %s: [%d] signal %.17g != MACD line %.17g\n",
-                 label, i, signal[i], macd[i] );
+         printf( "\nFail: %s: [%d] signal %.17g (sign bit %d) != MACD line "
+                 "%.17g (sign bit %d)\n", label, i, signal[i],
+                 signbit( signal[i] ) != 0, macd[i], signbit( macd[i] ) != 0 );
          return TA_REGTEST_OPTIMIZATION_REF_ERROR;
       }
-      if( hist[i] != 0.0 )
+      if( memcmp( &hist[i], &zero, sizeof(TA_Real) ) != 0 )
       {
-         printf( "\nFail: %s: [%d] hist %.17g, expected 0\n", label, i, hist[i] );
+         printf( "\nFail: %s: [%d] hist %.17g (sign bit %d), expected +0\n",
+                 label, i, hist[i], signbit( hist[i] ) != 0 );
          return TA_REGTEST_OPTIMIZATION_REF_ERROR;
       }
    }
    return TA_TEST_PASS;
+}
+
+static ErrorNumber pbRunMacdSignalOne( const char *label, int w, const TA_Real *in,
+                                       TA_Real *outM, TA_Real *outS,
+                                       TA_Real *outH, TA_Integer *nb )
+{
+   TA_Integer beg;
+   TA_RetCode rc;
+
+   switch( w )
+   {
+   case 0:
+      rc = TA_MACD( 0, MH_N-1, in, 12, 26, 1, &beg, nb, outM, outS, outH );
+      break;
+   case 1:
+      rc = TA_MACDFIX( 0, MH_N-1, in, 1, &beg, nb, outM, outS, outH );
+      break;
+   default:
+      rc = TA_MACDEXT( 0, MH_N-1, in, 12, TA_MAType_EMA, 26, TA_MAType_EMA,
+                       1, TA_MAType_EMA, &beg, nb, outM, outS, outH );
+      break;
+   }
+   PB_CHECK_RC( label, rc, TA_SUCCESS );
+   return TA_TEST_PASS;
+}
+
+/* The streams carry the signal=1 arm separately from the batch body: Open on
+ * the bars before the -0.0 one, then Peek and Update against the batch bits. */
+static ErrorNumber pbCheckMacdStreamIsBatch( const char *name, int w,
+                                             const TA_Real *in,
+                                             const TA_Real *outM,
+                                             const TA_Real *outS,
+                                             const TA_Real *outH, int beg )
+{
+   TA_MACD_Stream *ms = NULL;
+   TA_MACDFIX_Stream *fs = NULL;
+   const TA_Real *want[3];
+   TA_RetCode rc;
+   ErrorNumber errNb = TA_TEST_PASS;
+   double got[3];
+   char label[96];
+   int i, o, pass;
+
+   want[0] = outM; want[1] = outS; want[2] = outH;
+
+   rc = w == 0 ? TA_MACD_Open( &ms, in, MH_NEG_ZERO_BAR-1, 12, 26, 1,
+                               &got[0], &got[1], &got[2] )
+               : TA_MACDFIX_Open( &fs, in, MH_NEG_ZERO_BAR-1, 1,
+                                  &got[0], &got[1], &got[2] );
+   if( rc != TA_SUCCESS )
+   {
+      printf( "\nFail: %s stream Open: retCode %d\n", name, (int)rc );
+      errNb = TA_REGTEST_OPTIMIZATION_REF_ERROR;
+   }
+   for( i = MH_NEG_ZERO_BAR-1; errNb == TA_TEST_PASS && i < MH_N; i++ )
+   {
+      for( pass = 0; errNb == TA_TEST_PASS && pass < 2; pass++ )
+      {
+         if( pass == 0 )
+            rc = w == 0 ? TA_MACD_Peek( ms, in[i], &got[0], &got[1], &got[2] )
+                        : TA_MACDFIX_Peek( fs, in[i], &got[0], &got[1], &got[2] );
+         else
+            rc = w == 0 ? TA_MACD_Update( ms, in[i], &got[0], &got[1], &got[2] )
+                        : TA_MACDFIX_Update( fs, in[i], &got[0], &got[1], &got[2] );
+         for( o = 0; errNb == TA_TEST_PASS && o < 3; o++ )
+         {
+            snprintf( label, sizeof(label), "%s stream %s out%d bar %d", name,
+                      pass == 0 ? "Peek" : "Update", o, i );
+            errNb = pbCheckStreamCopy( label, rc, got[o], want[o][i-beg] );
+         }
+      }
+   }
+   if( w == 0 ) TA_MACD_Close( ms ); else TA_MACDFIX_Close( fs );
+   return errNb;
 }
 
 static ErrorNumber testMacdSignalOneHostile( void )
@@ -1637,12 +1862,10 @@ static ErrorNumber testMacdSignalOneHostile( void )
    static TA_Real outM[MH_N], outS[MH_N], outH[MH_N];
    /* MACDEXT is the control: it reaches the same contract through ma()'s
     * period-1 copy, not an EMA recursion (its all-EMA fast path requires
-    * signal >= 2), so it must already hold everywhere on this grid. */
+    * signal >= 2), so it must already hold everywhere. */
    static const char * const name[3] = { "MACD(12,26,1)", "MACDFIX(1)",
                                          "MACDEXT(sig=1,EMA) [control]" };
-   int nbNaive[3] = { 0, 0, 0 };
-   TA_Integer beg, nb;
-   TA_RetCode rc;
+   TA_Integer nb;
    ErrorNumber errNb;
    unsigned int r, k;
    int i, w;
@@ -1659,42 +1882,43 @@ static ErrorNumber testMacdSignalOneHostile( void )
 
          for( w = 0; w < 3; w++ )
          {
-            switch( w )
-            {
-            case 0:
-               rc = TA_MACD( 0, MH_N-1, in, 12, 26, 1, &beg, &nb, outM, outS, outH );
-               break;
-            case 1:
-               rc = TA_MACDFIX( 0, MH_N-1, in, 1, &beg, &nb, outM, outS, outH );
-               break;
-            default:
-               rc = TA_MACDEXT( 0, MH_N-1, in, 12, TA_MAType_EMA, 26, TA_MAType_EMA,
-                                1, TA_MAType_EMA, &beg, &nb, outM, outS, outH );
-               break;
-            }
             snprintf( label, sizeof(label), "%s run=%d lvl=%u",
                       name[w], pbMacdRuns[r], k );
-            PB_CHECK_RC( label, rc, TA_SUCCESS );
-            errNb = pbCheckMacdSignalIsLine( label, outM, outS, outH, nb, &nbNaive[w] );
+            errNb = pbRunMacdSignalOne( label, w, in, outM, outS, outH, &nb );
+            if( errNb != TA_TEST_PASS )
+               return errNb;
+            errNb = pbCheckMacdSignalIsLine( label, outM, outS, outH, nb );
             if( errNb != TA_TEST_PASS )
                return errNb;
          }
       }
    }
 
+   pbMacdNegZeroSeries( in );
    for( w = 0; w < 3; w++ )
    {
-      if( nbNaive[w] < MH_MIN_NAIVE )
+      snprintf( label, sizeof(label), "%s -0.0 line", name[w] );
+      errNb = pbRunMacdSignalOne( label, w, in, outM, outS, outH, &nb );
+      if( errNb != TA_TEST_PASS )
+         return errNb;
+      if( pbCountNegZeroAfterPositive( outM, 0, nb ) == 0 )
       {
-         printf( "\nFail: %s: the signal=1 grid no longer discriminates -- the "
-                 "naive step round-trips its MACD line on every bar of all %u "
-                 "shapes (need at least %d)\n", name[w],
-                 (unsigned)(sizeof(pbMacdRuns)/sizeof(pbMacdRuns[0]) *
-                            sizeof(pbMacdLo)/sizeof(pbMacdLo[0])), MH_MIN_NAIVE );
+         printf( "\nFail: %s: the series no longer puts a -0.0 on the MACD "
+                 "line behind a clear sign bit, so nothing here can see the "
+                 "signal=1 copy arm\n", label );
          return TA_REGTEST_OPTIMIZATION_REF_ERROR;
       }
+      errNb = pbCheckMacdSignalIsLine( label, outM, outS, outH, nb );
+      if( errNb != TA_TEST_PASS )
+         return errNb;
+      if( w < 2 )
+      {
+         errNb = pbCheckMacdStreamIsBatch( name[w], w, in, outM, outS, outH,
+                                           MH_N - (int)nb );
+         if( errNb != TA_TEST_PASS )
+            return errNb;
+      }
    }
-
 
    return TA_TEST_PASS;
 }

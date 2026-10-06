@@ -37,6 +37,7 @@ TA_RetCode tema(int startIdx, int endIdx,
    double outReal[])
 {
    double prevEMA1, prevEMA2, prevEMA3, tempReal, optInK_1;
+   double emaBeta;
    int i, today, outIdx, lookbackEMA, lookbackTotal;
 
    /* For an explanation of this function, please read:
@@ -99,7 +100,7 @@ TA_RetCode tema(int startIdx, int endIdx,
     *
     * The arithmetic order below is the bit-exactness contract
     * (do not reorder or fuse operations):
-    *  - EMA recursion: ((x-prev)*k)+prev.
+    *  - EMA recursion: k*x + beta*prev, with ema.c's k and beta.
     *  - Each EMA is seeded with the sum of its first 'period'
     *    inputs, accumulated from 0.0 in input order (0.0+x is
     *    not x for x=-0.0), divided by the period.
@@ -109,7 +110,9 @@ TA_RetCode tema(int startIdx, int endIdx,
     * In-place (inReal == outReal) is supported: outReal[outIdx]
     * is written only after inReal[startIdx+outIdx] was read.
     */
-   optInK_1 = 2.0 / ((double)(optInTimePeriod + 1));
+   emaBeta = ((double)(optInTimePeriod - 1)) / ((double)(optInTimePeriod + 1));
+   optInK_1 = 1.0 - emaBeta;
+   emaBeta = 1.0 - optInK_1;
 
    /* Seed EMA1 with a simple average of the first
     * 'period' price bars.
@@ -125,7 +128,7 @@ TA_RetCode tema(int startIdx, int endIdx,
     * the bar where EMA2 seeding begins.
     */
    while( today <= startIdx-(lookbackEMA*2) )
-      prevEMA1 = ((inReal[today++]-prevEMA1)*optInK_1) + prevEMA1;
+      prevEMA1 = optInK_1 * inReal[today++] + emaBeta * prevEMA1;
 
    /* Seed EMA2 with a simple average of the first 'period'
     * EMA1 values, accumulated as EMA1 produces them.
@@ -135,7 +138,7 @@ TA_RetCode tema(int startIdx, int endIdx,
    i = optInTimePeriod-1;
    while( i-- > 0 )
    {
-      prevEMA1 = ((inReal[today++]-prevEMA1)*optInK_1) + prevEMA1;
+      prevEMA1 = optInK_1 * inReal[today++] + emaBeta * prevEMA1;
       tempReal += prevEMA1;
    }
    prevEMA2 = tempReal / optInTimePeriod;
@@ -145,8 +148,8 @@ TA_RetCode tema(int startIdx, int endIdx,
     */
    while( today <= startIdx-lookbackEMA )
    {
-      prevEMA1 = ((inReal[today++]-prevEMA1)*optInK_1) + prevEMA1;
-      prevEMA2 = ((prevEMA1-prevEMA2)*optInK_1) + prevEMA2;
+      prevEMA1 = optInK_1 * inReal[today++] + emaBeta * prevEMA1;
+      prevEMA2 = optInK_1 * prevEMA1 + emaBeta * prevEMA2;
    }
 
    /* Seed EMA3 with a simple average of the first 'period'
@@ -157,8 +160,8 @@ TA_RetCode tema(int startIdx, int endIdx,
    i = optInTimePeriod-1;
    while( i-- > 0 )
    {
-      prevEMA1 = ((inReal[today++]-prevEMA1)*optInK_1) + prevEMA1;
-      prevEMA2 = ((prevEMA1-prevEMA2)*optInK_1) + prevEMA2;
+      prevEMA1 = optInK_1 * inReal[today++] + emaBeta * prevEMA1;
+      prevEMA2 = optInK_1 * prevEMA1 + emaBeta * prevEMA2;
       tempReal += prevEMA2;
    }
    prevEMA3 = tempReal / optInTimePeriod;
@@ -168,9 +171,9 @@ TA_RetCode tema(int startIdx, int endIdx,
     */
    while( today <= startIdx )
    {
-      prevEMA1 = ((inReal[today++]-prevEMA1)*optInK_1) + prevEMA1;
-      prevEMA2 = ((prevEMA1-prevEMA2)*optInK_1) + prevEMA2;
-      prevEMA3 = ((prevEMA2-prevEMA3)*optInK_1) + prevEMA3;
+      prevEMA1 = optInK_1 * inReal[today++] + emaBeta * prevEMA1;
+      prevEMA2 = optInK_1 * prevEMA1 + emaBeta * prevEMA2;
+      prevEMA3 = optInK_1 * prevEMA2 + emaBeta * prevEMA3;
    }
 
    /* Stable zone: keep advancing the three EMA in lockstep and
@@ -180,9 +183,9 @@ TA_RetCode tema(int startIdx, int endIdx,
    outIdx = 1;
    while( today <= endIdx )
    {
-      prevEMA1 = ((inReal[today++]-prevEMA1)*optInK_1) + prevEMA1;
-      prevEMA2 = ((prevEMA1-prevEMA2)*optInK_1) + prevEMA2;
-      prevEMA3 = ((prevEMA2-prevEMA3)*optInK_1) + prevEMA3;
+      prevEMA1 = optInK_1 * inReal[today++] + emaBeta * prevEMA1;
+      prevEMA2 = optInK_1 * prevEMA1 + emaBeta * prevEMA2;
+      prevEMA3 = optInK_1 * prevEMA2 + emaBeta * prevEMA3;
       outReal[outIdx++] = prevEMA3 + ((3.0*prevEMA1) - (3.0*prevEMA2));
    }
 

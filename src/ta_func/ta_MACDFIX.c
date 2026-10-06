@@ -102,6 +102,9 @@ TA_LIB_API TA_RetCode TA_MACDFIX( int    startIdx,
    double slowK;
    double fastK;
    double signalK;
+   double slowBeta;
+   double fastBeta;
+   double signalBeta;
    int i;
    int today;
    int outIdx;
@@ -142,15 +145,19 @@ TA_LIB_API TA_RetCode TA_MACDFIX( int    startIdx,
     *    Fix 26 -> slowK = 0.075
     */
    fastK = 0.15;
+   fastBeta = 1.0 - fastK;
+   fastK = 1.0 - fastBeta;
    slowK = 0.075;
+   slowBeta = 1.0 - slowK;
+   slowK = 1.0 - slowBeta;
    /* A signal period of 1 disables signal-line smoothing: the signal IS the
-    * MACD line and the histogram is exactly zero. signalK is then exactly
-    * 1.0, so the recursion below reduces to (x-prev)+prev -- which returns x
-    * only while consecutive MACD-line values stay within a factor of two of
-    * each other. The MACD line oscillates through zero, so it leaves that
-    * window on ordinary data; hence the explicit arm at each step.
+    * MACD line and the histogram is exactly zero. The recursion
+    * below, at a k of 1.0 and a beta of 0.0, does not keep the sign of a
+    * -0.0 line value; hence the explicit arm at each step.
     */
-   signalK = 2.0 / (double)(optInSignalPeriod + 1);
+   signalBeta = (double)(optInSignalPeriod - 1) / (double)(optInSignalPeriod + 1);
+   signalK = 1.0 - signalBeta;
+   signalBeta = 1.0 - signalK;
    lookbackSignal = TA_EMA_Lookback(optInSignalPeriod);
    /* Move up the start index if there is not
     * enough initial data.
@@ -176,7 +183,7 @@ TA_LIB_API TA_RetCode TA_MACDFIX( int    startIdx,
     *
     * The arithmetic order below is the bit-exactness contract
     * (do not reorder or fuse operations):
-    *  - EMA recursion: ((x-prev)*k)+prev.
+    *  - EMA recursion: k*x + beta*prev, with ema.c's k and beta.
     *  - Each EMA is seeded with the sum of its first 'period'
     *    inputs, accumulated from 0.0 in input order, divided by
     *    the period. The fast and slow seed windows end on the
@@ -214,8 +221,8 @@ TA_LIB_API TA_RetCode TA_MACDFIX( int    startIdx,
    while( today <= startIdx - lookbackSignal )
    {
       tempReal = inReal[today++];
-      prevFast = fma(tempReal - prevFast, fastK, prevFast);
-      prevSlow = fma(tempReal - prevSlow, slowK, prevSlow);
+      prevFast = fma(fastBeta, prevFast, fastK * tempReal);
+      prevSlow = fma(slowBeta, prevSlow, slowK * tempReal);
    }
    macdValue = prevFast - prevSlow;
    /* Seed the signal EMA with a simple average of the first
@@ -228,8 +235,8 @@ TA_LIB_API TA_RetCode TA_MACDFIX( int    startIdx,
    while( i-- > 0 )
    {
       tempReal = inReal[today++];
-      prevFast = fma(tempReal - prevFast, fastK, prevFast);
-      prevSlow = fma(tempReal - prevSlow, slowK, prevSlow);
+      prevFast = fma(fastBeta, prevFast, fastK * tempReal);
+      prevSlow = fma(slowBeta, prevSlow, slowK * tempReal);
       macdValue = prevFast - prevSlow;
       prevSignal += macdValue;
    }
@@ -240,15 +247,15 @@ TA_LIB_API TA_RetCode TA_MACDFIX( int    startIdx,
    while( today <= startIdx )
    {
       tempReal = inReal[today++];
-      prevFast = fma(tempReal - prevFast, fastK, prevFast);
-      prevSlow = fma(tempReal - prevSlow, slowK, prevSlow);
+      prevFast = fma(fastBeta, prevFast, fastK * tempReal);
+      prevSlow = fma(slowBeta, prevSlow, slowK * tempReal);
       macdValue = prevFast - prevSlow;
       if( optInSignalPeriod == 1 )
       {
          prevSignal = macdValue;
       } else 
       {
-         prevSignal = fma(macdValue - prevSignal, signalK, prevSignal);
+         prevSignal = fma(signalBeta, prevSignal, signalK * macdValue);
       }
    }
    /* Stable zone: keep advancing in lockstep and write the three
@@ -261,15 +268,15 @@ TA_LIB_API TA_RetCode TA_MACDFIX( int    startIdx,
    while( today <= endIdx )
    {
       tempReal = inReal[today++];
-      prevFast = fma(tempReal - prevFast, fastK, prevFast);
-      prevSlow = fma(tempReal - prevSlow, slowK, prevSlow);
+      prevFast = fma(fastBeta, prevFast, fastK * tempReal);
+      prevSlow = fma(slowBeta, prevSlow, slowK * tempReal);
       macdValue = prevFast - prevSlow;
       if( optInSignalPeriod == 1 )
       {
          prevSignal = macdValue;
       } else 
       {
-         prevSignal = fma(macdValue - prevSignal, signalK, prevSignal);
+         prevSignal = fma(signalBeta, prevSignal, signalK * macdValue);
       }
       outMACD[outIdx] = macdValue;
       outMACDSignal[outIdx] = prevSignal;
@@ -301,6 +308,9 @@ TA_RetCode TA_S_MACDFIX( int    startIdx,
    double slowK;
    double fastK;
    double signalK;
+   double slowBeta;
+   double fastBeta;
+   double signalBeta;
    int i;
    int today;
    int outIdx;
@@ -334,8 +344,14 @@ TA_RetCode TA_S_MACDFIX( int    startIdx,
    optInFastPeriod = 12;
    optInSlowPeriod = 26;
    fastK = 0.15;
+   fastBeta = 1.0 - fastK;
+   fastK = 1.0 - fastBeta;
    slowK = 0.075;
-   signalK = 2.0 / (double)(optInSignalPeriod + 1);
+   slowBeta = 1.0 - slowK;
+   slowK = 1.0 - slowBeta;
+   signalBeta = (double)(optInSignalPeriod - 1) / (double)(optInSignalPeriod + 1);
+   signalK = 1.0 - signalBeta;
+   signalBeta = 1.0 - signalK;
    lookbackSignal = TA_EMA_Lookback(optInSignalPeriod);
    lookbackTotal = lookbackSignal;
    lookbackTotal += TA_EMA_Lookback(26);
@@ -368,8 +384,8 @@ TA_RetCode TA_S_MACDFIX( int    startIdx,
    while( today <= startIdx - lookbackSignal )
    {
       tempReal = (double)inReal[today++];
-      prevFast = fma(tempReal - prevFast, fastK, prevFast);
-      prevSlow = fma(tempReal - prevSlow, slowK, prevSlow);
+      prevFast = fma(fastBeta, prevFast, fastK * tempReal);
+      prevSlow = fma(slowBeta, prevSlow, slowK * tempReal);
    }
    macdValue = prevFast - prevSlow;
    prevSignal = 0.0;
@@ -378,8 +394,8 @@ TA_RetCode TA_S_MACDFIX( int    startIdx,
    while( i-- > 0 )
    {
       tempReal = (double)inReal[today++];
-      prevFast = fma(tempReal - prevFast, fastK, prevFast);
-      prevSlow = fma(tempReal - prevSlow, slowK, prevSlow);
+      prevFast = fma(fastBeta, prevFast, fastK * tempReal);
+      prevSlow = fma(slowBeta, prevSlow, slowK * tempReal);
       macdValue = prevFast - prevSlow;
       prevSignal += macdValue;
    }
@@ -387,15 +403,15 @@ TA_RetCode TA_S_MACDFIX( int    startIdx,
    while( today <= startIdx )
    {
       tempReal = (double)inReal[today++];
-      prevFast = fma(tempReal - prevFast, fastK, prevFast);
-      prevSlow = fma(tempReal - prevSlow, slowK, prevSlow);
+      prevFast = fma(fastBeta, prevFast, fastK * tempReal);
+      prevSlow = fma(slowBeta, prevSlow, slowK * tempReal);
       macdValue = prevFast - prevSlow;
       if( optInSignalPeriod == 1 )
       {
          prevSignal = macdValue;
       } else 
       {
-         prevSignal = fma(macdValue - prevSignal, signalK, prevSignal);
+         prevSignal = fma(signalBeta, prevSignal, signalK * macdValue);
       }
    }
    outMACD[0] = macdValue;
@@ -405,15 +421,15 @@ TA_RetCode TA_S_MACDFIX( int    startIdx,
    while( today <= endIdx )
    {
       tempReal = (double)inReal[today++];
-      prevFast = fma(tempReal - prevFast, fastK, prevFast);
-      prevSlow = fma(tempReal - prevSlow, slowK, prevSlow);
+      prevFast = fma(fastBeta, prevFast, fastK * tempReal);
+      prevSlow = fma(slowBeta, prevSlow, slowK * tempReal);
       macdValue = prevFast - prevSlow;
       if( optInSignalPeriod == 1 )
       {
          prevSignal = macdValue;
       } else 
       {
-         prevSignal = fma(macdValue - prevSignal, signalK, prevSignal);
+         prevSignal = fma(signalBeta, prevSignal, signalK * macdValue);
       }
       outMACD[outIdx] = macdValue;
       outMACDSignal[outIdx] = prevSignal;
@@ -443,6 +459,9 @@ struct TA_MACDFIX_Stream {
    double slowK;
    double fastK;
    double signalK;
+   double slowBeta;
+   double fastBeta;
+   double signalBeta;
 };
 
 /* Private function, not in public API. */
@@ -454,15 +473,15 @@ static TA_FMA_STEP_INLINE void TA_MACDFIX_StepImpl( struct TA_MACDFIX_Stream *sp
 
    prevSignal = sp->prevSignal;
    tempReal = inReal;
-   sp->prevFast = fma(tempReal - sp->prevFast, sp->fastK, sp->prevFast);
-   sp->prevSlow = fma(tempReal - sp->prevSlow, sp->slowK, sp->prevSlow);
+   sp->prevFast = fma(sp->fastBeta, sp->prevFast, sp->fastK * tempReal);
+   sp->prevSlow = fma(sp->slowBeta, sp->prevSlow, sp->slowK * tempReal);
    macdValue = sp->prevFast - sp->prevSlow;
    if( sp->optInSignalPeriod == 1 )
    {
       prevSignal = macdValue;
    } else 
    {
-      prevSignal = fma(macdValue - prevSignal, sp->signalK, prevSignal);
+      prevSignal = fma(sp->signalBeta, prevSignal, sp->signalK * macdValue);
    }
    *outMACD= macdValue;
    *outMACDSignal= prevSignal;
@@ -505,6 +524,9 @@ static TA_RetCode TA_MACDFIX_OpenImpl( struct TA_MACDFIX_Stream **stream, const 
       double slowK = 0.0;
       double fastK = 0.0;
       double signalK = 0.0;
+      double slowBeta = 0.0;
+      double fastBeta = 0.0;
+      double signalBeta = 0.0;
       int i;
       int today;
       int outIdx;
@@ -520,15 +542,19 @@ static TA_RetCode TA_MACDFIX_OpenImpl( struct TA_MACDFIX_Stream **stream, const 
       int optInFastPeriod = 12;
       int optInSlowPeriod = 26;
       fastK = 0.15;
+      fastBeta = 1.0 - fastK;
+      fastK = 1.0 - fastBeta;
       slowK = 0.075;
+      slowBeta = 1.0 - slowK;
+      slowK = 1.0 - slowBeta;
       /* A signal period of 1 disables signal-line smoothing: the signal IS the
-       * MACD line and the histogram is exactly zero. signalK is then exactly
-       * 1.0, so the recursion below reduces to (x-prev)+prev -- which returns x
-       * only while consecutive MACD-line values stay within a factor of two of
-       * each other. The MACD line oscillates through zero, so it leaves that
-       * window on ordinary data; hence the explicit arm at each step.
+       * MACD line and the histogram is exactly zero. The recursion
+       * below, at a k of 1.0 and a beta of 0.0, does not keep the sign of a
+       * -0.0 line value; hence the explicit arm at each step.
        */
-      signalK = 2.0 / (double)(optInSignalPeriod + 1);
+      signalBeta = (double)(optInSignalPeriod - 1) / (double)(optInSignalPeriod + 1);
+      signalK = 1.0 - signalBeta;
+      signalBeta = 1.0 - signalK;
       lookbackSignal = TA_EMA_Lookback(optInSignalPeriod);
       /* Move up the start index if there is not
        * enough initial data.
@@ -554,7 +580,7 @@ static TA_RetCode TA_MACDFIX_OpenImpl( struct TA_MACDFIX_Stream **stream, const 
        *
        * The arithmetic order below is the bit-exactness contract
        * (do not reorder or fuse operations):
-       *  - EMA recursion: ((x-prev)*k)+prev.
+       *  - EMA recursion: k*x + beta*prev, with ema.c's k and beta.
        *  - Each EMA is seeded with the sum of its first 'period'
        *    inputs, accumulated from 0.0 in input order, divided by
        *    the period. The fast and slow seed windows end on the
@@ -592,8 +618,8 @@ static TA_RetCode TA_MACDFIX_OpenImpl( struct TA_MACDFIX_Stream **stream, const 
       while( today <= startIdx - lookbackSignal )
       {
          tempReal = inReal[today++];
-         prevFast = fma(tempReal - prevFast, fastK, prevFast);
-         prevSlow = fma(tempReal - prevSlow, slowK, prevSlow);
+         prevFast = fma(fastBeta, prevFast, fastK * tempReal);
+         prevSlow = fma(slowBeta, prevSlow, slowK * tempReal);
       }
       macdValue = prevFast - prevSlow;
       /* Seed the signal EMA with a simple average of the first
@@ -606,8 +632,8 @@ static TA_RetCode TA_MACDFIX_OpenImpl( struct TA_MACDFIX_Stream **stream, const 
       while( i-- > 0 )
       {
          tempReal = inReal[today++];
-         prevFast = fma(tempReal - prevFast, fastK, prevFast);
-         prevSlow = fma(tempReal - prevSlow, slowK, prevSlow);
+         prevFast = fma(fastBeta, prevFast, fastK * tempReal);
+         prevSlow = fma(slowBeta, prevSlow, slowK * tempReal);
          macdValue = prevFast - prevSlow;
          prevSignal += macdValue;
       }
@@ -618,15 +644,15 @@ static TA_RetCode TA_MACDFIX_OpenImpl( struct TA_MACDFIX_Stream **stream, const 
       while( today <= startIdx )
       {
          tempReal = inReal[today++];
-         prevFast = fma(tempReal - prevFast, fastK, prevFast);
-         prevSlow = fma(tempReal - prevSlow, slowK, prevSlow);
+         prevFast = fma(fastBeta, prevFast, fastK * tempReal);
+         prevSlow = fma(slowBeta, prevSlow, slowK * tempReal);
          macdValue = prevFast - prevSlow;
          if( optInSignalPeriod == 1 )
          {
             prevSignal = macdValue;
          } else 
          {
-            prevSignal = fma(macdValue - prevSignal, signalK, prevSignal);
+            prevSignal = fma(signalBeta, prevSignal, signalK * macdValue);
          }
       }
       /* Stable zone: keep advancing in lockstep and write the three
@@ -639,15 +665,15 @@ static TA_RetCode TA_MACDFIX_OpenImpl( struct TA_MACDFIX_Stream **stream, const 
       while( today <= endIdx )
       {
          tempReal = inReal[today++];
-         prevFast = fma(tempReal - prevFast, fastK, prevFast);
-         prevSlow = fma(tempReal - prevSlow, slowK, prevSlow);
+         prevFast = fma(fastBeta, prevFast, fastK * tempReal);
+         prevSlow = fma(slowBeta, prevSlow, slowK * tempReal);
          macdValue = prevFast - prevSlow;
          if( optInSignalPeriod == 1 )
          {
             prevSignal = macdValue;
          } else 
          {
-            prevSignal = fma(macdValue - prevSignal, signalK, prevSignal);
+            prevSignal = fma(signalBeta, prevSignal, signalK * macdValue);
          }
          outMACD[outIdx * outStride] = macdValue;
          outMACDSignal[outIdx * outStride] = prevSignal;
@@ -669,6 +695,9 @@ static TA_RetCode TA_MACDFIX_OpenImpl( struct TA_MACDFIX_Stream **stream, const 
       sp->slowK = slowK;
       sp->fastK = fastK;
       sp->signalK = signalK;
+      sp->slowBeta = slowBeta;
+      sp->fastBeta = fastBeta;
+      sp->signalBeta = signalBeta;
       sp->outRangeBegIdx = *outBegIdx;
       sp->outRangeCount = *outNBElement;
       sp->cur_outMACD = outMACD[(*outNBElement - 1) * outStride];
@@ -754,15 +783,15 @@ TA_LIB_API TA_RetCode TA_MACDFIX_Peek( const TA_MACDFIX_Stream *stream, double i
    prevSignal = sp->prevSignal;
    prevSlow = sp->prevSlow;
    tempReal = inReal;
-   prevFast = fma(tempReal - prevFast, sp->fastK, prevFast);
-   prevSlow = fma(tempReal - prevSlow, sp->slowK, prevSlow);
+   prevFast = fma(sp->fastBeta, prevFast, sp->fastK * tempReal);
+   prevSlow = fma(sp->slowBeta, prevSlow, sp->slowK * tempReal);
    macdValue = prevFast - prevSlow;
    if( sp->optInSignalPeriod == 1 )
    {
       prevSignal = macdValue;
    } else 
    {
-      prevSignal = fma(macdValue - prevSignal, sp->signalK, prevSignal);
+      prevSignal = fma(sp->signalBeta, prevSignal, sp->signalK * macdValue);
    }
    *outMACD= macdValue;
    *outMACDSignal= prevSignal;

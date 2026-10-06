@@ -86,6 +86,7 @@ TA_LIB_API TA_RetCode TA_EMA( int    startIdx,
                               int          *outNBElement,
                               double        outReal[] )
 {
+   double emaBeta;
    double optInK_1;
    double tempReal;
    double prevMA;
@@ -110,7 +111,13 @@ TA_LIB_API TA_RetCode TA_EMA( int    startIdx,
    if( !outReal )
       return TA_BAD_PARAM;
 
-   optInK_1 = 2.0 / (double)(optInTimePeriod + 1);
+   emaBeta = (double)(optInTimePeriod - 1) / (double)(optInTimePeriod + 1);
+   optInK_1 = 1.0 - emaBeta;
+   /* emaBeta + optInK_1 must be exactly 1.0, or a flat input drifts off
+    * its level. Each subtraction is exact only from an operand in
+    * [0.5,1): at a period of 2 that is optInK_1, above it emaBeta.
+    */
+   emaBeta = 1.0 - optInK_1;
    /* Identify the minimum number of price bar needed
     * to calculate at least one output.
     */
@@ -130,12 +137,10 @@ TA_LIB_API TA_RetCode TA_EMA( int    startIdx,
       return TA_SUCCESS;
    }
    /* No smoothing at period of 1: the output is a copy of the input
-    * (same convention as TA_MA for every MAType). Explicit because at
-    * period 1 optInK_1 is exactly 1.0, so the recursion below reduces to
-    * (x-prev)+prev -- which returns x only while consecutive values stay
-    * within a factor of two of each other. Two-decimal prices already
-    * spend a full mantissa, so a single 3x move breaks it. The unstable
-    * period still delays the first output.
+    * (same convention as TA_MA for every MAType). Explicit because the
+    * recursion below, at a k of 1.0 and a beta of 0.0, does not keep the
+    * sign of a -0.0 input. The unstable period still delays the first
+    * output.
     */
    if( optInTimePeriod == 1 )
    {
@@ -161,13 +166,13 @@ TA_LIB_API TA_RetCode TA_EMA( int    startIdx,
    prevMA = tempReal / optInTimePeriod;
    while( today <= startIdx )
    {
-      prevMA = fma(inReal[today++] - prevMA, optInK_1, prevMA);
+      prevMA = fma(emaBeta, prevMA, optInK_1 * inReal[today++]);
    }
    outReal[0] = prevMA;
    outIdx = 1;
    while( today <= endIdx )
    {
-      prevMA = fma(inReal[today++] - prevMA, optInK_1, prevMA);
+      prevMA = fma(emaBeta, prevMA, optInK_1 * inReal[today++]);
       outReal[outIdx++] = prevMA;
    }
    *outNBElement= outIdx;
@@ -183,6 +188,7 @@ TA_RetCode TA_S_EMA( int    startIdx,
                      int          *outNBElement,
                      double        outReal[] )
 {
+   double emaBeta;
    double optInK_1;
    double tempReal;
    double prevMA;
@@ -207,7 +213,9 @@ TA_RetCode TA_S_EMA( int    startIdx,
    if( !outReal )
       return TA_BAD_PARAM;
 
-   optInK_1 = 2.0 / (double)(optInTimePeriod + 1);
+   emaBeta = (double)(optInTimePeriod - 1) / (double)(optInTimePeriod + 1);
+   optInK_1 = 1.0 - emaBeta;
+   emaBeta = 1.0 - optInK_1;
    lookbackTotal = TA_EMA_Lookback(optInTimePeriod);
    if( startIdx < lookbackTotal )
    {
@@ -242,13 +250,13 @@ TA_RetCode TA_S_EMA( int    startIdx,
    prevMA = tempReal / optInTimePeriod;
    while( today <= startIdx )
    {
-      prevMA = fma((double)inReal[today++] - prevMA, optInK_1, prevMA);
+      prevMA = fma(emaBeta, prevMA, optInK_1 * (double)inReal[today++]);
    }
    outReal[0] = prevMA;
    outIdx = 1;
    while( today <= endIdx )
    {
-      prevMA = fma((double)inReal[today++] - prevMA, optInK_1, prevMA);
+      prevMA = fma(emaBeta, prevMA, optInK_1 * (double)inReal[today++]);
       outReal[outIdx++] = prevMA;
    }
    *outNBElement= outIdx;
@@ -264,6 +272,7 @@ struct TA_EMA_Stream {
    /* The value(s) at the last bar the stream counted (see TA_EMA_Value). */
    double cur_outReal;
    int optInTimePeriod;
+   double emaBeta;
    double optInK_1;
    double pad_0;
    double prevMA;
@@ -278,7 +287,7 @@ static TA_FMA_STEP_INLINE void TA_EMA_StepImpl( struct TA_EMA_Stream *sp, double
       sp->cur_outReal = *outReal;
       return;
    }
-   sp->prevMA = fma(inReal - sp->prevMA, sp->optInK_1, sp->prevMA);
+   sp->prevMA = fma(sp->emaBeta, sp->prevMA, sp->optInK_1 * inReal);
    *outReal= sp->prevMA;
    sp->cur_outReal = *outReal;
 }
@@ -344,13 +353,19 @@ static TA_RetCode TA_EMA_OpenImpl( struct TA_EMA_Stream **stream, const double i
    }
 
    {
-      double optInK_1 = 2.0 / (double)(optInTimePeriod + 1);
+      double emaBeta = (double)(optInTimePeriod - 1) / (double)(optInTimePeriod + 1);
+      double optInK_1 = 1.0 - emaBeta;
       double tempReal;
       double prevMA = 0.0;
       int i;
       int today;
       int outIdx;
       int lookbackTotal;
+      /* emaBeta + optInK_1 must be exactly 1.0, or a flat input drifts off
+       * its level. Each subtraction is exact only from an operand in
+       * [0.5,1): at a period of 2 that is optInK_1, above it emaBeta.
+       */
+      emaBeta = 1.0 - optInK_1;
       /* Identify the minimum number of price bar needed
        * to calculate at least one output.
        */
@@ -381,13 +396,13 @@ static TA_RetCode TA_EMA_OpenImpl( struct TA_EMA_Stream **stream, const double i
       prevMA = tempReal / optInTimePeriod;
       while( today <= startIdx )
       {
-         prevMA = fma(inReal[today++] - prevMA, optInK_1, prevMA);
+         prevMA = fma(emaBeta, prevMA, optInK_1 * inReal[today++]);
       }
       outReal[0 * outStride] = prevMA;
       outIdx = 1;
       while( today <= endIdx )
       {
-         prevMA = fma(inReal[today++] - prevMA, optInK_1, prevMA);
+         prevMA = fma(emaBeta, prevMA, optInK_1 * inReal[today++]);
          outReal[outIdx++ * outStride] = prevMA;
       }
       *outNBElement= outIdx;
@@ -397,6 +412,7 @@ static TA_RetCode TA_EMA_OpenImpl( struct TA_EMA_Stream **stream, const double i
       if( !sp ) { return TA_ALLOC_ERR; }
       memset( sp, 0, sizeof(*sp) );
       sp->optInTimePeriod = optInTimePeriod;
+      sp->emaBeta = emaBeta;
       sp->optInK_1 = optInK_1;
       sp->prevMA = prevMA;
       sp->outRangeBegIdx = *outBegIdx;
@@ -476,7 +492,7 @@ TA_LIB_API TA_RetCode TA_EMA_Peek( const TA_EMA_Stream *stream, double inReal, d
       *outReal= inReal;
       return TA_SUCCESS;
    }
-   prevMA = fma(inReal - prevMA, sp->optInK_1, prevMA);
+   prevMA = fma(sp->emaBeta, prevMA, sp->optInK_1 * inReal);
    *outReal= prevMA;
    return TA_SUCCESS;
 }

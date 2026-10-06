@@ -26,6 +26,7 @@ TA_RetCode cvi(int startIdx, int endIdx,
    double outReal[])
 {
    double prevEMA, laggedEMA, tempReal, optInK_1;
+   double emaBeta;
    int i, today, outIdx, lookbackTotal;
 
    /* CVI[t] = 100 * (E[t] - E[t-optInROCPeriod]) / E[t-optInROCPeriod], with E
@@ -33,7 +34,7 @@ TA_RetCode cvi(int startIdx, int endIdx,
     * EMA is anchored optInROCPeriod bars behind startIdx.
     *
     * The arithmetic below is TA_EMA's and TA_ROCP's verbatim -- seed sum
-    * accumulated from 0.0 in ascending bar order, ((x-prev)*k)+prev, and
+    * accumulated from 0.0 in ascending bar order, k*x + beta*prev, and
     * 100*((a-b)/b) under an exact zero test. That is what makes this fused pass
     * bit-identical to composing TA_SUB, TA_EMA and TA_ROCP, which test_cvi.c
     * holds it to memcmp-exact; reshaping any of it breaks that silently. The
@@ -57,7 +58,9 @@ TA_RetCode cvi(int startIdx, int endIdx,
 
    CIRCBUF_INIT( emaRing, double, optInROCPeriod );
 
-   optInK_1 = 2.0 / ((double)(optInTimePeriod + 1));
+   emaBeta = ((double)(optInTimePeriod - 1)) / ((double)(optInTimePeriod + 1));
+   optInK_1 = 1.0 - emaBeta;
+   emaBeta = 1.0 - optInK_1;
 
    today = startIdx-lookbackTotal;
    i = optInTimePeriod;
@@ -79,7 +82,7 @@ TA_RetCode cvi(int startIdx, int endIdx,
    while( today < startIdx )
    {
       tempReal = inHigh[today]-inLow[today];
-      prevEMA = ((tempReal-prevEMA)*optInK_1) + prevEMA;
+      prevEMA = optInK_1 * tempReal + emaBeta * prevEMA;
       today++;
       emaRing[emaRing_Idx] = prevEMA;
       CIRCBUF_NEXT(emaRing);
@@ -92,7 +95,7 @@ TA_RetCode cvi(int startIdx, int endIdx,
    while( today <= endIdx )
    {
       tempReal = inHigh[today]-inLow[today];
-      prevEMA = ((tempReal-prevEMA)*optInK_1) + prevEMA;
+      prevEMA = optInK_1 * tempReal + emaBeta * prevEMA;
       today++;
       laggedEMA = emaRing[emaRing_Idx];
       emaRing[emaRing_Idx] = prevEMA;

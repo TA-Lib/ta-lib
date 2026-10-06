@@ -101,8 +101,8 @@ extern double gDataLow[];
 #define CVI_MAX_N   20
 #define CVI_MAX_M   20
 
-/* Leg 2. Measured agreement of TA_CVI with the rows below is 4.6e-15 relative
- * at worst, and 8.8e-15 over every bar of the corpus whose |CVI| >= 10 at any
+/* Leg 2. Measured agreement of TA_CVI with the rows below is 3.4e-15 relative
+ * at worst, and 1.1e-14 over every bar of the corpus whose |CVI| >= 10 at any
  * period from 2 to 40 -- so this is two decimal orders of headroom for
  * cross-platform rounding, not a measured gap. The absolute floor never
  * governs: every frozen row has |value| >= 10, where the relative term is
@@ -126,8 +126,9 @@ typedef struct { int period; int bar; double want; const char *src; } CviGolden;
  * confirming the lookback and the lag:
  *   1. pandas-ta-classic 0.6.52 (pandas 3.0.3, numpy 2.5.1) -- Python,
  *      `ta.cvi`. Seeds the EMA with the average of the first `period` spreads,
- *      as TA-Lib does, but spells the step alpha*x + (1-alpha)*prev and the
- *      ratio (100*(a-b))/b, so it is close rather than bit-identical.
+ *      as TA-Lib does, but rounds alpha*x + (1-alpha)*prev twice where TA-Lib
+ *      fuses it into one fma, and spells the ratio (100*(a-b))/b, so it is
+ *      close rather than bit-identical.
  *   2. Tulip Indicators 0.9.2, pinned be18abb -- C, `ti_cvi`.
  *   3. trading-signals 8.3.0 -- TypeScript, `ts.CVI`.
  *
@@ -586,15 +587,7 @@ static ErrorNumber test_cvi_edges( void )
    return TA_TEST_PASS;
 }
 
-/* (4) Parameter rejection.
- *
- * The declared EMA range starts at 2, and that is load-bearing rather than
- * cosmetic: at a period of 1 the recursion reduces to (x-prev)+prev, which is
- * NOT a copy of x once consecutive values leave a factor of two of each other.
- * ema.c carries an explicit copy arm because its own range admits 1; CVI's
- * does not, so it needs none -- and this leg is what keeps the two facts tied
- * together.
- */
+/* (4) Parameter rejection. */
 static ErrorNumber test_cvi_param_reject( const TA_History *history )
 {
    static TA_Real out[CVI_CAP];

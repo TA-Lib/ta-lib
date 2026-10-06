@@ -29,9 +29,12 @@ TA_RetCode efi(int startIdx, int endIdx,
    int *outBegIdx, int *outNBElement,
    double outReal[])
 {
-   double optInK_1 = 2.0 / ((double)(optInTimePeriod + 1));
+   double emaBeta = ((double)(optInTimePeriod - 1)) / ((double)(optInTimePeriod + 1));
+   double optInK_1 = 1.0 - emaBeta;
    double tempReal, prevMA, prevClose, force;
    int i, today, outIdx, lookbackTotal;
+
+   emaBeta = 1.0 - optInK_1;
 
    /* Alexander Elder's Force Index (Trading for a Living, 1993): the one-bar
     * close-to-close move weighted by that bar's volume, then smoothed with an
@@ -43,10 +46,10 @@ TA_RetCode efi(int startIdx, int endIdx,
     *
     * The arithmetic below is ema.c's with inReal[t] replaced by force[t], kept
     * in exactly that shape on purpose: the seed accumulates from 0.0 in the
-    * same order, and the recurrence is (x - prevMA)*k + prevMA rather than the
-    * algebraically equal k*x + (1-k)*prevMA. That order IS the bit-exactness
-    * contract against the composed reference in test_composite.c -- MOM, then
-    * MULT, then EMA -- so do not tidy it. TRIX carries the same warning.
+    * same order, and the recurrence is k*x + beta*prevMA with ema.c's k and
+    * beta. That order IS the bit-exactness contract against the composed
+    * reference in test_composite.c -- MOM, then MULT, then EMA -- so do not
+    * tidy it. TRIX carries the same warning.
     *
     * Nothing on the data path divides by an input, so issue #112 is satisfied
     * structurally: a flat close gives force exactly 0.0 and output exactly
@@ -80,11 +83,8 @@ TA_RetCode efi(int startIdx, int endIdx,
    }
 
    /* No smoothing at a period of 1: the output is the raw Force Index.
-    * Explicit for the reason spelled out in ema.c -- at period 1 optInK_1 is
-    * exactly 1.0, so the recursion reduces to (x-prev)+prev, which returns x
-    * only while consecutive values stay within a factor of two of each other.
-    * Force values swing by orders of magnitude, far more than the prices EMA
-    * warns about.
+    * Explicit because the recursion, at a k of 1.0 and a beta of 0.0, does
+    * not keep the sign of a -0.0 force: a down bar on zero volume.
     */
    if( optInTimePeriod == 1 )
    {
@@ -128,7 +128,7 @@ TA_RetCode efi(int startIdx, int endIdx,
    {
       force = (inClose[today] - prevClose) * inVolume[today];
       prevClose = inClose[today];
-      prevMA = ((force - prevMA) * optInK_1) + prevMA;
+      prevMA = optInK_1 * force + emaBeta * prevMA;
       today = today + 1;
    }
 
@@ -139,7 +139,7 @@ TA_RetCode efi(int startIdx, int endIdx,
    {
       force = (inClose[today] - prevClose) * inVolume[today];
       prevClose = inClose[today];
-      prevMA = ((force - prevMA) * optInK_1) + prevMA;
+      prevMA = optInK_1 * force + emaBeta * prevMA;
       outReal[outIdx] = prevMA;
       outIdx = outIdx + 1;
       today = today + 1;

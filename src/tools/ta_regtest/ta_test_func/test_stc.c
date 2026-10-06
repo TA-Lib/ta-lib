@@ -79,14 +79,18 @@
 #define STC_WALK_NB 1200
 #define STC_MAX_NB  3000
 
-/* LEAN computes in decimal: worst 9.2e-11 over the six rows. */
-#define STC_LEAN_ABS  1e-9
+/* LEAN computes in decimal: worst 4.6e-11 over the six rows. */
+#define STC_LEAN_ABS  2e-10
 /* The early rows come from an unfused re-derivation; the library fuses each
  * EMA step into fma(), as TA_EMA does, which moves them by up to 1.6e-12 (bar
  * 86). The seed rule they pin moves bar 86 by 5.4e-3. */
 #define STC_EARLY_ABS 5e-12
 
+/* TA_EMA against stcRefEma, relative. Worst over the grid: 2.6e-16. */
+#define STC_EMA_REL 8e-16
+
 #define STC_COMPOSITE_CMP 486496
+#define STC_EMA_CMP       993600
 #define STC_MACD_CMP      248640
 #define STC_LOOKBACK_CMP  10
 #define STC_SHIFT_CMP     46085
@@ -100,12 +104,12 @@ typedef struct { int bar; double want; } StcGolden;
 
 static const StcGolden stcLean[] =
 {
-   {  411,  4.700918621975393 },
-   {  545, 32.47406928985344  },
-   {  570, 17.1049624023473   },
-   {  692, 63.56417075370149  },
-   { 1065, 70.51638442892849  },
-   { 1168, 89.38805758202847  },
+   {  411,  4.700918621972339  },
+   {  545, 32.474069289844074 },
+   {  570, 17.104962402333424 },
+   {  692, 63.56417075360968  },
+   { 1065, 70.51638442893523  },
+   { 1168, 89.38805758203083  },
 };
 
 /* startIdx 73: the smoothers are seeded on the first value, not on an SMA of
@@ -134,6 +138,7 @@ static const int stcStartAbs[] = { 150, 333, 800 };
 #define NB_OF(a) ((int)(sizeof(a)/sizeof((a)[0])))
 
 static int g_stcCompositeCmp;
+static int g_stcEmaCmp;
 static int g_stcMacdCmp;
 static int g_stcLookbackCmp;
 static int g_stcShiftCmp;
@@ -168,6 +173,7 @@ ErrorNumber test_func_stc( TA_History *history )
 
    TA_SetUnstablePeriod( TA_FUNC_UNST_ALL, 0 );
    g_stcCompositeCmp = g_stcMacdCmp = g_stcLookbackCmp = g_stcShiftCmp = 0;
+   g_stcEmaCmp = 0;
    g_stcGoldCmp = g_stcTrendCmp = g_stcFlatCmp = g_stcSwapCmp = g_stcInplaceCmp = 0;
 
    err = test_stc_goldens();
@@ -194,17 +200,18 @@ ErrorNumber test_func_stc( TA_History *history )
    /* Literal counts: every input is synthesized, so each leg is deterministic. */
    if( err == TA_TEST_PASS
        && ( g_stcCompositeCmp != STC_COMPOSITE_CMP || g_stcMacdCmp != STC_MACD_CMP
+            || g_stcEmaCmp != STC_EMA_CMP
             || g_stcLookbackCmp != STC_LOOKBACK_CMP || g_stcShiftCmp != STC_SHIFT_CMP
             || g_stcGoldCmp != STC_GOLD_CMP || g_stcTrendCmp != STC_TREND_CMP
             || g_stcFlatCmp != STC_FLAT_CMP || g_stcSwapCmp != STC_SWAP_CMP
             || g_stcInplaceCmp != STC_INPLACE_CMP ) )
    {
-      printf( "STC Fail: coverage counters (composite %d, macd %d, lookback %d, shift %d, "
-              "gold %d, trend %d, flat %d, swap %d, inplace %d) are not what this file "
-              "was written with (%d, %d, %d, %d, %d, %d, %d, %d, %d)\n",
-              g_stcCompositeCmp, g_stcMacdCmp, g_stcLookbackCmp, g_stcShiftCmp,
+      printf( "STC Fail: coverage counters (composite %d, ema %d, macd %d, lookback %d, "
+              "shift %d, gold %d, trend %d, flat %d, swap %d, inplace %d) are not what "
+              "this file was written with (%d, %d, %d, %d, %d, %d, %d, %d, %d, %d)\n",
+              g_stcCompositeCmp, g_stcEmaCmp, g_stcMacdCmp, g_stcLookbackCmp, g_stcShiftCmp,
               g_stcGoldCmp, g_stcTrendCmp, g_stcFlatCmp, g_stcSwapCmp, g_stcInplaceCmp,
-              STC_COMPOSITE_CMP, STC_MACD_CMP, STC_LOOKBACK_CMP, STC_SHIFT_CMP,
+              STC_COMPOSITE_CMP, STC_EMA_CMP, STC_MACD_CMP, STC_LOOKBACK_CMP, STC_SHIFT_CMP,
               STC_GOLD_CMP, STC_TREND_CMP, STC_FLAT_CMP, STC_SWAP_CMP, STC_INPLACE_CMP );
       return TA_STC_VACUOUS;
    }
@@ -403,6 +410,52 @@ static void stcStage( const double *x, int n, int cycle, double *outSm,
    }
 }
 
+/* TA_EMA's contract with the recurrence spelled prev + k*(x - prev). Keep it
+ * independent of the form TA_EMA uses: STC_EMA_REL holds TA_EMA to it, a check
+ * the compositions built from TA_EMA cannot make. */
+static TA_RetCode stcRefEma( int startIdx, int endIdx, const double *in, int period,
+                             TA_Integer *outBegIdx, TA_Integer *outNBElement, double *out )
+{
+   int lookback = period - 1 + (int)TA_GetUnstablePeriod( TA_FUNC_UNST_EMA );
+   double k = 2.0 / (double)(period + 1), prev = 0.0;
+   int today, i, outIdx = 0;
+
+   *outBegIdx = 0;
+   *outNBElement = 0;
+   if( startIdx < lookback )
+      startIdx = lookback;
+   if( startIdx > endIdx )
+      return TA_SUCCESS;
+   *outBegIdx = startIdx;
+
+   if( period == 1 )
+   {
+      for( today = startIdx; today <= endIdx; today++ )
+         out[outIdx++] = in[today];
+      *outNBElement = outIdx;
+      return TA_SUCCESS;
+   }
+
+   today = startIdx - lookback;
+   for( i = 0; i < period; i++ )
+      prev += in[today++];
+   prev /= period;
+   while( today <= startIdx )
+   {
+      prev = fma( in[today] - prev, k, prev );
+      today++;
+   }
+   out[outIdx++] = prev;
+   while( today <= endIdx )
+   {
+      prev = fma( in[today] - prev, k, prev );
+      today++;
+      out[outIdx++] = prev;
+   }
+   *outNBElement = outIdx;
+   return TA_SUCCESS;
+}
+
 /* (1) The line is fed from L0 = startIdx - 2*(cycle-1) - u, so PFF is seeded
  * at startIdx - u. A chain fed from the EMA seed bar reads red at (k,u) = (5,0). */
 static ErrorNumber stcComposite( const char *tag, const double *c, int nb,
@@ -411,6 +464,7 @@ static ErrorNumber stcComposite( const char *tag, const double *c, int nb,
    static double out[STC_MAX_NB], ef[STC_MAX_NB], es[STC_MAX_NB], line[STC_MAX_NB];
    static double mac[STC_MAX_NB], sig[STC_MAX_NB], hist[STC_MAX_NB];
    static double pf[STC_MAX_NB], pff[STC_MAX_NB], lo[STC_MAX_NB], hi[STC_MAX_NB];
+   static double rf[STC_MAX_NB], rs[STC_MAX_NB];
    TA_RetCode rc;
    TA_Integer begIdx, nbElement, b1, n1, b2, n2;
    int L0 = startIdx - 2*(t->cycle-1) - u;
@@ -431,8 +485,26 @@ static ErrorNumber stcComposite( const char *tag, const double *c, int nb,
       printf( "STC %s Fail: TA_EMA(%d) answered (%d,%d) (%d,%d)\n", tag, L0, b1, n1, b2, n2 );
       return TA_STC_VACUOUS;
    }
+   rc  = stcRefEma( L0, nb-1, c, t->fast, &b1, &n1, rf );
+   rc |= stcRefEma( L0, nb-1, c, t->slow, &b2, &n2, rs );
+   if( rc != TA_SUCCESS || b1 != L0 || b2 != L0 || n1 != nL || n2 != nL )
+   {
+      printf( "STC %s Fail: stcRefEma(%d) answered (%d,%d) (%d,%d)\n", tag, L0, b1, n1, b2, n2 );
+      return TA_STC_VACUOUS;
+   }
    for( j = 0; j < nL; j++ )
+   {
+      if( !(fabs( ef[j] - rf[j] ) <= STC_EMA_REL * fabs( rf[j] ))
+          || !(fabs( es[j] - rs[j] ) <= STC_EMA_REL * fabs( rs[j] )) )
+      {
+         printf( "STC %s Fail [%d,%d k %d start %d] at bar %d: TA_EMA %.17g, %.17g is not "
+                 "the reference step's %.17g, %.17g within %.0e relative\n", tag, t->fast,
+                 t->slow, k, startIdx, L0 + j, ef[j], es[j], rf[j], rs[j], STC_EMA_REL );
+         return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+      }
       line[j] = ef[j] - es[j];
+   }
+   g_stcEmaCmp += 2 * nL;
 
    if( k == 0 )
    {

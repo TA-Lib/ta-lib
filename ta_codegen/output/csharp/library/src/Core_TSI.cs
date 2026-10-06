@@ -126,6 +126,8 @@ public partial class Core
       outNBElement = 0;
       double kFirst = 0;
       double kSecond = 0;
+      double betaFirst = 0;
+      double betaSecond = 0;
       double emaFirstNum = 0;
       double emaFirstDen = 0;
       double emaSecondNum = 0;
@@ -183,7 +185,7 @@ public partial class Core
        * TA_SetUnstablePeriod(TA_FUNC_UNST_EMA) folds in: the second stage then
        * seeds from the values the first would have published. The seed sums
        * accumulate from 0.0 in production order and the recurrence is
-       * ((x-prev)*k)+prev rather than the algebraically equal k*x+(1-k)*prev; do
+       * k*x + beta*prev with ema.c's k and beta; do
        * not reorder or fuse them (0.0+x is not x for x=-0.0). That order IS the
        * bit-exactness contract against the composed reference.
        *
@@ -191,8 +193,12 @@ public partial class Core
        * because outReal may alias inReal: the slot holding close[t-1] may already
        * hold an output written a bar earlier.
        */
-      kFirst = 2.0 / (double)(optInFirstPeriod + 1);
-      kSecond = 2.0 / (double)(optInSecondPeriod + 1);
+      betaFirst = (double)(optInFirstPeriod - 1) / (double)(optInFirstPeriod + 1);
+      kFirst = 1.0 - betaFirst;
+      betaFirst = 1.0 - kFirst;
+      betaSecond = (double)(optInSecondPeriod - 1) / (double)(optInSecondPeriod + 1);
+      kSecond = 1.0 - betaSecond;
+      betaSecond = 1.0 - kSecond;
       lookbackFirst = EmaLookback(optInFirstPeriod);
       emaFirstNum = 0.0;
       emaFirstDen = 0.0;
@@ -222,8 +228,8 @@ public partial class Core
                emaFirstDen = sumFirstDen / optInFirstPeriod;
             }
          } else {
-            emaFirstNum = Math.FusedMultiplyAdd(mom - emaFirstNum, kFirst, emaFirstNum);
-            emaFirstDen = Math.FusedMultiplyAdd(absMom - emaFirstDen, kFirst, emaFirstDen);
+            emaFirstNum = Math.FusedMultiplyAdd(betaFirst, emaFirstNum, kFirst * mom);
+            emaFirstDen = Math.FusedMultiplyAdd(betaFirst, emaFirstDen, kFirst * absMom);
          }
          /* Stage 2: the second EMA, over what stage 1 publishes.
           *
@@ -247,8 +253,8 @@ public partial class Core
                   emaSecondDen = sumSecondDen / optInSecondPeriod;
                }
             } else {
-               emaSecondNum = Math.FusedMultiplyAdd(emaFirstNum - emaSecondNum, kSecond, emaSecondNum);
-               emaSecondDen = Math.FusedMultiplyAdd(emaFirstDen - emaSecondDen, kSecond, emaSecondDen);
+               emaSecondNum = Math.FusedMultiplyAdd(betaSecond, emaSecondNum, kSecond * emaFirstNum);
+               emaSecondDen = Math.FusedMultiplyAdd(betaSecond, emaSecondDen, kSecond * emaFirstDen);
             }
          }
          nBar = nBar + 1;
@@ -274,10 +280,10 @@ public partial class Core
          mom = inReal[today] - prevClose;
          prevClose = inReal[today];
          absMom = Math.Abs(mom);
-         emaFirstNum = Math.FusedMultiplyAdd(mom - emaFirstNum, kFirst, emaFirstNum);
-         emaFirstDen = Math.FusedMultiplyAdd(absMom - emaFirstDen, kFirst, emaFirstDen);
-         emaSecondNum = Math.FusedMultiplyAdd(emaFirstNum - emaSecondNum, kSecond, emaSecondNum);
-         emaSecondDen = Math.FusedMultiplyAdd(emaFirstDen - emaSecondDen, kSecond, emaSecondDen);
+         emaFirstNum = Math.FusedMultiplyAdd(betaFirst, emaFirstNum, kFirst * mom);
+         emaFirstDen = Math.FusedMultiplyAdd(betaFirst, emaFirstDen, kFirst * absMom);
+         emaSecondNum = Math.FusedMultiplyAdd(betaSecond, emaSecondNum, kSecond * emaFirstNum);
+         emaSecondDen = Math.FusedMultiplyAdd(betaSecond, emaSecondDen, kSecond * emaFirstDen);
          if( emaSecondDen > 0.0 ) {
             tsiValue = 100.0 * emaSecondNum / emaSecondDen;
          } else {
@@ -303,6 +309,8 @@ public partial class Core
       outNBElement = 0;
       double kFirst = 0;
       double kSecond = 0;
+      double betaFirst = 0;
+      double betaSecond = 0;
       double emaFirstNum = 0;
       double emaFirstDen = 0;
       double emaSecondNum = 0;
@@ -350,8 +358,12 @@ public partial class Core
          return RetCode.Success ;
       }
       outBegIdx = startIdx;
-      kFirst = 2.0 / (double)(optInFirstPeriod + 1);
-      kSecond = 2.0 / (double)(optInSecondPeriod + 1);
+      betaFirst = (double)(optInFirstPeriod - 1) / (double)(optInFirstPeriod + 1);
+      kFirst = 1.0 - betaFirst;
+      betaFirst = 1.0 - kFirst;
+      betaSecond = (double)(optInSecondPeriod - 1) / (double)(optInSecondPeriod + 1);
+      kSecond = 1.0 - betaSecond;
+      betaSecond = 1.0 - kSecond;
       lookbackFirst = EmaLookback(optInFirstPeriod);
       emaFirstNum = 0.0;
       emaFirstDen = 0.0;
@@ -376,8 +388,8 @@ public partial class Core
                emaFirstDen = sumFirstDen / optInFirstPeriod;
             }
          } else {
-            emaFirstNum = Math.FusedMultiplyAdd(mom - emaFirstNum, kFirst, emaFirstNum);
-            emaFirstDen = Math.FusedMultiplyAdd(absMom - emaFirstDen, kFirst, emaFirstDen);
+            emaFirstNum = Math.FusedMultiplyAdd(betaFirst, emaFirstNum, kFirst * mom);
+            emaFirstDen = Math.FusedMultiplyAdd(betaFirst, emaFirstDen, kFirst * absMom);
          }
          if( nBar >= lookbackFirst ) {
             nSecond = nBar - lookbackFirst;
@@ -389,8 +401,8 @@ public partial class Core
                   emaSecondDen = sumSecondDen / optInSecondPeriod;
                }
             } else {
-               emaSecondNum = Math.FusedMultiplyAdd(emaFirstNum - emaSecondNum, kSecond, emaSecondNum);
-               emaSecondDen = Math.FusedMultiplyAdd(emaFirstDen - emaSecondDen, kSecond, emaSecondDen);
+               emaSecondNum = Math.FusedMultiplyAdd(betaSecond, emaSecondNum, kSecond * emaFirstNum);
+               emaSecondDen = Math.FusedMultiplyAdd(betaSecond, emaSecondDen, kSecond * emaFirstDen);
             }
          }
          nBar = nBar + 1;
@@ -407,10 +419,10 @@ public partial class Core
          mom = (double)inReal[today] - prevClose;
          prevClose = (double)inReal[today];
          absMom = Math.Abs(mom);
-         emaFirstNum = Math.FusedMultiplyAdd(mom - emaFirstNum, kFirst, emaFirstNum);
-         emaFirstDen = Math.FusedMultiplyAdd(absMom - emaFirstDen, kFirst, emaFirstDen);
-         emaSecondNum = Math.FusedMultiplyAdd(emaFirstNum - emaSecondNum, kSecond, emaSecondNum);
-         emaSecondDen = Math.FusedMultiplyAdd(emaFirstDen - emaSecondDen, kSecond, emaSecondDen);
+         emaFirstNum = Math.FusedMultiplyAdd(betaFirst, emaFirstNum, kFirst * mom);
+         emaFirstDen = Math.FusedMultiplyAdd(betaFirst, emaFirstDen, kFirst * absMom);
+         emaSecondNum = Math.FusedMultiplyAdd(betaSecond, emaSecondNum, kSecond * emaFirstNum);
+         emaSecondDen = Math.FusedMultiplyAdd(betaSecond, emaSecondDen, kSecond * emaFirstDen);
          if( emaSecondDen > 0.0 ) {
             tsiValue = 100.0 * emaSecondNum / emaSecondDen;
          } else {
@@ -644,6 +656,8 @@ public partial class Core
       internal int optInSecondPeriod;
       internal double kFirst;
       internal double kSecond;
+      internal double betaFirst;
+      internal double betaSecond;
       internal double emaFirstNum;
       internal double emaFirstDen;
       internal double emaSecondNum;
@@ -695,6 +709,8 @@ public partial class Core
          this.optInSecondPeriod = other.optInSecondPeriod;
          this.kFirst = other.kFirst;
          this.kSecond = other.kSecond;
+         this.betaFirst = other.betaFirst;
+         this.betaSecond = other.betaSecond;
          this.emaFirstNum = other.emaFirstNum;
          this.emaFirstDen = other.emaFirstDen;
          this.emaSecondNum = other.emaSecondNum;
@@ -761,10 +777,10 @@ public partial class Core
          mom = inReal - prevClose;
          prevClose = inReal;
          absMom = Math.Abs(mom);
-         emaFirstNum = Math.FusedMultiplyAdd(mom - emaFirstNum, sp.kFirst, emaFirstNum);
-         emaFirstDen = Math.FusedMultiplyAdd(absMom - emaFirstDen, sp.kFirst, emaFirstDen);
-         emaSecondNum = Math.FusedMultiplyAdd(emaFirstNum - emaSecondNum, sp.kSecond, emaSecondNum);
-         emaSecondDen = Math.FusedMultiplyAdd(emaFirstDen - emaSecondDen, sp.kSecond, emaSecondDen);
+         emaFirstNum = Math.FusedMultiplyAdd(sp.betaFirst, emaFirstNum, sp.kFirst * mom);
+         emaFirstDen = Math.FusedMultiplyAdd(sp.betaFirst, emaFirstDen, sp.kFirst * absMom);
+         emaSecondNum = Math.FusedMultiplyAdd(sp.betaSecond, emaSecondNum, sp.kSecond * emaFirstNum);
+         emaSecondDen = Math.FusedMultiplyAdd(sp.betaSecond, emaSecondDen, sp.kSecond * emaFirstDen);
          if( emaSecondDen > 0.0 ) {
             tsiValue = 100.0 * emaSecondNum / emaSecondDen;
          } else {
@@ -799,10 +815,10 @@ public partial class Core
       mom = inReal - sp.prevClose;
       sp.prevClose = inReal;
       absMom = Math.Abs(mom);
-      sp.emaFirstNum = Math.FusedMultiplyAdd(mom - sp.emaFirstNum, sp.kFirst, sp.emaFirstNum);
-      sp.emaFirstDen = Math.FusedMultiplyAdd(absMom - sp.emaFirstDen, sp.kFirst, sp.emaFirstDen);
-      sp.emaSecondNum = Math.FusedMultiplyAdd(sp.emaFirstNum - sp.emaSecondNum, sp.kSecond, sp.emaSecondNum);
-      sp.emaSecondDen = Math.FusedMultiplyAdd(sp.emaFirstDen - sp.emaSecondDen, sp.kSecond, sp.emaSecondDen);
+      sp.emaFirstNum = Math.FusedMultiplyAdd(sp.betaFirst, sp.emaFirstNum, sp.kFirst * mom);
+      sp.emaFirstDen = Math.FusedMultiplyAdd(sp.betaFirst, sp.emaFirstDen, sp.kFirst * absMom);
+      sp.emaSecondNum = Math.FusedMultiplyAdd(sp.betaSecond, sp.emaSecondNum, sp.kSecond * sp.emaFirstNum);
+      sp.emaSecondDen = Math.FusedMultiplyAdd(sp.betaSecond, sp.emaSecondDen, sp.kSecond * sp.emaFirstDen);
       if( sp.emaSecondDen > 0.0 ) {
          tsiValue = 100.0 * sp.emaSecondNum / sp.emaSecondDen;
       } else {
@@ -817,6 +833,8 @@ public partial class Core
       outNBElement = 0;
       double kFirst = 0;
       double kSecond = 0;
+      double betaFirst = 0;
+      double betaSecond = 0;
       double emaFirstNum = 0;
       double emaFirstDen = 0;
       double emaSecondNum = 0;
@@ -878,7 +896,7 @@ public partial class Core
        * TA_SetUnstablePeriod(TA_FUNC_UNST_EMA) folds in: the second stage then
        * seeds from the values the first would have published. The seed sums
        * accumulate from 0.0 in production order and the recurrence is
-       * ((x-prev)*k)+prev rather than the algebraically equal k*x+(1-k)*prev; do
+       * k*x + beta*prev with ema.c's k and beta; do
        * not reorder or fuse them (0.0+x is not x for x=-0.0). That order IS the
        * bit-exactness contract against the composed reference.
        *
@@ -886,8 +904,12 @@ public partial class Core
        * because outReal may alias inReal: the slot holding close[t-1] may already
        * hold an output written a bar earlier.
        */
-      kFirst = 2.0 / (double)(optInFirstPeriod + 1);
-      kSecond = 2.0 / (double)(optInSecondPeriod + 1);
+      betaFirst = (double)(optInFirstPeriod - 1) / (double)(optInFirstPeriod + 1);
+      kFirst = 1.0 - betaFirst;
+      betaFirst = 1.0 - kFirst;
+      betaSecond = (double)(optInSecondPeriod - 1) / (double)(optInSecondPeriod + 1);
+      kSecond = 1.0 - betaSecond;
+      betaSecond = 1.0 - kSecond;
       lookbackFirst = EmaLookback(optInFirstPeriod);
       emaFirstNum = 0.0;
       emaFirstDen = 0.0;
@@ -917,8 +939,8 @@ public partial class Core
                emaFirstDen = sumFirstDen / optInFirstPeriod;
             }
          } else {
-            emaFirstNum = Math.FusedMultiplyAdd(mom - emaFirstNum, kFirst, emaFirstNum);
-            emaFirstDen = Math.FusedMultiplyAdd(absMom - emaFirstDen, kFirst, emaFirstDen);
+            emaFirstNum = Math.FusedMultiplyAdd(betaFirst, emaFirstNum, kFirst * mom);
+            emaFirstDen = Math.FusedMultiplyAdd(betaFirst, emaFirstDen, kFirst * absMom);
          }
          /* Stage 2: the second EMA, over what stage 1 publishes.
           *
@@ -942,8 +964,8 @@ public partial class Core
                   emaSecondDen = sumSecondDen / optInSecondPeriod;
                }
             } else {
-               emaSecondNum = Math.FusedMultiplyAdd(emaFirstNum - emaSecondNum, kSecond, emaSecondNum);
-               emaSecondDen = Math.FusedMultiplyAdd(emaFirstDen - emaSecondDen, kSecond, emaSecondDen);
+               emaSecondNum = Math.FusedMultiplyAdd(betaSecond, emaSecondNum, kSecond * emaFirstNum);
+               emaSecondDen = Math.FusedMultiplyAdd(betaSecond, emaSecondDen, kSecond * emaFirstDen);
             }
          }
          nBar = nBar + 1;
@@ -969,10 +991,10 @@ public partial class Core
          mom = inReal[today] - prevClose;
          prevClose = inReal[today];
          absMom = Math.Abs(mom);
-         emaFirstNum = Math.FusedMultiplyAdd(mom - emaFirstNum, kFirst, emaFirstNum);
-         emaFirstDen = Math.FusedMultiplyAdd(absMom - emaFirstDen, kFirst, emaFirstDen);
-         emaSecondNum = Math.FusedMultiplyAdd(emaFirstNum - emaSecondNum, kSecond, emaSecondNum);
-         emaSecondDen = Math.FusedMultiplyAdd(emaFirstDen - emaSecondDen, kSecond, emaSecondDen);
+         emaFirstNum = Math.FusedMultiplyAdd(betaFirst, emaFirstNum, kFirst * mom);
+         emaFirstDen = Math.FusedMultiplyAdd(betaFirst, emaFirstDen, kFirst * absMom);
+         emaSecondNum = Math.FusedMultiplyAdd(betaSecond, emaSecondNum, kSecond * emaFirstNum);
+         emaSecondDen = Math.FusedMultiplyAdd(betaSecond, emaSecondDen, kSecond * emaFirstDen);
          if( emaSecondDen > 0.0 ) {
             tsiValue = 100.0 * emaSecondNum / emaSecondDen;
          } else {
@@ -988,6 +1010,8 @@ public partial class Core
       sp.optInSecondPeriod = optInSecondPeriod;
       sp.kFirst = kFirst;
       sp.kSecond = kSecond;
+      sp.betaFirst = betaFirst;
+      sp.betaSecond = betaSecond;
       sp.emaFirstNum = emaFirstNum;
       sp.emaFirstDen = emaFirstDen;
       sp.emaSecondNum = emaSecondNum;

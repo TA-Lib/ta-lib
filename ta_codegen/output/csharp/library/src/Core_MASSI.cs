@@ -127,6 +127,7 @@ public partial class Core
       outBegIdx = 0;
       outNBElement = 0;
       double optInK_1 = 0;
+      double emaBeta = 0;
       double hl = 0;
       double ema1 = 0;
       double ema2 = 0;
@@ -191,7 +192,9 @@ public partial class Core
        * is warmed. The seed sums accumulate from 0.0 in production order; do not
        * reorder or fuse them (0.0+x is not x for x=-0.0).
        */
-      optInK_1 = 2.0 / (double)(optInFastPeriod + 1);
+      emaBeta = (double)(optInFastPeriod - 1) / (double)(optInFastPeriod + 1);
+      optInK_1 = 1.0 - emaBeta;
+      emaBeta = 1.0 - optInK_1;
       ema1 = 0.0;
       ema2 = 0.0;
       sum1 = 0.0;
@@ -211,7 +214,7 @@ public partial class Core
                ema1 = sum1 / optInFastPeriod;
             }
          } else {
-            ema1 = Math.FusedMultiplyAdd(hl - ema1, optInK_1, ema1);
+            ema1 = Math.FusedMultiplyAdd(emaBeta, ema1, optInK_1 * hl);
          }
          /* The stage counter is compared BEFORE it is subtracted, never after.
           * `n2 = nBar - lookbackEma; if( n2 >= 0 )` is correct in C and broken
@@ -226,7 +229,7 @@ public partial class Core
                   ema2 = sum2 / optInFastPeriod;
                }
             } else {
-               ema2 = Math.FusedMultiplyAdd(ema1 - ema2, optInK_1, ema2);
+               ema2 = Math.FusedMultiplyAdd(emaBeta, ema2, optInK_1 * ema1);
             }
          }
          if( nBar >= lookbackEma2 ) {
@@ -265,8 +268,8 @@ public partial class Core
       outIdx = 1;
       while( today <= endIdx ) {
          hl = inHigh[today] - inLow[today];
-         ema1 = Math.FusedMultiplyAdd(hl - ema1, optInK_1, ema1);
-         ema2 = Math.FusedMultiplyAdd(ema1 - ema2, optInK_1, ema2);
+         ema1 = Math.FusedMultiplyAdd(emaBeta, ema1, optInK_1 * hl);
+         ema2 = Math.FusedMultiplyAdd(emaBeta, ema2, optInK_1 * ema1);
          if( ema2 == 0.0 ) {
             ratio = 1.0;
          } else {
@@ -298,6 +301,7 @@ public partial class Core
       outBegIdx = 0;
       outNBElement = 0;
       double optInK_1 = 0;
+      double emaBeta = 0;
       double hl = 0;
       double ema1 = 0;
       double ema2 = 0;
@@ -351,7 +355,9 @@ public partial class Core
       maxIdx_ratioRing = (optInSlowPeriod)-1;
       ratioRing_Idx = 0;
       outBegIdx = startIdx;
-      optInK_1 = 2.0 / (double)(optInFastPeriod + 1);
+      emaBeta = (double)(optInFastPeriod - 1) / (double)(optInFastPeriod + 1);
+      optInK_1 = 1.0 - emaBeta;
+      emaBeta = 1.0 - optInK_1;
       ema1 = 0.0;
       ema2 = 0.0;
       sum1 = 0.0;
@@ -368,7 +374,7 @@ public partial class Core
                ema1 = sum1 / optInFastPeriod;
             }
          } else {
-            ema1 = Math.FusedMultiplyAdd(hl - ema1, optInK_1, ema1);
+            ema1 = Math.FusedMultiplyAdd(emaBeta, ema1, optInK_1 * hl);
          }
          if( nBar >= lookbackEma ) {
             n2 = nBar - lookbackEma;
@@ -378,7 +384,7 @@ public partial class Core
                   ema2 = sum2 / optInFastPeriod;
                }
             } else {
-               ema2 = Math.FusedMultiplyAdd(ema1 - ema2, optInK_1, ema2);
+               ema2 = Math.FusedMultiplyAdd(emaBeta, ema2, optInK_1 * ema1);
             }
          }
          if( nBar >= lookbackEma2 ) {
@@ -403,8 +409,8 @@ public partial class Core
       outIdx = 1;
       while( today <= endIdx ) {
          hl = (double)inHigh[today] - (double)inLow[today];
-         ema1 = Math.FusedMultiplyAdd(hl - ema1, optInK_1, ema1);
-         ema2 = Math.FusedMultiplyAdd(ema1 - ema2, optInK_1, ema2);
+         ema1 = Math.FusedMultiplyAdd(emaBeta, ema1, optInK_1 * hl);
+         ema2 = Math.FusedMultiplyAdd(emaBeta, ema2, optInK_1 * ema1);
          if( ema2 == 0.0 ) {
             ratio = 1.0;
          } else {
@@ -651,6 +657,7 @@ public partial class Core
       internal int optInFastPeriod;
       internal int optInSlowPeriod;
       internal double optInK_1;
+      internal double emaBeta;
       internal double ema1;
       internal double ema2;
       internal double total;
@@ -703,6 +710,7 @@ public partial class Core
          this.optInFastPeriod = other.optInFastPeriod;
          this.optInSlowPeriod = other.optInSlowPeriod;
          this.optInK_1 = other.optInK_1;
+         this.emaBeta = other.emaBeta;
          this.ema1 = other.ema1;
          this.ema2 = other.ema2;
          this.total = other.total;
@@ -773,8 +781,8 @@ public partial class Core
          int pkSlot0 = -1;
          double pkVal0 = 0.0;
          hl = inHigh - inLow;
-         ema1 = Math.FusedMultiplyAdd(hl - ema1, sp.optInK_1, ema1);
-         ema2 = Math.FusedMultiplyAdd(ema1 - ema2, sp.optInK_1, ema2);
+         ema1 = Math.FusedMultiplyAdd(sp.emaBeta, ema1, sp.optInK_1 * hl);
+         ema2 = Math.FusedMultiplyAdd(sp.emaBeta, ema2, sp.optInK_1 * ema1);
          if( ema2 == 0.0 ) {
             ratio = 1.0;
          } else {
@@ -816,8 +824,8 @@ public partial class Core
       double ratio = 0.0;
       double tempReal = 0.0;
       hl = inHigh - inLow;
-      sp.ema1 = Math.FusedMultiplyAdd(hl - sp.ema1, sp.optInK_1, sp.ema1);
-      sp.ema2 = Math.FusedMultiplyAdd(sp.ema1 - sp.ema2, sp.optInK_1, sp.ema2);
+      sp.ema1 = Math.FusedMultiplyAdd(sp.emaBeta, sp.ema1, sp.optInK_1 * hl);
+      sp.ema2 = Math.FusedMultiplyAdd(sp.emaBeta, sp.ema2, sp.optInK_1 * sp.ema1);
       if( sp.ema2 == 0.0 ) {
          ratio = 1.0;
       } else {
@@ -839,6 +847,7 @@ public partial class Core
       outBegIdx = 0;
       outNBElement = 0;
       double optInK_1 = 0;
+      double emaBeta = 0;
       double hl = 0;
       double ema1 = 0;
       double ema2 = 0;
@@ -910,7 +919,9 @@ public partial class Core
        * is warmed. The seed sums accumulate from 0.0 in production order; do not
        * reorder or fuse them (0.0+x is not x for x=-0.0).
        */
-      optInK_1 = 2.0 / (double)(optInFastPeriod + 1);
+      emaBeta = (double)(optInFastPeriod - 1) / (double)(optInFastPeriod + 1);
+      optInK_1 = 1.0 - emaBeta;
+      emaBeta = 1.0 - optInK_1;
       ema1 = 0.0;
       ema2 = 0.0;
       sum1 = 0.0;
@@ -930,7 +941,7 @@ public partial class Core
                ema1 = sum1 / optInFastPeriod;
             }
          } else {
-            ema1 = Math.FusedMultiplyAdd(hl - ema1, optInK_1, ema1);
+            ema1 = Math.FusedMultiplyAdd(emaBeta, ema1, optInK_1 * hl);
          }
          /* The stage counter is compared BEFORE it is subtracted, never after.
           * `n2 = nBar - lookbackEma; if( n2 >= 0 )` is correct in C and broken
@@ -945,7 +956,7 @@ public partial class Core
                   ema2 = sum2 / optInFastPeriod;
                }
             } else {
-               ema2 = Math.FusedMultiplyAdd(ema1 - ema2, optInK_1, ema2);
+               ema2 = Math.FusedMultiplyAdd(emaBeta, ema2, optInK_1 * ema1);
             }
          }
          if( nBar >= lookbackEma2 ) {
@@ -984,8 +995,8 @@ public partial class Core
       outIdx = 1;
       while( today <= endIdx ) {
          hl = inHigh[today] - inLow[today];
-         ema1 = Math.FusedMultiplyAdd(hl - ema1, optInK_1, ema1);
-         ema2 = Math.FusedMultiplyAdd(ema1 - ema2, optInK_1, ema2);
+         ema1 = Math.FusedMultiplyAdd(emaBeta, ema1, optInK_1 * hl);
+         ema2 = Math.FusedMultiplyAdd(emaBeta, ema2, optInK_1 * ema1);
          if( ema2 == 0.0 ) {
             ratio = 1.0;
          } else {
@@ -1010,6 +1021,7 @@ public partial class Core
       sp.optInFastPeriod = optInFastPeriod;
       sp.optInSlowPeriod = optInSlowPeriod;
       sp.optInK_1 = optInK_1;
+      sp.emaBeta = emaBeta;
       sp.ema1 = ema1;
       sp.ema2 = ema2;
       sp.total = total;

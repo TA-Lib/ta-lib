@@ -68,8 +68,8 @@
  *   (3) EDGES: all-flat input (both lines exactly 0.0, no NaN); high == low
  *       on every bar (the two lines bitwise identical); n=1 (EMA is the
  *       identity on close, so bull == high - close exactly) on TA_SREF and
- *       again on a series Sterbenz does not cover -- only the second can see
- *       a period-1 EMA left as the bare recursion.
+ *       again on a series holding an all -0.0 bar behind a positive close --
+ *       only the second can see a period-1 EMA left as the bare recursion.
  *
  *   (4) IN-PLACE ALIASING: two outputs over three inputs is the widest
  *       aliasing surface of any recent addition. Each output aliased onto
@@ -105,11 +105,15 @@ static const int eriUnstGrid[] = { 0, 1, 3, 7 };
 static const int eriAliasGrid[] = { 1, 13 };
 #define NB_ERI_ALIAS (sizeof(eriAliasGrid)/sizeof(eriAliasGrid[0]))
 
-/* Two closes alternating at a ratio near 8.9, both spending a full mantissa.
- * Sterbenz does not cover them: 32 of the 63 steps of fl(fl(x-prev)+prev)
- * land off the close, which is what makes the n=1 leg below able to fail. */
+/* Two closes alternating at a ratio near 8.9, both spending a full mantissa:
+ * the series a period-1 step of the (x - prev)*k + prev form cannot copy. */
 #define ERI_NS_HI 651.28353856681395
 #define ERI_NS_LO 73.36385038087522
+/* The bar of the same series whose high, low and close are all -0.0. At n=1
+ * the EMA step returns +0.0 for a -0.0 close behind a positive one, and
+ * (-0.0) - (+0.0) is -0.0 where (-0.0) - (-0.0) is +0.0: the one bar, and the
+ * one bit, on which the copy arm and the recursion differ. */
+#define ERI_NEG_ZERO_BAR 33
 
 /* Golden pins, n=13, unstable 0, outBegIdx=12, outNBElement=240 on TA_SREF.
  * See the header for provenance and for why the tolerance is ABSOLUTE. */
@@ -362,10 +366,8 @@ ErrorNumber test_func_eri( TA_History *history )
          return TA_TESTUTIL_TFRR_BAD_CALCULATION;
       }
    }
-   /* n=1 again, off the Sterbenz-benign corpus. TA_SREF keeps consecutive
-    * closes within a factor of two, where fl(fl(x-prev)+prev) returns x on
-    * every bar -- so the leg above stays green against a period-1 EMA written
-    * as the bare recursion, which is not the identity. This series is what
+   /* n=1 again: the leg above stays green against a period-1 EMA written as
+    * the bare recursion, TA_SREF holding no -0.0. ERI_NEG_ZERO_BAR is what
     * separates the two. */
    for( i = 0; i < 64; i++ )
    {
@@ -373,17 +375,18 @@ ErrorNumber test_func_eri( TA_History *history )
       aH[i] = aC[i] + 1.5;
       aL[i] = aC[i] - 1.5;
    }
+   aC[ERI_NEG_ZERO_BAR] = aH[ERI_NEG_ZERO_BAR] = aL[ERI_NEG_ZERO_BAR] = -0.0;
    rc = TA_ERI( 0, 63, aH, aL, aC, 1, &beg, &nb, outBull, outBear );
    if( rc != TA_SUCCESS || nb != 64 )
    {
-      printf( "ERI n=1 non-Sterbenz Fail: range (%d,%d), expected (0,64)\n",
+      printf( "ERI n=1 signed-zero Fail: range (%d,%d), expected (0,64)\n",
               (int)beg, (int)nb );
       return TA_TESTUTIL_TFRR_BAD_BEGIDX;
    }
    if( server_verify_active() )
    {
       ErrorNumber e;
-      e = eriServerVerify( "n=1 non-Sterbenz", aH, aL, aC, 64, 0, 63, 1,
+      e = eriServerVerify( "n=1 signed-zero", aH, aL, aC, 64, 0, 63, 1,
                            rc, beg, nb, outBull, outBear );
       if( e != TA_TEST_PASS )
          return e;
@@ -395,10 +398,42 @@ ErrorNumber test_func_eri( TA_History *history )
       if( memcmp( &outBull[i], &eb, sizeof(TA_Real) ) != 0 ||
           memcmp( &outBear[i], &es, sizeof(TA_Real) ) != 0 )
       {
-         printf( "ERI n=1 non-Sterbenz Fail bar %d: (%.17g,%.17g) != "
+         printf( "ERI n=1 signed-zero Fail bar %d: (%.17g,%.17g) != "
                  "(high-close, low-close) (%.17g,%.17g)\n",
                  (int)beg + i, outBull[i], outBear[i], eb, es );
          return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+      }
+   }
+   /* The float tier carries its own n=1 arm, and no other gate hands it a
+    * -0.0 close. */
+   {
+      static float fH[64], fL[64], fC[64];
+
+      for( i = 0; i < 64; i++ )
+      {
+         fH[i] = (float)aH[i];
+         fL[i] = (float)aL[i];
+         fC[i] = (float)aC[i];
+      }
+      rc = TA_S_ERI( 0, 63, fH, fL, fC, 1, &beg, &nb, outBull, outBear );
+      if( rc != TA_SUCCESS || beg != 0 || nb != 64 )
+      {
+         printf( "TA_S_ERI n=1 signed-zero Fail: rc=%d range (%d,%d), expected "
+                 "(0,64)\n", (int)rc, (int)beg, (int)nb );
+         return TA_TESTUTIL_TFRR_BAD_BEGIDX;
+      }
+      for( i = 0; i < 64; i++ )
+      {
+         double eb = (double)fH[i] - (double)fC[i];
+         double es = (double)fL[i] - (double)fC[i];
+         if( memcmp( &outBull[i], &eb, sizeof(TA_Real) ) != 0 ||
+             memcmp( &outBear[i], &es, sizeof(TA_Real) ) != 0 )
+         {
+            printf( "TA_S_ERI n=1 signed-zero Fail bar %d: (%.17g,%.17g) != "
+                    "(high-close, low-close) (%.17g,%.17g)\n",
+                    i, outBull[i], outBear[i], eb, es );
+            return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+         }
       }
    }
 

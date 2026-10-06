@@ -27,15 +27,18 @@ TA_RetCode zlema(int startIdx, int endIdx,
    int *outBegIdx, int *outNBElement,
    double outReal[])
 {
-   double optInK_1 = 2.0 / ((double)(optInTimePeriod + 1));
+   double emaBeta = ((double)(optInTimePeriod - 1)) / ((double)(optInTimePeriod + 1));
+   double optInK_1 = 1.0 - emaBeta;
    double tempReal, prevMA;
    int i, today, trailingIdx, outIdx, lag, lookbackTotal;
 
+   emaBeta = 1.0 - optInK_1;
+
    /* KEEP THIS ARITHMETIC EXACTLY AS WRITTEN -- the de-lag in one rounding
     * (2.0*c - l, not c + (c - l)), the seed sum accumulating from 0.0, and
-    * ((v - prevMA)*k) + prevMA. Together they make ZLEMA bit-for-bit equal to
-    * an EMA over a materialised de-lagged series, which is the strongest gate
-    * this function has. Reordering any one breaks that equality silently, and
+    * k*v + beta*prevMA with ema.c's k and beta. Together they make ZLEMA
+    * bit-for-bit equal to an EMA over a materialised de-lagged series, which
+    * is the strongest gate this function has. Reordering any one breaks that equality silently, and
     * the de-lag spelling is worth more than rounding noise: c + (c - l) rounds
     * twice, which is 5e-12 relative where 2c - l cancels.
     */
@@ -59,10 +62,9 @@ TA_RetCode zlema(int startIdx, int endIdx,
 
    /* No smoothing at period of 1: the output is a copy of the input, the
     * convention TA_MA applies to every MAType. Explicit, because at period 1
-    * lag is 0 and optInK_1 is exactly 1.0, so the recursion below reduces to
-    * (x-prev)+prev -- which returns x only while consecutive values stay
-    * within a factor of two of each other. The unstable period still delays
-    * the first output.
+    * lag is 0 and the recursion below, at a k of 1.0 and a beta of 0.0, does
+    * not keep the sign of a -0.0 input. The unstable period still delays the
+    * first output.
     */
    if( optInTimePeriod == 1 )
    {
@@ -97,7 +99,7 @@ TA_RetCode zlema(int startIdx, int endIdx,
 
    while( today <= startIdx )
    {
-      prevMA = (((2.0 * inReal[today] - inReal[trailingIdx]) - prevMA) * optInK_1) + prevMA;
+      prevMA = optInK_1 * (2.0 * inReal[today] - inReal[trailingIdx]) + emaBeta * prevMA;
       today++;
       trailingIdx++;
    }
@@ -107,7 +109,7 @@ TA_RetCode zlema(int startIdx, int endIdx,
 
    while( today <= endIdx )
    {
-      prevMA = (((2.0 * inReal[today] - inReal[trailingIdx]) - prevMA) * optInK_1) + prevMA;
+      prevMA = optInK_1 * (2.0 * inReal[today] - inReal[trailingIdx]) + emaBeta * prevMA;
       today++;
       trailingIdx++;
       outReal[outIdx++] = prevMA;

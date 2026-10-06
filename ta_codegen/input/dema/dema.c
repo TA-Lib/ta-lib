@@ -32,6 +32,7 @@ TA_RetCode dema(int startIdx, int endIdx,
    double outReal[])
 {
    double prevEMA1, prevEMA2, tempReal, optInK_1;
+   double emaBeta;
    int i, today, outIdx, lookbackEMA, lookbackTotal;
 
    /* For an explanation of this function, please read
@@ -76,12 +77,11 @@ TA_RetCode dema(int startIdx, int endIdx,
    /* No smoothing at period of 1: the output is a copy of the input
     * (same convention as TA_MA for every MAType). Explicit and separate
     * from TA_EMA's own copy because the two EMA below are inlined here,
-    * not delegated -- at period 1 they reduce to (x-prev)+prev, which
-    * loses the input as soon as consecutive values differ by more than a
-    * factor of two, and 2*e1 - e2 then propagates the residue rather
-    * than cancelling it. The unstable period still delays the first
-    * output, and at twice EMA's rate: TA_MA reports lookback 0 at period
-    * 1, so the two disagree on alignment when it is non-zero.
+    * not delegated -- at period 1 they run at a k of 1.0 and a beta of
+    * 0.0, which does not keep the sign of a -0.0 input. The unstable
+    * period still delays the first output, and at twice EMA's rate: TA_MA
+    * reports lookback 0 at period 1, so the two disagree on alignment when
+    * it is non-zero.
     */
    if( optInTimePeriod == 1 )
    {
@@ -100,7 +100,7 @@ TA_RetCode dema(int startIdx, int endIdx,
     *
     * The arithmetic order below is the bit-exactness contract
     * (do not reorder or fuse operations):
-    *  - EMA recursion: ((x-prev)*k)+prev.
+    *  - EMA recursion: k*x + beta*prev, with ema.c's k and beta.
     *  - Each EMA is seeded with the sum of its first 'period'
     *    inputs, accumulated from 0.0 in input order (0.0+x is
     *    not x for x=-0.0), divided by the period.
@@ -108,7 +108,9 @@ TA_RetCode dema(int startIdx, int endIdx,
     * In-place (inReal == outReal) is supported: outReal[outIdx]
     * is written only after inReal[startIdx+outIdx] was read.
     */
-   optInK_1 = 2.0 / ((double)(optInTimePeriod + 1));
+   emaBeta = ((double)(optInTimePeriod - 1)) / ((double)(optInTimePeriod + 1));
+   optInK_1 = 1.0 - emaBeta;
+   emaBeta = 1.0 - optInK_1;
 
    /* Seed EMA1 with a simple average of the first
     * 'period' price bars.
@@ -124,7 +126,7 @@ TA_RetCode dema(int startIdx, int endIdx,
     * the bar where EMA2 seeding begins.
     */
    while( today <= startIdx-lookbackEMA )
-      prevEMA1 = ((inReal[today++]-prevEMA1)*optInK_1) + prevEMA1;
+      prevEMA1 = optInK_1 * inReal[today++] + emaBeta * prevEMA1;
 
    /* Seed EMA2 with a simple average of the first 'period'
     * EMA1 values, accumulated as EMA1 produces them.
@@ -134,7 +136,7 @@ TA_RetCode dema(int startIdx, int endIdx,
    i = optInTimePeriod-1;
    while( i-- > 0 )
    {
-      prevEMA1 = ((inReal[today++]-prevEMA1)*optInK_1) + prevEMA1;
+      prevEMA1 = optInK_1 * inReal[today++] + emaBeta * prevEMA1;
       tempReal += prevEMA1;
    }
    prevEMA2 = tempReal / optInTimePeriod;
@@ -144,8 +146,8 @@ TA_RetCode dema(int startIdx, int endIdx,
     */
    while( today <= startIdx )
    {
-      prevEMA1 = ((inReal[today++]-prevEMA1)*optInK_1) + prevEMA1;
-      prevEMA2 = ((prevEMA1-prevEMA2)*optInK_1) + prevEMA2;
+      prevEMA1 = optInK_1 * inReal[today++] + emaBeta * prevEMA1;
+      prevEMA2 = optInK_1 * prevEMA1 + emaBeta * prevEMA2;
    }
 
    /* Stable zone: keep advancing both EMA in lockstep and
@@ -155,8 +157,8 @@ TA_RetCode dema(int startIdx, int endIdx,
    outIdx = 1;
    while( today <= endIdx )
    {
-      prevEMA1 = ((inReal[today++]-prevEMA1)*optInK_1) + prevEMA1;
-      prevEMA2 = ((prevEMA1-prevEMA2)*optInK_1) + prevEMA2;
+      prevEMA1 = optInK_1 * inReal[today++] + emaBeta * prevEMA1;
+      prevEMA2 = optInK_1 * prevEMA1 + emaBeta * prevEMA2;
       outReal[outIdx++] = (2.0*prevEMA1) - prevEMA2;
    }
 

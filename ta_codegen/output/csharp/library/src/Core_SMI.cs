@@ -154,12 +154,15 @@ public partial class Core
       double kSlow = 0;
       double kFast = 0;
       double kSignal = 0;
+      double betaSlow = 0;
+      double betaFast = 0;
+      double betaSignal = 0;
       double highest = 0;
       double lowest = 0;
       double tmp = 0;
       double emaSlowNum = 0;
-      double emaSlowDen = 0;
       double emaFastNum = 0;
+      double emaSlowDen = 0;
       double emaFastDen = 0;
       double sumSlowNum = 0;
       double sumSlowDen = 0;
@@ -215,6 +218,10 @@ public partial class Core
       if( (outSMI.Overlaps(inHigh) && outSMI != inHigh) || (outSMI.Overlaps(inLow) && outSMI != inLow) || (outSMI.Overlaps(inClose) && outSMI != inClose) || (outSMISignal.Overlaps(inHigh) && outSMISignal != inHigh) || (outSMISignal.Overlaps(inLow) && outSMISignal != inLow) || (outSMISignal.Overlaps(inClose) && outSMISignal != inClose) ) {
          return RetCode.BadParam ;
       }
+      /* Declared Num, Num, Den, Den: the stream state keeps this order, and with
+       * each stage's pair adjacent gcc 13 packs the steps two by two and then
+       * reads 16 bytes across two of its own stores, which cannot be forwarded.
+       */
       lookbackTotal = SmiLookback(optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod);
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
@@ -239,9 +246,15 @@ public partial class Core
        * composed form does. The seed sums accumulate from 0.0 in production
        * order; do not reorder or fuse them (0.0+x is not x for x=-0.0).
        */
-      kSlow = 2.0 / (double)(optInSlowPeriod + 1);
-      kFast = 2.0 / (double)(optInFastPeriod + 1);
-      kSignal = 2.0 / (double)(optInSignalPeriod + 1);
+      betaSlow = (double)(optInSlowPeriod - 1) / (double)(optInSlowPeriod + 1);
+      kSlow = 1.0 - betaSlow;
+      betaSlow = 1.0 - kSlow;
+      betaFast = (double)(optInFastPeriod - 1) / (double)(optInFastPeriod + 1);
+      kFast = 1.0 - betaFast;
+      betaFast = 1.0 - kFast;
+      betaSignal = (double)(optInSignalPeriod - 1) / (double)(optInSignalPeriod + 1);
+      kSignal = 1.0 - betaSignal;
+      betaSignal = 1.0 - kSignal;
       lookbackSlow = EmaLookback(optInSlowPeriod);
       lookbackFast = EmaLookback(optInFastPeriod);
       emaSlowNum = 0.0;
@@ -312,8 +325,8 @@ public partial class Core
                emaSlowDen = sumSlowDen / optInSlowPeriod;
             }
          } else {
-            emaSlowNum = Math.FusedMultiplyAdd(num - emaSlowNum, kSlow, emaSlowNum);
-            emaSlowDen = Math.FusedMultiplyAdd(den - emaSlowDen, kSlow, emaSlowDen);
+            emaSlowNum = Math.FusedMultiplyAdd(betaSlow, emaSlowNum, kSlow * num);
+            emaSlowDen = Math.FusedMultiplyAdd(betaSlow, emaSlowDen, kSlow * den);
          }
          /* Stage 2: the fast EMA, over what stage 1 publishes.
           *
@@ -337,8 +350,8 @@ public partial class Core
                   emaFastDen = sumFastDen / optInFastPeriod;
                }
             } else {
-               emaFastNum = Math.FusedMultiplyAdd(emaSlowNum - emaFastNum, kFast, emaFastNum);
-               emaFastDen = Math.FusedMultiplyAdd(emaSlowDen - emaFastDen, kFast, emaFastDen);
+               emaFastNum = Math.FusedMultiplyAdd(betaFast, emaFastNum, kFast * emaSlowNum);
+               emaFastDen = Math.FusedMultiplyAdd(betaFast, emaFastDen, kFast * emaSlowDen);
             }
          }
          /* Stage 3: the SMI line, then the signal EMA over it. */
@@ -356,7 +369,7 @@ public partial class Core
                   prevSignal = sumSignal / optInSignalPeriod;
                }
             } else {
-               prevSignal = Math.FusedMultiplyAdd(smiValue - prevSignal, kSignal, prevSignal);
+               prevSignal = Math.FusedMultiplyAdd(betaSignal, prevSignal, kSignal * smiValue);
             }
          }
          nBar = nBar + 1;
@@ -404,10 +417,10 @@ public partial class Core
          }
          den = highest - lowest;
          num = inClose[today] - (highest + lowest) * 0.5;
-         emaSlowNum = Math.FusedMultiplyAdd(num - emaSlowNum, kSlow, emaSlowNum);
-         emaSlowDen = Math.FusedMultiplyAdd(den - emaSlowDen, kSlow, emaSlowDen);
-         emaFastNum = Math.FusedMultiplyAdd(emaSlowNum - emaFastNum, kFast, emaFastNum);
-         emaFastDen = Math.FusedMultiplyAdd(emaSlowDen - emaFastDen, kFast, emaFastDen);
+         emaSlowNum = Math.FusedMultiplyAdd(betaSlow, emaSlowNum, kSlow * num);
+         emaSlowDen = Math.FusedMultiplyAdd(betaSlow, emaSlowDen, kSlow * den);
+         emaFastNum = Math.FusedMultiplyAdd(betaFast, emaFastNum, kFast * emaSlowNum);
+         emaFastDen = Math.FusedMultiplyAdd(betaFast, emaFastDen, kFast * emaSlowDen);
          /* The denominator is an EMA of an EMA of the high-low range: every term
           * is non-negative and every weight is positive, so it carries no
           * cancellation residue and is zero only when every range that reached it
@@ -425,7 +438,7 @@ public partial class Core
          } else {
             smiValue = 0.0;
          }
-         prevSignal = Math.FusedMultiplyAdd(smiValue - prevSignal, kSignal, prevSignal);
+         prevSignal = Math.FusedMultiplyAdd(betaSignal, prevSignal, kSignal * smiValue);
          outSMI[outIdx] = smiValue;
          outSMISignal[outIdx] = prevSignal;
          outIdx = outIdx + 1;
@@ -454,12 +467,15 @@ public partial class Core
       double kSlow = 0;
       double kFast = 0;
       double kSignal = 0;
+      double betaSlow = 0;
+      double betaFast = 0;
+      double betaSignal = 0;
       double highest = 0;
       double lowest = 0;
       double tmp = 0;
       double emaSlowNum = 0;
-      double emaSlowDen = 0;
       double emaFastNum = 0;
+      double emaSlowDen = 0;
       double emaFastDen = 0;
       double sumSlowNum = 0;
       double sumSlowDen = 0;
@@ -525,9 +541,15 @@ public partial class Core
          return RetCode.Success ;
       }
       outBegIdx = startIdx;
-      kSlow = 2.0 / (double)(optInSlowPeriod + 1);
-      kFast = 2.0 / (double)(optInFastPeriod + 1);
-      kSignal = 2.0 / (double)(optInSignalPeriod + 1);
+      betaSlow = (double)(optInSlowPeriod - 1) / (double)(optInSlowPeriod + 1);
+      kSlow = 1.0 - betaSlow;
+      betaSlow = 1.0 - kSlow;
+      betaFast = (double)(optInFastPeriod - 1) / (double)(optInFastPeriod + 1);
+      kFast = 1.0 - betaFast;
+      betaFast = 1.0 - kFast;
+      betaSignal = (double)(optInSignalPeriod - 1) / (double)(optInSignalPeriod + 1);
+      kSignal = 1.0 - betaSignal;
+      betaSignal = 1.0 - kSignal;
       lookbackSlow = EmaLookback(optInSlowPeriod);
       lookbackFast = EmaLookback(optInFastPeriod);
       emaSlowNum = 0.0;
@@ -591,8 +613,8 @@ public partial class Core
                emaSlowDen = sumSlowDen / optInSlowPeriod;
             }
          } else {
-            emaSlowNum = Math.FusedMultiplyAdd(num - emaSlowNum, kSlow, emaSlowNum);
-            emaSlowDen = Math.FusedMultiplyAdd(den - emaSlowDen, kSlow, emaSlowDen);
+            emaSlowNum = Math.FusedMultiplyAdd(betaSlow, emaSlowNum, kSlow * num);
+            emaSlowDen = Math.FusedMultiplyAdd(betaSlow, emaSlowDen, kSlow * den);
          }
          if( nBar >= lookbackSlow ) {
             nFast = nBar - lookbackSlow;
@@ -604,8 +626,8 @@ public partial class Core
                   emaFastDen = sumFastDen / optInFastPeriod;
                }
             } else {
-               emaFastNum = Math.FusedMultiplyAdd(emaSlowNum - emaFastNum, kFast, emaFastNum);
-               emaFastDen = Math.FusedMultiplyAdd(emaSlowDen - emaFastDen, kFast, emaFastDen);
+               emaFastNum = Math.FusedMultiplyAdd(betaFast, emaFastNum, kFast * emaSlowNum);
+               emaFastDen = Math.FusedMultiplyAdd(betaFast, emaFastDen, kFast * emaSlowDen);
             }
          }
          if( nBar >= lookbackSlow + lookbackFast ) {
@@ -622,7 +644,7 @@ public partial class Core
                   prevSignal = sumSignal / optInSignalPeriod;
                }
             } else {
-               prevSignal = Math.FusedMultiplyAdd(smiValue - prevSignal, kSignal, prevSignal);
+               prevSignal = Math.FusedMultiplyAdd(betaSignal, prevSignal, kSignal * smiValue);
             }
          }
          nBar = nBar + 1;
@@ -667,17 +689,17 @@ public partial class Core
          }
          den = highest - lowest;
          num = (double)inClose[today] - (highest + lowest) * 0.5;
-         emaSlowNum = Math.FusedMultiplyAdd(num - emaSlowNum, kSlow, emaSlowNum);
-         emaSlowDen = Math.FusedMultiplyAdd(den - emaSlowDen, kSlow, emaSlowDen);
-         emaFastNum = Math.FusedMultiplyAdd(emaSlowNum - emaFastNum, kFast, emaFastNum);
-         emaFastDen = Math.FusedMultiplyAdd(emaSlowDen - emaFastDen, kFast, emaFastDen);
+         emaSlowNum = Math.FusedMultiplyAdd(betaSlow, emaSlowNum, kSlow * num);
+         emaSlowDen = Math.FusedMultiplyAdd(betaSlow, emaSlowDen, kSlow * den);
+         emaFastNum = Math.FusedMultiplyAdd(betaFast, emaFastNum, kFast * emaSlowNum);
+         emaFastDen = Math.FusedMultiplyAdd(betaFast, emaFastDen, kFast * emaSlowDen);
          halfDen = 0.5 * emaFastDen;
          if( halfDen > 0.0 ) {
             smiValue = 100.0 * emaFastNum / halfDen;
          } else {
             smiValue = 0.0;
          }
-         prevSignal = Math.FusedMultiplyAdd(smiValue - prevSignal, kSignal, prevSignal);
+         prevSignal = Math.FusedMultiplyAdd(betaSignal, prevSignal, kSignal * smiValue);
          outSMI[outIdx] = smiValue;
          outSMISignal[outIdx] = prevSignal;
          outIdx = outIdx + 1;
@@ -952,11 +974,14 @@ public partial class Core
       internal double kSlow;
       internal double kFast;
       internal double kSignal;
+      internal double betaSlow;
+      internal double betaFast;
+      internal double betaSignal;
       internal double highest;
       internal double lowest;
       internal double emaSlowNum;
-      internal double emaSlowDen;
       internal double emaFastNum;
+      internal double emaSlowDen;
       internal double emaFastDen;
       internal double prevSignal;
       internal int trailingIdx;
@@ -1018,11 +1043,14 @@ public partial class Core
          this.kSlow = other.kSlow;
          this.kFast = other.kFast;
          this.kSignal = other.kSignal;
+         this.betaSlow = other.betaSlow;
+         this.betaFast = other.betaFast;
+         this.betaSignal = other.betaSignal;
          this.highest = other.highest;
          this.lowest = other.lowest;
          this.emaSlowNum = other.emaSlowNum;
-         this.emaSlowDen = other.emaSlowDen;
          this.emaFastNum = other.emaFastNum;
+         this.emaSlowDen = other.emaSlowDen;
          this.emaFastDen = other.emaFastDen;
          this.prevSignal = other.prevSignal;
          this.trailingIdx = other.trailingIdx;
@@ -1156,10 +1184,10 @@ public partial class Core
          }
          den = highest - lowest;
          num = (((sp.today & sp.xMask) != pkSlot2) ? sp.x_inClose[sp.today & sp.xMask] : pkVal2) - (highest + lowest) * 0.5;
-         emaSlowNum = Math.FusedMultiplyAdd(num - emaSlowNum, sp.kSlow, emaSlowNum);
-         emaSlowDen = Math.FusedMultiplyAdd(den - emaSlowDen, sp.kSlow, emaSlowDen);
-         emaFastNum = Math.FusedMultiplyAdd(emaSlowNum - emaFastNum, sp.kFast, emaFastNum);
-         emaFastDen = Math.FusedMultiplyAdd(emaSlowDen - emaFastDen, sp.kFast, emaFastDen);
+         emaSlowNum = Math.FusedMultiplyAdd(sp.betaSlow, emaSlowNum, sp.kSlow * num);
+         emaSlowDen = Math.FusedMultiplyAdd(sp.betaSlow, emaSlowDen, sp.kSlow * den);
+         emaFastNum = Math.FusedMultiplyAdd(sp.betaFast, emaFastNum, sp.kFast * emaSlowNum);
+         emaFastDen = Math.FusedMultiplyAdd(sp.betaFast, emaFastDen, sp.kFast * emaSlowDen);
          /* The denominator is an EMA of an EMA of the high-low range: every term
           * is non-negative and every weight is positive, so it carries no
           * cancellation residue and is zero only when every range that reached it
@@ -1177,7 +1205,7 @@ public partial class Core
          } else {
             smiValue = 0.0;
          }
-         prevSignal = Math.FusedMultiplyAdd(smiValue - prevSignal, sp.kSignal, prevSignal);
+         prevSignal = Math.FusedMultiplyAdd(sp.betaSignal, prevSignal, sp.kSignal * smiValue);
          cur_outSMI = smiValue;
          cur_outSMISignal = prevSignal;
          return new SmiValue(cur_outSMI, cur_outSMISignal);
@@ -1246,10 +1274,10 @@ public partial class Core
       }
       den = sp.highest - sp.lowest;
       num = sp.x_inClose[sp.today & sp.xMask] - (sp.highest + sp.lowest) * 0.5;
-      sp.emaSlowNum = Math.FusedMultiplyAdd(num - sp.emaSlowNum, sp.kSlow, sp.emaSlowNum);
-      sp.emaSlowDen = Math.FusedMultiplyAdd(den - sp.emaSlowDen, sp.kSlow, sp.emaSlowDen);
-      sp.emaFastNum = Math.FusedMultiplyAdd(sp.emaSlowNum - sp.emaFastNum, sp.kFast, sp.emaFastNum);
-      sp.emaFastDen = Math.FusedMultiplyAdd(sp.emaSlowDen - sp.emaFastDen, sp.kFast, sp.emaFastDen);
+      sp.emaSlowNum = Math.FusedMultiplyAdd(sp.betaSlow, sp.emaSlowNum, sp.kSlow * num);
+      sp.emaSlowDen = Math.FusedMultiplyAdd(sp.betaSlow, sp.emaSlowDen, sp.kSlow * den);
+      sp.emaFastNum = Math.FusedMultiplyAdd(sp.betaFast, sp.emaFastNum, sp.kFast * sp.emaSlowNum);
+      sp.emaFastDen = Math.FusedMultiplyAdd(sp.betaFast, sp.emaFastDen, sp.kFast * sp.emaSlowDen);
       /* The denominator is an EMA of an EMA of the high-low range: every term
        * is non-negative and every weight is positive, so it carries no
        * cancellation residue and is zero only when every range that reached it
@@ -1267,7 +1295,7 @@ public partial class Core
       } else {
          smiValue = 0.0;
       }
-      sp.prevSignal = Math.FusedMultiplyAdd(smiValue - sp.prevSignal, sp.kSignal, sp.prevSignal);
+      sp.prevSignal = Math.FusedMultiplyAdd(sp.betaSignal, sp.prevSignal, sp.kSignal * smiValue);
       sp.cur_outSMI = smiValue;
       sp.cur_outSMISignal = sp.prevSignal;
       sp.trailingIdx = sp.trailingIdx + 1;
@@ -1281,12 +1309,15 @@ public partial class Core
       double kSlow = 0;
       double kFast = 0;
       double kSignal = 0;
+      double betaSlow = 0;
+      double betaFast = 0;
+      double betaSignal = 0;
       double highest = 0;
       double lowest = 0;
       double tmp = 0;
       double emaSlowNum = 0;
-      double emaSlowDen = 0;
       double emaFastNum = 0;
+      double emaSlowDen = 0;
       double emaFastDen = 0;
       double sumSlowNum = 0;
       double sumSlowDen = 0;
@@ -1346,6 +1377,10 @@ public partial class Core
          outNBElement = 0;
          return RetCode.InsufficientHistory;
       }
+      /* Declared Num, Num, Den, Den: the stream state keeps this order, and with
+       * each stage's pair adjacent gcc 13 packs the steps two by two and then
+       * reads 16 bytes across two of its own stores, which cannot be forwarded.
+       */
       lookbackTotal = SmiLookback(optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod);
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
@@ -1370,9 +1405,15 @@ public partial class Core
        * composed form does. The seed sums accumulate from 0.0 in production
        * order; do not reorder or fuse them (0.0+x is not x for x=-0.0).
        */
-      kSlow = 2.0 / (double)(optInSlowPeriod + 1);
-      kFast = 2.0 / (double)(optInFastPeriod + 1);
-      kSignal = 2.0 / (double)(optInSignalPeriod + 1);
+      betaSlow = (double)(optInSlowPeriod - 1) / (double)(optInSlowPeriod + 1);
+      kSlow = 1.0 - betaSlow;
+      betaSlow = 1.0 - kSlow;
+      betaFast = (double)(optInFastPeriod - 1) / (double)(optInFastPeriod + 1);
+      kFast = 1.0 - betaFast;
+      betaFast = 1.0 - kFast;
+      betaSignal = (double)(optInSignalPeriod - 1) / (double)(optInSignalPeriod + 1);
+      kSignal = 1.0 - betaSignal;
+      betaSignal = 1.0 - kSignal;
       lookbackSlow = EmaLookback(optInSlowPeriod);
       lookbackFast = EmaLookback(optInFastPeriod);
       emaSlowNum = 0.0;
@@ -1443,8 +1484,8 @@ public partial class Core
                emaSlowDen = sumSlowDen / optInSlowPeriod;
             }
          } else {
-            emaSlowNum = Math.FusedMultiplyAdd(num - emaSlowNum, kSlow, emaSlowNum);
-            emaSlowDen = Math.FusedMultiplyAdd(den - emaSlowDen, kSlow, emaSlowDen);
+            emaSlowNum = Math.FusedMultiplyAdd(betaSlow, emaSlowNum, kSlow * num);
+            emaSlowDen = Math.FusedMultiplyAdd(betaSlow, emaSlowDen, kSlow * den);
          }
          /* Stage 2: the fast EMA, over what stage 1 publishes.
           *
@@ -1468,8 +1509,8 @@ public partial class Core
                   emaFastDen = sumFastDen / optInFastPeriod;
                }
             } else {
-               emaFastNum = Math.FusedMultiplyAdd(emaSlowNum - emaFastNum, kFast, emaFastNum);
-               emaFastDen = Math.FusedMultiplyAdd(emaSlowDen - emaFastDen, kFast, emaFastDen);
+               emaFastNum = Math.FusedMultiplyAdd(betaFast, emaFastNum, kFast * emaSlowNum);
+               emaFastDen = Math.FusedMultiplyAdd(betaFast, emaFastDen, kFast * emaSlowDen);
             }
          }
          /* Stage 3: the SMI line, then the signal EMA over it. */
@@ -1487,7 +1528,7 @@ public partial class Core
                   prevSignal = sumSignal / optInSignalPeriod;
                }
             } else {
-               prevSignal = Math.FusedMultiplyAdd(smiValue - prevSignal, kSignal, prevSignal);
+               prevSignal = Math.FusedMultiplyAdd(betaSignal, prevSignal, kSignal * smiValue);
             }
          }
          nBar = nBar + 1;
@@ -1535,10 +1576,10 @@ public partial class Core
          }
          den = highest - lowest;
          num = inClose[today] - (highest + lowest) * 0.5;
-         emaSlowNum = Math.FusedMultiplyAdd(num - emaSlowNum, kSlow, emaSlowNum);
-         emaSlowDen = Math.FusedMultiplyAdd(den - emaSlowDen, kSlow, emaSlowDen);
-         emaFastNum = Math.FusedMultiplyAdd(emaSlowNum - emaFastNum, kFast, emaFastNum);
-         emaFastDen = Math.FusedMultiplyAdd(emaSlowDen - emaFastDen, kFast, emaFastDen);
+         emaSlowNum = Math.FusedMultiplyAdd(betaSlow, emaSlowNum, kSlow * num);
+         emaSlowDen = Math.FusedMultiplyAdd(betaSlow, emaSlowDen, kSlow * den);
+         emaFastNum = Math.FusedMultiplyAdd(betaFast, emaFastNum, kFast * emaSlowNum);
+         emaFastDen = Math.FusedMultiplyAdd(betaFast, emaFastDen, kFast * emaSlowDen);
          /* The denominator is an EMA of an EMA of the high-low range: every term
           * is non-negative and every weight is positive, so it carries no
           * cancellation residue and is zero only when every range that reached it
@@ -1556,7 +1597,7 @@ public partial class Core
          } else {
             smiValue = 0.0;
          }
-         prevSignal = Math.FusedMultiplyAdd(smiValue - prevSignal, kSignal, prevSignal);
+         prevSignal = Math.FusedMultiplyAdd(betaSignal, prevSignal, kSignal * smiValue);
          outSMI[outIdx * outStride] = smiValue;
          outSMISignal[outIdx * outStride] = prevSignal;
          outIdx = outIdx + 1;
@@ -1588,11 +1629,14 @@ public partial class Core
       sp.kSlow = kSlow;
       sp.kFast = kFast;
       sp.kSignal = kSignal;
+      sp.betaSlow = betaSlow;
+      sp.betaFast = betaFast;
+      sp.betaSignal = betaSignal;
       sp.highest = highest;
       sp.lowest = lowest;
       sp.emaSlowNum = emaSlowNum;
-      sp.emaSlowDen = emaSlowDen;
       sp.emaFastNum = emaFastNum;
+      sp.emaSlowDen = emaSlowDen;
       sp.emaFastDen = emaFastDen;
       sp.prevSignal = prevSignal;
       sp.trailingIdx = trailingIdx;

@@ -197,6 +197,7 @@ static ErrorNumber test_hma_large_period( void );
 static ErrorNumber test_efi_differential( const TA_History *history );
 static ErrorNumber test_efi_oracle( const TA_History *history );
 static ErrorNumber test_efi_degenerate( void );
+static ErrorNumber test_efi_period_one_bits( void );
 static ErrorNumber test_efi_inplace( const TA_History *history );
 static ErrorNumber test_qstick_differential( const TA_History *history );
 static ErrorNumber test_qstick_oracle( void );
@@ -315,6 +316,10 @@ ErrorNumber test_func_composite1( TA_History *history )
       return retValue;
 
    retValue = test_efi_degenerate();
+   if( retValue != TA_TEST_PASS )
+      return retValue;
+
+   retValue = test_efi_period_one_bits();
    if( retValue != TA_TEST_PASS )
       return retValue;
 
@@ -2034,11 +2039,11 @@ static const int efiStartGrid[] = { 0, 1, 40, 200 };
  * TA_FUNC_UNST_EMA = 0. idx below is the BAR index.
  *
  * These are the oracle's OWN doubles, transcribed at the 17 digits that
- * round-trip. They are NOT what TA_EFI returns: pandas' ewm computes
- * alpha*x + (1-alpha)*prev where TA-Lib computes fma(x-prev, alpha, prev), and
+ * round-trip. They are NOT what TA_EFI returns: pandas' ewm rounds
+ * alpha*x + (1-alpha)*prev twice where TA-Lib fuses it into one fma, and
  * the seed sums differ in order (pandas .mean() sums pairwise), so the two
  * trajectories separate in the last bits. Measured divergence at these bars is
- * 1.4e-16 .. 7.0e-16 relative, and 1.4e-14 over all 239 values at period 13.
+ * at most 1.8e-15 relative.
  * Never make this leg bitwise -- pinning TA-Lib's own arithmetic here would
  * turn the only formula-constraining leg into a restatement of leg (1).
  *
@@ -2319,6 +2324,59 @@ static ErrorNumber test_efi_degenerate( void )
 
    return TA_TEST_PASS;
 #undef EFI_DEG_N
+}
+
+/* Period 1 is the raw force, to the bit.
+ *
+ * A down bar on zero volume is a -0.0 force. Behind a positive force the EMA
+ * step returns +0.0 for it, so this is the only bar on which the period-1 arm
+ * and the recursion differ, and the differential leg cannot see it: its
+ * reference is TA_EMA, which carries the same arm. */
+static ErrorNumber test_efi_period_one_bits( void )
+{
+#define EFI_P1_N 32
+   static TA_Real close[EFI_P1_N], volume[EFI_P1_N], out[EFI_P1_N];
+   TA_RetCode rc;
+   TA_Integer beg, nb;
+   int i, nbNegZero = 0;
+   double want, prevWant = 0.0;
+
+   /* Three up bars on volume, then a down bar on none. */
+   for( i = 0; i < EFI_P1_N; i++ )
+   {
+      close[i]  = i == 0 ? 50.13 : close[i-1] + ( i % 4 == 3 ? -0.37 : 1.21 );
+      volume[i] = i % 4 == 3 ? 0.0 : 1000.0 + 17.0 * i;
+   }
+
+   rc = TA_EFI( 0, EFI_P1_N - 1, close, volume, 1, &beg, &nb, out );
+   if( rc != TA_SUCCESS || beg != 1 || nb != EFI_P1_N - 1 )
+   {
+      printf( "EFI period-1 bits Fail: rc=%d beg=%d nb=%d expected 0/1/%d\n",
+              (int)rc, (int)beg, (int)nb, EFI_P1_N - 1 );
+      return TA_TESTUTIL_TFRR_BAD_BEGIDX;
+   }
+   for( i = 1; i < EFI_P1_N; i++ )
+   {
+      want = ( close[i] - close[i-1] ) * volume[i];
+      if( want == 0.0 && signbit( want ) && prevWant > 0.0 )
+         nbNegZero++;
+      if( memcmp( &out[i-1], &want, sizeof(double) ) != 0 )
+      {
+         printf( "EFI period-1 bits Fail at bar %d: got %.17g (sign bit %d) "
+                 "expected %.17g (sign bit %d)\n", i, out[i-1],
+                 signbit( out[i-1] ) != 0, want, signbit( want ) != 0 );
+         return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+      }
+      prevWant = want;
+   }
+   if( nbNegZero == 0 )
+   {
+      printf( "EFI period-1 bits Fail: the series holds no -0.0 force behind "
+              "a positive one, so it cannot see the period-1 arm\n" );
+      return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+   }
+   return TA_TEST_PASS;
+#undef EFI_P1_N
 }
 
 /* (4) IN-PLACE ALIASING over both inputs.

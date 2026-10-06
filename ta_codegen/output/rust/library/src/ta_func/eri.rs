@@ -190,6 +190,7 @@ impl Core {
         let mut prevMA: f64 = 0.0_f64;
         let mut tempReal: f64 = 0.0_f64;
         let mut k: f64 = 0.0_f64;
+        let mut beta: f64 = 0.0_f64;
         let mut tempHT: f64 = 0.0_f64;
         let mut tempLT: f64 = 0.0_f64;
         // Elder Ray Index (Alexander Elder, Trading for a Living, 1993): how far
@@ -221,9 +222,8 @@ impl Core {
         let inLow = &inLow[..=endIdx];
         let inClose = &inClose[..=endIdx];
         // Period 1: ema.c's explicit copy arm, kept here for the same reason it
-        // exists there. At n == 1 the recursion below is fl(fl(x-prev)+prev),
-        // which returns x only while consecutive closes stay within a factor of
-        // two (Sterbenz), so without this arm `High - TA_EMA(Close, 1)` is not
+        // exists there. At n == 1 the recursion below does not keep the sign
+        // of a -0.0 close, so without this arm `High - TA_EMA(Close, 1)` is not
         // what this function returns. The unstable period still delays the first
         // output, through the shared lookback above.
         if optInTimePeriod == 1 {
@@ -250,7 +250,9 @@ impl Core {
             (*outNBElement) = outIdx;
             return RetCode::Success;
         }
-        k = 2.0 / ((optInTimePeriod as f64) + 1.0);
+        beta = ((optInTimePeriod - 1) as f64) / ((optInTimePeriod + 1) as f64);
+        k = 1.0 - beta;
+        beta = 1.0 - k;
         // Seed: ema.c's DEFAULT arm, op for op.
         today = startIdx - lookbackTotal;
         i = (optInTimePeriod) as usize;
@@ -261,7 +263,7 @@ impl Core {
         prevMA = tempReal / ((optInTimePeriod) as f64);
         // The warm-up also consumes the EMA unstable period.
         while today <= startIdx {
-            prevMA = (inClose[{ let _v = today; today += 1; _v }] - prevMA as f64).mul_add(k, prevMA);
+            prevMA = (beta as f64).mul_add(prevMA, k * inClose[{ let _v = today; today += 1; _v }]);
         }
         // prevMA is the EMA at bar startIdx; today == startIdx + 1. Load the
         // extremes into temps BEFORE writing either output: with two outputs
@@ -280,7 +282,7 @@ impl Core {
             let _w3 = &mut outBearPower[outIdx..][.._wn];
             let _w4 = &mut outBullPower[outIdx..][.._wn];
             for _wk in 0.._wn {
-                prevMA = (_w0[_wk] - prevMA as f64).mul_add(k, prevMA);
+                prevMA = (beta as f64).mul_add(prevMA, k * _w0[_wk]);
                 tempHT = _w1[_wk];
                 tempLT = _w2[_wk];
                 _w4[_wk] = tempHT - prevMA;
@@ -443,6 +445,7 @@ struct EriStreamState {
     optInTimePeriod: i32,
     prevMA: f64,
     k: f64,
+    beta: f64,
     cur_outBullPower: f64,
     cur_outBearPower: f64,
 }
@@ -468,7 +471,7 @@ impl Core {
         } else {
             let mut tempHT: f64 = 0.0_f64;
             let mut tempLT: f64 = 0.0_f64;
-            sp.prevMA = (inClose - sp.prevMA as f64).mul_add(sp.k, sp.prevMA);
+            sp.prevMA = (sp.beta as f64).mul_add(sp.prevMA, sp.k * inClose);
             tempHT = inHigh;
             tempLT = inLow;
             (*outBullPower) = tempHT - sp.prevMA;
@@ -515,6 +518,7 @@ impl Core {
             let mut prevMA: f64 = 0.0_f64;
             let mut tempReal: f64 = 0.0_f64;
             let mut k: f64 = 0.0_f64;
+            let mut beta: f64 = 0.0_f64;
             let mut tempHT: f64 = 0.0_f64;
             let mut tempLT: f64 = 0.0_f64;
             // Elder Ray Index (Alexander Elder, Trading for a Living, 1993): how far
@@ -543,9 +547,8 @@ impl Core {
                 return Err(RetCode::InsufficientHistory);
             }
             // Period 1: ema.c's explicit copy arm, kept here for the same reason it
-            // exists there. At n == 1 the recursion below is fl(fl(x-prev)+prev),
-            // which returns x only while consecutive closes stay within a factor of
-            // two (Sterbenz), so without this arm `High - TA_EMA(Close, 1)` is not
+            // exists there. At n == 1 the recursion below does not keep the sign
+            // of a -0.0 close, so without this arm `High - TA_EMA(Close, 1)` is not
             // what this function returns. The unstable period still delays the first
             // output, through the shared lookback above.
             outIdx = 0;
@@ -567,6 +570,7 @@ impl Core {
                 optInTimePeriod,
                 prevMA,
                 k,
+                beta,
                 cur_outBullPower: outBullPower[(*outNBElement - 1) * outStride],
                 cur_outBearPower: outBearPower[(*outNBElement - 1) * outStride],
             };
@@ -579,6 +583,7 @@ impl Core {
             let mut prevMA: f64 = 0.0_f64;
             let mut tempReal: f64 = 0.0_f64;
             let mut k: f64 = 0.0_f64;
+            let mut beta: f64 = 0.0_f64;
             let mut tempHT: f64 = 0.0_f64;
             let mut tempLT: f64 = 0.0_f64;
             // Elder Ray Index (Alexander Elder, Trading for a Living, 1993): how far
@@ -607,12 +612,13 @@ impl Core {
                 return Err(RetCode::InsufficientHistory);
             }
             // Period 1: ema.c's explicit copy arm, kept here for the same reason it
-            // exists there. At n == 1 the recursion below is fl(fl(x-prev)+prev),
-            // which returns x only while consecutive closes stay within a factor of
-            // two (Sterbenz), so without this arm `High - TA_EMA(Close, 1)` is not
+            // exists there. At n == 1 the recursion below does not keep the sign
+            // of a -0.0 close, so without this arm `High - TA_EMA(Close, 1)` is not
             // what this function returns. The unstable period still delays the first
             // output, through the shared lookback above.
-            k = 2.0 / ((optInTimePeriod as f64) + 1.0);
+            beta = ((optInTimePeriod - 1) as f64) / ((optInTimePeriod + 1) as f64);
+            k = 1.0 - beta;
+            beta = 1.0 - k;
             // Seed: ema.c's DEFAULT arm, op for op.
             today = startIdx - lookbackTotal;
             i = (optInTimePeriod) as usize;
@@ -623,7 +629,7 @@ impl Core {
             prevMA = tempReal / ((optInTimePeriod) as f64);
             // The warm-up also consumes the EMA unstable period.
             while today <= startIdx {
-                prevMA = (inClose[{ let _v = today; today += 1; _v }] - prevMA as f64).mul_add(k, prevMA);
+                prevMA = (beta as f64).mul_add(prevMA, k * inClose[{ let _v = today; today += 1; _v }]);
             }
             // prevMA is the EMA at bar startIdx; today == startIdx + 1. Load the
             // extremes into temps BEFORE writing either output: with two outputs
@@ -635,7 +641,7 @@ impl Core {
             outBearPower[(0 * outStride) as usize] = tempLT - prevMA;
             outIdx = 1;
             while today <= endIdx {
-                prevMA = (inClose[today] - prevMA as f64).mul_add(k, prevMA);
+                prevMA = (beta as f64).mul_add(prevMA, k * inClose[today]);
                 tempHT = inHigh[today];
                 tempLT = inLow[today];
                 outBullPower[(outIdx * outStride) as usize] = tempHT - prevMA;
@@ -651,6 +657,7 @@ impl Core {
                 optInTimePeriod,
                 prevMA,
                 k,
+                beta,
                 cur_outBullPower: outBullPower[(*outNBElement - 1) * outStride],
                 cur_outBearPower: outBearPower[(*outNBElement - 1) * outStride],
             };
@@ -855,7 +862,7 @@ impl EriStream {
                 let mut tempHT: f64 = 0.0_f64;
                 let mut tempLT: f64 = 0.0_f64;
                 let mut prevMA = sp.prevMA;
-                prevMA = (inClose - prevMA as f64).mul_add(sp.k, prevMA);
+                prevMA = (sp.beta as f64).mul_add(prevMA, sp.k * inClose);
                 tempHT = inHigh;
                 tempLT = inLow;
                 (*outBullPower) = tempHT - prevMA;

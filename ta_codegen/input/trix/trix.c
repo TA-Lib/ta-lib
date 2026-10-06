@@ -33,6 +33,7 @@ TA_RetCode trix(int startIdx, int endIdx,
    double outReal[])
 {
    double prevEMA1, prevEMA2, prevEMA3, tempReal, optInK_1;
+   double emaBeta;
    int i, today, outIdx, lookbackEMA, lookbackTotal;
 
    /* TRIX = 1-day percent rate-of-change of a triple EMA. */
@@ -60,7 +61,9 @@ TA_RetCode trix(int startIdx, int endIdx,
     * x for x=-0.0). In-place safe: outReal[outIdx] is written after
     * inReal[startIdx+outIdx] was read.
     */
-   optInK_1 = 2.0 / ((double)(optInTimePeriod + 1));
+   emaBeta = ((double)(optInTimePeriod - 1)) / ((double)(optInTimePeriod + 1));
+   optInK_1 = 1.0 - emaBeta;
+   emaBeta = 1.0 - optInK_1;
 
    /* Seed EMA1 with a simple average of the first
     * 'period' price bars.
@@ -76,7 +79,7 @@ TA_RetCode trix(int startIdx, int endIdx,
     * the bar where EMA2 seeding begins.
     */
    while( today <= startIdx-((lookbackEMA*2)+1) )
-      prevEMA1 = ((inReal[today++]-prevEMA1)*optInK_1) + prevEMA1;
+      prevEMA1 = optInK_1 * inReal[today++] + emaBeta * prevEMA1;
 
    /* Seed EMA2 with a simple average of the first 'period'
     * EMA1 values, accumulated as EMA1 produces them.
@@ -86,7 +89,7 @@ TA_RetCode trix(int startIdx, int endIdx,
    i = optInTimePeriod-1;
    while( i-- > 0 )
    {
-      prevEMA1 = ((inReal[today++]-prevEMA1)*optInK_1) + prevEMA1;
+      prevEMA1 = optInK_1 * inReal[today++] + emaBeta * prevEMA1;
       tempReal += prevEMA1;
    }
    prevEMA2 = tempReal / optInTimePeriod;
@@ -96,8 +99,8 @@ TA_RetCode trix(int startIdx, int endIdx,
     */
    while( today <= startIdx-(lookbackEMA+1) )
    {
-      prevEMA1 = ((inReal[today++]-prevEMA1)*optInK_1) + prevEMA1;
-      prevEMA2 = ((prevEMA1-prevEMA2)*optInK_1) + prevEMA2;
+      prevEMA1 = optInK_1 * inReal[today++] + emaBeta * prevEMA1;
+      prevEMA2 = optInK_1 * prevEMA1 + emaBeta * prevEMA2;
    }
 
    /* Seed EMA3 with a simple average of the first 'period'
@@ -108,8 +111,8 @@ TA_RetCode trix(int startIdx, int endIdx,
    i = optInTimePeriod-1;
    while( i-- > 0 )
    {
-      prevEMA1 = ((inReal[today++]-prevEMA1)*optInK_1) + prevEMA1;
-      prevEMA2 = ((prevEMA1-prevEMA2)*optInK_1) + prevEMA2;
+      prevEMA1 = optInK_1 * inReal[today++] + emaBeta * prevEMA1;
+      prevEMA2 = optInK_1 * prevEMA1 + emaBeta * prevEMA2;
       tempReal += prevEMA2;
    }
    prevEMA3 = tempReal / optInTimePeriod;
@@ -119,9 +122,9 @@ TA_RetCode trix(int startIdx, int endIdx,
     */
    while( today <= startIdx-1 )
    {
-      prevEMA1 = ((inReal[today++]-prevEMA1)*optInK_1) + prevEMA1;
-      prevEMA2 = ((prevEMA1-prevEMA2)*optInK_1) + prevEMA2;
-      prevEMA3 = ((prevEMA2-prevEMA3)*optInK_1) + prevEMA3;
+      prevEMA1 = optInK_1 * inReal[today++] + emaBeta * prevEMA1;
+      prevEMA2 = optInK_1 * prevEMA1 + emaBeta * prevEMA2;
+      prevEMA3 = optInK_1 * prevEMA2 + emaBeta * prevEMA3;
    }
 
    /* Stable zone: keep advancing the three EMA in lockstep and
@@ -131,9 +134,9 @@ TA_RetCode trix(int startIdx, int endIdx,
    while( today <= endIdx )
    {
       tempReal = prevEMA3;
-      prevEMA1 = ((inReal[today++]-prevEMA1)*optInK_1) + prevEMA1;
-      prevEMA2 = ((prevEMA1-prevEMA2)*optInK_1) + prevEMA2;
-      prevEMA3 = ((prevEMA2-prevEMA3)*optInK_1) + prevEMA3;
+      prevEMA1 = optInK_1 * inReal[today++] + emaBeta * prevEMA1;
+      prevEMA2 = optInK_1 * prevEMA1 + emaBeta * prevEMA2;
+      prevEMA3 = optInK_1 * prevEMA2 + emaBeta * prevEMA3;
       if( tempReal != 0.0 )
          outReal[outIdx++] = ((prevEMA3 / tempReal)-1.0)*100.0;
       else

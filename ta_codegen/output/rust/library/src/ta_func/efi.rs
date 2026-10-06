@@ -176,6 +176,7 @@ impl Core {
         assert!(_assertStart > endIdx || endIdx < inVolume.len());
         assert!(_assertStart > endIdx || endIdx - _assertStart < outReal.len());
         let mut startIdx = startIdx;
+        let mut emaBeta: f64 = 0.0_f64;
         let mut optInK_1: f64 = 0.0_f64;
         let mut tempReal: f64 = 0.0_f64;
         let mut prevMA: f64 = 0.0_f64;
@@ -185,7 +186,9 @@ impl Core {
         let mut today: usize = 0_usize;
         let mut outIdx: usize = 0_usize;
         let mut lookbackTotal: usize = 0_usize;
-        optInK_1 = 2.0 / ((optInTimePeriod + 1) as f64);
+        emaBeta = ((optInTimePeriod - 1) as f64) / ((optInTimePeriod + 1) as f64);
+        optInK_1 = 1.0 - emaBeta;
+        emaBeta = 1.0 - ((optInK_1) as f64);
         // Alexander Elder's Force Index (Trading for a Living, 1993): the one-bar
         // close-to-close move weighted by that bar's volume, then smoothed with an
         // EMA. Elder's 2-period reading is the short-term form and 13 the
@@ -196,10 +199,10 @@ impl Core {
         //
         // The arithmetic below is ema.c's with inReal[t] replaced by force[t], kept
         // in exactly that shape on purpose: the seed accumulates from 0.0 in the
-        // same order, and the recurrence is (x - prevMA)*k + prevMA rather than the
-        // algebraically equal k*x + (1-k)*prevMA. That order IS the bit-exactness
-        // contract against the composed reference in test_composite.c -- MOM, then
-        // MULT, then EMA -- so do not tidy it. TRIX carries the same warning.
+        // same order, and the recurrence is k*x + beta*prevMA with ema.c's k and
+        // beta. That order IS the bit-exactness contract against the composed
+        // reference in test_composite.c -- MOM, then MULT, then EMA -- so do not
+        // tidy it. TRIX carries the same warning.
         //
         // Nothing on the data path divides by an input, so issue #112 is satisfied
         // structurally: a flat close gives force exactly 0.0 and output exactly
@@ -228,11 +231,8 @@ impl Core {
         let inClose = &inClose[..=endIdx];
         let inVolume = &inVolume[..=endIdx];
         // No smoothing at a period of 1: the output is the raw Force Index.
-        // Explicit for the reason spelled out in ema.c -- at period 1 optInK_1 is
-        // exactly 1.0, so the recursion reduces to (x-prev)+prev, which returns x
-        // only while consecutive values stay within a factor of two of each other.
-        // Force values swing by orders of magnitude, far more than the prices EMA
-        // warns about.
+        // Explicit because the recursion, at a k of 1.0 and a beta of 0.0, does
+        // not keep the sign of a -0.0 force: a down bar on zero volume.
         if optInTimePeriod == 1 {
             (*outBegIdx) = startIdx;
             outIdx = 0;
@@ -281,7 +281,7 @@ impl Core {
         while today <= startIdx {
             force = (inClose[today] - prevClose) * inVolume[today];
             prevClose = inClose[today];
-            prevMA = (force - prevMA as f64).mul_add(optInK_1, prevMA);
+            prevMA = (emaBeta as f64).mul_add(prevMA, ((optInK_1) as f64) * force);
             today = today + 1;
         }
         outReal[0] = prevMA;
@@ -294,7 +294,7 @@ impl Core {
             for _wk in 0.._wn {
                 force = (_w0[_wk] - prevClose) * _w1[_wk];
                 prevClose = _w0[_wk];
-                prevMA = (force - prevMA as f64).mul_add(optInK_1, prevMA);
+                prevMA = (emaBeta as f64).mul_add(prevMA, ((optInK_1) as f64) * force);
                 _w2[_wk] = prevMA;
                 outIdx = outIdx + 1;
                 today = today + 1;
@@ -449,6 +449,7 @@ pub struct EfiStream {
 struct EfiStreamState {
     optInTimePeriod: i32,
     prevClose: f64,
+    emaBeta: f64,
     optInK_1: f64,
     prevMA: f64,
     cur_outReal: f64,
@@ -471,7 +472,7 @@ impl Core {
             let mut force: f64 = 0.0_f64;
             force = (inClose - sp.prevClose) * inVolume;
             sp.prevClose = inClose;
-            sp.prevMA = (force - sp.prevMA as f64).mul_add(sp.optInK_1, sp.prevMA);
+            sp.prevMA = (sp.emaBeta as f64).mul_add(sp.prevMA, ((sp.optInK_1) as f64) * force);
             (*outReal) = sp.prevMA;
             sp.cur_outReal = (*outReal);
         }
@@ -507,6 +508,7 @@ impl Core {
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
         if optInTimePeriod == 1 {
+            let mut emaBeta: f64 = 0.0_f64;
             let mut optInK_1: f64 = 0.0_f64;
             let mut tempReal: f64 = 0.0_f64;
             let mut prevMA: f64 = 0.0_f64;
@@ -516,7 +518,9 @@ impl Core {
             let mut today: usize = 0_usize;
             let mut outIdx: usize = 0_usize;
             let mut lookbackTotal: usize = 0_usize;
-            optInK_1 = 2.0 / ((optInTimePeriod + 1) as f64);
+            emaBeta = ((optInTimePeriod - 1) as f64) / ((optInTimePeriod + 1) as f64);
+            optInK_1 = 1.0 - emaBeta;
+            emaBeta = 1.0 - ((optInK_1) as f64);
             // Alexander Elder's Force Index (Trading for a Living, 1993): the one-bar
             // close-to-close move weighted by that bar's volume, then smoothed with an
             // EMA. Elder's 2-period reading is the short-term form and 13 the
@@ -527,10 +531,10 @@ impl Core {
             //
             // The arithmetic below is ema.c's with inReal[t] replaced by force[t], kept
             // in exactly that shape on purpose: the seed accumulates from 0.0 in the
-            // same order, and the recurrence is (x - prevMA)*k + prevMA rather than the
-            // algebraically equal k*x + (1-k)*prevMA. That order IS the bit-exactness
-            // contract against the composed reference in test_composite.c -- MOM, then
-            // MULT, then EMA -- so do not tidy it. TRIX carries the same warning.
+            // same order, and the recurrence is k*x + beta*prevMA with ema.c's k and
+            // beta. That order IS the bit-exactness contract against the composed
+            // reference in test_composite.c -- MOM, then MULT, then EMA -- so do not
+            // tidy it. TRIX carries the same warning.
             //
             // Nothing on the data path divides by an input, so issue #112 is satisfied
             // structurally: a flat close gives force exactly 0.0 and output exactly
@@ -557,11 +561,8 @@ impl Core {
                 return Err(RetCode::InsufficientHistory);
             }
             // No smoothing at a period of 1: the output is the raw Force Index.
-            // Explicit for the reason spelled out in ema.c -- at period 1 optInK_1 is
-            // exactly 1.0, so the recursion reduces to (x-prev)+prev, which returns x
-            // only while consecutive values stay within a factor of two of each other.
-            // Force values swing by orders of magnitude, far more than the prices EMA
-            // warns about.
+            // Explicit because the recursion, at a k of 1.0 and a beta of 0.0, does
+            // not keep the sign of a -0.0 force: a down bar on zero volume.
             (*outBegIdx) = startIdx;
             outIdx = 0;
             today = startIdx;
@@ -579,12 +580,14 @@ impl Core {
             let state = EfiStreamState {
                 optInTimePeriod,
                 prevClose,
+                emaBeta,
                 optInK_1,
                 prevMA,
                 cur_outReal: outReal[(*outNBElement - 1) * outStride],
             };
             Ok(EfiStream { state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
         } else {
+            let mut emaBeta: f64 = 0.0_f64;
             let mut optInK_1: f64 = 0.0_f64;
             let mut tempReal: f64 = 0.0_f64;
             let mut prevMA: f64 = 0.0_f64;
@@ -594,7 +597,9 @@ impl Core {
             let mut today: usize = 0_usize;
             let mut outIdx: usize = 0_usize;
             let mut lookbackTotal: usize = 0_usize;
-            optInK_1 = 2.0 / ((optInTimePeriod + 1) as f64);
+            emaBeta = ((optInTimePeriod - 1) as f64) / ((optInTimePeriod + 1) as f64);
+            optInK_1 = 1.0 - emaBeta;
+            emaBeta = 1.0 - ((optInK_1) as f64);
             // Alexander Elder's Force Index (Trading for a Living, 1993): the one-bar
             // close-to-close move weighted by that bar's volume, then smoothed with an
             // EMA. Elder's 2-period reading is the short-term form and 13 the
@@ -605,10 +610,10 @@ impl Core {
             //
             // The arithmetic below is ema.c's with inReal[t] replaced by force[t], kept
             // in exactly that shape on purpose: the seed accumulates from 0.0 in the
-            // same order, and the recurrence is (x - prevMA)*k + prevMA rather than the
-            // algebraically equal k*x + (1-k)*prevMA. That order IS the bit-exactness
-            // contract against the composed reference in test_composite.c -- MOM, then
-            // MULT, then EMA -- so do not tidy it. TRIX carries the same warning.
+            // same order, and the recurrence is k*x + beta*prevMA with ema.c's k and
+            // beta. That order IS the bit-exactness contract against the composed
+            // reference in test_composite.c -- MOM, then MULT, then EMA -- so do not
+            // tidy it. TRIX carries the same warning.
             //
             // Nothing on the data path divides by an input, so issue #112 is satisfied
             // structurally: a flat close gives force exactly 0.0 and output exactly
@@ -635,11 +640,8 @@ impl Core {
                 return Err(RetCode::InsufficientHistory);
             }
             // No smoothing at a period of 1: the output is the raw Force Index.
-            // Explicit for the reason spelled out in ema.c -- at period 1 optInK_1 is
-            // exactly 1.0, so the recursion reduces to (x-prev)+prev, which returns x
-            // only while consecutive values stay within a factor of two of each other.
-            // Force values swing by orders of magnitude, far more than the prices EMA
-            // warns about.
+            // Explicit because the recursion, at a k of 1.0 and a beta of 0.0, does
+            // not keep the sign of a -0.0 force: a down bar on zero volume.
             (*outBegIdx) = startIdx;
             // The first EMA value is a simple average of the first 'period' force
             // values; it then seeds the recursion. This is ema.c's seeding applied
@@ -658,7 +660,7 @@ impl Core {
             while today <= startIdx {
                 force = (inClose[today] - prevClose) * inVolume[today];
                 prevClose = inClose[today];
-                prevMA = (force - prevMA as f64).mul_add(optInK_1, prevMA);
+                prevMA = (emaBeta as f64).mul_add(prevMA, ((optInK_1) as f64) * force);
                 today = today + 1;
             }
             outReal[(0 * outStride) as usize] = prevMA;
@@ -666,7 +668,7 @@ impl Core {
             while today <= endIdx {
                 force = (inClose[today] - prevClose) * inVolume[today];
                 prevClose = inClose[today];
-                prevMA = (force - prevMA as f64).mul_add(optInK_1, prevMA);
+                prevMA = (emaBeta as f64).mul_add(prevMA, ((optInK_1) as f64) * force);
                 outReal[(outIdx * outStride) as usize] = prevMA;
                 outIdx = outIdx + 1;
                 today = today + 1;
@@ -677,6 +679,7 @@ impl Core {
             let state = EfiStreamState {
                 optInTimePeriod,
                 prevClose,
+                emaBeta,
                 optInK_1,
                 prevMA,
                 cur_outReal: outReal[(*outNBElement - 1) * outStride],
@@ -871,7 +874,7 @@ impl EfiStream {
                 let mut prevMA = sp.prevMA;
                 force = (inClose - prevClose) * inVolume;
                 prevClose = inClose;
-                prevMA = (force - prevMA as f64).mul_add(sp.optInK_1, prevMA);
+                prevMA = (sp.emaBeta as f64).mul_add(prevMA, ((sp.optInK_1) as f64) * force);
                 (*outReal) = prevMA;
             }
         }

@@ -3807,6 +3807,7 @@ static int sv_steq_TA_CVI( const struct TA_CVI_Stream *a, const struct TA_CVI_St
    if( a->optInROCPeriod != b->optInROCPeriod ) { *w = "optInROCPeriod"; return 1; }
    if( sv_xtier_ne(a->prevEMA, b->prevEMA, z) ) { *w = "prevEMA"; return 1; }
    if( sv_xtier_ne(a->optInK_1, b->optInK_1, z) ) { *w = "optInK_1"; return 1; }
+   if( sv_xtier_ne(a->emaBeta, b->emaBeta, z) ) { *w = "emaBeta"; return 1; }
    if( a->emaRing_Idx != b->emaRing_Idx ) { *w = "emaRing_Idx"; return 1; }
    if( a->maxIdx_emaRing != b->maxIdx_emaRing ) { *w = "maxIdx_emaRing"; return 1; }
    if( a->cbSize_emaRing != b->cbSize_emaRing ) { *w = "cbSize_emaRing"; return 1; }
@@ -3826,6 +3827,7 @@ static int sv_steq_TA_DEMA( const struct TA_DEMA_Stream *a, const struct TA_DEMA
    if( sv_xtier_ne(a->prevEMA1, b->prevEMA1, z) ) { *w = "prevEMA1"; return 1; }
    if( sv_xtier_ne(a->prevEMA2, b->prevEMA2, z) ) { *w = "prevEMA2"; return 1; }
    if( sv_xtier_ne(a->optInK_1, b->optInK_1, z) ) { *w = "optInK_1"; return 1; }
+   if( sv_xtier_ne(a->emaBeta, b->emaBeta, z) ) { *w = "emaBeta"; return 1; }
    return 0;
 }
 
@@ -3930,6 +3932,7 @@ static int sv_steq_TA_EFI( const struct TA_EFI_Stream *a, const struct TA_EFI_St
    if( sv_xtier_ne(a->cur_outReal, b->cur_outReal, z) ) { *w = "cur_outReal"; return 1; }
    if( a->optInTimePeriod != b->optInTimePeriod ) { *w = "optInTimePeriod"; return 1; }
    if( sv_xtier_ne(a->prevClose, b->prevClose, z) ) { *w = "prevClose"; return 1; }
+   if( sv_xtier_ne(a->emaBeta, b->emaBeta, z) ) { *w = "emaBeta"; return 1; }
    if( sv_xtier_ne(a->optInK_1, b->optInK_1, z) ) { *w = "optInK_1"; return 1; }
    if( sv_xtier_ne(a->prevMA, b->prevMA, z) ) { *w = "prevMA"; return 1; }
    return 0;
@@ -3943,6 +3946,7 @@ static int sv_steq_TA_EMA( const struct TA_EMA_Stream *a, const struct TA_EMA_St
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
    if( sv_xtier_ne(a->cur_outReal, b->cur_outReal, z) ) { *w = "cur_outReal"; return 1; }
    if( a->optInTimePeriod != b->optInTimePeriod ) { *w = "optInTimePeriod"; return 1; }
+   if( sv_xtier_ne(a->emaBeta, b->emaBeta, z) ) { *w = "emaBeta"; return 1; }
    if( sv_xtier_ne(a->optInK_1, b->optInK_1, z) ) { *w = "optInK_1"; return 1; }
    if( sv_xtier_ne(a->prevMA, b->prevMA, z) ) { *w = "prevMA"; return 1; }
    return 0;
@@ -4001,6 +4005,7 @@ static int sv_steq_TA_ERI( const struct TA_ERI_Stream *a, const struct TA_ERI_St
    if( a->optInTimePeriod != b->optInTimePeriod ) { *w = "optInTimePeriod"; return 1; }
    if( sv_xtier_ne(a->prevMA, b->prevMA, z) ) { *w = "prevMA"; return 1; }
    if( sv_xtier_ne(a->k, b->k, z) ) { *w = "k"; return 1; }
+   if( sv_xtier_ne(a->beta, b->beta, z) ) { *w = "beta"; return 1; }
    return 0;
 }
 
@@ -5087,6 +5092,9 @@ static int sv_steq_TA_MACD( const struct TA_MACD_Stream *a, const struct TA_MACD
    if( sv_xtier_ne(a->slowK, b->slowK, z) ) { *w = "slowK"; return 1; }
    if( sv_xtier_ne(a->fastK, b->fastK, z) ) { *w = "fastK"; return 1; }
    if( sv_xtier_ne(a->signalK, b->signalK, z) ) { *w = "signalK"; return 1; }
+   if( sv_xtier_ne(a->slowBeta, b->slowBeta, z) ) { *w = "slowBeta"; return 1; }
+   if( sv_xtier_ne(a->fastBeta, b->fastBeta, z) ) { *w = "fastBeta"; return 1; }
+   if( sv_xtier_ne(a->signalBeta, b->signalBeta, z) ) { *w = "signalBeta"; return 1; }
    return 0;
 }
 
@@ -5130,6 +5138,9 @@ static int sv_steq_TA_MACDFIX( const struct TA_MACDFIX_Stream *a, const struct T
    if( sv_xtier_ne(a->slowK, b->slowK, z) ) { *w = "slowK"; return 1; }
    if( sv_xtier_ne(a->fastK, b->fastK, z) ) { *w = "fastK"; return 1; }
    if( sv_xtier_ne(a->signalK, b->signalK, z) ) { *w = "signalK"; return 1; }
+   if( sv_xtier_ne(a->slowBeta, b->slowBeta, z) ) { *w = "slowBeta"; return 1; }
+   if( sv_xtier_ne(a->fastBeta, b->fastBeta, z) ) { *w = "fastBeta"; return 1; }
+   if( sv_xtier_ne(a->signalBeta, b->signalBeta, z) ) { *w = "signalBeta"; return 1; }
    return 0;
 }
 
@@ -5218,6 +5229,7 @@ static int sv_steq_TA_MASSI( const struct TA_MASSI_Stream *a, const struct TA_MA
    if( a->optInFastPeriod != b->optInFastPeriod ) { *w = "optInFastPeriod"; return 1; }
    if( a->optInSlowPeriod != b->optInSlowPeriod ) { *w = "optInSlowPeriod"; return 1; }
    if( sv_xtier_ne(a->optInK_1, b->optInK_1, z) ) { *w = "optInK_1"; return 1; }
+   if( sv_xtier_ne(a->emaBeta, b->emaBeta, z) ) { *w = "emaBeta"; return 1; }
    if( sv_xtier_ne(a->ema1, b->ema1, z) ) { *w = "ema1"; return 1; }
    if( sv_xtier_ne(a->ema2, b->ema2, z) ) { *w = "ema2"; return 1; }
    if( sv_xtier_ne(a->total, b->total, z) ) { *w = "total"; return 1; }
@@ -6148,11 +6160,14 @@ static int sv_steq_TA_SMI( const struct TA_SMI_Stream *a, const struct TA_SMI_St
    if( sv_xtier_ne(a->kSlow, b->kSlow, z) ) { *w = "kSlow"; return 1; }
    if( sv_xtier_ne(a->kFast, b->kFast, z) ) { *w = "kFast"; return 1; }
    if( sv_xtier_ne(a->kSignal, b->kSignal, z) ) { *w = "kSignal"; return 1; }
+   if( sv_xtier_ne(a->betaSlow, b->betaSlow, z) ) { *w = "betaSlow"; return 1; }
+   if( sv_xtier_ne(a->betaFast, b->betaFast, z) ) { *w = "betaFast"; return 1; }
+   if( sv_xtier_ne(a->betaSignal, b->betaSignal, z) ) { *w = "betaSignal"; return 1; }
    if( sv_xtier_ne(a->highest, b->highest, z) ) { *w = "highest"; return 1; }
    if( sv_xtier_ne(a->lowest, b->lowest, z) ) { *w = "lowest"; return 1; }
    if( sv_xtier_ne(a->emaSlowNum, b->emaSlowNum, z) ) { *w = "emaSlowNum"; return 1; }
-   if( sv_xtier_ne(a->emaSlowDen, b->emaSlowDen, z) ) { *w = "emaSlowDen"; return 1; }
    if( sv_xtier_ne(a->emaFastNum, b->emaFastNum, z) ) { *w = "emaFastNum"; return 1; }
+   if( sv_xtier_ne(a->emaSlowDen, b->emaSlowDen, z) ) { *w = "emaSlowDen"; return 1; }
    if( sv_xtier_ne(a->emaFastDen, b->emaFastDen, z) ) { *w = "emaFastDen"; return 1; }
    if( sv_xtier_ne(a->prevSignal, b->prevSignal, z) ) { *w = "prevSignal"; return 1; }
    if( a->trailingIdx != b->trailingIdx ) { *w = "trailingIdx"; return 1; }
@@ -6208,6 +6223,8 @@ static int sv_steq_TA_STC( const struct TA_STC_Stream *a, const struct TA_STC_St
    if( sv_xtier_ne(a->prevSlow, b->prevSlow, z) ) { *w = "prevSlow"; return 1; }
    if( sv_xtier_ne(a->fastK, b->fastK, z) ) { *w = "fastK"; return 1; }
    if( sv_xtier_ne(a->slowK, b->slowK, z) ) { *w = "slowK"; return 1; }
+   if( sv_xtier_ne(a->fastBeta, b->fastBeta, z) ) { *w = "fastBeta"; return 1; }
+   if( sv_xtier_ne(a->slowBeta, b->slowBeta, z) ) { *w = "slowBeta"; return 1; }
    if( sv_xtier_ne(a->frac1, b->frac1, z) ) { *w = "frac1"; return 1; }
    if( sv_xtier_ne(a->frac2, b->frac2, z) ) { *w = "frac2"; return 1; }
    if( sv_xtier_ne(a->pf, b->pf, z) ) { *w = "pf"; return 1; }
@@ -6568,6 +6585,7 @@ static int sv_steq_TA_TEMA( const struct TA_TEMA_Stream *a, const struct TA_TEMA
    if( sv_xtier_ne(a->prevEMA2, b->prevEMA2, z) ) { *w = "prevEMA2"; return 1; }
    if( sv_xtier_ne(a->prevEMA3, b->prevEMA3, z) ) { *w = "prevEMA3"; return 1; }
    if( sv_xtier_ne(a->optInK_1, b->optInK_1, z) ) { *w = "optInK_1"; return 1; }
+   if( sv_xtier_ne(a->emaBeta, b->emaBeta, z) ) { *w = "emaBeta"; return 1; }
    return 0;
 }
 
@@ -6626,6 +6644,7 @@ static int sv_steq_TA_TRIX( const struct TA_TRIX_Stream *a, const struct TA_TRIX
    if( sv_xtier_ne(a->prevEMA2, b->prevEMA2, z) ) { *w = "prevEMA2"; return 1; }
    if( sv_xtier_ne(a->prevEMA3, b->prevEMA3, z) ) { *w = "prevEMA3"; return 1; }
    if( sv_xtier_ne(a->optInK_1, b->optInK_1, z) ) { *w = "optInK_1"; return 1; }
+   if( sv_xtier_ne(a->emaBeta, b->emaBeta, z) ) { *w = "emaBeta"; return 1; }
    return 0;
 }
 
@@ -6671,6 +6690,8 @@ static int sv_steq_TA_TSI( const struct TA_TSI_Stream *a, const struct TA_TSI_St
    if( a->optInSecondPeriod != b->optInSecondPeriod ) { *w = "optInSecondPeriod"; return 1; }
    if( sv_xtier_ne(a->kFirst, b->kFirst, z) ) { *w = "kFirst"; return 1; }
    if( sv_xtier_ne(a->kSecond, b->kSecond, z) ) { *w = "kSecond"; return 1; }
+   if( sv_xtier_ne(a->betaFirst, b->betaFirst, z) ) { *w = "betaFirst"; return 1; }
+   if( sv_xtier_ne(a->betaSecond, b->betaSecond, z) ) { *w = "betaSecond"; return 1; }
    if( sv_xtier_ne(a->emaFirstNum, b->emaFirstNum, z) ) { *w = "emaFirstNum"; return 1; }
    if( sv_xtier_ne(a->emaFirstDen, b->emaFirstDen, z) ) { *w = "emaFirstDen"; return 1; }
    if( sv_xtier_ne(a->emaSecondNum, b->emaSecondNum, z) ) { *w = "emaSecondNum"; return 1; }
@@ -6983,6 +7004,7 @@ static int sv_steq_TA_ZLEMA( const struct TA_ZLEMA_Stream *a, const struct TA_ZL
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
    if( sv_xtier_ne(a->cur_outReal, b->cur_outReal, z) ) { *w = "cur_outReal"; return 1; }
    if( a->optInTimePeriod != b->optInTimePeriod ) { *w = "optInTimePeriod"; return 1; }
+   if( sv_xtier_ne(a->emaBeta, b->emaBeta, z) ) { *w = "emaBeta"; return 1; }
    if( sv_xtier_ne(a->optInK_1, b->optInK_1, z) ) { *w = "optInK_1"; return 1; }
    if( sv_xtier_ne(a->prevMA, b->prevMA, z) ) { *w = "prevMA"; return 1; }
    if( a->ringCap_trailingIdx != b->ringCap_trailingIdx ) { *w = "ringCap_trailingIdx"; return 1; }
