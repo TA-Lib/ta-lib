@@ -180,11 +180,13 @@ public partial class Core
        */
       if( optInNbDev != 1.0 ) {
          for( i = 0; i < (int)outNBElement; i += 1 ) {
-            outReal[i] = Math.Sqrt(outReal[i]) * optInNbDev;
+            double _ld1 = outReal[i];
+            outReal[i] = Math.Sqrt(_ld1) * optInNbDev;
          }
       } else {
          for( i = 0; i < (int)outNBElement; i += 1 ) {
-            outReal[i] = Math.Sqrt(outReal[i]);
+            double _ld2 = outReal[i];
+            outReal[i] = Math.Sqrt(_ld2);
          }
       }
       return RetCode.Success ;
@@ -232,11 +234,13 @@ public partial class Core
       retCode = RetCode.Success;
       if( optInNbDev != 1.0 ) {
          for( i = 0; i < (int)outNBElement; i += 1 ) {
-            outReal[i] = Math.Sqrt(outReal[i]) * optInNbDev;
+            double _ld1 = outReal[i];
+            outReal[i] = Math.Sqrt(_ld1) * optInNbDev;
          }
       } else {
          for( i = 0; i < (int)outNBElement; i += 1 ) {
-            outReal[i] = Math.Sqrt(outReal[i]);
+            double _ld2 = outReal[i];
+            outReal[i] = Math.Sqrt(_ld2);
          }
       }
       return RetCode.Success ;
@@ -636,11 +640,13 @@ public partial class Core
        */
       if( optInNbDev != 1.0 ) {
          for( i = 0; i < (int)outNBElement; i += 1 ) {
-            sc_outReal[i] = Math.Sqrt(sc_outReal[i]) * optInNbDev;
+            double _ld0 = sc_outReal[i];
+            sc_outReal[i] = Math.Sqrt(_ld0) * optInNbDev;
          }
       } else {
          for( i = 0; i < (int)outNBElement; i += 1 ) {
-            sc_outReal[i] = Math.Sqrt(sc_outReal[i]);
+            double _ld1 = sc_outReal[i];
+            sc_outReal[i] = Math.Sqrt(_ld1);
          }
       }
       /* Capture the live producer state + sub handles. */

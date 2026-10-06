@@ -1311,10 +1311,21 @@ impl CsStmt<'_> {
         } else {
             new_value
         };
+        let mut loads = Vec::new();
+        let guarded = nullable_target_base(target, self.ctx.nullable_outputs).is_some();
+        let new_value = if !guarded && is_pure_operand(target) && is_pure_operand(&new_value) {
+            hoist_merging_op_loads(&new_value, &mut loads, &mut cnt)
+        } else {
+            new_value
+        };
         self.ctx.inline_counter.set(cnt);
         let mut out = render_hoisted_blocks(
             &hoisted, indent, self.ctx, self.enums, self.registry, self.helpers,
         );
+        for (name, load) in &loads {
+            let load = render_expr(load, self.ctx, self.registry, self.helpers);
+            out.push_str(&format!("{pad}double {name} = {load};\n"));
+        }
 
         // Only fold compound assignments if the original source used +=/-=/etc.
         if compound {
@@ -2261,6 +2272,42 @@ fn fp_select<'e>(
         return Some((if gt { "ZeroIfGt" } else { "ZeroIfLt" }, vec![l, r, else_expr]));
     }
     None
+}
+
+/// Replaces the array-element operand of each `sqrt`, `floor` and `ceil` in
+/// `value` with a fresh local, returned in `loads` for the caller to declare.
+///
+/// RyuJIT folds an element operand into the instruction, and the scalar form of
+/// these three merges into its destination register: every iteration of a map
+/// loop then waits for the previous result. Only a named local keeps the load
+/// separate; an inlined helper does not.
+///
+/// Descends only through operands that are always evaluated, so a load is
+/// never moved out from under the test that guards its index.
+fn hoist_merging_op_loads(value: &Expr, loads: &mut Vec<(String, Expr)>, cnt: &mut usize) -> Expr {
+    match value {
+        Expr::FuncCall(name, args)
+            if matches!(MathFn::from_name(name), Some(MathFn::Sqrt | MathFn::Floor | MathFn::Ceil))
+                && matches!(args.as_slice(), [Expr::ArrayAccess(..)]) =>
+        {
+            let local = format!("_ld{cnt}");
+            *cnt += 1;
+            loads.push((local.clone(), args[0].clone()));
+            Expr::FuncCall(name.clone(), vec![Expr::Var(local)])
+        }
+        Expr::FuncCall(name, args) if MathFn::from_name(name).is_some() => Expr::FuncCall(
+            name.clone(),
+            args.iter().map(|a| hoist_merging_op_loads(a, loads, cnt)).collect(),
+        ),
+        Expr::BinOp(l, op @ (BinOp::Add | BinOp::Sub | BinOp::Mul | BinOp::Div), r) => Expr::BinOp(
+            Box::new(hoist_merging_op_loads(l, loads, cnt)),
+            op.clone(),
+            Box::new(hoist_merging_op_loads(r, loads, cnt)),
+        ),
+        Expr::Neg(e) => Expr::Neg(Box::new(hoist_merging_op_loads(e, loads, cnt))),
+        Expr::Cast(t, e) => Expr::Cast(t.clone(), Box::new(hoist_merging_op_loads(e, loads, cnt))),
+        other => other.clone(),
+    }
 }
 
 /// No side effect: a rewrite evaluates its operands a different number of

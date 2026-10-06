@@ -1094,6 +1094,52 @@ TA_RetCode max( int    startIdx,
     assert!(at("/* lead */") < at("hi = MaxGt(x, hi);") && at("hi = MaxGt(x, hi);") < at("/* trail */"), "{cs}");
 }
 
+/// A store into a nullable output is skipped when the caller declines it, so
+/// its `sqrt` operand must not be loaded ahead of that guard.
+#[test]
+fn csharp_keeps_a_declined_outputs_load_under_its_guard() {
+    let source = r#"
+int mama_lookback( double optInFastLimit, double optInSlowLimit )
+{
+   return 0;
+}
+
+TA_RetCode mama( int    startIdx,
+                 int    endIdx,
+                 const double inReal[],
+                 double optInFastLimit,
+                 double optInSlowLimit,
+                 int   *outBegIdx,
+                 int   *outNBElement,
+                 double outMAMA[],
+                 double outFAMA[] )
+{
+   int i, outIdx;
+
+   outIdx = 0;
+   for( i=startIdx; i <= endIdx; i++ )
+   {
+      outMAMA[outIdx] = sqrt(outMAMA[outIdx]);
+      outFAMA[outIdx] = sqrt(outFAMA[outIdx]);
+      outIdx++;
+   }
+
+   *outBegIdx = startIdx;
+   *outNBElement = outIdx;
+   return TA_SUCCESS;
+}
+"#;
+    let (func, enums) = load_indicator_with_source("mama", source);
+    let cs = backends::csharp::generate(&func, &enums, make_registry(), make_helpers());
+    let flat: String = cs.split_whitespace().collect::<Vec<_>>().join(" ");
+    for needle in [
+        "double _ld0 = outMAMA[outIdx]; outMAMA[outIdx] = Math.Sqrt(_ld0);",
+        "if( !outFAMA.IsEmpty ) outFAMA[outIdx] = Math.Sqrt(outFAMA[outIdx]);",
+    ] {
+        assert!(flat.contains(needle), "C# output missing `{needle}`:\n{cs}");
+    }
+}
+
 #[test]
 fn backends_render_math_functions_idiomatically() {
     let (func, enums) = load_indicator("ht_trendmode");

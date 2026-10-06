@@ -324,7 +324,8 @@ public partial class Core
             if( optInNbDevUp == optInNbDevDn ) {
                for( _k = 0; _k < _outIdx - _tileBase; _k += 1 ) {
                   middle = _mid[_k];
-                  tempReal = Math.Sqrt(outReal[_tileBase + _k]) * optInNbDevUp;
+                  double _ld0 = outReal[_tileBase + _k];
+                  tempReal = Math.Sqrt(_ld0) * optInNbDevUp;
                   upper = middle + tempReal;
                   lower = middle - tempReal;
                   den = upper - lower;
@@ -336,7 +337,8 @@ public partial class Core
             } else {
                for( _k = 0; _k < _outIdx - _tileBase; _k += 1 ) {
                   middle = _mid[_k];
-                  deviation = Math.Sqrt(outReal[_tileBase + _k]);
+                  double _ld1 = outReal[_tileBase + _k];
+                  deviation = Math.Sqrt(_ld1);
                   upper = Math.FusedMultiplyAdd(deviation, optInNbDevUp, middle);
                   lower = middle - deviation * optInNbDevDn;
                   den = upper - lower;
@@ -359,27 +361,28 @@ public partial class Core
       tempMA = new double[(int)((endIdx - startIdx + 1) * 1)];
       tempX = new double[(int)((endIdx - startIdx + 1) * 1)];
       /* Both before the variance: it may be written over inReal. */
-      OutRange _xr0 = Ma(startIdx, endIdx, inReal, optInTimePeriod, optInMAType, tempMA);
-      maBegIdx = _xr0.BegIdx;
-      maNbElement = _xr0.Count;
+      OutRange _xr2 = Ma(startIdx, endIdx, inReal, optInTimePeriod, optInMAType, tempMA);
+      maBegIdx = _xr2.BegIdx;
+      maNbElement = _xr2.Count;
       retCode = RetCode.Success;
-      OutRange _xr1 = Ma(maBegIdx, endIdx, inReal, 1, optInMAType, tempX);
-      xBegIdx = _xr1.BegIdx;
-      xNbElement = _xr1.Count;
+      OutRange _xr3 = Ma(maBegIdx, endIdx, inReal, 1, optInMAType, tempX);
+      xBegIdx = _xr3.BegIdx;
+      xNbElement = _xr3.Count;
       retCode = RetCode.Success;
       /* From the moving average's begIdx, as TA_BBANDS enters its deviation:
        * the variance's shift and reseed schedule are anchored on its start.
        */
-      OutRange _xr2 = Var(maBegIdx, endIdx, inReal, optInTimePeriod, 1.0, outReal);
-      outBegIdx = _xr2.BegIdx;
-      outNBElement = _xr2.Count;
+      OutRange _xr4 = Var(maBegIdx, endIdx, inReal, optInTimePeriod, 1.0, outReal);
+      outBegIdx = _xr4.BegIdx;
+      outNBElement = _xr4.Count;
       retCode = RetCode.Success;
       offsetMA = maNbElement - outNBElement;
       offsetX = xNbElement - outNBElement;
       if( optInNbDevUp == optInNbDevDn ) {
          for( i = 0; i < (int)outNBElement; i += 1 ) {
             middle = tempMA[i + offsetMA];
-            tempReal = Math.Sqrt(outReal[i]) * optInNbDevUp;
+            double _ld5 = outReal[i];
+            tempReal = Math.Sqrt(_ld5) * optInNbDevUp;
             upper = middle + tempReal;
             lower = middle - tempReal;
             den = upper - lower;
@@ -391,7 +394,8 @@ public partial class Core
       } else {
          for( i = 0; i < (int)outNBElement; i += 1 ) {
             middle = tempMA[i + offsetMA];
-            deviation = Math.Sqrt(outReal[i]);
+            double _ld6 = outReal[i];
+            deviation = Math.Sqrt(_ld6);
             upper = Math.FusedMultiplyAdd(deviation, optInNbDevUp, middle);
             lower = middle - deviation * optInNbDevDn;
             den = upper - lower;
@@ -579,7 +583,8 @@ public partial class Core
             if( optInNbDevUp == optInNbDevDn ) {
                for( _k = 0; _k < _outIdx - _tileBase; _k += 1 ) {
                   middle = _mid[_k];
-                  tempReal = Math.Sqrt(outReal[_tileBase + _k]) * optInNbDevUp;
+                  double _ld0 = outReal[_tileBase + _k];
+                  tempReal = Math.Sqrt(_ld0) * optInNbDevUp;
                   upper = middle + tempReal;
                   lower = middle - tempReal;
                   den = upper - lower;
@@ -591,7 +596,8 @@ public partial class Core
             } else {
                for( _k = 0; _k < _outIdx - _tileBase; _k += 1 ) {
                   middle = _mid[_k];
-                  deviation = Math.Sqrt(outReal[_tileBase + _k]);
+                  double _ld1 = outReal[_tileBase + _k];
+                  deviation = Math.Sqrt(_ld1);
                   upper = Math.FusedMultiplyAdd(deviation, optInNbDevUp, middle);
                   lower = middle - deviation * optInNbDevDn;
                   den = upper - lower;
@@ -613,24 +619,25 @@ public partial class Core
       }
       tempMA = new double[(int)((endIdx - startIdx + 1) * 1)];
       tempX = new double[(int)((endIdx - startIdx + 1) * 1)];
-      OutRange _xr0 = Ma(startIdx, endIdx, inReal, optInTimePeriod, optInMAType, tempMA);
-      maBegIdx = _xr0.BegIdx;
-      maNbElement = _xr0.Count;
+      OutRange _xr2 = Ma(startIdx, endIdx, inReal, optInTimePeriod, optInMAType, tempMA);
+      maBegIdx = _xr2.BegIdx;
+      maNbElement = _xr2.Count;
       retCode = RetCode.Success;
-      OutRange _xr1 = Ma(maBegIdx, endIdx, inReal, 1, optInMAType, tempX);
-      xBegIdx = _xr1.BegIdx;
-      xNbElement = _xr1.Count;
+      OutRange _xr3 = Ma(maBegIdx, endIdx, inReal, 1, optInMAType, tempX);
+      xBegIdx = _xr3.BegIdx;
+      xNbElement = _xr3.Count;
       retCode = RetCode.Success;
-      OutRange _xr2 = Var(maBegIdx, endIdx, inReal, optInTimePeriod, 1.0, outReal);
-      outBegIdx = _xr2.BegIdx;
-      outNBElement = _xr2.Count;
+      OutRange _xr4 = Var(maBegIdx, endIdx, inReal, optInTimePeriod, 1.0, outReal);
+      outBegIdx = _xr4.BegIdx;
+      outNBElement = _xr4.Count;
       retCode = RetCode.Success;
       offsetMA = maNbElement - outNBElement;
       offsetX = xNbElement - outNBElement;
       if( optInNbDevUp == optInNbDevDn ) {
          for( i = 0; i < (int)outNBElement; i += 1 ) {
             middle = tempMA[i + offsetMA];
-            tempReal = Math.Sqrt(outReal[i]) * optInNbDevUp;
+            double _ld5 = outReal[i];
+            tempReal = Math.Sqrt(_ld5) * optInNbDevUp;
             upper = middle + tempReal;
             lower = middle - tempReal;
             den = upper - lower;
@@ -642,7 +649,8 @@ public partial class Core
       } else {
          for( i = 0; i < (int)outNBElement; i += 1 ) {
             middle = tempMA[i + offsetMA];
-            deviation = Math.Sqrt(outReal[i]);
+            double _ld6 = outReal[i];
+            deviation = Math.Sqrt(_ld6);
             upper = Math.FusedMultiplyAdd(deviation, optInNbDevUp, middle);
             lower = middle - deviation * optInNbDevDn;
             den = upper - lower;
@@ -1157,7 +1165,8 @@ public partial class Core
       if( optInNbDevUp == optInNbDevDn ) {
          for( i = 0; i < (int)outNBElement; i += 1 ) {
             middle = tempMA[i + offset];
-            tempReal = Math.Sqrt(sc_outReal[i]) * optInNbDevUp;
+            double _ld0 = sc_outReal[i];
+            tempReal = Math.Sqrt(_ld0) * optInNbDevUp;
             upper = middle + tempReal;
             lower = middle - tempReal;
             den = upper - lower;
@@ -1169,7 +1178,8 @@ public partial class Core
       } else {
          for( i = 0; i < (int)outNBElement; i += 1 ) {
             middle = tempMA[i + offset];
-            deviation = Math.Sqrt(sc_outReal[i]);
+            double _ld1 = sc_outReal[i];
+            deviation = Math.Sqrt(_ld1);
             upper = Math.FusedMultiplyAdd(deviation, optInNbDevUp, middle);
             lower = middle - deviation * optInNbDevDn;
             den = upper - lower;

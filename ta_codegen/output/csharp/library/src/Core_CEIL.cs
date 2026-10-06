@@ -107,7 +107,8 @@ public partial class Core
          return RetCode.BadParam ;
       }
       for( i = startIdx, outIdx = 0; i <= endIdx; i += 1, outIdx += 1 ) {
-         outReal[outIdx] = Math.Ceiling(inReal[i]);
+         double _ld0 = inReal[i];
+         outReal[outIdx] = Math.Ceiling(_ld0);
       }
       outNBElement = outIdx;
       outBegIdx = startIdx;
@@ -134,7 +135,8 @@ public partial class Core
          return RetCode.BadParam ;
       }
       for( i = startIdx, outIdx = 0; i <= endIdx; i += 1, outIdx += 1 ) {
-         outReal[outIdx] = Math.Ceiling((double)inReal[i]);
+         double _ld0 = (double)inReal[i];
+         outReal[outIdx] = Math.Ceiling(_ld0);
       }
       outNBElement = outIdx;
       outBegIdx = startIdx;
@@ -443,7 +445,8 @@ public partial class Core
          return RetCode.InsufficientHistory;
       }
       for( i = startIdx, outIdx = 0; i <= endIdx; i += 1, outIdx += 1 ) {
-         outReal[outIdx * outStride] = Math.Ceiling(inReal[i]);
+         double _ld0 = inReal[i];
+         outReal[outIdx * outStride] = Math.Ceiling(_ld0);
       }
       outNBElement = outIdx;
       outBegIdx = startIdx;
