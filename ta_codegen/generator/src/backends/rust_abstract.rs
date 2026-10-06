@@ -844,6 +844,68 @@ mod binder_tests {
         );
     }
 
+    /// rE3 for every function. Every row is a rejection the public entry makes,
+    /// not the holder. The short last output must not cost the outputs declared
+    /// before it.
+    #[test]
+    fn a_rejected_call_writes_no_output() {
+        const PAINT: f64 = -1.2345678901234e300;
+        const PAINT_INT: i32 = 0x5A5A_A5A5;
+        let core = Core::new();
+        let close = series(0.0);
+        let high: Vec<f64> = close.iter().map(|v| v + 2.0).collect();
+        let low: Vec<f64> = close.iter().map(|v| v - 2.0).collect();
+        let vol: Vec<f64> = (0..N).map(|i| 1.0e6 + i as f64).collect();
+        let ints: Vec<i32> = (0..N as i32).collect();
+
+        let (mut outside, mut at_bound, mut above_min) = (0, 0, 0);
+        for f in FUNCS.iter() {
+            let rejected = |what: &str, vector: &[(usize, i32)], bars: usize, last: usize| {
+                let len = |k: usize, kind: OutputType| {
+                    if f.outputs[k].kind != kind { 0 } else if k + 1 == f.outputs.len() { last } else { N }
+                };
+                let mut r: Vec<Vec<f64>> =
+                    (0..f.outputs.len()).map(|k| vec![PAINT; len(k, OutputType::Real)]).collect();
+                let mut i: Vec<Vec<i32>> =
+                    (0..f.outputs.len()).map(|k| vec![PAINT_INT; len(k, OutputType::Integer)]).collect();
+                let painted = r.iter().flatten().count() + i.iter().flatten().count();
+                assert!(painted > 0, "{} {what}: nothing to compare", f.name);
+                let set = |h: &mut ParamHolder<'_>| {
+                    for &(k, v) in vector { h.set_opt_input(k, v).unwrap(); }
+                };
+                let res = drive(&core, f, &set, &close[..bars], &high[..bars], &low[..bars],
+                                &vol[..bars], &ints[..bars], &mut r, &mut i);
+                assert_eq!(res.err(), Some(RetCode::BadParam), "{} {what}", f.name);
+                assert!(
+                    r.iter().flatten().all(|v| v.to_bits() == PAINT.to_bits())
+                        && i.iter().flatten().all(|v| *v == PAINT_INT),
+                    "{} {what}: a rejected call wrote an output", f.name
+                );
+            };
+            rejected("with an input one bar short", &[], N - 1, N);
+            rejected("with a last output of one element", &[], N, 1);
+            for (k, o) in f.opt_inputs.iter().enumerate() {
+                let OptInputType::IntegerRange { min, max, .. } = o.kind else { continue };
+                for v in [min.checked_sub(1), max.checked_add(1)].into_iter().flatten() {
+                    rejected("outside its range", &[(k, v)], N, N);
+                    outside += 1;
+                }
+                for (v, bound) in [(min, true), (max, true), ((min + 1).min(max), false)] {
+                    let mut probe = f.id.new_call(&core);
+                    probe.set_opt_input(k, v).unwrap();
+                    if probe.lookback().is_err() {
+                        rejected("inside its range", &[(k, v)], N, N);
+                        if bound { at_bound += 1 } else { above_min += 1 }
+                    }
+                }
+            }
+        }
+        assert!(
+            outside > 0 && at_bound > 0 && above_min > 0,
+            "outside {outside}, at a bound {at_bound}, above the minimum {above_min}"
+        );
+    }
+
     #[test]
     fn a_bound_holder_answers_the_batch_index_codes() {
         let core = Core::new();

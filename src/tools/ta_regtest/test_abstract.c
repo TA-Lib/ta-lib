@@ -1672,15 +1672,9 @@ static ErrorNumber abstract_check_display_shift( const char *funcName,
  */
 #define REJECT_PAINT_REAL (-1.2345678901234e300)
 #define REJECT_PAINT_INT  ((int)0x5A5AA5A5)
-static ErrorNumber abstract_rejected_call_writes_nothing( const char *funcName,
-                                                          TA_ParamHolder *paramHolder,
-                                                          int size, const char *what )
+static void reject_paint_outputs( void )
 {
     const double paintReal = REJECT_PAINT_REAL;
-    TA_Integer beg = 0, nb = 0;
-    long judged = regtest_rejected_calls_judged();
-    long wrote = regtest_rejected_calls_wrote_range();
-    TA_RetCode rc;
     unsigned int o, j;
 
     for( o = 0; o < 10; o++ )
@@ -1689,6 +1683,37 @@ static ErrorNumber abstract_rejected_call_writes_nothing( const char *funcName,
             output[o][j] = paintReal;
             output_int[o][j] = REJECT_PAINT_INT;
         }
+}
+
+/* 1 when an element lost its paint, with its place in *oOut and *jOut. */
+static int reject_paint_lost( unsigned int *oOut, unsigned int *jOut )
+{
+    const double paintReal = REJECT_PAINT_REAL;
+    unsigned int o, j;
+
+    for( o = 0; o < 10; o++ )
+        for( j = 0; j < 2000; j++ )
+            if( memcmp(&output[o][j], &paintReal, sizeof(double)) != 0
+                || output_int[o][j] != REJECT_PAINT_INT )
+            {
+                *oOut = o;
+                *jOut = j;
+                return 1;
+            }
+    return 0;
+}
+
+static ErrorNumber abstract_rejected_call_writes_nothing( const char *funcName,
+                                                          TA_ParamHolder *paramHolder,
+                                                          int size, const char *what )
+{
+    TA_Integer beg = 0, nb = 0;
+    long judged = regtest_rejected_calls_judged();
+    long wrote = regtest_rejected_calls_wrote_range();
+    TA_RetCode rc;
+    unsigned int o, j;
+
+    reject_paint_outputs();
 
     rc = TA_CallFunc(paramHolder, 0, size - 1, &beg, &nb);
     if( rc != TA_BAD_PARAM )
@@ -1704,15 +1729,12 @@ static ErrorNumber abstract_rejected_call_writes_nothing( const char *funcName,
                "range was not looked at\n", funcName, what);
         return TA_ABS_TST_FAIL_REJECTED_CALL;
     }
-    for( o = 0; o < 10; o++ )
-        for( j = 0; j < 2000; j++ )
-            if( memcmp(&output[o][j], &paintReal, sizeof(double)) != 0
-                || output_int[o][j] != REJECT_PAINT_INT )
-            {
-                printf("  Failed [%s]: the call rejected for %s wrote output buffer "
-                       "%u at index %u\n", funcName, what, o, j);
-                return TA_ABS_TST_FAIL_REJECTED_CALL;
-            }
+    if( reject_paint_lost(&o, &j) )
+    {
+        printf("  Failed [%s]: the call rejected for %s wrote output buffer "
+               "%u at index %u\n", funcName, what, o, j);
+        return TA_ABS_TST_FAIL_REJECTED_CALL;
+    }
     return TA_TEST_PASS;
 }
 
@@ -3405,7 +3427,7 @@ static ErrorNumber checkIndexRangeRejected( const TA_FuncInfo *funcInfo )
    const TA_InputParameterInfo *inputInfo;
    const TA_OutputParameterInfo *outInfo;
    TA_RetCode retCode;
-   unsigned int i, c, badParamIdx = 0;
+   unsigned int i, c, badParamIdx = 0, lostO, lostJ;
    int outBegIdx, outNbElement;
    long judged, wrote;
    int badInt = 0, badIsReal = 0;
@@ -3470,11 +3492,18 @@ static ErrorNumber checkIndexRangeRejected( const TA_FuncInfo *funcInfo )
             TA_SetOptInputParamInteger( paramHolder, badParamIdx, badInt );
       }
 
+      reject_paint_outputs();
       judged = regtest_rejected_calls_judged();
       wrote = regtest_rejected_calls_wrote_range();
       retCode = TA_CallFunc( paramHolder, tc->startIdx, tc->endIdx,
                              &outBegIdx, &outNbElement );
       TA_ParamHolderFree( paramHolder );
+      if( reject_paint_lost( &lostO, &lostJ ) )
+      {
+         printf( "  INDEX RANGE [%s]: %s wrote output buffer %u at index %u\n",
+                 funcInfo->name, tc->what, lostO, lostJ );
+         return TA_ABS_TST_FAIL_INDEX_RANGE;
+      }
       if( regtest_rejected_calls_wrote_range() != wrote )
       {
          printf( "  INDEX RANGE [%s]: %s wrote the range\n", funcInfo->name, tc->what );

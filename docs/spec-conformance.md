@@ -301,13 +301,16 @@ its sweep that the lookback rejects and requires `TA_BAD_PARAM` with no element
 written. Its two floors count the vectors rejected inside their declared range,
 the rejections a C body makes itself after the generated checks: at a bound
 (MAVP's inverted window) and one step above the lower bound (FRAMA's odd
-period). Java's and C#'s `BatchApiTest` hold a canary after rB5. Rust has no
-run-time canary: the public entry makes every argument rejection before its one `_impl` call
-(`rust_public_entry_orders_the_argument_contract`), the parameter decision
-included, which it takes from the lookback, and no output is lent to anything
-ahead of that call. A code `_impl` returns is forwarded after the call; its own
-parameter rejections stay unreachable for as long as the lookback decides the
-same way (lookback rules above).
+period). `checkIndexRangeRejected` holds the same paint over every index
+rejection, for every function. Java's and C#'s `BatchApiTest` hold a canary
+after rB5. In Rust, `a_rejected_call_writes_no_output` (`abstract_api.rs`)
+paints the outputs of every function through a holder and requires `BadParam`
+with no element written, on an input one bar short and on a last output of one
+element with the others bound. It repeats that for each integer-range parameter
+one step outside its range and where the lookback refuses it at a bound or one
+step above the lower bound. A holder answers the index codes itself, so the
+order of the public entry's own index checks stays with
+`rust_public_entry_orders_the_argument_contract`.
 
 rB9's band: `testEnumValueContract` (`test_internals.c`) requires
 `TA_SetRetCodeInfo` to name each value from 5000 to 5999 `TA_INTERNAL_ERROR`,
