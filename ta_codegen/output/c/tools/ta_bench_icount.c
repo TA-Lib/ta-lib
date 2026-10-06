@@ -9094,6 +9094,57 @@ static void icount_PPO(int iters) {
     g_sink += acc + outNBElement;
 }
 
+static void icount_PSO(int iters) {
+    const char *nm = "PSO";
+    int outBegIdx = 0, outNBElement = 0;
+    double acc = 0.0;
+    TA_RetCode rc;
+    TA_PSO_Stream *st = NULL;
+    TA_PSO_Stream *stf = NULL;
+    double v0 = 0.0;
+
+    ICOUNT_ZERO();
+    rc = TA_PSO(0, g_nPoints - 1, g_high, g_low, g_close, 8, 5, &outBegIdx, &outNBElement, g_outBuf0);
+    ICOUNT_DUMP("PSO/batch");
+    icount_row(nm, "batch", 1, rc);
+    acc += g_outBuf0[0];
+
+    ICOUNT_ZERO();
+    rc = TA_PSO_OpenAndFill(&stf, g_high, g_low, g_close, g_nPoints, 8, 5, &outBegIdx, &outNBElement, g_outBuf0);
+    ICOUNT_DUMP("PSO/openfill");
+    icount_row(nm, "openfill", 1, rc);
+    acc += g_outBuf0[0];
+    if( stf ) TA_PSO_Close(stf);
+
+    ICOUNT_ZERO();
+    rc = TA_PSO_Open(&st, g_high, g_low, g_close, g_nPoints, 8, 5, &v0);
+    ICOUNT_DUMP("PSO/open");
+    icount_row(nm, "open", 1, rc);
+
+    if( rc == TA_SUCCESS && st ) {
+        TA_RetCode src = TA_SUCCESS;
+        ICOUNT_ZERO();
+        for( int it = 0; it < iters; it++ ) {
+            src = TA_PSO_Update(st, g_high[it & ICOUNT_MASK], g_low[it & ICOUNT_MASK], g_close[it & ICOUNT_MASK], &v0);
+            acc += v0;
+        }
+        ICOUNT_DUMP("PSO/update");
+        icount_row(nm, "update", 1, src);
+        ICOUNT_ZERO();
+        for( int it = 0; it < iters; it++ ) {
+            src = TA_PSO_Peek(st, g_high[it & ICOUNT_MASK], g_low[it & ICOUNT_MASK], g_close[it & ICOUNT_MASK], &v0);
+            acc += v0;
+        }
+        ICOUNT_DUMP("PSO/peek");
+        icount_row(nm, "peek", 1, src);
+    } else {
+        icount_row(nm, "update", 0, rc);
+        icount_row(nm, "peek", 0, rc);
+    }
+    if( st ) TA_PSO_Close(st);
+    g_sink += acc + outNBElement;
+}
+
 static void icount_PVI(int iters) {
     const char *nm = "PVI";
     int outBegIdx = 0, outNBElement = 0;
@@ -12205,6 +12256,7 @@ static void icount_all(const char *filter, int iters) {
     if( func_matches(filter, "PLUS_DI") ) { icount_PLUS_DI(iters); fflush(stdout); }
     if( func_matches(filter, "PLUS_DM") ) { icount_PLUS_DM(iters); fflush(stdout); }
     if( func_matches(filter, "PPO") ) { icount_PPO(iters); fflush(stdout); }
+    if( func_matches(filter, "PSO") ) { icount_PSO(iters); fflush(stdout); }
     if( func_matches(filter, "PVI") ) { icount_PVI(iters); fflush(stdout); }
     if( func_matches(filter, "PVO") ) { icount_PVO(iters); fflush(stdout); }
     if( func_matches(filter, "PVT") ) { icount_PVT(iters); fflush(stdout); }

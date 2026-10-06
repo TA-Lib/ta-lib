@@ -957,7 +957,7 @@ static TA_FMA_STEP_INLINE TA_RetCode TA_FISHER_OpenImpl( struct TA_FISHER_Stream
       sp->i = i;
       sp->today = today;
       sp->xCap = (int)(today - trailingIdx) + 1;
-      if( sp->xCap < 1 || sp->xCap > historyLen ) { TA_FISHER_ReleaseImpl( sp ); return TA_INTERNAL_ERROR(485); }
+      if( sp->xCap < 1 || sp->xCap > historyLen ) { TA_FISHER_ReleaseImpl( sp ); return TA_INTERNAL_ERROR(490); }
       sp->xPhys = 1;
       while( sp->xPhys < sp->xCap ) sp->xPhys <<= 1;
       sp->xMask = sp->xPhys - 1;

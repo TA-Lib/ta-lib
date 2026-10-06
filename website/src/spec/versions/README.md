@@ -32,7 +32,7 @@ On this page, **bit-identical** means the same return code, the same output rang
 
 ### Transcendental functions {#transcendental}
 
-A **transcendental function** here is `exp`, `log`, `log10`, or a trigonometric, inverse trigonometric or hyperbolic function. C and Rust take it from the platform's C math library, Java from the JVM, C# from the .NET runtime, and none of them is required to round it correctly. A call evaluates one when its function does, or when an MA-type parameter selects an average that does. The functions that do are ACOS, ALMA, ASIN, ATAN, CHOP, CHOPTR, COS, COSH, EXP, FISHER, FRAMA, HT_DCPERIOD, HT_DCPHASE, HT_PHASOR, HT_SINE, HT_TRENDLINE, HT_TRENDMODE, LINEARREG_ANGLE, LN, LOG10, MAMA, ROGERSSATCHELL, SIN, SINH, SWAK_2PHP, SWAK_BP, SWAK_BUTTER, SWAK_GAUSS, SWAK_HP, TAN and TANH, and the averages that do are `MAMA` and `ALMA`.
+A **transcendental function** here is `exp`, `log`, `log10`, or a trigonometric, inverse trigonometric or hyperbolic function. C and Rust take it from the platform's C math library, Java from the JVM, C# from the .NET runtime, and none of them is required to round it correctly. A call evaluates one when its function does, or when an MA-type parameter selects an average that does. The functions that do are ACOS, ALMA, ASIN, ATAN, CHOP, CHOPTR, COS, COSH, EXP, FRAMA, HT_DCPERIOD, HT_DCPHASE, HT_PHASOR, HT_SINE, HT_TRENDLINE, HT_TRENDMODE, LINEARREG_ANGLE, LN, LOG10, MAMA, PSO, ROGERSSATCHELL, SIN, SINH, SWAK_2PHP, SWAK_BP, SWAK_BUTTER, SWAK_GAUSS, SWAK_HP, TAN and TANH, and the averages that do are `MAMA` and `ALMA`.
 
 ### Across machines {#machines}
 

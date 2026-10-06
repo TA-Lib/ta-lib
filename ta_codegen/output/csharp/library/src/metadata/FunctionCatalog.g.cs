@@ -288,6 +288,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
             MakePlusDi(),
             MakePlusDm(),
             MakePpo(),
+            MakePso(),
             MakePvi(),
             MakePvo(),
             MakePvt(),
@@ -4392,6 +4393,31 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
         invoke: static (core, c, startIdx, endIdx) =>
             core.Ppo(
                 startIdx, endIdx, c.Series(0), c.IntOpt(0), c.IntOpt(1), (MAType)c.IntOpt(2), c.RealOut(0)));
+
+    private static FuncInfo MakePso() => new(
+        name: "PSO",
+        group: FunctionGroup.MomentumIndicators,
+        hint: "Premier Stochastic Oscillator",
+        flags: FuncFlags.Stream,
+        unstableId: null,
+        inputs:
+        [
+            new InputInfo(InputKind.Price, "inPriceHLC", PriceComponents.High | PriceComponents.Low | PriceComponents.Close, [PriceComponents.High, PriceComponents.Low, PriceComponents.Close]),
+        ],
+        optInputs:
+        [
+            new OptInputInfo("optInFastK_Period", "Fast-K Period", "Time period for building the Fast-K line", OptInputFlags.None, new OptInputDomain.IntegerRange(1, 100000, 8, 1, 200, 1)),
+            new OptInputInfo("optInEMAPeriod", "EMA Period", "Period of each of the two smoothing passes", OptInputFlags.None, new OptInputDomain.IntegerRange(1, 100000, 5, 1, 200, 1)),
+        ],
+        outputs:
+        [
+            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line),
+        ],
+        lookback: static (core, c) => core.PsoLookback(c.IntOpt(0), c.IntOpt(1)),
+        displayShift: static (core, c, outputIdx) => core.PsoDisplayShift(c.IntOpt(0), c.IntOpt(1), outputIdx),
+        invoke: static (core, c, startIdx, endIdx) =>
+            core.Pso(
+                startIdx, endIdx, c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.IntOpt(0), c.IntOpt(1), c.RealOut(0)));
 
     private static FuncInfo MakePvi() => new(
         name: "PVI",

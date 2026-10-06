@@ -484,6 +484,7 @@ set(LIB_SOURCES
 	"${CMAKE_CURRENT_SOURCE_DIR}/src/ta_func/ta_PLUS_DI.c"
 	"${CMAKE_CURRENT_SOURCE_DIR}/src/ta_func/ta_PLUS_DM.c"
 	"${CMAKE_CURRENT_SOURCE_DIR}/src/ta_func/ta_PPO.c"
+	"${CMAKE_CURRENT_SOURCE_DIR}/src/ta_func/ta_PSO.c"
 	"${CMAKE_CURRENT_SOURCE_DIR}/src/ta_func/ta_PVI.c"
 	"${CMAKE_CURRENT_SOURCE_DIR}/src/ta_func/ta_PVO.c"
 	"${CMAKE_CURRENT_SOURCE_DIR}/src/ta_func/ta_PVT.c"

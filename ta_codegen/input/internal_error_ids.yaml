@@ -18,7 +18,7 @@
 # Written by `ta_codegen generate`. Do not renumber by hand -- the number is
 # the only thing a bug report carries, and it has to mean the same guard in the
 # next release as it did in the last.
-next: 490
+next: 491
 sites:
   AC.cbsize.oscBuffer: 184
   AC.circbuf.oscBuffer: 181
@@ -192,7 +192,7 @@ sites:
   FISHER.circbuf.preLowest: 489
   FISHER.circbuf.sufHighest: 486
   FISHER.circbuf.sufLowest: 488
-  FISHER.extrema: 485
+  FISHER.extrema: 490
   FOSC.extrema: 406
   FRACTAL.wincap.i: 427
   FRAMA.cbsize.slot: 439
@@ -281,6 +281,7 @@ sites:
   PERCENTRANK.wincap.i: 415
   PLUS_DI.dualmode: 376
   PLUS_DM.dualmode: 377
+  PSO.extrema: 485
   QSTICK.ringcap.trailingIdx: 378
   ROC.ringcap.trailingIdx: 379
   ROCP.ringcap.trailingIdx: 380
