@@ -67,6 +67,7 @@ public partial class Core
     *                floating point (~1e-14 drift), so the copy is explicit.
     *  100626 MF,CC  Auto rule sized on the worst seed of the six stages,
     *                against the largest output difference it causes (#492).
+    *  100726 MF,CC  Auto rule sized by measurement on price series (#492).
     */
    /// <summary>
    /// Number of leading input bars <c>T3</c> consumes before it can produce its
@@ -99,16 +100,12 @@ public partial class Core
       } else if( !(optInVFactor >= 0e0 && optInVFactor <= 1e0) ) {
          return -1;
       }
-      /* The six stages share the pole (n-1)/(n+1) and are stepped together, so
-       * the outputs of two starts differ by that pole to the age, under n/2
-       * bars per e-fold, times a polynomial of the age of degree 5 at most.
-       * The 20 e-folds added to K are that polynomial's growth against the
-       * largest difference the seed causes: a seed can cancel itself in the
-       * early outputs and show late. That growth is 15.7 e-folds at K = 10,
-       * 17.6 at 19 and 19.9 at 37, at every volume factor above 0: it rises
-       * with K, and 20 covers no K above 37.
+      /* Sized by measurement on price series; it is not a bound. The six stages
+       * share the pole (n-1)/(n+1) and are stepped together, so a seed can cancel
+       * itself in the early outputs and show late: such a seed needs up to
+       * 13*n bars at PREC_4 and 18.5*n at PREC_8.
        */
-      return 6 * (optInTimePeriod - 1) + this.UnstableCount((int)FuncUnstId.T3, (optInTimePeriod > 1) ? ((10 + 20) * optInTimePeriod + 1) / 2 : 0, (optInTimePeriod > 1) ? ((19 + 20) * optInTimePeriod + 1) / 2 : 0) ;
+      return 6 * (optInTimePeriod - 1) + this.UnstableCount((int)FuncUnstId.T3, (optInTimePeriod > 1) ? (11 * (4 + 4) * optInTimePeriod + 7) / 8 : 0, (optInTimePeriod > 1) ? (11 * (8 + 4) * optInTimePeriod + 7) / 8 : 0) ;
 
    }
    /// <summary>

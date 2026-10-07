@@ -1,7 +1,9 @@
 # Checks of the proven Auto rules against the kernels' decay laws, at seven values of K and a
-# grid of periods; HA in exact fractions, T3 against the worst seed of its six stages, and
-# FISHER, whose gain has no closed form, by iterating the kernel from two starts. Not exhaustive, and the calibrated rules are not here. The two-pole
-# envelopes are stated against the largest difference the seed causes.
+# grid of periods; HA in exact fractions, and FISHER, whose gain has no closed form, by
+# iterating the kernel from two starts. Not exhaustive, and the calibrated rules are not here:
+# T3's is one, and its section computes what the worst seed of its six stages needs, which
+# that rule does not cover. The two-pole envelopes are stated against the largest difference
+# the seed causes.
 import math
 Ks=[7,10,14,19,20,28,37]
 def ceil_div(a,b): return -(-a//b)
@@ -189,7 +191,9 @@ print('BP: real-pole cases',realpoles,' violations',len(bad),bad[:3],' tightest 
 # sum of stages 3 to 6. The state difference of two starts moves as p times a unipotent
 # matrix on any input, so the output difference at age j is p^j * q(j), q a polynomial of
 # degree at most 5 (2 at a volume factor of 0), and every such q is a seed two starts can
-# hold (checked below). Rule m = ceil((K+c)*n/2): -ln(p) = 2*atanh(1/n) > 2/n.
+# hold (checked below). The library's count is sized on price series and is shorter than
+# what this seed needs: this section is the size of that gap, not a check of the count.
+# In bars the need is ceil((K+c)*n/2) for some c: -ln(p) = 2*atanh(1/n) > 2/n.
 # Bound: for any six ages j0 < ... < j5 and any m beyond them, Lagrange's formula gives
 #   |q(m)| p^m <= S * sum_i p^(m-j_i) |L_i(m)|,   S the largest |q(j)| p^j over all ages.
 # Search: the q that takes +-p^-j_i in turn at those ages meets it when its own S is 1; an
@@ -265,12 +269,13 @@ print('T3: worst seed against its bound, largest S-1 over the periods %.1e (0: t
 print('  need in bars at n=5 and n=15, K',Ks,':',[t3need[(K,5)] for K in Ks],[t3need[(K,15)] for K in Ks])
 print('  worst gain %.3f e-folds of n/2 bars at K=%d, n=%d; at K=10 %.3f, at K=19 %.3f'%(gain+
       tuple(max(2*t3need[(K,n)]/n-K for n in T3N) for K in (10,19))))
-for c in (15,16,17,18,19,20,21):
-    b=[(K,n) for K in Ks for n in T3N if t3need[(K,n)]>ceil_div((K+c)*n,2)]
-    sl=min(2*(ceil_div((K+c)*n,2)-t3need[(K,n)])/n for K in Ks for n in T3N)
-    print('  T3 with ceil((K+%d)*n/2): violations at K='%c,sorted(set(k for k,_ in b)),' tightest slack %.3f e-folds'%sl)
-b=[(K,n) for K in Ks for n in T3N if t3need[(K,n)]>ceil_div((K+19)*(n+1),2)]
-print('  T3 with ceil((K+19)*(n+1)/2): violations at K=',sorted(set(k for k,_ in b)))
+print('  smallest c with ceil((K+c)*n/2) at or above that need, per K',Ks,':',
+      [min(c for c in range(60) if all(t3need[(K,n)]<=ceil_div((K+c)*n,2) for n in T3N)) for K in Ks])
+def t3_shipped(X,n): return ceil_div(11*(X+4)*n,8)   # the measured rule of t3.c, here only to size the gap
+for K,X in ((10,4),(19,8)):
+    r=max((t3need[(K,n)]/t3_shipped(X,n),n) for n in T3N)
+    print('  worst-seed need against the measured count at PREC_%d: at most %.3f times it (n=%d); n=5: %d against %d'
+          %(X,r[0],r[1],t3need[(K,5)],t3_shipped(X,5)))
 # The kernel itself, in exact arithmetic: the state difference that gives the worst q, stepped
 # through the six stages with the output weights of t3.c; and the seeds, from the earlier and
 # the later start of the same series, span every state difference.

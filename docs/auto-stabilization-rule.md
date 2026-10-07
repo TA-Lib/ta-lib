@@ -85,8 +85,8 @@ OVR="TimePeriod=2" /tmp/auto_stabilization_probe 40000 <NAME> > /tmp/need_min.ts
   `never`, is a step, or a state that locks: reproduce one before sizing anything. Many
   over on one kind of series only is a rule sized for another kind: name it as a limit.
 - Random series do not reach the worst seed of a repeated pole or of several stages: T3
-  reads 34 on the probe and 45 on the census against a true 64. Neither tool sizes such a
-  rule; section 3's kernel check does.
+  needs 52 at most on fifty million pairs against the worst seed's 64. For a proven rule
+  neither tool gives the count; section 3's kernel check does.
 - The census ignores a difference under `1e-10` of the output's range, so an output whose
   seed difference is small against its range shows a `PREC_8` need cut short. Take that
   one from the probe's `A19`.

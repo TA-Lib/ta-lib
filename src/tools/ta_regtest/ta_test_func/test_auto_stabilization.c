@@ -166,7 +166,7 @@ static int awRule( const char *name, int K, int X, int p0, int p1, double r0, do
        !strcmp(name,"PLUS_DM") || !strcmp(name,"MINUS_DM") )
       return p0 > 1 ? K*p0 : 0;
    if( !strcmp(name,"ADX") ) return (K+6)*p0;
-   if( !strcmp(name,"T3") ) return p0 > 1 ? awCeilDiv( (K+20)*p0, 2 ) : 0;
+   if( !strcmp(name,"T3") ) return p0 > 1 ? awCeilDiv( 11*(X+4)*p0, 8 ) : 0;
    if( !strcmp(name,"HA") ) return awCeilDiv( 13*K, 9 );
    if( !strcmp(name,"SWAK_HP") ) return awCeilDiv( K*p0, 6 );
    if( !strcmp(name,"SWAK_GAUSS") || !strcmp(name,"SWAK_BUTTER") || !strcmp(name,"SWAK_2PHP") )

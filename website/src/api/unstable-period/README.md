@@ -220,12 +220,12 @@ Each id has one rule. `n` is the function's period. `K` is 10 at `PREC_4` and 19
 | `RMA`, `ATR`, `PLUS_DM`, `MINUS_DM` | `W(n)` | RMA 300 / 570, the others 140 / 266 | proof |
 | `NATR`, `RSI`, `CMO`, `PLUS_DI`, `MINUS_DI`, `DX`, `RVI` | `W(n)` | 140 / 266 | proof, ratio |
 | `ADX` | `(K+6)*n` | 224 / 350 | proof, ratio |
-| `T3` | `ceil((K+20)*n/2)` | 75 / 98 | proof |
 | `HA` | `ceil(13*K/9)` | 15 / 28 | proof |
 | `SWAK_HP` | `ceil(K*n/6)` | 34 / 64 | proof |
 | `SWAK_GAUSS`, `SWAK_BUTTER`, `SWAK_2PHP` | `ceil((K+3)*(n+2)/9)` | 32 / 54 | proof |
 | `SWAK_BP` | `ceil((K+1)*n/(6*delta))` | 367 / 667 | proof |
 | `FISHER` | `ceil(5*(K+6)/2)` | 40 / 63 | proof, limiter |
+| `T3` | `ceil(11*(X+4)*n/8)` | 55 / 83 | measurement |
 | `KAMA` | `25*X*isqrt(n)` | 500 / 1000 | measurement |
 | `FRAMA` | `80*X` | 320 / 640 | measurement |
 | `VIDYA` | `2*X*(n+1)*isqrt(m)`, `m` the CMO period, at most `TA_INDEX_MAX` | 312 / 624 | measurement |
@@ -265,6 +265,9 @@ none. Each [function page](/functions/) names what it inherits from.
 - **The adaptive averages are sized for a market that trends or wanders.** KAMA, FRAMA
   and VIDYA slow down by design in a range-bound market and then need several times
   their count. Where that matters, set a fixed count on that id.
+- **T3 is sized on price series.** A start whose six stages nearly cancel in the first
+  outputs shows its difference later and can need a fifth more than the count; it is
+  rare on prices, and a fixed count of `20*n` on that id covers it at either level.
 - **The Hilbert transform functions need an input that moves.** While the input holds
   one value for a whole dominant cycle, as an oscillator pinned at 0 or 100 does, the
   phase is undefined: HT_DCPHASE, HT_SINE and HT_TRENDMODE from two starts can differ by
