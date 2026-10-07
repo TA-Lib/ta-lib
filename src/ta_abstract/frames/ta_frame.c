@@ -4713,6 +4713,34 @@ int TA_PPO_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
 {
    return TA_PPO_DisplayShift( params->optIn[0].data.optInInteger, params->optIn[1].data.optInInteger, (TA_MAType)params->optIn[2].data.optInInteger, outputIdx );
 }
+TA_RetCode TA_PSO_FramePP( const TA_ParamHolderPriv *params,
+                           int            startIdx,
+                           int            endIdx,
+                           int           *outBegIdx,
+                           int           *outNBElement )
+{
+   return TA_PSO(
+               startIdx,
+               endIdx,
+               params->in[0].data.inPrice.high, /* inHigh */
+               params->in[0].data.inPrice.low, /* inLow */
+               params->in[0].data.inPrice.close, /* inClose */
+               params->optIn[0].data.optInInteger, /* optInFastK_Period*/
+               params->optIn[1].data.optInInteger, /* optInEMAPeriod*/
+               outBegIdx, 
+               outNBElement, 
+               params->out[0].data.outReal /*  outReal */
+               );
+}
+unsigned int TA_PSO_FramePPLB( const TA_ParamHolderPriv *params )
+{
+   return TA_PSO_Lookback(params->optIn[0].data.optInInteger, /* optInFastK_Period*/
+                    params->optIn[1].data.optInInteger /* optInEMAPeriod*/ );
+}
+int TA_PSO_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+{
+   return TA_PSO_DisplayShift( params->optIn[0].data.optInInteger, params->optIn[1].data.optInInteger, outputIdx );
+}
 TA_RetCode TA_PVI_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
                            int            endIdx,

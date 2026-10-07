@@ -66,6 +66,8 @@ public partial class Core
     *                constant-cap padded loop for(i<50) if(i<DCPeriodInt) sum +=
     *                inReal[today-i]. Bit-identical (same terms, same order); the
     *                literal cap lets the streaming rescan-window machinery bound it.
+    *  100726 MF,CC  #492. The Auto rule sized on when the integer cycle period
+    *                of two starts stops disagreeing.
     */
    /// <summary>
    /// Number of leading input bars <c>HtTrendline</c> consumes before it can
@@ -90,8 +92,12 @@ public partial class Core
        *
        * 31 is for being compatible with Tradestation.
        * See mama_lookback for an explanation of the "32".
+       *
+       * Two starts are equal once their integer cycle periods have agreed for
+       * four bars, at either level: the Auto count buys a rarer late
+       * disagreement, never a smaller difference.
        */
-      return 63 + this.UnstableCount((int)FuncUnstId.HT_TRENDLINE, (80 + 50 * 4), (80 + 50 * 8)) ;
+      return 63 + this.UnstableCount((int)FuncUnstId.HT_TRENDLINE, 120 + 20 * 4, 120 + 20 * 8) ;
 
    }
    /// <summary>

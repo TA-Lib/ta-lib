@@ -209,7 +209,7 @@ TA_LIB_API TA_RetCode TA_WAVETREND( int    startIdx,
       *outNBElement= 0;
       return TA_SUCCESS;
    }
-   if( optInSignalPeriod < 1 ) return TA_INTERNAL_ERROR(485);
+   if( optInSignalPeriod < 1 ) return TA_INTERNAL_ERROR(495);
    if( (int)optInSignalPeriod > (int)(sizeof(local_wtBuffer)/sizeof(double)) )
    {
       wtBuffer = TA_Malloc( sizeof(double)*optInSignalPeriod );
@@ -495,7 +495,7 @@ TA_RetCode TA_S_WAVETREND( int    startIdx,
       *outNBElement= 0;
       return TA_SUCCESS;
    }
-   if( optInSignalPeriod < 1 ) return TA_INTERNAL_ERROR(485);
+   if( optInSignalPeriod < 1 ) return TA_INTERNAL_ERROR(495);
    if( (int)optInSignalPeriod > (int)(sizeof(local_wtBuffer)/sizeof(double)) )
    {
       wtBuffer = TA_Malloc( sizeof(double)*optInSignalPeriod );
@@ -845,7 +845,7 @@ static TA_FMA_STEP_INLINE TA_RetCode TA_WAVETREND_OpenImpl( struct TA_WAVETREND_
          *outNBElement= 0;
          return TA_INSUFFICIENT_HISTORY;
       }
-      if( optInSignalPeriod < 1 ) return TA_INTERNAL_ERROR(485);
+      if( optInSignalPeriod < 1 ) return TA_INTERNAL_ERROR(495);
       if( (int)optInSignalPeriod > (int)(sizeof(local_wtBuffer)/sizeof(double)) )
       {
          wtBuffer = TA_Malloc( sizeof(double)*optInSignalPeriod );
@@ -1059,7 +1059,7 @@ static TA_FMA_STEP_INLINE TA_RetCode TA_WAVETREND_OpenImpl( struct TA_WAVETREND_
       sp->wtBuffer_Idx = wtBuffer_Idx;
       sp->maxIdx_wtBuffer = maxIdx_wtBuffer;
       sp->cbSize_wtBuffer = maxIdx_wtBuffer + 1;
-      if( sp->cbSize_wtBuffer < 1 || sp->cbSize_wtBuffer > historyLen + 1 ) { if( wtBuffer != &local_wtBuffer[0] ) { TA_Free( wtBuffer ); } TA_WAVETREND_ReleaseImpl( sp ); return TA_INTERNAL_ERROR(486); }
+      if( sp->cbSize_wtBuffer < 1 || sp->cbSize_wtBuffer > historyLen + 1 ) { if( wtBuffer != &local_wtBuffer[0] ) { TA_Free( wtBuffer ); } TA_WAVETREND_ReleaseImpl( sp ); return TA_INTERNAL_ERROR(496); }
       sp->cb_wtBuffer = (double *)TA_Malloc( sizeof(double) * (size_t)sp->cbSize_wtBuffer );
       if( !sp->cb_wtBuffer ) { if( wtBuffer != &local_wtBuffer[0] ) { TA_Free( wtBuffer ); } TA_WAVETREND_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
       memcpy( sp->cb_wtBuffer, wtBuffer, sizeof(double) * (size_t)sp->cbSize_wtBuffer );
@@ -1081,6 +1081,22 @@ TA_FMA_OPEN_CLONE static TA_RetCode TA_WAVETREND_OpenImplFma( struct TA_WAVETREN
 TA_FMA_OPEN_PLAIN static TA_RetCode TA_WAVETREND_OpenImplPlain( struct TA_WAVETREND_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, int optInChannelPeriod, int optInAveragePeriod, int optInSignalPeriod, int *outBegIdx, int *outNBElement, double outWT1[], double outWT2[], int outStride )
 {
    return TA_WAVETREND_OpenImpl( stream, inHigh, inLow, inClose, startIdx, historyLen, optInChannelPeriod, optInAveragePeriod, optInSignalPeriod, outBegIdx, outNBElement, outWT1, outWT2, outStride );
+}
+
+TA_FMA_OPEN_CLONE static TA_RetCode TA_WAVETREND_OpenSinkFma( struct TA_WAVETREND_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, int optInChannelPeriod, int optInAveragePeriod, int optInSignalPeriod, double *outWT1, double *outWT2 )
+{
+   TA_RetCode retCode;
+   int dummyBegIdx = 0;
+   int dummyNBElement = 0;
+   double sink_outWT1 = 0.0;
+   double sink_outWT2 = 0.0;
+   retCode = TA_WAVETREND_OpenImpl( stream, inHigh, inLow, inClose, startIdx, historyLen, optInChannelPeriod, optInAveragePeriod, optInSignalPeriod, &dummyBegIdx, &dummyNBElement, &sink_outWT1, &sink_outWT2, 0 );
+   if( retCode == TA_SUCCESS )
+   {
+      *outWT1 = sink_outWT1;
+      *outWT2 = sink_outWT2;
+   }
+   return retCode;
 }
 
 /* Private function, not in public API. */
@@ -1107,7 +1123,7 @@ TA_LIB_API TA_RetCode TA_WAVETREND_Open( TA_WAVETREND_Stream **stream, const dou
    if( historyLen < 1 ) return TA_OUT_OF_RANGE_START_INDEX;
    if( historyLen > TA_INDEX_MAX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
    if( !inHigh || !inLow || !inClose || !outWT1 || !outWT2 ) return TA_BAD_PARAM;
-   return TA_WAVETREND_OpenInternal( stream, inHigh, inLow, inClose, 0, historyLen, optInChannelPeriod, optInAveragePeriod, optInSignalPeriod, outWT1, outWT2 );
+   return TA_FMA_AVAILABLE ? TA_WAVETREND_OpenSinkFma( stream, inHigh, inLow, inClose, 0, historyLen, optInChannelPeriod, optInAveragePeriod, optInSignalPeriod, outWT1, outWT2 ) : TA_WAVETREND_OpenInternal( stream, inHigh, inLow, inClose, 0, historyLen, optInChannelPeriod, optInAveragePeriod, optInSignalPeriod, outWT1, outWT2 );
 }
 
 TA_LIB_API TA_RetCode TA_WAVETREND_OpenAndFill( TA_WAVETREND_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], int historyLen, int optInChannelPeriod, int optInAveragePeriod, int optInSignalPeriod, int *outBegIdx, int *outNBElement, double outWT1[], double outWT2[] )

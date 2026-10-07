@@ -65,6 +65,9 @@
  *                natural math is only near-identity at period=1: the
  *                coefficients sum to 1 in real arithmetic but not in
  *                floating point (~1e-14 drift), so the copy is explicit.
+ *  100626 MF,CC  Auto rule sized on the worst seed of the six stages,
+ *                against the largest output difference it causes (#492).
+ *  100726 MF,CC  Auto rule sized by measurement on price series (#492).
  */
 
 TA_NOINLINE TA_LIB_API int TA_T3_Lookback( int optInTimePeriod, double optInVFactor )
@@ -77,7 +80,12 @@ TA_NOINLINE TA_LIB_API int TA_T3_Lookback( int optInTimePeriod, double optInVFac
       optInVFactor = 0.7;
    else if( !(optInVFactor >= 0e0 && optInVFactor <= 1e0) )
       return -1;
-   return 6 * (optInTimePeriod - 1) + TA_GLOBALS_UNSTABLE(TA_FUNC_UNST_T3,T3,(optInTimePeriod > 1) ? ((10 + 20) * (optInTimePeriod + 1) + 1) / 2 : 0,(optInTimePeriod > 1) ? ((19 + 20) * (optInTimePeriod + 1) + 1) / 2 : 0);
+   /* Sized by measurement on price series; it is not a bound. The six stages
+    * share the pole (n-1)/(n+1) and are stepped together, so a seed can cancel
+    * itself in the early outputs and show late: such a seed needs up to
+    * 13*n bars at PREC_4 and 18.5*n at PREC_8.
+    */
+   return 6 * (optInTimePeriod - 1) + TA_GLOBALS_UNSTABLE(TA_FUNC_UNST_T3,T3,(optInTimePeriod > 1) ? (11 * (4 + 4) * optInTimePeriod + 7) / 8 : 0,(optInTimePeriod > 1) ? (11 * (8 + 4) * optInTimePeriod + 7) / 8 : 0);
 }
 
 TA_LIB_API int TA_T3_DisplayShift( int optInTimePeriod, double optInVFactor, int outputIdx )
@@ -726,6 +734,20 @@ TA_FMA_OPEN_PLAIN static TA_RetCode TA_T3_OpenImplPlain( struct TA_T3_Stream **s
    return TA_T3_OpenImpl( stream, inReal, startIdx, historyLen, optInTimePeriod, optInVFactor, outBegIdx, outNBElement, outReal, outStride );
 }
 
+TA_FMA_OPEN_CLONE static TA_RetCode TA_T3_OpenSinkFma( struct TA_T3_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInTimePeriod, double optInVFactor, double *outReal )
+{
+   TA_RetCode retCode;
+   int dummyBegIdx = 0;
+   int dummyNBElement = 0;
+   double sink_outReal = 0.0;
+   retCode = TA_T3_OpenImpl( stream, inReal, startIdx, historyLen, optInTimePeriod, optInVFactor, &dummyBegIdx, &dummyNBElement, &sink_outReal, 0 );
+   if( retCode == TA_SUCCESS )
+   {
+      *outReal = sink_outReal;
+   }
+   return retCode;
+}
+
 /* Private function, not in public API. */
 TA_RetCode TA_T3_OpenInternal( struct TA_T3_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInTimePeriod, double optInVFactor, double *outReal )
 {
@@ -748,7 +770,7 @@ TA_LIB_API TA_RetCode TA_T3_Open( TA_T3_Stream **stream, const double inReal[], 
    if( historyLen < 1 ) return TA_OUT_OF_RANGE_START_INDEX;
    if( historyLen > TA_INDEX_MAX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
    if( !inReal || !outReal ) return TA_BAD_PARAM;
-   return TA_T3_OpenInternal( stream, inReal, 0, historyLen, optInTimePeriod, optInVFactor, outReal );
+   return TA_FMA_AVAILABLE ? TA_T3_OpenSinkFma( stream, inReal, 0, historyLen, optInTimePeriod, optInVFactor, outReal ) : TA_T3_OpenInternal( stream, inReal, 0, historyLen, optInTimePeriod, optInVFactor, outReal );
 }
 
 TA_LIB_API TA_RetCode TA_T3_OpenAndFill( TA_T3_Stream **stream, const double inReal[], int historyLen, int optInTimePeriod, double optInVFactor, int *outBegIdx, int *outNBElement, double outReal[] )

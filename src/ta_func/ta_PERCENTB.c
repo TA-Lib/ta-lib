@@ -1013,6 +1013,20 @@ TA_FMA_OPEN_PLAIN static TA_RetCode TA_PERCENTB_OpenImplPlain( struct TA_PERCENT
    return TA_PERCENTB_OpenImpl( stream, inReal, startIdx, historyLen, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, outBegIdx, outNBElement, outReal, outStride );
 }
 
+TA_FMA_OPEN_CLONE static TA_RetCode TA_PERCENTB_OpenSinkFma( struct TA_PERCENTB_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInTimePeriod, double optInNbDevUp, double optInNbDevDn, TA_MAType optInMAType, double *outReal )
+{
+   TA_RetCode retCode;
+   int dummyBegIdx = 0;
+   int dummyNBElement = 0;
+   double sink_outReal = 0.0;
+   retCode = TA_PERCENTB_OpenImpl( stream, inReal, startIdx, historyLen, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, &dummyBegIdx, &dummyNBElement, &sink_outReal, 0 );
+   if( retCode == TA_SUCCESS )
+   {
+      *outReal = sink_outReal;
+   }
+   return retCode;
+}
+
 /* Private function, not in public API. */
 TA_RetCode TA_PERCENTB_OpenInternal( struct TA_PERCENTB_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInTimePeriod, double optInNbDevUp, double optInNbDevDn, TA_MAType optInMAType, double *outReal )
 {
@@ -1035,7 +1049,7 @@ TA_LIB_API TA_RetCode TA_PERCENTB_Open( TA_PERCENTB_Stream **stream, const doubl
    if( historyLen < 1 ) return TA_OUT_OF_RANGE_START_INDEX;
    if( historyLen > TA_INDEX_MAX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
    if( !inReal || !outReal ) return TA_BAD_PARAM;
-   return TA_PERCENTB_OpenInternal( stream, inReal, 0, historyLen, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, outReal );
+   return TA_FMA_AVAILABLE ? TA_PERCENTB_OpenSinkFma( stream, inReal, 0, historyLen, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, outReal ) : TA_PERCENTB_OpenInternal( stream, inReal, 0, historyLen, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, outReal );
 }
 
 TA_LIB_API TA_RetCode TA_PERCENTB_OpenAndFill( TA_PERCENTB_Stream **stream, const double inReal[], int historyLen, int optInTimePeriod, double optInNbDevUp, double optInNbDevDn, TA_MAType optInMAType, int *outBegIdx, int *outNBElement, double outReal[] )

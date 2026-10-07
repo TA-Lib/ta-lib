@@ -57,6 +57,7 @@
  *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
  *  092926 MF,CC  Initial version (#478).
+ *  100726 MF,CC  #492. The Auto rule takes the bars the shorter EMA count gives up.
  */
 
 // Import types from parent module
@@ -109,7 +110,7 @@ impl Core {
         // The MACD line's own lookback, which is what inherits TA_FUNC_UNST_EMA,
         // then one window per stochastic stage. The two 0.5 smoothers seed on
         // their first input, so they add only the unstable period.
-        return Ok((self.ema_lookback(optInSlowPeriod)? + ((2 * (optInCyclePeriod - 1)) as usize) + ((self.unstable_count(FuncUnstId::STC, 2 * 10 + 3 * (optInSlowPeriod + 1), 2 * 19 + 3 * (optInSlowPeriod + 1))) as usize)) as usize);
+        return Ok((self.ema_lookback(optInSlowPeriod)? + ((2 * (optInCyclePeriod - 1)) as usize) + ((self.unstable_count(FuncUnstId::STC, (5 * 10 + 1) / 2 + 3 * (optInSlowPeriod + 1), (5 * 19 + 1) / 2 + 3 * (optInSlowPeriod + 1))) as usize)) as usize);
     }
     /// Display shift of one output of [`Core::stc`]: how many bars ahead (positive) or behind
     /// (negative) of the bar that computed it a chart draws that output. The values are never

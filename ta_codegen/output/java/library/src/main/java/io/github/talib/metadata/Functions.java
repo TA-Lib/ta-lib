@@ -293,6 +293,7 @@ public final class Functions {
       put(m, f_PLUS_DI());
       put(m, f_PLUS_DM());
       put(m, f_PPO());
+      put(m, f_PSO());
       put(m, f_PVI());
       put(m, f_PVO());
       put(m, f_PVT());
@@ -3331,6 +3332,29 @@ public final class Functions {
                "MA Type", "Type of Moving Average", 1.0,
                0.0, 0.0, 0, 0.0, 0.0, 0.0,
                0, 0, 0, 0, 0, "0=SMA;1=EMA;2=WMA;3=DEMA;4=TEMA;5=TRIMA;6=KAMA;7=MAMA;8=T3;9=HMA;10=DISABLED;11=DEFAULT;12=ZLEMA;13=RMA;14=VIDYA;15=ALMA")
+         ),
+         List.of(
+            new OutputInfo(OutputType.REAL, "outReal", 0x00000001)
+         ));
+   }
+
+   private static FuncInfo f_PSO() {
+      return new FuncInfo(
+         "PSO", "Momentum Indicators", "Premier Stochastic Oscillator", 0x02000000,
+         List.of(
+            new InputInfo(InputType.PRICE, "inPriceHLC", 0x0000000E)
+         ),
+         List.of(
+            new OptInputInfo(
+               OptInputType.INTEGER_RANGE, "optInFastK_Period", 0x00000000,
+               "Fast-K Period", "Time period for building the Fast-K line", 8.0,
+               0.0, 0.0, 0, 0.0, 0.0, 0.0,
+               1, 100000, 1, 200, 1, null),
+            new OptInputInfo(
+               OptInputType.INTEGER_RANGE, "optInEMAPeriod", 0x00000000,
+               "EMA Period", "Period of each of the two smoothing passes", 5.0,
+               0.0, 0.0, 0, 0.0, 0.0, 0.0,
+               1, 100000, 1, 200, 1, null)
          ),
          List.of(
             new OutputInfo(OutputType.REAL, "outReal", 0x00000001)

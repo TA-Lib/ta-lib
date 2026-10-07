@@ -1675,6 +1675,22 @@ TA_FMA_OPEN_PLAIN static TA_RetCode TA_MAMA_OpenImplPlain( struct TA_MAMA_Stream
    return TA_MAMA_OpenImpl( stream, inReal, startIdx, historyLen, optInFastLimit, optInSlowLimit, outBegIdx, outNBElement, outMAMA, outFAMA, outStride );
 }
 
+TA_FMA_OPEN_CLONE static TA_RetCode TA_MAMA_OpenSinkFma( struct TA_MAMA_Stream **stream, const double inReal[], int startIdx, int historyLen, double optInFastLimit, double optInSlowLimit, double *outMAMA, double *outFAMA )
+{
+   TA_RetCode retCode;
+   int dummyBegIdx = 0;
+   int dummyNBElement = 0;
+   double sink_outMAMA = 0.0;
+   double sink_outFAMA = 0.0;
+   retCode = TA_MAMA_OpenImpl( stream, inReal, startIdx, historyLen, optInFastLimit, optInSlowLimit, &dummyBegIdx, &dummyNBElement, &sink_outMAMA, outFAMA ? &sink_outFAMA : NULL, 0 );
+   if( retCode == TA_SUCCESS )
+   {
+      *outMAMA = sink_outMAMA;
+      if( outFAMA != NULL ) *outFAMA = sink_outFAMA;
+   }
+   return retCode;
+}
+
 /* Private function, not in public API. */
 TA_RetCode TA_MAMA_OpenInternal( struct TA_MAMA_Stream **stream, const double inReal[], int startIdx, int historyLen, double optInFastLimit, double optInSlowLimit, double *outMAMA, double *outFAMA )
 {
@@ -1699,7 +1715,7 @@ TA_LIB_API TA_RetCode TA_MAMA_Open( TA_MAMA_Stream **stream, const double inReal
    if( historyLen < 1 ) return TA_OUT_OF_RANGE_START_INDEX;
    if( historyLen > TA_INDEX_MAX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
    if( !inReal || !outMAMA ) return TA_BAD_PARAM;
-   return TA_MAMA_OpenInternal( stream, inReal, 0, historyLen, optInFastLimit, optInSlowLimit, outMAMA, outFAMA );
+   return TA_FMA_AVAILABLE ? TA_MAMA_OpenSinkFma( stream, inReal, 0, historyLen, optInFastLimit, optInSlowLimit, outMAMA, outFAMA ) : TA_MAMA_OpenInternal( stream, inReal, 0, historyLen, optInFastLimit, optInSlowLimit, outMAMA, outFAMA );
 }
 
 TA_LIB_API TA_RetCode TA_MAMA_OpenAndFill( TA_MAMA_Stream **stream, const double inReal[], int historyLen, double optInFastLimit, double optInSlowLimit, int *outBegIdx, int *outNBElement, double outMAMA[], double outFAMA[] )

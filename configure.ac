@@ -9,6 +9,11 @@ AC_CONFIG_SRCDIR([src/ta_func/ta_AD.c])
 AC_CONFIG_HEADERS([include/ta_config.h])
 AM_INIT_AUTOMAKE([foreign subdir-objects -Wall -Werror])
 
+# -O3 (issue #515) — the level CMake's Release build uses and every gate runs
+# against. Only when CFLAGS is unset, so a caller's flags are never touched, and
+# before AC_PROG_CC, which would otherwise default an unset CFLAGS to -g -O2.
+: ${CFLAGS="-g -O3"}
+
 # Checks for programs.
 AM_PROG_AR
 AC_PROG_CC

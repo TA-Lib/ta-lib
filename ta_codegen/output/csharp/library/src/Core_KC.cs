@@ -182,6 +182,8 @@ public partial class Core
       if( (outRealUpperBand.Overlaps(inHigh) && outRealUpperBand != inHigh) || (outRealUpperBand.Overlaps(inLow) && outRealUpperBand != inLow) || (outRealUpperBand.Overlaps(inClose) && outRealUpperBand != inClose) || (outRealMiddleBand.Overlaps(inHigh) && outRealMiddleBand != inHigh) || (outRealMiddleBand.Overlaps(inLow) && outRealMiddleBand != inLow) || (outRealMiddleBand.Overlaps(inClose) && outRealMiddleBand != inClose) || (outRealLowerBand.Overlaps(inHigh) && outRealLowerBand != inHigh) || (outRealLowerBand.Overlaps(inLow) && outRealLowerBand != inLow) || (outRealLowerBand.Overlaps(inClose) && outRealLowerBand != inClose) ) {
          return RetCode.BadParam ;
       }
+      double[]? _rent_tempATR = null;
+      double[]? _rent_tempTP = null;
       emaLookback = EmaLookback(optInTimePeriod);
       lookbackTotal = KcLookback(optInTimePeriod, optInATRPeriod, optInNbDev);
       /* Nothing to produce: the range ends before the lookback. Return before
@@ -203,8 +205,10 @@ public partial class Core
        * materialized only over the window the moving average reads.
        */
       tpStartIdx = startIdx - emaLookback;
-      tempTP = new double[(int)((endIdx - tpStartIdx + 1) * 1)];
-      tempATR = new double[(int)((endIdx - startIdx + 1) * 1)];
+      _rent_tempTP = System.Buffers.ArrayPool<double>.Shared.Rent((int)((endIdx - tpStartIdx + 1) * 1));
+      tempTP = _rent_tempTP.AsSpan(0, (int)((endIdx - tpStartIdx + 1) * 1));
+      _rent_tempATR = System.Buffers.ArrayPool<double>.Shared.Rent((int)((endIdx - startIdx + 1) * 1));
+      tempATR = _rent_tempATR.AsSpan(0, (int)((endIdx - startIdx + 1) * 1));
       OutRange _xr0 = Typprice(tpStartIdx, endIdx, inHigh, inLow, inClose, tempTP);
       tempBegIdx = _xr0.BegIdx;
       tempNbElement = _xr0.Count;
@@ -224,6 +228,8 @@ public partial class Core
       outNBElement = _xr2.Count;
       retCode = RetCode.Success;
       if( (int)outNBElement == 0 ) {
+         ReturnScratch(ref _rent_tempTP);
+         ReturnScratch(ref _rent_tempATR);
          outNBElement = 0;
          return retCode ;
       }
@@ -234,6 +240,8 @@ public partial class Core
          outRealUpperBand[i] = middle + tempReal;
          outRealLowerBand[i] = middle - tempReal;
       }
+      ReturnScratch(ref _rent_tempTP);
+      ReturnScratch(ref _rent_tempATR);
       return RetCode.Success ;
    }
    internal RetCode KcImpl( int startIdx,
@@ -290,6 +298,8 @@ public partial class Core
       if( System.Runtime.InteropServices.MemoryMarshal.AsBytes(outRealUpperBand).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inHigh)) || System.Runtime.InteropServices.MemoryMarshal.AsBytes(outRealUpperBand).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inLow)) || System.Runtime.InteropServices.MemoryMarshal.AsBytes(outRealUpperBand).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inClose)) || System.Runtime.InteropServices.MemoryMarshal.AsBytes(outRealMiddleBand).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inHigh)) || System.Runtime.InteropServices.MemoryMarshal.AsBytes(outRealMiddleBand).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inLow)) || System.Runtime.InteropServices.MemoryMarshal.AsBytes(outRealMiddleBand).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inClose)) || System.Runtime.InteropServices.MemoryMarshal.AsBytes(outRealLowerBand).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inHigh)) || System.Runtime.InteropServices.MemoryMarshal.AsBytes(outRealLowerBand).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inLow)) || System.Runtime.InteropServices.MemoryMarshal.AsBytes(outRealLowerBand).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inClose)) ) {
          return RetCode.BadParam ;
       }
+      double[]? _rent_tempATR = null;
+      double[]? _rent_tempTP = null;
       emaLookback = EmaLookback(optInTimePeriod);
       lookbackTotal = KcLookback(optInTimePeriod, optInATRPeriod, optInNbDev);
       if( lookbackTotal > endIdx ) {
@@ -301,8 +311,10 @@ public partial class Core
          startIdx = lookbackTotal;
       }
       tpStartIdx = startIdx - emaLookback;
-      tempTP = new double[(int)((endIdx - tpStartIdx + 1) * 1)];
-      tempATR = new double[(int)((endIdx - startIdx + 1) * 1)];
+      _rent_tempTP = System.Buffers.ArrayPool<double>.Shared.Rent((int)((endIdx - tpStartIdx + 1) * 1));
+      tempTP = _rent_tempTP.AsSpan(0, (int)((endIdx - tpStartIdx + 1) * 1));
+      _rent_tempATR = System.Buffers.ArrayPool<double>.Shared.Rent((int)((endIdx - startIdx + 1) * 1));
+      tempATR = _rent_tempATR.AsSpan(0, (int)((endIdx - startIdx + 1) * 1));
       OutRange _xr0 = Typprice(tpStartIdx, endIdx, inHigh, inLow, inClose, tempTP);
       tempBegIdx = _xr0.BegIdx;
       tempNbElement = _xr0.Count;
@@ -316,6 +328,8 @@ public partial class Core
       outNBElement = _xr2.Count;
       retCode = RetCode.Success;
       if( (int)outNBElement == 0 ) {
+         ReturnScratch(ref _rent_tempTP);
+         ReturnScratch(ref _rent_tempATR);
          outNBElement = 0;
          return retCode ;
       }
@@ -326,6 +340,8 @@ public partial class Core
          outRealUpperBand[i] = middle + tempReal;
          outRealLowerBand[i] = middle - tempReal;
       }
+      ReturnScratch(ref _rent_tempTP);
+      ReturnScratch(ref _rent_tempATR);
       return RetCode.Success ;
    }
    /// <summary>

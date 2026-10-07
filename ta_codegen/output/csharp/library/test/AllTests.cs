@@ -80,7 +80,9 @@ public static class AllTests
         ["FpSelectTest"] = 3_635_004,
         ["MetadataTest"] = 4_282,
         ["NoPhantomIoTest"] = 868,
+        ["PooledScratchTest"] = 129,
         ["SMathOverflowTest"] = 5,
+        ["ScratchTest"] = 13,
         ["SqrtRunTest"] = 45_375,
         ["StreamApiTest"] = 4_022,
     };

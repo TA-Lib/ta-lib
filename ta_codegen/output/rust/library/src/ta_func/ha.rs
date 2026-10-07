@@ -52,6 +52,7 @@
  *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
  *  090526 MF,CC  First version (issue #373).
+ *  100626 MF,CC  Auto rule sized on the pole at 1/2: ceil(13*K/9) (#492).
  */
 
 // Import types from parent module
@@ -68,7 +69,9 @@ impl Core {
     /// first output value can be produced.
     #[doc(alias = "TA_HA_Lookback")]
     pub fn ha_lookback(&self) -> Result<usize, RetCode> {
-        return Ok((self.unstable_count(FuncUnstId::HA, 2 * 10, 2 * 19)) as usize);
+        // 13/9 is 1/ln(2) rounded up: the open is the only state, and it shows
+        // the whole first difference at its first bar.
+        return Ok((self.unstable_count(FuncUnstId::HA, (13 * 10 + 8) / 9, (13 * 19 + 8) / 9)) as usize);
     }
     /// Display shift of one output of [`Core::ha`]: how many bars ahead (positive) or behind
     /// (negative) of the bar that computed it a chart draws that output. The values are never

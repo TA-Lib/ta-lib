@@ -185,6 +185,7 @@ public partial class Core
       if( (outReal.Overlaps(inReal) && outReal != inReal) ) {
          return RetCode.BadParam ;
       }
+      double[]? _rent_tempBuffer = null;
       if( optInMAType == MAType.SMA ) {
          /* Keep the middle band's divide in the recurrence, where the running
           * sums' dependency chain hides it; everything downstream of the
@@ -349,7 +350,8 @@ public partial class Core
          outNBElement = 0;
          return RetCode.Success ;
       }
-      tempBuffer = new double[(int)((endIdx - startIdx + 1) * 1)];
+      _rent_tempBuffer = System.Buffers.ArrayPool<double>.Shared.Rent((int)((endIdx - startIdx + 1) * 1));
+      tempBuffer = _rent_tempBuffer.AsSpan(0, (int)((endIdx - startIdx + 1) * 1));
       /* Before the variance: it may be written over inReal. */
       OutRange _xr2 = Ma(startIdx, endIdx, inReal, optInTimePeriod, optInMAType, tempBuffer);
       maBegIdx = _xr2.BegIdx;
@@ -388,6 +390,7 @@ public partial class Core
             }
          }
       }
+      ReturnScratch(ref _rent_tempBuffer);
       return RetCode.Success ;
    }
    internal RetCode BbwImpl( int startIdx,
@@ -443,6 +446,7 @@ public partial class Core
       if( System.Runtime.InteropServices.MemoryMarshal.AsBytes(outReal).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inReal)) ) {
          return RetCode.BadParam ;
       }
+      double[]? _rent_tempBuffer = null;
       if( optInMAType == MAType.SMA ) {
          double[] _mid = new double[256];
          double maTotal;
@@ -591,7 +595,8 @@ public partial class Core
          outNBElement = 0;
          return RetCode.Success ;
       }
-      tempBuffer = new double[(int)((endIdx - startIdx + 1) * 1)];
+      _rent_tempBuffer = System.Buffers.ArrayPool<double>.Shared.Rent((int)((endIdx - startIdx + 1) * 1));
+      tempBuffer = _rent_tempBuffer.AsSpan(0, (int)((endIdx - startIdx + 1) * 1));
       OutRange _xr2 = Ma(startIdx, endIdx, inReal, optInTimePeriod, optInMAType, tempBuffer);
       maBegIdx = _xr2.BegIdx;
       maNbElement = _xr2.Count;
@@ -626,6 +631,7 @@ public partial class Core
             }
          }
       }
+      ReturnScratch(ref _rent_tempBuffer);
       return RetCode.Success ;
    }
    /// <summary>

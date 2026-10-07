@@ -197,6 +197,11 @@ public partial class Core
       if( (outReal.Overlaps(inReal) && outReal != inReal) || (outReal.Overlaps(inPeriods) && outReal != inPeriods) ) {
          return RetCode.BadParam ;
       }
+      int[]? _rent_bucketOfs = null;
+      double[]? _rent_localFinalArray = null;
+      double[]? _rent_localOutputArray = null;
+      int[]? _rent_localPeriodArray = null;
+      int[]? _rent_sortedIdx = null;
       /* An inverted period window (min above max) is an invalid parameter
        * combination: the per-bar clamp below would push a period above
        * optInMaxPeriod, exceeding the lookback and reading uninitialized
@@ -237,7 +242,8 @@ public partial class Core
          return RetCode.Success ;
       }
       outputSize = endIdx - firstOut + 1;
-      localPeriodArray = new int[(int)(outputSize * 1)];
+      _rent_localPeriodArray = System.Buffers.ArrayPool<int>.Shared.Rent((int)(outputSize * 1));
+      localPeriodArray = _rent_localPeriodArray.AsSpan(0, (int)(outputSize * 1));
       /* In-place defence (issue #130): each ma() pass below re-reads inReal over
        * the full range, so with outReal==inReal the results are staged in a
        * scratch buffer and copied once at the end. A regular call writes
@@ -246,7 +252,8 @@ public partial class Core
       finalIsAllocated = 0;
       if( outReal == inReal ) {
          finalIsAllocated = 1;
-         localFinalArray = new double[(int)(outputSize * 1)];
+         _rent_localFinalArray = System.Buffers.ArrayPool<double>.Shared.Rent((int)(outputSize * 1));
+         localFinalArray = _rent_localFinalArray.AsSpan(0, (int)(outputSize * 1));
       } else {
          localFinalArray = outReal;
       }
@@ -318,6 +325,10 @@ public partial class Core
        * If you delete this, delete the clamps and the comments together.
        */
       if( maxUsed < minUsed || maxUsed - minUsed > 100000 ) {
+         ReturnScratch(ref _rent_localPeriodArray);
+         if( (finalIsAllocated) != 0 ) {
+            ReturnScratch(ref _rent_localFinalArray);
+         }
          return RetCode.BadParam ;
       }
       if( minUsed == maxUsed ) {
@@ -329,9 +340,12 @@ public partial class Core
          localNbElement = _xr0.Count;
          retCode = RetCode.Success;
       } else {
-         localOutputArray = new double[(int)(outputSize * 1)];
-         sortedIdx = new int[(int)(outputSize * 1)];
-         bucketOfs = new int[(int)((maxUsed - minUsed + 2) * 1)];
+         _rent_localOutputArray = System.Buffers.ArrayPool<double>.Shared.Rent((int)(outputSize * 1));
+         localOutputArray = _rent_localOutputArray.AsSpan(0, (int)(outputSize * 1));
+         _rent_sortedIdx = System.Buffers.ArrayPool<int>.Shared.Rent((int)(outputSize * 1));
+         sortedIdx = _rent_sortedIdx.AsSpan(0, (int)(outputSize * 1));
+         _rent_bucketOfs = System.Buffers.ArrayPool<int>.Shared.Rent((int)((maxUsed - minUsed + 2) * 1));
+         bucketOfs = _rent_bucketOfs.AsSpan(0, (int)((maxUsed - minUsed + 2) * 1));
          /* Counting sort: sortedIdx ends up holding the output indices ordered
           * by period, one contiguous ascending slice per distinct period, with
           * bucketOfs[p] the end of period p's slice.
@@ -391,9 +405,16 @@ public partial class Core
             }
             bucketStart = bucketEnd;
          }
+         ReturnScratch(ref _rent_localOutputArray);
+         ReturnScratch(ref _rent_sortedIdx);
+         ReturnScratch(ref _rent_bucketOfs);
       }
       if( localFinalArray != outReal ) {
          localFinalArray.Slice(0, outputSize * 1).CopyTo(outReal.Slice(0));
+      }
+      ReturnScratch(ref _rent_localPeriodArray);
+      if( (finalIsAllocated) != 0 ) {
+         ReturnScratch(ref _rent_localFinalArray);
       }
       /* Done. Inform the caller of the success. */
       outBegIdx = startIdx;
@@ -461,6 +482,11 @@ public partial class Core
       if( System.Runtime.InteropServices.MemoryMarshal.AsBytes(outReal).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inReal)) || System.Runtime.InteropServices.MemoryMarshal.AsBytes(outReal).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inPeriods)) ) {
          return RetCode.BadParam ;
       }
+      int[]? _rent_bucketOfs = null;
+      double[]? _rent_localFinalArray = null;
+      double[]? _rent_localOutputArray = null;
+      int[]? _rent_localPeriodArray = null;
+      int[]? _rent_sortedIdx = null;
       if( optInMinPeriod > optInMaxPeriod ) {
          return RetCode.BadParam ;
       }
@@ -484,7 +510,8 @@ public partial class Core
          return RetCode.Success ;
       }
       outputSize = endIdx - firstOut + 1;
-      localPeriodArray = new int[(int)(outputSize * 1)];
+      _rent_localPeriodArray = System.Buffers.ArrayPool<int>.Shared.Rent((int)(outputSize * 1));
+      localPeriodArray = _rent_localPeriodArray.AsSpan(0, (int)(outputSize * 1));
       finalIsAllocated = 0;
       localFinalArray = outReal;
       minUsed = optInMaxPeriod;
@@ -515,6 +542,10 @@ public partial class Core
          }
       }
       if( maxUsed < minUsed || maxUsed - minUsed > 100000 ) {
+         ReturnScratch(ref _rent_localPeriodArray);
+         if( (finalIsAllocated) != 0 ) {
+            ReturnScratch(ref _rent_localFinalArray);
+         }
          return RetCode.BadParam ;
       }
       if( minUsed == maxUsed ) {
@@ -523,9 +554,12 @@ public partial class Core
          localNbElement = _xr0.Count;
          retCode = RetCode.Success;
       } else {
-         localOutputArray = new double[(int)(outputSize * 1)];
-         sortedIdx = new int[(int)(outputSize * 1)];
-         bucketOfs = new int[(int)((maxUsed - minUsed + 2) * 1)];
+         _rent_localOutputArray = System.Buffers.ArrayPool<double>.Shared.Rent((int)(outputSize * 1));
+         localOutputArray = _rent_localOutputArray.AsSpan(0, (int)(outputSize * 1));
+         _rent_sortedIdx = System.Buffers.ArrayPool<int>.Shared.Rent((int)(outputSize * 1));
+         sortedIdx = _rent_sortedIdx.AsSpan(0, (int)(outputSize * 1));
+         _rent_bucketOfs = System.Buffers.ArrayPool<int>.Shared.Rent((int)((maxUsed - minUsed + 2) * 1));
+         bucketOfs = _rent_bucketOfs.AsSpan(0, (int)((maxUsed - minUsed + 2) * 1));
          for( curPeriod = minUsed; curPeriod <= maxUsed + 1; curPeriod += 1 ) {
             bucketOfs[curPeriod - minUsed] = 0;
          }
@@ -562,9 +596,16 @@ public partial class Core
             }
             bucketStart = bucketEnd;
          }
+         ReturnScratch(ref _rent_localOutputArray);
+         ReturnScratch(ref _rent_sortedIdx);
+         ReturnScratch(ref _rent_bucketOfs);
       }
       if( localFinalArray != outReal ) {
          localFinalArray.Slice(0, outputSize * 1).CopyTo(outReal.Slice(0));
+      }
+      ReturnScratch(ref _rent_localPeriodArray);
+      if( (finalIsAllocated) != 0 ) {
+         ReturnScratch(ref _rent_localFinalArray);
       }
       outBegIdx = startIdx;
       outNBElement = outputSize;

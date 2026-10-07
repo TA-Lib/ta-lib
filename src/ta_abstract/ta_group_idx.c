@@ -213,6 +213,7 @@ extern const TA_FuncDef TA_DEF_PERCENTRANK;
 extern const TA_FuncDef TA_DEF_PLUS_DI;
 extern const TA_FuncDef TA_DEF_PLUS_DM;
 extern const TA_FuncDef TA_DEF_PPO;
+extern const TA_FuncDef TA_DEF_PSO;
 extern const TA_FuncDef TA_DEF_PVI;
 extern const TA_FuncDef TA_DEF_PVO;
 extern const TA_FuncDef TA_DEF_PVT;
@@ -399,6 +400,7 @@ const TA_FuncDef *TA_PerGroupFunc_4[] = {
 &TA_DEF_PLUS_DI,
 &TA_DEF_PLUS_DM,
 &TA_DEF_PPO,
+&TA_DEF_PSO,
 &TA_DEF_QSTICK,
 &TA_DEF_ROC,
 &TA_DEF_ROCP,

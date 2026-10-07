@@ -55,6 +55,8 @@ public partial class Core
     *  -------------------------------------------------------------------
     *  092826 MF,CC  First version (issue #464).
     *  100226 MF,CC  #497. An odd period is refused before the range is written.
+    *  100726 MF,CC  #492. The Auto rule grows with the period and stops at the
+    *                slowest alpha's bound.
     */
    /// <summary>
    /// Number of leading input bars <c>Frama</c> consumes before it can produce
@@ -79,13 +81,15 @@ public partial class Core
       } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
          return -1;
       }
+      int root = 0;
+      root = (int)Math.Sqrt((double)optInTimePeriod);
       /* The range check cannot demand an even period; without this the lookback
        * answers a usable number for a call that cannot run.
        */
       if( optInTimePeriod % 2 != 0 ) {
          return -1 ;
       }
-      return optInTimePeriod + this.UnstableCount((int)FuncUnstId.FRAMA, 80 * 4, 80 * 8) ;
+      return optInTimePeriod + this.UnstableCount((int)FuncUnstId.FRAMA, ((9 * (4 + 4) * (root + 2) / 2 < 99 * 10) ? 9 * (4 + 4) * (root + 2) / 2 : 99 * 10), ((9 * (8 + 4) * (root + 2) / 2 < 99 * 19) ? 9 * (8 + 4) * (root + 2) / 2 : 99 * 19)) ;
 
    }
    /// <summary>

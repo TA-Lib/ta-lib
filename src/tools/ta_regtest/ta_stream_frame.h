@@ -7039,6 +7039,48 @@ static TA_RetCode TA_PPO_SFrameClose( void *stream )
    return TA_PPO_Close( (TA_PPO_Stream *)stream );
 }
 
+static TA_RetCode TA_PSO_SFrameOpen( void **stream,
+                  const double *const in[], int historyLen,
+                  const double optIn[],
+                  double *const outReal[], int *const outInteger[] )
+{
+   (void)outInteger;
+   return TA_PSO_Open(
+               (TA_PSO_Stream **)stream,
+               in[0] /* inHigh */,
+               in[1] /* inLow */,
+               in[2] /* inClose */,
+               historyLen,
+               (int)optIn[0] /* optInFastK_Period */,
+               (int)optIn[1] /* optInEMAPeriod */,
+               outReal[0] /* outReal */
+               );
+}
+static TA_RetCode TA_PSO_SFrameFill( void **stream,
+                  const double *const in[], int historyLen,
+                  const double optIn[],
+                  int *outBegIdx, int *outNBElement,
+                  double *const outReal[], int *const outInteger[] )
+{
+   (void)outInteger;
+   return TA_PSO_OpenAndFill(
+               (TA_PSO_Stream **)stream,
+               in[0] /* inHigh */,
+               in[1] /* inLow */,
+               in[2] /* inClose */,
+               historyLen,
+               (int)optIn[0] /* optInFastK_Period */,
+               (int)optIn[1] /* optInEMAPeriod */,
+               outBegIdx,
+               outNBElement,
+               outReal[0] /* outReal */
+               );
+}
+static TA_RetCode TA_PSO_SFrameClose( void *stream )
+{
+   return TA_PSO_Close( (TA_PSO_Stream *)stream );
+}
+
 static TA_RetCode TA_PVI_SFrameOpen( void **stream,
                   const double *const in[], int historyLen,
                   const double optIn[],
@@ -9644,6 +9686,8 @@ static const TA_StreamEntry TA_StreamTable[] = {
      2, TA_VIn_PLUS_DM, 1, TA_VOpt_PLUS_DM, 1, TA_VOutIsInt_PLUS_DM },
    { "PPO", TA_PPO_SFrameOpen, TA_PPO_SFrameFill, TA_PPO_SFrameClose,
      1, TA_VIn_PPO, 3, TA_VOpt_PPO, 1, TA_VOutIsInt_PPO },
+   { "PSO", TA_PSO_SFrameOpen, TA_PSO_SFrameFill, TA_PSO_SFrameClose,
+     3, TA_VIn_PSO, 2, TA_VOpt_PSO, 1, TA_VOutIsInt_PSO },
    { "PVI", TA_PVI_SFrameOpen, TA_PVI_SFrameFill, TA_PVI_SFrameClose,
      2, TA_VIn_PVI, 0, NULL, 1, TA_VOutIsInt_PVI },
    { "PVO", TA_PVO_SFrameOpen, TA_PVO_SFrameFill, TA_PVO_SFrameClose,
@@ -9762,6 +9806,6 @@ static const TA_StreamEntry TA_StreamTable[] = {
      1, TA_VIn_ZLEMA, 1, TA_VOpt_ZLEMA, 1, TA_VOutIsInt_ZLEMA },
 };
 
-#define TA_STREAM_TABLE_SIZE 231
+#define TA_STREAM_TABLE_SIZE 232
 
 #endif /* TA_STREAM_FRAME_H */

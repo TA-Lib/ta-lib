@@ -34,6 +34,7 @@ See [github commits](https://github.com/TA-Lib/ta-lib/commits) for complete list
   - MCGD: McGinley Dynamic, a moving average whose step adapts to the price-to-line ratio (#471)
   - MEDIAN: Rolling Median (#432)
   - PERCENTB: Bollinger Bands %B, where the input sits relative to the bands (#449)
+  - PSO: Premier Stochastic Oscillator, Leibfarth's double-smoothed Fast %K squashed into -1 to +1 (#473)
   - RVIR: Relative Volatility Index, 1995 refined form (#416)
   - SI: Wilder Swing Index, each bar rated against the one before (#451)
   - STC: Schaff Trend Cycle, a MACD line run twice through a stochastic, each pass smoothed by half (#478)

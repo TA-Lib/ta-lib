@@ -1950,6 +1950,17 @@ unsigned int TA_PPO_FramePPLB( const TA_ParamHolderPriv *params )
 int TA_PPO_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
 ;
 
+TA_RetCode TA_PSO_FramePP( const TA_ParamHolderPriv *params,
+                           int            startIdx,
+                           int            endIdx,
+                           int           *outBegIdx,
+                           int           *outNBElement )
+;
+unsigned int TA_PSO_FramePPLB( const TA_ParamHolderPriv *params )
+;
+int TA_PSO_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+;
+
 TA_RetCode TA_PVI_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
                            int            endIdx,

@@ -21,12 +21,20 @@
  *                natural math is only near-identity at period=1: the
  *                coefficients sum to 1 in real arithmetic but not in
  *                floating point (~1e-14 drift), so the copy is explicit.
+ *  100626 MF,CC  Auto rule sized on the worst seed of the six stages,
+ *                against the largest output difference it causes (#492).
+ *  100726 MF,CC  Auto rule sized by measurement on price series (#492).
  */
 
 int t3_lookback(int optInTimePeriod, double optInVFactor)
 {
    (void)optInVFactor;
-   return 6 * (optInTimePeriod-1) + TA_UNSTABLE( TA_FUNC_UNST_T3, optInTimePeriod > 1 ? ((K + 20) * (optInTimePeriod + 1) + 1) / 2 : 0 );
+   /* Sized by measurement on price series; it is not a bound. The six stages
+    * share the pole (n-1)/(n+1) and are stepped together, so a seed can cancel
+    * itself in the early outputs and show late: such a seed needs up to
+    * 13*n bars at PREC_4 and 18.5*n at PREC_8.
+    */
+   return 6 * (optInTimePeriod-1) + TA_UNSTABLE( TA_FUNC_UNST_T3, optInTimePeriod > 1 ? (11 * (X + 4) * optInTimePeriod + 7) / 8 : 0 );
 }
 
 TA_RetCode t3(int startIdx, int endIdx,

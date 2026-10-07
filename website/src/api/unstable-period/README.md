@@ -191,10 +191,10 @@ The cost in bars is set mostly by the period, so no level makes a long period ch
 
 | Call | Lookback at `0` | `PREC_4` | `PREC_8` |
 | --- | --: | --: | --: |
-| EMA(30) | 29 | 184 | 324 |
-| EMA(200) | 199 | 1204 | 2109 |
+| EMA(30) | 29 | 179 | 314 |
+| EMA(200) | 199 | 1199 | 2099 |
 | RSI(14) | 14 | 154 | 280 |
-| MACD(12, 26, 9) | 33 | 218 | 385 |
+| MACD(12, 26, 9) | 33 | 208 | 366 |
 
 A batch call whose range ends before the lookback succeeds with no output, and a stream
 needs the lookback plus one bar to open: size your history from the lookback call.
@@ -210,31 +210,32 @@ The exact behaviour is in the specification: the values a setter accepts
 Each id has one rule. `n` is the function's period. `K` is 10 at `PREC_4` and 19 at
 `PREC_8`; `X` is the level's digit count, 4 or 8.
 
-- `E(n) = ceil(K*(n+1)/2)`, for an EMA.
-- `W(n) = K*n`, for Wilder smoothing.
+- `E(n) = ceil(K*n/2)`, for an EMA.
+- `W(n) = ceil(K*(2*n-1)/2)`, for Wilder smoothing whose output is the smoothed value.
 - `H = 80 + 50*X`, for the Hilbert transform functions.
 
 | Id | Bars discarded | `PREC_4` / `PREC_8` at the defaults | Sized by |
 | --- | --- | --- | --- |
-| `EMA` | `E(n)` | 155 / 295 | proof |
-| `RMA`, `ATR`, `PLUS_DM`, `MINUS_DM` | `W(n)` | RMA 300 / 570, the others 140 / 266 | proof |
-| `NATR`, `RSI`, `CMO`, `PLUS_DI`, `MINUS_DI`, `DX`, `RVI` | `W(n)` | 140 / 266 | proof, ratio |
+| `EMA` | `E(n)` | 150 / 285 | proof |
+| `RMA`, `ATR`, `PLUS_DM`, `MINUS_DM` | `W(n)` | RMA 295 / 561, the others 135 / 257 | proof |
+| `NATR`, `RSI`, `CMO`, `PLUS_DI`, `MINUS_DI`, `DX`, `RVI` | `K*n` | 140 / 266 | proof, ratio |
 | `ADX` | `(K+6)*n` | 224 / 350 | proof, ratio |
-| `T3` | `ceil((K+20)*(n+1)/2)` | 90 / 117 | proof |
-| `HA` | `2*K` | 20 / 38 | proof |
+| `HA` | `ceil(13*K/9)` | 15 / 28 | proof |
 | `SWAK_HP` | `ceil(K*n/6)` | 34 / 64 | proof |
-| `SWAK_GAUSS`, `SWAK_BUTTER`, `SWAK_2PHP` | `ceil((K+5)*(n+2)/9)` | 37 / 59 | proof |
+| `SWAK_GAUSS`, `SWAK_BUTTER`, `SWAK_2PHP` | `ceil((K+3)*(n+2)/9)` | 32 / 54 | proof |
 | `SWAK_BP` | `ceil((K+1)*n/(6*delta))` | 367 / 667 | proof |
 | `FISHER` | `ceil(5*(K+6)/2)` | 40 / 63 | proof, limiter |
+| `T3` | `ceil(11*(X+4)*n/8)` | 55 / 83 | measurement |
 | `KAMA` | `25*X*isqrt(n)` | 500 / 1000 | measurement |
-| `FRAMA` | `80*X` | 320 / 640 | measurement |
+| `FRAMA` | `9*(X+4)*(isqrt(n)+2)/2`, at most `99*K` | 216 / 324 | measurement |
 | `VIDYA` | `2*X*(n+1)*isqrt(m)`, `m` the CMO period, at most `TA_INDEX_MAX` | 312 / 624 | measurement |
 | `MCGD` | `5*X*n` | 280 / 560 | measurement |
-| `HT_DCPERIOD`, `HT_DCPHASE`, `HT_PHASOR`, `HT_SINE`, `HT_TRENDLINE`, `HT_TRENDMODE` | `H` | 280 / 480 | measurement |
+| `HT_DCPERIOD`, `HT_DCPHASE`, `HT_PHASOR`, `HT_SINE`, `HT_TRENDMODE` | `H` | 280 / 480 | measurement |
+| `HT_TRENDLINE` | `120 + 20*X` | 200 / 280 | measurement |
 | `MAMA` | `H + ceil(2*K/max(fast, slow))` | 320 / 556 | measurement |
-| `STC` | `2*K + 3*(s+1)`, `s = max(fast, slow)`, on top of the `E(s)` it inherits | 173 / 191 | measurement |
+| `STC` | `ceil(5*K/2) + 3*(s+1)`, `s = max(fast, slow)`, on top of the `E(s)` it inherits | 178 / 201 | measurement |
 
-`isqrt` is the integer square root. The `E`, `W`, `T3`, `KAMA` and `VIDYA` rules give 0
+`isqrt` is the integer square root. The `E`, `W`, `K*n`, `T3`, `KAMA` and `VIDYA` rules give 0
 at a period of 1, where the function does no smoothing.
 
 - **Proof.** The count bounds what is left of the seed, for any input. "Ratio" marks an
@@ -253,6 +254,9 @@ none. Each [function page](/functions/) names what it inherits from.
 
 - **Not bit-identity.** A level bounds how much of the seed is left; two starts then
   agree to the level's digits, not to the last bit.
+- **The `E` and `W` counts have no bar to spare.** At a long period the count is the
+  exact number of bars the level needs, so the first value kept can sit above the
+  level's threshold by the rounding of the arithmetic. The digits a level names hold.
 - **A flat market freezes a ratio.** RSI, CMO, the DI pair, DX, RVI, TSI, SMI and STC
   divide one smoothed series by another, and ADX averages such a ratio. When prices
   stop moving both series shrink together, and the ratio keeps its dependence on the
@@ -264,10 +268,31 @@ none. Each [function page](/functions/) names what it inherits from.
   stays across and the two do not meet for any warm-up.
 - **The adaptive averages are sized for a market that trends or wanders.** KAMA, FRAMA
   and VIDYA slow down by design in a range-bound market and then need several times
-  their count. Where that matters, set a fixed count on that id.
-- **The measured counts are sized on price series.** MAMA and the Hilbert transform
-  functions do not converge on an input that rests on one value for runs of bars, such
-  as an oscillator pinned at 0 or 100.
+  their count. Where that matters, set a fixed count on that id. FRAMA's slowest rate
+  is known, so `99*K` bars hold its level on any input.
+- **HT_TRENDLINE agrees exactly or not at all.** It averages the price over a cycle
+  period cut to a whole number of bars, so two starts are equal once their whole
+  periods have agreed for four bars. A level sets how rare a later disagreement is,
+  not how small: on random walks about one start in 2,500 has one past the `PREC_4`
+  count and one in 400,000 past the `PREC_8` count.
+- **T3 is sized on price series.** A start whose six stages nearly cancel in the first
+  outputs shows its difference later and can need a fifth more than the count; it is
+  rare on prices, and a fixed count of `20*n` on that id covers it at either level.
+- **The Hilbert transform functions need an input that moves.** While the input holds
+  one value for a whole dominant cycle, as an oscillator pinned at 0 or 100 does, the
+  phase is undefined: HT_DCPHASE, HT_SINE and HT_TRENDMODE from two starts can differ by
+  any amount on those bars, and MAMA does not converge. When the input moves again every
+  Hilbert function starts its warm-up over.
+- **MAMA can reopen a difference for a bar or two.** On a bar where its in-phase component
+  is exactly zero, which coarse ticks against a low price make more frequent, two starts
+  can take different alphas. The difference is at most the distance from the price to
+  the line and decays at alpha's rate.
+- **MCGD is sized for a line that tracks the price.** Its rate falls as the line trails,
+  to zero at 20% under the price, and past that it amplifies its start. In a steady rise
+  the count runs short once the period times the rise per bar passes about 0.06, and the
+  line stays 20% under from about 0.10: for a period of 100 on daily bars, a year that
+  gains 16% and one that gains 29%. Past the second, two starts agree only after the
+  price comes back to the line.
 - **A path-dependent function stays path-dependent.** No level changes AD, OBV or SAR.
   SUPERTREND computes an ATR, so a level lengthens its lookback and promises nothing
   about its line.

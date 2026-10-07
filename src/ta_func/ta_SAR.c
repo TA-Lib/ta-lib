@@ -1065,6 +1065,20 @@ TA_FMA_OPEN_PLAIN static TA_RetCode TA_SAR_OpenImplPlain( struct TA_SAR_Stream *
    return TA_SAR_OpenImpl( stream, inHigh, inLow, startIdx, historyLen, optInAcceleration, optInMaximum, outBegIdx, outNBElement, outReal, outStride );
 }
 
+TA_FMA_OPEN_CLONE static TA_RetCode TA_SAR_OpenSinkFma( struct TA_SAR_Stream **stream, const double inHigh[], const double inLow[], int startIdx, int historyLen, double optInAcceleration, double optInMaximum, double *outReal )
+{
+   TA_RetCode retCode;
+   int dummyBegIdx = 0;
+   int dummyNBElement = 0;
+   double sink_outReal = 0.0;
+   retCode = TA_SAR_OpenImpl( stream, inHigh, inLow, startIdx, historyLen, optInAcceleration, optInMaximum, &dummyBegIdx, &dummyNBElement, &sink_outReal, 0 );
+   if( retCode == TA_SUCCESS )
+   {
+      *outReal = sink_outReal;
+   }
+   return retCode;
+}
+
 /* Private function, not in public API. */
 TA_RetCode TA_SAR_OpenInternal( struct TA_SAR_Stream **stream, const double inHigh[], const double inLow[], int startIdx, int historyLen, double optInAcceleration, double optInMaximum, double *outReal )
 {
@@ -1087,7 +1101,7 @@ TA_LIB_API TA_RetCode TA_SAR_Open( TA_SAR_Stream **stream, const double inHigh[]
    if( historyLen < 1 ) return TA_OUT_OF_RANGE_START_INDEX;
    if( historyLen > TA_INDEX_MAX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
    if( !inHigh || !inLow || !outReal ) return TA_BAD_PARAM;
-   return TA_SAR_OpenInternal( stream, inHigh, inLow, 0, historyLen, optInAcceleration, optInMaximum, outReal );
+   return TA_FMA_AVAILABLE ? TA_SAR_OpenSinkFma( stream, inHigh, inLow, 0, historyLen, optInAcceleration, optInMaximum, outReal ) : TA_SAR_OpenInternal( stream, inHigh, inLow, 0, historyLen, optInAcceleration, optInMaximum, outReal );
 }
 
 TA_LIB_API TA_RetCode TA_SAR_OpenAndFill( TA_SAR_Stream **stream, const double inHigh[], const double inLow[], int historyLen, double optInAcceleration, double optInMaximum, int *outBegIdx, int *outNBElement, double outReal[] )

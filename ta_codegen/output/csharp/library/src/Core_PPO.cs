@@ -182,6 +182,7 @@ public partial class Core
       if( (outReal.Overlaps(inReal) && outReal != inReal) ) {
          return RetCode.BadParam ;
       }
+      double[]? _rent_tempBuffer = null;
       /* Nothing to produce: the range ends before the lookback. Return before
        * touching anything.
        *
@@ -393,7 +394,8 @@ public partial class Core
          return RetCode.Success ;
       }
       /* Allocate an intermediate buffer. */
-      tempBuffer = new double[(int)((endIdx - startIdx + 1) * 1)];
+      _rent_tempBuffer = System.Buffers.ArrayPool<double>.Shared.Rent((int)((endIdx - startIdx + 1) * 1));
+      tempBuffer = _rent_tempBuffer.AsSpan(0, (int)((endIdx - startIdx + 1) * 1));
       /* Make sure slow is really slower than
        * the fast period! if not, swap...
        */
@@ -455,6 +457,7 @@ public partial class Core
             }
          }
       }
+      ReturnScratch(ref _rent_tempBuffer);
       return RetCode.Success ;
    }
    internal RetCode PpoImpl( int startIdx,
@@ -504,6 +507,7 @@ public partial class Core
       if( System.Runtime.InteropServices.MemoryMarshal.AsBytes(outReal).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inReal)) ) {
          return RetCode.BadParam ;
       }
+      double[]? _rent_tempBuffer = null;
       if( MaLookback(MaxGt(optInSlowPeriod, optInFastPeriod), optInMAType) > endIdx ) {
          outBegIdx = 0;
          outNBElement = 0;
@@ -659,7 +663,8 @@ public partial class Core
          outNBElement = _eOutIdx;
          return RetCode.Success ;
       }
-      tempBuffer = new double[(int)((endIdx - startIdx + 1) * 1)];
+      _rent_tempBuffer = System.Buffers.ArrayPool<double>.Shared.Rent((int)((endIdx - startIdx + 1) * 1));
+      tempBuffer = _rent_tempBuffer.AsSpan(0, (int)((endIdx - startIdx + 1) * 1));
       if( optInSlowPeriod < optInFastPeriod ) {
          tempInteger = optInSlowPeriod;
          optInSlowPeriod = optInFastPeriod;
@@ -703,6 +708,7 @@ public partial class Core
             }
          }
       }
+      ReturnScratch(ref _rent_tempBuffer);
       return RetCode.Success ;
    }
    /// <summary>

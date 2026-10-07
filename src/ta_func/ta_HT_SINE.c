@@ -1751,6 +1751,22 @@ TA_FMA_OPEN_PLAIN static TA_RetCode TA_HT_SINE_OpenImplPlain( struct TA_HT_SINE_
    return TA_HT_SINE_OpenImpl( stream, inReal, startIdx, historyLen, outBegIdx, outNBElement, outSine, outLeadSine, outStride );
 }
 
+TA_FMA_OPEN_CLONE static TA_RetCode TA_HT_SINE_OpenSinkFma( struct TA_HT_SINE_Stream **stream, const double inReal[], int startIdx, int historyLen, double *outSine, double *outLeadSine )
+{
+   TA_RetCode retCode;
+   int dummyBegIdx = 0;
+   int dummyNBElement = 0;
+   double sink_outSine = 0.0;
+   double sink_outLeadSine = 0.0;
+   retCode = TA_HT_SINE_OpenImpl( stream, inReal, startIdx, historyLen, &dummyBegIdx, &dummyNBElement, &sink_outSine, &sink_outLeadSine, 0 );
+   if( retCode == TA_SUCCESS )
+   {
+      *outSine = sink_outSine;
+      *outLeadSine = sink_outLeadSine;
+   }
+   return retCode;
+}
+
 /* Private function, not in public API. */
 TA_RetCode TA_HT_SINE_OpenInternal( struct TA_HT_SINE_Stream **stream, const double inReal[], int startIdx, int historyLen, double *outSine, double *outLeadSine )
 {
@@ -1775,7 +1791,7 @@ TA_LIB_API TA_RetCode TA_HT_SINE_Open( TA_HT_SINE_Stream **stream, const double 
    if( historyLen < 1 ) return TA_OUT_OF_RANGE_START_INDEX;
    if( historyLen > TA_INDEX_MAX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
    if( !inReal || !outSine || !outLeadSine ) return TA_BAD_PARAM;
-   return TA_HT_SINE_OpenInternal( stream, inReal, 0, historyLen, outSine, outLeadSine );
+   return TA_FMA_AVAILABLE ? TA_HT_SINE_OpenSinkFma( stream, inReal, 0, historyLen, outSine, outLeadSine ) : TA_HT_SINE_OpenInternal( stream, inReal, 0, historyLen, outSine, outLeadSine );
 }
 
 TA_LIB_API TA_RetCode TA_HT_SINE_OpenAndFill( TA_HT_SINE_Stream **stream, const double inReal[], int historyLen, int *outBegIdx, int *outNBElement, double outSine[], double outLeadSine[] )

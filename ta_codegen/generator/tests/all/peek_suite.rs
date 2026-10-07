@@ -923,18 +923,24 @@ fn a_fused_per_bar_tier_carries_the_fma_multiversion_attribute() {
             let fuses = body.contains("fma(") && framed_tier;
             let line = &src[src[..at].rfind('\n').map_or(0, |i| i + 1)..at];
             let inlined = line.starts_with("static TA_FMA_STEP_INLINE ");
-            // The definition, then one frame each; a seam names both frames.
+            // The definition, then one call per frame: the two around the
+            // body and the public Open's sink frame. A seam names both body
+            // frames; the public Open names its sink frame.
             let direct = src.matches(&open).count();
             let framed = |suffix: &str| src.matches(&format!(" TA_{upper}_OpenImpl{suffix}(")).count();
             let shape = (direct, framed("Fma"), framed("Plain"));
             let attributed = src.contains(&format!("\nTA_FMA_OPEN_CLONE static TA_RetCode TA_{upper}_OpenImplFma("))
                 && src.contains(&format!("\nTA_FMA_OPEN_PLAIN static TA_RetCode TA_{upper}_OpenImplPlain("));
+            let sunk = src.contains(&format!("\nTA_FMA_OPEN_CLONE static TA_RetCode TA_{upper}_OpenSinkFma("));
             let picked = src.matches(&format!(" TA_FMA_AVAILABLE ? TA_{upper}_OpenImplFma(")).count();
+            let sink_picked = src.matches(&format!("   return TA_FMA_AVAILABLE ? TA_{upper}_OpenSinkFma(")).count();
             fused_opens += usize::from(fuses);
             if fuses != inlined
                 || fuses != attributed
+                || fuses != sunk
                 || picked != if fuses { 2 } else { 0 }
-                || shape != if fuses { (3, 3, 3) } else { (3, 0, 0) }
+                || sink_picked != usize::from(fuses)
+                || shape != if fuses { (4, 3, 3) } else { (3, 0, 0) }
             {
                 drifted.push(format!("{upper} Open (fuses={fuses}, inlined={inlined}, calls={shape:?})"));
             }

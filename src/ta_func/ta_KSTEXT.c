@@ -1077,6 +1077,22 @@ TA_FMA_OPEN_PLAIN static TA_RetCode TA_KSTEXT_OpenImplPlain( struct TA_KSTEXT_St
    return TA_KSTEXT_OpenImpl( stream, inReal, startIdx, historyLen, optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInMA1Period, optInMA2Period, optInMA3Period, optInMA4Period, optInSignalPeriod, optInROCMAType, optInSignalMAType, outBegIdx, outNBElement, outKST, outKSTSignal, outStride );
 }
 
+TA_FMA_OPEN_CLONE static TA_RetCode TA_KSTEXT_OpenSinkFma( struct TA_KSTEXT_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInROC1Period, int optInROC2Period, int optInROC3Period, int optInROC4Period, int optInMA1Period, int optInMA2Period, int optInMA3Period, int optInMA4Period, int optInSignalPeriod, TA_MAType optInROCMAType, TA_MAType optInSignalMAType, double *outKST, double *outKSTSignal )
+{
+   TA_RetCode retCode;
+   int dummyBegIdx = 0;
+   int dummyNBElement = 0;
+   double sink_outKST = 0.0;
+   double sink_outKSTSignal = 0.0;
+   retCode = TA_KSTEXT_OpenImpl( stream, inReal, startIdx, historyLen, optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInMA1Period, optInMA2Period, optInMA3Period, optInMA4Period, optInSignalPeriod, optInROCMAType, optInSignalMAType, &dummyBegIdx, &dummyNBElement, &sink_outKST, &sink_outKSTSignal, 0 );
+   if( retCode == TA_SUCCESS )
+   {
+      *outKST = sink_outKST;
+      *outKSTSignal = sink_outKSTSignal;
+   }
+   return retCode;
+}
+
 /* Private function, not in public API. */
 TA_RetCode TA_KSTEXT_OpenInternal( struct TA_KSTEXT_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInROC1Period, int optInROC2Period, int optInROC3Period, int optInROC4Period, int optInMA1Period, int optInMA2Period, int optInMA3Period, int optInMA4Period, int optInSignalPeriod, TA_MAType optInROCMAType, TA_MAType optInSignalMAType, double *outKST, double *outKSTSignal )
 {
@@ -1101,7 +1117,7 @@ TA_LIB_API TA_RetCode TA_KSTEXT_Open( TA_KSTEXT_Stream **stream, const double in
    if( historyLen < 1 ) return TA_OUT_OF_RANGE_START_INDEX;
    if( historyLen > TA_INDEX_MAX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
    if( !inReal || !outKST || !outKSTSignal ) return TA_BAD_PARAM;
-   return TA_KSTEXT_OpenInternal( stream, inReal, 0, historyLen, optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInMA1Period, optInMA2Period, optInMA3Period, optInMA4Period, optInSignalPeriod, optInROCMAType, optInSignalMAType, outKST, outKSTSignal );
+   return TA_FMA_AVAILABLE ? TA_KSTEXT_OpenSinkFma( stream, inReal, 0, historyLen, optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInMA1Period, optInMA2Period, optInMA3Period, optInMA4Period, optInSignalPeriod, optInROCMAType, optInSignalMAType, outKST, outKSTSignal ) : TA_KSTEXT_OpenInternal( stream, inReal, 0, historyLen, optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInMA1Period, optInMA2Period, optInMA3Period, optInMA4Period, optInSignalPeriod, optInROCMAType, optInSignalMAType, outKST, outKSTSignal );
 }
 
 TA_LIB_API TA_RetCode TA_KSTEXT_OpenAndFill( TA_KSTEXT_Stream **stream, const double inReal[], int historyLen, int optInROC1Period, int optInROC2Period, int optInROC3Period, int optInROC4Period, int optInMA1Period, int optInMA2Period, int optInMA3Period, int optInMA4Period, int optInSignalPeriod, TA_MAType optInROCMAType, TA_MAType optInSignalMAType, int *outBegIdx, int *outNBElement, double outKST[], double outKSTSignal[] )

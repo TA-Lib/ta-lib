@@ -34,9 +34,10 @@
 //!   those sites dead code. `internal` plus overloading (the cores carry the two
 //!   `out int` params the wrappers do not) lets the cores share the public names.
 //!
-//! - **Scratch buffers are `new double[n]`, not `ArrayPool`** — a pooled buffer
-//!   needs a matching return on every early-return path, and the IR renders
-//!   `free()` as the empty string because the ports are GC'd.
+//! - **A batch body rents its scratch buffers from `ArrayPool<T>.Shared`** and
+//!   returns each where the C frees it; a stream body allocates. A return the C
+//!   does not have, or a read after one, is a pool defect no gate here sees
+//!   until two callers hold one array.
 //!
 //! - **`out int outBegIdx, out int outNBElement`, with an emitted `= 0` seeding
 //!   prologue.** A guarded core returns before either is assigned, which is
@@ -59,7 +60,7 @@
 //!   with `Lang::CSharp` in `registry.rs` or every cross-indicator call targets
 //!   a method that does not exist.
 use std::cell::Cell;
-use std::collections::{HashMap, HashSet};
+use std::collections::{BTreeMap, HashMap, HashSet};
 use std::fmt::Write as _;
 
 use crate::candle_settings::{detect_candle_settings, emit_csharp_unpacking};
@@ -123,6 +124,11 @@ pub(crate) struct CsRenderCtx<'a> {
     /// The batch tier. A rewrite that read slower in a stream body on one CPU or
     /// another applies only here.
     pub(crate) batch: bool,
+    /// The scratch buffers this body rents from the shared array pool instead of
+    /// allocating, each with its element type. The body's `malloc` and `free`
+    /// of one render as the rent and the return, so the C's placement of the
+    /// two IS the pool contract: one return per rent, nothing read after it.
+    pub(crate) pooled: Option<&'a BTreeMap<String, &'static str>>,
 }
 
 /// Words this backend cannot render as an identifier (see [`crate::naming`]):
@@ -882,7 +888,8 @@ fn gen_func_inner(
     // conditional later. C states none: every one of these would be wrong there.
     let admits = |f: &str, a: &[Expr]| cross_call_split(f, a, registry).is_some();
     let folded = super::ir_cleanup::drop_answered_cross_call_guards(body, &admits, None);
-    let folded = super::ir_cleanup::drop_deallocation(&folded);
+    let pooled = pooled_scratch(&folded);
+    let folded = super::ir_cleanup::drop_deallocation_keeping(&folded, &pooled.keys().cloned().collect());
     let folded = super::ir_cleanup::drop_inert_guards(&folded);
     let body: &[Statement] = &folded;
 
@@ -1073,7 +1080,12 @@ fn gen_func_inner(
         plain_selects: Cell::new(false),
         in_reduction_loop: Cell::new(false),
         batch: true,
+        pooled: Some(&pooled),
     };
+
+    for (name, element) in &pooled {
+        out.push_str(&format!("      {element}[]? _rent_{name} = null;\n"));
+    }
 
     // Emit VarDecl initializations
     for stmt in body {
@@ -1661,6 +1673,17 @@ impl StatementEmitter for CsStmt<'_> {
     }
 
     fn assign(&self, target: &Expr, value: &Expr, compound: bool, indent: usize) -> String {
+        if let (Expr::Var(name), Expr::FuncCall(f, args)) = (target, value) {
+            let element = self.ctx.pooled.and_then(|p| p.get(name));
+            if let (Some(element), Some(StdlibFn::Malloc), [size]) = (element, StdlibFn::from_name(f), args.as_slice()) {
+                let pad = " ".repeat(indent);
+                let size = render_expr(size, self.ctx, self.registry, self.helpers);
+                let pool = format!("System.Buffers.ArrayPool<{element}>.Shared");
+                return format!(
+                    "{pad}_rent_{name} = {pool}.Rent((int)({size}));\n{pad}{name} = _rent_{name}.AsSpan(0, (int)({size}));\n"
+                );
+            }
+        }
         let recurrent = matches!(target, Expr::Var(n) if is_recurrent_select_target(n, self.ctx));
         let outer = self.ctx.plain_selects.replace(recurrent || self.ctx.plain_selects.get());
         let out = self.assign_unscoped(target, value, compound, indent);
@@ -2329,6 +2352,7 @@ impl ExprEmitter for CsExpr<'_> {
                     plain_selects: Cell::new(self.ctx.plain_selects.get()),
                     in_reduction_loop: Cell::new(false),
                     batch: self.ctx.batch,
+                    pooled: self.ctx.pooled,
                 };
                 render_expr(inner, &inner_ctx, self.registry, self.helpers)
             }
@@ -2434,6 +2458,34 @@ fn fp_select<'e>(
         return Some((if gt { "ZeroIfGt" } else { "ZeroIfLt" }, vec![l, r, else_expr]));
     }
     None
+}
+
+/// The locals a batch body gets from `malloc`, with their element type: the
+/// ones it rents from the shared array pool.
+///
+/// The size is rendered twice, so it must only read.
+fn pooled_scratch(body: &[Statement]) -> BTreeMap<String, &'static str> {
+    let mut pooled = BTreeMap::new();
+    let mut refused = Vec::new();
+    for (name, size) in super::ir_cleanup::scratch_allocations(body) {
+        let element = match find_sizeof_type(&size).as_deref() {
+            Some("int") => "int",
+            Some("float") => "float",
+            _ => "double",
+        };
+        let reads_only = !streaming::expr_effect(&size, &|f| {
+            MathFn::from_name(f).is_some() || matches!(StdlibFn::from_name(f), Some(StdlibFn::Sizeof))
+        });
+        if reads_only && pooled.get(&name).is_none_or(|seen| *seen == element) {
+            pooled.insert(name, element);
+        } else {
+            refused.push(name);
+        }
+    }
+    for name in refused {
+        pooled.remove(&name);
+    }
+    pooled
 }
 
 fn is_reduction_body(body: &[Statement]) -> bool {
@@ -2901,14 +2953,17 @@ fn render_func_call(
                 }
             }
             StdlibFn::Free => {
-                // Deallocation is removed from the IR before rendering, so this
-                // arm is the assertion that it was -- not a second way to make a
-                // `free` vanish, which could disagree with the pass.
-                unreachable!(
-                    "free() reached the C# renderer: `ir_cleanup::drop_deallocation` \
-                     runs on every body this backend renders, so a `free` here means a \
-                     render path was added without the cleanup sequence"
-                )
+                // The cleanup sequence removes every `free` but that of a pooled
+                // buffer, so anything else here means a render path was added
+                // without it.
+                let rented = match args {
+                    [Expr::Var(x)] => ctx.pooled.filter(|p| p.contains_key(x)).map(|_| x),
+                    _ => None,
+                };
+                let Some(name) = rented else {
+                    unreachable!("free() of an unpooled buffer reached the C# renderer")
+                };
+                format!("ReturnScratch(ref _rent_{name})")
             }
             StdlibFn::Memcpy | StdlibFn::Memmove => {
                 // memcpy/memmove(dst, src, count) -> src.Slice(..).CopyTo(dst.Slice(..)).
@@ -3017,6 +3072,7 @@ fn render_lookback_code(
         plain_selects: Cell::new(false),
         in_reduction_loop: Cell::new(false),
         batch: false,
+        pooled: None,
     };
 
     // Declare local variables (initialized: locals assigned only inside a

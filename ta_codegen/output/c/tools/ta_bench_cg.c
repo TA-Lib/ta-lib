@@ -198,6 +198,7 @@
 #include "ta_PLUS_DI.c"
 #include "ta_PLUS_DM.c"
 #include "ta_PPO.c"
+#include "ta_PSO.c"
 #include "ta_PVI.c"
 #include "ta_PVO.c"
 #include "ta_PVT.c"
@@ -3155,6 +3156,22 @@ static void bench_all(const char *filter, int iters) {
             g_sink += g_outBuf0[0];
         }
         printf("PPO %lld\n", best / iters);
+        fflush(stdout);
+    }
+    if( func_matches(filter, "PSO") ) {
+        long long best = 0;
+        for( int pass = 0; pass < 3; pass++ ) {
+            int outBegIdx, outNBElement;
+            long long t0 = get_nanotime();
+            for( int it = 0; it < iters; it++ ) {
+                TA_PSO(0, g_nPoints - 1, g_high, g_low, g_close, 8, 5, &outBegIdx, &outNBElement, g_outBuf0);
+            }
+            long long elapsed = get_nanotime() - t0;
+            if( !best || elapsed < best ) best = elapsed;
+            g_sink += outNBElement;
+            g_sink += g_outBuf0[0];
+        }
+        printf("PSO %lld\n", best / iters);
         fflush(stdout);
     }
     if( func_matches(filter, "PVI") ) {

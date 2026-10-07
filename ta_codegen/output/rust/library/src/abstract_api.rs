@@ -388,6 +388,8 @@ pub enum FuncId {
     PLUS_DM,
     /// Percentage Price Oscillator — [`Core::ppo`](crate::Core::ppo).
     PPO,
+    /// Premier Stochastic Oscillator — [`Core::pso`](crate::Core::pso).
+    PSO,
     /// Positive Volume Index — [`Core::pvi`](crate::Core::pvi).
     PVI,
     /// Percentage Volume Oscillator — [`Core::pvo`](crate::Core::pvo).
@@ -508,7 +510,7 @@ pub enum FuncId {
 
 impl FuncId {
     /// Number of functions in the registry.
-    pub const COUNT: usize = 231;
+    pub const COUNT: usize = 232;
     /// Metadata for this function (O(1) index into the const table).
     #[inline] pub fn info(self) -> &'static FuncInfo { &FUNC_TABLE[self as usize] }
     /// Upper-case TA name, e.g. "RSI".
@@ -848,7 +850,7 @@ impl FuncInfo {
 
 /// Backing storage for [`FUNCS`], indexed by [`FuncId`]. Link-time const, in
 /// `.rodata`. Private, so its length is nobody's business but this module's.
-static FUNC_TABLE: [FuncInfo; 231] = [
+static FUNC_TABLE: [FuncInfo; 232] = [
     FuncInfo {
         id: FuncId::AC,
         name: "AC",
@@ -2753,6 +2755,17 @@ static FUNC_TABLE: [FuncInfo; 231] = [
         unst_id: None,
     },
     FuncInfo {
+        id: FuncId::PSO,
+        name: "PSO",
+        group: Group::MomentumIndicators,
+        hint: "Premier Stochastic Oscillator",
+        flags: FuncFlags(0x02000000),
+        inputs: &[InputInfo { param_name: "inPriceHLC", kind: InputType::Price, flags: InputFlags(0x0000000e) }, ],
+        opt_inputs: &[OptInputInfo { param_name: "optInFastK_Period", display_name: "Fast-K Period", hint: "Time period for building the Fast-K line", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 1, max: 100000, default: 8, suggested: (1, 200, 1) } }, OptInputInfo { param_name: "optInEMAPeriod", display_name: "EMA Period", hint: "Period of each of the two smoothing passes", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 1, max: 100000, default: 5, suggested: (1, 200, 1) } }, ],
+        outputs: &[OutputInfo { param_name: "outReal", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, ],
+        unst_id: None,
+    },
+    FuncInfo {
         id: FuncId::PVI,
         name: "PVI",
         group: Group::VolumeIndicators,
@@ -3581,6 +3594,7 @@ fn get_func_handle_exact(name: &str) -> Option<FuncId> {
         "PLUS_DI" => FuncId::PLUS_DI,
         "PLUS_DM" => FuncId::PLUS_DM,
         "PPO" => FuncId::PPO,
+        "PSO" => FuncId::PSO,
         "PVI" => FuncId::PVI,
         "PVO" => FuncId::PVO,
         "PVT" => FuncId::PVT,
@@ -4080,6 +4094,7 @@ impl<'a> ParamHolder<'a> {
             FuncId::PLUS_DI => self.core.plus_di_lookback(self.int_opt[0]),
             FuncId::PLUS_DM => self.core.plus_dm_lookback(self.int_opt[0]),
             FuncId::PPO => self.core.ppo_lookback(self.int_opt[0], self.int_opt[1], MAType::try_from(self.int_opt[2])?),
+            FuncId::PSO => self.core.pso_lookback(self.int_opt[0], self.int_opt[1]),
             FuncId::PVI => self.core.pvi_lookback(),
             FuncId::PVO => self.core.pvo_lookback(self.int_opt[0], self.int_opt[1], MAType::try_from(self.int_opt[2])?),
             FuncId::PVT => self.core.pvt_lookback(),
@@ -4324,6 +4339,7 @@ impl<'a> ParamHolder<'a> {
             FuncId::PLUS_DI => self.core.plus_di_display_shift(self.int_opt[0], output_idx),
             FuncId::PLUS_DM => self.core.plus_dm_display_shift(self.int_opt[0], output_idx),
             FuncId::PPO => self.core.ppo_display_shift(self.int_opt[0], self.int_opt[1], MAType::try_from(self.int_opt[2])?, output_idx),
+            FuncId::PSO => self.core.pso_display_shift(self.int_opt[0], self.int_opt[1], output_idx),
             FuncId::PVI => self.core.pvi_display_shift(output_idx),
             FuncId::PVO => self.core.pvo_display_shift(self.int_opt[0], self.int_opt[1], MAType::try_from(self.int_opt[2])?, output_idx),
             FuncId::PVT => self.core.pvt_display_shift(output_idx),
@@ -6828,6 +6844,20 @@ impl<'a> ParamHolder<'a> {
                 let e2 = MAType::try_from(self.int_opt[2])?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.ppo(start_idx, end_idx, i0, self.int_opt[0], self.int_opt[1], e2, &mut *o0);
+                self.real_out[0] = Some(o0);
+                match res {
+                    Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
+                    Err(e) => e,
+                }
+            }
+            FuncId::PSO => {
+                let i0_1 = self.price[0][1].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_2 = self.price[0][2].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_3 = self.price[0][3].ok_or(RetCode::InputNotAllInitialize)?;
+                if self.real_out[0].is_none() { return Err(RetCode::OutputNotAllInitialize); }
+                Self::check_range(start_idx, end_idx)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let res = self.core.pso(start_idx, end_idx, i0_1, i0_2, i0_3, self.int_opt[0], self.int_opt[1], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
                     Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }

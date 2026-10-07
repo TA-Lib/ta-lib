@@ -54,11 +54,15 @@
  *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
  *  090526 MF,CC  First version (issue #373).
+ *  100626 MF,CC  Auto rule sized on the pole at 1/2: ceil(13*K/9) (#492).
  */
 
 TA_NOINLINE TA_LIB_API int TA_HA_Lookback( void )
 {
-   return TA_GLOBALS_UNSTABLE(TA_FUNC_UNST_HA,Ha,2 * 10,2 * 19);
+   /* 13/9 is 1/ln(2) rounded up: the open is the only state, and it shows
+    * the whole first difference at its first bar.
+    */
+   return TA_GLOBALS_UNSTABLE(TA_FUNC_UNST_HA,Ha,(13 * 10 + 8) / 9,(13 * 19 + 8) / 9);
 }
 
 TA_LIB_API int TA_HA_DisplayShift( int outputIdx )

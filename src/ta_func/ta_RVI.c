@@ -1294,6 +1294,20 @@ TA_FMA_OPEN_PLAIN static TA_RetCode TA_RVI_OpenImplPlain( struct TA_RVI_Stream *
    return TA_RVI_OpenImpl( stream, inReal, startIdx, historyLen, optInTimePeriod, optInStdDevPeriod, outBegIdx, outNBElement, outReal, outStride );
 }
 
+TA_FMA_OPEN_CLONE static TA_RetCode TA_RVI_OpenSinkFma( struct TA_RVI_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInTimePeriod, int optInStdDevPeriod, double *outReal )
+{
+   TA_RetCode retCode;
+   int dummyBegIdx = 0;
+   int dummyNBElement = 0;
+   double sink_outReal = 0.0;
+   retCode = TA_RVI_OpenImpl( stream, inReal, startIdx, historyLen, optInTimePeriod, optInStdDevPeriod, &dummyBegIdx, &dummyNBElement, &sink_outReal, 0 );
+   if( retCode == TA_SUCCESS )
+   {
+      *outReal = sink_outReal;
+   }
+   return retCode;
+}
+
 /* Private function, not in public API. */
 TA_RetCode TA_RVI_OpenInternal( struct TA_RVI_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInTimePeriod, int optInStdDevPeriod, double *outReal )
 {
@@ -1316,7 +1330,7 @@ TA_LIB_API TA_RetCode TA_RVI_Open( TA_RVI_Stream **stream, const double inReal[]
    if( historyLen < 1 ) return TA_OUT_OF_RANGE_START_INDEX;
    if( historyLen > TA_INDEX_MAX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
    if( !inReal || !outReal ) return TA_BAD_PARAM;
-   return TA_RVI_OpenInternal( stream, inReal, 0, historyLen, optInTimePeriod, optInStdDevPeriod, outReal );
+   return TA_FMA_AVAILABLE ? TA_RVI_OpenSinkFma( stream, inReal, 0, historyLen, optInTimePeriod, optInStdDevPeriod, outReal ) : TA_RVI_OpenInternal( stream, inReal, 0, historyLen, optInTimePeriod, optInStdDevPeriod, outReal );
 }
 
 TA_LIB_API TA_RetCode TA_RVI_OpenAndFill( TA_RVI_Stream **stream, const double inReal[], int historyLen, int optInTimePeriod, int optInStdDevPeriod, int *outBegIdx, int *outNBElement, double outReal[] )

@@ -53,6 +53,8 @@
  *  -------------------------------------------------------------------
  *  092826 MF,CC  First version (issue #464).
  *  100226 MF,CC  #497. An odd period is refused before the range is written.
+ *  100726 MF,CC  #492. The Auto rule grows with the period and stops at the
+ *                slowest alpha's bound.
  */
 
 // Import types from parent module
@@ -85,12 +87,14 @@ impl Core {
         } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
             return Err(RetCode::BadParam);
         }
+        let mut root: usize = 0_usize;
+        root = ((optInTimePeriod as f64).sqrt() as usize) as usize;
         // The range check cannot demand an even period; without this the lookback
         // answers a usable number for a call that cannot run.
         if optInTimePeriod % 2 != 0 {
             return Err(RetCode::BadParam);
         }
-        return Ok((optInTimePeriod + self.unstable_count(FuncUnstId::FRAMA, 80 * 4, 80 * 8)) as usize);
+        return Ok((optInTimePeriod + self.unstable_count(FuncUnstId::FRAMA, (if 9 * (4 + 4) * (((root + 2)) as i32) / 2 < 99 * 10 { 9 * (4 + 4) * (((root + 2)) as i32) / 2 } else { 99 * 10 }), (if 9 * (8 + 4) * (((root + 2)) as i32) / 2 < 99 * 19 { 9 * (8 + 4) * (((root + 2)) as i32) / 2 } else { 99 * 19 }))) as usize);
     }
     /// Display shift of one output of [`Core::frama`]: how many bars ahead (positive) or behind
     /// (negative) of the bar that computed it a chart draws that output. The values are never

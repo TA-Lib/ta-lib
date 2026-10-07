@@ -54,6 +54,7 @@ public partial class Core
     *  MMDDYY BY     Description
     *  -------------------------------------------------------------------
     *  090526 MF,CC  First version (issue #373).
+    *  100626 MF,CC  Auto rule sized on the pole at 1/2: ceil(13*K/9) (#492).
     */
    /// <summary>
    /// Number of leading input bars <c>Ha</c> consumes before it can produce its
@@ -71,7 +72,10 @@ public partial class Core
    /// <returns>The lookback, or <c>-1</c> if a parameter is out of range.</returns>
    public int HaLookback( )
    {
-      return this.UnstableCount((int)FuncUnstId.HA, 2 * 10, 2 * 19) ;
+      /* 13/9 is 1/ln(2) rounded up: the open is the only state, and it shows
+       * the whole first difference at its first bar.
+       */
+      return this.UnstableCount((int)FuncUnstId.HA, (13 * 10 + 8) / 9, (13 * 19 + 8) / 9) ;
 
    }
    /// <summary>

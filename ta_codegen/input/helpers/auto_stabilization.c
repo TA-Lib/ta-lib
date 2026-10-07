@@ -5,20 +5,37 @@
  */
 
 int ta_auto_stabilization_ema(int K, int period) {
-   return period > 1 ? (K * (period + 1) + 1) / 2 : 0;
+   return period > 1 ? (K * period + 1) / 2 : 0;
 }
 
 int ta_auto_stabilization_wilder(int K, int period) {
+   return period > 1 ? (K * (2 * period - 1) + 1) / 2 : 0;
+}
+
+/* For an output that divides by the smoothed value: at a period of 2 the
+ * ratio needs more bars than the value it divides by.
+ */
+int ta_auto_stabilization_wilder_ratio(int K, int period) {
    return period > 1 ? K * period : 0;
 }
 
-/* A repeated real pole of a two-pole filter of critical period `period`. */
+/* One short at a period of 2 for K = 6 and K = 15: check a new level against
+ * the envelope of rules_check.py before passing it.
+ */
 int ta_auto_stabilization_two_pole(int K, int period) {
-   return ((K + 5) * (period + 2) + 8) / 9;
+   return ((K + 3) * (period + 2) + 8) / 9;
 }
 
 int ta_auto_stabilization_hilbert(int X) {
    return 80 + 50 * X;
+}
+
+/* The alpha depends on the window alone, so two starts close by 1 - alpha a
+ * bar: the count is sized on how slowly price series let that run, and no
+ * series needs more than 99 bars an e-fold, the alpha's floor of e^-4.6.
+ */
+int ta_auto_stabilization_frama(int K, int X, int root) {
+   return 9 * (X + 4) * (root + 2) / 2 < 99 * K ? 9 * (X + 4) * (root + 2) / 2 : 99 * K;
 }
 
 /* Saturates at TA_INDEX_MAX. */

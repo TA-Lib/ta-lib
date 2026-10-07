@@ -922,6 +922,20 @@ TA_FMA_OPEN_PLAIN static TA_RetCode TA_VIDYA_OpenImplPlain( struct TA_VIDYA_Stre
    return TA_VIDYA_OpenImpl( stream, inReal, startIdx, historyLen, optInTimePeriod, optInCMOPeriod, outBegIdx, outNBElement, outReal, outStride );
 }
 
+TA_FMA_OPEN_CLONE static TA_RetCode TA_VIDYA_OpenSinkFma( struct TA_VIDYA_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInTimePeriod, int optInCMOPeriod, double *outReal )
+{
+   TA_RetCode retCode;
+   int dummyBegIdx = 0;
+   int dummyNBElement = 0;
+   double sink_outReal = 0.0;
+   retCode = TA_VIDYA_OpenImpl( stream, inReal, startIdx, historyLen, optInTimePeriod, optInCMOPeriod, &dummyBegIdx, &dummyNBElement, &sink_outReal, 0 );
+   if( retCode == TA_SUCCESS )
+   {
+      *outReal = sink_outReal;
+   }
+   return retCode;
+}
+
 /* Private function, not in public API. */
 TA_RetCode TA_VIDYA_OpenInternal( struct TA_VIDYA_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInTimePeriod, int optInCMOPeriod, double *outReal )
 {
@@ -944,7 +958,7 @@ TA_LIB_API TA_RetCode TA_VIDYA_Open( TA_VIDYA_Stream **stream, const double inRe
    if( historyLen < 1 ) return TA_OUT_OF_RANGE_START_INDEX;
    if( historyLen > TA_INDEX_MAX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
    if( !inReal || !outReal ) return TA_BAD_PARAM;
-   return TA_VIDYA_OpenInternal( stream, inReal, 0, historyLen, optInTimePeriod, optInCMOPeriod, outReal );
+   return TA_FMA_AVAILABLE ? TA_VIDYA_OpenSinkFma( stream, inReal, 0, historyLen, optInTimePeriod, optInCMOPeriod, outReal ) : TA_VIDYA_OpenInternal( stream, inReal, 0, historyLen, optInTimePeriod, optInCMOPeriod, outReal );
 }
 
 TA_LIB_API TA_RetCode TA_VIDYA_OpenAndFill( TA_VIDYA_Stream **stream, const double inReal[], int historyLen, int optInTimePeriod, int optInCMOPeriod, int *outBegIdx, int *outNBElement, double outReal[] )

@@ -81,7 +81,7 @@ public partial class Core
          return -1;
       }
       if( optInTimePeriod > 1 ) {
-         return optInTimePeriod + this.UnstableCount((int)FuncUnstId.MINUS_DM, ((optInTimePeriod > 1) ? 10 * optInTimePeriod : 0), ((optInTimePeriod > 1) ? 19 * optInTimePeriod : 0)) - 1 ;
+         return optInTimePeriod + this.UnstableCount((int)FuncUnstId.MINUS_DM, ((optInTimePeriod > 1) ? (10 * (2 * optInTimePeriod - 1) + 1) / 2 : 0), ((optInTimePeriod > 1) ? (19 * (2 * optInTimePeriod - 1) + 1) / 2 : 0)) - 1 ;
       } else {
          return 1 ;
       }

@@ -601,6 +601,22 @@ TA_FMA_OPEN_PLAIN static TA_RetCode TA_ERI_OpenImplPlain( struct TA_ERI_Stream *
    return TA_ERI_OpenImpl( stream, inHigh, inLow, inClose, startIdx, historyLen, optInTimePeriod, outBegIdx, outNBElement, outBullPower, outBearPower, outStride );
 }
 
+TA_FMA_OPEN_CLONE static TA_RetCode TA_ERI_OpenSinkFma( struct TA_ERI_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, int optInTimePeriod, double *outBullPower, double *outBearPower )
+{
+   TA_RetCode retCode;
+   int dummyBegIdx = 0;
+   int dummyNBElement = 0;
+   double sink_outBullPower = 0.0;
+   double sink_outBearPower = 0.0;
+   retCode = TA_ERI_OpenImpl( stream, inHigh, inLow, inClose, startIdx, historyLen, optInTimePeriod, &dummyBegIdx, &dummyNBElement, &sink_outBullPower, &sink_outBearPower, 0 );
+   if( retCode == TA_SUCCESS )
+   {
+      *outBullPower = sink_outBullPower;
+      *outBearPower = sink_outBearPower;
+   }
+   return retCode;
+}
+
 /* Private function, not in public API. */
 TA_RetCode TA_ERI_OpenInternal( struct TA_ERI_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, int optInTimePeriod, double *outBullPower, double *outBearPower )
 {
@@ -625,7 +641,7 @@ TA_LIB_API TA_RetCode TA_ERI_Open( TA_ERI_Stream **stream, const double inHigh[]
    if( historyLen < 1 ) return TA_OUT_OF_RANGE_START_INDEX;
    if( historyLen > TA_INDEX_MAX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
    if( !inHigh || !inLow || !inClose || !outBullPower || !outBearPower ) return TA_BAD_PARAM;
-   return TA_ERI_OpenInternal( stream, inHigh, inLow, inClose, 0, historyLen, optInTimePeriod, outBullPower, outBearPower );
+   return TA_FMA_AVAILABLE ? TA_ERI_OpenSinkFma( stream, inHigh, inLow, inClose, 0, historyLen, optInTimePeriod, outBullPower, outBearPower ) : TA_ERI_OpenInternal( stream, inHigh, inLow, inClose, 0, historyLen, optInTimePeriod, outBullPower, outBearPower );
 }
 
 TA_LIB_API TA_RetCode TA_ERI_OpenAndFill( TA_ERI_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], int historyLen, int optInTimePeriod, int *outBegIdx, int *outNBElement, double outBullPower[], double outBearPower[] )

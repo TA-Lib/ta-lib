@@ -156,24 +156,25 @@ static int awRule( const char *name, int K, int X, int p0, int p1, double r0, do
    double big;
    long long v;
 
-   if( !strcmp(name,"EMA") ) return p0 > 1 ? awCeilDiv( K*(p0+1), 2 ) : 0;
-   if( !strcmp(name,"RMA") || !strcmp(name,"ATR") || !strcmp(name,"NATR") ||
-       !strcmp(name,"RSI") || !strcmp(name,"CMO") || !strcmp(name,"DX") ||
-       !strcmp(name,"RVI") )
-      return p0 > 1 ? K*p0 : 0;
-   /* The DI and DM functions answer a period of 1 without their id. */
-   if( !strcmp(name,"PLUS_DI") || !strcmp(name,"MINUS_DI") ||
+   if( !strcmp(name,"EMA") ) return p0 > 1 ? awCeilDiv( K*p0, 2 ) : 0;
+   /* The DM and DI functions answer a period of 1 without their id. */
+   if( !strcmp(name,"RMA") || !strcmp(name,"ATR") ||
        !strcmp(name,"PLUS_DM") || !strcmp(name,"MINUS_DM") )
+      return p0 > 1 ? awCeilDiv( K*(2*p0-1), 2 ) : 0;
+   if( !strcmp(name,"NATR") || !strcmp(name,"RSI") || !strcmp(name,"CMO") ||
+       !strcmp(name,"DX") || !strcmp(name,"RVI") ||
+       !strcmp(name,"PLUS_DI") || !strcmp(name,"MINUS_DI") )
       return p0 > 1 ? K*p0 : 0;
    if( !strcmp(name,"ADX") ) return (K+6)*p0;
-   if( !strcmp(name,"T3") ) return p0 > 1 ? awCeilDiv( (K+20)*(p0+1), 2 ) : 0;
-   if( !strcmp(name,"HA") ) return 2*K;
+   if( !strcmp(name,"T3") ) return p0 > 1 ? awCeilDiv( 11*(X+4)*p0, 8 ) : 0;
+   if( !strcmp(name,"HA") ) return awCeilDiv( 13*K, 9 );
    if( !strcmp(name,"SWAK_HP") ) return awCeilDiv( K*p0, 6 );
    if( !strcmp(name,"SWAK_GAUSS") || !strcmp(name,"SWAK_BUTTER") || !strcmp(name,"SWAK_2PHP") )
-      return awCeilDiv( (K+5)*(p0+2), 9 );
+      return awCeilDiv( (K+3)*(p0+2), 9 );
    if( !strcmp(name,"SWAK_BP") ) return (int)ceil( (double)((K+1)*p0) / (6.0*r0) );
    if( !strcmp(name,"KAMA") ) return p0 > 1 ? 25*X*awISqrt(p0) : 0;
-   if( !strcmp(name,"FRAMA") ) return 80*X;
+   if( !strcmp(name,"FRAMA") )
+      return 9*(X+4)*(awISqrt(p0)+2)/2 < 99*K ? 9*(X+4)*(awISqrt(p0)+2)/2 : 99*K;
    if( !strcmp(name,"VIDYA") )
    {
       if( p0 <= 1 ) return 0;
@@ -181,6 +182,7 @@ static int awRule( const char *name, int K, int X, int p0, int p1, double r0, do
       return v > TA_INDEX_MAX ? TA_INDEX_MAX : (int)v;
    }
    if( !strcmp(name,"MCGD") ) return 5*X*p0;
+   if( !strcmp(name,"HT_TRENDLINE") ) return 120 + 20*X;
    if( !strncmp(name,"HT_",3) ) return hilbert;
    if( !strcmp(name,"MAMA") )
    {
@@ -189,7 +191,7 @@ static int awRule( const char *name, int K, int X, int p0, int p1, double r0, do
    }
    if( !strcmp(name,"FISHER") ) return awCeilDiv( 5*(K+6), 2 );
    /* STC: p0 = fast, p1 = slow; on top of the EMA count it inherits. */
-   if( !strcmp(name,"STC") ) return 2*K + 3*( (p0 > p1 ? p0 : p1) + 1 );
+   if( !strcmp(name,"STC") ) return awCeilDiv( 5*K, 2 ) + 3*( (p0 > p1 ? p0 : p1) + 1 );
    return -1;
 }
 
@@ -377,6 +379,11 @@ static int awBuildVectors( const TA_FuncInfo *funcInfo, AwVector *vec )
          vec[n] = def; vec[n].label = "limits";
          vec[n].val[0] = mamaLimits[j][0]; vec[n].val[1] = mamaLimits[j][1]; n++;
       }
+
+   if( !strcmp( funcInfo->name, "FRAMA" ) )
+   {
+      vec[n] = def; vec[n].label = "capped count"; vec[n].val[0] = 1024.0; n++;
+   }
 
    for( j=0; j < (unsigned int)n; j++ )
       awNoteMaType( &vec[j], funcInfo );

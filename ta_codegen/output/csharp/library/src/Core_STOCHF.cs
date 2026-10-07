@@ -201,6 +201,7 @@ public partial class Core
       if( (outFastK.Overlaps(inHigh) && outFastK != inHigh) || (outFastK.Overlaps(inLow) && outFastK != inLow) || (outFastK.Overlaps(inClose) && outFastK != inClose) || (outFastD.Overlaps(inHigh) && outFastD != inHigh) || (outFastD.Overlaps(inLow) && outFastD != inLow) || (outFastD.Overlaps(inClose) && outFastD != inClose) ) {
          return RetCode.BadParam ;
       }
+      double[]? _rent_tempBuffer = null;
       i = 0;
       /* With stochastic, there is a total of 4 different lines that
        * are defined: FASTK, FASTD, SLOWK and SLOWD.
@@ -287,7 +288,8 @@ public partial class Core
          tempBuffer = outFastK;
       } else {
          bufferIsAllocated = 1;
-         tempBuffer = new double[(int)((endIdx - today + 1) * 1)];
+         _rent_tempBuffer = System.Buffers.ArrayPool<double>.Shared.Rent((int)((endIdx - today + 1) * 1));
+         tempBuffer = _rent_tempBuffer.AsSpan(0, (int)((endIdx - today + 1) * 1));
       }
       /* Do the K calculation */
       while( today <= endIdx ) {
@@ -353,6 +355,9 @@ public partial class Core
       outNBElement = _xr2.Count;
       retCode = RetCode.Success;
       if( (int)outNBElement == 0 ) {
+         if( (bufferIsAllocated) != 0 ) {
+            ReturnScratch(ref _rent_tempBuffer);
+         }
          /* Something wrong happen? No further data? */
          outBegIdx = 0;
          outNBElement = 0;
@@ -367,6 +372,9 @@ public partial class Core
        * reused as scratch, so source and destination overlap (issue #94).
        */
       tempBuffer.Slice(lookbackFastD, (int)outNBElement * 1).CopyTo(outFastK.Slice(0));
+      if( (bufferIsAllocated) != 0 ) {
+         ReturnScratch(ref _rent_tempBuffer);
+      }
       /* Note: Keep the outBegIdx relative to the
        *       caller input before returning.
        */
@@ -430,6 +438,7 @@ public partial class Core
       if( System.Runtime.InteropServices.MemoryMarshal.AsBytes(outFastK).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inHigh)) || System.Runtime.InteropServices.MemoryMarshal.AsBytes(outFastK).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inLow)) || System.Runtime.InteropServices.MemoryMarshal.AsBytes(outFastK).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inClose)) || System.Runtime.InteropServices.MemoryMarshal.AsBytes(outFastD).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inHigh)) || System.Runtime.InteropServices.MemoryMarshal.AsBytes(outFastD).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inLow)) || System.Runtime.InteropServices.MemoryMarshal.AsBytes(outFastD).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inClose)) ) {
          return RetCode.BadParam ;
       }
+      double[]? _rent_tempBuffer = null;
       i = 0;
       lookbackK = optInFastK_Period - 1;
       lookbackFastD = MaLookback(optInFastD_Period, optInFastD_MAType);
@@ -451,7 +460,8 @@ public partial class Core
       highest = lowest;
       bufferIsAllocated = 0;
       bufferIsAllocated = 1;
-      tempBuffer = new double[(int)((endIdx - today + 1) * 1)];
+      _rent_tempBuffer = System.Buffers.ArrayPool<double>.Shared.Rent((int)((endIdx - today + 1) * 1));
+      tempBuffer = _rent_tempBuffer.AsSpan(0, (int)((endIdx - today + 1) * 1));
       while( today <= endIdx ) {
          tmp = (double)inLow[today];
          if( lowestIdx < trailingIdx ) {
@@ -500,11 +510,17 @@ public partial class Core
       outNBElement = _xr2.Count;
       retCode = RetCode.Success;
       if( (int)outNBElement == 0 ) {
+         if( (bufferIsAllocated) != 0 ) {
+            ReturnScratch(ref _rent_tempBuffer);
+         }
          outBegIdx = 0;
          outNBElement = 0;
          return retCode ;
       }
       tempBuffer.Slice(lookbackFastD, (int)outNBElement * 1).CopyTo(outFastK.Slice(0));
+      if( (bufferIsAllocated) != 0 ) {
+         ReturnScratch(ref _rent_tempBuffer);
+      }
       outBegIdx = startIdx;
       return RetCode.Success ;
    }

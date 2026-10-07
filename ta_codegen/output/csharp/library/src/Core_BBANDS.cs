@@ -225,6 +225,8 @@ public partial class Core
       if( (outRealUpperBand.Overlaps(inReal) && outRealUpperBand != inReal) || (outRealMiddleBand.Overlaps(inReal) && outRealMiddleBand != inReal) || (outRealLowerBand.Overlaps(inReal) && outRealLowerBand != inReal) ) {
          return RetCode.BadParam ;
       }
+      double[]? _rent_tempBuffer1 = null;
+      double[]? _rent_tempBuffer2 = null;
       if( optInMAType == MAType.SMA ) {
          /* SMA fast path: the middle band (SMA) and the standard deviation share one
           * pass over the window below. Bit-identical to the general MA + STDDEV path
@@ -431,8 +433,10 @@ public partial class Core
          outNBElement = 0;
          return RetCode.Success ;
       }
-      tempBuffer1 = new double[(int)((endIdx - startIdx + 1) * 1)];
-      tempBuffer2 = new double[(int)((endIdx - startIdx + 1) * 1)];
+      _rent_tempBuffer1 = System.Buffers.ArrayPool<double>.Shared.Rent((int)((endIdx - startIdx + 1) * 1));
+      tempBuffer1 = _rent_tempBuffer1.AsSpan(0, (int)((endIdx - startIdx + 1) * 1));
+      _rent_tempBuffer2 = System.Buffers.ArrayPool<double>.Shared.Rent((int)((endIdx - startIdx + 1) * 1));
+      tempBuffer2 = _rent_tempBuffer2.AsSpan(0, (int)((endIdx - startIdx + 1) * 1));
       /* Calculate the middle band moving average. */
       OutRange _xr0 = Ma(startIdx, endIdx, inReal, optInTimePeriod, optInMAType, tempBuffer1);
       outBegIdx = _xr0.BegIdx;
@@ -440,6 +444,8 @@ public partial class Core
       retCode = RetCode.Success;
       if( (int)outNBElement == 0 ) {
          outNBElement = 0;
+         ReturnScratch(ref _rent_tempBuffer1);
+         ReturnScratch(ref _rent_tempBuffer2);
          return retCode ;
       }
       /* Remember where the moving average begins, to realign it below. */
@@ -479,6 +485,8 @@ public partial class Core
             outRealLowerBand[i] = tempReal2 - tempBuffer2[i] * optInNbDevDn;
          }
       }
+      ReturnScratch(ref _rent_tempBuffer1);
+      ReturnScratch(ref _rent_tempBuffer2);
       return RetCode.Success ;
    }
    internal RetCode BbandsImpl( int startIdx,
@@ -536,6 +544,8 @@ public partial class Core
       if( System.Runtime.InteropServices.MemoryMarshal.AsBytes(outRealUpperBand).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inReal)) || System.Runtime.InteropServices.MemoryMarshal.AsBytes(outRealMiddleBand).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inReal)) || System.Runtime.InteropServices.MemoryMarshal.AsBytes(outRealLowerBand).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inReal)) ) {
          return RetCode.BadParam ;
       }
+      double[]? _rent_tempBuffer1 = null;
+      double[]? _rent_tempBuffer2 = null;
       if( optInMAType == MAType.SMA ) {
          tempBuffer1 = outRealMiddleBand;
          tempBuffer2 = outRealUpperBand;
@@ -667,14 +677,18 @@ public partial class Core
          outNBElement = 0;
          return RetCode.Success ;
       }
-      tempBuffer1 = new double[(int)((endIdx - startIdx + 1) * 1)];
-      tempBuffer2 = new double[(int)((endIdx - startIdx + 1) * 1)];
+      _rent_tempBuffer1 = System.Buffers.ArrayPool<double>.Shared.Rent((int)((endIdx - startIdx + 1) * 1));
+      tempBuffer1 = _rent_tempBuffer1.AsSpan(0, (int)((endIdx - startIdx + 1) * 1));
+      _rent_tempBuffer2 = System.Buffers.ArrayPool<double>.Shared.Rent((int)((endIdx - startIdx + 1) * 1));
+      tempBuffer2 = _rent_tempBuffer2.AsSpan(0, (int)((endIdx - startIdx + 1) * 1));
       OutRange _xr0 = Ma(startIdx, endIdx, inReal, optInTimePeriod, optInMAType, tempBuffer1);
       outBegIdx = _xr0.BegIdx;
       outNBElement = _xr0.Count;
       retCode = RetCode.Success;
       if( (int)outNBElement == 0 ) {
          outNBElement = 0;
+         ReturnScratch(ref _rent_tempBuffer1);
+         ReturnScratch(ref _rent_tempBuffer2);
          return retCode ;
       }
       maBegIdx = (int)outBegIdx;
@@ -702,6 +716,8 @@ public partial class Core
             outRealLowerBand[i] = tempReal2 - tempBuffer2[i] * optInNbDevDn;
          }
       }
+      ReturnScratch(ref _rent_tempBuffer1);
+      ReturnScratch(ref _rent_tempBuffer2);
       return RetCode.Success ;
    }
    /// <summary>

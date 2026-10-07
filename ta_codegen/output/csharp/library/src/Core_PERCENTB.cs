@@ -190,6 +190,8 @@ public partial class Core
       if( (outReal.Overlaps(inReal) && outReal != inReal) ) {
          return RetCode.BadParam ;
       }
+      double[]? _rent_tempMA = null;
+      double[]? _rent_tempX = null;
       if( optInMAType == MAType.SMA ) {
          /* Keep the middle band's divide in the recurrence, where the running
           * sums' dependency chain hides it; the square root, the bands and the
@@ -358,8 +360,10 @@ public partial class Core
          outNBElement = 0;
          return RetCode.Success ;
       }
-      tempMA = new double[(int)((endIdx - startIdx + 1) * 1)];
-      tempX = new double[(int)((endIdx - startIdx + 1) * 1)];
+      _rent_tempMA = System.Buffers.ArrayPool<double>.Shared.Rent((int)((endIdx - startIdx + 1) * 1));
+      tempMA = _rent_tempMA.AsSpan(0, (int)((endIdx - startIdx + 1) * 1));
+      _rent_tempX = System.Buffers.ArrayPool<double>.Shared.Rent((int)((endIdx - startIdx + 1) * 1));
+      tempX = _rent_tempX.AsSpan(0, (int)((endIdx - startIdx + 1) * 1));
       /* Both before the variance: it may be written over inReal. */
       OutRange _xr2 = Ma(startIdx, endIdx, inReal, optInTimePeriod, optInMAType, tempMA);
       maBegIdx = _xr2.BegIdx;
@@ -405,6 +409,8 @@ public partial class Core
             }
          }
       }
+      ReturnScratch(ref _rent_tempMA);
+      ReturnScratch(ref _rent_tempX);
       return RetCode.Success ;
    }
    internal RetCode PercentbImpl( int startIdx,
@@ -465,6 +471,8 @@ public partial class Core
       if( System.Runtime.InteropServices.MemoryMarshal.AsBytes(outReal).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inReal)) ) {
          return RetCode.BadParam ;
       }
+      double[]? _rent_tempMA = null;
+      double[]? _rent_tempX = null;
       if( optInMAType == MAType.SMA ) {
          double[] _mid = new double[256];
          double[] _x = new double[256];
@@ -617,8 +625,10 @@ public partial class Core
          outNBElement = 0;
          return RetCode.Success ;
       }
-      tempMA = new double[(int)((endIdx - startIdx + 1) * 1)];
-      tempX = new double[(int)((endIdx - startIdx + 1) * 1)];
+      _rent_tempMA = System.Buffers.ArrayPool<double>.Shared.Rent((int)((endIdx - startIdx + 1) * 1));
+      tempMA = _rent_tempMA.AsSpan(0, (int)((endIdx - startIdx + 1) * 1));
+      _rent_tempX = System.Buffers.ArrayPool<double>.Shared.Rent((int)((endIdx - startIdx + 1) * 1));
+      tempX = _rent_tempX.AsSpan(0, (int)((endIdx - startIdx + 1) * 1));
       OutRange _xr2 = Ma(startIdx, endIdx, inReal, optInTimePeriod, optInMAType, tempMA);
       maBegIdx = _xr2.BegIdx;
       maNbElement = _xr2.Count;
@@ -660,6 +670,8 @@ public partial class Core
             }
          }
       }
+      ReturnScratch(ref _rent_tempMA);
+      ReturnScratch(ref _rent_tempX);
       return RetCode.Success ;
    }
    /// <summary>
