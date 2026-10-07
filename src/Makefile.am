@@ -13,6 +13,13 @@ libta_lib_la_LIBADD = \
 
 libta_lib_la_LDFLAGS = -version-info $(TALIB_LIBRARY_VERSION) $(TA_VERSION_SCRIPT_FLAGS)
 
+talibincludedir = $(includedir)/ta-lib
+talibinclude_HEADERS = ../include/ta_abstract.h \
+	../include/ta_common.h \
+	../include/ta_defs.h \
+	../include/ta_func.h \
+	../include/ta_libc.h
+
 # The linker map is consumed at LINK time, so a tarball without it configures
 # fine and then builds a library with the resolvers still exported.
 EXTRA_DIST = libta-lib.map
