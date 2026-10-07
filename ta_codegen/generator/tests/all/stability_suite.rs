@@ -391,6 +391,15 @@ fn unstable_read_gate_refuses_each_misplaced_read() {
         }),
         "CKSP: an Auto offset calls a lookback",
     );
+    let local = Expr::FuncCall("UNSTABLE_AUTO".into(), vec![Expr::Var("FUNC_UNST_ATR".into()), Expr::Var("root".into())]);
+    only(
+        mutated(&|f| {
+            let mut stmts = lookback_stmts(&f[cksp]);
+            stmts.insert(0, Statement::Expr(local.clone()));
+            f[cksp].lookback = Some(LookbackExpr::Code(stmts));
+        }),
+        "CKSP: an Auto offset reads `root`",
+    );
     only(mutated(&|f| f[cksp].body.push(Statement::Expr(offset("ATR")))), "CKSP: the body reads an Auto offset");
     let helper = ta_codegen_lib::ir::HelperDef {
         name: "ta_probe".into(),

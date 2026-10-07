@@ -191,11 +191,11 @@ pub fn unstable_level_counts(args: &[Expr]) -> Option<Vec<Expr>> {
 /// from paying for them. `rust` picks the `if` expression over the C-family ternary.
 pub fn unstable_auto_offset(counts: &[String], rust: bool, read: impl Fn(&[String]) -> String) -> String {
     let fill = |v: &str| vec![v.to_string(); counts.len()];
-    let (on, off, full) = (read(&fill("1")), read(&fill("0")), read(counts));
+    let (on, off, counted) = (read(&fill("1")), read(&fill("0")), read(counts));
     if rust {
-        format!("(if {on} != {off} {{ {full} - {off} }} else {{ 0 }})")
+        format!("(if {on} != {off} {{ {counted} - {off} }} else {{ 0 }})")
     } else {
-        format!("(({on} != {off}) ? ({full} - {off}) : 0)")
+        format!("(({on} != {off}) ? ({counted} - {off}) : 0)")
     }
 }
 

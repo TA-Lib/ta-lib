@@ -400,8 +400,22 @@ fn validate_auto_offsets(funcs: &[FuncDef], helpers: &crate::helper_registry::He
             crate::streaming::walk_stmt_exprs(s, &mut |top| {
                 crate::streaming::walk_expr(top, &mut |e| {
                     let Expr::FuncCall(callee, args) = e else { return };
-                    if callee == "UNSTABLE_AUTO" && format!("{args:?}").contains("_lookback\"") {
+                    if callee != "UNSTABLE_AUTO" {
+                        return;
+                    }
+                    if format!("{args:?}").contains("_lookback\"") {
                         errors.push(format!("{name}: an Auto offset calls a lookback; write it from the parameters"));
+                    }
+                    // The C backend computes it in a function that sees the parameters only.
+                    for arg in args.iter().skip(1) {
+                        crate::streaming::walk_expr(arg, &mut |inner| {
+                            let Expr::Var(var) = inner else { return };
+                            if var != "K" && var != "X" && !f.optional_inputs.iter().any(|o| &o.name == var) {
+                                errors.push(format!(
+                                    "{name}: an Auto offset reads `{var}`; write it from the parameters, K and X"
+                                ));
+                            }
+                        });
                     }
                 });
             });

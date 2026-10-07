@@ -179,7 +179,7 @@ generator recognizes and maps per language:
 |---|---|
 | `TA_IS_ZERO(x)` / `TA_IS_ZERO_OR_NEG(x)` | epsilon comparison against zero |
 | `TA_UNSTABLE( TA_FUNC_UNST_<NAME>, <count> )` | this function's unstable period: the stored count, or under an Auto level `<count>`, written with the free names `K` and `X` that each level supplies. Only in the owner's lookback, once per path |
-| `TA_UNSTABLE_AUTO( TA_FUNC_UNST_<ID>, <offset> )` | `<offset>`, written in `K` and `X`, while `<ID>` is on an Auto level, and 0 while it holds a count. For an id the function inherits: only in a lookback that calls that owner's lookback. The body must take its lookback from its own lookback function, or its first output and the lookback disagree |
+| `TA_UNSTABLE_AUTO( TA_FUNC_UNST_<ID>, <offset> )` | `<offset>`, written from the function's parameters, `K` and `X` only, while `<ID>` is on an Auto level, and 0 while it holds a count. For an id the function inherits: only in a lookback that calls that owner's lookback. The body must take its lookback from its own lookback function, or its first output and the lookback disagree |
 | candle-settings access (CDL* patterns) | resolved via the generated candle helpers |
 | `TA_OPAQUE(a, b, …);` | statement: the listed locals keep their values, but Rust's optimizer may not see through them there (`core::hint::black_box`; every other language emits nothing). Place it after each loop whose float accumulators LLVM would otherwise carry packed in one vector register through a later loop; see `cti.c` |
 | `CIRCBUF_PROLOG_CLASS` / `CIRCBUF_INIT_CLASS` / `CIRCBUF_NEXT` / `CIRCBUF_DESTROY` | circular scratch buffer over a local `typedef struct` element type (`src/ta_common/ta_memory.h`); see `cmf.c` or `ultosc.c` for usage |

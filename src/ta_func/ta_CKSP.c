@@ -59,6 +59,11 @@
  *  100726 MF,CC  #492. Under an Auto level the stop window is counted again.
  */
 
+static TA_COLD int cksp_auto_offset( int optInTimePeriod, double optInMultiplier, int optInStopPeriod )
+{
+   return TA_GLOBALS_UNSTABLE_AUTO(TA_FUNC_UNST_ATR,Atr,optInStopPeriod - 1,optInStopPeriod - 1);
+}
+
 TA_LIB_API int TA_CKSP_Lookback( int optInTimePeriod, double optInMultiplier, int optInStopPeriod )
 {
    if( (int)optInTimePeriod == TA_INTEGER_DEFAULT )
@@ -82,7 +87,7 @@ TA_LIB_API int TA_CKSP_Lookback( int optInTimePeriod, double optInMultiplier, in
     * was that much closer to its seed: the first difference two starts show
     * is the smaller for it, and an Auto level is held against that one.
     */
-   return TA_ATR_Lookback(optInTimePeriod) + optInStopPeriod - 1 + TA_GLOBALS_UNSTABLE_AUTO(TA_FUNC_UNST_ATR,Atr,optInStopPeriod - 1,optInStopPeriod - 1);
+   return TA_ATR_Lookback(optInTimePeriod) + optInStopPeriod - 1 + TA_GLOBALS_UNSTABLE_OFFSET(TA_FUNC_UNST_ATR,cksp_auto_offset(optInTimePeriod, optInMultiplier, optInStopPeriod));
 }
 
 TA_LIB_API int TA_CKSP_DisplayShift( int optInTimePeriod, double optInMultiplier, int optInStopPeriod, int outputIdx )
