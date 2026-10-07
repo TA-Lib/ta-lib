@@ -182,7 +182,7 @@ static int awRule( const char *name, int K, int X, int p0, int p1, double r0, do
       return v > TA_INDEX_MAX ? TA_INDEX_MAX : (int)v;
    }
    if( !strcmp(name,"MCGD") ) return 5*X*p0;
-   if( !strcmp(name,"HT_TRENDLINE") ) return 120 + 20*X;
+   if( !strcmp(name,"HT_TRENDLINE") || !strcmp(name,"HT_TRENDMODE") ) return 120 + 20*X;
    if( !strncmp(name,"HT_",3) ) return hilbert;
    if( !strcmp(name,"MAMA") )
    {

@@ -134,6 +134,10 @@ OVR="TimePeriod=2" /tmp/auto_stabilization_probe 40000 <NAME> > /tmp/need_min.ts
   thousands, and where the rule uses a root, the periods just under a square.
   Name the series it is sized on when one is left out, as the adaptive averages leave out
   the range-bound one.
+- **A function that only inherits a count cannot add to it.** Run the census on it by
+  name. Where a window or a difference after the smoothed value shrinks its own largest
+  difference, it needs more than it inherits: record that as a limit on the page, or give
+  the function an id and a rule of its own, as STC has, which is the owner's decision.
 - **`rules_vs_need.py` flags.** `LEG4` or `LEG8` fails the regression leg: the rule is too
   short. `k4` and `k8` are acceptable only for an output that divides by a state, `sig4`
   and `sig8` only for an output that reaches zero.

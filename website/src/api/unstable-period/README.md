@@ -230,8 +230,8 @@ Each id has one rule. `n` is the function's period. `K` is 10 at `PREC_4` and 19
 | `FRAMA` | `9*(X+4)*(isqrt(n)+2)/2`, at most `99*K` | 216 / 324 | measurement |
 | `VIDYA` | `2*X*(n+1)*isqrt(m)`, `m` the CMO period, at most `TA_INDEX_MAX` | 312 / 624 | measurement |
 | `MCGD` | `5*X*n` | 280 / 560 | measurement |
-| `HT_DCPERIOD`, `HT_DCPHASE`, `HT_PHASOR`, `HT_SINE`, `HT_TRENDMODE` | `H` | 280 / 480 | measurement |
-| `HT_TRENDLINE` | `120 + 20*X` | 200 / 280 | measurement |
+| `HT_DCPERIOD`, `HT_DCPHASE`, `HT_PHASOR`, `HT_SINE` | `H` | 280 / 480 | measurement |
+| `HT_TRENDLINE`, `HT_TRENDMODE` | `120 + 20*X` | 200 / 280 | measurement |
 | `MAMA` | `H + ceil(2*K/max(fast, slow))` | 320 / 556 | measurement |
 | `STC` | `ceil(5*K/2) + 3*(s+1)`, `s = max(fast, slow)`, on top of the `E(s)` it inherits | 178 / 201 | measurement |
 
@@ -274,7 +274,13 @@ none. Each [function page](/functions/) names what it inherits from.
   period cut to a whole number of bars, so two starts are equal once their whole
   periods have agreed for four bars. A level sets how rare a later disagreement is,
   not how small: on random walks about one start in 2,500 has one past the `PREC_4`
-  count and one in 400,000 past the `PREC_8` count.
+  count and one in 400,000 past the `PREC_8` count. HT_TRENDMODE is a flag and behaves
+  the same way: about one start in 15,000 and one in 150,000.
+- **A function that inherits a count is held to its source's rule.** Where it applies
+  a window or a difference after the smoothed value, its own largest difference is
+  smaller and it needs more bars to reach the level against it: at the defaults, e.g.,
+  up to 8 more for CKSP, 14 for CVI and 5 for ADOSC, and more as the stop, ROC and
+  slow periods grow.
 - **T3 is sized on price series.** A start whose six stages nearly cancel in the first
   outputs shows its difference later and can need a fifth more than the count; it is
   rare on prices, and a fixed count of `20*n` on that id covers it at either level.

@@ -117780,6 +117780,8 @@ class Core {
      *                literal cap lets the streaming rescan-window machinery bound it,
      *                and a separate counter j keeps it distinct from the DC-phase
      *                circular-buffer loop (which still uses i).
+     *  100726 MF,CC  #492. The Auto rule sized on when the flags of two starts
+     *                stop disagreeing.
      */
 
        /**
@@ -117803,8 +117805,11 @@ class Core {
            *
            * 31 is for being compatible with Tradestation.
            * See mama_lookback for an explanation of the "32".
+           *
+           * The flag of two starts is equal or not, at either level: the Auto count
+           * buys a rarer late disagreement.
            */
-          return 63 + this.unstableCount(FuncUnstId.HT_TRENDMODE.ordinal(), (80 + 50 * 4), (80 + 50 * 8)) ;
+          return 63 + this.unstableCount(FuncUnstId.HT_TRENDMODE.ordinal(), 120 + 20 * 4, 120 + 20 * 8) ;
 
        }
        /**
@@ -223518,7 +223523,7 @@ class Core {
 
 public class TaCodegenServe {
     static Core core = new Core();
-    static final String SPLICED_GENCODE_DIGEST = "ef8d703782260d3a";
+    static final String SPLICED_GENCODE_DIGEST = "8ee684beca1b083f";
     static final int MAX_ARRAY_SIZE = 200000;
     static double[] refOpen = new double[MAX_ARRAY_SIZE];
     static double[] refHigh = new double[MAX_ARRAY_SIZE];
