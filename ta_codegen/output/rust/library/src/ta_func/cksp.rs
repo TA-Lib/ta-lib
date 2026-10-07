@@ -54,6 +54,7 @@
  *  -------------------------------------------------------------------
  *  093026 KL,CC  Creation (#477).
  *  093026 MF,CC  Rolling extrema in a fixed number of comparisons per bar.
+ *  100726 MF,CC  #492. Under an Auto level the stop window is counted again.
  */
 
 // Import types from parent module
@@ -105,7 +106,11 @@ impl Core {
         // stop window reaches optInStopPeriod-1 first stops further back. The ATR
         // term is never restated here, which is what makes CKSP inherit
         // TA_FUNC_UNST_ATR.
-        return Ok((self.atr_lookback(optInTimePeriod)? + ((optInStopPeriod) as usize) - 1) as usize);
+        //
+        // A stop can rest on a first stop optInStopPeriod-1 bars old, whose ATR
+        // was that much closer to its seed: the first difference two starts show
+        // is the smaller for it, and an Auto level is held against that one.
+        return Ok((self.atr_lookback(optInTimePeriod)? + ((optInStopPeriod) as usize) - 1 + (((self.unstable_count(FuncUnstId::ATR, (if optInTimePeriod > 1 { optInStopPeriod - 1 } else { 0 }), (if optInTimePeriod > 1 { optInStopPeriod - 1 } else { 0 })) - self.unstable_count(FuncUnstId::ATR, 0, 0))) as usize)) as usize);
     }
     /// Display shift of one output of [`Core::cksp`]: how many bars ahead (positive) or behind
     /// (negative) of the bar that computed it a chart draws that output. The values are never

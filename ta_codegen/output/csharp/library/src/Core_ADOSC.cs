@@ -55,6 +55,7 @@ public partial class Core
     *  -------------------------------------------------------------------
     *  120802 MF   Template creation.
     *  052603 MF   Adapt code to compile with .NET Managed C++
+    *  100726 MF,CC  #492. Under an Auto level one more e-fold of the slow EMA.
     */
    /// <summary>
    /// Number of leading input bars <c>Adosc</c> consumes before it can produce
@@ -89,8 +90,12 @@ public partial class Core
       } else {
          slowestPeriod = optInFastPeriod;
       }
-      /* Adjust startIdx to account for the lookback period. */
-      return EmaLookback(slowestPeriod) ;
+      /* Both EMAs seed on one value at one bar, so the first differences two
+       * starts show cancel in part: the largest is under half the slow EMA's
+       * own while the slow period is at least three times the fast one. An Auto
+       * level is held against it, one e-fold of the slow EMA further.
+       */
+      return EmaLookback(slowestPeriod) + (this.UnstableCount((int)FuncUnstId.EMA, (optInFastPeriod < optInSlowPeriod) ? (optInSlowPeriod + 1) / 2 : (optInFastPeriod + 1) / 2, (optInFastPeriod < optInSlowPeriod) ? (optInSlowPeriod + 1) / 2 : (optInFastPeriod + 1) / 2) - this.UnstableCount((int)FuncUnstId.EMA, 0, 0)) ;
 
    }
    /// <summary>
@@ -134,7 +139,6 @@ public partial class Core
       int today = 0;
       int outIdx = 0;
       int lookbackTotal = 0;
-      int slowestPeriod = 0;
       double high = 0;
       double low = 0;
       double close = 0;
@@ -187,17 +191,8 @@ public partial class Core
        *     This gives more flexibility to the user if they want to
        *     experiment with unusual parameter settings.
        */
-      /* Identify the slowest period.
-       * This infomration is used soleley to bootstrap
-       * the algorithm (skip the lookback period).
-       */
-      if( optInFastPeriod < optInSlowPeriod ) {
-         slowestPeriod = optInSlowPeriod;
-      } else {
-         slowestPeriod = optInFastPeriod;
-      }
       /* Adjust startIdx to account for the lookback period. */
-      lookbackTotal = EmaLookback(slowestPeriod);
+      lookbackTotal = AdoscLookback(optInFastPeriod, optInSlowPeriod);
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
       }
@@ -291,7 +286,6 @@ public partial class Core
       int today = 0;
       int outIdx = 0;
       int lookbackTotal = 0;
-      int slowestPeriod = 0;
       double high = 0;
       double low = 0;
       double close = 0;
@@ -322,12 +316,7 @@ public partial class Core
       if( System.Runtime.InteropServices.MemoryMarshal.AsBytes(outReal).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inHigh)) || System.Runtime.InteropServices.MemoryMarshal.AsBytes(outReal).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inLow)) || System.Runtime.InteropServices.MemoryMarshal.AsBytes(outReal).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inClose)) || System.Runtime.InteropServices.MemoryMarshal.AsBytes(outReal).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inVolume)) ) {
          return RetCode.BadParam ;
       }
-      if( optInFastPeriod < optInSlowPeriod ) {
-         slowestPeriod = optInSlowPeriod;
-      } else {
-         slowestPeriod = optInFastPeriod;
-      }
-      lookbackTotal = EmaLookback(slowestPeriod);
+      lookbackTotal = AdoscLookback(optInFastPeriod, optInSlowPeriod);
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
       }
@@ -767,7 +756,6 @@ public partial class Core
       int today = 0;
       int outIdx = 0;
       int lookbackTotal = 0;
-      int slowestPeriod = 0;
       double high = 0;
       double low = 0;
       double close = 0;
@@ -827,17 +815,8 @@ public partial class Core
        *     This gives more flexibility to the user if they want to
        *     experiment with unusual parameter settings.
        */
-      /* Identify the slowest period.
-       * This infomration is used soleley to bootstrap
-       * the algorithm (skip the lookback period).
-       */
-      if( optInFastPeriod < optInSlowPeriod ) {
-         slowestPeriod = optInSlowPeriod;
-      } else {
-         slowestPeriod = optInFastPeriod;
-      }
       /* Adjust startIdx to account for the lookback period. */
-      lookbackTotal = EmaLookback(slowestPeriod);
+      lookbackTotal = AdoscLookback(optInFastPeriod, optInSlowPeriod);
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
       }

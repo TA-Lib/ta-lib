@@ -311,6 +311,18 @@ pub(crate) fn unstable_period_owner(expr: &Expr) -> Option<String> {
     Some(id.strip_prefix("FUNC_UNST_").unwrap_or(id).to_uppercase())
 }
 
+/// The function, upper-case, whose id a `TA_UNSTABLE_AUTO(...)` offset reads.
+fn unstable_auto_id(expr: &Expr) -> Option<String> {
+    let Expr::FuncCall(name, args) = expr else { return None };
+    if !matches!(SpecialBuiltin::from_name(name), Some(SpecialBuiltin::UnstableAuto)) {
+        return None;
+    }
+    match args.as_slice() {
+        [Expr::Var(id), _] => Some(id.strip_prefix("FUNC_UNST_").unwrap_or(id).to_uppercase()),
+        _ => Some(format!("<{} argument(s)>", args.len())),
+    }
+}
+
 /// Collect every `FuncCall` name reachable from an expression, plus the owner of every
 /// unstable-period id it reads.
 fn walk_expr(expr: &Expr, out: &mut BTreeSet<String>) {
@@ -345,6 +357,59 @@ fn walk_expr(expr: &Expr, out: &mut BTreeSet<String>) {
         | Expr::PreDecrement(e) => walk_expr(e, out),
         Expr::Literal(_) | Expr::IntLiteral(_) | Expr::Var(_) | Expr::PointerDeref(_) => {}
     }
+}
+
+/// Refuse an Auto offset anywhere but the lookback of a function that inherits its id.
+///
+/// The offset is how a function sizes the Auto count for what it does with its source's
+/// value; on an id its lookback does not already depend on, it would make that id change
+/// a lookback the stability class says it cannot.
+fn validate_auto_offsets(funcs: &[FuncDef], helpers: &crate::helper_registry::HelperRegistry) -> Vec<String> {
+    // Counted in the debug text for the reason `validate_unstable_reads` gives.
+    fn count<T: std::fmt::Debug>(tree: &T) -> usize {
+        format!("{tree:?}").matches("FuncCall(\"UNSTABLE_AUTO\"").count()
+    }
+    let classes = classify(funcs);
+    let mut errors = Vec::new();
+    for f in funcs {
+        let name = f.name.to_uppercase();
+        let private = if f.has_explicit_private { count(&f.private_body) } else { 0 };
+        for (place, n) in [
+            ("the body", count(&f.body)),
+            ("the private body", private),
+            ("the display shift", count(&f.display_shift)),
+            ("an alternate body", count(&f.alternates)),
+            ("a private parameter initializer", count(&f.private_param_init)),
+        ] {
+            if n > 0 {
+                errors.push(format!("{name}: {place} reads an Auto offset; only a lookback may"));
+            }
+        }
+        let Some(LookbackExpr::Code(stmts)) = &f.lookback else { continue };
+        let mut offsets = Vec::new();
+        for s in stmts {
+            crate::streaming::walk_stmt_exprs(s, &mut |top| {
+                crate::streaming::walk_expr(top, &mut |e| offsets.extend(unstable_auto_id(e)));
+            });
+        }
+        if offsets.len() != count(stmts) {
+            errors.push(format!("{name}: the lookback reads an Auto offset where the gate cannot name it"));
+        }
+        let inherited = classes.get(&f.name).map(|c| c.inherited_from.as_slice()).unwrap_or_default();
+        for id in offsets {
+            if !inherited.contains(&id) {
+                errors.push(format!(
+                    "{name}: the lookback takes an Auto offset on TA_FUNC_UNST_{id}, an id it does not inherit; call the owner's lookback first"
+                ));
+            }
+        }
+    }
+    for helper in helpers.iter() {
+        if count(&helper.body) > 0 {
+            errors.push(format!("helpers/{}: reads an Auto offset; only a lookback may", helper.name));
+        }
+    }
+    errors
 }
 
 /// Refuse an unstable-period read anywhere but the lookback of the function that owns
@@ -385,7 +450,7 @@ pub fn validate_unstable_reads<S: std::hash::BuildHasher>(
         }
     }
 
-    let mut errors = Vec::new();
+    let mut errors = validate_auto_offsets(funcs, helpers);
     let mut read_by_owner = BTreeSet::new();
     for f in funcs {
         let name = f.name.to_uppercase();

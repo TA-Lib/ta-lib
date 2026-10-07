@@ -12,6 +12,7 @@
  *  -------------------------------------------------------------------
  *  093026 KL,CC  Creation (#477).
  *  093026 MF,CC  Rolling extrema in a fixed number of comparisons per bar.
+ *  100726 MF,CC  #492. Under an Auto level the stop window is counted again.
  */
 
    /**
@@ -53,8 +54,12 @@
        * stop window reaches optInStopPeriod-1 first stops further back. The ATR
        * term is never restated here, which is what makes CKSP inherit
        * TA_FUNC_UNST_ATR.
+       *
+       * A stop can rest on a first stop optInStopPeriod-1 bars old, whose ATR
+       * was that much closer to its seed: the first difference two starts show
+       * is the smaller for it, and an Auto level is held against that one.
        */
-      return atrLookback(optInTimePeriod) + optInStopPeriod - 1 ;
+      return atrLookback(optInTimePeriod) + optInStopPeriod - 1 + (this.unstableCount(FuncUnstId.ATR.ordinal(), (optInTimePeriod > 1) ? optInStopPeriod - 1 : 0, (optInTimePeriod > 1) ? optInStopPeriod - 1 : 0) - this.unstableCount(FuncUnstId.ATR.ordinal(), 0, 0)) ;
 
    }
    /**

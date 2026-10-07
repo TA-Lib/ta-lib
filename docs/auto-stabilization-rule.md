@@ -134,10 +134,14 @@ OVR="TimePeriod=2" /tmp/auto_stabilization_probe 40000 <NAME> > /tmp/need_min.ts
   thousands, and where the rule uses a root, the periods just under a square.
   Name the series it is sized on when one is left out, as the adaptive averages leave out
   the range-bound one.
-- **A function that only inherits a count cannot add to it.** Run the census on it by
-  name. Where a window or a difference after the smoothed value shrinks its own largest
-  difference, it needs more than it inherits: record that as a limit on the page, or give
-  the function an id and a rule of its own, as STC has, which is the owner's decision.
+- **A function that inherits a count adjusts it for what it does with the value.** Run the
+  census on it by name. Where a window or a difference after the smoothed value shrinks
+  its own largest difference, it needs more than it inherits: that is a gain like any
+  other, and its lookback adds it with `TA_UNSTABLE_AUTO` on the inherited id (CKSP: its
+  stop window; ADOSC: one e-fold of the slow EMA, for two EMAs seeded together). A ratio
+  of the inherited value (CVI) is held to the regression leg like the owners' ratio
+  outputs, and gets none. Giving bars back is not an offset: the stages inside the body
+  would have to split differently.
 - **`rules_vs_need.py` flags.** `LEG4` or `LEG8` fails the regression leg: the rule is too
   short. `k4` and `k8` are acceptable only for an output that divides by a state, `sig4`
   and `sig8` only for an output that reaches zero.

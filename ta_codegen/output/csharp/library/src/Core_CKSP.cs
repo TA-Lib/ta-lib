@@ -56,6 +56,7 @@ public partial class Core
     *  -------------------------------------------------------------------
     *  093026 KL,CC  Creation (#477).
     *  093026 MF,CC  Rolling extrema in a fixed number of comparisons per bar.
+    *  100726 MF,CC  #492. Under an Auto level the stop window is counted again.
     */
    /// <summary>
    /// Number of leading input bars <c>Cksp</c> consumes before it can produce
@@ -96,8 +97,12 @@ public partial class Core
        * stop window reaches optInStopPeriod-1 first stops further back. The ATR
        * term is never restated here, which is what makes CKSP inherit
        * TA_FUNC_UNST_ATR.
+       *
+       * A stop can rest on a first stop optInStopPeriod-1 bars old, whose ATR
+       * was that much closer to its seed: the first difference two starts show
+       * is the smaller for it, and an Auto level is held against that one.
        */
-      return AtrLookback(optInTimePeriod) + optInStopPeriod - 1 ;
+      return AtrLookback(optInTimePeriod) + optInStopPeriod - 1 + (this.UnstableCount((int)FuncUnstId.ATR, (optInTimePeriod > 1) ? optInStopPeriod - 1 : 0, (optInTimePeriod > 1) ? optInStopPeriod - 1 : 0) - this.UnstableCount((int)FuncUnstId.ATR, 0, 0)) ;
 
    }
    /// <summary>

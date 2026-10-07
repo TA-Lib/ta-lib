@@ -92,6 +92,13 @@
    ( TA_Globals->unstablePeriod[x] <= (unsigned int)TA_INDEX_MAX ? (int)TA_Globals->unstablePeriod[x] \
    : TA_Globals->unstablePeriod[x] == (unsigned int)TA_UNSTABLE_AUTO_PREC_4 ? (int)(c4) : (int)(c8) )
 
+/* What a function adds to the count of an id it inherits: nothing under a
+ * stored count, the level's offset under an Auto level.
+ */
+#define TA_GLOBALS_UNSTABLE_AUTO(x,y,c4,c8) \
+   ( TA_Globals->unstablePeriod[x] <= (unsigned int)TA_INDEX_MAX ? 0 \
+   : TA_Globals->unstablePeriod[x] == (unsigned int)TA_UNSTABLE_AUTO_PREC_4 ? (int)(c4) : (int)(c8) )
+
 
 
 /* CIRCBUF : Circular Buffer Macros.

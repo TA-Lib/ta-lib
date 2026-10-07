@@ -56,6 +56,7 @@
  *  -------------------------------------------------------------------
  *  093026 KL,CC  Creation (#477).
  *  093026 MF,CC  Rolling extrema in a fixed number of comparisons per bar.
+ *  100726 MF,CC  #492. Under an Auto level the stop window is counted again.
  */
 
 TA_LIB_API int TA_CKSP_Lookback( int optInTimePeriod, double optInMultiplier, int optInStopPeriod )
@@ -76,8 +77,12 @@ TA_LIB_API int TA_CKSP_Lookback( int optInTimePeriod, double optInMultiplier, in
     * stop window reaches optInStopPeriod-1 first stops further back. The ATR
     * term is never restated here, which is what makes CKSP inherit
     * TA_FUNC_UNST_ATR.
+    *
+    * A stop can rest on a first stop optInStopPeriod-1 bars old, whose ATR
+    * was that much closer to its seed: the first difference two starts show
+    * is the smaller for it, and an Auto level is held against that one.
     */
-   return TA_ATR_Lookback(optInTimePeriod) + optInStopPeriod - 1;
+   return TA_ATR_Lookback(optInTimePeriod) + optInStopPeriod - 1 + TA_GLOBALS_UNSTABLE_AUTO(TA_FUNC_UNST_ATR,Atr,(optInTimePeriod > 1) ? optInStopPeriod - 1 : 0,(optInTimePeriod > 1) ? optInStopPeriod - 1 : 0);
 }
 
 TA_LIB_API int TA_CKSP_DisplayShift( int optInTimePeriod, double optInMultiplier, int optInStopPeriod, int outputIdx )

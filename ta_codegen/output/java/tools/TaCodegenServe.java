@@ -3852,6 +3852,7 @@ class Core {
      *  -------------------------------------------------------------------
      *  120802 MF   Template creation.
      *  052603 MF   Adapt code to compile with .NET Managed C++
+     *  100726 MF,CC  #492. Under an Auto level one more e-fold of the slow EMA.
      */
 
        /**
@@ -3886,8 +3887,12 @@ class Core {
           } else {
              slowestPeriod = optInFastPeriod;
           }
-          /* Adjust startIdx to account for the lookback period. */
-          return emaLookback(slowestPeriod) ;
+          /* Both EMAs seed on one value at one bar, so the first differences two
+           * starts show cancel in part: the largest is under half the slow EMA's
+           * own while the slow period is at least three times the fast one. An Auto
+           * level is held against it, one e-fold of the slow EMA further.
+           */
+          return emaLookback(slowestPeriod) + (this.unstableCount(FuncUnstId.EMA.ordinal(), (optInFastPeriod < optInSlowPeriod) ? (optInSlowPeriod + 1) / 2 : (optInFastPeriod + 1) / 2, (optInFastPeriod < optInSlowPeriod) ? (optInSlowPeriod + 1) / 2 : (optInFastPeriod + 1) / 2) - this.unstableCount(FuncUnstId.EMA.ordinal(), 0, 0)) ;
 
        }
        /**
@@ -3929,7 +3934,6 @@ class Core {
           int today = 0;
           int outIdx = 0;
           int lookbackTotal = 0;
-          int slowestPeriod = 0;
           double high = 0;
           double low = 0;
           double close = 0;
@@ -3979,17 +3983,8 @@ class Core {
            *     This gives more flexibility to the user if they want to
            *     experiment with unusual parameter settings.
            */
-          /* Identify the slowest period.
-           * This infomration is used soleley to bootstrap
-           * the algorithm (skip the lookback period).
-           */
-          if( optInFastPeriod < optInSlowPeriod ) {
-             slowestPeriod = optInSlowPeriod;
-          } else {
-             slowestPeriod = optInFastPeriod;
-          }
           /* Adjust startIdx to account for the lookback period. */
-          lookbackTotal = emaLookback(slowestPeriod);
+          lookbackTotal = adoscLookback(optInFastPeriod, optInSlowPeriod);
           if( startIdx < lookbackTotal ) {
              startIdx = lookbackTotal;
           }
@@ -4081,7 +4076,6 @@ class Core {
           int today = 0;
           int outIdx = 0;
           int lookbackTotal = 0;
-          int slowestPeriod = 0;
           double high = 0;
           double low = 0;
           double close = 0;
@@ -4109,12 +4103,7 @@ class Core {
           } else if( optInSlowPeriod < 2 || optInSlowPeriod > 100000 ) {
              return RetCode.BAD_PARAM;
           }
-          if( optInFastPeriod < optInSlowPeriod ) {
-             slowestPeriod = optInSlowPeriod;
-          } else {
-             slowestPeriod = optInFastPeriod;
-          }
-          lookbackTotal = emaLookback(slowestPeriod);
+          lookbackTotal = adoscLookback(optInFastPeriod, optInSlowPeriod);
           if( startIdx < lookbackTotal ) {
              startIdx = lookbackTotal;
           }
@@ -4510,7 +4499,6 @@ class Core {
           int today = 0;
           int outIdx = 0;
           int lookbackTotal = 0;
-          int slowestPeriod = 0;
           double high = 0;
           double low = 0;
           double close = 0;
@@ -4570,17 +4558,8 @@ class Core {
            *     This gives more flexibility to the user if they want to
            *     experiment with unusual parameter settings.
            */
-          /* Identify the slowest period.
-           * This infomration is used soleley to bootstrap
-           * the algorithm (skip the lookback period).
-           */
-          if( optInFastPeriod < optInSlowPeriod ) {
-             slowestPeriod = optInSlowPeriod;
-          } else {
-             slowestPeriod = optInFastPeriod;
-          }
           /* Adjust startIdx to account for the lookback period. */
-          lookbackTotal = emaLookback(slowestPeriod);
+          lookbackTotal = adoscLookback(optInFastPeriod, optInSlowPeriod);
           if( startIdx < lookbackTotal ) {
              startIdx = lookbackTotal;
           }
@@ -78403,6 +78382,7 @@ class Core {
      *  -------------------------------------------------------------------
      *  093026 KL,CC  Creation (#477).
      *  093026 MF,CC  Rolling extrema in a fixed number of comparisons per bar.
+     *  100726 MF,CC  #492. Under an Auto level the stop window is counted again.
      */
 
        /**
@@ -78444,8 +78424,12 @@ class Core {
            * stop window reaches optInStopPeriod-1 first stops further back. The ATR
            * term is never restated here, which is what makes CKSP inherit
            * TA_FUNC_UNST_ATR.
+           *
+           * A stop can rest on a first stop optInStopPeriod-1 bars old, whose ATR
+           * was that much closer to its seed: the first difference two starts show
+           * is the smaller for it, and an Auto level is held against that one.
            */
-          return atrLookback(optInTimePeriod) + optInStopPeriod - 1 ;
+          return atrLookback(optInTimePeriod) + optInStopPeriod - 1 + (this.unstableCount(FuncUnstId.ATR.ordinal(), (optInTimePeriod > 1) ? optInStopPeriod - 1 : 0, (optInTimePeriod > 1) ? optInStopPeriod - 1 : 0) - this.unstableCount(FuncUnstId.ATR.ordinal(), 0, 0)) ;
 
        }
        /**
@@ -223523,7 +223507,7 @@ class Core {
 
 public class TaCodegenServe {
     static Core core = new Core();
-    static final String SPLICED_GENCODE_DIGEST = "8ee684beca1b083f";
+    static final String SPLICED_GENCODE_DIGEST = "9434cac525d28688";
     static final int MAX_ARRAY_SIZE = 200000;
     static double[] refOpen = new double[MAX_ARRAY_SIZE];
     static double[] refHigh = new double[MAX_ARRAY_SIZE];

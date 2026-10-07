@@ -248,7 +248,9 @@ A function that owns no id gets its count through the functions it is built on, 
 does with a fixed count: MACD discards `E(max(fast, slow)) + E(signal)` bars, DEMA
 `2*E(n)`, and KC the longer of its EMA and ATR paths. A function with an MA-type
 parameter takes the count of the type selected, and a windowed type such as SMA adds
-none. Each [function page](/functions/) names what it inherits from.
+none. A function can add to the count it inherits for what it does with the value,
+under a level only: CKSP adds its stop period less one, and ADOSC half its slow period.
+Each [function page](/functions/) names what it inherits from.
 
 ## What a level does not promise {#limits}
 
@@ -276,11 +278,9 @@ none. Each [function page](/functions/) names what it inherits from.
   not how small: on random walks about one start in 2,500 has one past the `PREC_4`
   count and one in 400,000 past the `PREC_8` count. HT_TRENDMODE is a flag and behaves
   the same way: about one start in 15,000 and one in 150,000.
-- **A function that inherits a count is held to its source's rule.** Where it applies
-  a window or a difference after the smoothed value, its own largest difference is
-  smaller and it needs more bars to reach the level against it: at the defaults, e.g.,
-  up to 8 more for CKSP, 14 for CVI and 5 for ADOSC, and more as the stop, ROC and
-  slow periods grow.
+- **CVI is a ratio of an inherited value.** It divides its EMA by the same EMA some
+  bars earlier, so like the ratio ids it can sit above the level's threshold at the
+  count it inherits, e.g. for up to 14 bars at the defaults.
 - **T3 is sized on price series.** A start whose six stages nearly cancel in the first
   outputs shows its difference later and can need a fifth more than the count; it is
   rare on prices, and a fixed count of `20*n` on that id covers it at either level.

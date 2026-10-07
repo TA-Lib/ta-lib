@@ -89,7 +89,7 @@ static AwRun *awFull, *awLate;
 
 static int awNbReport;
 static unsigned int awNbWindow, awNbConverging, awNbPathDep, awNbCount, awNbCountNonZero, awNbFloorHeld;
-static unsigned int awNbSameValues, awNbPeriod1;
+static unsigned int awNbSameValues, awNbPeriod1, awNbOffset;
 
 /* --- corpus ---------------------------------------------------------- */
 
@@ -438,6 +438,64 @@ static TA_FuncUnstId awOwnId( const char *name )
    for( i=0; i < sizeof(own)/sizeof(own[0]); i++ )
       if( !strcmp( own[i].name, name ) ) return own[i].id;
    return TA_FUNC_UNST_ALL;
+}
+
+/* A function that adjusts the count it inherits: `offset` more bars under a
+ * level of `source`, and none under a count.
+ */
+static void awCheckOffset( const TA_FuncInfo *funcInfo, const AwVector *vec )
+{
+   const TA_OptInputParameterInfo *opt;
+   TA_FuncUnstId source;
+   int l, at0, got, base, offset, p0 = 0, p1 = 0, nbInt = 0;
+   unsigned int i;
+
+   for( i=0; i < funcInfo->nbOptInput; i++ )
+   {
+      TA_GetOptInputParameterInfo( funcInfo->handle, i, &opt );
+      if( opt->type != TA_OptInput_IntegerRange ) continue;
+      if( nbInt == 0 ) p0 = (int)vec->val[i]; else if( nbInt == 1 ) p1 = (int)vec->val[i];
+      nbInt++;
+   }
+   if( !strcmp( funcInfo->name, "CKSP" ) ) source = TA_FUNC_UNST_ATR;
+   else if( !strcmp( funcInfo->name, "ADOSC" ) ) source = TA_FUNC_UNST_EMA;
+   else return;
+
+   TA_SetUnstablePeriod( TA_FUNC_UNST_ALL, 0 );
+   at0 = awLookback( funcInfo, vec );
+   if( at0 < 0 ) return;
+   TA_SetUnstablePeriod( source, 30 );
+   got = awLookback( funcInfo, vec ) - at0;
+   TA_SetUnstablePeriod( source, 0 );
+   if( got != 30 )
+   {
+      sprintf( awMsg, "a count of 30 on the id it inherits adds %d bars", got );
+      awFail( funcInfo->name, vec->label );
+   }
+   for( l=0; l < 2; l++ )
+   {
+      if( source == TA_FUNC_UNST_ATR )
+      {
+         base   = awRule( "ATR", awLevel[l].K, awLevel[l].X, p0, 0, 0.0, 0.0 );
+         offset = p0 > 1 ? p1 - 1 : 0;
+      }
+      else
+      {
+         if( p1 > p0 ) p0 = p1;
+         base   = awRule( "EMA", awLevel[l].K, awLevel[l].X, p0, 0, 0.0, 0.0 );
+         offset = p0 > 1 ? (p0 + 1) / 2 : 0;
+      }
+      TA_SetUnstablePeriod( source, awLevel[l].level );
+      got = awLookback( funcInfo, vec ) - at0;
+      TA_SetUnstablePeriod( source, 0 );
+      if( got != base + offset )
+      {
+         sprintf( awMsg, "PREC_%d adds %d bars, its source's %d and its own %d say %d",
+                  awLevel[l].X, got, base, offset, base + offset );
+         awFail( funcInfo->name, vec->label );
+      }
+      if( offset > 0 ) awNbOffset++;
+   }
 }
 
 static void awCheckCount( const TA_FuncInfo *funcInfo, const AwVector *vec, TA_FuncUnstId own )
@@ -838,6 +896,7 @@ static void awOneFunction( const TA_FuncInfo *funcInfo, void *opaque )
    {
       if( own != TA_FUNC_UNST_ALL )
          awCheckCount( funcInfo, &vec[v], own );
+      awCheckOffset( funcInfo, &vec[v] );
       awTwoStarts( funcInfo, &vec[v] );
    }
    if( awPrintFloors )
@@ -860,7 +919,7 @@ ErrorNumber test_func_auto_stabilization( TA_History *history )
    }
    awNbReport = 0;
    awNbWindow = awNbConverging = awNbPathDep = awNbCount = awNbCountNonZero = awNbFloorHeld = 0;
-   awNbSameValues = awNbPeriod1 = 0;
+   awNbSameValues = awNbPeriod1 = awNbOffset = 0;
    awPrintFloors = getenv( "TA_AUTO_STABILIZATION_FLOORS" ) != NULL;
    awBuildSeries();
 
@@ -876,7 +935,7 @@ ErrorNumber test_func_auto_stabilization( TA_History *history )
       return TA_AUTO_STABILIZATION_FAIL;
    }
    if( awNbWindow < 1600 || awNbConverging < 1600 || awNbPathDep < 30 ||
-       awNbCount < 200 || awNbCountNonZero < 175 || awNbSameValues < 200 || awNbPeriod1 < 100 ||
+       awNbCount < 200 || awNbCountNonZero < 175 || awNbSameValues < 200 || awNbPeriod1 < 100 || awNbOffset < 8 ||
        ( !awPrintFloors && awNbFloorHeld < 60 ) )
    {
       printf( "\n  auto-stabilization: vacuous: %u window, %u converging, %u path-dependent, "

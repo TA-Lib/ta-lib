@@ -101,6 +101,9 @@ impl MathFn {
 #[derive(Clone, Copy)]
 pub enum SpecialBuiltin {
     UnstablePeriod,
+    /// `TA_UNSTABLE_AUTO(id, offset)`: `offset` under an Auto level of an id the function
+    /// inherits, 0 under a count.
+    UnstableAuto,
     IsZero,
     IsZeroScaled,
     IsZeroOrNeg,
@@ -114,6 +117,7 @@ impl SpecialBuiltin {
     pub fn from_name(name: &str) -> Option<Self> {
         Some(match name {
             "UNSTABLE_PERIOD" => Self::UnstablePeriod,
+            "UNSTABLE_AUTO" => Self::UnstableAuto,
             "IS_ZERO" => Self::IsZero,
             "IS_ZERO_SCALED" => Self::IsZeroScaled,
             "IS_ZERO_OR_NEG" => Self::IsZeroOrNeg,
@@ -179,6 +183,14 @@ pub fn unstable_level_counts(args: &[Expr]) -> Option<Vec<Expr>> {
             })
             .collect(),
     )
+}
+
+/// Wrap a rendered `TA_UNSTABLE(id, c4, c8)` read into the Auto-only offset: the same read
+/// less the read whose counts are 0, which is the stored count under a count and 0 under a
+/// level. `read` renders one read from its per-level counts.
+pub fn unstable_auto_offset(counts: &[String], read: impl Fn(&[String]) -> String) -> String {
+    let zeros = vec!["0".to_string(); counts.len()];
+    format!("({} - {})", read(counts), read(&zeros))
 }
 
 /// `4 == 4 ? a : b` to `a`, inside sums, casts and call arguments: how a count that cannot be written in `K` picks
