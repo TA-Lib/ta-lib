@@ -24,6 +24,7 @@ cd docs/studies/auto-stabilization
 gcc -O2 -I../../../include auto_stabilization_probe.c ../../../cmake-build/libta-lib.a -lm -o /tmp/auto_stabilization_probe
 gcc -O2 -I../../../include auto_stabilization_census.c ../../../cmake-build/libta-lib.a -lm -o /tmp/auto_stabilization_census
 /tmp/auto_stabilization_probe 40000 > /tmp/probe.tsv          # every function; add a name to run one
+CENSUS_CSV=../ema-seeding/data/ibm_daily_ohlc.csv /tmp/auto_stabilization_census 20000 1 > /tmp/census.tsv   # with real daily bars as a fourth series kind
 OVR="FastLimit=0.2,SlowLimit=0.02" /tmp/auto_stabilization_probe 40000 MAMA   # one function, other parameters
 python3 analyze.py /tmp/probe.tsv /tmp/agg.json summary
 python3 analyze.py /tmp/probe.tsv /tmp/agg.json nonexact
@@ -62,7 +63,8 @@ Link the static library by path. `-lta-lib` picks up an installed TA-Lib instead
 
 ## What it does not show
 
-- Real market data. The three shapes bracket the adaptive averages; they are not a market.
+- Real market data in the probe. The three shapes bracket the adaptive averages; they are not a
+  market. The census takes one real series, whose windows overlap.
 - Periods beyond three times the default.
 - The Rust, Java and C# libraries.
 - SWAK_BP away from its default delta. MAMA is measured at seven limit settings (section 6

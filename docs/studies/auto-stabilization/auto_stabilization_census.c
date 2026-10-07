@@ -14,6 +14,9 @@
  * given) flips at random intervals; rb, a range-bound walk pulled back to its
  * mean. tr starts at 10000 so that a long fall does not rest on the 1.00 floor:
  * a flat run is a limit of its own, and it would be counted as a rule's.
+ * With CENSUS_CSV=<file> a fourth kind, csv, takes each trial's bars from a
+ * random offset of that file (a header line, then date,high,low,close; the open
+ * is the previous close). Its trials overlap, so they are not independent.
  * Prices are near `level` (100 unless given) and rounded to `tick` (0.01): the
  * same walk at 4.5e-8 with a tick of 1e-10 is a coin quoted in satoshis.
  * need<K> p50/p99/max over the trials; over<K> = trials whose need is above the
@@ -37,6 +40,8 @@ static const char *g_only;
 static int g_trials, g_list;
 static double g_drift = 0.001, g_level = 100.0, g_tick = 0.01;
 static unsigned long long g_seed, rng_s;
+static double fH[NMAX], fL[NMAX], fC[NMAX];
+static int fN;
 
 static double rnd(void)
 {
@@ -53,22 +58,28 @@ static double r2(double x) { return floor(x*(g_level/100.0)/g_tick + 0.5) * g_ti
 
 static void make_series(int kind, int n)
 {
-   int i;
+   int i, off = kind == 3 ? (int)(rnd()*(fN - n + 1)) : 0;
    double c = kind == 1 ? 10000.0 : 100.0, prev = c, drift = g_drift, vol = 1.0e6;
+   if( kind == 3 ) prev = fC[off > 0 ? off - 1 : 0];
    for( i = 0; i < n; i++ )
    {
       double o, h, l;
-      if( kind == 0 ) c *= exp(0.012*gauss());
+      if( kind == 3 ) c = fC[off+i];
+      else if( kind == 0 ) c *= exp(0.012*gauss());
       else if( kind == 1 )
       {
          if( rnd() < 1.0/300.0 ) drift = -drift;
          c *= exp(drift + 0.012*gauss());
       }
       else c += 0.05*(100.0 - c) + 0.5*gauss();
-      if( c < 1.0 ) c = 1.0;
-      o = prev * (1.0 + 0.002*gauss());
-      h = (o > c ? o : c) * (1.0 + fabs(0.004*gauss()));
-      l = (o < c ? o : c) * (1.0 - fabs(0.004*gauss()));
+      if( kind == 3 ) { o = prev; h = fH[off+i]; l = fL[off+i]; }
+      else
+      {
+         if( c < 1.0 ) c = 1.0;
+         o = prev * (1.0 + 0.002*gauss());
+         h = (o > c ? o : c) * (1.0 + fabs(0.004*gauss()));
+         l = (o < c ? o : c) * (1.0 - fabs(0.004*gauss()));
+      }
       O[i] = r2(o); C[i] = r2(c); H[i] = r2(h); L[i] = r2(l);
       if( H[i] < O[i] ) H[i] = O[i];
       if( H[i] < C[i] ) H[i] = C[i];
@@ -171,9 +182,9 @@ static void each(const TA_FuncInfo *fi, void *opaque)
       if( autoCount[0] <= 0 ) continue;
       M = 3*autoCount[1];
       if( M < 300 ) M = 300;
-      for( kind = 0; kind < NKIND; kind++ )
+      for( kind = 0; kind < NKIND + (fN > 0); kind++ )
       {
-         static const char *kinds[NKIND] = { "rw", "tr", "rb" };
+         static const char *kinds[NKIND+1] = { "rw", "tr", "rb", "csv" };
          long over[4] = {0,0,0,0}, never = 0, live = 0;
          int worstT[2] = {-1,-1}, worst[2] = {0,0};
          for( t = 0; t < g_trials; t++ )
@@ -187,6 +198,7 @@ static void each(const TA_FuncInfo *fi, void *opaque)
             D = 50 + (int)(rnd()*autoCount[1]);
             n = D + lookback + M;
             if( n > NMAX ) n = NMAX;
+            if( kind == 3 && n > fN ) n = fN;
             make_series(kind, n);
             ok = call(fi, cfg, 0, n, 0, &beg, &nb, &lb2, NULL, d2, sizeof d2) == TA_SUCCESS
               && call(fi, cfg, D, n, 1, &begB, &nbB, &lb2, NULL, d2, sizeof d2) == TA_SUCCESS;
@@ -256,6 +268,16 @@ int main(int argc, char **argv)
    g_only = (argc > 3) ? argv[3] : NULL;
    if( argc > 4 ) g_drift = atof(argv[4]);
    if( argc > 6 ) { g_level = atof(argv[5]); g_tick = atof(argv[6]); }
+   if( getenv("CENSUS_CSV") )
+   {
+      char line[256];
+      FILE *f = fopen(getenv("CENSUS_CSV"), "r");
+      if( !f || !fgets(line, sizeof line, f) ) return 2;
+      while( fN < NMAX && fgets(line, sizeof line, f) )
+         if( sscanf(line, "%*[^,],%lf,%lf,%lf", &fH[fN], &fL[fN], &fC[fN]) == 3 ) fN++;
+      fclose(f);
+      if( fN < 400 ) return 2;
+   }
    if( TA_Initialize() != TA_SUCCESS ) return 2;
    if( !g_list && !g_only )
       printf("func\tcfg\tkind\tlookback\tlive\tauto4\tp50_10\tp99_10\tmax_10\tover10\tover7\tauto8\tp50_19\tp99_19\tmax_19\tover19\tover16\tnever\tworstT10\tworstT19\n");
