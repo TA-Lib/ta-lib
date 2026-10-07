@@ -2856,14 +2856,19 @@ fn render_func_call(
 
     if let Some(b) = SpecialBuiltin::from_name(fname) {
         match b {
-            SpecialBuiltin::UnstablePeriod => {
+            SpecialBuiltin::UnstablePeriod | SpecialBuiltin::UnstableAuto => {
                 // C# enums cast to int; there is no ordinal().
                 if let Some(Expr::Var(func_name)) = args.first() {
                     let variant = unst_variant_name(func_name);
                     if let Some(counts) = super::builtins::unstable_level_counts(args) {
                         let counts: Vec<String> =
                             counts.iter().map(|c| render_expr(c, ctx, registry, helpers)).collect();
-                        return format!("this.UnstableCount((int)FuncUnstId.{variant}, {})", counts.join(", "));
+                        let read = |c: &[String]| format!("this.UnstableCount((int)FuncUnstId.{variant}, {})", c.join(", "));
+                        return if matches!(b, SpecialBuiltin::UnstableAuto) {
+                            super::builtins::unstable_auto_offset(&counts, false, read)
+                        } else {
+                            read(&counts)
+                        };
                     }
                 }
                 panic!("an unstable-period read takes an id and a count")

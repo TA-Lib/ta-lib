@@ -61,6 +61,8 @@
  *                literal cap lets the streaming rescan-window machinery bound it,
  *                and a separate counter j keeps it distinct from the DC-phase
  *                circular-buffer loop (which still uses i).
+ *  100726 MF,CC  #492. The Auto rule sized on when the flags of two starts
+ *                stop disagreeing.
  */
 
 // Import types from parent module
@@ -84,7 +86,10 @@ impl Core {
         //
         // 31 is for being compatible with Tradestation.
         // See mama_lookback for an explanation of the "32".
-        return Ok((63 + self.unstable_count(FuncUnstId::HT_TRENDMODE, (80 + 50 * 4), (80 + 50 * 8))) as usize);
+        //
+        // The flag of two starts is equal or not, at either level: the Auto count
+        // buys a rarer late disagreement.
+        return Ok((63 + self.unstable_count(FuncUnstId::HT_TRENDMODE, 120 + 20 * 4, 120 + 20 * 8)) as usize);
     }
     /// Display shift of one output of [`Core::ht_trendmode`]: how many bars ahead (positive) or
     /// behind (negative) of the bar that computed it a chart draws that output. The values are

@@ -4988,7 +4988,7 @@ fn expr_is_i32_typed(expr: &Expr) -> bool {
                 || name.ends_with("_rangeType")
         }
         Expr::FuncCall(name, args) => {
-            if name == "UNSTABLE_PERIOD" {
+            if name == "UNSTABLE_PERIOD" || name == "UNSTABLE_AUTO" {
                 return true; // unstable_period array contains i32 values
             }
             // max(a,b) / min(a,b) preserve the type of their arguments.
@@ -5429,7 +5429,7 @@ fn render_func_call(
     }
     if let Some(b) = SpecialBuiltin::from_name(fname) {
         match b {
-            SpecialBuiltin::UnstablePeriod => {
+            SpecialBuiltin::UnstablePeriod | SpecialBuiltin::UnstableAuto => {
                 if let Some(Expr::Var(func_name)) = args.first() {
                     let base = func_name
                         .strip_prefix("FUNC_UNST_")
@@ -5439,7 +5439,15 @@ fn render_func_call(
                             .iter()
                             .map(|c| render_expr(c, ctx, opt_real_params, registry, helpers))
                             .collect();
-                        return format!("self.unstable_count(FuncUnstId::{base}, {})", counts.join(", "));
+                        let read = |c: &[String]| format!("self.unstable_count(FuncUnstId::{base}, {})", c.join(", "));
+                        return if matches!(b, SpecialBuiltin::UnstableAuto) {
+                            // An offset beside a callee's lookback renders in usize: keep
+                            // every cast the whole count.
+                            let counts: Vec<String> = counts.iter().map(|c| format!("(({c}) as i32)")).collect();
+                            super::builtins::unstable_auto_offset(&counts, true, read)
+                        } else {
+                            read(&counts)
+                        };
                     }
                 }
                 panic!("an unstable-period read takes an id and a count")
@@ -7041,6 +7049,7 @@ fn is_ta_function(name: &str) -> bool {
         && !matches!(
             name,
             "UNSTABLE_PERIOD"
+                | "UNSTABLE_AUTO"
                 | "IS_ZERO"
                 | "IS_ZERO_OR_NEG"
                 | "IS_FINITE"

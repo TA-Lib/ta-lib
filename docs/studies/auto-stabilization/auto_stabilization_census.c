@@ -1,6 +1,6 @@
 /* Census for the Auto-Stabilization rules. Not part of the library.
  *
- * For every function that owns an unstable id: many random series, each run
+ * For every function that owns an unstable id, or the one named: many random series, each run
  * from bar 0 and from a later bar D with every id at 0, and the age from which
  * the two runs stay within e^-K of their largest difference (the need), set
  * against the count the library discards at each level. The probe measures
@@ -182,7 +182,7 @@ static void each(const TA_FuncInfo *fi, void *opaque)
    char desc[256];
    (void)opaque;
 
-   if( !(fi->flags & TA_FUNC_FLG_UNST_PER) ) return;
+   if( !(fi->flags & TA_FUNC_FLG_UNST_PER) && !g_only ) return;   /* by name, a function that only inherits a count runs too */
    if( g_only && strcmp(g_only, fi->name) ) return;
    if( g_list ) { printf("%s\n", fi->name); return; }
    need[0] = malloc(sizeof(int)*g_trials); need[1] = malloc(sizeof(int)*g_trials);

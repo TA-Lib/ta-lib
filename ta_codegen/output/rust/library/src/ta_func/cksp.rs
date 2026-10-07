@@ -54,6 +54,7 @@
  *  -------------------------------------------------------------------
  *  093026 KL,CC  Creation (#477).
  *  093026 MF,CC  Rolling extrema in a fixed number of comparisons per bar.
+ *  100726 MF,CC  #492. Under an Auto level the stop window is counted again.
  */
 
 // Import types from parent module
@@ -105,7 +106,11 @@ impl Core {
         // stop window reaches optInStopPeriod-1 first stops further back. The ATR
         // term is never restated here, which is what makes CKSP inherit
         // TA_FUNC_UNST_ATR.
-        return Ok((self.atr_lookback(optInTimePeriod)? + ((optInStopPeriod) as usize) - 1) as usize);
+        //
+        // A stop can rest on a first stop optInStopPeriod-1 bars old, whose ATR
+        // was that much closer to its seed: the first difference two starts show
+        // is the smaller for it, and an Auto level is held against that one.
+        return Ok((self.atr_lookback(optInTimePeriod)? + ((optInStopPeriod) as usize) - 1 + (((if self.unstable_count(FuncUnstId::ATR, 1, 1) != self.unstable_count(FuncUnstId::ATR, 0, 0) { self.unstable_count(FuncUnstId::ATR, ((optInStopPeriod - 1) as i32), ((optInStopPeriod - 1) as i32)) - self.unstable_count(FuncUnstId::ATR, 0, 0) } else { 0 })) as usize)) as usize);
     }
     /// Display shift of one output of [`Core::cksp`]: how many bars ahead (positive) or behind
     /// (negative) of the bar that computed it a chart draws that output. The values are never
@@ -363,8 +368,9 @@ impl Core {
             i = i.wrapping_sub(1);
         }
         prevATR = periodTotal / ((optInTimePeriod) as f64);
-        // Skip the Average True Range's unstable period. Taking the count from the
-        // lookback rather than naming the setting keeps the two from disagreeing.
+        // Skip the bars the lookback adds for the unstable period. Taking the count
+        // from the lookback rather than naming the setting keeps the two from
+        // disagreeing.
         i = lookbackTotal - lastQ - ((optInTimePeriod) as usize);
         if i != 0 {
             let _wn: usize = i;
@@ -1102,8 +1108,9 @@ impl Core {
             today += 1;
         }
         prevATR = periodTotal / ((optInTimePeriod) as f64);
-        // Skip the Average True Range's unstable period. Taking the count from the
-        // lookback rather than naming the setting keeps the two from disagreeing.
+        // Skip the bars the lookback adds for the unstable period. Taking the count
+        // from the lookback rather than naming the setting keeps the two from
+        // disagreeing.
         i = lookbackTotal - lastQ - ((optInTimePeriod) as usize);
         while i != 0 {
             tempLT = inLow[today];

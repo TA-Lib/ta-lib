@@ -562,7 +562,7 @@ fn is_unsigned(e: &Expr) -> bool {
 }
 
 fn is_unstable_call(name: &str) -> bool {
-    name == "UNSTABLE_PERIOD"
+    name == "UNSTABLE_PERIOD" || name == "UNSTABLE_AUTO"
 }
 
 fn subst(e: &Expr, env: &BTreeMap<String, Expr>) -> Expr {

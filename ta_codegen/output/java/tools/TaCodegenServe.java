@@ -3852,6 +3852,7 @@ class Core {
      *  -------------------------------------------------------------------
      *  120802 MF   Template creation.
      *  052603 MF   Adapt code to compile with .NET Managed C++
+     *  100726 MF,CC  #492. Under an Auto level the bars its two EMAs' cancelling costs.
      */
 
        /**
@@ -3886,8 +3887,11 @@ class Core {
           } else {
              slowestPeriod = optInFastPeriod;
           }
-          /* Adjust startIdx to account for the lookback period. */
-          return emaLookback(slowestPeriod) ;
+          /* Both EMAs seed on one value at one bar, so two starts differ by a fast
+           * term less a slow one, and the two can cancel in the first outputs: an
+           * Auto level is held against what is left.
+           */
+          return emaLookback(slowestPeriod) + ((this.unstableCount(FuncUnstId.EMA.ordinal(), 1, 1) != this.unstableCount(FuncUnstId.EMA.ordinal(), 0, 0)) ? (this.unstableCount(FuncUnstId.EMA.ordinal(), ((15 * Math.min(optInFastPeriod, optInSlowPeriod) + 3 * (Math.min(Math.max(optInFastPeriod, optInSlowPeriod) / 2, Math.min(optInFastPeriod, optInSlowPeriod)) + Math.min(Math.max(optInFastPeriod, optInSlowPeriod) / 4, Math.min(optInFastPeriod, optInSlowPeriod)) + Math.min(Math.max(optInFastPeriod, optInSlowPeriod) / 8, Math.min(optInFastPeriod, optInSlowPeriod)) + Math.min(Math.max(optInFastPeriod, optInSlowPeriod) / 16, Math.min(optInFastPeriod, optInSlowPeriod)) + Math.min(Math.max(optInFastPeriod, optInSlowPeriod) / 32, Math.min(optInFastPeriod, optInSlowPeriod)) + Math.min(Math.max(optInFastPeriod, optInSlowPeriod) / 64, Math.min(optInFastPeriod, optInSlowPeriod)) + Math.min(Math.max(optInFastPeriod, optInSlowPeriod) / 128, Math.min(optInFastPeriod, optInSlowPeriod)) + Math.min(Math.max(optInFastPeriod, optInSlowPeriod) / 256, Math.min(optInFastPeriod, optInSlowPeriod)) + Math.min(Math.max(optInFastPeriod, optInSlowPeriod) / 512, Math.min(optInFastPeriod, optInSlowPeriod)) + Math.min(Math.max(optInFastPeriod, optInSlowPeriod) / 1024, Math.min(optInFastPeriod, optInSlowPeriod)) + Math.min(Math.max(optInFastPeriod, optInSlowPeriod) / 2048, Math.min(optInFastPeriod, optInSlowPeriod)) + Math.min(Math.max(optInFastPeriod, optInSlowPeriod) / 4096, Math.min(optInFastPeriod, optInSlowPeriod)) + Math.min(Math.max(optInFastPeriod, optInSlowPeriod) / 8192, Math.min(optInFastPeriod, optInSlowPeriod)) + Math.min(Math.max(optInFastPeriod, optInSlowPeriod) / 16384, Math.min(optInFastPeriod, optInSlowPeriod)) + Math.min(Math.max(optInFastPeriod, optInSlowPeriod) / 32768, Math.min(optInFastPeriod, optInSlowPeriod)) + Math.min(Math.max(optInFastPeriod, optInSlowPeriod) / 65536, Math.min(optInFastPeriod, optInSlowPeriod))) + 7) / 8), ((15 * Math.min(optInFastPeriod, optInSlowPeriod) + 3 * (Math.min(Math.max(optInFastPeriod, optInSlowPeriod) / 2, Math.min(optInFastPeriod, optInSlowPeriod)) + Math.min(Math.max(optInFastPeriod, optInSlowPeriod) / 4, Math.min(optInFastPeriod, optInSlowPeriod)) + Math.min(Math.max(optInFastPeriod, optInSlowPeriod) / 8, Math.min(optInFastPeriod, optInSlowPeriod)) + Math.min(Math.max(optInFastPeriod, optInSlowPeriod) / 16, Math.min(optInFastPeriod, optInSlowPeriod)) + Math.min(Math.max(optInFastPeriod, optInSlowPeriod) / 32, Math.min(optInFastPeriod, optInSlowPeriod)) + Math.min(Math.max(optInFastPeriod, optInSlowPeriod) / 64, Math.min(optInFastPeriod, optInSlowPeriod)) + Math.min(Math.max(optInFastPeriod, optInSlowPeriod) / 128, Math.min(optInFastPeriod, optInSlowPeriod)) + Math.min(Math.max(optInFastPeriod, optInSlowPeriod) / 256, Math.min(optInFastPeriod, optInSlowPeriod)) + Math.min(Math.max(optInFastPeriod, optInSlowPeriod) / 512, Math.min(optInFastPeriod, optInSlowPeriod)) + Math.min(Math.max(optInFastPeriod, optInSlowPeriod) / 1024, Math.min(optInFastPeriod, optInSlowPeriod)) + Math.min(Math.max(optInFastPeriod, optInSlowPeriod) / 2048, Math.min(optInFastPeriod, optInSlowPeriod)) + Math.min(Math.max(optInFastPeriod, optInSlowPeriod) / 4096, Math.min(optInFastPeriod, optInSlowPeriod)) + Math.min(Math.max(optInFastPeriod, optInSlowPeriod) / 8192, Math.min(optInFastPeriod, optInSlowPeriod)) + Math.min(Math.max(optInFastPeriod, optInSlowPeriod) / 16384, Math.min(optInFastPeriod, optInSlowPeriod)) + Math.min(Math.max(optInFastPeriod, optInSlowPeriod) / 32768, Math.min(optInFastPeriod, optInSlowPeriod)) + Math.min(Math.max(optInFastPeriod, optInSlowPeriod) / 65536, Math.min(optInFastPeriod, optInSlowPeriod))) + 7) / 8)) - this.unstableCount(FuncUnstId.EMA.ordinal(), 0, 0)) : 0) ;
 
        }
        /**
@@ -3929,7 +3933,6 @@ class Core {
           int today = 0;
           int outIdx = 0;
           int lookbackTotal = 0;
-          int slowestPeriod = 0;
           double high = 0;
           double low = 0;
           double close = 0;
@@ -3979,17 +3982,8 @@ class Core {
            *     This gives more flexibility to the user if they want to
            *     experiment with unusual parameter settings.
            */
-          /* Identify the slowest period.
-           * This infomration is used soleley to bootstrap
-           * the algorithm (skip the lookback period).
-           */
-          if( optInFastPeriod < optInSlowPeriod ) {
-             slowestPeriod = optInSlowPeriod;
-          } else {
-             slowestPeriod = optInFastPeriod;
-          }
           /* Adjust startIdx to account for the lookback period. */
-          lookbackTotal = emaLookback(slowestPeriod);
+          lookbackTotal = adoscLookback(optInFastPeriod, optInSlowPeriod);
           if( startIdx < lookbackTotal ) {
              startIdx = lookbackTotal;
           }
@@ -4081,7 +4075,6 @@ class Core {
           int today = 0;
           int outIdx = 0;
           int lookbackTotal = 0;
-          int slowestPeriod = 0;
           double high = 0;
           double low = 0;
           double close = 0;
@@ -4109,12 +4102,7 @@ class Core {
           } else if( optInSlowPeriod < 2 || optInSlowPeriod > 100000 ) {
              return RetCode.BAD_PARAM;
           }
-          if( optInFastPeriod < optInSlowPeriod ) {
-             slowestPeriod = optInSlowPeriod;
-          } else {
-             slowestPeriod = optInFastPeriod;
-          }
-          lookbackTotal = emaLookback(slowestPeriod);
+          lookbackTotal = adoscLookback(optInFastPeriod, optInSlowPeriod);
           if( startIdx < lookbackTotal ) {
              startIdx = lookbackTotal;
           }
@@ -4510,7 +4498,6 @@ class Core {
           int today = 0;
           int outIdx = 0;
           int lookbackTotal = 0;
-          int slowestPeriod = 0;
           double high = 0;
           double low = 0;
           double close = 0;
@@ -4570,17 +4557,8 @@ class Core {
            *     This gives more flexibility to the user if they want to
            *     experiment with unusual parameter settings.
            */
-          /* Identify the slowest period.
-           * This infomration is used soleley to bootstrap
-           * the algorithm (skip the lookback period).
-           */
-          if( optInFastPeriod < optInSlowPeriod ) {
-             slowestPeriod = optInSlowPeriod;
-          } else {
-             slowestPeriod = optInFastPeriod;
-          }
           /* Adjust startIdx to account for the lookback period. */
-          lookbackTotal = emaLookback(slowestPeriod);
+          lookbackTotal = adoscLookback(optInFastPeriod, optInSlowPeriod);
           if( startIdx < lookbackTotal ) {
              startIdx = lookbackTotal;
           }
@@ -78403,6 +78381,7 @@ class Core {
      *  -------------------------------------------------------------------
      *  093026 KL,CC  Creation (#477).
      *  093026 MF,CC  Rolling extrema in a fixed number of comparisons per bar.
+     *  100726 MF,CC  #492. Under an Auto level the stop window is counted again.
      */
 
        /**
@@ -78444,8 +78423,12 @@ class Core {
            * stop window reaches optInStopPeriod-1 first stops further back. The ATR
            * term is never restated here, which is what makes CKSP inherit
            * TA_FUNC_UNST_ATR.
+           *
+           * A stop can rest on a first stop optInStopPeriod-1 bars old, whose ATR
+           * was that much closer to its seed: the first difference two starts show
+           * is the smaller for it, and an Auto level is held against that one.
            */
-          return atrLookback(optInTimePeriod) + optInStopPeriod - 1 ;
+          return atrLookback(optInTimePeriod) + optInStopPeriod - 1 + ((this.unstableCount(FuncUnstId.ATR.ordinal(), 1, 1) != this.unstableCount(FuncUnstId.ATR.ordinal(), 0, 0)) ? (this.unstableCount(FuncUnstId.ATR.ordinal(), optInStopPeriod - 1, optInStopPeriod - 1) - this.unstableCount(FuncUnstId.ATR.ordinal(), 0, 0)) : 0) ;
 
        }
        /**
@@ -78628,8 +78611,9 @@ class Core {
              today += 1;
           }
           prevATR = periodTotal / optInTimePeriod;
-          /* Skip the Average True Range's unstable period. Taking the count from the
-           * lookback rather than naming the setting keeps the two from disagreeing.
+          /* Skip the bars the lookback adds for the unstable period. Taking the count
+           * from the lookback rather than naming the setting keeps the two from
+           * disagreeing.
            */
           i = lookbackTotal - lastQ - optInTimePeriod;
           while( i != 0 ) {
@@ -80099,8 +80083,9 @@ class Core {
              today += 1;
           }
           prevATR = periodTotal / optInTimePeriod;
-          /* Skip the Average True Range's unstable period. Taking the count from the
-           * lookback rather than naming the setting keeps the two from disagreeing.
+          /* Skip the bars the lookback adds for the unstable period. Taking the count
+           * from the lookback rather than naming the setting keeps the two from
+           * disagreeing.
            */
           i = lookbackTotal - lastQ - optInTimePeriod;
           while( i != 0 ) {
@@ -119141,6 +119126,8 @@ class Core {
      *                literal cap lets the streaming rescan-window machinery bound it,
      *                and a separate counter j keeps it distinct from the DC-phase
      *                circular-buffer loop (which still uses i).
+     *  100726 MF,CC  #492. The Auto rule sized on when the flags of two starts
+     *                stop disagreeing.
      */
 
        /**
@@ -119164,8 +119151,11 @@ class Core {
            *
            * 31 is for being compatible with Tradestation.
            * See mama_lookback for an explanation of the "32".
+           *
+           * The flag of two starts is equal or not, at either level: the Auto count
+           * buys a rarer late disagreement.
            */
-          return 63 + this.unstableCount(FuncUnstId.HT_TRENDMODE.ordinal(), (80 + 50 * 4), (80 + 50 * 8)) ;
+          return 63 + this.unstableCount(FuncUnstId.HT_TRENDMODE.ordinal(), 120 + 20 * 4, 120 + 20 * 8) ;
 
        }
        /**
@@ -224879,7 +224869,7 @@ class Core {
 
 public class TaCodegenServe {
     static Core core = new Core();
-    static final String SPLICED_GENCODE_DIGEST = "39d05e1fc0170d4c";
+    static final String SPLICED_GENCODE_DIGEST = "0cc1fdfc2a29984e";
     static final int MAX_ARRAY_SIZE = 200000;
     static double[] refOpen = new double[MAX_ARRAY_SIZE];
     static double[] refHigh = new double[MAX_ARRAY_SIZE];
