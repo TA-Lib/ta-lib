@@ -319,10 +319,13 @@ fn unstable_read_gate_refuses_each_misplaced_read() {
     assert!(errs.iter().any(|e| e.contains("EMA: flagged unstable_period, but its lookback does not read")));
     assert!(errs.iter().any(|e| e.contains("TA_FUNC_UNST_EMA: no lookback reads this id")));
 
-    // A read with no flag.
-    only(
-        mutated(&|f| f[ema].flags.retain(|x| x != "unstable_period")),
-        "EMA: its lookback reads TA_FUNC_UNST_EMA, but it is not flagged",
+    // A read with no flag. EMA then owns nothing, so the offsets taken on its id are
+    // refused with it.
+    let errs = mutated(&|f| f[ema].flags.retain(|x| x != "unstable_period"));
+    assert!(errs.iter().any(|e| e.contains("EMA: its lookback reads TA_FUNC_UNST_EMA, but it is not flagged")), "{errs:#?}");
+    assert!(
+        errs.iter().all(|e| e.contains("but it is not flagged") || e.contains("takes an Auto offset on TA_FUNC_UNST_EMA")),
+        "{errs:#?}"
     );
 
     // Two reads in one expression, and two on one path in two statements.
@@ -358,6 +361,84 @@ fn unstable_read_gate_refuses_each_misplaced_read() {
         f[sma].lookback = Some(LookbackExpr::Code(stmts));
     });
     assert!(errs.iter().any(|e| e.contains("SMA: the lookback reads an unstable id where the gate cannot name it")), "{errs:#?}");
+
+    // An Auto offset: taken by the corpus on an inherited id, refused on any other id
+    // and outside a lookback.
+    let cksp = at("CKSP");
+    assert!(
+        format!("{:?}", corpus[cksp].lookback).contains("FuncCall(\"UNSTABLE_AUTO\", [Var(\"FUNC_UNST_ATR\")"),
+        "CKSP's lookback no longer takes an Auto offset on the id it inherits"
+    );
+    let offset = |id: &str| Expr::FuncCall("UNSTABLE_AUTO".into(), vec![Expr::Var(format!("FUNC_UNST_{id}")), Expr::IntLiteral(3)]);
+    let with_offset = |id: &'static str, target: usize| {
+        mutated(&|f| {
+            let mut stmts = lookback_stmts(&f[target]);
+            stmts.insert(0, Statement::Expr(offset(id)));
+            f[target].lookback = Some(LookbackExpr::Code(stmts));
+        })
+    };
+    only(with_offset("EMA", sma), "SMA: the lookback takes an Auto offset on TA_FUNC_UNST_EMA, an id it does not inherit");
+    only(with_offset("EMA", cksp), "CKSP: the lookback takes an Auto offset on TA_FUNC_UNST_EMA, an id it does not inherit");
+    assert_eq!(with_offset("ATR", cksp), Vec::<String>::new());
+    let calling = Expr::FuncCall(
+        "UNSTABLE_AUTO".into(),
+        vec![Expr::Var("FUNC_UNST_ATR".into()), Expr::FuncCall("ema_lookback".into(), vec![Expr::IntLiteral(3)])],
+    );
+    only(
+        mutated(&|f| {
+            let mut stmts = lookback_stmts(&f[cksp]);
+            stmts.insert(0, Statement::Expr(calling.clone()));
+            f[cksp].lookback = Some(LookbackExpr::Code(stmts));
+        }),
+        "CKSP: an Auto offset calls a lookback",
+    );
+    let local = Expr::FuncCall("UNSTABLE_AUTO".into(), vec![Expr::Var("FUNC_UNST_ATR".into()), Expr::Var("root".into())]);
+    only(
+        mutated(&|f| {
+            let mut stmts = lookback_stmts(&f[cksp]);
+            stmts.insert(0, Statement::Expr(local.clone()));
+            f[cksp].lookback = Some(LookbackExpr::Code(stmts));
+        }),
+        "CKSP: an Auto offset reads `root`",
+    );
+    let indexed = Expr::FuncCall(
+        "UNSTABLE_AUTO".into(),
+        vec![Expr::Var("FUNC_UNST_ATR".into()), Expr::ArrayAccess("tab".into(), Box::new(Expr::IntLiteral(0)))],
+    );
+    only(
+        mutated(&|f| {
+            let mut stmts = lookback_stmts(&f[cksp]);
+            stmts.insert(0, Statement::Expr(indexed.clone()));
+            f[cksp].lookback = Some(LookbackExpr::Code(stmts));
+        }),
+        "CKSP: an Auto offset reads `tab`",
+    );
+    let keyed = Expr::FuncCall(
+        "UNSTABLE_AUTO".into(),
+        vec![
+            Expr::Var("FUNC_UNST_ATR".into()),
+            Expr::BinOp(Box::new(Expr::Var("optInStopPeriod".into())), BinOp::Add, Box::new(Expr::Var("MAType_EMA".into()))),
+        ],
+    );
+    assert_eq!(
+        mutated(&|f| {
+            let mut stmts = lookback_stmts(&f[cksp]);
+            stmts.insert(0, Statement::Expr(keyed.clone()));
+            f[cksp].lookback = Some(LookbackExpr::Code(stmts));
+        }),
+        Vec::<String>::new()
+    );
+    only(mutated(&|f| f[cksp].body.push(Statement::Expr(offset("ATR")))), "CKSP: the body reads an Auto offset");
+    let helper = ta_codegen_lib::ir::HelperDef {
+        name: "ta_probe".into(),
+        return_type: ta_codegen_lib::ir::VarType::Integer,
+        params: Vec::new(),
+        body: vec![Statement::Expr(offset("ATR"))],
+    };
+    only(
+        unstable_read_gate_with(&corpus, &ta_codegen_lib::helper_registry::HelperRegistry::from_defs(vec![helper])),
+        "helpers/ta_probe: reads an Auto offset",
+    );
 
     // A read whose first argument is not a bare id, and one with no Auto rule.
     let Expr::BinOp(l, op, r) = read_expr.clone() else { panic!("EMA's lookback is no longer a sum") };

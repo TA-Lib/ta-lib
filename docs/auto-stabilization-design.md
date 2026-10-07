@@ -908,6 +908,8 @@ the advanced details. The specification states no tolerance, so the 2026-10-03 r
 
 - The inheritance stays mechanical. A level lengthens the lookback of ADOSC (through EMA) and
   of SUPERTREND (through ATR) as a fixed count does today.
+  Ruled (owner, 2026-10-07): under a level, and only then, a function may add bars of its
+  own to the count it inherits for what it does with the value; ADOSC and CKSP do.
 - ADOSC is reclassified: it loses its `path_dependent` flag and reads "Initial Unstable Period,
   inherited from EMA". Both of its EMAs are seeded on the same first A/D value, so the constant
   offset between two starts' A/D lines cancels in the difference and what remains decays at the

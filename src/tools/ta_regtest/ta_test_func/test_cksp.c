@@ -297,8 +297,8 @@ static ErrorNumber test_cksp_zero_mult( const TA_History *history )
    return TA_TEST_PASS;
 }
 
-/* (3) The lookback is atr_lookback(p) + q - 1, so it moves with the ATR's
- * unstable period. Asserted at the default and again after the setting moves,
+/* (3) Under a count the lookback is atr_lookback(p) + q - 1, so it moves with
+ * the ATR's unstable period. Asserted at the default and again after the setting moves,
  * because a wrong-by-one anchor shows up nowhere else once the series is long.
  */
 static ErrorNumber test_cksp_lookback( const TA_History *history )

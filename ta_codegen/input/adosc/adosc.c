@@ -11,6 +11,7 @@
  *  -------------------------------------------------------------------
  *  120802 MF   Template creation.
  *  052603 MF   Adapt code to compile with .NET Managed C++
+ *  100726 MF,CC  #492. Under an Auto level the bars its two EMAs' cancelling costs.
  *
  */
 
@@ -24,8 +25,14 @@ int adosc_lookback(int optInFastPeriod, int optInSlowPeriod)
    else
       slowestPeriod = optInFastPeriod;
 
-   /* Adjust startIdx to account for the lookback period. */
-   return ema_lookback( slowestPeriod );
+   /* Both EMAs seed on one value at one bar, so two starts differ by a fast
+    * term less a slow one, and the two can cancel in the first outputs: an
+    * Auto level is held against what is left.
+    */
+   return ema_lookback( slowestPeriod )
+   + TA_UNSTABLE_AUTO( TA_FUNC_UNST_EMA,
+      ta_auto_stabilization_adosc( min( optInFastPeriod, optInSlowPeriod ),
+      max( optInFastPeriod, optInSlowPeriod ) ) );
 }
 
 TA_RetCode adosc(int startIdx, int endIdx,
@@ -39,7 +46,6 @@ TA_RetCode adosc(int startIdx, int endIdx,
    double outReal[])
 {
    int today, outIdx, lookbackTotal;
-   int slowestPeriod;
    double high, low, close, tmp;
 
    double slowEMA, slowk, one_minus_slowk;
@@ -69,17 +75,8 @@ TA_RetCode adosc(int startIdx, int endIdx,
     *     experiment with unusual parameter settings.
     */
 
-   /* Identify the slowest period.
-    * This infomration is used soleley to bootstrap
-    * the algorithm (skip the lookback period).
-    */
-   if( optInFastPeriod < optInSlowPeriod )
-      slowestPeriod = optInSlowPeriod;
-   else
-      slowestPeriod = optInFastPeriod;
-
    /* Adjust startIdx to account for the lookback period. */
-   lookbackTotal = ema_lookback( slowestPeriod );
+   lookbackTotal = adosc_lookback( optInFastPeriod, optInSlowPeriod );
    if( startIdx < lookbackTotal )
       startIdx = lookbackTotal;
 

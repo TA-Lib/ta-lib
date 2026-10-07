@@ -53,6 +53,7 @@
  *  -------------------------------------------------------------------
  *  120802 MF   Template creation.
  *  052603 MF   Adapt code to compile with .NET Managed C++
+ *  100726 MF,CC  #492. Under an Auto level the bars its two EMAs' cancelling costs.
  */
 
 // Import types from parent module
@@ -97,8 +98,10 @@ impl Core {
         } else {
             slowestPeriod = (optInFastPeriod) as usize;
         }
-        // Adjust startIdx to account for the lookback period.
-        return Ok(self.ema_lookback((slowestPeriod) as i32)?);
+        // Both EMAs seed on one value at one bar, so two starts differ by a fast
+        // term less a slow one, and the two can cancel in the first outputs: an
+        // Auto level is held against what is left.
+        return Ok((self.ema_lookback((slowestPeriod) as i32)? + (((if self.unstable_count(FuncUnstId::EMA, 1, 1) != self.unstable_count(FuncUnstId::EMA, 0, 0) { self.unstable_count(FuncUnstId::EMA, ((((15 * (optInFastPeriod).min(optInSlowPeriod) + 3 * (((optInFastPeriod).max(optInSlowPeriod) / 2).min((optInFastPeriod).min(optInSlowPeriod)) + ((optInFastPeriod).max(optInSlowPeriod) / 4).min((optInFastPeriod).min(optInSlowPeriod)) + ((optInFastPeriod).max(optInSlowPeriod) / 8).min((optInFastPeriod).min(optInSlowPeriod)) + ((optInFastPeriod).max(optInSlowPeriod) / 16).min((optInFastPeriod).min(optInSlowPeriod)) + ((optInFastPeriod).max(optInSlowPeriod) / 32).min((optInFastPeriod).min(optInSlowPeriod)) + ((optInFastPeriod).max(optInSlowPeriod) / 64).min((optInFastPeriod).min(optInSlowPeriod)) + ((optInFastPeriod).max(optInSlowPeriod) / 128).min((optInFastPeriod).min(optInSlowPeriod)) + ((optInFastPeriod).max(optInSlowPeriod) / 256).min((optInFastPeriod).min(optInSlowPeriod)) + ((optInFastPeriod).max(optInSlowPeriod) / 512).min((optInFastPeriod).min(optInSlowPeriod)) + ((optInFastPeriod).max(optInSlowPeriod) / 1024).min((optInFastPeriod).min(optInSlowPeriod)) + ((optInFastPeriod).max(optInSlowPeriod) / 2048).min((optInFastPeriod).min(optInSlowPeriod)) + ((optInFastPeriod).max(optInSlowPeriod) / 4096).min((optInFastPeriod).min(optInSlowPeriod)) + ((optInFastPeriod).max(optInSlowPeriod) / 8192).min((optInFastPeriod).min(optInSlowPeriod)) + ((optInFastPeriod).max(optInSlowPeriod) / 16384).min((optInFastPeriod).min(optInSlowPeriod)) + ((optInFastPeriod).max(optInSlowPeriod) / 32768).min((optInFastPeriod).min(optInSlowPeriod)) + ((optInFastPeriod).max(optInSlowPeriod) / 65536).min((optInFastPeriod).min(optInSlowPeriod))) + 7) / 8)) as i32), ((((15 * (optInFastPeriod).min(optInSlowPeriod) + 3 * (((optInFastPeriod).max(optInSlowPeriod) / 2).min((optInFastPeriod).min(optInSlowPeriod)) + ((optInFastPeriod).max(optInSlowPeriod) / 4).min((optInFastPeriod).min(optInSlowPeriod)) + ((optInFastPeriod).max(optInSlowPeriod) / 8).min((optInFastPeriod).min(optInSlowPeriod)) + ((optInFastPeriod).max(optInSlowPeriod) / 16).min((optInFastPeriod).min(optInSlowPeriod)) + ((optInFastPeriod).max(optInSlowPeriod) / 32).min((optInFastPeriod).min(optInSlowPeriod)) + ((optInFastPeriod).max(optInSlowPeriod) / 64).min((optInFastPeriod).min(optInSlowPeriod)) + ((optInFastPeriod).max(optInSlowPeriod) / 128).min((optInFastPeriod).min(optInSlowPeriod)) + ((optInFastPeriod).max(optInSlowPeriod) / 256).min((optInFastPeriod).min(optInSlowPeriod)) + ((optInFastPeriod).max(optInSlowPeriod) / 512).min((optInFastPeriod).min(optInSlowPeriod)) + ((optInFastPeriod).max(optInSlowPeriod) / 1024).min((optInFastPeriod).min(optInSlowPeriod)) + ((optInFastPeriod).max(optInSlowPeriod) / 2048).min((optInFastPeriod).min(optInSlowPeriod)) + ((optInFastPeriod).max(optInSlowPeriod) / 4096).min((optInFastPeriod).min(optInSlowPeriod)) + ((optInFastPeriod).max(optInSlowPeriod) / 8192).min((optInFastPeriod).min(optInSlowPeriod)) + ((optInFastPeriod).max(optInSlowPeriod) / 16384).min((optInFastPeriod).min(optInSlowPeriod)) + ((optInFastPeriod).max(optInSlowPeriod) / 32768).min((optInFastPeriod).min(optInSlowPeriod)) + ((optInFastPeriod).max(optInSlowPeriod) / 65536).min((optInFastPeriod).min(optInSlowPeriod))) + 7) / 8)) as i32)) - self.unstable_count(FuncUnstId::EMA, 0, 0) } else { 0 })) as usize)) as usize);
     }
     /// Display shift of one output of [`Core::adosc`]: how many bars ahead (positive) or behind
     /// (negative) of the bar that computed it a chart draws that output. The values are never
@@ -206,7 +209,6 @@ impl Core {
         let mut today: usize = 0_usize;
         let mut outIdx: usize = 0_usize;
         let mut lookbackTotal: usize = 0_usize;
-        let mut slowestPeriod: usize = 0_usize;
         let mut high: f64 = 0.0_f64;
         let mut low: f64 = 0.0_f64;
         let mut close: f64 = 0.0_f64;
@@ -239,16 +241,8 @@ impl Core {
         //
         //     This gives more flexibility to the user if they want to
         //     experiment with unusual parameter settings.
-        // Identify the slowest period.
-        // This infomration is used soleley to bootstrap
-        // the algorithm (skip the lookback period).
-        if optInFastPeriod < optInSlowPeriod {
-            slowestPeriod = (optInSlowPeriod) as usize;
-        } else {
-            slowestPeriod = (optInFastPeriod) as usize;
-        }
         // Adjust startIdx to account for the lookback period.
-        lookbackTotal = self.ema_lookback((slowestPeriod) as i32).unwrap_or(usize::MAX);
+        lookbackTotal = self.adosc_lookback(optInFastPeriod, optInSlowPeriod).unwrap_or(usize::MAX);
         if startIdx < lookbackTotal {
             startIdx = lookbackTotal;
         }
@@ -578,7 +572,6 @@ impl Core {
         let mut today: usize = 0_usize;
         let mut outIdx: usize = 0_usize;
         let mut lookbackTotal: usize = 0_usize;
-        let mut slowestPeriod: usize = 0_usize;
         let mut high: f64 = 0.0_f64;
         let mut low: f64 = 0.0_f64;
         let mut close: f64 = 0.0_f64;
@@ -611,16 +604,8 @@ impl Core {
         //
         //     This gives more flexibility to the user if they want to
         //     experiment with unusual parameter settings.
-        // Identify the slowest period.
-        // This infomration is used soleley to bootstrap
-        // the algorithm (skip the lookback period).
-        if optInFastPeriod < optInSlowPeriod {
-            slowestPeriod = (optInSlowPeriod) as usize;
-        } else {
-            slowestPeriod = (optInFastPeriod) as usize;
-        }
         // Adjust startIdx to account for the lookback period.
-        lookbackTotal = self.ema_lookback((slowestPeriod) as i32)?;
+        lookbackTotal = self.adosc_lookback(optInFastPeriod, optInSlowPeriod)?;
         if startIdx < lookbackTotal {
             startIdx = lookbackTotal;
         }

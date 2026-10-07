@@ -714,12 +714,53 @@ fn gen_lookback(
     // and Open bodies, the per-level counts cost gcc 13 and 14 up to six
     // instructions per bar in loops that never read them.
     let attr = if body.contains("TA_GLOBALS_UNSTABLE(") { "TA_NOINLINE " } else { "" };
+    let args = func.optional_inputs.iter().map(|o| o.name.as_str()).collect::<Vec<_>>().join(", ");
+    let (cold, body) = split_auto_offsets(&name.to_lowercase(), &param_str, &args, &body);
     format!(
-        "{attr}TA_LIB_API int TA_{name}_Lookback({param_str})\n\
+        "{cold}{attr}TA_LIB_API int TA_{name}_Lookback({param_str})\n\
          {{\n\
          {body}\
          }}\n\n"
     )
+}
+
+/// Move every Auto offset of a lookback body into a cold function of its own, leaving a
+/// test of the setting behind.
+///
+/// The lookback is inlined into the batch and Open bodies. With the counts in it, it is
+/// either too large to inline, which costs a call and a second parameter check per batch
+/// call, or inlined with them, which costs instructions on the path that never reads
+/// them. The stability gate holds an offset to the function's parameters, which is what
+/// lets it move.
+fn split_auto_offsets(lower: &str, param_str: &str, args: &str, body: &str) -> (String, String) {
+    const TAG: &str = "TA_GLOBALS_UNSTABLE_AUTO(";
+    let (mut cold, mut out, mut rest, mut n) = (String::new(), String::new(), body, 0);
+    while let Some(at) = rest.find(TAG) {
+        let open = at + TAG.len() - 1;
+        let mut depth = 0usize;
+        let close = rest[open..]
+            .char_indices()
+            .find(|&(_, ch)| {
+                match ch {
+                    '(' => depth += 1,
+                    ')' => depth -= 1,
+                    _ => {}
+                }
+                depth == 0
+            })
+            .map(|(i, _)| open + i)
+            .expect("an Auto offset read closes");
+        let call = &rest[at..=close];
+        let id = call[TAG.len()..].split(',').next().expect("an Auto offset names its id");
+        let name = if n == 0 { format!("{lower}_auto_offset") } else { format!("{lower}_auto_offset{n}") };
+        cold.push_str(&format!("static TA_COLD int {name}({param_str})\n{{\n   return {call};\n}}\n\n"));
+        out.push_str(&rest[..at]);
+        out.push_str(&format!("TA_GLOBALS_UNSTABLE_OFFSET({id},{name}({args}))"));
+        rest = &rest[close + 1..];
+        n += 1;
+    }
+    out.push_str(rest);
+    (cold, out)
 }
 
 /// `TA_<N>_DisplayShift`: the lookback's contract with one more rejection, an
@@ -2512,7 +2553,7 @@ fn render_func_call(
 
     if let Some(b) = SpecialBuiltin::from_name(fname) {
         match b {
-            SpecialBuiltin::UnstablePeriod => {
+            SpecialBuiltin::UnstablePeriod | SpecialBuiltin::UnstableAuto => {
                 // UNSTABLE_PERIOD(FUNC_UNST_ATR, count) -> strip FUNC_UNST_ prefix first
                 if let Some(Expr::Var(func_name)) = args.first() {
                     let base = func_name
@@ -2523,7 +2564,12 @@ fn render_func_call(
                     if let Some(counts) = super::builtins::unstable_level_counts(args) {
                         let counts: Vec<String> =
                             counts.iter().map(|c| render_expr(c, ctx, registry, helpers)).collect();
-                        return format!("TA_GLOBALS_UNSTABLE(TA_FUNC_UNST_{upper},{pascal},{})", counts.join(","));
+                        let macro_name = if matches!(b, SpecialBuiltin::UnstableAuto) {
+                            "TA_GLOBALS_UNSTABLE_AUTO"
+                        } else {
+                            "TA_GLOBALS_UNSTABLE"
+                        };
+                        return format!("{macro_name}(TA_FUNC_UNST_{upper},{pascal},{})", counts.join(","));
                     }
                 }
                 panic!("an unstable-period read takes an id and a count")

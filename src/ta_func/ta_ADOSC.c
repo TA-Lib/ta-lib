@@ -55,7 +55,13 @@
  *  -------------------------------------------------------------------
  *  120802 MF   Template creation.
  *  052603 MF   Adapt code to compile with .NET Managed C++
+ *  100726 MF,CC  #492. Under an Auto level the bars its two EMAs' cancelling costs.
  */
+
+static TA_COLD int adosc_auto_offset( int optInFastPeriod, int optInSlowPeriod )
+{
+   return TA_GLOBALS_UNSTABLE_AUTO(TA_FUNC_UNST_EMA,Ema,((15 * min(optInFastPeriod,optInSlowPeriod) + 3 * (min(max(optInFastPeriod,optInSlowPeriod) / 2,min(optInFastPeriod,optInSlowPeriod)) + min(max(optInFastPeriod,optInSlowPeriod) / 4,min(optInFastPeriod,optInSlowPeriod)) + min(max(optInFastPeriod,optInSlowPeriod) / 8,min(optInFastPeriod,optInSlowPeriod)) + min(max(optInFastPeriod,optInSlowPeriod) / 16,min(optInFastPeriod,optInSlowPeriod)) + min(max(optInFastPeriod,optInSlowPeriod) / 32,min(optInFastPeriod,optInSlowPeriod)) + min(max(optInFastPeriod,optInSlowPeriod) / 64,min(optInFastPeriod,optInSlowPeriod)) + min(max(optInFastPeriod,optInSlowPeriod) / 128,min(optInFastPeriod,optInSlowPeriod)) + min(max(optInFastPeriod,optInSlowPeriod) / 256,min(optInFastPeriod,optInSlowPeriod)) + min(max(optInFastPeriod,optInSlowPeriod) / 512,min(optInFastPeriod,optInSlowPeriod)) + min(max(optInFastPeriod,optInSlowPeriod) / 1024,min(optInFastPeriod,optInSlowPeriod)) + min(max(optInFastPeriod,optInSlowPeriod) / 2048,min(optInFastPeriod,optInSlowPeriod)) + min(max(optInFastPeriod,optInSlowPeriod) / 4096,min(optInFastPeriod,optInSlowPeriod)) + min(max(optInFastPeriod,optInSlowPeriod) / 8192,min(optInFastPeriod,optInSlowPeriod)) + min(max(optInFastPeriod,optInSlowPeriod) / 16384,min(optInFastPeriod,optInSlowPeriod)) + min(max(optInFastPeriod,optInSlowPeriod) / 32768,min(optInFastPeriod,optInSlowPeriod)) + min(max(optInFastPeriod,optInSlowPeriod) / 65536,min(optInFastPeriod,optInSlowPeriod))) + 7) / 8),((15 * min(optInFastPeriod,optInSlowPeriod) + 3 * (min(max(optInFastPeriod,optInSlowPeriod) / 2,min(optInFastPeriod,optInSlowPeriod)) + min(max(optInFastPeriod,optInSlowPeriod) / 4,min(optInFastPeriod,optInSlowPeriod)) + min(max(optInFastPeriod,optInSlowPeriod) / 8,min(optInFastPeriod,optInSlowPeriod)) + min(max(optInFastPeriod,optInSlowPeriod) / 16,min(optInFastPeriod,optInSlowPeriod)) + min(max(optInFastPeriod,optInSlowPeriod) / 32,min(optInFastPeriod,optInSlowPeriod)) + min(max(optInFastPeriod,optInSlowPeriod) / 64,min(optInFastPeriod,optInSlowPeriod)) + min(max(optInFastPeriod,optInSlowPeriod) / 128,min(optInFastPeriod,optInSlowPeriod)) + min(max(optInFastPeriod,optInSlowPeriod) / 256,min(optInFastPeriod,optInSlowPeriod)) + min(max(optInFastPeriod,optInSlowPeriod) / 512,min(optInFastPeriod,optInSlowPeriod)) + min(max(optInFastPeriod,optInSlowPeriod) / 1024,min(optInFastPeriod,optInSlowPeriod)) + min(max(optInFastPeriod,optInSlowPeriod) / 2048,min(optInFastPeriod,optInSlowPeriod)) + min(max(optInFastPeriod,optInSlowPeriod) / 4096,min(optInFastPeriod,optInSlowPeriod)) + min(max(optInFastPeriod,optInSlowPeriod) / 8192,min(optInFastPeriod,optInSlowPeriod)) + min(max(optInFastPeriod,optInSlowPeriod) / 16384,min(optInFastPeriod,optInSlowPeriod)) + min(max(optInFastPeriod,optInSlowPeriod) / 32768,min(optInFastPeriod,optInSlowPeriod)) + min(max(optInFastPeriod,optInSlowPeriod) / 65536,min(optInFastPeriod,optInSlowPeriod))) + 7) / 8));
+}
 
 TA_LIB_API int TA_ADOSC_Lookback( int optInFastPeriod, int optInSlowPeriod )
 {
@@ -76,8 +82,11 @@ TA_LIB_API int TA_ADOSC_Lookback( int optInFastPeriod, int optInSlowPeriod )
    {
       slowestPeriod = optInFastPeriod;
    }
-   /* Adjust startIdx to account for the lookback period. */
-   return TA_EMA_Lookback(slowestPeriod);
+   /* Both EMAs seed on one value at one bar, so two starts differ by a fast
+    * term less a slow one, and the two can cancel in the first outputs: an
+    * Auto level is held against what is left.
+    */
+   return TA_EMA_Lookback(slowestPeriod) + TA_GLOBALS_UNSTABLE_OFFSET(TA_FUNC_UNST_EMA,adosc_auto_offset(optInFastPeriod, optInSlowPeriod));
 }
 
 TA_LIB_API int TA_ADOSC_DisplayShift( int optInFastPeriod, int optInSlowPeriod, int outputIdx )
@@ -105,7 +114,6 @@ TA_LIB_API TA_RetCode TA_ADOSC( int    startIdx,
    int today;
    int outIdx;
    int lookbackTotal;
-   int slowestPeriod;
    double high;
    double low;
    double close;
@@ -166,19 +174,8 @@ TA_LIB_API TA_RetCode TA_ADOSC( int    startIdx,
     *     This gives more flexibility to the user if they want to
     *     experiment with unusual parameter settings.
     */
-   /* Identify the slowest period.
-    * This infomration is used soleley to bootstrap
-    * the algorithm (skip the lookback period).
-    */
-   if( optInFastPeriod < optInSlowPeriod )
-   {
-      slowestPeriod = optInSlowPeriod;
-   } else 
-   {
-      slowestPeriod = optInFastPeriod;
-   }
    /* Adjust startIdx to account for the lookback period. */
-   lookbackTotal = TA_EMA_Lookback(slowestPeriod);
+   lookbackTotal = TA_ADOSC_Lookback(optInFastPeriod,optInSlowPeriod);
    if( startIdx < lookbackTotal )
    {
       startIdx = lookbackTotal;
@@ -281,7 +278,6 @@ TA_RetCode TA_S_ADOSC( int    startIdx,
    int today;
    int outIdx;
    int lookbackTotal;
-   int slowestPeriod;
    double high;
    double low;
    double close;
@@ -320,14 +316,7 @@ TA_RetCode TA_S_ADOSC( int    startIdx,
    if( !outReal )
       return TA_BAD_PARAM;
 
-   if( optInFastPeriod < optInSlowPeriod )
-   {
-      slowestPeriod = optInSlowPeriod;
-   } else 
-   {
-      slowestPeriod = optInFastPeriod;
-   }
-   lookbackTotal = TA_EMA_Lookback(slowestPeriod);
+   lookbackTotal = TA_ADOSC_Lookback(optInFastPeriod,optInSlowPeriod);
    if( startIdx < lookbackTotal )
    {
       startIdx = lookbackTotal;
@@ -474,7 +463,6 @@ static TA_FMA_STEP_INLINE TA_RetCode TA_ADOSC_OpenImpl( struct TA_ADOSC_Stream *
       int today;
       int outIdx;
       int lookbackTotal;
-      int slowestPeriod;
       double high;
       double low;
       double close;
@@ -508,19 +496,8 @@ static TA_FMA_STEP_INLINE TA_RetCode TA_ADOSC_OpenImpl( struct TA_ADOSC_Stream *
        *     This gives more flexibility to the user if they want to
        *     experiment with unusual parameter settings.
        */
-      /* Identify the slowest period.
-       * This infomration is used soleley to bootstrap
-       * the algorithm (skip the lookback period).
-       */
-      if( optInFastPeriod < optInSlowPeriod )
-      {
-         slowestPeriod = optInSlowPeriod;
-      } else 
-      {
-         slowestPeriod = optInFastPeriod;
-      }
       /* Adjust startIdx to account for the lookback period. */
-      lookbackTotal = TA_EMA_Lookback(slowestPeriod);
+      lookbackTotal = TA_ADOSC_Lookback(optInFastPeriod,optInSlowPeriod);
       if( startIdx < lookbackTotal )
       {
          startIdx = lookbackTotal;

@@ -134,6 +134,17 @@ OVR="TimePeriod=2" /tmp/auto_stabilization_probe 40000 <NAME> > /tmp/need_min.ts
   thousands, and where the rule uses a root, the periods just under a square.
   Name the series it is sized on when one is left out, as the adaptive averages leave out
   the range-bound one.
+- **A function that inherits a count adjusts it for what it does with the value.** Run the
+  census on it by name. Where a window or a difference after the smoothed value shrinks
+  its own largest difference, it needs more than it inherits: that is a gain like any
+  other, and its lookback adds it with `TA_UNSTABLE_AUTO` on the inherited id (CKSP: its
+  stop window; ADOSC: what two EMAs seeded together can cancel, a count in the fast
+  period that `rules_check.py` holds against every way the two combine). A ratio
+  of the inherited value (CVI) is treated like the owners' ratio outputs, and gets none.
+  A difference of two poles looks unbounded as they meet and is not: it tends to the
+  repeated pole's `(A + B*k) * pole^k`. Take the worst case over the seed's ratio before
+  calling a gain unbounded. Giving bars back is not an offset: the stages inside the body
+  would have to split differently, and the offset is never negative.
 - **`rules_vs_need.py` flags.** `LEG4` or `LEG8` fails the regression leg: the rule is too
   short. `k4` and `k8` are acceptable only for an output that divides by a state, `sig4`
   and `sig8` only for an output that reaches zero.
@@ -162,6 +173,8 @@ int ema_lookback(int optInTimePeriod)
   takes the count from its own lookback (`lookbackTotal` minus the structural part). A
   function that runs another's recursion calls that function's lookback and never reads
   its id.
+- **A quotient of two periods steps down** as the smaller one grows. Where a rule needs
+  the log of a ratio, sum `min(f, s/2^j)` instead: each term is non-decreasing in both.
 - **Non-decreasing in every period.** The functions that run two periods of one average
   (MACD, APO, MAVP and the like) place the shorter leg on that; a rule that shrinks as a
   period grows makes them read before a buffer with no error.

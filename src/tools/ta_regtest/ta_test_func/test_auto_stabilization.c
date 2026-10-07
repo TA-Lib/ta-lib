@@ -89,7 +89,7 @@ static AwRun *awFull, *awLate;
 
 static int awNbReport;
 static unsigned int awNbWindow, awNbConverging, awNbPathDep, awNbCount, awNbCountNonZero, awNbFloorHeld;
-static unsigned int awNbSameValues, awNbPeriod1;
+static unsigned int awNbSameValues, awNbPeriod1, awNbOffset, awNbMonotone;
 
 /* --- corpus ---------------------------------------------------------- */
 
@@ -182,7 +182,7 @@ static int awRule( const char *name, int K, int X, int p0, int p1, double r0, do
       return v > TA_INDEX_MAX ? TA_INDEX_MAX : (int)v;
    }
    if( !strcmp(name,"MCGD") ) return 5*X*p0;
-   if( !strcmp(name,"HT_TRENDLINE") ) return 120 + 20*X;
+   if( !strcmp(name,"HT_TRENDLINE") || !strcmp(name,"HT_TRENDMODE") ) return 120 + 20*X;
    if( !strncmp(name,"HT_",3) ) return hilbert;
    if( !strcmp(name,"MAMA") )
    {
@@ -380,6 +380,10 @@ static int awBuildVectors( const TA_FuncInfo *funcInfo, AwVector *vec )
          vec[n].val[0] = mamaLimits[j][0]; vec[n].val[1] = mamaLimits[j][1]; n++;
       }
 
+   if( !strcmp( funcInfo->name, "ADOSC" ) )
+   {
+      vec[n] = def; vec[n].label = "fast above slow"; vec[n].val[0] = 20.0; vec[n].val[1] = 5.0; n++;
+   }
    if( !strcmp( funcInfo->name, "FRAMA" ) )
    {
       vec[n] = def; vec[n].label = "capped count"; vec[n].val[0] = 1024.0; n++;
@@ -438,6 +442,122 @@ static TA_FuncUnstId awOwnId( const char *name )
    for( i=0; i < sizeof(own)/sizeof(own[0]); i++ )
       if( !strcmp( own[i].name, name ) ) return own[i].id;
    return TA_FUNC_UNST_ALL;
+}
+
+/* A function that adjusts the count it inherits: `offset` more bars under a
+ * level of `source`, and none under a count.
+ */
+static void awCheckOffset( const TA_FuncInfo *funcInfo, const AwVector *vec )
+{
+   const TA_OptInputParameterInfo *opt;
+   TA_FuncUnstId source;
+   int l, at0, got, base, offset, p0 = 0, p1 = 0, nbInt = 0;
+   unsigned int i;
+
+   for( i=0; i < funcInfo->nbOptInput; i++ )
+   {
+      TA_GetOptInputParameterInfo( funcInfo->handle, i, &opt );
+      if( opt->type != TA_OptInput_IntegerRange ) continue;
+      if( nbInt == 0 ) p0 = (int)vec->val[i]; else if( nbInt == 1 ) p1 = (int)vec->val[i];
+      nbInt++;
+   }
+   if( !strcmp( funcInfo->name, "CKSP" ) ) source = TA_FUNC_UNST_ATR;
+   else if( !strcmp( funcInfo->name, "ADOSC" ) ) source = TA_FUNC_UNST_EMA;
+   else return;
+
+   TA_SetUnstablePeriod( TA_FUNC_UNST_ALL, 0 );
+   at0 = awLookback( funcInfo, vec );
+   if( at0 < 0 ) return;
+   TA_SetUnstablePeriod( source, 30 );
+   got = awLookback( funcInfo, vec ) - at0;
+   TA_SetUnstablePeriod( source, 0 );
+   if( got != 30 )
+   {
+      sprintf( awMsg, "a count of 30 on the id it inherits adds %d bars", got );
+      awFail( funcInfo->name, vec->label );
+   }
+   for( l=0; l < 2; l++ )
+   {
+      if( source == TA_FUNC_UNST_ATR )
+      {
+         base   = awRule( "ATR", awLevel[l].K, awLevel[l].X, p0, 0, 0.0, 0.0 );
+         offset = p1 - 1;
+      }
+      else
+      {
+         int slowest = p0 > p1 ? p0 : p1, fastest = p0 > p1 ? p1 : p0, j, sum = 0;
+         for( j=1; j <= 16; j++ )
+            sum += (slowest >> j) < fastest ? (slowest >> j) : fastest;
+         base   = awRule( "EMA", awLevel[l].K, awLevel[l].X, slowest, 0, 0.0, 0.0 );
+         offset = awCeilDiv( 15*fastest + 3*sum, 8 );
+      }
+      TA_SetUnstablePeriod( source, awLevel[l].level );
+      got = awLookback( funcInfo, vec ) - at0;
+      TA_SetUnstablePeriod( source, 0 );
+      if( got != base + offset )
+      {
+         sprintf( awMsg, "PREC_%d adds %d bars, its source's %d and its own %d say %d",
+                  awLevel[l].X, got, base, offset, base + offset );
+         awFail( funcInfo->name, vec->label );
+      }
+      if( offset > 0 ) awNbOffset++;
+   }
+}
+
+/* MACD, STC, MAVP and the like index a shorter-period leg on a count that
+ * does not fall as a period grows. ADOSC's is the one written in two periods.
+ */
+static void awAdoscMonotone( void )
+{
+   int l, f, s, prev, lb;
+
+   for( l=0; l < 2; l++ )
+   {
+      TA_SetUnstablePeriod( TA_FUNC_UNST_EMA, awLevel[l].level );
+      for( s=2; s <= 100000; s = s < 300 ? s+1 : s + s/7 )
+      {
+         prev = 0;
+         for( f=2; f <= 100000; f = f < 300 ? f+1 : f + f/7 )
+         {
+            lb = TA_ADOSC_Lookback( f, s );
+            if( lb < prev )
+            {
+               sprintf( awMsg, "PREC_%d lookback falls to %d at fast %d, slow %d", awLevel[l].X, lb, f, s );
+               awFail( "ADOSC", "" );
+            }
+            if( lb != TA_ADOSC_Lookback( s, f ) )
+            {
+               sprintf( awMsg, "lookback differs with the two periods swapped at %d, %d", f, s );
+               awFail( "ADOSC", "" );
+            }
+            prev = lb;
+            awNbMonotone++;
+         }
+      }
+   }
+   TA_SetUnstablePeriod( TA_FUNC_UNST_EMA, 0 );
+}
+
+/* No level takes bars away: with every id on a level a lookback is at least
+ * what it is at 0, and PREC_8 at least PREC_4.
+ */
+static void awCheckLevels( const TA_FuncInfo *funcInfo, const AwVector *vec )
+{
+   int at0, at4, at8;
+
+   TA_SetUnstablePeriod( TA_FUNC_UNST_ALL, 0 );
+   at0 = awLookback( funcInfo, vec );
+   if( at0 < 0 ) return;
+   TA_SetUnstablePeriod( TA_FUNC_UNST_ALL, TA_UNSTABLE_AUTO_PREC_4 );
+   at4 = awLookback( funcInfo, vec );
+   TA_SetUnstablePeriod( TA_FUNC_UNST_ALL, TA_UNSTABLE_AUTO_PREC_8 );
+   at8 = awLookback( funcInfo, vec );
+   TA_SetUnstablePeriod( TA_FUNC_UNST_ALL, 0 );
+   if( at4 < at0 || at8 < at4 )
+   {
+      sprintf( awMsg, "lookback is %d at 0, %d under PREC_4 and %d under PREC_8", at0, at4, at8 );
+      awFail( funcInfo->name, vec->label );
+   }
 }
 
 static void awCheckCount( const TA_FuncInfo *funcInfo, const AwVector *vec, TA_FuncUnstId own )
@@ -838,6 +958,8 @@ static void awOneFunction( const TA_FuncInfo *funcInfo, void *opaque )
    {
       if( own != TA_FUNC_UNST_ALL )
          awCheckCount( funcInfo, &vec[v], own );
+      awCheckOffset( funcInfo, &vec[v] );
+      awCheckLevels( funcInfo, &vec[v] );
       awTwoStarts( funcInfo, &vec[v] );
    }
    if( awPrintFloors )
@@ -860,11 +982,12 @@ ErrorNumber test_func_auto_stabilization( TA_History *history )
    }
    awNbReport = 0;
    awNbWindow = awNbConverging = awNbPathDep = awNbCount = awNbCountNonZero = awNbFloorHeld = 0;
-   awNbSameValues = awNbPeriod1 = 0;
+   awNbSameValues = awNbPeriod1 = awNbOffset = awNbMonotone = 0;
    awPrintFloors = getenv( "TA_AUTO_STABILIZATION_FLOORS" ) != NULL;
    awBuildSeries();
 
    TA_ForEachFunc( awOneFunction, NULL );
+   awAdoscMonotone();
    TA_SetUnstablePeriod( TA_FUNC_UNST_ALL, 0 );
 
    free( awSeries ); free( awFull ); free( awLate );
@@ -876,7 +999,7 @@ ErrorNumber test_func_auto_stabilization( TA_History *history )
       return TA_AUTO_STABILIZATION_FAIL;
    }
    if( awNbWindow < 1600 || awNbConverging < 1600 || awNbPathDep < 30 ||
-       awNbCount < 200 || awNbCountNonZero < 175 || awNbSameValues < 200 || awNbPeriod1 < 100 ||
+       awNbCount < 200 || awNbCountNonZero < 175 || awNbSameValues < 200 || awNbPeriod1 < 100 || awNbOffset < 8 || awNbMonotone < 100000 ||
        ( !awPrintFloors && awNbFloorHeld < 60 ) )
    {
       printf( "\n  auto-stabilization: vacuous: %u window, %u converging, %u path-dependent, "

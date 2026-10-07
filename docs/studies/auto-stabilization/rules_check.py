@@ -476,3 +476,33 @@ P=[100.0+10.0*t for t in range(30)]
 while len(P)<4000: P.append(round(P[-1]+10.69,2)); P.append(round(P[-1]-0.69,2))
 a=fisher_series(P,0); b=fisher_series(P,40)
 print('  latch: fisher at the last two bars from bar 0 %.4f %.4f, from bar 40 %.4f %.4f, %d bars after the later start'%(a[len(P)-2],a[len(P)-1],b[len(P)-2],b[len(P)-1],len(P)-40))
+
+# ADOSC: two EMAs seeded on one value at one bar, so two starts differ by x*pf^a - ps^a at age
+# a, x being the ratio of the two first differences, any real. Rule: the slow EMA's count plus
+# ceil((15*f + 3*t)/8), f the fastest period, s the slowest, t the sum of min(f, s >> j) for j
+# in 1..16. S(x), the largest difference, is the upper envelope of the lines +-(x*pf^b - ps^b):
+# convex and piecewise linear. On one of its pieces |x*pf^a - ps^a| - e^-K*S(x) is convex, so
+# the worst x for any age is a vertex of the envelope, or x far out.
+def adosc_need(nf,ns,K):
+    lf=math.log((nf-1)/(nf+1)); ls=math.log((ns-1)/(ns+1))
+    A=int((K+14)/-ls)+60
+    f=[math.exp(a*lf) for a in range(A)]; s=[math.exp(a*ls) for a in range(A)]
+    B=min(A,int(8/-ls)+12)
+    hull=[]
+    for m,c in sorted(set([(f[b],-s[b]) for b in range(B)]+[(-f[b],s[b]) for b in range(B)])):
+        if hull and hull[-1][0]==m:
+            if hull[-1][1]>=c: continue
+            hull.pop()
+        while len(hull)>=2 and (c-hull[-2][1])*(hull[-1][0]-hull[-2][0]) >= (hull[-1][1]-hull[-2][1])*(m-hull[-2][0]): hull.pop()
+        hull.append((m,c))
+    best=0
+    for x in [(c1-c2)/(m2-m1) for (m1,c1),(m2,c2) in zip(hull,hull[1:])]+[-1e12,1e12]:
+        thr=math.exp(-K)*max(abs(x*f[b]-s[b]) for b in range(B))
+        best=max(best,next((a+1 for a in range(A-1,-1,-1) if abs(x*f[a]-s[a])>thr),0))
+    return best
+def adosc_rule(K,nf,ns): return ceil_div(K*ns,2)+ceil_div(15*nf+3*sum(min(nf,ns>>j) for j in range(1,17)),8)
+adosc_pairs=[(nf,ns) for ns in range(3,25) for nf in range(2,ns)]+[(3,10),(9,30),(29,30),(99,100),(2,26),(2,29),(2,100),(5,250),(10,500),(2,1000)]
+adosc_bad=[(nf,ns,K) for nf,ns in adosc_pairs for K in (10,19) if adosc_need(nf,ns,K)>adosc_rule(K,nf,ns)]
+print('ADOSC at K = 10 and 19: pairs',len(adosc_pairs),'violations',adosc_bad[:5],len(adosc_bad),
+      ' fewest spare bars',min(adosc_rule(K,nf,ns)-adosc_need(nf,ns,K) for nf,ns in adosc_pairs for K in (10,19)),
+      ' at (3,10), (29,30), (99,100):',[[adosc_rule(K,nf,ns)-adosc_need(nf,ns,K) for K in (10,19)] for nf,ns in ((3,10),(29,30),(99,100))])

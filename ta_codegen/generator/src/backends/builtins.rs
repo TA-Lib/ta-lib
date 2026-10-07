@@ -101,6 +101,9 @@ impl MathFn {
 #[derive(Clone, Copy)]
 pub enum SpecialBuiltin {
     UnstablePeriod,
+    /// `TA_UNSTABLE_AUTO(id, offset)`: `offset` under an Auto level of an id the function
+    /// inherits, 0 under a count.
+    UnstableAuto,
     IsZero,
     IsZeroScaled,
     IsZeroOrNeg,
@@ -114,6 +117,7 @@ impl SpecialBuiltin {
     pub fn from_name(name: &str) -> Option<Self> {
         Some(match name {
             "UNSTABLE_PERIOD" => Self::UnstablePeriod,
+            "UNSTABLE_AUTO" => Self::UnstableAuto,
             "IS_ZERO" => Self::IsZero,
             "IS_ZERO_SCALED" => Self::IsZeroScaled,
             "IS_ZERO_OR_NEG" => Self::IsZeroOrNeg,
@@ -179,6 +183,20 @@ pub fn unstable_level_counts(args: &[Expr]) -> Option<Vec<Expr>> {
             })
             .collect(),
     )
+}
+
+/// The Auto-only offset from a backend's `read(id, c4, c8)`: under a count every read
+/// returns the stored count, so the reads at (1, 1) and (0, 0) differ only under a level.
+/// The offset's counts are evaluated only then, which keeps a call at the default setting
+/// from paying for them. `rust` picks the `if` expression over the C-family ternary.
+pub fn unstable_auto_offset(counts: &[String], rust: bool, read: impl Fn(&[String]) -> String) -> String {
+    let fill = |v: &str| vec![v.to_string(); counts.len()];
+    let (on, off, counted) = (read(&fill("1")), read(&fill("0")), read(counts));
+    if rust {
+        format!("(if {on} != {off} {{ {counted} - {off} }} else {{ 0 }})")
+    } else {
+        format!("(({on} != {off}) ? ({counted} - {off}) : 0)")
+    }
 }
 
 /// `4 == 4 ? a : b` to `a`, inside sums, casts and call arguments: how a count that cannot be written in `K` picks
