@@ -38,7 +38,9 @@ fed back, and when. Each item decides a part of the rule.
     earlier start's whole state at the first bar, which is what bounds the cancelling.
 - **A coefficient the data moves**, or a state that feeds back into its own gain through
   clamps or a rate limiter. There is no bound, or one several times the need. The rule is
-  sized by measurement.
+  sized by measurement. Where the coefficient depends on the input alone (FRAMA), both
+  starts share it, the difference shrinks by exactly that coefficient each bar, and its
+  floor gives a bound: cap the measured rule with it.
 - **A step**: a limiter that snaps to a value, a comparison on the state whose branches
   differ where they meet, a test for an exact zero of a computed value, which rounding
   decides. A branch on the input alone is not one, both starts take it together, nor is a
@@ -50,6 +52,9 @@ fed back, and when. Each item decides a part of the rule.
   series do not. Rare and short-lived: size
   the rule for the path where both starts step together and state the step as a limit.
   When steps are what drives the state, the function is a state machine and gets no rule.
+  Where the output reads its state only through a step (HT_TRENDLINE: a period cut to a
+  whole number of bars), the two starts are equal or a step apart, the need is the same at
+  every level, and a level can only buy a rarer miss: size each on the tail of the need.
 - **A rate that reaches zero.** Where the coefficient depends on the state against the
   price, find the region where a difference stops shrinking (MCGD: the line 20% under the
   price) and what input holds the state there. That is a limit to state as a condition on
@@ -121,7 +126,9 @@ OVR="TimePeriod=2" /tmp/auto_stabilization_probe 40000 <NAME> > /tmp/need_min.ts
 - **A measured need above a proven rule** means the derivation is wrong, not that the
   rule needs margin, unless a step of section 1 is what produced it.
 - **A measured rule covers the worst need at both levels**, at the defaults and at tripled
-  periods, with margin. Give it a period term only where the need grows with the period.
+  periods, with margin. Give it a period term only where the need grows with the period,
+  which three periods do not settle: run `CENSUS_PERIOD` from the smallest period to the
+  thousands, and where the rule uses a root, the periods just under a square.
   Name the series it is sized on when one is left out, as the adaptive averages leave out
   the range-bound one.
 - **`rules_vs_need.py` flags.** `LEG4` or `LEG8` fails the regression leg: the rule is too

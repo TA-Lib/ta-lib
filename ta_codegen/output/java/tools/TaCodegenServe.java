@@ -103188,6 +103188,8 @@ class Core {
      *  -------------------------------------------------------------------
      *  092826 MF,CC  First version (issue #464).
      *  100226 MF,CC  #497. An odd period is refused before the range is written.
+     *  100726 MF,CC  #492. The Auto rule grows with the period and stops at the
+     *                slowest alpha's bound.
      */
 
        /**
@@ -103212,13 +103214,15 @@ class Core {
           } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
              return -1;
           }
+          int root;
+          root = (int)Math.sqrt((double)optInTimePeriod);
           /* The range check cannot demand an even period; without this the lookback
            * answers a usable number for a call that cannot run.
            */
           if( optInTimePeriod % 2 != 0 ) {
              return -1 ;
           }
-          return optInTimePeriod + this.unstableCount(FuncUnstId.FRAMA.ordinal(), 80 * 4, 80 * 8) ;
+          return optInTimePeriod + this.unstableCount(FuncUnstId.FRAMA.ordinal(), ((9 * (4 + 4) * (root + 2) / 2 < 99 * 10) ? 9 * (4 + 4) * (root + 2) / 2 : 99 * 10), ((9 * (8 + 4) * (root + 2) / 2 < 99 * 19) ? 9 * (8 + 4) * (root + 2) / 2 : 99 * 19)) ;
 
        }
        /**
@@ -115743,6 +115747,8 @@ class Core {
      *                constant-cap padded loop for(i<50) if(i<DCPeriodInt) sum +=
      *                inReal[today-i]. Bit-identical (same terms, same order); the
      *                literal cap lets the streaming rescan-window machinery bound it.
+     *  100726 MF,CC  #492. The Auto rule sized on when the integer cycle period
+     *                of two starts stops disagreeing.
      */
 
        /**
@@ -115767,7 +115773,7 @@ class Core {
            * 31 is for being compatible with Tradestation.
            * See mama_lookback for an explanation of the "32".
            */
-          return 63 + this.unstableCount(FuncUnstId.HT_TRENDLINE.ordinal(), (80 + 50 * 4), (80 + 50 * 8)) ;
+          return 63 + this.unstableCount(FuncUnstId.HT_TRENDLINE.ordinal(), (120 + 20 * 4), (120 + 20 * 8)) ;
 
        }
        /**
@@ -223509,7 +223515,7 @@ class Core {
 
 public class TaCodegenServe {
     static Core core = new Core();
-    static final String SPLICED_GENCODE_DIGEST = "71ba402530aae5cc";
+    static final String SPLICED_GENCODE_DIGEST = "8a894a2a98012131";
     static final int MAX_ARRAY_SIZE = 200000;
     static double[] refOpen = new double[MAX_ARRAY_SIZE];
     static double[] refHigh = new double[MAX_ARRAY_SIZE];

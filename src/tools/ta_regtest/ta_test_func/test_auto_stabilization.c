@@ -173,7 +173,8 @@ static int awRule( const char *name, int K, int X, int p0, int p1, double r0, do
       return awCeilDiv( (K+3)*(p0+2), 9 );
    if( !strcmp(name,"SWAK_BP") ) return (int)ceil( (double)((K+1)*p0) / (6.0*r0) );
    if( !strcmp(name,"KAMA") ) return p0 > 1 ? 25*X*awISqrt(p0) : 0;
-   if( !strcmp(name,"FRAMA") ) return 80*X;
+   if( !strcmp(name,"FRAMA") )
+      return 9*(X+4)*(awISqrt(p0)+2)/2 < 99*K ? 9*(X+4)*(awISqrt(p0)+2)/2 : 99*K;
    if( !strcmp(name,"VIDYA") )
    {
       if( p0 <= 1 ) return 0;
@@ -181,6 +182,7 @@ static int awRule( const char *name, int K, int X, int p0, int p1, double r0, do
       return v > TA_INDEX_MAX ? TA_INDEX_MAX : (int)v;
    }
    if( !strcmp(name,"MCGD") ) return 5*X*p0;
+   if( !strcmp(name,"HT_TRENDLINE") ) return 120 + 20*X;
    if( !strncmp(name,"HT_",3) ) return hilbert;
    if( !strcmp(name,"MAMA") )
    {

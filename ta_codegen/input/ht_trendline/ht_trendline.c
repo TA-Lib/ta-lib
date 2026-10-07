@@ -22,6 +22,8 @@
  *                constant-cap padded loop for(i<50) if(i<DCPeriodInt) sum +=
  *                inReal[today-i]. Bit-identical (same terms, same order); the
  *                literal cap lets the streaming rescan-window machinery bound it.
+ *  100726 MF,CC  #492. The Auto rule sized on when the integer cycle period
+ *                of two starts stops disagreeing.
  */
 
 int ht_trendline_lookback(void)
@@ -34,7 +36,7 @@ int ht_trendline_lookback(void)
     * 31 is for being compatible with Tradestation.
     * See mama_lookback for an explanation of the "32".
     */
-   return 63 + TA_UNSTABLE( TA_FUNC_UNST_HT_TRENDLINE, ta_auto_stabilization_hilbert(X) );
+   return 63 + TA_UNSTABLE( TA_FUNC_UNST_HT_TRENDLINE, ta_auto_stabilization_ht_trendline(X) );
 }
 
 TA_RetCode ht_trendline(int startIdx, int endIdx,

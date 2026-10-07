@@ -25,6 +25,7 @@ gcc -O2 -I../../../include auto_stabilization_probe.c ../../../cmake-build/libta
 gcc -O2 -I../../../include auto_stabilization_census.c ../../../cmake-build/libta-lib.a -lm -o /tmp/auto_stabilization_census
 /tmp/auto_stabilization_probe 40000 > /tmp/probe.tsv          # every function; add a name to run one
 CENSUS_CSV=../ema-seeding/data/ibm_daily_ohlc.csv /tmp/auto_stabilization_census 20000 1 > /tmp/census.tsv   # with real daily bars as a fourth series kind
+CENSUS_PERIOD=98 CENSUS_NEEDS=/tmp/needs.tsv /tmp/auto_stabilization_census 20000 1 FRAMA   # one period, and every trial's need
 OVR="FastLimit=0.2,SlowLimit=0.02" /tmp/auto_stabilization_probe 40000 MAMA   # one function, other parameters
 python3 analyze.py /tmp/probe.tsv /tmp/agg.json summary
 python3 analyze.py /tmp/probe.tsv /tmp/agg.json nonexact

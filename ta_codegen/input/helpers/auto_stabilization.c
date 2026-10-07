@@ -36,6 +36,22 @@ int ta_auto_stabilization_hilbert(int X) {
    return 80 + 50 * X;
 }
 
+/* The alpha depends on the window alone, so two starts close by 1 - alpha a
+ * bar: the count is sized on how slowly price series let that run, and no
+ * series needs more than 99 bars an e-fold, the alpha's floor of e^-4.6.
+ */
+int ta_auto_stabilization_frama(int K, int X, int root) {
+   return 9 * (X + 4) * (root + 2) / 2 < 99 * K ? 9 * (X + 4) * (root + 2) / 2 : 99 * K;
+}
+
+/* The trendline averages the price over the cycle period truncated to an
+ * integer: two starts are equal once that integer agrees, at either level, so
+ * a level buys a smaller chance of a late disagreement, not a smaller one.
+ */
+int ta_auto_stabilization_ht_trendline(int X) {
+   return 120 + 20 * X;
+}
+
 /* Saturates at TA_INDEX_MAX. */
 int ta_auto_stabilization_vidya(int X, int period, int root) {
    return 2 * X * (period + 1) * root > 100000000 ? 100000000 : 2 * X * (period + 1) * root;

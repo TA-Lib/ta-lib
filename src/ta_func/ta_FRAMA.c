@@ -55,14 +55,18 @@
  *  -------------------------------------------------------------------
  *  092826 MF,CC  First version (issue #464).
  *  100226 MF,CC  #497. An odd period is refused before the range is written.
+ *  100726 MF,CC  #492. The Auto rule grows with the period and stops at the
+ *                slowest alpha's bound.
  */
 
 TA_NOINLINE TA_LIB_API int TA_FRAMA_Lookback( int optInTimePeriod )
 {
+   int root;
    if( (int)optInTimePeriod == TA_INTEGER_DEFAULT )
       optInTimePeriod = 16;
    else if( (int)optInTimePeriod < 2 || (int)optInTimePeriod > 100000 )
       return -1;
+   root = (int)sqrt((double)optInTimePeriod);
    /* The range check cannot demand an even period; without this the lookback
     * answers a usable number for a call that cannot run.
     */
@@ -70,7 +74,7 @@ TA_NOINLINE TA_LIB_API int TA_FRAMA_Lookback( int optInTimePeriod )
    {
       return -1;
    }
-   return optInTimePeriod + TA_GLOBALS_UNSTABLE(TA_FUNC_UNST_FRAMA,Frama,80 * 4,80 * 8);
+   return optInTimePeriod + TA_GLOBALS_UNSTABLE(TA_FUNC_UNST_FRAMA,Frama,((9 * (4 + 4) * (root + 2) / 2 < 99 * 10) ? 9 * (4 + 4) * (root + 2) / 2 : 99 * 10),((9 * (8 + 4) * (root + 2) / 2 < 99 * 19) ? 9 * (8 + 4) * (root + 2) / 2 : 99 * 19));
 }
 
 TA_LIB_API int TA_FRAMA_DisplayShift( int optInTimePeriod, int outputIdx )

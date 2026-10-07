@@ -19,6 +19,9 @@
  * is the previous close). Its trials overlap, so they are not independent.
  * Prices are near `level` (100 unless given) and rounded to `tick` (0.01): the
  * same walk at 4.5e-8 with a tick of 1e-10 is a coin quoted in satoshis.
+ * CENSUS_PERIOD=<n> runs one configuration, every integer period at n.
+ * CENSUS_NEEDS=<file> also writes each trial's need at K = 10 and 19, for a
+ * tail the three quantiles do not show.
  * need<K> p50/p99/max over the trials; over<K> = trials whose need is above the
  * count; never = trials still above e^-7 at the last compared age.
  */
@@ -41,7 +44,8 @@ static int g_trials, g_list;
 static double g_drift = 0.001, g_level = 100.0, g_tick = 0.01;
 static unsigned long long g_seed, rng_s;
 static double fH[NMAX], fL[NMAX], fC[NMAX];
-static int fN;
+static int fN, g_period;
+static FILE *g_needs;
 
 static double rnd(void)
 {
@@ -126,7 +130,7 @@ static TA_RetCode call(const TA_FuncInfo *fi, int cfg, int D, int n, int useB,
       if( cfg != 0 && oi->type == TA_OptInput_IntegerRange && strstr(oi->paramName, "Period") )
       {
          const TA_IntegerRange *rg = (const TA_IntegerRange *)oi->dataSet;
-         long v = cfg == 1 ? (long)oi->defaultValue * 3 : rg->min;
+         long v = g_period ? g_period : cfg == 1 ? (long)oi->defaultValue * 3 : rg->min;
          int w;
          if( v > rg->max ) v = rg->max;
          rc = TA_SetOptInputParamInteger(ph, i, (TA_Integer)v);
@@ -178,6 +182,7 @@ static void each(const TA_FuncInfo *fi, void *opaque)
    for( cfg = 0; cfg < NCFG; cfg++ )
    {
       int lookback, autoCount[2], beg, nb, M;
+      if( g_period && cfg != 1 ) continue;
       if( call(fi, cfg, 0, 0, 0, &beg, &nb, &lookback, autoCount, desc, sizeof desc) != TA_SUCCESS ) continue;
       if( autoCount[0] <= 0 ) continue;
       M = 3*autoCount[1];
@@ -202,7 +207,7 @@ static void each(const TA_FuncInfo *fi, void *opaque)
             make_series(kind, n);
             ok = call(fi, cfg, 0, n, 0, &beg, &nb, &lb2, NULL, d2, sizeof d2) == TA_SUCCESS
               && call(fi, cfg, D, n, 1, &begB, &nbB, &lb2, NULL, d2, sizeof d2) == TA_SUCCESS;
-            if( !ok ) continue;
+            if( !ok || nb <= 0 || nbB <= 0 ) continue;   /* a capped series can be too short for the later start */
             first = D + begB; if( first < beg ) first = beg;
             last = beg + nb - 1;
             if( last - first < 50 ) continue;
@@ -239,6 +244,7 @@ static void each(const TA_FuncInfo *fi, void *opaque)
                }
             }
             need[0][t] = nd[1]; need[1][t] = nd[3];
+            if( g_needs ) fprintf(g_needs, "%s\t%s\t%s\t%d\t%d\n", fi->name, desc, kinds[kind], nd[1], nd[3]);
             if( nd[1] > autoCount[0] ) over[1]++;
             if( nd[0] > autoCount[0] ) over[0]++;
             if( nd[3] > autoCount[1] ) over[3]++;
@@ -278,6 +284,8 @@ int main(int argc, char **argv)
       fclose(f);
       if( fN < 400 ) return 2;
    }
+   if( getenv("CENSUS_PERIOD") ) g_period = atoi(getenv("CENSUS_PERIOD"));
+   if( getenv("CENSUS_NEEDS") && !(g_needs = fopen(getenv("CENSUS_NEEDS"), "w")) ) return 2;
    if( TA_Initialize() != TA_SUCCESS ) return 2;
    if( !g_list && !g_only )
       printf("func\tcfg\tkind\tlookback\tlive\tauto4\tp50_10\tp99_10\tmax_10\tover10\tover7\tauto8\tp50_19\tp99_19\tmax_19\tover19\tover16\tnever\tworstT10\tworstT19\n");

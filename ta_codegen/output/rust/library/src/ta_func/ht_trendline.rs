@@ -64,6 +64,8 @@
  *                constant-cap padded loop for(i<50) if(i<DCPeriodInt) sum +=
  *                inReal[today-i]. Bit-identical (same terms, same order); the
  *                literal cap lets the streaming rescan-window machinery bound it.
+ *  100726 MF,CC  #492. The Auto rule sized on when the integer cycle period
+ *                of two starts stops disagreeing.
  */
 
 // Import types from parent module
@@ -87,7 +89,7 @@ impl Core {
         //
         // 31 is for being compatible with Tradestation.
         // See mama_lookback for an explanation of the "32".
-        return Ok((63 + self.unstable_count(FuncUnstId::HT_TRENDLINE, (80 + 50 * 4), (80 + 50 * 8))) as usize);
+        return Ok((63 + self.unstable_count(FuncUnstId::HT_TRENDLINE, (120 + 20 * 4), (120 + 20 * 8))) as usize);
     }
     /// Display shift of one output of [`Core::ht_trendline`]: how many bars ahead (positive) or
     /// behind (negative) of the bar that computed it a chart draws that output. The values are
