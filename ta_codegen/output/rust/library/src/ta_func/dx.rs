@@ -94,7 +94,7 @@ impl Core {
             return Err(RetCode::BadParam);
         }
         if optInTimePeriod > 1 {
-            return Ok((optInTimePeriod + self.unstable_count(FuncUnstId::DX, (if optInTimePeriod > 1 { 10 * optInTimePeriod } else { 0 }), (if optInTimePeriod > 1 { 19 * optInTimePeriod } else { 0 }))) as usize);
+            return Ok((optInTimePeriod + self.unstable_count(FuncUnstId::DX, (if optInTimePeriod > 1 { (10 * (2 * optInTimePeriod - 1) + 1) / 2 } else { 0 }), (if optInTimePeriod > 1 { (19 * (2 * optInTimePeriod - 1) + 1) / 2 } else { 0 }))) as usize);
         } else {
             return Ok((2) as usize);
         }

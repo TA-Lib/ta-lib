@@ -5,11 +5,11 @@
  */
 
 int ta_auto_stabilization_ema(int K, int period) {
-   return period > 1 ? (K * (period + 1) + 1) / 2 : 0;
+   return period > 1 ? (K * period + 1) / 2 : 0;
 }
 
 int ta_auto_stabilization_wilder(int K, int period) {
-   return period > 1 ? K * period : 0;
+   return period > 1 ? (K * (2 * period - 1) + 1) / 2 : 0;
 }
 
 /* A repeated real pole of a two-pole filter of critical period `period`: an

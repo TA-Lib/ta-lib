@@ -14534,7 +14534,7 @@ public final class Core {
        * (optInTimePeriod-1) is for the simple
        * moving average.
        */
-      return optInTimePeriod + this.unstableCount(FuncUnstId.ATR.ordinal(), ((optInTimePeriod > 1) ? 10 * optInTimePeriod : 0), ((optInTimePeriod > 1) ? 19 * optInTimePeriod : 0)) ;
+      return optInTimePeriod + this.unstableCount(FuncUnstId.ATR.ordinal(), ((optInTimePeriod > 1) ? (10 * (2 * optInTimePeriod - 1) + 1) / 2 : 0), ((optInTimePeriod > 1) ? (19 * (2 * optInTimePeriod - 1) + 1) / 2 : 0)) ;
 
    }
    /**
@@ -81933,7 +81933,7 @@ public final class Core {
       } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
          return -1;
       }
-      return optInTimePeriod + this.unstableCount(FuncUnstId.CMO.ordinal(), ((optInTimePeriod > 1) ? 10 * optInTimePeriod : 0), ((optInTimePeriod > 1) ? 19 * optInTimePeriod : 0)) ;
+      return optInTimePeriod + this.unstableCount(FuncUnstId.CMO.ordinal(), ((optInTimePeriod > 1) ? (10 * (2 * optInTimePeriod - 1) + 1) / 2 : 0), ((optInTimePeriod > 1) ? (19 * (2 * optInTimePeriod - 1) + 1) / 2 : 0)) ;
 
    }
    /**
@@ -93881,7 +93881,7 @@ public final class Core {
          return -1;
       }
       if( optInTimePeriod > 1 ) {
-         return optInTimePeriod + this.unstableCount(FuncUnstId.DX.ordinal(), ((optInTimePeriod > 1) ? 10 * optInTimePeriod : 0), ((optInTimePeriod > 1) ? 19 * optInTimePeriod : 0)) ;
+         return optInTimePeriod + this.unstableCount(FuncUnstId.DX.ordinal(), ((optInTimePeriod > 1) ? (10 * (2 * optInTimePeriod - 1) + 1) / 2 : 0), ((optInTimePeriod > 1) ? (19 * (2 * optInTimePeriod - 1) + 1) / 2 : 0)) ;
       } else {
          return 2 ;
       }
@@ -96194,7 +96194,7 @@ public final class Core {
       } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
          return -1;
       }
-      return optInTimePeriod - 1 + this.unstableCount(FuncUnstId.EMA.ordinal(), ((optInTimePeriod > 1) ? (10 * (optInTimePeriod + 1) + 1) / 2 : 0), ((optInTimePeriod > 1) ? (19 * (optInTimePeriod + 1) + 1) / 2 : 0)) ;
+      return optInTimePeriod - 1 + this.unstableCount(FuncUnstId.EMA.ordinal(), ((optInTimePeriod > 1) ? (10 * optInTimePeriod + 1) / 2 : 0), ((optInTimePeriod > 1) ? (19 * optInTimePeriod + 1) / 2 : 0)) ;
 
    }
    /**
@@ -156592,7 +156592,7 @@ public final class Core {
          return -1;
       }
       if( optInTimePeriod > 1 ) {
-         return optInTimePeriod + this.unstableCount(FuncUnstId.MINUS_DI.ordinal(), ((optInTimePeriod > 1) ? 10 * optInTimePeriod : 0), ((optInTimePeriod > 1) ? 19 * optInTimePeriod : 0)) ;
+         return optInTimePeriod + this.unstableCount(FuncUnstId.MINUS_DI.ordinal(), ((optInTimePeriod > 1) ? (10 * (2 * optInTimePeriod - 1) + 1) / 2 : 0), ((optInTimePeriod > 1) ? (19 * (2 * optInTimePeriod - 1) + 1) / 2 : 0)) ;
       } else {
          return 1 ;
       }
@@ -158202,7 +158202,7 @@ public final class Core {
          return -1;
       }
       if( optInTimePeriod > 1 ) {
-         return optInTimePeriod + this.unstableCount(FuncUnstId.MINUS_DM.ordinal(), ((optInTimePeriod > 1) ? 10 * optInTimePeriod : 0), ((optInTimePeriod > 1) ? 19 * optInTimePeriod : 0)) - 1 ;
+         return optInTimePeriod + this.unstableCount(FuncUnstId.MINUS_DM.ordinal(), ((optInTimePeriod > 1) ? (10 * (2 * optInTimePeriod - 1) + 1) / 2 : 0), ((optInTimePeriod > 1) ? (19 * (2 * optInTimePeriod - 1) + 1) / 2 : 0)) - 1 ;
       } else {
          return 1 ;
       }
@@ -160449,7 +160449,7 @@ public final class Core {
        * (optInTimePeriod-1) is for the simple
        * moving average.
        */
-      return optInTimePeriod + this.unstableCount(FuncUnstId.NATR.ordinal(), ((optInTimePeriod > 1) ? 10 * optInTimePeriod : 0), ((optInTimePeriod > 1) ? 19 * optInTimePeriod : 0)) ;
+      return optInTimePeriod + this.unstableCount(FuncUnstId.NATR.ordinal(), ((optInTimePeriod > 1) ? (10 * (2 * optInTimePeriod - 1) + 1) / 2 : 0), ((optInTimePeriod > 1) ? (19 * (2 * optInTimePeriod - 1) + 1) / 2 : 0)) ;
 
    }
    /**
@@ -165649,7 +165649,7 @@ public final class Core {
          return -1;
       }
       if( optInTimePeriod > 1 ) {
-         return optInTimePeriod + this.unstableCount(FuncUnstId.PLUS_DI.ordinal(), ((optInTimePeriod > 1) ? 10 * optInTimePeriod : 0), ((optInTimePeriod > 1) ? 19 * optInTimePeriod : 0)) ;
+         return optInTimePeriod + this.unstableCount(FuncUnstId.PLUS_DI.ordinal(), ((optInTimePeriod > 1) ? (10 * (2 * optInTimePeriod - 1) + 1) / 2 : 0), ((optInTimePeriod > 1) ? (19 * (2 * optInTimePeriod - 1) + 1) / 2 : 0)) ;
       } else {
          return 1 ;
       }
@@ -167261,7 +167261,7 @@ public final class Core {
          return -1;
       }
       if( optInTimePeriod > 1 ) {
-         return optInTimePeriod + this.unstableCount(FuncUnstId.PLUS_DM.ordinal(), ((optInTimePeriod > 1) ? 10 * optInTimePeriod : 0), ((optInTimePeriod > 1) ? 19 * optInTimePeriod : 0)) - 1 ;
+         return optInTimePeriod + this.unstableCount(FuncUnstId.PLUS_DM.ordinal(), ((optInTimePeriod > 1) ? (10 * (2 * optInTimePeriod - 1) + 1) / 2 : 0), ((optInTimePeriod > 1) ? (19 * (2 * optInTimePeriod - 1) + 1) / 2 : 0)) - 1 ;
       } else {
          return 1 ;
       }
@@ -174470,7 +174470,7 @@ public final class Core {
       } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
          return -1;
       }
-      return optInTimePeriod - 1 + this.unstableCount(FuncUnstId.RMA.ordinal(), ((optInTimePeriod > 1) ? 10 * optInTimePeriod : 0), ((optInTimePeriod > 1) ? 19 * optInTimePeriod : 0)) ;
+      return optInTimePeriod - 1 + this.unstableCount(FuncUnstId.RMA.ordinal(), ((optInTimePeriod > 1) ? (10 * (2 * optInTimePeriod - 1) + 1) / 2 : 0), ((optInTimePeriod > 1) ? (19 * (2 * optInTimePeriod - 1) + 1) / 2 : 0)) ;
 
    }
    /**
@@ -178959,7 +178959,7 @@ public final class Core {
       } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
          return -1;
       }
-      return optInTimePeriod + this.unstableCount(FuncUnstId.RSI.ordinal(), ((optInTimePeriod > 1) ? 10 * optInTimePeriod : 0), ((optInTimePeriod > 1) ? 19 * optInTimePeriod : 0)) ;
+      return optInTimePeriod + this.unstableCount(FuncUnstId.RSI.ordinal(), ((optInTimePeriod > 1) ? (10 * (2 * optInTimePeriod - 1) + 1) / 2 : 0), ((optInTimePeriod > 1) ? (19 * (2 * optInTimePeriod - 1) + 1) / 2 : 0)) ;
 
    }
    /**
@@ -179831,7 +179831,7 @@ public final class Core {
       } else if( optInStdDevPeriod < 2 || optInStdDevPeriod > 100000 ) {
          return -1;
       }
-      return optInStdDevPeriod - 1 + (optInTimePeriod - 1) + this.unstableCount(FuncUnstId.RVI.ordinal(), ((optInTimePeriod > 1) ? 10 * optInTimePeriod : 0), ((optInTimePeriod > 1) ? 19 * optInTimePeriod : 0)) ;
+      return optInStdDevPeriod - 1 + (optInTimePeriod - 1) + this.unstableCount(FuncUnstId.RVI.ordinal(), ((optInTimePeriod > 1) ? (10 * (2 * optInTimePeriod - 1) + 1) / 2 : 0), ((optInTimePeriod > 1) ? (19 * (2 * optInTimePeriod - 1) + 1) / 2 : 0)) ;
 
    }
    /**

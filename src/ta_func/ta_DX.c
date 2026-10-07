@@ -73,7 +73,7 @@ TA_NOINLINE TA_LIB_API int TA_DX_Lookback( int optInTimePeriod )
       return -1;
    if( optInTimePeriod > 1 )
    {
-      return optInTimePeriod + TA_GLOBALS_UNSTABLE(TA_FUNC_UNST_DX,Dx,((optInTimePeriod > 1) ? 10 * optInTimePeriod : 0),((optInTimePeriod > 1) ? 19 * optInTimePeriod : 0));
+      return optInTimePeriod + TA_GLOBALS_UNSTABLE(TA_FUNC_UNST_DX,Dx,((optInTimePeriod > 1) ? (10 * (2 * optInTimePeriod - 1) + 1) / 2 : 0),((optInTimePeriod > 1) ? (19 * (2 * optInTimePeriod - 1) + 1) / 2 : 0));
    } else 
    {
       return 2;

@@ -86,7 +86,7 @@ public partial class Core
       } else if( optInStdDevPeriod < 2 || optInStdDevPeriod > 100000 ) {
          return -1;
       }
-      return optInStdDevPeriod - 1 + (optInTimePeriod - 1) + this.UnstableCount((int)FuncUnstId.RVI, ((optInTimePeriod > 1) ? 10 * optInTimePeriod : 0), ((optInTimePeriod > 1) ? 19 * optInTimePeriod : 0)) ;
+      return optInStdDevPeriod - 1 + (optInTimePeriod - 1) + this.UnstableCount((int)FuncUnstId.RVI, ((optInTimePeriod > 1) ? (10 * (2 * optInTimePeriod - 1) + 1) / 2 : 0), ((optInTimePeriod > 1) ? (19 * (2 * optInTimePeriod - 1) + 1) / 2 : 0)) ;
 
    }
    /// <summary>

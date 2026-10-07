@@ -14,8 +14,11 @@ fed back, and when. Each item decides a part of the rule.
 - **A fixed pole `p`**, `state = p*state + f(input)`. The difference between two starts
   shrinks by exactly `p` per bar on any input, so an e-fold costs `1/-ln(p)` bars. Round
   that up to the nearest ratio of small integers, taken with a ceiling: `n/2` for a pole at
-  `(n-1)/(n+1)`, `13/9` for one at 1/2, `5/2` for one at 0.67. A looser ratio costs bars
-  at every level. This is the per-level part, `K` times it.
+  `(n-1)/(n+1)`, `n - 1/2` for one at `1 - 1/n`, `13/9` for one at 1/2, `5/2` for one at
+  0.67. A looser ratio costs bars at every level. This is the per-level part, `K` times
+  it. A ratio this tight leaves no bar over the need at a long period, so the count holds
+  the level in exact arithmetic and a pair can sit a rounding error over it: say so on
+  the page.
 - **The gain between that state and the outputs.** A level is measured against `S`, the
   largest difference the seed causes on any output at any bar. The gain is how much more
   a late state difference shows than an early one, in e-folds. It is added to `K`: the

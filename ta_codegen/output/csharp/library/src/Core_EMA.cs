@@ -81,7 +81,7 @@ public partial class Core
       } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
          return -1;
       }
-      return optInTimePeriod - 1 + this.UnstableCount((int)FuncUnstId.EMA, ((optInTimePeriod > 1) ? (10 * (optInTimePeriod + 1) + 1) / 2 : 0), ((optInTimePeriod > 1) ? (19 * (optInTimePeriod + 1) + 1) / 2 : 0)) ;
+      return optInTimePeriod - 1 + this.UnstableCount((int)FuncUnstId.EMA, ((optInTimePeriod > 1) ? (10 * optInTimePeriod + 1) / 2 : 0), ((optInTimePeriod > 1) ? (19 * optInTimePeriod + 1) / 2 : 0)) ;
 
    }
    /// <summary>
