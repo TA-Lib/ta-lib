@@ -9,10 +9,10 @@ pkgconfig_DATA = ta-lib.pc
 # Downstream consumers build straight out of this tarball — the PHP `trader`
 # extension globs src/ta_func/*.c — so the internal headers those .c files
 # include (ta_func_private.h, ta_utility.h, ta_common/*.h) must ship too.
-HEADER_FILES = $(shell find src -name '*.h')
+HEADER_FILES = $(shell unset CDPATH; cd $(srcdir) && find src -name '*.h')
 
 # Distribute some C files containing static data used for ta_regtest
-GDATA_FILES = $(shell find . -name 'ta_gData*.c')
+GDATA_FILES = $(shell unset CDPATH; cd $(srcdir) && find src -name 'ta_gData*.c')
 
 # Distribute additional bash scripts needed to "make all"
 BUILD_SHELL_FILES = src/tools/post-build-bin.sh

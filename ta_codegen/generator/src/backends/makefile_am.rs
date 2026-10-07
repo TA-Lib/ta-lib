@@ -14,7 +14,7 @@ pub fn generate(funcs: &[FuncDef], out_path: &Path, root: &Path) {
     // Header (matches the old Makefile.am.template)
     content.push_str(
         "\nnoinst_LTLIBRARIES = libta_func.la\n\
-         AM_CPPFLAGS = -I../ta_common/\n\
+         AM_CPPFLAGS = -I$(top_srcdir)/include -I$(top_srcdir)/src/ta_common\n\
          \n\
          libta_func_la_SOURCES = ta_utility.c \\\n",
     );

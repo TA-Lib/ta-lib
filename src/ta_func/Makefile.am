@@ -1,6 +1,6 @@
 
 noinst_LTLIBRARIES = libta_func.la
-AM_CPPFLAGS = -I../ta_common/
+AM_CPPFLAGS = -I$(top_srcdir)/include -I$(top_srcdir)/src/ta_common
 
 libta_func_la_SOURCES = ta_utility.c \
 	ta_AC.c \
