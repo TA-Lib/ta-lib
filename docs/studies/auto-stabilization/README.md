@@ -22,6 +22,7 @@ From the repository root, after `scripts/build.py`:
 ```bash
 cd docs/studies/auto-stabilization
 gcc -O2 -I../../../include auto_stabilization_probe.c ../../../cmake-build/libta-lib.a -lm -o /tmp/auto_stabilization_probe
+gcc -O2 -I../../../include auto_stabilization_census.c ../../../cmake-build/libta-lib.a -lm -o /tmp/auto_stabilization_census
 /tmp/auto_stabilization_probe 40000 > /tmp/probe.tsv          # every function; add a name to run one
 OVR="FastLimit=0.2,SlowLimit=0.02" /tmp/auto_stabilization_probe 40000 MAMA   # one function, other parameters
 python3 analyze.py /tmp/probe.tsv /tmp/agg.json summary

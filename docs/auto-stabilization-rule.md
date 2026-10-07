@@ -36,8 +36,8 @@ fed back, and when. Each item decides a part of the rule.
   on either side of a step differ by it however close they are, so no count is a bound.
   Work out two things: whether the stepped value is fed back, and then for which inputs
   each side stays on its side (FISHER: a channel position between 0.986 and 0.995); and
-  how often it happens, by counting two-start pairs over the rule on random series through
-  the library, since the study's three series do not show it. Rare and short-lived: size
+  how often it happens, which only the census of section 2 shows: the probe's three
+  series do not. Rare and short-lived: size
   the rule for the path where both starts step together and state the step as a limit.
   When steps are what drives the state, the function is a state machine and gets no rule.
 
@@ -51,6 +51,7 @@ Build the library and the probe as the study's README says, from
 python3 analyze.py /tmp/need.tsv /tmp/agg.json f=<NAME>    # one line per output and parameter set
 python3 rules_vs_need.py /tmp/need.tsv                     # the library's count against the need
 OVR="TimePeriod=2" /tmp/auto_stabilization_probe 40000 <NAME> > /tmp/need_min.tsv
+/tmp/auto_stabilization_census 20000 1 <NAME>              # how often random series pass the count
 ```
 
 - Read `A10` and `A19`, the need at each level, `A7` and `A16`, what the regression leg
@@ -65,6 +66,16 @@ OVR="TimePeriod=2" /tmp/auto_stabilization_probe 40000 <NAME> > /tmp/need_min.ts
 - `analyze.py` shows the need whatever the lookback holds: the probe runs with every id
   at 0. `rules_vs_need.py` sets the count the library gives against it, so after changing
   a rule run `scripts/build.py generate`, rebuild the library and relink the probe.
+- The census runs thousands of random series from two starts, at the defaults, tripled
+  periods and the shortest ones. `max_10` and `max_19` are the largest need it met,
+  `over10` and `over19` the trials above the count, `over7` and `over16` those above what
+  the regression leg holds, `never` those that had not converged when the window ended. A
+  constant need with nothing over is a linear kernel. A few trials far over, or any in
+  `never`, is a step, or a state that locks: reproduce one before sizing anything. Many
+  over on one kind of series only is a rule sized for another kind: name it as a limit.
+- The census ignores a difference under `1e-10` of the output's range, so an output whose
+  seed difference is small against its range shows a `PREC_8` need cut short. Take that
+  one from the probe's `A19`.
 - On one row, `(A19 - A10) / 9` is the measured bars per e-fold. A linear output comes out
   at the derived figure; well above it on every row means the derivation missed a slower
   state. A non-linear output scatters around it.
@@ -82,6 +93,9 @@ OVR="TimePeriod=2" /tmp/auto_stabilization_probe 40000 <NAME> > /tmp/need_min.ts
   run, at every `K` the script lists. Derive the bound first and require the search to
   reach it: a search that stays under it has missed the worst case, or the bound is slack.
   `c` is the smallest integer with no violation.
+- **A proven rule well above the largest need the census met, at both levels,** is a
+  slack bound: usually one taken against the seed's size where the level is measured
+  against `S`. Redo the gain before accepting the rule.
 - **A measured need above a proven rule** means the derivation is wrong, not that the
   rule needs margin, unless a step of section 1 is what produced it.
 - **A measured rule covers the worst need at both levels**, at the defaults and at tripled
