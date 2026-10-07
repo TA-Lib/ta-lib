@@ -459,6 +459,7 @@ jobs:
         uses: actions/checkout@v6
         with:
           ref: ${{ job.workflow_sha }}
+          fetch-depth: 0 # the release tags the ta_ref members pin
 
       - name: Install Python
         uses: actions/setup-python@v6
@@ -492,6 +493,12 @@ jobs:
       - name: Run the Java and C# suites
         shell: bash
         run: python3 scripts/build.py libraries
+
+      # arm64-linux runs this under GCC; AppleClang is the other compiler on a
+      # target where FMA is baseline.
+      - name: Fuzz current library vs each frozen release
+        shell: bash
+        run: python3 scripts/build.py ref
 
   # The only thing anywhere that LINKS the Windows DLL. The dist tests check
   # that ta-lib.dll and ta-lib.lib exist as files (scripts/install_tests/msi.py),
@@ -1098,9 +1105,8 @@ jobs:
   #      without -ffp-contract=off fuses a*b+c inside the REFERENCE, and the suite
   #      then measures a compiler difference rather than a code difference (549
   #      false failures across 9 functions, reported on an M5 Max). On x86-64 the
-  #      flag is inert — no baseline FMA — which is why every job above is blind to
-  #      this class. macos-latest is arm64, but no job there runs --ref; no
-  #      FMA-baseline runner has ever executed an oracle suite.
+  #      flag is inert — no baseline FMA — which is why an x86-64 job is blind to
+  #      this class.
   #  (2) GCC. fuzz_data.h — the seeded INPUT generator both sides of --ref
   #      compile — defends itself with `#pragma STDC FP_CONTRACT OFF`, which clang
   #      honours and GCC ignores outright (GCC also contracts ACROSS statements, so
