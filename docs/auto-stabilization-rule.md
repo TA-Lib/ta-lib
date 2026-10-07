@@ -13,8 +13,9 @@ fed back, and when. Each item decides a part of the rule.
 
 - **A fixed pole `p`**, `state = p*state + f(input)`. The difference between two starts
   shrinks by exactly `p` per bar on any input, so an e-fold costs `1/-ln(p)` bars. Round
-  that up to a ratio of small integers the period scales: `(n+1)/2` for an EMA, `n` for
-  Wilder, `5/2` for a pole at 0.67. This is the per-level part, `K` times it.
+  that up to the nearest ratio of small integers, taken with a ceiling: `n/2` for a pole at
+  `(n-1)/(n+1)`, `13/9` for one at 1/2, `5/2` for one at 0.67. A looser ratio costs bars
+  at every level. This is the per-level part, `K` times it.
 - **The gain between that state and the outputs.** A level is measured against `S`, the
   largest difference the seed causes on any output at any bar. The gain is how much more
   a late state difference shows than an early one, in e-folds. It is added to `K`: the
@@ -22,8 +23,12 @@ fed back, and when. Each item decides a part of the rule.
   level to make room for it. What contributes:
   - a non-linear map: its largest slope between two states both starts can hold. A value
     only a limiter produces is not one of them, both starts hold it or neither does;
-  - a faster pole `q` after the state: `p/(p-q)`; a repeated or complex pole: its envelope
-    against its own peak;
+  - a faster pole `q` after the state: `p/(p-q)`;
+  - a repeated pole, or stages stepped together: the difference is the pole to the age
+    times a polynomial of the age, and the seeds can cancel across its terms, so the first
+    outputs are small and the peak comes later. The gain is that polynomial's worst growth
+    against `S`, over every seed the slots can hold. It grows with `K`: `c` is sized at
+    the largest `K` to hold, and the lookback comment names that `K`;
   - an output that repeats another a bar later: one bar;
   - the smallest `S` can be against the first state difference. Seeds can cancel part of
     each other in the first outputs, and every output counts: FISHER's trigger shows the
@@ -31,8 +36,10 @@ fed back, and when. Each item decides a part of the rule.
 - **A coefficient the data moves**, or a state that feeds back into its own gain through
   clamps or a rate limiter. There is no bound, or one several times the need. The rule is
   sized by measurement.
-- **A step**: a limiter that snaps to a value, a comparison that picks a branch on the
-  state. A branch on the input alone is not one: both starts take it together. Two starts
+- **A step**: a limiter that snaps to a value, a comparison on the state whose branches
+  differ where they meet, a test for an exact zero of a computed value, which rounding
+  decides. A branch on the input alone is not one, both starts take it together, nor is a
+  `max` or `min` with the state, which is continuous: a slope of 1. Two starts
   on either side of a step differ by it however close they are, so no count is a bound.
   Work out two things: whether the stepped value is fed back, and then for which inputs
   each side stays on its side (FISHER: a channel position between 0.986 and 0.995); and
@@ -40,6 +47,10 @@ fed back, and when. Each item decides a part of the rule.
   series do not. Rare and short-lived: size
   the rule for the path where both starts step together and state the step as a limit.
   When steps are what drives the state, the function is a state machine and gets no rule.
+- **A rate that reaches zero.** Where the coefficient depends on the state against the
+  price, find the region where a difference stops shrinking (MCGD: the line 20% under the
+  price) and what input holds the state there. That is a limit to state as a condition on
+  the input, and no multiple of the period removes it.
 
 ## 2. Measure the need
 
@@ -73,6 +84,9 @@ OVR="TimePeriod=2" /tmp/auto_stabilization_probe 40000 <NAME> > /tmp/need_min.ts
   constant need with nothing over is a linear kernel. A few trials far over, or any in
   `never`, is a step, or a state that locks: reproduce one before sizing anything. Many
   over on one kind of series only is a rule sized for another kind: name it as a limit.
+- Random series do not reach the worst seed of a repeated pole or of several stages: T3
+  reads 34 on the probe and 45 on the census against a true 64. Neither tool sizes such a
+  rule; section 3's kernel check does.
 - The census ignores a difference under `1e-10` of the output's range, so an output whose
   seed difference is small against its range shows a `PREC_8` need cut short. Take that
   one from the probe's `A19`.
@@ -92,7 +106,12 @@ OVR="TimePeriod=2" /tmp/auto_stabilization_probe 40000 <NAME> > /tmp/need_min.ts
   hold both starts where the gain is largest, every output, against `S` over the whole
   run, at every `K` the script lists. Derive the bound first and require the search to
   reach it: a search that stays under it has missed the worst case, or the bound is slack.
-  `c` is the smallest integer with no violation.
+  `c` is the smallest integer with no violation. Iterate in exact fractions where the
+  tolerance at the largest `K` is under a double's rounding, and take `S` at whole ages:
+  a continuous envelope is not a bound at short periods.
+- **When the worst seed is nothing like a price**, a proven count can be well above any
+  need a series shows. Report both figures; choosing the measured one changes the rule's
+  tier and is the owner's decision.
 - **A proven rule well above the largest need the census met, at both levels,** is a
   slack bound: usually one taken against the seed's size where the level is measured
   against `S`. Redo the gain before accepting the rule.

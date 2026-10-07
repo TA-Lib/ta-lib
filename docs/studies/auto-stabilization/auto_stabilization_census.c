@@ -7,11 +7,13 @@
  * three fixed series; this counts how often a rule is passed, which is how a
  * step in the recursion shows.
  *
- *    census <trials> <seed> [NAME]     one TSV row per (function, parameters, series kind)
+ *    census <trials> <seed> [NAME [drift]]   one TSV row per (function, parameters, series kind)
  *    census list                       the functions it would run
  *
- * Series kinds: rw, a random walk; tr, a walk whose drift flips at random
- * intervals; rb, a range-bound walk pulled back to its mean.
+ * Series kinds: rw, a random walk; tr, a walk whose drift (0.001 per bar unless
+ * given) flips at random intervals; rb, a range-bound walk pulled back to its
+ * mean. tr starts at 10000 so that a long fall does not rest on the 1.00 floor:
+ * a flat run is a limit of its own, and it would be counted as a rule's.
  * need<K> p50/p99/max over the trials; over<K> = trials whose need is above the
  * count; never = trials still above e^-7 at the last compared age.
  */
@@ -31,6 +33,7 @@ static double RA[MAXOUT][NMAX], RB[MAXOUT][NMAX];
 static int    IA[MAXOUT][NMAX], IB[MAXOUT][NMAX];
 static const char *g_only;
 static int g_trials, g_list;
+static double g_drift = 0.001;
 static unsigned long long g_seed, rng_s;
 
 static double rnd(void)
@@ -49,7 +52,7 @@ static double r2(double x) { return floor(x*100.0 + 0.5) / 100.0; }
 static void make_series(int kind, int n)
 {
    int i;
-   double c = 100.0, prev = 100.0, drift = 0.004, vol = 1.0e6;
+   double c = kind == 1 ? 10000.0 : 100.0, prev = c, drift = g_drift, vol = 1.0e6;
    for( i = 0; i < n; i++ )
    {
       double o, h, l;
@@ -249,6 +252,7 @@ int main(int argc, char **argv)
    g_trials = (argc > 1 && !g_list) ? atoi(argv[1]) : 1000;
    g_seed = (argc > 2) ? strtoull(argv[2], NULL, 10) : 1;
    g_only = (argc > 3) ? argv[3] : NULL;
+   if( argc > 4 ) g_drift = atof(argv[4]);
    if( TA_Initialize() != TA_SUCCESS ) return 2;
    if( !g_list && !g_only )
       printf("func\tcfg\tkind\tlookback\tlive\tauto4\tp50_10\tp99_10\tmax_10\tover10\tover7\tauto8\tp50_19\tp99_19\tmax_19\tover19\tover16\tnever\tworstT10\tworstT19\n");
