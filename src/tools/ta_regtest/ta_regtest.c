@@ -930,6 +930,7 @@ static ErrorNumber testTAFunction_ALL( void )
    DO_TEST( test_func_composite2, "SMI,COPPOCK,ER" );
    DO_TEST( test_func_marketfi, "MARKETFI" );
    DO_TEST( test_func_fisher,   "FISHER" );
+   DO_TEST( test_func_pso, "PSO" );
    DO_TEST( test_func_rogerssatchell, "ROGERSSATCHELL" );
    DO_TEST( test_func_emv,       "EMV" );
    DO_TEST( test_func_ibs,       "IBS" );

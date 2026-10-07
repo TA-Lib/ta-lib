@@ -688,6 +688,10 @@ static const UnstableLookup UNSTABLE_MAP[] = {
     {"MINUS_DI",     TA_FUNC_UNST_MINUS_DI},
     {"MINUS_DM",     TA_FUNC_UNST_MINUS_DM},
     {"NATR",         TA_FUNC_UNST_NATR},
+    /* PSO inherits: both of its smoothings are EMA sub-calls, so it takes no
+     * id of its own. Without this row the range-stability leg classifies it
+     * EPSILON and the stream leg never runs it at a non-zero unstable period. */
+    {"PSO",          TA_FUNC_UNST_EMA},
     {"PLUS_DI",      TA_FUNC_UNST_PLUS_DI},
     {"PLUS_DM",      TA_FUNC_UNST_PLUS_DM},
     {"RMA",          TA_FUNC_UNST_RMA},
@@ -6943,7 +6947,7 @@ void codegen_hash_report(const char *who, TA_RetCode goldRc, int goldBeg,
 static const char *const CODEGEN_TRANSCENDENTAL[] = {
     "ACOS", "ALMA", "ASIN", "ATAN", "CHOP", "CHOPTR", "COS", "COSH", "EXP", "FISHER", "FRAMA",
     "HT_DCPERIOD", "HT_DCPHASE", "HT_PHASOR", "HT_SINE", "HT_TRENDLINE",
-    "HT_TRENDMODE", "LINEARREG_ANGLE", "LN", "LOG10", "MAMA",
+    "HT_TRENDMODE", "LINEARREG_ANGLE", "LN", "LOG10", "MAMA", "PSO",
     "ROGERSSATCHELL", "SIN", "SINH",
     "SWAK_2PHP", "SWAK_BP", "SWAK_BUTTER", "SWAK_GAUSS", "SWAK_HP",
     "TAN", "TANH",
