@@ -8,6 +8,7 @@ how the value at a bar computed from a later start approaches the value computed
 | File | What it does |
 |---|---|
 | `auto_stabilization_probe.c` | Runs every function through the abstraction layer from bar 0 and from six later starts, on three synthetic series, and writes one row per (series, function, parameter set, output, start) |
+| `auto_stabilization_census.c` | Runs every function that owns an unstable id from two starts on thousands of random series and counts how often the need passes the count the library discards. Its header has the usage and the columns |
 | `analyze.py` | Folds those rows into one line per output, worst case over series and starts, and a class per function |
 | `rules_vs_need.py` | Sets the count the library discards at each level, for every function that owns an unstable id, against the measured need |
 | `rules_check.py` | Checks the one-pole, SWAK, T3 and FISHER rules against the kernels at seven values of K and a grid of periods, with no library involved. The calibrated rules are not in it: section 3 of `results.txt` holds those |
