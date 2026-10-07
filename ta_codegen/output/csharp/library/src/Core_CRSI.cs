@@ -175,6 +175,7 @@ public partial class Core
       if( (outReal.Overlaps(inReal) && outReal != inReal) ) {
          return RetCode.BadParam ;
       }
+      double[]? _rent_tempStreak = null;
       outBegIdx = 0;
       outNBElement = 0;
       lookbackTotal = CrsiLookback(optInTimePeriod, optInStreakPeriod, optInRankPeriod);
@@ -189,7 +190,8 @@ public partial class Core
        * up over the spare bars instead of starting cold at its own lookback.
        */
       anchorIdx = startIdx - lookbackTotal;
-      tempStreak = new double[(int)((endIdx - anchorIdx) * 1)];
+      _rent_tempStreak = System.Buffers.ArrayPool<double>.Shared.Rent((int)((endIdx - anchorIdx) * 1));
+      tempStreak = _rent_tempStreak.AsSpan(0, (int)((endIdx - anchorIdx) * 1));
       tempRSI = new double[(int)((endIdx - anchorIdx - RsiLookback(optInTimePeriod) + 1) * 1)];
       tempStreakRSI = new double[(int)((endIdx - anchorIdx - RsiLookback(optInStreakPeriod)) * 1)];
       streak = 0.0;
@@ -231,6 +233,7 @@ public partial class Core
       for( i = 0; i < (int)outNBElement; i += 1 ) {
          outReal[i] = (tempRSI[i + offsetRSI] + tempStreakRSI[i + offsetStreak] + outReal[i]) / 3.0;
       }
+      ReturnScratch(ref _rent_tempStreak);
       outBegIdx = startIdx;
       return RetCode.Success ;
    }
@@ -288,6 +291,7 @@ public partial class Core
       if( System.Runtime.InteropServices.MemoryMarshal.AsBytes(outReal).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inReal)) ) {
          return RetCode.BadParam ;
       }
+      double[]? _rent_tempStreak = null;
       outBegIdx = 0;
       outNBElement = 0;
       lookbackTotal = CrsiLookback(optInTimePeriod, optInStreakPeriod, optInRankPeriod);
@@ -298,7 +302,8 @@ public partial class Core
          startIdx = lookbackTotal;
       }
       anchorIdx = startIdx - lookbackTotal;
-      tempStreak = new double[(int)((endIdx - anchorIdx) * 1)];
+      _rent_tempStreak = System.Buffers.ArrayPool<double>.Shared.Rent((int)((endIdx - anchorIdx) * 1));
+      tempStreak = _rent_tempStreak.AsSpan(0, (int)((endIdx - anchorIdx) * 1));
       tempRSI = new double[(int)((endIdx - anchorIdx - RsiLookback(optInTimePeriod) + 1) * 1)];
       tempStreakRSI = new double[(int)((endIdx - anchorIdx - RsiLookback(optInStreakPeriod)) * 1)];
       streak = 0.0;
@@ -339,6 +344,7 @@ public partial class Core
       for( i = 0; i < (int)outNBElement; i += 1 ) {
          outReal[i] = (tempRSI[i + offsetRSI] + tempStreakRSI[i + offsetStreak] + outReal[i]) / 3.0;
       }
+      ReturnScratch(ref _rent_tempStreak);
       outBegIdx = startIdx;
       return RetCode.Success ;
    }

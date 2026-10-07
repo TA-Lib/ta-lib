@@ -234,6 +234,7 @@ public partial class Core
       if( (outSlowK.Overlaps(inHigh) && outSlowK != inHigh) || (outSlowK.Overlaps(inLow) && outSlowK != inLow) || (outSlowK.Overlaps(inClose) && outSlowK != inClose) || (outSlowD.Overlaps(inHigh) && outSlowD != inHigh) || (outSlowD.Overlaps(inLow) && outSlowD != inLow) || (outSlowD.Overlaps(inClose) && outSlowD != inClose) ) {
          return RetCode.BadParam ;
       }
+      double[]? _rent_tempBuffer = null;
       i = 0;
       /* With stochastic, there is a total of 4 different lines that
        * are defined: FASTK, FASTD, SLOWK and SLOWD.
@@ -321,7 +322,8 @@ public partial class Core
          tempBuffer = outSlowK;
       } else {
          bufferIsAllocated = 1;
-         tempBuffer = new double[(int)((endIdx - today + 1) * 1)];
+         _rent_tempBuffer = System.Buffers.ArrayPool<double>.Shared.Rent((int)((endIdx - today + 1) * 1));
+         tempBuffer = _rent_tempBuffer.AsSpan(0, (int)((endIdx - today + 1) * 1));
       }
       /* Do the K calculation */
       while( today <= endIdx ) {
@@ -389,6 +391,9 @@ public partial class Core
       outNBElement = _xr2.Count;
       retCode = RetCode.Success;
       if( (int)outNBElement == 0 ) {
+         if( (bufferIsAllocated) != 0 ) {
+            ReturnScratch(ref _rent_tempBuffer);
+         }
          /* Something wrong happen? No further data? */
          outBegIdx = 0;
          outNBElement = 0;
@@ -410,6 +415,9 @@ public partial class Core
        * reused as scratch, so source and destination overlap (issue #94).
        */
       tempBuffer.Slice(lookbackDSlow, (int)outNBElement * 1).CopyTo(outSlowK.Slice(0));
+      if( (bufferIsAllocated) != 0 ) {
+         ReturnScratch(ref _rent_tempBuffer);
+      }
       /* Note: Keep the outBegIdx relative to the
        *       caller input before returning.
        */
@@ -486,6 +494,7 @@ public partial class Core
       if( System.Runtime.InteropServices.MemoryMarshal.AsBytes(outSlowK).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inHigh)) || System.Runtime.InteropServices.MemoryMarshal.AsBytes(outSlowK).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inLow)) || System.Runtime.InteropServices.MemoryMarshal.AsBytes(outSlowK).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inClose)) || System.Runtime.InteropServices.MemoryMarshal.AsBytes(outSlowD).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inHigh)) || System.Runtime.InteropServices.MemoryMarshal.AsBytes(outSlowD).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inLow)) || System.Runtime.InteropServices.MemoryMarshal.AsBytes(outSlowD).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inClose)) ) {
          return RetCode.BadParam ;
       }
+      double[]? _rent_tempBuffer = null;
       i = 0;
       lookbackK = optInFastK_Period - 1;
       lookbackKSlow = MaLookback(optInSlowK_Period, optInSlowK_MAType);
@@ -508,7 +517,8 @@ public partial class Core
       highest = lowest;
       bufferIsAllocated = 0;
       bufferIsAllocated = 1;
-      tempBuffer = new double[(int)((endIdx - today + 1) * 1)];
+      _rent_tempBuffer = System.Buffers.ArrayPool<double>.Shared.Rent((int)((endIdx - today + 1) * 1));
+      tempBuffer = _rent_tempBuffer.AsSpan(0, (int)((endIdx - today + 1) * 1));
       while( today <= endIdx ) {
          tmp = (double)inLow[today];
          if( lowestIdx < trailingIdx ) {
@@ -557,6 +567,9 @@ public partial class Core
       outNBElement = _xr2.Count;
       retCode = RetCode.Success;
       if( (int)outNBElement == 0 ) {
+         if( (bufferIsAllocated) != 0 ) {
+            ReturnScratch(ref _rent_tempBuffer);
+         }
          outBegIdx = 0;
          outNBElement = 0;
          return retCode ;
@@ -566,6 +579,9 @@ public partial class Core
       outNBElement = _xr3.Count;
       retCode = RetCode.Success;
       tempBuffer.Slice(lookbackDSlow, (int)outNBElement * 1).CopyTo(outSlowK.Slice(0));
+      if( (bufferIsAllocated) != 0 ) {
+         ReturnScratch(ref _rent_tempBuffer);
+      }
       outBegIdx = startIdx;
       return RetCode.Success ;
    }

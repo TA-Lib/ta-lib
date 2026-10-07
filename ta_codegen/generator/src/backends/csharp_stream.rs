@@ -1299,6 +1299,7 @@ fn stream_ctx<'a>(
         plain_selects: Cell::new(false),
         in_reduction_loop: Cell::new(false),
         batch: false,
+        pooled: None,
     }
 }
 
@@ -2193,6 +2194,7 @@ fn emit_open_region(
         plain_selects: Cell::new(false),
         in_reduction_loop: Cell::new(false),
         batch: false,
+        pooled: None,
     };
 
     // VarDecl initializations (mirrors gen_func_inner).
@@ -4833,6 +4835,7 @@ fn emit_composed_open(
         plain_selects: Cell::new(false),
         in_reduction_loop: Cell::new(false),
         batch: false,
+        pooled: None,
     };
     let region_len = region_stmts.len();
     // Own inputs are exactly `historyLen` long — `emit_open_validation` above

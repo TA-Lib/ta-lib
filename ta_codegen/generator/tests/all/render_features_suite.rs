@@ -1307,6 +1307,79 @@ TA_RetCode max( int    startIdx,
     }
 }
 
+/// A C# batch body rents its `malloc` scratch from the shared pool and returns
+/// it where the C frees it; a size that writes keeps the plain allocation, and
+/// its `free` stays dropped.
+#[test]
+fn csharp_rents_batch_scratch_and_returns_it_where_c_frees() {
+    let source = r#"
+int max_lookback( int optInTimePeriod )
+{
+   return (optInTimePeriod-1);
+}
+
+TA_RetCode max( int    startIdx,
+                int    endIdx,
+                const double inReal[],
+                int    optInTimePeriod,
+                int   *outBegIdx,
+                int   *outNBElement,
+                double outReal[] )
+{
+   int outIdx, i;
+   double *scratch;
+   double *counted;
+   double *twice;
+   double *mixed;
+
+   outIdx = 0;
+   scratch = malloc((endIdx-startIdx+1) * sizeof(double));
+   counted = malloc((outIdx++) * sizeof(double));
+   twice = malloc(8 * sizeof(double));
+   twice = malloc((outIdx++) * sizeof(double));
+   mixed = malloc(8 * sizeof(double));
+   mixed = malloc(8 * sizeof(int));
+   for( i=startIdx; i <= endIdx; i++ )
+   {
+      scratch[i-startIdx] = inReal[i];
+      outReal[outIdx++] = scratch[i-startIdx];
+   }
+   if( outIdx == 0 )
+   {
+      free(scratch);
+      free(counted);
+      *outBegIdx = 0;
+      *outNBElement = 0;
+      return TA_SUCCESS;
+   }
+   free(scratch);
+   free(counted);
+
+   *outBegIdx = startIdx;
+   *outNBElement = outIdx;
+   return TA_SUCCESS;
+}
+"#;
+    let (func, enums) = load_indicator_with_source("max", source);
+    let cs = backends::csharp::generate(&func, &enums, make_registry(), make_helpers());
+    let flat: String = cs.split_whitespace().collect::<Vec<_>>().join(" ");
+    for needle in [
+        "double[]? _rent_scratch = null;",
+        "_rent_scratch = System.Buffers.ArrayPool<double>.Shared.Rent((int)((endIdx - startIdx + 1) * 1)); \
+         scratch = _rent_scratch.AsSpan(0, (int)((endIdx - startIdx + 1) * 1));",
+        "if( outIdx == 0 ) { ReturnScratch(ref _rent_scratch); outBegIdx = 0;",
+        "ReturnScratch(ref _rent_scratch); outBegIdx = startIdx;",
+        "counted = new double[(int)(",
+        "twice = new double[(int)(8 * 1)];",
+        "mixed = new double[(int)(8 * 1)];",
+    ] {
+        assert!(flat.contains(needle), "C# output missing `{needle}`:\n{cs}");
+    }
+    for name in ["counted", "twice", "mixed"] {
+        assert!(!flat.contains(&format!("_rent_{name}")), "{name}:\n{cs}");
+    }
+}
+
 #[test]
 fn backends_render_math_functions_idiomatically() {
     let (func, enums) = load_indicator("ht_trendmode");
