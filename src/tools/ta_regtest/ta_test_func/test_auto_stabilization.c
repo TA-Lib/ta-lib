@@ -485,9 +485,9 @@ static void awCheckOffset( const TA_FuncInfo *funcInfo, const AwVector *vec )
       }
       else
       {
-         if( p1 > p0 ) p0 = p1;
-         base   = awRule( "EMA", awLevel[l].K, awLevel[l].X, p0, 0, 0.0, 0.0 );
-         offset = (p0 + 1) / 2;
+         int slowest = p0 > p1 ? p0 : p1, fastest = p0 > p1 ? p1 : p0;
+         base   = awRule( "EMA", awLevel[l].K, awLevel[l].X, slowest, 0, 0.0, 0.0 );
+         offset = awCeilDiv( fastest*(7 + 3*awISqrt( awISqrt( slowest/fastest ) )), 4 );
       }
       TA_SetUnstablePeriod( source, awLevel[l].level );
       got = awLookback( funcInfo, vec ) - at0;

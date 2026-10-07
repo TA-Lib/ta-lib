@@ -476,3 +476,29 @@ P=[100.0+10.0*t for t in range(30)]
 while len(P)<4000: P.append(round(P[-1]+10.69,2)); P.append(round(P[-1]-0.69,2))
 a=fisher_series(P,0); b=fisher_series(P,40)
 print('  latch: fisher at the last two bars from bar 0 %.4f %.4f, from bar 40 %.4f %.4f, %d bars after the later start'%(a[len(P)-2],a[len(P)-1],b[len(P)-2],b[len(P)-1],len(P)-40))
+
+# ADOSC: two EMAs seeded on one value at one bar, so two starts differ by x*pf^a - ps^a at age
+# a, x being the ratio of the two first differences, any real. Rule: the slow EMA's count plus
+# ceil(f*(7 + 3*r)/4), f the fastest period and r the integer fourth root of slowest/fastest.
+# Held against the worst x, found by a scan refined three times.
+def adosc_need(nf,ns,K,nx=121):
+    lf=math.log((nf-1)/(nf+1)); ls=math.log((ns-1)/(ns+1))
+    A=int((K+14)/-ls)+60
+    f=[math.exp(a*lf) for a in range(A)]; s=[math.exp(a*ls) for a in range(A)]
+    head=min(A,int(6/-ls)+10)
+    def need(x):
+        thr=math.exp(-K)*max(abs(x*f[a]-s[a]) for a in range(head))
+        return next((a+1 for a in range(A-1,-1,-1) if abs(x*f[a]-s[a])>thr),0)
+    lo,hi,best=-1.0,4.0,0
+    for _ in range(3):
+        xs=[lo+(hi-lo)*i/(nx-1) for i in range(nx)]
+        v=[need(x) for x in xs]; m=max(v); best=max(best,m)
+        tops=[x for x,n in zip(xs,v) if n==m]; w=xs[1]-xs[0]
+        lo,hi=min(tops)-w,max(tops)+w
+    return best
+def adosc_rule(K,nf,ns): return ceil_div(K*ns,2)+ceil_div(nf*(7+3*math.isqrt(math.isqrt(ns//nf))),4)
+adosc_pairs=[(nf,ns) for ns in range(3,25) for nf in range(2,ns)]+[(3,10),(9,30),(29,30),(99,100),(2,100),(5,250),(10,500),(2,1000)]
+adosc_bad=[(nf,ns,K) for nf,ns in adosc_pairs for K in (10,19) if adosc_need(nf,ns,K)>adosc_rule(K,nf,ns)]
+print('ADOSC: pairs',len(adosc_pairs),'violations',adosc_bad[:5],len(adosc_bad),
+      ' spare bars at (3,10), (29,30), (99,100):',[[adosc_rule(K,nf,ns)-adosc_need(nf,ns,K) for K in (10,19)] for nf,ns in ((3,10),(29,30),(99,100))])
+

@@ -11,7 +11,7 @@
  *  -------------------------------------------------------------------
  *  120802 MF   Template creation.
  *  052603 MF   Adapt code to compile with .NET Managed C++
- *  100726 MF,CC  #492. Under an Auto level one more e-fold of the slow EMA.
+ *  100726 MF,CC  #492. Under an Auto level the bars its two EMAs' cancelling costs.
  *
  */
 
@@ -25,13 +25,15 @@ int adosc_lookback(int optInFastPeriod, int optInSlowPeriod)
    else
       slowestPeriod = optInFastPeriod;
 
-   /* Both EMAs seed on one value at one bar, so the first differences two
-    * starts show cancel in part: the largest is under half the slow EMA's
-    * own while the slow period is at least three times the fast one. An Auto
-    * level is held against it, one e-fold of the slow EMA further.
+   /* Both EMAs seed on one value at one bar, so two starts differ by a fast
+    * term less a slow one, and the two can cancel in the first outputs: an
+    * Auto level is held against what is left. The bars that costs follow the
+    * fastest period, with the fourth root of the periods' ratio.
     */
    return ema_lookback( slowestPeriod )
-   + TA_UNSTABLE_AUTO( TA_FUNC_UNST_EMA, optInFastPeriod < optInSlowPeriod ? (optInSlowPeriod + 1) / 2 : (optInFastPeriod + 1) / 2 );
+   + TA_UNSTABLE_AUTO( TA_FUNC_UNST_EMA, optInFastPeriod < optInSlowPeriod
+      ? ta_auto_stabilization_adosc(optInFastPeriod, optInSlowPeriod)
+      : ta_auto_stabilization_adosc(optInSlowPeriod, optInFastPeriod) );
 }
 
 TA_RetCode adosc(int startIdx, int endIdx,

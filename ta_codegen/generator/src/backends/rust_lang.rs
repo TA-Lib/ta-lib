@@ -5441,6 +5441,9 @@ fn render_func_call(
                             .collect();
                         let read = |c: &[String]| format!("self.unstable_count(FuncUnstId::{base}, {})", c.join(", "));
                         return if matches!(b, SpecialBuiltin::UnstableAuto) {
+                            // An offset beside a callee's lookback renders in usize: keep
+                            // every cast the whole count.
+                            let counts: Vec<String> = counts.iter().map(|c| format!("(({c}) as i32)")).collect();
                             super::builtins::unstable_auto_offset(&counts, read)
                         } else {
                             read(&counts)

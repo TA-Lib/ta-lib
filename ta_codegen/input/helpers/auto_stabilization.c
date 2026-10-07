@@ -38,6 +38,22 @@ int ta_auto_stabilization_frama(int K, int X, int root) {
    return 9 * (X + 4) * (root + 2) / 2 < 99 * K ? 9 * (X + 4) * (root + 2) / 2 : 99 * K;
 }
 
+/* The integer fourth root of q, for q up to 50624: a period ratio stays under
+ * that. In comparisons so that the count costs nothing until a level asks for
+ * it.
+ */
+int ta_auto_stabilization_root4(int q) {
+   return q < 16 ? 1 : q < 81 ? 2 : q < 256 ? 3 : q < 625 ? 4 : q < 1296 ? 5 : q < 2401 ? 6 : q < 4096 ? 7
+   : q < 6561 ? 8 : q < 10000 ? 9 : q < 14641 ? 10 : q < 20736 ? 11 : q < 28561 ? 12 : q < 38416 ? 13 : 14;
+}
+
+/* rules_check.py holds the worst case over how the two EMAs' first differences
+ * combine.
+ */
+int ta_auto_stabilization_adosc(int fastest, int slowest) {
+   return (fastest * (7 + 3 * ta_auto_stabilization_root4(slowest / fastest)) + 3) / 4;
+}
+
 /* Saturates at TA_INDEX_MAX. */
 int ta_auto_stabilization_vidya(int X, int period, int root) {
    return 2 * X * (period + 1) * root > 100000000 ? 100000000 : 2 * X * (period + 1) * root;

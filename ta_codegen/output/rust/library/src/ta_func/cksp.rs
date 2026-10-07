@@ -110,7 +110,7 @@ impl Core {
         // A stop can rest on a first stop optInStopPeriod-1 bars old, whose ATR
         // was that much closer to its seed: the first difference two starts show
         // is the smaller for it, and an Auto level is held against that one.
-        return Ok((self.atr_lookback(optInTimePeriod)? + ((optInStopPeriod) as usize) - 1 + (((self.unstable_count(FuncUnstId::ATR, optInStopPeriod - 1, optInStopPeriod - 1) - self.unstable_count(FuncUnstId::ATR, 0, 0))) as usize)) as usize);
+        return Ok((self.atr_lookback(optInTimePeriod)? + ((optInStopPeriod) as usize) - 1 + (((self.unstable_count(FuncUnstId::ATR, ((optInStopPeriod - 1) as i32), ((optInStopPeriod - 1) as i32)) - self.unstable_count(FuncUnstId::ATR, 0, 0))) as usize)) as usize);
     }
     /// Display shift of one output of [`Core::cksp`]: how many bars ahead (positive) or behind
     /// (negative) of the bar that computed it a chart draws that output. The values are never

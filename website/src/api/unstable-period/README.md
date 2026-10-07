@@ -249,7 +249,9 @@ does with a fixed count: MACD discards `E(max(fast, slow)) + E(signal)` bars, DE
 `2*E(n)`, and KC the longer of its EMA and ATR paths. A function with an MA-type
 parameter takes the count of the type selected, and a windowed type such as SMA adds
 none. A function can add to the count it inherits for what it does with the value,
-under a level only: CKSP adds its stop period less one, and ADOSC half the longer of its two periods.
+under a level only: CKSP adds its stop period less one, and ADOSC `ceil(f*(7 + 3*r)/4)` bars, `f` the
+shorter of its two periods and `r` the integer fourth root of the longer over the
+shorter.
 Each [function page](/functions/) names what it inherits from.
 
 ## What a level does not promise {#limits}
@@ -278,10 +280,6 @@ Each [function page](/functions/) names what it inherits from.
   not how small: on random walks about one start in 2,500 has one past the `PREC_4`
   count and one in 400,000 past the `PREC_8` count. HT_TRENDMODE is a flag and behaves
   the same way: about one start in 15,000 and one in 150,000.
-- **ADOSC is sized for periods well apart.** Its two EMAs start from one value, and the
-  closer their periods, the more of the first difference cancels and the more bars
-  the level needs against what is left: none over the count at 3 and 10 or 9 and 30,
-  about a quarter more at 29 and 30.
 - **CVI is a ratio of an inherited value.** It divides its EMA by the same EMA some
   bars earlier, so like the ratio ids it can sit above the level's threshold at the
   count it inherits, e.g. for up to 14 bars at the defaults.

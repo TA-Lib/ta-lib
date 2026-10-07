@@ -55,7 +55,7 @@ public partial class Core
     *  -------------------------------------------------------------------
     *  120802 MF   Template creation.
     *  052603 MF   Adapt code to compile with .NET Managed C++
-    *  100726 MF,CC  #492. Under an Auto level one more e-fold of the slow EMA.
+    *  100726 MF,CC  #492. Under an Auto level the bars its two EMAs' cancelling costs.
     */
    /// <summary>
    /// Number of leading input bars <c>Adosc</c> consumes before it can produce
@@ -90,12 +90,12 @@ public partial class Core
       } else {
          slowestPeriod = optInFastPeriod;
       }
-      /* Both EMAs seed on one value at one bar, so the first differences two
-       * starts show cancel in part: the largest is under half the slow EMA's
-       * own while the slow period is at least three times the fast one. An Auto
-       * level is held against it, one e-fold of the slow EMA further.
+      /* Both EMAs seed on one value at one bar, so two starts differ by a fast
+       * term less a slow one, and the two can cancel in the first outputs: an
+       * Auto level is held against what is left. The bars that costs follow the
+       * fastest period, with the fourth root of the periods' ratio.
        */
-      return EmaLookback(slowestPeriod) + (this.UnstableCount((int)FuncUnstId.EMA, (optInFastPeriod < optInSlowPeriod) ? (optInSlowPeriod + 1) / 2 : (optInFastPeriod + 1) / 2, (optInFastPeriod < optInSlowPeriod) ? (optInSlowPeriod + 1) / 2 : (optInFastPeriod + 1) / 2) - this.UnstableCount((int)FuncUnstId.EMA, 0, 0)) ;
+      return EmaLookback(slowestPeriod) + (this.UnstableCount((int)FuncUnstId.EMA, (optInFastPeriod < optInSlowPeriod) ? ((optInFastPeriod * (7 + 3 * ((optInSlowPeriod / optInFastPeriod < 16) ? 1 : ((optInSlowPeriod / optInFastPeriod < 81) ? 2 : ((optInSlowPeriod / optInFastPeriod < 256) ? 3 : ((optInSlowPeriod / optInFastPeriod < 625) ? 4 : ((optInSlowPeriod / optInFastPeriod < 1296) ? 5 : ((optInSlowPeriod / optInFastPeriod < 2401) ? 6 : ((optInSlowPeriod / optInFastPeriod < 4096) ? 7 : ((optInSlowPeriod / optInFastPeriod < 6561) ? 8 : ((optInSlowPeriod / optInFastPeriod < 10000) ? 9 : ((optInSlowPeriod / optInFastPeriod < 14641) ? 10 : ((optInSlowPeriod / optInFastPeriod < 20736) ? 11 : ((optInSlowPeriod / optInFastPeriod < 28561) ? 12 : ((optInSlowPeriod / optInFastPeriod < 38416) ? 13 : 14)))))))))))))) + 3) / 4) : ((optInSlowPeriod * (7 + 3 * ((optInFastPeriod / optInSlowPeriod < 16) ? 1 : ((optInFastPeriod / optInSlowPeriod < 81) ? 2 : ((optInFastPeriod / optInSlowPeriod < 256) ? 3 : ((optInFastPeriod / optInSlowPeriod < 625) ? 4 : ((optInFastPeriod / optInSlowPeriod < 1296) ? 5 : ((optInFastPeriod / optInSlowPeriod < 2401) ? 6 : ((optInFastPeriod / optInSlowPeriod < 4096) ? 7 : ((optInFastPeriod / optInSlowPeriod < 6561) ? 8 : ((optInFastPeriod / optInSlowPeriod < 10000) ? 9 : ((optInFastPeriod / optInSlowPeriod < 14641) ? 10 : ((optInFastPeriod / optInSlowPeriod < 20736) ? 11 : ((optInFastPeriod / optInSlowPeriod < 28561) ? 12 : ((optInFastPeriod / optInSlowPeriod < 38416) ? 13 : 14)))))))))))))) + 3) / 4), (optInFastPeriod < optInSlowPeriod) ? ((optInFastPeriod * (7 + 3 * ((optInSlowPeriod / optInFastPeriod < 16) ? 1 : ((optInSlowPeriod / optInFastPeriod < 81) ? 2 : ((optInSlowPeriod / optInFastPeriod < 256) ? 3 : ((optInSlowPeriod / optInFastPeriod < 625) ? 4 : ((optInSlowPeriod / optInFastPeriod < 1296) ? 5 : ((optInSlowPeriod / optInFastPeriod < 2401) ? 6 : ((optInSlowPeriod / optInFastPeriod < 4096) ? 7 : ((optInSlowPeriod / optInFastPeriod < 6561) ? 8 : ((optInSlowPeriod / optInFastPeriod < 10000) ? 9 : ((optInSlowPeriod / optInFastPeriod < 14641) ? 10 : ((optInSlowPeriod / optInFastPeriod < 20736) ? 11 : ((optInSlowPeriod / optInFastPeriod < 28561) ? 12 : ((optInSlowPeriod / optInFastPeriod < 38416) ? 13 : 14)))))))))))))) + 3) / 4) : ((optInSlowPeriod * (7 + 3 * ((optInFastPeriod / optInSlowPeriod < 16) ? 1 : ((optInFastPeriod / optInSlowPeriod < 81) ? 2 : ((optInFastPeriod / optInSlowPeriod < 256) ? 3 : ((optInFastPeriod / optInSlowPeriod < 625) ? 4 : ((optInFastPeriod / optInSlowPeriod < 1296) ? 5 : ((optInFastPeriod / optInSlowPeriod < 2401) ? 6 : ((optInFastPeriod / optInSlowPeriod < 4096) ? 7 : ((optInFastPeriod / optInSlowPeriod < 6561) ? 8 : ((optInFastPeriod / optInSlowPeriod < 10000) ? 9 : ((optInFastPeriod / optInSlowPeriod < 14641) ? 10 : ((optInFastPeriod / optInSlowPeriod < 20736) ? 11 : ((optInFastPeriod / optInSlowPeriod < 28561) ? 12 : ((optInFastPeriod / optInSlowPeriod < 38416) ? 13 : 14)))))))))))))) + 3) / 4)) - this.UnstableCount((int)FuncUnstId.EMA, 0, 0)) ;
 
    }
    /// <summary>
