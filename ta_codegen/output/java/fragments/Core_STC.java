@@ -15,6 +15,7 @@
  *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
  *  092926 MF,CC  Initial version (#478).
+ *  100726 MF,CC  #492. The Auto rule keeps its total as the EMA count shortens.
  */
 
    /**
@@ -62,7 +63,7 @@
        * then one window per stochastic stage. The two 0.5 smoothers seed on
        * their first input, so they add only the unstable period.
        */
-      return emaLookback(optInSlowPeriod) + 2 * (optInCyclePeriod - 1) + this.unstableCount(FuncUnstId.STC.ordinal(), 2 * 10 + 3 * (optInSlowPeriod + 1), 2 * 19 + 3 * (optInSlowPeriod + 1)) ;
+      return emaLookback(optInSlowPeriod) + 2 * (optInCyclePeriod - 1) + this.unstableCount(FuncUnstId.STC.ordinal(), (5 * 10 + 1) / 2 + 3 * (optInSlowPeriod + 1), (5 * 19 + 1) / 2 + 3 * (optInSlowPeriod + 1)) ;
 
    }
    /**

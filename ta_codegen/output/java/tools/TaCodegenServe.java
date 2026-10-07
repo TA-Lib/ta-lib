@@ -104449,10 +104449,8 @@ class Core {
         */
        public int haLookback( )
        {
-          /* The opens of two starts differ by half as much each bar on any input,
-           * 1/ln(2) = 1.4427 bars per e-fold, rounded up to 13/9. No fixed part:
-           * the open shows the whole first difference at its first bar, the high
-           * and the low never more than the open's, and the close none.
+          /* 13/9 is 1/ln(2) rounded up: the open is the only state, and it shows
+           * the whole first difference at its first bar.
            */
           return this.unstableCount(FuncUnstId.HA.ordinal(), (13 * 10 + 8) / 9, (13 * 19 + 8) / 9) ;
 
@@ -115772,8 +115770,12 @@ class Core {
            *
            * 31 is for being compatible with Tradestation.
            * See mama_lookback for an explanation of the "32".
+           *
+           * Two starts are equal once their integer cycle periods have agreed for
+           * four bars, at either level: the Auto count buys a rarer late disagreement, never a smaller
+           * difference.
            */
-          return 63 + this.unstableCount(FuncUnstId.HT_TRENDLINE.ordinal(), (120 + 20 * 4), (120 + 20 * 8)) ;
+          return 63 + this.unstableCount(FuncUnstId.HT_TRENDLINE.ordinal(), 120 + 20 * 4, 120 + 20 * 8) ;
 
        }
        /**
@@ -190065,6 +190067,7 @@ class Core {
      *  MMDDYY BY     Description
      *  -------------------------------------------------------------------
      *  092926 MF,CC  Initial version (#478).
+     *  100726 MF,CC  #492. The Auto rule keeps its total as the EMA count shortens.
      */
 
        /**
@@ -190112,7 +190115,7 @@ class Core {
            * then one window per stochastic stage. The two 0.5 smoothers seed on
            * their first input, so they add only the unstable period.
            */
-          return emaLookback(optInSlowPeriod) + 2 * (optInCyclePeriod - 1) + this.unstableCount(FuncUnstId.STC.ordinal(), 2 * 10 + 3 * (optInSlowPeriod + 1), 2 * 19 + 3 * (optInSlowPeriod + 1)) ;
+          return emaLookback(optInSlowPeriod) + 2 * (optInCyclePeriod - 1) + this.unstableCount(FuncUnstId.STC.ordinal(), (5 * 10 + 1) / 2 + 3 * (optInSlowPeriod + 1), (5 * 19 + 1) / 2 + 3 * (optInSlowPeriod + 1)) ;
 
        }
        /**
@@ -223515,7 +223518,7 @@ class Core {
 
 public class TaCodegenServe {
     static Core core = new Core();
-    static final String SPLICED_GENCODE_DIGEST = "8a894a2a98012131";
+    static final String SPLICED_GENCODE_DIGEST = "88b890c4404955e5";
     static final int MAX_ARRAY_SIZE = 200000;
     static double[] refOpen = new double[MAX_ARRAY_SIZE];
     static double[] refHigh = new double[MAX_ARRAY_SIZE];

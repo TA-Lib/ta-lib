@@ -13,7 +13,7 @@ how the value at a bar computed from a later start approaches the value computed
 | `rules_vs_need.py` | Sets the count the library discards at each level, for every function that owns an unstable id, against the measured need |
 | `rules_check.py` | Checks the one-pole, SWAK and FISHER rules against the kernels at seven values of K and a grid of periods, with no library involved. The calibrated rules are not in it: section 3 of `results.txt` holds those. For T3, a calibrated rule, it computes what the seed that shows latest needs against the largest difference it causes, with the bound it meets: more than the count |
 | `tie_break.c` | Compares MAXINDEX and MININDEX from two starts on a series full of equal extremes. It counted mismatches at the commit `results.txt` names, and counts none since a tie names the most recent bar (#503) |
-| `results.txt` | The output of all of the above at the commit named on its first line |
+| `results.txt` | The output of the probe and its scripts at the commit named on its first line. Rules re-sized since are on the [Unstable Period page](../../../website/src/api/unstable-period/README.md), and the census is rerun, not recorded |
 
 ## Running it
 

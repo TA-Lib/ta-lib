@@ -15,11 +15,8 @@
 
 int ha_lookback(void)
 {
-   /* The opens of two starts differ by half as much each bar on any input,
-    * 1/ln(2) = 1.4427 bars per e-fold, rounded up to 13/9. No fixed part:
-    * the open shows the whole first difference at its first bar, the high
-    * and the low never more than the open's, and the close none.
-    */
+   /* 13/9 is 1/ln(2) rounded up: the open is the only state, and it shows
+    * the whole first difference at its first bar. */
    return TA_UNSTABLE( TA_FUNC_UNST_HA, (13 * K + 8) / 9 );
 }
 

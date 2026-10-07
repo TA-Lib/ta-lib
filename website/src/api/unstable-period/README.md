@@ -233,7 +233,7 @@ Each id has one rule. `n` is the function's period. `K` is 10 at `PREC_4` and 19
 | `HT_DCPERIOD`, `HT_DCPHASE`, `HT_PHASOR`, `HT_SINE`, `HT_TRENDMODE` | `H` | 280 / 480 | measurement |
 | `HT_TRENDLINE` | `120 + 20*X` | 200 / 280 | measurement |
 | `MAMA` | `H + ceil(2*K/max(fast, slow))` | 320 / 556 | measurement |
-| `STC` | `2*K + 3*(s+1)`, `s = max(fast, slow)`, on top of the `E(s)` it inherits | 173 / 191 | measurement |
+| `STC` | `ceil(5*K/2) + 3*(s+1)`, `s = max(fast, slow)`, on top of the `E(s)` it inherits | 178 / 201 | measurement |
 
 `isqrt` is the integer square root. The `E`, `W`, `K*n`, `T3`, `KAMA` and `VIDYA` rules give 0
 at a period of 1, where the function does no smoothing.
@@ -256,7 +256,9 @@ none. Each [function page](/functions/) names what it inherits from.
   agree to the level's digits, not to the last bit.
 - **The `E` and `W` counts have no bar to spare.** At a long period the count is the
   exact number of bars the level needs, so the first value kept can sit above the
-  level's threshold by the rounding of the arithmetic. The digits a level names hold.
+  level's threshold by the rounding of the arithmetic. A function built on such an
+  average, as ADOSC, CVI and CKSP are, can need a few bars more than the count it
+  inherits. The digits a level names hold.
 - **A flat market freezes a ratio.** RSI, CMO, the DI pair, DX, RVI, TSI, SMI and STC
   divide one smoothed series by another, and ADX averages such a ratio. When prices
   stop moving both series shrink together, and the ratio keeps its dependence on the
@@ -271,8 +273,8 @@ none. Each [function page](/functions/) names what it inherits from.
   their count. Where that matters, set a fixed count on that id. FRAMA's slowest rate
   is known, so `99*K` bars hold its level on any input.
 - **HT_TRENDLINE agrees exactly or not at all.** It averages the price over a cycle
-  period cut to a whole number of bars, so two starts are equal from the bar their
-  whole periods agree. A level sets how rare a later disagreement is, not how small:
+  period cut to a whole number of bars, so two starts are equal once their whole
+  periods have agreed for four bars. A level sets how rare a later disagreement is, not how small:
   on random walks about one start in 2,500 has one past the `PREC_4` count and one in
   400,000 past the `PREC_8` count.
 - **T3 is sized on price series.** A start whose six stages nearly cancel in the first

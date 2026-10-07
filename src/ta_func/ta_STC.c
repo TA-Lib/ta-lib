@@ -59,6 +59,7 @@
  *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
  *  092926 MF,CC  Initial version (#478).
+ *  100726 MF,CC  #492. The Auto rule keeps its total as the EMA count shortens.
  */
 
 TA_NOINLINE TA_LIB_API int TA_STC_Lookback( int optInFastPeriod, int optInSlowPeriod, int optInCyclePeriod )
@@ -86,7 +87,7 @@ TA_NOINLINE TA_LIB_API int TA_STC_Lookback( int optInFastPeriod, int optInSlowPe
     * then one window per stochastic stage. The two 0.5 smoothers seed on
     * their first input, so they add only the unstable period.
     */
-   return TA_EMA_Lookback(optInSlowPeriod) + 2 * (optInCyclePeriod - 1) + TA_GLOBALS_UNSTABLE(TA_FUNC_UNST_STC,Stc,2 * 10 + 3 * (optInSlowPeriod + 1),2 * 19 + 3 * (optInSlowPeriod + 1));
+   return TA_EMA_Lookback(optInSlowPeriod) + 2 * (optInCyclePeriod - 1) + TA_GLOBALS_UNSTABLE(TA_FUNC_UNST_STC,Stc,(5 * 10 + 1) / 2 + 3 * (optInSlowPeriod + 1),(5 * 19 + 1) / 2 + 3 * (optInSlowPeriod + 1));
 }
 
 TA_LIB_API int TA_STC_DisplayShift( int optInFastPeriod, int optInSlowPeriod, int optInCyclePeriod, int outputIdx )

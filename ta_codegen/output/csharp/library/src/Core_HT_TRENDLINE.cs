@@ -92,8 +92,12 @@ public partial class Core
        *
        * 31 is for being compatible with Tradestation.
        * See mama_lookback for an explanation of the "32".
+       *
+       * Two starts are equal once their integer cycle periods have agreed for
+       * four bars, at either level: the Auto count buys a rarer late disagreement, never a smaller
+       * difference.
        */
-      return 63 + this.UnstableCount((int)FuncUnstId.HT_TRENDLINE, (120 + 20 * 4), (120 + 20 * 8)) ;
+      return 63 + this.UnstableCount((int)FuncUnstId.HT_TRENDLINE, 120 + 20 * 4, 120 + 20 * 8) ;
 
    }
    /// <summary>

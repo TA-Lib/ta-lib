@@ -157,7 +157,7 @@ static int awRule( const char *name, int K, int X, int p0, int p1, double r0, do
    long long v;
 
    if( !strcmp(name,"EMA") ) return p0 > 1 ? awCeilDiv( K*p0, 2 ) : 0;
-   /* The DI and DM functions answer a period of 1 without their id. */
+   /* The DM and DI functions answer a period of 1 without their id. */
    if( !strcmp(name,"RMA") || !strcmp(name,"ATR") ||
        !strcmp(name,"PLUS_DM") || !strcmp(name,"MINUS_DM") )
       return p0 > 1 ? awCeilDiv( K*(2*p0-1), 2 ) : 0;
@@ -191,7 +191,7 @@ static int awRule( const char *name, int K, int X, int p0, int p1, double r0, do
    }
    if( !strcmp(name,"FISHER") ) return awCeilDiv( 5*(K+6), 2 );
    /* STC: p0 = fast, p1 = slow; on top of the EMA count it inherits. */
-   if( !strcmp(name,"STC") ) return 2*K + 3*( (p0 > p1 ? p0 : p1) + 1 );
+   if( !strcmp(name,"STC") ) return awCeilDiv( 5*K, 2 ) + 3*( (p0 > p1 ? p0 : p1) + 1 );
    return -1;
 }
 
@@ -379,6 +379,11 @@ static int awBuildVectors( const TA_FuncInfo *funcInfo, AwVector *vec )
          vec[n] = def; vec[n].label = "limits";
          vec[n].val[0] = mamaLimits[j][0]; vec[n].val[1] = mamaLimits[j][1]; n++;
       }
+
+   if( !strcmp( funcInfo->name, "FRAMA" ) )
+   {
+      vec[n] = def; vec[n].label = "capped count"; vec[n].val[0] = 1024.0; n++;
+   }
 
    for( j=0; j < (unsigned int)n; j++ )
       awNoteMaType( &vec[j], funcInfo );

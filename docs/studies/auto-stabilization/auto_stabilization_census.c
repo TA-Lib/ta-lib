@@ -22,8 +22,14 @@
  * CENSUS_PERIOD=<n> runs one configuration, every integer period at n.
  * CENSUS_NEEDS=<file> also writes each trial's need at K = 10 and 19, for a
  * tail the three quantiles do not show.
- * need<K> p50/p99/max over the trials; over<K> = trials whose need is above the
- * count; never = trials still above e^-7 at the last compared age.
+ * Columns: lookback, at 0; live, the trials counted: the two starts differ and
+ * the series leaves more ages to compare than the PREC_8 count; auto4 and
+ * auto8, the counts; need<K> p50/p99/max over the live trials; over<K>, live
+ * trials whose need is above the count; never, those still above e^-7 at the
+ * last compared age; worstT, the trial of the largest need.
+ * A difference under 1e-13 of the output's range is taken for rounding. Long
+ * needs are cut short by it where the seed difference is small against the
+ * range, and a count with no spare bar shows one bar over.
  */
 #include <stdio.h>
 #include <stdlib.h>
@@ -197,7 +203,6 @@ static void each(const TA_FuncInfo *fi, void *opaque)
             int D, n, begB, nbB, lb2, first, last, age, nd[4] = {0,0,0,0}, ok;
             double SF = 0.0, R[MAXOUT];
             char d2[256];
-            need[0][t] = 0; need[1][t] = 0;
             rng_s = g_seed*0x9E3779B97F4A7C15ULL + (unsigned long long)t*1000003ULL + (unsigned long long)(kind*31 + cfg*7 + 1);
             for( k = 0; k < 8; k++ ) rnd();
             D = 50 + (int)(rnd()*autoCount[1]);
@@ -210,7 +215,7 @@ static void each(const TA_FuncInfo *fi, void *opaque)
             if( !ok || nb <= 0 || nbB <= 0 ) continue;   /* a capped series can be too short for the later start */
             first = D + begB; if( first < beg ) first = beg;
             last = beg + nb - 1;
-            if( last - first < 50 ) continue;
+            if( last - first < 50 || last - first < autoCount[1] + 3 ) continue;
             for( o = 0; o < fi->nbOutput && o < MAXOUT; o++ )
             {
                const TA_OutputParameterInfo *oo;
@@ -238,12 +243,12 @@ static void each(const TA_FuncInfo *fi, void *opaque)
                   double a = oo->type == TA_Output_Real ? RA[o][first+age-beg] : IA[o][first+age-beg];
                   double b = oo->type == TA_Output_Real ? RB[o][first+age-D-begB] : IB[o][first+age-D-begB];
                   double df = fabs(a - b);
-                  if( df <= 1e-10*R[o] ) continue;        /* rounding, not the seed */
+                  if( df <= 1e-13*R[o] ) continue;        /* rounding, not the seed */
                   for( k = 0; k < 4; k++ )
                      if( df > exp(-(double)KS[k])*SF && age + 1 > nd[k] ) nd[k] = age + 1;
                }
             }
-            need[0][t] = nd[1]; need[1][t] = nd[3];
+            need[0][live-1] = nd[1]; need[1][live-1] = nd[3];
             if( g_needs ) fprintf(g_needs, "%s\t%s\t%s\t%d\t%d\n", fi->name, desc, kinds[kind], nd[1], nd[3]);
             if( nd[1] > autoCount[0] ) over[1]++;
             if( nd[0] > autoCount[0] ) over[0]++;
@@ -253,12 +258,13 @@ static void each(const TA_FuncInfo *fi, void *opaque)
             if( nd[1] > worst[0] ) { worst[0] = nd[1]; worstT[0] = t; }
             if( nd[3] > worst[1] ) { worst[1] = nd[3]; worstT[1] = t; }
          }
-         qsort(need[0], g_trials, sizeof(int), cmpInt);
-         qsort(need[1], g_trials, sizeof(int), cmpInt);
+         if( !live ) continue;
+         qsort(need[0], live, sizeof(int), cmpInt);
+         qsort(need[1], live, sizeof(int), cmpInt);
          printf("%s\t%s\t%s\t%d\t%ld\t%d\t%d\t%d\t%d\t%ld\t%ld\t%d\t%d\t%d\t%d\t%ld\t%ld\t%ld\t%d\t%d\n",
                 fi->name, desc, kinds[kind], lookback, live,
-                autoCount[0], need[0][g_trials/2], need[0][g_trials - 1 - g_trials/100], need[0][g_trials-1], over[1], over[0],
-                autoCount[1], need[1][g_trials/2], need[1][g_trials - 1 - g_trials/100], need[1][g_trials-1], over[3], over[2],
+                autoCount[0], need[0][live/2], need[0][live - 1 - live/100], need[0][live-1], over[1], over[0],
+                autoCount[1], need[1][live/2], need[1][live - 1 - live/100], need[1][live-1], over[3], over[2],
                 never, worstT[0], worstT[1]);
          fflush(stdout);
       }

@@ -19,8 +19,8 @@ print('one-pole violations:',bad[:5], len(bad))
 # At a long period both counts are the need itself, so a pair of starts can sit a rounding error
 # over the level's threshold at the count.
 spare=lambda m,lp,K: m-math.ceil(K/-lp-1e-12)
-print('  bars over the exact need, most: ema',max(spare(ceil_div(K*n,2),math.log1p(-2/(n+1)),K) for K in Ks for n in range(3,2000)),
-      ' wilder',max(spare(ceil_div(K*(2*n-1),2),math.log1p(-1/n),K) for K in Ks for n in range(3,2000)))
+print('  bars over the exact need, fewest: ema',min(spare(ceil_div(K*n,2),math.log1p(-2/(n+1)),K) for K in Ks for n in range(3,2000)),
+      ' wilder',min(spare(ceil_div(K*(2*n-1),2),math.log1p(-1/n),K) for K in Ks for n in range(3,2000)))
 
 # HA: open = (open + close)/2, the close is the bar's own average, so the opens of two starts
 # differ by exactly 2^-age; the high and the low take a max and a min with the open. Rule

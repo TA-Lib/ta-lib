@@ -95,9 +95,9 @@ OVR="TimePeriod=2" /tmp/auto_stabilization_probe 40000 <NAME> > /tmp/need_min.ts
 - Random series do not reach the worst seed of a repeated pole or of several stages: T3
   needs 52 at most on fifty million pairs against the worst seed's 64. For a proven rule
   neither tool gives the count; section 3's kernel check does.
-- The census ignores a difference under `1e-10` of the output's range, so an output whose
-  seed difference is small against its range shows a `PREC_8` need cut short. Take that
-  one from the probe's `A19`.
+- The census ignores a difference under `1e-13` of the output's range, so an output whose
+  seed difference is small against its range shows a `PREC_8` need cut short, and a count
+  with no spare bar shows one bar over. Check a long need against the probe's `A19`.
 - On one row, `(A19 - A10) / 9` is the measured bars per e-fold. A linear output comes out
   at the derived figure; well above it on every row means the derivation missed a slower
   state. A non-linear output scatters around it.
