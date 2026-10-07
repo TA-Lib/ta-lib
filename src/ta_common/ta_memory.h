@@ -92,11 +92,6 @@
    ( TA_Globals->unstablePeriod[x] <= (unsigned int)TA_INDEX_MAX ? (int)TA_Globals->unstablePeriod[x] \
    : TA_Globals->unstablePeriod[x] == (unsigned int)TA_UNSTABLE_AUTO_PREC_4 ? (int)(c4) : (int)(c8) )
 
-/* What a function adds to the count of an id it inherits: nothing under a
- * stored count, the level's offset under an Auto level. The offset is computed
- * in a cold function (TA_GLOBALS_UNSTABLE_AUTO there, `call` here), so that a
- * lookback inlined into its caller carries one test and no count.
- */
 #if defined(__GNUC__)
    #define TA_COLD __attribute__((cold,noinline))
 #elif defined(_MSC_VER)
@@ -104,6 +99,12 @@
 #else
    #define TA_COLD
 #endif
+
+/* What a function adds to the count of an id it inherits: nothing under a
+ * stored count, the level's offset under an Auto level. The offset is computed
+ * in a TA_COLD function, so that a lookback inlined into its caller carries
+ * one test and no count.
+ */
 #define TA_GLOBALS_UNSTABLE_AUTO(x,y,c4,c8) \
    ( TA_Globals->unstablePeriod[x] <= (unsigned int)TA_INDEX_MAX ? 0 \
    : TA_Globals->unstablePeriod[x] == (unsigned int)TA_UNSTABLE_AUTO_PREC_4 ? (int)(c4) : (int)(c8) )

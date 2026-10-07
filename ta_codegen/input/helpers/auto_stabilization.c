@@ -40,8 +40,7 @@ int ta_auto_stabilization_frama(int K, int X, int root) {
 
 /* ADOSC's two EMAs seed on one value, so the first differences of two starts
  * can cancel. The sum of min(fastest, slowest / 2^j) stands for fastest times
- * the log of the periods' ratio: every term is non-decreasing in both periods,
- * which a quotient of the two would not be.
+ * the log of the periods' ratio, and keeps the count non-decreasing in both.
  */
 int ta_auto_stabilization_adosc(int fastest, int slowest) {
    return (15 * fastest + 3 * (

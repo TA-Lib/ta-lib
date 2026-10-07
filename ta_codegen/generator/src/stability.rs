@@ -407,10 +407,14 @@ fn validate_auto_offsets(funcs: &[FuncDef], helpers: &crate::helper_registry::He
                         errors.push(format!("{name}: an Auto offset calls a lookback; write it from the parameters"));
                     }
                     // The C backend computes it in a function that sees the parameters only.
+                    // A name with a capital first is a constant: an enum value, a default.
                     for arg in args.iter().skip(1) {
                         crate::streaming::walk_expr(arg, &mut |inner| {
-                            let Expr::Var(var) = inner else { return };
-                            if var != "K" && var != "X" && !f.optional_inputs.iter().any(|o| &o.name == var) {
+                            let (Expr::Var(var) | Expr::ArrayAccess(var, _) | Expr::PointerDeref(var)) = inner else {
+                                return;
+                            };
+                            let constant = matches!(inner, Expr::Var(_)) && var.starts_with(|c: char| c.is_ascii_uppercase());
+                            if !constant && !f.optional_inputs.iter().any(|o| &o.name == var) {
                                 errors.push(format!(
                                     "{name}: an Auto offset reads `{var}`; write it from the parameters, K and X"
                                 ));

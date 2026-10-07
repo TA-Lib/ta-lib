@@ -400,6 +400,33 @@ fn unstable_read_gate_refuses_each_misplaced_read() {
         }),
         "CKSP: an Auto offset reads `root`",
     );
+    let indexed = Expr::FuncCall(
+        "UNSTABLE_AUTO".into(),
+        vec![Expr::Var("FUNC_UNST_ATR".into()), Expr::ArrayAccess("tab".into(), Box::new(Expr::IntLiteral(0)))],
+    );
+    only(
+        mutated(&|f| {
+            let mut stmts = lookback_stmts(&f[cksp]);
+            stmts.insert(0, Statement::Expr(indexed.clone()));
+            f[cksp].lookback = Some(LookbackExpr::Code(stmts));
+        }),
+        "CKSP: an Auto offset reads `tab`",
+    );
+    let keyed = Expr::FuncCall(
+        "UNSTABLE_AUTO".into(),
+        vec![
+            Expr::Var("FUNC_UNST_ATR".into()),
+            Expr::BinOp(Box::new(Expr::Var("optInStopPeriod".into())), BinOp::Add, Box::new(Expr::Var("MAType_EMA".into()))),
+        ],
+    );
+    assert_eq!(
+        mutated(&|f| {
+            let mut stmts = lookback_stmts(&f[cksp]);
+            stmts.insert(0, Statement::Expr(keyed.clone()));
+            f[cksp].lookback = Some(LookbackExpr::Code(stmts));
+        }),
+        Vec::<String>::new()
+    );
     only(mutated(&|f| f[cksp].body.push(Statement::Expr(offset("ATR")))), "CKSP: the body reads an Auto offset");
     let helper = ta_codegen_lib::ir::HelperDef {
         name: "ta_probe".into(),

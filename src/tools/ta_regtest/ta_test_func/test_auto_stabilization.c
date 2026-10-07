@@ -89,7 +89,7 @@ static AwRun *awFull, *awLate;
 
 static int awNbReport;
 static unsigned int awNbWindow, awNbConverging, awNbPathDep, awNbCount, awNbCountNonZero, awNbFloorHeld;
-static unsigned int awNbSameValues, awNbPeriod1, awNbOffset;
+static unsigned int awNbSameValues, awNbPeriod1, awNbOffset, awNbMonotone;
 
 /* --- corpus ---------------------------------------------------------- */
 
@@ -531,7 +531,7 @@ static void awAdoscMonotone( void )
                awFail( "ADOSC", "" );
             }
             prev = lb;
-            awNbOffset++;
+            awNbMonotone++;
          }
       }
    }
@@ -982,7 +982,7 @@ ErrorNumber test_func_auto_stabilization( TA_History *history )
    }
    awNbReport = 0;
    awNbWindow = awNbConverging = awNbPathDep = awNbCount = awNbCountNonZero = awNbFloorHeld = 0;
-   awNbSameValues = awNbPeriod1 = awNbOffset = 0;
+   awNbSameValues = awNbPeriod1 = awNbOffset = awNbMonotone = 0;
    awPrintFloors = getenv( "TA_AUTO_STABILIZATION_FLOORS" ) != NULL;
    awBuildSeries();
 
@@ -999,7 +999,7 @@ ErrorNumber test_func_auto_stabilization( TA_History *history )
       return TA_AUTO_STABILIZATION_FAIL;
    }
    if( awNbWindow < 1600 || awNbConverging < 1600 || awNbPathDep < 30 ||
-       awNbCount < 200 || awNbCountNonZero < 175 || awNbSameValues < 200 || awNbPeriod1 < 100 || awNbOffset < 8 ||
+       awNbCount < 200 || awNbCountNonZero < 175 || awNbSameValues < 200 || awNbPeriod1 < 100 || awNbOffset < 8 || awNbMonotone < 100000 ||
        ( !awPrintFloors && awNbFloorHeld < 60 ) )
    {
       printf( "\n  auto-stabilization: vacuous: %u window, %u converging, %u path-dependent, "

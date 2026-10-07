@@ -482,7 +482,7 @@ print('  latch: fisher at the last two bars from bar 0 %.4f %.4f, from bar 40 %.
 # ceil((15*f + 3*t)/8), f the fastest period, s the slowest, t the sum of min(f, s >> j) for j
 # in 1..16. S(x), the largest difference, is the upper envelope of the lines +-(x*pf^b - ps^b):
 # convex and piecewise linear. On one of its pieces |x*pf^a - ps^a| - e^-K*S(x) is convex, so
-# the worst x for any age is a vertex of the envelope, or x far out. No scan.
+# the worst x for any age is a vertex of the envelope, or x far out.
 def adosc_need(nf,ns,K):
     lf=math.log((nf-1)/(nf+1)); ls=math.log((ns-1)/(ns+1))
     A=int((K+14)/-ls)+60
