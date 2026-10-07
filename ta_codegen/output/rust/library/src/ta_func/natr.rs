@@ -99,7 +99,7 @@ impl Core {
         // Where 1 is for the True Range, and
         // (optInTimePeriod-1) is for the simple
         // moving average.
-        return Ok((optInTimePeriod + self.unstable_count(FuncUnstId::NATR, (if optInTimePeriod > 1 { (10 * (2 * optInTimePeriod - 1) + 1) / 2 } else { 0 }), (if optInTimePeriod > 1 { (19 * (2 * optInTimePeriod - 1) + 1) / 2 } else { 0 }))) as usize);
+        return Ok((optInTimePeriod + self.unstable_count(FuncUnstId::NATR, (if optInTimePeriod > 1 { 10 * optInTimePeriod } else { 0 }), (if optInTimePeriod > 1 { 19 * optInTimePeriod } else { 0 }))) as usize);
     }
     /// Display shift of one output of [`Core::natr`]: how many bars ahead (positive) or behind
     /// (negative) of the bar that computed it a chart draws that output. The values are never

@@ -12,6 +12,14 @@ int ta_auto_stabilization_wilder(int K, int period) {
    return period > 1 ? (K * (2 * period - 1) + 1) / 2 : 0;
 }
 
+/* For an output that divides by the smoothed value. The half bar per e-fold
+ * over the pole is what holds the level at a period of 2 or 3, where the ratio
+ * shows a late difference larger than an early one.
+ */
+int ta_auto_stabilization_wilder_ratio(int K, int period) {
+   return period > 1 ? K * period : 0;
+}
+
 /* A repeated real pole of a two-pole filter of critical period `period`: an
  * e-fold costs under (period + 2) / 9.76 bars, and the mismatch moves as
  * (A + B*k) * pole^k. Its worst case crosses zero right after the seed, so the

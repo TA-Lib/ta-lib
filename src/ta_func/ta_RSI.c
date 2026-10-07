@@ -73,7 +73,7 @@ TA_NOINLINE TA_LIB_API int TA_RSI_Lookback( int optInTimePeriod )
       optInTimePeriod = 14;
    else if( (int)optInTimePeriod < 2 || (int)optInTimePeriod > 100000 )
       return -1;
-   return optInTimePeriod + TA_GLOBALS_UNSTABLE(TA_FUNC_UNST_RSI,Rsi,((optInTimePeriod > 1) ? (10 * (2 * optInTimePeriod - 1) + 1) / 2 : 0),((optInTimePeriod > 1) ? (19 * (2 * optInTimePeriod - 1) + 1) / 2 : 0));
+   return optInTimePeriod + TA_GLOBALS_UNSTABLE(TA_FUNC_UNST_RSI,Rsi,((optInTimePeriod > 1) ? 10 * optInTimePeriod : 0),((optInTimePeriod > 1) ? 19 * optInTimePeriod : 0));
 }
 
 TA_LIB_API int TA_RSI_DisplayShift( int optInTimePeriod, int outputIdx )

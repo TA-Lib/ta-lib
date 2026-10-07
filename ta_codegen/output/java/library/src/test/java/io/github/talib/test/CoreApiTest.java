@@ -486,7 +486,7 @@ public class CoreApiTest {
         check(auto.unstablePeriod(FuncUnstId.EMA) == Core.UNSTABLE_AUTO_PREC_4
             && auto.unstablePeriod(FuncUnstId.RSI) == Core.UNSTABLE_AUTO_PREC_8,
             "a level is read back as the level, per id and through the wildcard");
-        check(auto.emaLookback(30) == 179 && auto.rsiLookback(14) == 271,
+        check(auto.emaLookback(30) == 179 && auto.rsiLookback(14) == 280,
             "under a level the lookback adds the id's own count");
         checkThrows(IllegalArgumentException.class,
             () -> Core.builder().unstablePeriod(FuncUnstId.EMA, Core.INDEX_MAX + 5),

@@ -157,14 +157,14 @@ static int awRule( const char *name, int K, int X, int p0, int p1, double r0, do
    long long v;
 
    if( !strcmp(name,"EMA") ) return p0 > 1 ? awCeilDiv( K*p0, 2 ) : 0;
-   if( !strcmp(name,"RMA") || !strcmp(name,"ATR") || !strcmp(name,"NATR") ||
-       !strcmp(name,"RSI") || !strcmp(name,"CMO") || !strcmp(name,"DX") ||
-       !strcmp(name,"RVI") )
-      return p0 > 1 ? awCeilDiv( K*(2*p0-1), 2 ) : 0;
    /* The DI and DM functions answer a period of 1 without their id. */
-   if( !strcmp(name,"PLUS_DI") || !strcmp(name,"MINUS_DI") ||
+   if( !strcmp(name,"RMA") || !strcmp(name,"ATR") ||
        !strcmp(name,"PLUS_DM") || !strcmp(name,"MINUS_DM") )
       return p0 > 1 ? awCeilDiv( K*(2*p0-1), 2 ) : 0;
+   if( !strcmp(name,"NATR") || !strcmp(name,"RSI") || !strcmp(name,"CMO") ||
+       !strcmp(name,"DX") || !strcmp(name,"RVI") ||
+       !strcmp(name,"PLUS_DI") || !strcmp(name,"MINUS_DI") )
+      return p0 > 1 ? K*p0 : 0;
    if( !strcmp(name,"ADX") ) return (K+6)*p0;
    if( !strcmp(name,"T3") ) return p0 > 1 ? awCeilDiv( 11*(X+4)*p0, 8 ) : 0;
    if( !strcmp(name,"HA") ) return awCeilDiv( 13*K, 9 );

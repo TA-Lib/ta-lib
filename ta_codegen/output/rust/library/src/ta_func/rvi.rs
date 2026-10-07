@@ -92,7 +92,7 @@ impl Core {
         } else if (((optInStdDevPeriod) as i32) < 2) || (((optInStdDevPeriod) as i32) > 100000) {
             return Err(RetCode::BadParam);
         }
-        return Ok((optInStdDevPeriod - 1 + (optInTimePeriod - 1) + self.unstable_count(FuncUnstId::RVI, (if optInTimePeriod > 1 { (10 * (2 * optInTimePeriod - 1) + 1) / 2 } else { 0 }), (if optInTimePeriod > 1 { (19 * (2 * optInTimePeriod - 1) + 1) / 2 } else { 0 }))) as usize);
+        return Ok((optInStdDevPeriod - 1 + (optInTimePeriod - 1) + self.unstable_count(FuncUnstId::RVI, (if optInTimePeriod > 1 { 10 * optInTimePeriod } else { 0 }), (if optInTimePeriod > 1 { 19 * optInTimePeriod } else { 0 }))) as usize);
     }
     /// Display shift of one output of [`Core::rvi`]: how many bars ahead (positive) or behind
     /// (negative) of the bar that computed it a chart draws that output. The values are never

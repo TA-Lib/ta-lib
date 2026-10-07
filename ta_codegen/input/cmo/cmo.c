@@ -22,7 +22,7 @@
 int cmo_lookback(int optInTimePeriod)
 {
    return optInTimePeriod
-   + TA_UNSTABLE( TA_FUNC_UNST_CMO, ta_auto_stabilization_wilder(K, optInTimePeriod) );
+   + TA_UNSTABLE( TA_FUNC_UNST_CMO, ta_auto_stabilization_wilder_ratio(K, optInTimePeriod) );
 }
 
 TA_RetCode cmo(int startIdx, int endIdx,

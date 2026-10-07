@@ -193,7 +193,7 @@ The cost in bars is set mostly by the period, so no level makes a long period ch
 | --- | --: | --: | --: |
 | EMA(30) | 29 | 179 | 314 |
 | EMA(200) | 199 | 1199 | 2099 |
-| RSI(14) | 14 | 149 | 271 |
+| RSI(14) | 14 | 154 | 280 |
 | MACD(12, 26, 9) | 33 | 208 | 366 |
 
 A batch call whose range ends before the lookback succeeds with no output, and a stream
@@ -211,14 +211,14 @@ Each id has one rule. `n` is the function's period. `K` is 10 at `PREC_4` and 19
 `PREC_8`; `X` is the level's digit count, 4 or 8.
 
 - `E(n) = ceil(K*n/2)`, for an EMA.
-- `W(n) = ceil(K*(2*n-1)/2)`, for Wilder smoothing.
+- `W(n) = ceil(K*(2*n-1)/2)`, for Wilder smoothing whose output is the smoothed value.
 - `H = 80 + 50*X`, for the Hilbert transform functions.
 
 | Id | Bars discarded | `PREC_4` / `PREC_8` at the defaults | Sized by |
 | --- | --- | --- | --- |
 | `EMA` | `E(n)` | 150 / 285 | proof |
 | `RMA`, `ATR`, `PLUS_DM`, `MINUS_DM` | `W(n)` | RMA 295 / 561, the others 135 / 257 | proof |
-| `NATR`, `RSI`, `CMO`, `PLUS_DI`, `MINUS_DI`, `DX`, `RVI` | `W(n)` | 135 / 257 | proof, ratio |
+| `NATR`, `RSI`, `CMO`, `PLUS_DI`, `MINUS_DI`, `DX`, `RVI` | `K*n` | 140 / 266 | proof, ratio |
 | `ADX` | `(K+6)*n` | 224 / 350 | proof, ratio |
 | `HA` | `ceil(13*K/9)` | 15 / 28 | proof |
 | `SWAK_HP` | `ceil(K*n/6)` | 34 / 64 | proof |
@@ -234,7 +234,7 @@ Each id has one rule. `n` is the function's period. `K` is 10 at `PREC_4` and 19
 | `MAMA` | `H + ceil(2*K/max(fast, slow))` | 320 / 556 | measurement |
 | `STC` | `2*K + 3*(s+1)`, `s = max(fast, slow)`, on top of the `E(s)` it inherits | 173 / 191 | measurement |
 
-`isqrt` is the integer square root. The `E`, `W`, `T3`, `KAMA` and `VIDYA` rules give 0
+`isqrt` is the integer square root. The `E`, `W`, `K*n`, `T3`, `KAMA` and `VIDYA` rules give 0
 at a period of 1, where the function does no smoothing.
 
 - **Proof.** The count bounds what is left of the seed, for any input. "Ratio" marks an
@@ -253,7 +253,7 @@ none. Each [function page](/functions/) names what it inherits from.
 
 - **Not bit-identity.** A level bounds how much of the seed is left; two starts then
   agree to the level's digits, not to the last bit.
-- **The EMA and Wilder counts have no bar to spare.** At a long period the count is the
+- **The `E` and `W` counts have no bar to spare.** At a long period the count is the
   exact number of bars the level needs, so the first value kept can sit above the
   level's threshold by the rounding of the arithmetic. The digits a level names hold.
 - **A flat market freezes a ratio.** RSI, CMO, the DI pair, DX, RVI, TSI, SMI and STC
