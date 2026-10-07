@@ -173,6 +173,8 @@ int ema_lookback(int optInTimePeriod)
   takes the count from its own lookback (`lookbackTotal` minus the structural part). A
   function that runs another's recursion calls that function's lookback and never reads
   its id.
+- **A quotient of two periods steps down** as the smaller one grows. Where a rule needs
+  the log of a ratio, sum `min(f, s/2^j)` instead: each term is non-decreasing in both.
 - **Non-decreasing in every period.** The functions that run two periods of one average
   (MACD, APO, MAVP and the like) place the shorter leg on that; a rule that shrinks as a
   period grows makes them read before a buffer with no error.

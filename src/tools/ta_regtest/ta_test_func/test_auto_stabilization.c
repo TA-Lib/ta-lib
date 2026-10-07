@@ -485,9 +485,11 @@ static void awCheckOffset( const TA_FuncInfo *funcInfo, const AwVector *vec )
       }
       else
       {
-         int slowest = p0 > p1 ? p0 : p1, fastest = p0 > p1 ? p1 : p0;
+         int slowest = p0 > p1 ? p0 : p1, fastest = p0 > p1 ? p1 : p0, j, sum = 0;
+         for( j=1; j <= 16; j++ )
+            sum += (slowest >> j) < fastest ? (slowest >> j) : fastest;
          base   = awRule( "EMA", awLevel[l].K, awLevel[l].X, slowest, 0, 0.0, 0.0 );
-         offset = awCeilDiv( fastest*(7 + 3*awISqrt( awISqrt( slowest/fastest ) )), 4 );
+         offset = awCeilDiv( 15*fastest + 3*sum, 8 );
       }
       TA_SetUnstablePeriod( source, awLevel[l].level );
       got = awLookback( funcInfo, vec ) - at0;
@@ -500,6 +502,40 @@ static void awCheckOffset( const TA_FuncInfo *funcInfo, const AwVector *vec )
       }
       if( offset > 0 ) awNbOffset++;
    }
+}
+
+/* MACD, STC, MAVP and the like index a shorter-period leg on a count that
+ * does not fall as a period grows. ADOSC's is the one written in two periods.
+ */
+static void awAdoscMonotone( void )
+{
+   int l, f, s, prev, lb;
+
+   for( l=0; l < 2; l++ )
+   {
+      TA_SetUnstablePeriod( TA_FUNC_UNST_EMA, awLevel[l].level );
+      for( s=2; s <= 100000; s = s < 300 ? s+1 : s + s/7 )
+      {
+         prev = 0;
+         for( f=2; f <= 100000; f = f < 300 ? f+1 : f + f/7 )
+         {
+            lb = TA_ADOSC_Lookback( f, s );
+            if( lb < prev )
+            {
+               sprintf( awMsg, "PREC_%d lookback falls to %d at fast %d, slow %d", awLevel[l].X, lb, f, s );
+               awFail( "ADOSC", "" );
+            }
+            if( lb != TA_ADOSC_Lookback( s, f ) )
+            {
+               sprintf( awMsg, "lookback differs with the two periods swapped at %d, %d", f, s );
+               awFail( "ADOSC", "" );
+            }
+            prev = lb;
+            awNbOffset++;
+         }
+      }
+   }
+   TA_SetUnstablePeriod( TA_FUNC_UNST_EMA, 0 );
 }
 
 /* No level takes bars away: with every id on a level a lookback is at least
@@ -951,6 +987,7 @@ ErrorNumber test_func_auto_stabilization( TA_History *history )
    awBuildSeries();
 
    TA_ForEachFunc( awOneFunction, NULL );
+   awAdoscMonotone();
    TA_SetUnstablePeriod( TA_FUNC_UNST_ALL, 0 );
 
    free( awSeries ); free( awFull ); free( awLate );

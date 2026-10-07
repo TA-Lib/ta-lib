@@ -185,12 +185,18 @@ pub fn unstable_level_counts(args: &[Expr]) -> Option<Vec<Expr>> {
     )
 }
 
-/// Wrap a rendered `TA_UNSTABLE(id, c4, c8)` read into the Auto-only offset: the same read
-/// less the read whose counts are 0, which is the stored count under a count and 0 under a
-/// level. `read` renders one read from its per-level counts.
-pub fn unstable_auto_offset(counts: &[String], read: impl Fn(&[String]) -> String) -> String {
-    let zeros = vec!["0".to_string(); counts.len()];
-    format!("({} - {})", read(counts), read(&zeros))
+/// The Auto-only offset from a backend's `read(id, c4, c8)`: under a count every read
+/// returns the stored count, so the reads at (1, 1) and (0, 0) differ only under a level.
+/// The offset's counts are evaluated only then, which keeps a call at the default setting
+/// from paying for them. `rust` picks the `if` expression over the C-family ternary.
+pub fn unstable_auto_offset(counts: &[String], rust: bool, read: impl Fn(&[String]) -> String) -> String {
+    let fill = |v: &str| vec![v.to_string(); counts.len()];
+    let (on, off, full) = (read(&fill("1")), read(&fill("0")), read(counts));
+    if rust {
+        format!("(if {on} != {off} {{ {full} - {off} }} else {{ 0 }})")
+    } else {
+        format!("(({on} != {off}) ? ({full} - {off}) : 0)")
+    }
 }
 
 /// `4 == 4 ? a : b` to `a`, inside sums, casts and call arguments: how a count that cannot be written in `K` picks

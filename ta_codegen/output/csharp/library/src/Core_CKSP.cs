@@ -102,7 +102,7 @@ public partial class Core
        * was that much closer to its seed: the first difference two starts show
        * is the smaller for it, and an Auto level is held against that one.
        */
-      return AtrLookback(optInTimePeriod) + optInStopPeriod - 1 + (this.UnstableCount((int)FuncUnstId.ATR, optInStopPeriod - 1, optInStopPeriod - 1) - this.UnstableCount((int)FuncUnstId.ATR, 0, 0)) ;
+      return AtrLookback(optInTimePeriod) + optInStopPeriod - 1 + ((this.UnstableCount((int)FuncUnstId.ATR, 1, 1) != this.UnstableCount((int)FuncUnstId.ATR, 0, 0)) ? (this.UnstableCount((int)FuncUnstId.ATR, optInStopPeriod - 1, optInStopPeriod - 1) - this.UnstableCount((int)FuncUnstId.ATR, 0, 0)) : 0) ;
 
    }
    /// <summary>

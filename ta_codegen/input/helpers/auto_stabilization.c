@@ -38,20 +38,30 @@ int ta_auto_stabilization_frama(int K, int X, int root) {
    return 9 * (X + 4) * (root + 2) / 2 < 99 * K ? 9 * (X + 4) * (root + 2) / 2 : 99 * K;
 }
 
-/* The integer fourth root of q, for q up to 50624: a period ratio stays under
- * that. In comparisons so that the count costs nothing until a level asks for
- * it.
- */
-int ta_auto_stabilization_root4(int q) {
-   return q < 16 ? 1 : q < 81 ? 2 : q < 256 ? 3 : q < 625 ? 4 : q < 1296 ? 5 : q < 2401 ? 6 : q < 4096 ? 7
-   : q < 6561 ? 8 : q < 10000 ? 9 : q < 14641 ? 10 : q < 20736 ? 11 : q < 28561 ? 12 : q < 38416 ? 13 : 14;
-}
-
-/* rules_check.py holds the worst case over how the two EMAs' first differences
- * combine.
+/* ADOSC's two EMAs seed on one value, so the first differences of two starts
+ * can cancel. The sum of min(fastest, slowest / 2^j) stands for fastest times
+ * the log of the periods' ratio: every term is non-decreasing in both periods,
+ * which a quotient of the two would not be.
  */
 int ta_auto_stabilization_adosc(int fastest, int slowest) {
-   return (fastest * (7 + 3 * ta_auto_stabilization_root4(slowest / fastest)) + 3) / 4;
+   return (15 * fastest + 3 * (
+      min( slowest / 2, fastest )
+      + min( slowest / 4, fastest )
+      + min( slowest / 8, fastest )
+      + min( slowest / 16, fastest )
+      + min( slowest / 32, fastest )
+      + min( slowest / 64, fastest )
+      + min( slowest / 128, fastest )
+      + min( slowest / 256, fastest )
+      + min( slowest / 512, fastest )
+      + min( slowest / 1024, fastest )
+      + min( slowest / 2048, fastest )
+      + min( slowest / 4096, fastest )
+      + min( slowest / 8192, fastest )
+      + min( slowest / 16384, fastest )
+      + min( slowest / 32768, fastest )
+      + min( slowest / 65536, fastest )
+   ) + 7) / 8;
 }
 
 /* Saturates at TA_INDEX_MAX. */

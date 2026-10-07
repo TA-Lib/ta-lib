@@ -249,9 +249,9 @@ does with a fixed count: MACD discards `E(max(fast, slow)) + E(signal)` bars, DE
 `2*E(n)`, and KC the longer of its EMA and ATR paths. A function with an MA-type
 parameter takes the count of the type selected, and a windowed type such as SMA adds
 none. A function can add to the count it inherits for what it does with the value,
-under a level only: CKSP adds its stop period less one, and ADOSC `ceil(f*(7 + 3*r)/4)` bars, `f` the
-shorter of its two periods and `r` the integer fourth root of the longer over the
-shorter.
+under a level only: CKSP adds its stop period less one, and ADOSC `ceil((15*f + 3*t)/8)` bars, `f` the
+shorter of its two periods, `s` the longer and `t` the sum of `min(f, s/2^j)` for `j`
+from 1 to 16, in integer divisions.
 Each [function page](/functions/) names what it inherits from.
 
 ## What a level does not promise {#limits}

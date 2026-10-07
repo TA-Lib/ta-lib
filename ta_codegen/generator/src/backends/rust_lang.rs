@@ -5444,7 +5444,7 @@ fn render_func_call(
                             // An offset beside a callee's lookback renders in usize: keep
                             // every cast the whole count.
                             let counts: Vec<String> = counts.iter().map(|c| format!("(({c}) as i32)")).collect();
-                            super::builtins::unstable_auto_offset(&counts, read)
+                            super::builtins::unstable_auto_offset(&counts, true, read)
                         } else {
                             read(&counts)
                         };

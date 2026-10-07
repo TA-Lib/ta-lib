@@ -2865,7 +2865,7 @@ fn render_func_call(
                             counts.iter().map(|c| render_expr(c, ctx, registry, helpers)).collect();
                         let read = |c: &[String]| format!("this.UnstableCount((int)FuncUnstId.{variant}, {})", c.join(", "));
                         return if matches!(b, SpecialBuiltin::UnstableAuto) {
-                            super::builtins::unstable_auto_offset(&counts, read)
+                            super::builtins::unstable_auto_offset(&counts, false, read)
                         } else {
                             read(&counts)
                         };

@@ -27,13 +27,12 @@ int adosc_lookback(int optInFastPeriod, int optInSlowPeriod)
 
    /* Both EMAs seed on one value at one bar, so two starts differ by a fast
     * term less a slow one, and the two can cancel in the first outputs: an
-    * Auto level is held against what is left. The bars that costs follow the
-    * fastest period, with the fourth root of the periods' ratio.
+    * Auto level is held against what is left.
     */
    return ema_lookback( slowestPeriod )
-   + TA_UNSTABLE_AUTO( TA_FUNC_UNST_EMA, optInFastPeriod < optInSlowPeriod
-      ? ta_auto_stabilization_adosc(optInFastPeriod, optInSlowPeriod)
-      : ta_auto_stabilization_adosc(optInSlowPeriod, optInFastPeriod) );
+   + TA_UNSTABLE_AUTO( TA_FUNC_UNST_EMA,
+      ta_auto_stabilization_adosc( min( optInFastPeriod, optInSlowPeriod ),
+      max( optInFastPeriod, optInSlowPeriod ) ) );
 }
 
 TA_RetCode adosc(int startIdx, int endIdx,

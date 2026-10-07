@@ -59,7 +59,7 @@
        * was that much closer to its seed: the first difference two starts show
        * is the smaller for it, and an Auto level is held against that one.
        */
-      return atrLookback(optInTimePeriod) + optInStopPeriod - 1 + (this.unstableCount(FuncUnstId.ATR.ordinal(), optInStopPeriod - 1, optInStopPeriod - 1) - this.unstableCount(FuncUnstId.ATR.ordinal(), 0, 0)) ;
+      return atrLookback(optInTimePeriod) + optInStopPeriod - 1 + ((this.unstableCount(FuncUnstId.ATR.ordinal(), 1, 1) != this.unstableCount(FuncUnstId.ATR.ordinal(), 0, 0)) ? (this.unstableCount(FuncUnstId.ATR.ordinal(), optInStopPeriod - 1, optInStopPeriod - 1) - this.unstableCount(FuncUnstId.ATR.ordinal(), 0, 0)) : 0) ;
 
    }
    /**
