@@ -27,9 +27,11 @@
  * auto8, the counts; need<K> p50/p99/max over the live trials; over<K>, live
  * trials whose need is above the count; never, those still above e^-7 at the
  * last compared age; worstT, the trial of the largest need.
- * A difference under 1e-13 of the output's range is taken for rounding. Long
+ * A difference under 1e-13 of the output's range is taken for rounding: long
  * needs are cut short by it where the seed difference is small against the
- * range, and a count with no spare bar shows one bar over.
+ * range. A count with no spare bar shows bars over at PREC_8, more of them the
+ * longer the period: that is the arithmetic's rounding against e^-19 of a
+ * small seed difference.
  */
 #include <stdio.h>
 #include <stdlib.h>

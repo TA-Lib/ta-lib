@@ -15,7 +15,7 @@
  *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
  *  092926 MF,CC  Initial version (#478).
- *  100726 MF,CC  #492. The Auto rule keeps its total as the EMA count shortens.
+ *  100726 MF,CC  #492. The Auto rule takes the bars the shorter EMA count gives up.
  *
  */
 

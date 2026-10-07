@@ -81,8 +81,8 @@ TA_NOINLINE TA_LIB_API int TA_HT_TRENDLINE_Lookback( void )
     * See mama_lookback for an explanation of the "32".
     *
     * Two starts are equal once their integer cycle periods have agreed for
-    * four bars, at either level: the Auto count buys a rarer late disagreement, never a smaller
-    * difference.
+    * four bars, at either level: the Auto count buys a rarer late
+    * disagreement, never a smaller difference.
     */
    return 63 + TA_GLOBALS_UNSTABLE(TA_FUNC_UNST_HT_TRENDLINE,Ht_trendline,120 + 20 * 4,120 + 20 * 8);
 }

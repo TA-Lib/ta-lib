@@ -115772,8 +115772,8 @@ class Core {
            * See mama_lookback for an explanation of the "32".
            *
            * Two starts are equal once their integer cycle periods have agreed for
-           * four bars, at either level: the Auto count buys a rarer late disagreement, never a smaller
-           * difference.
+           * four bars, at either level: the Auto count buys a rarer late
+           * disagreement, never a smaller difference.
            */
           return 63 + this.unstableCount(FuncUnstId.HT_TRENDLINE.ordinal(), 120 + 20 * 4, 120 + 20 * 8) ;
 
@@ -190067,7 +190067,7 @@ class Core {
      *  MMDDYY BY     Description
      *  -------------------------------------------------------------------
      *  092926 MF,CC  Initial version (#478).
-     *  100726 MF,CC  #492. The Auto rule keeps its total as the EMA count shortens.
+     *  100726 MF,CC  #492. The Auto rule takes the bars the shorter EMA count gives up.
      */
 
        /**
@@ -223518,7 +223518,7 @@ class Core {
 
 public class TaCodegenServe {
     static Core core = new Core();
-    static final String SPLICED_GENCODE_DIGEST = "88b890c4404955e5";
+    static final String SPLICED_GENCODE_DIGEST = "ef8d703782260d3a";
     static final int MAX_ARRAY_SIZE = 200000;
     static double[] refOpen = new double[MAX_ARRAY_SIZE];
     static double[] refHigh = new double[MAX_ARRAY_SIZE];

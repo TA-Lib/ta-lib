@@ -256,9 +256,7 @@ none. Each [function page](/functions/) names what it inherits from.
   agree to the level's digits, not to the last bit.
 - **The `E` and `W` counts have no bar to spare.** At a long period the count is the
   exact number of bars the level needs, so the first value kept can sit above the
-  level's threshold by the rounding of the arithmetic. A function built on such an
-  average, as ADOSC, CVI and CKSP are, can need a few bars more than the count it
-  inherits. The digits a level names hold.
+  level's threshold by the rounding of the arithmetic. The digits a level names hold.
 - **A flat market freezes a ratio.** RSI, CMO, the DI pair, DX, RVI, TSI, SMI and STC
   divide one smoothed series by another, and ADX averages such a ratio. When prices
   stop moving both series shrink together, and the ratio keeps its dependence on the
@@ -274,9 +272,9 @@ none. Each [function page](/functions/) names what it inherits from.
   is known, so `99*K` bars hold its level on any input.
 - **HT_TRENDLINE agrees exactly or not at all.** It averages the price over a cycle
   period cut to a whole number of bars, so two starts are equal once their whole
-  periods have agreed for four bars. A level sets how rare a later disagreement is, not how small:
-  on random walks about one start in 2,500 has one past the `PREC_4` count and one in
-  400,000 past the `PREC_8` count.
+  periods have agreed for four bars. A level sets how rare a later disagreement is,
+  not how small: on random walks about one start in 2,500 has one past the `PREC_4`
+  count and one in 400,000 past the `PREC_8` count.
 - **T3 is sized on price series.** A start whose six stages nearly cancel in the first
   outputs shows its difference later and can need a fifth more than the count; it is
   rare on prices, and a fixed count of `20*n` on that id covers it at either level.

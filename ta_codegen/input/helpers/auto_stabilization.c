@@ -13,7 +13,7 @@ int ta_auto_stabilization_wilder(int K, int period) {
 }
 
 /* For an output that divides by the smoothed value: at a period of 2 the
- * tight count does not hold what the regression test holds.
+ * ratio needs more bars than the value it divides by.
  */
 int ta_auto_stabilization_wilder_ratio(int K, int period) {
    return period > 1 ? K * period : 0;

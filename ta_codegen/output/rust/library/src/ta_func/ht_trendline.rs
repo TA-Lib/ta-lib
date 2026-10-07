@@ -91,8 +91,8 @@ impl Core {
         // See mama_lookback for an explanation of the "32".
         //
         // Two starts are equal once their integer cycle periods have agreed for
-        // four bars, at either level: the Auto count buys a rarer late disagreement, never a smaller
-        // difference.
+        // four bars, at either level: the Auto count buys a rarer late
+        // disagreement, never a smaller difference.
         return Ok((63 + self.unstable_count(FuncUnstId::HT_TRENDLINE, 120 + 20 * 4, 120 + 20 * 8)) as usize);
     }
     /// Display shift of one output of [`Core::ht_trendline`]: how many bars ahead (positive) or

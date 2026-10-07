@@ -96,8 +96,11 @@ OVR="TimePeriod=2" /tmp/auto_stabilization_probe 40000 <NAME> > /tmp/need_min.ts
   needs 52 at most on fifty million pairs against the worst seed's 64. For a proven rule
   neither tool gives the count; section 3's kernel check does.
 - The census ignores a difference under `1e-13` of the output's range, so an output whose
-  seed difference is small against its range shows a `PREC_8` need cut short, and a count
-  with no spare bar shows one bar over. Check a long need against the probe's `A19`.
+  seed difference is small against its range shows a `PREC_8` need cut short. Check a long
+  need against the probe's `A19`.
+- A count with no spare bar shows bars over at `PREC_8`, more of them the longer the
+  period, and none over the regression leg: the arithmetic's rounding against `e^-19` of a
+  small seed difference.
 - On one row, `(A19 - A10) / 9` is the measured bars per e-fold. A linear output comes out
   at the derived figure; well above it on every row means the derivation missed a slower
   state. A non-linear output scatters around it.
