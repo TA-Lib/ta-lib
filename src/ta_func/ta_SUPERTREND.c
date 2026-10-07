@@ -855,6 +855,22 @@ TA_FMA_OPEN_PLAIN static TA_RetCode TA_SUPERTREND_OpenImplPlain( struct TA_SUPER
    return TA_SUPERTREND_OpenImpl( stream, inHigh, inLow, inClose, startIdx, historyLen, optInTimePeriod, optInMultiplier, outBegIdx, outNBElement, outSupertrend, outTrend, outStride );
 }
 
+TA_FMA_OPEN_CLONE static TA_RetCode TA_SUPERTREND_OpenSinkFma( struct TA_SUPERTREND_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, int optInTimePeriod, double optInMultiplier, double *outSupertrend, int *outTrend )
+{
+   TA_RetCode retCode;
+   int dummyBegIdx = 0;
+   int dummyNBElement = 0;
+   double sink_outSupertrend = 0.0;
+   int sink_outTrend = 0;
+   retCode = TA_SUPERTREND_OpenImpl( stream, inHigh, inLow, inClose, startIdx, historyLen, optInTimePeriod, optInMultiplier, &dummyBegIdx, &dummyNBElement, &sink_outSupertrend, &sink_outTrend, 0 );
+   if( retCode == TA_SUCCESS )
+   {
+      *outSupertrend = sink_outSupertrend;
+      *outTrend = sink_outTrend;
+   }
+   return retCode;
+}
+
 /* Private function, not in public API. */
 TA_RetCode TA_SUPERTREND_OpenInternal( struct TA_SUPERTREND_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, int optInTimePeriod, double optInMultiplier, double *outSupertrend, int *outTrend )
 {
@@ -879,7 +895,7 @@ TA_LIB_API TA_RetCode TA_SUPERTREND_Open( TA_SUPERTREND_Stream **stream, const d
    if( historyLen < 1 ) return TA_OUT_OF_RANGE_START_INDEX;
    if( historyLen > TA_INDEX_MAX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
    if( !inHigh || !inLow || !inClose || !outSupertrend || !outTrend ) return TA_BAD_PARAM;
-   return TA_SUPERTREND_OpenInternal( stream, inHigh, inLow, inClose, 0, historyLen, optInTimePeriod, optInMultiplier, outSupertrend, outTrend );
+   return TA_FMA_AVAILABLE ? TA_SUPERTREND_OpenSinkFma( stream, inHigh, inLow, inClose, 0, historyLen, optInTimePeriod, optInMultiplier, outSupertrend, outTrend ) : TA_SUPERTREND_OpenInternal( stream, inHigh, inLow, inClose, 0, historyLen, optInTimePeriod, optInMultiplier, outSupertrend, outTrend );
 }
 
 TA_LIB_API TA_RetCode TA_SUPERTREND_OpenAndFill( TA_SUPERTREND_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], int historyLen, int optInTimePeriod, double optInMultiplier, int *outBegIdx, int *outNBElement, double outSupertrend[], int outTrend[] )

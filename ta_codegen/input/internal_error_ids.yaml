@@ -18,7 +18,7 @@
 # Written by `ta_codegen generate`. Do not renumber by hand -- the number is
 # the only thing a bug report carries, and it has to mean the same guard in the
 # next release as it did in the last.
-next: 492
+next: 497
 sites:
   AC.cbsize.oscBuffer: 184
   AC.circbuf.oscBuffer: 181
@@ -181,8 +181,8 @@ sites:
   CVI.cbsize.emaRing: 417
   CVI.circbuf.emaRing: 416
   DONCHIAN.extrema: 403
-  DOSC.cbsize.dsBuffer: 486
-  DOSC.circbuf.dsBuffer: 485
+  DOSC.cbsize.dsBuffer: 496
+  DOSC.circbuf.dsBuffer: 495
   DPO.ringcap.dispIdx: 409
   DPO.ringcap.trailingIdx: 410
   EFI.dualmode: 318
@@ -190,11 +190,11 @@ sites:
   EMV.circbuf.rawBuffer: 440
   ER.ringcap.trailingIdx: 426
   ERI.dualmode: 425
-  FISHER.circbuf.preHighest: 488
-  FISHER.circbuf.preLowest: 490
-  FISHER.circbuf.sufHighest: 487
-  FISHER.circbuf.sufLowest: 489
-  FISHER.extrema: 491
+  FISHER.circbuf.preHighest: 487
+  FISHER.circbuf.preLowest: 489
+  FISHER.circbuf.sufHighest: 486
+  FISHER.circbuf.sufLowest: 488
+  FISHER.extrema: 485
   FOSC.extrema: 406
   FRACTAL.wincap.i: 427
   FRAMA.cbsize.slot: 439
@@ -283,6 +283,11 @@ sites:
   PERCENTRANK.wincap.i: 415
   PLUS_DI.dualmode: 376
   PLUS_DM.dualmode: 377
+  PSO.circbuf.preHighest: 492
+  PSO.circbuf.preLowest: 494
+  PSO.circbuf.sufHighest: 491
+  PSO.circbuf.sufLowest: 493
+  PSO.extrema: 490
   QSTICK.ringcap.trailingIdx: 378
   ROC.ringcap.trailingIdx: 379
   ROCP.ringcap.trailingIdx: 380

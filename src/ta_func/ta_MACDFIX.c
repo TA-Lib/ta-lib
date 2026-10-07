@@ -727,6 +727,24 @@ TA_FMA_OPEN_PLAIN static TA_RetCode TA_MACDFIX_OpenImplPlain( struct TA_MACDFIX_
    return TA_MACDFIX_OpenImpl( stream, inReal, startIdx, historyLen, optInSignalPeriod, outBegIdx, outNBElement, outMACD, outMACDSignal, outMACDHist, outStride );
 }
 
+TA_FMA_OPEN_CLONE static TA_RetCode TA_MACDFIX_OpenSinkFma( struct TA_MACDFIX_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInSignalPeriod, double *outMACD, double *outMACDSignal, double *outMACDHist )
+{
+   TA_RetCode retCode;
+   int dummyBegIdx = 0;
+   int dummyNBElement = 0;
+   double sink_outMACD = 0.0;
+   double sink_outMACDSignal = 0.0;
+   double sink_outMACDHist = 0.0;
+   retCode = TA_MACDFIX_OpenImpl( stream, inReal, startIdx, historyLen, optInSignalPeriod, &dummyBegIdx, &dummyNBElement, &sink_outMACD, &sink_outMACDSignal, &sink_outMACDHist, 0 );
+   if( retCode == TA_SUCCESS )
+   {
+      *outMACD = sink_outMACD;
+      *outMACDSignal = sink_outMACDSignal;
+      *outMACDHist = sink_outMACDHist;
+   }
+   return retCode;
+}
+
 /* Private function, not in public API. */
 TA_RetCode TA_MACDFIX_OpenInternal( struct TA_MACDFIX_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInSignalPeriod, double *outMACD, double *outMACDSignal, double *outMACDHist )
 {
@@ -753,7 +771,7 @@ TA_LIB_API TA_RetCode TA_MACDFIX_Open( TA_MACDFIX_Stream **stream, const double 
    if( historyLen < 1 ) return TA_OUT_OF_RANGE_START_INDEX;
    if( historyLen > TA_INDEX_MAX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
    if( !inReal || !outMACD || !outMACDSignal || !outMACDHist ) return TA_BAD_PARAM;
-   return TA_MACDFIX_OpenInternal( stream, inReal, 0, historyLen, optInSignalPeriod, outMACD, outMACDSignal, outMACDHist );
+   return TA_FMA_AVAILABLE ? TA_MACDFIX_OpenSinkFma( stream, inReal, 0, historyLen, optInSignalPeriod, outMACD, outMACDSignal, outMACDHist ) : TA_MACDFIX_OpenInternal( stream, inReal, 0, historyLen, optInSignalPeriod, outMACD, outMACDSignal, outMACDHist );
 }
 
 TA_LIB_API TA_RetCode TA_MACDFIX_OpenAndFill( TA_MACDFIX_Stream **stream, const double inReal[], int historyLen, int optInSignalPeriod, int *outBegIdx, int *outNBElement, double outMACD[], double outMACDSignal[], double outMACDHist[] )

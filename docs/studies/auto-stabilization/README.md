@@ -8,11 +8,12 @@ how the value at a bar computed from a later start approaches the value computed
 | File | What it does |
 |---|---|
 | `auto_stabilization_probe.c` | Runs every function through the abstraction layer from bar 0 and from six later starts, on three synthetic series, and writes one row per (series, function, parameter set, output, start) |
+| `auto_stabilization_census.c` | Runs every function that owns an unstable id from two starts on thousands of random series and counts how often the need passes the count the library discards. Its header has the usage and the columns |
 | `analyze.py` | Folds those rows into one line per output, worst case over series and starts, and a class per function |
 | `rules_vs_need.py` | Sets the count the library discards at each level, for every function that owns an unstable id, against the measured need |
-| `rules_check.py` | Checks the one-pole, SWAK, T3 and FISHER rules against the kernels at seven values of K and a grid of periods, with no library involved. The calibrated rules are not in it: section 3 of `results.txt` holds those |
+| `rules_check.py` | Checks the one-pole, SWAK and FISHER rules against the kernels at seven values of K and a grid of periods, with no library involved. The calibrated rules are not in it: section 3 of `results.txt` holds those. For T3, a calibrated rule, it computes what the seed that shows latest needs against the largest difference it causes, with the bound it meets: more than the count |
 | `tie_break.c` | Compares MAXINDEX and MININDEX from two starts on a series full of equal extremes. It counted mismatches at the commit `results.txt` names, and counts none since a tie names the most recent bar (#503) |
-| `results.txt` | The output of all of the above at the commit named on its first line |
+| `results.txt` | The output of the probe and its scripts at the commit named on its first line. Rules re-sized since are on the [Unstable Period page](../../../website/src/api/unstable-period/README.md), and the census is rerun, not recorded |
 
 ## Running it
 
@@ -21,7 +22,10 @@ From the repository root, after `scripts/build.py`:
 ```bash
 cd docs/studies/auto-stabilization
 gcc -O2 -I../../../include auto_stabilization_probe.c ../../../cmake-build/libta-lib.a -lm -o /tmp/auto_stabilization_probe
+gcc -O2 -I../../../include auto_stabilization_census.c ../../../cmake-build/libta-lib.a -lm -o /tmp/auto_stabilization_census
 /tmp/auto_stabilization_probe 40000 > /tmp/probe.tsv          # every function; add a name to run one
+CENSUS_CSV=../ema-seeding/data/ibm_daily_ohlc.csv /tmp/auto_stabilization_census 20000 1 > /tmp/census.tsv   # with real daily bars as a fourth series kind
+CENSUS_PERIOD=98 CENSUS_NEEDS=/tmp/needs.tsv /tmp/auto_stabilization_census 20000 1 FRAMA   # one period, and every trial's need
 OVR="FastLimit=0.2,SlowLimit=0.02" /tmp/auto_stabilization_probe 40000 MAMA   # one function, other parameters
 python3 analyze.py /tmp/probe.tsv /tmp/agg.json summary
 python3 analyze.py /tmp/probe.tsv /tmp/agg.json nonexact
@@ -60,7 +64,8 @@ Link the static library by path. `-lta-lib` picks up an installed TA-Lib instead
 
 ## What it does not show
 
-- Real market data. The three shapes bracket the adaptive averages; they are not a market.
+- Real market data in the probe. The three shapes bracket the adaptive averages; they are not a
+  market. The census takes one real series, whose windows overlap.
 - Periods beyond three times the default.
 - The Rust, Java and C# libraries.
 - SWAK_BP away from its default delta. MAMA is measured at seven limit settings (section 6

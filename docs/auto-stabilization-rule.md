@@ -13,8 +13,12 @@ fed back, and when. Each item decides a part of the rule.
 
 - **A fixed pole `p`**, `state = p*state + f(input)`. The difference between two starts
   shrinks by exactly `p` per bar on any input, so an e-fold costs `1/-ln(p)` bars. Round
-  that up to a ratio of small integers the period scales: `(n+1)/2` for an EMA, `n` for
-  Wilder, `5/2` for a pole at 0.67. This is the per-level part, `K` times it.
+  that up to the nearest ratio of small integers, taken with a ceiling: `n/2` for a pole at
+  `(n-1)/(n+1)`, `n - 1/2` for one at `1 - 1/n`, `13/9` for one at 1/2, `5/2` for one at
+  0.67. A looser ratio costs bars at every level. This is the per-level part, `K` times
+  it. A ratio this tight leaves no bar over the need at a long period, so the count holds
+  the level in exact arithmetic and a pair can sit a rounding error over it: say so on
+  the page.
 - **The gain between that state and the outputs.** A level is measured against `S`, the
   largest difference the seed causes on any output at any bar. The gain is how much more
   a late state difference shows than an early one, in e-folds. It is added to `K`: the
@@ -22,24 +26,39 @@ fed back, and when. Each item decides a part of the rule.
   level to make room for it. What contributes:
   - a non-linear map: its largest slope between two states both starts can hold. A value
     only a limiter produces is not one of them, both starts hold it or neither does;
-  - a faster pole `q` after the state: `p/(p-q)`; a repeated or complex pole: its envelope
-    against its own peak;
+  - a faster pole `q` after the state: `p/(p-q)`;
+  - a repeated pole, or stages stepped together: the difference is the pole to the age
+    times a polynomial of the age, and the seeds can cancel across its terms, so the first
+    outputs are small and the peak comes later. The gain is that polynomial's worst growth
+    against `S`, over every seed the slots can hold. It grows with `K`: `c` is sized at
+    the largest `K` to hold, and the lookback comment names that `K`;
   - an output that repeats another a bar later: one bar;
   - the smallest `S` can be against the first state difference. Seeds can cancel part of
     each other in the first outputs, and every output counts: FISHER's trigger shows the
     earlier start's whole state at the first bar, which is what bounds the cancelling.
 - **A coefficient the data moves**, or a state that feeds back into its own gain through
   clamps or a rate limiter. There is no bound, or one several times the need. The rule is
-  sized by measurement.
-- **A step**: a limiter that snaps to a value, a comparison that picks a branch on the
-  state. A branch on the input alone is not one: both starts take it together. Two starts
+  sized by measurement. Where the coefficient depends on the input alone (FRAMA), both
+  starts share it, the difference shrinks by exactly that coefficient each bar, and its
+  floor gives a bound: cap the measured rule with it.
+- **A step**: a limiter that snaps to a value, a comparison on the state whose branches
+  differ where they meet, a test for an exact zero of a computed value, which rounding
+  decides. A branch on the input alone is not one, both starts take it together, nor is a
+  `max` or `min` with the state, which is continuous: a slope of 1. Two starts
   on either side of a step differ by it however close they are, so no count is a bound.
   Work out two things: whether the stepped value is fed back, and then for which inputs
   each side stays on its side (FISHER: a channel position between 0.986 and 0.995); and
-  how often it happens, by counting two-start pairs over the rule on random series through
-  the library, since the study's three series do not show it. Rare and short-lived: size
+  how often it happens, which only the census of section 2 shows: the probe's three
+  series do not. Rare and short-lived: size
   the rule for the path where both starts step together and state the step as a limit.
   When steps are what drives the state, the function is a state machine and gets no rule.
+  Where the output reads its state only through a step (HT_TRENDLINE: a period cut to a
+  whole number of bars), the two starts are equal or a step apart, the need is the same at
+  every level, and a level can only buy a rarer miss: size each on the tail of the need.
+- **A rate that reaches zero.** Where the coefficient depends on the state against the
+  price, find the region where a difference stops shrinking (MCGD: the line 20% under the
+  price) and what input holds the state there. That is a limit to state as a condition on
+  the input, and no multiple of the period removes it.
 
 ## 2. Measure the need
 
@@ -51,6 +70,7 @@ Build the library and the probe as the study's README says, from
 python3 analyze.py /tmp/need.tsv /tmp/agg.json f=<NAME>    # one line per output and parameter set
 python3 rules_vs_need.py /tmp/need.tsv                     # the library's count against the need
 OVR="TimePeriod=2" /tmp/auto_stabilization_probe 40000 <NAME> > /tmp/need_min.tsv
+/tmp/auto_stabilization_census 20000 1 <NAME>              # how often random series pass the count
 ```
 
 - Read `A10` and `A19`, the need at each level, `A7` and `A16`, what the regression leg
@@ -65,6 +85,22 @@ OVR="TimePeriod=2" /tmp/auto_stabilization_probe 40000 <NAME> > /tmp/need_min.ts
 - `analyze.py` shows the need whatever the lookback holds: the probe runs with every id
   at 0. `rules_vs_need.py` sets the count the library gives against it, so after changing
   a rule run `scripts/build.py generate`, rebuild the library and relink the probe.
+- The census runs thousands of random series from two starts, at the defaults, tripled
+  periods and the shortest ones. `max_10` and `max_19` are the largest need it met,
+  `over10` and `over19` the trials above the count, `over7` and `over16` those above what
+  the regression leg holds, `never` those that had not converged when the window ended. A
+  constant need with nothing over is a linear kernel. A few trials far over, or any in
+  `never`, is a step, or a state that locks: reproduce one before sizing anything. Many
+  over on one kind of series only is a rule sized for another kind: name it as a limit.
+- Random series do not reach the worst seed of a repeated pole or of several stages: T3
+  needs 52 at most on fifty million pairs against the worst seed's 64. For a proven rule
+  neither tool gives the count; section 3's kernel check does.
+- The census ignores a difference under `1e-13` of the output's range, so an output whose
+  seed difference is small against its range shows a `PREC_8` need cut short. Check a long
+  need against the probe's `A19`.
+- A count with no spare bar shows bars over at `PREC_8`, more of them the longer the
+  period, and none over the regression leg: the arithmetic's rounding against `e^-19` of a
+  small seed difference.
 - On one row, `(A19 - A10) / 9` is the measured bars per e-fold. A linear output comes out
   at the derived figure; well above it on every row means the derivation missed a slower
   state. A non-linear output scatters around it.
@@ -81,11 +117,21 @@ OVR="TimePeriod=2" /tmp/auto_stabilization_probe 40000 <NAME> > /tmp/need_min.ts
   hold both starts where the gain is largest, every output, against `S` over the whole
   run, at every `K` the script lists. Derive the bound first and require the search to
   reach it: a search that stays under it has missed the worst case, or the bound is slack.
-  `c` is the smallest integer with no violation.
+  `c` is the smallest integer with no violation. Iterate in exact fractions where the
+  tolerance at the largest `K` is under a double's rounding, and take `S` at whole ages:
+  a continuous envelope is not a bound at short periods.
+- **When the worst seed is nothing like a price**, a proven count can be well above any
+  need a series shows. Report both figures; choosing the measured one changes the rule's
+  tier and is the owner's decision.
+- **A proven rule well above the largest need the census met, at both levels,** is a
+  slack bound: usually one taken against the seed's size where the level is measured
+  against `S`. Redo the gain before accepting the rule.
 - **A measured need above a proven rule** means the derivation is wrong, not that the
   rule needs margin, unless a step of section 1 is what produced it.
 - **A measured rule covers the worst need at both levels**, at the defaults and at tripled
-  periods, with margin. Give it a period term only where the need grows with the period.
+  periods, with margin. Give it a period term only where the need grows with the period,
+  which three periods do not settle: run `CENSUS_PERIOD` from the smallest period to the
+  thousands, and where the rule uses a root, the periods just under a square.
   Name the series it is sized on when one is left out, as the adaptive averages leave out
   the range-bound one.
 - **`rules_vs_need.py` flags.** `LEG4` or `LEG8` fails the regression leg: the rule is too

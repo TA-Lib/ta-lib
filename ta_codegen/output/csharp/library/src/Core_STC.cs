@@ -59,6 +59,7 @@ public partial class Core
     *  MMDDYY BY     Description
     *  -------------------------------------------------------------------
     *  092926 MF,CC  Initial version (#478).
+    *  100726 MF,CC  #492. The Auto rule takes the bars the shorter EMA count gives up.
     */
    /// <summary>
    /// Number of leading input bars <c>Stc</c> consumes before it can produce its
@@ -107,7 +108,7 @@ public partial class Core
        * then one window per stochastic stage. The two 0.5 smoothers seed on
        * their first input, so they add only the unstable period.
        */
-      return EmaLookback(optInSlowPeriod) + 2 * (optInCyclePeriod - 1) + this.UnstableCount((int)FuncUnstId.STC, 2 * 10 + 3 * (optInSlowPeriod + 1), 2 * 19 + 3 * (optInSlowPeriod + 1)) ;
+      return EmaLookback(optInSlowPeriod) + 2 * (optInCyclePeriod - 1) + this.UnstableCount((int)FuncUnstId.STC, (5 * 10 + 1) / 2 + 3 * (optInSlowPeriod + 1), (5 * 19 + 1) / 2 + 3 * (optInSlowPeriod + 1)) ;
 
    }
    /// <summary>

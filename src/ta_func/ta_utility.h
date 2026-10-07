@@ -28,7 +28,7 @@
    /* A fused body, inlined into each clone of its caller: a clone runs its
     * callees at the ISA they were compiled for. */
    #define TA_FMA_STEP_INLINE __inline__ __attribute__((always_inline))
-   /* The open tier's two frames around one fused body, picked per call by
+   /* The open tier's frames around one fused body, picked per call by
     * TA_FMA_AVAILABLE. Its seams are private and a target_clones symbol is
     * exported whatever its visibility, so they dispatch by hand. */
    #define TA_FMA_OPEN_CLONE __attribute__((target("fma")))

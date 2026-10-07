@@ -87,7 +87,7 @@ public partial class Core
        * no callee whose lookback could be inherited, so the function's own
        * unstable period is the whole of it.
        */
-      return this.UnstableCount((int)FuncUnstId.SWAK_BUTTER, (((10 + 5) * (optInTimePeriod + 2) + 8) / 9), (((19 + 5) * (optInTimePeriod + 2) + 8) / 9)) ;
+      return this.UnstableCount((int)FuncUnstId.SWAK_BUTTER, (((10 + 3) * (optInTimePeriod + 2) + 8) / 9), (((19 + 3) * (optInTimePeriod + 2) + 8) / 9)) ;
 
    }
    /// <summary>

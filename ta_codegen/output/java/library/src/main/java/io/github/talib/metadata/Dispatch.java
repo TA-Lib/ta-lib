@@ -580,6 +580,9 @@ final class Dispatch {
          case "PPO":
             return core.ppo(
                startIdx, endIdx, h.realInput(0), h.intOpt(0), h.intOpt(1), h.maTypeOpt(2), h.realOutput(0));
+         case "PSO":
+            return core.pso(
+               startIdx, endIdx, h.price(0, 1), h.price(0, 2), h.price(0, 3), h.intOpt(0), h.intOpt(1), h.realOutput(0));
          case "PVI":
             return core.pvi(
                startIdx, endIdx, h.price(0, 3), h.price(0, 4), h.realOutput(0));
@@ -1110,6 +1113,8 @@ final class Dispatch {
             return core.plusDmLookback(h.intOpt(0));
          case "PPO":
             return core.ppoLookback(h.intOpt(0), h.intOpt(1), h.maTypeOpt(2));
+         case "PSO":
+            return core.psoLookback(h.intOpt(0), h.intOpt(1));
          case "PVI":
             return core.pviLookback();
          case "PVO":
@@ -1580,6 +1585,8 @@ final class Dispatch {
             return core.plusDmDisplayShift(h.intOpt(0), outputIdx);
          case "PPO":
             return core.ppoDisplayShift(h.intOpt(0), h.intOpt(1), h.maTypeOpt(2), outputIdx);
+         case "PSO":
+            return core.psoDisplayShift(h.intOpt(0), h.intOpt(1), outputIdx);
          case "PVI":
             return core.pviDisplayShift(outputIdx);
          case "PVO":

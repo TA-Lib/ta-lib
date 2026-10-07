@@ -190,6 +190,7 @@ public partial class Core
       if( (outFastK.Overlaps(inReal) && outFastK != inReal) || (outFastD.Overlaps(inReal) && outFastD != inReal) ) {
          return RetCode.BadParam ;
       }
+      double[]? _rent_tempRSIBuffer = null;
       /* Stochastic RSI
        *
        * Reference: "Stochastic RSI and Dynamic Momentum Index"
@@ -230,12 +231,14 @@ public partial class Core
       }
       outBegIdx = startIdx;
       tempArraySize = endIdx - startIdx + 1 + lookbackSTOCHF;
-      tempRSIBuffer = new double[(int)(tempArraySize * 1)];
+      _rent_tempRSIBuffer = System.Buffers.ArrayPool<double>.Shared.Rent((int)(tempArraySize * 1));
+      tempRSIBuffer = _rent_tempRSIBuffer.AsSpan(0, (int)(tempArraySize * 1));
       OutRange _xr0 = Rsi(startIdx - lookbackSTOCHF, endIdx, inReal, optInTimePeriod, tempRSIBuffer);
       outBegIdx1 = _xr0.BegIdx;
       outNbElement1 = _xr0.Count;
       retCode = RetCode.Success;
       if( outNbElement1 == 0 ) {
+         ReturnScratch(ref _rent_tempRSIBuffer);
          outBegIdx = 0;
          outNBElement = 0;
          return retCode ;
@@ -244,6 +247,7 @@ public partial class Core
       outBegIdx2 = _xr1.BegIdx;
       outNBElement = _xr1.Count;
       retCode = RetCode.Success;
+      ReturnScratch(ref _rent_tempRSIBuffer);
       if( (int)outNBElement == 0 ) {
          outBegIdx = 0;
          outNBElement = 0;
@@ -305,6 +309,7 @@ public partial class Core
       if( System.Runtime.InteropServices.MemoryMarshal.AsBytes(outFastK).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inReal)) || System.Runtime.InteropServices.MemoryMarshal.AsBytes(outFastD).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inReal)) ) {
          return RetCode.BadParam ;
       }
+      double[]? _rent_tempRSIBuffer = null;
       outBegIdx = 0;
       outNBElement = 0;
       lookbackSTOCHF = StochfLookback(optInFastK_Period, optInFastD_Period, optInFastD_MAType);
@@ -319,12 +324,14 @@ public partial class Core
       }
       outBegIdx = startIdx;
       tempArraySize = endIdx - startIdx + 1 + lookbackSTOCHF;
-      tempRSIBuffer = new double[(int)(tempArraySize * 1)];
+      _rent_tempRSIBuffer = System.Buffers.ArrayPool<double>.Shared.Rent((int)(tempArraySize * 1));
+      tempRSIBuffer = _rent_tempRSIBuffer.AsSpan(0, (int)(tempArraySize * 1));
       OutRange _xr0 = Rsi(startIdx - lookbackSTOCHF, endIdx, inReal, optInTimePeriod, tempRSIBuffer);
       outBegIdx1 = _xr0.BegIdx;
       outNbElement1 = _xr0.Count;
       retCode = RetCode.Success;
       if( outNbElement1 == 0 ) {
+         ReturnScratch(ref _rent_tempRSIBuffer);
          outBegIdx = 0;
          outNBElement = 0;
          return retCode ;
@@ -333,6 +340,7 @@ public partial class Core
       outBegIdx2 = _xr1.BegIdx;
       outNBElement = _xr1.Count;
       retCode = RetCode.Success;
+      ReturnScratch(ref _rent_tempRSIBuffer);
       if( (int)outNBElement == 0 ) {
          outBegIdx = 0;
          outNBElement = 0;

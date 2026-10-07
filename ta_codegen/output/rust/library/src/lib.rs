@@ -178,7 +178,7 @@
 //! * [`TAN`](Core::tan) — Vector Trigonometric Tan
 //! * [`TANH`](Core::tanh) — Vector Trigonometric Tanh
 //!
-//! ## Momentum Indicators (60)
+//! ## Momentum Indicators (61)
 //!
 //! * [`AC`](Core::ac) — Accelerator/Decelerator Oscillator
 //! * [`ADX`](Core::adx) — Average Directional Movement Index
@@ -221,6 +221,7 @@
 //! * [`PLUS_DI`](Core::plus_di) — Plus Directional Indicator
 //! * [`PLUS_DM`](Core::plus_dm) — Plus Directional Movement
 //! * [`PPO`](Core::ppo) — Percentage Price Oscillator
+//! * [`PSO`](Core::pso) — Premier Stochastic Oscillator
 //! * [`QSTICK`](Core::qstick) — Qstick
 //! * [`ROC`](Core::roc) — Rate of change : ((price/prevPrice)-1)*100
 //! * [`ROCP`](Core::rocp) — Rate of change Percentage: (price-prevPrice)/prevPrice

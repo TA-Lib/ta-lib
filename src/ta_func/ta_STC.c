@@ -59,6 +59,7 @@
  *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
  *  092926 MF,CC  Initial version (#478).
+ *  100726 MF,CC  #492. The Auto rule takes the bars the shorter EMA count gives up.
  */
 
 TA_NOINLINE TA_LIB_API int TA_STC_Lookback( int optInFastPeriod, int optInSlowPeriod, int optInCyclePeriod )
@@ -86,7 +87,7 @@ TA_NOINLINE TA_LIB_API int TA_STC_Lookback( int optInFastPeriod, int optInSlowPe
     * then one window per stochastic stage. The two 0.5 smoothers seed on
     * their first input, so they add only the unstable period.
     */
-   return TA_EMA_Lookback(optInSlowPeriod) + 2 * (optInCyclePeriod - 1) + TA_GLOBALS_UNSTABLE(TA_FUNC_UNST_STC,Stc,2 * 10 + 3 * (optInSlowPeriod + 1),2 * 19 + 3 * (optInSlowPeriod + 1));
+   return TA_EMA_Lookback(optInSlowPeriod) + 2 * (optInCyclePeriod - 1) + TA_GLOBALS_UNSTABLE(TA_FUNC_UNST_STC,Stc,(5 * 10 + 1) / 2 + 3 * (optInSlowPeriod + 1),(5 * 19 + 1) / 2 + 3 * (optInSlowPeriod + 1));
 }
 
 TA_LIB_API int TA_STC_DisplayShift( int optInFastPeriod, int optInSlowPeriod, int optInCyclePeriod, int outputIdx )
@@ -2103,6 +2104,20 @@ TA_FMA_OPEN_PLAIN static TA_RetCode TA_STC_OpenImplPlain( struct TA_STC_Stream *
    return TA_STC_OpenImpl( stream, inReal, startIdx, historyLen, optInFastPeriod, optInSlowPeriod, optInCyclePeriod, outBegIdx, outNBElement, outReal, outStride );
 }
 
+TA_FMA_OPEN_CLONE static TA_RetCode TA_STC_OpenSinkFma( struct TA_STC_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInFastPeriod, int optInSlowPeriod, int optInCyclePeriod, double *outReal )
+{
+   TA_RetCode retCode;
+   int dummyBegIdx = 0;
+   int dummyNBElement = 0;
+   double sink_outReal = 0.0;
+   retCode = TA_STC_OpenImpl( stream, inReal, startIdx, historyLen, optInFastPeriod, optInSlowPeriod, optInCyclePeriod, &dummyBegIdx, &dummyNBElement, &sink_outReal, 0 );
+   if( retCode == TA_SUCCESS )
+   {
+      *outReal = sink_outReal;
+   }
+   return retCode;
+}
+
 /* Private function, not in public API. */
 TA_RetCode TA_STC_OpenInternal( struct TA_STC_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInFastPeriod, int optInSlowPeriod, int optInCyclePeriod, double *outReal )
 {
@@ -2125,7 +2140,7 @@ TA_LIB_API TA_RetCode TA_STC_Open( TA_STC_Stream **stream, const double inReal[]
    if( historyLen < 1 ) return TA_OUT_OF_RANGE_START_INDEX;
    if( historyLen > TA_INDEX_MAX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
    if( !inReal || !outReal ) return TA_BAD_PARAM;
-   return TA_STC_OpenInternal( stream, inReal, 0, historyLen, optInFastPeriod, optInSlowPeriod, optInCyclePeriod, outReal );
+   return TA_FMA_AVAILABLE ? TA_STC_OpenSinkFma( stream, inReal, 0, historyLen, optInFastPeriod, optInSlowPeriod, optInCyclePeriod, outReal ) : TA_STC_OpenInternal( stream, inReal, 0, historyLen, optInFastPeriod, optInSlowPeriod, optInCyclePeriod, outReal );
 }
 
 TA_LIB_API TA_RetCode TA_STC_OpenAndFill( TA_STC_Stream **stream, const double inReal[], int historyLen, int optInFastPeriod, int optInSlowPeriod, int optInCyclePeriod, int *outBegIdx, int *outNBElement, double outReal[] )

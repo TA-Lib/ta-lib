@@ -89,9 +89,9 @@
 /* TA_EMA against stcRefEma, relative. Worst over the grid: 2.6e-16. */
 #define STC_EMA_REL 8e-16
 
-#define STC_COMPOSITE_CMP 2030988
-#define STC_EMA_CMP       4288616
-#define STC_MACD_CMP      1544001
+#define STC_COMPOSITE_CMP 2030877
+#define STC_EMA_CMP       4299024
+#define STC_MACD_CMP      1554436
 #define STC_LOOKBACK_CMP  14
 #define STC_SHIFT_CMP     46085
 #define STC_GOLD_CMP      10

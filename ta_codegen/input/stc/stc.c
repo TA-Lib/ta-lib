@@ -15,6 +15,7 @@
  *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
  *  092926 MF,CC  Initial version (#478).
+ *  100726 MF,CC  #492. The Auto rule takes the bars the shorter EMA count gives up.
  *
  */
 
@@ -35,7 +36,7 @@ int stc_lookback(int optInFastPeriod, int optInSlowPeriod, int optInCyclePeriod)
     */
    return ema_lookback( optInSlowPeriod )
    + 2 * (optInCyclePeriod - 1)
-   + TA_UNSTABLE( TA_FUNC_UNST_STC, 2 * K + 3 * (optInSlowPeriod + 1) );
+   + TA_UNSTABLE( TA_FUNC_UNST_STC, (5 * K + 1) / 2 + 3 * (optInSlowPeriod + 1) );
 }
 
 TA_RetCode stc(int startIdx, int endIdx,

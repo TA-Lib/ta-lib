@@ -906,6 +906,20 @@ TA_FMA_OPEN_PLAIN static TA_RetCode TA_KURTOSIS_OpenImplPlain( struct TA_KURTOSI
    return TA_KURTOSIS_OpenImpl( stream, inReal, startIdx, historyLen, optInTimePeriod, outBegIdx, outNBElement, outReal, outStride );
 }
 
+TA_FMA_OPEN_CLONE static TA_RetCode TA_KURTOSIS_OpenSinkFma( struct TA_KURTOSIS_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInTimePeriod, double *outReal )
+{
+   TA_RetCode retCode;
+   int dummyBegIdx = 0;
+   int dummyNBElement = 0;
+   double sink_outReal = 0.0;
+   retCode = TA_KURTOSIS_OpenImpl( stream, inReal, startIdx, historyLen, optInTimePeriod, &dummyBegIdx, &dummyNBElement, &sink_outReal, 0 );
+   if( retCode == TA_SUCCESS )
+   {
+      *outReal = sink_outReal;
+   }
+   return retCode;
+}
+
 /* Private function, not in public API. */
 TA_RetCode TA_KURTOSIS_OpenInternal( struct TA_KURTOSIS_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInTimePeriod, double *outReal )
 {
@@ -928,7 +942,7 @@ TA_LIB_API TA_RetCode TA_KURTOSIS_Open( TA_KURTOSIS_Stream **stream, const doubl
    if( historyLen < 1 ) return TA_OUT_OF_RANGE_START_INDEX;
    if( historyLen > TA_INDEX_MAX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
    if( !inReal || !outReal ) return TA_BAD_PARAM;
-   return TA_KURTOSIS_OpenInternal( stream, inReal, 0, historyLen, optInTimePeriod, outReal );
+   return TA_FMA_AVAILABLE ? TA_KURTOSIS_OpenSinkFma( stream, inReal, 0, historyLen, optInTimePeriod, outReal ) : TA_KURTOSIS_OpenInternal( stream, inReal, 0, historyLen, optInTimePeriod, outReal );
 }
 
 TA_LIB_API TA_RetCode TA_KURTOSIS_OpenAndFill( TA_KURTOSIS_Stream **stream, const double inReal[], int historyLen, int optInTimePeriod, int *outBegIdx, int *outNBElement, double outReal[] )

@@ -85,7 +85,7 @@ public partial class Core
        * seeded from the first bar rather than read from before it, and there is
        * no callee whose lookback could be inherited.
        */
-      return this.UnstableCount((int)FuncUnstId.SWAK_2PHP, (((10 + 5) * (optInTimePeriod + 2) + 8) / 9), (((19 + 5) * (optInTimePeriod + 2) + 8) / 9)) ;
+      return this.UnstableCount((int)FuncUnstId.SWAK_2PHP, (((10 + 3) * (optInTimePeriod + 2) + 8) / 9), (((19 + 3) * (optInTimePeriod + 2) + 8) / 9)) ;
 
    }
    /// <summary>

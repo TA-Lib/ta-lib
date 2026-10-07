@@ -63,6 +63,9 @@
  *                natural math is only near-identity at period=1: the
  *                coefficients sum to 1 in real arithmetic but not in
  *                floating point (~1e-14 drift), so the copy is explicit.
+ *  100626 MF,CC  Auto rule sized on the worst seed of the six stages,
+ *                against the largest output difference it causes (#492).
+ *  100726 MF,CC  Auto rule sized by measurement on price series (#492).
  */
 
 // Import types from parent module
@@ -102,7 +105,11 @@ impl Core {
         } else if !((optInVFactor >= 0e0) && (optInVFactor <= 1e0)) {
             return Err(RetCode::BadParam);
         }
-        return Ok((6 * (optInTimePeriod - 1) + self.unstable_count(FuncUnstId::T3, (if optInTimePeriod > 1 { ((10 + 20) * (optInTimePeriod + 1) + 1) / 2 } else { 0 }), (if optInTimePeriod > 1 { ((19 + 20) * (optInTimePeriod + 1) + 1) / 2 } else { 0 }))) as usize);
+        // Sized by measurement on price series; it is not a bound. The six stages
+        // share the pole (n-1)/(n+1) and are stepped together, so a seed can cancel
+        // itself in the early outputs and show late: such a seed needs up to
+        // 13*n bars at PREC_4 and 18.5*n at PREC_8.
+        return Ok((6 * (optInTimePeriod - 1) + self.unstable_count(FuncUnstId::T3, (if optInTimePeriod > 1 { (11 * (4 + 4) * optInTimePeriod + 7) / 8 } else { 0 }), (if optInTimePeriod > 1 { (11 * (8 + 4) * optInTimePeriod + 7) / 8 } else { 0 }))) as usize);
     }
     /// Display shift of one output of [`Core::t3`]: how many bars ahead (positive) or behind
     /// (negative) of the bar that computed it a chart draws that output. The values are never

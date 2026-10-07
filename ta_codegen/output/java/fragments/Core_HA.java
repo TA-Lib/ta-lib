@@ -10,6 +10,7 @@
  *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
  *  090526 MF,CC  First version (issue #373).
+ *  100626 MF,CC  Auto rule sized on the pole at 1/2: ceil(13*K/9) (#492).
  */
 
    /**
@@ -26,7 +27,10 @@
     */
    public int haLookback( )
    {
-      return this.unstableCount(FuncUnstId.HA.ordinal(), 2 * 10, 2 * 19) ;
+      /* 13/9 is 1/ln(2) rounded up: the open is the only state, and it shows
+       * the whole first difference at its first bar.
+       */
+      return this.unstableCount(FuncUnstId.HA.ordinal(), (13 * 10 + 8) / 9, (13 * 19 + 8) / 9) ;
 
    }
    /**

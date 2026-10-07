@@ -11,7 +11,7 @@
 //!
 //! ```text
 //! let body = ir_cleanup::drop_answered_cross_call_guards(body, &admits, None);
-//! let body = ir_cleanup::drop_deallocation(&body);
+//! let body = ir_cleanup::drop_deallocation(&body);   // or its `_keeping` form
 //! let body = ir_cleanup::drop_inert_guards(&body);   // always last
 //! ```
 //!
@@ -33,6 +33,8 @@
 use crate::backends::builtins::StdlibFn;
 use crate::backends::cond_fold::{fold_cond, CondFold};
 use crate::ir::{BinOp, CircBuf, Expr, Statement};
+use std::cell::RefCell;
+use std::collections::BTreeSet;
 
 /// Fold away the guard on a cross-indicator call whose rejection the calling
 /// backend has already answered, over one function body.
@@ -245,8 +247,8 @@ fn is_not_success(e: &Expr, var: &str) -> bool {
 }
 /// Drop deallocation, for a backend that has none.
 ///
-/// Two spellings reach the IR and both render to the empty string in Rust, Java
-/// and C# today: `free()`, and `CircBuf::Destroy` (whose own doc says "C frees
+/// Two spellings reach the IR and neither has a rendering in such a backend:
+/// `free()`, and `CircBuf::Destroy` (whose own doc says "C frees
 /// each heap buffer iff allocated; other backends no-op"). Taking both here
 /// rather than at the renderer is what lets [`drop_inert_guards`] be a
 /// structural rule instead of one that has to know what `free` is.
@@ -267,6 +269,44 @@ pub(crate) fn drop_deallocation(body: &[Statement]) -> Vec<Statement> {
             }
         })
         .collect()
+}
+
+/// As [`drop_deallocation`], but a `free(x)` survives for each `x` in `kept`:
+/// the backend renders that one as the return of a pooled buffer.
+pub(crate) fn drop_deallocation_keeping(body: &[Statement], kept: &BTreeSet<String>) -> Vec<Statement> {
+    body.iter()
+        .map(|s| {
+            let frees_kept = matches!(s, Statement::Expr(Expr::FuncCall(f, args))
+                if matches!(StdlibFn::from_name(f), Some(StdlibFn::Free))
+                    && matches!(args.as_slice(), [Expr::Var(x)] if kept.contains(x)));
+            if is_deallocation(s) && !frees_kept {
+                Statement::Block { body: Vec::new() }
+            } else {
+                recurse(s, &|b| drop_deallocation_keeping(b, kept))
+            }
+        })
+        .collect()
+}
+
+/// Every `x = malloc(size)` in `body`, at any depth: the name and the size.
+pub(crate) fn scratch_allocations(body: &[Statement]) -> Vec<(String, Expr)> {
+    let found = RefCell::new(Vec::new());
+    collect_allocations(body, &found);
+    found.into_inner()
+}
+
+fn collect_allocations(body: &[Statement], found: &RefCell<Vec<(String, Expr)>>) {
+    for s in body {
+        if let Statement::Assign { target: Expr::Var(x), value: Expr::FuncCall(f, args), compound: false } = s {
+            if let (Some(StdlibFn::Malloc), [size]) = (StdlibFn::from_name(f), args.as_slice()) {
+                found.borrow_mut().push((x.clone(), size.clone()));
+            }
+        }
+        recurse(s, &|b| {
+            collect_allocations(b, found);
+            Vec::new()
+        });
+    }
 }
 
 fn is_deallocation(s: &Statement) -> bool {

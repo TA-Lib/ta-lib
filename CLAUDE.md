@@ -111,9 +111,13 @@ PKG  <N>_OpenAndFillInternal(in, sIdx, ..)  -> <N>_OpenImpl(.., 1)
 PRV  <N>_OpenImpl(sp, in, sIdx, params, outBeg, outNb, outs, outStride)
 ```
 
-A fused `_OpenImpl` (C, Rust) runs as one of two private frames, one compiled
-for hardware FMA, picked per call on the running CPU. Kept on one path: C
-candlesticks; Rust stateless maps and `HT_TRENDMODE`.
+A fused `_OpenImpl` (C, Rust) runs in a private frame compiled for hardware
+FMA or in a plain one, picked per call on the running CPU. Kept on one path: C
+candlesticks; Rust stateless maps and `HT_TRENDMODE`. In C the public
+`Open` has an FMA frame of its own that declares the sinks: a sink a frame is
+handed is stored on every bar, with everything that feeds it, where a local one
+is computed once. Both seams still call the shared frame, one per stride; drop
+either call and the compiler specialises the fill's loop differently.
 
 Both public entries delegate at anchor 0, so **no seam is emitted unreachable**.
 The guard sits on the public frame because that is the only one handed an array

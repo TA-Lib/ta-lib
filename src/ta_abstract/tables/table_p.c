@@ -326,6 +326,60 @@ DEF_FUNCTION( PPO,
              );
 /* PPO END */
 
+/* PSO BEGIN */
+static const TA_OptInputParameterInfo TA_DEF_UI_D_PSO_FastK_Period =
+{
+   TA_OptInput_IntegerRange,
+   "optInFastK_Period",
+   0,
+
+   "Fast-K Period",
+   (const void *)&TA_DEF_TimePeriod_Positive,
+   8,
+   "Time period for building the Fast-K line",
+
+   NULL
+};
+
+static const TA_OptInputParameterInfo TA_DEF_UI_D_PSO_EMAPeriod =
+{
+   TA_OptInput_IntegerRange,
+   "optInEMAPeriod",
+   0,
+
+   "EMA Period",
+   (const void *)&TA_DEF_TimePeriod_Positive,
+   5,
+   "Period of each of the two smoothing passes",
+
+   NULL
+};
+
+static const TA_InputParameterInfo    *TA_PSO_Inputs[]    =
+{
+  &TA_DEF_UI_Input_Price_HLC,
+  NULL
+};
+
+static const TA_OutputParameterInfo   *TA_PSO_Outputs[]   =
+{
+  &TA_DEF_UI_Output_Real,
+  NULL
+};
+
+static const TA_OptInputParameterInfo *TA_PSO_OptInputs[] =
+{ &TA_DEF_UI_D_PSO_FastK_Period,
+  &TA_DEF_UI_D_PSO_EMAPeriod,
+  NULL
+};
+
+DEF_FUNCTION( PSO,
+              TA_GroupId_MomentumIndicators,
+              "Premier Stochastic Oscillator",
+              TA_FUNC_FLG_STREAM
+             );
+/* PSO END */
+
 /* PVI BEGIN */
 static const TA_InputParameterInfo    *TA_PVI_Inputs[]    =
 {
@@ -425,6 +479,7 @@ const TA_FuncDef *TA_DEF_TableP[] =
    ADD_TO_TABLE(PLUS_DI),
    ADD_TO_TABLE(PLUS_DM),
    ADD_TO_TABLE(PPO),
+   ADD_TO_TABLE(PSO),
    ADD_TO_TABLE(PVI),
    ADD_TO_TABLE(PVO),
    ADD_TO_TABLE(PVT),

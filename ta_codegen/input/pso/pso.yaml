@@ -1,0 +1,27 @@
+name: PSO
+group: Momentum Indicators
+hint: Premier Stochastic Oscillator
+flags: [stream]
+inputs:
+  - name: inPriceHLC
+    type: price
+    price_components: [high, low, close]
+optional_inputs:
+  - name: optInFastK_Period
+    type: integer
+    display_name: Fast-K Period
+    hint: Time period for building the Fast-K line
+    range: [1, 100000]
+    default: 8
+    suggested: [1, 200, 1]
+  - name: optInEMAPeriod
+    type: integer
+    display_name: EMA Period
+    hint: Period of each of the two smoothing passes
+    range: [1, 100000]
+    default: 5
+    suggested: [1, 200, 1]
+outputs:
+  - name: outReal
+    type: real
+    flags: [line]

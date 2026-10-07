@@ -241,6 +241,8 @@ public partial class Core
       if( (outMACD.Overlaps(inReal) && outMACD != inReal) || (outMACDSignal.Overlaps(inReal) && outMACDSignal != inReal) || (outMACDHist.Overlaps(inReal) && outMACDHist != inReal) ) {
          return RetCode.BadParam ;
       }
+      double[]? _rent_fastMABuffer = null;
+      double[]? _rent_slowMABuffer = null;
       if( optInFastMAType == MAType.EMA && optInSlowMAType == MAType.EMA && optInSignalMAType == MAType.EMA && optInFastPeriod >= 2 && optInSlowPeriod >= 2 && optInSignalPeriod >= 2 ) {
          /* An all-EMA MACDEXT computes exactly what MACD computes. Delegate
           * to its single-pass implementation. Period 1 stays on the generic
@@ -295,8 +297,10 @@ public partial class Core
       }
       /* Allocate intermediate buffer for fast/slow MA. */
       tempInteger = endIdx - startIdx + 1 + lookbackSignal;
-      fastMABuffer = new double[(int)(tempInteger * 1)];
-      slowMABuffer = new double[(int)(tempInteger * 1)];
+      _rent_fastMABuffer = System.Buffers.ArrayPool<double>.Shared.Rent((int)(tempInteger * 1));
+      fastMABuffer = _rent_fastMABuffer.AsSpan(0, (int)(tempInteger * 1));
+      _rent_slowMABuffer = System.Buffers.ArrayPool<double>.Shared.Rent((int)(tempInteger * 1));
+      slowMABuffer = _rent_slowMABuffer.AsSpan(0, (int)(tempInteger * 1));
       /* Calculate the slow MA.
        *
        * Move back the startIdx to get enough data
@@ -316,6 +320,8 @@ public partial class Core
       retCode = RetCode.Success;
       /* Parano tests. Will be removed eventually. */
       if( outBegIdx1 != tempInteger || outBegIdx2 != tempInteger || outNbElement1 != outNbElement2 || outNbElement1 != endIdx - startIdx + 1 + lookbackSignal ) {
+         ReturnScratch(ref _rent_fastMABuffer);
+         ReturnScratch(ref _rent_slowMABuffer);
          return RetCode.BadParam ;
       }
       /* Calculate (fast MA) - (slow MA). */
@@ -332,6 +338,8 @@ public partial class Core
       outBegIdx2 = _xr3.BegIdx;
       outNbElement2 = _xr3.Count;
       retCode = RetCode.Success;
+      ReturnScratch(ref _rent_fastMABuffer);
+      ReturnScratch(ref _rent_slowMABuffer);
       /* Calculate the histogram. */
       for( i = 0; i < outNbElement2; i += 1 ) {
          outMACDHist[i] = outMACD[i] - outMACDSignal[i];
@@ -413,6 +421,8 @@ public partial class Core
       if( System.Runtime.InteropServices.MemoryMarshal.AsBytes(outMACD).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inReal)) || System.Runtime.InteropServices.MemoryMarshal.AsBytes(outMACDSignal).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inReal)) || System.Runtime.InteropServices.MemoryMarshal.AsBytes(outMACDHist).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inReal)) ) {
          return RetCode.BadParam ;
       }
+      double[]? _rent_fastMABuffer = null;
+      double[]? _rent_slowMABuffer = null;
       if( optInFastMAType == MAType.EMA && optInSlowMAType == MAType.EMA && optInSignalMAType == MAType.EMA && optInFastPeriod >= 2 && optInSlowPeriod >= 2 && optInSignalPeriod >= 2 ) {
          OutRange _xr0 = Macd(startIdx, endIdx, inReal, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outMACD, outMACDSignal, outMACDHist);
          outBegIdx = _xr0.BegIdx;
@@ -443,8 +453,10 @@ public partial class Core
          return RetCode.Success ;
       }
       tempInteger = endIdx - startIdx + 1 + lookbackSignal;
-      fastMABuffer = new double[(int)(tempInteger * 1)];
-      slowMABuffer = new double[(int)(tempInteger * 1)];
+      _rent_fastMABuffer = System.Buffers.ArrayPool<double>.Shared.Rent((int)(tempInteger * 1));
+      fastMABuffer = _rent_fastMABuffer.AsSpan(0, (int)(tempInteger * 1));
+      _rent_slowMABuffer = System.Buffers.ArrayPool<double>.Shared.Rent((int)(tempInteger * 1));
+      slowMABuffer = _rent_slowMABuffer.AsSpan(0, (int)(tempInteger * 1));
       tempInteger = startIdx - lookbackSignal;
       OutRange _xr1 = Ma(tempInteger, endIdx, inReal, optInSlowPeriod, optInSlowMAType, slowMABuffer);
       outBegIdx1 = _xr1.BegIdx;
@@ -455,6 +467,8 @@ public partial class Core
       outNbElement2 = _xr2.Count;
       retCode = RetCode.Success;
       if( outBegIdx1 != tempInteger || outBegIdx2 != tempInteger || outNbElement1 != outNbElement2 || outNbElement1 != endIdx - startIdx + 1 + lookbackSignal ) {
+         ReturnScratch(ref _rent_fastMABuffer);
+         ReturnScratch(ref _rent_slowMABuffer);
          return RetCode.BadParam ;
       }
       for( i = 0; i < outNbElement1; i += 1 ) {
@@ -465,6 +479,8 @@ public partial class Core
       outBegIdx2 = _xr3.BegIdx;
       outNbElement2 = _xr3.Count;
       retCode = RetCode.Success;
+      ReturnScratch(ref _rent_fastMABuffer);
+      ReturnScratch(ref _rent_slowMABuffer);
       for( i = 0; i < outNbElement2; i += 1 ) {
          outMACDHist[i] = outMACD[i] - outMACDSignal[i];
       }

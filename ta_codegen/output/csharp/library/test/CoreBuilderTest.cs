@@ -192,7 +192,7 @@ public static class CoreBuilderTest
         Check(auto.UnstablePeriod(FuncUnstId.EMA) == Core.UnstableAutoPrec4
             && auto.UnstablePeriod(FuncUnstId.RSI) == Core.UnstableAutoPrec8,
             "a level is read back as the level, per id and through the wildcard");
-        Check(auto.EmaLookback(30) == 184 && auto.RsiLookback(14) == 280,
+        Check(auto.EmaLookback(30) == 179 && auto.RsiLookback(14) == 280,
             "under a level the lookback adds the id's own count");
         CheckThrows<ArgumentOutOfRangeException>(
             () => Core.Builder().UnstablePeriod(FuncUnstId.EMA, Core.IndexMax + 5),

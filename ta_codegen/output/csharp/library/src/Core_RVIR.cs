@@ -149,6 +149,7 @@ public partial class Core
       if( (outReal.Overlaps(inHigh) && outReal != inHigh) || (outReal.Overlaps(inLow) && outReal != inLow) ) {
          return RetCode.BadParam ;
       }
+      double[]? _rent_tempHigh = null;
       outBegIdx = 0;
       outNBElement = 0;
       lookbackTotal = RvirLookback(optInTimePeriod, optInStdDevPeriod);
@@ -176,7 +177,8 @@ public partial class Core
        * fusing would cost this function the streaming tier. Composing keeps it,
        * for the reason KC's legs do: each leg streams as itself.
        */
-      tempHigh = new double[(int)((endIdx - startIdx + 1) * 1)];
+      _rent_tempHigh = System.Buffers.ArrayPool<double>.Shared.Rent((int)((endIdx - startIdx + 1) * 1));
+      tempHigh = _rent_tempHigh.AsSpan(0, (int)((endIdx - startIdx + 1) * 1));
       /* Either input may be aliased onto outReal. Both legs are safe against that
        * for TA_RVI's own reason -- its write index trails its read index by the
        * lookback and never overtakes it -- so the order of the two calls is an
@@ -201,6 +203,7 @@ public partial class Core
       for( i = 0; i < outNBElement; i += 1 ) {
          outReal[i] = 0.5 * (tempHigh[i] + outReal[i]);
       }
+      ReturnScratch(ref _rent_tempHigh);
       return RetCode.Success ;
    }
    internal RetCode RvirImpl( int startIdx,
@@ -240,6 +243,7 @@ public partial class Core
       if( System.Runtime.InteropServices.MemoryMarshal.AsBytes(outReal).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inHigh)) || System.Runtime.InteropServices.MemoryMarshal.AsBytes(outReal).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inLow)) ) {
          return RetCode.BadParam ;
       }
+      double[]? _rent_tempHigh = null;
       outBegIdx = 0;
       outNBElement = 0;
       lookbackTotal = RvirLookback(optInTimePeriod, optInStdDevPeriod);
@@ -252,7 +256,8 @@ public partial class Core
       if( startIdx > endIdx ) {
          return RetCode.Success ;
       }
-      tempHigh = new double[(int)((endIdx - startIdx + 1) * 1)];
+      _rent_tempHigh = System.Buffers.ArrayPool<double>.Shared.Rent((int)((endIdx - startIdx + 1) * 1));
+      tempHigh = _rent_tempHigh.AsSpan(0, (int)((endIdx - startIdx + 1) * 1));
       OutRange _xr0 = Rvi(startIdx, endIdx, inHigh, optInTimePeriod, optInStdDevPeriod, tempHigh);
       tempBegIdx = _xr0.BegIdx;
       tempNbElement = _xr0.Count;
@@ -264,6 +269,7 @@ public partial class Core
       for( i = 0; i < outNBElement; i += 1 ) {
          outReal[i] = 0.5 * (tempHigh[i] + outReal[i]);
       }
+      ReturnScratch(ref _rent_tempHigh);
       return RetCode.Success ;
    }
    /// <summary>

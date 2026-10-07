@@ -1272,7 +1272,7 @@ fn mark_fma_multiversion(o: &mut String, func: &FuncDef) {
         o.insert_str(line, "TA_FMA_MULTIVERSION\n");
     }
     if open_takes_fma_frames(func) {
-        dispatch_fused_open(o, &n);
+        dispatch_fused_open(o, func);
     }
 }
 
@@ -1283,8 +1283,15 @@ pub fn open_takes_fma_frames(func: &FuncDef) -> bool {
 }
 
 /// The open tier's hardware-FMA clone: a fused `_OpenImpl` is force-inlined
-/// into two file-static frames and each seam picks one on the running CPU.
-fn dispatch_fused_open(o: &mut String, n: &str) {
+/// into file-static frames and each seam picks one on the running CPU.
+///
+/// The public `Open` has an FMA frame of its own, which declares the sinks: a
+/// frame handed its sinks and a run-time stride computes and stores every
+/// output on every bar only to keep the last. Both seams keep calling the
+/// shared frame, one per stride: how the compiler specialises that frame
+/// depends on the strides it is called with, and the fill's loop with it.
+fn dispatch_fused_open(o: &mut String, func: &FuncDef) {
+    let n = &uname(func);
     let sig = format!("static TA_RetCode TA_{n}_OpenImpl(");
     let Some(line) = fuses_at(o, &sig) else {
         return;
@@ -1293,11 +1300,7 @@ fn dispatch_fused_open(o: &mut String, n: &str) {
     let params_from = line + sig.len();
     let params_to = params_from + o[params_from..].find(" )\n").expect("an `_OpenImpl` signature closes its line");
     let params = o[params_from..params_to].trim().to_string();
-    let args: Vec<&str> = params
-        .split(", ")
-        .map(|p| p.rsplit([' ', '*']).next().unwrap_or(p).trim_end_matches("[]"))
-        .collect();
-    let args = args.join(", ");
+    let args = arg_names(&params);
     let mut frames = String::new();
     for (attr, suffix) in [("TA_FMA_OPEN_CLONE", "Fma"), ("TA_FMA_OPEN_PLAIN", "Plain")] {
         let _ = write!(
@@ -1306,6 +1309,25 @@ fn dispatch_fused_open(o: &mut String, n: &str) {
         );
     }
     let tail = o.split_off(end);
+
+    // The sink frame is `_OpenInternal` as emitted, under another name.
+    let internal_sig = open_internal_signature(func);
+    let internal_at =
+        def_line(&tail, &internal_sig).unwrap_or_else(|| panic!("{n}: no _OpenInternal after its fused _OpenImpl"));
+    let internal_end = internal_at + tail[internal_at..].find("\n}\n").expect("a definition closes") + 3;
+    let internal_head = format!("TA_RetCode TA_{n}_OpenInternal( ");
+    let sink_frame = format!(
+        "\nTA_FMA_OPEN_CLONE static TA_RetCode TA_{n}_OpenSinkFma( {}",
+        &tail[internal_at + internal_head.len()..internal_end]
+    );
+    let delegate = format!("   return TA_{n}_OpenInternal( ");
+    assert!(tail.matches(&delegate).count() == 1, "{n}: the public Open does not delegate to _OpenInternal exactly once");
+    let (before, after) = tail.split_once(&delegate).expect("counted above");
+    let (delegate_args, rest) = after.split_once(" );\n").expect("the delegation closes its line");
+    let tail = format!(
+        "{before}   return TA_FMA_AVAILABLE ? TA_{n}_OpenSinkFma( {delegate_args} ) : TA_{n}_OpenInternal( {delegate_args} );\n{rest}"
+    );
+
     let mut calls = 0;
     let seams = tail.replace(&format!(" TA_{n}_OpenImpl( "), "\u{0}");
     let mut rewritten = String::with_capacity(tail.len());
@@ -1324,8 +1346,18 @@ fn dispatch_fused_open(o: &mut String, n: &str) {
     }
     assert!(calls == 2, "{n}: {calls} call(s) of a fused _OpenImpl were routed to its FMA frames, not both seams");
     o.push_str(&frames);
+    o.push_str(&sink_frame);
     o.push_str(&rewritten);
     o.replace_range(line..line + "static ".len(), "static TA_FMA_STEP_INLINE ");
+}
+
+/// The argument list that forwards the parameter list `params`.
+fn arg_names(params: &str) -> String {
+    let names: Vec<&str> = params
+        .split(", ")
+        .map(|p| p.rsplit([' ', '*']).next().unwrap_or(p).trim_end_matches("[]"))
+        .collect();
+    names.join(", ")
 }
 
 /// Start of the line holding the definition that begins with `sig`.

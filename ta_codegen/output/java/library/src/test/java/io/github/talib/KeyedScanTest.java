@@ -87,13 +87,19 @@ public final class KeyedScanTest {
     private static final class Fn {
         final String name;
         final int inputs, scanned, outputs;
+        /** Bars of lookback beyond the scanned window's {@code p - 1}. */
+        final int extra;
         final Call dbl, flt;
         long keyedTrials, plantedTrials, aliasedTrials, values;
         final long[] edgeTrials = new long[2], bites = new long[2];
 
         Fn(String name, int inputs, int scanned, int outputs, Call dbl, Call flt) {
+            this(name, inputs, scanned, outputs, 0, dbl, flt);
+        }
+
+        Fn(String name, int inputs, int scanned, int outputs, int extra, Call dbl, Call flt) {
             this.name = name; this.inputs = inputs; this.scanned = scanned; this.outputs = outputs;
-            this.dbl = dbl; this.flt = flt;
+            this.extra = extra; this.dbl = dbl; this.flt = flt;
         }
     }
 
@@ -132,6 +138,14 @@ public final class KeyedScanTest {
             (k, s, e, in, p, b, n, o) -> k
                 ? CORE.willrKeyedImpl(s, e, (float[]) in[0], (float[]) in[1], (float[]) in[2], p, b, n, o[0])
                 : CORE.willrImpl(s, e, (float[]) in[0], (float[]) in[1], (float[]) in[2], p, b, n, o[0])),
+        // Two EMA passes of 3 follow the scan: 2 * (3 - 1) more bars of lookback.
+        new Fn("PSO", 3, 2, 1, 4,
+            (k, s, e, in, p, b, n, o) -> k
+                ? CORE.psoKeyedImpl(s, e, (double[]) in[0], (double[]) in[1], (double[]) in[2], p, 3, b, n, o[0])
+                : CORE.psoImpl(s, e, (double[]) in[0], (double[]) in[1], (double[]) in[2], p, 3, b, n, o[0]),
+            (k, s, e, in, p, b, n, o) -> k
+                ? CORE.psoKeyedImpl(s, e, (float[]) in[0], (float[]) in[1], (float[]) in[2], p, 3, b, n, o[0])
+                : CORE.psoImpl(s, e, (float[]) in[0], (float[]) in[1], (float[]) in[2], p, 3, b, n, o[0])),
     };
 
     private static void helpers() {
@@ -271,8 +285,9 @@ public final class KeyedScanTest {
         }
         Object[] in = typed(cut, wantFloat);
         plant(in, 0, e + 1, -1.25);
-        check(!keyable(fn, in, Math.max(s, p - 1) - (p - 1), e + 1), fn.name + ": the plant left the range keyable");
-        double[][] out = run(fn, wantFloat, false, s, e + 1, in, p, e + 2 - Math.max(s, p - 1), meta, -1, 0);
+        int lb = p - 1 + fn.extra;
+        check(!keyable(fn, in, Math.max(s, lb) - lb, e + 1), fn.name + ": the plant left the range keyable");
+        double[][] out = run(fn, wantFloat, false, s, e + 1, in, p, e + 2 - Math.max(s, lb), meta, -1, 0);
         meta[2] -= 1;
         return out;
     }
@@ -282,10 +297,11 @@ public final class KeyedScanTest {
         for (int trial = 0; trial < 6000; trial++) {
             int n = 3 + r.nextInt(140), p = 2 + r.nextInt(40);
             int e = r.nextInt(n - 1), s = r.nextInt(e + 1);
-            if (e < p - 1) {
+            int lb = p - 1 + fn.extra;
+            if (e < lb) {
                 continue;
             }
-            int from = Math.max(s, p - 1) - (p - 1);
+            int from = Math.max(s, lb) - lb;
             double[][] data = data(r, fn, n, r.nextInt(3));
             String where = fn.name + (wantFloat ? " float" : " double") + " trial " + trial;
             double[][] f = fallback(fn, wantFloat, s, e, data, p, mf);

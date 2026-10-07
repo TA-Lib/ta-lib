@@ -212,7 +212,7 @@ TA_LIB_API TA_RetCode TA_DOSC( int    startIdx,
       *outNBElement= 0;
       return TA_SUCCESS;
    }
-   if( optInSignalPeriod < 1 ) return TA_INTERNAL_ERROR(485);
+   if( optInSignalPeriod < 1 ) return TA_INTERNAL_ERROR(495);
    if( (int)optInSignalPeriod > (int)(sizeof(local_dsBuffer)/sizeof(double)) )
    {
       dsBuffer = TA_Malloc( sizeof(double)*optInSignalPeriod );
@@ -492,7 +492,7 @@ TA_RetCode TA_S_DOSC( int    startIdx,
       *outNBElement= 0;
       return TA_SUCCESS;
    }
-   if( optInSignalPeriod < 1 ) return TA_INTERNAL_ERROR(485);
+   if( optInSignalPeriod < 1 ) return TA_INTERNAL_ERROR(495);
    if( (int)optInSignalPeriod > (int)(sizeof(local_dsBuffer)/sizeof(double)) )
    {
       dsBuffer = TA_Malloc( sizeof(double)*optInSignalPeriod );
@@ -851,7 +851,7 @@ static TA_FMA_STEP_INLINE TA_RetCode TA_DOSC_OpenImpl( struct TA_DOSC_Stream **s
          *outNBElement= 0;
          return TA_INSUFFICIENT_HISTORY;
       }
-      if( optInSignalPeriod < 1 ) return TA_INTERNAL_ERROR(485);
+      if( optInSignalPeriod < 1 ) return TA_INTERNAL_ERROR(495);
       if( (int)optInSignalPeriod > (int)(sizeof(local_dsBuffer)/sizeof(double)) )
       {
          dsBuffer = TA_Malloc( sizeof(double)*optInSignalPeriod );
@@ -1065,7 +1065,7 @@ static TA_FMA_STEP_INLINE TA_RetCode TA_DOSC_OpenImpl( struct TA_DOSC_Stream **s
       sp->dsBuffer_Idx = dsBuffer_Idx;
       sp->maxIdx_dsBuffer = maxIdx_dsBuffer;
       sp->cbSize_dsBuffer = maxIdx_dsBuffer + 1;
-      if( sp->cbSize_dsBuffer < 1 || sp->cbSize_dsBuffer > historyLen + 1 ) { if( dsBuffer != &local_dsBuffer[0] ) { TA_Free( dsBuffer ); } TA_DOSC_ReleaseImpl( sp ); return TA_INTERNAL_ERROR(486); }
+      if( sp->cbSize_dsBuffer < 1 || sp->cbSize_dsBuffer > historyLen + 1 ) { if( dsBuffer != &local_dsBuffer[0] ) { TA_Free( dsBuffer ); } TA_DOSC_ReleaseImpl( sp ); return TA_INTERNAL_ERROR(496); }
       sp->cb_dsBuffer = (double *)TA_Malloc( sizeof(double) * (size_t)sp->cbSize_dsBuffer );
       if( !sp->cb_dsBuffer ) { if( dsBuffer != &local_dsBuffer[0] ) { TA_Free( dsBuffer ); } TA_DOSC_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
       memcpy( sp->cb_dsBuffer, dsBuffer, sizeof(double) * (size_t)sp->cbSize_dsBuffer );
@@ -1086,6 +1086,20 @@ TA_FMA_OPEN_CLONE static TA_RetCode TA_DOSC_OpenImplFma( struct TA_DOSC_Stream *
 TA_FMA_OPEN_PLAIN static TA_RetCode TA_DOSC_OpenImplPlain( struct TA_DOSC_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInTimePeriod, int optInFirstPeriod, int optInSecondPeriod, int optInSignalPeriod, int *outBegIdx, int *outNBElement, double outReal[], int outStride )
 {
    return TA_DOSC_OpenImpl( stream, inReal, startIdx, historyLen, optInTimePeriod, optInFirstPeriod, optInSecondPeriod, optInSignalPeriod, outBegIdx, outNBElement, outReal, outStride );
+}
+
+TA_FMA_OPEN_CLONE static TA_RetCode TA_DOSC_OpenSinkFma( struct TA_DOSC_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInTimePeriod, int optInFirstPeriod, int optInSecondPeriod, int optInSignalPeriod, double *outReal )
+{
+   TA_RetCode retCode;
+   int dummyBegIdx = 0;
+   int dummyNBElement = 0;
+   double sink_outReal = 0.0;
+   retCode = TA_DOSC_OpenImpl( stream, inReal, startIdx, historyLen, optInTimePeriod, optInFirstPeriod, optInSecondPeriod, optInSignalPeriod, &dummyBegIdx, &dummyNBElement, &sink_outReal, 0 );
+   if( retCode == TA_SUCCESS )
+   {
+      *outReal = sink_outReal;
+   }
+   return retCode;
 }
 
 /* Private function, not in public API. */
@@ -1110,7 +1124,7 @@ TA_LIB_API TA_RetCode TA_DOSC_Open( TA_DOSC_Stream **stream, const double inReal
    if( historyLen < 1 ) return TA_OUT_OF_RANGE_START_INDEX;
    if( historyLen > TA_INDEX_MAX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
    if( !inReal || !outReal ) return TA_BAD_PARAM;
-   return TA_DOSC_OpenInternal( stream, inReal, 0, historyLen, optInTimePeriod, optInFirstPeriod, optInSecondPeriod, optInSignalPeriod, outReal );
+   return TA_FMA_AVAILABLE ? TA_DOSC_OpenSinkFma( stream, inReal, 0, historyLen, optInTimePeriod, optInFirstPeriod, optInSecondPeriod, optInSignalPeriod, outReal ) : TA_DOSC_OpenInternal( stream, inReal, 0, historyLen, optInTimePeriod, optInFirstPeriod, optInSecondPeriod, optInSignalPeriod, outReal );
 }
 
 TA_LIB_API TA_RetCode TA_DOSC_OpenAndFill( TA_DOSC_Stream **stream, const double inReal[], int historyLen, int optInTimePeriod, int optInFirstPeriod, int optInSecondPeriod, int optInSignalPeriod, int *outBegIdx, int *outNBElement, double outReal[] )

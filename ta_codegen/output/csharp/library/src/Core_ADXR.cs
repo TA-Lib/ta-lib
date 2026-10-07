@@ -141,6 +141,7 @@ public partial class Core
       if( (outReal.Overlaps(inHigh) && outReal != inHigh) || (outReal.Overlaps(inLow) && outReal != inLow) || (outReal.Overlaps(inClose) && outReal != inClose) ) {
          return RetCode.BadParam ;
       }
+      double[]? _rent_adx = null;
       /* Original implementation from Wilder's book was doing some integer
        * rounding in its calculations.
        *
@@ -167,7 +168,8 @@ public partial class Core
          outNBElement = 0;
          return RetCode.Success ;
       }
-      adx = new double[(int)((endIdx - startIdx + optInTimePeriod) * 1)];
+      _rent_adx = System.Buffers.ArrayPool<double>.Shared.Rent((int)((endIdx - startIdx + optInTimePeriod) * 1));
+      adx = _rent_adx.AsSpan(0, (int)((endIdx - startIdx + optInTimePeriod) * 1));
       /* Compute ADX over a range that starts (period-1) bars earlier, so each
        * ADXR bar can pair the current ADX with the ADX from (period-1) bars ago.
        */
@@ -183,6 +185,7 @@ public partial class Core
       for( outIdx = 0; outIdx < nbElement; outIdx += 1 ) {
          outReal[outIdx] = ((adx[outIdx + (optInTimePeriod - 1)] + adx[outIdx]) / 2.0);
       }
+      ReturnScratch(ref _rent_adx);
       outBegIdx = startIdx;
       outNBElement = nbElement;
       return RetCode.Success ;
@@ -218,6 +221,7 @@ public partial class Core
       if( System.Runtime.InteropServices.MemoryMarshal.AsBytes(outReal).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inHigh)) || System.Runtime.InteropServices.MemoryMarshal.AsBytes(outReal).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inLow)) || System.Runtime.InteropServices.MemoryMarshal.AsBytes(outReal).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inClose)) ) {
          return RetCode.BadParam ;
       }
+      double[]? _rent_adx = null;
       adxrLookback = AdxrLookback(optInTimePeriod);
       if( startIdx < adxrLookback ) {
          startIdx = adxrLookback;
@@ -227,7 +231,8 @@ public partial class Core
          outNBElement = 0;
          return RetCode.Success ;
       }
-      adx = new double[(int)((endIdx - startIdx + optInTimePeriod) * 1)];
+      _rent_adx = System.Buffers.ArrayPool<double>.Shared.Rent((int)((endIdx - startIdx + optInTimePeriod) * 1));
+      adx = _rent_adx.AsSpan(0, (int)((endIdx - startIdx + optInTimePeriod) * 1));
       OutRange _xr0 = Adx(startIdx - (optInTimePeriod - 1), endIdx, inHigh, inLow, inClose, optInTimePeriod, adx);
       outBegIdx = _xr0.BegIdx;
       outNBElement = _xr0.Count;
@@ -236,6 +241,7 @@ public partial class Core
       for( outIdx = 0; outIdx < nbElement; outIdx += 1 ) {
          outReal[outIdx] = ((adx[outIdx + (optInTimePeriod - 1)] + adx[outIdx]) / 2.0);
       }
+      ReturnScratch(ref _rent_adx);
       outBegIdx = startIdx;
       outNBElement = nbElement;
       return RetCode.Success ;

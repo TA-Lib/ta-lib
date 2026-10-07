@@ -1307,6 +1307,79 @@ TA_RetCode max( int    startIdx,
     }
 }
 
+/// A C# batch body rents its `malloc` scratch from the shared pool and returns
+/// it where the C frees it; a size that writes keeps the plain allocation, and
+/// its `free` stays dropped.
+#[test]
+fn csharp_rents_batch_scratch_and_returns_it_where_c_frees() {
+    let source = r#"
+int max_lookback( int optInTimePeriod )
+{
+   return (optInTimePeriod-1);
+}
+
+TA_RetCode max( int    startIdx,
+                int    endIdx,
+                const double inReal[],
+                int    optInTimePeriod,
+                int   *outBegIdx,
+                int   *outNBElement,
+                double outReal[] )
+{
+   int outIdx, i;
+   double *scratch;
+   double *counted;
+   double *twice;
+   double *mixed;
+
+   outIdx = 0;
+   scratch = malloc((endIdx-startIdx+1) * sizeof(double));
+   counted = malloc((outIdx++) * sizeof(double));
+   twice = malloc(8 * sizeof(double));
+   twice = malloc((outIdx++) * sizeof(double));
+   mixed = malloc(8 * sizeof(double));
+   mixed = malloc(8 * sizeof(int));
+   for( i=startIdx; i <= endIdx; i++ )
+   {
+      scratch[i-startIdx] = inReal[i];
+      outReal[outIdx++] = scratch[i-startIdx];
+   }
+   if( outIdx == 0 )
+   {
+      free(scratch);
+      free(counted);
+      *outBegIdx = 0;
+      *outNBElement = 0;
+      return TA_SUCCESS;
+   }
+   free(scratch);
+   free(counted);
+
+   *outBegIdx = startIdx;
+   *outNBElement = outIdx;
+   return TA_SUCCESS;
+}
+"#;
+    let (func, enums) = load_indicator_with_source("max", source);
+    let cs = backends::csharp::generate(&func, &enums, make_registry(), make_helpers());
+    let flat: String = cs.split_whitespace().collect::<Vec<_>>().join(" ");
+    for needle in [
+        "double[]? _rent_scratch = null;",
+        "_rent_scratch = System.Buffers.ArrayPool<double>.Shared.Rent((int)((endIdx - startIdx + 1) * 1)); \
+         scratch = _rent_scratch.AsSpan(0, (int)((endIdx - startIdx + 1) * 1));",
+        "if( outIdx == 0 ) { ReturnScratch(ref _rent_scratch); outBegIdx = 0;",
+        "ReturnScratch(ref _rent_scratch); outBegIdx = startIdx;",
+        "counted = new double[(int)(",
+        "twice = new double[(int)(8 * 1)];",
+        "mixed = new double[(int)(8 * 1)];",
+    ] {
+        assert!(flat.contains(needle), "C# output missing `{needle}`:\n{cs}");
+    }
+    for name in ["counted", "twice", "mixed"] {
+        assert!(!flat.contains(&format!("_rent_{name}")), "{name}:\n{cs}");
+    }
+}
+
 #[test]
 fn backends_render_math_functions_idiomatically() {
     let (func, enums) = load_indicator("ht_trendmode");
@@ -2215,14 +2288,15 @@ fn java_backend_hoisted_helper_declares_local_vars() {
 fn java_renders_the_block_scan_with_a_keyed_twin() {
     let registry = common::make_registry();
     let helpers = common::make_helpers();
-    // (name, selects per twin, key arrays per twin, the guard's scanned inputs)
-    let scans: [(&str, usize, usize, &[&str]); 6] = [
-        ("max", 3, 2, &["inReal"]),
-        ("midpoint", 6, 4, &["inReal"]),
-        ("midprice", 6, 4, &["inHigh", "inLow"]),
-        ("min", 3, 2, &["inReal"]),
-        ("minmax", 6, 4, &["inReal"]),
-        ("willr", 6, 4, &["inHigh", "inLow"]),
+    // (name, selects per twin, key arrays per twin, the guard's scanned inputs, the lookback's arguments)
+    let scans: [(&str, usize, usize, &[&str], &str); 7] = [
+        ("max", 3, 2, &["inReal"], "optInTimePeriod"),
+        ("midpoint", 6, 4, &["inReal"], "optInTimePeriod"),
+        ("midprice", 6, 4, &["inHigh", "inLow"], "optInTimePeriod"),
+        ("min", 3, 2, &["inReal"], "optInTimePeriod"),
+        ("minmax", 6, 4, &["inReal"], "optInTimePeriod"),
+        ("pso", 6, 4, &["inHigh", "inLow"], "optInFastK_Period, optInEMAPeriod"),
+        ("willr", 6, 4, &["inHigh", "inLow"], "optInTimePeriod"),
     ];
 
     // An `if` whose first statement keeps an extreme.
@@ -2246,7 +2320,7 @@ fn java_renders_the_block_scan_with_a_keyed_twin() {
     fired.sort();
     assert_eq!(fired, scans.map(|s| s.0), "the functions rendered with a keyed twin");
 
-    for (name, selects, arrays, scanned) in scans {
+    for (name, selects, arrays, scanned, args) in scans {
         let (func, enums) = common::load_indicator(name);
         let java = backends::java::generate(&func, &enums, registry, helpers);
         let stream = java.find(" class ").unwrap_or_else(|| panic!("{name}: no stream section"));
@@ -2263,7 +2337,7 @@ fn java_renders_the_block_scan_with_a_keyed_twin() {
         let (guarded, twins) = (named(&format!("{name}Impl")), named(&format!("{name}KeyedImpl")));
         assert_eq!((guarded.len(), twins.len()), (2, 2), "{name}: one twin per precision");
 
-        let from = format!("startIdx - {name}Lookback(optInTimePeriod), endIdx)");
+        let from = format!("startIdx - {name}Lookback({args}), endIdx)");
         let guard = format!(
             "      if( {} ) {{\n         return {name}KeyedImpl(startIdx, endIdx, ",
             scanned.iter().map(|i| format!("keyable({i}, {from}")).collect::<Vec<_>>().join(" && ")
@@ -2289,7 +2363,13 @@ fn java_renders_the_block_scan_with_a_keyed_twin() {
             );
             assert_eq!(twin.matches("new long[").count(), arrays, "{name}: key arrays: {twin}");
             assert!(twin.contains(read), "{name}: the twin must read `{read}`: {twin}");
-            for banned in ["new double[", "Math.min(", "Math.max(", "Math.fma(", "keyable("] {
+            // PSO smooths what it scans: its twin keeps the EMA's fma.
+            let banned: &[&str] = if name == "pso" {
+                &["new double[", "Math.min(", "Math.max(", "keyable("]
+            } else {
+                &["new double[", "Math.min(", "Math.max(", "Math.fma(", "keyable("]
+            };
+            for banned in banned {
                 assert!(!twin.contains(banned), "{name}: the twin must not contain `{banned}`: {twin}");
             }
             assert_eq!(branches(twin), 0, "{name}: the twin must not branch on an extreme: {twin}");

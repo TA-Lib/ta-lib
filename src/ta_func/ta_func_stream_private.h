@@ -189,6 +189,7 @@ struct TA_PERCENTRANK_Stream;
 struct TA_PLUS_DI_Stream;
 struct TA_PLUS_DM_Stream;
 struct TA_PPO_Stream;
+struct TA_PSO_Stream;
 struct TA_PVI_Stream;
 struct TA_PVO_Stream;
 struct TA_PVT_Stream;
@@ -420,6 +421,7 @@ TA_RetCode TA_PERCENTRANK_OpenInternal( struct TA_PERCENTRANK_Stream **stream, c
 TA_RetCode TA_PLUS_DI_OpenInternal( struct TA_PLUS_DI_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, int optInTimePeriod, double *outReal );
 TA_RetCode TA_PLUS_DM_OpenInternal( struct TA_PLUS_DM_Stream **stream, const double inHigh[], const double inLow[], int startIdx, int historyLen, int optInTimePeriod, double *outReal );
 TA_RetCode TA_PPO_OpenInternal( struct TA_PPO_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInFastPeriod, int optInSlowPeriod, TA_MAType optInMAType, double *outReal );
+TA_RetCode TA_PSO_OpenInternal( struct TA_PSO_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, int optInFastK_Period, int optInEMAPeriod, double *outReal );
 TA_RetCode TA_PVI_OpenInternal( struct TA_PVI_Stream **stream, const double inClose[], const double inVolume[], int startIdx, int historyLen, double *outReal );
 TA_RetCode TA_PVO_OpenInternal( struct TA_PVO_Stream **stream, const double inVolume[], int startIdx, int historyLen, int optInFastPeriod, int optInSlowPeriod, TA_MAType optInMAType, double *outReal );
 TA_RetCode TA_PVT_OpenInternal( struct TA_PVT_Stream **stream, const double inClose[], const double inVolume[], int startIdx, int historyLen, double *outReal );
@@ -652,6 +654,7 @@ TA_RetCode TA_PERCENTRANK_OpenAndFillInternal( struct TA_PERCENTRANK_Stream **st
 TA_RetCode TA_PLUS_DI_OpenAndFillInternal( struct TA_PLUS_DI_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, int optInTimePeriod, int *outBegIdx, int *outNBElement, double outReal[] );
 TA_RetCode TA_PLUS_DM_OpenAndFillInternal( struct TA_PLUS_DM_Stream **stream, const double inHigh[], const double inLow[], int startIdx, int historyLen, int optInTimePeriod, int *outBegIdx, int *outNBElement, double outReal[] );
 TA_RetCode TA_PPO_OpenAndFillInternal( struct TA_PPO_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInFastPeriod, int optInSlowPeriod, TA_MAType optInMAType, int *outBegIdx, int *outNBElement, double outReal[] );
+TA_RetCode TA_PSO_OpenAndFillInternal( struct TA_PSO_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, int optInFastK_Period, int optInEMAPeriod, int *outBegIdx, int *outNBElement, double outReal[] );
 TA_RetCode TA_PVI_OpenAndFillInternal( struct TA_PVI_Stream **stream, const double inClose[], const double inVolume[], int startIdx, int historyLen, int *outBegIdx, int *outNBElement, double outReal[] );
 TA_RetCode TA_PVO_OpenAndFillInternal( struct TA_PVO_Stream **stream, const double inVolume[], int startIdx, int historyLen, int optInFastPeriod, int optInSlowPeriod, TA_MAType optInMAType, int *outBegIdx, int *outNBElement, double outReal[] );
 TA_RetCode TA_PVT_OpenAndFillInternal( struct TA_PVT_Stream **stream, const double inClose[], const double inVolume[], int startIdx, int historyLen, int *outBegIdx, int *outNBElement, double outReal[] );

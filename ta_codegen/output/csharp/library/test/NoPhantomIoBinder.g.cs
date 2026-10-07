@@ -1163,6 +1163,12 @@ internal static class NoPhantomIoBinder
                 startIdx, endIdx, c.Series(0), c.IntOpt(0), c.IntOpt(1), (MAType)c.IntOpt(2), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         },
+        ["PSO"] = static (core, c, startIdx, endIdx) =>
+        {
+            RetCode rc = core.PsoImpl(
+                startIdx, endIdx, c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.IntOpt(0), c.IntOpt(1), out int b, out int n, c.RealOut(0));
+            return new CallOutcome(rc, b, n);
+        },
         ["PVI"] = static (core, c, startIdx, endIdx) =>
         {
             RetCode rc = core.PviImpl(
@@ -2554,6 +2560,12 @@ internal static class NoPhantomIoBinder
                 startIdx, endIdx, Narrow(c.Series(0)), c.IntOpt(0), c.IntOpt(1), (MAType)c.IntOpt(2), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         },
+        ["PSO"] = static (core, c, startIdx, endIdx) =>
+        {
+            RetCode rc = core.PsoImpl(
+                startIdx, endIdx, Narrow(c.Price(0, PriceComponents.High)), Narrow(c.Price(0, PriceComponents.Low)), Narrow(c.Price(0, PriceComponents.Close)), c.IntOpt(0), c.IntOpt(1), out int b, out int n, c.RealOut(0));
+            return new CallOutcome(rc, b, n);
+        },
         ["PVI"] = static (core, c, startIdx, endIdx) =>
         {
             RetCode rc = core.PviImpl(
@@ -3075,6 +3087,7 @@ internal static class NoPhantomIoBinder
         ["PLUS_DI"] = static (core, c) => core.PlusDiOpen(c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.IntOpt(0)),
         ["PLUS_DM"] = static (core, c) => core.PlusDmOpen(c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.IntOpt(0)),
         ["PPO"] = static (core, c) => core.PpoOpen(c.Series(0), c.IntOpt(0), c.IntOpt(1), (MAType)c.IntOpt(2)),
+        ["PSO"] = static (core, c) => core.PsoOpen(c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.IntOpt(0), c.IntOpt(1)),
         ["PVI"] = static (core, c) => core.PviOpen(c.Price(0, PriceComponents.Close), c.Price(0, PriceComponents.Volume)),
         ["PVO"] = static (core, c) => core.PvoOpen(c.Price(0, PriceComponents.Volume), c.IntOpt(0), c.IntOpt(1), (MAType)c.IntOpt(2)),
         ["PVT"] = static (core, c) => core.PvtOpen(c.Price(0, PriceComponents.Close), c.Price(0, PriceComponents.Volume)),

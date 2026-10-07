@@ -314,6 +314,8 @@ public partial class Core
       if( (outKST.Overlaps(inReal) && outKST != inReal) || (outKSTSignal.Overlaps(inReal) && outKSTSignal != inReal) ) {
          return RetCode.BadParam ;
       }
+      double[]? _rent_kstBuffer = null;
+      double[]? _rent_tempBuffer = null;
       /* With every type SMA this is bit-exact with kst(): each leg's average
        * starts on the first bar the signal consumes, and the line accumulates
        * its legs left to right. Changing either breaks the equality.
@@ -346,8 +348,10 @@ public partial class Core
          lookbackMA = tempInteger;
       }
       tempInteger = endIdx - sigStart + 1 + lookbackMA;
-      kstBuffer = new double[(int)(tempInteger * 1)];
-      tempBuffer = new double[(int)(tempInteger * 1)];
+      _rent_kstBuffer = System.Buffers.ArrayPool<double>.Shared.Rent((int)(tempInteger * 1));
+      kstBuffer = _rent_kstBuffer.AsSpan(0, (int)(tempInteger * 1));
+      _rent_tempBuffer = System.Buffers.ArrayPool<double>.Shared.Rent((int)(tempInteger * 1));
+      tempBuffer = _rent_tempBuffer.AsSpan(0, (int)(tempInteger * 1));
       OutRange _xr0 = Roc(sigStart - MaLookback(optInMA1Period, optInROCMAType), endIdx, inReal, optInROC1Period, kstBuffer);
       tempBegIdx = _xr0.BegIdx;
       rocNb = _xr0.Count;
@@ -395,6 +399,8 @@ public partial class Core
       tempBegIdx = _xr8.BegIdx;
       sigNb = _xr8.Count;
       retCode = RetCode.Success;
+      ReturnScratch(ref _rent_kstBuffer);
+      ReturnScratch(ref _rent_tempBuffer);
       outBegIdx = startIdx;
       outNBElement = sigNb;
       return RetCode.Success ;
@@ -501,6 +507,8 @@ public partial class Core
       if( System.Runtime.InteropServices.MemoryMarshal.AsBytes(outKST).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inReal)) || System.Runtime.InteropServices.MemoryMarshal.AsBytes(outKSTSignal).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inReal)) ) {
          return RetCode.BadParam ;
       }
+      double[]? _rent_kstBuffer = null;
+      double[]? _rent_tempBuffer = null;
       outBegIdx = 0;
       outNBElement = 0;
       lookbackSignal = MaLookback(optInSignalPeriod, optInSignalMAType);
@@ -526,8 +534,10 @@ public partial class Core
          lookbackMA = tempInteger;
       }
       tempInteger = endIdx - sigStart + 1 + lookbackMA;
-      kstBuffer = new double[(int)(tempInteger * 1)];
-      tempBuffer = new double[(int)(tempInteger * 1)];
+      _rent_kstBuffer = System.Buffers.ArrayPool<double>.Shared.Rent((int)(tempInteger * 1));
+      kstBuffer = _rent_kstBuffer.AsSpan(0, (int)(tempInteger * 1));
+      _rent_tempBuffer = System.Buffers.ArrayPool<double>.Shared.Rent((int)(tempInteger * 1));
+      tempBuffer = _rent_tempBuffer.AsSpan(0, (int)(tempInteger * 1));
       OutRange _xr0 = Roc(sigStart - MaLookback(optInMA1Period, optInROCMAType), endIdx, inReal, optInROC1Period, kstBuffer);
       tempBegIdx = _xr0.BegIdx;
       rocNb = _xr0.Count;
@@ -574,6 +584,8 @@ public partial class Core
       tempBegIdx = _xr8.BegIdx;
       sigNb = _xr8.Count;
       retCode = RetCode.Success;
+      ReturnScratch(ref _rent_kstBuffer);
+      ReturnScratch(ref _rent_tempBuffer);
       outBegIdx = startIdx;
       outNBElement = sigNb;
       return RetCode.Success ;

@@ -172,6 +172,7 @@ PERCENTRANK         Percent Rank
 PLUS_DI             Plus Directional Indicator
 PLUS_DM             Plus Directional Movement
 PPO                 Percentage Price Oscillator
+PSO                 Premier Stochastic Oscillator
 PVI                 Positive Volume Index
 PVO                 Percentage Volume Oscillator
 PVT                 Price Volume Trend

@@ -770,6 +770,20 @@ TA_FMA_OPEN_PLAIN static TA_RetCode TA_MASSI_OpenImplPlain( struct TA_MASSI_Stre
    return TA_MASSI_OpenImpl( stream, inHigh, inLow, startIdx, historyLen, optInFastPeriod, optInSlowPeriod, outBegIdx, outNBElement, outReal, outStride );
 }
 
+TA_FMA_OPEN_CLONE static TA_RetCode TA_MASSI_OpenSinkFma( struct TA_MASSI_Stream **stream, const double inHigh[], const double inLow[], int startIdx, int historyLen, int optInFastPeriod, int optInSlowPeriod, double *outReal )
+{
+   TA_RetCode retCode;
+   int dummyBegIdx = 0;
+   int dummyNBElement = 0;
+   double sink_outReal = 0.0;
+   retCode = TA_MASSI_OpenImpl( stream, inHigh, inLow, startIdx, historyLen, optInFastPeriod, optInSlowPeriod, &dummyBegIdx, &dummyNBElement, &sink_outReal, 0 );
+   if( retCode == TA_SUCCESS )
+   {
+      *outReal = sink_outReal;
+   }
+   return retCode;
+}
+
 /* Private function, not in public API. */
 TA_RetCode TA_MASSI_OpenInternal( struct TA_MASSI_Stream **stream, const double inHigh[], const double inLow[], int startIdx, int historyLen, int optInFastPeriod, int optInSlowPeriod, double *outReal )
 {
@@ -792,7 +806,7 @@ TA_LIB_API TA_RetCode TA_MASSI_Open( TA_MASSI_Stream **stream, const double inHi
    if( historyLen < 1 ) return TA_OUT_OF_RANGE_START_INDEX;
    if( historyLen > TA_INDEX_MAX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
    if( !inHigh || !inLow || !outReal ) return TA_BAD_PARAM;
-   return TA_MASSI_OpenInternal( stream, inHigh, inLow, 0, historyLen, optInFastPeriod, optInSlowPeriod, outReal );
+   return TA_FMA_AVAILABLE ? TA_MASSI_OpenSinkFma( stream, inHigh, inLow, 0, historyLen, optInFastPeriod, optInSlowPeriod, outReal ) : TA_MASSI_OpenInternal( stream, inHigh, inLow, 0, historyLen, optInFastPeriod, optInSlowPeriod, outReal );
 }
 
 TA_LIB_API TA_RetCode TA_MASSI_OpenAndFill( TA_MASSI_Stream **stream, const double inHigh[], const double inLow[], int historyLen, int optInFastPeriod, int optInSlowPeriod, int *outBegIdx, int *outNBElement, double outReal[] )

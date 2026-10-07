@@ -1967,6 +1967,22 @@ TA_FMA_OPEN_PLAIN static TA_RetCode TA_CKSP_OpenImplPlain( struct TA_CKSP_Stream
    return TA_CKSP_OpenImpl( stream, inHigh, inLow, inClose, startIdx, historyLen, optInTimePeriod, optInMultiplier, optInStopPeriod, outBegIdx, outNBElement, outHighStop, outLowStop, outStride );
 }
 
+TA_FMA_OPEN_CLONE static TA_RetCode TA_CKSP_OpenSinkFma( struct TA_CKSP_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, int optInTimePeriod, double optInMultiplier, int optInStopPeriod, double *outHighStop, double *outLowStop )
+{
+   TA_RetCode retCode;
+   int dummyBegIdx = 0;
+   int dummyNBElement = 0;
+   double sink_outHighStop = 0.0;
+   double sink_outLowStop = 0.0;
+   retCode = TA_CKSP_OpenImpl( stream, inHigh, inLow, inClose, startIdx, historyLen, optInTimePeriod, optInMultiplier, optInStopPeriod, &dummyBegIdx, &dummyNBElement, &sink_outHighStop, &sink_outLowStop, 0 );
+   if( retCode == TA_SUCCESS )
+   {
+      *outHighStop = sink_outHighStop;
+      *outLowStop = sink_outLowStop;
+   }
+   return retCode;
+}
+
 /* Private function, not in public API. */
 TA_RetCode TA_CKSP_OpenInternal( struct TA_CKSP_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, int optInTimePeriod, double optInMultiplier, int optInStopPeriod, double *outHighStop, double *outLowStop )
 {
@@ -1991,7 +2007,7 @@ TA_LIB_API TA_RetCode TA_CKSP_Open( TA_CKSP_Stream **stream, const double inHigh
    if( historyLen < 1 ) return TA_OUT_OF_RANGE_START_INDEX;
    if( historyLen > TA_INDEX_MAX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
    if( !inHigh || !inLow || !inClose || !outHighStop || !outLowStop ) return TA_BAD_PARAM;
-   return TA_CKSP_OpenInternal( stream, inHigh, inLow, inClose, 0, historyLen, optInTimePeriod, optInMultiplier, optInStopPeriod, outHighStop, outLowStop );
+   return TA_FMA_AVAILABLE ? TA_CKSP_OpenSinkFma( stream, inHigh, inLow, inClose, 0, historyLen, optInTimePeriod, optInMultiplier, optInStopPeriod, outHighStop, outLowStop ) : TA_CKSP_OpenInternal( stream, inHigh, inLow, inClose, 0, historyLen, optInTimePeriod, optInMultiplier, optInStopPeriod, outHighStop, outLowStop );
 }
 
 TA_LIB_API TA_RetCode TA_CKSP_OpenAndFill( TA_CKSP_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], int historyLen, int optInTimePeriod, double optInMultiplier, int optInStopPeriod, int *outBegIdx, int *outNBElement, double outHighStop[], double outLowStop[] )
