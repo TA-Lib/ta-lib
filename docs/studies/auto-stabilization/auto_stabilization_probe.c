@@ -16,6 +16,7 @@
  *   B<K> = first age from which the difference stays <= e^-K * R  (scale-relative)
  *   Z   = first age from which the two runs are bit-identical (-1: never)
  *   tail = largest difference over the last tenth of the ages, divided by S
+ *   auto4, auto8 = bars the library adds to the lookback with every id on PREC_4, on PREC_8
  */
 #include <stdio.h>
 #include <stdlib.h>
@@ -79,7 +80,7 @@ static void make_series(const char *shape)
 
 typedef struct
 {
-   int beg, nb, lookback;
+   int beg, nb, lookback, autoCount[2];
    double *r[MAXOUT];
    int    *n[MAXOUT];
 } Res;
@@ -178,6 +179,13 @@ static TA_RetCode run(const TA_FuncInfo *fi, const Cfg *cfg, int D, Res *res, ch
    }
 
    rc = TA_GetLookback(ph, &res->lookback);
+   for( i = 0; i < 2 && rc == TA_SUCCESS; i++ )
+   {
+      TA_SetUnstablePeriod(TA_FUNC_UNST_ALL, i ? TA_UNSTABLE_AUTO_PREC_8 : TA_UNSTABLE_AUTO_PREC_4);
+      rc = TA_GetLookback(ph, &res->autoCount[i]);
+      res->autoCount[i] -= res->lookback;
+      TA_SetUnstablePeriod(TA_FUNC_UNST_ALL, 0);
+   }
    if( rc == TA_SUCCESS )
       rc = TA_CallFunc(ph, 0, N - D - 1, &res->beg, &res->nb);
    TA_ParamHolderFree(ph);
@@ -295,7 +303,8 @@ static void each(const TA_FuncInfo *fi, void *opaque)
                    oo->type == TA_Output_Real ? "real" : "int", g_cut.lookback, D, S, ageS, R, g_sf);
             for( k = 0; k < NK; k++ ) printf("\t%d", A[k] >= n ? -1 : A[k]);
             for( k = 0; k < NK; k++ ) printf("\t%d", B[k] >= n ? -1 : B[k]);
-            printf("\t%d\t%.3g\t%d\t%d\t%d\t%d\n", Z, tail, n, C4 >= n ? -1 : C4, C6 >= n ? -1 : C6, C8 >= n ? -1 : C8);
+            printf("\t%d\t%.3g\t%d\t%d\t%d\t%d\t%d\t%d\n", Z, tail, n, C4 >= n ? -1 : C4, C6 >= n ? -1 : C6, C8 >= n ? -1 : C8,
+                   g_cut.autoCount[0], g_cut.autoCount[1]);
          }
       }
    }
@@ -316,7 +325,7 @@ int main(int argc, char **argv)
       g_cut.r[i]  = malloc(sizeof(double)*N); g_cut.n[i]  = malloc(sizeof(int)*N);
    }
    if( TA_Initialize() != TA_SUCCESS ) return 2;
-   printf("shape\tfunc\tflags\tcfgkind\tcfg\tout\toutname\ttype\tlookback\tD\tS\tageS\tR\tSF\tA7\tA10\tA14\tA16\tA19\tA21\tA28\tB7\tB10\tB14\tB16\tB19\tB21\tB28\tZ\ttail\tn\tC4\tC6\tC8\n");
+   printf("shape\tfunc\tflags\tcfgkind\tcfg\tout\toutname\ttype\tlookback\tD\tS\tageS\tR\tSF\tA7\tA10\tA14\tA16\tA19\tA21\tA28\tB7\tB10\tB14\tB16\tB19\tB21\tB28\tZ\ttail\tn\tC4\tC6\tC8\tauto4\tauto8\n");
    for( s = 0; s < 3; s++ )
    {
       g_shape = shapes[s];

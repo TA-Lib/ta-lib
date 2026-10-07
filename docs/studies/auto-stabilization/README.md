@@ -9,7 +9,7 @@ how the value at a bar computed from a later start approaches the value computed
 |---|---|
 | `auto_stabilization_probe.c` | Runs every function through the abstraction layer from bar 0 and from six later starts, on three synthetic series, and writes one row per (series, function, parameter set, output, start) |
 | `analyze.py` | Folds those rows into one line per output, worst case over series and starts, and a class per function |
-| `rules_vs_need.py` | Evaluates the design's rule for each unstable id, at both levels, against the measured need |
+| `rules_vs_need.py` | Sets the count the library discards at each level, for every function that owns an unstable id, against the measured need |
 | `rules_check.py` | Checks the one-pole, SWAK and T3 rules against the kernels' decay laws at seven values of K and a grid of periods, with no library involved. The calibrated rules are not in it: section 3 of `results.txt` holds those |
 | `tie_break.c` | Compares MAXINDEX and MININDEX from two starts on a series full of equal extremes. It counted mismatches at the commit `results.txt` names, and counts none since a tie names the most recent bar (#503) |
 | `results.txt` | The output of all of the above at the commit named on its first line |
@@ -25,7 +25,7 @@ gcc -O2 -I../../../include auto_stabilization_probe.c ../../../cmake-build/libta
 OVR="FastLimit=0.2,SlowLimit=0.02" /tmp/auto_stabilization_probe 40000 MAMA   # one function, other parameters
 python3 analyze.py /tmp/probe.tsv /tmp/agg.json summary
 python3 analyze.py /tmp/probe.tsv /tmp/agg.json nonexact
-python3 rules_vs_need.py /tmp/probe.tsv ../../..
+python3 rules_vs_need.py /tmp/probe.tsv
 python3 rules_check.py
 ```
 
@@ -50,6 +50,8 @@ Link the static library by path. `-lta-lib` picks up an installed TA-Lib instead
   for `PREC_8`; the regression leg holds `K - 3`, so 7 and 16.
 - **Significant digits.** `C<d>` is the first age from which the two runs agree to `d`
   significant digits of the value: a difference of at most `10^-d` of the larger magnitude.
+- **Count.** `auto4` and `auto8` are the bars the library adds to the lookback with every
+  id on `PREC_4` and on `PREC_8`.
 - **Bit-identity.** `Z` is the first age from which the two runs are bit-identical, -1 when
   they never are.
 - **Classes.** `EXACT`: no difference at all. `ROUND`: differences below 1e-9 of the range.

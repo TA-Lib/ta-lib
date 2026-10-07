@@ -188,45 +188,9 @@ Standard math functions (`sqrt`, `floor`, `ceil`, `fabs`, `sin`, `cos`, `atan`,
 
 ## An unstable id and its Auto rule
 
-A function that owns `TA_FUNC_UNST_<NAME>` reads it in its own lookback and
-nowhere else. The read's second argument is the id's rule: the bars an Auto
-level discards for this call.
-
-```c
-int ema_lookback(int optInTimePeriod)
-{
-   return optInTimePeriod - 1
-        + TA_UNSTABLE( TA_FUNC_UNST_EMA, ta_auto_stabilization_ema(K, optInTimePeriod) );
-}
-```
-
-- **`K` and `X`** exist only inside the read. `K` is the level's number of
-  e-folds (10 at `PREC_4`, 19 at `PREC_8`), `X` its digit count (4, 8).
-- **Tier.** A proven rule is written in `K` and bounds the seed's weight by
-  `e^-K` for any input. A calibrated rule is sized by measurement, where the
-  recursion gives no usable bound, and for an adaptive average is a multiple
-  of `X`, with a period term where the need grows with the period. The rule and its tier go in the table of
-  `website/src/api/unstable-period/README.md`.
-- **Helper.** A kernel several ids share is a helper in
-  `ta_codegen/input/helpers/auto_stabilization.c` that takes `K` or `X` as an argument. Use
-  the existing one when the kernel is the same (`ta_auto_stabilization_ema`,
-  `ta_auto_stabilization_wilder`); a rule only one function has is written in the read, unless
-  it needs a saturating form (`ta_auto_stabilization_vidya`).
-- **One read per path.** Once in the lookback, or once in each of its
-  `return`s. The body takes the count from its own lookback (`lookbackTotal`
-  minus the structural part). A function that runs another's recursion calls
-  that function's lookback and never reads its id.
-- **Non-decreasing in every period.** MAVP, APO, PPO, PVO, MACD, STC, ADOSC
-  and MACDFIX place a shorter-period leg on that; a rule that shrinks as a
-  period grows makes them read before a buffer with no error.
-- **0 where the function does no smoothing**, a period of 1.
-- **The same integer in every backend.** No `log`, `exp` or trigonometric
-  call; `ceil`, a division and `sqrt` are safe. Keep an `(int)` of a `double`
-  the whole right-hand side of an assignment to an `int` local placed before
-  the read, one local per level when `K` is inside the cast (`kama.c`,
-  `swak_bp.c`).
-- **Test.** `test_auto_stabilization.c` keeps its own copy of every rule and its own
-  list of owners: add the id to both.
+A function that owns `TA_FUNC_UNST_<NAME>` reads it once, in its own lookback, and the
+read's second argument is the id's rule. Finding, sizing, writing and recording that rule
+is [`auto-stabilization-rule.md`](auto-stabilization-rule.md).
 
 ## Cross-indicator calls
 
