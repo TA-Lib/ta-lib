@@ -688,8 +688,8 @@ static const UnstableLookup UNSTABLE_MAP[] = {
     {"MINUS_DI",     TA_FUNC_UNST_MINUS_DI},
     {"MINUS_DM",     TA_FUNC_UNST_MINUS_DM},
     {"NATR",         TA_FUNC_UNST_NATR},
-    /* PSO inherits: both of its smoothings are EMA sub-calls, so it takes no
-     * id of its own. Without this row the range-stability leg classifies it
+    /* PSO inherits: both of its smoothings are sized by ema_lookback, so it
+     * takes no id of its own. Without this row the range-stability leg classifies it
      * EPSILON and the stream leg never runs it at a non-zero unstable period. */
     {"PSO",          TA_FUNC_UNST_EMA},
     {"PLUS_DI",      TA_FUNC_UNST_PLUS_DI},

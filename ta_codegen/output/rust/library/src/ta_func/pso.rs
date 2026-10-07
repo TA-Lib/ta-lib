@@ -45,13 +45,15 @@
  *  Initial  Name/description
  *  -------------------------------------------------------------------
  *  MF       Mario Fortier
+ *  KL       Kevin Lin (@kevinlincg)
  *  CC       Claude Code (AI assistant)
  *
  * Change history:
  *
  *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
- *  100626 MF,CC  Initial version (#473).
+ *  100626 KL,CC  Initial version (#473).
+ *  100726 MF,CC  Batch tier: block scan of the Fast-K window (#473).
  */
 
 // Import types from parent module
@@ -201,11 +203,24 @@ impl Core {
         assert!(_assertStart > endIdx || endIdx < inClose.len());
         assert!(_assertStart > endIdx || endIdx - _assertStart < outReal.len());
         let mut startIdx = startIdx;
+        let mut local_sufHighest: [f64; 30] = [0.0_f64; 30];
+        let mut heap_sufHighest: Vec<f64> = Vec::new();
+        let mut sufHighest: &mut [f64] = &mut [];
+        let mut local_preHighest: [f64; 30] = [0.0_f64; 30];
+        let mut heap_preHighest: Vec<f64> = Vec::new();
+        let mut preHighest: &mut [f64] = &mut [];
+        let mut local_sufLowest: [f64; 30] = [0.0_f64; 30];
+        let mut heap_sufLowest: Vec<f64> = Vec::new();
+        let mut sufLowest: &mut [f64] = &mut [];
+        let mut local_preLowest: [f64; 30] = [0.0_f64; 30];
+        let mut heap_preLowest: Vec<f64> = Vec::new();
+        let mut preLowest: &mut [f64] = &mut [];
         let mut emaK: f64 = 0.0_f64;
         let mut emaBeta: f64 = 0.0_f64;
         let mut highest: f64 = 0.0_f64;
         let mut lowest: f64 = 0.0_f64;
         let mut tmp: f64 = 0.0_f64;
+        let mut tempReal: f64 = 0.0_f64;
         let mut fastK: f64 = 0.0_f64;
         let mut nsk: f64 = 0.0_f64;
         let mut ema1: f64 = 0.0_f64;
@@ -214,14 +229,17 @@ impl Core {
         let mut sum2: f64 = 0.0_f64;
         let mut lookbackTotal: usize = 0_usize;
         let mut lookbackEMA: usize = 0_usize;
+        let mut warmBars: usize = 0_usize;
         let mut today: usize = 0_usize;
-        let mut trailingIdx: usize = 0_usize;
-        let mut highestIdx: i32 = 0_i32;
-        let mut lowestIdx: i32 = 0_i32;
         let mut i: usize = 0_usize;
+        let mut m: usize = 0_usize;
+        let mut blockStart: usize = 0_usize;
+        let mut blockNext: usize = 0_usize;
+        let mut nAvail: usize = 0_usize;
         let mut outIdx: usize = 0_usize;
         let mut nBar: usize = 0_usize;
         let mut n2: usize = 0_usize;
+        let mut nOut: usize = 0_usize;
         lookbackTotal = self.pso_lookback(optInFastK_Period, optInEMAPeriod).unwrap_or(usize::MAX);
         // Move up the start index if there is not
         // enough initial data.
@@ -237,195 +255,186 @@ impl Core {
         let inHigh = &inHigh[..=endIdx];
         let inLow = &inLow[..=endIdx];
         let inClose = &inClose[..=endIdx];
-        (*outBegIdx) = startIdx;
-        // Leibfarth's pipeline in one pass: a Fast-K window, the affine step that
-        // centres it on zero, two EMA passes and the squash.
-        //
-        // The affine step comes BEFORE the smoothing, as the article's listing
-        // spells it. Moving it after is equal in real arithmetic and differs by up
-        // to 6.0e-16 absolute in doubles, which no golden at a sane tolerance can
-        // see; only the composite gate against TA_STOCHF + TA_EMA + TA_EMA can.
-        //
-        // Each pass seeds the way ema.c does -- a simple average of that pass's
-        // first optInEMAPeriod inputs, summed from 0.0 in production order -- so
-        // the result is bit-identical to that composed chain. The stage boundary
-        // below is the callee LOOKBACK, not (period-1), so that a warm
-        // TA_SetUnstablePeriod(TA_FUNC_UNST_EMA) folds in: the second pass then
-        // seeds from the values the first would have published, exactly as the
-        // composed form does.
-        //
-        // At optInEMAPeriod == 1 ema.c takes an explicit copy path, because its
-        // recursion at a k of 1.0 and a beta of 0.0 does not keep the sign of a
-        // -0.0 input. The recursion below is left to run instead: its input is
-        // 0.1*(fastK - 50.0), and x - x is +0.0 in every rounding mode, so -0.0
-        // cannot reach it. The composite gate runs 5/1 and compares bitwise.
+        // Same values as pso_ALT1 below, which carries the formula. Only the
+        // Fast-K window differs: a Van Herk / Gil-Werman block scan (WILLR's,
+        // issue #147), so the cost per bar does not depend on the period or on
+        // the shape of the input, where the cached extremum of pso_ALT1 rescans
+        // its whole window on every bar of a flat or trending stretch. Every
+        // scratch array holds copies, so the output may alias an input.
         emaBeta = ((optInEMAPeriod - 1) as f64) / ((optInEMAPeriod + 1) as f64);
         emaK = 1.0 - emaBeta;
-        emaBeta = 1.0 - emaK;
+        if emaBeta < 0.5 {
+            emaBeta = 1.0 - emaK;
+        }
         lookbackEMA = self.ema_lookback(optInEMAPeriod).unwrap_or(usize::MAX);
+        warmBars = lookbackEMA + lookbackEMA;
         ema1 = 0.0;
         ema2 = 0.0;
         sum1 = 0.0;
         sum2 = 0.0;
-        highest = 0.0;
-        lowest = 0.0;
-        highestIdx = -1;
-        lowestIdx = -1;
-        // The first bar carrying a full Fast-K window.
-        trailingIdx = startIdx - lookbackTotal;
-        today = trailingIdx + (((optInFastK_Period - 1)) as usize);
         nBar = 0;
-        // Warm-up. Runs through startIdx inclusive: the last pass here is the one
-        // that completes the second pass's seed, so it produces the first output.
-        while today <= startIdx {
-            // Set the lowest low
-            tmp = inLow[today];
-            if lowestIdx < ((trailingIdx) as i32) {
-                lowestIdx = (trailingIdx) as i32;
-                lowest = inLow[(lowestIdx) as usize];
-                i = (lowestIdx) as usize;
-                while { i += 1; i } <= today {
-                    tmp = inLow[i];
-                    if tmp < lowest {
-                        lowestIdx = (i) as i32;
-                        lowest = tmp;
-                    }
-                }
-            } else if tmp <= lowest {
-                lowestIdx = (today) as i32;
-                lowest = tmp;
-            }
-            // Set the highest high
-            tmp = inHigh[today];
-            if highestIdx < ((trailingIdx) as i32) {
-                highestIdx = (trailingIdx) as i32;
-                highest = inHigh[(highestIdx) as usize];
-                i = (highestIdx) as usize;
-                while { i += 1; i } <= today {
-                    tmp = inHigh[i];
-                    if tmp > highest {
-                        highestIdx = (i) as i32;
-                        highest = tmp;
-                    }
-                }
-            } else if tmp >= highest {
-                highestIdx = (today) as i32;
-                highest = tmp;
-            }
-            // Fast-K, spelled as stochf.c spells it: divide by the range itself and
-            // scale by 100.0 after, guarded by the very expression the division
-            // uses, against ITS OWN two extremes rather than a fixed constant
-            // (issue #253).
-            //
-            // Where STOCHF answers 0.0 on a flat window, PSO answers 50.0, the
-            // Fast-K midpoint, so that a flat market reads PSO 0 instead of
-            // -tanh(2.5) = -0.9866, a near-extreme oversold reading that nothing in
-            // the window supports (#473 Q4, the neutral-point rule of #112).
-            if !(((highest - lowest).abs() <= 1e-14 * ((highest).abs() + (lowest).abs()))) {
-                fastK = (inClose[today] - lowest) / (highest - lowest) * 100.0;
-            } else {
-                fastK = 50.0;
-            }
-            nsk = 0.1 * (fastK - 50.0);
-            // Pass 1, over the normalised Fast-K.
-            if nBar < ((optInEMAPeriod) as usize) {
-                sum1 = sum1 + nsk;
-                if nBar == ((optInEMAPeriod - 1) as usize) {
-                    ema1 = sum1 / ((optInEMAPeriod) as f64);
-                }
-            } else {
-                ema1 = (emaBeta as f64).mul_add(ema1, emaK * nsk);
-            }
-            // Pass 2, over what pass 1 publishes.
-            //
-            // The stage counter is compared BEFORE it is subtracted, never after.
-            // Writing this as `n2 = nBar - lookbackEMA; if( n2 >= 0 )` is correct in
-            // C, where the counters are signed, and broken everywhere else: the Rust
-            // backend renders them as usize, so the subtraction underflows for the
-            // first lookbackEMA bars -- a panic in a debug build and a wrap in
-            // release (the lesson smi.c records).
-            if nBar >= lookbackEMA {
-                n2 = nBar - lookbackEMA;
-                if n2 < ((optInEMAPeriod) as usize) {
-                    sum2 = sum2 + ema1;
-                    if n2 == ((optInEMAPeriod - 1) as usize) {
-                        ema2 = sum2 / ((optInEMAPeriod) as f64);
-                    }
-                } else {
-                    ema2 = (emaBeta as f64).mul_add(ema2, emaK * ema1);
-                }
-            }
-            nBar = nBar + 1;
-            trailingIdx = trailingIdx + 1;
-            today = today + 1;
+        today = startIdx - warmBars;
+        blockStart = today - (((optInFastK_Period - 1)) as usize);
+        outIdx = 0;
+        if optInFastK_Period < 1 { return RetCode::InternalError; }
+        if (optInFastK_Period) as usize <= 30usize {
+            sufHighest = &mut local_sufHighest[..(optInFastK_Period) as usize];
+        } else {
+            heap_sufHighest = vec![0.0_f64; (optInFastK_Period) as usize];
+            sufHighest = &mut heap_sufHighest;
         }
-        // tanh(ss/2) rather than the published (e^ss - 1)/(e^ss + 1): the same
-        // function, equal within 2.2e-16 on normal data, exactly odd and well
-        // conditioned at zero. TA-Lib does not validate that a close lies inside
-        // its bar, so ss is only bounded by [-5, 5] on well-formed input; the
-        // literal form emits NaN from a successful call once ss exceeds 709.78,
-        // which the house rule of #112 forbids (#473 Q3).
-        outReal[0] = (0.5 * ema2).tanh();
-        outIdx = 1;
-        // Stable zone. Both passes are pure recursions from here on.
+        if optInFastK_Period < 1 { return RetCode::InternalError; }
+        if (optInFastK_Period) as usize <= 30usize {
+            preHighest = &mut local_preHighest[..(optInFastK_Period) as usize];
+        } else {
+            heap_preHighest = vec![0.0_f64; (optInFastK_Period) as usize];
+            preHighest = &mut heap_preHighest;
+        }
+        if optInFastK_Period < 1 { return RetCode::InternalError; }
+        if (optInFastK_Period) as usize <= 30usize {
+            sufLowest = &mut local_sufLowest[..(optInFastK_Period) as usize];
+        } else {
+            heap_sufLowest = vec![0.0_f64; (optInFastK_Period) as usize];
+            sufLowest = &mut heap_sufLowest;
+        }
+        if optInFastK_Period < 1 { return RetCode::InternalError; }
+        if (optInFastK_Period) as usize <= 30usize {
+            preLowest = &mut local_preLowest[..(optInFastK_Period) as usize];
+        } else {
+            heap_preLowest = vec![0.0_f64; (optInFastK_Period) as usize];
+            preLowest = &mut heap_preLowest;
+        }
         while today <= endIdx {
-            // Set the lowest low
-            tmp = inLow[today];
-            if lowestIdx < ((trailingIdx) as i32) {
-                lowestIdx = (trailingIdx) as i32;
-                lowest = inLow[(lowestIdx) as usize];
-                i = (lowestIdx) as usize;
-                while { i += 1; i } <= today {
-                    tmp = inLow[i];
-                    if tmp < lowest {
-                        lowestIdx = (i) as i32;
-                        lowest = tmp;
+            // Suffix extrema of the block [blockStart, today].
+            i = today;
+            highest = inHigh[i];
+            lowest = inLow[i];
+            sufHighest[(optInFastK_Period - 1) as usize] = highest;
+            sufLowest[(optInFastK_Period - 1) as usize] = lowest;
+            if i > blockStart {
+                let _wn: usize = i - blockStart;
+                let _w0 = &inHigh[i - _wn..][.._wn];
+                let _w1 = &inLow[i - _wn..][.._wn];
+                let _w2 = &mut sufHighest[i - _wn - blockStart..][.._wn];
+                let _w3 = &mut sufLowest[i - _wn - blockStart..][.._wn];
+                for _wk in (0.._wn).rev() {
+                    i -= 1;
+                    tmp = _w0[_wk];
+                    highest = c_max(tmp, highest);
+                    tmp = _w1[_wk];
+                    lowest = c_min(tmp, lowest);
+                    _w2[_wk] = highest;
+                    _w3[_wk] = lowest;
+                }
+            }
+            // Prefix extrema of the next block, clamped to what remains, stored
+            // one slot up: slot 0 repeats the suffix so that bar 'today', whose
+            // window is the block itself, runs the same combine as the others.
+            blockNext = blockStart + ((optInFastK_Period) as usize);
+            nAvail = endIdx + 1 - blockNext;
+            if nAvail > ((optInFastK_Period - 1) as usize) {
+                nAvail = (optInFastK_Period - 1) as usize;
+            }
+            preHighest[0] = sufHighest[0];
+            preLowest[0] = sufLowest[0];
+            if nAvail > 0 {
+                i = 1;
+                highest = inHigh[blockNext];
+                lowest = inLow[blockNext];
+                preHighest[1] = highest;
+                preLowest[1] = lowest;
+                if i < nAvail {
+                    let _wn: usize = nAvail - i;
+                    let _w0 = &inHigh[blockNext + i..][.._wn];
+                    let _w1 = &inLow[blockNext + i..][.._wn];
+                    let _w2 = &mut preHighest[i + 1..][.._wn];
+                    let _w3 = &mut preLowest[i + 1..][.._wn];
+                    for _wk in 0.._wn {
+                        tmp = _w0[_wk];
+                        highest = c_max(tmp, highest);
+                        tmp = _w1[_wk];
+                        lowest = c_min(tmp, lowest);
+                        _w2[_wk] = highest;
+                        _w3[_wk] = lowest;
+                        i += 1;
                     }
                 }
-            } else if tmp <= lowest {
-                lowestIdx = (today) as i32;
-                lowest = tmp;
             }
-            // Set the highest high
-            tmp = inHigh[today];
-            if highestIdx < ((trailingIdx) as i32) {
-                highestIdx = (trailingIdx) as i32;
-                highest = inHigh[(highestIdx) as usize];
-                i = (highestIdx) as usize;
-                while { i += 1; i } <= today {
-                    tmp = inHigh[i];
-                    if tmp > highest {
-                        highestIdx = (i) as i32;
-                        highest = tmp;
+            // The squash runs as a pass of its own over what the block wrote:
+            // a call inside the loop above it would have every carried value
+            // saved and restored around it on each bar.
+            nOut = 0;
+            m = 0;
+            while m <= nAvail {
+                highest = sufHighest[m];
+                highest = c_max(preHighest[m], highest);
+                lowest = sufLowest[m];
+                lowest = c_min(preLowest[m], lowest);
+                tempReal = highest - lowest;
+                if !(((tempReal).abs() <= 1e-14 * ((highest).abs() + (lowest).abs()))) {
+                    fastK = (inClose[today + m] - lowest) / tempReal * 100.0;
+                } else {
+                    fastK = 50.0;
+                }
+                nsk = 0.1 * (fastK - 50.0);
+                if nBar > warmBars {
+                    ema1 = (emaBeta as f64).mul_add(ema1, emaK * nsk);
+                    ema2 = (emaBeta as f64).mul_add(ema2, emaK * ema1);
+                    outReal[outIdx + nOut] = 0.5 * ema2;
+                    nOut = nOut + 1;
+                } else {
+                    // The two seeds, staged as pso_ALT1 stages them.
+                    if nBar < ((optInEMAPeriod) as usize) {
+                        sum1 = sum1 + nsk;
+                        if nBar == ((optInEMAPeriod - 1) as usize) {
+                            ema1 = sum1 / ((optInEMAPeriod) as f64);
+                        }
+                    } else {
+                        ema1 = (emaBeta as f64).mul_add(ema1, emaK * nsk);
+                    }
+                    if nBar >= lookbackEMA {
+                        n2 = nBar - lookbackEMA;
+                        if n2 < ((optInEMAPeriod) as usize) {
+                            sum2 = sum2 + ema1;
+                            if n2 == ((optInEMAPeriod - 1) as usize) {
+                                ema2 = sum2 / ((optInEMAPeriod) as f64);
+                            }
+                        } else {
+                            ema2 = (emaBeta as f64).mul_add(ema2, emaK * ema1);
+                        }
+                    }
+                    if nBar == warmBars {
+                        outReal[outIdx + nOut] = 0.5 * ema2;
+                        nOut = nOut + 1;
                     }
                 }
-            } else if tmp >= highest {
-                highestIdx = (today) as i32;
-                highest = tmp;
+                nBar = nBar + 1;
+                m += 1;
             }
-            if !(((highest - lowest).abs() <= 1e-14 * ((highest).abs() + (lowest).abs()))) {
-                fastK = (inClose[today] - lowest) / (highest - lowest) * 100.0;
-            } else {
-                fastK = 50.0;
+            i = 0;
+            if i < nOut {
+                let _wn: usize = nOut - i;
+                let _w0 = &mut outReal[outIdx..][.._wn];
+                for _wk in 0.._wn {
+                    _w0[_wk] = (((_w0[_wk]).tanh()) as f64);
+                    outIdx = outIdx + 1;
+                    i += 1;
+                }
             }
-            nsk = 0.1 * (fastK - 50.0);
-            ema1 = (emaBeta as f64).mul_add(ema1, emaK * nsk);
-            ema2 = (emaBeta as f64).mul_add(ema2, emaK * ema1);
-            outReal[outIdx] = (0.5 * ema2).tanh();
-            outIdx = outIdx + 1;
-            trailingIdx = trailingIdx + 1;
-            today = today + 1;
+            today = today + nAvail + 1;
+            blockStart = blockNext;
         }
         (*outNBElement) = outIdx;
+        (*outBegIdx) = startIdx;
         return RetCode::Success;
     }
     /// Premier Stochastic Oscillator: a short-period Fast %K, recentred on zero and rescaled,
-    /// double-smoothed and then squashed into the open interval -1 to +1. Leibfarth's reading is
-    /// that the plain stochastic spends most of its life pinned at one end or the other, so the
-    /// extremes stop meaning anything; the two exponential passes strip the bar-to-bar noise out of
-    /// it, and the squash gives back a scale on which the extremes are rare again. Readings beyond
-    /// ±0.9 are the extremes, and ±0.2 the band Leibfarth watches for the crossing back toward
-    /// the middle.
+    /// double-smoothed and then squashed into the range -1 to +1. Leibfarth's reading is that the
+    /// plain stochastic spends most of its life pinned at one end or the other, so the extremes
+    /// stop meaning anything; the two exponential passes strip the bar-to-bar noise out of it, and
+    /// the squash gives back a scale on which the extremes are rare again. Readings beyond ±0.9
+    /// are the extremes, and ±0.2 the band Leibfarth watches for the crossing back toward the
+    /// middle.
     ///
     /// Formula and more info at [ta-lib.org/functions/pso](https://ta-lib.org/functions/pso).
     ///
@@ -549,6 +558,8 @@ impl Core {
 
 }
 /**** Streaming API *****/
+
+/* Using pso_ALT1 for TA_ALT={STREAM,ALL_LANGUAGES} */
 
 /// Live PSO stream: one value per closed bar, bit-identical to [`Core::pso`]
 /// over the same series. Open with [`Core::pso_open`]; dropping the handle
@@ -750,14 +761,14 @@ impl Core {
         // seeds from the values the first would have published, exactly as the
         // composed form does.
         //
-        // At optInEMAPeriod == 1 ema.c takes an explicit copy path, because its
-        // recursion at a k of 1.0 and a beta of 0.0 does not keep the sign of a
-        // -0.0 input. The recursion below is left to run instead: its input is
-        // 0.1*(fastK - 50.0), and x - x is +0.0 in every rounding mode, so -0.0
-        // cannot reach it. The composite gate runs 5/1 and compares bitwise.
+        // At optInEMAPeriod == 1 the recursion runs at a k of 1.0 and a beta of
+        // 0.0 where the composed chain copies: the same bits while every Fast-K
+        // is finite.
         emaBeta = ((optInEMAPeriod - 1) as f64) / ((optInEMAPeriod + 1) as f64);
         emaK = 1.0 - emaBeta;
-        emaBeta = 1.0 - emaK;
+        if emaBeta < 0.5 {
+            emaBeta = 1.0 - emaK;
+        }
         lookbackEMA = self.ema_lookback(optInEMAPeriod)?;
         ema1 = 0.0;
         ema2 = 0.0;
@@ -771,8 +782,8 @@ impl Core {
         trailingIdx = startIdx - lookbackTotal;
         today = trailingIdx + (((optInFastK_Period - 1)) as usize);
         nBar = 0;
-        // Warm-up. Runs through startIdx inclusive: the last pass here is the one
-        // that completes the second pass's seed, so it produces the first output.
+        // Warm-up. Runs through startIdx inclusive: its last pass produces the
+        // first output.
         while today <= startIdx {
             // Set the lowest low
             tmp = inLow[today];
@@ -832,14 +843,8 @@ impl Core {
             } else {
                 ema1 = (emaBeta as f64).mul_add(ema1, emaK * nsk);
             }
-            // Pass 2, over what pass 1 publishes.
-            //
-            // The stage counter is compared BEFORE it is subtracted, never after.
-            // Writing this as `n2 = nBar - lookbackEMA; if( n2 >= 0 )` is correct in
-            // C, where the counters are signed, and broken everywhere else: the Rust
-            // backend renders them as usize, so the subtraction underflows for the
-            // first lookbackEMA bars -- a panic in a debug build and a wrap in
-            // release (the lesson smi.c records).
+            // Pass 2, over what pass 1 publishes. Keep the comparison ahead of
+            // the subtraction: the counters are unsigned in Rust.
             if nBar >= lookbackEMA {
                 n2 = nBar - lookbackEMA;
                 if n2 < ((optInEMAPeriod) as usize) {

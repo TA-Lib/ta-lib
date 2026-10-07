@@ -169597,13 +169597,15 @@ public final class Core {
  *  Initial  Name/description
  *  -------------------------------------------------------------------
  *  MF       Mario Fortier
+ *  KL       Kevin Lin (@kevinlincg)
  *  CC       Claude Code (AI assistant)
  *
  * Change history:
  *
  *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
- *  100626 MF,CC  Initial version (#473).
+ *  100626 KL,CC  Initial version (#473).
+ *  100726 MF,CC  Batch tier: block scan of the Fast-K window (#473).
  */
 
    /**
@@ -169677,11 +169679,24 @@ public final class Core {
                     MInteger outNBElement,
                     double outReal[] )
    {
+      double[] sufHighest;
+      int sufHighest_Idx = 0;
+      int maxIdx_sufHighest = (30)-1;
+      double[] preHighest;
+      int preHighest_Idx = 0;
+      int maxIdx_preHighest = (30)-1;
+      double[] sufLowest;
+      int sufLowest_Idx = 0;
+      int maxIdx_sufLowest = (30)-1;
+      double[] preLowest;
+      int preLowest_Idx = 0;
+      int maxIdx_preLowest = (30)-1;
       double emaK = 0;
       double emaBeta = 0;
       double highest = 0;
       double lowest = 0;
       double tmp = 0;
+      double tempReal = 0;
       double fastK = 0;
       double nsk = 0;
       double ema1 = 0;
@@ -169690,14 +169705,17 @@ public final class Core {
       double sum2 = 0;
       int lookbackTotal = 0;
       int lookbackEMA = 0;
+      int warmBars = 0;
       int today = 0;
-      int trailingIdx = 0;
-      int highestIdx = 0;
-      int lowestIdx = 0;
       int i = 0;
+      int m = 0;
+      int blockStart = 0;
+      int blockNext = 0;
+      int nAvail = 0;
       int outIdx = 0;
       int nBar = 0;
       int n2 = 0;
+      int nOut = 0;
       if( (startIdx < 0) || (startIdx > INDEX_MAX) ) {
          return RetCode.OUT_OF_RANGE_START_INDEX ;
       }
@@ -169727,191 +169745,352 @@ public final class Core {
          outNBElement.value = 0;
          return RetCode.SUCCESS ;
       }
-      outBegIdx.value = startIdx;
-      /* Leibfarth's pipeline in one pass: a Fast-K window, the affine step that
-       * centres it on zero, two EMA passes and the squash.
-       *
-       * The affine step comes BEFORE the smoothing, as the article's listing
-       * spells it. Moving it after is equal in real arithmetic and differs by up
-       * to 6.0e-16 absolute in doubles, which no golden at a sane tolerance can
-       * see; only the composite gate against TA_STOCHF + TA_EMA + TA_EMA can.
-       *
-       * Each pass seeds the way ema.c does -- a simple average of that pass's
-       * first optInEMAPeriod inputs, summed from 0.0 in production order -- so
-       * the result is bit-identical to that composed chain. The stage boundary
-       * below is the callee LOOKBACK, not (period-1), so that a warm
-       * TA_SetUnstablePeriod(TA_FUNC_UNST_EMA) folds in: the second pass then
-       * seeds from the values the first would have published, exactly as the
-       * composed form does.
-       *
-       * At optInEMAPeriod == 1 ema.c takes an explicit copy path, because its
-       * recursion at a k of 1.0 and a beta of 0.0 does not keep the sign of a
-       * -0.0 input. The recursion below is left to run instead: its input is
-       * 0.1*(fastK - 50.0), and x - x is +0.0 in every rounding mode, so -0.0
-       * cannot reach it. The composite gate runs 5/1 and compares bitwise.
+      /* Same values as pso_ALT1 below, which carries the formula. Only the
+       * Fast-K window differs: a Van Herk / Gil-Werman block scan (WILLR's,
+       * issue #147), so the cost per bar does not depend on the period or on
+       * the shape of the input, where the cached extremum of pso_ALT1 rescans
+       * its whole window on every bar of a flat or trending stretch. Every
+       * scratch array holds copies, so the output may alias an input.
        */
       emaBeta = (double)(optInEMAPeriod - 1) / (double)(optInEMAPeriod + 1);
       emaK = 1.0 - emaBeta;
-      emaBeta = 1.0 - emaK;
+      if( emaBeta < 0.5 ) {
+         emaBeta = 1.0 - emaK;
+      }
       lookbackEMA = emaLookback(optInEMAPeriod);
+      warmBars = lookbackEMA + lookbackEMA;
       ema1 = 0.0;
       ema2 = 0.0;
       sum1 = 0.0;
       sum2 = 0.0;
-      highest = 0.0;
-      lowest = 0.0;
-      highestIdx = -1;
-      lowestIdx = -1;
-      /* The first bar carrying a full Fast-K window. */
-      trailingIdx = startIdx - lookbackTotal;
-      today = trailingIdx + (optInFastK_Period - 1);
       nBar = 0;
-      /* Warm-up. Runs through startIdx inclusive: the last pass here is the one
-       * that completes the second pass's seed, so it produces the first output.
-       */
-      while( today <= startIdx ) {
-         /* Set the lowest low */
-         tmp = inLow[today];
-         if( lowestIdx < trailingIdx ) {
-            lowestIdx = trailingIdx;
-            lowest = inLow[lowestIdx];
-            i = lowestIdx;
-            while( ++i <= today ) {
-               tmp = inLow[i];
-               if( tmp < lowest ) {
-                  lowestIdx = i;
-                  lowest = tmp;
-               }
-            }
-         } else if( tmp <= lowest ) {
-            lowestIdx = today;
-            lowest = tmp;
-         }
-         /* Set the highest high */
-         tmp = inHigh[today];
-         if( highestIdx < trailingIdx ) {
-            highestIdx = trailingIdx;
-            highest = inHigh[highestIdx];
-            i = highestIdx;
-            while( ++i <= today ) {
-               tmp = inHigh[i];
-               if( tmp > highest ) {
-                  highestIdx = i;
-                  highest = tmp;
-               }
-            }
-         } else if( tmp >= highest ) {
-            highestIdx = today;
-            highest = tmp;
-         }
-         /* Fast-K, spelled as stochf.c spells it: divide by the range itself and
-          * scale by 100.0 after, guarded by the very expression the division
-          * uses, against ITS OWN two extremes rather than a fixed constant
-          * (issue #253).
-          *
-          * Where STOCHF answers 0.0 on a flat window, PSO answers 50.0, the
-          * Fast-K midpoint, so that a flat market reads PSO 0 instead of
-          * -tanh(2.5) = -0.9866, a near-extreme oversold reading that nothing in
-          * the window supports (#473 Q4, the neutral-point rule of #112).
-          */
-         if( !(Math.abs(highest - lowest) <= 0.00000000000001 * (Math.abs(highest) + Math.abs(lowest))) ) {
-            fastK = (inClose[today] - lowest) / (highest - lowest) * 100.0;
-         } else {
-            fastK = 50.0;
-         }
-         nsk = 0.1 * (fastK - 50.0);
-         /* Pass 1, over the normalised Fast-K. */
-         if( nBar < optInEMAPeriod ) {
-            sum1 = sum1 + nsk;
-            if( nBar == optInEMAPeriod - 1 ) {
-               ema1 = sum1 / optInEMAPeriod;
-            }
-         } else {
-            ema1 = Math.fma(emaBeta, ema1, emaK * nsk);
-         }
-         /* Pass 2, over what pass 1 publishes.
-          *
-          * The stage counter is compared BEFORE it is subtracted, never after.
-          * Writing this as `n2 = nBar - lookbackEMA; if( n2 >= 0 )` is correct in
-          * C, where the counters are signed, and broken everywhere else: the Rust
-          * backend renders them as usize, so the subtraction underflows for the
-          * first lookbackEMA bars -- a panic in a debug build and a wrap in
-          * release (the lesson smi.c records).
-          */
-         if( nBar >= lookbackEMA ) {
-            n2 = nBar - lookbackEMA;
-            if( n2 < optInEMAPeriod ) {
-               sum2 = sum2 + ema1;
-               if( n2 == optInEMAPeriod - 1 ) {
-                  ema2 = sum2 / optInEMAPeriod;
-               }
-            } else {
-               ema2 = Math.fma(emaBeta, ema2, emaK * ema1);
-            }
-         }
-         nBar = nBar + 1;
-         trailingIdx = trailingIdx + 1;
-         today = today + 1;
+      today = startIdx - warmBars;
+      blockStart = today - (optInFastK_Period - 1);
+      outIdx = 0;
+      if( keyable(inHigh, startIdx - psoLookback(optInFastK_Period, optInEMAPeriod), endIdx) && keyable(inLow, startIdx - psoLookback(optInFastK_Period, optInEMAPeriod), endIdx) ) {
+         return psoKeyedImpl(startIdx, endIdx, inHigh, inLow, inClose, optInFastK_Period, optInEMAPeriod, outBegIdx, outNBElement, outReal);
       }
-      /* tanh(ss/2) rather than the published (e^ss - 1)/(e^ss + 1): the same
-       * function, equal within 2.2e-16 on normal data, exactly odd and well
-       * conditioned at zero. TA-Lib does not validate that a close lies inside
-       * its bar, so ss is only bounded by [-5, 5] on well-formed input; the
-       * literal form emits NaN from a successful call once ss exceeds 709.78,
-       * which the house rule of #112 forbids (#473 Q3).
-       */
-      outReal[0] = Math.tanh(0.5 * ema2);
-      outIdx = 1;
-      /* Stable zone. Both passes are pure recursions from here on. */
+      if( optInFastK_Period < 1 ) return RetCode.INTERNAL_ERROR;
+      sufHighest = new double[optInFastK_Period];
+      maxIdx_sufHighest = (optInFastK_Period)-1;
+      sufHighest_Idx = 0;
+      if( optInFastK_Period < 1 ) return RetCode.INTERNAL_ERROR;
+      preHighest = new double[optInFastK_Period];
+      maxIdx_preHighest = (optInFastK_Period)-1;
+      preHighest_Idx = 0;
+      if( optInFastK_Period < 1 ) return RetCode.INTERNAL_ERROR;
+      sufLowest = new double[optInFastK_Period];
+      maxIdx_sufLowest = (optInFastK_Period)-1;
+      sufLowest_Idx = 0;
+      if( optInFastK_Period < 1 ) return RetCode.INTERNAL_ERROR;
+      preLowest = new double[optInFastK_Period];
+      maxIdx_preLowest = (optInFastK_Period)-1;
+      preLowest_Idx = 0;
       while( today <= endIdx ) {
-         /* Set the lowest low */
-         tmp = inLow[today];
-         if( lowestIdx < trailingIdx ) {
-            lowestIdx = trailingIdx;
-            lowest = inLow[lowestIdx];
-            i = lowestIdx;
-            while( ++i <= today ) {
-               tmp = inLow[i];
-               if( tmp < lowest ) {
-                  lowestIdx = i;
-                  lowest = tmp;
-               }
+         /* Suffix extrema of the block [blockStart, today]. */
+         i = today;
+         highest = inHigh[i];
+         lowest = inLow[i];
+         sufHighest[optInFastK_Period - 1] = highest;
+         sufLowest[optInFastK_Period - 1] = lowest;
+         while( i > blockStart ) {
+            i -= 1;
+            tmp = inHigh[i];
+            if( tmp > highest ) {
+               highest = tmp;
             }
-         } else if( tmp <= lowest ) {
-            lowestIdx = today;
-            lowest = tmp;
+            tmp = inLow[i];
+            if( tmp < lowest ) {
+               lowest = tmp;
+            }
+            sufHighest[i - blockStart] = highest;
+            sufLowest[i - blockStart] = lowest;
          }
-         /* Set the highest high */
-         tmp = inHigh[today];
-         if( highestIdx < trailingIdx ) {
-            highestIdx = trailingIdx;
-            highest = inHigh[highestIdx];
-            i = highestIdx;
-            while( ++i <= today ) {
-               tmp = inHigh[i];
+         /* Prefix extrema of the next block, clamped to what remains, stored
+          * one slot up: slot 0 repeats the suffix so that bar 'today', whose
+          * window is the block itself, runs the same combine as the others.
+          */
+         blockNext = blockStart + optInFastK_Period;
+         nAvail = endIdx + 1 - blockNext;
+         if( nAvail > optInFastK_Period - 1 ) {
+            nAvail = optInFastK_Period - 1;
+         }
+         preHighest[0] = sufHighest[0];
+         preLowest[0] = sufLowest[0];
+         if( nAvail > 0 ) {
+            i = 1;
+            highest = inHigh[blockNext];
+            lowest = inLow[blockNext];
+            preHighest[1] = highest;
+            preLowest[1] = lowest;
+            while( i < nAvail ) {
+               tmp = inHigh[blockNext + i];
                if( tmp > highest ) {
-                  highestIdx = i;
                   highest = tmp;
                }
+               tmp = inLow[blockNext + i];
+               if( tmp < lowest ) {
+                  lowest = tmp;
+               }
+               preHighest[i + 1] = highest;
+               preLowest[i + 1] = lowest;
+               i += 1;
             }
-         } else if( tmp >= highest ) {
-            highestIdx = today;
-            highest = tmp;
          }
-         if( !(Math.abs(highest - lowest) <= 0.00000000000001 * (Math.abs(highest) + Math.abs(lowest))) ) {
-            fastK = (inClose[today] - lowest) / (highest - lowest) * 100.0;
-         } else {
-            fastK = 50.0;
+         /* The squash runs as a pass of its own over what the block wrote:
+          * a call inside the loop above it would have every carried value
+          * saved and restored around it on each bar.
+          */
+         nOut = 0;
+         m = 0;
+         while( m <= nAvail ) {
+            highest = sufHighest[m];
+            if( preHighest[m] > highest ) {
+               highest = preHighest[m];
+            }
+            lowest = sufLowest[m];
+            if( preLowest[m] < lowest ) {
+               lowest = preLowest[m];
+            }
+            tempReal = highest - lowest;
+            if( !(Math.abs(tempReal) <= 0.00000000000001 * (Math.abs(highest) + Math.abs(lowest))) ) {
+               fastK = (inClose[today + m] - lowest) / tempReal * 100.0;
+            } else {
+               fastK = 50.0;
+            }
+            nsk = 0.1 * (fastK - 50.0);
+            if( nBar > warmBars ) {
+               ema1 = Math.fma(emaBeta, ema1, emaK * nsk);
+               ema2 = Math.fma(emaBeta, ema2, emaK * ema1);
+               outReal[outIdx + nOut] = 0.5 * ema2;
+               nOut = nOut + 1;
+            } else {
+               /* The two seeds, staged as pso_ALT1 stages them. */
+               if( nBar < optInEMAPeriod ) {
+                  sum1 = sum1 + nsk;
+                  if( nBar == optInEMAPeriod - 1 ) {
+                     ema1 = sum1 / optInEMAPeriod;
+                  }
+               } else {
+                  ema1 = Math.fma(emaBeta, ema1, emaK * nsk);
+               }
+               if( nBar >= lookbackEMA ) {
+                  n2 = nBar - lookbackEMA;
+                  if( n2 < optInEMAPeriod ) {
+                     sum2 = sum2 + ema1;
+                     if( n2 == optInEMAPeriod - 1 ) {
+                        ema2 = sum2 / optInEMAPeriod;
+                     }
+                  } else {
+                     ema2 = Math.fma(emaBeta, ema2, emaK * ema1);
+                  }
+               }
+               if( nBar == warmBars ) {
+                  outReal[outIdx + nOut] = 0.5 * ema2;
+                  nOut = nOut + 1;
+               }
+            }
+            nBar = nBar + 1;
+            m += 1;
          }
-         nsk = 0.1 * (fastK - 50.0);
-         ema1 = Math.fma(emaBeta, ema1, emaK * nsk);
-         ema2 = Math.fma(emaBeta, ema2, emaK * ema1);
-         outReal[outIdx] = Math.tanh(0.5 * ema2);
-         outIdx = outIdx + 1;
-         trailingIdx = trailingIdx + 1;
-         today = today + 1;
+         i = 0;
+         while( i < nOut ) {
+            outReal[outIdx] = Math.tanh(outReal[outIdx]);
+            outIdx = outIdx + 1;
+            i += 1;
+         }
+         today = today + nAvail + 1;
+         blockStart = blockNext;
       }
       outNBElement.value = outIdx;
+      outBegIdx.value = startIdx;
+      return RetCode.SUCCESS ;
+   }
+   /* Exact only where keyable() held for every scanned input over [startIdx - lookback, endIdx]. */
+   RetCode psoKeyedImpl( int startIdx,
+                         int endIdx,
+                         double inHigh[],
+                         double inLow[],
+                         double inClose[],
+                         int optInFastK_Period,
+                         int optInEMAPeriod,
+                         MInteger outBegIdx,
+                         MInteger outNBElement,
+                         double outReal[] )
+   {
+      long[] sufHighest;
+      int sufHighest_Idx = 0;
+      int maxIdx_sufHighest = (30)-1;
+      long[] preHighest;
+      int preHighest_Idx = 0;
+      int maxIdx_preHighest = (30)-1;
+      long[] sufLowest;
+      int sufLowest_Idx = 0;
+      int maxIdx_sufLowest = (30)-1;
+      long[] preLowest;
+      int preLowest_Idx = 0;
+      int maxIdx_preLowest = (30)-1;
+      double emaK = 0;
+      double emaBeta = 0;
+      long highest = 0;
+      long lowest = 0;
+      long tmp = 0;
+      double tempReal = 0;
+      double fastK = 0;
+      double nsk = 0;
+      double ema1 = 0;
+      double ema2 = 0;
+      double sum1 = 0;
+      double sum2 = 0;
+      int lookbackTotal = 0;
+      int lookbackEMA = 0;
+      int warmBars = 0;
+      int today = 0;
+      int i = 0;
+      int m = 0;
+      int blockStart = 0;
+      int blockNext = 0;
+      int nAvail = 0;
+      int outIdx = 0;
+      int nBar = 0;
+      int n2 = 0;
+      int nOut = 0;
+      lookbackTotal = psoLookback(optInFastK_Period, optInEMAPeriod);
+      if( startIdx < lookbackTotal ) {
+         startIdx = lookbackTotal;
+      }
+      if( startIdx > endIdx ) {
+         outBegIdx.value = 0;
+         outNBElement.value = 0;
+         return RetCode.SUCCESS ;
+      }
+      emaBeta = (double)(optInEMAPeriod - 1) / (double)(optInEMAPeriod + 1);
+      emaK = 1.0 - emaBeta;
+      if( emaBeta < 0.5 ) {
+         emaBeta = 1.0 - emaK;
+      }
+      lookbackEMA = emaLookback(optInEMAPeriod);
+      warmBars = lookbackEMA + lookbackEMA;
+      ema1 = 0.0;
+      ema2 = 0.0;
+      sum1 = 0.0;
+      sum2 = 0.0;
+      nBar = 0;
+      today = startIdx - warmBars;
+      blockStart = today - (optInFastK_Period - 1);
+      outIdx = 0;
+      if( optInFastK_Period < 1 ) return RetCode.INTERNAL_ERROR;
+      sufHighest = new long[optInFastK_Period];
+      maxIdx_sufHighest = (optInFastK_Period)-1;
+      sufHighest_Idx = 0;
+      if( optInFastK_Period < 1 ) return RetCode.INTERNAL_ERROR;
+      preHighest = new long[optInFastK_Period];
+      maxIdx_preHighest = (optInFastK_Period)-1;
+      preHighest_Idx = 0;
+      if( optInFastK_Period < 1 ) return RetCode.INTERNAL_ERROR;
+      sufLowest = new long[optInFastK_Period];
+      maxIdx_sufLowest = (optInFastK_Period)-1;
+      sufLowest_Idx = 0;
+      if( optInFastK_Period < 1 ) return RetCode.INTERNAL_ERROR;
+      preLowest = new long[optInFastK_Period];
+      maxIdx_preLowest = (optInFastK_Period)-1;
+      preLowest_Idx = 0;
+      while( today <= endIdx ) {
+         i = today;
+         highest = Double.doubleToRawLongBits(inHigh[i]);
+         lowest = Double.doubleToRawLongBits(inLow[i]);
+         sufHighest[optInFastK_Period - 1] = highest;
+         sufLowest[optInFastK_Period - 1] = lowest;
+         while( i > blockStart ) {
+            i -= 1;
+            tmp = Double.doubleToRawLongBits(inHigh[i]);
+            highest = keyMax(highest, tmp);
+            tmp = Double.doubleToRawLongBits(inLow[i]);
+            lowest = keyMin(lowest, tmp);
+            sufHighest[i - blockStart] = highest;
+            sufLowest[i - blockStart] = lowest;
+         }
+         blockNext = blockStart + optInFastK_Period;
+         nAvail = endIdx + 1 - blockNext;
+         if( nAvail > optInFastK_Period - 1 ) {
+            nAvail = optInFastK_Period - 1;
+         }
+         preHighest[0] = sufHighest[0];
+         preLowest[0] = sufLowest[0];
+         if( nAvail > 0 ) {
+            i = 1;
+            highest = Double.doubleToRawLongBits(inHigh[blockNext]);
+            lowest = Double.doubleToRawLongBits(inLow[blockNext]);
+            preHighest[1] = highest;
+            preLowest[1] = lowest;
+            while( i < nAvail ) {
+               tmp = Double.doubleToRawLongBits(inHigh[blockNext + i]);
+               highest = keyMax(highest, tmp);
+               tmp = Double.doubleToRawLongBits(inLow[blockNext + i]);
+               lowest = keyMin(lowest, tmp);
+               preHighest[i + 1] = highest;
+               preLowest[i + 1] = lowest;
+               i += 1;
+            }
+         }
+         nOut = 0;
+         m = 0;
+         while( m <= nAvail ) {
+            highest = sufHighest[m];
+            highest = keyMax(highest, preHighest[m]);
+            lowest = sufLowest[m];
+            lowest = keyMin(lowest, preLowest[m]);
+            tempReal = Double.longBitsToDouble(highest) - Double.longBitsToDouble(lowest);
+            if( !(Math.abs(tempReal) <= 0.00000000000001 * (Math.abs(Double.longBitsToDouble(highest)) + Math.abs(Double.longBitsToDouble(lowest)))) ) {
+               fastK = (inClose[today + m] - Double.longBitsToDouble(lowest)) / tempReal * 100.0;
+            } else {
+               fastK = 50.0;
+            }
+            nsk = 0.1 * (fastK - 50.0);
+            if( nBar > warmBars ) {
+               ema1 = Math.fma(emaBeta, ema1, emaK * nsk);
+               ema2 = Math.fma(emaBeta, ema2, emaK * ema1);
+               outReal[outIdx + nOut] = 0.5 * ema2;
+               nOut = nOut + 1;
+            } else {
+               if( nBar < optInEMAPeriod ) {
+                  sum1 = sum1 + nsk;
+                  if( nBar == optInEMAPeriod - 1 ) {
+                     ema1 = sum1 / optInEMAPeriod;
+                  }
+               } else {
+                  ema1 = Math.fma(emaBeta, ema1, emaK * nsk);
+               }
+               if( nBar >= lookbackEMA ) {
+                  n2 = nBar - lookbackEMA;
+                  if( n2 < optInEMAPeriod ) {
+                     sum2 = sum2 + ema1;
+                     if( n2 == optInEMAPeriod - 1 ) {
+                        ema2 = sum2 / optInEMAPeriod;
+                     }
+                  } else {
+                     ema2 = Math.fma(emaBeta, ema2, emaK * ema1);
+                  }
+               }
+               if( nBar == warmBars ) {
+                  outReal[outIdx + nOut] = 0.5 * ema2;
+                  nOut = nOut + 1;
+               }
+            }
+            nBar = nBar + 1;
+            m += 1;
+         }
+         i = 0;
+         while( i < nOut ) {
+            outReal[outIdx] = Math.tanh(outReal[outIdx]);
+            outIdx = outIdx + 1;
+            i += 1;
+         }
+         today = today + nAvail + 1;
+         blockStart = blockNext;
+      }
+      outNBElement.value = outIdx;
+      outBegIdx.value = startIdx;
       return RetCode.SUCCESS ;
    }
    RetCode psoImpl( int startIdx,
@@ -169925,11 +170104,24 @@ public final class Core {
                     MInteger outNBElement,
                     double outReal[] )
    {
+      double[] sufHighest;
+      int sufHighest_Idx = 0;
+      int maxIdx_sufHighest = (30)-1;
+      double[] preHighest;
+      int preHighest_Idx = 0;
+      int maxIdx_preHighest = (30)-1;
+      double[] sufLowest;
+      int sufLowest_Idx = 0;
+      int maxIdx_sufLowest = (30)-1;
+      double[] preLowest;
+      int preLowest_Idx = 0;
+      int maxIdx_preLowest = (30)-1;
       double emaK = 0;
       double emaBeta = 0;
       double highest = 0;
       double lowest = 0;
       double tmp = 0;
+      double tempReal = 0;
       double fastK = 0;
       double nsk = 0;
       double ema1 = 0;
@@ -169938,14 +170130,17 @@ public final class Core {
       double sum2 = 0;
       int lookbackTotal = 0;
       int lookbackEMA = 0;
+      int warmBars = 0;
       int today = 0;
-      int trailingIdx = 0;
-      int highestIdx = 0;
-      int lowestIdx = 0;
       int i = 0;
+      int m = 0;
+      int blockStart = 0;
+      int blockNext = 0;
+      int nAvail = 0;
       int outIdx = 0;
       int nBar = 0;
       int n2 = 0;
+      int nOut = 0;
       if( (startIdx < 0) || (startIdx > INDEX_MAX) ) {
          return RetCode.OUT_OF_RANGE_START_INDEX ;
       }
@@ -169971,144 +170166,346 @@ public final class Core {
          outNBElement.value = 0;
          return RetCode.SUCCESS ;
       }
-      outBegIdx.value = startIdx;
       emaBeta = (double)(optInEMAPeriod - 1) / (double)(optInEMAPeriod + 1);
       emaK = 1.0 - emaBeta;
-      emaBeta = 1.0 - emaK;
+      if( emaBeta < 0.5 ) {
+         emaBeta = 1.0 - emaK;
+      }
       lookbackEMA = emaLookback(optInEMAPeriod);
+      warmBars = lookbackEMA + lookbackEMA;
       ema1 = 0.0;
       ema2 = 0.0;
       sum1 = 0.0;
       sum2 = 0.0;
-      highest = 0.0;
-      lowest = 0.0;
-      highestIdx = -1;
-      lowestIdx = -1;
-      trailingIdx = startIdx - lookbackTotal;
-      today = trailingIdx + (optInFastK_Period - 1);
       nBar = 0;
-      while( today <= startIdx ) {
-         tmp = (double)inLow[today];
-         if( lowestIdx < trailingIdx ) {
-            lowestIdx = trailingIdx;
-            lowest = (double)inLow[lowestIdx];
-            i = lowestIdx;
-            while( ++i <= today ) {
-               tmp = (double)inLow[i];
-               if( tmp < lowest ) {
-                  lowestIdx = i;
-                  lowest = tmp;
-               }
-            }
-         } else if( tmp <= lowest ) {
-            lowestIdx = today;
-            lowest = tmp;
-         }
-         tmp = (double)inHigh[today];
-         if( highestIdx < trailingIdx ) {
-            highestIdx = trailingIdx;
-            highest = (double)inHigh[highestIdx];
-            i = highestIdx;
-            while( ++i <= today ) {
-               tmp = (double)inHigh[i];
-               if( tmp > highest ) {
-                  highestIdx = i;
-                  highest = tmp;
-               }
-            }
-         } else if( tmp >= highest ) {
-            highestIdx = today;
-            highest = tmp;
-         }
-         if( !(Math.abs(highest - lowest) <= 0.00000000000001 * (Math.abs(highest) + Math.abs(lowest))) ) {
-            fastK = ((double)inClose[today] - lowest) / (highest - lowest) * 100.0;
-         } else {
-            fastK = 50.0;
-         }
-         nsk = 0.1 * (fastK - 50.0);
-         if( nBar < optInEMAPeriod ) {
-            sum1 = sum1 + nsk;
-            if( nBar == optInEMAPeriod - 1 ) {
-               ema1 = sum1 / optInEMAPeriod;
-            }
-         } else {
-            ema1 = Math.fma(emaBeta, ema1, emaK * nsk);
-         }
-         if( nBar >= lookbackEMA ) {
-            n2 = nBar - lookbackEMA;
-            if( n2 < optInEMAPeriod ) {
-               sum2 = sum2 + ema1;
-               if( n2 == optInEMAPeriod - 1 ) {
-                  ema2 = sum2 / optInEMAPeriod;
-               }
-            } else {
-               ema2 = Math.fma(emaBeta, ema2, emaK * ema1);
-            }
-         }
-         nBar = nBar + 1;
-         trailingIdx = trailingIdx + 1;
-         today = today + 1;
+      today = startIdx - warmBars;
+      blockStart = today - (optInFastK_Period - 1);
+      outIdx = 0;
+      if( keyable(inHigh, startIdx - psoLookback(optInFastK_Period, optInEMAPeriod), endIdx) && keyable(inLow, startIdx - psoLookback(optInFastK_Period, optInEMAPeriod), endIdx) ) {
+         return psoKeyedImpl(startIdx, endIdx, inHigh, inLow, inClose, optInFastK_Period, optInEMAPeriod, outBegIdx, outNBElement, outReal);
       }
-      outReal[0] = Math.tanh(0.5 * ema2);
-      outIdx = 1;
+      if( optInFastK_Period < 1 ) return RetCode.INTERNAL_ERROR;
+      sufHighest = new double[optInFastK_Period];
+      maxIdx_sufHighest = (optInFastK_Period)-1;
+      sufHighest_Idx = 0;
+      if( optInFastK_Period < 1 ) return RetCode.INTERNAL_ERROR;
+      preHighest = new double[optInFastK_Period];
+      maxIdx_preHighest = (optInFastK_Period)-1;
+      preHighest_Idx = 0;
+      if( optInFastK_Period < 1 ) return RetCode.INTERNAL_ERROR;
+      sufLowest = new double[optInFastK_Period];
+      maxIdx_sufLowest = (optInFastK_Period)-1;
+      sufLowest_Idx = 0;
+      if( optInFastK_Period < 1 ) return RetCode.INTERNAL_ERROR;
+      preLowest = new double[optInFastK_Period];
+      maxIdx_preLowest = (optInFastK_Period)-1;
+      preLowest_Idx = 0;
       while( today <= endIdx ) {
-         tmp = (double)inLow[today];
-         if( lowestIdx < trailingIdx ) {
-            lowestIdx = trailingIdx;
-            lowest = (double)inLow[lowestIdx];
-            i = lowestIdx;
-            while( ++i <= today ) {
-               tmp = (double)inLow[i];
-               if( tmp < lowest ) {
-                  lowestIdx = i;
-                  lowest = tmp;
-               }
+         i = today;
+         highest = (double)inHigh[i];
+         lowest = (double)inLow[i];
+         sufHighest[optInFastK_Period - 1] = highest;
+         sufLowest[optInFastK_Period - 1] = lowest;
+         while( i > blockStart ) {
+            i -= 1;
+            tmp = (double)inHigh[i];
+            if( tmp > highest ) {
+               highest = tmp;
             }
-         } else if( tmp <= lowest ) {
-            lowestIdx = today;
-            lowest = tmp;
+            tmp = (double)inLow[i];
+            if( tmp < lowest ) {
+               lowest = tmp;
+            }
+            sufHighest[i - blockStart] = highest;
+            sufLowest[i - blockStart] = lowest;
          }
-         tmp = (double)inHigh[today];
-         if( highestIdx < trailingIdx ) {
-            highestIdx = trailingIdx;
-            highest = (double)inHigh[highestIdx];
-            i = highestIdx;
-            while( ++i <= today ) {
-               tmp = (double)inHigh[i];
+         blockNext = blockStart + optInFastK_Period;
+         nAvail = endIdx + 1 - blockNext;
+         if( nAvail > optInFastK_Period - 1 ) {
+            nAvail = optInFastK_Period - 1;
+         }
+         preHighest[0] = sufHighest[0];
+         preLowest[0] = sufLowest[0];
+         if( nAvail > 0 ) {
+            i = 1;
+            highest = (double)inHigh[blockNext];
+            lowest = (double)inLow[blockNext];
+            preHighest[1] = highest;
+            preLowest[1] = lowest;
+            while( i < nAvail ) {
+               tmp = (double)inHigh[blockNext + i];
                if( tmp > highest ) {
-                  highestIdx = i;
                   highest = tmp;
                }
+               tmp = (double)inLow[blockNext + i];
+               if( tmp < lowest ) {
+                  lowest = tmp;
+               }
+               preHighest[i + 1] = highest;
+               preLowest[i + 1] = lowest;
+               i += 1;
             }
-         } else if( tmp >= highest ) {
-            highestIdx = today;
-            highest = tmp;
          }
-         if( !(Math.abs(highest - lowest) <= 0.00000000000001 * (Math.abs(highest) + Math.abs(lowest))) ) {
-            fastK = ((double)inClose[today] - lowest) / (highest - lowest) * 100.0;
-         } else {
-            fastK = 50.0;
+         nOut = 0;
+         m = 0;
+         while( m <= nAvail ) {
+            highest = sufHighest[m];
+            if( preHighest[m] > highest ) {
+               highest = preHighest[m];
+            }
+            lowest = sufLowest[m];
+            if( preLowest[m] < lowest ) {
+               lowest = preLowest[m];
+            }
+            tempReal = highest - lowest;
+            if( !(Math.abs(tempReal) <= 0.00000000000001 * (Math.abs(highest) + Math.abs(lowest))) ) {
+               fastK = ((double)inClose[today + m] - lowest) / tempReal * 100.0;
+            } else {
+               fastK = 50.0;
+            }
+            nsk = 0.1 * (fastK - 50.0);
+            if( nBar > warmBars ) {
+               ema1 = Math.fma(emaBeta, ema1, emaK * nsk);
+               ema2 = Math.fma(emaBeta, ema2, emaK * ema1);
+               outReal[outIdx + nOut] = 0.5 * ema2;
+               nOut = nOut + 1;
+            } else {
+               if( nBar < optInEMAPeriod ) {
+                  sum1 = sum1 + nsk;
+                  if( nBar == optInEMAPeriod - 1 ) {
+                     ema1 = sum1 / optInEMAPeriod;
+                  }
+               } else {
+                  ema1 = Math.fma(emaBeta, ema1, emaK * nsk);
+               }
+               if( nBar >= lookbackEMA ) {
+                  n2 = nBar - lookbackEMA;
+                  if( n2 < optInEMAPeriod ) {
+                     sum2 = sum2 + ema1;
+                     if( n2 == optInEMAPeriod - 1 ) {
+                        ema2 = sum2 / optInEMAPeriod;
+                     }
+                  } else {
+                     ema2 = Math.fma(emaBeta, ema2, emaK * ema1);
+                  }
+               }
+               if( nBar == warmBars ) {
+                  outReal[outIdx + nOut] = 0.5 * ema2;
+                  nOut = nOut + 1;
+               }
+            }
+            nBar = nBar + 1;
+            m += 1;
          }
-         nsk = 0.1 * (fastK - 50.0);
-         ema1 = Math.fma(emaBeta, ema1, emaK * nsk);
-         ema2 = Math.fma(emaBeta, ema2, emaK * ema1);
-         outReal[outIdx] = Math.tanh(0.5 * ema2);
-         outIdx = outIdx + 1;
-         trailingIdx = trailingIdx + 1;
-         today = today + 1;
+         i = 0;
+         while( i < nOut ) {
+            outReal[outIdx] = Math.tanh(outReal[outIdx]);
+            outIdx = outIdx + 1;
+            i += 1;
+         }
+         today = today + nAvail + 1;
+         blockStart = blockNext;
       }
       outNBElement.value = outIdx;
+      outBegIdx.value = startIdx;
+      return RetCode.SUCCESS ;
+   }
+   /* Exact only where keyable() held for every scanned input over [startIdx - lookback, endIdx]. */
+   RetCode psoKeyedImpl( int startIdx,
+                         int endIdx,
+                         float inHigh[],
+                         float inLow[],
+                         float inClose[],
+                         int optInFastK_Period,
+                         int optInEMAPeriod,
+                         MInteger outBegIdx,
+                         MInteger outNBElement,
+                         double outReal[] )
+   {
+      long[] sufHighest;
+      int sufHighest_Idx = 0;
+      int maxIdx_sufHighest = (30)-1;
+      long[] preHighest;
+      int preHighest_Idx = 0;
+      int maxIdx_preHighest = (30)-1;
+      long[] sufLowest;
+      int sufLowest_Idx = 0;
+      int maxIdx_sufLowest = (30)-1;
+      long[] preLowest;
+      int preLowest_Idx = 0;
+      int maxIdx_preLowest = (30)-1;
+      double emaK = 0;
+      double emaBeta = 0;
+      long highest = 0;
+      long lowest = 0;
+      long tmp = 0;
+      double tempReal = 0;
+      double fastK = 0;
+      double nsk = 0;
+      double ema1 = 0;
+      double ema2 = 0;
+      double sum1 = 0;
+      double sum2 = 0;
+      int lookbackTotal = 0;
+      int lookbackEMA = 0;
+      int warmBars = 0;
+      int today = 0;
+      int i = 0;
+      int m = 0;
+      int blockStart = 0;
+      int blockNext = 0;
+      int nAvail = 0;
+      int outIdx = 0;
+      int nBar = 0;
+      int n2 = 0;
+      int nOut = 0;
+      lookbackTotal = psoLookback(optInFastK_Period, optInEMAPeriod);
+      if( startIdx < lookbackTotal ) {
+         startIdx = lookbackTotal;
+      }
+      if( startIdx > endIdx ) {
+         outBegIdx.value = 0;
+         outNBElement.value = 0;
+         return RetCode.SUCCESS ;
+      }
+      emaBeta = (double)(optInEMAPeriod - 1) / (double)(optInEMAPeriod + 1);
+      emaK = 1.0 - emaBeta;
+      if( emaBeta < 0.5 ) {
+         emaBeta = 1.0 - emaK;
+      }
+      lookbackEMA = emaLookback(optInEMAPeriod);
+      warmBars = lookbackEMA + lookbackEMA;
+      ema1 = 0.0;
+      ema2 = 0.0;
+      sum1 = 0.0;
+      sum2 = 0.0;
+      nBar = 0;
+      today = startIdx - warmBars;
+      blockStart = today - (optInFastK_Period - 1);
+      outIdx = 0;
+      if( optInFastK_Period < 1 ) return RetCode.INTERNAL_ERROR;
+      sufHighest = new long[optInFastK_Period];
+      maxIdx_sufHighest = (optInFastK_Period)-1;
+      sufHighest_Idx = 0;
+      if( optInFastK_Period < 1 ) return RetCode.INTERNAL_ERROR;
+      preHighest = new long[optInFastK_Period];
+      maxIdx_preHighest = (optInFastK_Period)-1;
+      preHighest_Idx = 0;
+      if( optInFastK_Period < 1 ) return RetCode.INTERNAL_ERROR;
+      sufLowest = new long[optInFastK_Period];
+      maxIdx_sufLowest = (optInFastK_Period)-1;
+      sufLowest_Idx = 0;
+      if( optInFastK_Period < 1 ) return RetCode.INTERNAL_ERROR;
+      preLowest = new long[optInFastK_Period];
+      maxIdx_preLowest = (optInFastK_Period)-1;
+      preLowest_Idx = 0;
+      while( today <= endIdx ) {
+         i = today;
+         highest = Double.doubleToRawLongBits((double)inHigh[i]);
+         lowest = Double.doubleToRawLongBits((double)inLow[i]);
+         sufHighest[optInFastK_Period - 1] = highest;
+         sufLowest[optInFastK_Period - 1] = lowest;
+         while( i > blockStart ) {
+            i -= 1;
+            tmp = Double.doubleToRawLongBits((double)inHigh[i]);
+            highest = keyMax(highest, tmp);
+            tmp = Double.doubleToRawLongBits((double)inLow[i]);
+            lowest = keyMin(lowest, tmp);
+            sufHighest[i - blockStart] = highest;
+            sufLowest[i - blockStart] = lowest;
+         }
+         blockNext = blockStart + optInFastK_Period;
+         nAvail = endIdx + 1 - blockNext;
+         if( nAvail > optInFastK_Period - 1 ) {
+            nAvail = optInFastK_Period - 1;
+         }
+         preHighest[0] = sufHighest[0];
+         preLowest[0] = sufLowest[0];
+         if( nAvail > 0 ) {
+            i = 1;
+            highest = Double.doubleToRawLongBits((double)inHigh[blockNext]);
+            lowest = Double.doubleToRawLongBits((double)inLow[blockNext]);
+            preHighest[1] = highest;
+            preLowest[1] = lowest;
+            while( i < nAvail ) {
+               tmp = Double.doubleToRawLongBits((double)inHigh[blockNext + i]);
+               highest = keyMax(highest, tmp);
+               tmp = Double.doubleToRawLongBits((double)inLow[blockNext + i]);
+               lowest = keyMin(lowest, tmp);
+               preHighest[i + 1] = highest;
+               preLowest[i + 1] = lowest;
+               i += 1;
+            }
+         }
+         nOut = 0;
+         m = 0;
+         while( m <= nAvail ) {
+            highest = sufHighest[m];
+            highest = keyMax(highest, preHighest[m]);
+            lowest = sufLowest[m];
+            lowest = keyMin(lowest, preLowest[m]);
+            tempReal = Double.longBitsToDouble(highest) - Double.longBitsToDouble(lowest);
+            if( !(Math.abs(tempReal) <= 0.00000000000001 * (Math.abs(Double.longBitsToDouble(highest)) + Math.abs(Double.longBitsToDouble(lowest)))) ) {
+               fastK = ((double)inClose[today + m] - Double.longBitsToDouble(lowest)) / tempReal * 100.0;
+            } else {
+               fastK = 50.0;
+            }
+            nsk = 0.1 * (fastK - 50.0);
+            if( nBar > warmBars ) {
+               ema1 = Math.fma(emaBeta, ema1, emaK * nsk);
+               ema2 = Math.fma(emaBeta, ema2, emaK * ema1);
+               outReal[outIdx + nOut] = 0.5 * ema2;
+               nOut = nOut + 1;
+            } else {
+               if( nBar < optInEMAPeriod ) {
+                  sum1 = sum1 + nsk;
+                  if( nBar == optInEMAPeriod - 1 ) {
+                     ema1 = sum1 / optInEMAPeriod;
+                  }
+               } else {
+                  ema1 = Math.fma(emaBeta, ema1, emaK * nsk);
+               }
+               if( nBar >= lookbackEMA ) {
+                  n2 = nBar - lookbackEMA;
+                  if( n2 < optInEMAPeriod ) {
+                     sum2 = sum2 + ema1;
+                     if( n2 == optInEMAPeriod - 1 ) {
+                        ema2 = sum2 / optInEMAPeriod;
+                     }
+                  } else {
+                     ema2 = Math.fma(emaBeta, ema2, emaK * ema1);
+                  }
+               }
+               if( nBar == warmBars ) {
+                  outReal[outIdx + nOut] = 0.5 * ema2;
+                  nOut = nOut + 1;
+               }
+            }
+            nBar = nBar + 1;
+            m += 1;
+         }
+         i = 0;
+         while( i < nOut ) {
+            outReal[outIdx] = Math.tanh(outReal[outIdx]);
+            outIdx = outIdx + 1;
+            i += 1;
+         }
+         today = today + nAvail + 1;
+         blockStart = blockNext;
+      }
+      outNBElement.value = outIdx;
+      outBegIdx.value = startIdx;
       return RetCode.SUCCESS ;
    }
    /**
     * Premier Stochastic Oscillator: a short-period Fast %K, recentred on zero
-    * and rescaled, double-smoothed and then squashed into the open interval -1
-    * to +1. Leibfarth's reading is that the plain stochastic spends most of its
-    * life pinned at one end or the other, so the extremes stop meaning
-    * anything; the two exponential passes strip the bar-to-bar noise out of it,
-    * and the squash gives back a scale on which the extremes are rare again.
-    * Readings beyond ±0.9 are the extremes, and ±0.2 the band Leibfarth watches
-    * for the crossing back toward the middle.
+    * and rescaled, double-smoothed and then squashed into the range -1 to +1.
+    * Leibfarth's reading is that the plain stochastic spends most of its life
+    * pinned at one end or the other, so the extremes stop meaning anything; the
+    * two exponential passes strip the bar-to-bar noise out of it, and the
+    * squash gives back a scale on which the extremes are rare again. Readings
+    * beyond ±0.9 are the extremes, and ±0.2 the band Leibfarth watches for the
+    * crossing back toward the middle.
     * <p>Formula and more info at <a
     * href="https://ta-lib.org/functions/pso">ta-lib.org/functions/pso</a>.
     * <p><b>Notes</b>
@@ -170117,7 +170514,7 @@ public final class Core {
     * <li>The squash is computed as {@code tanh(SS/2)}, which is the published quotient rewritten. The quotient form is {@code inf/inf} once {@code SS} exceeds 709.78, which a bar whose close lies outside its own high/low range can reach; {@code tanh} saturates at ±1 instead.</li>
     * <li>A Fast-K window whose range is zero reads 50, the midpoint, so a flat market reads PSO 0 rather than the near-extreme the Fast-K convention of 0 would give it. The flatness test is the one STOCHF applies, against the window's own extremes rather than a fixed band.</li>
     * <li>Each exponential pass is seeded with a simple average of its own first inputs, the same seeding TA-Lib's EMA uses, and the second pass seeds on what the first publishes. {@code TA_SetUnstablePeriod(TA_FUNC_UNST_EMA, ...)} discards more of that warm-up, through both passes. Implementations seeding each pass from a single first sample differ over the transient and agree once it decays.</li>
-    * <li>Leibfarth parameterises the smoothing as the square root of a longer period, 25 by default, which is 5. The length is taken here directly, as an integer, because the sources that follow the square root disagree over how to round it.</li>
+    * <li>Leibfarth parameterises the smoothing as the square root of a longer period, 25 in his article. The length is taken here directly, as an integer, because the sources that follow the square root disagree over how to round it.</li>
     * </ul>
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are, and the
@@ -170183,13 +170580,13 @@ public final class Core {
    }
    /**
     * Premier Stochastic Oscillator: a short-period Fast %K, recentred on zero
-    * and rescaled, double-smoothed and then squashed into the open interval -1
-    * to +1. Leibfarth's reading is that the plain stochastic spends most of its
-    * life pinned at one end or the other, so the extremes stop meaning
-    * anything; the two exponential passes strip the bar-to-bar noise out of it,
-    * and the squash gives back a scale on which the extremes are rare again.
-    * Readings beyond ±0.9 are the extremes, and ±0.2 the band Leibfarth watches
-    * for the crossing back toward the middle.
+    * and rescaled, double-smoothed and then squashed into the range -1 to +1.
+    * Leibfarth's reading is that the plain stochastic spends most of its life
+    * pinned at one end or the other, so the extremes stop meaning anything; the
+    * two exponential passes strip the bar-to-bar noise out of it, and the
+    * squash gives back a scale on which the extremes are rare again. Readings
+    * beyond ±0.9 are the extremes, and ±0.2 the band Leibfarth watches for the
+    * crossing back toward the middle.
     * <p>Formula and more info at <a
     * href="https://ta-lib.org/functions/pso">ta-lib.org/functions/pso</a>.
     * <p><b>Notes</b>
@@ -170198,7 +170595,7 @@ public final class Core {
     * <li>The squash is computed as {@code tanh(SS/2)}, which is the published quotient rewritten. The quotient form is {@code inf/inf} once {@code SS} exceeds 709.78, which a bar whose close lies outside its own high/low range can reach; {@code tanh} saturates at ±1 instead.</li>
     * <li>A Fast-K window whose range is zero reads 50, the midpoint, so a flat market reads PSO 0 rather than the near-extreme the Fast-K convention of 0 would give it. The flatness test is the one STOCHF applies, against the window's own extremes rather than a fixed band.</li>
     * <li>Each exponential pass is seeded with a simple average of its own first inputs, the same seeding TA-Lib's EMA uses, and the second pass seeds on what the first publishes. {@code TA_SetUnstablePeriod(TA_FUNC_UNST_EMA, ...)} discards more of that warm-up, through both passes. Implementations seeding each pass from a single first sample differ over the transient and agree once it decays.</li>
-    * <li>Leibfarth parameterises the smoothing as the square root of a longer period, 25 by default, which is 5. The length is taken here directly, as an integer, because the sources that follow the square root disagree over how to round it.</li>
+    * <li>Leibfarth parameterises the smoothing as the square root of a longer period, 25 in his article. The length is taken here directly, as an integer, because the sources that follow the square root disagree over how to round it.</li>
     * </ul>
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a
@@ -170266,6 +170663,8 @@ public final class Core {
       return new OutRange(outBegIdx.value, outNBElement.value);
    }
 /**** Streaming API *****/
+
+/* Using pso_ALT1 for TA_ALT={STREAM,ALL_LANGUAGES} */
 
    /**
     * A live PSO stream (unrelated to {@code java.util.stream}): one value per
@@ -170632,15 +171031,15 @@ public final class Core {
        * seeds from the values the first would have published, exactly as the
        * composed form does.
        *
-       * At optInEMAPeriod == 1 ema.c takes an explicit copy path, because its
-       * recursion at a k of 1.0 and a beta of 0.0 does not keep the sign of a
-       * -0.0 input. The recursion below is left to run instead: its input is
-       * 0.1*(fastK - 50.0), and x - x is +0.0 in every rounding mode, so -0.0
-       * cannot reach it. The composite gate runs 5/1 and compares bitwise.
+       * At optInEMAPeriod == 1 the recursion runs at a k of 1.0 and a beta of
+       * 0.0 where the composed chain copies: the same bits while every Fast-K
+       * is finite.
        */
       emaBeta = (double)(optInEMAPeriod - 1) / (double)(optInEMAPeriod + 1);
       emaK = 1.0 - emaBeta;
-      emaBeta = 1.0 - emaK;
+      if( emaBeta < 0.5 ) {
+         emaBeta = 1.0 - emaK;
+      }
       lookbackEMA = emaLookback(optInEMAPeriod);
       ema1 = 0.0;
       ema2 = 0.0;
@@ -170654,8 +171053,8 @@ public final class Core {
       trailingIdx = startIdx - lookbackTotal;
       today = trailingIdx + (optInFastK_Period - 1);
       nBar = 0;
-      /* Warm-up. Runs through startIdx inclusive: the last pass here is the one
-       * that completes the second pass's seed, so it produces the first output.
+      /* Warm-up. Runs through startIdx inclusive: its last pass produces the
+       * first output.
        */
       while( today <= startIdx ) {
          /* Set the lowest low */
@@ -170717,14 +171116,8 @@ public final class Core {
          } else {
             ema1 = Math.fma(emaBeta, ema1, emaK * nsk);
          }
-         /* Pass 2, over what pass 1 publishes.
-          *
-          * The stage counter is compared BEFORE it is subtracted, never after.
-          * Writing this as `n2 = nBar - lookbackEMA; if( n2 >= 0 )` is correct in
-          * C, where the counters are signed, and broken everywhere else: the Rust
-          * backend renders them as usize, so the subtraction underflows for the
-          * first lookbackEMA bars -- a panic in a debug build and a wrap in
-          * release (the lesson smi.c records).
+         /* Pass 2, over what pass 1 publishes. Keep the comparison ahead of
+          * the subtraction: the counters are unsigned in Rust.
           */
          if( nBar >= lookbackEMA ) {
             n2 = nBar - lookbackEMA;

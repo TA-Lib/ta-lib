@@ -44,6 +44,7 @@
  *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
  *  100626 KL,CC  First version (proposal PSO, #473).
+ *  100726 MF,CC  LEAN and trading-signals rows, captured live (#473).
  */
 
 /* Description:
@@ -62,7 +63,7 @@
  *   pins the per-pass seeding and the way the EMA unstable period flows
  *   through both passes.
  *
- *   The GOLDEN leg holds the formula itself, from a 60-digit evaluation over
+ *   The GOLDEN leg holds the formula itself, from a 50-digit evaluation over
  *   the committed corpus. It carries no transcendental in its inputs, so it
  *   is the same on every platform.
  *
@@ -73,7 +74,15 @@
  *   whole series by up to 6.564e-15, which is why this leg's tolerance is
  *   1e-13 and not the 2e-15 the proposal quotes. It stays non-vacuous by a
  *   wide margin: the nearest wrong reading of the author (EMA period 4) moves
- *   those same rows by at least 2.9e-03.
+ *   those same rows by at least 2.1e-04.
+ *
+ *   The LEAN and TRADING-SIGNALS legs are two other implementations, run
+ *   live over the committed corpus by ta-lib-oracles' capture_473_pso.py.
+ *   LEAN seeds each EMA as TA-Lib does and is compared from the first bar;
+ *   trading-signals starts each EMA on its first value and is compared once
+ *   that has decayed. It is also the one that answers a flat window as ruled
+ *   (K = 50), where LEAN answers Fast-K's 0, so its flat-run rows are the
+ *   independent reading of that ruling.
  *
  *   Every comparison count is pinned, so a leg that stops comparing fails.
  *
@@ -119,6 +128,10 @@
 #define PSO_LOOKBACK_CMP    32
 /* outReal aliased onto each of the three price inputs. */
 #define PSO_ALIAS_CMP        3
+/* 4 (n,m) sets x 10 corpus bars. */
+#define PSO_LEAN_CMP        40
+/* 17 corpus rows past each set's decay bar, then 4 on the flat run. */
+#define PSO_TS_CMP          21
 
 static int g_psoGoldenCmp;
 static int g_psoSeriesCmp;
@@ -127,6 +140,8 @@ static int g_psoFlatCmp;
 static int g_psoSpikeCmp;
 static int g_psoLookbackCmp;
 static int g_psoAliasCmp;
+static int g_psoLeanCmp;
+static int g_psoTsCmp;
 
 typedef struct
 {
@@ -136,10 +151,10 @@ typedef struct
    double value;
 } PsoGolden;
 
-/* From a 60-digit evaluation of the #473 formula over the committed corpus,
- * rounded once to 17 significant digits. The first three rows of each set sit
- * on the seed, where a first-value EMA seeding differs by up to 1.9e-02; by
- * bar 100 that difference is gone, so those rows hold the recursion instead.
+/* The #473 formula in 50-digit decimal over the committed corpus, each value
+ * as its nearest double (the `exact` arm of ta-lib-oracles'
+ * capture_473_pso.py). The first three rows of each set sit on the seed,
+ * where a first-value EMA seeding differs by up to 6.1e-02.
  * The 5/1 set is the minimum-period edge, where ema.c takes its copy path.
  */
 static const PsoGolden psoGolden[] =
@@ -206,7 +221,106 @@ static const PsoGolden psoSeriesGolden[] =
 #define PSO_NB_SERIES_GOLDEN ((int)(sizeof(psoSeriesGolden)/sizeof(psoSeriesGolden[0])))
 #define PSO_SERIES_TOL 1e-13
 
+/* QuantConnect LEAN, QuantConnect.Indicators 2.5.18090 (commit 5b0c9975),
+ * PremierStochasticOscillator through ta-lib-oracles lean_serve, over the
+ * committed corpus. LEAN computes in decimal from the shortest string of each
+ * double and casts exp() back at 15 digits; measured against TA_PSO that is
+ * at most 6.6e-15 on these four sets and 4.3e-14 on a 1200-bar series, hence
+ * the tolerance. An EMA period of 4 moves the 8/5 rows by at least 2.1e-02.
+ */
+static const PsoGolden psoLean[] =
+{
+   {  8,  5,  15, 0.063364421472106608     },
+   {  8,  5,  16, -0.19370106718164926     },
+   {  8,  5,  17, -0.42647193235461023     },
+   {  8,  5,  20, -0.68529056230584129     },
+   {  8,  5,  30, -0.27392454089115698     },
+   {  8,  5, 100, 0.0031618199676850139    },
+   {  8,  5, 123, 0.52096522748802787      },
+   {  8,  5, 180, -0.3194304725126314      },
+   {  8,  5, 187, -0.90199446496534963     },
+   {  8,  5, 251, -0.045586914352121602    },
+   { 14,  3,  17, -0.84091793065566733     },
+   { 14,  3,  18, -0.80435742697421786     },
+   { 14,  3,  19, -0.80977056564958272     },
+   { 14,  3,  22, -0.95059152354547705     },
+   { 14,  3,  32, -0.2582842298309706      },
+   { 14,  3,  89, 0.97610458896689112      },
+   { 14,  3, 100, 0.30117427032228961      },
+   { 14,  3, 170, 0.8240612404341483       },
+   { 14,  3, 180, -0.42387883044369068     },
+   { 14,  3, 251, -0.57568451718029323     },
+   {  5,  1,   4, 0.19096002056749573      },
+   {  5,  1,   5, 0.62880465970872557      },
+   {  5,  1,   6, -0.9557455761693906      },
+   {  5,  1,   9, 0.22110741148108987      },
+   {  5,  1,  19, -0.8658398644667461      },
+   {  5,  1,  40, -0.91352498608591959     },
+   {  5,  1, 100, 0.76940749599236569      },
+   {  5,  1, 145, -0.97477726482202798     },
+   {  5,  1, 180, -0.76252585390189087     },
+   {  5,  1, 251, -0.75594430889008524     },
+   { 21, 10,  38, -0.77843035357044221     },
+   { 21, 10,  39, -0.75711731868822596     },
+   { 21, 10,  40, -0.74470085812887876     },
+   { 21, 10,  43, -0.52926462617717707     },
+   { 21, 10,  53, 0.45084772063654321      },
+   { 21, 10, 100, 0.90490814015651078      },
+   { 21, 10, 180, 0.59267962294732468      },
+   { 21, 10, 236, 0.77821659689977396      },
+   { 21, 10, 243, 0.67553643459426616      },
+   { 21, 10, 251, -0.079118107272664009    }
+};
+
+#define PSO_NB_LEAN ((int)(sizeof(psoLean)/sizeof(psoLean[0])))
+#define PSO_LEAN_TOL 1e-13
+
+/* trading-signals 8.3.0, PremierStochastic through ta-lib-oracles
+ * trading_signals_serve, over the committed corpus. Doubles throughout, so it
+ * is held as tightly as the 60-digit rows (measured at most 6.2e-16 here),
+ * but only from bar lookback + 18*(m+1): each of its EMAs starts on the first
+ * value it is fed, and that is where the difference has decayed under 2e-15.
+ */
+static const PsoGolden psoTs[] =
+{
+   {  8,  5, 123, 0.52096522748802843      },
+   {  8,  5, 180, -0.31943047251263074     },
+   {  8,  5, 187, -0.90199446496534963     },
+   {  8,  5, 251, -0.045586914352121317    },
+   { 14,  3,  89, 0.97610458896689112      },
+   { 14,  3, 100, 0.30117427032228844      },
+   { 14,  3, 170, 0.82406124043414952      },
+   { 14,  3, 180, -0.42387883044369068     },
+   { 14,  3, 251, -0.57568451718029234     },
+   {  5,  1,  40, -0.91352498608591981     },
+   {  5,  1, 100, 0.76940749599236591      },
+   {  5,  1, 145, -0.97477726482202809     },
+   {  5,  1, 180, -0.7625258539018902      },
+   {  5,  1, 251, -0.75594430889008501     },
+   { 21, 10, 236, 0.77821659689977385      },
+   { 21, 10, 243, 0.67553643459426582      },
+   { 21, 10, 251, -0.07911810727266487     }
+};
+
+#define PSO_NB_TS ((int)(sizeof(psoTs)/sizeof(psoTs[0])))
+
+/* trading-signals again, on the first 200 bars of the #473 series with bars
+ * 60 to 119 at high == low == close == 130.7. Inside the run it decays to 0
+ * as TA_PSO does; LEAN reads -0.9866 there. The series is built from sin and
+ * cos, hence PSO_SERIES_TOL.
+ */
+static const PsoGolden psoTsFlat[] =
+{
+   {  8,  5, 100, 3.0669889975782598e-05   },
+   {  8,  5, 119, 2.0978363161728422e-08   },
+   {  8,  5, 130, -0.068938867719352454    },
+   {  8,  5, 199, -0.83585220789449355     }
+};
+
+#define PSO_NB_TS_FLAT ((int)(sizeof(psoTsFlat)/sizeof(psoTsFlat[0])))
+
 static ErrorNumber test_pso_golden   ( const TA_History *history );
+static ErrorNumber test_pso_oracles  ( const TA_History *history );
 static ErrorNumber test_pso_series   ( void );
 static ErrorNumber test_pso_composite( const TA_History *history );
 static ErrorNumber test_pso_flat     ( const TA_History *history );
@@ -228,6 +342,8 @@ ErrorNumber test_func_pso( TA_History *history )
    g_psoSpikeCmp = 0;
    g_psoLookbackCmp = 0;
    g_psoAliasCmp = 0;
+   g_psoLeanCmp = 0;
+   g_psoTsCmp = 0;
 
    if( history->nbBars != PSO_NB_BAR )
    {
@@ -240,6 +356,9 @@ ErrorNumber test_func_pso( TA_History *history )
    if( retValue != TA_TEST_PASS ) return retValue;
 
    retValue = test_pso_series();
+   if( retValue != TA_TEST_PASS ) return retValue;
+
+   retValue = test_pso_oracles( history );
    if( retValue != TA_TEST_PASS ) return retValue;
 
    retValue = test_pso_composite( history );
@@ -266,16 +385,20 @@ ErrorNumber test_func_pso( TA_History *history )
     || g_psoFlatCmp      != PSO_FLAT_CMP
     || g_psoSpikeCmp     != PSO_SPIKE_CMP
     || g_psoLookbackCmp  != PSO_LOOKBACK_CMP
-    || g_psoAliasCmp     != PSO_ALIAS_CMP )
+    || g_psoAliasCmp     != PSO_ALIAS_CMP
+    || g_psoLeanCmp      != PSO_LEAN_CMP
+    || g_psoTsCmp        != PSO_TS_CMP )
    {
       printf( "Fail: TA_PSO comparison counts (golden %d, series %d, "
-              "composite %d, flat %d, spike %d, lookback %d, alias %d) are "
-              "not what this file asserts (%d, %d, %d, %d, %d, %d, %d)\n",
+              "composite %d, flat %d, spike %d, lookback %d, alias %d, "
+              "lean %d, trading-signals %d) are not what this file asserts "
+              "(%d, %d, %d, %d, %d, %d, %d, %d, %d)\n",
               g_psoGoldenCmp, g_psoSeriesCmp, g_psoCompositeCmp,
               g_psoFlatCmp, g_psoSpikeCmp, g_psoLookbackCmp, g_psoAliasCmp,
+              g_psoLeanCmp, g_psoTsCmp,
               PSO_GOLDEN_CMP, PSO_SERIES_CMP, PSO_COMPOSITE_CMP,
               PSO_FLAT_CMP, PSO_SPIKE_CMP, PSO_LOOKBACK_CMP,
-              PSO_ALIAS_CMP );
+              PSO_ALIAS_CMP, PSO_LEAN_CMP, PSO_TS_CMP );
       return TA_TESTUTIL_TFRR_BAD_CALCULATION;
    }
 
@@ -405,6 +528,73 @@ static ErrorNumber test_pso_series( void )
    }
 
    return TA_TEST_PASS;
+}
+
+/* One oracle table against one input set. */
+static ErrorNumber psoOracleRows( const char *who, const PsoGolden *rows, int nbRows,
+                                  double tol, int nbBar,
+                                  const double *h, const double *l, const double *c,
+                                  int *counter )
+{
+   static TA_Real out[PSO_NB_BAR];
+   TA_RetCode rc;
+   TA_Integer begIdx, nbElement;
+   int k;
+
+   for( k = 0; k < nbRows; k++ )
+   {
+      const PsoGolden *g = &rows[k];
+      double got, err;
+
+      rc = TA_PSO( 0, nbBar - 1, h, l, c, g->n, g->m, &begIdx, &nbElement, out );
+      if( rc != TA_SUCCESS || g->bar < begIdx || g->bar >= begIdx + nbElement )
+      {
+         printf( "Fail: TA_PSO %s rc=%d range %d/%d, bar %d (n=%d, m=%d)\n",
+                 who, (int)rc, (int)begIdx, (int)nbElement, g->bar, g->n, g->m );
+         return TA_TESTUTIL_TFRR_BAD_RETCODE;
+      }
+
+      got = out[g->bar - begIdx];
+      err = fabs( got - g->value );
+      if( !( err <= tol ) )
+      {
+         printf( "Fail: TA_PSO %s bar %d (n=%d, m=%d): %.17g, expected "
+                 "%.17g (abs %.3g, tol %.1e)\n",
+                 who, g->bar, g->n, g->m, got, g->value, err, tol );
+         return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+      }
+      (*counter)++;
+   }
+
+   return TA_TEST_PASS;
+}
+
+/* LEAN and trading-signals, captured live. */
+static ErrorNumber test_pso_oracles( const TA_History *history )
+{
+   static double sh[PSO_NB_SERIES], sl[PSO_NB_SERIES], sc[PSO_NB_SERIES];
+   ErrorNumber retValue;
+   int i;
+
+   retValue = psoOracleRows( "LEAN", psoLean, PSO_NB_LEAN, PSO_LEAN_TOL,
+                             PSO_NB_BAR, history->high, history->low,
+                             history->close, &g_psoLeanCmp );
+   if( retValue != TA_TEST_PASS ) return retValue;
+
+   retValue = psoOracleRows( "trading-signals", psoTs, PSO_NB_TS, PSO_GOLDEN_TOL,
+                             PSO_NB_BAR, history->high, history->low,
+                             history->close, &g_psoTsCmp );
+   if( retValue != TA_TEST_PASS ) return retValue;
+
+   psoBuildSeries( sh, sl, sc );
+   for( i = 60; i <= 119; i++ )
+   {
+      sh[i] = 130.7;
+      sl[i] = 130.7;
+      sc[i] = 130.7;
+   }
+   return psoOracleRows( "trading-signals flat run", psoTsFlat, PSO_NB_TS_FLAT,
+                         PSO_SERIES_TOL, 200, sh, sl, sc, &g_psoTsCmp );
 }
 
 /* (3) COMPOSITE, bit-exact: TA_STOCHF then TA_EMA then TA_EMA, entered
@@ -570,7 +760,7 @@ badrc:
  * mflat: the same, with bars 80 to 98 carrying a high and a close one ulp
  * above that low -- a window whose range is 2.8e-14, which an exact
  * `range == 0` test divides into [0,100] noise and TA_IS_ZERO_SCALED calls
- * flat. LEAN, which tests exactly, reads 1.97 away from TA-Lib there.
+ * flat. An exact test reads up to 1.97 apart between the two runs.
  */
 #define PSO_FLAT_NB   200
 #define PSO_FLAT_FROM  60
