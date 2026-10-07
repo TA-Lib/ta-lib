@@ -883,6 +883,24 @@ TA_FMA_OPEN_PLAIN static TA_RetCode TA_MACD_OpenImplPlain( struct TA_MACD_Stream
    return TA_MACD_OpenImpl( stream, inReal, startIdx, historyLen, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outBegIdx, outNBElement, outMACD, outMACDSignal, outMACDHist, outStride );
 }
 
+TA_FMA_OPEN_CLONE static TA_RetCode TA_MACD_OpenSinkFma( struct TA_MACD_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod, double *outMACD, double *outMACDSignal, double *outMACDHist )
+{
+   TA_RetCode retCode;
+   int dummyBegIdx = 0;
+   int dummyNBElement = 0;
+   double sink_outMACD = 0.0;
+   double sink_outMACDSignal = 0.0;
+   double sink_outMACDHist = 0.0;
+   retCode = TA_MACD_OpenImpl( stream, inReal, startIdx, historyLen, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, &dummyBegIdx, &dummyNBElement, &sink_outMACD, &sink_outMACDSignal, &sink_outMACDHist, 0 );
+   if( retCode == TA_SUCCESS )
+   {
+      *outMACD = sink_outMACD;
+      *outMACDSignal = sink_outMACDSignal;
+      *outMACDHist = sink_outMACDHist;
+   }
+   return retCode;
+}
+
 /* Private function, not in public API. */
 TA_RetCode TA_MACD_OpenInternal( struct TA_MACD_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod, double *outMACD, double *outMACDSignal, double *outMACDHist )
 {
@@ -909,7 +927,7 @@ TA_LIB_API TA_RetCode TA_MACD_Open( TA_MACD_Stream **stream, const double inReal
    if( historyLen < 1 ) return TA_OUT_OF_RANGE_START_INDEX;
    if( historyLen > TA_INDEX_MAX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
    if( !inReal || !outMACD || !outMACDSignal || !outMACDHist ) return TA_BAD_PARAM;
-   return TA_MACD_OpenInternal( stream, inReal, 0, historyLen, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outMACD, outMACDSignal, outMACDHist );
+   return TA_FMA_AVAILABLE ? TA_MACD_OpenSinkFma( stream, inReal, 0, historyLen, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outMACD, outMACDSignal, outMACDHist ) : TA_MACD_OpenInternal( stream, inReal, 0, historyLen, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outMACD, outMACDSignal, outMACDHist );
 }
 
 TA_LIB_API TA_RetCode TA_MACD_OpenAndFill( TA_MACD_Stream **stream, const double inReal[], int historyLen, int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod, int *outBegIdx, int *outNBElement, double outMACD[], double outMACDSignal[], double outMACDHist[] )

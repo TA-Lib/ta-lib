@@ -1430,6 +1430,22 @@ TA_FMA_OPEN_PLAIN static TA_RetCode TA_HT_PHASOR_OpenImplPlain( struct TA_HT_PHA
    return TA_HT_PHASOR_OpenImpl( stream, inReal, startIdx, historyLen, outBegIdx, outNBElement, outInPhase, outQuadrature, outStride );
 }
 
+TA_FMA_OPEN_CLONE static TA_RetCode TA_HT_PHASOR_OpenSinkFma( struct TA_HT_PHASOR_Stream **stream, const double inReal[], int startIdx, int historyLen, double *outInPhase, double *outQuadrature )
+{
+   TA_RetCode retCode;
+   int dummyBegIdx = 0;
+   int dummyNBElement = 0;
+   double sink_outInPhase = 0.0;
+   double sink_outQuadrature = 0.0;
+   retCode = TA_HT_PHASOR_OpenImpl( stream, inReal, startIdx, historyLen, &dummyBegIdx, &dummyNBElement, &sink_outInPhase, &sink_outQuadrature, 0 );
+   if( retCode == TA_SUCCESS )
+   {
+      *outInPhase = sink_outInPhase;
+      *outQuadrature = sink_outQuadrature;
+   }
+   return retCode;
+}
+
 /* Private function, not in public API. */
 TA_RetCode TA_HT_PHASOR_OpenInternal( struct TA_HT_PHASOR_Stream **stream, const double inReal[], int startIdx, int historyLen, double *outInPhase, double *outQuadrature )
 {
@@ -1454,7 +1470,7 @@ TA_LIB_API TA_RetCode TA_HT_PHASOR_Open( TA_HT_PHASOR_Stream **stream, const dou
    if( historyLen < 1 ) return TA_OUT_OF_RANGE_START_INDEX;
    if( historyLen > TA_INDEX_MAX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
    if( !inReal || !outInPhase || !outQuadrature ) return TA_BAD_PARAM;
-   return TA_HT_PHASOR_OpenInternal( stream, inReal, 0, historyLen, outInPhase, outQuadrature );
+   return TA_FMA_AVAILABLE ? TA_HT_PHASOR_OpenSinkFma( stream, inReal, 0, historyLen, outInPhase, outQuadrature ) : TA_HT_PHASOR_OpenInternal( stream, inReal, 0, historyLen, outInPhase, outQuadrature );
 }
 
 TA_LIB_API TA_RetCode TA_HT_PHASOR_OpenAndFill( TA_HT_PHASOR_Stream **stream, const double inReal[], int historyLen, int *outBegIdx, int *outNBElement, double outInPhase[], double outQuadrature[] )

@@ -1128,6 +1128,20 @@ TA_FMA_OPEN_PLAIN static TA_RetCode TA_FRAMA_OpenImplPlain( struct TA_FRAMA_Stre
    return TA_FRAMA_OpenImpl( stream, inHigh, inLow, startIdx, historyLen, optInTimePeriod, outBegIdx, outNBElement, outReal, outStride );
 }
 
+TA_FMA_OPEN_CLONE static TA_RetCode TA_FRAMA_OpenSinkFma( struct TA_FRAMA_Stream **stream, const double inHigh[], const double inLow[], int startIdx, int historyLen, int optInTimePeriod, double *outReal )
+{
+   TA_RetCode retCode;
+   int dummyBegIdx = 0;
+   int dummyNBElement = 0;
+   double sink_outReal = 0.0;
+   retCode = TA_FRAMA_OpenImpl( stream, inHigh, inLow, startIdx, historyLen, optInTimePeriod, &dummyBegIdx, &dummyNBElement, &sink_outReal, 0 );
+   if( retCode == TA_SUCCESS )
+   {
+      *outReal = sink_outReal;
+   }
+   return retCode;
+}
+
 /* Private function, not in public API. */
 TA_RetCode TA_FRAMA_OpenInternal( struct TA_FRAMA_Stream **stream, const double inHigh[], const double inLow[], int startIdx, int historyLen, int optInTimePeriod, double *outReal )
 {
@@ -1150,7 +1164,7 @@ TA_LIB_API TA_RetCode TA_FRAMA_Open( TA_FRAMA_Stream **stream, const double inHi
    if( historyLen < 1 ) return TA_OUT_OF_RANGE_START_INDEX;
    if( historyLen > TA_INDEX_MAX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
    if( !inHigh || !inLow || !outReal ) return TA_BAD_PARAM;
-   return TA_FRAMA_OpenInternal( stream, inHigh, inLow, 0, historyLen, optInTimePeriod, outReal );
+   return TA_FMA_AVAILABLE ? TA_FRAMA_OpenSinkFma( stream, inHigh, inLow, 0, historyLen, optInTimePeriod, outReal ) : TA_FRAMA_OpenInternal( stream, inHigh, inLow, 0, historyLen, optInTimePeriod, outReal );
 }
 
 TA_LIB_API TA_RetCode TA_FRAMA_OpenAndFill( TA_FRAMA_Stream **stream, const double inHigh[], const double inLow[], int historyLen, int optInTimePeriod, int *outBegIdx, int *outNBElement, double outReal[] )
