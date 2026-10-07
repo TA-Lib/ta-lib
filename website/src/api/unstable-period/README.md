@@ -180,7 +180,7 @@ that is `45.67y`, `1.234y` or `0.0001234y`, with `y` the first digit that can st
 - **An output that reaches zero** has no leading digits to keep there, so count the
   digits from the size of its swing: CMO, DX, the high-pass and band-pass SWAK filters,
   HT_PHASOR, HT_SINE, HT_DCPHASE, and the oscillators centred on zero such as MACD, APO,
-  PPO and TRIX. At `PREC_4` two starts differ by about one ten-thousandth of the swing.
+  PPO, TRIX and FISHER. At `PREC_4` two starts differ by about one ten-thousandth of the swing.
   Outputs that divide by a state (DX, CMO, STOCHRSI, PPO, PVO) can be a few times above
   that at the count.
 
@@ -225,6 +225,7 @@ Each id has one rule. `n` is the function's period. `K` is 10 at `PREC_4` and 19
 | `SWAK_HP` | `ceil(K*n/6)` | 34 / 64 | proof |
 | `SWAK_GAUSS`, `SWAK_BUTTER`, `SWAK_2PHP` | `ceil((K+5)*(n+2)/9)` | 37 / 59 | proof |
 | `SWAK_BP` | `ceil((K+1)*n/(6*delta))` | 367 / 667 | proof |
+| `FISHER` | `ceil(5*(K+6)/2)` | 40 / 63 | proof, limiter |
 | `KAMA` | `25*X*isqrt(n)` | 500 / 1000 | measurement |
 | `FRAMA` | `80*X` | 320 / 640 | measurement |
 | `VIDYA` | `2*X*(n+1)*isqrt(m)`, `m` the CMO period, at most `TA_INDEX_MAX` | 312 / 624 | measurement |
@@ -237,8 +238,8 @@ Each id has one rule. `n` is the function's period. `K` is 10 at `PREC_4` and 19
 at a period of 1, where the function does no smoothing.
 
 - **Proof.** The count bounds what is left of the seed, for any input. "Ratio" marks an
-  output that divides by a smoothed value or by a price: see the
-  [limits](/api/unstable-period/#limits).
+  output that divides by a smoothed value or by a price, "limiter" a state that is
+  snapped at a limit: see the [limits](/api/unstable-period/#limits).
 - **Measurement.** The count is a formula sized on measured series, with margin. It is
   not a bound.
 
@@ -256,6 +257,11 @@ none. Each [function page](/functions/) names what it inherits from.
   divide one smoothed series by another, and ADX averages such a ratio. When prices
   stop moving both series shrink together, and the ratio keeps its dependence on the
   start for any warm-up.
+- **A limiter can restart a difference, or hold it.** FISHER replaces a smoothed position
+  beyond 0.99 by 0.999. Two starts on either side of 0.99 differ again by a visible
+  amount, at any bar, and the count restarts from there. While the price holds close
+  to the top or the bottom of its channel without resting on it, the start that crossed
+  stays across and the two do not meet for any warm-up.
 - **The adaptive averages are sized for a market that trends or wanders.** KAMA, FRAMA
   and VIDYA slow down by design in a range-bound market and then need several times
   their count. Where that matters, set a fixed count on that id.

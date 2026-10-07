@@ -10,7 +10,7 @@ how the value at a bar computed from a later start approaches the value computed
 | `auto_stabilization_probe.c` | Runs every function through the abstraction layer from bar 0 and from six later starts, on three synthetic series, and writes one row per (series, function, parameter set, output, start) |
 | `analyze.py` | Folds those rows into one line per output, worst case over series and starts, and a class per function |
 | `rules_vs_need.py` | Sets the count the library discards at each level, for every function that owns an unstable id, against the measured need |
-| `rules_check.py` | Checks the one-pole, SWAK and T3 rules against the kernels' decay laws at seven values of K and a grid of periods, with no library involved. The calibrated rules are not in it: section 3 of `results.txt` holds those |
+| `rules_check.py` | Checks the one-pole, SWAK, T3 and FISHER rules against the kernels at seven values of K and a grid of periods, with no library involved. The calibrated rules are not in it: section 3 of `results.txt` holds those |
 | `tie_break.c` | Compares MAXINDEX and MININDEX from two starts on a series full of equal extremes. It counted mismatches at the commit `results.txt` names, and counts none since a tie names the most recent bar (#503) |
 | `results.txt` | The output of all of the above at the commit named on its first line |
 

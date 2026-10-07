@@ -12,18 +12,22 @@
  *  -------------------------------------------------------------------
  *  100626 KL,CC  Creation (#485).
  *  100626 MF,CC  Batch tier: block scan of the channel (#485).
+ *  100626 MF,CC  Auto rule sized on the slope under the limit (#485).
  */
 
 int fisher_lookback(int optInTimePeriod)
 {
-   /* The seed reaches the output through the smoothing pole alone, 0.67 per
-    * bar whatever the period: 2.5 bars per e-fold. The 9 e-folds added to K
-    * are the gain between that pole and the output: the transform's
-    * derivative, which the clamp caps at 500, times 5.9 for the convolution
-    * with its own 0.5 pole.
+   /* The smoothed values of two starts differ by 0.67 times less each bar on
+    * any input, 2.5 bars per e-fold, while the limiter treats both alike.
+    * The 6 e-folds added to K are the gain from that difference to the
+    * outputs, against the largest difference the seed causes: the
+    * transform's slope at the limit, 1/(1 - 0.99^2), about 50, times
+    * 0.67/(0.67 - 0.5) for its own 0.5 pole, plus a bar for the trigger.
+    * Not a bound when the limiter moves one start alone: 0.999 is fed back,
+    * and a channel position that stays above 0.986 keeps it there.
     */
    return (optInTimePeriod - 1)
-   + TA_UNSTABLE( TA_FUNC_UNST_FISHER, (5 * (K + 9) + 1) / 2 );
+   + TA_UNSTABLE( TA_FUNC_UNST_FISHER, (5 * (K + 6) + 1) / 2 );
 }
 
 TA_RetCode fisher(int startIdx, int endIdx,

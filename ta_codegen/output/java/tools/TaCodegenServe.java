@@ -99705,6 +99705,7 @@ class Core {
      *  -------------------------------------------------------------------
      *  100626 KL,CC  Creation (#485).
      *  100626 MF,CC  Batch tier: block scan of the channel (#485).
+     *  100626 MF,CC  Auto rule sized on the slope under the limit (#485).
      */
 
     /* Using fisher_ALT1 for TA_ALT={BATCH,JAVA} */
@@ -99731,13 +99732,16 @@ class Core {
           } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
              return -1;
           }
-          /* The seed reaches the output through the smoothing pole alone, 0.67 per
-           * bar whatever the period: 2.5 bars per e-fold. The 9 e-folds added to K
-           * are the gain between that pole and the output: the transform's
-           * derivative, which the clamp caps at 500, times 5.9 for the convolution
-           * with its own 0.5 pole.
+          /* The smoothed values of two starts differ by 0.67 times less each bar on
+           * any input, 2.5 bars per e-fold, while the limiter treats both alike.
+           * The 6 e-folds added to K are the gain from that difference to the
+           * outputs, against the largest difference the seed causes: the
+           * transform's slope at the limit, 1/(1 - 0.99^2), about 50, times
+           * 0.67/(0.67 - 0.5) for its own 0.5 pole, plus a bar for the trigger.
+           * Not a bound when the limiter moves one start alone: 0.999 is fed back,
+           * and a channel position that stays above 0.986 keeps it there.
            */
-          return optInTimePeriod - 1 + this.unstableCount(FuncUnstId.FISHER.ordinal(), (5 * (10 + 9) + 1) / 2, (5 * (19 + 9) + 1) / 2) ;
+          return optInTimePeriod - 1 + this.unstableCount(FuncUnstId.FISHER.ordinal(), (5 * (10 + 6) + 1) / 2, (5 * (19 + 6) + 1) / 2) ;
 
        }
        /**
@@ -221769,7 +221773,7 @@ class Core {
 
 public class TaCodegenServe {
     static Core core = new Core();
-    static final String SPLICED_GENCODE_DIGEST = "c11e4758b8f4b8d5";
+    static final String SPLICED_GENCODE_DIGEST = "69573e7b33dd7c90";
     static final int MAX_ARRAY_SIZE = 200000;
     static double[] refOpen = new double[MAX_ARRAY_SIZE];
     static double[] refHigh = new double[MAX_ARRAY_SIZE];
