@@ -268,17 +268,18 @@ none. Each [function page](/functions/) names what it inherits from.
 - **The Hilbert transform functions need an input that moves.** While the input holds
   one value for a whole dominant cycle, as an oscillator pinned at 0 or 100 does, the
   phase is undefined: HT_DCPHASE, HT_SINE and HT_TRENDMODE from two starts can differ by
-  any amount on those bars, and MAMA does not converge. They agree again once the input
-  moves.
+  any amount on those bars, and MAMA does not converge. When the input moves again every
+  Hilbert function starts its warm-up over.
 - **MAMA can reopen a difference for a bar or two.** On a bar where its in-phase component
   is exactly zero, which coarse ticks against a low price make more frequent, two starts
   can take different alphas. The difference is at most the distance from the price to
   the line and decays at alpha's rate.
 - **MCGD is sized for a line that tracks the price.** Its rate falls as the line trails,
-  to zero at 20% under the price, and past that it amplifies its start. A steady rise
-  holds the line there once the period times the rise per bar passes about 0.06: a
-  period of 100 on daily bars in a year that gains 16%. Two starts then agree only after
-  the price comes back to the line.
+  to zero at 20% under the price, and past that it amplifies its start. In a steady rise
+  the count runs short once the period times the rise per bar passes about 0.06, and the
+  line stays 20% under from about 0.10: for a period of 100 on daily bars, a year that
+  gains 16% and one that gains 29%. Past the second, two starts agree only after the
+  price comes back to the line.
 - **A path-dependent function stays path-dependent.** No level changes AD, OBV or SAR.
   SUPERTREND computes an ATR, so a level lengthens its lookback and promises nothing
   about its line.

@@ -3,7 +3,10 @@
 **Status:** design for [#492](https://github.com/TA-Lib/ta-lib/issues/492), with its decisions
 ruled by the owner (section 9). Implemented in this tree, except the function-page row of section 7;
 sections 5 and 8 describe the change, and "today" there is the tree before it. The measurements are reproducible from
-[`studies/auto-stabilization/`](studies/auto-stabilization/README.md).
+[`studies/auto-stabilization/`](studies/auto-stabilization/README.md). The rules have been
+re-sized since: the table of record is
+[`website/src/api/unstable-period/README.md`](../website/src/api/unstable-period/README.md), and the
+counts quoted here are the design's.
 
 ## 1. Summary
 
