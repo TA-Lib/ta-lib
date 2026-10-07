@@ -7,13 +7,15 @@
  * three fixed series; this counts how often a rule is passed, which is how a
  * step in the recursion shows.
  *
- *    census <trials> <seed> [NAME [drift]]   one TSV row per (function, parameters, series kind)
+ *    census <trials> <seed> [NAME [drift [level tick]]]   one TSV row per (function, parameters, series kind)
  *    census list                       the functions it would run
  *
  * Series kinds: rw, a random walk; tr, a walk whose drift (0.001 per bar unless
  * given) flips at random intervals; rb, a range-bound walk pulled back to its
  * mean. tr starts at 10000 so that a long fall does not rest on the 1.00 floor:
  * a flat run is a limit of its own, and it would be counted as a rule's.
+ * Prices are near `level` (100 unless given) and rounded to `tick` (0.01): the
+ * same walk at 4.5e-8 with a tick of 1e-10 is a coin quoted in satoshis.
  * need<K> p50/p99/max over the trials; over<K> = trials whose need is above the
  * count; never = trials still above e^-7 at the last compared age.
  */
@@ -33,7 +35,7 @@ static double RA[MAXOUT][NMAX], RB[MAXOUT][NMAX];
 static int    IA[MAXOUT][NMAX], IB[MAXOUT][NMAX];
 static const char *g_only;
 static int g_trials, g_list;
-static double g_drift = 0.001;
+static double g_drift = 0.001, g_level = 100.0, g_tick = 0.01;
 static unsigned long long g_seed, rng_s;
 
 static double rnd(void)
@@ -47,7 +49,7 @@ static double gauss(void)
    if( u < 1e-300 ) u = 1e-300;
    return sqrt(-2.0*log(u)) * cos(6.283185307179586*v);
 }
-static double r2(double x) { return floor(x*100.0 + 0.5) / 100.0; }
+static double r2(double x) { return floor(x*(g_level/100.0)/g_tick + 0.5) * g_tick; }
 
 static void make_series(int kind, int n)
 {
@@ -253,6 +255,7 @@ int main(int argc, char **argv)
    g_seed = (argc > 2) ? strtoull(argv[2], NULL, 10) : 1;
    g_only = (argc > 3) ? argv[3] : NULL;
    if( argc > 4 ) g_drift = atof(argv[4]);
+   if( argc > 6 ) { g_level = atof(argv[5]); g_tick = atof(argv[6]); }
    if( TA_Initialize() != TA_SUCCESS ) return 2;
    if( !g_list && !g_only )
       printf("func\tcfg\tkind\tlookback\tlive\tauto4\tp50_10\tp99_10\tmax_10\tover10\tover7\tauto8\tp50_19\tp99_19\tmax_19\tover19\tover16\tnever\tworstT10\tworstT19\n");
