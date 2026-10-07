@@ -29,7 +29,7 @@ int cksp_lookback(int optInTimePeriod, double optInMultiplier, int optInStopPeri
     * is the smaller for it, and an Auto level is held against that one.
     */
    return atr_lookback( optInTimePeriod ) + optInStopPeriod - 1
-   + TA_UNSTABLE_AUTO( TA_FUNC_UNST_ATR, optInTimePeriod > 1 ? optInStopPeriod - 1 : 0 );
+   + TA_UNSTABLE_AUTO( TA_FUNC_UNST_ATR, optInStopPeriod - 1 );
 }
 
 TA_RetCode cksp(int startIdx, int endIdx,
@@ -122,8 +122,9 @@ TA_RetCode cksp(int startIdx, int endIdx,
    }
    prevATR = periodTotal / optInTimePeriod;
 
-   /* Skip the Average True Range's unstable period. Taking the count from the
-    * lookback rather than naming the setting keeps the two from disagreeing.
+   /* Skip the bars the lookback adds for the unstable period. Taking the count
+    * from the lookback rather than naming the setting keeps the two from
+    * disagreeing.
     */
    i = lookbackTotal - lastQ - optInTimePeriod;
    while( i != 0 )

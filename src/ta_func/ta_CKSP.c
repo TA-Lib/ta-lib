@@ -82,7 +82,7 @@ TA_LIB_API int TA_CKSP_Lookback( int optInTimePeriod, double optInMultiplier, in
     * was that much closer to its seed: the first difference two starts show
     * is the smaller for it, and an Auto level is held against that one.
     */
-   return TA_ATR_Lookback(optInTimePeriod) + optInStopPeriod - 1 + TA_GLOBALS_UNSTABLE_AUTO(TA_FUNC_UNST_ATR,Atr,(optInTimePeriod > 1) ? optInStopPeriod - 1 : 0,(optInTimePeriod > 1) ? optInStopPeriod - 1 : 0);
+   return TA_ATR_Lookback(optInTimePeriod) + optInStopPeriod - 1 + TA_GLOBALS_UNSTABLE_AUTO(TA_FUNC_UNST_ATR,Atr,optInStopPeriod - 1,optInStopPeriod - 1);
 }
 
 TA_LIB_API int TA_CKSP_DisplayShift( int optInTimePeriod, double optInMultiplier, int optInStopPeriod, int outputIdx )
@@ -306,8 +306,9 @@ TA_LIB_API TA_RetCode TA_CKSP( int    startIdx,
       today += 1;
    }
    prevATR = periodTotal / optInTimePeriod;
-   /* Skip the Average True Range's unstable period. Taking the count from the
-    * lookback rather than naming the setting keeps the two from disagreeing.
+   /* Skip the bars the lookback adds for the unstable period. Taking the count
+    * from the lookback rather than naming the setting keeps the two from
+    * disagreeing.
     */
    i = lookbackTotal - lastQ - optInTimePeriod;
    while( i != 0 )
@@ -1574,8 +1575,9 @@ static TA_FMA_STEP_INLINE TA_RetCode TA_CKSP_OpenImpl( struct TA_CKSP_Stream **s
          today += 1;
       }
       prevATR = periodTotal / optInTimePeriod;
-      /* Skip the Average True Range's unstable period. Taking the count from the
-       * lookback rather than naming the setting keeps the two from disagreeing.
+      /* Skip the bars the lookback adds for the unstable period. Taking the count
+       * from the lookback rather than naming the setting keeps the two from
+       * disagreeing.
        */
       i = lookbackTotal - lastQ - optInTimePeriod;
       while( i != 0 )

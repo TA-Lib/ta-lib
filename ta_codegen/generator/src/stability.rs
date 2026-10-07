@@ -395,6 +395,17 @@ fn validate_auto_offsets(funcs: &[FuncDef], helpers: &crate::helper_registry::He
         if offsets.len() != count(stmts) {
             errors.push(format!("{name}: the lookback reads an Auto offset where the gate cannot name it"));
         }
+        // A call in the offset would itself count as inheriting the id it reaches.
+        for s in stmts {
+            crate::streaming::walk_stmt_exprs(s, &mut |top| {
+                crate::streaming::walk_expr(top, &mut |e| {
+                    let Expr::FuncCall(callee, args) = e else { return };
+                    if callee == "UNSTABLE_AUTO" && format!("{args:?}").contains("_lookback\"") {
+                        errors.push(format!("{name}: an Auto offset calls a lookback; write it from the parameters"));
+                    }
+                });
+            });
+        }
         let inherited = classes.get(&f.name).map(|c| c.inherited_from.as_slice()).unwrap_or_default();
         for id in offsets {
             if !inherited.contains(&id) {

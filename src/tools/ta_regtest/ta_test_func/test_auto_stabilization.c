@@ -380,6 +380,10 @@ static int awBuildVectors( const TA_FuncInfo *funcInfo, AwVector *vec )
          vec[n].val[0] = mamaLimits[j][0]; vec[n].val[1] = mamaLimits[j][1]; n++;
       }
 
+   if( !strcmp( funcInfo->name, "ADOSC" ) )
+   {
+      vec[n] = def; vec[n].label = "fast above slow"; vec[n].val[0] = 20.0; vec[n].val[1] = 5.0; n++;
+   }
    if( !strcmp( funcInfo->name, "FRAMA" ) )
    {
       vec[n] = def; vec[n].label = "capped count"; vec[n].val[0] = 1024.0; n++;
@@ -477,13 +481,13 @@ static void awCheckOffset( const TA_FuncInfo *funcInfo, const AwVector *vec )
       if( source == TA_FUNC_UNST_ATR )
       {
          base   = awRule( "ATR", awLevel[l].K, awLevel[l].X, p0, 0, 0.0, 0.0 );
-         offset = p0 > 1 ? p1 - 1 : 0;
+         offset = p1 - 1;
       }
       else
       {
          if( p1 > p0 ) p0 = p1;
          base   = awRule( "EMA", awLevel[l].K, awLevel[l].X, p0, 0, 0.0, 0.0 );
-         offset = p0 > 1 ? (p0 + 1) / 2 : 0;
+         offset = (p0 + 1) / 2;
       }
       TA_SetUnstablePeriod( source, awLevel[l].level );
       got = awLookback( funcInfo, vec ) - at0;
@@ -495,6 +499,28 @@ static void awCheckOffset( const TA_FuncInfo *funcInfo, const AwVector *vec )
          awFail( funcInfo->name, vec->label );
       }
       if( offset > 0 ) awNbOffset++;
+   }
+}
+
+/* No level takes bars away: with every id on a level a lookback is at least
+ * what it is at 0, and PREC_8 at least PREC_4.
+ */
+static void awCheckLevels( const TA_FuncInfo *funcInfo, const AwVector *vec )
+{
+   int at0, at4, at8;
+
+   TA_SetUnstablePeriod( TA_FUNC_UNST_ALL, 0 );
+   at0 = awLookback( funcInfo, vec );
+   if( at0 < 0 ) return;
+   TA_SetUnstablePeriod( TA_FUNC_UNST_ALL, TA_UNSTABLE_AUTO_PREC_4 );
+   at4 = awLookback( funcInfo, vec );
+   TA_SetUnstablePeriod( TA_FUNC_UNST_ALL, TA_UNSTABLE_AUTO_PREC_8 );
+   at8 = awLookback( funcInfo, vec );
+   TA_SetUnstablePeriod( TA_FUNC_UNST_ALL, 0 );
+   if( at4 < at0 || at8 < at4 )
+   {
+      sprintf( awMsg, "lookback is %d at 0, %d under PREC_4 and %d under PREC_8", at0, at4, at8 );
+      awFail( funcInfo->name, vec->label );
    }
 }
 
@@ -897,6 +923,7 @@ static void awOneFunction( const TA_FuncInfo *funcInfo, void *opaque )
       if( own != TA_FUNC_UNST_ALL )
          awCheckCount( funcInfo, &vec[v], own );
       awCheckOffset( funcInfo, &vec[v] );
+      awCheckLevels( funcInfo, &vec[v] );
       awTwoStarts( funcInfo, &vec[v] );
    }
    if( awPrintFloors )

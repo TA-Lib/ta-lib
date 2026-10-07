@@ -139,9 +139,10 @@ OVR="TimePeriod=2" /tmp/auto_stabilization_probe 40000 <NAME> > /tmp/need_min.ts
   its own largest difference, it needs more than it inherits: that is a gain like any
   other, and its lookback adds it with `TA_UNSTABLE_AUTO` on the inherited id (CKSP: its
   stop window; ADOSC: one e-fold of the slow EMA, for two EMAs seeded together). A ratio
-  of the inherited value (CVI) is held to the regression leg like the owners' ratio
-  outputs, and gets none. Giving bars back is not an offset: the stages inside the body
-  would have to split differently.
+  of the inherited value (CVI) is treated like the owners' ratio outputs, and gets none.
+  Where the gain has no bound in the parameters (ADOSC with close periods), size the
+  offset for the usual ones and state the rest as a limit. Giving bars back is not an offset: the stages inside the body
+  would have to split differently, and the offset is never negative.
 - **`rules_vs_need.py` flags.** `LEG4` or `LEG8` fails the regression leg: the rule is too
   short. `k4` and `k8` are acceptable only for an output that divides by a state, `sig4`
   and `sig8` only for an output that reaches zero.

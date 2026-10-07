@@ -102,7 +102,7 @@ public partial class Core
        * was that much closer to its seed: the first difference two starts show
        * is the smaller for it, and an Auto level is held against that one.
        */
-      return AtrLookback(optInTimePeriod) + optInStopPeriod - 1 + (this.UnstableCount((int)FuncUnstId.ATR, (optInTimePeriod > 1) ? optInStopPeriod - 1 : 0, (optInTimePeriod > 1) ? optInStopPeriod - 1 : 0) - this.UnstableCount((int)FuncUnstId.ATR, 0, 0)) ;
+      return AtrLookback(optInTimePeriod) + optInStopPeriod - 1 + (this.UnstableCount((int)FuncUnstId.ATR, optInStopPeriod - 1, optInStopPeriod - 1) - this.UnstableCount((int)FuncUnstId.ATR, 0, 0)) ;
 
    }
    /// <summary>
@@ -285,8 +285,9 @@ public partial class Core
          today += 1;
       }
       prevATR = periodTotal / optInTimePeriod;
-      /* Skip the Average True Range's unstable period. Taking the count from the
-       * lookback rather than naming the setting keeps the two from disagreeing.
+      /* Skip the bars the lookback adds for the unstable period. Taking the count
+       * from the lookback rather than naming the setting keeps the two from
+       * disagreeing.
        */
       i = lookbackTotal - lastQ - optInTimePeriod;
       while( i != 0 ) {
@@ -1610,8 +1611,9 @@ public partial class Core
          today += 1;
       }
       prevATR = periodTotal / optInTimePeriod;
-      /* Skip the Average True Range's unstable period. Taking the count from the
-       * lookback rather than naming the setting keeps the two from disagreeing.
+      /* Skip the bars the lookback adds for the unstable period. Taking the count
+       * from the lookback rather than naming the setting keeps the two from
+       * disagreeing.
        */
       i = lookbackTotal - lastQ - optInTimePeriod;
       while( i != 0 ) {

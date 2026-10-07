@@ -110,7 +110,7 @@ impl Core {
         // A stop can rest on a first stop optInStopPeriod-1 bars old, whose ATR
         // was that much closer to its seed: the first difference two starts show
         // is the smaller for it, and an Auto level is held against that one.
-        return Ok((self.atr_lookback(optInTimePeriod)? + ((optInStopPeriod) as usize) - 1 + (((self.unstable_count(FuncUnstId::ATR, (if optInTimePeriod > 1 { optInStopPeriod - 1 } else { 0 }), (if optInTimePeriod > 1 { optInStopPeriod - 1 } else { 0 })) - self.unstable_count(FuncUnstId::ATR, 0, 0))) as usize)) as usize);
+        return Ok((self.atr_lookback(optInTimePeriod)? + ((optInStopPeriod) as usize) - 1 + (((self.unstable_count(FuncUnstId::ATR, optInStopPeriod - 1, optInStopPeriod - 1) - self.unstable_count(FuncUnstId::ATR, 0, 0))) as usize)) as usize);
     }
     /// Display shift of one output of [`Core::cksp`]: how many bars ahead (positive) or behind
     /// (negative) of the bar that computed it a chart draws that output. The values are never
@@ -368,8 +368,9 @@ impl Core {
             i = i.wrapping_sub(1);
         }
         prevATR = periodTotal / ((optInTimePeriod) as f64);
-        // Skip the Average True Range's unstable period. Taking the count from the
-        // lookback rather than naming the setting keeps the two from disagreeing.
+        // Skip the bars the lookback adds for the unstable period. Taking the count
+        // from the lookback rather than naming the setting keeps the two from
+        // disagreeing.
         i = lookbackTotal - lastQ - ((optInTimePeriod) as usize);
         if i != 0 {
             let _wn: usize = i;
@@ -1107,8 +1108,9 @@ impl Core {
             today += 1;
         }
         prevATR = periodTotal / ((optInTimePeriod) as f64);
-        // Skip the Average True Range's unstable period. Taking the count from the
-        // lookback rather than naming the setting keeps the two from disagreeing.
+        // Skip the bars the lookback adds for the unstable period. Taking the count
+        // from the lookback rather than naming the setting keeps the two from
+        // disagreeing.
         i = lookbackTotal - lastQ - ((optInTimePeriod) as usize);
         while i != 0 {
             tempLT = inLow[today];
