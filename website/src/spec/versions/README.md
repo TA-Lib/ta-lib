@@ -36,9 +36,9 @@ A **transcendental function** here is `exp`, `log`, `log10`, or a trigonometric,
 
 ### Across machines {#machines}
 
-A call that evaluates a transcendental function can differ between machines, because their math libraries can.
+No rule promises the same bits on two machines. The same call can give different values on a different CPU, compiler or math library, and a release may compute a function differently on one CPU family than on another.
 
-Everything else is written to give the same bits on every machine: each fused multiply-add is explicit in the source, so nothing depends on the CPU or on how the compiler orders operations. The test suite checks this against fixed golden values on several CPUs and compilers.
+Each release is checked on every supported platform against the regression suite's reference values, some compared exactly and some within a tolerance.
 
 ### Equivalent calls {#equivalent}
 
@@ -52,7 +52,7 @@ Everything else is written to give the same bits on every machine: each fused mu
 | an output in place on its input, and in a separate buffer | bit-identical | [rW7](/spec/inputs-outputs/#rw7) |
 | a declinable output declined, and supplied | the other outputs bit-identical | [rW5](/spec/inputs-outputs/#rw5) |
 | a `float` input, and the `double` call on its widened values | bit-identical | [rP4](/spec/inputs-outputs/#rp4) |
-| the same call on two machines | as [across machines](/spec/versions/#machines) describes | |
+| the same call on two machines | not bit-identical in general | [across machines](/spec/versions/#machines) |
 | the same bar from batch calls with different `startIdx` | not bit-identical in general | [different starts](/spec/lookback/#start) |
 
 ## Releases {#releases}
