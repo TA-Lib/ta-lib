@@ -220,10 +220,10 @@ Each id has one rule. `n` is the function's period. `K` is 10 at `PREC_4` and 19
 | `RMA`, `ATR`, `PLUS_DM`, `MINUS_DM` | `W(n)` | RMA 300 / 570, the others 140 / 266 | proof |
 | `NATR`, `RSI`, `CMO`, `PLUS_DI`, `MINUS_DI`, `DX`, `RVI` | `W(n)` | 140 / 266 | proof, ratio |
 | `ADX` | `(K+6)*n` | 224 / 350 | proof, ratio |
-| `T3` | `ceil((K+20)*(n+1)/2)` | 90 / 117 | proof |
-| `HA` | `2*K` | 20 / 38 | proof |
+| `T3` | `ceil((K+20)*n/2)` | 75 / 98 | proof |
+| `HA` | `ceil(13*K/9)` | 15 / 28 | proof |
 | `SWAK_HP` | `ceil(K*n/6)` | 34 / 64 | proof |
-| `SWAK_GAUSS`, `SWAK_BUTTER`, `SWAK_2PHP` | `ceil((K+5)*(n+2)/9)` | 37 / 59 | proof |
+| `SWAK_GAUSS`, `SWAK_BUTTER`, `SWAK_2PHP` | `ceil((K+3)*(n+2)/9)` | 32 / 54 | proof |
 | `SWAK_BP` | `ceil((K+1)*n/(6*delta))` | 367 / 667 | proof |
 | `FISHER` | `ceil(5*(K+6)/2)` | 40 / 63 | proof, limiter |
 | `KAMA` | `25*X*isqrt(n)` | 500 / 1000 | measurement |
@@ -265,9 +265,20 @@ none. Each [function page](/functions/) names what it inherits from.
 - **The adaptive averages are sized for a market that trends or wanders.** KAMA, FRAMA
   and VIDYA slow down by design in a range-bound market and then need several times
   their count. Where that matters, set a fixed count on that id.
-- **The measured counts are sized on price series.** MAMA and the Hilbert transform
-  functions do not converge on an input that rests on one value for runs of bars, such
-  as an oscillator pinned at 0 or 100.
+- **The Hilbert transform functions need an input that moves.** While the input holds
+  one value for a whole dominant cycle, as an oscillator pinned at 0 or 100 does, the
+  phase is undefined: HT_DCPHASE, HT_SINE and HT_TRENDMODE from two starts can differ by
+  any amount on those bars, and MAMA does not converge. They agree again once the input
+  moves.
+- **MAMA can reopen a difference for a bar or two.** On a bar where its in-phase component
+  is exactly zero, which coarse ticks against a low price make more frequent, two starts
+  can take different alphas. The difference is at most the distance from the price to
+  the line and decays at alpha's rate.
+- **MCGD is sized for a line that tracks the price.** Its rate falls as the line trails,
+  to zero at 20% under the price, and past that it amplifies its start. A steady rise
+  holds the line there once the period times the rise per bar passes about 0.06: a
+  period of 100 on daily bars in a year that gains 16%. Two starts then agree only after
+  the price comes back to the line.
 - **A path-dependent function stays path-dependent.** No level changes AD, OBV or SAR.
   SUPERTREND computes an ATR, so a level lengthens its lookback and promises nothing
   about its line.

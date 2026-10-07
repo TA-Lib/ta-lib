@@ -10,11 +10,17 @@
  *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
  *  090526 MF,CC  First version (issue #373).
+ *  100626 MF,CC  Auto rule sized on the pole at 1/2: ceil(13*K/9) (#492).
  */
 
 int ha_lookback(void)
 {
-   return TA_UNSTABLE( TA_FUNC_UNST_HA, 2 * K );
+   /* The opens of two starts differ by half as much each bar on any input,
+    * 1/ln(2) = 1.4427 bars per e-fold, rounded up to 13/9. No fixed part:
+    * the open shows the whole first difference at its first bar, the high
+    * and the low never more than the open's, and the close none.
+    */
+   return TA_UNSTABLE( TA_FUNC_UNST_HA, (13 * K + 8) / 9 );
 }
 
 TA_RetCode ha(int startIdx, int endIdx,

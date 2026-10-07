@@ -104428,6 +104428,7 @@ class Core {
      *  MMDDYY BY     Description
      *  -------------------------------------------------------------------
      *  090526 MF,CC  First version (issue #373).
+     *  100626 MF,CC  Auto rule sized on the pole at 1/2: ceil(13*K/9) (#492).
      */
 
        /**
@@ -104444,7 +104445,12 @@ class Core {
         */
        public int haLookback( )
        {
-          return this.unstableCount(FuncUnstId.HA.ordinal(), 2 * 10, 2 * 19) ;
+          /* The opens of two starts differ by half as much each bar on any input,
+           * 1/ln(2) = 1.4427 bars per e-fold, rounded up to 13/9. No fixed part:
+           * the open shows the whole first difference at its first bar, the high
+           * and the low never more than the open's, and the close none.
+           */
+          return this.unstableCount(FuncUnstId.HA.ordinal(), (13 * 10 + 8) / 9, (13 * 19 + 8) / 9) ;
 
        }
        /**
@@ -198699,7 +198705,7 @@ class Core {
            * seeded from the first bar rather than read from before it, and there is
            * no callee whose lookback could be inherited.
            */
-          return this.unstableCount(FuncUnstId.SWAK_2PHP.ordinal(), (((10 + 5) * (optInTimePeriod + 2) + 8) / 9), (((19 + 5) * (optInTimePeriod + 2) + 8) / 9)) ;
+          return this.unstableCount(FuncUnstId.SWAK_2PHP.ordinal(), (((10 + 3) * (optInTimePeriod + 2) + 8) / 9), (((19 + 3) * (optInTimePeriod + 2) + 8) / 9)) ;
 
        }
        /**
@@ -200311,7 +200317,7 @@ class Core {
            * no callee whose lookback could be inherited, so the function's own
            * unstable period is the whole of it.
            */
-          return this.unstableCount(FuncUnstId.SWAK_BUTTER.ordinal(), (((10 + 5) * (optInTimePeriod + 2) + 8) / 9), (((19 + 5) * (optInTimePeriod + 2) + 8) / 9)) ;
+          return this.unstableCount(FuncUnstId.SWAK_BUTTER.ordinal(), (((10 + 3) * (optInTimePeriod + 2) + 8) / 9), (((19 + 3) * (optInTimePeriod + 2) + 8) / 9)) ;
 
        }
        /**
@@ -201096,7 +201102,7 @@ class Core {
            * from before it -- and there is no callee whose lookback could be
            * inherited, so the function's own unstable period is the whole of it.
            */
-          return this.unstableCount(FuncUnstId.SWAK_GAUSS.ordinal(), (((10 + 5) * (optInTimePeriod + 2) + 8) / 9), (((19 + 5) * (optInTimePeriod + 2) + 8) / 9)) ;
+          return this.unstableCount(FuncUnstId.SWAK_GAUSS.ordinal(), (((10 + 3) * (optInTimePeriod + 2) + 8) / 9), (((19 + 3) * (optInTimePeriod + 2) + 8) / 9)) ;
 
        }
        /**
@@ -202552,6 +202558,8 @@ class Core {
      *                natural math is only near-identity at period=1: the
      *                coefficients sum to 1 in real arithmetic but not in
      *                floating point (~1e-14 drift), so the copy is explicit.
+     *  100626 MF,CC  Auto rule sized on the worst seed of the six stages,
+     *                against the largest output difference it causes (#492).
      */
 
        /**
@@ -202583,7 +202591,16 @@ class Core {
           } else if( !(optInVFactor >= 0e0 && optInVFactor <= 1e0) ) {
              return -1;
           }
-          return 6 * (optInTimePeriod - 1) + this.unstableCount(FuncUnstId.T3.ordinal(), (optInTimePeriod > 1) ? ((10 + 20) * (optInTimePeriod + 1) + 1) / 2 : 0, (optInTimePeriod > 1) ? ((19 + 20) * (optInTimePeriod + 1) + 1) / 2 : 0) ;
+          /* The six stages share the pole (n-1)/(n+1) and are stepped together, so
+           * the outputs of two starts differ by that pole to the age, under n/2
+           * bars per e-fold, times a polynomial of the age of degree 5 at most.
+           * The 20 e-folds added to K are that polynomial's growth against the
+           * largest difference the seed causes: a seed can cancel itself in the
+           * early outputs and show late. That growth is 15.7 e-folds at K = 10,
+           * 17.6 at 19 and 19.9 at 37, at every volume factor above 0: it rises
+           * with K, and 20 covers no K above 37.
+           */
+          return 6 * (optInTimePeriod - 1) + this.unstableCount(FuncUnstId.T3.ordinal(), (optInTimePeriod > 1) ? ((10 + 20) * optInTimePeriod + 1) / 2 : 0, (optInTimePeriod > 1) ? ((19 + 20) * optInTimePeriod + 1) / 2 : 0) ;
 
        }
        /**
@@ -223495,7 +223512,7 @@ class Core {
 
 public class TaCodegenServe {
     static Core core = new Core();
-    static final String SPLICED_GENCODE_DIGEST = "e10bee8253f0046d";
+    static final String SPLICED_GENCODE_DIGEST = "265800c7018530ef";
     static final int MAX_ARRAY_SIZE = 200000;
     static double[] refOpen = new double[MAX_ARRAY_SIZE];
     static double[] refHigh = new double[MAX_ARRAY_SIZE];

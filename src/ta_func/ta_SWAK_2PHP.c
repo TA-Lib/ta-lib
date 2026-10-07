@@ -69,7 +69,7 @@ TA_NOINLINE TA_LIB_API int TA_SWAK_2PHP_Lookback( int optInTimePeriod )
     * seeded from the first bar rather than read from before it, and there is
     * no callee whose lookback could be inherited.
     */
-   return TA_GLOBALS_UNSTABLE(TA_FUNC_UNST_SWAK_2PHP,Swak_2php,(((10 + 5) * (optInTimePeriod + 2) + 8) / 9),(((19 + 5) * (optInTimePeriod + 2) + 8) / 9));
+   return TA_GLOBALS_UNSTABLE(TA_FUNC_UNST_SWAK_2PHP,Swak_2php,(((10 + 3) * (optInTimePeriod + 2) + 8) / 9),(((19 + 3) * (optInTimePeriod + 2) + 8) / 9));
 }
 
 TA_LIB_API int TA_SWAK_2PHP_DisplayShift( int optInTimePeriod, int outputIdx )

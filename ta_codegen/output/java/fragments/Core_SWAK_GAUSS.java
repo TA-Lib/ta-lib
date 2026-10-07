@@ -42,7 +42,7 @@
        * from before it -- and there is no callee whose lookback could be
        * inherited, so the function's own unstable period is the whole of it.
        */
-      return this.unstableCount(FuncUnstId.SWAK_GAUSS.ordinal(), (((10 + 5) * (optInTimePeriod + 2) + 8) / 9), (((19 + 5) * (optInTimePeriod + 2) + 8) / 9)) ;
+      return this.unstableCount(FuncUnstId.SWAK_GAUSS.ordinal(), (((10 + 3) * (optInTimePeriod + 2) + 8) / 9), (((19 + 3) * (optInTimePeriod + 2) + 8) / 9)) ;
 
    }
    /**
