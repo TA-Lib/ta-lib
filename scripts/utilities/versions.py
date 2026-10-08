@@ -775,14 +775,8 @@ def read_sources_digest(root_dir: str) -> str:
     return None
 
 def calculate_sources_digest(root_dir: str, silent: bool = False) -> str:
-    # This is for a calculated digest of all source file contant relevant
-    # to packaging. It helps to trig CI repackaging when a change
-    # is detected.
-    #
-    # The digest is written as a "#define TA_LIB_SOURCE_DIGEST XXXXXXXX"
-    # in ta_common.h
-    #
-    # Return true when ta_common.h was updated with a new digest.
+    # A digest of the build inputs of the release packages. CI repackages when it
+    # changes.
     file_patterns = [
         "CMakeLists.txt",
         "configure.ac",
@@ -805,30 +799,16 @@ def calculate_sources_digest(root_dir: str, silent: bool = False) -> str:
         "*.am",
         "ta_func_api.xml",
         "ta_func_list.txt",
-        # NOTE: the Java and C# library sources are deliberately NOT listed.
+        # The Java and C# library sources are deliberately NOT listed: this digest
+        # triggers repackaging of the assets in get_release_assets(), and none of
+        # them carries a .java or .cs file. Only add a binding here if a release
+        # asset starts carrying it.
         #
-        # This digest exists to trigger repackaging of the assets in
-        # get_release_assets() -- and not one of them contains a byte of Java or C#.
-        # Verified against the built artifacts: src.tar.gz is autotools + include/ +
-        # src/ (319 entries, zero .java/.cs), the .deb is 5 headers plus
-        # libta-lib.{a,so}, and the Windows .zip is ta-lib.dll + 2 .lib + 5 headers.
-        # Java ships via Maven and C# via NuGet, on their own release paths.
-        #
-        # Listing them meant every ta_codegen Java/C# regeneration bumped this digest
-        # and forced a rebuild + repack + commit of all 8 C packages -- ~15 MB of
-        # non-deltable bytes each time, for a change that cannot reach any of them.
-        # Only re-add a binding here if a release asset actually starts carrying it.
-        #
-        # The packaging scripts decide package CONTENT, so a change to them must
-        # invalidate the digest exactly like a source change does. get_src_generated_files()
-        # literally defines what lands in src.tar.gz, and package.py picks the CPack
-        # generator and assembles the zip/tarball.
-        #
-        # Without these, editing the packaging and then cutting a release ships a stale
-        # package with a green digest: scheduled nightlies always rebuild and would
-        # self-correct within a day, but the release path is a MANUAL dispatch
-        # (c-publish-runbook.md step CP6), which takes the build-SKIP branch of
-        # is_build_skipping_allowed().
+        # These three scripts decide package CONTENT, so they are hashed like the
+        # sources. Otherwise editing the packaging and then cutting a release ships
+        # a stale package with a green digest: scheduled nightlies always rebuild,
+        # but a manually dispatched nightly, which is what the release runbook
+        # runs, takes the build-SKIP branch of is_build_skipping_allowed().
         "scripts/package.py",
         "scripts/utilities/common.py",
         "scripts/utilities/files.py",
