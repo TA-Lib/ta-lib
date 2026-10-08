@@ -3,7 +3,7 @@ echo aclocal
 aclocal || exit
 echo autoheader
 autoheader || exit
-if [[ `uname -o` -eq 'Darwin' ]]; then
+if [ "`uname -s`" = Darwin ]; then
     echo glibtoolize --copy --force
     glibtoolize --copy --force || exit
 else

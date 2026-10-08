@@ -12,21 +12,11 @@ const END_MARKER: &str = "# [ta_codegen end LIB_SOURCES]";
 /// Sources included (sorted alphabetically):
 /// - `src/ta_func/ta_utility.c` (hand-written helper, always first)
 /// - `src/ta_func/ta_NAME.c` for each function in `ta_codegen/input/` (from `funcs`)
-/// - Any extra `ta_*.c` files found in `src/ta_func/` not yet in `ta_codegen/input/`
 /// - `src/ta_abstract/frames/ta_frame.c`
 /// - `src/ta_abstract/ta_func_api.c`
 /// - `src/ta_abstract/ta_group_idx.c`
-pub fn generate(funcs: &[FuncDef], cmake_path: &Path, root: &Path) {
-    // Shared with the autotools Makefile.am generator so the two source lists
-    // cannot drift. `extras` are un-ported ta_*.c stubs (e.g. NVI, PVI) folded in.
-    let (names, extras) = super::sorted_source_stems(funcs, root);
-    if !extras.is_empty() {
-        println!(
-            "  CMakeLists.txt: including {} extra src/ta_func file(s) not in ta_codegen/input: {}",
-            extras.len(),
-            extras.join(", ")
-        );
-    }
+pub fn generate(funcs: &[FuncDef], cmake_path: &Path) {
+    let names = super::sorted_source_stems(funcs);
 
     // Build the replacement block
     let mut block = String::new();

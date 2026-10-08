@@ -17,6 +17,7 @@ not a break), TA_*DIGEST macros, and a behaviour change behind an unchanged
 signature.
 """
 
+import glob
 import os
 import re
 import subprocess
@@ -47,19 +48,16 @@ def installed_headers(root: str) -> list:
     # Anything appended later counts too -- `set(...)` is not the whole list.
     for m in re.finditer(r"list\s*\(\s*APPEND\s+LIB_HEADERS(.*?)\)", text, re.S):
         names |= set(re.findall(r"/include/([A-Za-z0-9_.]+\.h)", m.group(1)))
-    # And what autotools installs, which is a separate list in three Makefile.am
-    # files. The two build systems shipping different public headers is the same
-    # class of defect as their shipping different sonames.
+    # And what autotools installs, which is a separate list in a Makefile.am
+    # under src/. The two build systems shipping different public headers is the
+    # same class of defect as their shipping different sonames.
     auto = set()
-    for rel in ("src/ta_abstract/Makefile.am", "src/ta_func/Makefile.am",
-                "src/ta_common/Makefile.am"):
-        path = os.path.join(root, rel)
-        if not os.path.exists(path):
-            continue
+    pattern = os.path.join(glob.escape(root), "src", "**", "Makefile.am")
+    for path in glob.glob(pattern, recursive=True):
         am = open(path).read().replace("\\\n", " ")
         for m in re.finditer(r"^\w+_HEADERS\s*=([^\n]*)$", am, re.M):
             auto |= set(re.findall(r"include/([A-Za-z0-9_.]+\.h)", m.group(1)))
-    if auto and auto != names:
+    if auto != names:
         sys.exit("abi: CMake installs %s but autotools installs %s -- the two "
                  "build systems disagree about the public headers"
                  % (sorted(names), sorted(auto)))

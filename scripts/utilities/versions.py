@@ -789,12 +789,15 @@ def calculate_sources_digest(root_dir: str, silent: bool = False) -> str:
         "ta-lib.*.in",
         "cmake/*",
         "include/ta_abstract.h",
+        "include/ta_common.h",
         "include/ta_defs.h",
         "include/ta_func.h",
         "include/ta_libc.h",
+        "include/ta_config.h.cmake",
         "src/**/*.c",
         "src/**/*.h",
         "src/**/*.am",
+        "src/tools/post-build-bin.sh",
         # The linker map decides what the shipped library EXPORTS, so a change
         # here changes the artifact without touching a single .c -- and every
         # other pattern would miss it.
@@ -833,7 +836,13 @@ def calculate_sources_digest(root_dir: str, silent: bool = False) -> str:
         "VERSION",
     ]
 
-    file_list = expand_globs(root_dir, file_patterns)
+    file_list = []
+    for pattern in file_patterns:
+        matched = expand_globs(root_dir, [pattern])
+        if not matched:
+            print(f"Error: sources digest pattern [{pattern}] matches no file in [{root_dir}]")
+            sys.exit(1)
+        file_list.extend(matched)
 
     # Remove potential duplicate entries
     file_list = list(set(file_list))
@@ -856,6 +865,9 @@ def calculate_sources_digest(root_dir: str, silent: bool = False) -> str:
             with open(full_file_path, 'r', encoding='utf-8') as f:
                 n_opens += 1
                 for line in f:
+                    # ta_common.h holds the digest: hashing that line would never settle.
+                    if line.startswith('#define TA_LIB_SOURCES_DIGEST'):
+                        continue
                     # Normalize line endings to Unix-style LF, remove leading/trailing whitespace
                     normalized_line = line.replace('\r\n', '\n').replace('\r', '\n').strip()
                     utf8_line = normalized_line.encode('utf-8')
