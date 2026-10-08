@@ -4,7 +4,7 @@ format 9
 soname libta-lib.so.1
 version-info 3:0:2
 headers ta_abstract.h ta_common.h ta_defs.h ta_func.h ta_libc.h
-function-count 3044
+function-count 3057
 platform pointer=8 long=8 int=4 enum=4
 type TA_FuncInfo sizeof=48 name:const_char_*=0 group:const_char_*=8 hint:const_char_*=16 flags:TA_FuncFlags=24 nbInput:unsigned_int=28 nbOptInput:unsigned_int=32 nbOutput:unsigned_int=36 handle:const_TA_FuncHandle_*=40
 type TA_InputParameterInfo sizeof=24 type:TA_InputParameterType=0 paramName:const_char_*=8 flags:TA_InputFlags=16
@@ -2169,6 +2169,16 @@ function TA_RetCode TA_SQRT_OutRange(const TA_SQRT_Stream *, int *, int *)
 function TA_RetCode TA_SQRT_Peek(const TA_SQRT_Stream *, double, double *)
 function TA_RetCode TA_SQRT_Update(TA_SQRT_Stream *, double, double *)
 function TA_RetCode TA_SQRT_Value(const TA_SQRT_Stream *, double *)
+function TA_RetCode TA_SQZMOM(int, int, const double *, const double *, const double *, int, double, int, double, double, double, int *, int *, double *, int *)
+function TA_RetCode TA_SQZMOM_Advance(TA_SQZMOM_Stream *)
+function TA_RetCode TA_SQZMOM_Clone(const TA_SQZMOM_Stream *, TA_SQZMOM_Stream **)
+function TA_RetCode TA_SQZMOM_Close(TA_SQZMOM_Stream *)
+function TA_RetCode TA_SQZMOM_Open(TA_SQZMOM_Stream **, const double *, const double *, const double *, int, int, double, int, double, double, double, double *, int *)
+function TA_RetCode TA_SQZMOM_OpenAndFill(TA_SQZMOM_Stream **, const double *, const double *, const double *, int, int, double, int, double, double, double, int *, int *, double *, int *)
+function TA_RetCode TA_SQZMOM_OutRange(const TA_SQZMOM_Stream *, int *, int *)
+function TA_RetCode TA_SQZMOM_Peek(const TA_SQZMOM_Stream *, double, double, double, double *, int *)
+function TA_RetCode TA_SQZMOM_Update(TA_SQZMOM_Stream *, double, double, double, double *, int *)
+function TA_RetCode TA_SQZMOM_Value(const TA_SQZMOM_Stream *, double *, int *)
 function TA_RetCode TA_STC(int, int, const double *, int, int, int, int *, int *, double *)
 function TA_RetCode TA_STC_Advance(TA_STC_Stream *)
 function TA_RetCode TA_STC_Clone(const TA_STC_Stream *, TA_STC_Stream **)
@@ -2495,6 +2505,7 @@ function TA_RetCode TA_S_SINH(int, int, const float *, int *, int *, double *)
 function TA_RetCode TA_S_SMA(int, int, const float *, int, int *, int *, double *)
 function TA_RetCode TA_S_SMI(int, int, const float *, const float *, const float *, int, int, int, int, int *, int *, double *, double *)
 function TA_RetCode TA_S_SQRT(int, int, const float *, int *, int *, double *)
+function TA_RetCode TA_S_SQZMOM(int, int, const float *, const float *, const float *, int, double, int, double, double, double, int *, int *, double *, int *)
 function TA_RetCode TA_S_STC(int, int, const float *, int, int, int, int *, int *, double *)
 function TA_RetCode TA_S_STDDEV(int, int, const float *, int, double, int *, int *, double *)
 function TA_RetCode TA_S_STOCH(int, int, const float *, const float *, const float *, int, int, TA_MAType, int, TA_MAType, int *, int *, double *, double *)
@@ -3162,6 +3173,8 @@ function int TA_SMI_DisplayShift(int, int, int, int, int)
 function int TA_SMI_Lookback(int, int, int, int)
 function int TA_SQRT_DisplayShift(int)
 function int TA_SQRT_Lookback(void)
+function int TA_SQZMOM_DisplayShift(int, double, int, double, double, double, int)
+function int TA_SQZMOM_Lookback(int, double, int, double, double, double)
 function int TA_STC_DisplayShift(int, int, int, int)
 function int TA_STC_Lookback(int, int, int)
 function int TA_STDDEV_DisplayShift(int, double, int)
