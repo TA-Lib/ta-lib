@@ -521,6 +521,8 @@ impl Core {
     /// assert!(out_range.count > 0);
     /// assert!(momentum[..out_range.count].iter().all(|v| v.is_finite()));
     /// assert_eq!(out_range.beg_idx + out_range.count, high.len());
+    /// // the compression level is an ordinal: 3 narrow, 2 normal, 1 wide, -1 released, 0 otherwise
+    /// assert!(squeeze[..out_range.count].iter().all(|&v| (-1..=3).contains(&v)));
     /// # Ok::<(), ta_lib::RetCode>(())
     /// ```
     ///
