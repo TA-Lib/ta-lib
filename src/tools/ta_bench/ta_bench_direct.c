@@ -103,11 +103,46 @@ static void generate_price_data(int n, const BenchCorpusCfg *corpus) {
 
 /* ---- Output buffers ---- */
 
-static TA_Real g_outReal0[MAX_POINTS];
-static TA_Real g_outReal1[MAX_POINTS];
-static TA_Real g_outReal2[MAX_POINTS];
-static TA_Integer g_outInt0[MAX_POINTS];
-static TA_Integer g_outInt1[MAX_POINTS];
+/* One buffer per output slot of the widest function, counted from the function
+ * table. Two outputs sharing a buffer make TA_CallFunc answer TA_BAD_PARAM,
+ * and no setter reports it. */
+static TA_Real    **g_outReal;
+static TA_Integer **g_outInt;
+static unsigned int g_nOutReal, g_nOutInt;
+
+static void arity_probe(const TA_FuncInfo *fi, void *opaque)
+{
+    unsigned int nreal = 0, nint = 0;
+    (void)opaque;
+    for( unsigned int o = 0; o < fi->nbOutput; o++ ) {
+        const TA_OutputParameterInfo *info;
+        TA_GetOutputParameterInfo(fi->handle, o, &info);
+        if( info->type == TA_Output_Integer ) nint++; else nreal++;
+    }
+    if( nreal > g_nOutReal ) g_nOutReal = nreal;
+    if( nint  > g_nOutInt  ) g_nOutInt  = nint;
+}
+
+static void alloc_output_buffers(int n)
+{
+    TA_ForEachFunc(arity_probe, NULL);
+    g_outReal = calloc(g_nOutReal + 1, sizeof(*g_outReal));
+    g_outInt  = calloc(g_nOutInt + 1, sizeof(*g_outInt));
+    if( !g_outReal || !g_outInt ) TA_TOOL_OOM("the output buffer tables");
+    for( unsigned int i = 0; i < g_nOutReal; i++ )
+        if( !(g_outReal[i] = calloc(n, sizeof(TA_Real))) )
+            TA_TOOL_OOM("the real output buffers");
+    for( unsigned int i = 0; i < g_nOutInt; i++ )
+        if( !(g_outInt[i] = calloc(n, sizeof(TA_Integer))) )
+            TA_TOOL_OOM("the integer output buffers");
+}
+
+static void free_output_buffers(void)
+{
+    for( unsigned int i = 0; i < g_nOutReal; i++ ) free(g_outReal[i]);
+    for( unsigned int i = 0; i < g_nOutInt; i++ )  free(g_outInt[i]);
+    free(g_outReal); free(g_outInt);
+}
 
 /* ---- Function filter ---- */
 
@@ -135,6 +170,7 @@ typedef struct {
     long long cg_s[MAX_SAMPLES];
     int nref, ncg;
     double ref_spread, cg_spread;   /* (max-min)/median; -1 when < 2 samples */
+    int ref_rc;   /* TA_RetCode of the reference call; non-zero: no ref timing */
 } BenchResult;
 
 static BenchResult g_results[MAX_FUNCTIONS];
@@ -223,9 +259,10 @@ static void write_jsonl(const char *path, int points, int iters, int reps,
     for( int i = 0; i < g_nResults; i++ ) {
         const BenchResult *r = &g_results[i];
         fprintf(f, "%s\"%s\":{\"ref_ns\":%lld,\"cg_ns\":%lld,"
-                   "\"ref_spread\":%.4f,\"cg_spread\":%.4f,\"n\":%d}",
+                   "\"ref_spread\":%.4f,\"cg_spread\":%.4f,\"n\":%d,"
+                   "\"ref_rc\":%d}",
                 i ? "," : "", r->name, r->ref_ns, r->cg_ns,
-                r->ref_spread, r->cg_spread, r->nref);
+                r->ref_spread, r->cg_spread, r->nref, r->ref_rc);
     }
     fprintf(f, "}}\n");
     fclose(f);
@@ -274,11 +311,10 @@ static void bench_ref_func(const TA_FuncInfo *fi, void *opaque) {
         const TA_OutputParameterInfo *info;
         TA_GetOutputParameterInfo(fi->handle, i, &info);
         if( info->type == TA_Output_Integer ) {
-            TA_SetOutputParamIntegerPtr(params, i, intIdx == 0 ? g_outInt0 : g_outInt1);
+            TA_SetOutputParamIntegerPtr(params, i, g_outInt[intIdx]);
             intIdx++;
         } else {
-            TA_Real *buf = realIdx == 0 ? g_outReal0 : (realIdx == 1 ? g_outReal1 : g_outReal2);
-            TA_SetOutputParamRealPtr(params, i, buf);
+            TA_SetOutputParamRealPtr(params, i, g_outReal[realIdx]);
             realIdx++;
         }
     }
@@ -288,6 +324,16 @@ static void bench_ref_func(const TA_FuncInfo *fi, void *opaque) {
     TA_Integer outBegIdx, outNbElement;
     BenchResult *r = result_row(fi->name);
     if( !r ) { TA_ParamHolderFree(params); return; }
+
+    /* A rejected call returns at once and repeatably, so timed it reads as a
+     * fast row with a tight spread: read the code before timing anything. */
+    TA_RetCode rc = TA_CallFunc(params, 0, g_nPoints - 1, &outBegIdx, &outNbElement);
+    if( rc != TA_SUCCESS ) {
+        r->ref_rc = (int)rc;
+        TA_ParamHolderFree(params);
+        return;
+    }
+
     for( int pass = 0; pass < BENCH_PASSES; pass++ ) {
         long long t0 = get_nanotime();
         for( int it = 0; it < ctx->iters; it++ ) {
@@ -366,6 +412,7 @@ int main(int argc, char *argv[]) {
 
     TA_Initialize();
     generate_price_data(n_points, &corpus);
+    alloc_output_buffers(n_points);
 
     printf("ta_bench_direct: %d points, %d iters, shape=%s seed=%d regime-period=%d"
            " trend-strength=%.2f (direct calls)\n\n",
@@ -445,7 +492,7 @@ int main(int argc, char *argv[]) {
            "--------", "------", "-----", "------", "-----", "-----");
 
     double spreads[MAX_FUNCTIONS];
-    int nspread = 0, n_noisy = 0;
+    int nspread = 0, n_noisy = 0, n_rejected = 0;
 
     for( int i = 0; i < g_nResults; i++ ) {
         BenchResult *r = &g_results[i];
@@ -455,6 +502,17 @@ int main(int argc, char *argv[]) {
         if( r->cg_spread >= 0.0 )  snprintf(cs, sizeof(cs), "%.0f%%", r->cg_spread * 100.0);
         else                       snprintf(cs, sizeof(cs), "%s", "?");
         if( r->ref_spread >= 0.0 ) spreads[nspread++] = r->ref_spread;
+
+        if( r->ref_rc != 0 ) {
+            char why[24];
+            snprintf(why, sizeof(why), "rejected %d", r->ref_rc);
+            if( r->cg_ns > 0 )
+                printf("%-20s %10s %6s %10lld %6s %8s\n", r->name, why, "--", r->cg_ns, cs, "--");
+            else
+                printf("%-20s %10s %6s %10s %6s %8s\n", r->name, why, "--", "--", "--", "--");
+            n_rejected++;
+            continue;
+        }
 
         double ratio = (r->ref_ns > 0 && r->cg_ns > 0)
             ? (double)r->cg_ns / (double)r->ref_ns : 0.0;
@@ -490,6 +548,10 @@ int main(int argc, char *argv[]) {
            "a build-configuration difference, not an algorithm one. Coloured only\n"
            "outside %.2fx and only when the row's own spread is narrower than that.\n",
            no_signal);
+    if( n_rejected > 0 )
+        fprintf(stderr,
+                "ta_bench_direct: %d row(s) have no reference timing: TA_CallFunc "
+                "rejected the call as this tool set it up.\n", n_rejected);
     printf("Median per-row spread %.0f%%", med_spread * 100.0);
     if( n_noisy )
         printf("; %d row(s) exceeded %.2fx but were too noisy to call", n_noisy, no_signal);
@@ -510,6 +572,7 @@ int main(int argc, char *argv[]) {
 
     free(g_open); free(g_high); free(g_low); free(g_close); free(g_volume); free(g_oi);
     free(g_periods);
+    free_output_buffers();
     TA_Shutdown();
-    return (cg_failed || too_noisy) ? 1 : 0;
+    return (cg_failed || too_noisy || n_rejected) ? 1 : 0;
 }
