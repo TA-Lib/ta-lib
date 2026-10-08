@@ -31,7 +31,7 @@ The filter is seeded in the steady state of a constant input equal to its first 
 
 ## Notes
 
-The period range starts at 5 because of arithmetic rather than taste. At a period of 4, `cos(w)` is 6.1e-17 and the numerator `cos(w) + sin(w) - 1` rounds to exactly zero in doubles, so `a1p` is 0, both `c0` and `a1` become 1, and the filter degenerates into the integrator `x[i] - x[s]`. At a period of 2, `cos(w)` is -1 and `c0` is 0, a filter that answers nothing at all. No contiguous range below 5 avoids both.
+The period range starts at 5 because of arithmetic rather than taste. At a period of 4, `cos(w)` is zero and so is the numerator, so `a1p` is 0/0 and no filter comes out of it. At a period of 2, `cos(w)` is -1 and `c0` is 0, a filter that answers nothing at all. No contiguous range below 5 avoids both.
 
 Every term of the recurrence exists at the first bar, so there is no structural lookback. What the first bars carry is the seed, which decays rather than ending: set `TA_FUNC_UNST_SWAK_HP` to discard bars until that transient is below whatever matters for the caller.
 

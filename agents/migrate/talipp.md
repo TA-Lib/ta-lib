@@ -76,6 +76,7 @@ These talipp classes map to a TA-Lib function of another name, or need care:
 | McGinleyDynamic | [MCGD](https://ta-lib.org/functions/mcgd.md) | |
 | MeanDev | [AVGDEV](https://ta-lib.org/functions/avgdev.md) | |
 | ParabolicSAR | [SAR](https://ta-lib.org/functions/sar.md) | |
+| RogersSatchell | [ROGERSSATCHELL](https://ta-lib.org/functions/rogerssatchell.md) | Pass `annualization=1` for talipp's per-bar value. |
 | SMMA | [RMA](https://ta-lib.org/functions/rma.md) | |
 | STC | [STC](https://ta-lib.org/functions/stc.md) | TA-Lib smooths both stochastic stages with a factor of 0.5, which is talipp's `stoch_smoothing_period=3` with `stoch_ma_type=MAType.EMA`; talipp's default, `MAType.SMA`, has no TA-Lib function. |
 | StdDev | [STDDEV](https://ta-lib.org/functions/stddev.md) | |
@@ -90,13 +91,13 @@ These talipp indicators have a TA-Lib function of the same name: ALMA, AO, Aroon
 
 Where TA-Lib fixes a setting that talipp exposes, such as the moving-average type, a talipp value other than TA-Lib's has no single-function equivalent; the function's page gives TA-Lib's value. Two exceptions: [MACDEXT](https://ta-lib.org/functions/macdext.md) takes a moving-average type for each MACD line, and [SAREXT](https://ta-lib.org/functions/sarext.md) takes ParabolicSAR's initial acceleration separately and returns the stop negated while short.
 
-Compose these from several handles: SOBV (SMA over OBV), SFX (ATR, STDDEV, SMA), Ichimoku (MIDPRICE; keep your own buffer for the displaced lines) and RogersSatchell (SUM over your own per-bar term).
+Compose these from several handles: SOBV (SMA over OBV), SFX (ATR, STDDEV, SMA) and Ichimoku (MIDPRICE; keep your own buffer for the displaced lines).
 
 No TA-Lib function: KVO, PivotsHL, TTM, ZigZag.
 
 ## Training and live features
 
-A handle opened on the same history as a batch call, then fed the same bars, returns the batch function's values bit for bit, so features computed in batch for training equal the ones a live handle produces. Keep that history: a handle does not pickle, so after a restart reopen it on the stored bars, starting from the same first bar as the training batch.
+A handle opened on the same history as a batch call, then fed the same bars, returns the batch function's values bit for bit, with the exceptions [the streaming rule](https://ta-lib.org/spec/streaming/index.md) states, so features computed in batch for training equal the ones a live handle produces. Keep that history: a handle does not pickle, so after a restart reopen it on the stored bars, starting from the same first bar as the training batch.
 
 ## Related
 

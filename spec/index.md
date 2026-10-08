@@ -116,6 +116,8 @@ Constants: C prefixes `TA_` (`TA_INDEX_MAX`); Rust, Java and C# hold them on `Co
 | Constant | Value |
 |---|---|
 | `INDEX_MAX` | 100000000, the largest index |
+| `UNSTABLE_AUTO_PREC_4` | `INDEX_MAX + 4`, an Auto level of the unstable period ([rT3](/spec/settings-threads/#rt3)) |
+| `UNSTABLE_AUTO_PREC_8` | `INDEX_MAX + 8`, an Auto level of the unstable period |
 | `REAL_DEFAULT` | -4e37, selects a real parameter's default ([rP3](/spec/inputs-outputs/#rp3)) |
 | `INTEGER_DEFAULT` | `INT_MIN`, selects an integer parameter's default |
 | `REAL_MIN`, `REAL_MAX` | -3e37, 3e37 ([input domain](/spec/inputs-outputs/#input-domain)) |

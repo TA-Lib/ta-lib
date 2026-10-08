@@ -76,6 +76,7 @@ All technical-analysis functions, grouped by category. Each page documents the f
 * [DX](/functions/dx.md) — Directional Movement Index
 * [ER](/functions/er.md) — Kaufman Efficiency Ratio
 * [ERI](/functions/eri.md) — Elder Ray Index (Bull Power / Bear Power)
+* [FISHER](/functions/fisher.md) — Fisher Transform
 * [FOSC](/functions/fosc.md) — Forecast Oscillator
 * [FRACTAL](/functions/fractal.md) — Williams Fractal
 * [IBS](/functions/ibs.md) — Internal Bar Strength
@@ -93,6 +94,7 @@ All technical-analysis functions, grouped by category. Each page documents the f
 * [PLUS_DI](/functions/plus_di.md) — Plus Directional Indicator
 * [PLUS_DM](/functions/plus_dm.md) — Plus Directional Movement
 * [PPO](/functions/ppo.md) — Percentage Price Oscillator
+* [PSO](/functions/pso.md) — Premier Stochastic Oscillator
 * [QSTICK](/functions/qstick.md) — Qstick
 * [ROC](/functions/roc.md) — Rate of change : ((price/prevPrice)-1)\*100
 * [ROCP](/functions/rocp.md) — Rate of change Percentage: (price-prevPrice)/prevPrice
@@ -246,6 +248,7 @@ All technical-analysis functions, grouped by category. Each page documents the f
 * [MASSI](/functions/massi.md) — Mass Index
 * [NATR](/functions/natr.md) — Normalized Average True Range
 * [PERCENTB](/functions/percentb.md) — Bollinger Bands %B
+* [ROGERSSATCHELL](/functions/rogerssatchell.md) — Rogers-Satchell Volatility
 * [RVI](/functions/rvi.md) — Relative Volatility Index
 * [RVIR](/functions/rvir.md) — Relative Volatility Index, refined high/low form
 * [TRANGE](/functions/trange.md) — True Range

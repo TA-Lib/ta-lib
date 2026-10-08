@@ -37,7 +37,7 @@ ADOSC = fastEMA - slowEMA
 
 ## Properties
 
-**Numerical Stability:** [Path-Dependent](/functions/stability.md#path-dependent) — It also computes EMA internally, so EMA's unstable period governs how many leading values are discarded.
+**Numerical Stability:** [Initial Unstable Period](/functions/stability.md#initial-unstable-period) — Inherited from EMA, which ADOSC computes internally; tunable via EMA's unstable period.
 
 <div class="flag-table">
 

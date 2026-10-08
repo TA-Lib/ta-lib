@@ -99,8 +99,7 @@ Ensure you have the required dependencies: `brew install automake && brew instal
 3. **Build and Install**:
 
    ```bash
-   chmod +x autogen.sh  # ensure the permissions are set to generate the configure file
-   ./autogen.sh         # generate the configure file
+   autoreconf -fi       # regenerate the configure file for macOS
    ./configure
    make
    sudo make install
@@ -161,7 +160,7 @@ Recommended for all debian-based distributions (e.g. Ubuntu, Mint...)
    sudo ldconfig     # refresh the shared-library cache so the linker finds libta-lib.so
    ```
 
-   If you cloned the repository instead of downloading the tarball, the `configure` script is not included; generate it first with `./autogen.sh` (requires the `autoconf`, `automake` and `libtool` packages).
+   If you cloned the repository instead of downloading the tarball, the `configure` script is not included; generate it first with `autoreconf -fi` (requires the `autoconf`, `automake` and `libtool` packages).
 
    Follow the same procedure for an update (the older version is overwritten, no need to uninstall).
 
