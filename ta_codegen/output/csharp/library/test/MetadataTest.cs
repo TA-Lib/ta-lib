@@ -1480,8 +1480,20 @@ public static class MetadataTest
     {
         int domains = 0;
         int inputs = 0;
+        int funcs = 0;
         foreach (FuncInfo f in FunctionCatalog.Default)
         {
+            // FuncInfo carries three ImmutableArray members and is held to the
+            // same rule by an outright ToString override rather than by a
+            // PrintMembers. Asserted here because the sweep below would not
+            // touch it otherwise: it reads the members, never the record.
+            string printedFunc = f.ToString();
+            funcs++;
+            Check(!printedFunc.Contains("ImmutableArray", StringComparison.Ordinal),
+                $"{f.Name}: FuncInfo does not print an array type ({printedFunc})");
+            Check(printedFunc == f.Name,
+                $"{f.Name}: FuncInfo prints its name, not its members ({printedFunc})");
+
             foreach (InputInfo i in f.Inputs)
             {
                 string printed = i.ToString();
@@ -1529,6 +1541,7 @@ public static class MetadataTest
         // would pass every assertion above without testing anything.
         Check(domains > 0, $"the sweep saw at least one list domain ({domains})");
         Check(inputs > 0, $"the sweep saw at least one input ({inputs})");
+        Check(funcs > 0, $"the sweep saw at least one function ({funcs})");
     }
 
     public static int Run()
