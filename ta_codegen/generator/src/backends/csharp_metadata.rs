@@ -1339,6 +1339,8 @@ public abstract record OptInputDomain
     }
 
     /// <summary>A fixed set of named integer choices.</summary>
+    /// <remarks>Equality compares <see cref="Values"/> by reference: two instances
+    /// are equal only when they share the array, as the catalogue's do.</remarks>
     public sealed record IntegerList : OptInputDomain
     {
         internal IntegerList(ImmutableArray<NamedValue> values, long defaultValue)
@@ -1376,7 +1378,9 @@ public abstract record OptInputDomain
     /// <summary>A fixed set of named real choices.</summary>
     /// <remarks>Declared by no shipped function. Modelled anyway, so that the day
     /// one appears every consumer's <c>switch</c> has to account for it rather
-    /// than silently treating it as a range.</remarks>
+    /// than silently treating it as a range. Equality compares
+    /// <see cref="Values"/> by reference: two instances are equal only when they
+    /// share the array, as the catalogue's do.</remarks>
     public sealed record RealList : OptInputDomain
     {
         internal RealList(ImmutableArray<NamedRealValue> values, double defaultValue)
@@ -1413,6 +1417,8 @@ public abstract record OptInputDomain
 }
 
 /// <summary>One required input of a function.</summary>
+/// <remarks>Equality compares <see cref="SignatureOrder"/> by reference: two
+/// instances are equal only when they share the array, as the catalogue's do.</remarks>
 public sealed record InputInfo
 {
     internal InputInfo(InputKind kind, string paramName, PriceComponents components,
@@ -1512,6 +1518,8 @@ public sealed record OutputInfo
 }
 
 /// <summary>Everything the library knows about one indicator.</summary>
+/// <remarks>Equality compares the parameter lists by reference: two instances
+/// are equal only when they share the arrays, as the catalogue's do.</remarks>
 public sealed record FuncInfo
 {
     internal FuncInfo(string name, FunctionGroup group, string hint,
