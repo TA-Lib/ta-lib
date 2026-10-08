@@ -35,3 +35,9 @@ all generated from one source and tested against the C reference.
 ## License
 
 BSD 3-Clause: free for open-source and commercial use. See [LICENSE](LICENSE).
+
+## Star Count
+
+[Give a star](https://github.com/TA-Lib/ta-lib): backtests show a 100% correlation with maintainer happiness.
+
+[![TA-Lib/ta-lib GitHub star history](website/src/.vuepress/public/assets/images/star-history.svg)](https://github.com/TA-Lib/ta-lib/stargazers)
