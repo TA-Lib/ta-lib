@@ -42,9 +42,20 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
+using System.Globalization;
 using System.Linq;
+using System.Text;
 
 namespace TALib.Metadata;
+
+/// <summary>Renders a collection member for a record's <c>ToString</c>.</summary>
+/// <remarks>The compiler-generated printer calls <c>ToString</c> on each member,
+/// and an <see cref="ImmutableArray{T}"/> answers its type name.</remarks>
+internal static class MemberPrinter
+{
+    internal static string List<T>(ImmutableArray<T> values) =>
+        values.IsDefaultOrEmpty ? "[]" : "[" + string.Join(", ", values) + "]";
+}
 
 /// <summary>Computes a function's lookback from a bound call.</summary>
 internal delegate int LookbackThunk(Core core, ParamHolder call);
@@ -230,6 +241,8 @@ public abstract record OptInputDomain
     }
 
     /// <summary>A fixed set of named integer choices.</summary>
+    /// <remarks>Equality compares <see cref="Values"/> by reference: two instances
+    /// are equal only when they share the array, as the catalogue's do.</remarks>
     public sealed record IntegerList : OptInputDomain
     {
         internal IntegerList(ImmutableArray<NamedValue> values, long defaultValue)
@@ -249,12 +262,27 @@ public abstract record OptInputDomain
         /// <summary>The list in C's <c>"0=SMA;1=EMA;..."</c> form.</summary>
         /// <returns>Semicolon-separated <c>value=name</c> pairs.</returns>
         public string ToValueListString() => string.Join(";", Values.Select(v => FormattableString.Invariant($"{v.Value}={v.Name}")));
+
+        /// <inheritdoc/>
+        protected override bool PrintMembers(StringBuilder builder)
+        {
+            if (base.PrintMembers(builder))
+            {
+                builder.Append(", ");
+            }
+
+            builder.Append("Values = ").Append(MemberPrinter.List(Values))
+                   .Append(", Default = ").Append(Default.ToString(CultureInfo.InvariantCulture));
+            return true;
+        }
     }
 
     /// <summary>A fixed set of named real choices.</summary>
     /// <remarks>Declared by no shipped function. Modelled anyway, so that the day
     /// one appears every consumer's <c>switch</c> has to account for it rather
-    /// than silently treating it as a range.</remarks>
+    /// than silently treating it as a range. Equality compares
+    /// <see cref="Values"/> by reference: two instances are equal only when they
+    /// share the array, as the catalogue's do.</remarks>
     public sealed record RealList : OptInputDomain
     {
         internal RealList(ImmutableArray<NamedRealValue> values, double defaultValue)
@@ -274,10 +302,25 @@ public abstract record OptInputDomain
         /// <summary>The list in C's <c>"value=name;..."</c> form.</summary>
         /// <returns>Semicolon-separated <c>value=name</c> pairs.</returns>
         public string ToValueListString() => string.Join(";", Values.Select(v => FormattableString.Invariant($"{v.Value}={v.Name}")));
+
+        /// <inheritdoc/>
+        protected override bool PrintMembers(StringBuilder builder)
+        {
+            if (base.PrintMembers(builder))
+            {
+                builder.Append(", ");
+            }
+
+            builder.Append("Values = ").Append(MemberPrinter.List(Values))
+                   .Append(", Default = ").Append(Default.ToString(CultureInfo.InvariantCulture));
+            return true;
+        }
     }
 }
 
 /// <summary>One required input of a function.</summary>
+/// <remarks>Equality compares <see cref="SignatureOrder"/> by reference: two
+/// instances are equal only when they share the array, as the catalogue's do.</remarks>
 public sealed record InputInfo
 {
     internal InputInfo(InputKind kind, string paramName, PriceComponents components,
@@ -307,6 +350,21 @@ public sealed record InputInfo
     /// <param name="component">The component to test for.</param>
     /// <returns><see langword="true"/> when the function needs it.</returns>
     public bool Requires(PriceComponents component) => (Components & component) == component;
+
+    /// <summary>Prints every member, with <see cref="SignatureOrder"/> expanded.</summary>
+    /// <param name="builder">The buffer the record printer is building.</param>
+    /// <returns>Always <see langword="true"/>: this record has members to print.</returns>
+    /// <remarks>This record has no base record, so declaring a printer replaces the
+    /// generated one outright rather than extending it, and every member is listed
+    /// here.</remarks>
+    private bool PrintMembers(StringBuilder builder)
+    {
+        builder.Append("Kind = ").Append(Kind)
+               .Append(", ParamName = ").Append(ParamName)
+               .Append(", Components = ").Append(Components)
+               .Append(", SignatureOrder = ").Append(MemberPrinter.List(SignatureOrder));
+        return true;
+    }
 }
 
 /// <summary>One optional parameter of a function.</summary>
@@ -362,6 +420,8 @@ public sealed record OutputInfo
 }
 
 /// <summary>Everything the library knows about one indicator.</summary>
+/// <remarks>Equality compares the parameter lists by reference: two instances
+/// are equal only when they share the arrays, as the catalogue's do.</remarks>
 public sealed record FuncInfo
 {
     internal FuncInfo(string name, FunctionGroup group, string hint,

@@ -291,10 +291,13 @@ Each [function page](/functions/) names what it inherits from.
   phase is undefined: HT_DCPHASE, HT_SINE and HT_TRENDMODE from two starts can differ by
   any amount on those bars, and MAMA does not converge. When the input moves again every
   Hilbert function starts its warm-up over.
-- **MAMA can reopen a difference for a bar or two.** On a bar where its in-phase component
-  is exactly zero, which coarse ticks against a low price make more frequent, two starts
-  can take different alphas. The difference is at most the distance from the price to
-  the line and decays at alpha's rate.
+- **MAMA needs a price that is fine against its tick.** On a bar where its in-phase
+  component is zero to rounding, which a price worth few ticks makes frequent, two starts
+  can take different alphas: the difference reopens by up to the distance from the price
+  to the line, and where it keeps happening it stays open. A trending series shows none
+  at any tick. On a range-bound series, the share of starts still apart past the `PREC_4`
+  count is about 5% at a price worth 500 ticks, 1% at 1,000, 0.3% at 2,000, 0.1% at
+  5,000 and none at 100,000; a random walk shows about a tenth of that.
 - **MCGD is sized for a line that tracks the price.** Its rate falls as the line trails,
   to zero at 20% under the price, and past that it amplifies its start. In a steady rise
   the count runs short once the period times the rise per bar passes about 0.06, and the
