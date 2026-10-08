@@ -8,8 +8,7 @@
 text{font-family:system-ui,-apple-system,Segoe UI,Helvetica,Arial,sans-serif}
 </style>
 <rect class="bg" x=".5" y=".5" width="799" height="399" rx="12"/>
-<text class="ink" x="62" y="32" font-size="18" font-weight="600">TA-Lib/ta-lib</text>
-<text class="mute" x="772" y="32" font-size="14" text-anchor="end">GitHub stars</text>
+<text class="ink" x="62" y="32" font-size="18" font-weight="600">GitHub stars since 2022</text>
 <line class="axis" x1="62" y1="356.0" x2="772" y2="356.0"/>
 <text class="mute" x="54" y="360.0" font-size="12" text-anchor="end">0</text>
 <line class="grid" x1="62" y1="281.0" x2="772" y2="281.0"/>

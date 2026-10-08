@@ -77,8 +77,7 @@ def render(stamps):
         'text{font-family:system-ui,-apple-system,Segoe UI,Helvetica,Arial,sans-serif}',
         '</style>',
         f'<rect class="bg" x=".5" y=".5" width="{W - 1}" height="{H - 1}" rx="12"/>',
-        f'<text class="ink" x="{L}" y="32" font-size="18" font-weight="600">{REPO}</text>',
-        f'<text class="mute" x="{R}" y="32" font-size="14" text-anchor="end">GitHub stars</text>',
+        f'<text class="ink" x="{L}" y="32" font-size="18" font-weight="600">GitHub stars since {SINCE}</text>',
     ]
     for v in range(0, ymax + 1, step):
         out.append(f'<line class="{"grid" if v else "axis"}" x1="{L}" y1="{y(v):.1f}" x2="{R}" y2="{y(v):.1f}"/>')
