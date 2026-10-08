@@ -590,7 +590,11 @@ rD2's list of functions: `the_transcendental_list_is_what_the_sources_call`
 set on the versions page and in `CODEGEN_TRANSCENDENTAL[]` (`test_codegen.c`),
 the list that moves a Java or C# comparison from bitwise to a tolerance.
 `test_elementary_math` (`test_1in_1out.c`) holds each elementary function to
-the host math library's routine of that name.
+the host math library's routine of that name. rD1's and rH1's transcendental
+exception: where the batch tier is a vector kernel, `regtest_vmath_batch`
+(`test_util.c`) alone moves a comparison of a kernel value with a one-value
+result from bitwise to `fuzz_vmath_near`, and `test_elementary_lanes` holds
+every element of a batch call to one function of one value on every platform.
 
 The build-flags caller item: `the_three_build_systems_carry_the_same_flags`
 (generator suite) requires the statements that set `-ffp-contract=off`,

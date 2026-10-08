@@ -9,7 +9,7 @@ Where the same call gives the same bits, and what a release keeps and may add.
 
 ## The caller must {#caller}
 
-- <a id="tolerance"></a>**Compare a transcendental call with a tolerance** unless both results come from C or Rust on the same machine ([transcendental functions](/spec/versions/#transcendental)). Their difference starts in the last bit of one math-library result and can grow through the function's arithmetic; the HT_* outputs that round a computed period to whole bars can differ outright on some inputs.
+- <a id="tolerance"></a>**Compare a transcendental call with a tolerance**: across languages, across machines, and a stream against a batch call ([transcendental functions](/spec/versions/#transcendental)). Their difference starts in the last bits of one math-library result and can grow through the function's arithmetic; the HT_* outputs that round a computed period to whole bars can differ outright on some inputs.
 - <a id="build-flags"></a>**Build C from source with the project's floating-point flags.** [rD1](/spec/versions/#rd1) and [rD2](/spec/versions/#rd2) hold for C only when the compiler evaluates every `double` operation as written:
 
   | Condition | GCC and Clang | Build files in the source tree |
@@ -26,13 +26,13 @@ Where the same call gives the same bits, and what a release keeps and may add.
 
 On this page, **bit-identical** means the same return code, the same output range, and every output element with the same bits, except that a NaN matches any NaN: no math library specifies a NaN's payload. **The same call** means the same function, input values, `startIdx` and `endIdx`, optional parameters and settings.
 
-<a id="rd1"></a>**rD1** On one machine, C and Rust are bit-identical for the same call, transcendental functions included.
+<a id="rd1"></a>**rD1** On one machine, C and Rust are bit-identical for every call that evaluates no transcendental function. A call that evaluates one may differ in the last bits ([transcendental functions](/spec/versions/#transcendental)).
 
 <a id="rd2"></a>**rD2** On one machine, Java and C# are bit-identical to C for every call that evaluates no transcendental function. A call that evaluates one may differ from C's: Java's and .NET's math libraries can round a transcendental result differently from the C library in the last bit, which is beyond TA-Lib's control.
 
 ### Transcendental functions {#transcendental}
 
-A **transcendental function** here is `exp`, `log`, `log10`, or a trigonometric, inverse trigonometric or hyperbolic function. C and Rust take it from the platform's C math library, Java from the JVM, C# from the .NET runtime, and none of them is required to round it correctly. A call evaluates one when its function does, or when an MA-type parameter selects an average that does. The functions that do are ACOS, ALMA, ASIN, ATAN, CHOP, CHOPTR, COS, COSH, EXP, FISHER, FRAMA, HT_DCPERIOD, HT_DCPHASE, HT_PHASOR, HT_SINE, HT_TRENDLINE, HT_TRENDMODE, LINEARREG_ANGLE, LN, LOG10, MAMA, PSO, ROGERSSATCHELL, SIN, SINH, SWAK_2PHP, SWAK_BP, SWAK_BUTTER, SWAK_GAUSS, SWAK_HP, TAN and TANH, and the averages that do are `MAMA` and `ALMA`.
+A **transcendental function** here is `exp`, `log`, `log10`, or a trigonometric, inverse trigonometric or hyperbolic function. C and Rust take it from the platform's C math library, Java from the JVM, C# from the .NET runtime, and none of them is required to round it correctly. A platform can also provide two routines for one function, one for a single value and one for several values at a time, and the two need not round alike: where a batch call takes the vectorized routine, its result can differ in the last bits from a stream's, which evaluates one value at a time, and from another language's. A call evaluates one when its function does, or when an MA-type parameter selects an average that does. The functions that do are ACOS, ALMA, ASIN, ATAN, CHOP, CHOPTR, COS, COSH, EXP, FISHER, FRAMA, HT_DCPERIOD, HT_DCPHASE, HT_PHASOR, HT_SINE, HT_TRENDLINE, HT_TRENDMODE, LINEARREG_ANGLE, LN, LOG10, MAMA, PSO, ROGERSSATCHELL, SIN, SINH, SWAK_2PHP, SWAK_BP, SWAK_BUTTER, SWAK_GAUSS, SWAK_HP, TAN and TANH, and the averages that do are `MAMA` and `ALMA`.
 
 ### Across machines {#machines}
 
