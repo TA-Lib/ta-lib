@@ -103,11 +103,21 @@ static void generate_price_data(int n, const BenchCorpusCfg *corpus) {
 
 /* ---- Output buffers ---- */
 
-static TA_Real g_outReal0[MAX_POINTS];
-static TA_Real g_outReal1[MAX_POINTS];
-static TA_Real g_outReal2[MAX_POINTS];
-static TA_Integer g_outInt0[MAX_POINTS];
-static TA_Integer g_outInt1[MAX_POINTS];
+/* One buffer per output, never one shared between two. The abstract layer
+ * rejects a call whose outputs are not distinct pointers, and it rejects it at
+ * TA_CallFunc rather than at the setter, so a shortage here does not surface as
+ * a failed setup -- it surfaces as a timing for a call that never ran. HA, with
+ * four real outputs, is what ran the old three-deep ternary out of buffers.
+ *
+ * The ceilings are generous for the shipped corpus (the widest function has
+ * four real outputs), and a function that outgrows one is refused at setup and
+ * printed as `no buffers` rather than timed against a shared pointer. That is
+ * the property worth keeping: the next one to outgrow them says so. */
+#define MAX_REAL_OUT 8
+#define MAX_INT_OUT  4
+
+static TA_Real    g_outReal[MAX_REAL_OUT][MAX_POINTS];
+static TA_Integer g_outInt[MAX_INT_OUT][MAX_POINTS];
 
 /* ---- Function filter ---- */
 
@@ -135,6 +145,11 @@ typedef struct {
     long long cg_s[MAX_SAMPLES];
     int nref, ncg;
     double ref_spread, cg_spread;   /* (max-min)/median; -1 when < 2 samples */
+    /* Non-zero when the reference call was REJECTED rather than timed: the
+     * TA_RetCode TA_CallFunc answered, or -1 when the function asks for more
+     * output buffers than this tool carries. Such a row has no ref timing, and
+     * printing one would be the defect this field exists to prevent. */
+    int ref_rc;
 } BenchResult;
 
 static BenchResult g_results[MAX_FUNCTIONS];
@@ -223,9 +238,10 @@ static void write_jsonl(const char *path, int points, int iters, int reps,
     for( int i = 0; i < g_nResults; i++ ) {
         const BenchResult *r = &g_results[i];
         fprintf(f, "%s\"%s\":{\"ref_ns\":%lld,\"cg_ns\":%lld,"
-                   "\"ref_spread\":%.4f,\"cg_spread\":%.4f,\"n\":%d}",
+                   "\"ref_spread\":%.4f,\"cg_spread\":%.4f,\"n\":%d,"
+                   "\"ref_rc\":%d}",
                 i ? "," : "", r->name, r->ref_ns, r->cg_ns,
-                r->ref_spread, r->cg_spread, r->nref);
+                r->ref_spread, r->cg_spread, r->nref, r->ref_rc);
     }
     fprintf(f, "}}\n");
     fclose(f);
@@ -270,15 +286,17 @@ static void bench_ref_func(const TA_FuncInfo *fi, void *opaque) {
 
     /* Set outputs */
     unsigned int realIdx = 0, intIdx = 0;
+    int tooManyOutputs = 0;
     for( unsigned int i = 0; i < fi->nbOutput; i++ ) {
         const TA_OutputParameterInfo *info;
         TA_GetOutputParameterInfo(fi->handle, i, &info);
         if( info->type == TA_Output_Integer ) {
-            TA_SetOutputParamIntegerPtr(params, i, intIdx == 0 ? g_outInt0 : g_outInt1);
+            if( intIdx >= MAX_INT_OUT ) { tooManyOutputs = 1; break; }
+            TA_SetOutputParamIntegerPtr(params, i, g_outInt[intIdx]);
             intIdx++;
         } else {
-            TA_Real *buf = realIdx == 0 ? g_outReal0 : (realIdx == 1 ? g_outReal1 : g_outReal2);
-            TA_SetOutputParamRealPtr(params, i, buf);
+            if( realIdx >= MAX_REAL_OUT ) { tooManyOutputs = 1; break; }
+            TA_SetOutputParamRealPtr(params, i, g_outReal[realIdx]);
             realIdx++;
         }
     }
@@ -288,6 +306,25 @@ static void bench_ref_func(const TA_FuncInfo *fi, void *opaque) {
     TA_Integer outBegIdx, outNbElement;
     BenchResult *r = result_row(fi->name);
     if( !r ) { TA_ParamHolderFree(params); return; }
+
+    /* One call first, and its return code read. An immediate error return is
+     * fast, repeatable and has a believable spread, so a rejected call does not
+     * look rejected once it is divided by iters -- it looks like a fast path.
+     * This is the only site that can tell the difference: every setter above
+     * answers TA_SUCCESS even for the duplicate pointer that causes it. */
+    if( tooManyOutputs ) {
+        r->ref_rc = -1;
+        TA_ParamHolderFree(params);
+        return;
+    }
+    TA_RetCode rc = TA_CallFunc(params, 0, g_nPoints - 1, &outBegIdx, &outNbElement);
+    if( rc != TA_SUCCESS ) {
+        r->ref_rc = (int)rc;
+        TA_ParamHolderFree(params);
+        return;
+    }
+    r->ref_rc = 0;
+
     for( int pass = 0; pass < BENCH_PASSES; pass++ ) {
         long long t0 = get_nanotime();
         for( int it = 0; it < ctx->iters; it++ ) {
@@ -445,7 +482,7 @@ int main(int argc, char *argv[]) {
            "--------", "------", "-----", "------", "-----", "-----");
 
     double spreads[MAX_FUNCTIONS];
-    int nspread = 0, n_noisy = 0;
+    int nspread = 0, n_noisy = 0, n_rejected = 0;
 
     for( int i = 0; i < g_nResults; i++ ) {
         BenchResult *r = &g_results[i];
@@ -455,6 +492,22 @@ int main(int argc, char *argv[]) {
         if( r->cg_spread >= 0.0 )  snprintf(cs, sizeof(cs), "%.0f%%", r->cg_spread * 100.0);
         else                       snprintf(cs, sizeof(cs), "%s", "?");
         if( r->ref_spread >= 0.0 ) spreads[nspread++] = r->ref_spread;
+
+        /* A rejected reference call has no timing, and the row must not read
+         * as one. Printing it as 0 would be worse than printing nothing: the
+         * ratio column would then divide the codegen arm by zero or by a number
+         * that measures an error return. */
+        if( r->ref_rc != 0 ) {
+            char why[24];
+            if( r->ref_rc < 0 ) snprintf(why, sizeof(why), "%s", "no buffers");
+            else                snprintf(why, sizeof(why), "rejected %d", r->ref_rc);
+            if( r->cg_ns > 0 )
+                printf("%-20s %10s %6s %10lld %6s %8s\n", r->name, why, "--", r->cg_ns, cs, "--");
+            else
+                printf("%-20s %10s %6s %10s %6s %8s\n", r->name, why, "--", "--", "--", "--");
+            n_rejected++;
+            continue;
+        }
 
         double ratio = (r->ref_ns > 0 && r->cg_ns > 0)
             ? (double)r->cg_ns / (double)r->ref_ns : 0.0;
@@ -490,6 +543,9 @@ int main(int argc, char *argv[]) {
            "a build-configuration difference, not an algorithm one. Coloured only\n"
            "outside %.2fx and only when the row's own spread is narrower than that.\n",
            no_signal);
+    if( n_rejected > 0 )
+        printf("%d row(s) had no reference timing: the library rejected the call, "
+               "so nothing was measured for that arm.\n", n_rejected);
     printf("Median per-row spread %.0f%%", med_spread * 100.0);
     if( n_noisy )
         printf("; %d row(s) exceeded %.2fx but were too noisy to call", n_noisy, no_signal);
