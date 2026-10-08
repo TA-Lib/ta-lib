@@ -16839,6 +16839,106 @@ fn legs_SQRT(r: &mut Report) {
     r.legs_done("SQRT", 1);
 }
 
+const V_SQZMOM: &[(&str, i32, f64, i32, f64, f64, f64)] = &[
+    ("defaults", i32::MIN, Core::REAL_DEFAULT, i32::MIN, Core::REAL_DEFAULT, Core::REAL_DEFAULT, Core::REAL_DEFAULT),
+    ("minimums", 2i32, 0.0f64, 2i32, 0.0f64, 0.0f64, 0.0f64),
+];
+
+fn sub_SQZMOM(r: &mut Report) {
+    let core = Core::new();
+    for &(label, optInBBPeriod, optInNbDev, optInKCPeriod, optInFactorWide, optInFactorNormal, optInFactorNarrow) in V_SQZMOM {
+        let Ok(lb) = core.sqzmom_lookback(optInBBPeriod, optInNbDev, optInKCPeriod, optInFactorWide, optInFactorNormal, optInFactorNarrow) else { continue; };
+        r.control("SQZMOM", label, run(|| {
+            let inHigh: Vec<f64> = Vec::with_capacity(1);
+            let inLow: Vec<f64> = Vec::with_capacity(1);
+            let inClose: Vec<f64> = Vec::with_capacity(1);
+            let mut outMomentum: Vec<f64> = Vec::with_capacity(1);
+            let mut outSqueeze: Vec<i32> = Vec::with_capacity(1);
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.sqzmom_impl(0, lb, &inHigh, &inLow, &inClose, optInBBPeriod, optInNbDev, optInKCPeriod, optInFactorWide, optInFactorNormal, optInFactorNarrow, &mut _b, &mut _n, &mut outMomentum, &mut outSqueeze);
+            (rc, _n)
+        }));
+        if lb < 1 { r.no_quiet_range("SQZMOM", label); continue; }
+        r.quiet("SQZMOM", label, lb, run(|| {
+            let inHigh: Vec<f64> = Vec::with_capacity(1);
+            let inLow: Vec<f64> = Vec::with_capacity(1);
+            let inClose: Vec<f64> = Vec::with_capacity(1);
+            let mut outMomentum: Vec<f64> = Vec::with_capacity(1);
+            let mut outSqueeze: Vec<i32> = Vec::with_capacity(1);
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.sqzmom_impl(0, lb - 1, &inHigh, &inLow, &inClose, optInBBPeriod, optInNbDev, optInKCPeriod, optInFactorWide, optInFactorNormal, optInFactorNarrow, &mut _b, &mut _n, &mut outMomentum, &mut outSqueeze);
+            (rc, _n)
+        }));
+    }
+}
+
+fn legs_SQZMOM(r: &mut Report) {
+    let core = Core::new();
+    let optInBBPeriod = i32::MIN;
+    let optInNbDev = Core::REAL_DEFAULT;
+    let optInKCPeriod = i32::MIN;
+    let optInFactorWide = Core::REAL_DEFAULT;
+    let optInFactorNormal = Core::REAL_DEFAULT;
+    let optInFactorNarrow = Core::REAL_DEFAULT;
+    let Ok(lb) = core.sqzmom_lookback(optInBBPeriod, optInNbDev, optInKCPeriod, optInFactorWide, optInFactorNormal, optInFactorNarrow) else { r.no_legs("SQZMOM"); return; };
+    let (startIdx, endIdx) = (lb, lb + 4);
+    {
+        let inHigh: Vec<f64> = series("high", endIdx + 1);
+        let inLow: Vec<f64> = series("low", endIdx + 1);
+        let inClose: Vec<f64> = series("close", endIdx + 1);
+        let mut outMomentum: Vec<f64> = vec![Default::default(); 5];
+        let mut outSqueeze: Vec<i32> = vec![Default::default(); 5];
+        r.legs_control("SQZMOM", run(|| {
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.sqzmom_impl(startIdx, endIdx, &inHigh, &inLow, &inClose, optInBBPeriod, optInNbDev, optInKCPeriod, optInFactorWide, optInFactorNormal, optInFactorNarrow, &mut _b, &mut _n, &mut outMomentum, &mut outSqueeze);
+            (rc, _n)
+        }));
+    }
+    {
+        let inHigh: Vec<f64> = Vec::with_capacity(1);
+        let inLow: Vec<f64> = series("low", endIdx + 1);
+        let inClose: Vec<f64> = series("close", endIdx + 1);
+        let mut outMomentum: Vec<f64> = vec![Default::default(); 5];
+        let mut outSqueeze: Vec<i32> = vec![Default::default(); 5];
+        r.leg("SQZMOM", "inHigh", 0, run(|| {
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.sqzmom_impl(startIdx, endIdx, &inHigh, &inLow, &inClose, optInBBPeriod, optInNbDev, optInKCPeriod, optInFactorWide, optInFactorNormal, optInFactorNarrow, &mut _b, &mut _n, &mut outMomentum, &mut outSqueeze);
+            (rc, _n)
+        }));
+    }
+    {
+        let inHigh: Vec<f64> = series("high", endIdx + 1);
+        let inLow: Vec<f64> = Vec::with_capacity(1);
+        let inClose: Vec<f64> = series("close", endIdx + 1);
+        let mut outMomentum: Vec<f64> = vec![Default::default(); 5];
+        let mut outSqueeze: Vec<i32> = vec![Default::default(); 5];
+        r.leg("SQZMOM", "inLow", 1, run(|| {
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.sqzmom_impl(startIdx, endIdx, &inHigh, &inLow, &inClose, optInBBPeriod, optInNbDev, optInKCPeriod, optInFactorWide, optInFactorNormal, optInFactorNarrow, &mut _b, &mut _n, &mut outMomentum, &mut outSqueeze);
+            (rc, _n)
+        }));
+    }
+    {
+        let inHigh: Vec<f64> = series("high", endIdx + 1);
+        let inLow: Vec<f64> = series("low", endIdx + 1);
+        let inClose: Vec<f64> = Vec::with_capacity(1);
+        let mut outMomentum: Vec<f64> = vec![Default::default(); 5];
+        let mut outSqueeze: Vec<i32> = vec![Default::default(); 5];
+        r.leg("SQZMOM", "inClose", 2, run(|| {
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.sqzmom_impl(startIdx, endIdx, &inHigh, &inLow, &inClose, optInBBPeriod, optInNbDev, optInKCPeriod, optInFactorWide, optInFactorNormal, optInFactorNarrow, &mut _b, &mut _n, &mut outMomentum, &mut outSqueeze);
+            (rc, _n)
+        }));
+    }
+    r.legs_done("SQZMOM", 3);
+}
+
 const V_STC: &[(&str, i32, i32, i32)] = &[
     ("defaults", i32::MIN, i32::MIN, i32::MIN),
     ("minimums", 2i32, 2i32, 2i32),
@@ -19595,6 +19695,7 @@ const PROBES: &[(&str, Probe, Probe)] = &[
     ("SMA", sub_SMA, legs_SMA),
     ("SMI", sub_SMI, legs_SMI),
     ("SQRT", sub_SQRT, legs_SQRT),
+    ("SQZMOM", sub_SQZMOM, legs_SQZMOM),
     ("STC", sub_STC, legs_STC),
     ("STDDEV", sub_STDDEV, legs_STDDEV),
     ("STOCH", sub_STOCH, legs_STOCH),
@@ -19668,7 +19769,7 @@ fn no_phantom_io() {
     // The corpus is the generator's, not a list kept by hand: a probe that
     // stopped being emitted is a shrinking sweep, which is the one way this
     // file can fail open.
-    assert_eq!(PROBES.len(), 231, "probe count");
+    assert_eq!(PROBES.len(), 232, "probe count");
     assert_eq!(
         PROBES.len(),
         crate::abstract_api::funcs().count(),

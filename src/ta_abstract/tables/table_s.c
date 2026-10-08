@@ -597,6 +597,167 @@ DEF_FUNCTION( SQRT,
              );
 /* SQRT END */
 
+/* SQZMOM BEGIN */
+static const TA_OptInputParameterInfo TA_DEF_UI_D_SQZMOM_BBPeriod =
+{
+   TA_OptInput_IntegerRange,
+   "optInBBPeriod",
+   0,
+
+   "BB Period",
+   (const void *)&TA_DEF_TimePeriod_Positive_Minimum2,
+   20,
+   "Period of the Bollinger Bands",
+
+   NULL
+};
+
+static const TA_RealRange TA_DEF_SQZMOM_NbDev =
+{
+   0.0,
+   TA_REAL_MAX,
+   2,
+   1.0,
+   3.0,
+   0.2
+};
+
+static const TA_OptInputParameterInfo TA_DEF_UI_D_SQZMOM_NbDev =
+{
+   TA_OptInput_RealRange,
+   "optInNbDev",
+   0,
+
+   "Deviations",
+   (const void *)&TA_DEF_SQZMOM_NbDev,
+   2.0,
+   "Deviation multiplier for both Bollinger Bands",
+
+   NULL
+};
+
+static const TA_OptInputParameterInfo TA_DEF_UI_D_SQZMOM_KCPeriod =
+{
+   TA_OptInput_IntegerRange,
+   "optInKCPeriod",
+   0,
+
+   "KC Period",
+   (const void *)&TA_DEF_TimePeriod_Positive_Minimum2,
+   20,
+   "Period of the Keltner Channel, and of the momentum regression",
+
+   NULL
+};
+
+static const TA_RealRange TA_DEF_SQZMOM_FactorWide =
+{
+   0.0,
+   TA_REAL_MAX,
+   2,
+   1.0,
+   3.0,
+   0.25
+};
+
+static const TA_OptInputParameterInfo TA_DEF_UI_D_SQZMOM_FactorWide =
+{
+   TA_OptInput_RealRange,
+   "optInFactorWide",
+   0,
+
+   "Wide Factor",
+   (const void *)&TA_DEF_SQZMOM_FactorWide,
+   2.0,
+   "Keltner width for the widest compression test",
+
+   NULL
+};
+
+static const TA_RealRange TA_DEF_SQZMOM_FactorNormal =
+{
+   0.0,
+   TA_REAL_MAX,
+   2,
+   1.0,
+   3.0,
+   0.25
+};
+
+static const TA_OptInputParameterInfo TA_DEF_UI_D_SQZMOM_FactorNormal =
+{
+   TA_OptInput_RealRange,
+   "optInFactorNormal",
+   0,
+
+   "Normal Factor",
+   (const void *)&TA_DEF_SQZMOM_FactorNormal,
+   1.5,
+   "Keltner width for the classic squeeze test",
+
+   NULL
+};
+
+static const TA_RealRange TA_DEF_SQZMOM_FactorNarrow =
+{
+   0.0,
+   TA_REAL_MAX,
+   2,
+   0.5,
+   2.0,
+   0.25
+};
+
+static const TA_OptInputParameterInfo TA_DEF_UI_D_SQZMOM_FactorNarrow =
+{
+   TA_OptInput_RealRange,
+   "optInFactorNarrow",
+   0,
+
+   "Narrow Factor",
+   (const void *)&TA_DEF_SQZMOM_FactorNarrow,
+   1.0,
+   "Keltner width for the tightest compression test",
+
+   NULL
+};
+
+const TA_OutputParameterInfo TA_DEF_UI_Output_Real_SQZMOM_outMomentum =
+                               { TA_Output_Real, "outMomentum", TA_OUT_LINE };
+
+const TA_OutputParameterInfo TA_DEF_UI_Output_Integer_SQZMOM_outSqueeze =
+                               { TA_Output_Integer, "outSqueeze", TA_OUT_LINE };
+
+static const TA_InputParameterInfo    *TA_SQZMOM_Inputs[]    =
+{
+  &TA_DEF_UI_Input_Price_HLC,
+  NULL
+};
+
+static const TA_OutputParameterInfo   *TA_SQZMOM_Outputs[]   =
+{
+  &TA_DEF_UI_Output_Real_SQZMOM_outMomentum,
+  &TA_DEF_UI_Output_Integer_SQZMOM_outSqueeze,
+  NULL
+};
+
+static const TA_OptInputParameterInfo *TA_SQZMOM_OptInputs[] =
+{ &TA_DEF_UI_D_SQZMOM_BBPeriod,
+  &TA_DEF_UI_D_SQZMOM_NbDev,
+  &TA_DEF_UI_D_SQZMOM_KCPeriod,
+  &TA_DEF_UI_D_SQZMOM_FactorWide,
+  &TA_DEF_UI_D_SQZMOM_FactorNormal,
+  &TA_DEF_UI_D_SQZMOM_FactorNarrow,
+  NULL
+};
+
+DEF_FUNCTION( SQZMOM,
+              TA_GroupId_MomentumIndicators,
+              "Squeeze Momentum and Level",
+              TA_FUNC_FLG_STREAM
+             );
+/* SQZMOM END */
+
 /* STC BEGIN */
 static const TA_OptInputParameterInfo TA_DEF_UI_D_STC_FastPeriod =
 {
@@ -1350,6 +1511,7 @@ const TA_FuncDef *TA_DEF_TableS[] =
    ADD_TO_TABLE(SMA),
    ADD_TO_TABLE(SMI),
    ADD_TO_TABLE(SQRT),
+   ADD_TO_TABLE(SQZMOM),
    ADD_TO_TABLE(STC),
    ADD_TO_TABLE(STDDEV),
    ADD_TO_TABLE(STOCH),

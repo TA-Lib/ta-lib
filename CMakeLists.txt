@@ -507,6 +507,7 @@ set(LIB_SOURCES
 	"${CMAKE_CURRENT_SOURCE_DIR}/src/ta_func/ta_SMA.c"
 	"${CMAKE_CURRENT_SOURCE_DIR}/src/ta_func/ta_SMI.c"
 	"${CMAKE_CURRENT_SOURCE_DIR}/src/ta_func/ta_SQRT.c"
+	"${CMAKE_CURRENT_SOURCE_DIR}/src/ta_func/ta_SQZMOM.c"
 	"${CMAKE_CURRENT_SOURCE_DIR}/src/ta_func/ta_STC.c"
 	"${CMAKE_CURRENT_SOURCE_DIR}/src/ta_func/ta_STDDEV.c"
 	"${CMAKE_CURRENT_SOURCE_DIR}/src/ta_func/ta_STOCH.c"

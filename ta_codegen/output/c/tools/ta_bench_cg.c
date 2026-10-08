@@ -221,6 +221,7 @@
 #include "ta_SMA.c"
 #include "ta_SMI.c"
 #include "ta_SQRT.c"
+#include "ta_SQZMOM.c"
 #include "ta_STC.c"
 #include "ta_STDDEV.c"
 #include "ta_STOCH.c"
@@ -3524,6 +3525,23 @@ static void bench_all(const char *filter, int iters) {
             g_sink += g_outBuf0[0];
         }
         printf("SQRT %lld\n", best / iters);
+        fflush(stdout);
+    }
+    if( func_matches(filter, "SQZMOM") ) {
+        long long best = 0;
+        for( int pass = 0; pass < 3; pass++ ) {
+            int outBegIdx, outNBElement;
+            long long t0 = get_nanotime();
+            for( int it = 0; it < iters; it++ ) {
+                TA_SQZMOM(0, g_nPoints - 1, g_high, g_low, g_close, 20, 2.000000000000000, 20, 2.000000000000000, 1.500000000000000, 1.000000000000000, &outBegIdx, &outNBElement, g_outBuf0, g_outIntBuf0);
+            }
+            long long elapsed = get_nanotime() - t0;
+            if( !best || elapsed < best ) best = elapsed;
+            g_sink += outNBElement;
+            g_sink += g_outBuf0[0];
+            g_sink += g_outIntBuf0[0];
+        }
+        printf("SQZMOM %lld\n", best / iters);
         fflush(stdout);
     }
     if( func_matches(filter, "STC") ) {

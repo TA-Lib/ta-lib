@@ -17544,6 +17544,129 @@ TA_LIB_API TA_RetCode TA_SQRT_Advance( TA_SQRT_Stream *stream );
 TA_LIB_API TA_RetCode TA_SQRT_Clone( const TA_SQRT_Stream *stream, TA_SQRT_Stream **clone );
 
 /*
+ * TA_SQZMOM - Squeeze Momentum and Level
+ * 
+ * Input  = High, Low, Close
+ * Output = double, int
+ * 
+ * Optional Parameters
+ * -------------------
+ * optInBBPeriod:(From 2 to 100000)
+ *    Period of the Bollinger Bands
+ * 
+ * optInNbDev:(From 0 to 30000000000000000000000000000000000000)
+ *    Deviation multiplier for both Bollinger Bands
+ * 
+ * optInKCPeriod:(From 2 to 100000)
+ *    Period of the Keltner Channel, and of the momentum regression
+ * 
+ * optInFactorWide:(From 0 to 30000000000000000000000000000000000000)
+ *    Keltner width for the widest compression test
+ * 
+ * optInFactorNormal:(From 0 to 30000000000000000000000000000000000000)
+ *    Keltner width for the classic squeeze test
+ * 
+ * optInFactorNarrow:(From 0 to 30000000000000000000000000000000000000)
+ *    Keltner width for the tightest compression test
+ * 
+ * 
+ */
+TA_LIB_API TA_RetCode TA_SQZMOM( int    startIdx,
+                                 int    endIdx,
+                                            const double inHigh[],
+                                            const double inLow[],
+                                            const double inClose[],
+                                            int           optInBBPeriod, /* From 2 to 100000 */
+                                            double        optInNbDev, /* From 0 to 30000000000000000000000000000000000000 */
+                                            int           optInKCPeriod, /* From 2 to 100000 */
+                                            double        optInFactorWide, /* From 0 to 30000000000000000000000000000000000000 */
+                                            double        optInFactorNormal, /* From 0 to 30000000000000000000000000000000000000 */
+                                            double        optInFactorNarrow, /* From 0 to 30000000000000000000000000000000000000 */
+                                            int          *outBegIdx,
+                                            int          *outNBElement,
+                                            double        outMomentum[],
+                                            int           outSqueeze[] );
+
+TA_LIB_API TA_RetCode TA_S_SQZMOM( int    startIdx,
+                                   int    endIdx,
+                                              const float  inHigh[],
+                                              const float  inLow[],
+                                              const float  inClose[],
+                                              int           optInBBPeriod, /* From 2 to 100000 */
+                                              double        optInNbDev, /* From 0 to 30000000000000000000000000000000000000 */
+                                              int           optInKCPeriod, /* From 2 to 100000 */
+                                              double        optInFactorWide, /* From 0 to 30000000000000000000000000000000000000 */
+                                              double        optInFactorNormal, /* From 0 to 30000000000000000000000000000000000000 */
+                                              double        optInFactorNarrow, /* From 0 to 30000000000000000000000000000000000000 */
+                                              int          *outBegIdx,
+                                              int          *outNBElement,
+                                              double        outMomentum[],
+                                              int           outSqueeze[] );
+
+TA_LIB_API int TA_SQZMOM_Lookback( int           optInBBPeriod, /* From 2 to 100000 */
+                                            double        optInNbDev, /* From 0 to 30000000000000000000000000000000000000 */
+                                            int           optInKCPeriod, /* From 2 to 100000 */
+                                            double        optInFactorWide, /* From 0 to 30000000000000000000000000000000000000 */
+                                            double        optInFactorNormal, /* From 0 to 30000000000000000000000000000000000000 */
+                                            double        optInFactorNarrow );  /* From 0 to 30000000000000000000000000000000000000 */
+TA_LIB_API int TA_SQZMOM_DisplayShift( int optInBBPeriod, double optInNbDev, int optInKCPeriod, double optInFactorWide, double optInFactorNormal, double optInFactorNarrow, int outputIdx );
+
+
+
+/*
+ * Streaming API for TA_SQZMOM: incremental per-bar evaluation.
+ */
+typedef struct TA_SQZMOM_Stream TA_SQZMOM_Stream;
+
+TA_LIB_API TA_RetCode TA_SQZMOM_Open( TA_SQZMOM_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], int historyLen, int optInBBPeriod, double optInNbDev, int optInKCPeriod, double optInFactorWide, double optInFactorNormal, double optInFactorNarrow, double *outMomentum, int *outSqueeze );
+
+TA_LIB_API TA_RetCode TA_SQZMOM_Update( TA_SQZMOM_Stream *stream, double inHigh, double inLow, double inClose, double *outMomentum, int *outSqueeze );
+
+TA_LIB_API TA_RetCode TA_SQZMOM_Peek( const TA_SQZMOM_Stream *stream, double inHigh, double inLow, double inClose, double *outMomentum, int *outSqueeze );
+
+TA_LIB_API TA_RetCode TA_SQZMOM_Close( TA_SQZMOM_Stream *stream );
+
+/*
+ * OpenAndFill: like Open, but a single pass ALSO fills the caller's arrays
+ * with the whole warm-up history. The fill is bit-identical to
+ * TA_SQZMOM( 0, historyLen-1, ... ).
+ */
+TA_LIB_API TA_RetCode TA_SQZMOM_OpenAndFill( TA_SQZMOM_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], int historyLen, int optInBBPeriod, double optInNbDev, int optInKCPeriod, double optInFactorWide, double optInFactorNormal, double optInFactorNarrow, int *outBegIdx, int *outNBElement, double outMomentum[], int outSqueeze[] );
+
+/*
+ * Value: the value(s) at the last bar the stream counted (the bar
+ * TA_SQZMOM_OutRange ends on), without recomputing. Seeded by Open, refreshed by
+ * every accepted Update, left alone by Peek.
+ */
+TA_LIB_API TA_RetCode TA_SQZMOM_Value( const TA_SQZMOM_Stream *stream, double *outMomentum, int *outSqueeze );
+
+/*
+ * OutRange: the bars this stream has an output for, in the input series'
+ * coordinates. That is [*outBegIdx, *outBegIdx + *outNBElement), the range
+ * TA_SQZMOM reports over the same bars. Open seeds it; every accepted Update and every
+ * TA_SQZMOM_Advance adds one; a rejected Update and a Peek change nothing. The
+ * last bar it can reach is TA_INDEX_MAX: past that Update and Advance answer
+ * TA_OUT_OF_RANGE_END_INDEX, and the handle is done.
+ */
+TA_LIB_API TA_RetCode TA_SQZMOM_OutRange( const TA_SQZMOM_Stream *stream, int *outBegIdx, int *outNBElement );
+
+/*
+ * Advance: count one bar this stream was not fed (one an Update rejected and
+ * that will not be re-fed, or a session with no print). The range moves by one
+ * and nothing else does, so TA_SQZMOM_Value keeps answering the previous output,
+ * which is this bar's output too. TA_OUT_OF_RANGE_END_INDEX once the range has
+ * reached TA_INDEX_MAX.
+ */
+TA_LIB_API TA_RetCode TA_SQZMOM_Advance( TA_SQZMOM_Stream *stream );
+
+/*
+ * Clone: fork the stream. The fork is an independent stream at the same bar,
+ * owning its own copy of everything the original owns. Both must be closed.
+ * The fork carries the value and the range verbatim.
+ */
+TA_LIB_API TA_RetCode TA_SQZMOM_Clone( const TA_SQZMOM_Stream *stream, TA_SQZMOM_Stream **clone );
+
+/*
  * TA_STC - Schaff Trend Cycle
  * 
  * Input  = double

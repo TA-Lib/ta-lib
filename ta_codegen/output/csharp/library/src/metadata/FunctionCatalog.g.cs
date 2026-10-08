@@ -311,6 +311,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
             MakeSma(),
             MakeSmi(),
             MakeSqrt(),
+            MakeSqzmom(),
             MakeStc(),
             MakeStddev(),
             MakeStoch(),
@@ -4948,6 +4949,36 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
         invoke: static (core, c, startIdx, endIdx) =>
             core.Sqrt(
                 startIdx, endIdx, c.Series(0), c.RealOut(0)));
+
+    private static FuncInfo MakeSqzmom() => new(
+        name: "SQZMOM",
+        group: FunctionGroup.MomentumIndicators,
+        hint: "Squeeze Momentum and Level",
+        flags: FuncFlags.Stream,
+        unstableId: null,
+        inputs:
+        [
+            new InputInfo(InputKind.Price, "inPriceHLC", PriceComponents.High | PriceComponents.Low | PriceComponents.Close, [PriceComponents.High, PriceComponents.Low, PriceComponents.Close]),
+        ],
+        optInputs:
+        [
+            new OptInputInfo("optInBBPeriod", "BB Period", "Period of the Bollinger Bands", OptInputFlags.None, new OptInputDomain.IntegerRange(2, 100000, 20, 4, 200, 1)),
+            new OptInputInfo("optInNbDev", "Deviations", "Deviation multiplier for both Bollinger Bands", OptInputFlags.None, new OptInputDomain.RealRange(0.0, 3e37, 2, 2.0, 1.0, 3.0, 0.2)),
+            new OptInputInfo("optInKCPeriod", "KC Period", "Period of the Keltner Channel, and of the momentum regression", OptInputFlags.None, new OptInputDomain.IntegerRange(2, 100000, 20, 4, 200, 1)),
+            new OptInputInfo("optInFactorWide", "Wide Factor", "Keltner width for the widest compression test", OptInputFlags.None, new OptInputDomain.RealRange(0.0, 3e37, 2, 2.0, 1.0, 3.0, 0.25)),
+            new OptInputInfo("optInFactorNormal", "Normal Factor", "Keltner width for the classic squeeze test", OptInputFlags.None, new OptInputDomain.RealRange(0.0, 3e37, 2, 1.5, 1.0, 3.0, 0.25)),
+            new OptInputInfo("optInFactorNarrow", "Narrow Factor", "Keltner width for the tightest compression test", OptInputFlags.None, new OptInputDomain.RealRange(0.0, 3e37, 2, 1.0, 0.5, 2.0, 0.25)),
+        ],
+        outputs:
+        [
+            new OutputInfo(OutputKind.Real, "outMomentum", OutputFlags.Line),
+            new OutputInfo(OutputKind.Integer, "outSqueeze", OutputFlags.Line),
+        ],
+        lookback: static (core, c) => core.SqzmomLookback(c.IntOpt(0), c.RealOpt(1), c.IntOpt(2), c.RealOpt(3), c.RealOpt(4), c.RealOpt(5)),
+        displayShift: static (core, c, outputIdx) => core.SqzmomDisplayShift(c.IntOpt(0), c.RealOpt(1), c.IntOpt(2), c.RealOpt(3), c.RealOpt(4), c.RealOpt(5), outputIdx),
+        invoke: static (core, c, startIdx, endIdx) =>
+            core.Sqzmom(
+                startIdx, endIdx, c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.IntOpt(0), c.RealOpt(1), c.IntOpt(2), c.RealOpt(3), c.RealOpt(4), c.RealOpt(5), c.RealOut(0), c.IntOut(1)));
 
     private static FuncInfo MakeStc() => new(
         name: "STC",

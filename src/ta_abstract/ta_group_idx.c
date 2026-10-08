@@ -236,6 +236,7 @@ extern const TA_FuncDef TA_DEF_SINH;
 extern const TA_FuncDef TA_DEF_SMA;
 extern const TA_FuncDef TA_DEF_SMI;
 extern const TA_FuncDef TA_DEF_SQRT;
+extern const TA_FuncDef TA_DEF_SQZMOM;
 extern const TA_FuncDef TA_DEF_STC;
 extern const TA_FuncDef TA_DEF_STDDEV;
 extern const TA_FuncDef TA_DEF_STOCH;
@@ -408,6 +409,7 @@ const TA_FuncDef *TA_PerGroupFunc_4[] = {
 &TA_DEF_RSI,
 &TA_DEF_SI,
 &TA_DEF_SMI,
+&TA_DEF_SQZMOM,
 &TA_DEF_STC,
 &TA_DEF_STOCH,
 &TA_DEF_STOCHF,

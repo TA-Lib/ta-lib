@@ -5321,6 +5321,43 @@ int TA_SQRT_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
    (void)params;
    return TA_SQRT_DisplayShift( outputIdx );
 }
+TA_RetCode TA_SQZMOM_FramePP( const TA_ParamHolderPriv *params,
+                           int            startIdx,
+                           int            endIdx,
+                           int           *outBegIdx,
+                           int           *outNBElement )
+{
+   return TA_SQZMOM(
+               startIdx,
+               endIdx,
+               params->in[0].data.inPrice.high, /* inHigh */
+               params->in[0].data.inPrice.low, /* inLow */
+               params->in[0].data.inPrice.close, /* inClose */
+               params->optIn[0].data.optInInteger, /* optInBBPeriod*/
+               params->optIn[1].data.optInReal, /* optInNbDev*/
+               params->optIn[2].data.optInInteger, /* optInKCPeriod*/
+               params->optIn[3].data.optInReal, /* optInFactorWide*/
+               params->optIn[4].data.optInReal, /* optInFactorNormal*/
+               params->optIn[5].data.optInReal, /* optInFactorNarrow*/
+               outBegIdx, 
+               outNBElement, 
+               params->out[0].data.outReal, /*  outMomentum */
+               params->out[1].data.outInteger /*  outSqueeze */
+               );
+}
+unsigned int TA_SQZMOM_FramePPLB( const TA_ParamHolderPriv *params )
+{
+   return TA_SQZMOM_Lookback(params->optIn[0].data.optInInteger, /* optInBBPeriod*/
+                    params->optIn[1].data.optInReal, /* optInNbDev*/
+                    params->optIn[2].data.optInInteger, /* optInKCPeriod*/
+                    params->optIn[3].data.optInReal, /* optInFactorWide*/
+                    params->optIn[4].data.optInReal, /* optInFactorNormal*/
+                    params->optIn[5].data.optInReal /* optInFactorNarrow*/ );
+}
+int TA_SQZMOM_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+{
+   return TA_SQZMOM_DisplayShift( params->optIn[0].data.optInInteger, params->optIn[1].data.optInReal, params->optIn[2].data.optInInteger, params->optIn[3].data.optInReal, params->optIn[4].data.optInReal, params->optIn[5].data.optInReal, outputIdx );
+}
 TA_RetCode TA_STC_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
                            int            endIdx,

@@ -434,6 +434,8 @@ pub enum FuncId {
     SMI,
     /// Vector Square Root — [`Core::sqrt`](crate::Core::sqrt).
     SQRT,
+    /// Squeeze Momentum and Level — [`Core::sqzmom`](crate::Core::sqzmom).
+    SQZMOM,
     /// Schaff Trend Cycle — [`Core::stc`](crate::Core::stc).
     STC,
     /// Standard Deviation — [`Core::stddev`](crate::Core::stddev).
@@ -508,7 +510,7 @@ pub enum FuncId {
 
 impl FuncId {
     /// Number of functions in the registry.
-    pub const COUNT: usize = 231;
+    pub const COUNT: usize = 232;
     /// Metadata for this function (O(1) index into the const table).
     #[inline] pub fn info(self) -> &'static FuncInfo { &FUNC_TABLE[self as usize] }
     /// Upper-case TA name, e.g. "RSI".
@@ -848,7 +850,7 @@ impl FuncInfo {
 
 /// Backing storage for [`FUNCS`], indexed by [`FuncId`]. Link-time const, in
 /// `.rodata`. Private, so its length is nobody's business but this module's.
-static FUNC_TABLE: [FuncInfo; 231] = [
+static FUNC_TABLE: [FuncInfo; 232] = [
     FuncInfo {
         id: FuncId::AC,
         name: "AC",
@@ -3006,6 +3008,17 @@ static FUNC_TABLE: [FuncInfo; 231] = [
         unst_id: None,
     },
     FuncInfo {
+        id: FuncId::SQZMOM,
+        name: "SQZMOM",
+        group: Group::MomentumIndicators,
+        hint: "Squeeze Momentum and Level",
+        flags: FuncFlags(0x02000000),
+        inputs: &[InputInfo { param_name: "inPriceHLC", kind: InputType::Price, flags: InputFlags(0x0000000e) }, ],
+        opt_inputs: &[OptInputInfo { param_name: "optInBBPeriod", display_name: "BB Period", hint: "Period of the Bollinger Bands", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 2, max: 100000, default: 20, suggested: (4, 200, 1) } }, OptInputInfo { param_name: "optInNbDev", display_name: "Deviations", hint: "Deviation multiplier for both Bollinger Bands", flags: OptInputFlags(0x00000000), kind: OptInputType::RealRange { min: 0.0, max: 3e37, precision: 2, default: 2.0, suggested: (1.0, 3.0, 0.2) } }, OptInputInfo { param_name: "optInKCPeriod", display_name: "KC Period", hint: "Period of the Keltner Channel, and of the momentum regression", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 2, max: 100000, default: 20, suggested: (4, 200, 1) } }, OptInputInfo { param_name: "optInFactorWide", display_name: "Wide Factor", hint: "Keltner width for the widest compression test", flags: OptInputFlags(0x00000000), kind: OptInputType::RealRange { min: 0.0, max: 3e37, precision: 2, default: 2.0, suggested: (1.0, 3.0, 0.25) } }, OptInputInfo { param_name: "optInFactorNormal", display_name: "Normal Factor", hint: "Keltner width for the classic squeeze test", flags: OptInputFlags(0x00000000), kind: OptInputType::RealRange { min: 0.0, max: 3e37, precision: 2, default: 1.5, suggested: (1.0, 3.0, 0.25) } }, OptInputInfo { param_name: "optInFactorNarrow", display_name: "Narrow Factor", hint: "Keltner width for the tightest compression test", flags: OptInputFlags(0x00000000), kind: OptInputType::RealRange { min: 0.0, max: 3e37, precision: 2, default: 1.0, suggested: (0.5, 2.0, 0.25) } }, ],
+        outputs: &[OutputInfo { param_name: "outMomentum", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, OutputInfo { param_name: "outSqueeze", kind: OutputType::Integer, flags: OutputFlags(0x00000001) }, ],
+        unst_id: None,
+    },
+    FuncInfo {
         id: FuncId::STC,
         name: "STC",
         group: Group::MomentumIndicators,
@@ -3604,6 +3617,7 @@ fn get_func_handle_exact(name: &str) -> Option<FuncId> {
         "SMA" => FuncId::SMA,
         "SMI" => FuncId::SMI,
         "SQRT" => FuncId::SQRT,
+        "SQZMOM" => FuncId::SQZMOM,
         "STC" => FuncId::STC,
         "STDDEV" => FuncId::STDDEV,
         "STOCH" => FuncId::STOCH,
@@ -4103,6 +4117,7 @@ impl<'a> ParamHolder<'a> {
             FuncId::SMA => self.core.sma_lookback(self.int_opt[0]),
             FuncId::SMI => self.core.smi_lookback(self.int_opt[0], self.int_opt[1], self.int_opt[2], self.int_opt[3]),
             FuncId::SQRT => self.core.sqrt_lookback(),
+            FuncId::SQZMOM => self.core.sqzmom_lookback(self.int_opt[0], self.real_opt[1], self.int_opt[2], self.real_opt[3], self.real_opt[4], self.real_opt[5]),
             FuncId::STC => self.core.stc_lookback(self.int_opt[0], self.int_opt[1], self.int_opt[2]),
             FuncId::STDDEV => self.core.stddev_lookback(self.int_opt[0], self.real_opt[1]),
             FuncId::STOCH => self.core.stoch_lookback(self.int_opt[0], self.int_opt[1], MAType::try_from(self.int_opt[2])?, self.int_opt[3], MAType::try_from(self.int_opt[4])?),
@@ -4347,6 +4362,7 @@ impl<'a> ParamHolder<'a> {
             FuncId::SMA => self.core.sma_display_shift(self.int_opt[0], output_idx),
             FuncId::SMI => self.core.smi_display_shift(self.int_opt[0], self.int_opt[1], self.int_opt[2], self.int_opt[3], output_idx),
             FuncId::SQRT => self.core.sqrt_display_shift(output_idx),
+            FuncId::SQZMOM => self.core.sqzmom_display_shift(self.int_opt[0], self.real_opt[1], self.int_opt[2], self.real_opt[3], self.real_opt[4], self.real_opt[5], output_idx),
             FuncId::STC => self.core.stc_display_shift(self.int_opt[0], self.int_opt[1], self.int_opt[2], output_idx),
             FuncId::STDDEV => self.core.stddev_display_shift(self.int_opt[0], self.real_opt[1], output_idx),
             FuncId::STOCH => self.core.stoch_display_shift(self.int_opt[0], self.int_opt[1], MAType::try_from(self.int_opt[2])?, self.int_opt[3], MAType::try_from(self.int_opt[4])?, output_idx),
@@ -7124,6 +7140,22 @@ impl<'a> ParamHolder<'a> {
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.sqrt(start_idx, end_idx, i0, &mut *o0);
                 self.real_out[0] = Some(o0);
+                match res {
+                    Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
+                    Err(e) => e,
+                }
+            }
+            FuncId::SQZMOM => {
+                let i0_1 = self.price[0][1].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_2 = self.price[0][2].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_3 = self.price[0][3].ok_or(RetCode::InputNotAllInitialize)?;
+                if self.real_out[0].is_none() || self.int_out[1].is_none() { return Err(RetCode::OutputNotAllInitialize); }
+                Self::check_range(start_idx, end_idx)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let mut o1 = self.int_out[1].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let res = self.core.sqzmom(start_idx, end_idx, i0_1, i0_2, i0_3, self.int_opt[0], self.real_opt[1], self.int_opt[2], self.real_opt[3], self.real_opt[4], self.real_opt[5], &mut *o0, &mut *o1);
+                self.real_out[0] = Some(o0);
+                self.int_out[1] = Some(o1);
                 match res {
                     Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
                     Err(e) => e,

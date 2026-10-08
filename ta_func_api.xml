@@ -9447,6 +9447,131 @@
 	</FinancialFunction>
 
 
+	<!-- SQZMOM -->
+	<FinancialFunction>
+		<Abbreviation>SQZMOM</Abbreviation>
+		<ShortDescription>Squeeze Momentum and Level</ShortDescription>
+		<GroupId>Momentum Indicators</GroupId>
+		<Flags>
+			<Flag>Streaming</Flag>
+		</Flags>
+		<RequiredInputArguments>
+			<RequiredInputArgument>
+				<Type>High</Type>
+				<Name>High</Name>
+			</RequiredInputArgument>
+			<RequiredInputArgument>
+				<Type>Low</Type>
+				<Name>Low</Name>
+			</RequiredInputArgument>
+			<RequiredInputArgument>
+				<Type>Close</Type>
+				<Name>Close</Name>
+			</RequiredInputArgument>
+		</RequiredInputArguments>
+		<OptionalInputArguments>
+			<OptionalInputArgument>
+				<Name>BB Period</Name>
+				<ShortDescription>Period of the Bollinger Bands</ShortDescription>
+				<Type>Integer</Type>
+				<Range>
+					<Minimum>2</Minimum>
+					<Maximum>100000</Maximum>
+					<SuggestedStart>4</SuggestedStart>
+					<SuggestedEnd>200</SuggestedEnd>
+					<SuggestedIncrement>1</SuggestedIncrement>
+				</Range>
+				<DefaultValue>20</DefaultValue>
+			</OptionalInputArgument>
+			<OptionalInputArgument>
+				<Name>Deviations</Name>
+				<ShortDescription>Deviation multiplier for both Bollinger Bands</ShortDescription>
+				<Type>Double</Type>
+				<Range>
+					<Minimum>0.000000e+0</Minimum>
+					<Maximum>3.000000e+37</Maximum>
+					<Precision>2</Precision>
+					<SuggestedStart>1.000000e+0</SuggestedStart>
+					<SuggestedEnd>3.000000e+0</SuggestedEnd>
+					<SuggestedIncrement>2.000000e-1</SuggestedIncrement>
+				</Range>
+				<DefaultValue>2.000000e+0</DefaultValue>
+			</OptionalInputArgument>
+			<OptionalInputArgument>
+				<Name>KC Period</Name>
+				<ShortDescription>Period of the Keltner Channel, and of the momentum regression</ShortDescription>
+				<Type>Integer</Type>
+				<Range>
+					<Minimum>2</Minimum>
+					<Maximum>100000</Maximum>
+					<SuggestedStart>4</SuggestedStart>
+					<SuggestedEnd>200</SuggestedEnd>
+					<SuggestedIncrement>1</SuggestedIncrement>
+				</Range>
+				<DefaultValue>20</DefaultValue>
+			</OptionalInputArgument>
+			<OptionalInputArgument>
+				<Name>Wide Factor</Name>
+				<ShortDescription>Keltner width for the widest compression test</ShortDescription>
+				<Type>Double</Type>
+				<Range>
+					<Minimum>0.000000e+0</Minimum>
+					<Maximum>3.000000e+37</Maximum>
+					<Precision>2</Precision>
+					<SuggestedStart>1.000000e+0</SuggestedStart>
+					<SuggestedEnd>3.000000e+0</SuggestedEnd>
+					<SuggestedIncrement>2.500000e-1</SuggestedIncrement>
+				</Range>
+				<DefaultValue>2.000000e+0</DefaultValue>
+			</OptionalInputArgument>
+			<OptionalInputArgument>
+				<Name>Normal Factor</Name>
+				<ShortDescription>Keltner width for the classic squeeze test</ShortDescription>
+				<Type>Double</Type>
+				<Range>
+					<Minimum>0.000000e+0</Minimum>
+					<Maximum>3.000000e+37</Maximum>
+					<Precision>2</Precision>
+					<SuggestedStart>1.000000e+0</SuggestedStart>
+					<SuggestedEnd>3.000000e+0</SuggestedEnd>
+					<SuggestedIncrement>2.500000e-1</SuggestedIncrement>
+				</Range>
+				<DefaultValue>1.500000e+0</DefaultValue>
+			</OptionalInputArgument>
+			<OptionalInputArgument>
+				<Name>Narrow Factor</Name>
+				<ShortDescription>Keltner width for the tightest compression test</ShortDescription>
+				<Type>Double</Type>
+				<Range>
+					<Minimum>0.000000e+0</Minimum>
+					<Maximum>3.000000e+37</Maximum>
+					<Precision>2</Precision>
+					<SuggestedStart>5.000000e-1</SuggestedStart>
+					<SuggestedEnd>2.000000e+0</SuggestedEnd>
+					<SuggestedIncrement>2.500000e-1</SuggestedIncrement>
+				</Range>
+				<DefaultValue>1.000000e+0</DefaultValue>
+			</OptionalInputArgument>
+		</OptionalInputArguments>
+		<OutputArguments>
+			<OutputArgument>
+				<Type>Double Array</Type>
+				<Name>outMomentum</Name>
+				<Flags>
+					<Flag>Line</Flag>
+				</Flags>
+			</OutputArgument>
+			<OutputArgument>
+				<Type>Integer Array</Type>
+				<Name>outSqueeze</Name>
+				<Flags>
+					<Flag>Line</Flag>
+				</Flags>
+			</OutputArgument>
+		</OutputArguments>
+	</FinancialFunction>
+
+
 	<!-- STC -->
 	<FinancialFunction>
 		<Abbreviation>STC</Abbreviation>
