@@ -114,8 +114,12 @@ static void generate_price_data(int n, const BenchCorpusCfg *corpus) {
  * needs more slots than are compiled in. The generated benches get the same
  * property from `common::max_output_arity` at generation time; this tool is
  * hand-written and cannot, so it checks at run time instead. A function that
- * outgrows a ceiling is also refused at setup and printed as `no buffers`,
- * which is the per-row half of the same guard.
+ * A function that outgrows a ceiling is ALSO refused at setup and printed as
+ * `no buffers`. That path is unreachable while the startup count stands --
+ * measured: with the ceiling at 3 it never runs, and with the startup check
+ * short-circuited the same build prints `HA  no buffers`. It is kept because
+ * unreachable is not the same as untested: it is what stops a future change
+ * that moves the startup check from silently handing two outputs one pointer.
  *
  * #262 is the same defect in the server: a third integer output bound
  * g_outIntBuf1 twice and TA_CallFunc rejected the call. It was fixed there by
