@@ -55,6 +55,7 @@
  *  100126 MF,CC Pre-load the candle defaults, also after TA_Shutdown.
  *  100226 MF,CC A candle factor is finite and not negative (#497).
  *  100226 MF,CC TA_Initialize and TA_Shutdown are idempotent (#497).
+ *  100826 MF,CC Bind vForce at run time for the batch math kernel (#85).
  */
 
 /* Description:
@@ -124,6 +125,45 @@ TA_LibcPriv *TA_Globals = &ta_theGlobals;
 /* None */
 
 /**** Global functions definitions.   ****/
+#if TA_VMATH_KERNEL
+/* What TA_VMathBind answers when vForce cannot be reached. A call site keeps it
+ * like any routine, so the lookup is not repeated. Never called.
+ */
+void TA_VMathUnbound( double *out, const double *in, const int *count )
+{
+   (void)out;
+   (void)in;
+   (void)count;
+}
+
+extern void *dlopen( const char *path, int mode );
+extern void *dlsym( void *handle, const char *symbol );
+
+/* The first image holds vForce alone and loads in a small fraction of the time the
+ * whole framework takes; the framework is the documented path, kept behind it.
+ */
+TA_VMathRoutine TA_VMathBind( const char *symbol )
+{
+   static const char *const image[] =
+   {
+      "/System/Library/Frameworks/Accelerate.framework/Versions/A/Frameworks/vecLib.framework/Versions/A/libvMisc.dylib",
+      "/System/Library/Frameworks/Accelerate.framework/Versions/A/Accelerate"
+   };
+   unsigned int i;
+
+   for( i = 0; i < sizeof(image)/sizeof(image[0]); i++ )
+   {
+      void *handle = dlopen( image[i], 0x5 /* RTLD_LAZY | RTLD_LOCAL */ );
+      if( handle )
+      {
+         void *routine = dlsym( handle, symbol );
+         if( routine ) return __extension__ (TA_VMathRoutine)routine;
+      }
+   }
+   return TA_VMathUnbound;
+}
+#endif
+
 TA_RetCode TA_Initialize( void )
 {
    TA_RetCode retCode;

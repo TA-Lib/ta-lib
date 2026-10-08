@@ -330,7 +330,7 @@ def build_xlanghash(root_dir: str, build_dir: str, jobs: int, lang_filter=None) 
     boundary with a seed (gen_present); Java and C# cross it with lossless
     hex-bits inputs (#114). Java and C# both relax their transcendental-using
     calls to a 1e-9 tolerance (fdlibm != the C libm; .NET does not guarantee
-    Math.* reaches the platform libm). Everything else stays bitwise. Needs the
+    Math.* reaches the platform libm). Needs the
     JDK for the Java server and the .NET SDK for the C# server.
 
     --language narrows the gate to a subset of those three, so a machine with no

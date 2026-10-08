@@ -184,7 +184,7 @@ fn emit_c_ridealong_fn(func: &FuncDef) -> String {
     // One bar of the Open/Update leg: every output on the bar must match before
     // the bar counts. `srCmp` is the comparison's own verdict, so deleting the
     // compare cannot leave the counter climbing.
-    let cmp_bar = |idx: &str, indent: &str| -> String {
+    let cmp_bar = |idx: &str, indent: &str, real_ne: &str| -> String {
         let mut c = String::new();
         let _ = writeln!(c, "{indent}srCmp = 1;");
         for (k, (is_int, slot)) in slot_of.iter().enumerate() {
@@ -196,7 +196,7 @@ fn emit_c_ridealong_fn(func: &FuncDef) -> String {
             } else {
                 let _ = writeln!(
                     c,
-                    "{indent}if( srCmp && sv_xtier_ne(sr_b{slot}[{idx}], srO{k}, &srBenign) ) {{ srCmp = 0; srOut = {k}; srA = sr_b{slot}[{idx}]; srB = srO{k}; }}"
+                    "{indent}if( srCmp && {real_ne}(sr_b{slot}[{idx}], srO{k}, &srBenign) ) {{ srCmp = 0; srOut = {k}; srA = sr_b{slot}[{idx}]; srB = srO{k}; }}"
                 );
             }
         }
@@ -327,7 +327,7 @@ fn emit_c_ridealong_fn(func: &FuncDef) -> String {
     // block silently. That shape left the real OpenAndFill compare dead across
     // 178 functions for four releases.
     s.push_str("        if( srOk )\n        {\n");
-    s.push_str(&cmp_bar("srLb - srBeg", "            "));
+    s.push_str(&cmp_bar("srLb - srBeg", "            ", "sv_xtier_ne"));
     s.push_str("            if( srCmp ) srOpenBars++;\n");
     s.push_str("            if( !srCmp ) { srOk = 0; srLeg = 1; srBar = srLb; }\n");
     s.push_str("            for( srT = srLb + 1; srOk && srT < srM; srT++ )\n            {\n");
@@ -335,13 +335,20 @@ fn emit_c_ridealong_fn(func: &FuncDef) -> String {
     for j in 0..input_names.len() {
         let _ = write!(upd_args, "g_inBuf{j}[srT], ");
     }
+    // Only the Update bars: the Open bar and the fill are the batch loop's own
+    // values.
+    let step_ne = if crate::backends::c::batch_renders_vmath_map(func) {
+        "sv_step_ne"
+    } else {
+        "sv_xtier_ne"
+    };
     let _ = writeln!(
         s,
         "                srRc = TA_{n}_Update( srH, {upd_args}{} );",
         scalar_addrs.trim_start_matches(", ")
     );
     s.push_str("                if( srRc != TA_SUCCESS ) { srOk = 0; srLeg = 1; srBar = srT; break; }\n");
-    s.push_str(&cmp_bar("srT - srBeg", "                "));
+    s.push_str(&cmp_bar("srT - srBeg", "                ", step_ne));
     s.push_str("                if( srCmp ) srOpenBars++;\n");
     s.push_str("                if( !srCmp ) { srOk = 0; srLeg = 1; srBar = srT; }\n");
     s.push_str("            }\n        }\n");

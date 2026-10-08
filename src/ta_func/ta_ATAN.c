@@ -90,10 +90,7 @@ TA_LIB_API TA_RetCode TA_ATAN( int    startIdx,
       return TA_BAD_PARAM;
 
    /* Default return values */
-   for( i = startIdx, outIdx = 0; i <= endIdx; i += 1, outIdx += 1 )
-   {
-      outReal[outIdx] = atan(inReal[i]);
-   }
+   TA_VMATH_MAP( atan, i, startIdx, endIdx, outIdx, outReal[outIdx], inReal[i] )
    *outNBElement= outIdx;
    *outBegIdx= startIdx;
    return TA_SUCCESS;
@@ -121,10 +118,7 @@ TA_RetCode TA_S_ATAN( int    startIdx,
    if( !outReal )
       return TA_BAD_PARAM;
 
-   for( i = startIdx, outIdx = 0; i <= endIdx; i += 1, outIdx += 1 )
-   {
-      outReal[outIdx] = atan((double)inReal[i]);
-   }
+   TA_VMATH_MAP( atan, i, startIdx, endIdx, outIdx, outReal[outIdx], (double)inReal[i] )
    *outNBElement= outIdx;
    *outBegIdx= startIdx;
    return TA_SUCCESS;
@@ -170,10 +164,7 @@ static TA_RetCode TA_ATAN_OpenImpl( struct TA_ATAN_Stream **stream, const double
       int outIdx;
       int i;
       /* Default return values */
-      for( i = startIdx, outIdx = 0; i <= endIdx; i += 1, outIdx += 1 )
-      {
-         outReal[outIdx * outStride] = atan(inReal[i]);
-      }
+      TA_VMATH_MAP( atan, i, startIdx, endIdx, outIdx, outReal[outIdx * outStride], inReal[i] )
       *outNBElement= outIdx;
       *outBegIdx= startIdx;
 

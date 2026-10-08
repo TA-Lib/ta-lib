@@ -89,10 +89,7 @@ TA_LIB_API TA_RetCode TA_COSH( int    startIdx,
    if( !outReal )
       return TA_BAD_PARAM;
 
-   for( i = startIdx, outIdx = 0; i <= endIdx; i += 1, outIdx += 1 )
-   {
-      outReal[outIdx] = cosh(inReal[i]);
-   }
+   TA_VMATH_MAP( cosh, i, startIdx, endIdx, outIdx, outReal[outIdx], inReal[i] )
    *outNBElement= outIdx;
    *outBegIdx= startIdx;
    return TA_SUCCESS;
@@ -120,10 +117,7 @@ TA_RetCode TA_S_COSH( int    startIdx,
    if( !outReal )
       return TA_BAD_PARAM;
 
-   for( i = startIdx, outIdx = 0; i <= endIdx; i += 1, outIdx += 1 )
-   {
-      outReal[outIdx] = cosh((double)inReal[i]);
-   }
+   TA_VMATH_MAP( cosh, i, startIdx, endIdx, outIdx, outReal[outIdx], (double)inReal[i] )
    *outNBElement= outIdx;
    *outBegIdx= startIdx;
    return TA_SUCCESS;
@@ -168,10 +162,7 @@ static TA_RetCode TA_COSH_OpenImpl( struct TA_COSH_Stream **stream, const double
    {
       int outIdx;
       int i;
-      for( i = startIdx, outIdx = 0; i <= endIdx; i += 1, outIdx += 1 )
-      {
-         outReal[outIdx * outStride] = cosh(inReal[i]);
-      }
+      TA_VMATH_MAP( cosh, i, startIdx, endIdx, outIdx, outReal[outIdx * outStride], inReal[i] )
       *outNBElement= outIdx;
       *outBegIdx= startIdx;
 

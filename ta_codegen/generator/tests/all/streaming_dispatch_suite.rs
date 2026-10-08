@@ -1654,6 +1654,144 @@ fn test_c_server_state_equivalence_leg() {
     );
 }
 
+/// The names `regtest_vmath_batch` answers for, read from the array its body
+/// names.
+fn harness_vmath_list(test_util: &str) -> Option<std::collections::BTreeSet<String>> {
+    let (at, _) = test_util.match_indices("regtest_vmath_batch(").find(|(i, _)| {
+        let rest = &test_util[*i..];
+        rest.find(')').is_some_and(|close| rest[close + 1..].trim_start().starts_with('{'))
+    })?;
+    let body = &test_util[at..];
+    let body = &body[..body.find("\n}").expect("regtest_vmath_batch closes")];
+    let is_ident = |c: char| c.is_alphanumeric() || c == '_';
+    let list = test_util.match_indices("[]").find_map(|(i, brackets)| {
+        let init = test_util[i + brackets.len()..].trim_start().strip_prefix('=')?;
+        let init = init.trim_start().strip_prefix('{')?;
+        let name_at = test_util[..i].rfind(|c: char| !is_ident(c)).map_or(0, |p| p + 1);
+        let name = &test_util[name_at..i];
+        let read = body.match_indices(name).any(|(j, _)| {
+            !body[..j].ends_with(is_ident) && !body[j + name.len()..].starts_with(is_ident)
+        });
+        (!name.is_empty() && read).then(|| &init[..init.find("};").expect("the array closes")])
+    });
+    let list = list.expect(
+        "regtest_vmath_batch reads no `<name>[] = { .. };` array of names in test_util.c: \
+         teach this test where the list now lives",
+    );
+    Some(list.split('"').skip(1).step_by(2).map(str::to_string).collect())
+}
+
+/// The functions whose batch loop is a vector kernel on one platform are one
+/// set, held in three places: the `TA_VMATH_MAP` loops of the committed C, the
+/// C server legs that spell `sv_step_ne`, and the harness's list. Where there
+/// is no kernel all three are inert, so a
+/// drift shows on no platform a PR runs on: a name too many loosens that
+/// function's compares for nothing, a name too few is red there alone.
+///
+/// Which legs spell it is the other half. `sv_step_ne` is `sv_xtier_ne` where
+/// there is no kernel, so moving the fill, Open or anchored compare onto it
+/// changes no token there, and on the kernel platform drops the only check
+/// that every element is one function of one value.
+#[test]
+fn the_vmath_class_is_one_set_and_only_its_step_legs_take_the_lane() {
+    use std::collections::BTreeSet;
+    let root = Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");
+    let read = |rel: &str| {
+        std::fs::read_to_string(root.join(rel)).unwrap_or_else(|e| panic!("{rel}: {e}"))
+    };
+
+    let mut in_c = BTreeSet::new();
+    for entry in std::fs::read_dir(root.join("src/ta_func")).expect("src/ta_func").flatten() {
+        let file = entry.file_name().to_string_lossy().into_owned();
+        let Some(name) = file.strip_prefix("ta_").and_then(|n| n.strip_suffix(".c")) else {
+            continue;
+        };
+        let text = std::fs::read_to_string(entry.path()).expect("readable");
+        if text.contains("TA_VMATH_MAP(") {
+            in_c.insert(name.to_string());
+        }
+    }
+    assert!(!in_c.is_empty(), "no committed src/ta_func/*.c renders TA_VMATH_MAP");
+
+    let base = root.join("ta_codegen/input");
+    let enums = parser::enums::load_enums(&base.join("enums.yaml"));
+    let funcs: Vec<ir::FuncDef> = discover_indicators().iter().map(|n| load_indicator(n).0).collect();
+    let srv = ta_codegen_lib::server_gen::generate_c_server(&funcs, &enums);
+    let body = |head: String| {
+        let at = srv.find(&head).unwrap_or_else(|| panic!("no `{head}` in the C server"));
+        &srv[at..at + srv[at..].find("\n}\n").expect("the function closes")]
+    };
+    let mut in_server = BTreeSet::new();
+    for f in funcs.iter().filter(|f| f.streaming) {
+        let n = &f.name;
+        let verify = body(format!("static SV_NOINLINE void sv_verify_{n}("));
+        let state = body(format!("static int sv_steq_TA_{n}( const struct TA_{n}_Stream *a, const struct TA_{n}_Stream *b, const char **w, int *z )\n{{"));
+        let ride = body(format!("static void sr_{n}( "));
+        let steps = [verify, state, ride].map(|b| b.matches("sv_step_ne(").count());
+        if steps == [0, 0, 0] {
+            assert!(!verify.contains("SV_STEP_EXACT"), "{n}: an exact window with no lane to close");
+            continue;
+        }
+        in_server.insert(n.clone());
+
+        let reals: Vec<usize> = (0..f.outputs.len())
+            .filter(|&i| f.outputs[i].param_type != ir::ParamType::Integer)
+            .collect();
+        assert_eq!(
+            steps,
+            [4 * reals.len(), reals.len(), reals.len()],
+            "{n}: per real output the lane is the Update leg and the three fork compares, the \
+             `cur_` field, and the ride's Update bars"
+        );
+        for (slot, i) in reals.iter().enumerate() {
+            for (leg, kept) in [
+                ("fill", format!("sv_xtier_ne(sv_f{slot}[ft], sv_b{slot}[ft], &svZsign)")),
+                ("Open", format!("sv_xtier_ne(v{i}, sv_b{slot}[(P - 1) - svBeg], &svZsign)")),
+                ("anchored", format!("sv_xtier_ne(v{i}, sv_b{slot}[(svN - 1) - svBegS], &svZsign)")),
+            ] {
+                assert!(verify.contains(&kept), "{n}: the {leg} leg must stay `{kept}`");
+            }
+            for (leg, kept) in [
+                ("Open bar", format!("sv_xtier_ne(sr_b{slot}[srLb - srBeg], srO{i}, &srBenign)")),
+                ("fill", format!("sv_xtier_ne(sr_b{slot}[srK], sr_f{slot}[srK], &srBenign)")),
+            ] {
+                assert!(ride.contains(&kept), "{n}: the ride's {leg} must stay `{kept}`");
+            }
+        }
+        let peek = format!(
+            "SV_STEP_EXACT(1)\n                if( sv_steq_TA_{n}( stPk, stEq, &pkWhat, &svZsign ) ) {{ peekAll = 0; peekBad = pkWhat; }}\n                SV_STEP_EXACT(0)\n"
+        );
+        assert!(
+            verify.contains(&peek),
+            "{n}: the peek leg compares two opener-seeded handles and must hold `cur_` to bits"
+        );
+    }
+    assert_eq!(
+        in_server, in_c,
+        "the functions whose C server legs spell sv_step_ne are not the ones whose committed C \
+         renders TA_VMATH_MAP"
+    );
+
+    match harness_vmath_list(&read("src/tools/ta_regtest/test_util.c")) {
+        Some(listed) => assert_eq!(
+            listed, in_c,
+            "regtest_vmath_batch's list in test_util.c is not the functions whose committed C \
+             renders TA_VMATH_MAP"
+        ),
+        None => panic!(
+            "src/tools/ta_regtest/test_util.c defines no regtest_vmath_batch this test can find, \
+             so the harness's list is not compared"
+        ),
+    }
+
+    // A frozen release has neither the kernel macro nor the stream structs.
+    let leaked = common::first_line_a_ref_serve_build_compiles(
+        &srv,
+        &["sv_step_ne", "g_svVmath", "g_svStepExact", "SV_STEP_EXACT", "fuzz_vmath_near", "vmath\\\":"],
+    );
+    assert!(leaked.is_none(), "emitted outside `#ifndef TA_REF_SERVE`: {leaked:?}");
+}
+
 /// Pin HT_TRENDLINE: a rescan window over the RAW input (the padded-loop source
 /// rewrite of `inReal[idx--]`), no circbuf, single output.
 #[test]
