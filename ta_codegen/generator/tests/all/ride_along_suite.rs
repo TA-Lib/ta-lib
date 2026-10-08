@@ -8,7 +8,7 @@
 //! pinned here, on emitted text, where a missing emitter is loud.
 
 use crate::common;
-use common::{discover_indicators, load_indicator};
+use common::{discover_indicators, first_line_a_ref_serve_build_compiles, load_indicator};
 use std::path::Path;
 use ta_codegen_lib::{ir, parser};
 
@@ -85,8 +85,10 @@ fn every_backend_compares_every_ride_output() {
             want_fns,
             "{lang}: emitted ride functions != streaming functions"
         );
+        // C spells the Update-bar compare `sv_step_ne` for a function whose batch
+        // loop is `TA_VMATH_MAP`.
         assert_eq!(
-            src.matches(cmp_needle).count(),
+            src.matches(cmp_needle).count() + src.matches("sv_step_ne(sr_b").count(),
             want_cmps,
             "{lang}: ride comparisons != 3 per real output. A deleted comparison \
              leaves its bar counter climbing, so no runtime floor can see this."
@@ -307,27 +309,10 @@ fn the_ride_along_is_emitted_after_the_timed_region() {
 fn the_c_ride_along_is_entirely_inside_the_ref_serve_guard() {
     let (funcs, enums) = corpus();
     let src = ta_codegen_lib::server_gen::generate_c_server(&funcs, &enums);
-    let mut depth = 0i32;
-    let mut guarded = true;
-    for line in src.lines() {
-        let t = line.trim_start();
-        if t.starts_with("#ifndef TA_REF_SERVE") {
-            depth += 1;
-        } else if t.starts_with("#endif") && depth > 0 {
-            depth -= 1;
-        } else if depth == 0
-            && (t.contains("sr_")
-                || t.contains("SR_")
-                || t.contains("g_sr")
-                || t.contains("RIDE_"))
-        {
-            guarded = false;
-            break;
-        }
-    }
+    let leaked = first_line_a_ref_serve_build_compiles(&src, &["sr_", "SR_", "g_sr", "RIDE_"]);
     assert!(
-        guarded,
-        "a ride-along symbol is emitted outside `#ifndef TA_REF_SERVE`"
+        leaked.is_none(),
+        "a ride-along symbol is emitted outside `#ifndef TA_REF_SERVE`: {leaked:?}"
     );
 }
 

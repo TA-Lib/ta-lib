@@ -89,10 +89,7 @@ TA_LIB_API TA_RetCode TA_LN( int    startIdx,
    if( !outReal )
       return TA_BAD_PARAM;
 
-   for( i = startIdx, outIdx = 0; i <= endIdx; i += 1, outIdx += 1 )
-   {
-      outReal[outIdx] = log(inReal[i]);
-   }
+   TA_VMATH_MAP( log, i, startIdx, endIdx, outIdx, outReal[outIdx], inReal[i] )
    *outNBElement= outIdx;
    *outBegIdx= startIdx;
    return TA_SUCCESS;
@@ -120,10 +117,7 @@ TA_RetCode TA_S_LN( int    startIdx,
    if( !outReal )
       return TA_BAD_PARAM;
 
-   for( i = startIdx, outIdx = 0; i <= endIdx; i += 1, outIdx += 1 )
-   {
-      outReal[outIdx] = log((double)inReal[i]);
-   }
+   TA_VMATH_MAP( log, i, startIdx, endIdx, outIdx, outReal[outIdx], (double)inReal[i] )
    *outNBElement= outIdx;
    *outBegIdx= startIdx;
    return TA_SUCCESS;
@@ -168,10 +162,7 @@ static TA_RetCode TA_LN_OpenImpl( struct TA_LN_Stream **stream, const double inR
    {
       int outIdx;
       int i;
-      for( i = startIdx, outIdx = 0; i <= endIdx; i += 1, outIdx += 1 )
-      {
-         outReal[outIdx * outStride] = log(inReal[i]);
-      }
+      TA_VMATH_MAP( log, i, startIdx, endIdx, outIdx, outReal[outIdx * outStride], inReal[i] )
       *outNBElement= outIdx;
       *outBegIdx= startIdx;
 

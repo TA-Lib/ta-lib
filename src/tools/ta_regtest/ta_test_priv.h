@@ -333,6 +333,13 @@ int checkOracleValue( double got, double want,
                       double relTol, double absTol,
                       double *outErr, const char **outMode );
 
+/* 1 when TA_<funcName>'s batch loop is a vector kernel on this build
+ * (TA_VMATH_KERNEL), always 0 on a build without one. Its batch,
+ * TA_S_, OpenAndFill and Open values then agree with each other bit for bit,
+ * and with the same value from libm (Update, Peek, another language, a frozen
+ * release) only as fuzz_vmath_near allows. The one list of those functions. */
+int regtest_vmath_batch( const char *funcName );
+
 /* Print out info about a retCode */
 void printRetCode( TA_RetCode retCode );
 

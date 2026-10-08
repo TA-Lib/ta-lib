@@ -1274,6 +1274,124 @@ fn gen_func_inner(
     out
 }
 
+/// The libm calls `TA_VMATH_MAP` (`ta_utility.h`) has a vector kernel for.
+fn vmath_kernel(name: &str) -> Option<&'static str> {
+    let mf = MathFn::from_name(name)?;
+    match mf {
+        MathFn::Sin
+        | MathFn::Cos
+        | MathFn::Tan
+        | MathFn::Asin
+        | MathFn::Acos
+        | MathFn::Atan
+        | MathFn::Sinh
+        | MathFn::Cosh
+        | MathFn::Tanh
+        | MathFn::Exp
+        | MathFn::Log
+        | MathFn::Log10 => Some(mf.canonical()),
+        MathFn::Sqrt | MathFn::Floor | MathFn::Ceil | MathFn::Abs | MathFn::Max | MathFn::Min => None,
+    }
+}
+
+/// The arguments of one `TA_VMATH_MAP( .. )`.
+struct VmathMap<'a> {
+    kernel: &'static str,
+    cursor: &'a str,
+    first: &'a Expr,
+    last: &'a Expr,
+    out_cursor: &'a str,
+    target: &'a Expr,
+    source: &'a Expr,
+}
+
+/// `for( i = first, o = 0; i <= last; i += 1, o += 1 ) { out[o] = fn(in[i]); }`
+/// and nothing else; `out[o]` may be the open tier's `out[o * stride]`.
+///
+/// Keep every clause checked. The macro's kernel expansion computes this loop
+/// and no other, so a loop taken here that is not exactly this one is wrong on
+/// the kernel platform only, where no other platform's run can show it.
+fn vmath_map<'a>(
+    init: &'a Statement,
+    condition: &'a Expr,
+    update: &'a Statement,
+    body: &'a [Statement],
+    nullable: &[String],
+) -> Option<VmathMap<'a>> {
+    let is_var = |e: &Expr, name: &str| matches!(e, Expr::Var(v) if v == name);
+    let steps_by_one = |s: &Statement, name: &str| {
+        matches!(
+            s,
+            Statement::Assign { target, value: Expr::BinOp(l, BinOp::Add, r), compound: true }
+                if is_var(target, name) && is_var(l, name) && matches!(r.as_ref(), Expr::IntLiteral(1))
+        )
+    };
+
+    let (Statement::Block { body: init }, Statement::Block { body: update }) = (init, update) else {
+        return None;
+    };
+    let [Statement::Assign { target: Expr::Var(cursor), value: first @ Expr::Var(_), compound: false }, Statement::Assign { target: Expr::Var(out_cursor), value: Expr::IntLiteral(0), compound: false }] =
+        init.as_slice()
+    else {
+        return None;
+    };
+    let Expr::BinOp(bound, BinOp::LessEq, last) = condition else {
+        return None;
+    };
+    let [step, out_step] = update.as_slice() else {
+        return None;
+    };
+    // Comments do not count: `TA_S_` renders a body stripped of them, and the
+    // three renderings of one loop must classify alike.
+    let mut code = body.iter().filter(|s| !matches!(s, Statement::Comment(_)));
+    let (Some(Statement::Assign { target, value: Expr::FuncCall(fname, args), compound: false }), None) =
+        (code.next(), code.next())
+    else {
+        return None;
+    };
+    let Expr::ArrayAccess(out, out_idx) = target else {
+        return None;
+    };
+    let [source @ Expr::ArrayAccess(_, in_idx)] = args.as_slice() else {
+        return None;
+    };
+    let kernel = vmath_kernel(fname)?;
+
+    let loop_invariant = |e: &Expr| matches!(e, Expr::Var(v) if v != cursor && v != out_cursor);
+    let out_idx_ok = match out_idx.as_ref() {
+        Expr::BinOp(l, BinOp::Mul, stride) => is_var(l, out_cursor) && loop_invariant(stride),
+        idx => is_var(idx, out_cursor),
+    };
+    let ok = cursor != out_cursor
+        && loop_invariant(first)
+        && loop_invariant(last)
+        && is_var(bound, cursor)
+        && steps_by_one(step, cursor)
+        && steps_by_one(out_step, out_cursor)
+        && out_idx_ok
+        && is_var(in_idx, cursor)
+        && !nullable.contains(out);
+    ok.then_some(VmathMap { kernel, cursor, first, last, out_cursor, target, source })
+}
+
+/// Whether `func`'s batch tier renders a loop as `TA_VMATH_MAP`.
+///
+/// Answered by [`vmath_map`] over the bodies that tier renders, never by a list
+/// of names: a function named here whose loop is spelled out would have its
+/// stream compares loosened on the kernel platform with nothing to absorb.
+pub(crate) fn batch_renders_vmath_map(func: &FuncDef) -> bool {
+    fn any(stmts: &[Statement], nullable: &[String]) -> bool {
+        stmts.iter().any(|s| {
+            matches!(s, Statement::ForC { init, condition, update, body }
+                if vmath_map(init, condition, update, body, nullable).is_some())
+                || crate::streaming::nested_bodies(s).0.into_iter().any(|b| any(b, nullable))
+        })
+    }
+    let func = func.resolved_for(crate::ir::Lang::C);
+    let nullable = super::common::nullable_output_list(&func);
+    any(&func.body, &nullable) || (func.has_explicit_private && any(&func.private_body, &nullable))
+}
+
 /// Render a ForC init or update clause. If it's a Block with multiple
 /// statements, comma-separate them instead of using semicolons.
 fn render_forc_part(
@@ -1844,6 +1962,28 @@ impl StatementEmitter for CStmt<'_> {
 
     fn for_c(&self, init: &Statement, condition: &Expr, update: &Statement, body: &[Statement], indent: usize) -> String {
         let pad = " ".repeat(indent);
+        if let Some(m) = vmath_map(init, condition, update, body, self.ctx.nullable_outputs) {
+            // Each argument is the plain loop's own rendering of that piece, which
+            // is what makes the macro's plain expansion that loop token for token.
+            let expr = |e: &Expr| render_expr(e, self.ctx, self.registry, self.helpers);
+            let target = render_assign_target(m.target, self.ctx, self.registry, self.helpers);
+            let mut out: String = body
+                .iter()
+                .filter(|s| matches!(s, Statement::Comment(_)))
+                .map(|c| self.walk_stmt(c, indent))
+                .collect();
+            out.push_str(&format!(
+                "{pad}TA_VMATH_MAP( {}, {}, {}, {}, {}, {}, {} )\n",
+                m.kernel,
+                m.cursor,
+                expr(m.first),
+                expr(m.last),
+                m.out_cursor,
+                target.trim_end(),
+                expr(m.source)
+            ));
+            return out;
+        }
         let init_str = render_forc_part(
             init, self.ctx, self.enums, self.registry, self.helpers,
         );
@@ -2906,6 +3046,56 @@ mod tests {
     fn make_registry() -> Registry {
         let base = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../ta_codegen/input");
         Registry::from_dir(&base)
+    }
+
+    /// The kernel `vmath_map` answers for the one `for` statement in `loop_src`.
+    fn vmath_kernel_of(loop_src: &str) -> Option<&'static str> {
+        let src = format!(
+            "int x_lookback(void)\n{{\n   return 0;\n}}\n\n\
+             TA_RetCode x(int startIdx, int endIdx,\n   const double inReal[],\n   \
+             int *outBegIdx, int *outNBElement,\n   double outReal[])\n{{\n   \
+             int outIdx;\n   int i;\n\n   {loop_src}\n\n   \
+             *outNBElement = outIdx;\n   *outBegIdx    = startIdx;\n\n   return TA_SUCCESS;\n}}\n"
+        );
+        let parsed = parser::c_source::parse_c_source_str(&src);
+        let body = &parsed.functions.iter().find(|f| f.name == "x").expect("function x").body;
+        let Some(Statement::ForC { init, condition, update, body }) =
+            body.iter().find(|s| matches!(s, Statement::ForC { .. }))
+        else {
+            panic!("no C-style for loop parsed from:\n{loop_src}");
+        };
+        vmath_map(init, condition, update, body, &[]).map(|m| m.kernel)
+    }
+
+    #[test]
+    fn vmath_map_takes_the_one_loop_shape_and_no_near_miss() {
+        const HEAD: &str = "for( i=startIdx, outIdx=0; i <= endIdx; i++, outIdx++ )";
+        let with_body = |b: &str| format!("{HEAD}\n   {{\n      {b}\n   }}");
+        let with_head = |h: &str| format!("{h}\n   {{\n      outReal[outIdx] = sin(inReal[i]);\n   }}");
+
+        assert_eq!(vmath_kernel_of(&with_head(HEAD)), Some("sin"));
+        assert_eq!(vmath_kernel_of(&with_body("outReal[outIdx] = log(inReal[i]);")), Some("log"));
+        // `TA_S_` renders the body without its comments, and the three renderings
+        // of one loop must classify alike.
+        assert_eq!(
+            vmath_kernel_of(&with_body("/* per element */\n      outReal[outIdx] = sin(inReal[i]);")),
+            Some("sin")
+        );
+
+        for (what, near_miss) in [
+            ("a step of 2", with_head("for( i=startIdx, outIdx=0; i <= endIdx; i += 2, outIdx++ )")),
+            ("`<` for `<=`", with_head("for( i=startIdx, outIdx=0; i < endIdx; i++, outIdx++ )")),
+            (
+                "two statements in the body",
+                with_body("outReal[outIdx] = sin(inReal[i]);\n      outReal[outIdx] = cos(inReal[i]);"),
+            ),
+            ("a compound assignment", with_body("outReal[outIdx] += sin(inReal[i]);")),
+            ("a call that has no kernel", with_body("outReal[outIdx] = sqrt(inReal[i]);")),
+            ("the out slot indexed by the in cursor", with_body("outReal[i] = sin(inReal[i]);")),
+            ("the in slot indexed by the out cursor", with_body("outReal[outIdx] = sin(inReal[outIdx]);")),
+        ] {
+            assert_eq!(vmath_kernel_of(&near_miss), None, "{what} was taken as a TA_VMATH_MAP loop");
+        }
     }
 
     #[test]

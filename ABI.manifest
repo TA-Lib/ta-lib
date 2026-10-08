@@ -4,7 +4,7 @@ format 9
 soname libta-lib.so.1
 version-info 3:0:2
 headers ta_abstract.h ta_common.h ta_defs.h ta_func.h ta_libc.h
-function-count 3056
+function-count 3044
 platform pointer=8 long=8 int=4 enum=4
 type TA_FuncInfo sizeof=48 name:const_char_*=0 group:const_char_*=8 hint:const_char_*=16 flags:TA_FuncFlags=24 nbInput:unsigned_int=28 nbOptInput:unsigned_int=32 nbOutput:unsigned_int=36 handle:const_TA_FuncHandle_*=40
 type TA_InputParameterInfo sizeof=24 type:TA_InputParameterType=0 paramName:const_char_*=8 flags:TA_InputFlags=16
@@ -1382,6 +1382,7 @@ function TA_RetCode TA_GetInputParameterInfo(const TA_FuncHandle *, unsigned int
 function TA_RetCode TA_GetLookback(const TA_ParamHolder *, TA_Integer *)
 function TA_RetCode TA_GetOptInputParameterInfo(const TA_FuncHandle *, unsigned int, const TA_OptInputParameterInfo **)
 function TA_RetCode TA_GetOutputParameterInfo(const TA_FuncHandle *, unsigned int, const TA_OutputParameterInfo **)
+function TA_RetCode TA_GetRuntimeInfo(const char *, int *)
 function TA_RetCode TA_GroupTableAlloc(TA_StringTable **)
 function TA_RetCode TA_GroupTableFree(TA_StringTable *)
 function TA_RetCode TA_HA(int, int, const double *, const double *, const double *, const double *, int *, int *, double *, double *, double *, double *)
@@ -2525,7 +2526,6 @@ function TA_RetCode TA_S_VORTEX(int, int, const float *, const float *, const fl
 function TA_RetCode TA_S_VWAP(int, int, const float *, const float *, const float *, const float *, int *, int *, double *)
 function TA_RetCode TA_S_VWMA(int, int, const float *, const float *, int, int *, int *, double *)
 function TA_RetCode TA_S_WAD(int, int, const float *, const float *, const float *, int *, int *, double *)
-function TA_RetCode TA_S_WAVETREND(int, int, const float *, const float *, const float *, int, int, int, int *, int *, double *, double *)
 function TA_RetCode TA_S_WCLPRICE(int, int, const float *, const float *, const float *, int *, int *, double *)
 function TA_RetCode TA_S_WILLR(int, int, const float *, const float *, const float *, int, int *, int *, double *)
 function TA_RetCode TA_S_WMA(int, int, const float *, int, int *, int *, double *)
@@ -2721,16 +2721,6 @@ function TA_RetCode TA_WAD_OutRange(const TA_WAD_Stream *, int *, int *)
 function TA_RetCode TA_WAD_Peek(const TA_WAD_Stream *, double, double, double, double *)
 function TA_RetCode TA_WAD_Update(TA_WAD_Stream *, double, double, double, double *)
 function TA_RetCode TA_WAD_Value(const TA_WAD_Stream *, double *)
-function TA_RetCode TA_WAVETREND(int, int, const double *, const double *, const double *, int, int, int, int *, int *, double *, double *)
-function TA_RetCode TA_WAVETREND_Advance(TA_WAVETREND_Stream *)
-function TA_RetCode TA_WAVETREND_Clone(const TA_WAVETREND_Stream *, TA_WAVETREND_Stream **)
-function TA_RetCode TA_WAVETREND_Close(TA_WAVETREND_Stream *)
-function TA_RetCode TA_WAVETREND_Open(TA_WAVETREND_Stream **, const double *, const double *, const double *, int, int, int, int, double *, double *)
-function TA_RetCode TA_WAVETREND_OpenAndFill(TA_WAVETREND_Stream **, const double *, const double *, const double *, int, int, int, int, int *, int *, double *, double *)
-function TA_RetCode TA_WAVETREND_OutRange(const TA_WAVETREND_Stream *, int *, int *)
-function TA_RetCode TA_WAVETREND_Peek(const TA_WAVETREND_Stream *, double, double, double, double *, double *)
-function TA_RetCode TA_WAVETREND_Update(TA_WAVETREND_Stream *, double, double, double, double *, double *)
-function TA_RetCode TA_WAVETREND_Value(const TA_WAVETREND_Stream *, double *, double *)
 function TA_RetCode TA_WCLPRICE(int, int, const double *, const double *, const double *, int *, int *, double *)
 function TA_RetCode TA_WCLPRICE_Advance(TA_WCLPRICE_Stream *)
 function TA_RetCode TA_WCLPRICE_Clone(const TA_WCLPRICE_Stream *, TA_WCLPRICE_Stream **)
@@ -3234,8 +3224,6 @@ function int TA_VWMA_DisplayShift(int, int)
 function int TA_VWMA_Lookback(int)
 function int TA_WAD_DisplayShift(int)
 function int TA_WAD_Lookback(void)
-function int TA_WAVETREND_DisplayShift(int, int, int, int)
-function int TA_WAVETREND_Lookback(int, int, int)
 function int TA_WCLPRICE_DisplayShift(int)
 function int TA_WCLPRICE_Lookback(void)
 function int TA_WILLR_DisplayShift(int, int)

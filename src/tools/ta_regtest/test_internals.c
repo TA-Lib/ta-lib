@@ -1748,6 +1748,10 @@ static ErrorNumber testUnstablePeriodBounds( void )
       for( pass = 0; pass < 2; pass++ )
       {
          TA_RetCode first, second;
+         int initBefore = -1, shutBefore = -1, initAfter = -1, shutAfter = -1;
+         if( TA_GetRuntimeInfo( "count.initialize", &initBefore ) != TA_SUCCESS ||
+             TA_GetRuntimeInfo( "count.shutdown", &shutBefore ) != TA_SUCCESS )
+            return TA_INTERNAL_INIT_RESET_FAIL;
          TA_SetUnstablePeriod( TA_FUNC_UNST_ALL, 5 );
          TA_SetCandleSettings( TA_BodyDoji, TA_RangeType_Shadows, 7, 2.5 );
          first = pass == 0 ? TA_Initialize() : TA_Shutdown();
@@ -1758,6 +1762,15 @@ static ErrorNumber testUnstablePeriodBounds( void )
          {
             printf( "\nFailed: TA_%s answered %d then %d, expected TA_SUCCESS twice\n",
                     pass == 0 ? "Initialize" : "Shutdown", (int)first, (int)second );
+            return TA_INTERNAL_INIT_RESET_FAIL;
+         }
+         if( TA_GetRuntimeInfo( "count.initialize", &initAfter ) != TA_SUCCESS ||
+             TA_GetRuntimeInfo( "count.shutdown", &shutAfter ) != TA_SUCCESS ||
+             initAfter != initBefore + ( pass == 0 ? 2 : 0 ) ||
+             shutAfter != shutBefore + ( pass == 0 ? 0 : 2 ) )
+         {
+            printf( "\nFailed: two calls of TA_%s moved count.initialize %d -> %d and count.shutdown %d -> %d\n",
+                    pass == 0 ? "Initialize" : "Shutdown", initBefore, initAfter, shutBefore, shutAfter );
             return TA_INTERNAL_INIT_RESET_FAIL;
          }
          for( id = 0; id < TA_FUNC_UNST_COUNT; id++ )

@@ -110,6 +110,22 @@ that reach a transcendental, which take `server_verify`'s 1e-9 rule (below).
 Integer outputs compare exactly. Integer parameters sweep from each one's
 declared minimum.
 
+**The kernel lane.** Where the batch tier is a vector kernel (`TA_VMATH_KERNEL`
+is 1), every "bitwise" in this file has one exception: for a
+`regtest_vmath_batch` function, a kernel value against a libm value (a Rust
+server, a frozen release, the C server's own Update) is held by
+`fuzz_vmath_near`. Kernel against kernel stays bitwise. The lane compiles to
+nothing on every other build, so a comparison site added without it stays green
+there.
+
+The lane cannot tell a kernel that silently gave way to the plain loop: the
+values still pass, and only the speed is lost. `ta_regtest` asks the library
+instead, on every build: right after its first `TA_Initialize`, which loads the
+kernel, and before any function has run, `TA_GetRuntimeInfo` must report it
+loaded on the kernel's platform, which the check states for itself. Keep it a
+state query: a value cannot tell a kernel from a math library that happens to
+agree with it.
+
 The sweep **compares values by default** for every function; checking only
 coherency is how the TRIX partial-range mislabeling survived two decades.
 EMA-derived functions map to `TA_FUNC_UNST_EMA` in `UNSTABLE_MAP` so the
@@ -698,7 +714,7 @@ on it. Needs cmake + gcc + cargo plus the **JDK** and the **.NET SDK**.
 
 Scope rules (deliberate):
 
-- **No waivers; one tolerance and two skips.** Current against current, so no
+- **No waivers; the transcendental tolerance, the kernel lane and two skips.** Current against current, so no
   frozen-release carve-out applies. A non-tolerated mismatch is a real
   fusion-site or codegen divergence to fix.
 - **The choice-list default sentinel, Java only.** Every optional parameter gets
@@ -734,7 +750,7 @@ exact arrays instead of a seed, sharing the driver core in `test_codegen.c`.
 The hard-coded tests validate in-process C against the expected constants at a
 legitimate tolerance; this runs the *transitive* check, feeding the same inputs
 to another language and requiring **exact** agreement with what C computed (same
-algorithm + same inputs ⇒ same bits). Do not give it a tolerance: a 1e-6
+algorithm + same inputs ⇒ same bits). Do not give it a tolerance of its own: a 1e-6
 re-compare would be strictly weaker than "C == server, then C == expected ⇒
 server == expected".
 
