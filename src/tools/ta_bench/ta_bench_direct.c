@@ -109,15 +109,64 @@ static void generate_price_data(int n, const BenchCorpusCfg *corpus) {
  * a failed setup -- it surfaces as a timing for a call that never ran. HA, with
  * four real outputs, is what ran the old three-deep ternary out of buffers.
  *
- * The ceilings are generous for the shipped corpus (the widest function has
- * four real outputs), and a function that outgrows one is refused at setup and
- * printed as `no buffers` rather than timed against a shared pointer. That is
- * the property worth keeping: the next one to outgrow them says so. */
+ * The ceilings are COUNTED against the loaded corpus at startup, not asserted:
+ * check_output_arity() below walks every function and refuses to run if one
+ * needs more slots than are compiled in. The generated benches get the same
+ * property from `common::max_output_arity` at generation time; this tool is
+ * hand-written and cannot, so it checks at run time instead. A function that
+ * outgrows a ceiling is also refused at setup and printed as `no buffers`,
+ * which is the per-row half of the same guard.
+ *
+ * #262 is the same defect in the server: a third integer output bound
+ * g_outIntBuf1 twice and TA_CallFunc rejected the call. It was fixed there by
+ * counting rather than by writing a wider literal. */
 #define MAX_REAL_OUT 8
 #define MAX_INT_OUT  4
 
 static TA_Real    g_outReal[MAX_REAL_OUT][MAX_POINTS];
 static TA_Integer g_outInt[MAX_INT_OUT][MAX_POINTS];
+
+/* The widest arity the loaded corpus actually uses, against what is compiled
+ * in. Reported once, before any timing, so a corpus this tool cannot serve is a
+ * message at the top of the run rather than a row quietly missing from the
+ * table. Returns 0 when the ceilings hold. */
+static unsigned int g_widestReal = 0, g_widestInt = 0;
+static char g_widestName[64] = "(none)";
+
+static void arity_probe(const TA_FuncInfo *fi, void *opaque)
+{
+    unsigned int nreal = 0, nint = 0;
+    (void)opaque;
+    for( unsigned int o = 0; o < fi->nbOutput; o++ ) {
+        const TA_OutputParameterInfo *info;
+        TA_GetOutputParameterInfo(fi->handle, o, &info);
+        if( info->type == TA_Output_Integer ) nint++; else nreal++;
+    }
+    if( nreal > g_widestReal ) {
+        g_widestReal = nreal;
+        strncpy(g_widestName, fi->name, sizeof(g_widestName) - 1);
+        g_widestName[sizeof(g_widestName) - 1] = '\0';
+    }
+    if( nint > g_widestInt ) g_widestInt = nint;
+}
+
+static int check_output_arity(void)
+{
+    TA_ForEachFunc(arity_probe, NULL);
+    if( g_widestReal > MAX_REAL_OUT || g_widestInt > MAX_INT_OUT ) {
+        fprintf(stderr,
+                "ta_bench_direct: the corpus needs %u real and %u integer output "
+                "buffers (%s is the widest); this build carries %d and %d. "
+                "Raise MAX_REAL_OUT/MAX_INT_OUT -- running would time calls the "
+                "library rejects.\n",
+                g_widestReal, g_widestInt, g_widestName, MAX_REAL_OUT, MAX_INT_OUT);
+        return 1;
+    }
+    printf("  output arity: corpus needs %u real / %u int (widest: %s), "
+           "this build carries %d / %d\n",
+           g_widestReal, g_widestInt, g_widestName, MAX_REAL_OUT, MAX_INT_OUT);
+    return 0;
+}
 
 /* ---- Function filter ---- */
 
@@ -419,6 +468,7 @@ int main(int argc, char *argv[]) {
     printf("  Running reference (libta-lib.a)...\n");
 
     BenchCallbackCtx cb = { .filter = func_filter, .iters = n_iters };
+    if( rep == 0 && check_output_arity() != 0 ) return 1;
     TA_ForEachFunc(bench_ref_func, &cb);
     printf("  %d functions timed\n", g_nResults);
 
