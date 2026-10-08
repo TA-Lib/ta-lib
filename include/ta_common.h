@@ -156,11 +156,28 @@ TA_LIB_API void TA_SetRetCodeInfo( TA_RetCode theRetCode, TA_RetCodeInfo *retCod
 TA_LIB_API TA_RetCode TA_Initialize( void );
 TA_LIB_API TA_RetCode TA_Shutdown( void );
 
+/* TA_GetRuntimeInfo() reports run-time state of this library: which optional code
+ * path it is using, where the absence of one costs speed and leaves every result
+ * correct, and counters for debugging. It promises no speed and no value.
+ *
+ *   "vmath.transcendental"  The batch kernel of the functions that are one
+ *                           transcendental call per element (SIN, EXP, LN and
+ *                           the like): 0 none, 1 vForce (Apple Silicon macOS).
+ *                           TA_Initialize loads it, and it is 1 only once every
+ *                           routine of the kernel is loaded.
+ *   "count.initialize"      How many times TA_Initialize was called in this
+ *                           process.
+ *   "count.shutdown"        How many times TA_Shutdown was called in this process.
+ *
+ * The keys are the same on every platform. An unknown key is TA_BAD_PARAM.
+ */
+TA_LIB_API TA_RetCode TA_GetRuntimeInfo( const char *key, int *value );
+
 /* TA_LIB_SOURCES_DIGEST helps for TA-Lib automated maintenance: it changes
  * whenever a source modification should trigger a repackaging of TA-Lib.
  * Written by scripts/sync.py; do not edit.
  */
-#define TA_LIB_SOURCES_DIGEST 0e24519cbb66691e974b4f1ab94f0fa5
+#define TA_LIB_SOURCES_DIGEST 6a3a40d5f2a7f83208c92b9a1b254d35
 
 #ifdef __cplusplus
 }

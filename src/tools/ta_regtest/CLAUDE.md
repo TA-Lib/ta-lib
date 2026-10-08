@@ -118,6 +118,14 @@ server, a frozen release, the C server's own Update) is held by
 nothing on every other build, so a comparison site added without it stays green
 there.
 
+The lane cannot tell a kernel that silently gave way to the plain loop: the
+values still pass, and only the speed is lost. `ta_regtest` asks the library
+instead, on every build: right after its first `TA_Initialize`, which loads the
+kernel, and before any function has run, `TA_GetRuntimeInfo` must report it
+loaded on the kernel's platform, which the check states for itself. Keep it a
+state query: a value cannot tell a kernel from a math library that happens to
+agree with it.
+
 The sweep **compares values by default** for every function; checking only
 coherency is how the TRIX partial-range mislabeling survived two decades.
 EMA-derived functions map to `TA_FUNC_UNST_EMA` in `UNSTABLE_MAP` so the

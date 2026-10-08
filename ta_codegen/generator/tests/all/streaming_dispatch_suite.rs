@@ -1682,9 +1682,9 @@ fn harness_vmath_list(test_util: &str) -> Option<std::collections::BTreeSet<Stri
 }
 
 /// The functions whose batch loop is a vector kernel on one platform are one
-/// set, held in three places: the `TA_VMATH_MAP` loops of the committed C, the
-/// C server legs that spell `sv_step_ne`, and the harness's list. Where there
-/// is no kernel all three are inert, so a
+/// set, held in four places: the `TA_VMATH_MAP` loops of the committed C, the
+/// routines `TA_Initialize` loads, the C server legs that spell `sv_step_ne`,
+/// and the harness's list. Where there is no kernel all four are inert, so a
 /// drift shows on no platform a PR runs on: a name too many loosens that
 /// function's compares for nothing, a name too few is red there alone.
 ///
@@ -1700,18 +1700,42 @@ fn the_vmath_class_is_one_set_and_only_its_step_legs_take_the_lane() {
         std::fs::read_to_string(root.join(rel)).unwrap_or_else(|e| panic!("{rel}: {e}"))
     };
 
-    let mut in_c = BTreeSet::new();
+    let (mut in_c, mut bound) = (BTreeSet::new(), BTreeSet::new());
     for entry in std::fs::read_dir(root.join("src/ta_func")).expect("src/ta_func").flatten() {
         let file = entry.file_name().to_string_lossy().into_owned();
         let Some(name) = file.strip_prefix("ta_").and_then(|n| n.strip_suffix(".c")) else {
             continue;
         };
         let text = std::fs::read_to_string(entry.path()).expect("readable");
-        if text.contains("TA_VMATH_MAP(") {
+        for call in text.split("TA_VMATH_MAP(").skip(1) {
             in_c.insert(name.to_string());
+            let kernel = call.split(',').next().expect("a first argument").trim();
+            bound.insert(format!("vv{kernel}"));
         }
+        // The batch loop, the float twin and the open tier each take the kernel. A
+        // tier that renders a plain loop loses it where no run on this platform shows.
+        let sites = text.matches("TA_VMATH_MAP(").count();
+        assert!(sites == 0 || sites == 3, "{file}: {sites} TA_VMATH_MAP loop(s), want 3");
     }
     assert!(!in_c.is_empty(), "no committed src/ta_func/*.c renders TA_VMATH_MAP");
+
+    // TA_GetRuntimeInfo reports the kernel as loaded when every routine in the library's
+    // list is. A loop that binds a routine outside the list is never bound at all.
+    let global = read("src/ta_common/ta_global.c");
+    let (_, list) = global.split_once("vmathRoutine[] =").expect("ta_global.c holds vmathRoutine[]");
+    let mut rest = &list[..list.find("};").expect("vmathRoutine[] ends")];
+    let mut entries = String::new();
+    while let Some((code, comment)) = rest.split_once("/*") {
+        entries.push_str(code);
+        rest = comment.split_once("*/").map_or("", |(_, after)| after);
+    }
+    entries.push_str(rest);
+    let listed: BTreeSet<String> =
+        entries.split('"').skip(1).step_by(2).map(str::to_string).collect();
+    assert_eq!(
+        bound, listed,
+        "the routines the committed loops bind are not the ones TA_Initialize loads"
+    );
 
     let base = root.join("ta_codegen/input");
     let enums = parser::enums::load_enums(&base.join("enums.yaml"));

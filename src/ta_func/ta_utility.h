@@ -123,10 +123,12 @@
  * runs this loop with a stride of 0 and reads the sink afterwards. Without that
  * Open is a pass over the whole history that overruns the sink.
  *
- * The routine is bound at first use, never linked: linking the framework adds its
- * load to the start of every program that links this library, whatever it calls.
- * A routine that cannot be bound leaves the plain loop, whose values no tolerance
- * tells from the kernel's.
+ * The routines are bound at run time, never linked: linking the framework adds
+ * its load to the start of every program that links this library, whatever it
+ * calls. TA_Initialize binds them all; a loop still binds its own at first use,
+ * so a caller that skipped TA_Initialize gets the same values. A routine that
+ * cannot be bound leaves the plain loop, whose values no tolerance tells from the
+ * kernel's: TA_GetRuntimeInfo reports it.
  */
 #define TA_VMATH_PLAIN( fn, i, first, last, outIdx, OUT, IN )               \
    for( i = first, outIdx = 0; i <= last; i += 1, outIdx += 1 )             \

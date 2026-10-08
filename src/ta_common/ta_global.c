@@ -56,6 +56,7 @@
  *  100226 MF,CC A candle factor is finite and not negative (#497).
  *  100226 MF,CC TA_Initialize and TA_Shutdown are idempotent (#497).
  *  100826 MF,CC Bind vForce at run time for the batch math kernel (#85).
+ *  100826 MF,CC TA_GetRuntimeInfo; TA_Initialize loads the kernel (#527).
  */
 
 /* Description:
@@ -125,7 +126,25 @@ TA_LibcPriv *TA_Globals = &ta_theGlobals;
 /* None */
 
 /**** Global functions definitions.   ****/
+/* Calls of TA_Initialize and of TA_Shutdown since the process started. Outside
+ * TA_Globals, which both of them clear.
+ */
+static int nbInitialize = 0;
+static int nbShutdown = 0;
+
 #if TA_VMATH_KERNEL
+/* Every routine a TA_VMATH_MAP loop binds, and what each was bound to. The first
+ * attempt decides for good, so TA_Initialize, the loops and TA_GetRuntimeInfo share
+ * one answer.
+ */
+static const char *const vmathRoutine[] =
+{
+   "vvacos", "vvasin", "vvatan", "vvcos", "vvcosh", "vvexp",
+   "vvlog", "vvlog10", "vvsin", "vvsinh", "vvtan", "vvtanh"
+};
+#define NB_VMATH_ROUTINE (sizeof(vmathRoutine)/sizeof(vmathRoutine[0]))
+static TA_VMathRoutine vmathBound[NB_VMATH_ROUTINE];
+
 /* What TA_VMathBind answers when vForce cannot be reached. A call site keeps it
  * like any routine, so the lookup is not repeated. Never called.
  */
@@ -141,20 +160,28 @@ extern void *dlsym( void *handle, const char *symbol );
 
 /* The first image holds vForce alone and loads in a small fraction of the time the
  * whole framework takes; the framework is the documented path, kept behind it.
+ * Each image is tried once: a slot that holds the array's own address did not open.
  */
-TA_VMathRoutine TA_VMathBind( const char *symbol )
+static TA_VMathRoutine vmathOpen( const char *symbol )
 {
    static const char *const image[] =
    {
       "/System/Library/Frameworks/Accelerate.framework/Versions/A/Frameworks/vecLib.framework/Versions/A/libvMisc.dylib",
       "/System/Library/Frameworks/Accelerate.framework/Versions/A/Accelerate"
    };
+   static void *opened[sizeof(image)/sizeof(image[0])];
    unsigned int i;
 
    for( i = 0; i < sizeof(image)/sizeof(image[0]); i++ )
    {
-      void *handle = dlopen( image[i], 0x5 /* RTLD_LAZY | RTLD_LOCAL */ );
-      if( handle )
+      void *handle = __atomic_load_n( &opened[i], __ATOMIC_RELAXED );
+      if( !handle )
+      {
+         handle = dlopen( image[i], 0x5 /* RTLD_LAZY | RTLD_LOCAL */ );
+         if( !handle ) handle = (void *)opened;
+         __atomic_store_n( &opened[i], handle, __ATOMIC_RELAXED );
+      }
+      if( handle != (void *)opened )
       {
          void *routine = dlsym( handle, symbol );
          if( routine ) return __extension__ (TA_VMathRoutine)routine;
@@ -162,11 +189,70 @@ TA_VMathRoutine TA_VMathBind( const char *symbol )
    }
    return TA_VMathUnbound;
 }
+
+TA_VMathRoutine TA_VMathBind( const char *symbol )
+{
+   unsigned int i;
+
+   for( i = 0; i < NB_VMATH_ROUTINE; i++ )
+   {
+      if( strcmp( vmathRoutine[i], symbol ) == 0 )
+      {
+         TA_VMathRoutine routine = __atomic_load_n( &vmathBound[i], __ATOMIC_RELAXED );
+         if( !routine )
+         {
+            TA_VMathRoutine found = vmathOpen( symbol );
+            if( __atomic_compare_exchange_n( &vmathBound[i], &routine, found, 0,
+                                             __ATOMIC_RELAXED, __ATOMIC_RELAXED ) )
+               routine = found;
+         }
+         return routine;
+      }
+   }
+   return TA_VMathUnbound;
+}
 #endif
+
+TA_RetCode TA_GetRuntimeInfo( const char *key, int *value )
+{
+   if( !key || !value ) return TA_BAD_PARAM;
+   if( strcmp( key, "count.initialize" ) == 0 )
+   {
+      *value = nbInitialize;
+      return TA_SUCCESS;
+   }
+   if( strcmp( key, "count.shutdown" ) == 0 )
+   {
+      *value = nbShutdown;
+      return TA_SUCCESS;
+   }
+   if( strcmp( key, "vmath.transcendental" ) != 0 ) return TA_BAD_PARAM;
+#if TA_VMATH_KERNEL
+   {
+      unsigned int i;
+
+      for( i = 0; i < NB_VMATH_ROUTINE; i++ )
+      {
+         TA_VMathRoutine routine = __atomic_load_n( &vmathBound[i], __ATOMIC_RELAXED );
+         if( !routine || routine == TA_VMathUnbound )
+         {
+            *value = 0;
+            return TA_SUCCESS;
+         }
+      }
+   }
+   *value = 1;
+#else
+   *value = 0;
+#endif
+   return TA_SUCCESS;
+}
 
 TA_RetCode TA_Initialize( void )
 {
    TA_RetCode retCode;
+
+   nbInitialize++;
 
    /* Initialize the "global variable" used to manage the global
     * variables of all other modules...
@@ -181,11 +267,22 @@ TA_RetCode TA_Initialize( void )
    if( retCode != TA_SUCCESS )
       return retCode;
 
+#if TA_VMATH_KERNEL
+   {
+      unsigned int i;
+
+      for( i = 0; i < NB_VMATH_ROUTINE; i++ )
+         (void)TA_VMathBind( vmathRoutine[i] );
+   }
+#endif
+
    return TA_SUCCESS;
 }
 
 TA_RetCode TA_Shutdown( void )
 {
+   nbShutdown++;
+
    /* Idempotent, like TA_Initialize: every call leaves the defaults in force. */
    memset( TA_Globals, 0, sizeof( TA_LibcPriv ) );
 
