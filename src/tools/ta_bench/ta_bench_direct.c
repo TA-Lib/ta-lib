@@ -131,7 +131,12 @@ static TA_Integer g_outInt[MAX_INT_OUT][MAX_POINTS];
  * message at the top of the run rather than a row quietly missing from the
  * table. Returns 0 when the ceilings hold. */
 static unsigned int g_widestReal = 0, g_widestInt = 0;
-static char g_widestName[64] = "(none)";
+/* Named separately: the function with the most real outputs is not the one
+ * with the most integer outputs, so a refusal that names the real winner while
+ * the INTEGER ceiling is what broke points the reader at a function that has no
+ * integer output at all. */
+static char g_widestRealName[64] = "(none)";
+static char g_widestIntName[64] = "(none)";
 
 static void arity_probe(const TA_FuncInfo *fi, void *opaque)
 {
@@ -144,10 +149,14 @@ static void arity_probe(const TA_FuncInfo *fi, void *opaque)
     }
     if( nreal > g_widestReal ) {
         g_widestReal = nreal;
-        strncpy(g_widestName, fi->name, sizeof(g_widestName) - 1);
-        g_widestName[sizeof(g_widestName) - 1] = '\0';
+        strncpy(g_widestRealName, fi->name, sizeof(g_widestRealName) - 1);
+        g_widestRealName[sizeof(g_widestRealName) - 1] = '\0';
     }
-    if( nint > g_widestInt ) g_widestInt = nint;
+    if( nint > g_widestInt ) {
+        g_widestInt = nint;
+        strncpy(g_widestIntName, fi->name, sizeof(g_widestIntName) - 1);
+        g_widestIntName[sizeof(g_widestIntName) - 1] = '\0';
+    }
 }
 
 static int check_output_arity(void)
@@ -155,16 +164,18 @@ static int check_output_arity(void)
     TA_ForEachFunc(arity_probe, NULL);
     if( g_widestReal > MAX_REAL_OUT || g_widestInt > MAX_INT_OUT ) {
         fprintf(stderr,
-                "ta_bench_direct: the corpus needs %u real and %u integer output "
-                "buffers (%s is the widest); this build carries %d and %d. "
-                "Raise MAX_REAL_OUT/MAX_INT_OUT -- running would time calls the "
+                "ta_bench_direct: the corpus needs %u real (%s) and %u integer "
+                "(%s) output buffers; this build carries %d and %d. Raise "
+                "MAX_REAL_OUT/MAX_INT_OUT -- running would time calls the "
                 "library rejects.\n",
-                g_widestReal, g_widestInt, g_widestName, MAX_REAL_OUT, MAX_INT_OUT);
+                g_widestReal, g_widestRealName, g_widestInt, g_widestIntName,
+                MAX_REAL_OUT, MAX_INT_OUT);
         return 1;
     }
-    printf("  output arity: corpus needs %u real / %u int (widest: %s), "
+    printf("  output arity: corpus needs %u real (%s) / %u int (%s), "
            "this build carries %d / %d\n",
-           g_widestReal, g_widestInt, g_widestName, MAX_REAL_OUT, MAX_INT_OUT);
+           g_widestReal, g_widestRealName, g_widestInt, g_widestIntName,
+           MAX_REAL_OUT, MAX_INT_OUT);
     return 0;
 }
 
