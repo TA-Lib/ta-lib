@@ -103,44 +103,12 @@ static void generate_price_data(int n, const BenchCorpusCfg *corpus) {
 
 /* ---- Output buffers ---- */
 
-/* One buffer per output, never one shared between two. The abstract layer
- * rejects a call whose outputs are not distinct pointers, and it rejects it at
- * TA_CallFunc rather than at the setter, so a shortage here does not surface as
- * a failed setup -- it surfaces as a timing for a call that never ran. HA, with
- * four real outputs, is what ran the old three-deep ternary out of buffers.
- *
- * The ceilings are COUNTED against the loaded corpus at startup, not asserted:
- * check_output_arity() below walks every function and refuses to run if one
- * needs more slots than are compiled in. The generated benches get the same
- * property from `common::max_output_arity` at generation time; this tool is
- * hand-written and cannot, so it checks at run time instead. A function that
- * A function that outgrows a ceiling is ALSO refused at setup and printed as
- * `no buffers`. That path is unreachable while the startup count stands --
- * measured: with the ceiling at 3 it never runs, and with the startup check
- * short-circuited the same build prints `HA  no buffers`. It is kept because
- * unreachable is not the same as untested: it is what stops a future change
- * that moves the startup check from silently handing two outputs one pointer.
- *
- * #262 is the same defect in the server: a third integer output bound
- * g_outIntBuf1 twice and TA_CallFunc rejected the call. It was fixed there by
- * counting rather than by writing a wider literal. */
-#define MAX_REAL_OUT 8
-#define MAX_INT_OUT  4
-
-static TA_Real    g_outReal[MAX_REAL_OUT][MAX_POINTS];
-static TA_Integer g_outInt[MAX_INT_OUT][MAX_POINTS];
-
-/* The widest arity the loaded corpus actually uses, against what is compiled
- * in. Reported once, before any timing, so a corpus this tool cannot serve is a
- * message at the top of the run rather than a row quietly missing from the
- * table. Returns 0 when the ceilings hold. */
-static unsigned int g_widestReal = 0, g_widestInt = 0;
-/* Named separately: the function with the most real outputs is not the one
- * with the most integer outputs, so a refusal that names the real winner while
- * the INTEGER ceiling is what broke points the reader at a function that has no
- * integer output at all. */
-static char g_widestRealName[64] = "(none)";
-static char g_widestIntName[64] = "(none)";
+/* One buffer per output slot of the widest function, counted from the function
+ * table. Two outputs sharing a buffer make TA_CallFunc answer TA_BAD_PARAM,
+ * and no setter reports it. */
+static TA_Real    **g_outReal;
+static TA_Integer **g_outInt;
+static unsigned int g_nOutReal, g_nOutInt;
 
 static void arity_probe(const TA_FuncInfo *fi, void *opaque)
 {
@@ -151,36 +119,29 @@ static void arity_probe(const TA_FuncInfo *fi, void *opaque)
         TA_GetOutputParameterInfo(fi->handle, o, &info);
         if( info->type == TA_Output_Integer ) nint++; else nreal++;
     }
-    if( nreal > g_widestReal ) {
-        g_widestReal = nreal;
-        strncpy(g_widestRealName, fi->name, sizeof(g_widestRealName) - 1);
-        g_widestRealName[sizeof(g_widestRealName) - 1] = '\0';
-    }
-    if( nint > g_widestInt ) {
-        g_widestInt = nint;
-        strncpy(g_widestIntName, fi->name, sizeof(g_widestIntName) - 1);
-        g_widestIntName[sizeof(g_widestIntName) - 1] = '\0';
-    }
+    if( nreal > g_nOutReal ) g_nOutReal = nreal;
+    if( nint  > g_nOutInt  ) g_nOutInt  = nint;
 }
 
-static int check_output_arity(void)
+static void alloc_output_buffers(int n)
 {
     TA_ForEachFunc(arity_probe, NULL);
-    if( g_widestReal > MAX_REAL_OUT || g_widestInt > MAX_INT_OUT ) {
-        fprintf(stderr,
-                "ta_bench_direct: the corpus needs %u real (%s) and %u integer "
-                "(%s) output buffers; this build carries %d and %d. Raise "
-                "MAX_REAL_OUT/MAX_INT_OUT -- running would time calls the "
-                "library rejects.\n",
-                g_widestReal, g_widestRealName, g_widestInt, g_widestIntName,
-                MAX_REAL_OUT, MAX_INT_OUT);
-        return 1;
-    }
-    printf("  output arity: corpus needs %u real (%s) / %u int (%s), "
-           "this build carries %d / %d\n",
-           g_widestReal, g_widestRealName, g_widestInt, g_widestIntName,
-           MAX_REAL_OUT, MAX_INT_OUT);
-    return 0;
+    g_outReal = calloc(g_nOutReal + 1, sizeof(*g_outReal));
+    g_outInt  = calloc(g_nOutInt + 1, sizeof(*g_outInt));
+    if( !g_outReal || !g_outInt ) TA_TOOL_OOM("the output buffer tables");
+    for( unsigned int i = 0; i < g_nOutReal; i++ )
+        if( !(g_outReal[i] = calloc(n, sizeof(TA_Real))) )
+            TA_TOOL_OOM("the real output buffers");
+    for( unsigned int i = 0; i < g_nOutInt; i++ )
+        if( !(g_outInt[i] = calloc(n, sizeof(TA_Integer))) )
+            TA_TOOL_OOM("the integer output buffers");
+}
+
+static void free_output_buffers(void)
+{
+    for( unsigned int i = 0; i < g_nOutReal; i++ ) free(g_outReal[i]);
+    for( unsigned int i = 0; i < g_nOutInt; i++ )  free(g_outInt[i]);
+    free(g_outReal); free(g_outInt);
 }
 
 /* ---- Function filter ---- */
@@ -209,11 +170,7 @@ typedef struct {
     long long cg_s[MAX_SAMPLES];
     int nref, ncg;
     double ref_spread, cg_spread;   /* (max-min)/median; -1 when < 2 samples */
-    /* Non-zero when the reference call was REJECTED rather than timed: the
-     * TA_RetCode TA_CallFunc answered, or -1 when the function asks for more
-     * output buffers than this tool carries. Such a row has no ref timing, and
-     * printing one would be the defect this field exists to prevent. */
-    int ref_rc;
+    int ref_rc;   /* TA_RetCode of the reference call; non-zero: no ref timing */
 } BenchResult;
 
 static BenchResult g_results[MAX_FUNCTIONS];
@@ -350,16 +307,13 @@ static void bench_ref_func(const TA_FuncInfo *fi, void *opaque) {
 
     /* Set outputs */
     unsigned int realIdx = 0, intIdx = 0;
-    int tooManyOutputs = 0;
     for( unsigned int i = 0; i < fi->nbOutput; i++ ) {
         const TA_OutputParameterInfo *info;
         TA_GetOutputParameterInfo(fi->handle, i, &info);
         if( info->type == TA_Output_Integer ) {
-            if( intIdx >= MAX_INT_OUT ) { tooManyOutputs = 1; break; }
             TA_SetOutputParamIntegerPtr(params, i, g_outInt[intIdx]);
             intIdx++;
         } else {
-            if( realIdx >= MAX_REAL_OUT ) { tooManyOutputs = 1; break; }
             TA_SetOutputParamRealPtr(params, i, g_outReal[realIdx]);
             realIdx++;
         }
@@ -371,23 +325,14 @@ static void bench_ref_func(const TA_FuncInfo *fi, void *opaque) {
     BenchResult *r = result_row(fi->name);
     if( !r ) { TA_ParamHolderFree(params); return; }
 
-    /* One call first, and its return code read. An immediate error return is
-     * fast, repeatable and has a believable spread, so a rejected call does not
-     * look rejected once it is divided by iters -- it looks like a fast path.
-     * This is the only site that can tell the difference: every setter above
-     * answers TA_SUCCESS even for the duplicate pointer that causes it. */
-    if( tooManyOutputs ) {
-        r->ref_rc = -1;
-        TA_ParamHolderFree(params);
-        return;
-    }
+    /* A rejected call returns at once and repeatably, so timed it reads as a
+     * fast row with a tight spread: read the code before timing anything. */
     TA_RetCode rc = TA_CallFunc(params, 0, g_nPoints - 1, &outBegIdx, &outNbElement);
     if( rc != TA_SUCCESS ) {
         r->ref_rc = (int)rc;
         TA_ParamHolderFree(params);
         return;
     }
-    r->ref_rc = 0;
 
     for( int pass = 0; pass < BENCH_PASSES; pass++ ) {
         long long t0 = get_nanotime();
@@ -466,14 +411,8 @@ int main(int argc, char *argv[]) {
         return bench_corpus_selfcheck(n_points, &corpus) ? 1 : 0;
 
     TA_Initialize();
-    /* Before the corpus is generated, not inside the timing loop: what it
-       checks is a property of the function catalogue, and refusing early means
-       nothing has been allocated to unwind. */
-    if( check_output_arity() != 0 ) {
-        TA_Shutdown();
-        return 1;
-    }
     generate_price_data(n_points, &corpus);
+    alloc_output_buffers(n_points);
 
     printf("ta_bench_direct: %d points, %d iters, shape=%s seed=%d regime-period=%d"
            " trend-strength=%.2f (direct calls)\n\n",
@@ -564,14 +503,9 @@ int main(int argc, char *argv[]) {
         else                       snprintf(cs, sizeof(cs), "%s", "?");
         if( r->ref_spread >= 0.0 ) spreads[nspread++] = r->ref_spread;
 
-        /* A rejected reference call has no timing, and the row must not read
-         * as one. Printing it as 0 would be worse than printing nothing: the
-         * ratio column would then divide the codegen arm by zero or by a number
-         * that measures an error return. */
         if( r->ref_rc != 0 ) {
             char why[24];
-            if( r->ref_rc < 0 ) snprintf(why, sizeof(why), "%s", "no buffers");
-            else                snprintf(why, sizeof(why), "rejected %d", r->ref_rc);
+            snprintf(why, sizeof(why), "rejected %d", r->ref_rc);
             if( r->cg_ns > 0 )
                 printf("%-20s %10s %6s %10lld %6s %8s\n", r->name, why, "--", r->cg_ns, cs, "--");
             else
@@ -615,8 +549,9 @@ int main(int argc, char *argv[]) {
            "outside %.2fx and only when the row's own spread is narrower than that.\n",
            no_signal);
     if( n_rejected > 0 )
-        printf("%d row(s) had no reference timing: the library rejected the call, "
-               "so nothing was measured for that arm.\n", n_rejected);
+        fprintf(stderr,
+                "ta_bench_direct: %d row(s) have no reference timing: TA_CallFunc "
+                "rejected the call as this tool set it up.\n", n_rejected);
     printf("Median per-row spread %.0f%%", med_spread * 100.0);
     if( n_noisy )
         printf("; %d row(s) exceeded %.2fx but were too noisy to call", n_noisy, no_signal);
@@ -637,6 +572,7 @@ int main(int argc, char *argv[]) {
 
     free(g_open); free(g_high); free(g_low); free(g_close); free(g_volume); free(g_oi);
     free(g_periods);
+    free_output_buffers();
     TA_Shutdown();
-    return (cg_failed || too_noisy) ? 1 : 0;
+    return (cg_failed || too_noisy || n_rejected) ? 1 : 0;
 }
