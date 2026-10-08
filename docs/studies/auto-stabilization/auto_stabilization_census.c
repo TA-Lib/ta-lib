@@ -20,6 +20,8 @@
  * Prices are near `level` (100 unless given) and rounded to `tick` (0.01): the
  * same walk at 4.5e-8 with a tick of 1e-10 is a coin quoted in satoshis.
  * CENSUS_PERIOD=<n> runs one configuration, every integer period at n.
+ * CENSUS_SET=<name>=<value>[,...] runs one configuration, the defaults with
+ * those optional parameters set (FastPeriod=12,MAType=3).
  * CENSUS_NEEDS=<file> also writes each trial's need at K = 10 and 19, for a
  * tail the three quantiles do not show.
  * Columns: lookback, at 0; live, the trials counted: the two starts differ and
@@ -54,6 +56,7 @@ static unsigned long long g_seed, rng_s;
 static double fH[NMAX], fL[NMAX], fC[NMAX];
 static int fN, g_period;
 static FILE *g_needs;
+static const char *g_set;
 
 static double rnd(void)
 {
@@ -148,7 +151,21 @@ static TA_RetCode call(const TA_FuncInfo *fi, int cfg, int D, int n, int useB,
       }
    }
    if( rc == TA_SUCCESS && cfg != 0 && !applied ) rc = TA_NOT_SUPPORTED;
-   if( cfg == 0 ) snprintf(desc, descsz, "defaults");
+   if( cfg == 0 ) snprintf(desc, descsz, "%s", g_set ? g_set : "defaults");
+   for( i = 0; i < fi->nbOptInput && rc == TA_SUCCESS && g_set && cfg == 0; i++ )
+   {
+      const TA_OptInputParameterInfo *oi;
+      const char *at = g_set;
+      size_t len;
+      TA_GetOptInputParameterInfo(fi->handle, i, &oi);
+      len = strlen(oi->paramName+5);
+      while( (at = strstr(at, oi->paramName+5)) && !((at == g_set || at[-1] == ',') && at[len] == '=') ) at++;
+      if( !at ) continue;
+      if( oi->type == TA_OptInput_IntegerRange || oi->type == TA_OptInput_IntegerList )
+         rc = TA_SetOptInputParamInteger(ph, i, (TA_Integer)atoi(at+len+1));
+      else
+         rc = TA_SetOptInputParamReal(ph, i, atof(at+len+1));
+   }
    for( i = 0; i < fi->nbOutput && i < MAXOUT && rc == TA_SUCCESS; i++ )
    {
       const TA_OutputParameterInfo *oo;
@@ -191,6 +208,7 @@ static void each(const TA_FuncInfo *fi, void *opaque)
    {
       int lookback, autoCount[2], beg, nb, M;
       if( g_period && cfg != 1 ) continue;
+      if( g_set && cfg != 0 ) continue;
       if( call(fi, cfg, 0, 0, 0, &beg, &nb, &lookback, autoCount, desc, sizeof desc) != TA_SUCCESS ) continue;
       if( autoCount[0] <= 0 ) continue;
       M = 3*autoCount[1];
@@ -293,6 +311,7 @@ int main(int argc, char **argv)
       if( fN < 400 ) return 2;
    }
    if( getenv("CENSUS_PERIOD") ) g_period = atoi(getenv("CENSUS_PERIOD"));
+   g_set = getenv("CENSUS_SET");
    if( getenv("CENSUS_NEEDS") && !(g_needs = fopen(getenv("CENSUS_NEEDS"), "w")) ) return 2;
    if( TA_Initialize() != TA_SUCCESS ) return 2;
    if( !g_list && !g_only )

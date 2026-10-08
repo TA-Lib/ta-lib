@@ -70,6 +70,16 @@ Link the static library by path. `-lta-lib` picks up an installed TA-Lib instead
 - The Rust, Java and C# libraries.
 - SWAK_BP away from its default delta. MAMA is measured at seven limit settings (section 6
   of `results.txt`).
+- A tick that is a power of two. With such a tick the arithmetic is exact, two starts land on
+  the same side of MAMA's zero test, and the census counts no start past its count at any
+  price level; 0.2, 0.1 or 0.01 show what the Unstable Period page states.
+- Functions that subtract two averages at nearly equal periods. With the EMA, ZLEMA or RMA
+  type, APO and PPO run past the inherited count by up to ADOSC's offset for the pair (e.g. 48
+  bars at 25 and 26 with the EMA type), and MACD and MACDFIX by that offset less the signal EMA's
+  count, which leaves something only with a signal period of 1 to 3 or close periods.
+  `CENSUS_SET` reruns any of them. APO's and PPO's legs are seeded by the moving average they
+  call, so a longer lookback alone does not age them; MACDEXT hands MACD its all-EMA case while
+  its own lookback and stream are built from moving-average calls, so MACD cannot move alone.
 - A measured need beyond `K` of about 21 is unreliable in the `rw` series: prices there grow by
   orders of magnitude, so late rounding differences are large against an early seed difference.
 
