@@ -53,8 +53,10 @@ extern "C" {
 #endif
 
 /* The streaming API: what every TA_<NAME>_Open / Update / Peek / Close
- * quartet below promises. A stream evaluates one bar at a time and is
- * bit-identical to the batch function over the same series.
+ * quartet below promises. A stream evaluates one bar at a time and
+ * returns the batch function's values over the same series: bit for bit,
+ * except that a value depending on a transcendental math function may
+ * differ in the last bits.
  *
  * Open( &stream, inputs..., historyLen, params..., out ) warms up on
  * historyLen bars and hands back a handle. It wants at least one bar --

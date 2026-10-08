@@ -97,7 +97,7 @@ No TA-Lib function: KVO, PivotsHL, TTM, ZigZag.
 
 ## Training and live features
 
-A handle opened on the same history as a batch call, then fed the same bars, returns the batch function's values bit for bit, so features computed in batch for training equal the ones a live handle produces. Keep that history: a handle does not pickle, so after a restart reopen it on the stored bars, starting from the same first bar as the training batch.
+A handle opened on the same history as a batch call, then fed the same bars, returns the batch function's values bit for bit, with the exceptions [the streaming rule](https://ta-lib.org/spec/streaming/index.md) states, so features computed in batch for training equal the ones a live handle produces. Keep that history: a handle does not pickle, so after a restart reopen it on the stored bars, starting from the same first bar as the training batch.
 
 ## Related
 

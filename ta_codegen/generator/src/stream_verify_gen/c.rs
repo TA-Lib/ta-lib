@@ -1,6 +1,6 @@
 //! C `stream_verify`: `handle_stream_verify` runs batch (startIdx=0) and the
-//! stream trajectory in-process on identical seeded inputs, compares BITWISE
-//! per bar (memcmp on doubles), spot-asserts peek == update, and answers flat
+//! stream trajectory in-process on identical seeded inputs, compares them per
+//! bar (bitwise, but for the steps `sv_step_ne` holds), spot-asserts peek == update, and answers flat
 //! JSON (`ok`, per-leg match flags, first divergence as %a on mismatch). See
 //! docs/streaming-api-design.md, Verification. The whole handler is compiled
 //! out under TA_REF_SERVE: it reads the current tree's private stream structs,
@@ -25,6 +25,7 @@ fn emit_sv_compare(
     idx: &str,
     bar: &str,
     pre: &str,
+    real_ne: &str,
 ) {
     for (i, is_int) in out_is_int.iter().enumerate() {
         let b = &bbuf[i];
@@ -34,7 +35,7 @@ fn emit_sv_compare(
             ));
         } else {
             let _ = std::fmt::Write::write_fmt(s, format_args!(
-                "{pad}if( {pre} sv_xtier_ne(v{i}, {b}[{idx}], &svZsign) ) {{ ok = 0; badBar = {bar}; badOut = {i}; bv = {b}[{idx}]; sv = v{i}; }}\n"
+                "{pad}if( {pre} {real_ne}(v{i}, {b}[{idx}], &svZsign) ) {{ ok = 0; badBar = {bar}; badOut = {i}; bv = {b}[{idx}]; sv = v{i}; }}\n"
             ));
         }
     }
@@ -70,9 +71,9 @@ fn emit_sv_batch_fail_tail(s: &mut String, candle: bool) {
         s.push_str("            TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );\n");
         // Reachable after earlier candle rounds already compared, so the benign
         // count travels with it — otherwise those cases vanish from the summary.
-        s.push_str("            pos = json_appendf(resp, resp_size, pos, \",\\\"rrc\\\":%d,\\\"legs\\\":%d,\\\"nb\\\":%d,\\\"openRejects\\\":%d,\\\"ok\\\":%d,\\\"peek_checked\\\":%d,\\\"peek_ok\\\":%d,\\\"peek_reps\\\":%d,\\\"peek_rep_ok\\\":%d,\\\"peek_rejects\\\":%d,\\\"benign\\\":%d}\", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, svZsign);\n");
+        s.push_str("            pos = json_appendf(resp, resp_size, pos, \",\\\"rrc\\\":%d,\\\"legs\\\":%d,\\\"nb\\\":%d,\\\"openRejects\\\":%d,\\\"ok\\\":%d,\\\"peek_checked\\\":%d,\\\"peek_ok\\\":%d,\\\"peek_reps\\\":%d,\\\"peek_rep_ok\\\":%d,\\\"peek_rejects\\\":%d,\\\"benign\\\":%d,\\\"vmath\\\":%d}\", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, svZsign, g_svVmath);\n");
     } else {
-        s.push_str("            snprintf(resp, resp_size, \"{\\\"retCode\\\":%d,\\\"legs\\\":0,\\\"nb\\\":%d,\\\"openRejects\\\":%d,\\\"ok\\\":%d,\\\"peek_ok\\\":1}\", (int)rc, svNb, openRejects, openRejects);\n");
+        s.push_str("            snprintf(resp, resp_size, \"{\\\"retCode\\\":%d,\\\"legs\\\":0,\\\"nb\\\":%d,\\\"openRejects\\\":%d,\\\"ok\\\":%d,\\\"peek_ok\\\":1,\\\"vmath\\\":%d}\", (int)rc, svNb, openRejects, openRejects, g_svVmath);\n");
     }
     s.push_str("            return;\n");
     s.push_str("        }\n");
@@ -179,7 +180,7 @@ fn emit_sv_dispatch_precheck(
         )
     };
     s.push_str(&format!(
-        "        if( {guard} )\n        {{\n            TA_{name}_Stream *st = NULL; {decls} TA_RetCode orc;\n            int rejected;\n            orc = TA_{name}_Open( &st, {pre_in_args}svN, {pre_opt_args}{addrs} );\n            rejected = ( orc != TA_SUCCESS && !st ) ? 1 : 0;\n            if( st ) TA_{name}_Close( st );\n{fill_block}            snprintf(resp, resp_size, \"{{\\\"retCode\\\":0,\\\"legs\\\":0,\\\"unsupportedArm\\\":1,\\\"ok\\\":%d,\\\"peek_ok\\\":1}}\", rejected);\n            return;\n        }}\n"
+        "        if( {guard} )\n        {{\n            TA_{name}_Stream *st = NULL; {decls} TA_RetCode orc;\n            int rejected;\n            orc = TA_{name}_Open( &st, {pre_in_args}svN, {pre_opt_args}{addrs} );\n            rejected = ( orc != TA_SUCCESS && !st ) ? 1 : 0;\n            if( st ) TA_{name}_Close( st );\n{fill_block}            snprintf(resp, resp_size, \"{{\\\"retCode\\\":0,\\\"legs\\\":0,\\\"unsupportedArm\\\":1,\\\"ok\\\":%d,\\\"peek_ok\\\":1,\\\"vmath\\\":%d}}\", rejected, g_svVmath);\n            return;\n        }}\n"
     ));
 }
 
@@ -226,7 +227,8 @@ fn c_canary_check(fbuf: &[String], out_is_int: &[bool]) -> String {
 // every language. It moves the STATE of all 14, on the first bar it is read.
 //
 // So compare state, not output: the handle after `Open(P)` plus `n - P` updates
-// must equal the handle after `Open(n)`, bit for bit. That holds by
+// must equal the handle after `Open(n)`: bit for bit, bar the `cur_` of a
+// kernel-batch function. That holds by
 // construction — `Update` is the transcribed batch loop body, so both paths run
 // the identical operation sequence over the identical bars, and the ring cursor
 // is `historyLen % cap` on one side against the same number of `+1`s on the
@@ -497,6 +499,9 @@ fn sv_comparator(func: &FuncDef, funcs: &[FuncDef], enums: &HashMap<String, Enum
     let text = c_stream::state_struct_text(func, &FuncsLookup(funcs));
     let decls = sv_parse_state_struct(name, &text);
     let (roles, phases) = sv_ptr_roles(func, funcs);
+    // `cur_` is the last step's value on one handle and the opener's fill on
+    // the other.
+    let step_cur = crate::backends::c::batch_renders_vmath_map(func);
     let mut claimed: BTreeSet<&str> = BTreeSet::new();
     let mut body = String::new();
     let mut deps: Vec<String> = Vec::new();
@@ -516,6 +521,11 @@ fn sv_comparator(func: &FuncDef, funcs: &[FuncDef], enums: &HashMap<String, Enum
                     "   for( k = 0; k < {}; k++ ) if( {} ) {{ *w = \"{n}\"; return 1; }}",
                     d.len,
                     sv_ne(&format!("a->{n}[k]"), &format!("b->{n}[k]"), d.is_int)
+                );
+            } else if step_cur && !d.is_int && n.starts_with("cur_") {
+                let _ = writeln!(
+                    body,
+                    "   if( sv_step_ne(a->{n}, b->{n}, z) ) {{ *w = \"{n}\"; return 1; }}"
                 );
             } else {
                 let _ = writeln!(
@@ -668,8 +678,8 @@ fn generate_c_state_eq(
 
     let mut s = String::new();
     s.push_str("/* ---- state-equivalence comparators (issue #240) ----\n");
-    s.push_str(" * `Open(P)` + (n-P) updates must leave the handle bit-identical to\n");
-    s.push_str(" * `Open(n)`. Compares every carried field; skips the Peek scratch mirrors\n");
+    s.push_str(" * `Open(P)` + (n-P) updates must leave the handle equal to `Open(n)`: bit\n");
+    s.push_str(" * for bit, bar the `cur_` of a kernel-batch function. Compares every carried field; skips the Peek scratch mirrors\n");
     s.push_str(" * (written only inside Peek) and, for the extrema automaton, the slack\n");
     s.push_str(" * above the live window (never written, so it holds malloc leftovers).\n");
     s.push_str(" * Returns 1 and names the field on the first difference. */\n");
@@ -868,6 +878,7 @@ fn emit_sv_peek_noncommit(
     in_args: &str,
     opt_args: &str,
     input_arrays: &[&str],
+    step_cur: bool,
 ) {
     if !steq {
         return;
@@ -913,10 +924,18 @@ fn emit_sv_peek_noncommit(
     s.push_str("                {
 ");
     s.push_str("                    const char *pkWhat = \"-\";\n");
+    // Both handles are opener-seeded and neither is stepped, so `cur_` owes
+    // bits here even where the state leg's compare of it does not.
+    if step_cur {
+        s.push_str("                    SV_STEP_EXACT(1)\n");
+    }
     let _ = writeln!(
         s,
         "                    if( sv_steq_TA_{name}( stPk, stEq, &pkWhat, &svZsign ) ) {{ peekAll = 0; peekBad = pkWhat; }}"
     );
+    if step_cur {
+        s.push_str("                    SV_STEP_EXACT(0)\n");
+    }
     s.push_str("                }
 ");
     s.push_str("            }
@@ -1002,6 +1021,7 @@ fn emit_sv_clone_leg(
     opt_args: &str,
     out_is_int: &[bool],
     bbuf: &[String],
+    step_ne: &str,
 ) {
     let n = out_is_int.len();
     let decl_a: String = out_is_int
@@ -1057,7 +1077,7 @@ fn emit_sv_clone_leg(
         let cross = if *is_int {
             format!("ca{i} != {b}[t - svBeg]")
         } else {
-            format!("sv_xtier_ne(ca{i}, {b}[t - svBeg], &svZsign)")
+            format!("{step_ne}(ca{i}, {b}[t - svBeg], &svZsign)")
         };
         let _ = writeln!(s, "                    if( {cross} ) {{ cOk = 0; cloneBad = \"the filled handle left batch before the fork\"; }}");
     }
@@ -1099,7 +1119,7 @@ fn emit_sv_clone_leg(
         let cross_b = if *is_int {
             format!("cb{i} != {b}[t - svBeg]")
         } else {
-            format!("sv_xtier_ne(cb{i}, {b}[t - svBeg], &svZsign)")
+            format!("{step_ne}(cb{i}, {b}[t - svBeg], &svZsign)")
         };
         let _ = writeln!(s, "                    if( {cross_b} ) {{ cOk = 0; cloneBad = \"the fork left batch\"; }}");
     }
@@ -1113,7 +1133,7 @@ fn emit_sv_clone_leg(
         let cross = if *is_int {
             format!("ca{i} != {b}[t - svBeg]")
         } else {
-            format!("sv_xtier_ne(ca{i}, {b}[t - svBeg], &svZsign)")
+            format!("{step_ne}(ca{i}, {b}[t - svBeg], &svZsign)")
         };
         let _ = writeln!(s, "                    if( {cross} ) {{ cOk = 0; cloneBad = \"the original left batch after the fork\"; }}");
     }
@@ -1189,7 +1209,7 @@ pub(crate) fn generate_c_stream_verify(
     enums: &HashMap<String, EnumDef>,
 ) -> String {
     let mut s = String::new();
-    s.push_str("/* ---- stream_verify: bitwise batch-vs-stream comparison ---- */\n");
+    s.push_str("/* ---- stream_verify: batch-vs-stream comparison ---- */\n");
     s.push_str("#ifndef TA_REF_SERVE\n");
     s.push_str("#define SV_MAXN 256\n");
     // Canary for the OpenAndFill slack. The fill buffers are SV_MAXN wide but
@@ -1233,6 +1253,25 @@ pub(crate) fn generate_c_stream_verify(
     s.push_str("    if( a == b ) { (*zsign)++; return 0; }\n");
     s.push_str("    return 1;\n");
     s.push_str("}\n");
+    // A step's value against a batch or fill value, for a function whose batch
+    // loop is TA_VMATH_MAP. Only a site with a step's value on one side may
+    // spell this. The fill, Open and anchored compares are kernel against
+    // kernel, and their bit compare is all that holds every element to one
+    // function of one value: here it would pass a kernel that is not, on the
+    // one platform that has a kernel.
+    s.push_str("static int g_svVmath;\n");
+    s.push_str("#if TA_VMATH_KERNEL\n");
+    s.push_str("static int g_svStepExact;\n");
+    s.push_str("static int sv_step_ne(double a, double b, int *zsign) {\n");
+    s.push_str("    if( g_svStepExact ) return sv_xtier_ne(a, b, zsign);\n");
+    s.push_str("    g_svVmath++;\n");
+    s.push_str("    return !fuzz_vmath_near(a, b);\n");
+    s.push_str("}\n");
+    s.push_str("#define SV_STEP_EXACT(on) g_svStepExact = (on);\n");
+    s.push_str("#else\n");
+    s.push_str("#define sv_step_ne sv_xtier_ne\n");
+    s.push_str("#define SV_STEP_EXACT(on)\n");
+    s.push_str("#endif\n");
     // Candle-settings variation for CDL streams: rounds 1/2 re-run the
     // batch-vs-stream comparison with every setting's avgPeriod bumped (+3)
     // or zeroed (the instant-candle degenerate, runtime trailing lag 0).
@@ -1262,6 +1301,7 @@ pub(crate) fn generate_c_stream_verify(
     disp.push_str("    int svN      = json_find_int(json, \"gen_n\");\n");
     disp.push_str("    int svK      = json_find_int(json, \"unstablePeriod\");\n");
     disp.push_str("    int svCandle = json_find_int(json, \"candleLegs\");\n");
+    disp.push_str("    g_svVmath = 0;\n");
     disp.push_str("    if( !fn ) { snprintf(resp, resp_size, \"{\\\"error\\\":\\\"missing funcName\\\"}\"); return; }\n");
     disp.push_str("    if( svN < 2 ) svN = 2;\n");
     disp.push_str("    if( svN > SV_MAXN ) svN = SV_MAXN;\n");
@@ -1325,6 +1365,8 @@ pub(crate) fn generate_c_stream_verify(
 
         let candle = func.flags.iter().any(|f| f == "candlestick");
         let steq = steq_have.contains(name);
+        let step_cur = crate::backends::c::batch_renders_vmath_map(func);
+        let step_ne = if step_cur { "sv_step_ne" } else { "sv_xtier_ne" };
         s.push_str("        TA_RetCode rc;\n");
         s.push_str("        int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;\n");
         s.push_str("        int peekChecked = 0;\n");
@@ -1642,7 +1684,7 @@ pub(crate) fn generate_c_stream_verify(
         ));
         s.push_str("            if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }\n");
         // Compare the open value (bar P-1).
-        emit_sv_compare(&mut s, &out_is_int, &bbuf, "            ", "(P - 1) - svBeg", "P - 1", "ok &&");
+        emit_sv_compare(&mut s, &out_is_int, &bbuf, "            ", "(P - 1) - svBeg", "P - 1", "ok &&", "sv_xtier_ne");
         // The opener SEEDS `cur_`; nothing else observes that write.
         s.push_str("            if( ok && st )\n");
         emit_sv_value_probe(
@@ -1687,7 +1729,7 @@ pub(crate) fn generate_c_stream_verify(
             "                if( pkRc == TA_SUCCESS && ({}) ) pkOk = 0;\n",
             peek_ne.join(" || ")
         ));
-        emit_sv_compare(&mut s, &out_is_int, &bbuf, "                ", "t - svBeg", "t", "");
+        emit_sv_compare(&mut s, &out_is_int, &bbuf, "                ", "t - svBeg", "t", "", step_ne);
         // Every accepted Update refreshes `cur_`; a Peek in between must not.
         s.push_str("                if( ok )\n");
         emit_sv_value_probe(
@@ -1718,8 +1760,8 @@ pub(crate) fn generate_c_stream_verify(
             s.push_str("            if( !pkOk ) peekAll = 0;\n");
             s.push_str("        }\n");
         }
-        emit_sv_peek_noncommit(&mut s, name, steq, &out_is_int, &in_args, &opt_args, &input_arrays);
-        emit_sv_clone_leg(&mut s, name, &input_arrays, &in_args, &opt_args, &out_is_int, &bbuf);
+        emit_sv_peek_noncommit(&mut s, name, steq, &out_is_int, &in_args, &opt_args, &input_arrays, step_cur);
+        emit_sv_clone_leg(&mut s, name, &input_arrays, &in_args, &opt_args, &out_is_int, &bbuf, step_ne);
         emit_sv_state_close(&mut s, name, steq);
         if candle {
             s.push_str("        }\n");
@@ -1752,7 +1794,7 @@ pub(crate) fn generate_c_stream_verify(
                 "                    TA_RetCode arc = TA_{name}_OpenInternal(&stA, {in_args}Sidx, svN, {opt_args}{aout});\n"
             ));
             s.push_str("                    if( arc != TA_SUCCESS || !stA ) ok = 0;\n");
-            emit_sv_compare(&mut s, &out_is_int, &bbuf, "                    ", "(svN - 1) - svBegS", "svN - 1", "ok &&");
+            emit_sv_compare(&mut s, &out_is_int, &bbuf, "                    ", "(svN - 1) - svBegS", "svN - 1", "ok &&", "sv_xtier_ne");
             emit_sv_range_check(&mut s, name, "                    ", "stA", "ok && stA", "svBegS", "svNbS", SvRangeSite::Anchored);
 
             s.push_str(&format!("                    if( stA ) TA_{name}_Close(stA);\n"));
@@ -1814,9 +1856,9 @@ pub(crate) fn generate_c_stream_verify(
         emit_sv_state_report(&mut s, steq);
         emit_sv_range_report(&mut s);
         if candle {
-            s.push_str("        pos = json_appendf(resp, resp_size, pos, \",\\\"beg\\\":%d,\\\"nb\\\":%d,\\\"legs\\\":%d,\\\"fill_checked\\\":%d,\\\"fill_ok\\\":%d,\\\"fill_bars\\\":%d,\\\"ok\\\":%d,\\\"peek_checked\\\":%d,\\\"peek_ok\\\":%d,\\\"peek_reps\\\":%d,\\\"peek_rep_ok\\\":%d,\\\"peek_rejects\\\":%d,\\\"short_history_checked\\\":%d,\\\"short_history_ok\\\":%d,\\\"short_history_bad\\\":\\\"%s\\\",\\\"clone_checked\\\":%d,\\\"clone_legs\\\":%d,\\\"clone_ok\\\":%d,\\\"clone_bad\\\":\\\"%s\\\",\\\"value_checked\\\":%d,\\\"value_legs\\\":%d,\\\"value_ok\\\":%d,\\\"value_bad\\\":\\\"%s\\\",\\\"benign\\\":%d}\", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);\n");
+            s.push_str("        pos = json_appendf(resp, resp_size, pos, \",\\\"beg\\\":%d,\\\"nb\\\":%d,\\\"legs\\\":%d,\\\"fill_checked\\\":%d,\\\"fill_ok\\\":%d,\\\"fill_bars\\\":%d,\\\"ok\\\":%d,\\\"peek_checked\\\":%d,\\\"peek_ok\\\":%d,\\\"peek_reps\\\":%d,\\\"peek_rep_ok\\\":%d,\\\"peek_rejects\\\":%d,\\\"short_history_checked\\\":%d,\\\"short_history_ok\\\":%d,\\\"short_history_bad\\\":\\\"%s\\\",\\\"clone_checked\\\":%d,\\\"clone_legs\\\":%d,\\\"clone_ok\\\":%d,\\\"clone_bad\\\":\\\"%s\\\",\\\"value_checked\\\":%d,\\\"value_legs\\\":%d,\\\"value_ok\\\":%d,\\\"value_bad\\\":\\\"%s\\\",\\\"benign\\\":%d,\\\"vmath\\\":%d}\", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath);\n");
         } else {
-            s.push_str("        pos = json_appendf(resp, resp_size, pos, \",\\\"fill_checked\\\":%d,\\\"fill_ok\\\":%d,\\\"fill_bars\\\":%d,\\\"ok\\\":%d,\\\"peek_checked\\\":%d,\\\"peek_ok\\\":%d,\\\"peek_reps\\\":%d,\\\"peek_rep_ok\\\":%d,\\\"peek_rejects\\\":%d,\\\"short_history_checked\\\":%d,\\\"short_history_ok\\\":%d,\\\"short_history_bad\\\":\\\"%s\\\",\\\"clone_checked\\\":%d,\\\"clone_legs\\\":%d,\\\"clone_ok\\\":%d,\\\"clone_bad\\\":\\\"%s\\\",\\\"value_checked\\\":%d,\\\"value_legs\\\":%d,\\\"value_ok\\\":%d,\\\"value_bad\\\":\\\"%s\\\",\\\"benign\\\":%d}\", fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);\n");
+            s.push_str("        pos = json_appendf(resp, resp_size, pos, \",\\\"fill_checked\\\":%d,\\\"fill_ok\\\":%d,\\\"fill_bars\\\":%d,\\\"ok\\\":%d,\\\"peek_checked\\\":%d,\\\"peek_ok\\\":%d,\\\"peek_reps\\\":%d,\\\"peek_rep_ok\\\":%d,\\\"peek_rejects\\\":%d,\\\"short_history_checked\\\":%d,\\\"short_history_ok\\\":%d,\\\"short_history_bad\\\":\\\"%s\\\",\\\"clone_checked\\\":%d,\\\"clone_legs\\\":%d,\\\"clone_ok\\\":%d,\\\"clone_bad\\\":\\\"%s\\\",\\\"value_checked\\\":%d,\\\"value_legs\\\":%d,\\\"value_ok\\\":%d,\\\"value_bad\\\":\\\"%s\\\",\\\"benign\\\":%d,\\\"vmath\\\":%d}\", fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign, g_svVmath);\n");
         }
         let mut body = String::with_capacity(s.len() - body_start);
         for l in s[body_start..].lines() {

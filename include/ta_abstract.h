@@ -181,8 +181,8 @@ typedef int TA_FuncFlags;
 #define TA_FUNC_FLG_OVERLAP   0x01000000 /* Output scale same as input data. */
 #define TA_FUNC_FLG_STREAM    0x02000000 /* Function also has a streaming API:
                                           * TA_<FUNC>_Open/Update/Peek/Close,
-                                          * incremental per-bar evaluation
-                                          * bit-identical to the batch function.
+                                          * incremental per-bar evaluation of
+                                          * the batch function's values.
                                           */
 #define TA_FUNC_FLG_VOLUME    0x04000000 /* Output shall be over the volume data. */
 #define TA_FUNC_FLG_UNST_PER  0x08000000 /* Indicate if this function have an unstable

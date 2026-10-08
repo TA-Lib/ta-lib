@@ -607,6 +607,21 @@ static ErrorNumber test_rs_range( const TA_History *history )
                          (void *)history, 1, 0 );
 }
 
+/* The fused function takes its logs one value at a time, so on a build whose
+ * TA_LN is a batch kernel the composition takes them from log() too: the leg
+ * pins the order of the term's operations, not the library's choice of log. */
+static TA_RetCode rsLogs( int nbBar, TA_Real *x )
+{
+   TA_Integer beg, nb;
+   int i;
+
+   if( !regtest_vmath_batch( "LN" ) )
+      return TA_LN( 0, nbBar-1, x, &beg, &nb, x );
+   for( i = 0; i < nbBar; i++ )
+      x[i] = log( x[i] );
+   return TA_SUCCESS;
+}
+
 /* (7) COMPOSITE, bit-exact. The same estimator built out of shipped
  * primitives -- TA_DIV, TA_LN, TA_MULT, TA_ADD for the term, TA_SUM for the
  * window -- must land on the SAME BITS as the fused function.
@@ -642,10 +657,10 @@ static ErrorNumber test_rs_composite( const TA_History *history )
     || TA_DIV( 0, nbBar-1, history->high, history->open,  &beg, &nb, ho ) != TA_SUCCESS
     || TA_DIV( 0, nbBar-1, history->low,  history->close, &beg, &nb, lc ) != TA_SUCCESS
     || TA_DIV( 0, nbBar-1, history->low,  history->open,  &beg, &nb, lo ) != TA_SUCCESS
-    || TA_LN ( 0, nbBar-1, hc, &beg, &nb, hc ) != TA_SUCCESS
-    || TA_LN ( 0, nbBar-1, ho, &beg, &nb, ho ) != TA_SUCCESS
-    || TA_LN ( 0, nbBar-1, lc, &beg, &nb, lc ) != TA_SUCCESS
-    || TA_LN ( 0, nbBar-1, lo, &beg, &nb, lo ) != TA_SUCCESS
+    || rsLogs( nbBar, hc ) != TA_SUCCESS
+    || rsLogs( nbBar, ho ) != TA_SUCCESS
+    || rsLogs( nbBar, lc ) != TA_SUCCESS
+    || rsLogs( nbBar, lo ) != TA_SUCCESS
     || TA_MULT( 0, nbBar-1, hc, ho, &beg, &nb, p1 ) != TA_SUCCESS
     || TA_MULT( 0, nbBar-1, lc, lo, &beg, &nb, p2 ) != TA_SUCCESS
     || TA_ADD ( 0, nbBar-1, p1, p2, &beg, &nb, term ) != TA_SUCCESS )

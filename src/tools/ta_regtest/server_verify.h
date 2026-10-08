@@ -39,6 +39,12 @@ int server_verify_comparisons(void);
  * counts server_verify_lookback_parity, which compares no number. */
 int server_verify_value_comparisons(void);
 
+/* Output values server_verify() held by fuzz_vmath_near instead of by bits, and
+ * the live pipes it does that on for funcName. A caller routing a kernel-batch
+ * function requires the first to advance exactly when the second is non-zero. */
+int server_verify_vmath_comparisons(void);
+int server_verify_vmath_pipes(const char *funcName);
+
 /* Verify a C function call against all active servers.
  *
  * Uses ta_abstract metadata to build JSON-RPC requests internally.

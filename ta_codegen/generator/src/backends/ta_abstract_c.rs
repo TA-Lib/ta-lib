@@ -3024,8 +3024,10 @@ fn gen_ta_func_h(funcs: &[&FuncDef]) -> String {
          #endif\n\
          \n\
          /* The streaming API: what every TA_<NAME>_Open / Update / Peek / Close\n\
-         \x20* quartet below promises. A stream evaluates one bar at a time and is\n\
-         \x20* bit-identical to the batch function over the same series.\n\
+         \x20* quartet below promises. A stream evaluates one bar at a time and\n\
+         \x20* returns the batch function's values over the same series: bit for bit,\n\
+         \x20* except that a value depending on a transcendental math function may\n\
+         \x20* differ in the last bits.\n\
          \x20*\n\
          \x20* Open( &stream, inputs..., historyLen, params..., out ) warms up on\n\
          \x20* historyLen bars and hands back a handle. It wants at least one bar --\n\

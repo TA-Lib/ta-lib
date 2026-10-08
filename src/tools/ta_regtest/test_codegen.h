@@ -49,6 +49,16 @@ int codegen_short_filter_token_matches(const char *name, const char *token);
  * --xlang-hash and server_verify; see the comment on the implementation. */
 int codegen_lang_needs_transcendental_tol(const char *lang);
 
+/* True if a real output of funcName from `lang` is held to the in-process
+ * library's by fuzz_vmath_near instead of by bits: the library answers from a
+ * batch kernel (regtest_vmath_batch) and `lang` from libm. Never the C server,
+ * whose batch has the kernel too, nor a language of the 1e-9 lane, which already
+ * takes every such function. A NULL lang is a frozen release. */
+int codegen_call_needs_vmath_tol(const char *lang, const char *funcName);
+
+/* fuzz_vmath_near, for a suite that does not include fuzz_data.h. */
+int codegen_vmath_near(double a, double b);
+
 /* Differential fuzz of the current in-process library against the frozen
  * release `version` ("0_6_4"), served by bin/ta_ref_<version>_serve (--ref).
  * functionFilter: CSV substring filter (NULL = all). Returns TA_TEST_PASS iff
@@ -114,14 +124,17 @@ void codegen_hash_report(const char *who, TA_RetCode goldRc, int goldBeg,
  * not guaranteed to (proven host-dependent — see
  * codegen_lang_needs_transcendental_tol). Those calls swap the bitwise out_hash
  * path for a narrow element-compare at this tolerance (relative for |v|>1,
- * absolute otherwise). Every other language, and every non-transcendental call,
- * stays bitwise. Measured Java drift over both gates' scenarios peaks ~9.7e-15
+ * absolute otherwise). Measured Java drift over both gates' scenarios peaks ~9.7e-15
  * (HT_DCPHASE), so 1e-9 keeps ~5 orders of margin over libm noise while still
  * failing any real algorithmic regression (orders of magnitude larger). ---- */
 #define CODEGEN_TRANSCENDENTAL_TOL 1e-9
 
 /* Passed as codegen_compare_tol's tol, compares bits: the sign of a zero counts. */
 #define CODEGEN_TOL_BITWISE (-1.0)
+
+/* Passed as codegen_compare_tol's tol, holds reals by fuzz_vmath_near. Negative
+ * like the one above: test for it before any `tol < 0.0`. */
+#define CODEGEN_TOL_VMATH (-2.0)
 
 /* True if the FUNCTION name calls a transcendental C math routine directly.
  * Source-derived fixed list (ta_codegen/input grep). */
@@ -162,6 +175,7 @@ typedef struct {
     double cReal, sReal;          /* golden vs server value (real outputs) */
     int    cInt, sInt;            /* golden vs server value (integer outputs) */
     int    srvCount;              /* server array length (CTOL_COUNT only) */
+    int    nbNear;                /* reals taken through fuzz_vmath_near */
 } CTolDetail;
 
 /* Parse a server's array-mode response and element-compare against the C golden
