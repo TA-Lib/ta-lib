@@ -512,12 +512,8 @@ pub fn write_if_changed_silent(path: &std::path::Path, content: &str) {
 /// The sorted `ta_<STEM>.c` source stems for the generated C library, shared by the
 /// CMake (`LIB_SOURCES`) and autotools source-list generators so the two lists cannot
 /// drift apart. Every function in `ta_codegen/input/`, upper-cased and sorted.
-///
-/// Returns `(sorted_stems, extras)`; `extras` is always empty (kept for the callers'
-/// signature) — every shipped `.c` comes from `ta_codegen/input/`, nothing is picked up
-/// by scanning `src/ta_func/`.
-pub fn sorted_source_stems(funcs: &[FuncDef], _root: &Path) -> (Vec<String>, Vec<String>) {
+pub fn sorted_source_stems(funcs: &[FuncDef]) -> Vec<String> {
     let mut names: Vec<String> = funcs.iter().map(|f| f.name.to_uppercase()).collect();
     names.sort();
-    (names, Vec::new())
+    names
 }
