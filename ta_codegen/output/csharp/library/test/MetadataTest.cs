@@ -1468,6 +1468,82 @@ public static class MetadataTest
             $"both calls produced values, and the tuned Core produced fewer ({rDefault.Count} vs {rTuned.Count})");
     }
 
+    /// <summary>Every record that carries a collection prints its elements.</summary>
+    /// <remarks>The compiler-generated printer calls <c>ToString</c> on each member,
+    /// and <see cref="ImmutableArray{T}"/> answers its own type name, so a domain's
+    /// choices printed as <c>ImmutableArray`1[TALib.Metadata.NamedValue]</c>: the
+    /// type visible, the data not (#444 G7). The assertion is written against the
+    /// type name rather than against an expected string, so it keeps holding for a
+    /// collection member added later -- and it is checked over the whole catalogue,
+    /// not on one hand-picked function.</remarks>
+    private static void RecordPrintersExpandCollections()
+    {
+        int domains = 0;
+        int inputs = 0;
+        int funcs = 0;
+        foreach (FuncInfo f in FunctionCatalog.Default)
+        {
+            // FuncInfo carries three ImmutableArray members and is held to the
+            // same rule by an outright ToString override rather than by a
+            // PrintMembers. Asserted here because the sweep below would not
+            // touch it otherwise: it reads the members, never the record.
+            string printedFunc = f.ToString();
+            funcs++;
+            Check(!printedFunc.Contains("ImmutableArray", StringComparison.Ordinal),
+                $"{f.Name}: FuncInfo does not print an array type ({printedFunc})");
+            Check(printedFunc == f.Name,
+                $"{f.Name}: FuncInfo prints its name, not its members ({printedFunc})");
+
+            foreach (InputInfo i in f.Inputs)
+            {
+                string printed = i.ToString();
+                inputs++;
+                Check(!printed.Contains("ImmutableArray", StringComparison.Ordinal),
+                    $"{f.Name}.{i.ParamName}: InputInfo prints its SignatureOrder, not the array type ({printed})");
+                foreach (PriceComponents c in i.SignatureOrder)
+                {
+                    Check(printed.Contains(c.ToString(), StringComparison.Ordinal),
+                        $"{f.Name}.{i.ParamName}: SignatureOrder lists {c}");
+                }
+            }
+
+            foreach (OptInputInfo o in f.OptInputs)
+            {
+                string printed = o.Domain.ToString();
+                string where = $"{f.Name}.{o.ParamName}";
+                Check(!printed.Contains("ImmutableArray", StringComparison.Ordinal),
+                    $"{where}: the domain prints its values, not the array type ({printed})");
+                switch (o.Domain)
+                {
+                    case OptInputDomain.IntegerList l:
+                        domains++;
+                        foreach (NamedValue v in l.Values)
+                        {
+                            Check(printed.Contains(v.Name, StringComparison.Ordinal),
+                                $"{where}: the printed domain carries the choice {v.Name}");
+                        }
+
+                        break;
+                    case OptInputDomain.RealList l:
+                        domains++;
+                        foreach (NamedRealValue v in l.Values)
+                        {
+                            Check(printed.Contains(v.Name, StringComparison.Ordinal),
+                                $"{where}: the printed domain carries the choice {v.Name}");
+                        }
+
+                        break;
+                }
+            }
+        }
+
+        // The sweep is only worth what it covers: a catalogue with no list domain
+        // would pass every assertion above without testing anything.
+        Check(domains > 0, $"the sweep saw at least one list domain ({domains})");
+        Check(inputs > 0, $"the sweep saw at least one input ({inputs})");
+        Check(funcs > 0, $"the sweep saw at least one function ({funcs})");
+    }
+
     public static int Run()
     {
         CatalogueIsComplete();
@@ -1485,6 +1561,7 @@ public static class MetadataTest
         UnboundParametersTakeTheDocumentedDefault();
         MetadataTypesCannotBeConstructedOutside();
         FunctionDescriptionXmlDescribesEveryFunction();
+        RecordPrintersExpandCollections();
 
         if (_failures == 0)
         {
