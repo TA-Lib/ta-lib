@@ -340,6 +340,13 @@ impl Core {
     /// assert!(out_range.count > 0);
     /// assert!(zig_zag[..out_range.count].iter().all(|v| v.is_finite()));
     /// assert_eq!(out_range.beg_idx + out_range.count, high.len());
+    /// // the leg is a two-state latch: +1 while it runs up, -1 while it runs down
+    /// assert!(trend[..out_range.count].iter().all(|&v| v == 1 || v == -1));
+    /// // the pivot names a bar at or before the one reporting it, and never moves back
+    /// for (k, &idx) in pivot_idx[..out_range.count].iter().enumerate() {
+    ///     assert!((idx as usize) <= out_range.beg_idx + k);
+    ///     if k > 0 { assert!(idx >= pivot_idx[k - 1]); }
+    /// }
     /// # Ok::<(), ta_lib::RetCode>(())
     /// ```
     ///

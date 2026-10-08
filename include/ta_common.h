@@ -158,7 +158,7 @@ TA_LIB_API TA_RetCode TA_Shutdown( void );
  * whenever a source modification should trigger a repackaging of TA-Lib.
  * Written by scripts/sync.py; do not edit.
  */
-#define TA_LIB_SOURCES_DIGEST 69c907887da78c4e641855765b271d04
+#define TA_LIB_SOURCES_DIGEST 959f44cde72f129346521511d3a4e21d
 
 #ifdef __cplusplus
 }
