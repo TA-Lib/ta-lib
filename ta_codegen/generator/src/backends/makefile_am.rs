@@ -5,8 +5,8 @@ use std::path::Path;
 ///
 /// Uses the shared [`super::sorted_source_stems`] list so the autotools source
 /// set matches the CMake `LIB_SOURCES`. Writes only if content has changed.
-pub fn generate(funcs: &[FuncDef], out_path: &Path, root: &Path) {
-    let (names, _extras) = super::sorted_source_stems(funcs, root);
+pub fn generate(funcs: &[FuncDef], out_path: &Path) {
+    let names = super::sorted_source_stems(funcs);
 
     let mut content = String::new();
 
@@ -17,7 +17,6 @@ pub fn generate(funcs: &[FuncDef], out_path: &Path, root: &Path) {
          libta_func_la_SOURCES = ta_utility.c \\\n",
     );
 
-    // Function source entries
     for (i, name) in names.iter().enumerate() {
         if i + 1 < names.len() {
             content.push_str(&format!("\tta_{name}.c \\\n"));
