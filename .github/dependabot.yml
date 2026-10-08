@@ -1,0 +1,20 @@
+# Read from the default branch only: an edit here does nothing until it is on
+# main. `target-branch` covers version updates; a security update still opens
+# against main, and workflows/dependabot-prs.yml moves it to dev.
+version: 2
+updates:
+  - package-ecosystem: "npm"
+    directory: "/website"
+    target-branch: "dev"
+    schedule:
+      interval: "weekly"
+    # A bump can merge with no human look, so let a bad release be caught
+    # upstream first. Security updates ignore this.
+    cooldown:
+      default-days: 7
+
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    target-branch: "dev"
+    schedule:
+      interval: "weekly"

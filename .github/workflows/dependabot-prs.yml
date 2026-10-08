@@ -1,0 +1,182 @@
+# Dependabot PRs: move each one to dev, build the website with it, and merge
+# the low-risk website bumps. Everything else is left open on dev for a human.
+#
+# A PR against main runs main's copy of this file, so a change here reaches
+# security updates only after dev is promoted.
+#
+# Keep the trigger `pull_request`: a Dependabot run can raise its token with
+# `permissions:` there, and `pull_request_target` would hand a write token to
+# a job that installs the PR's packages.
+#
+# Retargeting by changing the base is clean only because main is always an
+# ancestor of dev (scripts/merge.py fast-forwards). If main ever carries a
+# commit dev lacks, the retargeted PR would carry it into dev.
+name: Dependabot PRs
+
+on:
+  pull_request:
+    types: [opened, reopened, synchronize]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: dependabot-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+env:
+  LAND_BRANCH: dev
+  PR: ${{ github.event.pull_request.number }}
+  HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+
+jobs:
+  triage:
+    name: Classify and retarget
+    # user.login, not github.actor: the actor is whoever caused the event, so
+    # a human re-running or commenting would otherwise pass as Dependabot.
+    if: >-
+      github.event.pull_request.user.login == 'dependabot[bot]' &&
+      github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      pull-requests: write
+    outputs:
+      website: ${{ steps.classify.outputs.website }}
+      auto: ${{ steps.classify.outputs.auto }}
+    steps:
+      # The action fails on a PR whose first commit is not a signed Dependabot
+      # commit. Keep going: the PR must still move to dev, as not automatic.
+      - name: Read the update's metadata
+        id: meta
+        continue-on-error: true
+        uses: dependabot/fetch-metadata@v3
+
+      - name: Classify
+        id: classify
+        env:
+          GH_TOKEN: ${{ github.token }}
+          DEPS: ${{ steps.meta.outputs.updated-dependencies-json }}
+        run: |
+          set -euo pipefail
+          files=$(gh api --paginate "repos/$GITHUB_REPOSITORY/pulls/$PR/files" --jq '.[].filename')
+          website=false
+          only_manifest=true
+          while IFS= read -r f; do
+            [[ $f == website/* ]] && website=true
+            [[ $f =~ ^website/(package\.json|pnpm-lock\.yaml)$ ]] || only_manifest=false
+          done <<<"$files"
+
+          # The metadata describes the first commit only, so anything pushed
+          # on top of it would merge under that commit's update type.
+          untouched=$(gh api "repos/$GITHUB_REPOSITORY/pulls/$PR/commits" --jq '
+            length == 1 and .[0].sha == env.HEAD_SHA and
+            .[0].author.login == "dependabot[bot]" and .[0].commit.verification.verified')
+
+          # A 0.x minor and any prerelease may break under semver, so only a
+          # patch, or a minor of a stable >=1.0 release, counts as low risk.
+          low_risk=$(jq '
+            length > 0 and all(.[];
+              (.prevVersion // "") != "" and (.newVersion // "") != "" and
+              (.prevVersion + .newVersion | contains("-") | not) and
+              (.updateType == "version-update:semver-patch" or
+               (.updateType == "version-update:semver-minor" and
+                (.prevVersion | test("^[1-9]")))))' <<<"${DEPS:-[]}")
+
+          auto=false
+          reason=""
+          if [[ $only_manifest != true ]]; then
+            reason="it changes files other than the website manifest and lockfile"
+          elif [[ $untouched != true ]]; then
+            reason="it is not a single signed Dependabot commit"
+          elif [[ $low_risk != true ]]; then
+            reason="it is not a patch, or a minor of a stable 1.0+ release"
+          else
+            auto=true
+          fi
+
+          {
+            echo "website=$website"
+            echo "auto=$auto"
+            echo "reason=$reason"
+          } >>"$GITHUB_OUTPUT"
+
+      - name: Retarget to dev
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          base=$(gh api "repos/$GITHUB_REPOSITORY/pulls/$PR" --jq .base.ref)
+          if [[ $base != "$LAND_BRANCH" ]]; then
+            gh api -X PATCH "repos/$GITHUB_REPOSITORY/pulls/$PR" -f base="$LAND_BRANCH" --silent
+            echo "Retargeted from $base to $LAND_BRANCH." >>"$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Say why it was not merged
+        if: steps.classify.outputs.auto != 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REASON: ${{ steps.classify.outputs.reason }}
+        run: |
+          gh pr comment "$PR" --repo "$GITHUB_REPOSITORY" --edit-last --create-if-none \
+            --body "Left for review on \`$LAND_BRANCH\`, not merged automatically: $REASON."
+
+  # Runs the PR's packages, so it holds no write token and no stored
+  # credentials. Keep it a separate job from the merge.
+  website:
+    name: Website builds on dev
+    needs: triage
+    if: needs.triage.outputs.website == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout dev
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ env.LAND_BRANCH }}
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Merge the PR into it
+        run: |
+          git -c user.name=ci -c user.email=ci@invalid merge --no-edit "$HEAD_SHA"
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v6
+        with:
+          version: "11.2.2"
+          run_install: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: website/pnpm-lock.yaml
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+        working-directory: website
+
+      - name: Build
+        env:
+          NODE_OPTIONS: --max_old_space_size=8192
+        run: pnpm run docs:build
+        working-directory: website
+
+  merge:
+    name: Merge into dev
+    needs: [triage, website]
+    if: needs.triage.outputs.auto == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - name: Merge
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh pr merge "$PR" --repo "$GITHUB_REPOSITORY" --merge --match-head-commit "$HEAD_SHA"
