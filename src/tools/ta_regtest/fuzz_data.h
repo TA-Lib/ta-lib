@@ -11,6 +11,7 @@
 
 #pragma STDC FP_CONTRACT OFF
 #include <math.h>
+#include <string.h>
 
 /* ---- splitmix64 PRNG (deterministic, self-contained) ---- */
 static unsigned long long fuzz_sm_next(unsigned long long *s)
@@ -662,6 +663,24 @@ static inline unsigned long long fuzz_hash_fin(unsigned long long hsh)
     hsh *= 0xC4CEB9FE1A85EC53ULL;
     hsh ^= hsh >> 33;
     return hsh;
+}
+
+/* ---- A value from a batch kernel against the same value from libm ----
+ * (TA_VMATH_KERNEL). Keep it this strict: a relative bound would
+ * pass a wrong value near zero, and an infinity against a finite value is a
+ * different overflow threshold, not a rounding. */
+#define FUZZ_VMATH_MAX_STEPS 8
+
+static inline int fuzz_vmath_near( double a, double b )
+{
+    unsigned long long ua, ub;
+    if( a != a || b != b ) return a != a && b != b;
+    if( a == b ) return 1;
+    if( isinf(a) || isinf(b) ) return 0;
+    memcpy(&ua, &a, sizeof(ua));
+    memcpy(&ub, &b, sizeof(ub));
+    if( (ua >> 63) != (ub >> 63) ) return 0;
+    return ( ua > ub ? ua - ub : ub - ua ) <= FUZZ_VMATH_MAX_STEPS;
 }
 
 #endif /* FUZZ_DATA_H */

@@ -223,6 +223,9 @@ static int              g_valueComparisons;
 /* Lookback numbers compared with the in-process library, summed over pipes. */
 static int              g_lookbackValues;
 
+/* Output values held by fuzz_vmath_near, summed over pipes. */
+static int              g_vmathComparisons;
+
 /* ---- Init / shutdown ---- */
 
 void server_verify_init(CodegenPipe *pipes[], const char *langs[], int nbPipes)
@@ -251,6 +254,7 @@ void server_verify_init(CodegenPipe *pipes[], const char *langs[], int nbPipes)
         g_comparisons = 0;
         g_valueComparisons = 0;
         g_lookbackValues = 0;
+        g_vmathComparisons = 0;
     }
 }
 
@@ -304,6 +308,20 @@ int server_verify_value_comparisons(void)
 int server_verify_lookback_values(void)
 {
     return g_lookbackValues;
+}
+
+int server_verify_vmath_comparisons(void)
+{
+    return g_vmathComparisons;
+}
+
+int server_verify_vmath_pipes(const char *funcName)
+{
+    int n = 0;
+    for( int p = 0; p < g_nbPipes; p++ )
+        if( codegen_call_needs_vmath_tol(g_pipeLang[p], funcName) )
+            n++;
+    return n;
 }
 
 int server_verify_active(void)
@@ -672,13 +690,9 @@ static unsigned long long sv_golden_hash(const char *funcName,
     return codegen_output_hash(nbOutput, isInt, bufs, (int)nbElement);
 }
 
-/* ---- Tolerance-based element compare (Java transcendental path only) ----
+/* ---- Element compare, for a call that cannot be compared by hash ----
  *
- * fdlibm != system libm means Java cannot be bit-compared on the transcendental
- * calls, so its output arrays are element-compared at `tol` (integers still
- * exact) via the shared codegen_compare_tol — the same primitive --xlang-hash's
- * Java leg uses. This wrapper just reconstructs the C outputs in logical order
- * and translates the verdict into server_verify's messages and error codes. */
+ * `tol` is codegen_compare_tol's: integers stay exact under every mode. */
 static ErrorNumber compare_output_tol(const char *funcName,
                                       const char *resp,
                                       TA_RetCode crefRetCode,
@@ -698,6 +712,7 @@ static ErrorNumber compare_output_tol(const char *funcName,
     CTolVerdict v = codegen_compare_tol(resp, nbOutput, isInt, bufs,
                                         crefRetCode, (int)crefOutBegIdx,
                                         (int)crefOutNbElement, tol, &d);
+    g_vmathComparisons += d.nbNear;
     switch( v )
     {
     case CTOL_MATCH:
@@ -726,6 +741,11 @@ static ErrorNumber compare_output_tol(const char *funcName,
         if( d.isInt )
             printf("  SV FAIL [%s]: int output %d [%d] C=%d server=%d\n",
                    funcName, d.output, d.element, d.cInt, d.sInt);
+        else if( tol == CODEGEN_TOL_VMATH )
+            printf("  SV FAIL [%s] (pipe %d, %s): output %d [%d] C=%.17g (%a) "
+                   "server=%.17g (%a), kernel against libm\n",
+                   funcName, g_curPipe, g_pipeLang[g_curPipe] ? g_pipeLang[g_curPipe] : "?",
+                   d.output, d.element, d.cReal, d.cReal, d.sReal, d.sReal);
         else
             printf("  SV FAIL [%s]: output %d [%d] C=%.15g server=%.15g (diff=%.15g)\n",
                    funcName, d.output, d.element, d.cReal, d.sReal,
@@ -763,8 +783,7 @@ ErrorNumber server_verify(
         sv_golden_hash(funcName, crefOutNbElement, outReal, outInteger);
 
     /* Decide transcendental-ness once (per call — it depends on the MAType
-     * argument, not just the function name). Only Java relaxes to a tolerance
-     * for these; C/Rust/C# stay bitwise even here. */
+     * argument, not just the function name). */
     const TA_FuncHandle *handle = NULL;
     int isTranscendental = 0;
     if( TA_GetFuncHandle(funcName, &handle) == TA_SUCCESS )
@@ -772,8 +791,7 @@ ErrorNumber server_verify(
                                                           optParams, nbOptParams);
 
     /* Send to each active server and compare. Each pipe gets its own request:
-     * the bitwise pipes ask for want_hash, the Java-transcendental pipe asks for
-     * arrays (tolerance path). */
+     * want_hash where the compare is bitwise, the arrays where it is not. */
     for( int p = 0; p < g_nbPipes; p++ )
     {
         g_curPipe = p;
@@ -785,6 +803,10 @@ ErrorNumber server_verify(
          * out_hash is always of the double tier. */
         int bitwise = !g_svFloat
                       && !(codegen_lang_needs_transcendental_tol(lang) && isTranscendental);
+        /* A hash cannot be held within a tolerance: such a call asks for the
+         * arrays. */
+        int vmath = bitwise && codegen_call_needs_vmath_tol(lang, funcName);
+        bitwise = bitwise && !vmath;
 
         if( g_svFloat && !sv_serves_float(lang) )
             continue;
@@ -873,12 +895,11 @@ ErrorNumber server_verify(
         }
         else
         {
-            /* Element compare: bitwise for the float tier, at the narrow
-             * tolerance for Java transcendentals. */
             err = compare_output_tol(funcName, g_respBuf,
                                      crefRetCode, crefOutBegIdx, crefOutNbElement,
                                      outReal, outInteger,
                                      g_svFloat ? CODEGEN_TOL_BITWISE
+                                     : vmath   ? CODEGEN_TOL_VMATH
                                                : CODEGEN_TRANSCENDENTAL_TOL);
             if( err != TA_TEST_PASS )
                 return err;

@@ -96,6 +96,92 @@
    #define TA_UNROLL(n)
 #endif
 
+/* TA_VMATH_MAP - the loop of a function that is one math-library call per element:
+ *
+ *    for( i = first, outIdx = 0; i <= last; i += 1, outIdx += 1 ) { OUT = fn(IN); }
+ *
+ * OUT is an lvalue written in terms of outIdx, IN an expression in terms of i, and
+ * first <= last.
+ *
+ * On Apple Silicon macOS the loop hands the values to vForce, the array routines
+ * of the Accelerate framework. A result may then differ from fn() in the last
+ * bits, in the sign of a zero and in the bits of a NaN; the one-value tiers
+ * (Update, Peek) keep fn().
+ *
+ * Keep every element one function of one value: every length goes through the
+ * same routine, never through fn() or another kernel for a short range, or a
+ * result would depend on where its range starts.
+ *
+ * vForce computes in blocks of eight, and one value in a block can change
+ * another's result (measured: a signalling NaN does, four places away). It is
+ * therefore given the scratch only, and the scratch slots after the last value,
+ * up to a whole block, hold an ordinary value, never what the stack held.
+ *
+ * vForce writes its whole count from the slot it is given, so it runs only where
+ * OUT's slots are consecutive, or one slot for every outIdx (a sink): any other
+ * layout keeps the plain loop. Into a sink only the last element is computed: Open
+ * runs this loop with a stride of 0 and reads the sink afterwards. Without that
+ * Open is a pass over the whole history that overruns the sink.
+ *
+ * The routines are bound at run time, never linked: linking the framework adds
+ * its load to the start of every program that links this library, whatever it
+ * calls. TA_Initialize binds them all; a loop still binds its own at first use,
+ * so a caller that skipped TA_Initialize gets the same values. A routine that
+ * cannot be bound leaves the plain loop, whose values no tolerance tells from the
+ * kernel's: TA_GetRuntimeInfo reports it.
+ */
+#define TA_VMATH_PLAIN( fn, i, first, last, outIdx, OUT, IN )               \
+   for( i = first, outIdx = 0; i <= last; i += 1, outIdx += 1 )             \
+   {                                                                        \
+      OUT = fn(IN);                                                         \
+   }
+#if TA_VMATH_KERNEL
+   #define TA_VMATH_SCRATCH 128
+   #define TA_VMATH_MAP( fn, i, first, last, outIdx, OUT, IN )              \
+   {                                                                        \
+      static TA_VMathRoutine ta_vmath_bound;                                \
+      const double *ta_vmath_slot0, *ta_vmath_slot1;                        \
+      TA_VMathRoutine ta_vmath_vv = __atomic_load_n( &ta_vmath_bound, __ATOMIC_RELAXED ); \
+      if( !ta_vmath_vv )                                                    \
+      {                                                                     \
+         ta_vmath_vv = TA_VMathBind( "vv" #fn );                            \
+         __atomic_store_n( &ta_vmath_bound, ta_vmath_vv, __ATOMIC_RELAXED ); \
+      }                                                                     \
+      outIdx = 1;                                                           \
+      ta_vmath_slot1 = &(OUT);                                              \
+      outIdx = 0;                                                           \
+      ta_vmath_slot0 = &(OUT);                                              \
+      if( ta_vmath_vv == TA_VMathUnbound || ( ta_vmath_slot1 != ta_vmath_slot0 && ta_vmath_slot1 != ta_vmath_slot0 + 1 ) ) \
+      {                                                                     \
+         TA_VMATH_PLAIN( fn, i, first, last, outIdx, OUT, IN )              \
+      }                                                                     \
+      else                                                                  \
+      {                                                                     \
+         double ta_vmath_in[TA_VMATH_SCRATCH];                              \
+         i = first;                                                         \
+         if( ta_vmath_slot1 == ta_vmath_slot0 )                             \
+         {                                                                  \
+            i = last;                                                       \
+            outIdx = last - first;                                          \
+         }                                                                  \
+         while( i <= last )                                                 \
+         {                                                                  \
+            int ta_vmath_n = last - i + 1, ta_vmath_k;                      \
+            if( ta_vmath_n > TA_VMATH_SCRATCH ) ta_vmath_n = TA_VMATH_SCRATCH; \
+            for( ta_vmath_k = 0; ta_vmath_k < ta_vmath_n; ta_vmath_k += 1, i += 1 ) \
+               ta_vmath_in[ta_vmath_k] = IN;                                \
+            for( ; ta_vmath_k & 7; ta_vmath_k += 1 )                        \
+               ta_vmath_in[ta_vmath_k] = 0.5;                               \
+            ta_vmath_vv( &(OUT), ta_vmath_in, &ta_vmath_n );                \
+            outIdx += ta_vmath_n;                                           \
+         }                                                                  \
+      }                                                                     \
+   }
+#else
+   #define TA_VMATH_MAP( fn, i, first, last, outIdx, OUT, IN )              \
+      TA_VMATH_PLAIN( fn, i, first, last, outIdx, OUT, IN )
+#endif
+
 /* Rounding macro for doubles. Works only with positive numbers. */
 #define round_pos(x) (std_floor((x)+0.5))
 

@@ -1500,3 +1500,21 @@ int checkOracleValue( double got, double want,
 
    return ad <= ( absTol + relTerm );
 }
+
+/* Hand-kept beside the generator's own choice of which loops become
+ * TA_VMATH_MAP. A name missing here fails a kernel build loudly; a name too
+ * many loosens that function's comparisons on a kernel build only. */
+static const char *const vmathBatchFunc[] = {
+   "ACOS", "ASIN", "ATAN", "COS", "COSH", "EXP",
+   "LN", "LOG10", "SIN", "SINH", "TAN", "TANH"
+};
+
+int regtest_vmath_batch( const char *funcName )
+{
+   unsigned int i;
+
+   for( i = 0; i < sizeof(vmathBatchFunc)/sizeof(vmathBatchFunc[0]); i++ )
+      if( strcmp( vmathBatchFunc[i], funcName ) == 0 )
+         return TA_VMATH_KERNEL;
+   return 0;
+}

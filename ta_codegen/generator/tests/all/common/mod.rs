@@ -81,6 +81,29 @@ pub fn load_enums() -> HashMap<String, ir::EnumDef> {
     parser::enums::load_enums(&path)
 }
 
+/// The first line of generated C naming one of `words` that a `-DTA_REF_SERVE`
+/// build compiles. Conditionals nest, and an `#else` flips only the two that
+/// test `TA_REF_SERVE`.
+pub fn first_line_a_ref_serve_build_compiles<'a>(src: &'a str, words: &[&str]) -> Option<&'a str> {
+    // (excluded from the frozen build, tests TA_REF_SERVE)
+    let mut conds: Vec<(bool, bool)> = Vec::new();
+    for line in src.lines() {
+        let t = line.trim_start();
+        if t.starts_with("#if") {
+            let tests = t.starts_with("#ifndef TA_REF_SERVE") || t.starts_with("#ifdef TA_REF_SERVE");
+            conds.push((t.starts_with("#ifndef TA_REF_SERVE"), tests));
+        } else if t.starts_with("#else") {
+            let (excluded, tests) = conds.last_mut().expect("#else inside a conditional");
+            *excluded = *tests && !*excluded;
+        } else if t.starts_with("#endif") {
+            conds.pop().expect("#endif closes a conditional");
+        } else if !conds.iter().any(|c| c.0) && words.iter().any(|w| t.contains(w)) {
+            return Some(line);
+        }
+    }
+    None
+}
+
 /// Like [`load_indicator`], but wires a hand-written source body onto the real
 /// YAML metadata — for fixtures that no shipped `.c` provides. Mirrors the
 /// production load path (`wire_parsed_source`), matching the function by name.

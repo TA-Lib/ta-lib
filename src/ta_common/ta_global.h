@@ -130,4 +130,19 @@ typedef struct
 
 extern TA_LIB_INTERNAL_EXPORT TA_LibcPriv *TA_Globals;
 
+/* TA_VMATH_KERNEL - whether the batch loop of the functions that are one
+ * math-library call per element calls a platform kernel (TA_VMATH_MAP in
+ * ta_func/ta_utility.h). The condition uses only macros the compiler predefines,
+ * and is true for macOS alone among Apple's systems. Always defined, 1 or 0: test
+ * its value, never defined().
+ */
+#if defined( __APPLE__ ) && defined( __aarch64__ ) && defined( __ENVIRONMENT_MAC_OS_X_VERSION_MIN_REQUIRED__ )
+   #define TA_VMATH_KERNEL 1
+   typedef void (*TA_VMathRoutine)( double *out, const double *in, const int *count );
+   TA_VMathRoutine TA_VMathBind( const char *symbol );
+   void TA_VMathUnbound( double *out, const double *in, const int *count );
+#else
+   #define TA_VMATH_KERNEL 0
+#endif
+
 #endif
