@@ -82,7 +82,6 @@ From the repo root:
 ```bash
 python3 scripts/build.py generate          # output/csharp must be regenerated, not stale
 git status --porcelain                     # must be empty
-git clean -xdn -- ta_codegen/output/csharp # must be silent (F2)
 python3 scripts/build.py libraries --language=csharp
 ```
 
@@ -158,6 +157,6 @@ license element and the icon, both of which already ship.
 - **What the recorded API surface cannot see** (#444 E13): a changed base type, interface list,
   enum underlying type or sealedness. E13 detects removed or changed members only.
 - **Where the package is built** (#444 F2) is undecided. A laptop pack compiles any untracked
-  `.cs` into the DLL while the nuspec's `commit=` names HEAD, which is why NP1 requires both
-  `git status --porcelain` empty and `git clean -xdn` silent. A byte-identical DLL also needs
+  `.cs` into the DLL while the nuspec's `commit=` names HEAD, which is why the package gate
+  refuses a dirty tree or a stray file in the library directory. A byte-identical DLL also needs
   the same .NET runtime and the same line endings; the repo's `.gitattributes` sets none.
