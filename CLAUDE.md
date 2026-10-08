@@ -14,8 +14,8 @@ writes — the build-system source lists and the ta-lib.org function pages inclu
 whole-dir symlink breaks autotools' per-dir libtool recursion (`make` enters the
 symlink's *physical* path, so the Makefile's relative `../../libtool` fails with
 `Error 127`), and it would force a packaging dereference step. Real files in
-`src/` avoid both — and downstream consumers (notably the PHP `trader` extension)
-glob `src/ta_func/*.c` straight out of the released source tarball.
+`src/` avoid both — and downstream consumers glob `src/ta_func/*.c` straight out
+of the released source tarball.
 
 **Build separation (important):** the C build systems (CMake + autotools) build
 **only C** — the library plus `ta_regtest` and `ta_bench`. `ta_codegen` is Rust,
