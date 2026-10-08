@@ -451,6 +451,13 @@ int main(int argc, char *argv[]) {
         return bench_corpus_selfcheck(n_points, &corpus) ? 1 : 0;
 
     TA_Initialize();
+    /* Before the corpus is generated, not inside the timing loop: what it
+       checks is a property of the function catalogue, and refusing early means
+       nothing has been allocated to unwind. */
+    if( check_output_arity() != 0 ) {
+        TA_Shutdown();
+        return 1;
+    }
     generate_price_data(n_points, &corpus);
 
     printf("ta_bench_direct: %d points, %d iters, shape=%s seed=%d regime-period=%d"
@@ -468,7 +475,6 @@ int main(int argc, char *argv[]) {
     printf("  Running reference (libta-lib.a)...\n");
 
     BenchCallbackCtx cb = { .filter = func_filter, .iters = n_iters };
-    if( rep == 0 && check_output_arity() != 0 ) return 1;
     TA_ForEachFunc(bench_ref_func, &cb);
     printf("  %d functions timed\n", g_nResults);
 
