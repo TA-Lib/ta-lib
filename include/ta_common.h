@@ -52,16 +52,18 @@
  */
 #define TA_INTERNAL_ERROR(Id) ((TA_RetCode)(TA_INTERNAL_ERROR+Id))
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
+/* System includes stay outside extern "C": a C++ translation unit must see
+ * them with their own linkage. */
 #include <stdio.h>
 #include <limits.h>
 #include <float.h>
 
 #ifndef TA_DEFS_H
    #include "ta_defs.h"
+#endif
+
+#ifdef __cplusplus
+extern "C" {
 #endif
 
 /* Some functions to get the version of TA-Lib.
@@ -158,7 +160,7 @@ TA_LIB_API TA_RetCode TA_Shutdown( void );
  * whenever a source modification should trigger a repackaging of TA-Lib.
  * Written by scripts/sync.py; do not edit.
  */
-#define TA_LIB_SOURCES_DIGEST 7c6e8f4603eee19b00d9b8e356659062
+#define TA_LIB_SOURCES_DIGEST ac3bb8cb1137badd3257d95e7dc2e1df
 
 #ifdef __cplusplus
 }
