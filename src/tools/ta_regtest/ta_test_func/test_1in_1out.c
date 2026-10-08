@@ -65,6 +65,8 @@
 #include "ta_utility.h"
 #include "ta_memory.h"
 #include "server_verify.h"
+#include "test_codegen.h"
+#include "ta_stream_frame.h"
 #include "../../ta_alloc_check.h"
 
 /**** External functions declarations. ****/
@@ -151,7 +153,9 @@ static TA_Test tableTest[] =
 /* Each elementary math function is the C math library's routine of that
  * name, bar by bar. A committed value cannot say so: the library's result
  * differs in the last bit from one host to the next. The bound allows a build
- * that vectorizes the call through another routine of the same library.
+ * that vectorizes the call through another routine of the same library; a
+ * build whose batch loop is a kernel of its own is held by the kernel's
+ * comparator instead, which has margin over what that kernel measures.
  */
 typedef TA_RetCode (*ElemFunc)( int, int, const double[], int *, int *, double[] );
 
@@ -185,6 +189,7 @@ static ErrorNumber test_elementary_math( const TA_History *history )
 {
    static double in[ELEM_CAP], out[ELEM_CAP];
    int nbBars = (int)history->nbBars;
+   int nbNear = 0;
    unsigned int r;
    int i;
 
@@ -194,6 +199,7 @@ static ErrorNumber test_elementary_math( const TA_History *history )
    for( r = 0; r < NB_ELEM_ROW; r++ )
    {
       const ElemRow *row = &elemRows[r];
+      int kernel = regtest_vmath_batch( row->name );
       TA_Integer begIdx = -1, nbElement = -1;
       TA_RetCode retCode;
 
@@ -210,13 +216,215 @@ static ErrorNumber test_elementary_math( const TA_History *history )
       {
          double want = row->reference( in[i] );
          double bound = 4.0 * DBL_EPSILON * fabs( want );
-         if( !( fabs( out[i] - want ) <= bound ) )
+         int same;
+         if( kernel )
+         {
+            nbNear++;
+            same = codegen_vmath_near( out[i], want );
+         }
+         else
+            same = fabs( out[i] - want ) <= bound;
+         if( !same )
          {
             printf( "\nFail: TA_%s(%.17g) is %.17g, the math library answers %.17g\n",
                     row->name, in[i], out[i], want );
             return TA_TESTUTIL_TFRR_BAD_CALCULATION;
          }
       }
+   }
+   /* Every row is a kernel-batch function, or none is. */
+   if( nbNear != TA_VMATH_KERNEL * (int)NB_ELEM_ROW * nbBars )
+   {
+      printf( "\nFail: %d elementary math value(s) held by the kernel comparator, "
+              "want %d\n", nbNear, TA_VMATH_KERNEL * (int)NB_ELEM_ROW * nbBars );
+      return TA_TESTUTIL_TFRR_BAD_PARAM;
+   }
+   return TA_TEST_PASS;
+}
+
+/* One element is one function of one value: not of its neighbour, of where the
+ * range starts, of the range's length or of the tier computing it. A loop that
+ * works several elements at a time can break each of those inside any
+ * tolerance, and a comparison against the math library cannot tell. Ordinary
+ * values are mixed with special ones, so a leak has an ordinary result to change.
+ *
+ * isFloat marks a value that is exactly a float, so that TA_S_ is given the
+ * same number. Not the NaN: its bits through a float are the platform's.
+ */
+typedef struct
+{
+   double value;
+   int    isFloat;
+} ElemLaneIn;
+
+static const ElemLaneIn elemLaneIn[] =
+{
+   { 0.5,   1 }, { (double)NAN,       0 },
+   { 0.37,  0 }, { (double)INFINITY,  1 },
+   { 0.25,  1 }, { -(double)INFINITY, 1 },
+   { 0.81,  0 }, { 0.0,               1 },
+   { 0.75,  1 }, { -0.0,              1 },
+   { 0.12,  0 }, { DBL_MIN / 8.0,     0 },   /* subnormal */
+   { 0.125, 1 }, { 1e300,             0 },
+   { 0.63,  0 }, { -1.0,              1 },   /* outside LN and LOG10 */
+   { 0.625, 1 }, { 2.0,               1 },   /* outside ACOS and ASIN */
+   { 0.94,  0 }, { -0.0,              1 },
+   { 1e300, 0 }, { -0.0,              1 },
+   { (double)NAN, 0 }, { 0.0,         1 },
+   { (double)INFINITY, 1 }, { -1.0,   1 },
+   { 1e300, 0 }
+};
+/* Not a whole number of the kernel's blocks, and neither is the range starting
+ * one bar later, which also moves every element to another place in its block. */
+#define ELEM_LANE_N 27
+/* Per function: 26 one bar later, 27 alone, 16 through TA_S_, 27 in place,
+ * 27 filled, 27 opened. */
+#define ELEM_LANE_CMP 150
+#define ELEM_LANE_GUARD 7.25e-300
+
+static ErrorNumber elemLaneFail( const char *name, const char *leg, int bar )
+{
+   printf( "\nFail: TA_%s: %s differs from the full-range call at bar %d\n",
+           name, leg, bar );
+   return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+}
+
+static ErrorNumber test_elementary_lanes( void )
+{
+   static const double guard = ELEM_LANE_GUARD;
+   double in[ELEM_LANE_N], full[ELEM_LANE_N + 1], out[ELEM_LANE_N + 1];
+   float  inS[ELEM_LANE_N];
+   const double *const inPtr[1]  = { in };
+   const float  *const inSPtr[1] = { inS };
+   double       *const outPtr[1] = { out };
+   const int n = ELEM_LANE_N;
+   int nbCmp = 0;
+   unsigned int r;
+   int i, t;
+
+   if( (int)(sizeof(elemLaneIn)/sizeof(elemLaneIn[0])) != n )
+      return TA_TESTUTIL_TFRR_BAD_PARAM;
+
+   for( i = 0; i < n; i++ )
+   {
+      double widened;
+      in[i]  = elemLaneIn[i].value;
+      inS[i] = elemLaneIn[i].isFloat ? (float)in[i] : 0.25f;
+      widened = (double)inS[i];
+      if( elemLaneIn[i].isFloat && memcmp( &widened, &in[i], sizeof(double) ) != 0 )
+      {
+         printf( "\nFail: elementary math input %d (%.17g) is not a float\n", i, in[i] );
+         return TA_TESTUTIL_TFRR_BAD_PARAM;
+      }
+   }
+
+   for( r = 0; r < NB_ELEM_ROW; r++ )
+   {
+      const ElemRow *row = &elemRows[r];
+      const TA_StreamEntry  *se = NULL;
+      const TA_VariantEntry *ve = NULL;
+      TA_Integer beg = -1, nb = -1;
+      TA_RetCode rc;
+      void *stream;
+
+      for( t = 0; t < TA_STREAM_TABLE_SIZE; t++ )
+         if( strcmp( TA_StreamTable[t].name, row->name ) == 0 )
+            se = &TA_StreamTable[t];
+      for( t = 0; t < TA_VARIANT_TABLE_SIZE; t++ )
+         if( strcmp( TA_VariantTable[t].name, row->name ) == 0 )
+            ve = &TA_VariantTable[t];
+      if( !se || !ve )
+      {
+         printf( "\nFail: TA_%s has no stream or no TA_S_ entry\n", row->name );
+         return TA_TESTUTIL_TFRR_BAD_PARAM;
+      }
+
+      full[n] = guard;
+      rc = row->func( 0, n - 1, in, &beg, &nb, full );
+      if( rc != TA_SUCCESS || beg != 0 || nb != n
+          || memcmp( &full[n], &guard, sizeof(double) ) != 0 )
+      {
+         printf( "\nFail: TA_%s rc=%d begIdx=%d count=%d on %d values, or a write "
+                 "past them\n", row->name, (int)rc, (int)beg, (int)nb, n );
+         return TA_TESTUTIL_TFRR_BAD_RETCODE;
+      }
+
+      rc = row->func( 1, n - 1, in, &beg, &nb, out );
+      if( rc != TA_SUCCESS || beg != 1 || nb != n - 1 )
+         return elemLaneFail( row->name, "the range of the call starting one bar later", 1 );
+      for( i = 1; i < n; i++ )
+      {
+         nbCmp++;
+         if( memcmp( &out[i - 1], &full[i], sizeof(double) ) != 0 )
+            return elemLaneFail( row->name, "the call starting one bar later", i );
+      }
+
+      for( i = 0; i < n; i++ )
+      {
+         rc = row->func( i, i, in, &beg, &nb, out );
+         nbCmp++;
+         if( rc != TA_SUCCESS || beg != i || nb != 1
+             || memcmp( &out[0], &full[i], sizeof(double) ) != 0 )
+            return elemLaneFail( row->name, "the one-element call", i );
+      }
+
+      rc = ve->single( 0, n - 1, inSPtr, NULL, &beg, &nb, outPtr, NULL );
+      if( rc != TA_SUCCESS || beg != 0 || nb != n )
+         return elemLaneFail( row->name, "the range of TA_S_", 0 );
+      for( i = 0; i < n; i++ )
+      {
+         if( !elemLaneIn[i].isFloat )
+            continue;
+         nbCmp++;
+         if( memcmp( &out[i], &full[i], sizeof(double) ) != 0 )
+            return elemLaneFail( row->name, "TA_S_", i );
+      }
+
+      memcpy( out, in, sizeof(in) );
+      out[n] = guard;
+      rc = row->func( 0, n - 1, out, &beg, &nb, out );
+      if( rc != TA_SUCCESS || beg != 0 || nb != n
+          || memcmp( &out[n], &guard, sizeof(double) ) != 0 )
+         return elemLaneFail( row->name, "the range of the in-place call, or the "
+                              "element after it,", n );
+      for( i = 0; i < n; i++ )
+      {
+         nbCmp++;
+         if( memcmp( &out[i], &full[i], sizeof(double) ) != 0 )
+            return elemLaneFail( row->name, "the in-place call", i );
+      }
+
+      stream = NULL;
+      rc = se->openAndFill( &stream, inPtr, n, NULL, &beg, &nb, outPtr, NULL );
+      if( stream )
+         se->close( stream );
+      if( rc != TA_SUCCESS || beg != 0 || nb != n )
+         return elemLaneFail( row->name, "the range of OpenAndFill", 0 );
+      for( i = 0; i < n; i++ )
+      {
+         nbCmp++;
+         if( memcmp( &out[i], &full[i], sizeof(double) ) != 0 )
+            return elemLaneFail( row->name, "OpenAndFill", i );
+      }
+
+      /* Open computes into one slot: the last bar has to be the last store. */
+      for( i = 0; i < n; i++ )
+      {
+         stream = NULL;
+         rc = se->open( &stream, inPtr, i + 1, NULL, outPtr, NULL );
+         if( stream )
+            se->close( stream );
+         nbCmp++;
+         if( rc != TA_SUCCESS || memcmp( &out[0], &full[i], sizeof(double) ) != 0 )
+            return elemLaneFail( row->name, "the value Open reports", i );
+      }
+   }
+
+   if( nbCmp != (int)NB_ELEM_ROW * ELEM_LANE_CMP )
+   {
+      printf( "\nFail: %d elementary math lane comparison(s), want %d\n",
+              nbCmp, (int)NB_ELEM_ROW * ELEM_LANE_CMP );
+      return TA_TESTUTIL_TFRR_BAD_PARAM;
    }
    return TA_TEST_PASS;
 }
@@ -250,6 +458,10 @@ ErrorNumber test_func_1in_1out( TA_History *history )
    TA_SetUnstablePeriod( TA_FUNC_UNST_ALL, 0 );
 
    retValue = test_elementary_math( history );
+   if( retValue != TA_TEST_PASS )
+      return retValue;
+
+   retValue = test_elementary_lanes();
    if( retValue != TA_TEST_PASS )
       return retValue;
 
@@ -497,11 +709,22 @@ static ErrorNumber do_test( const TA_History *history,
       }
       else
       {
+         int nearBefore = server_verify_vmath_comparisons();
          errNb = server_verify(funcName, test->startIdx, test->endIdx, history->nbBars,
                                retCode, outBegIdx, outNbElement,
                                (const TA_Real*[]){ gBuffer[0].in, NULL },
                                NULL, 0,
                                (const TA_Real*[]){ gBuffer[0].out0, NULL }, NULL);
+         if( errNb == TA_TEST_PASS &&
+             ( server_verify_vmath_comparisons() > nearBefore )
+             != ( server_verify_vmath_pipes( funcName ) > 0 ) )
+         {
+            printf( "\nFail: TA_%s: %d server value(s) held by the kernel comparator "
+                    "on %d pipe(s) that call for it\n", funcName,
+                    server_verify_vmath_comparisons() - nearBefore,
+                    server_verify_vmath_pipes( funcName ) );
+            return TA_SV_ROUTED_VACUOUS;
+         }
       }
       if( errNb != TA_TEST_PASS ) return errNb;
    }

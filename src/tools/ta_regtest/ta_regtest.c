@@ -143,6 +143,50 @@ static const char *displayTag( const char *tag, const char *label )
 /**** Global functions definitions.   ****/
 static ErrorNumber regtest_main( int argc, char **argv );
 
+/* What the library reports about itself, asked once the first TA_Initialize has
+ * returned and before any TA function has run: afterwards a loop has loaded its
+ * own routine, and the answer says nothing about TA_Initialize.
+ *
+ * A kernel the library cannot load fails no value anywhere: only the speed is
+ * lost. The kernel's platform is stated here, not taken from the library's own
+ * switch, so that a kernel compiled out by mistake is not agreed with: keep the
+ * two conditions written apart.
+ */
+static ErrorNumber runtimeInfoAfterFirstInitialize( void )
+{
+#if defined( __APPLE__ ) && defined( __aarch64__ ) && defined( __ENVIRONMENT_MAC_OS_X_VERSION_MIN_REQUIRED__ )
+   const int wantKernel = 1;
+#else
+   const int wantKernel = TA_VMATH_KERNEL;
+#endif
+   int kernel = -1, nbInitialize = -1, nbShutdown = -1, untouched = 7;
+
+   if( TA_GetRuntimeInfo( "vmath.transcendental", &kernel ) != TA_SUCCESS || kernel != wantKernel )
+   {
+      printf( "Fail: after TA_Initialize vmath.transcendental is %d, want %d on this build\n",
+              kernel, wantKernel );
+      return TA_TESTUTIL_INIT_FAILED;
+   }
+   if( TA_GetRuntimeInfo( "count.initialize", &nbInitialize ) != TA_SUCCESS ||
+       TA_GetRuntimeInfo( "count.shutdown", &nbShutdown ) != TA_SUCCESS ||
+       nbInitialize != 1 || nbShutdown != 0 )
+   {
+      printf( "Fail: after the first TA_Initialize count.initialize is %d and count.shutdown is %d\n",
+              nbInitialize, nbShutdown );
+      return TA_TESTUTIL_INIT_FAILED;
+   }
+   if( TA_GetRuntimeInfo( "vmath.SIN", &untouched ) != TA_BAD_PARAM ||
+       TA_GetRuntimeInfo( "vmath", &untouched ) != TA_BAD_PARAM ||
+       TA_GetRuntimeInfo( NULL, &untouched ) != TA_BAD_PARAM ||
+       TA_GetRuntimeInfo( "vmath.transcendental", NULL ) != TA_BAD_PARAM ||
+       untouched != 7 )
+   {
+      printf( "Fail: TA_GetRuntimeInfo accepts a key or an argument it must reject\n" );
+      return TA_TESTUTIL_INIT_FAILED;
+   }
+   return TA_TEST_PASS;
+}
+
 /* A ride-along divergence fails the run that FOUND it.
  *
  * The ride is a passenger on the language servers, so every pass that drives
@@ -259,7 +303,9 @@ static ErrorNumber regtest_main( int argc, char **argv )
          printf( "TA_Initialize failed\n" );
          return TA_TESTUTIL_INIT_FAILED;
       }
-      arityRet = codegen_output_arity_within_cap();
+      arityRet = runtimeInfoAfterFirstInitialize();
+      if( arityRet == TA_TEST_PASS )
+         arityRet = codegen_output_arity_within_cap();
       TA_Shutdown();
       if( arityRet != TA_TEST_PASS )
          return arityRet;
