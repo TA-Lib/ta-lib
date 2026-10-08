@@ -1499,6 +1499,12 @@ internal static class NoPhantomIoBinder
                 startIdx, endIdx, c.Series(0), c.IntOpt(0), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         },
+        ["ZIGZAG"] = static (core, c, startIdx, endIdx) =>
+        {
+            RetCode rc = core.ZigzagImpl(
+                startIdx, endIdx, c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.RealOpt(0), c.IntOpt(1), out int b, out int n, c.RealOut(0), c.IntOut(1), c.IntOut(2));
+            return new CallOutcome(rc, b, n);
+        },
         ["ZLEMA"] = static (core, c, startIdx, endIdx) =>
         {
             RetCode rc = core.ZlemaImpl(
@@ -2890,6 +2896,12 @@ internal static class NoPhantomIoBinder
                 startIdx, endIdx, Narrow(c.Series(0)), c.IntOpt(0), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         },
+        ["ZIGZAG"] = static (core, c, startIdx, endIdx) =>
+        {
+            RetCode rc = core.ZigzagImpl(
+                startIdx, endIdx, Narrow(c.Price(0, PriceComponents.High)), Narrow(c.Price(0, PriceComponents.Low)), c.RealOpt(0), c.IntOpt(1), out int b, out int n, c.RealOut(0), c.IntOut(1), c.IntOut(2));
+            return new CallOutcome(rc, b, n);
+        },
         ["ZLEMA"] = static (core, c, startIdx, endIdx) =>
         {
             RetCode rc = core.ZlemaImpl(
@@ -3131,6 +3143,7 @@ internal static class NoPhantomIoBinder
         ["WCLPRICE"] = static (core, c) => core.WclpriceOpen(c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close)),
         ["WILLR"] = static (core, c) => core.WillrOpen(c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.IntOpt(0)),
         ["WMA"] = static (core, c) => core.WmaOpen(c.Series(0), c.IntOpt(0)),
+        ["ZIGZAG"] = static (core, c) => core.ZigzagOpen(c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.RealOpt(0), c.IntOpt(1)),
         ["ZLEMA"] = static (core, c) => core.ZlemaOpen(c.Series(0), c.IntOpt(0)),
     };
 }

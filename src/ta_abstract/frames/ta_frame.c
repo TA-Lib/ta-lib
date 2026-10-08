@@ -6215,6 +6215,35 @@ int TA_WMA_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
 {
    return TA_WMA_DisplayShift( params->optIn[0].data.optInInteger, outputIdx );
 }
+TA_RetCode TA_ZIGZAG_FramePP( const TA_ParamHolderPriv *params,
+                           int            startIdx,
+                           int            endIdx,
+                           int           *outBegIdx,
+                           int           *outNBElement )
+{
+   return TA_ZIGZAG(
+               startIdx,
+               endIdx,
+               params->in[0].data.inPrice.high, /* inHigh */
+               params->in[0].data.inPrice.low, /* inLow */
+               params->optIn[0].data.optInReal, /* optInSensitivity*/
+               params->optIn[1].data.optInInteger, /* optInMinTrendLength*/
+               outBegIdx, 
+               outNBElement, 
+               params->out[0].data.outReal, /*  outZigZag */
+               params->out[1].data.outInteger, /*  outTrend */
+               params->out[2].data.outInteger /*  outPivotIdx */
+               );
+}
+unsigned int TA_ZIGZAG_FramePPLB( const TA_ParamHolderPriv *params )
+{
+   return TA_ZIGZAG_Lookback(params->optIn[0].data.optInReal, /* optInSensitivity*/
+                    params->optIn[1].data.optInInteger /* optInMinTrendLength*/ );
+}
+int TA_ZIGZAG_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+{
+   return TA_ZIGZAG_DisplayShift( params->optIn[0].data.optInReal, params->optIn[1].data.optInInteger, outputIdx );
+}
 TA_RetCode TA_ZLEMA_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
                            int            endIdx,

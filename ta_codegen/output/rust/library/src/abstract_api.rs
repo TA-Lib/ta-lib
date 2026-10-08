@@ -502,13 +502,15 @@ pub enum FuncId {
     WILLR,
     /// Weighted Moving Average — [`Core::wma`](crate::Core::wma).
     WMA,
+    /// Zig Zag — [`Core::zigzag`](crate::Core::zigzag).
+    ZIGZAG,
     /// Zero-Lag Exponential Moving Average — [`Core::zlema`](crate::Core::zlema).
     ZLEMA,
 }
 
 impl FuncId {
     /// Number of functions in the registry.
-    pub const COUNT: usize = 231;
+    pub const COUNT: usize = 232;
     /// Metadata for this function (O(1) index into the const table).
     #[inline] pub fn info(self) -> &'static FuncInfo { &FUNC_TABLE[self as usize] }
     /// Upper-case TA name, e.g. "RSI".
@@ -848,7 +850,7 @@ impl FuncInfo {
 
 /// Backing storage for [`FUNCS`], indexed by [`FuncId`]. Link-time const, in
 /// `.rodata`. Private, so its length is nobody's business but this module's.
-static FUNC_TABLE: [FuncInfo; 231] = [
+static FUNC_TABLE: [FuncInfo; 232] = [
     FuncInfo {
         id: FuncId::AC,
         name: "AC",
@@ -3380,6 +3382,17 @@ static FUNC_TABLE: [FuncInfo; 231] = [
         unst_id: None,
     },
     FuncInfo {
+        id: FuncId::ZIGZAG,
+        name: "ZIGZAG",
+        group: Group::OverlapStudies,
+        hint: "Zig Zag",
+        flags: FuncFlags(0x23000000),
+        inputs: &[InputInfo { param_name: "inPriceHL", kind: InputType::Price, flags: InputFlags(0x00000006) }, ],
+        opt_inputs: &[OptInputInfo { param_name: "optInSensitivity", display_name: "Sensitivity", hint: "Minimum move away from the current extreme that reverses the leg, in percent", flags: OptInputFlags(0x00100000), kind: OptInputType::RealRange { min: 0.0, max: 100.0, precision: 2, default: 5.0, suggested: (1.0, 20.0, 1.0) } }, OptInputInfo { param_name: "optInMinTrendLength", display_name: "Minimum Trend Length", hint: "Minimum number of bars between two pivots", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 1, max: 100000, default: 1, suggested: (1, 20, 1) } }, ],
+        outputs: &[OutputInfo { param_name: "outZigZag", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, OutputInfo { param_name: "outTrend", kind: OutputType::Integer, flags: OutputFlags(0x00000001) }, OutputInfo { param_name: "outPivotIdx", kind: OutputType::Integer, flags: OutputFlags(0x00000001) }, ],
+        unst_id: None,
+    },
+    FuncInfo {
         id: FuncId::ZLEMA,
         name: "ZLEMA",
         group: Group::OverlapStudies,
@@ -3638,6 +3651,7 @@ fn get_func_handle_exact(name: &str) -> Option<FuncId> {
         "WCLPRICE" => FuncId::WCLPRICE,
         "WILLR" => FuncId::WILLR,
         "WMA" => FuncId::WMA,
+        "ZIGZAG" => FuncId::ZIGZAG,
         "ZLEMA" => FuncId::ZLEMA,
         _ => return None,
     })
@@ -4137,6 +4151,7 @@ impl<'a> ParamHolder<'a> {
             FuncId::WCLPRICE => self.core.wclprice_lookback(),
             FuncId::WILLR => self.core.willr_lookback(self.int_opt[0]),
             FuncId::WMA => self.core.wma_lookback(self.int_opt[0]),
+            FuncId::ZIGZAG => self.core.zigzag_lookback(self.real_opt[0], self.int_opt[1]),
             FuncId::ZLEMA => self.core.zlema_lookback(self.int_opt[0]),
         }
     }
@@ -4381,6 +4396,7 @@ impl<'a> ParamHolder<'a> {
             FuncId::WCLPRICE => self.core.wclprice_display_shift(output_idx),
             FuncId::WILLR => self.core.willr_display_shift(self.int_opt[0], output_idx),
             FuncId::WMA => self.core.wma_display_shift(self.int_opt[0], output_idx),
+            FuncId::ZIGZAG => self.core.zigzag_display_shift(self.real_opt[0], self.int_opt[1], output_idx),
             FuncId::ZLEMA => self.core.zlema_display_shift(self.int_opt[0], output_idx),
         }
     }
@@ -7571,6 +7587,23 @@ impl<'a> ParamHolder<'a> {
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.wma(start_idx, end_idx, i0, self.int_opt[0], &mut *o0);
                 self.real_out[0] = Some(o0);
+                match res {
+                    Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
+                    Err(e) => e,
+                }
+            }
+            FuncId::ZIGZAG => {
+                let i0_1 = self.price[0][1].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_2 = self.price[0][2].ok_or(RetCode::InputNotAllInitialize)?;
+                if self.real_out[0].is_none() || self.int_out[1].is_none() || self.int_out[2].is_none() { return Err(RetCode::OutputNotAllInitialize); }
+                Self::check_range(start_idx, end_idx)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let mut o1 = self.int_out[1].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let mut o2 = self.int_out[2].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let res = self.core.zigzag(start_idx, end_idx, i0_1, i0_2, self.real_opt[0], self.int_opt[1], &mut *o0, &mut *o1, &mut *o2);
+                self.real_out[0] = Some(o0);
+                self.int_out[1] = Some(o1);
+                self.int_out[2] = Some(o2);
                 match res {
                     Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
                     Err(e) => e,

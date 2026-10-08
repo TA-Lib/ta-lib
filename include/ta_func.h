@@ -20615,6 +20615,105 @@ TA_LIB_API TA_RetCode TA_WMA_Advance( TA_WMA_Stream *stream );
 TA_LIB_API TA_RetCode TA_WMA_Clone( const TA_WMA_Stream *stream, TA_WMA_Stream **clone );
 
 /*
+ * TA_ZIGZAG - Zig Zag
+ * 
+ * Input  = High, Low
+ * Output = double, int, int
+ * 
+ * Optional Parameters
+ * -------------------
+ * optInSensitivity:(From 0 to 100)
+ *    Minimum move away from the current extreme that reverses the leg, in percent
+ * 
+ * optInMinTrendLength:(From 1 to 100000)
+ *    Minimum number of bars between two pivots
+ * 
+ * 
+ */
+TA_LIB_API TA_RetCode TA_ZIGZAG( int    startIdx,
+                                 int    endIdx,
+                                            const double inHigh[],
+                                            const double inLow[],
+                                            double        optInSensitivity, /* From 0 to 100 */
+                                            int           optInMinTrendLength, /* From 1 to 100000 */
+                                            int          *outBegIdx,
+                                            int          *outNBElement,
+                                            double        outZigZag[],
+                                            int           outTrend[],
+                                            int           outPivotIdx[] );
+
+TA_LIB_API TA_RetCode TA_S_ZIGZAG( int    startIdx,
+                                   int    endIdx,
+                                              const float  inHigh[],
+                                              const float  inLow[],
+                                              double        optInSensitivity, /* From 0 to 100 */
+                                              int           optInMinTrendLength, /* From 1 to 100000 */
+                                              int          *outBegIdx,
+                                              int          *outNBElement,
+                                              double        outZigZag[],
+                                              int           outTrend[],
+                                              int           outPivotIdx[] );
+
+TA_LIB_API int TA_ZIGZAG_Lookback( double        optInSensitivity, /* From 0 to 100 */
+                                            int           optInMinTrendLength );  /* From 1 to 100000 */
+TA_LIB_API int TA_ZIGZAG_DisplayShift( double optInSensitivity, int optInMinTrendLength, int outputIdx );
+
+
+
+/*
+ * Streaming API for TA_ZIGZAG: incremental per-bar evaluation.
+ */
+typedef struct TA_ZIGZAG_Stream TA_ZIGZAG_Stream;
+
+TA_LIB_API TA_RetCode TA_ZIGZAG_Open( TA_ZIGZAG_Stream **stream, const double inHigh[], const double inLow[], int historyLen, double optInSensitivity, int optInMinTrendLength, double *outZigZag, int *outTrend, int *outPivotIdx );
+
+TA_LIB_API TA_RetCode TA_ZIGZAG_Update( TA_ZIGZAG_Stream *stream, double inHigh, double inLow, double *outZigZag, int *outTrend, int *outPivotIdx );
+
+TA_LIB_API TA_RetCode TA_ZIGZAG_Peek( const TA_ZIGZAG_Stream *stream, double inHigh, double inLow, double *outZigZag, int *outTrend, int *outPivotIdx );
+
+TA_LIB_API TA_RetCode TA_ZIGZAG_Close( TA_ZIGZAG_Stream *stream );
+
+/*
+ * OpenAndFill: like Open, but a single pass ALSO fills the caller's arrays
+ * with the whole warm-up history. The fill is bit-identical to
+ * TA_ZIGZAG( 0, historyLen-1, ... ).
+ */
+TA_LIB_API TA_RetCode TA_ZIGZAG_OpenAndFill( TA_ZIGZAG_Stream **stream, const double inHigh[], const double inLow[], int historyLen, double optInSensitivity, int optInMinTrendLength, int *outBegIdx, int *outNBElement, double outZigZag[], int outTrend[], int outPivotIdx[] );
+
+/*
+ * Value: the value(s) at the last bar the stream counted (the bar
+ * TA_ZIGZAG_OutRange ends on), without recomputing. Seeded by Open, refreshed by
+ * every accepted Update, left alone by Peek.
+ */
+TA_LIB_API TA_RetCode TA_ZIGZAG_Value( const TA_ZIGZAG_Stream *stream, double *outZigZag, int *outTrend, int *outPivotIdx );
+
+/*
+ * OutRange: the bars this stream has an output for, in the input series'
+ * coordinates. That is [*outBegIdx, *outBegIdx + *outNBElement), the range
+ * TA_ZIGZAG reports over the same bars. Open seeds it; every accepted Update and every
+ * TA_ZIGZAG_Advance adds one; a rejected Update and a Peek change nothing. The
+ * last bar it can reach is TA_INDEX_MAX: past that Update and Advance answer
+ * TA_OUT_OF_RANGE_END_INDEX, and the handle is done.
+ */
+TA_LIB_API TA_RetCode TA_ZIGZAG_OutRange( const TA_ZIGZAG_Stream *stream, int *outBegIdx, int *outNBElement );
+
+/*
+ * Advance: count one bar this stream was not fed (one an Update rejected and
+ * that will not be re-fed, or a session with no print). The range moves by one
+ * and nothing else does, so TA_ZIGZAG_Value keeps answering the previous output,
+ * which is this bar's output too. TA_OUT_OF_RANGE_END_INDEX once the range has
+ * reached TA_INDEX_MAX.
+ */
+TA_LIB_API TA_RetCode TA_ZIGZAG_Advance( TA_ZIGZAG_Stream *stream );
+
+/*
+ * Clone: fork the stream. The fork is an independent stream at the same bar,
+ * owning its own copy of everything the original owns. Both must be closed.
+ * The fork carries the value and the range verbatim.
+ */
+TA_LIB_API TA_RetCode TA_ZIGZAG_Clone( const TA_ZIGZAG_Stream *stream, TA_ZIGZAG_Stream **clone );
+
+/*
  * TA_ZLEMA - Zero-Lag Exponential Moving Average
  * 
  * Input  = double

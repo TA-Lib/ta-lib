@@ -145,6 +145,7 @@ All technical-analysis functions, grouped by category. Each page documents the f
 - [VIDYA](/functions/vidya.md) — Variable Index Dynamic Average
 - [VWMA](/functions/vwma.md) — Volume Weighted Moving Average
 - [WMA](/functions/wma.md) — Weighted Moving Average
+- [ZIGZAG](/functions/zigzag.md) — Zig Zag
 - [ZLEMA](/functions/zlema.md) — Zero-Lag Exponential Moving Average
 
 ## Pattern Recognition

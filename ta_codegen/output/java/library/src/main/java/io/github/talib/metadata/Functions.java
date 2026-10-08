@@ -350,6 +350,7 @@ public final class Functions {
       put(m, f_WCLPRICE());
       put(m, f_WILLR());
       put(m, f_WMA());
+      put(m, f_ZIGZAG());
       put(m, f_ZLEMA());
       return Collections.unmodifiableMap(m);
    }
@@ -4475,6 +4476,31 @@ public final class Functions {
          ),
          List.of(
             new OutputInfo(OutputType.REAL, "outReal", 0x00000001)
+         ));
+   }
+
+   private static FuncInfo f_ZIGZAG() {
+      return new FuncInfo(
+         "ZIGZAG", "Overlap Studies", "Zig Zag", 0x23000000,
+         List.of(
+            new InputInfo(InputType.PRICE, "inPriceHL", 0x00000006)
+         ),
+         List.of(
+            new OptInputInfo(
+               OptInputType.REAL_RANGE, "optInSensitivity", 0x00100000,
+               "Sensitivity", "Minimum move away from the current extreme that reverses the leg, in percent", 5.0,
+               0.0, 100.0, 2, 1.0, 20.0, 1.0,
+               0, 0, 0, 0, 0, null),
+            new OptInputInfo(
+               OptInputType.INTEGER_RANGE, "optInMinTrendLength", 0x00000000,
+               "Minimum Trend Length", "Minimum number of bars between two pivots", 1.0,
+               0.0, 0.0, 0, 0.0, 0.0, 0.0,
+               1, 100000, 1, 20, 1, null)
+         ),
+         List.of(
+            new OutputInfo(OutputType.REAL, "outZigZag", 0x00000001),
+            new OutputInfo(OutputType.INTEGER, "outTrend", 0x00000001),
+            new OutputInfo(OutputType.INTEGER, "outPivotIdx", 0x00000001)
          ));
    }
 

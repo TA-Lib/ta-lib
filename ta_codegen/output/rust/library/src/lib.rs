@@ -241,7 +241,7 @@
 //! * [`WAD`](Core::wad) — Williams' Accumulation/Distribution
 //! * [`WILLR`](Core::willr) — Williams' %R
 //!
-//! ## Overlap Studies (32)
+//! ## Overlap Studies (33)
 //!
 //! * [`ACCBANDS`](Core::accbands) — Acceleration Bands
 //! * [`ALMA`](Core::alma) — Arnaud Legoux Moving Average
@@ -274,6 +274,7 @@
 //! * [`VIDYA`](Core::vidya) — Variable Index Dynamic Average
 //! * [`VWMA`](Core::vwma) — Volume Weighted Moving Average
 //! * [`WMA`](Core::wma) — Weighted Moving Average
+//! * [`ZIGZAG`](Core::zigzag) — Zig Zag
 //! * [`ZLEMA`](Core::zlema) — Zero-Lag Exponential Moving Average
 //!
 //! ## Pattern Recognition (61)

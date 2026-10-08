@@ -334,6 +334,7 @@ mod wad;
 mod wclprice;
 mod willr;
 mod wma;
+mod zigzag;
 mod zlema;
 
 // Generated stream handles (one per streamable indicator):
@@ -567,4 +568,5 @@ pub use wad::WadStream;
 pub use wclprice::WclpriceStream;
 pub use willr::WillrStream;
 pub use wma::WmaStream;
+pub use zigzag::ZigzagStream;
 pub use zlema::ZlemaStream;
