@@ -235,8 +235,3 @@ libta_func_la_SOURCES = ta_utility.c \
 	ta_WMA.c \
 	ta_ZIGZAG.c \
 	ta_ZLEMA.c
-
-libta_funcdir=$(includedir)/ta-lib/
-libta_func_HEADERS = ../../include/ta_defs.h \
-	../../include/ta_libc.h \
-	../../include/ta_func.h
