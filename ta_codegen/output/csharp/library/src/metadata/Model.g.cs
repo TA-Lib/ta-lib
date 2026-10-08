@@ -50,11 +50,7 @@ namespace TALib.Metadata;
 
 /// <summary>Renders a collection member for a record's <c>ToString</c>.</summary>
 /// <remarks>The compiler-generated printer calls <c>ToString</c> on each member,
-/// and an <see cref="ImmutableArray{T}"/> answers its type name, so a domain's
-/// choices print as <c>System.Collections.Immutable.ImmutableArray`1[...]</c> --
-/// the type is visible and the data is not. Java's records print their lists, and
-/// so does <c>CandleSetting.ToString()</c> here; these overrides make the C#
-/// records agree.</remarks>
+/// and an <see cref="ImmutableArray{T}"/> answers its type name.</remarks>
 internal static class MemberPrinter
 {
     internal static string List<T>(ImmutableArray<T> values) =>

@@ -1469,15 +1469,21 @@ public static class MetadataTest
     }
 
     /// <summary>Every record that carries a collection prints its elements.</summary>
-    /// <remarks>The compiler-generated printer calls <c>ToString</c> on each member,
-    /// and <see cref="ImmutableArray{T}"/> answers its own type name, so a domain's
-    /// choices printed as <c>ImmutableArray`1[TALib.Metadata.NamedValue]</c>: the
-    /// type visible, the data not (#444 G7). The assertion is written against the
-    /// type name rather than against an expected string, so it keeps holding for a
-    /// collection member added later -- and it is checked over the whole catalogue,
-    /// not on one hand-picked function.</remarks>
+    /// <remarks>Asserted against the array's type name, not an expected string, so a
+    /// collection member added later is covered. A hand-written printer lists its
+    /// members itself, so each public property is looked for by name: one added
+    /// later would otherwise drop out of the print with nothing failing.</remarks>
     private static void RecordPrintersExpandCollections()
     {
+        static void PrintsEveryProperty(object record, string printed, string where)
+        {
+            foreach (PropertyInfo p in record.GetType().GetProperties(BindingFlags.Public | BindingFlags.Instance))
+            {
+                Check(printed.Contains(p.Name + " = ", StringComparison.Ordinal),
+                    $"{where}: the record prints its {p.Name} ({printed})");
+            }
+        }
+
         int domains = 0;
         int inputs = 0;
         int funcs = 0;
@@ -1500,6 +1506,7 @@ public static class MetadataTest
                 inputs++;
                 Check(!printed.Contains("ImmutableArray", StringComparison.Ordinal),
                     $"{f.Name}.{i.ParamName}: InputInfo prints its SignatureOrder, not the array type ({printed})");
+                PrintsEveryProperty(i, printed, $"{f.Name}.{i.ParamName}");
                 foreach (PriceComponents c in i.SignatureOrder)
                 {
                     Check(printed.Contains(c.ToString(), StringComparison.Ordinal),
@@ -1513,6 +1520,7 @@ public static class MetadataTest
                 string where = $"{f.Name}.{o.ParamName}";
                 Check(!printed.Contains("ImmutableArray", StringComparison.Ordinal),
                     $"{where}: the domain prints its values, not the array type ({printed})");
+                PrintsEveryProperty(o.Domain, printed, where);
                 switch (o.Domain)
                 {
                     case OptInputDomain.IntegerList l:
