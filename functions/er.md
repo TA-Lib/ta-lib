@@ -54,6 +54,7 @@ TC2000 documents a signed ×100 variant (−100..+100); the absolute 0..1 form h
 | <span class="flag-box">☐</span> <span style="opacity:0.5">Can Output NaN or ±Inf</span> |
 | <span class="flag-box">☐</span> <span style="opacity:0.5">Identity at Period 1</span> |
 | <span class="flag-box">☐</span> <span style="opacity:0.5">Display Shift</span> |
+| <span class="flag-box">☐</span> <span style="opacity:0.5">Uses Transcendental</span> |
 
 </div>
 

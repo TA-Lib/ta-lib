@@ -66,6 +66,7 @@ where $\mathrm{Close}$ is the input series, $m_1$ is `optInTimePeriod`, $m_2$ is
 | <span class="flag-box">☐</span> <span style="opacity:0.5">Can Output NaN or ±Inf</span> |
 | <span class="flag-box">☐</span> <span style="opacity:0.5">Identity at Period 1</span> |
 | <span class="flag-box">☐</span> <span style="opacity:0.5">Display Shift</span> |
+| <span class="flag-box">☐</span> <span style="opacity:0.5">Uses Transcendental</span> |
 
 </div>
 
