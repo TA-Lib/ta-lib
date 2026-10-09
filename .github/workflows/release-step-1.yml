@@ -114,7 +114,7 @@ jobs:
 
       - name: Ensure a draft release exists
         id: release_vars
-        uses: actions/github-script@v7
+        uses: actions/github-script@v9
         env:
           TAG: ${{ env.TAG }}
         with:
@@ -200,7 +200,7 @@ jobs:
             core.setOutput("release_id", release_id);
 
       - name: Attach/Update assets with latest in dist/
-        uses: actions/github-script@v7
+        uses: actions/github-script@v9
         env:
           UPLOAD_URL: ${{ steps.release_vars.outputs.upload_url }}
           RELEASE_ID: ${{ steps.release_vars.outputs.release_id }}
