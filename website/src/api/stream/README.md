@@ -4,7 +4,9 @@ description: "The TA-Lib C/C++ streaming API for live feeds: open a stream once,
 toc: false
 ---
 
-The **streaming API** is built for live feeds: open a stream once, then feed it one bar at a time. The stream carries its state from bar to bar, so a new bar never costs a pass over the history: most indicators do constant work per bar, and the ones that work over their window, such as AVGDEV, CCI, MEDIAN and the rolling extremes, take time at most proportional to the window's length. Every value is **bit-identical** to what the [batch function](/api/) (`TA_SMA`, `TA_RSI`, …) would return by recomputing over the whole array ([exact rule](/spec/streaming/#rh1)). To compute only the newest bar, use a stream: the batch functions are built for arrays, not for a call over one bar.
+The **streaming API** is built for live feeds: open a stream once, then feed it one bar at a time. The stream carries its state from bar to bar, so a new bar never costs a pass over the history.
+
+Every value is **bit-identical** to what the [batch function](/api/) would return by recomputing over the whole array (see [detailed specs](/spec/streaming/#rh1) for a few exceptions).
 
 Every TA function gets these calls:
 
