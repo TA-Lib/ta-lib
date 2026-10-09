@@ -1659,6 +1659,11 @@ flag_newtype!(
     /// At least one output carries [`OutputFlags::DISPLAY_SHIFT`]. Without it
     /// every output's display shift is 0.
     DISPLAY_SHIFT = 0x0000_0002,
+    /// The function calls a transcendental math function, so a value may differ
+    /// slightly between languages, between a stream and a batch call, and
+    /// between machines. Not set on a function that reaches one only when an
+    /// MA-type parameter selects MAMA or ALMA.
+    USES_TRANSCENDENTAL = 0x0000_0004,
 });
 flag_newtype!(
     /// Which OHLCV components an [`InputType::Price`] input reads

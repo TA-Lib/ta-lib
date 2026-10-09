@@ -1,7 +1,7 @@
 name: EXP
 group: Math Transform
 hint: Vector Arithmetic Exp
-flags: [stream, nan_inf_output]
+flags: [stream, nan_inf_output, uses_transcendental]
 inputs:
   - name: inReal
     type: real

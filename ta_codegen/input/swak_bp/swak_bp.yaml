@@ -1,7 +1,7 @@
 name: SWAK_BP
 group: Cycle Indicators
 hint: Swiss Army Knife - Band-Pass Filter
-flags: [unstable_period, stream]
+flags: [unstable_period, stream, uses_transcendental]
 inputs:
   - name: inReal
     type: real

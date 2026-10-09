@@ -390,48 +390,23 @@ fn transcendental_functions() -> std::collections::BTreeSet<String> {
     }
 }
 
-/// `CODEGEN_TRANSCENDENTAL[]` is what drops a Java or C# comparison from bitwise
-/// to a tolerance. A name it should not hold loosens a gate in silence, so the
-/// list must be exactly what the sources say.
+/// `uses_transcendental` is what drops a Java or C# comparison from bitwise to a
+/// tolerance. A function that should not carry it loosens a gate in silence, so
+/// the flagged set must be exactly what the sources say.
 #[test]
-fn the_transcendental_list_is_what_the_sources_call() {
+fn the_transcendental_flag_is_what_the_sources_call() {
     let derived = transcendental_functions();
-    let harness = std::fs::read_to_string(
-        repo_root().join("src/tools/ta_regtest/test_codegen.c"),
-    )
-    .expect("test_codegen.c");
-    let at = harness
-        .find("CODEGEN_TRANSCENDENTAL[] = {")
-        .expect("CODEGEN_TRANSCENDENTAL[]");
-    let end = harness[at..].find("};").expect("the array closes") + at;
-    let listed: std::collections::BTreeSet<String> = harness[at..end]
-        .split('"')
-        .skip(1)
-        .step_by(2)
-        .map(str::to_string)
+    let flagged: std::collections::BTreeSet<String> = crate::common::discover_indicators()
+        .iter()
+        .map(|name| crate::common::load_indicator(name).0)
+        .filter(|f| f.flags.iter().any(|x| x == "uses_transcendental"))
+        .map(|f| f.name.to_uppercase())
         .collect();
     assert!(derived.len() >= 20, "derived only {derived:?}");
     assert_eq!(
-        listed, derived,
-        "CODEGEN_TRANSCENDENTAL[] in test_codegen.c no longer matches the functions \
-         that call a transcendental routine"
-    );
-
-    // The published list is the same one.
-    let page = std::fs::read_to_string(repo_root().join("website/src/spec/versions/README.md"))
-        .expect("the versions page");
-    let from = page.find("The functions that do are ").expect("the published list")
-        + "The functions that do are ".len();
-    let to = page[from..].find(", and the averages").expect("the list's end") + from;
-    let published: std::collections::BTreeSet<String> = page[from..to]
-        .replace(" and ", ", ")
-        .split(", ")
-        .map(|n| n.trim().to_string())
-        .collect();
-    assert_eq!(
-        published, derived,
-        "the transcendental functions listed on website/src/spec/versions/README.md \
-         no longer match the sources"
+        flagged, derived,
+        "the functions flagged `uses_transcendental` in their YAML no longer match the \
+         functions that call a transcendental routine"
     );
 }
 

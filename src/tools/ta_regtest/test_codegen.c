@@ -6813,7 +6813,7 @@ ErrorNumber fuzz_ref(const char *version, const char *functionFilter)
  *     server_verify transport) and requests want_hash. Non-transcendental calls
  *     are diffed BITWISE; a call that reaches a transcendental (fdlibm != the C
  *     libm, ~1 ULP) drops to a CODEGEN_TRANSCENDENTAL_TOL (1e-9) element
- *     compare, and HT_DCPHASE/HT_SINE on the zero-variance constant shape are
+ *     compare, and HT_DCPHASE/HT_SINE/HT_TRENDMODE on the zero-variance constant shape are
  *     skipped outright (xlang_illcond — atan2 of a null signal amplifies
  *     the ULP unboundedly; C and Rust stay bitwise there).
  *   - C#: the same hex-bits transport as Java (the managed server has no
@@ -6933,7 +6933,7 @@ typedef struct {
     long long    vmathCases;         /* calls whose values fuzz_vmath_near held  */
     long long    vmathDue;           /* (function, server) pairs swept that
                                       * codegen_call_needs_vmath_tol names        */
-    long long    illcondSkipped;     /* Java HT_DCPHASE/HT_SINE calls skipped on
+    long long    illcondSkipped;     /* HT_DCPHASE/HT_SINE/HT_TRENDMODE calls skipped on
                                       * the zero-variance constant shape (phase of
                                       * a null signal — see xlang_illcond)    */
     long long    oorCases;           /* per-server comparisons on an out-of-range
@@ -7062,24 +7062,7 @@ void codegen_hash_report(const char *who, TA_RetCode goldRc, int goldBeg,
  * hence the only ones --xlang-hash's Java leg and server_verify relax from
  * bitwise to CODEGEN_TRANSCENDENTAL_TOL. Every other function — including
  * sqrt/ceil/floor users (IEEE correctly-rounded) — stays bit-identical across
- * languages. Source-derived from a grep of ta_codegen/input. ---- */
-static const char *const CODEGEN_TRANSCENDENTAL[] = {
-    "ACOS", "ALMA", "ASIN", "ATAN", "CHOP", "CHOPTR", "COS", "COSH", "EXP", "FISHER", "FRAMA",
-    "HT_DCPERIOD", "HT_DCPHASE", "HT_PHASOR", "HT_SINE", "HT_TRENDLINE",
-    "HT_TRENDMODE", "LINEARREG_ANGLE", "LN", "LOG10", "MAMA", "PSO",
-    "ROGERSSATCHELL", "SIN", "SINH",
-    "SWAK_2PHP", "SWAK_BP", "SWAK_BUTTER", "SWAK_GAUSS", "SWAK_HP",
-    "TAN", "TANH",
-};
-
-int codegen_is_transcendental(const char *name)
-{
-    for( unsigned int i = 0;
-         i < sizeof(CODEGEN_TRANSCENDENTAL) / sizeof(CODEGEN_TRANSCENDENTAL[0]); i++ )
-        if( strcmp(CODEGEN_TRANSCENDENTAL[i], name) == 0 )
-            return 1;
-    return 0;
-}
+ * languages. ---- */
 
 /* The MA-dispatch functions (MA, MAVP, BBANDS, MACDEXT, APO, PPO, STOCH*) route
  * to MAMA (atan) or ALMA (exp) when a MAType optional parameter selects it, so
@@ -7091,7 +7074,7 @@ int codegen_call_is_transcendental(const TA_FuncHandle *handle,
     const TA_FuncInfo *fi;
     if( TA_GetFuncInfo(handle, &fi) != TA_SUCCESS )
         return 0;
-    if( codegen_is_transcendental(fi->name) )
+    if( fi->flags & TA_FUNC_FLG_USES_TRANSCENDENTAL )
         return 1;
     for( unsigned int i = 0; i < fi->nbOptInput; i++ )
     {
@@ -7276,13 +7259,16 @@ static int xlang_selfcheck_inputs(XlangCtx *ctx)
  * ill-conditioning amplifies that to whole degrees. It is not a codegen
  * divergence — every non-degenerate shape agrees within the 1e-9 tolerance, and
  * atan2 of a null signal is mathematically undefined — so no fixed tolerance can
- * separate it from fdlibm noise. The Java leg skips exactly these two functions
- * on exactly the constant shape (reported as a skip count for transparency);
- * every other shape, function, and language stays fully gated. */
+ * separate it from fdlibm noise. HT_TRENDMODE branches on the same phase, so
+ * there the difference is its integer output flipping. The tolerance-lane legs
+ * skip exactly these three functions on exactly the constant shape (reported as
+ * a skip count for transparency); every other shape, function, and language
+ * stays fully gated. */
 static int xlang_illcond(const char *name, int shape)
 {
     return shape == FUZZ_CONSTANT &&
-           (strcmp(name, "HT_DCPHASE") == 0 || strcmp(name, "HT_SINE") == 0);
+           (strcmp(name, "HT_DCPHASE") == 0 || strcmp(name, "HT_SINE") == 0 ||
+            strcmp(name, "HT_TRENDMODE") == 0);
 }
 
 /* Build a per-function TA_<name> request with LOSSLESS hex-bits inputs (the
@@ -9407,7 +9393,7 @@ ErrorNumber xlang_hash(const char *functionFilter, const char *languageFilter)
                "vector kernel, the server's is libm)\n",
                ctx.vmathCases, ctx.l3VmathCases, FUZZ_VMATH_MAX_STEPS);
     if( ctx.illcondSkipped > 0 )
-        printf("  (%lld HT_DCPHASE/HT_SINE call(s) skipped on the constant shape "
+        printf("  (%lld HT_DCPHASE/HT_SINE/HT_TRENDMODE call(s) skipped on the constant shape "
                "across the tolerance-lane servers: atan2 phase of a null signal, "
                "ill-conditioned across libms — C and Rust bitwise there)\n",
                ctx.illcondSkipped);

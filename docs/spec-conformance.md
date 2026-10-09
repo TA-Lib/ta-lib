@@ -585,10 +585,10 @@ member.
 rV3: `rust_matype_emits_every_yaml_variant_and_its_frozen_shape` and
 `rust_template_enums_are_non_exhaustive` (generator suite).
 
-rD2's list of functions: `the_transcendental_list_is_what_the_sources_call`
+rD2's set of functions: `the_transcendental_flag_is_what_the_sources_call`
 (generator suite) derives it from the indicator sources and requires the same
-set on the versions page and in `CODEGEN_TRANSCENDENTAL[]` (`test_codegen.c`),
-the list that moves a Java or C# comparison from bitwise to a tolerance.
+set to carry `TA_FUNC_FLG_USES_TRANSCENDENTAL`, the flag that moves a Java or C#
+comparison from bitwise to a tolerance.
 `test_elementary_math` (`test_1in_1out.c`) holds each elementary function to
 the host math library's routine of that name. rD1's and rH1's transcendental
 exception: where the batch tier is a vector kernel, `regtest_vmath_batch`

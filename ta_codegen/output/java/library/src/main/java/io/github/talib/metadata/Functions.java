@@ -409,7 +409,7 @@ public final class Functions {
 
    private static FuncInfo f_ACOS() {
       return new FuncInfo(
-         "ACOS", "Math Transform", "Vector Trigonometric ACos", 0x42000000,
+         "ACOS", "Math Transform", "Vector Trigonometric ACos", 0x42000004,
          List.of(
             new InputInfo(InputType.REAL, "inReal", 0x00000000)
          ),
@@ -523,7 +523,7 @@ public final class Functions {
 
    private static FuncInfo f_ALMA() {
       return new FuncInfo(
-         "ALMA", "Overlap Studies", "Arnaud Legoux Moving Average", 0x03000001,
+         "ALMA", "Overlap Studies", "Arnaud Legoux Moving Average", 0x03000005,
          List.of(
             new InputInfo(InputType.REAL, "inReal", 0x00000000)
          ),
@@ -657,7 +657,7 @@ public final class Functions {
 
    private static FuncInfo f_ASIN() {
       return new FuncInfo(
-         "ASIN", "Math Transform", "Vector Trigonometric ASin", 0x42000000,
+         "ASIN", "Math Transform", "Vector Trigonometric ASin", 0x42000004,
          List.of(
             new InputInfo(InputType.REAL, "inReal", 0x00000000)
          ),
@@ -669,7 +669,7 @@ public final class Functions {
 
    private static FuncInfo f_ATAN() {
       return new FuncInfo(
-         "ATAN", "Math Transform", "Vector Trigonometric ATan", 0x02000000,
+         "ATAN", "Math Transform", "Vector Trigonometric ATan", 0x02000004,
          List.of(
             new InputInfo(InputType.REAL, "inReal", 0x00000000)
          ),
@@ -1650,7 +1650,7 @@ public final class Functions {
 
    private static FuncInfo f_CHOP() {
       return new FuncInfo(
-         "CHOP", "Momentum Indicators", "Choppiness Index", 0x02000000,
+         "CHOP", "Momentum Indicators", "Choppiness Index", 0x02000004,
          List.of(
             new InputInfo(InputType.PRICE, "inPriceHLC", 0x0000000E)
          ),
@@ -1668,7 +1668,7 @@ public final class Functions {
 
    private static FuncInfo f_CHOPTR() {
       return new FuncInfo(
-         "CHOPTR", "Momentum Indicators", "Choppiness Index (True Range Box)", 0x02000000,
+         "CHOPTR", "Momentum Indicators", "Choppiness Index (True Range Box)", 0x02000004,
          List.of(
             new InputInfo(InputType.PRICE, "inPriceHLC", 0x0000000E)
          ),
@@ -1816,7 +1816,7 @@ public final class Functions {
 
    private static FuncInfo f_COS() {
       return new FuncInfo(
-         "COS", "Math Transform", "Vector Trigonometric Cos", 0x02000000,
+         "COS", "Math Transform", "Vector Trigonometric Cos", 0x02000004,
          List.of(
             new InputInfo(InputType.REAL, "inReal", 0x00000000)
          ),
@@ -1828,7 +1828,7 @@ public final class Functions {
 
    private static FuncInfo f_COSH() {
       return new FuncInfo(
-         "COSH", "Math Transform", "Vector Trigonometric Cosh", 0x42000000,
+         "COSH", "Math Transform", "Vector Trigonometric Cosh", 0x42000004,
          List.of(
             new InputInfo(InputType.REAL, "inReal", 0x00000000)
          ),
@@ -2104,7 +2104,7 @@ public final class Functions {
 
    private static FuncInfo f_EXP() {
       return new FuncInfo(
-         "EXP", "Math Transform", "Vector Arithmetic Exp", 0x42000000,
+         "EXP", "Math Transform", "Vector Arithmetic Exp", 0x42000004,
          List.of(
             new InputInfo(InputType.REAL, "inReal", 0x00000000)
          ),
@@ -2116,7 +2116,7 @@ public final class Functions {
 
    private static FuncInfo f_FISHER() {
       return new FuncInfo(
-         "FISHER", "Momentum Indicators", "Fisher Transform", 0x0A000000,
+         "FISHER", "Momentum Indicators", "Fisher Transform", 0x0A000004,
          List.of(
             new InputInfo(InputType.PRICE, "inPriceHL", 0x00000006)
          ),
@@ -2189,7 +2189,7 @@ public final class Functions {
 
    private static FuncInfo f_FRAMA() {
       return new FuncInfo(
-         "FRAMA", "Overlap Studies", "Fractal Adaptive Moving Average", 0x0B000000,
+         "FRAMA", "Overlap Studies", "Fractal Adaptive Moving Average", 0x0B000004,
          List.of(
             new InputInfo(InputType.PRICE, "inPriceHL", 0x00000006)
          ),
@@ -2240,7 +2240,7 @@ public final class Functions {
 
    private static FuncInfo f_HT_DCPERIOD() {
       return new FuncInfo(
-         "HT_DCPERIOD", "Cycle Indicators", "Hilbert Transform - Dominant Cycle Period", 0x0A000000,
+         "HT_DCPERIOD", "Cycle Indicators", "Hilbert Transform - Dominant Cycle Period", 0x0A000004,
          List.of(
             new InputInfo(InputType.REAL, "inReal", 0x00000000)
          ),
@@ -2252,7 +2252,7 @@ public final class Functions {
 
    private static FuncInfo f_HT_DCPHASE() {
       return new FuncInfo(
-         "HT_DCPHASE", "Cycle Indicators", "Hilbert Transform - Dominant Cycle Phase", 0x0A000000,
+         "HT_DCPHASE", "Cycle Indicators", "Hilbert Transform - Dominant Cycle Phase", 0x0A000004,
          List.of(
             new InputInfo(InputType.REAL, "inReal", 0x00000000)
          ),
@@ -2264,7 +2264,7 @@ public final class Functions {
 
    private static FuncInfo f_HT_PHASOR() {
       return new FuncInfo(
-         "HT_PHASOR", "Cycle Indicators", "Hilbert Transform - Phasor Components", 0x0A000000,
+         "HT_PHASOR", "Cycle Indicators", "Hilbert Transform - Phasor Components", 0x0A000004,
          List.of(
             new InputInfo(InputType.REAL, "inReal", 0x00000000)
          ),
@@ -2277,7 +2277,7 @@ public final class Functions {
 
    private static FuncInfo f_HT_SINE() {
       return new FuncInfo(
-         "HT_SINE", "Cycle Indicators", "Hilbert Transform - SineWave", 0x0A000000,
+         "HT_SINE", "Cycle Indicators", "Hilbert Transform - SineWave", 0x0A000004,
          List.of(
             new InputInfo(InputType.REAL, "inReal", 0x00000000)
          ),
@@ -2290,7 +2290,7 @@ public final class Functions {
 
    private static FuncInfo f_HT_TRENDLINE() {
       return new FuncInfo(
-         "HT_TRENDLINE", "Overlap Studies", "Hilbert Transform - Instantaneous Trendline", 0x0B000000,
+         "HT_TRENDLINE", "Overlap Studies", "Hilbert Transform - Instantaneous Trendline", 0x0B000004,
          List.of(
             new InputInfo(InputType.REAL, "inReal", 0x00000000)
          ),
@@ -2302,7 +2302,7 @@ public final class Functions {
 
    private static FuncInfo f_HT_TRENDMODE() {
       return new FuncInfo(
-         "HT_TRENDMODE", "Cycle Indicators", "Hilbert Transform - Trend vs Cycle Mode", 0x0A000000,
+         "HT_TRENDMODE", "Cycle Indicators", "Hilbert Transform - Trend vs Cycle Mode", 0x0A000004,
          List.of(
             new InputInfo(InputType.REAL, "inReal", 0x00000000)
          ),
@@ -2596,7 +2596,7 @@ public final class Functions {
 
    private static FuncInfo f_LINEARREG_ANGLE() {
       return new FuncInfo(
-         "LINEARREG_ANGLE", "Statistic Functions", "Linear Regression Angle", 0x02000000,
+         "LINEARREG_ANGLE", "Statistic Functions", "Linear Regression Angle", 0x02000004,
          List.of(
             new InputInfo(InputType.REAL, "inReal", 0x00000000)
          ),
@@ -2650,7 +2650,7 @@ public final class Functions {
 
    private static FuncInfo f_LN() {
       return new FuncInfo(
-         "LN", "Math Transform", "Vector Log Natural", 0x42000000,
+         "LN", "Math Transform", "Vector Log Natural", 0x42000004,
          List.of(
             new InputInfo(InputType.REAL, "inReal", 0x00000000)
          ),
@@ -2662,7 +2662,7 @@ public final class Functions {
 
    private static FuncInfo f_LOG10() {
       return new FuncInfo(
-         "LOG10", "Math Transform", "Vector Log10", 0x42000000,
+         "LOG10", "Math Transform", "Vector Log10", 0x42000004,
          List.of(
             new InputInfo(InputType.REAL, "inReal", 0x00000000)
          ),
@@ -2792,7 +2792,7 @@ public final class Functions {
 
    private static FuncInfo f_MAMA() {
       return new FuncInfo(
-         "MAMA", "Overlap Studies", "MESA Adaptive Moving Average", 0x0B000000,
+         "MAMA", "Overlap Studies", "MESA Adaptive Moving Average", 0x0B000004,
          List.of(
             new InputInfo(InputType.REAL, "inReal", 0x00000000)
          ),
@@ -3340,7 +3340,7 @@ public final class Functions {
 
    private static FuncInfo f_PSO() {
       return new FuncInfo(
-         "PSO", "Momentum Indicators", "Premier Stochastic Oscillator", 0x02000000,
+         "PSO", "Momentum Indicators", "Premier Stochastic Oscillator", 0x02000004,
          List.of(
             new InputInfo(InputType.PRICE, "inPriceHLC", 0x0000000E)
          ),
@@ -3523,7 +3523,7 @@ public final class Functions {
 
    private static FuncInfo f_ROGERSSATCHELL() {
       return new FuncInfo(
-         "ROGERSSATCHELL", "Volatility Indicators", "Rogers-Satchell Volatility", 0x02000000,
+         "ROGERSSATCHELL", "Volatility Indicators", "Rogers-Satchell Volatility", 0x02000004,
          List.of(
             new InputInfo(InputType.PRICE, "inPriceOHLC", 0x0000000F)
          ),
@@ -3722,7 +3722,7 @@ public final class Functions {
 
    private static FuncInfo f_SIN() {
       return new FuncInfo(
-         "SIN", "Math Transform", "Vector Trigonometric Sin", 0x02000000,
+         "SIN", "Math Transform", "Vector Trigonometric Sin", 0x02000004,
          List.of(
             new InputInfo(InputType.REAL, "inReal", 0x00000000)
          ),
@@ -3734,7 +3734,7 @@ public final class Functions {
 
    private static FuncInfo f_SINH() {
       return new FuncInfo(
-         "SINH", "Math Transform", "Vector Trigonometric Sinh", 0x42000000,
+         "SINH", "Math Transform", "Vector Trigonometric Sinh", 0x42000004,
          List.of(
             new InputInfo(InputType.REAL, "inReal", 0x00000000)
          ),
@@ -4018,7 +4018,7 @@ public final class Functions {
 
    private static FuncInfo f_SWAK_2PHP() {
       return new FuncInfo(
-         "SWAK_2PHP", "Cycle Indicators", "Swiss Army Knife - Two-Pole High-Pass Filter", 0x0A000000,
+         "SWAK_2PHP", "Cycle Indicators", "Swiss Army Knife - Two-Pole High-Pass Filter", 0x0A000004,
          List.of(
             new InputInfo(InputType.REAL, "inReal", 0x00000000)
          ),
@@ -4036,7 +4036,7 @@ public final class Functions {
 
    private static FuncInfo f_SWAK_BP() {
       return new FuncInfo(
-         "SWAK_BP", "Cycle Indicators", "Swiss Army Knife - Band-Pass Filter", 0x0A000000,
+         "SWAK_BP", "Cycle Indicators", "Swiss Army Knife - Band-Pass Filter", 0x0A000004,
          List.of(
             new InputInfo(InputType.REAL, "inReal", 0x00000000)
          ),
@@ -4059,7 +4059,7 @@ public final class Functions {
 
    private static FuncInfo f_SWAK_BUTTER() {
       return new FuncInfo(
-         "SWAK_BUTTER", "Overlap Studies", "Swiss Army Knife - Butterworth Filter", 0x0B000000,
+         "SWAK_BUTTER", "Overlap Studies", "Swiss Army Knife - Butterworth Filter", 0x0B000004,
          List.of(
             new InputInfo(InputType.REAL, "inReal", 0x00000000)
          ),
@@ -4077,7 +4077,7 @@ public final class Functions {
 
    private static FuncInfo f_SWAK_GAUSS() {
       return new FuncInfo(
-         "SWAK_GAUSS", "Overlap Studies", "Swiss Army Knife - Gaussian Filter", 0x0B000000,
+         "SWAK_GAUSS", "Overlap Studies", "Swiss Army Knife - Gaussian Filter", 0x0B000004,
          List.of(
             new InputInfo(InputType.REAL, "inReal", 0x00000000)
          ),
@@ -4095,7 +4095,7 @@ public final class Functions {
 
    private static FuncInfo f_SWAK_HP() {
       return new FuncInfo(
-         "SWAK_HP", "Cycle Indicators", "Swiss Army Knife - High-Pass Filter", 0x0A000000,
+         "SWAK_HP", "Cycle Indicators", "Swiss Army Knife - High-Pass Filter", 0x0A000004,
          List.of(
             new InputInfo(InputType.REAL, "inReal", 0x00000000)
          ),
@@ -4136,7 +4136,7 @@ public final class Functions {
 
    private static FuncInfo f_TAN() {
       return new FuncInfo(
-         "TAN", "Math Transform", "Vector Trigonometric Tan", 0x02000000,
+         "TAN", "Math Transform", "Vector Trigonometric Tan", 0x02000004,
          List.of(
             new InputInfo(InputType.REAL, "inReal", 0x00000000)
          ),
@@ -4148,7 +4148,7 @@ public final class Functions {
 
    private static FuncInfo f_TANH() {
       return new FuncInfo(
-         "TANH", "Math Transform", "Vector Trigonometric Tanh", 0x02000000,
+         "TANH", "Math Transform", "Vector Trigonometric Tanh", 0x02000004,
          List.of(
             new InputInfo(InputType.REAL, "inReal", 0x00000000)
          ),
