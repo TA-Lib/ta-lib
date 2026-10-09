@@ -169,9 +169,8 @@ static const DoscGolden doscGolden[] =
 
 /* The flat-then-move run: bars 0 to 99 flat at 100.0, the committed closes
  * from bar 100 on. The transient rows below are a 60-digit evaluation under
- * TA_RSI's own 50.0 (#480). Under the 0.0 this card was written against they
- * read 14.81, 30.25, 38.13, ... -- a gap of up to 24.5 -- so these rows
- * arbitrate the inherited value, which the flat run itself cannot.
+ * TA_RSI's own 50.0 (#480). They are what pins that inherited value: a
+ * different seed moves them by tens, where the flat run does not move at all.
  */
 #define DOSC_FLAT_TO 99
 
