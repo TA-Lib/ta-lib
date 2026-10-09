@@ -1,7 +1,7 @@
 name: FISHER
 group: Momentum Indicators
 hint: Fisher Transform
-flags: [unstable_period, stream]
+flags: [unstable_period, stream, uses_transcendental]
 inputs:
   - name: inPriceHL
     type: price

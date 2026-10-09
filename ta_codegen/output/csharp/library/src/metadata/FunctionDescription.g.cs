@@ -198,6 +198,7 @@ public static class FunctionDescription
 		<Flags>
 			<Flag>Streaming</Flag>
 			<Flag>Can Output NaN or +/-Inf</Flag>
+			<Flag>Uses Transcendental</Flag>
 		</Flags>
 		<RequiredInputArguments>
 			<RequiredInputArgument>
@@ -505,6 +506,7 @@ public static class FunctionDescription
 			<Flag>Overlap</Flag>
 			<Flag>Streaming</Flag>
 			<Flag>Period 1 Identity</Flag>
+			<Flag>Uses Transcendental</Flag>
 		</Flags>
 		<RequiredInputArguments>
 			<RequiredInputArgument>
@@ -845,6 +847,7 @@ public static class FunctionDescription
 		<Flags>
 			<Flag>Streaming</Flag>
 			<Flag>Can Output NaN or +/-Inf</Flag>
+			<Flag>Uses Transcendental</Flag>
 		</Flags>
 		<RequiredInputArguments>
 			<RequiredInputArgument>
@@ -871,6 +874,7 @@ public static class FunctionDescription
 		<GroupId>Math Transform</GroupId>
 		<Flags>
 			<Flag>Streaming</Flag>
+			<Flag>Uses Transcendental</Flag>
 		</Flags>
 		<RequiredInputArguments>
 			<RequiredInputArgument>
@@ -4095,6 +4099,7 @@ public static class FunctionDescription
 		<GroupId>Momentum Indicators</GroupId>
 		<Flags>
 			<Flag>Streaming</Flag>
+			<Flag>Uses Transcendental</Flag>
 		</Flags>
 		<RequiredInputArguments>
 			<RequiredInputArgument>
@@ -4144,6 +4149,7 @@ public static class FunctionDescription
 		<GroupId>Momentum Indicators</GroupId>
 		<Flags>
 			<Flag>Streaming</Flag>
+			<Flag>Uses Transcendental</Flag>
 		</Flags>
 		<RequiredInputArguments>
 			<RequiredInputArgument>
@@ -4525,6 +4531,7 @@ public static class FunctionDescription
 		<GroupId>Math Transform</GroupId>
 		<Flags>
 			<Flag>Streaming</Flag>
+			<Flag>Uses Transcendental</Flag>
 		</Flags>
 		<RequiredInputArguments>
 			<RequiredInputArgument>
@@ -4552,6 +4559,7 @@ public static class FunctionDescription
 		<Flags>
 			<Flag>Streaming</Flag>
 			<Flag>Can Output NaN or +/-Inf</Flag>
+			<Flag>Uses Transcendental</Flag>
 		</Flags>
 		<RequiredInputArguments>
 			<RequiredInputArgument>
@@ -5328,6 +5336,7 @@ public static class FunctionDescription
 		<Flags>
 			<Flag>Streaming</Flag>
 			<Flag>Can Output NaN or +/-Inf</Flag>
+			<Flag>Uses Transcendental</Flag>
 		</Flags>
 		<RequiredInputArguments>
 			<RequiredInputArgument>
@@ -5355,6 +5364,7 @@ public static class FunctionDescription
 		<Flags>
 			<Flag>Unstable Period</Flag>
 			<Flag>Streaming</Flag>
+			<Flag>Uses Transcendental</Flag>
 		</Flags>
 		<RequiredInputArguments>
 			<RequiredInputArgument>
@@ -5550,6 +5560,7 @@ public static class FunctionDescription
 			<Flag>Overlap</Flag>
 			<Flag>Unstable Period</Flag>
 			<Flag>Streaming</Flag>
+			<Flag>Uses Transcendental</Flag>
 		</Flags>
 		<RequiredInputArguments>
 			<RequiredInputArgument>
@@ -5702,6 +5713,7 @@ public static class FunctionDescription
 		<Flags>
 			<Flag>Unstable Period</Flag>
 			<Flag>Streaming</Flag>
+			<Flag>Uses Transcendental</Flag>
 		</Flags>
 		<RequiredInputArguments>
 			<RequiredInputArgument>
@@ -5729,6 +5741,7 @@ public static class FunctionDescription
 		<Flags>
 			<Flag>Unstable Period</Flag>
 			<Flag>Streaming</Flag>
+			<Flag>Uses Transcendental</Flag>
 		</Flags>
 		<RequiredInputArguments>
 			<RequiredInputArgument>
@@ -5756,6 +5769,7 @@ public static class FunctionDescription
 		<Flags>
 			<Flag>Unstable Period</Flag>
 			<Flag>Streaming</Flag>
+			<Flag>Uses Transcendental</Flag>
 		</Flags>
 		<RequiredInputArguments>
 			<RequiredInputArgument>
@@ -5790,6 +5804,7 @@ public static class FunctionDescription
 		<Flags>
 			<Flag>Unstable Period</Flag>
 			<Flag>Streaming</Flag>
+			<Flag>Uses Transcendental</Flag>
 		</Flags>
 		<RequiredInputArguments>
 			<RequiredInputArgument>
@@ -5825,6 +5840,7 @@ public static class FunctionDescription
 			<Flag>Overlap</Flag>
 			<Flag>Unstable Period</Flag>
 			<Flag>Streaming</Flag>
+			<Flag>Uses Transcendental</Flag>
 		</Flags>
 		<RequiredInputArguments>
 			<RequiredInputArgument>
@@ -5852,6 +5868,7 @@ public static class FunctionDescription
 		<Flags>
 			<Flag>Unstable Period</Flag>
 			<Flag>Streaming</Flag>
+			<Flag>Uses Transcendental</Flag>
 		</Flags>
 		<RequiredInputArguments>
 			<RequiredInputArgument>
@@ -6593,6 +6610,7 @@ public static class FunctionDescription
 		<GroupId>Statistic Functions</GroupId>
 		<Flags>
 			<Flag>Streaming</Flag>
+			<Flag>Uses Transcendental</Flag>
 		</Flags>
 		<RequiredInputArguments>
 			<RequiredInputArgument>
@@ -6718,6 +6736,7 @@ public static class FunctionDescription
 		<Flags>
 			<Flag>Streaming</Flag>
 			<Flag>Can Output NaN or +/-Inf</Flag>
+			<Flag>Uses Transcendental</Flag>
 		</Flags>
 		<RequiredInputArguments>
 			<RequiredInputArgument>
@@ -6745,6 +6764,7 @@ public static class FunctionDescription
 		<Flags>
 			<Flag>Streaming</Flag>
 			<Flag>Can Output NaN or +/-Inf</Flag>
+			<Flag>Uses Transcendental</Flag>
 		</Flags>
 		<RequiredInputArguments>
 			<RequiredInputArgument>
@@ -7057,6 +7077,7 @@ public static class FunctionDescription
 			<Flag>Overlap</Flag>
 			<Flag>Unstable Period</Flag>
 			<Flag>Streaming</Flag>
+			<Flag>Uses Transcendental</Flag>
 		</Flags>
 		<RequiredInputArguments>
 			<RequiredInputArgument>
@@ -8408,6 +8429,7 @@ public static class FunctionDescription
 		<GroupId>Momentum Indicators</GroupId>
 		<Flags>
 			<Flag>Streaming</Flag>
+			<Flag>Uses Transcendental</Flag>
 		</Flags>
 		<RequiredInputArguments>
 			<RequiredInputArgument>
@@ -8845,6 +8867,7 @@ public static class FunctionDescription
 		<GroupId>Volatility Indicators</GroupId>
 		<Flags>
 			<Flag>Streaming</Flag>
+			<Flag>Uses Transcendental</Flag>
 		</Flags>
 		<RequiredInputArguments>
 			<RequiredInputArgument>
@@ -9371,6 +9394,7 @@ public static class FunctionDescription
 		<GroupId>Math Transform</GroupId>
 		<Flags>
 			<Flag>Streaming</Flag>
+			<Flag>Uses Transcendental</Flag>
 		</Flags>
 		<RequiredInputArguments>
 			<RequiredInputArgument>
@@ -9398,6 +9422,7 @@ public static class FunctionDescription
 		<Flags>
 			<Flag>Streaming</Flag>
 			<Flag>Can Output NaN or +/-Inf</Flag>
+			<Flag>Uses Transcendental</Flag>
 		</Flags>
 		<RequiredInputArguments>
 			<RequiredInputArgument>
@@ -10105,6 +10130,7 @@ public static class FunctionDescription
 		<Flags>
 			<Flag>Unstable Period</Flag>
 			<Flag>Streaming</Flag>
+			<Flag>Uses Transcendental</Flag>
 		</Flags>
 		<RequiredInputArguments>
 			<RequiredInputArgument>
@@ -10147,6 +10173,7 @@ public static class FunctionDescription
 		<Flags>
 			<Flag>Unstable Period</Flag>
 			<Flag>Streaming</Flag>
+			<Flag>Uses Transcendental</Flag>
 		</Flags>
 		<RequiredInputArguments>
 			<RequiredInputArgument>
@@ -10204,6 +10231,7 @@ public static class FunctionDescription
 			<Flag>Overlap</Flag>
 			<Flag>Unstable Period</Flag>
 			<Flag>Streaming</Flag>
+			<Flag>Uses Transcendental</Flag>
 		</Flags>
 		<RequiredInputArguments>
 			<RequiredInputArgument>
@@ -10247,6 +10275,7 @@ public static class FunctionDescription
 			<Flag>Overlap</Flag>
 			<Flag>Unstable Period</Flag>
 			<Flag>Streaming</Flag>
+			<Flag>Uses Transcendental</Flag>
 		</Flags>
 		<RequiredInputArguments>
 			<RequiredInputArgument>
@@ -10289,6 +10318,7 @@ public static class FunctionDescription
 		<Flags>
 			<Flag>Unstable Period</Flag>
 			<Flag>Streaming</Flag>
+			<Flag>Uses Transcendental</Flag>
 		</Flags>
 		<RequiredInputArguments>
 			<RequiredInputArgument>
@@ -10388,6 +10418,7 @@ public static class FunctionDescription
 		<GroupId>Math Transform</GroupId>
 		<Flags>
 			<Flag>Streaming</Flag>
+			<Flag>Uses Transcendental</Flag>
 		</Flags>
 		<RequiredInputArguments>
 			<RequiredInputArgument>
@@ -10414,6 +10445,7 @@ public static class FunctionDescription
 		<GroupId>Math Transform</GroupId>
 		<Flags>
 			<Flag>Streaming</Flag>
+			<Flag>Uses Transcendental</Flag>
 		</Flags>
 		<RequiredInputArguments>
 			<RequiredInputArgument>

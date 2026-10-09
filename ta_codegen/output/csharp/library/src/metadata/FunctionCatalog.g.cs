@@ -445,7 +445,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
         name: "ACOS",
         group: FunctionGroup.MathTransform,
         hint: "Vector Trigonometric ACos",
-        flags: FuncFlags.Stream | FuncFlags.NanInfOutput,
+        flags: FuncFlags.Stream | FuncFlags.NanInfOutput | FuncFlags.UsesTranscendental,
         unstableId: null,
         inputs:
         [
@@ -606,7 +606,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
         name: "ALMA",
         group: FunctionGroup.OverlapStudies,
         hint: "Arnaud Legoux Moving Average",
-        flags: FuncFlags.Overlap | FuncFlags.Stream | FuncFlags.Period1Identity,
+        flags: FuncFlags.Overlap | FuncFlags.Stream | FuncFlags.Period1Identity | FuncFlags.UsesTranscendental,
         unstableId: null,
         inputs:
         [
@@ -756,7 +756,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
         name: "ASIN",
         group: FunctionGroup.MathTransform,
         hint: "Vector Trigonometric ASin",
-        flags: FuncFlags.Stream | FuncFlags.NanInfOutput,
+        flags: FuncFlags.Stream | FuncFlags.NanInfOutput | FuncFlags.UsesTranscendental,
         unstableId: null,
         inputs:
         [
@@ -777,7 +777,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
         name: "ATAN",
         group: FunctionGroup.MathTransform,
         hint: "Vector Trigonometric ATan",
-        flags: FuncFlags.Stream,
+        flags: FuncFlags.Stream | FuncFlags.UsesTranscendental,
         unstableId: null,
         inputs:
         [
@@ -2340,7 +2340,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
         name: "CHOP",
         group: FunctionGroup.MomentumIndicators,
         hint: "Choppiness Index",
-        flags: FuncFlags.Stream,
+        flags: FuncFlags.Stream | FuncFlags.UsesTranscendental,
         unstableId: null,
         inputs:
         [
@@ -2364,7 +2364,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
         name: "CHOPTR",
         group: FunctionGroup.MomentumIndicators,
         hint: "Choppiness Index (True Range Box)",
-        flags: FuncFlags.Stream,
+        flags: FuncFlags.Stream | FuncFlags.UsesTranscendental,
         unstableId: null,
         inputs:
         [
@@ -2538,7 +2538,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
         name: "COS",
         group: FunctionGroup.MathTransform,
         hint: "Vector Trigonometric Cos",
-        flags: FuncFlags.Stream,
+        flags: FuncFlags.Stream | FuncFlags.UsesTranscendental,
         unstableId: null,
         inputs:
         [
@@ -2559,7 +2559,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
         name: "COSH",
         group: FunctionGroup.MathTransform,
         hint: "Vector Trigonometric Cosh",
-        flags: FuncFlags.Stream | FuncFlags.NanInfOutput,
+        flags: FuncFlags.Stream | FuncFlags.NanInfOutput | FuncFlags.UsesTranscendental,
         unstableId: null,
         inputs:
         [
@@ -2945,7 +2945,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
         name: "EXP",
         group: FunctionGroup.MathTransform,
         hint: "Vector Arithmetic Exp",
-        flags: FuncFlags.Stream | FuncFlags.NanInfOutput,
+        flags: FuncFlags.Stream | FuncFlags.NanInfOutput | FuncFlags.UsesTranscendental,
         unstableId: null,
         inputs:
         [
@@ -2966,7 +2966,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
         name: "FISHER",
         group: FunctionGroup.MomentumIndicators,
         hint: "Fisher Transform",
-        flags: FuncFlags.Stream | FuncFlags.UnstablePeriod,
+        flags: FuncFlags.Stream | FuncFlags.UnstablePeriod | FuncFlags.UsesTranscendental,
         unstableId: FuncUnstId.FISHER,
         inputs:
         [
@@ -3062,7 +3062,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
         name: "FRAMA",
         group: FunctionGroup.OverlapStudies,
         hint: "Fractal Adaptive Moving Average",
-        flags: FuncFlags.Overlap | FuncFlags.Stream | FuncFlags.UnstablePeriod,
+        flags: FuncFlags.Overlap | FuncFlags.Stream | FuncFlags.UnstablePeriod | FuncFlags.UsesTranscendental,
         unstableId: FuncUnstId.FRAMA,
         inputs:
         [
@@ -3134,7 +3134,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
         name: "HT_DCPERIOD",
         group: FunctionGroup.CycleIndicators,
         hint: "Hilbert Transform - Dominant Cycle Period",
-        flags: FuncFlags.Stream | FuncFlags.UnstablePeriod,
+        flags: FuncFlags.Stream | FuncFlags.UnstablePeriod | FuncFlags.UsesTranscendental,
         unstableId: FuncUnstId.HT_DCPERIOD,
         inputs:
         [
@@ -3155,7 +3155,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
         name: "HT_DCPHASE",
         group: FunctionGroup.CycleIndicators,
         hint: "Hilbert Transform - Dominant Cycle Phase",
-        flags: FuncFlags.Stream | FuncFlags.UnstablePeriod,
+        flags: FuncFlags.Stream | FuncFlags.UnstablePeriod | FuncFlags.UsesTranscendental,
         unstableId: FuncUnstId.HT_DCPHASE,
         inputs:
         [
@@ -3176,7 +3176,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
         name: "HT_PHASOR",
         group: FunctionGroup.CycleIndicators,
         hint: "Hilbert Transform - Phasor Components",
-        flags: FuncFlags.Stream | FuncFlags.UnstablePeriod,
+        flags: FuncFlags.Stream | FuncFlags.UnstablePeriod | FuncFlags.UsesTranscendental,
         unstableId: FuncUnstId.HT_PHASOR,
         inputs:
         [
@@ -3198,7 +3198,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
         name: "HT_SINE",
         group: FunctionGroup.CycleIndicators,
         hint: "Hilbert Transform - SineWave",
-        flags: FuncFlags.Stream | FuncFlags.UnstablePeriod,
+        flags: FuncFlags.Stream | FuncFlags.UnstablePeriod | FuncFlags.UsesTranscendental,
         unstableId: FuncUnstId.HT_SINE,
         inputs:
         [
@@ -3220,7 +3220,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
         name: "HT_TRENDLINE",
         group: FunctionGroup.OverlapStudies,
         hint: "Hilbert Transform - Instantaneous Trendline",
-        flags: FuncFlags.Overlap | FuncFlags.Stream | FuncFlags.UnstablePeriod,
+        flags: FuncFlags.Overlap | FuncFlags.Stream | FuncFlags.UnstablePeriod | FuncFlags.UsesTranscendental,
         unstableId: FuncUnstId.HT_TRENDLINE,
         inputs:
         [
@@ -3241,7 +3241,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
         name: "HT_TRENDMODE",
         group: FunctionGroup.CycleIndicators,
         hint: "Hilbert Transform - Trend vs Cycle Mode",
-        flags: FuncFlags.Stream | FuncFlags.UnstablePeriod,
+        flags: FuncFlags.Stream | FuncFlags.UnstablePeriod | FuncFlags.UsesTranscendental,
         unstableId: FuncUnstId.HT_TRENDMODE,
         inputs:
         [
@@ -3505,7 +3505,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
         name: "LINEARREG_ANGLE",
         group: FunctionGroup.StatisticFunctions,
         hint: "Linear Regression Angle",
-        flags: FuncFlags.Stream,
+        flags: FuncFlags.Stream | FuncFlags.UsesTranscendental,
         unstableId: null,
         inputs:
         [
@@ -3577,7 +3577,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
         name: "LN",
         group: FunctionGroup.MathTransform,
         hint: "Vector Log Natural",
-        flags: FuncFlags.Stream | FuncFlags.NanInfOutput,
+        flags: FuncFlags.Stream | FuncFlags.NanInfOutput | FuncFlags.UsesTranscendental,
         unstableId: null,
         inputs:
         [
@@ -3598,7 +3598,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
         name: "LOG10",
         group: FunctionGroup.MathTransform,
         hint: "Vector Log10",
-        flags: FuncFlags.Stream | FuncFlags.NanInfOutput,
+        flags: FuncFlags.Stream | FuncFlags.NanInfOutput | FuncFlags.UsesTranscendental,
         unstableId: null,
         inputs:
         [
@@ -3729,7 +3729,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
         name: "MAMA",
         group: FunctionGroup.OverlapStudies,
         hint: "MESA Adaptive Moving Average",
-        flags: FuncFlags.Overlap | FuncFlags.Stream | FuncFlags.UnstablePeriod,
+        flags: FuncFlags.Overlap | FuncFlags.Stream | FuncFlags.UnstablePeriod | FuncFlags.UsesTranscendental,
         unstableId: FuncUnstId.MAMA,
         inputs:
         [
@@ -4426,7 +4426,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
         name: "PSO",
         group: FunctionGroup.MomentumIndicators,
         hint: "Premier Stochastic Oscillator",
-        flags: FuncFlags.Stream,
+        flags: FuncFlags.Stream | FuncFlags.UsesTranscendental,
         unstableId: null,
         inputs:
         [
@@ -4663,7 +4663,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
         name: "ROGERSSATCHELL",
         group: FunctionGroup.VolatilityIndicators,
         hint: "Rogers-Satchell Volatility",
-        flags: FuncFlags.Stream,
+        flags: FuncFlags.Stream | FuncFlags.UsesTranscendental,
         unstableId: null,
         inputs:
         [
@@ -4866,7 +4866,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
         name: "SIN",
         group: FunctionGroup.MathTransform,
         hint: "Vector Trigonometric Sin",
-        flags: FuncFlags.Stream,
+        flags: FuncFlags.Stream | FuncFlags.UsesTranscendental,
         unstableId: null,
         inputs:
         [
@@ -4887,7 +4887,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
         name: "SINH",
         group: FunctionGroup.MathTransform,
         hint: "Vector Trigonometric Sinh",
-        flags: FuncFlags.Stream | FuncFlags.NanInfOutput,
+        flags: FuncFlags.Stream | FuncFlags.NanInfOutput | FuncFlags.UsesTranscendental,
         unstableId: null,
         inputs:
         [
@@ -5188,7 +5188,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
         name: "SWAK_2PHP",
         group: FunctionGroup.CycleIndicators,
         hint: "Swiss Army Knife - Two-Pole High-Pass Filter",
-        flags: FuncFlags.Stream | FuncFlags.UnstablePeriod,
+        flags: FuncFlags.Stream | FuncFlags.UnstablePeriod | FuncFlags.UsesTranscendental,
         unstableId: FuncUnstId.SWAK_2PHP,
         inputs:
         [
@@ -5212,7 +5212,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
         name: "SWAK_BP",
         group: FunctionGroup.CycleIndicators,
         hint: "Swiss Army Knife - Band-Pass Filter",
-        flags: FuncFlags.Stream | FuncFlags.UnstablePeriod,
+        flags: FuncFlags.Stream | FuncFlags.UnstablePeriod | FuncFlags.UsesTranscendental,
         unstableId: FuncUnstId.SWAK_BP,
         inputs:
         [
@@ -5237,7 +5237,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
         name: "SWAK_BUTTER",
         group: FunctionGroup.OverlapStudies,
         hint: "Swiss Army Knife - Butterworth Filter",
-        flags: FuncFlags.Overlap | FuncFlags.Stream | FuncFlags.UnstablePeriod,
+        flags: FuncFlags.Overlap | FuncFlags.Stream | FuncFlags.UnstablePeriod | FuncFlags.UsesTranscendental,
         unstableId: FuncUnstId.SWAK_BUTTER,
         inputs:
         [
@@ -5261,7 +5261,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
         name: "SWAK_GAUSS",
         group: FunctionGroup.OverlapStudies,
         hint: "Swiss Army Knife - Gaussian Filter",
-        flags: FuncFlags.Overlap | FuncFlags.Stream | FuncFlags.UnstablePeriod,
+        flags: FuncFlags.Overlap | FuncFlags.Stream | FuncFlags.UnstablePeriod | FuncFlags.UsesTranscendental,
         unstableId: FuncUnstId.SWAK_GAUSS,
         inputs:
         [
@@ -5285,7 +5285,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
         name: "SWAK_HP",
         group: FunctionGroup.CycleIndicators,
         hint: "Swiss Army Knife - High-Pass Filter",
-        flags: FuncFlags.Stream | FuncFlags.UnstablePeriod,
+        flags: FuncFlags.Stream | FuncFlags.UnstablePeriod | FuncFlags.UsesTranscendental,
         unstableId: FuncUnstId.SWAK_HP,
         inputs:
         [
@@ -5334,7 +5334,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
         name: "TAN",
         group: FunctionGroup.MathTransform,
         hint: "Vector Trigonometric Tan",
-        flags: FuncFlags.Stream,
+        flags: FuncFlags.Stream | FuncFlags.UsesTranscendental,
         unstableId: null,
         inputs:
         [
@@ -5355,7 +5355,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
         name: "TANH",
         group: FunctionGroup.MathTransform,
         hint: "Vector Trigonometric Tanh",
-        flags: FuncFlags.Stream,
+        flags: FuncFlags.Stream | FuncFlags.UsesTranscendental,
         unstableId: null,
         inputs:
         [

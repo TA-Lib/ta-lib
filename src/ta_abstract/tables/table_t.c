@@ -107,7 +107,7 @@ static const TA_OptInputParameterInfo *TA_TAN_OptInputs[] =
 DEF_FUNCTION( TAN,
               TA_GroupId_MathTransform,
               "Vector Trigonometric Tan",
-              TA_FUNC_FLG_STREAM
+              TA_FUNC_FLG_STREAM | TA_FUNC_FLG_USES_TRANSCENDENTAL
              );
 /* TAN END */
 
@@ -130,7 +130,7 @@ static const TA_OptInputParameterInfo *TA_TANH_OptInputs[] =
 DEF_FUNCTION( TANH,
               TA_GroupId_MathTransform,
               "Vector Trigonometric Tanh",
-              TA_FUNC_FLG_STREAM
+              TA_FUNC_FLG_STREAM | TA_FUNC_FLG_USES_TRANSCENDENTAL
              );
 /* TANH END */
 

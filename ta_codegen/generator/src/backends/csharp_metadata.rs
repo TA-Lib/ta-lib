@@ -361,6 +361,13 @@ const FUNC_FLAGS: &[(&str, &str, &str)] = &[
         "DisplayShift",
         "At least one output carries <c>OutputFlags.DisplayShift</c>; without it every output's display shift is 0.",
     ),
+    (
+        "uses_transcendental",
+        "UsesTranscendental",
+        "The function calls a transcendental math function, so a value may differ slightly between \
+         languages, between a stream and a batch call, and between machines. Not set on a function \
+         that reaches one only when an MA-type parameter selects MAMA or ALMA.",
+    ),
 ];
 
 const OPT_FLAGS: &[(&str, &str, &str)] = &[

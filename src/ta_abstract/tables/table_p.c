@@ -376,7 +376,7 @@ static const TA_OptInputParameterInfo *TA_PSO_OptInputs[] =
 DEF_FUNCTION( PSO,
               TA_GroupId_MomentumIndicators,
               "Premier Stochastic Oscillator",
-              TA_FUNC_FLG_STREAM
+              TA_FUNC_FLG_STREAM | TA_FUNC_FLG_USES_TRANSCENDENTAL
              );
 /* PSO END */
 
