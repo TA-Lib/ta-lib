@@ -1,7 +1,7 @@
 name: PSO
 group: Momentum Indicators
 hint: Premier Stochastic Oscillator
-flags: [stream]
+flags: [stream, uses_transcendental]
 inputs:
   - name: inPriceHLC
     type: price

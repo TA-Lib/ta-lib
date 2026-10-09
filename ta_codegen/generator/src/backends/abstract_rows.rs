@@ -517,6 +517,7 @@ pub fn func_flag_bits(flags: &[String]) -> u32 {
             // The top byte is full bar the sign bit; new flags start from bit 0.
             "period1_identity" => b |= 0x0000_0001, // TA_FUNC_FLG_PERIOD1_IDENTITY
             "display_shift" => b |= 0x0000_0002, // TA_FUNC_FLG_DISPLAY_SHIFT
+            "uses_transcendental" => b |= 0x0000_0004, // TA_FUNC_FLG_USES_TRANSCENDENTAL
             _ => {}
         }
     }

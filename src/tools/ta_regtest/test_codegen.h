@@ -136,11 +136,7 @@ void codegen_hash_report(const char *who, TA_RetCode goldRc, int goldBeg,
  * like the one above: test for it before any `tol < 0.0`. */
 #define CODEGEN_TOL_VMATH (-2.0)
 
-/* True if the FUNCTION name calls a transcendental C math routine directly.
- * Source-derived fixed list (ta_codegen/input grep). */
-int codegen_is_transcendental(const char *name);
-
-/* True if THIS CALL reaches a transcendental — the name test above, OR an
+/* True if THIS CALL reaches a transcendental — TA_FUNC_FLG_USES_TRANSCENDENTAL, OR an
  * MA-dispatch function (MA/MAVP/BBANDS/MACDEXT/APO/PPO/STOCH*) whose *MAType
  * optional parameter selects TA_MAType_MAMA (atan) or TA_MAType_ALMA (exp). optVals[i] is one
  * value per optInput in signature order; defaults are assumed beyond nbOpt. */

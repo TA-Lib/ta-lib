@@ -1,7 +1,7 @@
 name: HT_DCPHASE
 group: Cycle Indicators
 hint: Hilbert Transform - Dominant Cycle Phase
-flags: [unstable_period, stream]
+flags: [unstable_period, stream, uses_transcendental]
 inputs:
   - name: inReal
     type: real

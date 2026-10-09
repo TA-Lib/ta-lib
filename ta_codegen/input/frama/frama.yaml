@@ -1,7 +1,7 @@
 name: FRAMA
 group: Overlap Studies
 hint: Fractal Adaptive Moving Average
-flags: [overlap, unstable_period, stream]
+flags: [overlap, unstable_period, stream, uses_transcendental]
 inputs:
   - name: inPriceHL
     type: price

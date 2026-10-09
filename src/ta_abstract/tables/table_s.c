@@ -404,7 +404,7 @@ static const TA_OptInputParameterInfo *TA_SIN_OptInputs[] =
 DEF_FUNCTION( SIN,
               TA_GroupId_MathTransform,
               "Vector Trigonometric Sin",
-              TA_FUNC_FLG_STREAM
+              TA_FUNC_FLG_STREAM | TA_FUNC_FLG_USES_TRANSCENDENTAL
              );
 /* SIN END */
 
@@ -427,7 +427,7 @@ static const TA_OptInputParameterInfo *TA_SINH_OptInputs[] =
 DEF_FUNCTION( SINH,
               TA_GroupId_MathTransform,
               "Vector Trigonometric Sinh",
-              TA_FUNC_FLG_STREAM | TA_FUNC_FLG_NAN_INF_OUT
+              TA_FUNC_FLG_STREAM | TA_FUNC_FLG_NAN_INF_OUT | TA_FUNC_FLG_USES_TRANSCENDENTAL
              );
 /* SINH END */
 
@@ -1124,7 +1124,7 @@ static const TA_OptInputParameterInfo *TA_SWAK_2PHP_OptInputs[] =
 DEF_FUNCTION( SWAK_2PHP,
               TA_GroupId_CycleIndicators,
               "Swiss Army Knife - Two-Pole High-Pass Filter",
-              TA_FUNC_FLG_UNST_PER | TA_FUNC_FLG_STREAM
+              TA_FUNC_FLG_UNST_PER | TA_FUNC_FLG_STREAM | TA_FUNC_FLG_USES_TRANSCENDENTAL
              );
 /* SWAK_2PHP END */
 
@@ -1197,7 +1197,7 @@ static const TA_OptInputParameterInfo *TA_SWAK_BP_OptInputs[] =
 DEF_FUNCTION( SWAK_BP,
               TA_GroupId_CycleIndicators,
               "Swiss Army Knife - Band-Pass Filter",
-              TA_FUNC_FLG_UNST_PER | TA_FUNC_FLG_STREAM
+              TA_FUNC_FLG_UNST_PER | TA_FUNC_FLG_STREAM | TA_FUNC_FLG_USES_TRANSCENDENTAL
              );
 /* SWAK_BP END */
 
@@ -1245,7 +1245,7 @@ static const TA_OptInputParameterInfo *TA_SWAK_BUTTER_OptInputs[] =
 DEF_FUNCTION( SWAK_BUTTER,
               TA_GroupId_OverlapStudies,
               "Swiss Army Knife - Butterworth Filter",
-              TA_FUNC_FLG_OVERLAP | TA_FUNC_FLG_UNST_PER | TA_FUNC_FLG_STREAM
+              TA_FUNC_FLG_OVERLAP | TA_FUNC_FLG_UNST_PER | TA_FUNC_FLG_STREAM | TA_FUNC_FLG_USES_TRANSCENDENTAL
              );
 /* SWAK_BUTTER END */
 
@@ -1293,7 +1293,7 @@ static const TA_OptInputParameterInfo *TA_SWAK_GAUSS_OptInputs[] =
 DEF_FUNCTION( SWAK_GAUSS,
               TA_GroupId_OverlapStudies,
               "Swiss Army Knife - Gaussian Filter",
-              TA_FUNC_FLG_OVERLAP | TA_FUNC_FLG_UNST_PER | TA_FUNC_FLG_STREAM
+              TA_FUNC_FLG_OVERLAP | TA_FUNC_FLG_UNST_PER | TA_FUNC_FLG_STREAM | TA_FUNC_FLG_USES_TRANSCENDENTAL
              );
 /* SWAK_GAUSS END */
 
@@ -1332,7 +1332,7 @@ static const TA_OptInputParameterInfo *TA_SWAK_HP_OptInputs[] =
 DEF_FUNCTION( SWAK_HP,
               TA_GroupId_CycleIndicators,
               "Swiss Army Knife - High-Pass Filter",
-              TA_FUNC_FLG_UNST_PER | TA_FUNC_FLG_STREAM
+              TA_FUNC_FLG_UNST_PER | TA_FUNC_FLG_STREAM | TA_FUNC_FLG_USES_TRANSCENDENTAL
              );
 /* SWAK_HP END */
 

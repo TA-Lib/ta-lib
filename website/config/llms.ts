@@ -121,7 +121,42 @@ const llmsFull: Plugin = {
   },
 };
 
+// The plugin's own remark pass has no math syntax, so it rewrites LaTeX on the function
+// pages (`_{t-1}` becomes emphasis). This repeats that pass, every step of it, with
+// remark-math added. It runs in its own hook because the plugin's transformMarkdown is
+// synchronous and this pass is not.
+const mathSafe = new Map<string, string>();
+
+const llmsMath: Plugin = {
+  name: "ta-lib-llms-math",
+  onGenerated: async (app) => {
+    await Promise.all(
+      app.pages
+        .filter((page) => page.filePath?.endsWith(".md"))
+        .map(async (page) => {
+          const file = await remark()
+            .use(remarkMath)
+            .use(remarkPlease("unwrap", "llm-only"))
+            .use(remarkPlease("remove", "llm-exclude"))
+            .use(
+              remarkInclude(dirname(page.filePath!), {
+                resolvePath: (file: string) => file,
+                deep: false,
+                resolveLinkPath: true,
+                resolveImagePath: true,
+                useComment: true,
+              }),
+            )
+            .use(remarkImportCode(dirname(page.filePath!), {}))
+            .process(matter(page.content).content);
+          mathSafe.set(page.filePath!, String(file));
+        }),
+    );
+  },
+};
+
 export default [
+  llmsMath,
   llmsPlugin({
     domain: DOMAIN,
 
@@ -137,27 +172,10 @@ export default [
       "# {title}\n\n{description}\n\n## Key facts\n\n{keyFacts}\n\n## Table of Contents\n\n{toc}\n",
     llmsTxtTemplateGetter: { keyFacts, toc },
 
-    // The plugin's own remark pass has no math syntax, so it rewrites LaTeX on the function
-    // pages (`_{t-1}` becomes emphasis). This repeats that pass, every step of it, with
-    // remark-math added. Pages carry their title in frontmatter, so the twins get it as an H1.
+    // Pages carry their title in frontmatter, so the twins get it as an H1.
     transformMarkdown: (_markdown, page) => {
-      const md = String(
-        remark()
-          .use(remarkMath)
-          .use(remarkPlease("unwrap", "llm-only"))
-          .use(remarkPlease("remove", "llm-exclude"))
-          .use(
-            remarkInclude(dirname(page.filePath!), {
-              resolvePath: (file: string) => file,
-              deep: false,
-              resolveLinkPath: true,
-              resolveImagePath: true,
-              useComment: true,
-            }),
-          )
-          .use(remarkImportCode(dirname(page.filePath!), {}))
-          .processSync(matter(page.content).content),
-      );
+      const md = mathSafe.get(page.filePath!);
+      if (md === undefined) throw new Error(`llms: no math-safe Markdown for ${page.filePath}`);
       return /^# /.test(md.trimStart()) ? md : `# ${page.title}\n\n${md}`;
     },
   }),
