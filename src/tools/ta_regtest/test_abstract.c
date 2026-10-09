@@ -119,6 +119,14 @@ static long long g_dsListAccepted = 0;
 static long long g_dsFlagged = 0;
 static long long g_dsNonZero = 0;
 static long long g_dsServer = 0;
+/* Rule rL12, per axis (0 the unstable periods, 1 the candle settings): shifts
+ * found unchanged on a function whose own lookback the change moved, and
+ * non-zero shifts found unchanged. */
+static long long g_dsSettingLive[2] = { 0, 0 };
+static long long g_dsSettingNonZero[2] = { 0, 0 };
+/* The same two, for the server's answers. */
+static long long g_dsSrvSettingLive[2] = { 0, 0 };
+static long long g_dsSrvSettingNonZero[2] = { 0, 0 };
 /* Rejected batch calls found to leave the output buffers untouched, where the
  * rejected value lies inside its declared range: a rejection the function body
  * makes itself, after the generated argument checks. At a bound, and one step
@@ -126,12 +134,10 @@ static long long g_dsServer = 0;
 static long long g_rejectedAtBoundClean = 0;
 static long long g_rejectedAboveMinClean = 0;
 /* What a setting may move; see abstract_lookback_under_settings. Candlestick
- * functions whose lookback follows an averaging period, functions whose
- * lookback moved while their display shifts were compared, lookbacks that
+ * functions whose lookback follows an averaging period, lookbacks that
  * grew by an unstable period, then by an averaging period, at the ceiling,
  * and the ceiling reached again with an integer parameter at its maximum. */
 static long long g_lsCdlMoved = 0;
-static long long g_lsShiftLive = 0;
 static long long g_lsCeilingUnst = 0;
 static long long g_lsCeilingCandle = 0;
 static long long g_lsCeilingAtMax = 0;
@@ -194,8 +200,12 @@ void test_abstract_set_server(CodegenPipe *cp, const char *lang)
    g_dsAnswered = g_dsRejected = g_dsParamRejected = g_dsBoundRejected = 0;
    g_dsRealOutRejected = g_dsListOutRejected = g_dsRealAccepted = g_dsListAccepted = 0;
    g_dsFlagged = g_dsNonZero = g_dsServer = 0;
+   g_dsSettingLive[0] = g_dsSettingLive[1] = 0;
+   g_dsSettingNonZero[0] = g_dsSettingNonZero[1] = 0;
+   g_dsSrvSettingLive[0] = g_dsSrvSettingLive[1] = 0;
+   g_dsSrvSettingNonZero[0] = g_dsSrvSettingNonZero[1] = 0;
    g_rejectedAtBoundClean = g_rejectedAboveMinClean = 0;
-   g_lsCdlMoved = g_lsShiftLive = g_lsCeilingUnst = g_lsCeilingCandle = 0;
+   g_lsCdlMoved = g_lsCeilingUnst = g_lsCeilingCandle = 0;
    g_lsCeilingAtMax = 0;
    g_d2OorNotRejected = g_d2SentNotDefault = 0;
    if( cp )
@@ -1543,6 +1553,219 @@ static int d2_lo_hi( const TA_OptInputParameterInfo *oi, double *lo, double *hi 
     return 1;
 }
 
+/* One integer the server answers for a function at optVals (NULL for the
+ * declared defaults): its lookback, or with outputIdx the display shift of
+ * that output.
+ */
+static ErrorNumber ds_server_query( const char *method, const char *field,
+                                    const char *funcName, const TA_FuncHandle *handle,
+                                    const TA_FuncInfo *funcInfo, const double *optVals,
+                                    const int *outputIdx, int *answer )
+{
+    unsigned int k;
+    int pos = codegen_appendf(g_abstractReqBuf, ABSTRACT_JSON_BUF_SIZE, 0,
+        "{\"method\":\"%s\",\"params\":{\"funcName\":\"%s\"", method, funcName);
+
+    for( k = 0; k < funcInfo->nbOptInput; k++ )
+    {
+        const TA_OptInputParameterInfo *oi;
+        double v;
+        TA_GetOptInputParameterInfo(handle, k, &oi);
+        v = optVals ? optVals[k] : oi->defaultValue;
+        pos = codegen_appendf(g_abstractReqBuf, ABSTRACT_JSON_BUF_SIZE, pos,
+            ",\"%s\":", oi->paramName);
+        if( oi->type == TA_OptInput_RealRange || oi->type == TA_OptInput_RealList )
+            pos = codegen_appendf(g_abstractReqBuf, ABSTRACT_JSON_BUF_SIZE, pos, "%.17g", v);
+        else
+            pos = codegen_appendf(g_abstractReqBuf, ABSTRACT_JSON_BUF_SIZE, pos, "%d", (int)v);
+    }
+    if( outputIdx )
+        pos = codegen_appendf(g_abstractReqBuf, ABSTRACT_JSON_BUF_SIZE, pos,
+            ",\"outputIdx\":%d", *outputIdx);
+    codegen_appendf(g_abstractReqBuf, ABSTRACT_JSON_BUF_SIZE, pos, "}}");
+
+    if( codegen_pipe_call(g_abstractPipe, g_abstractReqBuf,
+                          g_abstractRespBuf, ABSTRACT_JSON_BUF_SIZE) != TA_TEST_PASS
+        || abstract_json_is_error(g_abstractRespBuf) )
+    {
+        printf("  ABSTRACT ERROR [%s]: %s server error\n", funcName, method);
+        return TA_ABSTRACT_SERVER_ERROR;
+    }
+    *answer = abstract_json_get_int(g_abstractRespBuf, field);
+    return TA_TEST_PASS;
+}
+
+/* Hands the server the unstable periods (axis 0) or the candle settings
+ * (axis 1) the library holds now.
+ */
+static ErrorNumber ds_server_push_settings( const char *funcName, int axis )
+{
+    unsigned int k, nb = axis == 0 ? TA_FUNC_UNST_COUNT : TA_NB_CANDLE_SETTING;
+    int uniform = axis == 0;
+
+    for( k = 1; uniform && k < TA_FUNC_UNST_COUNT; k++ )
+        uniform = TA_Globals->unstablePeriod[k] == TA_Globals->unstablePeriod[0];
+    if( uniform )
+        nb = 1;
+
+    for( k = 0; k < nb; k++ )
+    {
+        if( axis == 0 )
+            codegen_appendf(g_abstractReqBuf, ABSTRACT_JSON_BUF_SIZE, 0,
+                "{\"method\":\"set_unstable_period\",\"params\":{\"id\":%u,\"period\":%u}}",
+                uniform ? (unsigned int)TA_FUNC_UNST_ALL : k, TA_Globals->unstablePeriod[k]);
+        else
+        {
+            const TA_CandleSetting *c = &TA_Globals->candleSettings[k];
+            unsigned long long bits;
+            memcpy(&bits, &c->factor, sizeof(bits));
+            codegen_appendf(g_abstractReqBuf, ABSTRACT_JSON_BUF_SIZE, 0,
+                "{\"method\":\"set_candle_settings\",\"params\":{\"settingType\":%u,"
+                "\"rangeType\":%d,\"avgPeriod\":%d,\"factorBits\":\"%016llx\"}}",
+                k, (int)c->rangeType, c->avgPeriod, bits);
+        }
+        if( codegen_pipe_call(g_abstractPipe, g_abstractReqBuf,
+                              g_abstractRespBuf, ABSTRACT_JSON_BUF_SIZE) != TA_TEST_PASS
+            || abstract_json_is_error(g_abstractRespBuf) )
+        {
+            printf("  ABSTRACT ERROR [%s]: the server refused %s\n", funcName,
+                   axis == 0 ? "an unstable period" : "a candle setting");
+            return TA_ABSTRACT_SERVER_ERROR;
+        }
+    }
+    return TA_TEST_PASS;
+}
+
+/* Rule rL12: the display shift of every output, read again with every unstable
+ * period changed, then with every candle setting changed, from the library and
+ * from the server. Leaves the settings of both as it found them, on failure
+ * too.
+ */
+#define DS_SETTING_BUMP 7
+#define DS_MAX_OUTPUT 16
+static ErrorNumber ds_under_settings( const char *funcName,
+                                      const TA_FuncHandle *handle,
+                                      const TA_FuncInfo *funcInfo,
+                                      TA_ParamHolder *paramHolder,
+                                      const double *optVals,
+                                      int askServer )
+{
+    static const char *const axisName[2] = { "an unstable period", "a candle setting" };
+    TA_CandleSetting savedCandle[TA_NB_CANDLE_SETTING];
+    unsigned int savedUnst[TA_FUNC_UNST_COUNT];
+    TA_Integer shift0[DS_MAX_OUTPUT];
+    TA_Integer lookback0 = -1;
+    unsigned int k, o;
+    int axis;
+
+    if( funcInfo->nbOutput > DS_MAX_OUTPUT )
+    {
+        printf("  Failed [%s]: %u outputs, the settings leg holds %d\n",
+               funcName, funcInfo->nbOutput, DS_MAX_OUTPUT);
+        return TA_ABS_TST_FAIL_DISPLAY_SHIFT;
+    }
+    TA_GetLookback(paramHolder, &lookback0);
+    for( o = 0; o < funcInfo->nbOutput; o++ )
+        TA_GetDisplayShift(paramHolder, o, &shift0[o]);
+
+    memcpy(savedCandle, TA_Globals->candleSettings, sizeof(savedCandle));
+    memcpy(savedUnst, TA_Globals->unstablePeriod, sizeof(savedUnst));
+
+    for( axis = 0; axis < 2; axis++ )
+    {
+        TA_Integer lookback = -1;
+        int moved = -1, refused = 0, pushed = 0;
+        ErrorNumber e = TA_TEST_PASS, eRestore = TA_TEST_PASS;
+
+        if( axis == 0 )
+        {
+            for( k = 0; k < TA_FUNC_UNST_COUNT; k++ )
+                refused |= TA_SetUnstablePeriod( (TA_FuncUnstId)k,
+                               savedUnst[k] == DS_SETTING_BUMP ? 2 * DS_SETTING_BUMP
+                                                               : DS_SETTING_BUMP ) != TA_SUCCESS;
+        }
+        else
+        {
+            for( k = 0; k < TA_NB_CANDLE_SETTING; k++ )
+                refused |= TA_SetCandleSettings( savedCandle[k].settingType,
+                               (TA_RangeType)((savedCandle[k].rangeType + 1) % 3),
+                               savedCandle[k].avgPeriod + DS_SETTING_BUMP,
+                               savedCandle[k].factor * 3.7 ) != TA_SUCCESS;
+        }
+        TA_GetLookback(paramHolder, &lookback);
+        for( o = 0; !refused && moved < 0 && o < funcInfo->nbOutput; o++ )
+        {
+            TA_Integer shift = 12345;
+            TA_GetDisplayShift(paramHolder, o, &shift);
+            if( shift != shift0[o] )
+                moved = (int)o;
+            else if( shift != INT_MIN )
+            {
+                if( lookback != lookback0 ) g_dsSettingLive[axis]++;
+                if( shift != 0 ) g_dsSettingNonZero[axis]++;
+            }
+        }
+        if( g_abstractPipe && askServer && !refused && moved < 0 )
+        {
+            int srvLookback = -1;
+
+            pushed = 1;
+            e = ds_server_push_settings(funcName, axis);
+            if( e == TA_TEST_PASS && lookback0 >= 0 )
+            {
+                e = ds_server_query("abstract_get_lookback", "lookback", funcName, handle,
+                                    funcInfo, optVals, NULL, &srvLookback);
+                if( e == TA_TEST_PASS && srvLookback != (int)lookback )
+                {
+                    printf("  ABSTRACT ERROR [%s]: lookback after %s changed C=%d server=%d\n",
+                           funcName, axisName[axis], (int)lookback, srvLookback);
+                    e = TA_ABSTRACT_LOOKBACK_MISMATCH;
+                }
+            }
+            for( o = 0; e == TA_TEST_PASS && o < funcInfo->nbOutput; o++ )
+            {
+                int idx = (int)o, srvShift = 12345;
+                e = ds_server_query("abstract_get_display_shift", "displayShift", funcName,
+                                    handle, funcInfo, optVals, &idx, &srvShift);
+                if( e == TA_TEST_PASS && srvShift != (int)shift0[o] )
+                {
+                    printf("  ABSTRACT ERROR [%s]: %s moved the server's display shift of "
+                           "output %u from %d to %d\n", funcName, axisName[axis], o,
+                           (int)shift0[o], srvShift);
+                    e = TA_ABSTRACT_DISPLAY_SHIFT_MISMATCH;
+                }
+                else if( e == TA_TEST_PASS && srvShift != INT_MIN )
+                {
+                    if( srvLookback != (int)lookback0 ) g_dsSrvSettingLive[axis]++;
+                    if( srvShift != 0 ) g_dsSrvSettingNonZero[axis]++;
+                }
+            }
+        }
+        memcpy(TA_Globals->candleSettings, savedCandle, sizeof(savedCandle));
+        memcpy(TA_Globals->unstablePeriod, savedUnst, sizeof(savedUnst));
+        if( pushed )
+            eRestore = ds_server_push_settings(funcName, axis);
+        if( e != TA_TEST_PASS )
+            return e;
+        if( eRestore != TA_TEST_PASS )
+            return eRestore;
+
+        if( refused )
+        {
+            printf("  Failed [%s]: the settings leg could not change %s\n",
+                   funcName, axisName[axis]);
+            return TA_ABS_TST_FAIL_DISPLAY_SHIFT;
+        }
+        if( moved >= 0 )
+        {
+            printf("  Failed [%s]: %s moved the display shift of output %d\n",
+                   funcName, axisName[axis], moved);
+            return TA_ABS_TST_FAIL_DISPLAY_SHIFT;
+        }
+    }
+    return TA_TEST_PASS;
+}
+
 /* The display shift of every output for the parameters the holder carries now,
  * plus the two indices that name no output (-1 and nbOutput).
  *
@@ -1560,7 +1783,7 @@ static ErrorNumber abstract_check_display_shift( const char *funcName,
                                                  int askServer )
 {
     TA_Integer lookback = -1;
-    unsigned int nbFlagged = 0, k;
+    unsigned int nbFlagged = 0;
     int idx, paramsRejected;
 
     if( TA_GetLookback(paramHolder, &lookback) != TA_SUCCESS ) lookback = -1;
@@ -1625,40 +1848,17 @@ static ErrorNumber abstract_check_display_shift( const char *funcName,
 
         if( g_abstractPipe && askServer )
         {
-            int pos = codegen_appendf(g_abstractReqBuf, ABSTRACT_JSON_BUF_SIZE, 0,
-                "{\"method\":\"abstract_get_display_shift\",\"params\":{\"funcName\":\"%s\"",
-                funcName);
-            for( k = 0; k < funcInfo->nbOptInput; k++ )
+            int srvShift = 12345;
+            ErrorNumber e = ds_server_query("abstract_get_display_shift", "displayShift",
+                                            funcName, handle, funcInfo, optVals, &idx,
+                                            &srvShift);
+            if( e != TA_TEST_PASS )
+                return e;
+            if( srvShift != (int)shift )
             {
-                const TA_OptInputParameterInfo *oi;
-                double v;
-                TA_GetOptInputParameterInfo(handle, k, &oi);
-                v = optVals ? optVals[k] : oi->defaultValue;
-                pos = codegen_appendf(g_abstractReqBuf, ABSTRACT_JSON_BUF_SIZE, pos,
-                    ",\"%s\":", oi->paramName);
-                if( oi->type == TA_OptInput_RealRange || oi->type == TA_OptInput_RealList )
-                    pos = codegen_appendf(g_abstractReqBuf, ABSTRACT_JSON_BUF_SIZE, pos, "%.17g", v);
-                else
-                    pos = codegen_appendf(g_abstractReqBuf, ABSTRACT_JSON_BUF_SIZE, pos, "%d", (int)v);
-            }
-            codegen_appendf(g_abstractReqBuf, ABSTRACT_JSON_BUF_SIZE, pos,
-                ",\"outputIdx\":%d}}", idx);
-
-            if( codegen_pipe_call(g_abstractPipe, g_abstractReqBuf,
-                                  g_abstractRespBuf, ABSTRACT_JSON_BUF_SIZE) != TA_TEST_PASS
-                || abstract_json_is_error(g_abstractRespBuf) )
-            {
-                printf("  ABSTRACT ERROR [%s]: abstract_get_display_shift server error\n", funcName);
-                return TA_ABSTRACT_SERVER_ERROR;
-            }
-            {
-                int srvShift = abstract_json_get_int(g_abstractRespBuf, "displayShift");
-                if( srvShift != (int)shift )
-                {
-                    printf("  ABSTRACT ERROR [%s]: display shift of output %d C=%d server=%d\n",
-                           funcName, idx, (int)shift, srvShift);
-                    return TA_ABSTRACT_DISPLAY_SHIFT_MISMATCH;
-                }
+                printf("  ABSTRACT ERROR [%s]: display shift of output %d C=%d server=%d\n",
+                       funcName, idx, (int)shift, srvShift);
+                return TA_ABSTRACT_DISPLAY_SHIFT_MISMATCH;
             }
             g_dsServer++;
         }
@@ -1671,7 +1871,7 @@ static ErrorNumber abstract_check_display_shift( const char *funcName,
                (funcInfo->flags & TA_FUNC_FLG_DISPLAY_SHIFT) ? "set" : "clear", nbFlagged);
         return TA_ABS_TST_FAIL_DISPLAY_SHIFT;
     }
-    return TA_TEST_PASS;
+    return ds_under_settings(funcName, handle, funcInfo, paramHolder, optVals, askServer);
 }
 
 /* A call the library rejects for its arguments must not have stored anything:
@@ -1750,10 +1950,8 @@ static ErrorNumber abstract_rejected_call_writes_nothing( const char *funcName,
  *
  * A candle range type or factor moves no lookback. A candle averaging period
  * moves only the lookback of a candlestick function or a gate fixture, by
- * exactly what was added or not at all.
- * No setting moves a display shift: they are read with every candle component
- * and every unstable period changed. With every unstable period and averaging
- * period at TA_INDEX_MAX a lookback is still a count: it only grows.
+ * exactly what was added or not at all. With every unstable period and
+ * averaging period at TA_INDEX_MAX a lookback is still a count: it only grows.
  *
  * Leaves the settings as it found them, on failure too.
  */
@@ -1765,21 +1963,18 @@ static ErrorNumber abstract_lookback_under_settings( const char *funcName,
 {
     TA_CandleSetting savedCandle[TA_NB_CANDLE_SETTING];
     unsigned int savedUnst[TA_FUNC_UNST_COUNT];
-    TA_Integer shift0[10];
     TA_Integer base = -1, got = -1;
     const char *bad = NULL;
     int isCdl = (funcInfo->flags & TA_FUNC_FLG_CANDLESTICK) != 0;
     /* A gate fixture may read a candle setting without being a candlestick. */
     int readsCandle = isCdl || strncmp(funcName, "SYNTH", 5) == 0;
-    unsigned int k, o;
+    unsigned int k;
     int pass;
 
     memcpy(savedCandle, TA_Globals->candleSettings, sizeof(savedCandle));
     memcpy(savedUnst, TA_Globals->unstablePeriod, sizeof(savedUnst));
 
     TA_GetLookback(paramHolder, &base);
-    for( o = 0; o < funcInfo->nbOutput && o < 10; o++ )
-        TA_GetDisplayShift(paramHolder, o, &shift0[o]);
 
     /* Range type and factor alone. */
     for( k = 0; k < TA_NB_CANDLE_SETTING; k++ )
@@ -1802,19 +1997,6 @@ static ErrorNumber abstract_lookback_under_settings( const char *funcName,
                             "is not a candlestick";
     if( !bad && got != base && isCdl )
         g_lsCdlMoved++;
-
-    /* Display shifts, with an unstable period in force as well. */
-    TA_SetUnstablePeriod(TA_FUNC_UNST_ALL, LS_BUMP);
-    TA_GetLookback(paramHolder, &got);
-    for( o = 0; !bad && o < funcInfo->nbOutput && o < 10; o++ )
-    {
-        TA_Integer shift = 0;
-        TA_GetDisplayShift(paramHolder, o, &shift);
-        if( shift != shift0[o] )
-            bad = "a setting moved a display shift";
-    }
-    if( !bad && got != base )
-        g_lsShiftLive++;
 
     /* The ceiling, at the default parameters and with every integer range at
      * its maximum. Zero settings first: a combination the function rejects
@@ -2638,15 +2820,36 @@ ErrorNumber test_abstract( void )
       return TA_ABS_TST_FAIL_DISPLAY_SHIFT_VACUOUS;
    }
 
-   if( g_lsCdlMoved == 0 || g_lsShiftLive == 0 || g_lsCeilingUnst == 0 ||
+   if( g_dsSettingLive[0] == 0 || g_dsSettingLive[1] == 0 ||
+       g_dsSettingNonZero[0] == 0 || g_dsSettingNonZero[1] == 0 )
+   {
+      printf( "  Failed: the display-shift sweep held %lld shift(s) while an unstable "
+              "period moved the lookback and %lld while a candle setting did, and "
+              "held %lld and %lld non-zero shift(s)\n",
+              g_dsSettingLive[0], g_dsSettingLive[1],
+              g_dsSettingNonZero[0], g_dsSettingNonZero[1] );
+      return TA_ABS_TST_FAIL_DISPLAY_SHIFT_VACUOUS;
+   }
+   if( g_abstractPipe &&
+       ( g_dsSrvSettingLive[0] == 0 || g_dsSrvSettingLive[1] == 0 ||
+         g_dsSrvSettingNonZero[0] == 0 || g_dsSrvSettingNonZero[1] == 0 ) )
+   {
+      printf( "  Failed: the server held %lld shift(s) while an unstable period moved "
+              "its lookback and %lld while a candle setting did, and held %lld and "
+              "%lld non-zero shift(s)\n",
+              g_dsSrvSettingLive[0], g_dsSrvSettingLive[1],
+              g_dsSrvSettingNonZero[0], g_dsSrvSettingNonZero[1] );
+      return TA_ABS_TST_FAIL_DISPLAY_SHIFT_VACUOUS;
+   }
+
+   if( g_lsCdlMoved == 0 || g_lsCeilingUnst == 0 ||
        g_lsCeilingCandle == 0 || g_lsCeilingAtMax == 0 )
    {
       printf( "  Failed: the settings sweep saw %lld candlestick lookback(s) follow an "
-              "averaging period, compared display shifts on %lld function(s) whose "
-              "lookback moved, and reached the ceiling through an unstable period %lld "
+              "averaging period, and reached the ceiling through an unstable period %lld "
               "time(s), through an averaging period %lld, and with an integer parameter "
               "at its maximum %lld\n",
-              g_lsCdlMoved, g_lsShiftLive, g_lsCeilingUnst, g_lsCeilingCandle,
+              g_lsCdlMoved, g_lsCeilingUnst, g_lsCeilingCandle,
               g_lsCeilingAtMax );
       return TA_ABS_TST_FAIL_LOOKBACK_SETTINGS_VACUOUS;
    }
