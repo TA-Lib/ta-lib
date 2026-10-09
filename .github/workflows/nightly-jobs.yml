@@ -1778,7 +1778,7 @@ jobs:
       - name: Has this exact tree already been measured?
         id: seen
         if: env.FORCE != 'true' && env.IS_MAIN != '1' && env.MODE != 'accept'
-        uses: actions/cache/restore@v5
+        uses: actions/cache/restore@v6
         with:
           path: ${{ runner.temp }}/perf
           key: perf-icount-fp-${{ steps.fp.outputs.fp }}
@@ -1909,7 +1909,7 @@ jobs:
       # to the 5AM schedule.
       - name: Remember this tree as measured
         if: steps.decide.outputs.measure == 'true' && env.MODE != 'measure' && env.IS_MAIN != '1'
-        uses: actions/cache/save@v5
+        uses: actions/cache/save@v6
         with:
           path: ${{ runner.temp }}/perf
           key: perf-icount-fp-${{ steps.fp.outputs.fp }}
