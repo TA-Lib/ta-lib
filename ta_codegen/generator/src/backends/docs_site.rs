@@ -467,7 +467,7 @@ fn inject_flags(
             "Calls a transcendental math function (exp, log, log10, trigonometric, inverse \
              trigonometric or hyperbolic), so a value may differ slightly between languages, \
              between a stream and a batch call, and between machines. TA-Lib targets a \
-             difference within 1e-9.",
+             difference below 1e-9.",
         ),
     ];
 
