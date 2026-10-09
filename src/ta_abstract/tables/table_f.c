@@ -89,7 +89,7 @@ static const TA_OptInputParameterInfo *TA_FISHER_OptInputs[] =
 DEF_FUNCTION( FISHER,
               TA_GroupId_MomentumIndicators,
               "Fisher Transform",
-              TA_FUNC_FLG_UNST_PER | TA_FUNC_FLG_STREAM
+              TA_FUNC_FLG_UNST_PER | TA_FUNC_FLG_STREAM | TA_FUNC_FLG_USES_TRANSCENDENTAL
              );
 /* FISHER END */
 
@@ -287,7 +287,7 @@ static const TA_OptInputParameterInfo *TA_FRAMA_OptInputs[] =
 DEF_FUNCTION( FRAMA,
               TA_GroupId_OverlapStudies,
               "Fractal Adaptive Moving Average",
-              TA_FUNC_FLG_OVERLAP | TA_FUNC_FLG_UNST_PER | TA_FUNC_FLG_STREAM
+              TA_FUNC_FLG_OVERLAP | TA_FUNC_FLG_UNST_PER | TA_FUNC_FLG_STREAM | TA_FUNC_FLG_USES_TRANSCENDENTAL
              );
 /* FRAMA END */
 

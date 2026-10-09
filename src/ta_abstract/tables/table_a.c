@@ -165,7 +165,7 @@ static const TA_OptInputParameterInfo *TA_ACOS_OptInputs[] =
 DEF_FUNCTION( ACOS,
               TA_GroupId_MathTransform,
               "Vector Trigonometric ACos",
-              TA_FUNC_FLG_STREAM | TA_FUNC_FLG_NAN_INF_OUT
+              TA_FUNC_FLG_STREAM | TA_FUNC_FLG_NAN_INF_OUT | TA_FUNC_FLG_USES_TRANSCENDENTAL
              );
 /* ACOS END */
 
@@ -430,7 +430,7 @@ static const TA_OptInputParameterInfo *TA_ALMA_OptInputs[] =
 DEF_FUNCTION( ALMA,
               TA_GroupId_OverlapStudies,
               "Arnaud Legoux Moving Average",
-              TA_FUNC_FLG_OVERLAP | TA_FUNC_FLG_STREAM | TA_FUNC_FLG_PERIOD1_IDENTITY
+              TA_FUNC_FLG_OVERLAP | TA_FUNC_FLG_STREAM | TA_FUNC_FLG_PERIOD1_IDENTITY | TA_FUNC_FLG_USES_TRANSCENDENTAL
              );
 /* ALMA END */
 
@@ -657,7 +657,7 @@ static const TA_OptInputParameterInfo *TA_ASIN_OptInputs[] =
 DEF_FUNCTION( ASIN,
               TA_GroupId_MathTransform,
               "Vector Trigonometric ASin",
-              TA_FUNC_FLG_STREAM | TA_FUNC_FLG_NAN_INF_OUT
+              TA_FUNC_FLG_STREAM | TA_FUNC_FLG_NAN_INF_OUT | TA_FUNC_FLG_USES_TRANSCENDENTAL
              );
 /* ASIN END */
 
@@ -680,7 +680,7 @@ static const TA_OptInputParameterInfo *TA_ATAN_OptInputs[] =
 DEF_FUNCTION( ATAN,
               TA_GroupId_MathTransform,
               "Vector Trigonometric ATan",
-              TA_FUNC_FLG_STREAM
+              TA_FUNC_FLG_STREAM | TA_FUNC_FLG_USES_TRANSCENDENTAL
              );
 /* ATAN END */
 

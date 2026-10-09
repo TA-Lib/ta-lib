@@ -72,4 +72,7 @@ public final class FuncFlags {
    /** At least one output carries {@code OutputFlags.DISPLAY_SHIFT}; without it every output's display shift is 0. */
    public static final int DISPLAY_SHIFT = 0x00000002;
 
+   /** The function calls a transcendental math function, so a value may differ slightly between languages, between a stream and a batch call, and between machines. Not set on a function that reaches one only when an MA-type parameter selects MAMA or ALMA. */
+   public static final int USES_TRANSCENDENTAL = 0x00000004;
+
 }

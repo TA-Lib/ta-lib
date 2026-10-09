@@ -1,7 +1,7 @@
 name: TANH
 group: Math Transform
 hint: Vector Trigonometric Tanh
-flags: [stream]
+flags: [stream, uses_transcendental]
 inputs:
   - name: inReal
     type: real

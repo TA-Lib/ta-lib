@@ -134,7 +134,7 @@ static const TA_OptInputParameterInfo *TA_HT_DCPERIOD_OptInputs[] =
 DEF_FUNCTION( HT_DCPERIOD,
               TA_GroupId_CycleIndicators,
               "Hilbert Transform - Dominant Cycle Period",
-              TA_FUNC_FLG_UNST_PER | TA_FUNC_FLG_STREAM
+              TA_FUNC_FLG_UNST_PER | TA_FUNC_FLG_STREAM | TA_FUNC_FLG_USES_TRANSCENDENTAL
              );
 /* HT_DCPERIOD END */
 
@@ -157,7 +157,7 @@ static const TA_OptInputParameterInfo *TA_HT_DCPHASE_OptInputs[] =
 DEF_FUNCTION( HT_DCPHASE,
               TA_GroupId_CycleIndicators,
               "Hilbert Transform - Dominant Cycle Phase",
-              TA_FUNC_FLG_UNST_PER | TA_FUNC_FLG_STREAM
+              TA_FUNC_FLG_UNST_PER | TA_FUNC_FLG_STREAM | TA_FUNC_FLG_USES_TRANSCENDENTAL
              );
 /* HT_DCPHASE END */
 
@@ -187,7 +187,7 @@ static const TA_OptInputParameterInfo *TA_HT_PHASOR_OptInputs[] =
 DEF_FUNCTION( HT_PHASOR,
               TA_GroupId_CycleIndicators,
               "Hilbert Transform - Phasor Components",
-              TA_FUNC_FLG_UNST_PER | TA_FUNC_FLG_STREAM
+              TA_FUNC_FLG_UNST_PER | TA_FUNC_FLG_STREAM | TA_FUNC_FLG_USES_TRANSCENDENTAL
              );
 /* HT_PHASOR END */
 
@@ -217,7 +217,7 @@ static const TA_OptInputParameterInfo *TA_HT_SINE_OptInputs[] =
 DEF_FUNCTION( HT_SINE,
               TA_GroupId_CycleIndicators,
               "Hilbert Transform - SineWave",
-              TA_FUNC_FLG_UNST_PER | TA_FUNC_FLG_STREAM
+              TA_FUNC_FLG_UNST_PER | TA_FUNC_FLG_STREAM | TA_FUNC_FLG_USES_TRANSCENDENTAL
              );
 /* HT_SINE END */
 
@@ -240,7 +240,7 @@ static const TA_OptInputParameterInfo *TA_HT_TRENDLINE_OptInputs[] =
 DEF_FUNCTION( HT_TRENDLINE,
               TA_GroupId_OverlapStudies,
               "Hilbert Transform - Instantaneous Trendline",
-              TA_FUNC_FLG_UNST_PER | TA_FUNC_FLG_OVERLAP | TA_FUNC_FLG_STREAM
+              TA_FUNC_FLG_UNST_PER | TA_FUNC_FLG_OVERLAP | TA_FUNC_FLG_STREAM | TA_FUNC_FLG_USES_TRANSCENDENTAL
              );
 /* HT_TRENDLINE END */
 
@@ -263,7 +263,7 @@ static const TA_OptInputParameterInfo *TA_HT_TRENDMODE_OptInputs[] =
 DEF_FUNCTION( HT_TRENDMODE,
               TA_GroupId_CycleIndicators,
               "Hilbert Transform - Trend vs Cycle Mode",
-              TA_FUNC_FLG_UNST_PER | TA_FUNC_FLG_STREAM
+              TA_FUNC_FLG_UNST_PER | TA_FUNC_FLG_STREAM | TA_FUNC_FLG_USES_TRANSCENDENTAL
              );
 /* HT_TRENDMODE END */
 

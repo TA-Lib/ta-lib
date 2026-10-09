@@ -133,6 +133,9 @@ public enum FuncFlags : uint
 
     /// <summary>At least one output carries <c>OutputFlags.DisplayShift</c>; without it every output's display shift is 0.</summary>
     DisplayShift = 0x00000002,
+
+    /// <summary>The function calls a transcendental math function, so a value may differ slightly between languages, between a stream and a batch call, and between machines. Not set on a function that reaches one only when an MA-type parameter selects MAMA or ALMA.</summary>
+    UsesTranscendental = 0x00000004,
 }
 
 /// <summary>Which OHLCV components a price input consumes. Values match C's <c>TA_IN_PRICE_*</c>.</summary>

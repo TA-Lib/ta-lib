@@ -723,13 +723,14 @@ Scope rules (deliberate):
   and the driver never sends it (withheld cases counted and printed) while C,
   Rust and C# are held to it. These cases carry their own count and floor, being
   a subset of `sentCases` whose stopping the combined total could not show.
-- **The ill-conditioning skip: HT_DCPHASE / HT_SINE on the constant shape, for
-  the tolerance-lane servers.** Both derive their output from `atan` of a ratio
+- **The ill-conditioning skip: HT_DCPHASE / HT_SINE / HT_TRENDMODE on the constant
+  shape, for the tolerance-lane servers.** The first two derive their output from `atan` of a ratio
   of two sums, `realPart/imagPart`; on `FUZZ_CONSTANT` both are floating-point
   noise, so the phase is `atan(≈0/≈0)`: chaotically sensitive to the last bit of
-  every transcendental step, which amplifies ~1 ULP to whole degrees. C and Rust
+  every transcendental step, which amplifies ~1 ULP to whole degrees, and
+  HT_TRENDMODE branches on that phase, so its integer output flips. C and Rust
   share the system libm and stay bit-identical there, so `xlang_illcond` skips
-  exactly those two functions on exactly that shape for exactly the
+  exactly those three functions on exactly that shape for exactly the
   tolerance-lane servers, and reports the count. Not a codegen bug: every
   non-degenerate shape agrees within 1e-9, and the phase of a null signal is
   undefined, so no fixed tolerance could separate it from libm noise.

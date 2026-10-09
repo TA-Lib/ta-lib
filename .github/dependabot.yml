@@ -12,6 +12,14 @@ updates:
     # upstream first. Security updates ignore this.
     cooldown:
       default-days: 7
+    # The theme pins exact versions of these. A group only batches what is
+    # available that day, so check the PR against the theme's pins.
+    groups:
+      vuepress:
+        patterns:
+          - "vuepress"
+          - "vuepress-theme-hope"
+          - "@vuepress/*"
 
   - package-ecosystem: "github-actions"
     directory: "/"

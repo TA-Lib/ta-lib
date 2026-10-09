@@ -1,7 +1,7 @@
 name: MAMA
 group: Overlap Studies
 hint: MESA Adaptive Moving Average
-flags: [unstable_period, overlap, stream]
+flags: [unstable_period, overlap, stream, uses_transcendental]
 inputs:
   - name: inReal
     type: real

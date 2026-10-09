@@ -73,6 +73,7 @@ pub(crate) const FUNC_FLAGS: &[(&str, &str)] = &[
     ("nan_inf_output", "Can Output NaN or +/-Inf"),
     ("period1_identity", "Period 1 Identity"),
     ("display_shift", "Display Shift"),
+    ("uses_transcendental", "Uses Transcendental"),
 ];
 
 fn write_func_flags(out: &mut String, flags: &[String]) {
