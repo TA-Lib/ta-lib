@@ -6809,7 +6809,7 @@ ErrorNumber fuzz_ref(const char *version, const char *functionFilter)
  *     server_verify transport) and requests want_hash. Non-transcendental calls
  *     are diffed BITWISE; a call that reaches a transcendental (fdlibm != the C
  *     libm, ~1 ULP) drops to a CODEGEN_TRANSCENDENTAL_TOL (1e-9) element
- *     compare, and HT_DCPHASE/HT_SINE on the zero-variance constant shape are
+ *     compare, and HT_DCPHASE/HT_SINE/HT_TRENDMODE on the zero-variance constant shape are
  *     skipped outright (xlang_illcond — atan2 of a null signal amplifies
  *     the ULP unboundedly; C and Rust stay bitwise there).
  *   - C#: the same hex-bits transport as Java (the managed server has no
@@ -6929,7 +6929,7 @@ typedef struct {
     long long    vmathCases;         /* calls whose values fuzz_vmath_near held  */
     long long    vmathDue;           /* (function, server) pairs swept that
                                       * codegen_call_needs_vmath_tol names        */
-    long long    illcondSkipped;     /* Java HT_DCPHASE/HT_SINE calls skipped on
+    long long    illcondSkipped;     /* HT_DCPHASE/HT_SINE/HT_TRENDMODE calls skipped on
                                       * the zero-variance constant shape (phase of
                                       * a null signal — see xlang_illcond)    */
     long long    oorCases;           /* per-server comparisons on an out-of-range
@@ -7255,13 +7255,16 @@ static int xlang_selfcheck_inputs(XlangCtx *ctx)
  * ill-conditioning amplifies that to whole degrees. It is not a codegen
  * divergence — every non-degenerate shape agrees within the 1e-9 tolerance, and
  * atan2 of a null signal is mathematically undefined — so no fixed tolerance can
- * separate it from fdlibm noise. The Java leg skips exactly these two functions
- * on exactly the constant shape (reported as a skip count for transparency);
- * every other shape, function, and language stays fully gated. */
+ * separate it from fdlibm noise. HT_TRENDMODE branches on the same phase, so
+ * there the difference is its integer output flipping. The tolerance-lane legs
+ * skip exactly these three functions on exactly the constant shape (reported as
+ * a skip count for transparency); every other shape, function, and language
+ * stays fully gated. */
 static int xlang_illcond(const char *name, int shape)
 {
     return shape == FUZZ_CONSTANT &&
-           (strcmp(name, "HT_DCPHASE") == 0 || strcmp(name, "HT_SINE") == 0);
+           (strcmp(name, "HT_DCPHASE") == 0 || strcmp(name, "HT_SINE") == 0 ||
+            strcmp(name, "HT_TRENDMODE") == 0);
 }
 
 /* Build a per-function TA_<name> request with LOSSLESS hex-bits inputs (the
@@ -9386,7 +9389,7 @@ ErrorNumber xlang_hash(const char *functionFilter, const char *languageFilter)
                "vector kernel, the server's is libm)\n",
                ctx.vmathCases, ctx.l3VmathCases, FUZZ_VMATH_MAX_STEPS);
     if( ctx.illcondSkipped > 0 )
-        printf("  (%lld HT_DCPHASE/HT_SINE call(s) skipped on the constant shape "
+        printf("  (%lld HT_DCPHASE/HT_SINE/HT_TRENDMODE call(s) skipped on the constant shape "
                "across the tolerance-lane servers: atan2 phase of a null signal, "
                "ill-conditioned across libms — C and Rust bitwise there)\n",
                ctx.illcondSkipped);
