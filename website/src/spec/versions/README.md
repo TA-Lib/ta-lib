@@ -24,7 +24,7 @@ Where the same call gives the same bits, and what a release keeps and may add.
 
 ## Determinism {#determinism}
 
-On this page, **bit-identical** means the same return code, the same output range, and every output element with the same bits, except that a NaN matches any NaN: no math library specifies a NaN's payload. **The same call** means the same function, input values, `startIdx` and `endIdx`, optional parameters and settings.
+In this spec, **bit-identical** means the same return code, the same output range, and every output element with the same bits, except that a NaN matches any NaN: no math library specifies a NaN's payload. **The same call** means the same function, input values, `startIdx` and `endIdx`, optional parameters and settings.
 
 <a id="rd1"></a>**rD1** On one machine, C and Rust are bit-identical for every call that evaluates no transcendental function. A call that evaluates one may differ in the last bits ([transcendental functions](/spec/versions/#transcendental)).
 
@@ -57,7 +57,7 @@ Each release is checked on every supported platform against the regression suite
 
 ## Releases {#releases}
 
-<a id="rv1"></a>**rV1** Within one ABI generation N (the N of the soname `libta-lib.so.N`; the table below shows it on each platform), no function or callback signature, struct layout, typedef, enum value or `TA_` constant that a release shipped in the installed C headers is removed or changed, except that `TA_MATYPE_MAX` and `TA_FUNC_UNST_COUNT` follow their enums ([rV3](/spec/versions/#rv3)). A release that removes or changes one starts a new N; additions keep it. Deprecated names are part of that surface. rV1 covers declarations, not values. `TA_LIB_SOURCES_DIGEST` is outside it; it changes whenever the sources do. Rust, Java and C# have no ABI generation, and rV1 does not apply to them.
+<a id="rv1"></a>**rV1** Within one ABI generation N (the N of `libta-lib.so.N`; the table below shows it per platform), no function or callback signature, struct layout, typedef, enum value or `TA_` constant that a release shipped in the installed C headers is removed or changed, except the counts that grow with their enums ([rV3](/spec/versions/#rv3)). Deprecated names are included. A release that removes or changes one starts a new N; additions keep it. rV1 covers declarations, not values, and not `TA_LIB_SOURCES_DIGEST`, which changes whenever the sources do. Rust, Java and C# have no ABI generation, so rV1 does not apply to them.
 
 | Platform | Carrier | A program built against an earlier release with the same N |
 |---|---|---|
@@ -65,6 +65,6 @@ Each release is checked on every supported platform against the regression suite
 | macOS | install name `libta-lib.N.dylib` | links and runs against a later one without rebuilding |
 | Windows | none: the DLL's name carries no N (`ta-lib.dll` under MSVC) | gets no signal at link or load time when N changes; rebuild against the headers of the DLL you ship |
 
-<a id="rv2"></a>**rV2** No member of `RetCode`, `MAType`, `FuncUnstId`, `RangeType` or `CandleSettingType` is renumbered, in any language. `TA_AllCandleSettings` is pinned at 11 and `TA_FUNC_UNST_ALL` at 65535; neither tracks the number of members. A Rust, Java or C# enum may omit C members; each member it has carries C's number. Reading the number: for `RetCode`, see the [hub](/spec/#failures); for the other enums, Rust `as i32`, Java `value()` on `FuncUnstId` and `ordinal()` on `MAType`, `RangeType` and `CandleSettingType`, C# an `(int)` cast.
+<a id="rv2"></a>**rV2** No member of `RetCode`, `MAType`, `FuncUnstId`, `RangeType` or `CandleSettingType` is renumbered, in any language. `TA_AllCandleSettings` is pinned at 11 and `TA_FUNC_UNST_ALL` at 65535; neither tracks the number of members. A Rust, Java or C# enum may omit C members; each member it has carries C's number. Reading the number: for `RetCode`, see the [hub](/spec/#failures); for the other enums, Rust `as i32`, Java `value()` on `FuncUnstId` and `ordinal()` on `MAType`, `RangeType` and `CandleSettingType`, valid while the enum lists every member in order; C# an `(int)` cast.
 
 <a id="rv3"></a>**rV3** A release may add functions, MA types, unstable-period ids, candle settings, return codes and [metadata flags](/spec/abstract/#flags), and adding one starts no new N. `TA_MATYPE_MAX` and `TA_FUNC_UNST_COUNT` grow when a member is appended to their enum. Rust marks `RetCode`, `FuncUnstId`, `MAType`, `RangeType` and `CandleSettingType` `#[non_exhaustive]`, so a `match` on one needs a wildcard arm.
