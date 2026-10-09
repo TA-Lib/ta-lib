@@ -84,7 +84,7 @@ static const TA_OptInputParameterInfo *TA_LINEARREG_ANGLE_OptInputs[] =
 DEF_FUNCTION( LINEARREG_ANGLE,
               TA_GroupId_Statistic,
               "Linear Regression Angle",
-              TA_FUNC_FLG_STREAM
+              TA_FUNC_FLG_STREAM | TA_FUNC_FLG_USES_TRANSCENDENTAL
              );
 /* LINEARREG_ANGLE END */
 
@@ -157,7 +157,7 @@ static const TA_OptInputParameterInfo *TA_LN_OptInputs[] =
 DEF_FUNCTION( LN,
               TA_GroupId_MathTransform,
               "Vector Log Natural",
-              TA_FUNC_FLG_STREAM | TA_FUNC_FLG_NAN_INF_OUT
+              TA_FUNC_FLG_STREAM | TA_FUNC_FLG_NAN_INF_OUT | TA_FUNC_FLG_USES_TRANSCENDENTAL
              );
 /* LN END */
 
@@ -180,7 +180,7 @@ static const TA_OptInputParameterInfo *TA_LOG10_OptInputs[] =
 DEF_FUNCTION( LOG10,
               TA_GroupId_MathTransform,
               "Vector Log10",
-              TA_FUNC_FLG_STREAM | TA_FUNC_FLG_NAN_INF_OUT
+              TA_FUNC_FLG_STREAM | TA_FUNC_FLG_NAN_INF_OUT | TA_FUNC_FLG_USES_TRANSCENDENTAL
              );
 /* LOG10 END */
 

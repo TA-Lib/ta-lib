@@ -1,7 +1,7 @@
 name: ASIN
 group: Math Transform
 hint: Vector Trigonometric ASin
-flags: [stream, nan_inf_output]
+flags: [stream, nan_inf_output, uses_transcendental]
 inputs:
   - name: inReal
     type: real

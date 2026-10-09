@@ -340,7 +340,7 @@ static const TA_OptInputParameterInfo *TA_MAMA_OptInputs[] =
 DEF_FUNCTION( MAMA,
               TA_GroupId_OverlapStudies,
               "MESA Adaptive Moving Average",
-              TA_FUNC_FLG_UNST_PER | TA_FUNC_FLG_OVERLAP | TA_FUNC_FLG_STREAM
+              TA_FUNC_FLG_UNST_PER | TA_FUNC_FLG_OVERLAP | TA_FUNC_FLG_STREAM | TA_FUNC_FLG_USES_TRANSCENDENTAL
              );
 /* MAMA END */
 

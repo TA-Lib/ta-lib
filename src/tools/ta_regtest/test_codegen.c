@@ -7058,24 +7058,7 @@ void codegen_hash_report(const char *who, TA_RetCode goldRc, int goldBeg,
  * hence the only ones --xlang-hash's Java leg and server_verify relax from
  * bitwise to CODEGEN_TRANSCENDENTAL_TOL. Every other function — including
  * sqrt/ceil/floor users (IEEE correctly-rounded) — stays bit-identical across
- * languages. Source-derived from a grep of ta_codegen/input. ---- */
-static const char *const CODEGEN_TRANSCENDENTAL[] = {
-    "ACOS", "ALMA", "ASIN", "ATAN", "CHOP", "CHOPTR", "COS", "COSH", "EXP", "FISHER", "FRAMA",
-    "HT_DCPERIOD", "HT_DCPHASE", "HT_PHASOR", "HT_SINE", "HT_TRENDLINE",
-    "HT_TRENDMODE", "LINEARREG_ANGLE", "LN", "LOG10", "MAMA", "PSO",
-    "ROGERSSATCHELL", "SIN", "SINH",
-    "SWAK_2PHP", "SWAK_BP", "SWAK_BUTTER", "SWAK_GAUSS", "SWAK_HP",
-    "TAN", "TANH",
-};
-
-int codegen_is_transcendental(const char *name)
-{
-    for( unsigned int i = 0;
-         i < sizeof(CODEGEN_TRANSCENDENTAL) / sizeof(CODEGEN_TRANSCENDENTAL[0]); i++ )
-        if( strcmp(CODEGEN_TRANSCENDENTAL[i], name) == 0 )
-            return 1;
-    return 0;
-}
+ * languages. ---- */
 
 /* The MA-dispatch functions (MA, MAVP, BBANDS, MACDEXT, APO, PPO, STOCH*) route
  * to MAMA (atan) or ALMA (exp) when a MAType optional parameter selects it, so
@@ -7087,7 +7070,7 @@ int codegen_call_is_transcendental(const TA_FuncHandle *handle,
     const TA_FuncInfo *fi;
     if( TA_GetFuncInfo(handle, &fi) != TA_SUCCESS )
         return 0;
-    if( codegen_is_transcendental(fi->name) )
+    if( fi->flags & TA_FUNC_FLG_USES_TRANSCENDENTAL )
         return 1;
     for( unsigned int i = 0; i < fi->nbOptInput; i++ )
     {

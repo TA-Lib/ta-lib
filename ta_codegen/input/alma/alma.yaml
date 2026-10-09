@@ -1,7 +1,7 @@
 name: ALMA
 group: Overlap Studies
 hint: Arnaud Legoux Moving Average
-flags: [overlap, stream, period1_identity]
+flags: [overlap, stream, period1_identity, uses_transcendental]
 inputs:
   - name: inReal
     type: real
