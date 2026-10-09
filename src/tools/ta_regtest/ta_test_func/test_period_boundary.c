@@ -128,13 +128,9 @@
 /**** Local declarations.              ****/
 #define PB_DATA_SIZE 252   /* Daily reference data size. */
 
-/* Buffers for the abstract-driven sweep, one row per output parameter.
- * CODEGEN_MAX_OUTPUTS is the harness-wide output-arity cap that main() enforces
- * at startup for every run mode (#352), which is what makes the clamped loops
- * below safe. A ceiling of its own -- this was 3 while the enforced cap is 4 --
- * is not a narrower test: an output parameter left unset makes TA_CallFunc
- * return TA_BAD_PARAM, so the call fails outright, and pbScanOutputsFinite
- * stops one output short of the end. HA already has four outputs. */
+/* One row per output of the abstract-driven sweep. Keep it the cap enforced at
+ * startup: the loops below clamp at it, and a lower one leaves an output
+ * unbound, which fails the whole call instead of narrowing the test. */
 #define PB_MAX_OUTPUT CODEGEN_MAX_OUTPUTS
 /* Server-verify scratch bounds: a Price input expands to at most OHLCV+OI (6)
  * pointers. A function past either bound fails the sweep, never skips it. */
