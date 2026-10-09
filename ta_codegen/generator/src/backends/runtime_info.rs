@@ -4,7 +4,7 @@
 //! one probes the others without a rejection. None of the three has an optional
 //! path a key reports, nor a `TA_Initialize`: each answers 0.
 
-/// Every key, in C's spelling. `runtime_info_keys_are_c_s` holds it to the C source.
+/// Every key, in C's spelling.
 pub const KEYS: &[&str] = &["vmath.transcendental", "count.initialize", "count.shutdown"];
 
 /// Where the keys are described. The one description: no emitted doc repeats it.
@@ -18,9 +18,9 @@ fn quoted(separator: &str) -> String {
 pub fn rust_fn() -> String {
     format!(
         "\n/// Rust analog of C's `TA_GetRuntimeInfo()`: a run-time state of this library, by key.\n\
-         /// It promises no speed and no value. The keys: <{SPEC}>.\n\
+         /// The keys: <{SPEC}>.\n\
          ///\n\
-         /// An unknown key is [`RetCode::BadParam`](crate::RetCode::BadParam).\n\
+         /// An unknown key is [`RetCode::BadParam`].\n\
          pub fn get_runtime_info(key: &str) -> Result<i32, crate::RetCode> {{\n\
          \x20   match key {{\n\
          \x20       {keys} => Ok(0),\n\
@@ -39,8 +39,8 @@ pub fn java_class() -> String {
          /**\n\
          \x20* Run-time state of this library, by key.\n\
          \x20*\n\
-         \x20* <p>The Java analog of C's {{@code TA_GetRuntimeInfo()}}. It promises no speed and\n\
-         \x20* no value. The keys: <a href=\"{SPEC}\">{SPEC}</a>.\n\
+         \x20* <p>The Java analog of C's {{@code TA_GetRuntimeInfo()}}. The keys:\n\
+         \x20* <a href=\"{SPEC}\">{SPEC}</a>.\n\
          \x20*/\n\
          public final class RuntimeInfo {{\n\
          \x20   private RuntimeInfo() {{\n\
@@ -77,8 +77,8 @@ pub fn csharp_class(namespace: &str) -> String {
          /// Run-time state of this library, by key.\n\
          /// </summary>\n\
          /// <remarks>\n\
-         /// The C# analog of C's <c>TA_GetRuntimeInfo()</c>. It promises no speed and no\n\
-         /// value. The keys: <see href=\"{SPEC}\"/>.\n\
+         /// The C# analog of C's <c>TA_GetRuntimeInfo()</c>. The keys:\n\
+         /// <see href=\"{SPEC}\"/>.\n\
          /// </remarks>\n\
          public static class RuntimeInfo\n{{\n\
          \x20   /// <summary>The value of one key.</summary>\n\

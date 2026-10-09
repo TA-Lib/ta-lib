@@ -912,4 +912,17 @@ fn runtime_info_keys_are_c_s() {
         ta_codegen_lib::backends::runtime_info::KEYS.iter().copied().collect();
     assert_eq!(body.matches("strcmp(").count(), in_c.len(), "a key compare this test cannot read");
     assert_eq!(in_c, ours, "the keys TA_GetRuntimeInfo answers in C are not the managed backends'");
+
+    // Every API doc points at the spec's table for the keys and lists none itself.
+    let page = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+        .join("../../website/src/spec/abstract/README.md");
+    let page = std::fs::read_to_string(&page).expect("the spec's abstract page");
+    let (_, section) = page.split_once("{#runtime-info}").expect("the page has #runtime-info");
+    let section = &section[..section.find("\n## ").expect("a section follows")];
+    let in_spec: BTreeSet<&str> = section
+        .lines()
+        .filter_map(|l| l.strip_prefix("| `"))
+        .map(|l| l.split('`').next().expect("a closing backtick"))
+        .collect();
+    assert_eq!(in_spec, ours, "the spec's run-time information table does not list the keys");
 }

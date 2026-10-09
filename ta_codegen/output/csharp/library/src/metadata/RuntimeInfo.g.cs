@@ -45,8 +45,8 @@ namespace TALib.Metadata;
 /// Run-time state of this library, by key.
 /// </summary>
 /// <remarks>
-/// The C# analog of C's <c>TA_GetRuntimeInfo()</c>. It promises no speed and no
-/// value. The keys: <see href="https://ta-lib.org/spec/abstract/#runtime-info"/>.
+/// The C# analog of C's <c>TA_GetRuntimeInfo()</c>. The keys:
+/// <see href="https://ta-lib.org/spec/abstract/#runtime-info"/>.
 /// </remarks>
 public static class RuntimeInfo
 {

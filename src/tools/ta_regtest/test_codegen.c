@@ -4851,7 +4851,7 @@ static ErrorNumber codegen_check_gencode_digest( CodegenPipe *cp, const CodegenL
    return TA_TEST_PASS;
 }
 
-/* What each language's library reports about itself, asked as the server's first
+/* What each language's library reports about itself, asked before any function
  * request: afterwards the C server's loops have loaded their own routines.
  *
  * The values are stated here per language. Rust, Java and C# have no kernel and
@@ -4859,7 +4859,7 @@ static ErrorNumber codegen_check_gencode_digest( CodegenPipe *cp, const CodegenL
  * called TA_Initialize once, and ta_regtest held its own kernel answer to the
  * platform before any function ran.
  */
-static long g_runtimeInfoAsked = 0, g_runtimeInfoChecked = 0;
+static long g_runtimeInfoChecked = 0;
 
 static ErrorNumber codegen_check_runtime_info( CodegenPipe *cp, const CodegenLanguage *lang )
 {
@@ -4868,7 +4868,6 @@ static ErrorNumber codegen_check_runtime_info( CodegenPipe *cp, const CodegenLan
    int want[4] = { 0, 0, 0, 0 };
    unsigned int i;
 
-   g_runtimeInfoAsked++;
    if( isC )
    {
       if( TA_GetRuntimeInfo( key[0], &want[0] ) != TA_SUCCESS ) return TA_CODEGEN_RUNTIME_INFO;
@@ -4879,10 +4878,17 @@ static ErrorNumber codegen_check_runtime_info( CodegenPipe *cp, const CodegenLan
    {
       const int wantCode = i < 3 ? (int)TA_SUCCESS : (int)TA_BAD_PARAM;
       char req[128], resp[256];
+      ErrorNumber errNb;
 
       (void)snprintf( req, sizeof(req), "{\"method\":\"TA_GetRuntimeInfo\",\"params\":{\"key\":\"%s\"}}", key[i] );
-      if( codegen_pipe_call( cp, req, resp, (int)sizeof(resp) ) != TA_TEST_PASS
-          || !strstr( resp, "\"retCode\":" ) || !strstr( resp, "\"value\":" )
+      errNb = codegen_pipe_call( cp, req, resp, (int)sizeof(resp) );
+      if( errNb != TA_TEST_PASS )
+      {
+         printf( "\nCODEGEN FAILED: the %s server did not answer TA_GetRuntimeInfo( \"%s\" )\n",
+                 lang->display, key[i] );
+         return errNb;
+      }
+      if( !strstr( resp, "\"retCode\":" ) || !strstr( resp, "\"value\":" )
           || json_get_int( resp, "retCode" ) != wantCode
           || json_get_int( resp, "value" ) != want[i] )
       {
@@ -10041,10 +10047,9 @@ ErrorNumber test_codegen(const TA_History *history,
         return TA_CODEGEN_GENCODE_DIGEST_VACUOUS;
     }
 
-    if( g_runtimeInfoChecked == 0 || g_runtimeInfoChecked != g_runtimeInfoAsked )
+    if( g_runtimeInfoChecked == 0 )
     {
-        printf("\nCODEGEN FAILED: TA_GetRuntimeInfo was checked on %ld of %ld language server(s)\n",
-               g_runtimeInfoChecked, g_runtimeInfoAsked);
+        printf("\nCODEGEN FAILED: no language server was asked TA_GetRuntimeInfo\n");
         return TA_CODEGEN_RUNTIME_INFO;
     }
 

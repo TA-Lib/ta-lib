@@ -44,8 +44,8 @@ import io.github.talib.TALibArgumentException;
 /**
  * Run-time state of this library, by key.
  *
- * <p>The Java analog of C's {@code TA_GetRuntimeInfo()}. It promises no speed and
- * no value. The keys: <a href="https://ta-lib.org/spec/abstract/#runtime-info">https://ta-lib.org/spec/abstract/#runtime-info</a>.
+ * <p>The Java analog of C's {@code TA_GetRuntimeInfo()}. The keys:
+ * <a href="https://ta-lib.org/spec/abstract/#runtime-info">https://ta-lib.org/spec/abstract/#runtime-info</a>.
  */
 public final class RuntimeInfo {
     private RuntimeInfo() {
