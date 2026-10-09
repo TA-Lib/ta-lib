@@ -358,6 +358,7 @@ typedef enum
   TA_CODEGEN_RIDE_MISMATCH           = 1119,
   TA_CODEGEN_RIDE_VACUOUS            = 1120,
   TA_CODEGEN_TIER_SERIES_TOO_SHORT   = 1121,
+  TA_CODEGEN_RUNTIME_INFO            = 1122,
 
   /* Abstract codegen test errors */
   TA_ABSTRACT_LOOKBACK_MISMATCH      = 1200,

@@ -1381,6 +1381,17 @@ fn generate_c_dispatch(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>) -> S
     s.push_str("        handle_TA_FunctionDescriptionXML(json, resp, resp_size);\n");
     s.push_str("    }\n");
 
+    // Absent from a frozen release, which has no TA_GetRuntimeInfo to call.
+    let m = "TA_GetRuntimeInfo";
+    s.push_str("#ifndef TA_REF_SERVE\n");
+    s.push_str(&format!(
+        "    else if ( methodLen == {n} && strncmp(method, \"{m}\", {n}) == 0 ) {{\n",
+        n = m.len()
+    ));
+    s.push_str("        handle_TA_GetRuntimeInfo(json, resp, resp_size);\n");
+    s.push_str("    }\n");
+    s.push_str("#endif /* TA_REF_SERVE */\n");
+
     // Unknown method
     s.push_str("    else {\n");
     s.push_str("        snprintf(resp, resp_size,\n");
@@ -1815,6 +1826,7 @@ pub fn generate_java_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
 
     // ta_abstract metadata table + introspection RPC handlers (issue #114).
     s.push_str(&crate::backends::java_abstract::generate(funcs, enums));
+    s.push_str(crate::backends::runtime_info::JAVA_SERVER_HANDLER);
 
     s.push_str("    static final String[] FUNC_NAMES = {\n");
     for func in funcs {
@@ -1989,6 +2001,7 @@ pub fn generate_java_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
     s.push_str("        else if (json.contains(\"\\\"TA_GetOutputParameterInfo\\\"\")) return handleGetOutputParameterInfo(json);\n");
     s.push_str("        else if (json.contains(\"\\\"abstract_for_each_func\\\"\")) return handleForEachFunc();\n");
     s.push_str("        else if (json.contains(\"\\\"TA_FunctionDescriptionXML\\\"\")) return handleFunctionDescriptionXML();\n");
+    s.push_str("        else if (json.contains(\"\\\"TA_GetRuntimeInfo\\\"\")) return handleGetRuntimeInfo(json);\n");
     s.push_str("        else if (json.contains(\"\\\"abstract_call\\\"\")) return handleAbstractCall(json);\n");
     s.push_str("        else if (json.contains(\"\\\"abstract_get_lookback\\\"\")) return \"{\\\"lookback\\\":\" + computeLookback(jsonString(json, \"funcName\"), json) + \"}\";\n");
     s.push_str("        else if (json.contains(\"\\\"abstract_get_display_shift\\\"\")) return \"{\\\"displayShift\\\":\" + computeDisplayShift(jsonString(json, \"funcName\"), json) + \"}\";\n");
@@ -2938,6 +2951,7 @@ pub fn generate_csharp_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef
     s.push_str("            else if (method == \"TA_GetOutputParameterInfo\") return AbsOutputInfo(p);\n");
     s.push_str("            else if (method == \"abstract_for_each_func\") return AbsForEachFunc();\n");
     s.push_str("            else if (method == \"TA_FunctionDescriptionXML\") return AbsDescriptionXml();\n");
+    s.push_str("            else if (method == \"TA_GetRuntimeInfo\") return AbsRuntimeInfo(p);\n");
     s.push_str("            else if (method == \"abstract_call\") return AbsCall(p);\n");
     // stream_verify: C# stream vs C# batch, bitwise, in-process.
     s.push_str("            else if (method == \"stream_verify\") return HandleStreamVerify(p);\n");
@@ -4740,6 +4754,13 @@ const RUST_ABSTRACT_DYNAMIC_HANDLERS: &str = r#"        "abstract_call" => {
             });
             serde_json::json!({ "functions": arr }).to_string()
         }
+        "TA_GetRuntimeInfo" => {
+            let (rc, value) = match abstract_api::get_runtime_info(params["key"].as_str().unwrap_or("")) {
+                Ok(v) => (RetCode::Success, v),
+                Err(e) => (e, 0),
+            };
+            format!("{{\"retCode\":{},\"value\":{}}}", rc.as_c_int(), value)
+        }
         "TA_FunctionDescriptionXML" => {
             let xml = abstract_api::function_description_xml();
             let length = xml.len();
@@ -4929,6 +4950,14 @@ const CSHARP_ABSTRACT_HANDLERS: &str = r#"    static string AbsStr(string? v) {
        numbers at generation time made this leg unfailable: it compared C's real
        bytes against constants derived from the same string C's own table is
        built from (#164). Now both sides are real bytes. */
+    static string AbsRuntimeInfo(JsonElement p)
+    {
+        int rc = 0, value = 0;
+        try { value = TALib.Metadata.RuntimeInfo.Get(p.GetProperty("key").GetString()!); }
+        catch (TALibArgumentException e) { rc = (int)e.RetCode; }
+        return $"{{\"retCode\":{rc},\"value\":{value}}}";
+    }
+
     static string AbsDescriptionXml()
     {
         string xml = TALib.Metadata.FunctionDescription.Xml;

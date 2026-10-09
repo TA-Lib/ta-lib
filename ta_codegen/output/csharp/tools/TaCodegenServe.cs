@@ -894,6 +894,7 @@ public class TaCodegenServe {
             else if (method == "TA_GetOutputParameterInfo") return AbsOutputInfo(p);
             else if (method == "abstract_for_each_func") return AbsForEachFunc();
             else if (method == "TA_FunctionDescriptionXML") return AbsDescriptionXml();
+            else if (method == "TA_GetRuntimeInfo") return AbsRuntimeInfo(p);
             else if (method == "abstract_call") return AbsCall(p);
             else if (method == "stream_verify") return HandleStreamVerify(p);
             else if (method == "fuzz_in_hash") return HandleFuzzInHash(p);
@@ -1023,6 +1024,14 @@ public class TaCodegenServe {
        numbers at generation time made this leg unfailable: it compared C's real
        bytes against constants derived from the same string C's own table is
        built from (#164). Now both sides are real bytes. */
+    static string AbsRuntimeInfo(JsonElement p)
+    {
+        int rc = 0, value = 0;
+        try { value = TALib.Metadata.RuntimeInfo.Get(p.GetProperty("key").GetString()!); }
+        catch (TALibArgumentException e) { rc = (int)e.RetCode; }
+        return $"{{\"retCode\":{rc},\"value\":{value}}}";
+    }
+
     static string AbsDescriptionXml()
     {
         string xml = TALib.Metadata.FunctionDescription.Xml;

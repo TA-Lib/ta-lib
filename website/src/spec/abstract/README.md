@@ -92,6 +92,18 @@ Besides the codes a function call returns ([return codes](/spec/errors/#return-c
 | 11 | `TA_OUTPUT_NOT_ALL_INITIALIZE` | A call with an output left unbound. |
 | 15 | `TA_BAD_OBJECT` | Not a table it made, or a table given to the other kind's free call. |
 
+## Run-time information {#runtime-info}
+
+One call answers a key with an integer that describes the library in this process: C's `TA_GetRuntimeInfo` (`ta_common.h`), Rust's `get_runtime_info`, Java's `RuntimeInfo.get`, C#'s `RuntimeInfo.Get` and `TryGet`. It reports state and promises no value and no speed.
+
+Every key is answered in the four languages, and the answer depends on the language and the platform. An unknown key returns `TA_BAD_PARAM` ([failures](/spec/#failures)); C#'s `TryGet` returns `false`. A release may add a key.
+
+| Key | Meaning |
+|---|---|
+| `vmath.transcendental` | The vectorized math library behind the batch call of functions such as `SIN`, `EXP` and `LN`: 0 none, 1 Apple's vForce. In C, read it after `TA_Initialize`. |
+| `count.initialize` | How many times `TA_Initialize` was called in this process. 0 in Rust, Java and C#, which have no such call. |
+| `count.shutdown` | How many times `TA_Shutdown` was called in this process. 0 in Rust, Java and C#. |
+
 ## Flags {#flags}
 
 A function, an input, an optional parameter and an output each carry one word of flags. The four tables below list every flag. A rule that depends on a flag is on the page of its topic, linked from the flag's row.

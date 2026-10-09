@@ -124,7 +124,8 @@ instead, on every build: right after its first `TA_Initialize`, which loads the
 kernel, and before any function has run, `TA_GetRuntimeInfo` must report it
 loaded on the kernel's platform, which the check states for itself. Keep it a
 state query: a value cannot tell a kernel from a math library that happens to
-agree with it.
+agree with it. `--codegen` asks every language server the same keys as its first
+request, against values the check states per language.
 
 The sweep **compares values by default** for every function; checking only
 coherency is how the TRIX partial-range mislabeling survived two decades.

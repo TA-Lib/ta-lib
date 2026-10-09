@@ -123725,6 +123725,11 @@ static void handle_request(const char *json, char *resp, int resp_size) {
     else if ( methodLen == 25 && strncmp(method, "TA_FunctionDescriptionXML", 25) == 0 ) {
         handle_TA_FunctionDescriptionXML(json, resp, resp_size);
     }
+#ifndef TA_REF_SERVE
+    else if ( methodLen == 17 && strncmp(method, "TA_GetRuntimeInfo", 17) == 0 ) {
+        handle_TA_GetRuntimeInfo(json, resp, resp_size);
+    }
+#endif /* TA_REF_SERVE */
     else {
         snprintf(resp, resp_size,
             "{\"error\":\"Unknown method: %.*s\"}", methodLen, method);
