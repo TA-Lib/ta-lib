@@ -10047,9 +10047,10 @@ ErrorNumber test_codegen(const TA_History *history,
         return TA_CODEGEN_GENCODE_DIGEST_VACUOUS;
     }
 
-    if( g_runtimeInfoChecked == 0 )
+    if( g_runtimeInfoChecked != langsTested )
     {
-        printf("\nCODEGEN FAILED: no language server was asked TA_GetRuntimeInfo\n");
+        printf("\nCODEGEN FAILED: TA_GetRuntimeInfo was checked on %ld of %d language server(s)\n",
+               g_runtimeInfoChecked, (int)langsTested);
         return TA_CODEGEN_RUNTIME_INFO;
     }
 
