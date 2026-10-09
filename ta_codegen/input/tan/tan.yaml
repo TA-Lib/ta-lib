@@ -1,7 +1,7 @@
 name: TAN
 group: Math Transform
 hint: Vector Trigonometric Tan
-flags: [stream]
+flags: [stream, uses_transcendental]
 inputs:
   - name: inReal
     type: real

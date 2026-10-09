@@ -248,6 +248,18 @@ typedef int TA_FuncFlags;
                                           * computed it. Without this flag every
                                           * output's display shift is 0. e.g. DPO.
                                           */
+#define TA_FUNC_FLG_USES_TRANSCENDENTAL 0x00000004
+                                         /* The function calls a transcendental
+                                          * math function (exp, log, log10,
+                                          * trigonometric, inverse trigonometric
+                                          * or hyperbolic), so a value may differ
+                                          * slightly between languages, between a
+                                          * stream and a batch call, and between
+                                          * machines. Not set on a function that
+                                          * reaches one only when an MA-type
+                                          * parameter selects MAMA or ALMA.
+                                          * e.g. SIN, LN, HT_SINE.
+                                          */
 
 typedef struct TA_FuncInfo
 {

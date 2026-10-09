@@ -232,7 +232,7 @@ static const TA_OptInputParameterInfo *TA_ROGERSSATCHELL_OptInputs[] =
 DEF_FUNCTION( ROGERSSATCHELL,
               TA_GroupId_VolatilityIndicators,
               "Rogers-Satchell Volatility",
-              TA_FUNC_FLG_STREAM
+              TA_FUNC_FLG_STREAM | TA_FUNC_FLG_USES_TRANSCENDENTAL
              );
 /* ROGERSSATCHELL END */
 

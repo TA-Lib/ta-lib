@@ -1,7 +1,7 @@
 name: LINEARREG_ANGLE
 group: Statistic Functions
 hint: Linear Regression Angle
-flags: [stream]
+flags: [stream, uses_transcendental]
 inputs:
   - name: inReal
     type: real

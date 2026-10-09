@@ -1746,7 +1746,7 @@ static const TA_OptInputParameterInfo *TA_CHOP_OptInputs[] =
 DEF_FUNCTION( CHOP,
               TA_GroupId_MomentumIndicators,
               "Choppiness Index",
-              TA_FUNC_FLG_STREAM
+              TA_FUNC_FLG_STREAM | TA_FUNC_FLG_USES_TRANSCENDENTAL
              );
 /* CHOP END */
 
@@ -1771,7 +1771,7 @@ static const TA_OptInputParameterInfo *TA_CHOPTR_OptInputs[] =
 DEF_FUNCTION( CHOPTR,
               TA_GroupId_MomentumIndicators,
               "Choppiness Index (True Range Box)",
-              TA_FUNC_FLG_STREAM
+              TA_FUNC_FLG_STREAM | TA_FUNC_FLG_USES_TRANSCENDENTAL
              );
 /* CHOPTR END */
 
@@ -2050,7 +2050,7 @@ static const TA_OptInputParameterInfo *TA_COS_OptInputs[] =
 DEF_FUNCTION( COS,
               TA_GroupId_MathTransform,
               "Vector Trigonometric Cos",
-              TA_FUNC_FLG_STREAM
+              TA_FUNC_FLG_STREAM | TA_FUNC_FLG_USES_TRANSCENDENTAL
              );
 /* COS END */
 
@@ -2073,7 +2073,7 @@ static const TA_OptInputParameterInfo *TA_COSH_OptInputs[] =
 DEF_FUNCTION( COSH,
               TA_GroupId_MathTransform,
               "Vector Trigonometric Cosh",
-              TA_FUNC_FLG_STREAM | TA_FUNC_FLG_NAN_INF_OUT
+              TA_FUNC_FLG_STREAM | TA_FUNC_FLG_NAN_INF_OUT | TA_FUNC_FLG_USES_TRANSCENDENTAL
              );
 /* COSH END */
 

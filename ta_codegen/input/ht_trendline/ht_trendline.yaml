@@ -1,7 +1,7 @@
 name: HT_TRENDLINE
 group: Overlap Studies
 hint: Hilbert Transform - Instantaneous Trendline
-flags: [unstable_period, overlap, stream]
+flags: [unstable_period, overlap, stream, uses_transcendental]
 inputs:
   - name: inReal
     type: real

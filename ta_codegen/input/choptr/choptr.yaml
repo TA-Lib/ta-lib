@@ -1,7 +1,7 @@
 name: CHOPTR
 group: Momentum Indicators
 hint: Choppiness Index (True Range Box)
-flags: [stream]
+flags: [stream, uses_transcendental]
 inputs:
   - name: inPriceHLC
     type: price

@@ -12,18 +12,18 @@
     "docs:update-package": "pnpm dlx vp-update"
   },
   "devDependencies": {
-    "@vuepress/bundler-vite": "2.0.0-rc.30",
-    "@vuepress/plugin-llms": "2.0.0-rc.130",
-    "@vuepress/plugin-slimsearch": "2.0.0-rc.130",
+    "@vuepress/bundler-vite": "2.0.0-rc.31",
+    "@vuepress/plugin-llms": "2.0.0-rc.137",
+    "@vuepress/plugin-slimsearch": "2.0.0-rc.137",
     "gray-matter": "4.0.3",
     "remark": "15.0.1",
     "remark-math": "6.0.0",
-    "sass-embedded": "1.100.0",
-    "vue": "^3.5.39",
-    "vuepress": "2.0.0-rc.30",
-    "vuepress-theme-hope": "2.0.0-rc.107"
+    "sass-embedded": "1.105.1",
+    "vue": "^3.5.43",
+    "vuepress": "2.0.0-rc.31",
+    "vuepress-theme-hope": "2.0.0-rc.110"
   },
   "dependencies": {
-    "katex": "^0.16.47"
+    "katex": "^0.18.2"
   }
 }

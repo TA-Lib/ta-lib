@@ -45,6 +45,7 @@ d = P[t]-P[t-1]; over the trailing `optInTimePeriod` changes accumulate Su = sum
 | <span class="flag-box">☐</span> <span style="opacity:0.5">Can Output NaN or ±Inf</span> |
 | <span class="flag-box">☐</span> <span style="opacity:0.5">Identity at Period 1</span> |
 | <span class="flag-box">☐</span> <span style="opacity:0.5">Display Shift</span> |
+| <span class="flag-box">☐</span> <span style="opacity:0.5">Uses Transcendental</span> |
 
 </div>
 

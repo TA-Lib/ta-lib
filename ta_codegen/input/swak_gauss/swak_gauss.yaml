@@ -1,7 +1,7 @@
 name: SWAK_GAUSS
 group: Overlap Studies
 hint: Swiss Army Knife - Gaussian Filter
-flags: [overlap, unstable_period, stream]
+flags: [overlap, unstable_period, stream, uses_transcendental]
 inputs:
   - name: inReal
     type: real
