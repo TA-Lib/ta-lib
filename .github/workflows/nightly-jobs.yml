@@ -85,7 +85,7 @@ jobs:
           echo "definition: $WF_REF"
 
       - name: Install Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@v7
         with:
           python-version: "3.x"
 
@@ -462,7 +462,7 @@ jobs:
           fetch-depth: 0 # the release tags the ta_ref members pin
 
       - name: Install Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@v7
         with:
           python-version: "3.x"
 
@@ -521,7 +521,7 @@ jobs:
           ref: ${{ job.workflow_sha }}
 
       - name: Install Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@v7
         with:
           python-version: "3.x"
 
@@ -564,7 +564,7 @@ jobs:
           fetch-depth: 0 # the release tags the ta_ref members pin
 
       - name: Install Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@v7
         with:
           python-version: "3.x"
 
@@ -622,7 +622,7 @@ jobs:
           fetch-depth: 0 # the release tags the ta_ref members pin
 
       - name: Install Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@v7
         with:
           python-version: "3.x"
 
@@ -697,7 +697,7 @@ jobs:
 
       # `python` below is the one name setup-python gives both runners.
       - name: Install Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@v7
         with:
           python-version: "3.x"
 
@@ -751,7 +751,7 @@ jobs:
           fetch-depth: 0 # the release tags the ta_ref members pin
 
       - name: Install Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@v7
         with:
           python-version: "3.x"
 
@@ -1104,7 +1104,7 @@ jobs:
           fetch-depth: 0 # the release tags the ta_ref members pin
 
       - name: Install Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@v7
         with:
           python-version: "3.x"
 
@@ -1146,7 +1146,7 @@ jobs:
           fetch-depth: 0 # the release tags the ta_ref members pin
 
       - name: Install Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@v7
         with:
           python-version: "3.x"
 
@@ -1228,7 +1228,7 @@ jobs:
           ref: ${{ job.workflow_sha }}
 
       - name: Install Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@v7
         with:
           python-version: "3.x"
 
@@ -1297,7 +1297,7 @@ jobs:
           ref: ${{ job.workflow_sha }}
 
       - name: Install Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@v7
         with:
           python-version: "3.x"
 
@@ -1399,7 +1399,7 @@ jobs:
           ref: ${{ job.workflow_sha }}
 
       - name: Install Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@v7
         with:
           python-version: "3.x"
 
@@ -1446,7 +1446,7 @@ jobs:
           ref: ${{ job.workflow_sha }}
 
       - name: Install Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@v7
         with:
           python-version: "3.x"
 
@@ -1480,7 +1480,7 @@ jobs:
           ref: ${{ job.workflow_sha }}
 
       - name: Install Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@v7
         with:
           python-version: "3.x"
 
@@ -1542,7 +1542,7 @@ jobs:
           cmake --install _wrapper/c-build
 
       - name: Install Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@v7
         with:
           python-version: "3.x"
 
@@ -1583,7 +1583,7 @@ jobs:
           ref: ${{ job.workflow_sha }}
 
       - name: Install Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@v7
         with:
           python-version: "3.x"
 
@@ -1802,7 +1802,7 @@ jobs:
 
       - name: Install Python
         if: steps.decide.outputs.measure == 'true'
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@v7
         with:
           python-version: "3.x"
 
