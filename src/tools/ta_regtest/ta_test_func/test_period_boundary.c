@@ -112,6 +112,7 @@
 
 #include "ta_test_priv.h"
 #include "ta_test_func.h"
+#include "test_codegen.h"
 #include "ta_utility.h"
 #include "server_verify.h"
 
@@ -127,8 +128,10 @@
 /**** Local declarations.              ****/
 #define PB_DATA_SIZE 252   /* Daily reference data size. */
 
-/* Buffers for the abstract-driven sweep (max 3 outputs per function). */
-#define PB_MAX_OUTPUT 3
+/* One row per output of the abstract-driven sweep. Keep it the cap enforced at
+ * startup: the loops below clamp at it, and a lower one leaves an output
+ * unbound, which fails the whole call instead of narrowing the test. */
+#define PB_MAX_OUTPUT CODEGEN_MAX_OUTPUTS
 /* Server-verify scratch bounds: a Price input expands to at most OHLCV+OI (6)
  * pointers. A function past either bound fails the sweep, never skips it. */
 #define PB_MAX_INPUT  8
