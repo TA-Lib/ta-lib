@@ -24,6 +24,6 @@
     "vuepress-theme-hope": "2.0.0-rc.107"
   },
   "dependencies": {
-    "katex": "^0.16.47"
+    "katex": "^0.18.2"
   }
 }
