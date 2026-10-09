@@ -45,10 +45,10 @@ jobs:
 
     steps:
       # The default merge-commit ref is the right one to gate: it is what lands.
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - name: Install Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@v7
         with:
           python-version: "3.x"
 
@@ -115,7 +115,7 @@ jobs:
     timeout-minutes: 20
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - name: Install JDK
         uses: ./.github/actions/apt-install
@@ -180,7 +180,7 @@ jobs:
     timeout-minutes: 20
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - name: Install .NET SDK
         uses: actions/setup-dotnet@v6
@@ -238,7 +238,7 @@ jobs:
     timeout-minutes: 20
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       # The committed sources, not a fresh `generate` — regen-check already
       # proves they are the same tree, so this job needs no cargo.
@@ -286,7 +286,7 @@ jobs:
     timeout-minutes: 20
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       # rust-toolchain.toml pins the version, so a lint cannot fire differently
       # here than locally. Adding the component is idempotent.
