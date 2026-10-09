@@ -230,12 +230,14 @@ server, so a bare run reaches rejected parameters too. A value outside its
 declared domain that the lookback accepts fails. Each counter is asserted
 non-zero; the server one only when a server is attached.
 
-At each of those holders C reads every output's shift again with every
+At each of those holders every output's shift is read again with every
 unstable period changed, then with every candle setting changed, and it must
-not move (rule rL12). A setter that refuses the change fails. Each axis has two
-floors: a shift held while the change moved that function's own lookback, and a
-non-zero shift held. No shipped function meets both at once: the flagged
-outputs belong to functions no setting reaches.
+not move (rule rL12). C answers, then the server, which is handed the same
+settings and must also report C's lookback under them wherever C has one. A
+setter that refuses the change fails. Each axis has two floors, counted apart
+for C and for the server: a shift held while the change moved that function's
+own lookback, and a non-zero shift held. No shipped function meets both at
+once: the flagged outputs belong to functions no setting reaches.
 
 Opt-level `hint` is compared too. For a bespoke descriptor that is a genuine
 YAML-vs-C check; for a slot folded onto a predefined `TA_DEF_UI_*` it is not —

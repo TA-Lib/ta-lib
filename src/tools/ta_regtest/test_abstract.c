@@ -124,6 +124,9 @@ static long long g_dsServer = 0;
  * non-zero shifts found unchanged. */
 static long long g_dsSettingLive[2] = { 0, 0 };
 static long long g_dsSettingNonZero[2] = { 0, 0 };
+/* The same two, for the server's answers. */
+static long long g_dsSrvSettingLive[2] = { 0, 0 };
+static long long g_dsSrvSettingNonZero[2] = { 0, 0 };
 /* Rejected batch calls found to leave the output buffers untouched, where the
  * rejected value lies inside its declared range: a rejection the function body
  * makes itself, after the generated argument checks. At a bound, and one step
@@ -199,6 +202,8 @@ void test_abstract_set_server(CodegenPipe *cp, const char *lang)
    g_dsFlagged = g_dsNonZero = g_dsServer = 0;
    g_dsSettingLive[0] = g_dsSettingLive[1] = 0;
    g_dsSettingNonZero[0] = g_dsSettingNonZero[1] = 0;
+   g_dsSrvSettingLive[0] = g_dsSrvSettingLive[1] = 0;
+   g_dsSrvSettingNonZero[0] = g_dsSrvSettingNonZero[1] = 0;
    g_rejectedAtBoundClean = g_rejectedAboveMinClean = 0;
    g_lsCdlMoved = g_lsCeilingUnst = g_lsCeilingCandle = 0;
    g_lsCeilingAtMax = 0;
@@ -1548,15 +1553,102 @@ static int d2_lo_hi( const TA_OptInputParameterInfo *oi, double *lo, double *hi 
     return 1;
 }
 
+/* One integer the server answers for a function at optVals (NULL for the
+ * declared defaults): its lookback, or with outputIdx the display shift of
+ * that output.
+ */
+static ErrorNumber ds_server_query( const char *method, const char *field,
+                                    const char *funcName, const TA_FuncHandle *handle,
+                                    const TA_FuncInfo *funcInfo, const double *optVals,
+                                    const int *outputIdx, int *answer )
+{
+    unsigned int k;
+    int pos = codegen_appendf(g_abstractReqBuf, ABSTRACT_JSON_BUF_SIZE, 0,
+        "{\"method\":\"%s\",\"params\":{\"funcName\":\"%s\"", method, funcName);
+
+    for( k = 0; k < funcInfo->nbOptInput; k++ )
+    {
+        const TA_OptInputParameterInfo *oi;
+        double v;
+        TA_GetOptInputParameterInfo(handle, k, &oi);
+        v = optVals ? optVals[k] : oi->defaultValue;
+        pos = codegen_appendf(g_abstractReqBuf, ABSTRACT_JSON_BUF_SIZE, pos,
+            ",\"%s\":", oi->paramName);
+        if( oi->type == TA_OptInput_RealRange || oi->type == TA_OptInput_RealList )
+            pos = codegen_appendf(g_abstractReqBuf, ABSTRACT_JSON_BUF_SIZE, pos, "%.17g", v);
+        else
+            pos = codegen_appendf(g_abstractReqBuf, ABSTRACT_JSON_BUF_SIZE, pos, "%d", (int)v);
+    }
+    if( outputIdx )
+        pos = codegen_appendf(g_abstractReqBuf, ABSTRACT_JSON_BUF_SIZE, pos,
+            ",\"outputIdx\":%d", *outputIdx);
+    codegen_appendf(g_abstractReqBuf, ABSTRACT_JSON_BUF_SIZE, pos, "}}");
+
+    if( codegen_pipe_call(g_abstractPipe, g_abstractReqBuf,
+                          g_abstractRespBuf, ABSTRACT_JSON_BUF_SIZE) != TA_TEST_PASS
+        || abstract_json_is_error(g_abstractRespBuf) )
+    {
+        printf("  ABSTRACT ERROR [%s]: %s server error\n", funcName, method);
+        return TA_ABSTRACT_SERVER_ERROR;
+    }
+    *answer = abstract_json_get_int(g_abstractRespBuf, field);
+    return TA_TEST_PASS;
+}
+
+/* Hands the server the unstable periods (axis 0) or the candle settings
+ * (axis 1) the library holds now.
+ */
+static ErrorNumber ds_server_push_settings( const char *funcName, int axis )
+{
+    unsigned int k, nb = axis == 0 ? TA_FUNC_UNST_COUNT : TA_NB_CANDLE_SETTING;
+    int uniform = axis == 0;
+
+    for( k = 1; uniform && k < TA_FUNC_UNST_COUNT; k++ )
+        uniform = TA_Globals->unstablePeriod[k] == TA_Globals->unstablePeriod[0];
+    if( uniform )
+        nb = 1;
+
+    for( k = 0; k < nb; k++ )
+    {
+        if( axis == 0 )
+            codegen_appendf(g_abstractReqBuf, ABSTRACT_JSON_BUF_SIZE, 0,
+                "{\"method\":\"set_unstable_period\",\"params\":{\"id\":%u,\"period\":%u}}",
+                uniform ? (unsigned int)TA_FUNC_UNST_ALL : k, TA_Globals->unstablePeriod[k]);
+        else
+        {
+            const TA_CandleSetting *c = &TA_Globals->candleSettings[k];
+            unsigned long long bits;
+            memcpy(&bits, &c->factor, sizeof(bits));
+            codegen_appendf(g_abstractReqBuf, ABSTRACT_JSON_BUF_SIZE, 0,
+                "{\"method\":\"set_candle_settings\",\"params\":{\"settingType\":%u,"
+                "\"rangeType\":%d,\"avgPeriod\":%d,\"factorBits\":\"%016llx\"}}",
+                k, (int)c->rangeType, c->avgPeriod, bits);
+        }
+        if( codegen_pipe_call(g_abstractPipe, g_abstractReqBuf,
+                              g_abstractRespBuf, ABSTRACT_JSON_BUF_SIZE) != TA_TEST_PASS
+            || abstract_json_is_error(g_abstractRespBuf) )
+        {
+            printf("  ABSTRACT ERROR [%s]: the server refused %s\n", funcName,
+                   axis == 0 ? "an unstable period" : "a candle setting");
+            return TA_ABSTRACT_SERVER_ERROR;
+        }
+    }
+    return TA_TEST_PASS;
+}
+
 /* Rule rL12: the display shift of every output, read again with every unstable
- * period changed, then with every candle setting changed. Leaves the settings
- * as it found them, on failure too.
+ * period changed, then with every candle setting changed, from the library and
+ * from the server. Leaves the settings of both as it found them, on failure
+ * too.
  */
 #define DS_SETTING_BUMP 7
 #define DS_MAX_OUTPUT 16
 static ErrorNumber ds_under_settings( const char *funcName,
+                                      const TA_FuncHandle *handle,
                                       const TA_FuncInfo *funcInfo,
-                                      TA_ParamHolder *paramHolder )
+                                      TA_ParamHolder *paramHolder,
+                                      const double *optVals,
+                                      int askServer )
 {
     static const char *const axisName[2] = { "an unstable period", "a candle setting" };
     TA_CandleSetting savedCandle[TA_NB_CANDLE_SETTING];
@@ -1582,7 +1674,8 @@ static ErrorNumber ds_under_settings( const char *funcName,
     for( axis = 0; axis < 2; axis++ )
     {
         TA_Integer lookback = -1;
-        int moved = -1, refused = 0;
+        int moved = -1, refused = 0, pushed = 0;
+        ErrorNumber e = TA_TEST_PASS, eRestore = TA_TEST_PASS;
 
         if( axis == 0 )
         {
@@ -1612,8 +1705,50 @@ static ErrorNumber ds_under_settings( const char *funcName,
                 if( shift != 0 ) g_dsSettingNonZero[axis]++;
             }
         }
+        if( g_abstractPipe && askServer && !refused && moved < 0 )
+        {
+            int srvLookback = -1;
+
+            pushed = 1;
+            e = ds_server_push_settings(funcName, axis);
+            if( e == TA_TEST_PASS && lookback0 >= 0 )
+            {
+                e = ds_server_query("abstract_get_lookback", "lookback", funcName, handle,
+                                    funcInfo, optVals, NULL, &srvLookback);
+                if( e == TA_TEST_PASS && srvLookback != (int)lookback )
+                {
+                    printf("  ABSTRACT ERROR [%s]: lookback after %s changed C=%d server=%d\n",
+                           funcName, axisName[axis], (int)lookback, srvLookback);
+                    e = TA_ABSTRACT_LOOKBACK_MISMATCH;
+                }
+            }
+            for( o = 0; e == TA_TEST_PASS && o < funcInfo->nbOutput; o++ )
+            {
+                int idx = (int)o, srvShift = 12345;
+                e = ds_server_query("abstract_get_display_shift", "displayShift", funcName,
+                                    handle, funcInfo, optVals, &idx, &srvShift);
+                if( e == TA_TEST_PASS && srvShift != (int)shift0[o] )
+                {
+                    printf("  ABSTRACT ERROR [%s]: %s moved the server's display shift of "
+                           "output %u from %d to %d\n", funcName, axisName[axis], o,
+                           (int)shift0[o], srvShift);
+                    e = TA_ABSTRACT_DISPLAY_SHIFT_MISMATCH;
+                }
+                else if( e == TA_TEST_PASS && srvShift != INT_MIN )
+                {
+                    if( srvLookback != (int)lookback0 ) g_dsSrvSettingLive[axis]++;
+                    if( srvShift != 0 ) g_dsSrvSettingNonZero[axis]++;
+                }
+            }
+        }
         memcpy(TA_Globals->candleSettings, savedCandle, sizeof(savedCandle));
         memcpy(TA_Globals->unstablePeriod, savedUnst, sizeof(savedUnst));
+        if( pushed )
+            eRestore = ds_server_push_settings(funcName, axis);
+        if( e != TA_TEST_PASS )
+            return e;
+        if( eRestore != TA_TEST_PASS )
+            return eRestore;
 
         if( refused )
         {
@@ -1648,7 +1783,7 @@ static ErrorNumber abstract_check_display_shift( const char *funcName,
                                                  int askServer )
 {
     TA_Integer lookback = -1;
-    unsigned int nbFlagged = 0, k;
+    unsigned int nbFlagged = 0;
     int idx, paramsRejected;
 
     if( TA_GetLookback(paramHolder, &lookback) != TA_SUCCESS ) lookback = -1;
@@ -1713,40 +1848,17 @@ static ErrorNumber abstract_check_display_shift( const char *funcName,
 
         if( g_abstractPipe && askServer )
         {
-            int pos = codegen_appendf(g_abstractReqBuf, ABSTRACT_JSON_BUF_SIZE, 0,
-                "{\"method\":\"abstract_get_display_shift\",\"params\":{\"funcName\":\"%s\"",
-                funcName);
-            for( k = 0; k < funcInfo->nbOptInput; k++ )
+            int srvShift = 12345;
+            ErrorNumber e = ds_server_query("abstract_get_display_shift", "displayShift",
+                                            funcName, handle, funcInfo, optVals, &idx,
+                                            &srvShift);
+            if( e != TA_TEST_PASS )
+                return e;
+            if( srvShift != (int)shift )
             {
-                const TA_OptInputParameterInfo *oi;
-                double v;
-                TA_GetOptInputParameterInfo(handle, k, &oi);
-                v = optVals ? optVals[k] : oi->defaultValue;
-                pos = codegen_appendf(g_abstractReqBuf, ABSTRACT_JSON_BUF_SIZE, pos,
-                    ",\"%s\":", oi->paramName);
-                if( oi->type == TA_OptInput_RealRange || oi->type == TA_OptInput_RealList )
-                    pos = codegen_appendf(g_abstractReqBuf, ABSTRACT_JSON_BUF_SIZE, pos, "%.17g", v);
-                else
-                    pos = codegen_appendf(g_abstractReqBuf, ABSTRACT_JSON_BUF_SIZE, pos, "%d", (int)v);
-            }
-            codegen_appendf(g_abstractReqBuf, ABSTRACT_JSON_BUF_SIZE, pos,
-                ",\"outputIdx\":%d}}", idx);
-
-            if( codegen_pipe_call(g_abstractPipe, g_abstractReqBuf,
-                                  g_abstractRespBuf, ABSTRACT_JSON_BUF_SIZE) != TA_TEST_PASS
-                || abstract_json_is_error(g_abstractRespBuf) )
-            {
-                printf("  ABSTRACT ERROR [%s]: abstract_get_display_shift server error\n", funcName);
-                return TA_ABSTRACT_SERVER_ERROR;
-            }
-            {
-                int srvShift = abstract_json_get_int(g_abstractRespBuf, "displayShift");
-                if( srvShift != (int)shift )
-                {
-                    printf("  ABSTRACT ERROR [%s]: display shift of output %d C=%d server=%d\n",
-                           funcName, idx, (int)shift, srvShift);
-                    return TA_ABSTRACT_DISPLAY_SHIFT_MISMATCH;
-                }
+                printf("  ABSTRACT ERROR [%s]: display shift of output %d C=%d server=%d\n",
+                       funcName, idx, (int)shift, srvShift);
+                return TA_ABSTRACT_DISPLAY_SHIFT_MISMATCH;
             }
             g_dsServer++;
         }
@@ -1759,7 +1871,7 @@ static ErrorNumber abstract_check_display_shift( const char *funcName,
                (funcInfo->flags & TA_FUNC_FLG_DISPLAY_SHIFT) ? "set" : "clear", nbFlagged);
         return TA_ABS_TST_FAIL_DISPLAY_SHIFT;
     }
-    return ds_under_settings(funcName, funcInfo, paramHolder);
+    return ds_under_settings(funcName, handle, funcInfo, paramHolder, optVals, askServer);
 }
 
 /* A call the library rejects for its arguments must not have stored anything:
@@ -2716,6 +2828,17 @@ ErrorNumber test_abstract( void )
               "held %lld and %lld non-zero shift(s)\n",
               g_dsSettingLive[0], g_dsSettingLive[1],
               g_dsSettingNonZero[0], g_dsSettingNonZero[1] );
+      return TA_ABS_TST_FAIL_DISPLAY_SHIFT_VACUOUS;
+   }
+   if( g_abstractPipe &&
+       ( g_dsSrvSettingLive[0] == 0 || g_dsSrvSettingLive[1] == 0 ||
+         g_dsSrvSettingNonZero[0] == 0 || g_dsSrvSettingNonZero[1] == 0 ) )
+   {
+      printf( "  Failed: the server held %lld shift(s) while an unstable period moved "
+              "its lookback and %lld while a candle setting did, and held %lld and "
+              "%lld non-zero shift(s)\n",
+              g_dsSrvSettingLive[0], g_dsSrvSettingLive[1],
+              g_dsSrvSettingNonZero[0], g_dsSrvSettingNonZero[1] );
       return TA_ABS_TST_FAIL_DISPLAY_SHIFT_VACUOUS;
    }
 
