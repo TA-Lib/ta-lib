@@ -47,7 +47,7 @@ TA_SMA_Close( s );
 
 ### From C++
 
-The header is C++-ready. A `std::unique_ptr` can own the stream:
+The header is C++-ready. Optionally, a `std::unique_ptr` can own the stream:
 
 ```cpp
 struct SmaClose { void operator()( TA_SMA_Stream *s ) const { TA_SMA_Close( s ); } };
