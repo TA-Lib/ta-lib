@@ -22,7 +22,6 @@ all generated from one source and tested against the C reference.
 - Made for integration and glue-code friendly. Function metadata drives your
   UI, parameter range, automation and generated bindings; the
   [Abstract API](https://ta-lib.org/api/abstract/) calls any function by name.
-  New functions show up with an upgrade, with no code change.
 - No third-party dependencies.
 
 ## Example

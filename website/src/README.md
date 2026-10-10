@@ -16,7 +16,7 @@ toc: false
 - Candlestick patterns recognition
 - Batch and streaming API for every function: compute a whole array, or update one bar at a time without recomputing the history.
 - Native implementation in [C/C++](/api/), [Java](/api/java/), [C#](/api/csharp/) and [Rust](/api/rust/). The Java, C# and Rust ones do not need the C library.
-- Made for integration and glue-code friendly. Function metadata drives your UI, parameter range, automation and generated bindings; the [Abstract API](/api/abstract/) calls any function by name. New functions show up with an upgrade, with no code change.
+- Made for integration and glue-code friendly. Function metadata drives your UI, parameter range, automation and generated bindings; the [Abstract API](/api/abstract/) calls any function by name.
 - Wrappers for Python, R, and [more](/install/#wrappers).
 - Open-Source (BSD License). Can be freely integrated in your own open-source or commercial applications.
 
