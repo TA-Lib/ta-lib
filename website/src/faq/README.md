@@ -17,7 +17,7 @@ Yes. Every function has a streaming form: open it on the history, then update it
 
 **Can the same code serve a backtest and live trading?**
 
-Yes. A stream fed bar by bar returns the values the batch function returns over the same bars; the [specification](/spec/streaming/) lists the exceptions.
+Yes. A stream fed bar by bar returns the values the batch function returns over the same bars, except that a value depending on a [transcendental function](/spec/versions/#transcendental) may differ in the last bits.
 
 **Do the Rust, Java and C# libraries need the C library?**
 
