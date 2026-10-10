@@ -2323,34 +2323,6 @@ int codegen_short_filter_token_matches(const char *name, const char *token)
     return 0;
 }
 
-static int codegen_matches_filter(const char *filter, const char *name)
-{
-    char filterCopy[1024];
-    char *token;
-    if( filter == NULL ) return 1;
-    strncpy(filterCopy, filter, sizeof(filterCopy) - 1);
-    filterCopy[sizeof(filterCopy) - 1] = '\0';
-    token = strtok(filterCopy, ",");
-    while( token != NULL )
-    {
-        if( strlen(token) <= 2 )
-        {
-            if( codegen_short_filter_token_matches(name, token) )
-            {
-                filterHitMark( token );
-                return 1;
-            }
-        }
-        else if( strstr(name, token) != NULL )
-        {
-            filterHitMark( token );
-            return 1;
-        }
-        token = strtok(NULL, ",");
-    }
-    return 0;
-}
-
 /* A server's response, read into the baseline fields compare_codegen_output_
  * generic() diffs against: the float leg's baseline is the server's own double
  * answer. Field names mirror compare_codegen_output_generic() exactly (output 0
@@ -2490,7 +2462,7 @@ static void test_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
         return;
 
     /* Apply function filter */
-    if( !codegen_matches_filter(ctx->functionFilter, funcInfo->name) )
+    if( !filterMatchesName(ctx->functionFilter, funcInfo->name) )
         return;
 
     /* Skip functions with integer inputs (very rare, no test data) */
@@ -3167,7 +3139,7 @@ static void sweep_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
 
     if( ctx->error != TA_TEST_PASS )
         return;
-    if( !codegen_matches_filter(ctx->functionFilter, funcInfo->name) )
+    if( !filterMatchesName(ctx->functionFilter, funcInfo->name) )
         return;
     if( funcInfo->nbOptInput == 0 || funcInfo->nbOptInput > SWEEP_MAX_OPT )
         return;
@@ -3753,7 +3725,7 @@ static void stream_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
     int isUnstable;
 
     if( ctx->error != TA_TEST_PASS ) return;
-    if( !codegen_matches_filter(ctx->functionFilter, funcInfo->name) ) return;
+    if( !filterMatchesName(ctx->functionFilter, funcInfo->name) ) return;
 
     /* K-leg eligibility: the function's own unstable flag, or an internal
      * unstable dependency (DEMA/TEMA/TRIX/MACD map to EMA in UNSTABLE_MAP —
@@ -6381,7 +6353,7 @@ static void fuzz_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
     int w;
 
     if( ctx->error != TA_TEST_PASS ) return;
-    if( !codegen_matches_filter(ctx->functionFilter, funcInfo->name) ) return;
+    if( !filterMatchesName(ctx->functionFilter, funcInfo->name) ) return;
 
     /* Overflowing the cap must FAIL, not skip. A silent return here would drop
      * the function from the differential entirely — no message, no counter — so
@@ -8397,7 +8369,7 @@ static void xlang_array_transport_one(const TA_FuncInfo *fi, void *opaqueData)
     XlangArrayTransportCtx *actx = (XlangArrayTransportCtx *)opaqueData;
     XlangCtx *ctx = actx->ctx;
 
-    if( !codegen_matches_filter(ctx->functionFilter, fi->name) ) return;
+    if( !filterMatchesName(ctx->functionFilter, fi->name) ) return;
 
     for( unsigned int i = 0; i < fi->nbInput; i++ )
     {
@@ -8808,7 +8780,7 @@ static void xlang_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
     unsigned int i;
 
     if( ctx->error != TA_TEST_PASS ) return;
-    if( !codegen_matches_filter(ctx->functionFilter, funcInfo->name) ) return;
+    if( !filterMatchesName(ctx->functionFilter, funcInfo->name) ) return;
     ctx->funcsSwept++;
 
     /* See fuzz_one_function: a silent skip would remove this function from the
@@ -10297,7 +10269,8 @@ ErrorNumber test_codegen(const TA_History *history,
                 }
                 printf("NO VALUE COMPARISON: %d language server(s) started and ran "
                        "the structural legs, but --function=%s selected no function "
-                       "this sweep can value-compare. This is NOT a pass.\n",
+                       "this sweep can value-compare, so it asserted no output "
+                       "value.\n",
                        langsTested, functionFilter);
                 printf("=============================================\n");
                 write_timing_report("ta_regtest_timing.jsonl");

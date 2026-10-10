@@ -824,41 +824,11 @@ static ErrorNumber abstract_verify_func_metadata(
  * --------------------------------------------------------------------------- */
 typedef struct { ErrorNumber firstErr; int checked; int failed; const char *filter; } MetaParityCtx;
 
-/* The --function filter semantics of test_codegen, short-token rule included.
- * NULL filter = match all. */
-static int metaMatchesFilter( const char *filter, const char *name )
-{
-    char filterCopy[1024];
-    char *token;
-    if( filter == NULL ) return 1;
-    strncpy(filterCopy, filter, sizeof(filterCopy) - 1);
-    filterCopy[sizeof(filterCopy) - 1] = '\0';
-    token = strtok(filterCopy, ",");
-    while( token != NULL )
-    {
-        if( strlen(token) <= 2 )
-        {
-            if( codegen_short_filter_token_matches(name, token) )
-            {
-                filterHitMark( token );
-                return 1;
-            }
-        }
-        else if( strstr(name, token) != NULL )
-        {
-            filterHitMark( token );
-            return 1;
-        }
-        token = strtok(NULL, ",");
-    }
-    return 0;
-}
-
 static void metaParityCb( const TA_FuncInfo *funcInfo, void *opaqueData )
 {
     MetaParityCtx *ctx = (MetaParityCtx *)opaqueData;
     ErrorNumber e;
-    if( !metaMatchesFilter( ctx->filter, funcInfo->name ) )
+    if( !filterMatchesName( ctx->filter, funcInfo->name ) )
         return;
     ctx->checked++;
     e = abstract_verify_func_metadata( funcInfo->name, funcInfo->handle, funcInfo );
@@ -1074,7 +1044,7 @@ ErrorNumber test_abstract_server_metadata( const char *functionFilter )
      * ALL of them are gated on an unfiltered run, and that is not laziness.
      * `--function` carries two different vocabularies: the hand-written tests
      * match it against a DO_TEST *group tag* (`MATH`, `Moving Averages`,
-     * `COMPOSITE`), while metaMatchesFilter matches it against a *function
+     * `COMPOSITE`), while this sweep matches it against a *function
      * name*. Thirteen of the documented group tokens name no function at all,
      * so requiring checked != 0 under a filter turns `--codegen
      * --function="Moving Averages"` — a documented invocation — into a hard

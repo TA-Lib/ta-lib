@@ -65,6 +65,7 @@
 #include <math.h>
 #define TA_REGTEST_UNGUARDED_CALL
 #include "ta_test_priv.h"
+#include "test_codegen.h"
 #include "ta_utility.h"
 #include "ta_memory.h"
 #include "meta_ride.h"
@@ -646,100 +647,89 @@ void sweep_set_unstable( const TA_FuncUnstId *ids, int nbIds, unsigned int value
       TA_SetUnstablePeriod( ids[i], value );
 }
 
-/* --function entry tracking (#535). Every matcher answers "did ANY entry
- * match", so one good entry in a CSV list hid a typo next to it: the run
- * selected what the good entry named and said nothing about the rest. The
- * entries are recorded once here; each matcher marks the entry it matched;
- * main() names what nothing ever matched. */
-#define FILTER_MAX_ENTRIES   64
-#define FILTER_MAX_ENTRY_LEN 64
-static char g_filterEntry[FILTER_MAX_ENTRIES][FILTER_MAX_ENTRY_LEN];
-static int  g_filterEntryHit[FILTER_MAX_ENTRIES];
-static int  g_filterNbEntries = 0;
-static int  g_filterUntracked = 0;
+/* 1023 filter characters hold at most 512 non-empty entries. */
+#define FILTER_COPY_SIZE 1024
+static unsigned char g_filterEntryHit[FILTER_COPY_SIZE / 2];
 
-void filterHitInit( const char *filter )
+/* Tries EVERY entry, never just up to the first hit: an entry is reported as
+ * unmatched unless it matched something itself, and with RSI,STOCHRSI the name
+ * STOCHRSI matches both. */
+int filterMatches( const char *filter, const char *subject,
+                   FilterEntryMatches entryMatches )
 {
-   char copy[1024];
+   char copy[FILTER_COPY_SIZE];
    char *token;
+   int idx, matched = 0;
 
-   g_filterNbEntries = 0;
-   g_filterUntracked = 0;
    if( filter == NULL )
-      return;
+      return 1;
 
    strncpy( copy, filter, sizeof(copy)-1 );
    copy[sizeof(copy)-1] = '\0';
 
-   token = strtok( copy, "," );
-   while( token != NULL )
+   for( idx = 0, token = strtok( copy, "," ); token != NULL;
+        idx++, token = strtok( NULL, "," ) )
    {
-      /* An entry past the table is the only thing this cannot answer for, and
-       * it says so rather than going quiet: a partial list with a note beats
-       * the silence this replaces. An entry too long to store is kept
-       * truncated, which names it accurately enough -- no function name or
-       * group tag is that long, so it cannot have matched anything. */
-      if( g_filterNbEntries >= FILTER_MAX_ENTRIES )
+      if( entryMatches( subject, token ) )
       {
-         g_filterUntracked++;
-         token = strtok( NULL, "," );
-         continue;
-      }
-      if( strlen(token) >= FILTER_MAX_ENTRY_LEN )
-      {
-         memcpy( g_filterEntry[g_filterNbEntries], token, FILTER_MAX_ENTRY_LEN-4 );
-         strcpy( g_filterEntry[g_filterNbEntries] + FILTER_MAX_ENTRY_LEN-4, "..." );
-      }
-      else
-         strcpy( g_filterEntry[g_filterNbEntries], token );
-      g_filterEntryHit[g_filterNbEntries] = 0;
-      g_filterNbEntries++;
-      token = strtok( NULL, "," );
-   }
-}
-
-void filterHitMark( const char *entry )
-{
-   int i;
-
-   for( i = 0; i < g_filterNbEntries; i++ )
-   {
-      if( !strcmp( g_filterEntry[i], entry ) )
-      {
-         g_filterEntryHit[i] = 1;
-         return;
+         g_filterEntryHit[idx] = 1;
+         matched = 1;
       }
    }
+   return matched;
 }
 
-int filterHitReport( void )
+static int nameEntryMatches( const char *name, const char *entry )
 {
-   int i, nb = 0;
+   if( strlen(entry) <= 2 )
+      return codegen_short_filter_token_matches( name, entry );
+   return strstr( name, entry ) != NULL;
+}
 
-   for( i = 0; i < g_filterNbEntries; i++ )
-      if( !g_filterEntryHit[i] )
-         nb++;
+int filterMatchesName( const char *filter, const char *name )
+{
+   return filterMatches( filter, name, nameEntryMatches );
+}
 
-   if( g_filterUntracked > 0 )
-      printf( "\nNOTE: %d --function entr%s past the %d this run tracks; the\n"
-              "      verdict below covers the first %d only.\n",
-              g_filterUntracked, (g_filterUntracked == 1) ? "y" : "ies",
-              FILTER_MAX_ENTRIES, FILTER_MAX_ENTRIES );
+int filterUnmatchedReport( const char *filter )
+{
+   char copy[FILTER_COPY_SIZE];
+   char *token;
+   int idx, nbEntries = 0, nbUnmatched = 0;
 
-   if( nb == 0 )
+   if( filter == NULL )
       return 0;
 
-   printf( "\nFAILED: %d --function entr%s matched nothing, so nothing ran for",
-           nb, (nb == 1) ? "y" : "ies" );
-   for( i = 0; i < g_filterNbEntries; i++ )
-      if( !g_filterEntryHit[i] )
-         printf( " %s", g_filterEntry[i] );
+   strncpy( copy, filter, sizeof(copy)-1 );
+   copy[sizeof(copy)-1] = '\0';
+
+   for( idx = 0, token = strtok( copy, "," ); token != NULL;
+        idx++, token = strtok( NULL, "," ) )
+   {
+      nbEntries++;
+      if( g_filterEntryHit[idx] )
+         continue;
+      if( nbUnmatched++ == 0 )
+         printf( "\nFAILED: --function matched nothing for:" );
+      printf( " %s", token );
+   }
+
+   if( nbEntries == 0 )
+   {
+      printf( "\nFAILED: --function= names no entry, so nothing ran.\n" );
+      return 1;
+   }
+   if( nbUnmatched == 0 )
+      return 0;
+
    printf( "\n" );
-   printf( "        An entry is matched by a GROUP TAG in ta_regtest.c's DO_TEST\n" );
-   printf( "        list, or by a function name under --codegen, --xlang-hash,\n" );
-   printf( "        --ref and the abstract metadata parity leg. Matching neither\n" );
-   printf( "        is a typo or a name no group carries; the other entries ran.\n" );
-   return nb;
+   printf( "        An entry must match a GROUP TAG in ta_regtest.c's DO_TEST list\n" );
+   printf( "        (plain run and --codegen) or a function name (--codegen,\n" );
+   printf( "        --xlang-hash and --ref).\n" );
+   printf( "        Some functions have no hand-written group (the plain vector\n" );
+   printf( "        math, OBV, TYPPRICE, WCLPRICE): reach those with --codegen or\n" );
+   printf( "        --xlang-hash, or add the name to its group's tag.\n" );
+   return nbUnmatched;
 }
 
 ErrorNumber doRangeTest( RangeTestFunction testFunction,

@@ -28,7 +28,7 @@ of a property of library output; it moves with FMA dispatch, libm and compiler.
 
 | Flag | Description |
 |------|-------------|
-| `--function=CSV` | Substring filter matched against the **group tag** in `DO_TEST`, not the function name — a function absent from its group's tag is unreachable by it, which is why the composite groups spell their members out. A tag element ending in `*` is a prefix claim (`CDL*`). Matching no group is `TA_REGTEST_FILTER_MATCHED_NOTHING`, except on the three self-contained legs below, which filter by real function name and legitimately match no group. |
+| `--function=CSV` | Substring filter matched against the **group tag** in `DO_TEST`, not the function name — a function absent from its group's tag is unreachable by it, which is why the composite groups spell their members out. A tag element ending in `*` is a prefix claim (`CDL*`). `--codegen` also matches each entry against real function names; `--xlang-hash` and `--ref` match only those. An entry that matches nothing at all is `TA_REGTEST_FILTER_MATCHED_NOTHING`, even beside entries that matched. |
 | `--codegen` | Codegen verification after the C reference tests |
 | `--language=CSV` | Narrow it (`c,rust,java,csharp`) |
 | `--ref=X_Y_Z` | Differential fuzz vs one frozen release. **Self-contained** |
