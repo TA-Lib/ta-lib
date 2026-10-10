@@ -1,3 +1,6 @@
 #nullable enable
 const TALib.Core.UnstableAutoPrec4 = 100000004 -> int
 const TALib.Core.UnstableAutoPrec8 = 100000008 -> int
+TALib.Metadata.RuntimeInfo
+static TALib.Metadata.RuntimeInfo.Get(string! key) -> int
+static TALib.Metadata.RuntimeInfo.TryGet(string? key, out int value) -> bool
