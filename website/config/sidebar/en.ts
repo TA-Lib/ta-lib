@@ -41,6 +41,7 @@ export const enSidebar = sidebar({
             "spec/",
             "spec/inputs-outputs/",
             "spec/lookback/",
+            "spec/auto-stabilization/",
             "spec/streaming/",
             "spec/abstract/",
             "spec/settings-threads/",

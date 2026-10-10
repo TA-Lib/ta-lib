@@ -10,7 +10,7 @@ The lookback is how many input bars a function consumes before its first output.
 ## The caller must {#caller}
 
 - <a id="ask"></a>**Ask for the lookback, never compute it.** Call the function's lookback call with the parameters of the batch call, under the same settings. A formula written from a function's description goes wrong as soon as an unstable period or an MA type enters ([rL6](/spec/lookback/#rl6)).
-- <a id="start"></a>**Not compare values from different starts bit for bit.** Whether a value depends on where the series starts is the function's numerical stability; each [function page](/functions/) names its category ([categories](/functions/stability)). Only a start-independent function gives the same value at a bar for any `startIdx`, and then only up to rounding error; for any other, a call with a later `startIdx` is not a slice of a call from 0. A stream opened later in a series raises the same question: [rH2](/spec/streaming/#rh2).
+- <a id="start"></a>**Not compare values from different starts bit for bit.** Whether a value depends on where the series starts is the function's numerical stability; each [function page](/functions/) names its [category](/functions/stability). Only a start-independent function gives the same value at a bar for any `startIdx`, and then only up to rounding error; for any other, a call with a later `startIdx` is not a slice of a call from 0. A stream opened later in a series raises the same question: [rH2](/spec/streaming/#rh2).
 
 ## Definition {#definition}
 
@@ -32,10 +32,10 @@ Every function has a lookback call. It takes exactly the batch call's optional p
 <a id="rl6"></a>**rL6** An unstable period adds bars to the lookback of the function that owns its id:
 
 - A count adds exactly that many bars. MINUS_DI, MINUS_DM, PLUS_DI and PLUS_DM at period 1 take none and keep a lookback of 1.
-- An Auto level adds the count of the owner's [rule](/api/unstable-period/#rules) for that level, computed from the call's optional parameters. It can be 0.
+- An Auto level adds the owner's count for that level ([rZ1](/spec/auto-stabilization/#rz1)), computed from the call's optional parameters. It can be 0.
 - Either way, for a batch call from bar 0, the values the owner still reports are unchanged, bit for bit.
 - A function computed through the owner, directly or through an MA type the caller selects, also takes the lengthening, and how much depends on the function. It can count more than once (through EMA, DEMA counts it twice and TEMA three times), count only where its path is the longest (KC takes the longer of its EMA and ATR paths), or not count at all (an MA stage at period 1 or of the `DISABLED` type takes none).
-- Under an Auto level only, such a function may add bars of its own for how it uses the owner's value (CKSP adds its stop period less one).
+- Under an Auto level only, such a function may add bars of its own for how it uses the owner's value ([rZ2](/spec/auto-stabilization/#rz2)).
 
 Accepted values: [rT3](/spec/settings-threads/#rt3). The functions that own an id, and how to set one: [Unstable Period](/api/unstable-period/). An inheriting function names its source in the Numerical Stability line of its [function page](/functions/).
 

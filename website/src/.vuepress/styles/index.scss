@@ -211,6 +211,15 @@ body .vp-toc-placeholder {
   outline: none;
 }
 
+// Inline `<a id="..."></a>` targets: `scroll-margin-top` has no effect, because the
+// router scrolls to the element's rectangle. Keep each target empty and inside
+// its line of text: alone in a paragraph it adds a blank line.
+[vp-content] #markdown-content a[id]:empty {
+  display: inline-block;
+  position: relative;
+  top: calc(-2rem - var(--navbar-height));
+}
+
 // ---------------------------------------------------------------------------
 // Call-pattern argument groups (API pages).
 //
