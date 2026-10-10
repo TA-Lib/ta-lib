@@ -110310,7 +110310,12 @@ public final class Core {
          smoothPeriod = Math.fma(0.67, smoothPeriod, 0.33 * period);
          /* Compute Dominant Cycle Phase */
          DCPeriod = smoothPeriod + 0.5;
-         DCPeriodInt = (int)DCPeriod;
+         /* A NaN period has no int value, and C leaves converting one undefined. */
+         if( DCPeriod >= 0.0 ) {
+            DCPeriodInt = (int)DCPeriod;
+         } else {
+            DCPeriodInt = 0;
+         }
          realPart = 0.0;
          imagPart = 0.0;
          /* idx is used to iterate for up to 50 of the last
@@ -110657,7 +110662,11 @@ public final class Core {
          period = Math.fma(0.2, period, 0.8 * tempReal);
          smoothPeriod = Math.fma(0.67, smoothPeriod, 0.33 * period);
          DCPeriod = smoothPeriod + 0.5;
-         DCPeriodInt = (int)DCPeriod;
+         if( DCPeriod >= 0.0 ) {
+            DCPeriodInt = (int)DCPeriod;
+         } else {
+            DCPeriodInt = 0;
+         }
          realPart = 0.0;
          imagPart = 0.0;
          idx = smoothPrice_Idx;
@@ -111213,7 +111222,12 @@ public final class Core {
          smoothPeriod = Math.fma(0.67, smoothPeriod, 0.33 * period);
          /* Compute Dominant Cycle Phase */
          DCPeriod = smoothPeriod + 0.5;
-         DCPeriodInt = (int)DCPeriod;
+         /* A NaN period has no int value, and C leaves converting one undefined. */
+         if( DCPeriod >= 0.0 ) {
+            DCPeriodInt = (int)DCPeriod;
+         } else {
+            DCPeriodInt = 0;
+         }
          realPart = 0.0;
          imagPart = 0.0;
          /* idx is used to iterate for up to 50 of the last
@@ -111439,7 +111453,12 @@ public final class Core {
       sp.smoothPeriod = Math.fma(0.67, sp.smoothPeriod, 0.33 * sp.period);
       /* Compute Dominant Cycle Phase */
       DCPeriod = sp.smoothPeriod + 0.5;
-      DCPeriodInt = (int)DCPeriod;
+      /* A NaN period has no int value, and C leaves converting one undefined. */
+      if( DCPeriod >= 0.0 ) {
+         DCPeriodInt = (int)DCPeriod;
+      } else {
+         DCPeriodInt = 0;
+      }
       realPart = 0.0;
       imagPart = 0.0;
       /* idx is used to iterate for up to 50 of the last
@@ -111852,7 +111871,12 @@ public final class Core {
          smoothPeriod = Math.fma(0.67, smoothPeriod, 0.33 * period);
          /* Compute Dominant Cycle Phase */
          DCPeriod = smoothPeriod + 0.5;
-         DCPeriodInt = (int)DCPeriod;
+         /* A NaN period has no int value, and C leaves converting one undefined. */
+         if( DCPeriod >= 0.0 ) {
+            DCPeriodInt = (int)DCPeriod;
+         } else {
+            DCPeriodInt = 0;
+         }
          realPart = 0.0;
          imagPart = 0.0;
          /* idx is used to iterate for up to 50 of the last
@@ -114285,7 +114309,12 @@ public final class Core {
          smoothPeriod = Math.fma(0.67, smoothPeriod, 0.33 * period);
          /* Compute Dominant Cycle Phase */
          DCPeriod = smoothPeriod + 0.5;
-         DCPeriodInt = (int)DCPeriod;
+         /* A NaN period has no int value, and C leaves converting one undefined. */
+         if( DCPeriod >= 0.0 ) {
+            DCPeriodInt = (int)DCPeriod;
+         } else {
+            DCPeriodInt = 0;
+         }
          realPart = 0.0;
          imagPart = 0.0;
          /* idx is used to iterate for up to 50 of the last
@@ -114639,7 +114668,11 @@ public final class Core {
          period = Math.fma(0.2, period, 0.8 * tempReal);
          smoothPeriod = Math.fma(0.67, smoothPeriod, 0.33 * period);
          DCPeriod = smoothPeriod + 0.5;
-         DCPeriodInt = (int)DCPeriod;
+         if( DCPeriod >= 0.0 ) {
+            DCPeriodInt = (int)DCPeriod;
+         } else {
+            DCPeriodInt = 0;
+         }
          realPart = 0.0;
          imagPart = 0.0;
          idx = smoothPrice_Idx;
@@ -115210,7 +115243,12 @@ public final class Core {
          smoothPeriod = Math.fma(0.67, smoothPeriod, 0.33 * period);
          /* Compute Dominant Cycle Phase */
          DCPeriod = smoothPeriod + 0.5;
-         DCPeriodInt = (int)DCPeriod;
+         /* A NaN period has no int value, and C leaves converting one undefined. */
+         if( DCPeriod >= 0.0 ) {
+            DCPeriodInt = (int)DCPeriod;
+         } else {
+            DCPeriodInt = 0;
+         }
          realPart = 0.0;
          imagPart = 0.0;
          /* idx is used to iterate for up to 50 of the last
@@ -115462,7 +115500,12 @@ public final class Core {
       sp.smoothPeriod = Math.fma(0.67, sp.smoothPeriod, 0.33 * sp.period);
       /* Compute Dominant Cycle Phase */
       DCPeriod = sp.smoothPeriod + 0.5;
-      DCPeriodInt = (int)DCPeriod;
+      /* A NaN period has no int value, and C leaves converting one undefined. */
+      if( DCPeriod >= 0.0 ) {
+         DCPeriodInt = (int)DCPeriod;
+      } else {
+         DCPeriodInt = 0;
+      }
       realPart = 0.0;
       imagPart = 0.0;
       /* idx is used to iterate for up to 50 of the last
@@ -115878,7 +115921,12 @@ public final class Core {
          smoothPeriod = Math.fma(0.67, smoothPeriod, 0.33 * period);
          /* Compute Dominant Cycle Phase */
          DCPeriod = smoothPeriod + 0.5;
-         DCPeriodInt = (int)DCPeriod;
+         /* A NaN period has no int value, and C leaves converting one undefined. */
+         if( DCPeriod >= 0.0 ) {
+            DCPeriodInt = (int)DCPeriod;
+         } else {
+            DCPeriodInt = 0;
+         }
          realPart = 0.0;
          imagPart = 0.0;
          /* idx is used to iterate for up to 50 of the last
@@ -116488,7 +116536,12 @@ public final class Core {
          smoothPeriod = Math.fma(0.67, smoothPeriod, 0.33 * period);
          /* Compute Trendline */
          DCPeriod = smoothPeriod + 0.5;
-         DCPeriodInt = (int)DCPeriod;
+         /* A NaN period has no int value, and C leaves converting one undefined. */
+         if( DCPeriod >= 0.0 ) {
+            DCPeriodInt = (int)DCPeriod;
+         } else {
+            DCPeriodInt = 0;
+         }
          /* Average the RAW price over the dominant cycle period
           * (Ehlers, "Rocket Science for Traders": the Instantaneous
           * Trendline sums Price — not SmoothPrice, which only feeds
@@ -116813,7 +116866,11 @@ public final class Core {
          period = Math.fma(0.2, period, 0.8 * tempReal);
          smoothPeriod = Math.fma(0.67, smoothPeriod, 0.33 * period);
          DCPeriod = smoothPeriod + 0.5;
-         DCPeriodInt = (int)DCPeriod;
+         if( DCPeriod >= 0.0 ) {
+            DCPeriodInt = (int)DCPeriod;
+         } else {
+            DCPeriodInt = 0;
+         }
          tempReal = 0.0;
          for( i = 0; i < 50; i += 1 ) {
             if( i < DCPeriodInt ) {
@@ -117336,7 +117393,12 @@ public final class Core {
          smoothPeriod = Math.fma(0.67, smoothPeriod, 0.33 * period);
          /* Compute Trendline */
          DCPeriod = smoothPeriod + 0.5;
-         DCPeriodInt = (int)DCPeriod;
+         /* A NaN period has no int value, and C leaves converting one undefined. */
+         if( DCPeriod >= 0.0 ) {
+            DCPeriodInt = (int)DCPeriod;
+         } else {
+            DCPeriodInt = 0;
+         }
          /* Average the RAW price over the dominant cycle period
           * (Ehlers, "Rocket Science for Traders": the Instantaneous
           * Trendline sums Price — not SmoothPrice, which only feeds
@@ -117545,7 +117607,12 @@ public final class Core {
       sp.smoothPeriod = Math.fma(0.67, sp.smoothPeriod, 0.33 * sp.period);
       /* Compute Trendline */
       DCPeriod = sp.smoothPeriod + 0.5;
-      DCPeriodInt = (int)DCPeriod;
+      /* A NaN period has no int value, and C leaves converting one undefined. */
+      if( DCPeriod >= 0.0 ) {
+         DCPeriodInt = (int)DCPeriod;
+      } else {
+         DCPeriodInt = 0;
+      }
       /* Average the RAW price over the dominant cycle period
        * (Ehlers, "Rocket Science for Traders": the Instantaneous
        * Trendline sums Price — not SmoothPrice, which only feeds
@@ -117932,7 +117999,12 @@ public final class Core {
          smoothPeriod = Math.fma(0.67, smoothPeriod, 0.33 * period);
          /* Compute Trendline */
          DCPeriod = smoothPeriod + 0.5;
-         DCPeriodInt = (int)DCPeriod;
+         /* A NaN period has no int value, and C leaves converting one undefined. */
+         if( DCPeriod >= 0.0 ) {
+            DCPeriodInt = (int)DCPeriod;
+         } else {
+            DCPeriodInt = 0;
+         }
          /* Average the RAW price over the dominant cycle period
           * (Ehlers, "Rocket Science for Traders": the Instantaneous
           * Trendline sums Price — not SmoothPrice, which only feeds
@@ -118564,7 +118636,12 @@ public final class Core {
          /* Compute Dominant Cycle Phase */
          prevDCPhase = DCPhase;
          DCPeriod = smoothPeriod + 0.5;
-         DCPeriodInt = (int)DCPeriod;
+         /* A NaN period has no int value, and C leaves converting one undefined. */
+         if( DCPeriod >= 0.0 ) {
+            DCPeriodInt = (int)DCPeriod;
+         } else {
+            DCPeriodInt = 0;
+         }
          realPart = 0.0;
          imagPart = 0.0;
          /* idx is used to iterate for up to 50 of the last
@@ -118607,7 +118684,12 @@ public final class Core {
          leadSine = Math.sin((DCPhase + 45) * deg2Rad);
          /* Compute Trendline */
          DCPeriod = smoothPeriod + 0.5;
-         DCPeriodInt = (int)DCPeriod;
+         /* A NaN period has no int value, and C leaves converting one undefined. */
+         if( DCPeriod >= 0.0 ) {
+            DCPeriodInt = (int)DCPeriod;
+         } else {
+            DCPeriodInt = 0;
+         }
          /* Average the RAW price over the dominant cycle period.
           * Unlike the DC-phase loop above (which reads the smoothPrice
           * circular buffer), the iTrend average reads the raw price,
@@ -118988,7 +119070,11 @@ public final class Core {
          smoothPeriod = Math.fma(0.67, smoothPeriod, 0.33 * period);
          prevDCPhase = DCPhase;
          DCPeriod = smoothPeriod + 0.5;
-         DCPeriodInt = (int)DCPeriod;
+         if( DCPeriod >= 0.0 ) {
+            DCPeriodInt = (int)DCPeriod;
+         } else {
+            DCPeriodInt = 0;
+         }
          realPart = 0.0;
          imagPart = 0.0;
          idx = smoothPrice_Idx;
@@ -119026,7 +119112,11 @@ public final class Core {
          sine = Math.sin(DCPhase * deg2Rad);
          leadSine = Math.sin((DCPhase + 45) * deg2Rad);
          DCPeriod = smoothPeriod + 0.5;
-         DCPeriodInt = (int)DCPeriod;
+         if( DCPeriod >= 0.0 ) {
+            DCPeriodInt = (int)DCPeriod;
+         } else {
+            DCPeriodInt = 0;
+         }
          tempReal = 0.0;
          for( j = 0; j < 50; j += 1 ) {
             if( j < DCPeriodInt ) {
@@ -119613,7 +119703,12 @@ public final class Core {
          /* Compute Dominant Cycle Phase */
          prevDCPhase = DCPhase;
          DCPeriod = smoothPeriod + 0.5;
-         DCPeriodInt = (int)DCPeriod;
+         /* A NaN period has no int value, and C leaves converting one undefined. */
+         if( DCPeriod >= 0.0 ) {
+            DCPeriodInt = (int)DCPeriod;
+         } else {
+            DCPeriodInt = 0;
+         }
          realPart = 0.0;
          imagPart = 0.0;
          /* idx is used to iterate for up to 50 of the last
@@ -119656,7 +119751,12 @@ public final class Core {
          leadSine = Math.sin((DCPhase + 45) * sp.deg2Rad);
          /* Compute Trendline */
          DCPeriod = smoothPeriod + 0.5;
-         DCPeriodInt = (int)DCPeriod;
+         /* A NaN period has no int value, and C leaves converting one undefined. */
+         if( DCPeriod >= 0.0 ) {
+            DCPeriodInt = (int)DCPeriod;
+         } else {
+            DCPeriodInt = 0;
+         }
          /* Average the RAW price over the dominant cycle period.
           * Unlike the DC-phase loop above (which reads the smoothPrice
           * circular buffer), the iTrend average reads the raw price,
@@ -119899,7 +119999,12 @@ public final class Core {
       /* Compute Dominant Cycle Phase */
       prevDCPhase = sp.DCPhase;
       DCPeriod = sp.smoothPeriod + 0.5;
-      DCPeriodInt = (int)DCPeriod;
+      /* A NaN period has no int value, and C leaves converting one undefined. */
+      if( DCPeriod >= 0.0 ) {
+         DCPeriodInt = (int)DCPeriod;
+      } else {
+         DCPeriodInt = 0;
+      }
       realPart = 0.0;
       imagPart = 0.0;
       /* idx is used to iterate for up to 50 of the last
@@ -119942,7 +120047,12 @@ public final class Core {
       sp.leadSine = Math.sin((sp.DCPhase + 45) * sp.deg2Rad);
       /* Compute Trendline */
       DCPeriod = sp.smoothPeriod + 0.5;
-      DCPeriodInt = (int)DCPeriod;
+      /* A NaN period has no int value, and C leaves converting one undefined. */
+      if( DCPeriod >= 0.0 ) {
+         DCPeriodInt = (int)DCPeriod;
+      } else {
+         DCPeriodInt = 0;
+      }
       /* Average the RAW price over the dominant cycle period.
        * Unlike the DC-phase loop above (which reads the smoothPrice
        * circular buffer), the iTrend average reads the raw price,
@@ -120395,7 +120505,12 @@ public final class Core {
          /* Compute Dominant Cycle Phase */
          prevDCPhase = DCPhase;
          DCPeriod = smoothPeriod + 0.5;
-         DCPeriodInt = (int)DCPeriod;
+         /* A NaN period has no int value, and C leaves converting one undefined. */
+         if( DCPeriod >= 0.0 ) {
+            DCPeriodInt = (int)DCPeriod;
+         } else {
+            DCPeriodInt = 0;
+         }
          realPart = 0.0;
          imagPart = 0.0;
          /* idx is used to iterate for up to 50 of the last
@@ -120438,7 +120553,12 @@ public final class Core {
          leadSine = Math.sin((DCPhase + 45) * deg2Rad);
          /* Compute Trendline */
          DCPeriod = smoothPeriod + 0.5;
-         DCPeriodInt = (int)DCPeriod;
+         /* A NaN period has no int value, and C leaves converting one undefined. */
+         if( DCPeriod >= 0.0 ) {
+            DCPeriodInt = (int)DCPeriod;
+         } else {
+            DCPeriodInt = 0;
+         }
          /* Average the RAW price over the dominant cycle period.
           * Unlike the DC-phase loop above (which reads the smoothPrice
           * circular buffer), the iTrend average reads the raw price,

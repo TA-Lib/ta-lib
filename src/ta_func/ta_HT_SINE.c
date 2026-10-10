@@ -468,7 +468,14 @@ TA_LIB_API TA_RetCode TA_HT_SINE( int    startIdx,
       smoothPeriod = fma(0.67, smoothPeriod, 0.33 * period);
       /* Compute Dominant Cycle Phase */
       DCPeriod = smoothPeriod + 0.5;
-      DCPeriodInt = (int)DCPeriod;
+      /* A NaN period has no int value, and C leaves converting one undefined. */
+      if( DCPeriod >= 0.0 )
+      {
+         DCPeriodInt = (int)DCPeriod;
+      } else 
+      {
+         DCPeriodInt = 0;
+      }
       realPart = 0.0;
       imagPart = 0.0;
       /* idx is used to iterate for up to 50 of the last
@@ -858,7 +865,13 @@ TA_RetCode TA_S_HT_SINE( int    startIdx,
       period = fma(0.2, period, 0.8 * tempReal);
       smoothPeriod = fma(0.67, smoothPeriod, 0.33 * period);
       DCPeriod = smoothPeriod + 0.5;
-      DCPeriodInt = (int)DCPeriod;
+      if( DCPeriod >= 0.0 )
+      {
+         DCPeriodInt = (int)DCPeriod;
+      } else 
+      {
+         DCPeriodInt = 0;
+      }
       realPart = 0.0;
       imagPart = 0.0;
       idx = smoothPrice_Idx;
@@ -1159,7 +1172,14 @@ static TA_FMA_STEP_INLINE void TA_HT_SINE_StepImpl( struct TA_HT_SINE_Stream *sp
    sp->smoothPeriod = fma(0.67, sp->smoothPeriod, 0.33 * sp->period);
    /* Compute Dominant Cycle Phase */
    DCPeriod = sp->smoothPeriod + 0.5;
-   DCPeriodInt = (int)DCPeriod;
+   /* A NaN period has no int value, and C leaves converting one undefined. */
+   if( DCPeriod >= 0.0 )
+   {
+      DCPeriodInt = (int)DCPeriod;
+   } else 
+   {
+      DCPeriodInt = 0;
+   }
    realPart = 0.0;
    imagPart = 0.0;
    /* idx is used to iterate for up to 50 of the last
@@ -1609,7 +1629,14 @@ static TA_FMA_STEP_INLINE TA_RetCode TA_HT_SINE_OpenImpl( struct TA_HT_SINE_Stre
          smoothPeriod = fma(0.67, smoothPeriod, 0.33 * period);
          /* Compute Dominant Cycle Phase */
          DCPeriod = smoothPeriod + 0.5;
-         DCPeriodInt = (int)DCPeriod;
+         /* A NaN period has no int value, and C leaves converting one undefined. */
+         if( DCPeriod >= 0.0 )
+         {
+            DCPeriodInt = (int)DCPeriod;
+         } else 
+         {
+            DCPeriodInt = 0;
+         }
          realPart = 0.0;
          imagPart = 0.0;
          /* idx is used to iterate for up to 50 of the last
@@ -2056,7 +2083,14 @@ TA_LIB_API TA_RetCode TA_HT_SINE_Peek( const TA_HT_SINE_Stream *stream, double i
    smoothPeriod = fma(0.67, smoothPeriod, 0.33 * period);
    /* Compute Dominant Cycle Phase */
    DCPeriod = smoothPeriod + 0.5;
-   DCPeriodInt = (int)DCPeriod;
+   /* A NaN period has no int value, and C leaves converting one undefined. */
+   if( DCPeriod >= 0.0 )
+   {
+      DCPeriodInt = (int)DCPeriod;
+   } else 
+   {
+      DCPeriodInt = 0;
+   }
    realPart = 0.0;
    imagPart = 0.0;
    /* idx is used to iterate for up to 50 of the last
