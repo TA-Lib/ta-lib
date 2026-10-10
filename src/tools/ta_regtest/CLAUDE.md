@@ -357,7 +357,7 @@ every correctness path omits it.
 
 ### Driving a server by hand
 
-Five traps, each of which costs a debugging cycle:
+Traps, each of which costs a debugging cycle:
 
 **A real output array is a hex STRING, not a JSON number array** —
 `"outReal":"3ff0000000000000c000..."`, concatenated 16-hex-char groups of a
@@ -379,18 +379,12 @@ literal `"field":`, so `json.dumps`'s default `": "` makes every lookup miss and
 the C server answers `{"error":"Missing method field"}`. Use
 `separators=(",",":")`.
 
-**An omitted optional parameter is not the default, and the two kinds fail
-differently.** A missing INTEGER optInput is rejected — `TA_SMA` with no
-`optInTimePeriod` answers `retCode` 2 — but a missing REAL optInput is read as
-`0.0` and the call SUCCEEDS: `TA_STDDEV` without `optInNbDev` returns 243 values
-that are all exactly `0.0`, and `TA_SAR` without its acceleration pair never
-accelerates — 5 distinct values over 251 bars where the same call with
-`0.02`/`0.2` has 248. Send the sentinel to ask for the declared default: `-4e37`
-(`TA_REAL_DEFAULT`) for a real, `INT_MIN` for an integer. `INT_MIN` in a real
-slot is not a sentinel — it is taken literally, and `TA_STDDEV` answers
-`-3.2e9`. Measured on dev's C server; the asymmetry is why a hand-driven sweep
-should audit its request keys against the signatures in `ta_func.h` rather than
-trust a green `retCode`.
+**Send every optional parameter.** The servers disagree on an absent one: Rust
+substitutes the declared default, the C server reads zero. A period is then
+rejected, but a real optInput where `0.0` is legal answers `retCode` 0 with a
+wrong series: `TA_STDDEV` without `optInNbDev` is all zeros. To ask for a
+default, send the sentinel: `-4e37` for a real, `INT_MIN` for an integer;
+`INT_MIN` in a real slot is taken literally.
 
 **`fuzz_hash_init()` is `1469598103934665603`, NOT the standard FNV-1a 64-bit
 offset basis** (`14695981039346656037`) despite the comment beside it — the repo
