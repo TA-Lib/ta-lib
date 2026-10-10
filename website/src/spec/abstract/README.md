@@ -51,7 +51,7 @@ What a descriptor holds:
 | optional parameter | name, display name, hint, [flags](/spec/abstract/#flags-display), kind, default, and its accepted values ([rP2](/spec/inputs-outputs/#rp2)): for a range its bounds, a suggested sweep (start, end, increment) and, for a real range, a display precision; for a list its named values |
 | output | name, kind, [flags](/spec/abstract/#flags) |
 
-In Rust, Java and C# the function descriptor also holds the descriptors of its inputs, optional parameters and outputs. In C it holds their three counts and the function's handle, and each parameter descriptor comes from its getter, by index from 0. Rust's also holds `id`, the `FuncId` that `get_func_handle` returns.
+In Rust, Java and C# the function descriptor also holds the descriptors of its inputs, optional parameters and outputs. In C it holds their counts and the function's handle, and each parameter descriptor comes from its getter, by index from 0. Rust's also holds `id`, the `FuncId` that `get_func_handle` returns.
 
 A slot is one input, one optional parameter or one output. A bind call names it by its position among the function's inputs, optional parameters or outputs, from 0. A price input is one input, whatever number of series it consumes. An MA-type parameter is an integer list of the MA types.
 
@@ -106,71 +106,69 @@ Every key is answered in the four languages, and the answer can differ with the 
 
 ## Flags {#flags}
 
-A function, an input, an optional parameter and an output each carry one word of flags. The four tables below list every flag. A rule that depends on a flag is on the page of its topic, linked from the flag's row.
+A function, an input, an optional parameter and an output each carry one word of flags. The tables below list every flag under its C name; [Rust, Java and C# spell them](/spec/#flag-names) in their own flag types. A rule that depends on a flag is on the page of its topic, linked from the flag's row.
 
 ### Capability {#flags-capability}
 
 What a function or an output supports.
 
-| C | Rust | Java | C# | Meaning |
-|---|---|---|---|---|
-| `TA_FUNC_FLG_STREAM` | `FuncFlags::STREAM` | `FuncFlags.STREAMING` | `FuncFlags.Stream` | The function has a streaming API. Every function carries it ([rH9](/spec/streaming/#rh9)). |
-| `TA_FUNC_FLG_CANDLESTICK` | `FuncFlags::CANDLESTICK` | `FuncFlags.CANDLESTICK` | `FuncFlags.Candlestick` | A candlestick pattern function (`CDL*`): its lookback can depend on the candle settings ([rL7](/spec/lookback/#rl7)) and every integer output is a pattern output ([rW8](/spec/inputs-outputs/#rw8)). |
-| `TA_OUT_NULLABLE` | `OutputFlags::NULLABLE` | `OutputFlags.NULLABLE` | `OutputFlags.Nullable` | The typed call lets the caller decline this output ([rW5](/spec/inputs-outputs/#rw5)). A holder still needs it bound ([bind all](/spec/abstract/#bind-all)). |
+| Flag | Meaning |
+|---|---|
+| `TA_FUNC_FLG_STREAM` | The function has a streaming API. Every function carries it ([rH9](/spec/streaming/#rh9)). |
+| `TA_FUNC_FLG_CANDLESTICK` | A candlestick pattern function (`CDL*`): its lookback can depend on the candle settings ([rL7](/spec/lookback/#rl7)) and every integer output is a pattern output ([rW8](/spec/inputs-outputs/#rw8)). |
+| `TA_OUT_NULLABLE` | The typed call lets the caller decline this output ([rW5](/spec/inputs-outputs/#rw5)). A holder still needs it bound ([bind all](/spec/abstract/#bind-all)). |
 
 ### Price components {#flags-price}
 
 The series a price input consumes. The price bind call requires each of them and ignores the others. C# also has a `SetPriceInput` that binds one series at a time: a consumed series left unbound then fails the call ([rA3](/spec/abstract/#ra3)).
 
-| C | Rust | Java | C# | Meaning |
-|---|---|---|---|---|
-| `TA_IN_PRICE_OPEN` | `InputFlags::PRICE_OPEN` | `InputFlags.PRICE_OPEN` | `PriceComponents.Open` | The open. |
-| `TA_IN_PRICE_HIGH` | `InputFlags::PRICE_HIGH` | `InputFlags.PRICE_HIGH` | `PriceComponents.High` | The high. |
-| `TA_IN_PRICE_LOW` | `InputFlags::PRICE_LOW` | `InputFlags.PRICE_LOW` | `PriceComponents.Low` | The low. |
-| `TA_IN_PRICE_CLOSE` | `InputFlags::PRICE_CLOSE` | `InputFlags.PRICE_CLOSE` | `PriceComponents.Close` | The close. |
-| `TA_IN_PRICE_VOLUME` | `InputFlags::PRICE_VOLUME` | `InputFlags.PRICE_VOLUME` | `PriceComponents.Volume` | The volume. |
-| `TA_IN_PRICE_OPENINTEREST` | `InputFlags::PRICE_OPENINTEREST` | `InputFlags.PRICE_OPENINTEREST` | `PriceComponents.OpenInterest` | The open interest. No function sets it. |
-| `TA_IN_PRICE_TIMESTAMP` | `InputFlags::PRICE_TIMESTAMP` | none | none | A timestamp. No function sets it, and no setter takes one. |
+| Flag | Meaning |
+|---|---|
+| `TA_IN_PRICE_OPEN` | The open. |
+| `TA_IN_PRICE_HIGH` | The high. |
+| `TA_IN_PRICE_LOW` | The low. |
+| `TA_IN_PRICE_CLOSE` | The close. |
+| `TA_IN_PRICE_VOLUME` | The volume. |
+| `TA_IN_PRICE_OPENINTEREST` | The open interest. No function sets it. |
+| `TA_IN_PRICE_TIMESTAMP` | A timestamp. No function sets it, and no setter takes one. Java and C# have no member for it. |
 
 ### Numerical property {#flags-numerical}
 
 What can be said of the values a function writes.
 
-| C | Rust | Java | C# | Meaning |
-|---|---|---|---|---|
-| `TA_FUNC_FLG_UNST_PER` | `FuncFlags::UNSTABLE_PERIOD` | `FuncFlags.UNSTABLE_PERIOD` | `FuncFlags.UnstablePeriod` | The function owns an unstable-period id ([rL6](/spec/lookback/#rl6), [stability](/spec/lookback/#metadata)). |
-| `TA_FUNC_FLG_PATH_DEP` | `FuncFlags::PATH_DEPENDENT` | `FuncFlags.PATH_DEPENDENT` | `FuncFlags.PathDependent` | Path-dependent: the value at a bar depends on where the range starts, and never converges ([stability](/spec/lookback/#metadata)). |
-| `TA_FUNC_FLG_NAN_INF_OUT` | `FuncFlags::NAN_INF_OUTPUT` | `FuncFlags.NAN_INF_OUTPUT` | `FuncFlags.NanInfOutput` | A successful call can write NaN or ±Inf on ordinary finite input ([rW6](/spec/inputs-outputs/#rw6)). |
-| `TA_FUNC_FLG_PERIOD1_IDENTITY` | `FuncFlags::PERIOD1_IDENTITY` | `FuncFlags.PERIOD1_IDENTITY` | `FuncFlags.Period1Identity` | At a period of 1 every output value is a bit-for-bit copy of its input ([rL8](/spec/lookback/#rl8)). |
-| `TA_FUNC_FLG_USES_TRANSCENDENTAL` | `FuncFlags::USES_TRANSCENDENTAL` | `FuncFlags.USES_TRANSCENDENTAL` | `FuncFlags.UsesTranscendental` | The function calls a transcendental function, so a value may differ ([transcendental functions](/spec/versions/#transcendental)); TA-Lib targets a difference below 1e-9 ([rD2](/spec/versions/#rd2)). Not set on a function that reaches one only when an MA-type parameter selects `MAMA` or `ALMA`. |
-| `TA_OUT_POSITIVE` | `OutputFlags::POSITIVE` | `OutputFlags.POSITIVE` | `OutputFlags.Positive` | Positive values occur ([rW8](/spec/inputs-outputs/#rw8)). |
-| `TA_OUT_NEGATIVE` | `OutputFlags::NEGATIVE` | `OutputFlags.NEGATIVE` | `OutputFlags.Negative` | Negative values occur ([rW8](/spec/inputs-outputs/#rw8)). |
-| `TA_OUT_ZERO` | `OutputFlags::ZERO` | `OutputFlags.ZERO` | `OutputFlags.Zero` | 0 occurs; on a pattern output, no pattern on that bar ([rW8](/spec/inputs-outputs/#rw8)). |
-| `TA_OUT_PATTERN_BOOL` | `OutputFlags::PATTERN_BOOL` | `OutputFlags.PATTERN_BOOL` | `OutputFlags.PatternBool` | A pattern output whose values are 0 and 100 ([rW8](/spec/inputs-outputs/#rw8)). |
-| `TA_OUT_PATTERN_BULL_BEAR` | `OutputFlags::PATTERN_BULL_BEAR` | `OutputFlags.PATTERN_BULL_BEAR` | `OutputFlags.PatternBullBear` | A pattern output whose sign is a call: + bullish, - bearish ([rW8](/spec/inputs-outputs/#rw8)). |
-| `TA_OUT_PATTERN_WEAK` | `OutputFlags::PATTERN_WEAK` | `OutputFlags.PATTERN_WEAK` | `OutputFlags.PatternWeak` | Adds level 80: a weaker form of the pattern, on the same bar ([rW8](/spec/inputs-outputs/#rw8)). |
-| `TA_OUT_PATTERN_CONFIRM` | `OutputFlags::PATTERN_CONFIRM` | `OutputFlags.PATTERN_CONFIRM` | `OutputFlags.PatternConfirm` | Adds level 200: this bar confirms the output's live pattern ([rW8](/spec/inputs-outputs/#rw8)). |
+| Flag | Meaning |
+|---|---|
+| `TA_FUNC_FLG_UNST_PER` | The function owns an unstable-period id ([rL6](/spec/lookback/#rl6), [stability](/spec/lookback/#metadata)). |
+| `TA_FUNC_FLG_PATH_DEP` | Path-dependent: the value at a bar depends on where the range starts, and never converges ([stability](/spec/lookback/#metadata)). |
+| `TA_FUNC_FLG_NAN_INF_OUT` | A successful call can write NaN or ±Inf on ordinary finite input ([rW6](/spec/inputs-outputs/#rw6)). |
+| `TA_FUNC_FLG_PERIOD1_IDENTITY` | At a period of 1 every output value is a bit-for-bit copy of its input ([rL8](/spec/lookback/#rl8)). |
+| `TA_FUNC_FLG_USES_TRANSCENDENTAL` | The function calls a transcendental function, so a value may differ ([transcendental functions](/spec/versions/#transcendental)); TA-Lib targets a difference below 1e-9 ([rD2](/spec/versions/#rd2)). Not set on a function that reaches one only when an MA-type parameter selects `MAMA` or `ALMA`. |
+| `TA_OUT_POSITIVE` | Positive values occur ([rW8](/spec/inputs-outputs/#rw8)). |
+| `TA_OUT_NEGATIVE` | Negative values occur ([rW8](/spec/inputs-outputs/#rw8)). |
+| `TA_OUT_ZERO` | 0 occurs; on a pattern output, no pattern on that bar ([rW8](/spec/inputs-outputs/#rw8)). |
+| `TA_OUT_PATTERN_BOOL` | A pattern output whose values are 0 and 100 ([rW8](/spec/inputs-outputs/#rw8)). |
+| `TA_OUT_PATTERN_BULL_BEAR` | A pattern output whose sign is a call: + bullish, - bearish ([rW8](/spec/inputs-outputs/#rw8)). |
+| `TA_OUT_PATTERN_WEAK` | Adds level 80: a weaker form of the pattern, on the same bar ([rW8](/spec/inputs-outputs/#rw8)). |
+| `TA_OUT_PATTERN_CONFIRM` | Adds level 200: this bar confirms the output's live pattern ([rW8](/spec/inputs-outputs/#rw8)). |
 
 ### Display hint {#flags-display}
 
 How a chart or a settings dialog should present a function, an output or an optional parameter. No value depends on one.
 
-| C | Rust | Java | C# | Meaning |
-|---|---|---|---|---|
-| `TA_FUNC_FLG_OVERLAP` | `FuncFlags::OVERLAP` | `FuncFlags.OVERLAP_STUDY` | `FuncFlags.Overlap` | The output is on the scale of the input: draw it over the price series. |
-| `TA_FUNC_FLG_VOLUME` | `FuncFlags::VOLUME` | `FuncFlags.VOLUME_USED` | `FuncFlags.VolumeUsed` | Draw the output over the volume data. No function sets it. |
-| `TA_FUNC_FLG_DISPLAY_SHIFT` | `FuncFlags::DISPLAY_SHIFT` | `FuncFlags.DISPLAY_SHIFT` | `FuncFlags.DisplayShift` | At least one output carries `TA_OUT_DISPLAY_SHIFT` ([rL10](/spec/lookback/#rl10)). |
-| `TA_OUT_DISPLAY_SHIFT` | `OutputFlags::DISPLAY_SHIFT` | `OutputFlags.DISPLAY_SHIFT` | `OutputFlags.DisplayShift` | A chart draws the output ahead of or behind the bar that computed it ([rL9](/spec/lookback/#rl9), [rL10](/spec/lookback/#rl10)). |
-| `TA_OUT_LINE` | `OutputFlags::LINE` | `OutputFlags.LINE` | `OutputFlags.Line` | Draw as a connected line. |
-| `TA_OUT_DOT_LINE` | `OutputFlags::DOT_LINE` | `OutputFlags.DOT_LINE` | `OutputFlags.DotLine` | Draw as a dotted line. No function sets it. |
-| `TA_OUT_DASH_LINE` | `OutputFlags::DASH_LINE` | `OutputFlags.DASH_LINE` | `OutputFlags.DashLine` | Draw as a dashed line. |
-| `TA_OUT_DOT` | `OutputFlags::DOT` | `OutputFlags.DOT` | `OutputFlags.Dot` | Draw as dots only. No function sets it. |
-| `TA_OUT_HISTO` | `OutputFlags::HISTO` | `OutputFlags.HISTOGRAM` | `OutputFlags.Histogram` | Draw as a histogram. |
-| `TA_OUT_UPPER_LIMIT` | `OutputFlags::UPPER_LIMIT` | `OutputFlags.UPPER_LIMIT` | `OutputFlags.UpperLimit` | The values are an upper limit, such as the upper line of a band. |
-| `TA_OUT_LOWER_LIMIT` | `OutputFlags::LOWER_LIMIT` | `OutputFlags.LOWER_LIMIT` | `OutputFlags.LowerLimit` | The values are a lower limit, such as the lower line of a band. |
-| `TA_OPTIN_IS_PERCENT` | `OptInputFlags::IS_PERCENT` | `OptInputFlags.IS_PERCENT` | `OptInputFlags.IsPercent` | The parameter is a percentage. |
-| `TA_OPTIN_IS_DEGREE` | `OptInputFlags::IS_DEGREE` | `OptInputFlags.IS_DEGREE` | `OptInputFlags.IsDegree` | The parameter is an angle in degrees. No function sets it. |
-| `TA_OPTIN_IS_CURRENCY` | `OptInputFlags::IS_CURRENCY` | `OptInputFlags.IS_CURRENCY` | `OptInputFlags.IsCurrency` | The parameter is a currency amount. No function sets it. |
-| `TA_OPTIN_ADVANCED` | `OptInputFlags::ADVANCED` | `OptInputFlags.ADVANCED` | `OptInputFlags.Advanced` | The parameter is rarely changed: an application may hide it. No function sets it. |
-
-C#'s four flag enums each also have `None`, the empty word.
+| Flag | Meaning |
+|---|---|
+| `TA_FUNC_FLG_OVERLAP` | The output is on the scale of the input: draw it over the price series. |
+| `TA_FUNC_FLG_VOLUME` | Draw the output over the volume data. No function sets it. |
+| `TA_FUNC_FLG_DISPLAY_SHIFT` | At least one output carries `TA_OUT_DISPLAY_SHIFT` ([rL10](/spec/lookback/#rl10)). |
+| `TA_OUT_DISPLAY_SHIFT` | A chart draws the output ahead of or behind the bar that computed it ([rL9](/spec/lookback/#rl9), [rL10](/spec/lookback/#rl10)). |
+| `TA_OUT_LINE` | Draw as a connected line. |
+| `TA_OUT_DOT_LINE` | Draw as a dotted line. No function sets it. |
+| `TA_OUT_DASH_LINE` | Draw as a dashed line. |
+| `TA_OUT_DOT` | Draw as dots only. No function sets it. |
+| `TA_OUT_HISTO` | Draw as a histogram. |
+| `TA_OUT_UPPER_LIMIT` | The values are an upper limit, such as the upper line of a band. |
+| `TA_OUT_LOWER_LIMIT` | The values are a lower limit, such as the lower line of a band. |
+| `TA_OPTIN_IS_PERCENT` | The parameter is a percentage. |
+| `TA_OPTIN_IS_DEGREE` | The parameter is an angle in degrees. No function sets it. |
+| `TA_OPTIN_IS_CURRENCY` | The parameter is a currency amount. No function sets it. |
+| `TA_OPTIN_ADVANCED` | The parameter is rarely changed: an application may hide it. No function sets it. |

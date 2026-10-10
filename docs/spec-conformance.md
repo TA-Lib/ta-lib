@@ -486,12 +486,16 @@ in its shipped registry, and `abstract_verify_for_each_func` requires each
 server's enumeration to be C's, as a set (Java's server enumerates a table of
 its own).
 
-rA7: the generator's `the_spec_flag_catalog_is_complete` requires every flag
-member of the three ports to carry the value of the C `#define` its catalog row
-names. The same test holds the catalog itself, which is more than rA7 asks: a
-row for every flag `#define` of `ta_abstract.h`, no port flag without a row, no
-flag family beyond the four it reads, and "No function sets it" exactly on the
-flags no function carries.
+rA7: the generator's `the_spec_flag_catalog_is_complete` requires each port's
+flag type to carry the values of the C `#define`s of its family, one member per
+value, with none of its own (an alias member and C#'s `None` aside); Rust lacks
+none, and Java and C# lack only the
+flags whose catalog row says so. It matches by value: a port member's name is
+not held, so two members exchanging values would pass here. The same test holds
+the catalog itself, which is more than rA7 asks: a row for every flag `#define`
+of `ta_abstract.h`, no flag family beyond those it reads, the flag types the
+specification page names, and "No function sets it" exactly on the flags no
+function carries.
 
 ### Settings rules
 

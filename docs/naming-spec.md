@@ -66,7 +66,7 @@ C#'s struct and Rust's tuple do not.
 | function holder | (globals) | `Core` | `Core` | `Core` |
 | builder | `TA_SetUnstablePeriod`, `TA_SetCandleSettings` | `CoreBuilder`, `unstable_period`, `candle_setting`, `restore_candle_default`, `build` | `CoreBuilder`, `unstablePeriod`, `candleSetting`, `restoreCandleDefault`, `build` | `CoreBuilder`, `UnstablePeriod`, `CandleSetting`, `RestoreCandleDefault`, `Build` |
 | output range | `outBegIdx`, `outNBElement` out-params | `OutRange { beg_idx, count }`, `EMPTY`, `is_empty` | `OutRange(begIdx, count)`, `EMPTY`, `isEmpty` | `OutRange { BegIdx, Count }`, `Empty`, `IsEmpty` |
-| candle setting | none: the four arguments of `TA_SetCandleSettings` | `CandleSetting { range_type, avg_period, factor }`, `CandleSettings` | `CandleSetting`, `rangeType()`, `avgPeriod()`, `factor()` | `CandleSetting`, `RangeType`, `AvgPeriod`, `Factor` |
+| candle setting | none: the arguments of `TA_SetCandleSettings` | `CandleSetting { range_type, avg_period, factor }`, `CandleSettings` | `CandleSetting`, `rangeType()`, `avgPeriod()`, `factor()` | `CandleSetting`, `RangeType`, `AvgPeriod`, `Factor` |
 | enum type names | `TA_RetCode`, `TA_MAType`, `TA_FuncUnstId`, `TA_CandleSettingType`, `TA_RangeType` | `RetCode`, `MAType`, `FuncUnstId`, `CandleSettingType`, `RangeType` | same | same |
 
 C's word carries over where it is idiomatic in the target and is replaced where
