@@ -13,7 +13,7 @@ how the value at a bar computed from a later start approaches the value computed
 | `rules_vs_need.py` | Sets the count the library discards at each level, for every function that owns an unstable id, against the measured need |
 | `rules_check.py` | Checks the one-pole, SWAK and FISHER rules against the kernels at seven values of K and a grid of periods, and ADOSC's at both levels, with no library involved. The calibrated rules are not in it: section 3 of `results.txt` holds those. For T3, a calibrated rule, it computes what the seed that shows latest needs against the largest difference it causes, with the bound it meets: more than the count |
 | `tie_break.c` | Compares MAXINDEX and MININDEX from two starts on a series full of equal extremes. It counted mismatches at the commit `results.txt` names, and counts none since a tie names the most recent bar (#503) |
-| `results.txt` | The output of the probe and its scripts at the commit named on its first line. Rules re-sized since are on the [Unstable Period page](../../../website/src/api/unstable-period/README.md), and the census is rerun, not recorded |
+| `results.txt` | The output of the probe and its scripts at the commit named on its first line. Rules re-sized since are in the [specification](../../../website/src/spec/auto-stabilization/README.md), and the census is rerun, not recorded |
 
 ## Running it
 
@@ -62,6 +62,27 @@ Link the static library by path. `-lta-lib` picks up an installed TA-Lib instead
   `CONV`: larger differences that fall under `e^-14`. `SLOW`: within `e^-7` but never within
   `e^-14`. `NEVER`: still above 1e-3 of the largest difference at the end of the series.
 
+## Measured frequencies
+
+How often a case the [specification](../../../website/src/spec/auto-stabilization/README.md)
+lists as outside a level was seen. The census is rerun, not recorded, so these date from the
+run that sized the rules.
+
+- **HT_TRENDLINE.** On random walks about one start in 2,500 has a disagreement past the
+  `PREC_4` count and one in 400,000 past the `PREC_8` count.
+- **HT_TRENDMODE.** About one start in 15,000 and one in 150,000.
+- **MAMA.** On a range-bound series, the share of starts still apart past the `PREC_4` count
+  is about 5% at a price worth 500 ticks, 1% at 1,000, 0.3% at 2,000, 0.1% at 5,000 and none
+  at 100,000; a random walk shows about a tenth of that. A trending series shows none at any
+  tick.
+- **MCGD.** The count runs short once the period times the rise per bar passes about 0.06,
+  and the line stays 20% under the price from about 0.10: for a period of 100 on daily bars,
+  a year that gains 16% and one that gains 29%.
+- **CVI.** It can sit above the level's threshold past the count it inherits, e.g. for up to
+  14 bars at the defaults.
+- **Price scale.** On an output on the price scale the count usually delivers about two
+  digits more than the level names.
+
 ## What it does not show
 
 - Real market data in the probe. The three shapes bracket the adaptive averages; they are not a
@@ -72,7 +93,7 @@ Link the static library by path. `-lta-lib` picks up an installed TA-Lib instead
   of `results.txt`).
 - A tick that is a power of two. With such a tick the arithmetic is exact, two starts land on
   the same side of MAMA's zero test, and the census counts no start past its count at any
-  price level; 0.2, 0.1 or 0.01 show what the Unstable Period page states.
+  price level; 0.2, 0.1 or 0.01 show the shares under "Measured frequencies".
 - Functions that subtract two averages, away from the default and tripled periods. With the
   EMA, ZLEMA or RMA type, APO and PPO reach the level's own `e^-K` after the inherited count, by
   up to ADOSC's offset for the pair (e.g. 9 bars at the defaults, 48 at 25 and 26 with the EMA
