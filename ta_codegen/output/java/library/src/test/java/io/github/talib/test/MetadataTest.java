@@ -913,6 +913,16 @@ public class MetadataTest {
               "XML describes every function (" + found + "/" + Functions.all().size() + ")");
     }
 
+    static void runtimeInfoAnswersEveryKeyAndRejectsTheRest() {
+        for (String key : new String[] {"vmath.transcendental", "count.initialize", "count.shutdown"}) {
+            check(io.github.talib.metadata.RuntimeInfo.get(key) == 0, "runtime info " + key + " is 0");
+        }
+        checkRetCode(RetCode.BAD_PARAM, () -> io.github.talib.metadata.RuntimeInfo.get("vmath"),
+                     "a key prefix is no key");
+        checkRetCode(RetCode.BAD_PARAM, () -> io.github.talib.metadata.RuntimeInfo.get(null),
+                     "a null key is rejected");
+    }
+
     private static double[][] newReal(FuncInfo f) {
         double[][] a = new double[f.outputs().size()][];
         for (int i = 0; i < a.length; i++) {
@@ -1161,6 +1171,7 @@ public class MetadataTest {
         newCallCarriesTheGivenCore();
         holderDisplayShiftMatchesTheTypedApi();
         functionDescriptionXmlDescribesEveryFunction();
+        runtimeInfoAnswersEveryKeyAndRejectsTheRest();
         registryIsImmutable();
 
         if (failures == 0) {

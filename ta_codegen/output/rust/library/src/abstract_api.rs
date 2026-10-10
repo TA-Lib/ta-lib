@@ -8081,6 +8081,17 @@ pub fn function_description_xml() -> &'static str {
     include_str!("ta_func_api.xml")
 }
 
+/// Rust analog of C's `TA_GetRuntimeInfo()`: a run-time state of this library, by key.
+/// The keys: <https://ta-lib.org/spec/abstract/#runtime-info>.
+///
+/// An unknown key is [`RetCode::BadParam`].
+pub fn get_runtime_info(key: &str) -> Result<i32, crate::RetCode> {
+    match key {
+        "vmath.transcendental" | "count.initialize" | "count.shutdown" => Ok(0),
+        _ => Err(crate::RetCode::BadParam),
+    }
+}
+
 #[cfg(test)]
 mod registry_tests {
     use super::*;
