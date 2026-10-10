@@ -65,6 +65,7 @@
 #include <math.h>
 #define TA_REGTEST_UNGUARDED_CALL
 #include "ta_test_priv.h"
+#include "test_codegen.h"
 #include "ta_utility.h"
 #include "ta_memory.h"
 #include "meta_ride.h"
@@ -644,6 +645,91 @@ void sweep_set_unstable( const TA_FuncUnstId *ids, int nbIds, unsigned int value
    int i;
    for( i = 0; i < nbIds; i++ )
       TA_SetUnstablePeriod( ids[i], value );
+}
+
+/* 1023 filter characters hold at most 512 non-empty entries. */
+#define FILTER_COPY_SIZE 1024
+static unsigned char g_filterEntryHit[FILTER_COPY_SIZE / 2];
+
+/* Tries EVERY entry, never just up to the first hit: an entry is reported as
+ * unmatched unless it matched something itself, and with RSI,STOCHRSI the name
+ * STOCHRSI matches both. */
+int filterMatches( const char *filter, const char *subject,
+                   FilterEntryMatches entryMatches )
+{
+   char copy[FILTER_COPY_SIZE];
+   char *token;
+   int idx, matched = 0;
+
+   if( filter == NULL )
+      return 1;
+
+   strncpy( copy, filter, sizeof(copy)-1 );
+   copy[sizeof(copy)-1] = '\0';
+
+   for( idx = 0, token = strtok( copy, "," ); token != NULL;
+        idx++, token = strtok( NULL, "," ) )
+   {
+      if( entryMatches( subject, token ) )
+      {
+         g_filterEntryHit[idx] = 1;
+         matched = 1;
+      }
+   }
+   return matched;
+}
+
+static int nameEntryMatches( const char *name, const char *entry )
+{
+   if( strlen(entry) <= 2 )
+      return codegen_short_filter_token_matches( name, entry );
+   return strstr( name, entry ) != NULL;
+}
+
+int filterMatchesName( const char *filter, const char *name )
+{
+   return filterMatches( filter, name, nameEntryMatches );
+}
+
+int filterUnmatchedReport( const char *filter )
+{
+   char copy[FILTER_COPY_SIZE];
+   char *token;
+   int idx, nbEntries = 0, nbUnmatched = 0;
+
+   if( filter == NULL )
+      return 0;
+
+   strncpy( copy, filter, sizeof(copy)-1 );
+   copy[sizeof(copy)-1] = '\0';
+
+   for( idx = 0, token = strtok( copy, "," ); token != NULL;
+        idx++, token = strtok( NULL, "," ) )
+   {
+      nbEntries++;
+      if( g_filterEntryHit[idx] )
+         continue;
+      if( nbUnmatched++ == 0 )
+         printf( "\nFAILED: --function matched nothing for:" );
+      printf( " %s", token );
+   }
+
+   if( nbEntries == 0 )
+   {
+      printf( "\nFAILED: --function= names no entry, so nothing ran.\n" );
+      return 1;
+   }
+   if( nbUnmatched == 0 )
+      return 0;
+
+   printf( "\n" );
+   printf( "        An entry must match a GROUP TAG in ta_regtest.c's DO_TEST list\n" );
+   printf( "        (plain run and --codegen) or a function name (--codegen,\n" );
+   printf( "        --xlang-hash and --ref).\n" );
+   printf( "        Some functions have no hand-written group (the plain vector\n" );
+   printf( "        math, OBV, TYPPRICE, WCLPRICE): reach those with --codegen or\n" );
+   printf( "        --xlang-hash, or add the name to its group's tag.\n" );
+   return nbUnmatched;
 }
 
 ErrorNumber doRangeTest( RangeTestFunction testFunction,
