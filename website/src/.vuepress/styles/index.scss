@@ -181,6 +181,22 @@ body .vp-toc-placeholder {
   }
 }
 
+// FAQ (`containerClass: faq` in its frontmatter): each question is an `h2`, sized
+// down to a question, with its answer indented under it. Keep the questions direct
+// children of the content root, with no wrapper element: the theme's anchor
+// offset for the fixed navbar reaches direct children only.
+.faq #markdown-content {
+  > h2 {
+    font-size: 1.3rem;
+    border-bottom: none;
+    padding-bottom: 0;
+  }
+
+  > :not(h2) {
+    margin-inline-start: 1.5rem;
+  }
+}
+
 // Anchor scroll-offset for headings inside `.credits`.
 // The theme offsets scroll targets for its fixed navbar via padding-top/negative
 // margin-top, but only on *direct* children of the content root
