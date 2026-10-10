@@ -48,10 +48,10 @@ export const enSidebar = sidebar({
             "spec/versions/",
           ],
         },
-        "faq/",
       ],
     },
     "contribute/",
+    "faq/",
     "about/",
   ],
 });
