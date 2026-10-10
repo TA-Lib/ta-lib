@@ -73,11 +73,13 @@ Link the static library by path. `-lta-lib` picks up an installed TA-Lib instead
 - A tick that is a power of two. With such a tick the arithmetic is exact, two starts land on
   the same side of MAMA's zero test, and the census counts no start past its count at any
   price level; 0.2, 0.1 or 0.01 show what the Unstable Period page states.
-- Functions that subtract two averages at nearly equal periods. With the EMA, ZLEMA or RMA
-  type, APO and PPO run past the inherited count by up to ADOSC's offset for the pair (e.g. 48
-  bars at 25 and 26 with the EMA type), and MACD and MACDFIX by that offset less the signal EMA's
-  count, which leaves something only with a signal period of 1 to 3 or close periods.
-  `CENSUS_SET` reruns any of them. APO's and PPO's legs are seeded by the moving average they
+- Functions that subtract two averages, away from the default and tripled periods. With the
+  EMA, ZLEMA or RMA type, APO and PPO reach the level's own `e^-K` after the inherited count, by
+  up to ADOSC's offset for the pair (e.g. 9 bars at the defaults, 48 at 25 and 26 with the EMA
+  type). PVO does too (e.g. 15 bars at the defaults, 54 with its periods tripled). MACD and
+  MACDFIX do by that offset less the signal EMA's count, which leaves something only with a
+  signal period of 1 to 3 or close periods. At the default and tripled periods all of them
+  hold the leg. `CENSUS_SET` reruns any of them. APO's and PPO's legs are seeded by the moving average they
   call, so a longer lookback alone does not age them; MACDEXT hands MACD its all-EMA case while
   its own lookback and stream are built from moving-average calls, so MACD cannot move alone.
 - A measured need beyond `K` of about 21 is unreliable in the `rw` series: prices there grow by
@@ -98,8 +100,9 @@ never held to the end.
   output, `S/R` the same against the output's range, `tail` the largest difference over the last
   tenth of the ages against `S`, and the last column the `A10` need on each series.
 - Section 3 compares a rule with the need only for the function that owns the id, at the
-  defaults and tripled periods. KAMA, FRAMA and VIDYA are compared on `rw` and `tr` only: their
-  counts are sized for a market that trends or wanders, and `zz` takes several times longer. Its
+  defaults and tripled periods. A function that inherits its count is held to the leg by
+  `ta_regtest`, whose two-start comparison runs every function. KAMA, FRAMA and VIDYA are
+  compared on `rw` and `tr` only: their counts are sized for a market that trends or wanders, and `zz` takes several times longer. Its
   flags: `LEG4` and `LEG8` mean the count is short of what the leg holds (none is); `k4` and
   `k8` that it is short at the level's own `e^-K`, which happens for ratio outputs; `sig4` and
   `sig8` that the value does not agree to that many significant digits at the count, which
