@@ -196,7 +196,7 @@ What enters a lookback, in C, in a bare run:
 - rL8 under an Auto level: `test_auto_stabilization.c` asks every function flagged
   identity at a period of 1, owner of an id or not, for its lookback at a
   period of 1 with every id on each level, and requires 0.
-- rL6 under an Auto level: the count leg of `test_auto_stabilization.c`. With one id
+- rL6 under an Auto level, and rZ1: the count leg of `test_auto_stabilization.c`. With one id
   on a level, its owner's lookback minus its lookback at 0 must equal the
   rule, computed from the file's own copy of the rule table, and the owner
   must report the bits it reports at 0, starting that many bars later. It
@@ -206,6 +206,9 @@ What enters a lookback, in C, in a bare run:
   fails. `test_stc.c` holds the STC line to `TA_EMA(fast) - TA_EMA(slow)` bit
   for bit under each level: the fast leg is placed by its own lookback, which
   under a level is not the slow leg's.
+- rZ2: the same file's offset check asks CKSP and ADOSC for their lookback with
+  the id they inherit on a count of 30 and on each level: a count adds
+  exactly 30 bars, a level the owner's count plus the function's own.
 - rL5, rL7 and rL9: `abstract_lookback_under_settings` (`test_abstract.c`), for
   every function at its default parameters: another range type and factor on
   every candle setting moves no lookback; seven more bars on every averaging
@@ -529,7 +532,7 @@ the fused clones gcc builds, since under clang the FMA dispatch compiles away.
 ### Auto levels
 
 What the specification states about a level is mapped above: rT3 and rT12
-under Settings rules, rL1, rL4 and rL6 under Lookback rules. Two more legs run
+under Settings rules, rL1, rL4, rL6, rZ1 and rZ2 under Lookback rules. Two more legs run
 under each level.
 
 Stream against batch: `stream_verify`'s unstable-period leg runs one more pass
@@ -543,9 +546,9 @@ compared at `PREC_8`. The default all-EMA vector reports too few bars on the 240
 series to show it. A floor on the output bars compared under a level keeps
 the passes from comparing nothing.
 
-Two starts: the second leg of `test_auto_stabilization.c`, in a bare run. It holds
-what the [Unstable Period](https://ta-lib.org/api/unstable-period/) page says
-a level means, which is not a specification rule. Every function runs on three
+Two starts: the second leg of `test_auto_stabilization.c`, in a bare run. It is the
+check behind what the specification says [a level targets](https://ta-lib.org/spec/auto-stabilization/#target),
+which is not a numbered rule: the leg bounds the difference against the seed's, not the digits of the value. Every function runs on three
 synthetic 8192-bar series (a random walk, alternating trends, a range), from
 bar 0 and from six later starts, at the defaults, with every integer parameter
 at its minimum and tripled, at every MA type, and at the real parameters a
@@ -585,7 +588,7 @@ member.
 rV3: `rust_matype_emits_every_yaml_variant_and_its_frozen_shape` and
 `rust_template_enums_are_non_exhaustive` (generator suite).
 
-rD2's set of functions: `the_transcendental_flag_is_what_the_sources_call`
+rD1's set of functions: `the_transcendental_flag_is_what_the_sources_call`
 (generator suite) derives it from the indicator sources and requires the same
 set to carry `TA_FUNC_FLG_USES_TRANSCENDENTAL`, the flag that moves a Java or C#
 comparison from bitwise to a tolerance.
@@ -595,6 +598,27 @@ exception: where the batch tier is a vector kernel, `regtest_vmath_batch`
 (`test_util.c`) alone moves a comparison of a kernel value with a one-value
 result from bitwise to `fuzz_vmath_near`, and `test_elementary_lanes` holds
 every element of a batch call to one function of one value on every platform.
+
+rD2: `CODEGEN_TRANSCENDENTAL_TOL` (`test_codegen.h`) is the rule's figure and
+its shape, 1e-9 relative above a magnitude of 1 and absolute below. It holds
+every Java and C# call that evaluates a transcendental function against C, on
+one machine, in `--codegen` and `--xlang-hash`. Elsewhere on one machine the
+comparisons are bitwise or the kernel lane's `fuzz_vmath_near`, both tighter.
+HT_DCPHASE, HT_SINE and HT_TRENDMODE are skipped on the constant series
+(`xlang_illcond`), where their phase is undefined and two languages can differ
+outright.
+
+rD3: it states what is not promised, so no test holds it. What a level does
+bound between two starts is the second leg under [Auto levels](#auto-levels);
+a sampled check of the cases sized by measurement is #540.
+
+rD2 between machines ([across machines](https://ta-lib.org/spec/versions/#machines)): no machine is compared with another. Each is held on its own to the suite's
+reference values, which bounds two machines indirectly. `ta_test_legacy` replays
+the v0.6.4 values, frozen at 17 digits, on every platform, each function within
+its own bound, all under 1e-9. Known gap: a function added after v0.6.4, and one
+whose value depends on the host math library (the Hilbert functions among them),
+has no frozen value; its hand-written values are compared at 0.01
+([#540](https://github.com/TA-Lib/ta-lib/issues/540)).
 
 The build-flags caller item: `the_three_build_systems_carry_the_same_flags`
 (generator suite) requires the statements that set `-ffp-contract=off`,

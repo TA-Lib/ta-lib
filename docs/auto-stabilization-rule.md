@@ -189,11 +189,11 @@ int ema_lookback(int optInTimePeriod)
 
 - **The lookback comment** says where the bars per e-fold and the fixed part come from, in
   the recursion's own terms, and names a step.
-- **`website/src/api/unstable-period/README.md`** is the table of record. Add a row to
-  "Bars discarded under a level" with how the rule is sized: `proof`, `measurement`, and
-  the qualifiers `ratio` and `limiter` that the section defines. Add the function to one
-  of the two groups under "Auto-Stabilization", by whether its output reaches zero, and a
-  line under "What a level does not promise" for a case no count covers.
+- **`website/src/spec/auto-stabilization/README.md`** is the table of record. Add a row to
+  rZ1 with how the rule is sized: `proof`, `measurement`, and the qualifiers `ratio` and
+  `limiter` that the rule defines. Add the function to one of the two groups under "What
+  a level targets", by whether its output reaches zero, and a line under
+  "Known exceptions" for a case the count does not cover.
 - **`src/tools/ta_regtest/ta_test_func/test_auto_stabilization.c`** keeps its own copy of
   every rule and its own list of owners: add the id to both, and a vector for each real
   parameter the rule reads. A bare `bin/ta_regtest` runs it.

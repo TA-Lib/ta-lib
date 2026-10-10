@@ -25,6 +25,7 @@ In the order a caller meets them:
 |---|---|---|
 | [Batch Inputs and Outputs](/spec/inputs-outputs/) | what a call takes, what a successful call writes, pattern outputs, computing in place | `rP` parameters, `rW` writes |
 | [Lookback and Shift](/spec/lookback/) | lookback call, what enters it, display shift, stability from metadata | `rL` lookback |
+| [Auto-Stabilization](/spec/auto-stabilization/) | the bars an Auto level adds for each id, what a level targets, the known exceptions | `rZ` Auto-Stabilization |
 | [Streaming](/spec/streaming/) | bit-identity with batch, opening, advancing, accessors | `rH` handle behaviour, `rS` stream opening, `rU` update |
 | [Abstract API and Metadata](/spec/abstract/) | what the Abstract API provides, its rules and return codes, run-time information, the catalog of metadata flags | `rA` Abstract API |
 | [Settings and Threads](/spec/settings-threads/) | C lifecycle and settings, `Core`, setting validation, threads | `rT` settings and threads |
@@ -112,7 +113,7 @@ Constants: C prefixes `TA_` (`TA_INDEX_MAX`); Rust, Java and C# hold them on `Co
 | Constant | Value |
 |---|---|
 | `INDEX_MAX` | 100000000, the largest index |
-| `UNSTABLE_AUTO_PREC_4` | `INDEX_MAX + 4`, an Auto level of the unstable period ([rT3](/spec/settings-threads/#rt3)) |
+| `UNSTABLE_AUTO_PREC_4` | `INDEX_MAX + 4`, an Auto level of the unstable period ([rT3](/spec/settings-threads/#rt3), [rZ1](/spec/auto-stabilization/#rz1)) |
 | `UNSTABLE_AUTO_PREC_8` | `INDEX_MAX + 8`, an Auto level of the unstable period |
 | `REAL_DEFAULT` | -4e37, selects a real parameter's default ([rP3](/spec/inputs-outputs/#rp3)) |
 | `INTEGER_DEFAULT` | `INT_MIN`, selects an integer parameter's default |
