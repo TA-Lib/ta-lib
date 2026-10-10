@@ -461,8 +461,7 @@ typedef enum
   TA_STREAM_SHORT_HISTORY_CONTROL    = 1598,
   TA_STREAM_SHORT_HISTORY_VACUOUS    = 1599,
 
-  /* --function= named something no test group covers, on a run that had
-   * nothing else to do. Reported rather than passed silently. */
+  /* An entry of the --function= list matched nothing the run could select. */
   TA_REGTEST_FILTER_MATCHED_NOTHING  = 1600,
 
   /* Streaming empty-history rejection (rule rS1 / TA_OUT_OF_RANGE_START_INDEX). */
