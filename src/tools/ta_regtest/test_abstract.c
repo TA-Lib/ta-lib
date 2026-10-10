@@ -838,9 +838,17 @@ static int metaMatchesFilter( const char *filter, const char *name )
     {
         if( strlen(token) <= 2 )
         {
-            if( codegen_short_filter_token_matches(name, token) ) return 1;
+            if( codegen_short_filter_token_matches(name, token) )
+            {
+                filterHitMark( token );
+                return 1;
+            }
         }
-        else if( strstr(name, token) != NULL ) return 1;
+        else if( strstr(name, token) != NULL )
+        {
+            filterHitMark( token );
+            return 1;
+        }
         token = strtok(NULL, ",");
     }
     return 0;

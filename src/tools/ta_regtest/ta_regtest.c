@@ -194,6 +194,17 @@ static ErrorNumber runtimeInfoAfterFirstInitialize( void )
  * --xlang-hash, and --codegen. Only --codegen read the verdict, because its
  * per-language floors are where the read lived; everywhere else a divergence
  * printed its diagnostic and the run still exited 0. */
+/* #535: an entry of the --function list that matched nothing must not read as
+ * a pass. Every exit that can report success folds the verdict through here,
+ * so the three self-contained legs (--ref, --xlang-hash) answer like the
+ * ordinary run does. */
+static ErrorNumber filterVerdict( ErrorNumber ret )
+{
+   if( ret == TA_TEST_PASS && filterHitReport() > 0 )
+      return TA_REGTEST_FILTER_MATCHED_NOTHING;
+   return ret;
+}
+
 int main( int argc, char **argv )
 {
    ErrorNumber rideRet = regtest_main( argc, argv );
@@ -311,6 +322,9 @@ static ErrorNumber regtest_main( int argc, char **argv )
          return arityRet;
    }
 
+   /* Record the --function entries before anything consults them (#535). */
+   filterHitInit( functionFilter );
+
    /* Differential fuzz vs one frozen release (bin/ta_ref_<X_Y_Z>_serve).
     * Self-contained: init the lib, run the fuzz, done — skips the rest. */
    if( refVersion != NULL )
@@ -324,7 +338,7 @@ static ErrorNumber regtest_main( int argc, char **argv )
       TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
       fuzzRet = fuzz_ref( refVersion, functionFilter );
       retValue = freeLib();
-      return fuzzRet != TA_TEST_PASS ? fuzzRet : retValue;
+      return filterVerdict( fuzzRet != TA_TEST_PASS ? fuzzRet : retValue );
    }
 
    /* Opt-in cross-language BITWISE parity gate (issue #113). Self-contained:
@@ -341,7 +355,7 @@ static ErrorNumber regtest_main( int argc, char **argv )
       TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
       xlangRet = xlang_hash( functionFilter, codegenLanguageFilter );
       retValue = freeLib();
-      return xlangRet != TA_TEST_PASS ? xlangRet : retValue;
+      return filterVerdict( xlangRet != TA_TEST_PASS ? xlangRet : retValue );
    }
 
    /* Test utility like List/Stack/Dictionary/Memory Allocation etc... */
@@ -664,6 +678,12 @@ static ErrorNumber regtest_main( int argc, char **argv )
          return retValue;
    }
 
+   {
+      ErrorNumber filterRet = filterVerdict( TA_TEST_PASS );
+      if( filterRet != TA_TEST_PASS )
+         return filterRet;
+   }
+
    printf( "\n* All tests succeeded. Enjoy the library. *\n" );
 
 
@@ -820,12 +840,21 @@ static int matchesFilter(const char *filter, const char *tags)
       if( strlen(token) <= 2 )
       {
          if( tagHasShortToken(tags, token) )
+         {
+            filterHitMark( token );
             return 1;
+         }
       }
       else if( strstr(tags, token) != NULL )
+      {
+         filterHitMark( token );
          return 1;
+      }
       if( tagPrefixMatches(tags, token) )
+      {
+         filterHitMark( token );
          return 1;
+      }
       token = strtok(NULL, ",");
    }
    return 0;

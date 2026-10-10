@@ -6,6 +6,7 @@
  * and unstable periods.
  */
 #include "test_codegen.h"
+#include "ta_test_priv.h"
 #include "codegen_pipe.h"
 #include "server_verify.h"
 
@@ -2334,9 +2335,17 @@ static int codegen_matches_filter(const char *filter, const char *name)
     {
         if( strlen(token) <= 2 )
         {
-            if( codegen_short_filter_token_matches(name, token) ) return 1;
+            if( codegen_short_filter_token_matches(name, token) )
+            {
+                filterHitMark( token );
+                return 1;
+            }
         }
-        else if( strstr(name, token) != NULL ) return 1;
+        else if( strstr(name, token) != NULL )
+        {
+            filterHitMark( token );
+            return 1;
+        }
         token = strtok(NULL, ",");
     }
     return 0;

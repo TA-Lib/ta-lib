@@ -646,6 +646,102 @@ void sweep_set_unstable( const TA_FuncUnstId *ids, int nbIds, unsigned int value
       TA_SetUnstablePeriod( ids[i], value );
 }
 
+/* --function entry tracking (#535). Every matcher answers "did ANY entry
+ * match", so one good entry in a CSV list hid a typo next to it: the run
+ * selected what the good entry named and said nothing about the rest. The
+ * entries are recorded once here; each matcher marks the entry it matched;
+ * main() names what nothing ever matched. */
+#define FILTER_MAX_ENTRIES   64
+#define FILTER_MAX_ENTRY_LEN 64
+static char g_filterEntry[FILTER_MAX_ENTRIES][FILTER_MAX_ENTRY_LEN];
+static int  g_filterEntryHit[FILTER_MAX_ENTRIES];
+static int  g_filterNbEntries = 0;
+static int  g_filterUntracked = 0;
+
+void filterHitInit( const char *filter )
+{
+   char copy[1024];
+   char *token;
+
+   g_filterNbEntries = 0;
+   g_filterUntracked = 0;
+   if( filter == NULL )
+      return;
+
+   strncpy( copy, filter, sizeof(copy)-1 );
+   copy[sizeof(copy)-1] = '\0';
+
+   token = strtok( copy, "," );
+   while( token != NULL )
+   {
+      /* An entry past the table is the only thing this cannot answer for, and
+       * it says so rather than going quiet: a partial list with a note beats
+       * the silence this replaces. An entry too long to store is kept
+       * truncated, which names it accurately enough -- no function name or
+       * group tag is that long, so it cannot have matched anything. */
+      if( g_filterNbEntries >= FILTER_MAX_ENTRIES )
+      {
+         g_filterUntracked++;
+         token = strtok( NULL, "," );
+         continue;
+      }
+      if( strlen(token) >= FILTER_MAX_ENTRY_LEN )
+      {
+         memcpy( g_filterEntry[g_filterNbEntries], token, FILTER_MAX_ENTRY_LEN-4 );
+         strcpy( g_filterEntry[g_filterNbEntries] + FILTER_MAX_ENTRY_LEN-4, "..." );
+      }
+      else
+         strcpy( g_filterEntry[g_filterNbEntries], token );
+      g_filterEntryHit[g_filterNbEntries] = 0;
+      g_filterNbEntries++;
+      token = strtok( NULL, "," );
+   }
+}
+
+void filterHitMark( const char *entry )
+{
+   int i;
+
+   for( i = 0; i < g_filterNbEntries; i++ )
+   {
+      if( !strcmp( g_filterEntry[i], entry ) )
+      {
+         g_filterEntryHit[i] = 1;
+         return;
+      }
+   }
+}
+
+int filterHitReport( void )
+{
+   int i, nb = 0;
+
+   for( i = 0; i < g_filterNbEntries; i++ )
+      if( !g_filterEntryHit[i] )
+         nb++;
+
+   if( g_filterUntracked > 0 )
+      printf( "\nNOTE: %d --function entr%s past the %d this run tracks; the\n"
+              "      verdict below covers the first %d only.\n",
+              g_filterUntracked, (g_filterUntracked == 1) ? "y" : "ies",
+              FILTER_MAX_ENTRIES, FILTER_MAX_ENTRIES );
+
+   if( nb == 0 )
+      return 0;
+
+   printf( "\nFAILED: %d --function entr%s matched nothing, so nothing ran for",
+           nb, (nb == 1) ? "y" : "ies" );
+   for( i = 0; i < g_filterNbEntries; i++ )
+      if( !g_filterEntryHit[i] )
+         printf( " %s", g_filterEntry[i] );
+   printf( "\n" );
+   printf( "        An entry is matched by a GROUP TAG in ta_regtest.c's DO_TEST\n" );
+   printf( "        list, or by a function name under --codegen, --xlang-hash,\n" );
+   printf( "        --ref and the abstract metadata parity leg. Matching neither\n" );
+   printf( "        is a typo or a name no group carries; the other entries ran.\n" );
+   return nb;
+}
+
 ErrorNumber doRangeTest( RangeTestFunction testFunction,
                          TA_FuncUnstId unstId,
                          void *opaqueData,

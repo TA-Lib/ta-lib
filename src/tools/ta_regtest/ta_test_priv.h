@@ -37,6 +37,15 @@ void test_abstract_set_server(CodegenPipe *cp, const char *lang);
  * TA_TEST_PASS on full parity. Used to lock cross-language introspection in CI. */
 ErrorNumber test_abstract_server_metadata( const char *functionFilter );
 
+/* --function entry tracking (issue #535). The filter is a CSV list and every
+ * matcher below answers "did ANY entry match", so one good entry hid a typo
+ * next to it in every mode. filterHitInit() records the entries once,
+ * filterHitMark() is called by each matcher with the entry that matched, and
+ * filterHitReport() names the entries nothing ever matched. */
+void filterHitInit( const char *filter );
+void filterHitMark( const char *entry );
+int  filterHitReport( void );
+
 ErrorNumber freeLib( void );
 ErrorNumber allocLib( void );
 
