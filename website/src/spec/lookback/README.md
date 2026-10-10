@@ -10,7 +10,7 @@ The lookback is how many input bars a function consumes before its first output.
 ## The caller must {#caller}
 
 - <a id="ask"></a>**Ask for the lookback, never compute it.** Call the function's lookback call with the parameters of the batch call, under the same settings. A formula written from a function's description goes wrong as soon as an unstable period or an MA type enters ([rL6](/spec/lookback/#rl6)).
-- <a id="start"></a>**Not compare values from different starts bit for bit.** Whether a value depends on where the series starts is the function's numerical stability; each [function page](/functions/) names its category ([categories](/functions/stability)). Only a start-independent function gives the same value at a bar for any `startIdx`, and then only up to rounding error; for any other, a call with a later `startIdx` is not a slice of a call from 0. A stream opened later in a series raises the same question: [rH2](/spec/streaming/#rh2).
+- <a id="start"></a>**Not compare values from different starts bit for bit.** Whether a value depends on where the series starts is the function's numerical stability; each [function page](/functions/) names its [category](/functions/stability). Only a start-independent function gives the same value at a bar for any `startIdx`, and then only up to rounding error; for any other, a call with a later `startIdx` is not a slice of a call from 0. A stream opened later in a series raises the same question: [rH2](/spec/streaming/#rh2).
 
 ## Definition {#definition}
 
