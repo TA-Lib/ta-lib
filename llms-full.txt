@@ -65,10 +65,10 @@ description: >-
 <ul>
   <li>The lifecycle of the library (<a href="#init">TA_Initialize / TA_Shutdown</a>).</li>
   <li>The global settings (e.g. <a href="/api/unstable-period/">TA_SetUnstablePeriod</a>, <a href="/api/candle-settings/">TA_SetCandleSettings</a>).</li>
-  <li>Every <a href="#ta_func">TA function</a>, each processing a whole array of data at once.</li>
+  <li>Every <a href="#ta_func">TA function</a> in batch form, processing a whole array of data at once.</li>
+  <li>Every TA function in <a href="/api/stream/">streaming form</a>, processing a live feed one bar at a time without recomputing the history.</li>
   <li>An optional <a href="#abstract">Abstract API</a> for calling those functions dynamically.</li>
 </ul>
-<p>To process a live feed one bar at a time instead, see the companion <a href="/api/stream/">C/C++ Streaming API</a>.</p>
 <p>You must first <a href="/install/c/">install the C/C++ library</a>, which will provide all the shared/static libraries and headers needed to compile and link your program.</p>
 
 ## 2.0 How to add TA-Lib to your app {#build}
@@ -338,7 +338,9 @@ description: >-
 ---
 # C/C++ Streaming API
 
-The **streaming API** is built for live feeds: open a stream once, then feed it one bar at a time. The stream carries its state from bar to bar, so a new bar never costs a pass over the history: most indicators do constant work per bar, and the ones that work over their window, such as AVGDEV, CCI, MEDIAN and the rolling extremes, take time at most proportional to the window's length. Every value is **bit-identical** to what the [batch function](/api/) (`TA_SMA`, `TA_RSI`, …) would return by recomputing over the whole array ([exact rule](/spec/streaming/#rh1)). To compute only the newest bar, use a stream: the batch functions are built for arrays, not for a call over one bar.
+The **streaming API** is built for live feeds: open a stream once, then feed it one bar at a time. The stream carries its state from bar to bar, so a new bar never costs a pass over the history.
+
+Every value is **bit-identical** to what the [batch function](/api/) would return by recomputing over the whole array (see [detailed specs](/spec/streaming/#rh1) for a few exceptions).
 
 Every TA function gets these calls:
 
@@ -375,6 +377,22 @@ printf( "SMA = %f\n", sma );
 TA_SMA_Peek( s, formingClose, &sma );   /* state left unchanged */
 
 TA_SMA_Close( s );
+```
+
+### From C++
+
+The header is C++-ready. A `std::unique_ptr` can own the stream:
+
+```cpp
+struct SmaClose { void operator()( TA_SMA_Stream *s ) const { TA_SMA_Close( s ); } };
+
+std::unique_ptr<TA_SMA_Stream, SmaClose> sma;
+TA_SMA_Stream *raw;
+double value;
+if( TA_SMA_Open( &raw, history.data(), (int)history.size(), 30, &value ) == TA_SUCCESS )
+    sma.reset( raw );
+
+TA_SMA_Update( sma.get(), newClose, &value );
 ```
 
 ## Rules
@@ -709,7 +727,9 @@ description: >-
 The Rust API is not yet released. Estimated release: **Q1 2027**.
 :::
 
-The **streaming API** is built for live feeds: open a stream once, then feed it one bar at a time. The stream carries its state from bar to bar, so a new bar never costs a pass over the history: most indicators do constant work per bar, and the ones that work over their window, such as AVGDEV, CCI, MEDIAN and the rolling extremes, take time at most proportional to the window's length. Every value is **bit-identical** to what the [batch method](/api/rust/) (`core.sma`, `core.rsi`, …) would return by recomputing over the whole slice.
+The **streaming API** is built for live feeds: open a stream once, then feed it one bar at a time. The stream carries its state from bar to bar, so a new bar never costs a pass over the history.
+
+Every value is **bit-identical** to what the [batch method](/api/rust/) would return by recomputing over the whole slice (see [detailed specs](/spec/streaming/#rh1) for a few exceptions).
 
 Each streamable function adds two constructors on `Core` and a handful of methods on its stream:
 
@@ -1043,7 +1063,9 @@ description: >-
 ---
 # Java Streaming API
 
-The **streaming API** is built for live feeds: open a stream once, then feed it one bar at a time. The stream carries its state from bar to bar, so a new bar never costs a pass over the history: most indicators do constant work per bar, and the ones that work over their window, such as AVGDEV, CCI, MEDIAN and the rolling extremes, take time at most proportional to the window's length. Every value is **bit-identical** to what the [batch method](/api/java/) (`core.sma`, `core.rsi`, …) would return by recomputing over the whole array.
+The **streaming API** is built for live feeds: open a stream once, then feed it one bar at a time. The stream carries its state from bar to bar, so a new bar never costs a pass over the history.
+
+Every value is **bit-identical** to what the [batch method](/api/java/) would return by recomputing over the whole array (see [detailed specs](/spec/streaming/#rh1) for a few exceptions).
 
 Each streamable function adds two factory methods on `Core` and a handful of methods on its stream (a class nested in `Core`, e.g. `Core.SmaStream` — unrelated to `java.util.stream`):
 
@@ -1422,7 +1444,9 @@ description: >-
 The C# API is not yet released. Estimated release: **Q1 2027**.
 :::
 
-The **streaming API** is built for live feeds: open a stream once, then feed it one bar at a time. The stream carries its state from bar to bar, so a new bar never costs a pass over the history: most indicators do constant work per bar, and the ones that work over their window, such as AVGDEV, CCI, MEDIAN and the rolling extremes, take time at most proportional to the window's length. Every value is **bit-identical** to what the [batch method](/api/csharp/) (`core.Sma`, `core.Rsi`, …) would return by recomputing over the whole array.
+The **streaming API** is built for live feeds: open a stream once, then feed it one bar at a time. The stream carries its state from bar to bar, so a new bar never costs a pass over the history.
+
+Every value is **bit-identical** to what the [batch method](/api/csharp/) would return by recomputing over the whole array (see [detailed specs](/spec/streaming/#rh1) for a few exceptions).
 
 Each streamable function adds two factory methods on `Core` and a handful of members on its stream (a class nested in `Core`, e.g. `Core.SmaStream`):
 
@@ -2311,7 +2335,7 @@ The rules cover the four native APIs (C, Rust, Java, C#). Each rule has one home
 * A wrapper keeps its own conventions. ta-lib-python aligns outputs to the input and fills the warm-up with NaN; the native APIs do not ([rW3](/spec/inputs-outputs/#rw3)).
 * Published packages and their versions: [Install](/install/).
 * Owned by other pages: [Unstable Period](/api/unstable-period/), [Candlestick Settings](/api/candle-settings/) (model and defaults), streaming in [C](/api/stream/), [Rust](/api/rust/stream/), [Java](/api/java/stream/) and [C#](/api/csharp/stream/), [Numerical Stability](/functions/stability), and the [function pages](/functions/): inputs, outputs in order, parameters (type, default, accepted values), stability category, flags.
-* Every page except the per-function pages in one file: [/llms-full.txt](/llms-full.txt), whose [function index](/functions/) lists and links each function's page; [/llms.txt](/llms.txt) indexes them all. Each page has a Markdown twin, `/spec/index.md` for this one.
+* The pages other than the per-function pages are in [/llms-full.txt](/llms-full.txt); its [function index](/functions/) links each function page. [/llms.txt](/llms.txt) indexes every page. Each page has a Markdown twin; this page's is `/spec/index.md`.
 
 ## Rule pages {#reading}
 
@@ -2322,14 +2346,14 @@ In the order a caller meets them:
 | [Batch Inputs and Outputs](/spec/inputs-outputs/) | what a call takes, what a successful call writes, pattern outputs, computing in place | `rP` parameters, `rW` writes |
 | [Lookback and Shift](/spec/lookback/) | lookback call, what enters it, display shift, stability from metadata | `rL` lookback |
 | [Streaming](/spec/streaming/) | bit-identity with batch, opening, advancing, accessors | `rH` handle behaviour, `rS` stream opening, `rU` update |
-| [Abstract API and Metadata](/spec/abstract/) | what the Abstract API provides, its rules and return codes, the catalog of metadata flags | `rA` Abstract API |
+| [Abstract API and Metadata](/spec/abstract/) | what the Abstract API provides, its rules and return codes, run-time information, the catalog of metadata flags | `rA` Abstract API |
 | [Settings and Threads](/spec/settings-threads/) | C lifecycle and settings, `Core`, setting validation, threads | `rT` settings and threads |
 | [Errors](/spec/errors/) | return codes, batch conditions | `rE` errors, `rB` batch conditions |
 | [Versions and Determinism](/spec/versions/) | bit-identity across languages and equivalent calls; releases | `rD` determinism, `rV` versions |
 
 Each page has two kinds of statement:
 
-* **The caller must**: what the calling code has to ensure. Most of it is not checked by the library, so it comes first on every page, and the next section collects the items that fail silently.
+* **The caller must**: what the calling code has to ensure. Most of it is not checked by the library, so it comes first on every page, and the next section lists what the library never reports.
 * **A rule**: what TA-Lib does. Every rule is enforced by the test suite. Its id is `r`, the letter of its family and a number, such as `rB5`, and its anchor is the id in lower case: [/spec/errors/#rb5](/spec/errors/#rb5). An id's meaning can change from one release to the next.
 
 `<N>` stands for a function's canonical name: `TA_<N>_Open` is `TA_SMA_Open`.
@@ -2339,7 +2363,7 @@ Each page has two kinds of statement:
 None of these is reported. The caller avoids them, or treats what follows as undefined.
 
 * [A buffer too short, in C](/spec/inputs-outputs/#input-length): read or written past its end. Rust, Java and C# reject it.
-* [A buffer bound to a C parameter holder](/spec/abstract/#c-buffers) and no longer valid when the holder is called.
+* [A buffer bound to a C parameter holder](/spec/abstract/#c-buffers) that is no longer valid when the holder is called.
 * [A C parameter holder or table](/spec/abstract/#c-release) never released, or released twice.
 * [NaN or infinity inside an input series](/spec/inputs-outputs/#finite-inputs), or inside the history a stream opens on.
 * [A real input outside ±3e37](/spec/inputs-outputs/#input-domain).
@@ -2348,7 +2372,7 @@ None of these is reported. The caller avoids them, or treats what follows as und
 * [C used before `TA_Initialize`](/spec/settings-threads/#initialize) or after `TA_Shutdown`, or `TA_Initialize` called twice.
 * [A C setting changed](/spec/settings-threads/#idle-settings) while a TA function is running or a stream is open.
 * [A writer and any other call at once on one stream handle](/spec/settings-threads/#one-writer), or two threads on one parameter holder or builder (in Rust, the compiler rejects it).
-* [C's unstable-period getter](/spec/settings-threads/#rt4) given a wildcard or unknown id: it returns 0.
+* [C's unstable-period getter](/spec/settings-threads/#rt4) given the set-all wildcard or an out-of-range id: it returns 0.
 * [The state after an allocation failure](/spec/errors/#stop-on-alloc).
 
 ## Names in each language {#names}
@@ -2443,12 +2467,12 @@ One row per code a function call can report; `A : B` means `A` extends the platf
 
 Numbering: [rV2](/spec/versions/#rv2).
 
-A refused setting:
+Failed settings:
 
-| Refusal | C | Rust | Java | C# |
+| Failure | C | Rust | Java | C# |
 |---|---|---|---|---|
 | setter ([rT2](/spec/settings-threads/#rt2)) | returns `TA_BAD_PARAM` | `build()` returns `Err(RetCode::BadParam)` ([rT8](/spec/settings-threads/#rt8)) | throws `IllegalArgumentException` (`NullPointerException` on null), no code | throws `ArgumentOutOfRangeException`, no code |
-| getter ([rT4](/spec/settings-threads/#rt4)) | cannot refuse | returns `Err(RetCode::BadParam)` | as the setter | as the setter |
+| getter ([rT4](/spec/settings-threads/#rt4)) | cannot fail | returns `Err(RetCode::BadParam)` | as the setter | as the setter |
 
 ---
 
@@ -2470,11 +2494,11 @@ What a batch call takes, and what a successful call writes. Rules use C's spelli
 Nothing here is checked unless the item says so. A call that breaks an unchecked item can succeed with wrong values.
 
 * <a id="input-length"></a>**Pass full-length inputs.** Every input series a function declares holds at least `endIdx + 1` elements. That includes an input the function never reads ([CDLENGULFING](/functions/cdlengulfing) declares `inHigh` and `inLow` and reads neither), and a range that produces no output. A stream opener's inputs all have the history's length (in C, each holds `historyLen` elements). Rust, Java and C# reject a wrong length ([rB5](/spec/errors/#rb5), [rS5](/spec/streaming/#rs5)); C is handed bare pointers and reads past the end.
-* <a id="output-size"></a>**Size every output.** Each output holds at least the `count` the call produces ([rW1](/spec/inputs-outputs/#rw1)), `endIdx - max(startIdx, lookback) + 1` when that is positive, and never less than one element: an empty output is an absent one ([rB4](/spec/errors/#rb4)). `endIdx - startIdx + 1` always suffices. `lookback` is the function's [lookback](/spec/lookback/#rl1) for the same parameters and settings. Sizing methods: [Output Size and Lookback](/api/#output_size). Rust, Java and C# reject a shorter output ([rB5](/spec/errors/#rb5)); C writes past the end.
+* <a id="output-size"></a>**Size every output.** Each output holds at least `max(1, count)` elements, where `count` is the one the call produces ([rW1](/spec/inputs-outputs/#rw1)): `endIdx - max(startIdx, lookback) + 1`, or 0 when that is negative. A zero-length output that is not declined is absent ([rB4](/spec/errors/#rb4)). `endIdx - startIdx + 1` always suffices. `lookback` is the function's [lookback](/spec/lookback/#rl1) for the same parameters and settings. Sizing methods: [Output Size and Lookback](/api/#output_size). Rust, Java and C# reject a shorter output ([rB5](/spec/errors/#rb5)); C writes past the end.
 * <a id="finite-inputs"></a>**Pass only finite values in a series.** A NaN or infinity in a bar a call reads ([rL1](/spec/lookback/#rl1)), or inside the history a stream opens on, is not detected, and nothing is promised about the output or about a handle opened from it. Clean or split the series first. A single bar passed to `Update` or `Peek` is checked ([rU3](/spec/streaming/#ru3)).
 * <a id="input-domain"></a>**Keep real inputs within `TA_REAL_MIN` to `TA_REAL_MAX`** (±3e37). Nothing checks the bound, and outside it nothing is defined. The bound limits the domain only; it is not an accuracy promise.
 * <a id="overflow"></a>**Expect no overflow detection.** A running sum, a smoothed value or a ratio against a nearly flat window can leave the range of a double on bars that are each finite. Past that point nothing is defined: not the output, not the return code, not a stream handle's state. Open a new handle rather than keep one that went through it.
-* <a id="no-overlap"></a>**Do not overlap buffers**, except an output placed whole on an input ([rW7](/spec/inputs-outputs/#rw7)). Buffers that partially overlap (the same memory from a different start, or in a C# batch call a different length), or an output laid over an input of another element type, are not detected in C, where such a call can return `TA_SUCCESS` with wrong values.
+* <a id="no-overlap"></a>**Do not overlap buffers**, except an output placed whole on an input ([rW7](/spec/inputs-outputs/#rw7)). Partial overlap, such as the same memory from a different start, is not detected in C and can return `TA_SUCCESS` with wrong values. An output over an input of another element type is not detected in C either.
 
 ## What a call takes
 
@@ -2510,8 +2534,7 @@ An MA-type parameter accepts every `MAType` member, and a release may add member
 
 ## Computing in place {#aliasing}
 
-<a id="rw7"></a>**rW7** In a batch call, an output may be the very buffer of an input of the same element type: whole buffer, the same start, and in C# the same span. The outputs are bit-identical to a call with separate buffers. Afterwards, in that buffer, the elements at `[0, count)` hold the output, the elements at `[count, endIdx]` may hold any value, because the call may use them as scratch space for intermediate results, and the elements after `endIdx` keep their input values. Two outputs must be different buffers ([rB6](/spec/errors/#rb6)), and `OpenAndFill` takes no output on an input or on another output ([rS6](/spec/streaming/#rs6)).
-
+<a id="rw7"></a>**rW7** In a batch call, an output may be the very buffer of an input of the same element type: whole buffer, the same start, and in C# the same span. The outputs are bit-identical to a call with separate buffers. Afterwards, in that buffer, the elements at `[0, count)` hold the output, the elements at `[count, endIdx]` may hold any value, because the call may use them as scratch space for intermediate results, and the elements after `endIdx` keep their input values.
 | | C | Rust | Java | C# |
 |---|---|---|---|---|
 | "The same buffer" means | the same pointer | not expressible in safe code | the same array | equal spans: same start and length; at `OpenAndFill`, the same start; a null array is no buffer |
@@ -2521,13 +2544,13 @@ An MA-type parameter accepts every `MAType` member, and a release may add member
 
 <a id="rw8"></a>**rW8** A pattern output writes 0 or a sign times a level. Its [metadata flags](/spec/abstract/#flags) say which values it writes and what they mean, and the Output Values table on its function page says what each value means for that pattern.
 
-* **The values.** `TA_OUT_POSITIVE`, `TA_OUT_NEGATIVE` and `TA_OUT_ZERO` are the signs that occur: an output setting any of them sets every sign it writes, and one setting none declares nothing. The levels are 100, plus 80 with `TA_OUT_PATTERN_WEAK` and 200 with `TA_OUT_PATTERN_CONFIRM`. The output writes every declared sign times every level, 0 when `TA_OUT_ZERO` is set, and nothing else. 0 means no pattern on that bar.
+* **The values.** The sign flags `TA_OUT_POSITIVE` and `TA_OUT_NEGATIVE` give every sign times every level; `TA_OUT_ZERO` adds 0. Nothing else is written. An output with none of the three flags declares no values. The levels are 100, plus 80 with `TA_OUT_PATTERN_WEAK` and 200 with `TA_OUT_PATTERN_CONFIRM`. 0 means no pattern on that bar.
 * **The sign.**
   * With `TA_OUT_PATTERN_BOOL` it means nothing, and the values are 0 and 100.
   * With `TA_OUT_PATTERN_BULL_BEAR` it is the pattern's call: + bullish, - bearish. No function checks the trend a pattern's definition presumes.
   * With neither, on an integer output of a `TA_FUNC_FLG_CANDLESTICK` function that sets all three sign flags, it is the color of the input bar at the value's own index: + when close >= open, - otherwise. A display shift does not move that bar.
   * Any other output is not a pattern output.
-* **The level.** 100 is the pattern, found on this bar, and 80 a weaker form of it. 200 confirms the output's live pattern: its most recent earlier value of level 100 or 80, which has the same sign. A value of level 100 or 80 ends any earlier live pattern, and a 200 ends the one it confirms. The confirmed value can lie before the first value the caller received: before `begIdx`, or in the history a stream opened on. A peek value is never one.
+* **The level.** 100 is the pattern, found on this bar, and 80 a weaker form of it. 200 confirms the output's live pattern: its most recent earlier value of level 100 or 80, which has the same sign. A value of level 100 or 80 ends any earlier live pattern, and a 200 ends the one it confirms. The confirmed value can lie before the first value the caller received: before `begIdx`, or in the history a stream opened on.
 * **Counting.** The patterns found are the values of level 100 or 80; the confirmations are those of level 200.
 * **A flag a program does not know.** A later release may add flags. On a pattern output carrying one, the values listed above may not be all, and the sign keeps its meaning.
 
@@ -2549,7 +2572,7 @@ The lookback is how many input bars a function consumes before its first output.
 ## The caller must {#caller}
 
 * <a id="ask"></a>**Ask for the lookback, never compute it.** Call the function's lookback call with the parameters of the batch call, under the same settings. A formula written from a function's description goes wrong as soon as an unstable period or an MA type enters ([rL6](/spec/lookback/#rl6)).
-* <a id="start"></a>**Not compare values from different starts bit for bit.** Whether the value at a bar depends on where the series starts is the function's numerical stability: the categories are on [Numerical Stability](/functions/stability), and each [function page](/functions/) names its own. For a function that is not start-independent, a call with a later `startIdx` is not a slice of a call from 0. A start-independent function gives the same value at a bar for any `startIdx` only up to rounding error. A stream opened later in a series raises the same question: [rH2](/spec/streaming/#rh2).
+* <a id="start"></a>**Not compare values from different starts bit for bit.** Whether a value depends on where the series starts is the function's numerical stability; each [function page](/functions/) names its category ([categories](/functions/stability)). Only a start-independent function gives the same value at a bar for any `startIdx`, and then only up to rounding error; for any other, a call with a later `startIdx` is not a slice of a call from 0. A stream opened later in a series raises the same question: [rH2](/spec/streaming/#rh2).
 
 ## Definition {#definition}
 
@@ -2561,14 +2584,22 @@ Every function has a lookback call. It takes exactly the batch call's optional p
 
 | Rule | Statement |
 |---|---|
-| <a id="rl2"></a>**rL2** | An optional parameter outside its accepted values, or a combination of parameters the function rejects ([rP2](/spec/inputs-outputs/#rp2)), returns the lookback rejection signal ([per language](/spec/#failures)). It is the call's only failure. |
-| <a id="rl3"></a>**rL3** | The signal is returned exactly when the batch call, `Open` or `OpenAndFill` would reject the same parameters (batch [rB3](/spec/errors/#rb3), streams [rS3](/spec/streaming/#rs3)). A lookback call is therefore a way to validate parameters before a series exists. |
-| <a id="rl4"></a>**rL4** | Rust, Java and C# reach the same accept or reject decision as C for the same parameters and settings, and wherever both accept, return the same lookback. |
-| <a id="rl5"></a>**rL5** | A lookback depends only on the optional parameters and on the settings in effect at the call: the unstable periods ([rL6](/spec/lookback/#rl6)) and the candle averaging periods ([rL7](/spec/lookback/#rl7)). C reads them from its process-wide settings; Rust, Java and C# from the `Core` the call is made on ([rT1](/spec/settings-threads/#rt1)). With every setting at its bound ([rT3](/spec/settings-threads/#rt3), [rT6](/spec/settings-threads/#rt6)) a lookback is still a count: it is negative only as the rejection signal. |
+| <a id="rl2"></a>**rL2** | An optional parameter outside its accepted values, or a combination of parameters the function rejects ([rP2](/spec/inputs-outputs/#rp2)), fails ([per language](/spec/#failures)). It is the call's only failure. |
+| <a id="rl3"></a>**rL3** | The call fails exactly when the batch call, `Open` or `OpenAndFill` would reject the same parameters (batch [rB3](/spec/errors/#rb3), streams [rS3](/spec/streaming/#rs3)). A lookback call is therefore a way to validate parameters before a series exists. |
+| <a id="rl4"></a>**rL4** | Rust, Java and C# reach the same accept or reject decision as C for the same parameters and settings, and wherever both accept, return the same lookback or display shift. |
+| <a id="rl5"></a>**rL5** | A lookback depends only on the optional parameters and on the settings in effect at the call: the unstable periods ([rL6](/spec/lookback/#rl6)) and the candle averaging periods ([rL7](/spec/lookback/#rl7)). C reads them from its process-wide settings; Rust, Java and C# from the `Core` the call is made on ([rT1](/spec/settings-threads/#rt1)). With every setting at its bound ([rT3](/spec/settings-threads/#rt3), [rT6](/spec/settings-threads/#rt6)) a lookback is still a count: it is negative only when the call fails. |
 
 ## What enters the lookback {#enters}
 
-<a id="rl6"></a>**rL6** An unstable period that is a count adds exactly that many bars to the lookback of the function that owns its id; MINUS_DI, MINUS_DM, PLUS_DI and PLUS_DM at period 1 take none and keep a lookback of 1. An Auto level ([rT3](/spec/settings-threads/#rt3)) adds instead the count of the owner's [rule](/api/unstable-period/#rules) for that level, computed from the call's optional parameters; it can be 0. Either way, for a batch call from bar 0, the values the owner still reports are unchanged, bit for bit. An unstable period also lengthens the lookback of functions computed through the owner, directly or through an MA type the caller selects. There, how many bars it adds depends on the function and its parameters: it can count more than once (through EMA, DEMA counts it twice and TEMA three times), count only where its path is the longest (KC takes the longer of its EMA and ATR paths), or not count at all (an MA stage at period 1 or of the `DISABLED` type takes none). Under an Auto level, and only then, such a function may add bars of its own for how it uses the owner's value (CKSP adds its stop period less one). Its accepted values are [rT3](/spec/settings-threads/#rt3). The functions that own an id, and how to set one: [Unstable Period](/api/unstable-period/). An inheriting function names its source in the Numerical Stability line of its [function page](/functions/).
+<a id="rl6"></a>**rL6** An unstable period adds bars to the lookback of the function that owns its id:
+
+* A count adds exactly that many bars. MINUS_DI, MINUS_DM, PLUS_DI and PLUS_DM at period 1 take none and keep a lookback of 1.
+* An Auto level adds the count of the owner's [rule](/api/unstable-period/#rules) for that level, computed from the call's optional parameters. It can be 0.
+* Either way, for a batch call from bar 0, the values the owner still reports are unchanged, bit for bit.
+* A function computed through the owner, directly or through an MA type the caller selects, also takes the lengthening, and how much depends on the function. It can count more than once (through EMA, DEMA counts it twice and TEMA three times), count only where its path is the longest (KC takes the longer of its EMA and ATR paths), or not count at all (an MA stage at period 1 or of the `DISABLED` type takes none).
+* Under an Auto level only, such a function may add bars of its own for how it uses the owner's value (CKSP adds its stop period less one).
+
+Accepted values: [rT3](/spec/settings-threads/#rt3). The functions that own an id, and how to set one: [Unstable Period](/api/unstable-period/). An inheriting function names its source in the Numerical Stability line of its [function page](/functions/).
 
 <a id="rl7"></a>**rL7** A candle setting's `avgPeriod` enters the lookback of the CDL functions that read that setting. CDL functions carry the [metadata flag](/spec/abstract/#flags) `TA_FUNC_FLG_CANDLESTICK` (Rust `FuncFlags::CANDLESTICK`, Java `FuncFlags.CANDLESTICK`, C# `FuncFlags.Candlestick`). Only `avgPeriod` enters: a range type or a factor changes no lookback, and a candle setting changes the lookback of no function without the flag. Its bound is [rT6](/spec/settings-threads/#rt6). The model and the defaults: [Candlestick Settings](/api/candle-settings/).
 
@@ -2576,13 +2607,14 @@ Every function has a lookback call. It takes exactly the batch call's optional p
 
 ## Display shift {#display-shift}
 
-Every function has a display-shift call. It takes the lookback call's parameters followed by the index of one output, counted from 0 over every output in the batch call's output order. Its name and return type in each language: [names](/spec/#names). A parameter holder of the [Abstract API](/spec/abstract/#range-at-call) answers the same query.
+Every function has a display-shift call. It takes the lookback call's parameters followed by the index of one output, counted from 0 over every output in the batch call's output order. Its name and return type in each language: [names](/spec/#names). A parameter holder of the [Abstract API](/spec/abstract/#range-at-call) returns the same value.
 
 | Rule | Statement |
 |---|---|
-| <a id="rl9"></a>**rL9** | A display shift of `s` means a chart draws the value computed at bar `i` at bar `i + s`. It describes drawing only: every output value is written at the bar that computed it, and no value, lookback, `outBegIdx` or `outNBElement` depends on it. It depends on the optional parameters and the output index, never on a setting. |
-| <a id="rl10"></a>**rL10** | An output without the [metadata flag](/spec/abstract/#flags) `TA_OUT_DISPLAY_SHIFT` (Rust `OutputFlags::DISPLAY_SHIFT`, Java `OutputFlags.DISPLAY_SHIFT`, C# `OutputFlags.DisplayShift`) has a display shift of 0; a flagged output can report 0 for some parameters. A function carries `TA_FUNC_FLG_DISPLAY_SHIFT` (Rust `FuncFlags::DISPLAY_SHIFT`, Java `FuncFlags.DISPLAY_SHIFT`, C# `FuncFlags.DisplayShift`) exactly when at least one of its outputs carries the output flag. |
-| <a id="rl11"></a>**rL11** | The call returns its rejection signal ([per language](/spec/#failures)) exactly when the lookback call rejects the same parameters ([rL2](/spec/lookback/#rl2)) or the index names no output. Rust, Java and C# reach the same decision as C and, wherever both accept, return the same shift. |
+| <a id="rl9"></a>**rL9** | A display shift of `s` means a chart draws the value computed at bar `i` at bar `i + s`. It describes drawing only: every output value is written at the bar that computed it, and no value, lookback, `outBegIdx` or `outNBElement` depends on it. It depends only on the optional parameters and the output index. |
+| <a id="rl10"></a>**rL10** | A function carries `TA_FUNC_FLG_DISPLAY_SHIFT` (Rust `FuncFlags::DISPLAY_SHIFT`, Java `FuncFlags.DISPLAY_SHIFT`, C# `FuncFlags.DisplayShift`) exactly when at least one of its outputs carries the [metadata flag](/spec/abstract/#flags) `TA_OUT_DISPLAY_SHIFT`. Without it, you can assume that every shift is 0. |
+| <a id="rl11"></a>**rL11** | The call fails ([per language](/spec/#failures)) exactly when the lookback call rejects the same parameters ([rL2](/spec/lookback/#rl2)) or the index names no output. |
+| <a id="rl12"></a>**rL12** | No unstable period or candle setting ([rL5](/spec/lookback/#rl5)) changes a display shift. |
 
 ## Stability from metadata {#metadata}
 
@@ -2594,7 +2626,7 @@ What the [metadata](/spec/abstract/) says about a function's numerical stability
 | Path-dependent | `TA_FUNC_FLG_PATH_DEP` | `FuncFlags::PATH_DEPENDENT` | `FuncFlags.PATH_DEPENDENT` | `FuncFlags.PathDependent` |
 
 * **Depends on the MA type**: an optional parameter whose name ends in `MAType`. The Abstract API describes it as an [integer list](/spec/abstract/#provides) of the MA types.
-* **Inherits an unstable period**: no flag marks it (DEMA through EMA). The function page is the complete classification. To test one call, compare its lookback with every id at 0 and with every id set to a count above that first lookback (the `ALL` wildcard): when the two are equal, no unstable period reaches the call. An Auto level does not serve here: it can add no bar to a call it reaches.
+* **Inherits an unstable period**: no flag marks it (DEMA through EMA). The function page is the complete classification. To test one call: read its lookback with every unstable period at 0; then set them all (the `ALL` wildcard) to a count above that lookback and read it again. If the two are equal, no unstable period reaches the call. An Auto level cannot serve here: it can add no bar to a call it reaches.
 
 ---
 
@@ -2609,14 +2641,13 @@ description: >-
 
 *Part of TA-Lib's [specification](/spec/), a reference for AI-agent-driven integration.*
 
-A stream is defined as the batch call over every bar fed to it: the same values, bit for bit, and the same range ([rH1](/spec/streaming/#rh1)); a bar counted with [Advance](/spec/streaming/#rh6) enters the range only.
+A stream is defined as the batch call over every bar fed to it: the same values, bit for bit, and the same range ([rH1](/spec/streaming/#rh1)); a bar counted with [Advance](/spec/streaming/#rh6) is in the range but not in the computation.
 
 Every function streams ([rH9](/spec/streaming/#rh9)): `Open` or `OpenAndFill` once, then `Update` per closed bar and `Peek` per forming bar; `Value`, `OutRange`, `Advance` and `Clone` at any time; `Close` in C only. Calls, examples and per-language shapes: [C/C++](/api/stream/), [Rust](/api/rust/stream/), [Java](/api/java/stream/), [C#](/api/csharp/stream/). Rules use C's verbs (`TA_<N>_Open` and so on); each language's spelling is in [names](/spec/#names), and how each code reaches the caller in [failures](/spec/#failures).
 
 ## The caller must {#caller}
 
-* <a id="history"></a>**Open on at least `lookback + 1` finite bars.** A shorter, non-empty history answers `TA_INSUFFICIENT_HISTORY` ([rS8](/spec/streaming/#rs8)), the one recoverable code: send more bars rather than fix the call. A NaN or infinity inside the history is not detected ([finite inputs](/spec/inputs-outputs/#finite-inputs)).
-* <a id="rejected-bar"></a>**Answer every rejected bar.** A rejected `Update` changed nothing ([rH5](/spec/streaming/#rh5)), so the handle is now one bar behind the feed. Re-feed the bar with a corrected value, or count it with `Advance` ([rH6](/spec/streaming/#rh6)).
+* <a id="history"></a>**Open on at least `lookback + 1` finite bars.** A shorter, non-empty history returns `TA_INSUFFICIENT_HISTORY` ([rS8](/spec/streaming/#rs8)), the one recoverable code: send more bars rather than fix the call.- <a id="rejected-bar"></a>**Account for every rejected bar.** A rejected `Update` changed nothing ([rH5](/spec/streaming/#rh5)), so the handle is now one bar behind the feed. Re-feed the bar with a corrected value, or count it with `Advance` ([rH6](/spec/streaming/#rh6)).
 * <a id="ownership"></a>**In C, close every handle exactly once.** `Open`, `OpenAndFill` and `Clone` each return a handle that `Close` frees. Never open or clone into a variable that holds a live handle: a failed call sets it to NULL. Rust drops a handle; Java and C# collect it.
 * <a id="checkpoint"></a>**Keep the bars to resume.** A handle is not serializable and is valid only within the library version that opened it. To restart, reopen on the bars, then call `Advance` once for each bar the old handle counted without being fed ([rH6](/spec/streaming/#rh6)).
 * **Give each handle one writer**: [threads](/spec/settings-threads/#one-writer). **In C, change no setting while a stream is open**: [settings](/spec/settings-threads/#idle-settings).
@@ -2635,20 +2666,20 @@ For `Open` and `OpenAndFill`, the history is the first declared input and `histo
 |---|---|---|---|
 | <a id="rs1"></a>**rS1** | The history is empty (`historyLen < 1`) | `TA_OUT_OF_RANGE_START_INDEX` | |
 | <a id="rs2"></a>**rS2** | The history holds more than `TA_INDEX_MAX + 1` bars | `TA_OUT_OF_RANGE_END_INDEX` | |
-| <a id="rs3"></a>**rS3** | An optional parameter is outside its accepted values, or the parameters form a combination the function rejects ([rP2](/spec/inputs-outputs/#rp2)) | `TA_BAD_PARAM` | |
+| <a id="rs3"></a>**rS3** | As [rB3](/spec/errors/#rb3) | `TA_BAD_PARAM` | |
 | <a id="rs4"></a>**rS4** | A required argument is absent ([rB4](/spec/errors/#rb4)): an input, an output, or in C the handle out-parameter, `outBegIdx` or `outNBElement` | `TA_BAD_PARAM` | |
 | <a id="rs5"></a>**rS5** | An input's length differs from `historyLen`, or an `OpenAndFill` output holds fewer than `historyLen - lookback` values | `TA_BAD_PARAM` | C: cannot check ([input length](/spec/inputs-outputs/#input-length)) |
 | <a id="rs6"></a>**rS6** | `OpenAndFill`: an output is the buffer of an input or of another output | `TA_BAD_PARAM` | Rust: cannot alias |
 | <a id="rs7"></a>**rS7** | `OpenAndFill`: an output that is not declinable is declined ([rW5](/spec/inputs-outputs/#rw5)) | `TA_BAD_PARAM` | Rust: cannot decline |
 | <a id="rs8"></a>**rS8** | The history holds at least one bar, but fewer than [lookback](/spec/lookback/#rl1) `+ 1` | `TA_INSUFFICIENT_HISTORY` | |
 
-A loop that waits for enough history starts at one bar: an empty history is rS1.
+A loop that waits for enough history may open on one bar: a short history is rS8, an empty one rS1.
 
 <a id="rh3"></a>**rH3** `OpenAndFill` writes what `batch(0, historyLen - 1)` writes, compared as in [rH1](/spec/streaming/#rh1): `historyLen - lookback` values per output from index 0, the first for bar `lookback`, and the same range. It takes no `startIdx`. The handle it returns then updates as the one `Open` returns on the same history.
 
 ## Advancing
 
-`Update`, `Peek` and `Advance`.
+`Update` and `Peek` take a bar; `Advance` counts one that was not fed.
 
 | Rule | Condition | Code | Calls | Not checked in |
 |---|---|---|---|---|
@@ -2658,19 +2689,19 @@ A loop that waits for enough history starts at one bar: an empty history is rS1.
 | <a id="ru4"></a>**rU4** | The bar this call would count leaves the index domain: `begIdx + count > TA_INDEX_MAX` | `TA_OUT_OF_RANGE_END_INDEX` | Update, Advance | |
 | <a id="ru5"></a>**rU5** | An output that is not declinable is declined ([rW5](/spec/inputs-outputs/#rw5)) | `TA_BAD_PARAM` | Update, Peek | Rust, Java, C#: nothing to decline |
 
-* rU4 never clears: open a new handle on a shorter history. `Peek` counts no bar, so it keeps answering at the ceiling.
-* In C, a declination binds only its own call: the outputs an `Update` or `Peek` declines may differ from the opener's and from the previous call's.
+* rU4 never clears: open a new handle on a shorter history. `Peek` counts no bar, so it still succeeds at the ceiling.
+* In C, a decline applies to that call alone: the outputs an `Update` or `Peek` declines may differ from the opener's and from the previous call's.
 * An accepted bar whose output is not finite ([rW6](/spec/inputs-outputs/#rw6)) is a success: the call returns that value and the bar is counted.
 
-<a id="rh4"></a>**rH4** `Peek` never advances the stream and never changes the handle, whatever its outcome and however often it is called. Its value is bit-identical to what the next `Update` with the same bar returns.
+<a id="rh4"></a>**rH4** `Peek` never advances the stream and never changes the handle, however often it is called. Its value is bit-identical to what the next `Update` with the same bar returns.
 
 <a id="rh5"></a>**rH5** A rejected `Update` or `Peek` changes nothing: no state, no value, no range, no output variable written. A re-fed bar counts exactly once. An allocation failure ([rB8](/spec/errors/#rb8)) or an internal error ([rB9](/spec/errors/#rb9)) is outside this rule.
 
-<a id="rh6"></a>**rH6** `Advance` counts one bar the handle was not fed: the range grows by one, and that bar's output is the previous one, held. Later Updates compute over the bars fed, as if the counted bar did not exist; only the range includes it. An index output ([rW4](/spec/inputs-outputs/#rw4)) is a position among the bars fed: a bar fed after k `Advance` calls is named k below its place in `OutRange`.
+<a id="rh6"></a>**rH6** `Advance` counts one bar the handle was not fed: the range grows by one, and that bar's output is the previous one, held. Later Updates compute over the bars fed, as if the counted bar did not exist; only the range includes it. An index output ([rW4](/spec/inputs-outputs/#rw4)) is a position among the bars fed: a bar fed after k `Advance` calls has an index k less than its place in `OutRange`.
 
 ## Accessors
 
-<a id="rh7"></a>**rH7** `Value` returns the value(s) at the last counted bar, the bar the range ends on: after `Open` the last history bar's, after an accepted `Update` that bar's, after `Advance` the held value. `OutRange` is `[begIdx, begIdx + count)` in the input series' coordinates: the batch range over the same bars, Advance-counted bars included. `begIdx + count` never exceeds `TA_INDEX_MAX + 1`.
+<a id="rh7"></a>**rH7** `Value` returns the value(s) at the last counted bar, the bar the range ends on: after `Open` the last history bar's, after an accepted `Update` that bar's, after `Advance` the held value. `OutRange` is `[begIdx, begIdx + count)` in the input series' coordinates: the batch range over the same bars, Advance-counted bars included. The range stays within the index domain ([rU4](/spec/streaming/#ru4)).
 
 <a id="rh8"></a>**rH8** `Clone` is a deep, independent fork at the same bar: the same value and range, and updating either never affects the other.
 
@@ -2689,7 +2720,8 @@ url: 'https://ta-lib.org/spec/abstract/index.md'
 description: >-
   What TA-Lib's Abstract API provides in C, Rust, Java and C#: the run-time
   description of every function, the call by name through a parameter holder,
-  the codes it answers, and the catalog of every metadata flag.
+  the codes it returns, the run-time information keys, and the catalog of every
+  metadata flag.
 ---
 # Abstract API and Metadata
 
@@ -2700,10 +2732,10 @@ The Abstract API describes every function at run time and calls it by name. The 
 ## The caller must {#caller}
 
 * <a id="bind-all"></a>**Bind every input and every output before the call.** That includes an output the typed call lets a caller decline ([rW5](/spec/inputs-outputs/#rw5)). An optional parameter may stay unbound ([rA5](/spec/abstract/#ra5)).
-* <a id="range-at-call"></a>**Not take an accepted setter for an accepted value.** A setter checks the slot it names and the kind of the value. It may accept a value outside the parameter's accepted values: the call then rejects it ([rA1](/spec/abstract/#ra1)), and the holder's lookback and display shift return their rejection signal ([rL2](/spec/lookback/#rl2), [rL11](/spec/lookback/#rl11)). In C, `TA_GetLookback` and `TA_GetDisplayShift` return `TA_SUCCESS` and carry the signal in the value.
+* <a id="range-at-call"></a>**Do not assume a value a bind call accepts is valid for the call.** A bind call checks the slot it names and the kind of the value. It may accept a value outside the parameter's accepted values: the call then rejects it ([rA1](/spec/abstract/#ra1)), and the holder's lookback and display shift fail ([rL2](/spec/lookback/#rl2), [rL11](/spec/lookback/#rl11)). In C, `TA_GetLookback` and `TA_GetDisplayShift` return `TA_SUCCESS` and carry the failure in the value.
 * <a id="by-name"></a>**Identify a function by its name, never by its position.** A release that adds a function moves the ones after it, and the order of the groups differs between languages. In Rust, the number of a `FuncId` is such a position.
 * <a id="unknown-flag"></a>**Ignore a flag you do not know.** A release may add a flag ([rV3](/spec/versions/#rv3)).
-* <a id="c-buffers"></a>**In C, keep every bound buffer valid and long enough.** A C setter stores the pointer and takes no length. The buffer must stay valid until the last call on the holder, an input must reach `endIdx` ([input length](/spec/inputs-outputs/#input-length)) and an output must hold the count the call produces ([output size](/spec/inputs-outputs/#output-size)). None of it is detected.
+* <a id="c-buffers"></a>**In C, keep every bound buffer valid and long enough.** A C bind call stores the pointer and takes no length. The buffer must stay valid until the last call on the holder, an input must reach `endIdx` ([input length](/spec/inputs-outputs/#input-length)) and an output must hold the count the call produces ([output size](/spec/inputs-outputs/#output-size)). None of it is detected.
 * <a id="c-release"></a>**In C, release what the API allocated, once, with its own call.** `TA_ParamHolderFree` releases a holder, `TA_GroupTableFree` a group table and `TA_FuncTableFree` a function table. A function handle and the descriptors it leads to are static: never free them.
 
 Two more are on other pages: one thread per holder ([confine](/spec/settings-threads/#confine)), and enumerating the functions rather than hard-coding a list ([enumerate](/spec/versions/#enumerate)).
@@ -2743,7 +2775,7 @@ What a descriptor holds:
 
 In Rust, Java and C# the function descriptor also holds the descriptors of its inputs, optional parameters and outputs. In C it holds their three counts and the function's handle, and each parameter descriptor comes from its getter, by index from 0. Rust's also holds `id`, the `FuncId` that `get_func_handle` returns.
 
-A slot is one input, one optional parameter or one output. A setter names it by its position among the function's inputs, optional parameters or outputs, from 0. A price input is one input, whatever number of series it consumes. An MA-type parameter is an integer list of the MA types.
+A slot is one input, one optional parameter or one output. A bind call names it by its position among the function's inputs, optional parameters or outputs, from 0. A price input is one input, whatever number of series it consumes. An MA-type parameter is an integer list of the MA types.
 
 | Kind | C | Rust | Java | C# |
 |---|---|---|---|---|
@@ -2753,13 +2785,13 @@ A slot is one input, one optional parameter or one output. A setter names it by 
 
 ## Rules {#rules}
 
-<a id="ra1"></a>**rA1** A call through a parameter holder whose arguments are all bound and accepted by their setters is held to the [batch conditions](/spec/errors/#batch), with the same codes, and no output can be declined: an empty buffer bound to an output the typed call lets a caller decline ([rW5](/spec/inputs-outputs/#rw5)) is absent ([rB4](/spec/errors/#rb4)). The exceptions are in C. Its setters take bare pointers and no length: a bound series shorter than the range goes undetected, as in [rB5](/spec/errors/#rb5). And an absent range out-parameter answers `TA_INVALID_PARAM_HOLDER`, not [rB4](/spec/errors/#rb4)'s code.
+<a id="ra1"></a>**rA1** A call through a parameter holder whose arguments are all bound and accepted by their bind calls is held to the [batch conditions](/spec/errors/#batch), with the same codes. A holder cannot decline an output, so an empty buffer bound to any output is absent and fails ([rB4](/spec/errors/#rb4)), including one the typed call lets a caller decline ([rW5](/spec/inputs-outputs/#rw5)). The exceptions are in C. Its bind calls take bare pointers and no length, so a bound series shorter than the range goes undetected ([rB5](/spec/errors/#rb5)), and an absent range out-parameter returns `TA_INVALID_PARAM_HOLDER`, not [rB4](/spec/errors/#rb4)'s code.
 
-<a id="ra2"></a>**rA2** A rejected setter leaves the parameter holder as it found it, so a rejected re-bind cannot leave the next call to succeed, silently, over a mix of old and new arguments.
+<a id="ra2"></a>**rA2** A failed bind call leaves the parameter holder as it found it, so a re-bind that fails cannot let the next call succeed silently over a mix of old and new arguments.
 
-<a id="ra3"></a>**rA3** A misuse of a parameter holder (an unbound or mistyped argument, a setter index that names no slot, a holder the Abstract API did not make) answers `TA_BAD_PARAM` or one of the [codes below](/spec/abstract/#codes), and so does a misuse of C's lookups and tables. Which one is not specified, and a release may make it more specific. When a call is refused for the state of its holder, the function did not run and the code is one of the codes below, so it cannot be mistaken for the function's own. In Java and C# the carrier is a `TALibArgumentException` ([failures](/spec/#failures)).
+<a id="ra3"></a>**rA3** A misuse of a parameter holder (an unbound or mistyped argument, a bind index that names no slot, a holder the Abstract API did not make), or of C's lookups and tables, returns `TA_BAD_PARAM` or a code below, unspecified which; a release may make it more specific. A call that fails for the state of its holder did not run, and its code is one of the [codes below](/spec/abstract/#codes), so it cannot be mistaken for the function's own result. In Java and C# the carrier is a `TALibArgumentException` ([failures](/spec/#failures)).
 
-<a id="ra4"></a>**rA4** A lookup of a function by name ignores the case of ASCII letters. An unknown name answers `TA_FUNC_NOT_FOUND` in C and from Rust's `get_func_handle_rc`, `None` from Rust's `get_func_handle`, `null` in Java, and in C# a `KeyNotFoundException` from the indexer and `false` from `TryGet`. An empty name answers `TA_BAD_PARAM` in C and from `get_func_handle_rc`, as does an absent one in C.
+<a id="ra4"></a>**rA4** A lookup of a function by name ignores the case of ASCII letters. An unknown name returns `TA_FUNC_NOT_FOUND` in C and from Rust's `get_func_handle_rc`, `None` from Rust's `get_func_handle`, `null` in Java, and in C# a `KeyNotFoundException` from the indexer and `false` from `TryGet`. An empty name returns `TA_BAD_PARAM` in C and from `get_func_handle_rc`, as does an absent one in C.
 
 <a id="ra5"></a>**rA5** An optional parameter left unbound takes the function's documented default, as the default sentinel does in the typed call ([rP3](/spec/inputs-outputs/#rp3)).
 
@@ -2769,7 +2801,7 @@ A slot is one input, one optional parameter or one output. A setter names it by 
 
 ## Return codes {#codes}
 
-Besides the codes a function call answers ([return codes](/spec/errors/#return-codes)), the Abstract API can answer the codes below. No batch, lookback or stream call returns one.
+Besides the codes a function call returns ([return codes](/spec/errors/#return-codes)), the Abstract API can return the codes below. No batch, lookback or stream call returns one.
 
 | Code | `TA_RetCode` | Meaning |
 |---:|---|---|
@@ -2777,10 +2809,22 @@ Besides the codes a function call answers ([return codes](/spec/errors/#return-c
 | 5 | `TA_FUNC_NOT_FOUND` | No function has that name. |
 | 6 | `TA_INVALID_HANDLE` | Not a function handle the Abstract API gave out. |
 | 7 | `TA_INVALID_PARAM_HOLDER` | Not a parameter holder it made, or `TA_CallFunc` given no holder or no range out-parameter. |
-| 8 | `TA_INVALID_PARAM_HOLDER_TYPE` | A setter given a value of another kind than the slot it names. |
+| 8 | `TA_INVALID_PARAM_HOLDER_TYPE` | A bind call given a value of another kind than the slot it names. |
 | 10 | `TA_INPUT_NOT_ALL_INITIALIZE` | A call with an input left unbound. |
 | 11 | `TA_OUTPUT_NOT_ALL_INITIALIZE` | A call with an output left unbound. |
 | 15 | `TA_BAD_OBJECT` | Not a table it made, or a table given to the other kind's free call. |
+
+## Run-time information {#runtime-info}
+
+One call answers a key with an integer that describes the library in this process: C's `TA_GetRuntimeInfo` (`ta_common.h`), Rust's `get_runtime_info`, Java's `RuntimeInfo.get`, C#'s `RuntimeInfo.Get` and `TryGet`. It reports state and promises no value and no speed.
+
+Every key is answered in the four languages, and the answer can differ with the language and the platform. An unknown key returns `TA_BAD_PARAM` ([failures](/spec/#failures)); C#'s `TryGet` returns `false`. A release may add a key ([rV3](/spec/versions/#rv3)).
+
+| Key | Meaning |
+|---|---|
+| `vmath.transcendental` | The vectorized math library behind the batch call of functions such as `SIN`, `EXP` and `LN`: 0 none, 1 Apple's vForce. |
+| `count.initialize` | How many times `TA_Initialize` was called in this process. 0 in Rust, Java and C#, which have no such call. |
+| `count.shutdown` | How many times `TA_Shutdown` was called in this process. 0 in Rust, Java and C#. |
 
 ## Flags {#flags}
 
@@ -2798,7 +2842,7 @@ What a function or an output supports.
 
 ### Price components {#flags-price}
 
-The series a price input consumes. The price setter requires each of them and ignores the others. C# also has a `SetPriceInput` that binds one series at a time: a consumed series left unbound is then refused at the call ([rA3](/spec/abstract/#ra3)).
+The series a price input consumes. The price bind call requires each of them and ignores the others. C# also has a `SetPriceInput` that binds one series at a time: a consumed series left unbound then fails the call ([rA3](/spec/abstract/#ra3)).
 
 | C | Rust | Java | C# | Meaning |
 |---|---|---|---|---|
@@ -2866,7 +2910,7 @@ description: >-
 
 *Part of TA-Lib's [specification](/spec/), a reference for AI-agent-driven integration.*
 
-C keeps its settings (unstable periods and candle settings) process-wide; Rust, Java and C# keep them in an immutable `Core`. What each setting means: [Unstable Period](/api/unstable-period/), [Candlestick Settings](/api/candle-settings/) (with the defaults). Names per language: [names](/spec/#names). How a refusal reaches the caller: [failures](/spec/#failures).
+C keeps its settings (unstable periods and candle settings) process-wide; Rust, Java and C# keep them in an immutable `Core`. What each setting means: [Unstable Period](/api/unstable-period/), [Candlestick Settings](/api/candle-settings/) (with the defaults). Names per language: [names](/spec/#names). How a failure reaches the caller: [failures](/spec/#failures).
 
 ## The caller must {#caller}
 
@@ -2887,13 +2931,13 @@ The rows hold for every setter and getter in all four languages, except where a 
 
 | Rule | Condition | Language notes |
 |---|---|---|
-| <a id="rt2"></a>**rT2** | A setter refuses a target outside its enum, and a setter that takes a single target refuses the set-all wildcard. | Rust and Java enums cannot hold an out-of-domain target, so only the wildcard is refused there. |
-| <a id="rt3"></a>**rT3** | An unstable period is a count in `[0, TA_INDEX_MAX]` or an Auto level: `TA_UNSTABLE_AUTO_PREC_4` or `TA_UNSTABLE_AUTO_PREC_8` ([constants](/spec/#names)). | C takes an `unsigned int`, so a negative value arrives above every level and is refused. Rust's `u32` cannot hold one. |
-| <a id="rt4"></a>**rT4** | Reading a setting for the set-all wildcard is refused. | C's `TA_GetUnstablePeriod` cannot refuse: it returns 0, which is also a legal period. The getters on `Core` refuse ([failures](/spec/#failures)): Rust `get_unstable_period`, Java `unstablePeriod`, C# `UnstablePeriod` and `CandleSettings`. |
+| <a id="rt2"></a>**rT2** | A setter fails on a target outside its enum, and on the set-all wildcard when it takes a single target. | Rust and Java enums cannot hold an out-of-domain target, so only the wildcard fails there. |
+| <a id="rt3"></a>**rT3** | An unstable period is a count in `[0, TA_INDEX_MAX]` or an Auto level: `TA_UNSTABLE_AUTO_PREC_4` or `TA_UNSTABLE_AUTO_PREC_8` ([constants](/spec/#names)). | C takes an `unsigned int`, so a negative value arrives above every level and fails. Rust's `u32` cannot hold one. |
+| <a id="rt4"></a>**rT4** | Reading a setting for the set-all wildcard fails. | C's `TA_GetUnstablePeriod` cannot fail: for the wildcard or an out-of-range id it returns 0, which is also a legal period. The getters on `Core` fail ([failures](/spec/#failures)): Rust `get_unstable_period`, Java `unstablePeriod`, C# `UnstablePeriod` and `CandleSettings`. |
 | <a id="rt5"></a>**rT5** | A candle setting's range type is a `TA_RangeType` member. | Checked in C and C#. Rust and Java cannot express another value. |
 | <a id="rt6"></a>**rT6** | A candle setting's `avgPeriod` is in `[0, TA_INDEX_MAX]`. | |
 | <a id="rt7"></a>**rT7** | A candle setting's `factor` is finite and not negative. | |
-| <a id="rt8"></a>**rT8** | A refused call leaves every setting as it was, a wildcard call included. | Rust's builder latches the first refusal until `build()`: a later valid setter or `restore_candle_default` does not clear it, and `to_builder()` starts with none latched. |
+| <a id="rt8"></a>**rT8** | A failed call leaves every setting as it was, a wildcard call included. | Rust's builder latches the first failure until `build()`: a later valid setter or `restore_candle_default` does not clear it, and `to_builder()` starts with none latched. |
 
 <a id="rt9"></a>**rT9** A wildcard is legal where a call documents one. `TA_FUNC_UNST_ALL` (`FuncUnstId::ALL`, `FuncUnstId.ALL`) sets every unstable period at once. `TA_AllCandleSettings` restores every candle setting's default through `TA_RestoreCandleDefaultSettings` and the builders' restore call (`restore_candle_default`, `restoreCandleDefault`, `RestoreCandleDefault`). Elsewhere rT2 or rT4 applies.
 
@@ -2913,7 +2957,7 @@ The rows hold for every setter and getter in all four languages, except where a 
 url: 'https://ta-lib.org/spec/errors/index.md'
 description: >-
   What a rejected TA-Lib call reports: the return codes a function call can
-  answer and the batch call's conditions, for the C, Rust, Java and C# APIs.
+  return and the batch call's conditions, for the C, Rust, Java and C# APIs.
 ---
 # Errors
 
@@ -2931,19 +2975,19 @@ What a rejected call reports, in C's spelling. How each code reaches a Rust, Jav
 
 ## Return codes {#return-codes}
 
-The codes a batch, lookback or stream call can answer:
+The codes a batch, lookback or stream call can return:
 
 | Code | `TA_RetCode` | Returned by |
 |---:|---|---|
 | 0 | `TA_SUCCESS` | Every call that succeeds, including a batch range that ends before the lookback (count 0, [rW2](/spec/inputs-outputs/#rw2)). |
-| 2 | `TA_BAD_PARAM` | A rejected parameter, an absent or too-short buffer, one buffer used twice, a non-finite bar: most [batch](/spec/errors/#batch), [opening](/spec/streaming/#opening) and [advancing](/spec/streaming/#advancing) conditions; Rust's lookback ([rL2](/spec/lookback/#rl2)); the settings refusals in C and Rust ([rT2](/spec/settings-threads/#rt2)). |
+| 2 | `TA_BAD_PARAM` | A rejected parameter, an absent or too-short buffer, one buffer used twice, a non-finite bar: most [batch](/spec/errors/#batch), [opening](/spec/streaming/#opening) and [advancing](/spec/streaming/#advancing) conditions; Rust's lookback ([rL2](/spec/lookback/#rl2)); the failed settings calls in C and Rust ([rT2](/spec/settings-threads/#rt2)). |
 | 3 | `TA_ALLOC_ERR` | A C call that allocates, when the allocation fails ([rB8](/spec/errors/#rb8)). |
 | 12 | `TA_OUT_OF_RANGE_START_INDEX` | rB1, rS1. |
 | 13 | `TA_OUT_OF_RANGE_END_INDEX` | rB2, rS2, rU4. |
 | 17 | `TA_INSUFFICIENT_HISTORY` | Stream openers only ([rS8](/spec/streaming/#rs8)). A batch call never returns it. |
 | 5000 to 5999 | `TA_INTERNAL_ERROR` + id | [rB9](/spec/errors/#rb9). |
 
-The Abstract API answers codes of its own: [Abstract API and Metadata](/spec/abstract/#codes). The remaining members of `TA_RetCode`, declared in `ta_defs.h`, are returned by nothing.
+The Abstract API returns codes of its own: [Abstract API and Metadata](/spec/abstract/#codes). The remaining members of `TA_RetCode`, declared in `ta_defs.h`, are returned by nothing.
 
 ## General rules
 
@@ -2969,9 +3013,7 @@ A batch call accepts `0 <= startIdx <= endIdx <= TA_INDEX_MAX` ([`TA_INDEX_MAX`]
 | <a id="rb8"></a>**rB8** | A memory allocation failed. | `TA_ALLOC_ERR` (C only) | none |
 | <a id="rb9"></a>**rB9** | The library found an inconsistency in its own state. | `TA_INTERNAL_ERROR` + id | none |
 
-**rB4.** An input or output is absent when it is `NULL` in C, `null` or empty in Java, and empty in Rust and C#, where a `null` array becomes an empty span. It is refused whatever the call would produce, a range that produces no values ([rW2](/spec/inputs-outputs/#rw2)) included. The one exception is how C# declines an output ([rW5](/spec/inputs-outputs/#rw5)): with an empty span.
-
-**rB6.** Identity only: an input reused whole as an output is legal ([rW7](/spec/inputs-outputs/#rw7)), and partial overlap is the caller's to avoid ([no overlap](/spec/inputs-outputs/#no-overlap)). One buffer passed as two outputs is rejected.
+**rB4.** An input or output is absent when it is `NULL` in C, `null` or an empty array in Java, an empty slice in Rust, and an empty span in C# (a `null` array becomes one). An absent one fails whatever the call would produce, even a range that produces no values ([rW2](/spec/inputs-outputs/#rw2)). The exception is declining a declinable output with its own spelling ([rW5](/spec/inputs-outputs/#rw5)).
 
 **rB8.** Rust aborts the process, and Java and C# raise their runtime's out-of-memory error.
 
@@ -2981,11 +3023,11 @@ A batch call accepts `0 <= startIdx <= endIdx <= TA_INDEX_MAX` ([`TA_INDEX_MAX`]
 
 | Call | Rules |
 |---|---|
-| Lookback, display shift | [rL2](/spec/lookback/#rl2) rejection signal, [rL3](/spec/lookback/#rl3) agrees with batch, [rL11](/spec/lookback/#rl11) display shift |
+| Lookback, display shift | [rL2](/spec/lookback/#rl2) fails, [rL3](/spec/lookback/#rl3) agrees with batch, [rL11](/spec/lookback/#rl11) fails |
 | Stream opening | [rS1](/spec/streaming/#rs1) empty history, [rS2](/spec/streaming/#rs2) too long, [rS3](/spec/streaming/#rs3) parameter, [rS4](/spec/streaming/#rs4) absent, [rS5](/spec/streaming/#rs5) length, [rS6](/spec/streaming/#rs6) one buffer twice, [rS7](/spec/streaming/#rs7) declined output, [rS8](/spec/streaming/#rs8) short history |
 | Stream advancing | [rU1](/spec/streaming/#ru1) absent handle, [rU2](/spec/streaming/#ru2) absent output, [rU3](/spec/streaming/#ru3) non-finite bar, [rU4](/spec/streaming/#ru4) index ceiling, [rU5](/spec/streaming/#ru5) declined output |
-| Abstract API | [rA1](/spec/abstract/#ra1) batch conditions through a holder, [rA2](/spec/abstract/#ra2) rejected setter, [rA3](/spec/abstract/#ra3) misuse of a holder, [rA4](/spec/abstract/#ra4) unknown name |
-| Settings | [rT2](/spec/settings-threads/#rt2) target, [rT3](/spec/settings-threads/#rt3) unstable period, [rT4](/spec/settings-threads/#rt4) reading, [rT5](/spec/settings-threads/#rt5) range type, [rT6](/spec/settings-threads/#rt6) average, [rT7](/spec/settings-threads/#rt7) factor, [rT8](/spec/settings-threads/#rt8) no change on refusal |
+| Abstract API | [rA1](/spec/abstract/#ra1) batch conditions through a holder, [rA2](/spec/abstract/#ra2) failed bind call, [rA3](/spec/abstract/#ra3) misuse of a holder, [rA4](/spec/abstract/#ra4) unknown name |
+| Settings | [rT2](/spec/settings-threads/#rt2) target, [rT3](/spec/settings-threads/#rt3) unstable period, [rT4](/spec/settings-threads/#rt4) reading, [rT5](/spec/settings-threads/#rt5) range type, [rT6](/spec/settings-threads/#rt6) average, [rT7](/spec/settings-threads/#rt7) factor, [rT8](/spec/settings-threads/#rt8) no change on failure |
 
 ---
 
@@ -3014,12 +3056,12 @@ Where the same call gives the same bits, and what a release keeps and may add.
   | no extended-precision intermediates | on 32-bit x86, `-msse2 -mfpmath=sse` | only CMake's i386 cross-build toolchain, `cmake/toolchain-linux-i386.cmake`; a native 32-bit x86 build does not pass it, so add it yourself |
 
   Under MSVC or clang-cl, CMake passes no floating-point option; no condition is stated for them, and rD1 and rD2 are not promised for C built with them.
-* <a id="enumerate"></a>**Enumerate, never hard-code a list.** A release may add functions, MA types, unstable-period ids, candle settings, return codes and metadata flags ([rV3](/spec/versions/#rv3)). Enumerate functions through the [Abstract API](/spec/abstract/#provides), bound an MA-type value with the enum your code was built with ([rP2](/spec/inputs-outputs/#rp2)), give every `switch` or `match` over a TA-Lib enum a default branch, and ignore a metadata flag you do not know ([unknown flag](/spec/abstract/#unknown-flag)).
+* <a id="enumerate"></a>**Enumerate, never hard-code a list.** A release may add functions, MA types, unstable-period ids, candle settings, return codes, metadata flags and run-time information keys ([rV3](/spec/versions/#rv3)). Enumerate functions through the [Abstract API](/spec/abstract/#provides), bound an MA-type value with the enum your code was built with ([rP2](/spec/inputs-outputs/#rp2)), give every `switch` or `match` over a TA-Lib enum a default branch, and ignore a metadata flag you do not know ([unknown flag](/spec/abstract/#unknown-flag)).
 * <a id="pin"></a>**Validate against the release you ship.** No rule covers output values from one release to the next, nor API compatibility of the Rust, Java and C# packages between releases beyond rV2 and rV3. Which versions and packages exist: [Install](/install/).
 
 ## Determinism {#determinism}
 
-On this page, **bit-identical** means the same return code, the same output range, and every output element with the same bits, except that a NaN matches any NaN: no math library specifies a NaN's payload. **The same call** means the same function, input values, `startIdx` and `endIdx`, optional parameters and settings.
+In this spec, **bit-identical** means the same return code, the same output range, and every output element with the same bits, except that a NaN matches any NaN: no math library specifies a NaN's payload. **The same call** means the same function, input values, `startIdx` and `endIdx`, optional parameters and settings.
 
 <a id="rd1"></a>**rD1** On one machine, C and Rust are bit-identical for every call that evaluates no transcendental function. A call that evaluates one may differ in the last bits ([transcendental functions](/spec/versions/#transcendental)).
 
@@ -3052,7 +3094,7 @@ Each release is checked on every supported platform against the regression suite
 
 ## Releases {#releases}
 
-<a id="rv1"></a>**rV1** Within one ABI generation N (the N of the soname `libta-lib.so.N`; the table below shows it on each platform), no function or callback signature, struct layout, typedef, enum value or `TA_` constant that a release shipped in the installed C headers is removed or changed, except that `TA_MATYPE_MAX` and `TA_FUNC_UNST_COUNT` follow their enums ([rV3](/spec/versions/#rv3)). A release that removes or changes one starts a new N; additions keep it. Deprecated names are part of that surface. rV1 covers declarations, not values. `TA_LIB_SOURCES_DIGEST` is outside it; it changes whenever the sources do. Rust, Java and C# have no ABI generation, and rV1 does not apply to them.
+<a id="rv1"></a>**rV1** Within one ABI generation N (the N of `libta-lib.so.N`; the table below shows it per platform), no function or callback signature, struct layout, typedef, enum value or `TA_` constant that a release shipped in the installed C headers is removed or changed, except the counts that grow with their enums ([rV3](/spec/versions/#rv3)). Deprecated names are included. A release that removes or changes one starts a new N; additions keep it. rV1 covers declarations, not values, and not `TA_LIB_SOURCES_DIGEST`, which changes whenever the sources do. Rust, Java and C# have no ABI generation, so rV1 does not apply to them.
 
 | Platform | Carrier | A program built against an earlier release with the same N |
 |---|---|---|
@@ -3060,9 +3102,9 @@ Each release is checked on every supported platform against the regression suite
 | macOS | install name `libta-lib.N.dylib` | links and runs against a later one without rebuilding |
 | Windows | none: the DLL's name carries no N (`ta-lib.dll` under MSVC) | gets no signal at link or load time when N changes; rebuild against the headers of the DLL you ship |
 
-<a id="rv2"></a>**rV2** No member of `RetCode`, `MAType`, `FuncUnstId`, `RangeType` or `CandleSettingType` is renumbered, in any language. `TA_AllCandleSettings` is pinned at 11 and `TA_FUNC_UNST_ALL` at 65535; neither tracks the number of members. A Rust, Java or C# enum may omit C members; each member it has carries C's number. Reading the number: for `RetCode`, see the [hub](/spec/#failures); for the other enums, Rust `as i32`, Java `value()` on `FuncUnstId` and `ordinal()` on `MAType`, `RangeType` and `CandleSettingType`, C# an `(int)` cast.
+<a id="rv2"></a>**rV2** No member of `RetCode`, `MAType`, `FuncUnstId`, `RangeType` or `CandleSettingType` is renumbered, in any language. `TA_AllCandleSettings` is pinned at 11 and `TA_FUNC_UNST_ALL` at 65535; neither tracks the number of members. A Rust, Java or C# enum may omit C members; each member it has carries C's number. Reading the number: for `RetCode`, see the [hub](/spec/#failures); for the other enums, Rust `as i32`, Java `value()` on `FuncUnstId` and `ordinal()` on `MAType`, `RangeType` and `CandleSettingType`, valid while the enum lists every member in order; C# an `(int)` cast.
 
-<a id="rv3"></a>**rV3** A release may add functions, MA types, unstable-period ids, candle settings, return codes and [metadata flags](/spec/abstract/#flags), and adding one starts no new N. `TA_MATYPE_MAX` and `TA_FUNC_UNST_COUNT` grow when a member is appended to their enum. Rust marks `RetCode`, `FuncUnstId`, `MAType`, `RangeType` and `CandleSettingType` `#[non_exhaustive]`, so a `match` on one needs a wildcard arm.
+<a id="rv3"></a>**rV3** A release may add functions, MA types, unstable-period ids, candle settings, return codes, [metadata flags](/spec/abstract/#flags) and [run-time information keys](/spec/abstract/#runtime-info), and adding one starts no new N. `TA_MATYPE_MAX` and `TA_FUNC_UNST_COUNT` grow when a member is appended to their enum. Rust marks `RetCode`, `FuncUnstId`, `MAType`, `RangeType` and `CandleSettingType` `#[non_exhaustive]`, so a `match` on one needs a wildcard arm.
 
 ---
 
@@ -3343,8 +3385,8 @@ All technical-analysis functions, grouped by category. Each page documents the f
 url: 'https://ta-lib.org/index.md'
 description: >-
   Open-source technical analysis library: 200+ indicators (ADX, MACD, RSI),
-  candlestick patterns. Native C/C++, Java, C# and Rust, plus Python and R
-  wrappers.
+  candlestick patterns, batch and streaming. Native C/C++, Java, C# and Rust,
+  plus Python and R wrappers.
 ---
 # TA-Lib
 
@@ -3358,11 +3400,104 @@ description: >-
 
 * 200+ indicators such as ADX, MACD, RSI, Stochastic, Bollinger Bands etc... [See complete list...](/functions/)
 * Candlestick patterns recognition
-* Native implementation in [C/C++](/api/), [Java](/api/java/), [C#](/api/csharp/) and [Rust](/api/rust/).
+* Batch and streaming API for every function: compute a whole array, or update one bar at a time without recomputing the history.
+* Native implementation in [C/C++](/api/), [Java](/api/java/), [C#](/api/csharp/) and [Rust](/api/rust/). The Java, C# and Rust ones do not need the C library.
+* Made for integration and glue-code friendly. Function metadata drives your UI, parameter range, automation and generated bindings; the [Abstract API](/api/abstract/) calls any function by name.
 * Wrappers for Python, R, and [more](/install/#wrappers).
 * Open-Source (BSD License). Can be freely integrated in your own open-source or commercial applications.
 
 TA-Lib implements standard technical analysis algorithms used across the industry — stable, well-tested, and production-proven.
+
+## Example
+
+A 30-bar simple moving average, over an array and then on a live feed.
+
+
+
+::: tabs#lang
+
+@tab C/C++
+
+```c
+#include <ta_libc.h>
+
+TA_Initialize();
+
+/* Batch: out[0] is the value at bar outBegIdx. */
+int outBegIdx, outNBElement;
+TA_SMA( 0, n - 1, close, 30, &outBegIdx, &outNBElement, out );
+
+/* Streaming: open on history, then one call per bar. */
+TA_SMA_Stream *s;
+double sma;
+TA_SMA_Open( &s, close, n, 30, &sma );
+TA_SMA_Update( s, newClose, &sma );     /* a bar closed */
+TA_SMA_Peek( s, formingClose, &sma );   /* bar still forming; state unchanged */
+TA_SMA_Close( s );
+```
+
+[API](/api/) · [Streaming](/api/stream/)
+
+@tab Rust
+
+```rust
+use ta_lib::Core;
+
+let core = Core::new();
+
+// Batch: out[0] is the value at bar range.beg_idx.
+let mut out = vec![0.0; close.len()];
+let range = core.sma(0, close.len() - 1, &close, 30, &mut out)?;
+
+// Streaming: open on history, then one call per bar.
+let (mut s, last) = core.sma_open(&close, 30)?;
+let v = s.update(new_close)?;        // a bar closed
+let p = s.peek(forming_close)?;      // bar still forming; state unchanged
+```
+
+[API](/api/rust/) · [Streaming](/api/rust/stream/)
+
+@tab Java
+
+```java
+import io.github.talib.Core;
+import io.github.talib.OutRange;
+
+Core core = Core.DEFAULT;
+
+// Batch: out[0] is the value at bar r.begIdx().
+double[] out = new double[close.length];
+OutRange r = core.sma(0, close.length - 1, close, 30, out);
+
+// Streaming: open on history, then one call per bar.
+Core.SmaStream s = core.smaOpen(close, 30);
+double v = s.update(newClose);       // a bar closed
+double p = s.peek(formingClose);     // bar still forming; state unchanged
+```
+
+[API](/api/java/) · [Streaming](/api/java/stream/)
+
+@tab C#
+
+```csharp
+using TALib;
+
+var core = Core.Default;
+
+// Batch: outReal[0] is the value at bar r.BegIdx.
+var outReal = new double[close.Length];
+OutRange r = core.Sma(0, close.Length - 1, close, 30, outReal);
+
+// Streaming: open on history, then one call per bar.
+Core.SmaStream s = core.SmaOpen(close, 30);
+double v = s.Update(newClose);       // a bar closed
+double p = s.Peek(formingClose);     // bar still forming; state unchanged
+```
+
+[API](/api/csharp/) · [Streaming](/api/csharp/stream/)
+
+:::
+
 
 ---
 
@@ -3593,8 +3728,9 @@ If this page and the repo disagree, the repo wins; it is versioned with the code
 ---
 url: 'https://ta-lib.org/faq/index.md'
 description: >-
-  Whether TA-Lib is still maintained (yes, actively again since 2025) and where
-  to get support: Discord, GitHub issues and the wrapper communities.
+  Whether TA-Lib is still maintained (yes, actively again since 2025), whether
+  it works on a live feed, whether the Rust, Java and C# libraries need the C
+  library, and where to get support.
 ---
 # FAQ
 
@@ -3605,6 +3741,18 @@ Yes — and more actively than it has been in years!
 Development slowed to a near-hibernation between 2014 and 2024. That changed in 2025: packaging was modernized with automated CI/CD releases, and new feature development is underway — including a native Rust implementation, a streaming API, and more.
 
 The classic C library is as reliable as ever, and the project is once again moving forward.
+
+**Does TA-Lib work on a live feed?**
+
+Yes. Every function has a streaming form: open it on the history, then update it once per bar, without recomputing the history. See the streaming page for [C/C++](/api/stream/), [Rust](/api/rust/stream/), [Java](/api/java/stream/) or [C#](/api/csharp/stream/).
+
+**Can the same code serve a backtest and live trading?**
+
+Yes. A stream fed bar by bar returns the values the batch function returns over the same bars; the [specification](/spec/streaming/) lists the exceptions.
+
+**Do the Rust, Java and C# libraries need the C library?**
+
+No. Each is a native implementation in its own language, with no binding to C.
 
 **How to get support?**
 

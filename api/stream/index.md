@@ -7,7 +7,9 @@ description: >-
 ---
 # C/C++ Streaming API
 
-The **streaming API** is built for live feeds: open a stream once, then feed it one bar at a time. The stream carries its state from bar to bar, so a new bar never costs a pass over the history: most indicators do constant work per bar, and the ones that work over their window, such as AVGDEV, CCI, MEDIAN and the rolling extremes, take time at most proportional to the window's length. Every value is **bit-identical** to what the [batch function](/api/) (`TA_SMA`, `TA_RSI`, …) would return by recomputing over the whole array ([exact rule](/spec/streaming/#rh1)). To compute only the newest bar, use a stream: the batch functions are built for arrays, not for a call over one bar.
+The **streaming API** is built for live feeds: open a stream once, then feed it one bar at a time. The stream carries its state from bar to bar, so a new bar never costs a pass over the history.
+
+Every value is **bit-identical** to what the [batch function](/api/) would return by recomputing over the whole array (see [detailed specs](/spec/streaming/#rh1) for a few exceptions).
 
 Every TA function gets these calls:
 
@@ -44,6 +46,22 @@ printf( "SMA = %f\n", sma );
 TA_SMA_Peek( s, formingClose, &sma );   /* state left unchanged */
 
 TA_SMA_Close( s );
+```
+
+### From C++
+
+The header is C++-ready. A `std::unique_ptr` can own the stream:
+
+```cpp
+struct SmaClose { void operator()( TA_SMA_Stream *s ) const { TA_SMA_Close( s ); } };
+
+std::unique_ptr<TA_SMA_Stream, SmaClose> sma;
+TA_SMA_Stream *raw;
+double value;
+if( TA_SMA_Open( &raw, history.data(), (int)history.size(), 30, &value ) == TA_SUCCESS )
+    sma.reset( raw );
+
+TA_SMA_Update( sma.get(), newClose, &value );
 ```
 
 ## Rules

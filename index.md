@@ -2,8 +2,8 @@
 url: 'https://ta-lib.org/index.md'
 description: >-
   Open-source technical analysis library: 200+ indicators (ADX, MACD, RSI),
-  candlestick patterns. Native C/C++, Java, C# and Rust, plus Python and R
-  wrappers.
+  candlestick patterns, batch and streaming. Native C/C++, Java, C# and Rust,
+  plus Python and R wrappers.
 ---
 # TA-Lib
 
@@ -17,8 +17,101 @@ description: >-
 
 * 200+ indicators such as ADX, MACD, RSI, Stochastic, Bollinger Bands etc... [See complete list...](/functions/)
 * Candlestick patterns recognition
-* Native implementation in [C/C++](/api/), [Java](/api/java/), [C#](/api/csharp/) and [Rust](/api/rust/).
+* Batch and streaming API for every function: compute a whole array, or update one bar at a time without recomputing the history.
+* Native implementation in [C/C++](/api/), [Java](/api/java/), [C#](/api/csharp/) and [Rust](/api/rust/). The Java, C# and Rust ones do not need the C library.
+* Made for integration and glue-code friendly. Function metadata drives your UI, parameter range, automation and generated bindings; the [Abstract API](/api/abstract/) calls any function by name.
 * Wrappers for Python, R, and [more](/install/#wrappers).
 * Open-Source (BSD License). Can be freely integrated in your own open-source or commercial applications.
 
 TA-Lib implements standard technical analysis algorithms used across the industry — stable, well-tested, and production-proven.
+
+## Example
+
+A 30-bar simple moving average, over an array and then on a live feed.
+
+
+
+::: tabs#lang
+
+@tab C/C++
+
+```c
+#include <ta_libc.h>
+
+TA_Initialize();
+
+/* Batch: out[0] is the value at bar outBegIdx. */
+int outBegIdx, outNBElement;
+TA_SMA( 0, n - 1, close, 30, &outBegIdx, &outNBElement, out );
+
+/* Streaming: open on history, then one call per bar. */
+TA_SMA_Stream *s;
+double sma;
+TA_SMA_Open( &s, close, n, 30, &sma );
+TA_SMA_Update( s, newClose, &sma );     /* a bar closed */
+TA_SMA_Peek( s, formingClose, &sma );   /* bar still forming; state unchanged */
+TA_SMA_Close( s );
+```
+
+[API](/api/) · [Streaming](/api/stream/)
+
+@tab Rust
+
+```rust
+use ta_lib::Core;
+
+let core = Core::new();
+
+// Batch: out[0] is the value at bar range.beg_idx.
+let mut out = vec![0.0; close.len()];
+let range = core.sma(0, close.len() - 1, &close, 30, &mut out)?;
+
+// Streaming: open on history, then one call per bar.
+let (mut s, last) = core.sma_open(&close, 30)?;
+let v = s.update(new_close)?;        // a bar closed
+let p = s.peek(forming_close)?;      // bar still forming; state unchanged
+```
+
+[API](/api/rust/) · [Streaming](/api/rust/stream/)
+
+@tab Java
+
+```java
+import io.github.talib.Core;
+import io.github.talib.OutRange;
+
+Core core = Core.DEFAULT;
+
+// Batch: out[0] is the value at bar r.begIdx().
+double[] out = new double[close.length];
+OutRange r = core.sma(0, close.length - 1, close, 30, out);
+
+// Streaming: open on history, then one call per bar.
+Core.SmaStream s = core.smaOpen(close, 30);
+double v = s.update(newClose);       // a bar closed
+double p = s.peek(formingClose);     // bar still forming; state unchanged
+```
+
+[API](/api/java/) · [Streaming](/api/java/stream/)
+
+@tab C#
+
+```csharp
+using TALib;
+
+var core = Core.Default;
+
+// Batch: outReal[0] is the value at bar r.BegIdx.
+var outReal = new double[close.Length];
+OutRange r = core.Sma(0, close.Length - 1, close, 30, outReal);
+
+// Streaming: open on history, then one call per bar.
+Core.SmaStream s = core.SmaOpen(close, 30);
+double v = s.Update(newClose);       // a bar closed
+double p = s.Peek(formingClose);     // bar still forming; state unchanged
+```
+
+[API](/api/csharp/) · [Streaming](/api/csharp/stream/)
+
+:::
+

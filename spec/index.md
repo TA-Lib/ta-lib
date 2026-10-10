@@ -19,7 +19,7 @@ The rules cover the four native APIs (C, Rust, Java, C#). Each rule has one home
 * A wrapper keeps its own conventions. ta-lib-python aligns outputs to the input and fills the warm-up with NaN; the native APIs do not ([rW3](/spec/inputs-outputs/#rw3)).
 * Published packages and their versions: [Install](/install/).
 * Owned by other pages: [Unstable Period](/api/unstable-period/), [Candlestick Settings](/api/candle-settings/) (model and defaults), streaming in [C](/api/stream/), [Rust](/api/rust/stream/), [Java](/api/java/stream/) and [C#](/api/csharp/stream/), [Numerical Stability](/functions/stability), and the [function pages](/functions/): inputs, outputs in order, parameters (type, default, accepted values), stability category, flags.
-* Every page except the per-function pages in one file: [/llms-full.txt](/llms-full.txt), whose [function index](/functions/) lists and links each function's page; [/llms.txt](/llms.txt) indexes them all. Each page has a Markdown twin, `/spec/index.md` for this one.
+* The pages other than the per-function pages are in [/llms-full.txt](/llms-full.txt); its [function index](/functions/) links each function page. [/llms.txt](/llms.txt) indexes every page. Each page has a Markdown twin; this page's is `/spec/index.md`.
 
 ## Rule pages {#reading}
 
@@ -30,14 +30,14 @@ In the order a caller meets them:
 | [Batch Inputs and Outputs](/spec/inputs-outputs/) | what a call takes, what a successful call writes, pattern outputs, computing in place | `rP` parameters, `rW` writes |
 | [Lookback and Shift](/spec/lookback/) | lookback call, what enters it, display shift, stability from metadata | `rL` lookback |
 | [Streaming](/spec/streaming/) | bit-identity with batch, opening, advancing, accessors | `rH` handle behaviour, `rS` stream opening, `rU` update |
-| [Abstract API and Metadata](/spec/abstract/) | what the Abstract API provides, its rules and return codes, the catalog of metadata flags | `rA` Abstract API |
+| [Abstract API and Metadata](/spec/abstract/) | what the Abstract API provides, its rules and return codes, run-time information, the catalog of metadata flags | `rA` Abstract API |
 | [Settings and Threads](/spec/settings-threads/) | C lifecycle and settings, `Core`, setting validation, threads | `rT` settings and threads |
 | [Errors](/spec/errors/) | return codes, batch conditions | `rE` errors, `rB` batch conditions |
 | [Versions and Determinism](/spec/versions/) | bit-identity across languages and equivalent calls; releases | `rD` determinism, `rV` versions |
 
 Each page has two kinds of statement:
 
-* **The caller must**: what the calling code has to ensure. Most of it is not checked by the library, so it comes first on every page, and the next section collects the items that fail silently.
+* **The caller must**: what the calling code has to ensure. Most of it is not checked by the library, so it comes first on every page, and the next section lists what the library never reports.
 * **A rule**: what TA-Lib does. Every rule is enforced by the test suite. Its id is `r`, the letter of its family and a number, such as `rB5`, and its anchor is the id in lower case: [/spec/errors/#rb5](/spec/errors/#rb5). An id's meaning can change from one release to the next.
 
 `<N>` stands for a function's canonical name: `TA_<N>_Open` is `TA_SMA_Open`.
@@ -47,7 +47,7 @@ Each page has two kinds of statement:
 None of these is reported. The caller avoids them, or treats what follows as undefined.
 
 * [A buffer too short, in C](/spec/inputs-outputs/#input-length): read or written past its end. Rust, Java and C# reject it.
-* [A buffer bound to a C parameter holder](/spec/abstract/#c-buffers) and no longer valid when the holder is called.
+* [A buffer bound to a C parameter holder](/spec/abstract/#c-buffers) that is no longer valid when the holder is called.
 * [A C parameter holder or table](/spec/abstract/#c-release) never released, or released twice.
 * [NaN or infinity inside an input series](/spec/inputs-outputs/#finite-inputs), or inside the history a stream opens on.
 * [A real input outside ±3e37](/spec/inputs-outputs/#input-domain).
@@ -56,7 +56,7 @@ None of these is reported. The caller avoids them, or treats what follows as und
 * [C used before `TA_Initialize`](/spec/settings-threads/#initialize) or after `TA_Shutdown`, or `TA_Initialize` called twice.
 * [A C setting changed](/spec/settings-threads/#idle-settings) while a TA function is running or a stream is open.
 * [A writer and any other call at once on one stream handle](/spec/settings-threads/#one-writer), or two threads on one parameter holder or builder (in Rust, the compiler rejects it).
-* [C's unstable-period getter](/spec/settings-threads/#rt4) given a wildcard or unknown id: it returns 0.
+* [C's unstable-period getter](/spec/settings-threads/#rt4) given the set-all wildcard or an out-of-range id: it returns 0.
 * [The state after an allocation failure](/spec/errors/#stop-on-alloc).
 
 ## Names in each language {#names}
@@ -151,9 +151,9 @@ One row per code a function call can report; `A : B` means `A` extends the platf
 
 Numbering: [rV2](/spec/versions/#rv2).
 
-A refused setting:
+Failed settings:
 
-| Refusal | C | Rust | Java | C# |
+| Failure | C | Rust | Java | C# |
 |---|---|---|---|---|
 | setter ([rT2](/spec/settings-threads/#rt2)) | returns `TA_BAD_PARAM` | `build()` returns `Err(RetCode::BadParam)` ([rT8](/spec/settings-threads/#rt8)) | throws `IllegalArgumentException` (`NullPointerException` on null), no code | throws `ArgumentOutOfRangeException`, no code |
-| getter ([rT4](/spec/settings-threads/#rt4)) | cannot refuse | returns `Err(RetCode::BadParam)` | as the setter | as the setter |
+| getter ([rT4](/spec/settings-threads/#rt4)) | cannot fail | returns `Err(RetCode::BadParam)` | as the setter | as the setter |

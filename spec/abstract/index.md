@@ -3,7 +3,8 @@ url: 'https://ta-lib.org/spec/abstract/index.md'
 description: >-
   What TA-Lib's Abstract API provides in C, Rust, Java and C#: the run-time
   description of every function, the call by name through a parameter holder,
-  the codes it answers, and the catalog of every metadata flag.
+  the codes it returns, the run-time information keys, and the catalog of every
+  metadata flag.
 ---
 # Abstract API and Metadata
 
@@ -14,10 +15,10 @@ The Abstract API describes every function at run time and calls it by name. The 
 ## The caller must {#caller}
 
 * <a id="bind-all"></a>**Bind every input and every output before the call.** That includes an output the typed call lets a caller decline ([rW5](/spec/inputs-outputs/#rw5)). An optional parameter may stay unbound ([rA5](/spec/abstract/#ra5)).
-* <a id="range-at-call"></a>**Not take an accepted setter for an accepted value.** A setter checks the slot it names and the kind of the value. It may accept a value outside the parameter's accepted values: the call then rejects it ([rA1](/spec/abstract/#ra1)), and the holder's lookback and display shift return their rejection signal ([rL2](/spec/lookback/#rl2), [rL11](/spec/lookback/#rl11)). In C, `TA_GetLookback` and `TA_GetDisplayShift` return `TA_SUCCESS` and carry the signal in the value.
+* <a id="range-at-call"></a>**Do not assume a value a bind call accepts is valid for the call.** A bind call checks the slot it names and the kind of the value. It may accept a value outside the parameter's accepted values: the call then rejects it ([rA1](/spec/abstract/#ra1)), and the holder's lookback and display shift fail ([rL2](/spec/lookback/#rl2), [rL11](/spec/lookback/#rl11)). In C, `TA_GetLookback` and `TA_GetDisplayShift` return `TA_SUCCESS` and carry the failure in the value.
 * <a id="by-name"></a>**Identify a function by its name, never by its position.** A release that adds a function moves the ones after it, and the order of the groups differs between languages. In Rust, the number of a `FuncId` is such a position.
 * <a id="unknown-flag"></a>**Ignore a flag you do not know.** A release may add a flag ([rV3](/spec/versions/#rv3)).
-* <a id="c-buffers"></a>**In C, keep every bound buffer valid and long enough.** A C setter stores the pointer and takes no length. The buffer must stay valid until the last call on the holder, an input must reach `endIdx` ([input length](/spec/inputs-outputs/#input-length)) and an output must hold the count the call produces ([output size](/spec/inputs-outputs/#output-size)). None of it is detected.
+* <a id="c-buffers"></a>**In C, keep every bound buffer valid and long enough.** A C bind call stores the pointer and takes no length. The buffer must stay valid until the last call on the holder, an input must reach `endIdx` ([input length](/spec/inputs-outputs/#input-length)) and an output must hold the count the call produces ([output size](/spec/inputs-outputs/#output-size)). None of it is detected.
 * <a id="c-release"></a>**In C, release what the API allocated, once, with its own call.** `TA_ParamHolderFree` releases a holder, `TA_GroupTableFree` a group table and `TA_FuncTableFree` a function table. A function handle and the descriptors it leads to are static: never free them.
 
 Two more are on other pages: one thread per holder ([confine](/spec/settings-threads/#confine)), and enumerating the functions rather than hard-coding a list ([enumerate](/spec/versions/#enumerate)).
@@ -57,7 +58,7 @@ What a descriptor holds:
 
 In Rust, Java and C# the function descriptor also holds the descriptors of its inputs, optional parameters and outputs. In C it holds their three counts and the function's handle, and each parameter descriptor comes from its getter, by index from 0. Rust's also holds `id`, the `FuncId` that `get_func_handle` returns.
 
-A slot is one input, one optional parameter or one output. A setter names it by its position among the function's inputs, optional parameters or outputs, from 0. A price input is one input, whatever number of series it consumes. An MA-type parameter is an integer list of the MA types.
+A slot is one input, one optional parameter or one output. A bind call names it by its position among the function's inputs, optional parameters or outputs, from 0. A price input is one input, whatever number of series it consumes. An MA-type parameter is an integer list of the MA types.
 
 | Kind | C | Rust | Java | C# |
 |---|---|---|---|---|
@@ -67,13 +68,13 @@ A slot is one input, one optional parameter or one output. A setter names it by 
 
 ## Rules {#rules}
 
-<a id="ra1"></a>**rA1** A call through a parameter holder whose arguments are all bound and accepted by their setters is held to the [batch conditions](/spec/errors/#batch), with the same codes, and no output can be declined: an empty buffer bound to an output the typed call lets a caller decline ([rW5](/spec/inputs-outputs/#rw5)) is absent ([rB4](/spec/errors/#rb4)). The exceptions are in C. Its setters take bare pointers and no length: a bound series shorter than the range goes undetected, as in [rB5](/spec/errors/#rb5). And an absent range out-parameter answers `TA_INVALID_PARAM_HOLDER`, not [rB4](/spec/errors/#rb4)'s code.
+<a id="ra1"></a>**rA1** A call through a parameter holder whose arguments are all bound and accepted by their bind calls is held to the [batch conditions](/spec/errors/#batch), with the same codes. A holder cannot decline an output, so an empty buffer bound to any output is absent and fails ([rB4](/spec/errors/#rb4)), including one the typed call lets a caller decline ([rW5](/spec/inputs-outputs/#rw5)). The exceptions are in C. Its bind calls take bare pointers and no length, so a bound series shorter than the range goes undetected ([rB5](/spec/errors/#rb5)), and an absent range out-parameter returns `TA_INVALID_PARAM_HOLDER`, not [rB4](/spec/errors/#rb4)'s code.
 
-<a id="ra2"></a>**rA2** A rejected setter leaves the parameter holder as it found it, so a rejected re-bind cannot leave the next call to succeed, silently, over a mix of old and new arguments.
+<a id="ra2"></a>**rA2** A failed bind call leaves the parameter holder as it found it, so a re-bind that fails cannot let the next call succeed silently over a mix of old and new arguments.
 
-<a id="ra3"></a>**rA3** A misuse of a parameter holder (an unbound or mistyped argument, a setter index that names no slot, a holder the Abstract API did not make) answers `TA_BAD_PARAM` or one of the [codes below](/spec/abstract/#codes), and so does a misuse of C's lookups and tables. Which one is not specified, and a release may make it more specific. When a call is refused for the state of its holder, the function did not run and the code is one of the codes below, so it cannot be mistaken for the function's own. In Java and C# the carrier is a `TALibArgumentException` ([failures](/spec/#failures)).
+<a id="ra3"></a>**rA3** A misuse of a parameter holder (an unbound or mistyped argument, a bind index that names no slot, a holder the Abstract API did not make), or of C's lookups and tables, returns `TA_BAD_PARAM` or a code below, unspecified which; a release may make it more specific. A call that fails for the state of its holder did not run, and its code is one of the [codes below](/spec/abstract/#codes), so it cannot be mistaken for the function's own result. In Java and C# the carrier is a `TALibArgumentException` ([failures](/spec/#failures)).
 
-<a id="ra4"></a>**rA4** A lookup of a function by name ignores the case of ASCII letters. An unknown name answers `TA_FUNC_NOT_FOUND` in C and from Rust's `get_func_handle_rc`, `None` from Rust's `get_func_handle`, `null` in Java, and in C# a `KeyNotFoundException` from the indexer and `false` from `TryGet`. An empty name answers `TA_BAD_PARAM` in C and from `get_func_handle_rc`, as does an absent one in C.
+<a id="ra4"></a>**rA4** A lookup of a function by name ignores the case of ASCII letters. An unknown name returns `TA_FUNC_NOT_FOUND` in C and from Rust's `get_func_handle_rc`, `None` from Rust's `get_func_handle`, `null` in Java, and in C# a `KeyNotFoundException` from the indexer and `false` from `TryGet`. An empty name returns `TA_BAD_PARAM` in C and from `get_func_handle_rc`, as does an absent one in C.
 
 <a id="ra5"></a>**rA5** An optional parameter left unbound takes the function's documented default, as the default sentinel does in the typed call ([rP3](/spec/inputs-outputs/#rp3)).
 
@@ -83,7 +84,7 @@ A slot is one input, one optional parameter or one output. A setter names it by 
 
 ## Return codes {#codes}
 
-Besides the codes a function call answers ([return codes](/spec/errors/#return-codes)), the Abstract API can answer the codes below. No batch, lookback or stream call returns one.
+Besides the codes a function call returns ([return codes](/spec/errors/#return-codes)), the Abstract API can return the codes below. No batch, lookback or stream call returns one.
 
 | Code | `TA_RetCode` | Meaning |
 |---:|---|---|
@@ -91,10 +92,22 @@ Besides the codes a function call answers ([return codes](/spec/errors/#return-c
 | 5 | `TA_FUNC_NOT_FOUND` | No function has that name. |
 | 6 | `TA_INVALID_HANDLE` | Not a function handle the Abstract API gave out. |
 | 7 | `TA_INVALID_PARAM_HOLDER` | Not a parameter holder it made, or `TA_CallFunc` given no holder or no range out-parameter. |
-| 8 | `TA_INVALID_PARAM_HOLDER_TYPE` | A setter given a value of another kind than the slot it names. |
+| 8 | `TA_INVALID_PARAM_HOLDER_TYPE` | A bind call given a value of another kind than the slot it names. |
 | 10 | `TA_INPUT_NOT_ALL_INITIALIZE` | A call with an input left unbound. |
 | 11 | `TA_OUTPUT_NOT_ALL_INITIALIZE` | A call with an output left unbound. |
 | 15 | `TA_BAD_OBJECT` | Not a table it made, or a table given to the other kind's free call. |
+
+## Run-time information {#runtime-info}
+
+One call answers a key with an integer that describes the library in this process: C's `TA_GetRuntimeInfo` (`ta_common.h`), Rust's `get_runtime_info`, Java's `RuntimeInfo.get`, C#'s `RuntimeInfo.Get` and `TryGet`. It reports state and promises no value and no speed.
+
+Every key is answered in the four languages, and the answer can differ with the language and the platform. An unknown key returns `TA_BAD_PARAM` ([failures](/spec/#failures)); C#'s `TryGet` returns `false`. A release may add a key ([rV3](/spec/versions/#rv3)).
+
+| Key | Meaning |
+|---|---|
+| `vmath.transcendental` | The vectorized math library behind the batch call of functions such as `SIN`, `EXP` and `LN`: 0 none, 1 Apple's vForce. |
+| `count.initialize` | How many times `TA_Initialize` was called in this process. 0 in Rust, Java and C#, which have no such call. |
+| `count.shutdown` | How many times `TA_Shutdown` was called in this process. 0 in Rust, Java and C#. |
 
 ## Flags {#flags}
 
@@ -112,7 +125,7 @@ What a function or an output supports.
 
 ### Price components {#flags-price}
 
-The series a price input consumes. The price setter requires each of them and ignores the others. C# also has a `SetPriceInput` that binds one series at a time: a consumed series left unbound is then refused at the call ([rA3](/spec/abstract/#ra3)).
+The series a price input consumes. The price bind call requires each of them and ignores the others. C# also has a `SetPriceInput` that binds one series at a time: a consumed series left unbound then fails the call ([rA3](/spec/abstract/#ra3)).
 
 | C | Rust | Java | C# | Meaning |
 |---|---|---|---|---|
