@@ -156,12 +156,8 @@ TA_LIB_API void TA_SetRetCodeInfo( TA_RetCode theRetCode, TA_RetCodeInfo *retCod
 TA_LIB_API TA_RetCode TA_Initialize( void );
 TA_LIB_API TA_RetCode TA_Shutdown( void );
 
-/* TA_GetRuntimeInfo() reports run-time state of this library, by key: which
- * optional code path it is using, where the absence of one costs speed and leaves
- * every result correct, and counters for debugging. It promises no speed and no
- * value. The keys: https://ta-lib.org/spec/abstract/#runtime-info
- *
- * The keys are the same on every platform. An unknown key is TA_BAD_PARAM.
+/* TA_GetRuntimeInfo() reports run-time state of this library, by key.
+ * The keys: https://ta-lib.org/spec/abstract/#runtime-info
  */
 TA_LIB_API TA_RetCode TA_GetRuntimeInfo( const char *key, int *value );
 
@@ -169,7 +165,7 @@ TA_LIB_API TA_RetCode TA_GetRuntimeInfo( const char *key, int *value );
  * whenever a source modification should trigger a repackaging of TA-Lib.
  * Written by scripts/sync.py; do not edit.
  */
-#define TA_LIB_SOURCES_DIGEST e9dd9a25c6dc443151820197f8f2bb08
+#define TA_LIB_SOURCES_DIGEST 6996c56fabaa43db8ab94a3cb0a7d468
 
 #ifdef __cplusplus
 }
