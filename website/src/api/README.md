@@ -230,8 +230,7 @@ Error 2(TA_BAD_PARAM): A parameter is out of range
 
 ### 4.2 Numerical Stability {#numerical_stability}
 
-<a id="unstable_period"></a>
-<p>Your value changed when you fed the same bar more history? That is by design: recursive functions converge as history accumulates. See <a href="/api/unstable-period/">Unstable Period</a> for how to mitigate that.</p>
+<p><a id="unstable_period"></a>Your value changed when you fed the same bar more history? That is by design: recursive functions converge as history accumulates. See <a href="/api/unstable-period/">Unstable Period</a> for how to mitigate that.</p>
 <p>Rounding is a separate axis: floating-point error accumulates over a very long series, which is one reason a call is capped at <a href="#index_range">TA_INDEX_MAX</a>.</p>
 <p>Every function documentation page carries a <a href="/functions/stability">numerical-stability property</a>: how much the value at a given bar depends on where the series you passed in begins.</p>
 

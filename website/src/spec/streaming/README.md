@@ -18,7 +18,7 @@ Every function streams ([rH9](/spec/streaming/#rh9)): `Open` or `OpenAndFill` on
 
 ## Definition
 
-<a id="rh1"></a>**rH1** Open a stream on bars 0 to k, then `Update` it with bars k+1 to t, with no `Advance`. At every bar the stream reported (Open's value for bar k, each Update's for its bar), the value is bit-identical to what `batch(0, t)` writes for that bar, and `OutRange` equals the range `batch(0, t)` reports. This holds under the same parameters and settings. Two exceptions: a zero output may differ in sign, `+0.0` against `-0.0`, which compare equal; and a value that depends on a transcendental function may differ in the last bits ([transcendental functions](/spec/versions/#transcendental)).
+<a id="rh1"></a>**rH1** Open a stream on bars 0 to k, then `Update` it with bars k+1 to t, with no `Advance`. At every bar the stream reported (Open's value for bar k, each Update's for its bar), the value is bit-identical to what `batch(0, t)` writes for that bar, and `OutRange` equals the range `batch(0, t)` reports. This holds under the same parameters and settings. Exceptions: a zero output may differ in sign, `+0.0` against `-0.0`, which compare equal; and a value that depends on a transcendental function may differ in the last bits ([transcendental functions](/spec/versions/#transcendental)).
 
 <a id="rh2"></a>**rH2** The history given to `Open` defines bar 0. State is carried forward from bar to bar and never re-seeded, so a stream opened on a later start equals the batch call over that shorter series. Which functions' values depend on the start: [/functions/stability](/functions/stability).
 

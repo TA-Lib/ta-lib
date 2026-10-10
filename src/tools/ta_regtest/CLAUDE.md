@@ -357,7 +357,7 @@ every correctness path omits it.
 
 ### Driving a server by hand
 
-Four traps, each of which costs a debugging cycle:
+Traps, each of which costs a debugging cycle:
 
 **A real output array is a hex STRING, not a JSON number array** —
 `"outReal":"3ff0000000000000c000..."`, concatenated 16-hex-char groups of a
@@ -378,6 +378,13 @@ truncate.
 literal `"field":`, so `json.dumps`'s default `": "` makes every lookup miss and
 the C server answers `{"error":"Missing method field"}`. Use
 `separators=(",",":")`.
+
+**Send every optional parameter.** The servers disagree on an absent one: Rust
+substitutes the declared default, the C server reads zero. A period is then
+rejected, but a real optInput where `0.0` is legal answers `retCode` 0 with a
+wrong series: `TA_STDDEV` without `optInNbDev` is all zeros. To ask for a
+default, send the sentinel: `-4e37` for a real, `INT_MIN` for an integer;
+`INT_MIN` in a real slot is taken literally.
 
 **`fuzz_hash_init()` is `1469598103934665603`, NOT the standard FNV-1a 64-bit
 offset basis** (`14695981039346656037`) despite the comment beside it — the repo

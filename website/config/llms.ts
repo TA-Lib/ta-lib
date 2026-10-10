@@ -42,6 +42,7 @@ const isFunctionPage = (page: Page): boolean =>
 const PAGE_ORDER = [
   "/spec/inputs-outputs/",
   "/spec/lookback/",
+  "/spec/auto-stabilization/",
   "/spec/streaming/",
   "/spec/abstract/",
   "/spec/settings-threads/",
