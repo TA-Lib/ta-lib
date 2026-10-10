@@ -26,7 +26,7 @@ With `H = inHigh`, `L = inLow`, `m = optInMinTrendLength`, `s = optInSensitivity
 
 ## Notes
 
-- **Reversal is tested before extension.** On an outside bar that both makes a new extreme and clears the threshold, the leg reverses and the old pivot stays where it was. The other order moves the pivot and loses the reversal, which is a whole leg of difference rather than a rounding.
+- **Reversal is tested before extension.** On an outside bar that both makes a new extreme and clears the threshold, the leg reverses and the old pivot stays where it was. The other order moves the pivot to the new extreme and defers the reversal to the next bar, against a threshold that has just moved further away: on the 252-bar regtest corpus at 5 percent that costs one bar (R TTR, which takes that order, places the swing low at 148 where this places it at 147), but a range narrower than the sensitivity after the outside bar keeps it from ever firing, and the leg is then lost rather than delayed.
 - **Ties extend.** The comparisons are `<=` and `>=`, so at an equal price the pivot moves to the later bar: `outZigZag` does not change and `outPivotIdx` does. That movement is the only thing the index output carries and the price output cannot.
 - **The gate counts from the pivot's own bar, the seed included.** No reversal can fire before the first output bar; the first one can fire exactly there.
 - **The seed is a low.** A series that only rises therefore reports an up leg from its first reversal and never returns to a down leg.

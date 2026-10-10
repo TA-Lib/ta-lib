@@ -223371,7 +223371,7 @@ public final class Core {
     * href="https://ta-lib.org/functions/zigzag">ta-lib.org/functions/zigzag</a>.
     * <p><b>Notes</b>
     * <ul>
-    * <li><b>Reversal is tested before extension.</b> On an outside bar that both makes a new extreme and clears the threshold, the leg reverses and the old pivot stays where it was. The other order moves the pivot and loses the reversal, which is a whole leg of difference rather than a rounding.</li>
+    * <li><b>Reversal is tested before extension.</b> On an outside bar that both makes a new extreme and clears the threshold, the leg reverses and the old pivot stays where it was. The other order moves the pivot to the new extreme and defers the reversal to the next bar, against a threshold that has just moved further away: on the 252-bar regtest corpus at 5 percent that costs one bar (R TTR, which takes that order, places the swing low at 148 where this places it at 147), but a range narrower than the sensitivity after the outside bar keeps it from ever firing, and the leg is then lost rather than delayed.</li>
     * <li><b>Ties extend.</b> The comparisons are {@code &lt;=} and {@code &gt;=}, so at an equal price the pivot moves to the later bar: {@code outZigZag} does not change and {@code outPivotIdx} does. That movement is the only thing the index output carries and the price output cannot.</li>
     * <li><b>The gate counts from the pivot's own bar, the seed included.</b> No reversal can fire before the first output bar; the first one can fire exactly there.</li>
     * <li><b>The seed is a low.</b> A series that only rises therefore reports an up leg from its first reversal and never returns to a down leg.</li>
@@ -223472,7 +223472,7 @@ public final class Core {
     * href="https://ta-lib.org/functions/zigzag">ta-lib.org/functions/zigzag</a>.
     * <p><b>Notes</b>
     * <ul>
-    * <li><b>Reversal is tested before extension.</b> On an outside bar that both makes a new extreme and clears the threshold, the leg reverses and the old pivot stays where it was. The other order moves the pivot and loses the reversal, which is a whole leg of difference rather than a rounding.</li>
+    * <li><b>Reversal is tested before extension.</b> On an outside bar that both makes a new extreme and clears the threshold, the leg reverses and the old pivot stays where it was. The other order moves the pivot to the new extreme and defers the reversal to the next bar, against a threshold that has just moved further away: on the 252-bar regtest corpus at 5 percent that costs one bar (R TTR, which takes that order, places the swing low at 148 where this places it at 147), but a range narrower than the sensitivity after the outside bar keeps it from ever firing, and the leg is then lost rather than delayed.</li>
     * <li><b>Ties extend.</b> The comparisons are {@code &lt;=} and {@code &gt;=}, so at an equal price the pivot moves to the later bar: {@code outZigZag} does not change and {@code outPivotIdx} does. That movement is the only thing the index output carries and the price output cannot.</li>
     * <li><b>The gate counts from the pivot's own bar, the seed included.</b> No reversal can fire before the first output bar; the first one can fire exactly there.</li>
     * <li><b>The seed is a low.</b> A series that only rises therefore reports an up leg from its first reversal and never returns to a down leg.</li>
