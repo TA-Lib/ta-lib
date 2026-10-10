@@ -45,6 +45,22 @@ TA_SMA_Peek( s, formingClose, &sma );   /* state left unchanged */
 TA_SMA_Close( s );
 ```
 
+### From C++
+
+The header is C++-ready. A `std::unique_ptr` can own the stream:
+
+```cpp
+struct SmaClose { void operator()( TA_SMA_Stream *s ) const { TA_SMA_Close( s ); } };
+
+std::unique_ptr<TA_SMA_Stream, SmaClose> sma;
+TA_SMA_Stream *raw;
+double value;
+if( TA_SMA_Open( &raw, history.data(), (int)history.size(), 30, &value ) == TA_SUCCESS )
+    sma.reset( raw );
+
+TA_SMA_Update( sma.get(), newClose, &value );
+```
+
 ## Rules
 
 - **Warm-up.** `Open` succeeds only if `historyLen >= TA_<NAME>_Lookback(params) + 1` — with fewer bars there is no defined value yet. After `Open`, the history buffer can be freed — the stream keeps everything it needs.
