@@ -159,6 +159,27 @@ static void handle_abstract_get_display_shift(const char *json, char *resp, int 
 }
 #endif
 
+/* ---- TA_GetRuntimeInfo ----
+ * Params:  key
+ * Returns: retCode, value
+ */
+#ifndef TA_REF_SERVE
+static void handle_TA_GetRuntimeInfo(const char *json, char *resp, int resp_size) {
+   char key[64];
+   int keyLen = 0, value = 0;
+   const char *keyRaw = json_find_string(json, "key", &keyLen);
+   if( !keyRaw || keyLen >= (int)sizeof(key) ) {
+      snprintf(resp, resp_size, "{\"error\":\"Missing or oversized key\"}");
+      return;
+   }
+   memcpy(key, keyRaw, keyLen);
+   key[keyLen] = '\0';
+
+   TA_RetCode retCode = TA_GetRuntimeInfo(key, &value);
+   snprintf(resp, resp_size, "{\"retCode\":%d,\"value\":%d}", (int)retCode, value);
+}
+#endif
+
 /* ---- abstract_call ----
  * Mirrors: Full ta_abstract call path (GetFuncHandle → ParamHolderAlloc →
  *          SetInput* → SetOptInput* → SetOutput* → CallFunc → GetLookback → Free)

@@ -4856,6 +4856,58 @@ static ErrorNumber codegen_check_gencode_digest( CodegenPipe *cp, const CodegenL
    return TA_TEST_PASS;
 }
 
+/* What each language's library reports about itself, asked before any function
+ * request: afterwards the C server's loops have loaded their own routines.
+ *
+ * The values are stated here per language. Rust, Java and C# have no kernel and
+ * no TA_Initialize; the C server is this library in another process, which has
+ * called TA_Initialize once, and ta_regtest held its own kernel answer to the
+ * platform before any function ran.
+ */
+static long g_runtimeInfoChecked = 0;
+
+static ErrorNumber codegen_check_runtime_info( CodegenPipe *cp, const CodegenLanguage *lang )
+{
+   static const char *const key[] = { "vmath.transcendental", "count.initialize", "count.shutdown", "vmath" };
+   const int isC = strcmp( lang->name, "c" ) == 0;
+   int want[4] = { 0, 0, 0, 0 };
+   unsigned int i;
+
+   if( isC )
+   {
+      if( TA_GetRuntimeInfo( key[0], &want[0] ) != TA_SUCCESS ) return TA_CODEGEN_RUNTIME_INFO;
+      want[1] = 1;
+   }
+
+   for( i = 0; i < sizeof(key)/sizeof(key[0]); i++ )
+   {
+      const int wantCode = i < 3 ? (int)TA_SUCCESS : (int)TA_BAD_PARAM;
+      char req[128], resp[256];
+      ErrorNumber errNb;
+
+      (void)snprintf( req, sizeof(req), "{\"method\":\"TA_GetRuntimeInfo\",\"params\":{\"key\":\"%s\"}}", key[i] );
+      errNb = codegen_pipe_call( cp, req, resp, (int)sizeof(resp) );
+      if( errNb != TA_TEST_PASS )
+      {
+         printf( "\nCODEGEN FAILED: the %s server did not answer TA_GetRuntimeInfo( \"%s\" )\n",
+                 lang->display, key[i] );
+         return errNb;
+      }
+      if( !strstr( resp, "\"retCode\":" ) || !strstr( resp, "\"value\":" )
+          || json_get_int( resp, "retCode" ) != wantCode
+          || json_get_int( resp, "value" ) != want[i] )
+      {
+         printf( "\nCODEGEN FAILED: the %s server answers TA_GetRuntimeInfo( \"%s\" ) with\n"
+                 "  %s\n  want retCode %d and value %d\n",
+                 lang->display, key[i], resp, wantCode, want[i] );
+         return TA_CODEGEN_RUNTIME_INFO;
+      }
+   }
+
+   g_runtimeInfoChecked++;
+   return TA_TEST_PASS;
+}
+
 static ErrorNumber test_codegen_for_language(
     const CodegenLanguage *lang,
     int langIndex,
@@ -4885,6 +4937,13 @@ static ErrorNumber test_codegen_for_language(
 
     /* Before anything is measured: prove this server IS the shipped library. */
     errNb = codegen_check_gencode_digest(&cp, lang);
+    if( errNb != TA_TEST_PASS )
+    {
+        codegen_pipe_close(&cp);
+        return errNb;
+    }
+
+    errNb = codegen_check_runtime_info(&cp, lang);
     if( errNb != TA_TEST_PASS )
     {
         codegen_pipe_close(&cp);
@@ -9991,6 +10050,13 @@ ErrorNumber test_codegen(const TA_History *history,
         printf("\nCODEGEN FAILED: the Java build-stamp gate compared nothing — the\n"
                "  server was never asked whether it is running the shipped library\n");
         return TA_CODEGEN_GENCODE_DIGEST_VACUOUS;
+    }
+
+    if( g_runtimeInfoChecked != langsTested )
+    {
+        printf("\nCODEGEN FAILED: TA_GetRuntimeInfo was checked on %ld of %d language server(s)\n",
+               g_runtimeInfoChecked, (int)langsTested);
+        return TA_CODEGEN_RUNTIME_INFO;
     }
 
     /* Non-vacuity for the float leg: it compares a language's single-precision

@@ -1305,6 +1305,19 @@ public static class MetadataTest
         }
     }
 
+    private static void RuntimeInfoAnswersEveryKeyAndRejectsTheRest()
+    {
+        foreach (string key in new[] { "vmath.transcendental", "count.initialize", "count.shutdown" })
+        {
+            Check(RuntimeInfo.Get(key) == 0, $"runtime info {key} is 0");
+            Check(RuntimeInfo.TryGet(key, out int value) && value == 0, $"runtime info {key} is known");
+        }
+        CheckCode(RetCode.BadParam, () => RuntimeInfo.Get("vmath"), "a key prefix is no key");
+        CheckCode(RetCode.BadParam, () => RuntimeInfo.Get(null!), "a null key is rejected");
+        Check(!RuntimeInfo.TryGet("vmath", out _) && !RuntimeInfo.TryGet(null, out _),
+            "TryGet answers false for a key it does not know");
+    }
+
     /// <summary>
     /// The shipped XML describes every catalogued function.
     /// </summary>
@@ -1569,6 +1582,7 @@ public static class MetadataTest
         UnboundParametersTakeTheDocumentedDefault();
         MetadataTypesCannotBeConstructedOutside();
         FunctionDescriptionXmlDescribesEveryFunction();
+        RuntimeInfoAnswersEveryKeyAndRejectsTheRest();
         RecordPrintersExpandCollections();
 
         if (_failures == 0)

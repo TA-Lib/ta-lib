@@ -1624,6 +1624,13 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             });
             serde_json::json!({ "functions": arr }).to_string()
         }
+        "TA_GetRuntimeInfo" => {
+            let (rc, value) = match abstract_api::get_runtime_info(params["key"].as_str().unwrap_or("")) {
+                Ok(v) => (RetCode::Success, v),
+                Err(e) => (e, 0),
+            };
+            format!("{{\"retCode\":{},\"value\":{}}}", rc.as_c_int(), value)
+        }
         "TA_FunctionDescriptionXML" => {
             let xml = abstract_api::function_description_xml();
             let length = xml.len();

@@ -891,3 +891,42 @@ fn every_backend_retcode_member_carries_c_s_number() {
 }
 
 // ---------------------------------------------------------------------------
+
+/// A key C answers and a managed backend rejects fails on no platform's values:
+/// only a caller probing that key in that language sees it.
+#[test]
+fn runtime_info_keys_are_c_s() {
+    use std::collections::BTreeSet;
+    let path = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../src/ta_common/ta_global.c");
+    let global = std::fs::read_to_string(&path).expect("ta_global.c");
+    let (_, rest) = global
+        .split_once("TA_RetCode TA_GetRuntimeInfo(")
+        .expect("ta_global.c defines TA_GetRuntimeInfo");
+    let body = &rest[..rest.find("\n}\n").expect("the function closes")];
+    let in_c: BTreeSet<&str> = body
+        .split("strcmp( key, \"")
+        .skip(1)
+        .map(|s| s.split('"').next().expect("a closing quote"))
+        .collect();
+    let ours: BTreeSet<&str> =
+        ta_codegen_lib::backends::runtime_info::KEYS.iter().copied().collect();
+    assert_eq!(body.matches("strcmp(").count(), in_c.len(), "a key compare this test cannot read");
+    assert_eq!(in_c, ours, "the keys TA_GetRuntimeInfo answers in C are not the managed backends'");
+
+    let page = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+        .join("../../website/src/spec/abstract/README.md");
+    let page = std::fs::read_to_string(&page).expect("the spec's abstract page");
+    let (_, section) = page.split_once("{#runtime-info}").expect("the page has #runtime-info");
+    let section = &section[..section.find("\n## ").expect("a section follows")];
+    let in_spec: BTreeSet<&str> = section
+        .lines()
+        .filter(|l| l.starts_with('|') && !l.starts_with("|---") && !l.starts_with("| Key"))
+        .map(|l| {
+            let cell = l.split('|').nth(1).expect("a first cell").trim();
+            cell.strip_prefix('`')
+                .and_then(|c| c.strip_suffix('`'))
+                .unwrap_or_else(|| panic!("a row whose first cell is not one `key`: {l}"))
+        })
+        .collect();
+    assert_eq!(in_spec, ours, "the spec's run-time information table does not list the keys");
+}

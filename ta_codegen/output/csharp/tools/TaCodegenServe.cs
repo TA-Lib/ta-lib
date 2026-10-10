@@ -897,6 +897,7 @@ public class TaCodegenServe {
             else if (method == "TA_GetOutputParameterInfo") return AbsOutputInfo(p);
             else if (method == "abstract_for_each_func") return AbsForEachFunc();
             else if (method == "TA_FunctionDescriptionXML") return AbsDescriptionXml();
+            else if (method == "TA_GetRuntimeInfo") return AbsRuntimeInfo(p);
             else if (method == "abstract_call") return AbsCall(p);
             else if (method == "stream_verify") return HandleStreamVerify(p);
             else if (method == "fuzz_in_hash") return HandleFuzzInHash(p);
@@ -1032,6 +1033,14 @@ public class TaCodegenServe {
         ulong checksum = 0;
         foreach (char c in xml) checksum += (ulong)(c & 0xFF);
         return $"{{\"length\":{xml.Length},\"checksum\":{checksum}}}";
+    }
+
+    static string AbsRuntimeInfo(JsonElement p)
+    {
+        int rc = 0, value = 0;
+        try { value = TALib.Metadata.RuntimeInfo.Get(p.GetProperty("key").GetString()!); }
+        catch (TALibArgumentException e) { rc = (int)e.RetCode; }
+        return $"{{\"retCode\":{rc},\"value\":{value}}}";
     }
 
     /* The JSON key the driver sends a required input under. Price bundles are

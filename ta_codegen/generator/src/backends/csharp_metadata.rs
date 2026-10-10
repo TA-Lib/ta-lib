@@ -54,6 +54,7 @@ const EMITTED: &[&str] = &[
     "FunctionCatalog.g.cs",
     "CatalogFacts.g.cs",
     "FunctionDescription.g.cs",
+    "RuntimeInfo.g.cs",
 ];
 
 /// Generate the whole `TALib.Metadata` namespace into `dir`
@@ -79,6 +80,7 @@ pub fn generate(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>, dir: &Path)
     write(dir, "FunctionCatalog.g.cs", &catalog(&rows, &by_name));
     write(dir, "CatalogFacts.g.cs", &catalog_facts(&rows));
     write(dir, "FunctionDescription.g.cs", &function_description(funcs));
+    write(dir, "RuntimeInfo.g.cs", &(header() + &super::runtime_info::csharp_class(NAMESPACE)));
 
     println!("  C# metadata registry -> {} ({} functions)", dir.display(), rows.len());
 
