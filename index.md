@@ -15,19 +15,28 @@ description: >-
 
 </div>
 
-* 200+ indicators such as ADX, MACD, RSI, Stochastic, Bollinger Bands etc... [See complete list...](/functions/)
-* Candlestick patterns recognition
-* Batch and streaming API for every function: compute a whole array, or update one bar at a time without recomputing the history.
-* Native implementation in [C/C++](/api/), [Java](/api/java/), [C#](/api/csharp/) and [Rust](/api/rust/). The Java, C# and Rust ones do not need the C library.
-* Made for integration and glue-code friendly. Function metadata drives your UI, parameter range, automation and generated bindings; the [Abstract API](/api/abstract/) calls any function by name.
-* Wrappers for Python, R, and [more](/install/#wrappers).
-* Open-Source (BSD License). Can be freely integrated in your own open-source or commercial applications.
+TA-Lib implements the standard technical analysis algorithms used across the industry, and is often the reference other libraries test their results against.
 
-TA-Lib implements standard technical analysis algorithms used across the industry — stable, well-tested, and production-proven.
+<div class="home-cards">
+<div class="home-card">
+<h4>200+ indicators</h4>
+<p>ADX, MACD, RSI, Stochastic, Bollinger Bands and more, plus candlestick pattern recognition. <a href="/functions/">See the complete list</a>.</p>
+</div>
+<div class="home-card">
+<h4>Batch and streaming</h4>
+<p>Compute a whole array, or update one bar at a time without recomputing the history. <a href="/api/stream/">Streaming API</a>.</p>
+</div>
+<div class="home-card">
+<h4>Native in four languages</h4>
+<p><a href="/api/">C/C++</a>, <a href="/api/java/">Java</a>, <a href="/api/csharp/">C#</a> and <a href="/api/rust/">Rust</a>. Wrappers for Python, R, and <a href="/install/#wrappers">more</a>.</p>
+</div>
+<div class="home-card">
+<h4>Made for integration</h4>
+<p>Glue-code friendly. Function metadata drives your UI, parameter range, automation and generated bindings. <a href="/api/abstract/">Abstract API</a>.</p>
+</div>
+</div>
 
-## Example
-
-A 30-bar simple moving average, over an array and then on a live feed.
+A 30-bar simple moving average, over an array and then on a live feed:
 
 
 
@@ -115,3 +124,6 @@ double p = s.Peek(formingClose);     // bar still forming; state unchanged
 
 :::
 
+
+
+Open-Source (BSD License). Can be freely integrated in your own open-source or commercial applications.
