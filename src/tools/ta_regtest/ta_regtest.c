@@ -187,6 +187,15 @@ static ErrorNumber runtimeInfoAfterFirstInitialize( void )
    return TA_TEST_PASS;
 }
 
+/* Every exit that can report success goes through here: --ref and
+ * --xlang-hash return before the ordinary one. */
+static ErrorNumber filterVerdict( ErrorNumber ret )
+{
+   if( ret == TA_TEST_PASS && filterUnmatchedReport( functionFilter ) > 0 )
+      return TA_REGTEST_FILTER_MATCHED_NOTHING;
+   return ret;
+}
+
 /* A ride-along divergence fails the run that FOUND it.
  *
  * The ride is a passenger on the language servers, so every pass that drives
@@ -324,7 +333,7 @@ static ErrorNumber regtest_main( int argc, char **argv )
       TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
       fuzzRet = fuzz_ref( refVersion, functionFilter );
       retValue = freeLib();
-      return fuzzRet != TA_TEST_PASS ? fuzzRet : retValue;
+      return filterVerdict( fuzzRet != TA_TEST_PASS ? fuzzRet : retValue );
    }
 
    /* Opt-in cross-language BITWISE parity gate (issue #113). Self-contained:
@@ -341,7 +350,7 @@ static ErrorNumber regtest_main( int argc, char **argv )
       TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
       xlangRet = xlang_hash( functionFilter, codegenLanguageFilter );
       retValue = freeLib();
-      return xlangRet != TA_TEST_PASS ? xlangRet : retValue;
+      return filterVerdict( xlangRet != TA_TEST_PASS ? xlangRet : retValue );
    }
 
    /* Test utility like List/Stack/Dictionary/Memory Allocation etc... */
@@ -664,6 +673,10 @@ static ErrorNumber regtest_main( int argc, char **argv )
          return retValue;
    }
 
+   retValue = filterVerdict( TA_TEST_PASS );
+   if( retValue != TA_TEST_PASS )
+      return retValue;
+
    printf( "\n* All tests succeeded. Enjoy the library. *\n" );
 
 
@@ -739,9 +752,6 @@ static ErrorNumber test_codegen_with_simulator( void )
    return TA_TEST_PASS;
 }
 
-/* Check if any CSV token in 'filter' appears as a substring in 'tags'.
- * Returns 1 if match found (or filter is NULL), 0 otherwise.
- */
 /* Does any '*'-suffixed element of `tags` prefix `token`?
  *
  * A tag element ending in '*' is a PREFIX CLAIM: the group covers every
@@ -803,39 +813,22 @@ static int tagHasShortToken(const char *tags, const char *token)
    return 0;
 }
 
-static int matchesFilter(const char *filter, const char *tags)
+static int tagEntryMatches( const char *tags, const char *entry )
 {
-   char filterCopy[1024];
-   char *token;
-
-   if( filter == NULL )
-      return 1; /* No filter = run everything */
-
-   strncpy(filterCopy, filter, sizeof(filterCopy) - 1);
-   filterCopy[sizeof(filterCopy) - 1] = '\0';
-
-   token = strtok(filterCopy, ",");
-   while( token != NULL )
+   if( strlen(entry) <= 2 )
    {
-      if( strlen(token) <= 2 )
-      {
-         if( tagHasShortToken(tags, token) )
-            return 1;
-      }
-      else if( strstr(tags, token) != NULL )
+      if( tagHasShortToken(tags, entry) )
          return 1;
-      if( tagPrefixMatches(tags, token) )
-         return 1;
-      token = strtok(NULL, ",");
    }
-   return 0;
+   else if( strstr(tags, entry) != NULL )
+      return 1;
+   return tagPrefixMatches(tags, entry);
 }
 
 static ErrorNumber testTAFunction_ALL( void )
 {
    ErrorNumber retValue;
    TA_History history;
-   int nbGroupsRun = 0;
 
    history.nbBars = 252;
    history.open   = TA_SREF_open_daily_ref_0_PRIV;
@@ -871,10 +864,9 @@ static ErrorNumber testTAFunction_ALL( void )
    #define DO_TEST_LBL_NOSV(func,str,label) DO_TEST_FULL(func,str,label,0)
    #define DO_TEST_FULL(func,str,label,wantSv) \
       { \
-      if( matchesFilter(functionFilter, str) ) \
+      if( filterMatches(functionFilter, str, tagEntryMatches) ) \
       { \
          int svBefore = server_verify_value_comparisons(); \
-         nbGroupsRun++; \
          printf( "%*s: Testing....", TAG_W, displayTag(str,label) ); \
          fflush(stdout); \
          showFeedback(); \
@@ -1041,30 +1033,6 @@ static ErrorNumber testTAFunction_ALL( void )
    DO_TEST_LBL_NOSV( test_func_auto_stabilization,
             "UNSTABLE,LOOKBACK,AUTO",
             "Unstable period Auto levels" );
-
-   /* A filter that matched nothing must not read as success. The group tags are
-    * hand-maintained and cover far fewer names than the library exports, so a
-    * plausible `--function=SMA` selected zero groups and still printed "All
-    * tests succeeded" -- the failure mode that hid the candlestick gap above.
-    *
-    * Only fail when these groups were the whole job: --codegen, --xlang-hash
-    * and --ref filter by REAL function name and legitimately run for names
-    * no group tag carries (scripts/synth_gate.py drives --function=SYNTH that
-    * way). There, zero groups here is expected, not an error. */
-   if( functionFilter != NULL && nbGroupsRun == 0 &&
-       !doCodegenTest && !doXlangHash && refVersion == NULL )
-   {
-      printf( "\nFAILED: --function=%s matched no test group, so nothing ran.\n",
-              functionFilter );
-      printf( "        The filter is a substring match against the GROUP TAG in\n" );
-      printf( "        ta_regtest.c's DO_TEST list, not against the function name.\n" );
-      printf( "        Some functions have no hand-written group at all (the plain\n" );
-      printf( "        vector math, OBV, TYPPRICE, WCLPRICE); they\n" );
-      printf( "        are covered by the systematic sweeps, which enumerate every\n" );
-      printf( "        function through ta_abstract -- reach those with --codegen or\n" );
-      printf( "        --xlang-hash. Otherwise add the name to its group's tag.\n" );
-      return TA_REGTEST_FILTER_MATCHED_NOTHING;
-   }
 
    return TA_TEST_PASS; /* All tests succeeded. */
 }

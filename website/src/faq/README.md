@@ -1,17 +1,26 @@
 ---
 title: FAQ
-description: "Whether TA-Lib is still maintained (yes, actively again since 2025) and where to get support: Discord, GitHub issues and the wrapper communities."
+description: "Whether TA-Lib is still maintained (yes, actively again since 2025), whether it works on a live feed, whether the Rust, Java and C# libraries need the C library, and where to get support."
+containerClass: faq
 ---
 
-**Is TA-Lib maintained?**
+## Is TA-Lib maintained?
 
-Yes — and more actively than it has been in years!
+Yes, and more actively than in years. Development resumed in 2025 after a quiet decade (2014 to 2024), adding automated releases, a streaming API, and native Rust, Java and C# libraries. The classic C library stays as reliable as ever.
 
-Development slowed to a near-hibernation between 2014 and 2024. That changed in 2025: packaging was modernized with automated CI/CD releases, and new feature development is underway — including a native Rust implementation, a streaming API, and more.
+## Does TA-Lib work on a live feed?
 
-The classic C library is as reliable as ever, and the project is once again moving forward.
+Yes. Every function has a streaming form: open it on the history, then update it once per bar, without recomputing the history. See the streaming page for [C/C++](/api/stream/), [Rust](/api/rust/stream/), [Java](/api/java/stream/) or [C#](/api/csharp/stream/).
 
-**How to get support?**
+## Can the same code serve a backtest and live trading?
+
+Yes. A stream fed bar by bar returns the values the batch function returns over the same bars, except that a value depending on a [transcendental function](/spec/versions/#transcendental) may differ in the last bits.
+
+## Do the Rust, Java and C# libraries need the C library?
+
+No. Each is a native implementation in its own language, with no binding to C.
+
+## How to get support?
 
 Various ways:
 

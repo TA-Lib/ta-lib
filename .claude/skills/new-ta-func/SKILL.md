@@ -208,7 +208,7 @@ shared walkers' matches are exhaustive with no wildcard arm, so Rust points you 
 do this:**
 
 - `--function=<NAME>` substring-matches **DO_TEST tag strings**, not function names.
-  A name in no tag runs zero test groups and exits **0**.
+  A name in no tag runs zero test groups and fails the run.
 - The generic `--codegen` sweep value-compares it like any other function, but
   against the in-process C library generated from the same source: it proves the
   four languages agree, not that the numbers are right.
