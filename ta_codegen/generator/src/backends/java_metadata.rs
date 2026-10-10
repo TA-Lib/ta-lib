@@ -208,6 +208,7 @@ pub fn generate(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>, lib_src: &P
         ("ParamHolder.java", param_holder_class()),
         ("Dispatch.java", dispatch_class(&rows)),
         ("FunctionDescription.java", function_description_class(funcs)),
+        ("RuntimeInfo.java", header("MF,CC") + &super::runtime_info::java_class()),
     ];
     for (name, body) in &files {
         write(&dir, name, body);

@@ -226084,6 +226084,17 @@ public class TaCodegenServe {
         return "{\"length\":" + xml.length() + ",\"checksum\":" + checksum + "}";
     }
 
+    static String handleGetRuntimeInfo(String json) {
+        int rc = 0;
+        int value = 0;
+        try {
+            value = io.github.talib.metadata.RuntimeInfo.get(jsonString(json, "key"));
+        } catch (io.github.talib.TALibArgumentException e) {
+            rc = e.retCode().asCInt();
+        }
+        return "{\"retCode\":" + rc + ",\"value\":" + value + "}";
+    }
+
     static final String[] FUNC_NAMES = {
         "TA_AC",
         "TA_ACCBANDS",
@@ -226671,6 +226682,7 @@ public class TaCodegenServe {
         else if (json.contains("\"TA_GetOutputParameterInfo\"")) return handleGetOutputParameterInfo(json);
         else if (json.contains("\"abstract_for_each_func\"")) return handleForEachFunc();
         else if (json.contains("\"TA_FunctionDescriptionXML\"")) return handleFunctionDescriptionXML();
+        else if (json.contains("\"TA_GetRuntimeInfo\"")) return handleGetRuntimeInfo(json);
         else if (json.contains("\"abstract_call\"")) return handleAbstractCall(json);
         else if (json.contains("\"abstract_get_lookback\"")) return "{\"lookback\":" + computeLookback(jsonString(json, "funcName"), json) + "}";
         else if (json.contains("\"abstract_get_display_shift\"")) return "{\"displayShift\":" + computeDisplayShift(jsonString(json, "funcName"), json) + "}";

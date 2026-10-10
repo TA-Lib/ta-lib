@@ -125,6 +125,7 @@ pub fn render(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>) -> String {
 
     // --- TA_FunctionDescriptionXML analog (embeds the XML data file below) ---
     o.push_str(XML_FN);
+    o.push_str(&super::runtime_info::rust_fn());
 
     // --- committed regression tests for the registry's structural invariants ---
     o.push_str(REGISTRY_TESTS);
