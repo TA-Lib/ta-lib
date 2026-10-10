@@ -11,6 +11,31 @@
   }
 }
 
+.home-cards {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1rem;
+  margin: 1.5rem 0;
+
+  @media (max-width: 719px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.home-card {
+  padding: 1rem 1.25rem;
+  border: 1px solid var(--vp-c-border, var(--vp-c-divider, rgba(127, 127, 127, 0.3)));
+  border-radius: 8px;
+
+  h4 {
+    margin: 0 0 0.4rem;
+  }
+
+  p {
+    margin: 0;
+  }
+}
+
 // Hide hope-theme's auto "TA-Lib" page-title bar (from frontmatter `title:`)
 // on the homepage only — the hero image already carries the branding.
 body:has(.home-hero) .vp-page-title {

@@ -1,11 +1,8 @@
 # TA-Lib
 
-Technical analysis for price series: indicators such as RSI, MACD, ADX and
-Bollinger Bands, and candlestick pattern recognition. Used in production
-since 2001.
-
-TA-Lib Core is the C library plus native Java, C# and Rust implementations,
-all generated from one source and tested against the C reference.
+TA-Lib implements the standard technical analysis algorithms used across the
+industry since 2001, and is often the reference other libraries test their
+results against.
 
 [![release](https://img.shields.io/github/v/release/TA-Lib/ta-lib)](https://github.com/TA-Lib/ta-lib/releases)
 [![license](https://img.shields.io/github/license/TA-Lib/ta-lib)](LICENSE)
@@ -15,14 +12,46 @@ all generated from one source and tested against the C reference.
 
 ## Features
 
-- Batch and streaming API for every function: compute a whole array, or update
-  one bar at a time without recomputing the history.
-- Native libraries for C/C++, Rust, Java and C#. The Rust, Java and C# ones do
-  not need the C library.
-- Made for integration and glue-code friendly. Function metadata drives your
-  UI, parameter range, automation and generated bindings; the
-  [Abstract API](https://ta-lib.org/api/abstract/) calls any function by name.
+<table>
+<tr>
+<td width="50%" valign="top">
+
+**200+ indicators**<br>
+ADX, MACD, RSI, Stochastic, Bollinger Bands and more, plus candlestick pattern
+recognition. [See the complete list](https://ta-lib.org/functions/).
+
+</td>
+<td width="50%" valign="top">
+
+**Batch and streaming**<br>
+Compute a whole array, or update one bar at a time without recomputing the
+history. [Streaming API](https://ta-lib.org/api/stream/).
+
+</td>
+</tr>
+<tr>
+<td width="50%" valign="top">
+
+**Native in four languages**<br>
+[C/C++](https://ta-lib.org/api/), [Java](https://ta-lib.org/api/java/),
+[C#](https://ta-lib.org/api/csharp/) and [Rust](https://ta-lib.org/api/rust/).
+Wrappers for Python, R, and [more](https://ta-lib.org/install/#wrappers).
+
+</td>
+<td width="50%" valign="top">
+
+**Made for integration**<br>
+Glue-code friendly. Function metadata drives your UI, parameter range,
+automation and generated bindings.
+[Abstract API](https://ta-lib.org/api/abstract/).
+
+</td>
+</tr>
+</table>
+
 - No third-party dependencies.
+- All native implementations are generated from one source and tested against
+  the C reference.
 
 ## Example
 
