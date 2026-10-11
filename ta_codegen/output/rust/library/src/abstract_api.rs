@@ -298,6 +298,8 @@ pub enum FuncId {
     HT_TRENDMODE,
     /// Internal Bar Strength — [`Core::ibs`](crate::Core::ibs).
     IBS,
+    /// Ichimoku Kinko Hyo — [`Core::ichimoku`](crate::Core::ichimoku).
+    ICHIMOKU,
     /// Intraday Momentum Index — [`Core::imi`](crate::Core::imi).
     IMI,
     /// Kaufman Adaptive Moving Average — [`Core::kama`](crate::Core::kama).
@@ -516,7 +518,7 @@ pub enum FuncId {
 
 impl FuncId {
     /// Number of functions in the registry.
-    pub const COUNT: usize = 235;
+    pub const COUNT: usize = 236;
     /// Metadata for this function (O(1) index into the const table).
     #[inline] pub fn info(self) -> &'static FuncInfo { &FUNC_TABLE[self as usize] }
     /// Upper-case TA name, e.g. "RSI".
@@ -865,7 +867,7 @@ impl FuncInfo {
 
 /// Backing storage for [`FUNCS`], indexed by [`FuncId`]. Link-time const, in
 /// `.rodata`. Private, so its length is nobody's business but this module's.
-static FUNC_TABLE: [FuncInfo; 235] = [
+static FUNC_TABLE: [FuncInfo; 236] = [
     FuncInfo {
         id: FuncId::AC,
         name: "AC",
@@ -2275,6 +2277,17 @@ static FUNC_TABLE: [FuncInfo; 235] = [
         unst_id: None,
     },
     FuncInfo {
+        id: FuncId::ICHIMOKU,
+        name: "ICHIMOKU",
+        group: Group::OverlapStudies,
+        hint: "Ichimoku Kinko Hyo",
+        flags: FuncFlags(0x03000002),
+        inputs: &[InputInfo { param_name: "inPriceHL", kind: InputType::Price, flags: InputFlags(0x00000006) }, ],
+        opt_inputs: &[OptInputInfo { param_name: "optInTenkanPeriod", display_name: "Tenkan Period", hint: "Period of the conversion line", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 2, max: 100000, default: 9, suggested: (4, 200, 1) } }, OptInputInfo { param_name: "optInKijunPeriod", display_name: "Kijun Period", hint: "Period of the base line, and the forward shift of the two spans", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 2, max: 100000, default: 26, suggested: (4, 200, 1) } }, OptInputInfo { param_name: "optInSenkouBPeriod", display_name: "Senkou B Period", hint: "Period of the second leading span", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 2, max: 100000, default: 52, suggested: (4, 200, 1) } }, ],
+        outputs: &[OutputInfo { param_name: "outTenkanSen", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, OutputInfo { param_name: "outKijunSen", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, OutputInfo { param_name: "outSenkouSpanA", kind: OutputType::Real, flags: OutputFlags(0x00004001) }, OutputInfo { param_name: "outSenkouSpanB", kind: OutputType::Real, flags: OutputFlags(0x00004001) }, ],
+        unst_id: None,
+    },
+    FuncInfo {
         id: FuncId::IMI,
         name: "IMI",
         group: Group::MomentumIndicators,
@@ -3597,6 +3610,7 @@ fn get_func_handle_exact(name: &str) -> Option<FuncId> {
         "HT_TRENDLINE" => FuncId::HT_TRENDLINE,
         "HT_TRENDMODE" => FuncId::HT_TRENDMODE,
         "IBS" => FuncId::IBS,
+        "ICHIMOKU" => FuncId::ICHIMOKU,
         "IMI" => FuncId::IMI,
         "KAMA" => FuncId::KAMA,
         "KC" => FuncId::KC,
@@ -4100,6 +4114,7 @@ impl<'a> ParamHolder<'a> {
             FuncId::HT_TRENDLINE => self.core.ht_trendline_lookback(),
             FuncId::HT_TRENDMODE => self.core.ht_trendmode_lookback(),
             FuncId::IBS => self.core.ibs_lookback(),
+            FuncId::ICHIMOKU => self.core.ichimoku_lookback(self.int_opt[0], self.int_opt[1], self.int_opt[2]),
             FuncId::IMI => self.core.imi_lookback(self.int_opt[0]),
             FuncId::KAMA => self.core.kama_lookback(self.int_opt[0]),
             FuncId::KC => self.core.kc_lookback(self.int_opt[0], self.int_opt[1], self.real_opt[2]),
@@ -4348,6 +4363,7 @@ impl<'a> ParamHolder<'a> {
             FuncId::HT_TRENDLINE => self.core.ht_trendline_display_shift(output_idx),
             FuncId::HT_TRENDMODE => self.core.ht_trendmode_display_shift(output_idx),
             FuncId::IBS => self.core.ibs_display_shift(output_idx),
+            FuncId::ICHIMOKU => self.core.ichimoku_display_shift(self.int_opt[0], self.int_opt[1], self.int_opt[2], output_idx),
             FuncId::IMI => self.core.imi_display_shift(self.int_opt[0], output_idx),
             FuncId::KAMA => self.core.kama_display_shift(self.int_opt[0], output_idx),
             FuncId::KC => self.core.kc_display_shift(self.int_opt[0], self.int_opt[1], self.real_opt[2], output_idx),
@@ -6296,6 +6312,25 @@ impl<'a> ParamHolder<'a> {
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.ibs(start_idx, end_idx, i0_1, i0_2, i0_3, &mut *o0);
                 self.real_out[0] = Some(o0);
+                match res {
+                    Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
+                    Err(e) => e,
+                }
+            }
+            FuncId::ICHIMOKU => {
+                let i0_1 = self.price[0][1].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_2 = self.price[0][2].ok_or(RetCode::InputNotAllInitialize)?;
+                if self.real_out[0].is_none() || self.real_out[1].is_none() || self.real_out[2].is_none() || self.real_out[3].is_none() { return Err(RetCode::OutputNotAllInitialize); }
+                Self::check_range(start_idx, end_idx)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let mut o1 = self.real_out[1].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let mut o2 = self.real_out[2].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let mut o3 = self.real_out[3].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let res = self.core.ichimoku(start_idx, end_idx, i0_1, i0_2, self.int_opt[0], self.int_opt[1], self.int_opt[2], &mut *o0, &mut *o1, &mut *o2, &mut *o3);
+                self.real_out[0] = Some(o0);
+                self.real_out[1] = Some(o1);
+                self.real_out[2] = Some(o2);
+                self.real_out[3] = Some(o3);
                 match res {
                     Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
                     Err(e) => e,

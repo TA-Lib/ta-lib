@@ -11824,6 +11824,95 @@ fn legs_IBS(r: &mut Report) {
     r.legs_done("IBS", 3);
 }
 
+const V_ICHIMOKU: &[(&str, i32, i32, i32)] = &[
+    ("defaults", i32::MIN, i32::MIN, i32::MIN),
+    ("minimums", 2i32, 2i32, 2i32),
+];
+
+fn sub_ICHIMOKU(r: &mut Report) {
+    let core = Core::new();
+    for &(label, optInTenkanPeriod, optInKijunPeriod, optInSenkouBPeriod) in V_ICHIMOKU {
+        let Ok(lb) = core.ichimoku_lookback(optInTenkanPeriod, optInKijunPeriod, optInSenkouBPeriod) else { continue; };
+        r.control("ICHIMOKU", label, run(|| {
+            let inHigh: Vec<f64> = Vec::with_capacity(1);
+            let inLow: Vec<f64> = Vec::with_capacity(1);
+            let mut outTenkanSen: Vec<f64> = Vec::with_capacity(1);
+            let mut outKijunSen: Vec<f64> = Vec::with_capacity(1);
+            let mut outSenkouSpanA: Vec<f64> = Vec::with_capacity(1);
+            let mut outSenkouSpanB: Vec<f64> = Vec::with_capacity(1);
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.ichimoku_impl(0, lb, &inHigh, &inLow, optInTenkanPeriod, optInKijunPeriod, optInSenkouBPeriod, &mut _b, &mut _n, &mut outTenkanSen, &mut outKijunSen, &mut outSenkouSpanA, &mut outSenkouSpanB);
+            (rc, _n)
+        }));
+        if lb < 1 { r.no_quiet_range("ICHIMOKU", label); continue; }
+        r.quiet("ICHIMOKU", label, lb, run(|| {
+            let inHigh: Vec<f64> = Vec::with_capacity(1);
+            let inLow: Vec<f64> = Vec::with_capacity(1);
+            let mut outTenkanSen: Vec<f64> = Vec::with_capacity(1);
+            let mut outKijunSen: Vec<f64> = Vec::with_capacity(1);
+            let mut outSenkouSpanA: Vec<f64> = Vec::with_capacity(1);
+            let mut outSenkouSpanB: Vec<f64> = Vec::with_capacity(1);
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.ichimoku_impl(0, lb - 1, &inHigh, &inLow, optInTenkanPeriod, optInKijunPeriod, optInSenkouBPeriod, &mut _b, &mut _n, &mut outTenkanSen, &mut outKijunSen, &mut outSenkouSpanA, &mut outSenkouSpanB);
+            (rc, _n)
+        }));
+    }
+}
+
+fn legs_ICHIMOKU(r: &mut Report) {
+    let core = Core::new();
+    let optInTenkanPeriod = i32::MIN;
+    let optInKijunPeriod = i32::MIN;
+    let optInSenkouBPeriod = i32::MIN;
+    let Ok(lb) = core.ichimoku_lookback(optInTenkanPeriod, optInKijunPeriod, optInSenkouBPeriod) else { r.no_legs("ICHIMOKU"); return; };
+    let (startIdx, endIdx) = (lb, lb + 4);
+    {
+        let inHigh: Vec<f64> = series("high", endIdx + 1);
+        let inLow: Vec<f64> = series("low", endIdx + 1);
+        let mut outTenkanSen: Vec<f64> = vec![Default::default(); 5];
+        let mut outKijunSen: Vec<f64> = vec![Default::default(); 5];
+        let mut outSenkouSpanA: Vec<f64> = vec![Default::default(); 5];
+        let mut outSenkouSpanB: Vec<f64> = vec![Default::default(); 5];
+        r.legs_control("ICHIMOKU", run(|| {
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.ichimoku_impl(startIdx, endIdx, &inHigh, &inLow, optInTenkanPeriod, optInKijunPeriod, optInSenkouBPeriod, &mut _b, &mut _n, &mut outTenkanSen, &mut outKijunSen, &mut outSenkouSpanA, &mut outSenkouSpanB);
+            (rc, _n)
+        }));
+    }
+    {
+        let inHigh: Vec<f64> = Vec::with_capacity(1);
+        let inLow: Vec<f64> = series("low", endIdx + 1);
+        let mut outTenkanSen: Vec<f64> = vec![Default::default(); 5];
+        let mut outKijunSen: Vec<f64> = vec![Default::default(); 5];
+        let mut outSenkouSpanA: Vec<f64> = vec![Default::default(); 5];
+        let mut outSenkouSpanB: Vec<f64> = vec![Default::default(); 5];
+        r.leg("ICHIMOKU", "inHigh", 0, run(|| {
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.ichimoku_impl(startIdx, endIdx, &inHigh, &inLow, optInTenkanPeriod, optInKijunPeriod, optInSenkouBPeriod, &mut _b, &mut _n, &mut outTenkanSen, &mut outKijunSen, &mut outSenkouSpanA, &mut outSenkouSpanB);
+            (rc, _n)
+        }));
+    }
+    {
+        let inHigh: Vec<f64> = series("high", endIdx + 1);
+        let inLow: Vec<f64> = Vec::with_capacity(1);
+        let mut outTenkanSen: Vec<f64> = vec![Default::default(); 5];
+        let mut outKijunSen: Vec<f64> = vec![Default::default(); 5];
+        let mut outSenkouSpanA: Vec<f64> = vec![Default::default(); 5];
+        let mut outSenkouSpanB: Vec<f64> = vec![Default::default(); 5];
+        r.leg("ICHIMOKU", "inLow", 1, run(|| {
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.ichimoku_impl(startIdx, endIdx, &inHigh, &inLow, optInTenkanPeriod, optInKijunPeriod, optInSenkouBPeriod, &mut _b, &mut _n, &mut outTenkanSen, &mut outKijunSen, &mut outSenkouSpanA, &mut outSenkouSpanB);
+            (rc, _n)
+        }));
+    }
+    r.legs_done("ICHIMOKU", 2);
+}
+
 const V_IMI: &[(&str, i32)] = &[
     ("defaults", i32::MIN),
     ("minimums", 2i32),
@@ -19867,6 +19956,7 @@ const PROBES: &[(&str, Probe, Probe)] = &[
     ("HT_TRENDLINE", sub_HT_TRENDLINE, legs_HT_TRENDLINE),
     ("HT_TRENDMODE", sub_HT_TRENDMODE, legs_HT_TRENDMODE),
     ("IBS", sub_IBS, legs_IBS),
+    ("ICHIMOKU", sub_ICHIMOKU, legs_ICHIMOKU),
     ("IMI", sub_IMI, legs_IMI),
     ("KAMA", sub_KAMA, legs_KAMA),
     ("KC", sub_KC, legs_KC),
@@ -20012,7 +20102,7 @@ fn no_phantom_io() {
     // The corpus is the generator's, not a list kept by hand: a probe that
     // stopped being emitted is a shrinking sweep, which is the one way this
     // file can fail open.
-    assert_eq!(PROBES.len(), 235, "probe count");
+    assert_eq!(PROBES.len(), 236, "probe count");
     assert_eq!(
         PROBES.len(),
         crate::abstract_api::funcs().count(),

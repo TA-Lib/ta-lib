@@ -3508,6 +3508,38 @@ int TA_IBS_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
    (void)params;
    return TA_IBS_DisplayShift( outputIdx );
 }
+TA_RetCode TA_ICHIMOKU_FramePP( const TA_ParamHolderPriv *params,
+                           int            startIdx,
+                           int            endIdx,
+                           int           *outBegIdx,
+                           int           *outNBElement )
+{
+   return TA_ICHIMOKU(
+               startIdx,
+               endIdx,
+               params->in[0].data.inPrice.high, /* inHigh */
+               params->in[0].data.inPrice.low, /* inLow */
+               params->optIn[0].data.optInInteger, /* optInTenkanPeriod*/
+               params->optIn[1].data.optInInteger, /* optInKijunPeriod*/
+               params->optIn[2].data.optInInteger, /* optInSenkouBPeriod*/
+               outBegIdx, 
+               outNBElement, 
+               params->out[0].data.outReal, /*  outTenkanSen */
+               params->out[1].data.outReal, /*  outKijunSen */
+               params->out[2].data.outReal, /*  outSenkouSpanA */
+               params->out[3].data.outReal /*  outSenkouSpanB */
+               );
+}
+unsigned int TA_ICHIMOKU_FramePPLB( const TA_ParamHolderPriv *params )
+{
+   return TA_ICHIMOKU_Lookback(params->optIn[0].data.optInInteger, /* optInTenkanPeriod*/
+                    params->optIn[1].data.optInInteger, /* optInKijunPeriod*/
+                    params->optIn[2].data.optInInteger /* optInSenkouBPeriod*/ );
+}
+int TA_ICHIMOKU_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+{
+   return TA_ICHIMOKU_DisplayShift( params->optIn[0].data.optInInteger, params->optIn[1].data.optInInteger, params->optIn[2].data.optInInteger, outputIdx );
+}
 TA_RetCode TA_IMI_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
                            int            endIdx,

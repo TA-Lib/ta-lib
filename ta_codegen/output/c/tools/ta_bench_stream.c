@@ -191,6 +191,7 @@ static void bench_tracked_free(void *p) {
 #include "ta_HT_TRENDLINE.c"
 #include "ta_HT_TRENDMODE.c"
 #include "ta_IBS.c"
+#include "ta_ICHIMOKU.c"
 #include "ta_IMI.c"
 #include "ta_KAMA.c"
 #include "ta_KC.c"
@@ -9084,6 +9085,89 @@ static void bench_stream_all(const char *filter, int iters) {
             g_sink += acc + nb;
             if( st ) { g_ta_track = 0; TA_IBS_Close(st); }
             bench_stream_row("IBS", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
+        }
+        fflush(stdout);
+    }
+    if( func_matches(filter, "ICHIMOKU") ) {
+        long long best_b = 0, best_u = -1, best_p = -1;
+        int begIdx = 0, nb = 0;
+        size_t handle_bytes = 0;
+        double acc = 0.0;
+        const int optInTenkanPeriod = bench_opaque_int(9);
+        const int optInKijunPeriod = bench_opaque_int(26);
+        const int optInSenkouBPeriod = bench_opaque_int(52);
+        int lb = TA_ICHIMOKU_Lookback(optInTenkanPeriod, optInKijunPeriod, optInSenkouBPeriod);
+        bench_rt_reserve((long long)lb + iters);
+        for( int pass = 0; pass < 3; pass++ ) {
+            int t = lb < 0 ? 0 : lb;
+            long long t0 = get_nanotime();
+            for( int it = 0; it < iters; it++ ) {
+                g_rt_high[t] = g_high[it & BENCH_MASK];
+                g_rt_low[t] = g_low[it & BENCH_MASK];
+                TA_ICHIMOKU(t, t, g_rt_high, g_rt_low, optInTenkanPeriod, optInKijunPeriod, optInSenkouBPeriod, &begIdx, &nb, g_outBuf0, g_outBuf1, g_outBuf2, g_outBuf3);
+                acc += g_outBuf0[0];
+                acc += g_outBuf1[0];
+                acc += g_outBuf2[0];
+                acc += g_outBuf3[0];
+                t++;
+            }
+            long long el = get_nanotime() - t0;
+            if( !best_b || el < best_b ) best_b = el;
+        }
+        TA_ICHIMOKU_Stream *st = NULL;
+            double v0 = 0.0;
+            double v1 = 0.0;
+            double v2 = 0.0;
+            double v3 = 0.0;
+        g_trk_reset(); g_ta_track = 1;
+        TA_RetCode orc = TA_ICHIMOKU_Open(&st, g_high, g_low, g_nPoints, optInTenkanPeriod, optInKijunPeriod, optInSenkouBPeriod, &v0, &v1, &v2, &v3);
+        g_ta_track = 0; handle_bytes = g_ta_live_bytes;
+        if( orc == TA_SUCCESS && st ) {
+            int blk = (iters >= 64) ? 32 : 1;
+            int nblk = iters / blk; int npk = nblk * blk; if( npk < 1 ) npk = 1;
+            for( int pass = 0; pass < 3; pass++ ) {
+                long long t0 = get_nanotime();
+                for( int it = 0; it < iters; it++ ) {
+                    TA_ICHIMOKU_Update(st, g_high[it & BENCH_MASK], g_low[it & BENCH_MASK], &v0, &v1, &v2, &v3);
+                    acc += v0;
+                    acc += v1;
+                    acc += v2;
+                    acc += v3;
+                }
+                long long tu = get_nanotime() - t0;
+                if( best_u < 0 || tu < best_u ) best_u = tu;
+            }
+            for( int pass = 0; pass < 3; pass++ ) {
+                long long tp = 0;
+                for( int b = 0; b < nblk; b++ ) {
+                    long long t0 = get_nanotime();
+                    for( int j = 0; j < blk; j++ ) {
+                        int it = b * blk + j;
+                        TA_ICHIMOKU_Peek(st, g_high[it & BENCH_MASK], g_low[it & BENCH_MASK], &v0, &v1, &v2, &v3);
+                        acc += v0;
+                        acc += v1;
+                        acc += v2;
+                        acc += v3;
+                    }
+                    tp += get_nanotime() - t0;
+                    for( int j = 0; j < blk; j++ ) {
+                        int it = b * blk + j;
+                        TA_ICHIMOKU_Update(st, g_high[it & BENCH_MASK], g_low[it & BENCH_MASK], &v0, &v1, &v2, &v3);
+                        acc += v0;
+                        acc += v1;
+                        acc += v2;
+                        acc += v3;
+                    }
+                }
+                if( best_p < 0 || tp < best_p ) best_p = tp;
+            }
+            g_sink += acc + nb;
+            TA_ICHIMOKU_Close(st);
+            bench_stream_row("ICHIMOKU", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
+        } else {
+            g_sink += acc + nb;
+            if( st ) { g_ta_track = 0; TA_ICHIMOKU_Close(st); }
+            bench_stream_row("ICHIMOKU", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
         fflush(stdout);
     }
@@ -25287,6 +25371,92 @@ static void bench_stream_all_ctx(const char *filter, int iters) {
             g_sink += acc + nb;
             if( st ) { g_ta_track = 0; TA_IBS_Close(st); }
             bench_stream_row("IBS", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
+        }
+        fflush(stdout);
+    }
+    if( func_matches(filter, "ICHIMOKU") ) {
+        long long best_b = 0, best_u = -1, best_p = -1;
+        int begIdx = 0, nb = 0;
+        size_t handle_bytes = 0;
+        double acc = 0.0;
+        const int optInTenkanPeriod = bench_opaque_int(9);
+        const int optInKijunPeriod = bench_opaque_int(26);
+        const int optInSenkouBPeriod = bench_opaque_int(52);
+        int lb = TA_ICHIMOKU_Lookback(optInTenkanPeriod, optInKijunPeriod, optInSenkouBPeriod);
+        bench_rt_reserve((long long)lb + iters);
+        for( int pass = 0; pass < 3; pass++ ) {
+            int t = lb < 0 ? 0 : lb;
+            long long t0 = get_nanotime();
+            for( int it = 0; it < iters; it++ ) {
+                g_rt_high[t] = g_high[it & BENCH_MASK];
+                g_rt_low[t] = g_low[it & BENCH_MASK];
+                TA_ICHIMOKU(t, t, g_rt_high, g_rt_low, optInTenkanPeriod, optInKijunPeriod, optInSenkouBPeriod, &begIdx, &nb, g_outBuf0, g_outBuf1, g_outBuf2, g_outBuf3);
+                acc += g_outBuf0[0];
+                acc += g_outBuf1[0];
+                acc += g_outBuf2[0];
+                acc += g_outBuf3[0];
+                bench_context();
+                t++;
+            }
+            long long el = get_nanotime() - t0;
+            if( !best_b || el < best_b ) best_b = el;
+        }
+        TA_ICHIMOKU_Stream *st = NULL;
+            double v0 = 0.0;
+            double v1 = 0.0;
+            double v2 = 0.0;
+            double v3 = 0.0;
+        g_trk_reset(); g_ta_track = 1;
+        TA_RetCode orc = TA_ICHIMOKU_Open(&st, g_high, g_low, g_nPoints, optInTenkanPeriod, optInKijunPeriod, optInSenkouBPeriod, &v0, &v1, &v2, &v3);
+        g_ta_track = 0; handle_bytes = g_ta_live_bytes;
+        if( orc == TA_SUCCESS && st ) {
+            int blk = (iters >= 64) ? 32 : 1;
+            int nblk = iters / blk; int npk = nblk * blk; if( npk < 1 ) npk = 1;
+            for( int pass = 0; pass < 3; pass++ ) {
+                long long t0 = get_nanotime();
+                for( int it = 0; it < iters; it++ ) {
+                    TA_ICHIMOKU_Update(st, g_high[it & BENCH_MASK], g_low[it & BENCH_MASK], &v0, &v1, &v2, &v3);
+                    acc += v0;
+                    acc += v1;
+                    acc += v2;
+                    acc += v3;
+                    bench_context();
+                }
+                long long tu = get_nanotime() - t0;
+                if( best_u < 0 || tu < best_u ) best_u = tu;
+            }
+            for( int pass = 0; pass < 3; pass++ ) {
+                long long tp = 0;
+                for( int b = 0; b < nblk; b++ ) {
+                    long long t0 = get_nanotime();
+                    for( int j = 0; j < blk; j++ ) {
+                        int it = b * blk + j;
+                        TA_ICHIMOKU_Peek(st, g_high[it & BENCH_MASK], g_low[it & BENCH_MASK], &v0, &v1, &v2, &v3);
+                        acc += v0;
+                        acc += v1;
+                        acc += v2;
+                        acc += v3;
+                        bench_context();
+                    }
+                    tp += get_nanotime() - t0;
+                    for( int j = 0; j < blk; j++ ) {
+                        int it = b * blk + j;
+                        TA_ICHIMOKU_Update(st, g_high[it & BENCH_MASK], g_low[it & BENCH_MASK], &v0, &v1, &v2, &v3);
+                        acc += v0;
+                        acc += v1;
+                        acc += v2;
+                        acc += v3;
+                    }
+                }
+                if( best_p < 0 || tp < best_p ) best_p = tp;
+            }
+            g_sink += acc + nb;
+            TA_ICHIMOKU_Close(st);
+            bench_stream_row("ICHIMOKU", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
+        } else {
+            g_sink += acc + nb;
+            if( st ) { g_ta_track = 0; TA_ICHIMOKU_Close(st); }
+            bench_stream_row("ICHIMOKU", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
         fflush(stdout);
     }

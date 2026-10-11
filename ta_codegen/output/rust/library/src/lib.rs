@@ -244,7 +244,7 @@
 //! * [`WAVETREND`](Core::wavetrend) — WaveTrend Oscillator
 //! * [`WILLR`](Core::willr) — Williams' %R
 //!
-//! ## Overlap Studies (33)
+//! ## Overlap Studies (34)
 //!
 //! * [`ACCBANDS`](Core::accbands) — Acceleration Bands
 //! * [`ALMA`](Core::alma) — Arnaud Legoux Moving Average
@@ -256,6 +256,7 @@
 //! * [`FRAMA`](Core::frama) — Fractal Adaptive Moving Average
 //! * [`HMA`](Core::hma) — Hull Moving Average
 //! * [`HT_TRENDLINE`](Core::ht_trendline) — Hilbert Transform - Instantaneous Trendline
+//! * [`ICHIMOKU`](Core::ichimoku) — Ichimoku Kinko Hyo
 //! * [`KAMA`](Core::kama) — Kaufman Adaptive Moving Average
 //! * [`KC`](Core::kc) — Keltner Channels
 //! * [`MA`](Core::ma) — Moving average

@@ -126,6 +126,7 @@ HT_SINE             Hilbert Transform - SineWave
 HT_TRENDLINE        Hilbert Transform - Instantaneous Trendline
 HT_TRENDMODE        Hilbert Transform - Trend vs Cycle Mode
 IBS                 Internal Bar Strength
+ICHIMOKU            Ichimoku Kinko Hyo
 IMI                 Intraday Momentum Index
 KAMA                Kaufman Adaptive Moving Average
 KC                  Keltner Channels

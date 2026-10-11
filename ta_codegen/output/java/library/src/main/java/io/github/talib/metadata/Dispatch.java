@@ -442,6 +442,9 @@ final class Dispatch {
          case "IBS":
             return core.ibs(
                startIdx, endIdx, h.price(0, 1), h.price(0, 2), h.price(0, 3), h.realOutput(0));
+         case "ICHIMOKU":
+            return core.ichimoku(
+               startIdx, endIdx, h.price(0, 1), h.price(0, 2), h.intOpt(0), h.intOpt(1), h.intOpt(2), h.realOutput(0), h.realOutput(1), h.realOutput(2), h.realOutput(3));
          case "IMI":
             return core.imi(
                startIdx, endIdx, h.price(0, 0), h.price(0, 3), h.intOpt(0), h.realOutput(0));
@@ -1030,6 +1033,8 @@ final class Dispatch {
             return core.htTrendmodeLookback();
          case "IBS":
             return core.ibsLookback();
+         case "ICHIMOKU":
+            return core.ichimokuLookback(h.intOpt(0), h.intOpt(1), h.intOpt(2));
          case "IMI":
             return core.imiLookback(h.intOpt(0));
          case "KAMA":
@@ -1508,6 +1513,8 @@ final class Dispatch {
             return core.htTrendmodeDisplayShift(outputIdx);
          case "IBS":
             return core.ibsDisplayShift(outputIdx);
+         case "ICHIMOKU":
+            return core.ichimokuDisplayShift(h.intOpt(0), h.intOpt(1), h.intOpt(2), outputIdx);
          case "IMI":
             return core.imiDisplayShift(h.intOpt(0), outputIdx);
          case "KAMA":

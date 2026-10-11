@@ -1967,7 +1967,7 @@ fn composed_sub_call_destination_funcs() {
     // Membership alone would not tell the next author WHICH invariant to keep:
     // no two of these are safe for the same reason. The reason is recorded with
     // each entry and printed on failure. (Reasons proved by kevinlincg, #205.)
-    let expected: [(&str, &str); 16] = [
+    let expected: [(&str, &str); 17] = [
         ("APO", "sub-call uses optInSlowPeriod and the body swaps so slow == max(slow,fast); \
                  the swap is load-bearing -- see apo_family_period_swap_is_a_write_bound_precondition"),
         ("BBW", "as KDJ -- var is handed outBegIdx/outNBElement themselves and BBW returns them \
@@ -1978,6 +1978,11 @@ fn composed_sub_call_destination_funcs() {
                  returns the count unmodified, so the final count IS that callee's count. The \
                  rocp buffer it ranks is entered optInRankPeriod bars before startIdx, so that \
                  count is endIdx-startIdx+1"),
+        ("ICHIMOKU", "medprice writes outSenkouSpanA and ICHIMOKU returns its count \
+                 unmodified. It has a lookback of 0 and is entered at 0 over the n elements \
+                 the three midprice calls produced, so its count IS n = endIdx-startIdx+1, \
+                 the expression ICHIMOKU returns. Equal through the INPUT LENGTH, as KC is, \
+                 not through a lookback identity between two callees"),
         ("KC", "the moving average is entered at exactly ema_lookback over a typical-price buffer \
                  that begins ema_lookback bars before startIdx, so it clamps nothing: its first \
                  output lands on startIdx and its count is endIdx-startIdx+1, the same expression \

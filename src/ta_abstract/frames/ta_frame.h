@@ -1455,6 +1455,17 @@ unsigned int TA_IBS_FramePPLB( const TA_ParamHolderPriv *params )
 int TA_IBS_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
 ;
 
+TA_RetCode TA_ICHIMOKU_FramePP( const TA_ParamHolderPriv *params,
+                           int            startIdx,
+                           int            endIdx,
+                           int           *outBegIdx,
+                           int           *outNBElement )
+;
+unsigned int TA_ICHIMOKU_FramePPLB( const TA_ParamHolderPriv *params )
+;
+int TA_ICHIMOKU_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+;
+
 TA_RetCode TA_IMI_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
                            int            endIdx,

@@ -5261,6 +5261,54 @@ static TA_RetCode TA_IBS_SFrameClose( void *stream )
    return TA_IBS_Close( (TA_IBS_Stream *)stream );
 }
 
+static TA_RetCode TA_ICHIMOKU_SFrameOpen( void **stream,
+                  const double *const in[], int historyLen,
+                  const double optIn[],
+                  double *const outReal[], int *const outInteger[] )
+{
+   (void)outInteger;
+   return TA_ICHIMOKU_Open(
+               (TA_ICHIMOKU_Stream **)stream,
+               in[0] /* inHigh */,
+               in[1] /* inLow */,
+               historyLen,
+               (int)optIn[0] /* optInTenkanPeriod */,
+               (int)optIn[1] /* optInKijunPeriod */,
+               (int)optIn[2] /* optInSenkouBPeriod */,
+               outReal[0] /* outTenkanSen */,
+               outReal[1] /* outKijunSen */,
+               outReal[2] /* outSenkouSpanA */,
+               outReal[3] /* outSenkouSpanB */
+               );
+}
+static TA_RetCode TA_ICHIMOKU_SFrameFill( void **stream,
+                  const double *const in[], int historyLen,
+                  const double optIn[],
+                  int *outBegIdx, int *outNBElement,
+                  double *const outReal[], int *const outInteger[] )
+{
+   (void)outInteger;
+   return TA_ICHIMOKU_OpenAndFill(
+               (TA_ICHIMOKU_Stream **)stream,
+               in[0] /* inHigh */,
+               in[1] /* inLow */,
+               historyLen,
+               (int)optIn[0] /* optInTenkanPeriod */,
+               (int)optIn[1] /* optInKijunPeriod */,
+               (int)optIn[2] /* optInSenkouBPeriod */,
+               outBegIdx,
+               outNBElement,
+               outReal[0] /* outTenkanSen */,
+               outReal[1] /* outKijunSen */,
+               outReal[2] /* outSenkouSpanA */,
+               outReal[3] /* outSenkouSpanB */
+               );
+}
+static TA_RetCode TA_ICHIMOKU_SFrameClose( void *stream )
+{
+   return TA_ICHIMOKU_Close( (TA_ICHIMOKU_Stream *)stream );
+}
+
 static TA_RetCode TA_IMI_SFrameOpen( void **stream,
                   const double *const in[], int historyLen,
                   const double optIn[],
@@ -9730,6 +9778,8 @@ static const TA_StreamEntry TA_StreamTable[] = {
      1, TA_VIn_HT_TRENDMODE, 0, NULL, 1, TA_VOutIsInt_HT_TRENDMODE },
    { "IBS", TA_IBS_SFrameOpen, TA_IBS_SFrameFill, TA_IBS_SFrameClose,
      3, TA_VIn_IBS, 0, NULL, 1, TA_VOutIsInt_IBS },
+   { "ICHIMOKU", TA_ICHIMOKU_SFrameOpen, TA_ICHIMOKU_SFrameFill, TA_ICHIMOKU_SFrameClose,
+     2, TA_VIn_ICHIMOKU, 3, TA_VOpt_ICHIMOKU, 4, TA_VOutIsInt_ICHIMOKU },
    { "IMI", TA_IMI_SFrameOpen, TA_IMI_SFrameFill, TA_IMI_SFrameClose,
      2, TA_VIn_IMI, 1, TA_VOpt_IMI, 1, TA_VOutIsInt_IMI },
    { "KAMA", TA_KAMA_SFrameOpen, TA_KAMA_SFrameFill, TA_KAMA_SFrameClose,
@@ -9946,6 +9996,6 @@ static const TA_StreamEntry TA_StreamTable[] = {
      1, TA_VIn_ZLEMA, 1, TA_VOpt_ZLEMA, 1, TA_VOutIsInt_ZLEMA },
 };
 
-#define TA_STREAM_TABLE_SIZE 235
+#define TA_STREAM_TABLE_SIZE 236
 
 #endif /* TA_STREAM_FRAME_H */
