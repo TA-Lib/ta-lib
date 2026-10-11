@@ -1,0 +1,62 @@
+name: SQZMOM
+group: Momentum Indicators
+hint: Squeeze Momentum and Level
+flags: [stream]
+inputs:
+  - name: inPriceHLC
+    type: price
+    price_components: [high, low, close]
+optional_inputs:
+  - name: optInBBPeriod
+    type: integer
+    display_name: BB Period
+    hint: Period of the Bollinger Bands
+    range: [2, 100000]
+    default: 20
+    suggested: [4, 200, 1]
+  - name: optInNbDev
+    type: real
+    display_name: Deviations
+    hint: Deviation multiplier for both Bollinger Bands
+    range: [0, TA_REAL_MAX]
+    default: 2
+    precision: 2
+    suggested: [1, 3, 0.2]
+  - name: optInKCPeriod
+    type: integer
+    display_name: KC Period
+    hint: Period of the Keltner Channel, and of the momentum regression
+    range: [2, 100000]
+    default: 20
+    suggested: [4, 200, 1]
+  - name: optInFactorWide
+    type: real
+    display_name: Wide Factor
+    hint: Keltner width for the widest compression test
+    range: [0, TA_REAL_MAX]
+    default: 2
+    precision: 2
+    suggested: [1, 3, 0.25]
+  - name: optInFactorNormal
+    type: real
+    display_name: Normal Factor
+    hint: Keltner width for the classic squeeze test
+    range: [0, TA_REAL_MAX]
+    default: 1.5
+    precision: 2
+    suggested: [1, 3, 0.25]
+  - name: optInFactorNarrow
+    type: real
+    display_name: Narrow Factor
+    hint: Keltner width for the tightest compression test
+    range: [0, TA_REAL_MAX]
+    default: 1
+    precision: 2
+    suggested: [0.5, 2, 0.25]
+outputs:
+  - name: outMomentum
+    type: real
+    flags: [line]
+  - name: outSqueeze
+    type: integer
+    flags: [line]

@@ -2214,6 +2214,17 @@ unsigned int TA_SQRT_FramePPLB( const TA_ParamHolderPriv *params )
 int TA_SQRT_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
 ;
 
+TA_RetCode TA_SQZMOM_FramePP( const TA_ParamHolderPriv *params,
+                           int            startIdx,
+                           int            endIdx,
+                           int           *outBegIdx,
+                           int           *outNBElement )
+;
+unsigned int TA_SQZMOM_FramePPLB( const TA_ParamHolderPriv *params )
+;
+int TA_SQZMOM_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+;
+
 TA_RetCode TA_STC_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
                            int            endIdx,

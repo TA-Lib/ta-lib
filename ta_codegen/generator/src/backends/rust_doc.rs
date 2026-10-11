@@ -786,6 +786,15 @@ fn integer_domain_claim(
             ),
             format!("assert!({var}[..out_range.count].iter().all(|&v| v == 0 || v == 100));"),
         ],
+        // An ORDINAL, not a flag: the three Keltner channels share a centre and
+        // BAND >= 0, so they nest and the ladder is monotone. Which level a bar
+        // takes depends on three factors the caller chooses, so the domain is all
+        // a doctest can honestly claim.
+        ("SQZMOM", _) => vec![
+            "// the compression level is an ordinal: 3 narrow, 2 normal, 1 wide, -1 released, 0 otherwise"
+                .to_string(),
+            format!("assert!({var}[..out_range.count].iter().all(|&v| (-1..=3).contains(&v)));"),
+        ],
         // ta_HT_TRENDMODE.c writes its `trend` local, which is only ever 0 or 1.
         ("HT_TRENDMODE", _) => vec![
             "// the mode is a flag: 1 in a trend, 0 in a cycle".to_string(),

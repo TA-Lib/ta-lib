@@ -1967,7 +1967,7 @@ fn composed_sub_call_destination_funcs() {
     // Membership alone would not tell the next author WHICH invariant to keep:
     // no two of these are safe for the same reason. The reason is recorded with
     // each entry and printed on failure. (Reasons proved by kevinlincg, #205.)
-    let expected: [(&str, &str); 15] = [
+    let expected: [(&str, &str); 16] = [
         ("APO", "sub-call uses optInSlowPeriod and the body swaps so slow == max(slow,fast); \
                  the swap is load-bearing -- see apo_family_period_swap_is_a_write_bound_precondition"),
         ("BBW", "as KDJ -- var is handed outBegIdx/outNBElement themselves and BBW returns them \
@@ -2005,6 +2005,11 @@ fn composed_sub_call_destination_funcs() {
                  rvir_lookback delegates to rvi_lookback, so the high leg entered at the same \
                  startIdx agrees by construction and the averaging loop runs over one count, \
                  not two"),
+        ("SQZMOM", "as KC -- linearreg is entered at 0 over tempDev, a buffer whose length is \
+                 exactly (endIdx-startIdx+1) + linearreg_lookback(optInKCPeriod), so it clamps to \
+                 its own lookback and its count comes out at endIdx-startIdx+1, the expression \
+                 SQZMOM returns. Equal through the buffer's LENGTH, not through a lookback \
+                 identity between two callees"),
         ("STDDEV", "stddev_lookback DELEGATES to var_lookback in the source, so the counts are \
                  equal by construction rather than by arithmetic coincidence"),
         ("STOCH", "the callee is handed tempBuffer[..*outNBElement], so its output cannot exceed \
