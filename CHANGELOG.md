@@ -45,6 +45,7 @@ See [github commits](https://github.com/TA-Lib/ta-lib/commits) for complete list
   - SWAK_GAUSS: Swiss Army Knife - Gaussian Filter, Ehlers' two-pole low-pass with no zeros, hence no overshoot (#486)
   - SWAK_HP: Swiss Army Knife - High-Pass Filter, Ehlers' one-pole detrender centred on zero (#486)
   - VIDYA: Variable Index Dynamic Average, Chande's EMA scaled bar by bar by the CMO (#474)
+  - WAVETREND: WaveTrend Oscillator, the typical price's distance from its EMA scaled by that distance's own EMA, with a signal line (#476)
 - New MAType (for MA, BBANDS, STOCH etc...):
   - TA_MAType_VIDYA (#474)
   - TA_MAType_ALMA (#475)
