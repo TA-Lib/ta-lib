@@ -10,6 +10,7 @@
  *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
  *  100126 MF,CC  First version (#491).
+ *  101126 MF,CC  Each lookback is asked once per call (#522).
  */
 
 int kstext_lookback(int optInROC1Period, int optInROC2Period, int optInROC3Period, int optInROC4Period, int optInMA1Period, int optInMA2Period, int optInMA3Period, int optInMA4Period, int optInSignalPeriod, TA_MAType optInROCMAType, TA_MAType optInSignalMAType)
@@ -48,6 +49,7 @@ TA_RetCode kstext(int startIdx, int endIdx,
    double *tempBuffer;
    TA_RetCode retCode;
    int lookbackTotal, lookbackSignal, lookbackMA, sigStart;
+   int lookbackMA1, lookbackMA2, lookbackMA3, lookbackMA4;
    int tempInteger, tempBegIdx, rocNb, kstNb, legNb, sigNb;
    int i;
 
@@ -59,8 +61,21 @@ TA_RetCode kstext(int startIdx, int endIdx,
    *outBegIdx = 0;
    *outNBElement = 0;
 
+   /* lookbackTotal must stay kstext_lookback() of the same parameters. */
    lookbackSignal = ma_lookback( optInSignalPeriod, optInSignalMAType );
-   lookbackTotal = kstext_lookback( optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInMA1Period, optInMA2Period, optInMA3Period, optInMA4Period, optInSignalPeriod, optInROCMAType, optInSignalMAType );
+   lookbackMA1 = ma_lookback( optInMA1Period, optInROCMAType );
+   lookbackMA2 = ma_lookback( optInMA2Period, optInROCMAType );
+   lookbackMA3 = ma_lookback( optInMA3Period, optInROCMAType );
+   lookbackMA4 = ma_lookback( optInMA4Period, optInROCMAType );
+
+   lookbackTotal = optInROC1Period + lookbackMA1;
+   tempInteger = optInROC2Period + lookbackMA2;
+   if( tempInteger > lookbackTotal ) lookbackTotal = tempInteger;
+   tempInteger = optInROC3Period + lookbackMA3;
+   if( tempInteger > lookbackTotal ) lookbackTotal = tempInteger;
+   tempInteger = optInROC4Period + lookbackMA4;
+   if( tempInteger > lookbackTotal ) lookbackTotal = tempInteger;
+   lookbackTotal += lookbackSignal;
 
    if( startIdx < lookbackTotal )
       startIdx = lookbackTotal;
@@ -73,13 +88,10 @@ TA_RetCode kstext(int startIdx, int endIdx,
    /* Both buffers are sized by the longest leg average: a rate of change
     * starts its average's lookback before sigStart.
     */
-   lookbackMA = ma_lookback( optInMA1Period, optInROCMAType );
-   tempInteger = ma_lookback( optInMA2Period, optInROCMAType );
-   if( tempInteger > lookbackMA ) lookbackMA = tempInteger;
-   tempInteger = ma_lookback( optInMA3Period, optInROCMAType );
-   if( tempInteger > lookbackMA ) lookbackMA = tempInteger;
-   tempInteger = ma_lookback( optInMA4Period, optInROCMAType );
-   if( tempInteger > lookbackMA ) lookbackMA = tempInteger;
+   lookbackMA = lookbackMA1;
+   if( lookbackMA2 > lookbackMA ) lookbackMA = lookbackMA2;
+   if( lookbackMA3 > lookbackMA ) lookbackMA = lookbackMA3;
+   if( lookbackMA4 > lookbackMA ) lookbackMA = lookbackMA4;
 
    tempInteger = (endIdx-sigStart)+1+lookbackMA;
    kstBuffer = malloc((tempInteger) * sizeof(double));
@@ -93,7 +105,7 @@ TA_RetCode kstext(int startIdx, int endIdx,
       return TA_ALLOC_ERR;
    }
 
-   retCode = roc( sigStart-ma_lookback( optInMA1Period, optInROCMAType ), endIdx, inReal, optInROC1Period,
+   retCode = roc( sigStart-lookbackMA1, endIdx, inReal, optInROC1Period,
       &tempBegIdx, &rocNb, kstBuffer );
    if( retCode != TA_SUCCESS )
    {
@@ -111,7 +123,7 @@ TA_RetCode kstext(int startIdx, int endIdx,
       return retCode;
    }
 
-   retCode = roc( sigStart-ma_lookback( optInMA2Period, optInROCMAType ), endIdx, inReal, optInROC2Period,
+   retCode = roc( sigStart-lookbackMA2, endIdx, inReal, optInROC2Period,
       &tempBegIdx, &rocNb, tempBuffer );
    if( retCode != TA_SUCCESS )
    {
@@ -132,7 +144,7 @@ TA_RetCode kstext(int startIdx, int endIdx,
    for( i=0; i < kstNb; i++ )
       kstBuffer[i] = kstBuffer[i] + 2.0*tempBuffer[i];
 
-   retCode = roc( sigStart-ma_lookback( optInMA3Period, optInROCMAType ), endIdx, inReal, optInROC3Period,
+   retCode = roc( sigStart-lookbackMA3, endIdx, inReal, optInROC3Period,
       &tempBegIdx, &rocNb, tempBuffer );
    if( retCode != TA_SUCCESS )
    {
@@ -153,7 +165,7 @@ TA_RetCode kstext(int startIdx, int endIdx,
    for( i=0; i < kstNb; i++ )
       kstBuffer[i] = kstBuffer[i] + 3.0*tempBuffer[i];
 
-   retCode = roc( sigStart-ma_lookback( optInMA4Period, optInROCMAType ), endIdx, inReal, optInROC4Period,
+   retCode = roc( sigStart-lookbackMA4, endIdx, inReal, optInROC4Period,
       &tempBegIdx, &rocNb, tempBuffer );
    if( retCode != TA_SUCCESS )
    {

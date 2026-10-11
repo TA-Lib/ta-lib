@@ -48,6 +48,7 @@ See [github commits](https://github.com/TA-Lib/ta-lib/commits) for complete list
   - SWAK_HP: Swiss Army Knife - High-Pass Filter, Ehlers' one-pole detrender centred on zero (#486)
   - VIDYA: Variable Index Dynamic Average, Chande's EMA scaled bar by bar by the CMO (#474)
   - WAVETREND: WaveTrend Oscillator, the typical price's distance from its EMA scaled by that distance's own EMA, with a signal line (#476)
+  - ZIGZAG: Zig Zag, the percent-reversal swing line with each bar's pivot price, leg direction and pivot bar (#487)
 - New MAType (for MA, BBANDS, STOCH etc...):
   - TA_MAType_VIDYA (#474)
   - TA_MAType_ALMA (#475)
