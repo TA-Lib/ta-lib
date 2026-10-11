@@ -8423,6 +8423,64 @@ static TA_RetCode TA_SQRT_VFrameS( int startIdx, int endIdx,
 static const TA_VInputKind TA_VIn_SQRT[] = { TA_VIN_REAL };
 static const int TA_VOutIsInt_SQRT[] = { 0 };
 
+static TA_RetCode TA_SQZMOM_VFrameD( int startIdx, int endIdx,
+                  const double *const in[], const double optIn[],
+                  int *outBegIdx, int *outNBElement,
+                  double *const outReal[], int *const outInteger[] )
+{
+   return TA_SQZMOM(
+               startIdx,
+               endIdx,
+               in[0] /* inHigh */,
+               in[1] /* inLow */,
+               in[2] /* inClose */,
+               (int)optIn[0] /* optInBBPeriod */,
+               optIn[1] /* optInNbDev */,
+               (int)optIn[2] /* optInKCPeriod */,
+               optIn[3] /* optInFactorWide */,
+               optIn[4] /* optInFactorNormal */,
+               optIn[5] /* optInFactorNarrow */,
+               outBegIdx,
+               outNBElement,
+               outReal[0] /* outMomentum */,
+               outInteger[1] /* outSqueeze */
+               );
+}
+static TA_RetCode TA_SQZMOM_VFrameS( int startIdx, int endIdx,
+                  const float *const in[], const double optIn[],
+                  int *outBegIdx, int *outNBElement,
+                  double *const outReal[], int *const outInteger[] )
+{
+   return TA_S_SQZMOM(
+               startIdx,
+               endIdx,
+               in[0] /* inHigh */,
+               in[1] /* inLow */,
+               in[2] /* inClose */,
+               (int)optIn[0] /* optInBBPeriod */,
+               optIn[1] /* optInNbDev */,
+               (int)optIn[2] /* optInKCPeriod */,
+               optIn[3] /* optInFactorWide */,
+               optIn[4] /* optInFactorNormal */,
+               optIn[5] /* optInFactorNarrow */,
+               outBegIdx,
+               outNBElement,
+               outReal[0] /* outMomentum */,
+               outInteger[1] /* outSqueeze */
+               );
+}
+
+static const TA_VInputKind TA_VIn_SQZMOM[] = { TA_VIN_HIGH, TA_VIN_LOW, TA_VIN_CLOSE };
+static const int TA_VOutIsInt_SQZMOM[] = { 0, 1 };
+static const TA_VOptSpec TA_VOpt_SQZMOM[] = {
+   { "optInBBPeriod", TA_VOPT_INT, 2.0, 100000.0, 20.0 },
+   { "optInNbDev", TA_VOPT_REAL, 0.0, 3.00000000000000022e37, 2.0 },
+   { "optInKCPeriod", TA_VOPT_INT, 2.0, 100000.0, 20.0 },
+   { "optInFactorWide", TA_VOPT_REAL, 0.0, 3.00000000000000022e37, 2.0 },
+   { "optInFactorNormal", TA_VOPT_REAL, 0.0, 3.00000000000000022e37, 1.50000000000000000e0 },
+   { "optInFactorNarrow", TA_VOPT_REAL, 0.0, 3.00000000000000022e37, 1.0 },
+};
+
 static TA_RetCode TA_STC_VFrameD( int startIdx, int endIdx,
                   const double *const in[], const double optIn[],
                   int *outBegIdx, int *outNBElement,
@@ -10277,6 +10335,8 @@ static const TA_VariantEntry TA_VariantTable[] = {
      3, TA_VIn_SMI, 4, TA_VOpt_SMI, 2, TA_VOutIsInt_SMI, 0 },
    { "SQRT", TA_SQRT_VFrameD, TA_SQRT_VFrameS,
      1, TA_VIn_SQRT, 0, NULL, 1, TA_VOutIsInt_SQRT, 0 },
+   { "SQZMOM", TA_SQZMOM_VFrameD, TA_SQZMOM_VFrameS,
+     3, TA_VIn_SQZMOM, 6, TA_VOpt_SQZMOM, 2, TA_VOutIsInt_SQZMOM, 0 },
    { "STC", TA_STC_VFrameD, TA_STC_VFrameS,
      1, TA_VIn_STC, 3, TA_VOpt_STC, 1, TA_VOutIsInt_STC, 0 },
    { "STDDEV", TA_STDDEV_VFrameD, TA_STDDEV_VFrameS,
@@ -10349,6 +10409,6 @@ static const TA_VariantEntry TA_VariantTable[] = {
      1, TA_VIn_ZLEMA, 1, TA_VOpt_ZLEMA, 1, TA_VOutIsInt_ZLEMA, 0 },
 };
 
-#define TA_VARIANT_TABLE_SIZE 232
+#define TA_VARIANT_TABLE_SIZE 233
 
 #endif /* TA_VARIANT_FRAME_H */

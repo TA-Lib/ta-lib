@@ -317,6 +317,7 @@ public final class Functions {
       put(m, f_SMA());
       put(m, f_SMI());
       put(m, f_SQRT());
+      put(m, f_SQZMOM());
       put(m, f_STC());
       put(m, f_STDDEV());
       put(m, f_STOCH());
@@ -3838,6 +3839,50 @@ public final class Functions {
          List.of(),
          List.of(
             new OutputInfo(OutputType.REAL, "outReal", 0x00000001)
+         ));
+   }
+
+   private static FuncInfo f_SQZMOM() {
+      return new FuncInfo(
+         "SQZMOM", "Momentum Indicators", "Squeeze Momentum and Level", 0x02000000,
+         List.of(
+            new InputInfo(InputType.PRICE, "inPriceHLC", 0x0000000E)
+         ),
+         List.of(
+            new OptInputInfo(
+               OptInputType.INTEGER_RANGE, "optInBBPeriod", 0x00000000,
+               "BB Period", "Period of the Bollinger Bands", 20.0,
+               0.0, 0.0, 0, 0.0, 0.0, 0.0,
+               2, 100000, 4, 200, 1, null),
+            new OptInputInfo(
+               OptInputType.REAL_RANGE, "optInNbDev", 0x00000000,
+               "Deviations", "Deviation multiplier for both Bollinger Bands", 2.0,
+               0.0, 3e37, 2, 1.0, 3.0, 0.2,
+               0, 0, 0, 0, 0, null),
+            new OptInputInfo(
+               OptInputType.INTEGER_RANGE, "optInKCPeriod", 0x00000000,
+               "KC Period", "Period of the Keltner Channel, and of the momentum regression", 20.0,
+               0.0, 0.0, 0, 0.0, 0.0, 0.0,
+               2, 100000, 4, 200, 1, null),
+            new OptInputInfo(
+               OptInputType.REAL_RANGE, "optInFactorWide", 0x00000000,
+               "Wide Factor", "Keltner width for the widest compression test", 2.0,
+               0.0, 3e37, 2, 1.0, 3.0, 0.25,
+               0, 0, 0, 0, 0, null),
+            new OptInputInfo(
+               OptInputType.REAL_RANGE, "optInFactorNormal", 0x00000000,
+               "Normal Factor", "Keltner width for the classic squeeze test", 1.5,
+               0.0, 3e37, 2, 1.0, 3.0, 0.25,
+               0, 0, 0, 0, 0, null),
+            new OptInputInfo(
+               OptInputType.REAL_RANGE, "optInFactorNarrow", 0x00000000,
+               "Narrow Factor", "Keltner width for the tightest compression test", 1.0,
+               0.0, 3e37, 2, 0.5, 2.0, 0.25,
+               0, 0, 0, 0, 0, null)
+         ),
+         List.of(
+            new OutputInfo(OutputType.REAL, "outMomentum", 0x00000001),
+            new OutputInfo(OutputType.INTEGER, "outSqueeze", 0x00000001)
          ));
    }
 

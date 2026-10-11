@@ -10323,6 +10323,62 @@ static void icount_SQRT(int iters) {
     g_sink += acc + outNBElement;
 }
 
+static void icount_SQZMOM(int iters) {
+    const char *nm = "SQZMOM";
+    int outBegIdx = 0, outNBElement = 0;
+    double acc = 0.0;
+    TA_RetCode rc;
+    TA_SQZMOM_Stream *st = NULL;
+    TA_SQZMOM_Stream *stf = NULL;
+    double v0 = 0.0;
+    int iv0 = 0;
+
+    ICOUNT_ZERO();
+    rc = TA_SQZMOM(0, g_nPoints - 1, g_high, g_low, g_close, 20, 2.000000000000000, 20, 2.000000000000000, 1.500000000000000, 1.000000000000000, &outBegIdx, &outNBElement, g_outBuf0, g_outIntBuf0);
+    ICOUNT_DUMP("SQZMOM/batch");
+    icount_row(nm, "batch", 1, rc);
+    acc += g_outBuf0[0];
+    acc += (double)g_outIntBuf0[0];
+
+    ICOUNT_ZERO();
+    rc = TA_SQZMOM_OpenAndFill(&stf, g_high, g_low, g_close, g_nPoints, 20, 2.000000000000000, 20, 2.000000000000000, 1.500000000000000, 1.000000000000000, &outBegIdx, &outNBElement, g_outBuf0, g_outIntBuf0);
+    ICOUNT_DUMP("SQZMOM/openfill");
+    icount_row(nm, "openfill", 1, rc);
+    acc += g_outBuf0[0];
+    acc += (double)g_outIntBuf0[0];
+    if( stf ) TA_SQZMOM_Close(stf);
+
+    ICOUNT_ZERO();
+    rc = TA_SQZMOM_Open(&st, g_high, g_low, g_close, g_nPoints, 20, 2.000000000000000, 20, 2.000000000000000, 1.500000000000000, 1.000000000000000, &v0, &iv0);
+    ICOUNT_DUMP("SQZMOM/open");
+    icount_row(nm, "open", 1, rc);
+
+    if( rc == TA_SUCCESS && st ) {
+        TA_RetCode src = TA_SUCCESS;
+        ICOUNT_ZERO();
+        for( int it = 0; it < iters; it++ ) {
+            src = TA_SQZMOM_Update(st, g_high[it & ICOUNT_MASK], g_low[it & ICOUNT_MASK], g_close[it & ICOUNT_MASK], &v0, &iv0);
+            acc += v0;
+            acc += (double)iv0;
+        }
+        ICOUNT_DUMP("SQZMOM/update");
+        icount_row(nm, "update", 1, src);
+        ICOUNT_ZERO();
+        for( int it = 0; it < iters; it++ ) {
+            src = TA_SQZMOM_Peek(st, g_high[it & ICOUNT_MASK], g_low[it & ICOUNT_MASK], g_close[it & ICOUNT_MASK], &v0, &iv0);
+            acc += v0;
+            acc += (double)iv0;
+        }
+        ICOUNT_DUMP("SQZMOM/peek");
+        icount_row(nm, "peek", 1, src);
+    } else {
+        icount_row(nm, "update", 0, rc);
+        icount_row(nm, "peek", 0, rc);
+    }
+    if( st ) TA_SQZMOM_Close(st);
+    g_sink += acc + outNBElement;
+}
+
 static void icount_STC(int iters) {
     const char *nm = "STC";
     int outBegIdx = 0, outNBElement = 0;
@@ -12331,6 +12387,7 @@ static void icount_all(const char *filter, int iters) {
     if( func_matches(filter, "SMA") ) { icount_SMA(iters); fflush(stdout); }
     if( func_matches(filter, "SMI") ) { icount_SMI(iters); fflush(stdout); }
     if( func_matches(filter, "SQRT") ) { icount_SQRT(iters); fflush(stdout); }
+    if( func_matches(filter, "SQZMOM") ) { icount_SQZMOM(iters); fflush(stdout); }
     if( func_matches(filter, "STC") ) { icount_STC(iters); fflush(stdout); }
     if( func_matches(filter, "STDDEV") ) { icount_STDDEV(iters); fflush(stdout); }
     if( func_matches(filter, "STOCH") ) { icount_STOCH(iters); fflush(stdout); }
