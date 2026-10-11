@@ -577,6 +577,20 @@ bar handed in. One counter per class and a floor on the bars compared, per
 series for a window and per call for a converging one, keep the leg from
 passing on nothing; a call that fails or reports no lookback is a failure.
 
+Sampled starts: `scripts/auto_stabilization_sample.py`, its own nightly job. The
+leg above runs three series from six starts, which cannot show how often a
+count sized by measurement runs short. The script runs the census of
+`docs/studies/auto-stabilization/` on a fixed seed, for every function that
+owns an unstable id, at its defaults and with its periods tripled and at their
+minimum, on a random walk, a flipping trend, a range-bound series and windows
+of the IBM daily series. Each row is held to `census_table.tsv`: a ceiling on
+the share of starts whose need passes the count at each level, the largest
+need, and the starts that never converge. The trial that set the largest need
+of each row when the table was made is replayed. A row on either side without
+its counterpart fails, so a function that gains an unstable id brings its rows.
+The [known exceptions](https://ta-lib.org/spec/auto-stabilization/#exceptions)
+are rows like any other: their ceiling is the share measured, not zero.
+
 ### Versions and determinism
 
 rV2: `testEnumValueContract` pins C's numbers. `MAType` reaches every language
@@ -607,22 +621,28 @@ rD2: `CODEGEN_TRANSCENDENTAL_TOL` (`test_codegen.h`) is the rule's figure and
 its shape, 1e-9 relative above a magnitude of 1 and absolute below. It holds
 every Java and C# call that evaluates a transcendental function against C, on
 one machine, in `--codegen` and `--xlang-hash`. Elsewhere on one machine the
-comparisons are bitwise or the kernel lane's `fuzz_vmath_near`, both tighter.
+comparisons are bitwise or the kernel lane's `fuzz_vmath_near`, both tighter:
+that one allows `FUZZ_VMATH_MAX_STEPS` (8) adjacent doubles of the same sign,
+under 1.8e-15 of the value, which is where a stream stands against its batch
+call for a transcendental function.
 HT_DCPHASE, HT_SINE and HT_TRENDMODE are skipped on the constant series
 (`xlang_illcond`), where their phase is undefined and two languages can differ
 outright.
 
 rD3: it states what is not promised, so no test holds it. What a level does
-bound between two starts is the second leg under [Auto levels](#auto-levels);
-a sampled check of the cases sized by measurement is #540.
+bound between two starts is the second leg under [Auto levels](#auto-levels),
+and how often a count runs short is the sampled census there.
 
 rD2 between machines ([across machines](https://ta-lib.org/spec/versions/#machines)): no machine is compared with another. Each is held on its own to the suite's
 reference values, which bounds two machines indirectly. `ta_test_legacy` replays
 the v0.6.4 values, frozen at 17 digits, on every platform, each function within
-its own bound, all under 1e-9. Known gap: a function added after v0.6.4, and one
-whose value depends on the host math library (the Hilbert functions among them),
-has no frozen value; its hand-written values are compared at 0.01
-([#540](https://github.com/TA-Lib/ta-lib/issues/540)).
+its own bound, all under 1e-9. A function whose value depends on the host math
+library has no v0.6.4 row: `test_transcendental_ref.c` holds every function
+flagged `TA_FUNC_FLG_USES_TRANSCENDENTAL`, the Hilbert functions among them, to
+values committed once, at rD2's figure and shape, and a flagged function
+without a row fails. Known gap: a function added after v0.6.4 that calls no
+transcendental function has no frozen value; its hand-written values are
+compared at 0.01.
 
 The build-flags caller item: `the_three_build_systems_carry_the_same_flags`
 (generator suite) requires the statements that set `-ffp-contract=off`,
