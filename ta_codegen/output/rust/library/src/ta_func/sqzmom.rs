@@ -53,6 +53,7 @@
  *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
  *  100826 KL,CC  Creation (#488).
+ *  101126 MF,CC  Reject factors out of order (#488).
  */
 
 // Import types from parent module
@@ -121,6 +122,11 @@ impl Core {
         }
         let mut lookbackTotal: usize = 0_usize;
         let mut leg: usize = 0_usize;
+        // The range check cannot order the three factors; without this the lookback
+        // answers a usable number for a call that cannot run.
+        if optInFactorNormal > optInFactorWide || optInFactorNarrow > optInFactorNormal {
+            return Err(RetCode::BadParam);
+        }
         // Three chains reach the first bar at which both outputs exist, and the
         // first output is the longest of them:
         //
@@ -333,6 +339,12 @@ impl Core {
         // Two chains need their input one window earlier than the first output bar:
         // sma(k) over TR, and linearreg(k) over DEV. Both windows are k-1 long, so
         // one staged range serves both.
+        // A channel wider than the one it should nest in breaks the ladder: a bar
+        // could then be inside "narrow" and outside "normal". Ties are allowed, and
+        // wide == normal is the classic on/off/none squeeze.
+        if optInFactorNormal > optInFactorWide || optInFactorNarrow > optInFactorNormal {
+            return RetCode::BadParam;
+        }
         lookbackTotal = self.sqzmom_lookback(optInBBPeriod, optInNbDev, optInKCPeriod, optInFactorWide, optInFactorNormal, optInFactorNarrow).unwrap_or(usize::MAX);
         if lookbackTotal > endIdx {
             (*outBegIdx) = 0;
@@ -821,6 +833,12 @@ impl Core {
         // Two chains need their input one window earlier than the first output bar:
         // sma(k) over TR, and linearreg(k) over DEV. Both windows are k-1 long, so
         // one staged range serves both.
+        // A channel wider than the one it should nest in breaks the ladder: a bar
+        // could then be inside "narrow" and outside "normal". Ties are allowed, and
+        // wide == normal is the classic on/off/none squeeze.
+        if optInFactorNormal > optInFactorWide || optInFactorNarrow > optInFactorNormal {
+            return Err(RetCode::BadParam);
+        }
         lookbackTotal = self.sqzmom_lookback(optInBBPeriod, optInNbDev, optInKCPeriod, optInFactorWide, optInFactorNormal, optInFactorNarrow)?;
         if lookbackTotal > endIdx {
             (*outBegIdx) = 0;

@@ -3858,7 +3858,7 @@ public final class Functions {
             new OptInputInfo(
                OptInputType.REAL_RANGE, "optInNbDev", 0x00000000,
                "Deviations", "Deviation multiplier for both Bollinger Bands", 2.0,
-               0.0, 3e37, 2, 1.0, 3.0, 0.2,
+               0.0, 3e37, 2, 1.0, 3.0, 0.5,
                0, 0, 0, 0, 0, null),
             new OptInputInfo(
                OptInputType.INTEGER_RANGE, "optInKCPeriod", 0x00000000,
@@ -3868,21 +3868,21 @@ public final class Functions {
             new OptInputInfo(
                OptInputType.REAL_RANGE, "optInFactorWide", 0x00000000,
                "Wide Factor", "Keltner width for the widest compression test", 2.0,
-               0.0, 3e37, 2, 1.0, 3.0, 0.25,
+               0.0, 3e37, 1, 1.0, 3.0, 0.5,
                0, 0, 0, 0, 0, null),
             new OptInputInfo(
                OptInputType.REAL_RANGE, "optInFactorNormal", 0x00000000,
                "Normal Factor", "Keltner width for the classic squeeze test", 1.5,
-               0.0, 3e37, 2, 1.0, 3.0, 0.25,
+               0.0, 3e37, 1, 1.0, 3.0, 0.5,
                0, 0, 0, 0, 0, null),
             new OptInputInfo(
                OptInputType.REAL_RANGE, "optInFactorNarrow", 0x00000000,
                "Narrow Factor", "Keltner width for the tightest compression test", 1.0,
-               0.0, 3e37, 2, 0.5, 2.0, 0.25,
+               0.0, 3e37, 1, 0.5, 2.0, 0.5,
                0, 0, 0, 0, 0, null)
          ),
          List.of(
-            new OutputInfo(OutputType.REAL, "outMomentum", 0x00000001),
+            new OutputInfo(OutputType.REAL, "outMomentum", 0x00000010),
             new OutputInfo(OutputType.INTEGER, "outSqueeze", 0x00000001)
          ));
    }

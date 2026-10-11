@@ -4992,15 +4992,15 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
         optInputs:
         [
             new OptInputInfo("optInBBPeriod", "BB Period", "Period of the Bollinger Bands", OptInputFlags.None, new OptInputDomain.IntegerRange(2, 100000, 20, 4, 200, 1)),
-            new OptInputInfo("optInNbDev", "Deviations", "Deviation multiplier for both Bollinger Bands", OptInputFlags.None, new OptInputDomain.RealRange(0.0, 3e37, 2, 2.0, 1.0, 3.0, 0.2)),
+            new OptInputInfo("optInNbDev", "Deviations", "Deviation multiplier for both Bollinger Bands", OptInputFlags.None, new OptInputDomain.RealRange(0.0, 3e37, 2, 2.0, 1.0, 3.0, 0.5)),
             new OptInputInfo("optInKCPeriod", "KC Period", "Period of the Keltner Channel, and of the momentum regression", OptInputFlags.None, new OptInputDomain.IntegerRange(2, 100000, 20, 4, 200, 1)),
-            new OptInputInfo("optInFactorWide", "Wide Factor", "Keltner width for the widest compression test", OptInputFlags.None, new OptInputDomain.RealRange(0.0, 3e37, 2, 2.0, 1.0, 3.0, 0.25)),
-            new OptInputInfo("optInFactorNormal", "Normal Factor", "Keltner width for the classic squeeze test", OptInputFlags.None, new OptInputDomain.RealRange(0.0, 3e37, 2, 1.5, 1.0, 3.0, 0.25)),
-            new OptInputInfo("optInFactorNarrow", "Narrow Factor", "Keltner width for the tightest compression test", OptInputFlags.None, new OptInputDomain.RealRange(0.0, 3e37, 2, 1.0, 0.5, 2.0, 0.25)),
+            new OptInputInfo("optInFactorWide", "Wide Factor", "Keltner width for the widest compression test", OptInputFlags.None, new OptInputDomain.RealRange(0.0, 3e37, 1, 2.0, 1.0, 3.0, 0.5)),
+            new OptInputInfo("optInFactorNormal", "Normal Factor", "Keltner width for the classic squeeze test", OptInputFlags.None, new OptInputDomain.RealRange(0.0, 3e37, 1, 1.5, 1.0, 3.0, 0.5)),
+            new OptInputInfo("optInFactorNarrow", "Narrow Factor", "Keltner width for the tightest compression test", OptInputFlags.None, new OptInputDomain.RealRange(0.0, 3e37, 1, 1.0, 0.5, 2.0, 0.5)),
         ],
         outputs:
         [
-            new OutputInfo(OutputKind.Real, "outMomentum", OutputFlags.Line),
+            new OutputInfo(OutputKind.Real, "outMomentum", OutputFlags.Histogram),
             new OutputInfo(OutputKind.Integer, "outSqueeze", OutputFlags.Line),
         ],
         lookback: static (core, c) => core.SqzmomLookback(c.IntOpt(0), c.RealOpt(1), c.IntOpt(2), c.RealOpt(3), c.RealOpt(4), c.RealOpt(5)),

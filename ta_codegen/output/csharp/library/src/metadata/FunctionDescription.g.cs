@@ -9653,7 +9653,7 @@ public static class FunctionDescription
 					<Precision>2</Precision>
 					<SuggestedStart>1.000000e+0</SuggestedStart>
 					<SuggestedEnd>3.000000e+0</SuggestedEnd>
-					<SuggestedIncrement>2.000000e-1</SuggestedIncrement>
+					<SuggestedIncrement>5.000000e-1</SuggestedIncrement>
 				</Range>
 				<DefaultValue>2.000000e+0</DefaultValue>
 			</OptionalInputArgument>
@@ -9677,10 +9677,10 @@ public static class FunctionDescription
 				<Range>
 					<Minimum>0.000000e+0</Minimum>
 					<Maximum>3.000000e+37</Maximum>
-					<Precision>2</Precision>
+					<Precision>1</Precision>
 					<SuggestedStart>1.000000e+0</SuggestedStart>
 					<SuggestedEnd>3.000000e+0</SuggestedEnd>
-					<SuggestedIncrement>2.500000e-1</SuggestedIncrement>
+					<SuggestedIncrement>5.000000e-1</SuggestedIncrement>
 				</Range>
 				<DefaultValue>2.000000e+0</DefaultValue>
 			</OptionalInputArgument>
@@ -9691,10 +9691,10 @@ public static class FunctionDescription
 				<Range>
 					<Minimum>0.000000e+0</Minimum>
 					<Maximum>3.000000e+37</Maximum>
-					<Precision>2</Precision>
+					<Precision>1</Precision>
 					<SuggestedStart>1.000000e+0</SuggestedStart>
 					<SuggestedEnd>3.000000e+0</SuggestedEnd>
-					<SuggestedIncrement>2.500000e-1</SuggestedIncrement>
+					<SuggestedIncrement>5.000000e-1</SuggestedIncrement>
 				</Range>
 				<DefaultValue>1.500000e+0</DefaultValue>
 			</OptionalInputArgument>
@@ -9705,10 +9705,10 @@ public static class FunctionDescription
 				<Range>
 					<Minimum>0.000000e+0</Minimum>
 					<Maximum>3.000000e+37</Maximum>
-					<Precision>2</Precision>
+					<Precision>1</Precision>
 					<SuggestedStart>5.000000e-1</SuggestedStart>
 					<SuggestedEnd>2.000000e+0</SuggestedEnd>
-					<SuggestedIncrement>2.500000e-1</SuggestedIncrement>
+					<SuggestedIncrement>5.000000e-1</SuggestedIncrement>
 				</Range>
 				<DefaultValue>1.000000e+0</DefaultValue>
 			</OptionalInputArgument>
@@ -9718,7 +9718,7 @@ public static class FunctionDescription
 				<Type>Double Array</Type>
 				<Name>outMomentum</Name>
 				<Flags>
-					<Flag>Line</Flag>
+					<Flag>Histogram</Flag>
 				</Flags>
 			</OutputArgument>
 			<OutputArgument>

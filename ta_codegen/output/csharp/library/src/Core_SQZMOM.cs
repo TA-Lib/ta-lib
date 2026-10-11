@@ -55,6 +55,7 @@ public partial class Core
     *  MMDDYY BY     Description
     *  -------------------------------------------------------------------
     *  100826 KL,CC  Creation (#488).
+    *  101126 MF,CC  Reject factors out of order (#488).
     */
    /// <summary>
    /// Number of leading input bars <c>Sqzmom</c> consumes before it can produce
@@ -113,6 +114,12 @@ public partial class Core
       }
       int lookbackTotal = 0;
       int leg = 0;
+      /* The range check cannot order the three factors; without this the lookback
+       * answers a usable number for a call that cannot run.
+       */
+      if( optInFactorNormal > optInFactorWide || optInFactorNarrow > optInFactorNormal ) {
+         return -1 ;
+      }
       /* Three chains reach the first bar at which both outputs exist, and the
        * first output is the longest of them:
        *
@@ -282,6 +289,13 @@ public partial class Core
        * sma(k) over TR, and linearreg(k) over DEV. Both windows are k-1 long, so
        * one staged range serves both.
        */
+      /* A channel wider than the one it should nest in breaks the ladder: a bar
+       * could then be inside "narrow" and outside "normal". Ties are allowed, and
+       * wide == normal is the classic on/off/none squeeze.
+       */
+      if( optInFactorNormal > optInFactorWide || optInFactorNarrow > optInFactorNormal ) {
+         return RetCode.BadParam ;
+      }
       lookbackTotal = SqzmomLookback(optInBBPeriod, optInNbDev, optInKCPeriod, optInFactorWide, optInFactorNormal, optInFactorNarrow);
       if( lookbackTotal > endIdx ) {
          outBegIdx = 0;
@@ -488,6 +502,9 @@ public partial class Core
       double[]? _rent_tempMid = null;
       double[]? _rent_tempSD = null;
       double[]? _rent_tempWork = null;
+      if( optInFactorNormal > optInFactorWide || optInFactorNarrow > optInFactorNormal ) {
+         return RetCode.BadParam ;
+      }
       lookbackTotal = SqzmomLookback(optInBBPeriod, optInNbDev, optInKCPeriod, optInFactorWide, optInFactorNormal, optInFactorNarrow);
       if( lookbackTotal > endIdx ) {
          outBegIdx = 0;
@@ -609,7 +626,7 @@ public partial class Core
    /// <list type="bullet">
    /// <item><description><c>BAND</c> is the simple mean of the true range over <c>k</c> bars, not an ATR: no Wilder smoothing, and so no unstable period anywhere in this function.</description></item>
    /// <item><description>The anchor is written three ways across the sources — <c>avg(avg(HH,LL), SMA)</c>, <c>((HH+LL)/2 + SMA)/2</c> and <c>0.25*(HH+LL) + 0.5*SMA</c>. All three give the same double, because scaling by a power of two is exact.</description></item>
-   /// <item><description>The three channels share a centre and <c>BAND &gt;= 0</c>, so they nest: inside the narrow one implies inside the normal one implies inside the wide one. The ordinal is therefore monotone, and the factors are required only to be ordered <c>wide &gt;= normal &gt;= narrow &gt;= 0</c>, not strictly.</description></item>
+   /// <item><description>The three channels share a centre and <c>BAND &gt;= 0</c>, so they nest: inside the narrow one implies inside the normal one implies inside the wide one. The ordinal is therefore monotone, and the factors are required only to be ordered <c>wide &gt;= normal &gt;= narrow &gt;= 0</c>, not strictly. Factors out of that order are rejected with <c>TA_BAD_PARAM</c>.</description></item>
    /// <item><description>The momentum window is the Keltner period, as in LazyBear's script, pandas and trading-signals.</description></item>
    /// <item><description>The three chains that feed the outputs do not reach their first value together. The first output bar is the latest of them, so where <c>b</c> is much larger than <c>k</c> the momentum exists before the state does and is still withheld until both do. pandas emits the earlier momentum; a capture compared against it must start at the later bar.</description></item>
    /// </list>
@@ -730,7 +747,7 @@ public partial class Core
    /// <list type="bullet">
    /// <item><description><c>BAND</c> is the simple mean of the true range over <c>k</c> bars, not an ATR: no Wilder smoothing, and so no unstable period anywhere in this function.</description></item>
    /// <item><description>The anchor is written three ways across the sources — <c>avg(avg(HH,LL), SMA)</c>, <c>((HH+LL)/2 + SMA)/2</c> and <c>0.25*(HH+LL) + 0.5*SMA</c>. All three give the same double, because scaling by a power of two is exact.</description></item>
-   /// <item><description>The three channels share a centre and <c>BAND &gt;= 0</c>, so they nest: inside the narrow one implies inside the normal one implies inside the wide one. The ordinal is therefore monotone, and the factors are required only to be ordered <c>wide &gt;= normal &gt;= narrow &gt;= 0</c>, not strictly.</description></item>
+   /// <item><description>The three channels share a centre and <c>BAND &gt;= 0</c>, so they nest: inside the narrow one implies inside the normal one implies inside the wide one. The ordinal is therefore monotone, and the factors are required only to be ordered <c>wide &gt;= normal &gt;= narrow &gt;= 0</c>, not strictly. Factors out of that order are rejected with <c>TA_BAD_PARAM</c>.</description></item>
    /// <item><description>The momentum window is the Keltner period, as in LazyBear's script, pandas and trading-signals.</description></item>
    /// <item><description>The three chains that feed the outputs do not reach their first value together. The first output bar is the latest of them, so where <c>b</c> is much larger than <c>k</c> the momentum exists before the state does and is still withheld until both do. pandas emits the earlier momentum; a capture compared against it must start at the later bar.</description></item>
    /// </list>
@@ -1203,6 +1220,13 @@ public partial class Core
        * sma(k) over TR, and linearreg(k) over DEV. Both windows are k-1 long, so
        * one staged range serves both.
        */
+      /* A channel wider than the one it should nest in breaks the ladder: a bar
+       * could then be inside "narrow" and outside "normal". Ties are allowed, and
+       * wide == normal is the classic on/off/none squeeze.
+       */
+      if( optInFactorNormal > optInFactorWide || optInFactorNarrow > optInFactorNormal ) {
+         return RetCode.BadParam ;
+      }
       lookbackTotal = SqzmomLookback(optInBBPeriod, optInNbDev, optInKCPeriod, optInFactorWide, optInFactorNormal, optInFactorNarrow);
       if( lookbackTotal > endIdx ) {
          outBegIdx = 0;

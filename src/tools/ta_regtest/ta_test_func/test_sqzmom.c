@@ -46,6 +46,7 @@
  *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
  *  100826 KL,CC  Creation (#488).
+ *  101126 MF,CC  Factor order, sub-ranges, short series, range test (#488).
  */
 
 /* Description:
@@ -84,9 +85,14 @@
  *     6. ALIASING. Each output over each input in turn. The abstract layer
  *        caught this one: the body must read every bar input before it writes
  *        a caller buffer, which is why TA_LINEARREG runs last.
- *     7. EDGES. A period below its range is rejected; nbdev == 0 collapses the
- *        bands onto the middle band, which is inside every channel of positive
- *        width, so every bar reads 3.
+ *     7. EDGES. A period below its range and factors out of order are
+ *        rejected; nbdev == 0 collapses the bands onto the middle band, which
+ *        is inside every channel of positive width, so every bar reads 3; a
+ *        series one bar short gives no output and the next bar gives one.
+ *     8. SUB-RANGE. The composition again, entered above the lookback and
+ *        ended before the last bar. Four legs keep running sums, so the
+ *        reference starts each of them where the implementation does.
+ *     9. RANGE INDEPENDENCE, swept via doRangeTestEx.
  */
 
 #include <stdio.h>
@@ -102,22 +108,21 @@
 
 #define SQZ_NB_BAR 252
 
-/* 5 triples x 2 outputs x the bars each produces, summed below at run time and
- * checked against these floors: a leg that compares nothing passes silently
- * otherwise. */
-/* 5 triples; the bars each produces are 214, 226, 214, 250 and 203, which is
- * 1107, and each bar compares both outputs. */
-#define SQZ_COMPOSE_CMP   2214
+/* A leg that compares nothing passes silently without these counts.
+ * 11 cases; the bars each produces are 214, 226, 214, 250, 203, 233, 233, 212,
+ * 54, 214 and 214, which is 2267, and each bar compares both outputs. */
+#define SQZ_COMPOSE_CMP   4534
 #define SQZ_BOUNDARY_CMP   642   /* 3 tuned runs x 214 bars */
 /* One bar per tuned run lands on the edge -- the bar the factor was read from.
  * The floor is what stops the leg passing when the tuning lands nowhere near
  * one, which would make it leg 1 again. */
 #define SQZ_BOUNDARY_EDGE    3
-#define SQZ_LOOKBACK_CMP    10   /* 5 triples x (lookback, begIdx) */
-#define SQZ_NEST_CMP      1107   /* the same 1107 bars, one check each */
+#define SQZ_LOOKBACK_CMP    23   /* 11 cases x (lookback, begIdx), and the unstable-period check */
+#define SQZ_NEST_CMP      2267   /* the same 2267 bars, one check each */
 #define SQZ_FLAT_CMP       214
 #define SQZ_ALIAS_CMP        6   /* 2 outputs x 3 inputs */
-#define SQZ_EDGE_CMP       217   /* 3 return codes, then the 214 bars of the nbDev=0 run */
+#define SQZ_EDGE_CMP       229   /* 3 return codes, the 214 bars of the nbDev=0 run, 8 on factor order, 4 on short series */
+#define SQZ_RANGE_CMP      590   /* 152 and 143 bars, both outputs */
 
 static int g_sqzComposeCmp;
 static int g_sqzBoundaryCmp;
@@ -127,6 +132,7 @@ static int g_sqzNestCmp;
 static int g_sqzFlatCmp;
 static int g_sqzAliasCmp;
 static int g_sqzEdgeCmp;
+static int g_sqzRangeCmp;
 
 typedef struct
 {
@@ -146,6 +152,12 @@ static const SqzCase sqzCases[] =
    { 14, 2.0, 20, 2.0, 1.5, 1.0, 38 },
    {  2, 2.0,  2, 2.0, 1.5, 1.0,  2 },
    { 50, 2.5,  9, 3.0, 1.5, 0.5, 49 },
+   { 20, 2.0,  3, 2.0, 1.5, 1.0, 19 },
+   { 20, 2.0,  4, 2.0, 1.5, 1.0, 19 },
+   { 20, 2.0, 21, 2.0, 1.5, 1.0, 40 },
+   { 20, 2.0,100, 2.0, 1.5, 1.0,198 },
+   { 20, 2.0, 20, 1.5, 1.5, 1.0, 38 },   /* wide == normal: the classic squeeze */
+   { 20, 2.0, 20, 2.0, 1.5, 1.5, 38 },   /* normal == narrow */
 };
 #define SQZ_NB_CASE ((int)(sizeof(sqzCases)/sizeof(sqzCases[0])))
 
@@ -161,7 +173,8 @@ static TA_Integer gotSqz[SQZ_NB_BAR];
 
 static ErrorNumber sqzReference( const TA_Real *high, const TA_Real *low,
                                  const TA_Real *close, int nbBars,
-                                 const SqzCase *c, int *refBeg, int *refNb );
+                                 const SqzCase *c, int startIdx,
+                                 int *refBeg, int *refNb );
 static ErrorNumber sqzLegCompose( TA_History *history );
 static ErrorNumber sqzLegBoundary( TA_History *history );
 static ErrorNumber sqzLegLookback( TA_History *history );
@@ -169,6 +182,8 @@ static ErrorNumber sqzLegNesting( TA_History *history );
 static ErrorNumber sqzLegFlat( void );
 static ErrorNumber sqzLegAlias( TA_History *history );
 static ErrorNumber sqzLegEdges( TA_History *history );
+static ErrorNumber sqzLegSubRange( TA_History *history );
+static ErrorNumber sqzLegRange( TA_History *history );
 
 /**** Global functions definitions.   ****/
 
@@ -185,7 +200,7 @@ ErrorNumber test_func_sqzmom( TA_History *history )
 
    g_sqzComposeCmp = g_sqzBoundaryCmp = g_sqzBoundaryEdge = 0;
    g_sqzLookbackCmp = g_sqzNestCmp = g_sqzFlatCmp = 0;
-   g_sqzAliasCmp = g_sqzEdgeCmp = 0;
+   g_sqzAliasCmp = g_sqzEdgeCmp = g_sqzRangeCmp = 0;
 
    if( (e = sqzLegCompose ( history )) != TA_TEST_PASS ) return e;
    if( (e = sqzLegBoundary( history )) != TA_TEST_PASS ) return e;
@@ -194,6 +209,8 @@ ErrorNumber test_func_sqzmom( TA_History *history )
    if( (e = sqzLegFlat    (         )) != TA_TEST_PASS ) return e;
    if( (e = sqzLegAlias   ( history )) != TA_TEST_PASS ) return e;
    if( (e = sqzLegEdges   ( history )) != TA_TEST_PASS ) return e;
+   if( (e = sqzLegSubRange( history )) != TA_TEST_PASS ) return e;
+   if( (e = sqzLegRange   ( history )) != TA_TEST_PASS ) return e;
 
    /* Every leg must have compared what it says it compares. Without these a
     * leg that silently stopped early reads exactly like a leg that passed. */
@@ -204,16 +221,17 @@ ErrorNumber test_func_sqzmom( TA_History *history )
        g_sqzNestCmp     != SQZ_NEST_CMP     ||
        g_sqzFlatCmp     != SQZ_FLAT_CMP     ||
        g_sqzAliasCmp    != SQZ_ALIAS_CMP    ||
-       g_sqzEdgeCmp     != SQZ_EDGE_CMP )
+       g_sqzEdgeCmp     != SQZ_EDGE_CMP     ||
+       g_sqzRangeCmp    != SQZ_RANGE_CMP )
    {
-      printf( "Fail: SQZMOM comparison counts %d/%d/%d/%d/%d/%d/%d/%d, expected "
-              "%d/%d/>=%d/%d/%d/%d/%d/%d\n",
+      printf( "Fail: SQZMOM comparison counts %d/%d/%d/%d/%d/%d/%d/%d/%d, expected "
+              "%d/%d/>=%d/%d/%d/%d/%d/%d/%d\n",
               g_sqzComposeCmp, g_sqzBoundaryCmp, g_sqzBoundaryEdge,
               g_sqzLookbackCmp, g_sqzNestCmp, g_sqzFlatCmp, g_sqzAliasCmp,
-              g_sqzEdgeCmp,
+              g_sqzEdgeCmp, g_sqzRangeCmp,
               SQZ_COMPOSE_CMP, SQZ_BOUNDARY_CMP, SQZ_BOUNDARY_EDGE,
               SQZ_LOOKBACK_CMP, SQZ_NEST_CMP, SQZ_FLAT_CMP, SQZ_ALIAS_CMP,
-              SQZ_EDGE_CMP );
+              SQZ_EDGE_CMP, SQZ_RANGE_CMP );
       return TA_TESTUTIL_TFRR_BAD_CALCULATION;
    }
 
@@ -223,10 +241,12 @@ ErrorNumber test_func_sqzmom( TA_History *history )
 /**** Local functions definitions.     ****/
 
 /* The card's formula, every leg a public call, nothing of its own but the two
- * lines the card writes out. Fills refMom/refSqz, 0-based at *refBeg. */
+ * lines the card writes out. Fills refMom/refSqz, 0-based at *refBeg. The
+ * output starts at startIdx or at the lookback, whichever is later. */
 static ErrorNumber sqzReference( const TA_Real *high, const TA_Real *low,
                                  const TA_Real *close, int nbBars,
-                                 const SqzCase *c, int *refBeg, int *refNb )
+                                 const SqzCase *c, int startIdx,
+                                 int *refBeg, int *refNb )
 {
    TA_RetCode rc;
    TA_Integer b1, n1;
@@ -237,6 +257,7 @@ static ErrorNumber sqzReference( const TA_Real *high, const TA_Real *low,
    if( leg > beg ) beg = leg;
    leg = 2 * (c->kcPeriod - 1);
    if( leg > beg ) beg = leg;
+   if( startIdx > beg ) beg = startIdx;
 
    nb = nbBars - beg;
    stage = beg - (c->kcPeriod - 1);
@@ -318,7 +339,7 @@ static ErrorNumber sqzLegCompose( TA_History *history )
       }
 
       if( (e = sqzReference( history->high, history->low, history->close,
-                             nbBars, c, &refBeg, &refNb )) != TA_TEST_PASS )
+                             nbBars, c, 0, &refBeg, &refNb )) != TA_TEST_PASS )
          return e;
 
       if( begIdx != refBeg || nbElement != refNb )
@@ -411,7 +432,7 @@ static ErrorNumber sqzLegBoundary( TA_History *history )
 
       /* First pass: read the factor at which tuneBar[t] flips its upper test. */
       if( (e = sqzReference( history->high, history->low, history->close,
-                             nbBars, &c, &refBeg, &refNb )) != TA_TEST_PASS )
+                             nbBars, &c, 0, &refBeg, &refNb )) != TA_TEST_PASS )
          return e;
 
       i = tuneBar[t] - refBeg;
@@ -444,7 +465,7 @@ static ErrorNumber sqzLegBoundary( TA_History *history )
       }
 
       if( (e = sqzReference( history->high, history->low, history->close,
-                             nbBars, &c, &refBeg, &refNb )) != TA_TEST_PASS )
+                             nbBars, &c, 0, &refBeg, &refNb )) != TA_TEST_PASS )
          return e;
 
       if( begIdx != refBeg || nbElement != refNb )
@@ -521,6 +542,18 @@ static ErrorNumber sqzLegLookback( TA_History *history )
       g_sqzLookbackCmp++;
    }
 
+   /* No leg may be routed through a function that has an unstable period. */
+   TA_SetUnstablePeriod( TA_FUNC_UNST_ALL, 50 );
+   k = TA_SQZMOM_Lookback( 20, 2.0, 20, 2.0, 1.5, 1.0 );
+   TA_SetUnstablePeriod( TA_FUNC_UNST_ALL, 0 );
+   if( k != 38 )
+   {
+      printf( "Fail: TA_SQZMOM_Lookback is %d under an unstable period of 50, "
+              "expected 38\n", k );
+      return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+   }
+   g_sqzLookbackCmp++;
+
    return TA_TEST_PASS;
 }
 
@@ -540,7 +573,7 @@ static ErrorNumber sqzLegNesting( TA_History *history )
       const SqzCase *c = &sqzCases[k];
 
       if( (e = sqzReference( history->high, history->low, history->close,
-                             nbBars, c, &refBeg, &refNb )) != TA_TEST_PASS )
+                             nbBars, c, 0, &refBeg, &refNb )) != TA_TEST_PASS )
          return e;
 
       for( i = 0; i < refNb; i++ )
@@ -750,5 +783,174 @@ static ErrorNumber sqzLegEdges( TA_History *history )
       g_sqzEdgeCmp++;
    }
 
+   /* Factor order: wide >= normal >= narrow, ties allowed. */
+   {
+      static const struct { double wide, normal, narrow; TA_RetCode want; } order[] =
+      {
+         { 1.4, 1.5, 1.0, TA_BAD_PARAM },   /* normal above wide */
+         { 2.0, 1.5, 1.6, TA_BAD_PARAM },   /* narrow above normal */
+         { 2.0, 1.5,-0.5, TA_BAD_PARAM },   /* below the range */
+         { 1.5, 1.5, 1.5, TA_SUCCESS },
+      };
+
+      for( i = 0; i < (int)(sizeof(order)/sizeof(order[0])); i++ )
+      {
+         int lb = TA_SQZMOM_Lookback( 20, 2.0, 20, order[i].wide,
+                                      order[i].normal, order[i].narrow );
+
+         rc = TA_SQZMOM( 0, nbBars-1, history->high, history->low, history->close,
+                         20, 2.0, 20, order[i].wide, order[i].normal,
+                         order[i].narrow, &begIdx, &nbElement, gotMom, gotSqz );
+         if( rc != order[i].want )
+         {
+            printf( "Fail: SQZMOM factors %g/%g/%g rc=%d, expected %d\n",
+                    order[i].wide, order[i].normal, order[i].narrow,
+                    (int)rc, (int)order[i].want );
+            return TA_TESTUTIL_TFRR_BAD_RETCODE;
+         }
+         g_sqzEdgeCmp++;
+
+         if( lb != ( order[i].want == TA_SUCCESS ? 38 : -1 ) )
+         {
+            printf( "Fail: TA_SQZMOM_Lookback factors %g/%g/%g = %d\n",
+                    order[i].wide, order[i].normal, order[i].narrow, lb );
+            return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+         }
+         g_sqzEdgeCmp++;
+      }
+   }
+
+   /* One bar short of the lookback: success and nothing written. */
+   rc = TA_SQZMOM( 0, 37, history->high, history->low, history->close,
+                   20, 2.0, 20, 2.0, 1.5, 1.0,
+                   &begIdx, &nbElement, gotMom, gotSqz );
+   if( rc != TA_SUCCESS || nbElement != 0 )
+   {
+      printf( "Fail: SQZMOM over 38 bars rc=%d nbElement=%d, expected no output\n",
+              (int)rc, (int)nbElement );
+      return TA_TESTUTIL_TFRR_BAD_RETCODE;
+   }
+   g_sqzEdgeCmp++;
+
+   /* Exactly one output bar, equal to the first bar of the full run. */
+   {
+      TA_Real oneMom = 0.0;
+      TA_Integer oneSqz = 99;
+
+      rc = TA_SQZMOM( 0, nbBars-1, history->high, history->low, history->close,
+                      20, 2.0, 20, 2.0, 1.5, 1.0,
+                      &begIdx, &nbElement, gotMom, gotSqz );
+      if( rc != TA_SUCCESS || begIdx != 38 )
+         return TA_TESTUTIL_TFRR_BAD_RETCODE;
+
+      rc = TA_SQZMOM( 0, 38, history->high, history->low, history->close,
+                      20, 2.0, 20, 2.0, 1.5, 1.0,
+                      &begIdx, &nbElement, &oneMom, &oneSqz );
+      if( rc != TA_SUCCESS || begIdx != 38 || nbElement != 1 )
+      {
+         printf( "Fail: SQZMOM over 39 bars rc=%d begIdx=%d nbElement=%d\n",
+                 (int)rc, (int)begIdx, (int)nbElement );
+         return TA_TESTUTIL_TFRR_BAD_RETCODE;
+      }
+      g_sqzEdgeCmp++;
+
+      if( memcmp( &oneMom, &gotMom[0], sizeof(TA_Real) ) != 0 )
+      {
+         printf( "Fail: SQZMOM single bar outMomentum %.17g, the full run gives "
+                 "%.17g\n", oneMom, gotMom[0] );
+         return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+      }
+      g_sqzEdgeCmp++;
+
+      if( oneSqz != gotSqz[0] )
+      {
+         printf( "Fail: SQZMOM single bar outSqueeze %d, the full run gives %d\n",
+                 (int)oneSqz, (int)gotSqz[0] );
+         return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+      }
+      g_sqzEdgeCmp++;
+   }
+
    return TA_TEST_PASS;
+}
+
+/* Leg 8. Entered above the lookback and ended early. Leg 1 always starts at the
+ * lookback, where the staged range begins as early as it ever can.
+ */
+static ErrorNumber sqzLegSubRange( TA_History *history )
+{
+   static const struct { int start, nbBars; } sub[2] = { { 100, 252 }, { 57, 200 } };
+   const SqzCase *c = &sqzCases[0];
+   TA_RetCode rc;
+   TA_Integer begIdx, nbElement;
+   int t, i, refBeg, refNb;
+   ErrorNumber e;
+
+   for( t = 0; t < 2; t++ )
+   {
+      rc = TA_SQZMOM( sub[t].start, sub[t].nbBars-1,
+                      history->high, history->low, history->close,
+                      c->bbPeriod, c->nbDev, c->kcPeriod,
+                      c->wide, c->normal, c->narrow,
+                      &begIdx, &nbElement, gotMom, gotSqz );
+      if( rc != TA_SUCCESS )
+      {
+         printf( "Fail: TA_SQZMOM from bar %d rc=%d\n", sub[t].start, (int)rc );
+         return TA_TESTUTIL_TFRR_BAD_RETCODE;
+      }
+
+      if( (e = sqzReference( history->high, history->low, history->close,
+                             sub[t].nbBars, c, sub[t].start,
+                             &refBeg, &refNb )) != TA_TEST_PASS )
+         return e;
+
+      if( begIdx != sub[t].start || begIdx != refBeg || nbElement != refNb )
+      {
+         printf( "Fail: TA_SQZMOM from bar %d begIdx %d/%d nbElement %d/%d\n",
+                 sub[t].start, (int)begIdx, refBeg, (int)nbElement, refNb );
+         return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+      }
+
+      for( i = 0; i < nbElement; i++ )
+      {
+         if( memcmp( &gotMom[i], &refMom[i], sizeof(TA_Real) ) != 0
+             || gotSqz[i] != refSqz[i] )
+         {
+            printf( "Fail: TA_SQZMOM from bar %d, bar %d gives %.17g/%d, the "
+                    "composition %.17g/%d\n", sub[t].start, refBeg+i,
+                    gotMom[i], (int)gotSqz[i], refMom[i], (int)refSqz[i] );
+            return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+         }
+         g_sqzRangeCmp += 2;
+      }
+   }
+
+   return TA_TEST_PASS;
+}
+
+/* Leg 9. A sub-range equals the same slice of a full run, within the drift of
+ * the running sums; the ordinal exactly. */
+static TA_RetCode sqzRangeTestFunction( TA_Integer startIdx, TA_Integer endIdx,
+                                        TA_Real *outputBuffer, TA_Integer *outputBufferInt,
+                                        TA_Integer *outBegIdx, TA_Integer *outNbElement,
+                                        TA_Integer *lookback, void *opaqueData,
+                                        unsigned int outputNb, unsigned int *isOutputInteger )
+{
+   TA_History *h = (TA_History *)opaqueData;
+   static TA_Real otherMom[MAX_RANGE_SIZE];
+   static TA_Integer otherSqz[MAX_RANGE_SIZE];
+
+   *lookback = TA_SQZMOM_Lookback( 20, 2.0, 20, 2.0, 1.5, 1.0 );
+   *isOutputInteger = ( outputNb == 1 );
+
+   return TA_SQZMOM( startIdx, endIdx, h->high, h->low, h->close,
+                     20, 2.0, 20, 2.0, 1.5, 1.0, outBegIdx, outNbElement,
+                     outputNb == 0 ? outputBuffer : otherMom,
+                     outputNb == 1 ? outputBufferInt : otherSqz );
+}
+
+static ErrorNumber sqzLegRange( TA_History *history )
+{
+   return doRangeTestEx( sqzRangeTestFunction, TA_STABLE_EPSILON,
+                         TA_TEST_UNST_NONE, (void *)history, 2, 0 );
 }

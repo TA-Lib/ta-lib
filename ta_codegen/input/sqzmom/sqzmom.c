@@ -11,6 +11,7 @@
  *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
  *  100826 KL,CC  Creation (#488).
+ *  101126 MF,CC  Reject factors out of order (#488).
  */
 
 int sqzmom_lookback( int optInBBPeriod,
@@ -23,9 +24,11 @@ int sqzmom_lookback( int optInBBPeriod,
    int lookbackTotal, leg;
 
    (void)optInNbDev;
-   (void)optInFactorWide;
-   (void)optInFactorNormal;
-   (void)optInFactorNarrow;
+
+   /* The range check cannot order the three factors; without this the lookback
+    * answers a usable number for a call that cannot run. */
+   if( optInFactorNormal > optInFactorWide || optInFactorNarrow > optInFactorNormal )
+      return -1;
 
    /* Three chains reach the first bar at which both outputs exist, and the
     * first output is the longest of them:
@@ -105,6 +108,13 @@ TA_RetCode sqzmom(int startIdx, int endIdx,
     * sma(k) over TR, and linearreg(k) over DEV. Both windows are k-1 long, so
     * one staged range serves both.
     */
+   /* A channel wider than the one it should nest in breaks the ladder: a bar
+    * could then be inside "narrow" and outside "normal". Ties are allowed, and
+    * wide == normal is the classic on/off/none squeeze.
+    */
+   if( optInFactorNormal > optInFactorWide || optInFactorNarrow > optInFactorNormal )
+      return TA_BAD_PARAM;
+
    lookbackTotal = sqzmom_lookback( optInBBPeriod, optInNbDev, optInKCPeriod,
       optInFactorWide, optInFactorNormal,
       optInFactorNarrow );

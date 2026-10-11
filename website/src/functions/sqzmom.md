@@ -33,7 +33,7 @@ With `b = optInBBPeriod` and `k = optInKCPeriod`:
 
 - `BAND` is the simple mean of the true range over `k` bars, not an ATR: no Wilder smoothing, and so no unstable period anywhere in this function.
 - The anchor is written three ways across the sources — `avg(avg(HH,LL), SMA)`, `((HH+LL)/2 + SMA)/2` and `0.25*(HH+LL) + 0.5*SMA`. All three give the same double, because scaling by a power of two is exact.
-- The three channels share a centre and `BAND >= 0`, so they nest: inside the narrow one implies inside the normal one implies inside the wide one. The ordinal is therefore monotone, and the factors are required only to be ordered `wide >= normal >= narrow >= 0`, not strictly.
+- The three channels share a centre and `BAND >= 0`, so they nest: inside the narrow one implies inside the normal one implies inside the wide one. The ordinal is therefore monotone, and the factors are required only to be ordered `wide >= normal >= narrow >= 0`, not strictly. Factors out of that order are rejected with `TA_BAD_PARAM`.
 - The momentum window is the Keltner period, as in LazyBear's script, pandas and trading-signals.
 - The three chains that feed the outputs do not reach their first value together. The first output bar is the latest of them, so where `b` is much larger than `k` the momentum exists before the state does and is still withheld until both do. pandas emits the earlier momentum; a capture compared against it must start at the later bar.
 

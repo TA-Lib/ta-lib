@@ -191510,6 +191510,7 @@ class Core {
      *  MMDDYY BY     Description
      *  -------------------------------------------------------------------
      *  100826 KL,CC  Creation (#488).
+     *  101126 MF,CC  Reject factors out of order (#488).
      */
 
        /**
@@ -191570,6 +191571,12 @@ class Core {
           }
           int lookbackTotal;
           int leg;
+          /* The range check cannot order the three factors; without this the lookback
+           * answers a usable number for a call that cannot run.
+           */
+          if( optInFactorNormal > optInFactorWide || optInFactorNarrow > optInFactorNormal ) {
+             return -1 ;
+          }
           /* Three chains reach the first bar at which both outputs exist, and the
            * first output is the longest of them:
            *
@@ -191728,6 +191735,13 @@ class Core {
            * sma(k) over TR, and linearreg(k) over DEV. Both windows are k-1 long, so
            * one staged range serves both.
            */
+          /* A channel wider than the one it should nest in breaks the ladder: a bar
+           * could then be inside "narrow" and outside "normal". Ties are allowed, and
+           * wide == normal is the classic on/off/none squeeze.
+           */
+          if( optInFactorNormal > optInFactorWide || optInFactorNarrow > optInFactorNormal ) {
+             return RetCode.BAD_PARAM ;
+          }
           lookbackTotal = sqzmomLookback(optInBBPeriod, optInNbDev, optInKCPeriod, optInFactorWide, optInFactorNormal, optInFactorNarrow);
           if( lookbackTotal > endIdx ) {
              outBegIdx.value = 0;
@@ -191911,6 +191925,9 @@ class Core {
           } else if( !(optInFactorNarrow >= 0e0 && optInFactorNarrow <= REAL_MAX) ) {
              return RetCode.BAD_PARAM;
           }
+          if( optInFactorNormal > optInFactorWide || optInFactorNarrow > optInFactorNormal ) {
+             return RetCode.BAD_PARAM ;
+          }
           lookbackTotal = sqzmomLookback(optInBBPeriod, optInNbDev, optInKCPeriod, optInFactorWide, optInFactorNormal, optInFactorNarrow);
           if( lookbackTotal > endIdx ) {
              outBegIdx.value = 0;
@@ -192020,7 +192037,7 @@ class Core {
         * <ul>
         * <li>{@code BAND} is the simple mean of the true range over {@code k} bars, not an ATR: no Wilder smoothing, and so no unstable period anywhere in this function.</li>
         * <li>The anchor is written three ways across the sources — {@code avg(avg(HH,LL), SMA)}, {@code ((HH+LL)/2 + SMA)/2} and {@code 0.25*(HH+LL) + 0.5*SMA}. All three give the same double, because scaling by a power of two is exact.</li>
-        * <li>The three channels share a centre and {@code BAND &gt;= 0}, so they nest: inside the narrow one implies inside the normal one implies inside the wide one. The ordinal is therefore monotone, and the factors are required only to be ordered {@code wide &gt;= normal &gt;= narrow &gt;= 0}, not strictly.</li>
+        * <li>The three channels share a centre and {@code BAND &gt;= 0}, so they nest: inside the narrow one implies inside the normal one implies inside the wide one. The ordinal is therefore monotone, and the factors are required only to be ordered {@code wide &gt;= normal &gt;= narrow &gt;= 0}, not strictly. Factors out of that order are rejected with {@code TA_BAD_PARAM}.</li>
         * <li>The momentum window is the Keltner period, as in LazyBear's script, pandas and trading-signals.</li>
         * <li>The three chains that feed the outputs do not reach their first value together. The first output bar is the latest of them, so where {@code b} is much larger than {@code k} the momentum exists before the state does and is still withheld until both do. pandas emits the earlier momentum; a capture compared against it must start at the later bar.</li>
         * </ul>
@@ -192130,7 +192147,7 @@ class Core {
         * <ul>
         * <li>{@code BAND} is the simple mean of the true range over {@code k} bars, not an ATR: no Wilder smoothing, and so no unstable period anywhere in this function.</li>
         * <li>The anchor is written three ways across the sources — {@code avg(avg(HH,LL), SMA)}, {@code ((HH+LL)/2 + SMA)/2} and {@code 0.25*(HH+LL) + 0.5*SMA}. All three give the same double, because scaling by a power of two is exact.</li>
-        * <li>The three channels share a centre and {@code BAND &gt;= 0}, so they nest: inside the narrow one implies inside the normal one implies inside the wide one. The ordinal is therefore monotone, and the factors are required only to be ordered {@code wide &gt;= normal &gt;= narrow &gt;= 0}, not strictly.</li>
+        * <li>The three channels share a centre and {@code BAND &gt;= 0}, so they nest: inside the narrow one implies inside the normal one implies inside the wide one. The ordinal is therefore monotone, and the factors are required only to be ordered {@code wide &gt;= normal &gt;= narrow &gt;= 0}, not strictly. Factors out of that order are rejected with {@code TA_BAD_PARAM}.</li>
         * <li>The momentum window is the Keltner period, as in LazyBear's script, pandas and trading-signals.</li>
         * <li>The three chains that feed the outputs do not reach their first value together. The first output bar is the latest of them, so where {@code b} is much larger than {@code k} the momentum exists before the state does and is still withheld until both do. pandas emits the earlier momentum; a capture compared against it must start at the later bar.</li>
         * </ul>
@@ -192599,6 +192616,13 @@ class Core {
            * sma(k) over TR, and linearreg(k) over DEV. Both windows are k-1 long, so
            * one staged range serves both.
            */
+          /* A channel wider than the one it should nest in breaks the ladder: a bar
+           * could then be inside "narrow" and outside "normal". Ties are allowed, and
+           * wide == normal is the classic on/off/none squeeze.
+           */
+          if( optInFactorNormal > optInFactorWide || optInFactorNarrow > optInFactorNormal ) {
+             return RetCode.BAD_PARAM ;
+          }
           lookbackTotal = sqzmomLookback(optInBBPeriod, optInNbDev, optInKCPeriod, optInFactorWide, optInFactorNormal, optInFactorNarrow);
           if( lookbackTotal > endIdx ) {
              outBegIdx.value = 0;
@@ -227659,7 +227683,7 @@ class Core {
 
 public class TaCodegenServe {
     static Core core = new Core();
-    static final String SPLICED_GENCODE_DIGEST = "fa47ea45b47eb5b2";
+    static final String SPLICED_GENCODE_DIGEST = "824188193a40e7df";
     static final int MAX_ARRAY_SIZE = 200000;
     static double[] refOpen = new double[MAX_ARRAY_SIZE];
     static double[] refHigh = new double[MAX_ARRAY_SIZE];
@@ -228613,8 +228637,8 @@ public class TaCodegenServe {
             new AbsOut[]{ new AbsOut(0,"outReal",1) }));
         ABSTRACT.put("SQZMOM", new AbsFunc("SQZMOM", "Momentum Indicators", "Squeeze Momentum and Level", 33554432,
             new AbsIn[]{ new AbsIn(0,"inPriceHLC",14) },
-            new AbsOpt[]{ new AbsOpt(2,"optInBBPeriod",0,"BB Period","Period of the Bollinger Bands",20.0, 0,0,0,0,0,0, 2,100000,4,200,1, null), new AbsOpt(0,"optInNbDev",0,"Deviations","Deviation multiplier for both Bollinger Bands",2.0, 0.0,3e37,2,1.0,3.0,0.2, 0,0,0,0,0, null), new AbsOpt(2,"optInKCPeriod",0,"KC Period","Period of the Keltner Channel, and of the momentum regression",20.0, 0,0,0,0,0,0, 2,100000,4,200,1, null), new AbsOpt(0,"optInFactorWide",0,"Wide Factor","Keltner width for the widest compression test",2.0, 0.0,3e37,2,1.0,3.0,0.25, 0,0,0,0,0, null), new AbsOpt(0,"optInFactorNormal",0,"Normal Factor","Keltner width for the classic squeeze test",1.5, 0.0,3e37,2,1.0,3.0,0.25, 0,0,0,0,0, null), new AbsOpt(0,"optInFactorNarrow",0,"Narrow Factor","Keltner width for the tightest compression test",1.0, 0.0,3e37,2,0.5,2.0,0.25, 0,0,0,0,0, null) },
-            new AbsOut[]{ new AbsOut(0,"outMomentum",1), new AbsOut(1,"outSqueeze",1) }));
+            new AbsOpt[]{ new AbsOpt(2,"optInBBPeriod",0,"BB Period","Period of the Bollinger Bands",20.0, 0,0,0,0,0,0, 2,100000,4,200,1, null), new AbsOpt(0,"optInNbDev",0,"Deviations","Deviation multiplier for both Bollinger Bands",2.0, 0.0,3e37,2,1.0,3.0,0.5, 0,0,0,0,0, null), new AbsOpt(2,"optInKCPeriod",0,"KC Period","Period of the Keltner Channel, and of the momentum regression",20.0, 0,0,0,0,0,0, 2,100000,4,200,1, null), new AbsOpt(0,"optInFactorWide",0,"Wide Factor","Keltner width for the widest compression test",2.0, 0.0,3e37,1,1.0,3.0,0.5, 0,0,0,0,0, null), new AbsOpt(0,"optInFactorNormal",0,"Normal Factor","Keltner width for the classic squeeze test",1.5, 0.0,3e37,1,1.0,3.0,0.5, 0,0,0,0,0, null), new AbsOpt(0,"optInFactorNarrow",0,"Narrow Factor","Keltner width for the tightest compression test",1.0, 0.0,3e37,1,0.5,2.0,0.5, 0,0,0,0,0, null) },
+            new AbsOut[]{ new AbsOut(0,"outMomentum",16), new AbsOut(1,"outSqueeze",1) }));
         ABSTRACT.put("STC", new AbsFunc("STC", "Momentum Indicators", "Schaff Trend Cycle", 167772160,
             new AbsIn[]{ new AbsIn(1,"inReal",0) },
             new AbsOpt[]{ new AbsOpt(2,"optInFastPeriod",0,"Fast Period","Period of the fast EMA",23.0, 0,0,0,0,0,0, 2,100000,4,200,1, null), new AbsOpt(2,"optInSlowPeriod",0,"Slow Period","Period of the slow EMA",50.0, 0,0,0,0,0,0, 2,100000,4,200,1, null), new AbsOpt(2,"optInCyclePeriod",0,"Cycle Period","Window of both stochastic stages",10.0, 0,0,0,0,0,0, 2,100000,2,200,1, null) },

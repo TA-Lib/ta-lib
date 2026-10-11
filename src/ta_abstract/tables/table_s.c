@@ -619,7 +619,7 @@ static const TA_RealRange TA_DEF_SQZMOM_NbDev =
    2,
    1.0,
    3.0,
-   0.2
+   0.5
 };
 
 static const TA_OptInputParameterInfo TA_DEF_UI_D_SQZMOM_NbDev =
@@ -654,10 +654,10 @@ static const TA_RealRange TA_DEF_SQZMOM_FactorWide =
 {
    0.0,
    TA_REAL_MAX,
-   2,
+   1,
    1.0,
    3.0,
-   0.25
+   0.5
 };
 
 static const TA_OptInputParameterInfo TA_DEF_UI_D_SQZMOM_FactorWide =
@@ -678,10 +678,10 @@ static const TA_RealRange TA_DEF_SQZMOM_FactorNormal =
 {
    0.0,
    TA_REAL_MAX,
-   2,
+   1,
    1.0,
    3.0,
-   0.25
+   0.5
 };
 
 static const TA_OptInputParameterInfo TA_DEF_UI_D_SQZMOM_FactorNormal =
@@ -702,10 +702,10 @@ static const TA_RealRange TA_DEF_SQZMOM_FactorNarrow =
 {
    0.0,
    TA_REAL_MAX,
-   2,
+   1,
    0.5,
    2.0,
-   0.25
+   0.5
 };
 
 static const TA_OptInputParameterInfo TA_DEF_UI_D_SQZMOM_FactorNarrow =
@@ -723,7 +723,7 @@ static const TA_OptInputParameterInfo TA_DEF_UI_D_SQZMOM_FactorNarrow =
 };
 
 const TA_OutputParameterInfo TA_DEF_UI_Output_Real_SQZMOM_outMomentum =
-                               { TA_Output_Real, "outMomentum", TA_OUT_LINE };
+                               { TA_Output_Real, "outMomentum", TA_OUT_HISTO };
 
 const TA_OutputParameterInfo TA_DEF_UI_Output_Integer_SQZMOM_outSqueeze =
                                { TA_Output_Integer, "outSqueeze", TA_OUT_LINE };

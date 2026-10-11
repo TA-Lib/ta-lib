@@ -55,6 +55,7 @@
  *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
  *  100826 KL,CC  Creation (#488).
+ *  101126 MF,CC  Reject factors out of order (#488).
  */
 
 TA_LIB_API int TA_SQZMOM_Lookback( int optInBBPeriod, double optInNbDev, int optInKCPeriod, double optInFactorWide, double optInFactorNormal, double optInFactorNarrow )
@@ -85,6 +86,13 @@ TA_LIB_API int TA_SQZMOM_Lookback( int optInBBPeriod, double optInNbDev, int opt
       optInFactorNarrow = 1;
    else if( !(optInFactorNarrow >= 0e0 && optInFactorNarrow <= TA_REAL_MAX) )
       return -1;
+   /* The range check cannot order the three factors; without this the lookback
+    * answers a usable number for a call that cannot run.
+    */
+   if( optInFactorNormal > optInFactorWide || optInFactorNarrow > optInFactorNormal )
+   {
+      return -1;
+   }
    /* Three chains reach the first bar at which both outputs exist, and the
     * first output is the longest of them:
     *
@@ -230,6 +238,14 @@ TA_LIB_API TA_RetCode TA_SQZMOM( int    startIdx,
     * sma(k) over TR, and linearreg(k) over DEV. Both windows are k-1 long, so
     * one staged range serves both.
     */
+   /* A channel wider than the one it should nest in breaks the ladder: a bar
+    * could then be inside "narrow" and outside "normal". Ties are allowed, and
+    * wide == normal is the classic on/off/none squeeze.
+    */
+   if( optInFactorNormal > optInFactorWide || optInFactorNarrow > optInFactorNormal )
+   {
+      return TA_BAD_PARAM;
+   }
    lookbackTotal = TA_SQZMOM_Lookback(optInBBPeriod,optInNbDev,optInKCPeriod,optInFactorWide,optInFactorNormal,optInFactorNarrow);
    if( lookbackTotal > endIdx )
    {
@@ -566,6 +582,10 @@ TA_RetCode TA_S_SQZMOM( int    startIdx,
    if( (const void *)outMomentum == (const void *)outSqueeze )
       return TA_BAD_PARAM;
 
+   if( optInFactorNormal > optInFactorWide || optInFactorNarrow > optInFactorNormal )
+   {
+      return TA_BAD_PARAM;
+   }
    lookbackTotal = TA_SQZMOM_Lookback(optInBBPeriod,optInNbDev,optInKCPeriod,optInFactorWide,optInFactorNormal,optInFactorNarrow);
    if( lookbackTotal > endIdx )
    {
@@ -1043,6 +1063,15 @@ static TA_FMA_STEP_INLINE TA_RetCode TA_SQZMOM_OpenImpl( struct TA_SQZMOM_Stream
        * sma(k) over TR, and linearreg(k) over DEV. Both windows are k-1 long, so
        * one staged range serves both.
        */
+      /* A channel wider than the one it should nest in breaks the ladder: a bar
+       * could then be inside "narrow" and outside "normal". Ties are allowed, and
+       * wide == normal is the classic on/off/none squeeze.
+       */
+      if( optInFactorNormal > optInFactorWide || optInFactorNarrow > optInFactorNormal )
+      {
+         TA_MIDPRICE_Close( sub0 ); TA_SMA_Close( sub1 ); TA_MEDPRICE_Close( sub2 ); TA_SMA_Close( sub3 ); TA_SUB_Close( sub4 ); TA_TRANGE_Close( sub5 ); TA_SMA_Close( sub6 ); TA_SMA_Close( sub7 ); TA_STDDEV_Close( sub8 ); TA_SMA_Close( sub9 ); TA_LINEARREG_Close( sub10 ); if( !outStride ) TA_Free( sc_outMomentum ); if( !outStride ) TA_Free( sc_outSqueeze );
+         return TA_BAD_PARAM;
+      }
       lookbackTotal = TA_SQZMOM_Lookback(optInBBPeriod,optInNbDev,optInKCPeriod,optInFactorWide,optInFactorNormal,optInFactorNarrow);
       if( lookbackTotal > endIdx )
       {
