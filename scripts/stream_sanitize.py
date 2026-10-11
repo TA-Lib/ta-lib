@@ -6,7 +6,7 @@ The batch tier is already exercised under sanitizers by the ASan/UBSan nightly
 functions (Open/Update/Peek/Close, rings, sub-handles). This drives them:
 
   1. Build the C JSON-RPC server as ONE translation unit with
-     `-fsanitize=address,undefined` (address bundles LeakSanitizer on Linux).
+     `-fsanitize=address,undefined,float-cast-overflow` (address bundles LeakSanitizer on Linux).
   2. Feed it `stream_verify` requests for every stream-flagged function (defaults,
      the minimum period — the smallest ring — and, for recursive functions, an
      unstable-period leg), built from the input YAML metadata.
@@ -48,10 +48,10 @@ def build_server():
     os.makedirs(os.path.dirname(SERVER_BIN), exist_ok=True)
     cmd = ["gcc", "-o", SERVER_BIN, SERVER_SRC]
     cmd += [f"-I{os.path.join(ROOT, d)}" for d in INCLUDE_DIRS]
-    cmd += ["-O1", "-g", "-fsanitize=address,undefined", "-fno-omit-frame-pointer",
+    cmd += ["-O1", "-g", "-fsanitize=address,undefined,float-cast-overflow", "-fno-omit-frame-pointer",
             "-ffp-contract=off", "-fno-math-errno",
             "-Wno-parentheses-equality", "-lm"]
-    print("Building sanitized C stream server (single TU, -fsanitize=address,undefined)...")
+    print("Building sanitized C stream server (single TU, -fsanitize=address,undefined,float-cast-overflow)...")
     subprocess.run(cmd, check=True, cwd=ROOT)
     print(f"  built {SERVER_BIN}")
 

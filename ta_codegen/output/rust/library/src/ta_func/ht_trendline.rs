@@ -491,7 +491,12 @@ impl Core {
             smoothPeriod = (0.67 as f64).mul_add(smoothPeriod, 0.33 * period);
             // Compute Trendline
             DCPeriod = smoothPeriod + 0.5;
-            DCPeriodInt = (DCPeriod) as i32;
+            // A NaN period has no int value, and C leaves converting one undefined.
+            if DCPeriod >= 0.0 {
+                DCPeriodInt = (DCPeriod) as i32;
+            } else {
+                DCPeriodInt = 0;
+            }
             // Average the RAW price over the dominant cycle period
             // (Ehlers, "Rocket Science for Traders": the Instantaneous
             // Trendline sums Price — not SmoothPrice, which only feeds
@@ -858,7 +863,12 @@ impl Core {
         sp.smoothPeriod = (0.67 as f64).mul_add(sp.smoothPeriod, 0.33 * sp.period);
         // Compute Trendline
         DCPeriod = sp.smoothPeriod + 0.5;
-        DCPeriodInt = (DCPeriod) as i32;
+        // A NaN period has no int value, and C leaves converting one undefined.
+        if DCPeriod >= 0.0 {
+            DCPeriodInt = (DCPeriod) as i32;
+        } else {
+            DCPeriodInt = 0;
+        }
         // Average the RAW price over the dominant cycle period
         // (Ehlers, "Rocket Science for Traders": the Instantaneous
         // Trendline sums Price — not SmoothPrice, which only feeds
@@ -1266,7 +1276,12 @@ impl Core {
             smoothPeriod = (0.67 as f64).mul_add(smoothPeriod, 0.33 * period);
             // Compute Trendline
             DCPeriod = smoothPeriod + 0.5;
-            DCPeriodInt = (DCPeriod) as i32;
+            // A NaN period has no int value, and C leaves converting one undefined.
+            if DCPeriod >= 0.0 {
+                DCPeriodInt = (DCPeriod) as i32;
+            } else {
+                DCPeriodInt = 0;
+            }
             // Average the RAW price over the dominant cycle period
             // (Ehlers, "Rocket Science for Traders": the Instantaneous
             // Trendline sums Price — not SmoothPrice, which only feeds
@@ -1712,7 +1727,12 @@ impl HtTrendlineStream {
             smoothPeriod = (0.67 as f64).mul_add(smoothPeriod, 0.33 * period);
             // Compute Trendline
             DCPeriod = smoothPeriod + 0.5;
-            DCPeriodInt = (DCPeriod) as i32;
+            // A NaN period has no int value, and C leaves converting one undefined.
+            if DCPeriod >= 0.0 {
+                DCPeriodInt = (DCPeriod) as i32;
+            } else {
+                DCPeriodInt = 0;
+            }
             // Average the RAW price over the dominant cycle period
             // (Ehlers, "Rocket Science for Traders": the Instantaneous
             // Trendline sums Price — not SmoothPrice, which only feeds
