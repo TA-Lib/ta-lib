@@ -47,8 +47,9 @@ fn load() -> Vec<FuncDef> {
 /// function each one inherits from. Measured: every one of these moves at default params
 /// except CRSI, whose default 101-bar rank lookback outlasts both RSI legs at an unstable
 /// period of 10; it moves at (14,14,20), 21 -> 25.
-/// KC is the only one with TWO sources (EMA for its centre line, ATR for its band), and it
-/// shares the ATR one with SUPERTREND -- which inherits it through `atr_lookback()` alone,
+/// KC and DOSC are the two with TWO sources -- KC takes EMA for its centre line and ATR for
+/// its band, DOSC takes RSI for its first stage and EMA for the two smoothings stacked on it.
+/// KC shares the ATR one with SUPERTREND -- which inherits it through `atr_lookback()` alone,
 /// with no call to `atr()` in the body at all.
 /// STC is the one row that also declares an id of its own.
 const INHERITED: &[(&str, &str)] = &[
@@ -58,6 +59,7 @@ const INHERITED: &[(&str, &str)] = &[
     ("CRSI", "RSI"),
     ("CVI", "EMA"),
     ("DEMA", "EMA"),
+    ("DOSC", "RSI"),
     ("EFI", "EMA"),
     ("ERI", "EMA"),
     ("KC", "ATR"),
@@ -130,10 +132,18 @@ fn classification_matches_the_measured_library() {
     got.sort_unstable();
     assert_eq!(got, MATYPE_DEPENDENT, "set of MA-type-dependent functions changed");
 
-    // KC inherits from TWO different ids, and both matter: ta_regtest's UNSTABLE_MAP
-    // sweeps the set it is given and leaves the rest at zero, so a leg whose id is
-    // missing there never warms while the convergence envelope tightens around it.
-    // The INHERITED row above can name only one source, so assert the pair here.
+    // KC and DOSC each inherit from TWO different ids, and both matter: ta_regtest's
+    // UNSTABLE_MAP sweeps the set it is given and leaves the rest at zero, so a leg whose
+    // id is missing there never warms while the convergence envelope tightens around it.
+    // The INHERITED row above can name only one source, so assert each pair here.
+    {
+        let dosc = &st["DOSC"].inherited_from;
+        assert!(
+            dosc.iter().any(|g| g == "RSI") && dosc.iter().any(|g| g == "EMA"),
+            "DOSC must inherit from both RSI and EMA, got {dosc:?}"
+        );
+    }
+
     {
         let kc = &st["KC"].inherited_from;
         assert!(
