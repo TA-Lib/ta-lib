@@ -55,6 +55,7 @@ public partial class Core
     *  MMDDYY BY     Description
     *  -------------------------------------------------------------------
     *  100826 KL,CC  Creation (#487).
+    *  101126 MF,CC  The extension step is a select; the pivot index is derived (#546).
     */
    /// <summary>
    /// Number of leading input bars <c>Zigzag</c> consumes before it can produce
@@ -137,9 +138,9 @@ public partial class Core
       int today = 0;
       int outIdx = 0;
       int trend = 0;
-      int pivotIdx = 0;
       int barsSincePivot = 0;
       int barIdx = 0;
+      int isExt = 0;
       double s = 0;
       double up = 0;
       double dn = 0;
@@ -191,20 +192,12 @@ public partial class Core
       trend = -1;
       pivot = inLow[today];
       barIdx = today;
-      pivotIdx = barIdx;
       barsSincePivot = 0;
       today = today + 1;
       outIdx = 0;
       while( today <= endIdx ) {
-         /* Bars since the pivot's own bar, carried rather than recomputed as
-          * `today - pivotIdx`: a difference of two absolute indices has no meaning
-          * to a stream, which sees one bar at a time.
-          *
-          * barIdx is the absolute bar number the index output names, carried in
-          * its own right rather than read off the loop cursor. A stream has a
-          * cursor only into its own history, so the cursor cannot survive into the
-          * per-bar transition; outPivotIdx still has to name the bar the pivot
-          * sits on, and this is what lets it.
+         /* The pivot's bar is barIdx - barsSincePivot. Both are carried: a stream
+          * has no cursor to read a bar number from.
           */
          barsSincePivot = barsSincePivot + 1;
          barIdx = barIdx + 1;
@@ -218,32 +211,31 @@ public partial class Core
             if( inHigh[today] >= pivot * up && barsSincePivot >= optInMinTrendLength ) {
                trend = 1;
                pivot = inHigh[today];
-               pivotIdx = barIdx;
                barsSincePivot = 0;
-            } else if( inLow[today] <= pivot ) {
-               /* Ties extend. At an equal price the pivot moves to the LATER bar,
-                * so outZigZag does not change and outPivotIdx does: that movement
-                * is the only thing the index output carries and the price output
-                * cannot.
+            } else {
+               /* Ties extend: at an equal price the pivot moves to the later bar,
+                * which only outPivotIdx shows.
+                *
+                * A select, not a branch: on moving prices the extension is taken
+                * on a share of the bars no predictor follows.
                 */
-               pivot = inLow[today];
-               pivotIdx = barIdx;
-               barsSincePivot = 0;
+               isExt = (inLow[today] <= pivot) ? 1 : 0;
+               pivot = MinLt(pivot, inLow[today]);
+               barsSincePivot = barsSincePivot - isExt * barsSincePivot;
             }
          } else if( inLow[today] <= pivot * dn && barsSincePivot >= optInMinTrendLength ) {
             trend = -1;
             pivot = inLow[today];
-            pivotIdx = barIdx;
             barsSincePivot = 0;
-         } else if( inHigh[today] >= pivot ) {
-            pivot = inHigh[today];
-            pivotIdx = barIdx;
-            barsSincePivot = 0;
+         } else {
+            isExt = (inHigh[today] >= pivot) ? 1 : 0;
+            pivot = MaxGt(pivot, inHigh[today]);
+            barsSincePivot = barsSincePivot - isExt * barsSincePivot;
          }
          if( today >= startIdx ) {
             outZigZag[outIdx] = pivot;
             outTrend[outIdx] = trend;
-            outPivotIdx[outIdx] = pivotIdx;
+            outPivotIdx[outIdx] = barIdx - barsSincePivot;
             outIdx = outIdx + 1;
          }
          today = today + 1;
@@ -270,9 +262,9 @@ public partial class Core
       int today = 0;
       int outIdx = 0;
       int trend = 0;
-      int pivotIdx = 0;
       int barsSincePivot = 0;
       int barIdx = 0;
+      int isExt = 0;
       double s = 0;
       double up = 0;
       double dn = 0;
@@ -315,7 +307,6 @@ public partial class Core
       trend = -1;
       pivot = (double)inLow[today];
       barIdx = today;
-      pivotIdx = barIdx;
       barsSincePivot = 0;
       today = today + 1;
       outIdx = 0;
@@ -326,27 +317,25 @@ public partial class Core
             if( (double)inHigh[today] >= pivot * up && barsSincePivot >= optInMinTrendLength ) {
                trend = 1;
                pivot = (double)inHigh[today];
-               pivotIdx = barIdx;
                barsSincePivot = 0;
-            } else if( (double)inLow[today] <= pivot ) {
-               pivot = (double)inLow[today];
-               pivotIdx = barIdx;
-               barsSincePivot = 0;
+            } else {
+               isExt = ((double)inLow[today] <= pivot) ? 1 : 0;
+               pivot = MinLt(pivot, (double)inLow[today]);
+               barsSincePivot = barsSincePivot - isExt * barsSincePivot;
             }
          } else if( (double)inLow[today] <= pivot * dn && barsSincePivot >= optInMinTrendLength ) {
             trend = -1;
             pivot = (double)inLow[today];
-            pivotIdx = barIdx;
             barsSincePivot = 0;
-         } else if( (double)inHigh[today] >= pivot ) {
-            pivot = (double)inHigh[today];
-            pivotIdx = barIdx;
-            barsSincePivot = 0;
+         } else {
+            isExt = ((double)inHigh[today] >= pivot) ? 1 : 0;
+            pivot = MaxGt(pivot, (double)inHigh[today]);
+            barsSincePivot = barsSincePivot - isExt * barsSincePivot;
          }
          if( today >= startIdx ) {
             outZigZag[outIdx] = pivot;
             outTrend[outIdx] = trend;
-            outPivotIdx[outIdx] = pivotIdx;
+            outPivotIdx[outIdx] = barIdx - barsSincePivot;
             outIdx = outIdx + 1;
          }
          today = today + 1;
@@ -645,7 +634,6 @@ public partial class Core
       internal double optInSensitivity;
       internal int optInMinTrendLength;
       internal int trend;
-      internal int pivotIdx;
       internal int barsSincePivot;
       internal int barIdx;
       internal double up;
@@ -698,7 +686,6 @@ public partial class Core
          this.optInSensitivity = other.optInSensitivity;
          this.optInMinTrendLength = other.optInMinTrendLength;
          this.trend = other.trend;
-         this.pivotIdx = other.pivotIdx;
          this.barsSincePivot = other.barsSincePivot;
          this.barIdx = other.barIdx;
          this.up = other.up;
@@ -757,23 +744,16 @@ public partial class Core
       {
          if( !double.IsFinite(inHigh) || !double.IsFinite(inLow) ) throw Core.NonFiniteBar("ZIGZAG", "peek", !double.IsFinite(inHigh) ? nameof(inHigh) : nameof(inLow));
          ZigzagStream sp = this;
+         int isExt = 0;
          int barIdx = sp.barIdx;
          int barsSincePivot = sp.barsSincePivot;
          int cur_outPivotIdx = 0;
          int cur_outTrend = 0;
          double cur_outZigZag = 0.0;
          double pivot = sp.pivot;
-         int pivotIdx = sp.pivotIdx;
          int trend = sp.trend;
-         /* Bars since the pivot's own bar, carried rather than recomputed as
-          * `today - pivotIdx`: a difference of two absolute indices has no meaning
-          * to a stream, which sees one bar at a time.
-          *
-          * barIdx is the absolute bar number the index output names, carried in
-          * its own right rather than read off the loop cursor. A stream has a
-          * cursor only into its own history, so the cursor cannot survive into the
-          * per-bar transition; outPivotIdx still has to name the bar the pivot
-          * sits on, and this is what lets it.
+         /* The pivot's bar is barIdx - barsSincePivot. Both are carried: a stream
+          * has no cursor to read a bar number from.
           */
          barsSincePivot = barsSincePivot + 1;
          barIdx = barIdx + 1;
@@ -787,31 +767,30 @@ public partial class Core
             if( inHigh >= pivot * sp.up && barsSincePivot >= sp.optInMinTrendLength ) {
                trend = 1;
                pivot = inHigh;
-               pivotIdx = barIdx;
                barsSincePivot = 0;
-            } else if( inLow <= pivot ) {
-               /* Ties extend. At an equal price the pivot moves to the LATER bar,
-                * so outZigZag does not change and outPivotIdx does: that movement
-                * is the only thing the index output carries and the price output
-                * cannot.
+            } else {
+               /* Ties extend: at an equal price the pivot moves to the later bar,
+                * which only outPivotIdx shows.
+                *
+                * A select, not a branch: on moving prices the extension is taken
+                * on a share of the bars no predictor follows.
                 */
-               pivot = inLow;
-               pivotIdx = barIdx;
-               barsSincePivot = 0;
+               isExt = (inLow <= pivot) ? 1 : 0;
+               pivot = MinLt(pivot, inLow);
+               barsSincePivot = barsSincePivot - isExt * barsSincePivot;
             }
          } else if( inLow <= pivot * sp.dn && barsSincePivot >= sp.optInMinTrendLength ) {
             trend = -1;
             pivot = inLow;
-            pivotIdx = barIdx;
             barsSincePivot = 0;
-         } else if( inHigh >= pivot ) {
-            pivot = inHigh;
-            pivotIdx = barIdx;
-            barsSincePivot = 0;
+         } else {
+            isExt = (inHigh >= pivot) ? 1 : 0;
+            pivot = MaxGt(pivot, inHigh);
+            barsSincePivot = barsSincePivot - isExt * barsSincePivot;
          }
          cur_outZigZag = pivot;
          cur_outTrend = trend;
-         cur_outPivotIdx = pivotIdx;
+         cur_outPivotIdx = barIdx - barsSincePivot;
          return new ZigzagValue(cur_outZigZag, cur_outTrend, cur_outPivotIdx);
       }
 
@@ -834,15 +813,9 @@ public partial class Core
 
    private void ZigzagStepImpl( ZigzagStream sp, double inHigh, double inLow )
    {
-      /* Bars since the pivot's own bar, carried rather than recomputed as
-       * `today - pivotIdx`: a difference of two absolute indices has no meaning
-       * to a stream, which sees one bar at a time.
-       *
-       * barIdx is the absolute bar number the index output names, carried in
-       * its own right rather than read off the loop cursor. A stream has a
-       * cursor only into its own history, so the cursor cannot survive into the
-       * per-bar transition; outPivotIdx still has to name the bar the pivot
-       * sits on, and this is what lets it.
+      int isExt = 0;
+      /* The pivot's bar is barIdx - barsSincePivot. Both are carried: a stream
+       * has no cursor to read a bar number from.
        */
       sp.barsSincePivot = sp.barsSincePivot + 1;
       sp.barIdx = sp.barIdx + 1;
@@ -856,31 +829,30 @@ public partial class Core
          if( inHigh >= sp.pivot * sp.up && sp.barsSincePivot >= sp.optInMinTrendLength ) {
             sp.trend = 1;
             sp.pivot = inHigh;
-            sp.pivotIdx = sp.barIdx;
             sp.barsSincePivot = 0;
-         } else if( inLow <= sp.pivot ) {
-            /* Ties extend. At an equal price the pivot moves to the LATER bar,
-             * so outZigZag does not change and outPivotIdx does: that movement
-             * is the only thing the index output carries and the price output
-             * cannot.
+         } else {
+            /* Ties extend: at an equal price the pivot moves to the later bar,
+             * which only outPivotIdx shows.
+             *
+             * A select, not a branch: on moving prices the extension is taken
+             * on a share of the bars no predictor follows.
              */
-            sp.pivot = inLow;
-            sp.pivotIdx = sp.barIdx;
-            sp.barsSincePivot = 0;
+            isExt = (inLow <= sp.pivot) ? 1 : 0;
+            sp.pivot = MinLt(sp.pivot, inLow);
+            sp.barsSincePivot = sp.barsSincePivot - isExt * sp.barsSincePivot;
          }
       } else if( inLow <= sp.pivot * sp.dn && sp.barsSincePivot >= sp.optInMinTrendLength ) {
          sp.trend = -1;
          sp.pivot = inLow;
-         sp.pivotIdx = sp.barIdx;
          sp.barsSincePivot = 0;
-      } else if( inHigh >= sp.pivot ) {
-         sp.pivot = inHigh;
-         sp.pivotIdx = sp.barIdx;
-         sp.barsSincePivot = 0;
+      } else {
+         isExt = (inHigh >= sp.pivot) ? 1 : 0;
+         sp.pivot = MaxGt(sp.pivot, inHigh);
+         sp.barsSincePivot = sp.barsSincePivot - isExt * sp.barsSincePivot;
       }
       sp.cur_outZigZag = sp.pivot;
       sp.cur_outTrend = sp.trend;
-      sp.cur_outPivotIdx = sp.pivotIdx;
+      sp.cur_outPivotIdx = sp.barIdx - sp.barsSincePivot;
    }
 
    private RetCode ZigzagOpenImpl( ZigzagStream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, int startIdx, double optInSensitivity, int optInMinTrendLength, out int outBegIdx, out int outNBElement, Span<double> outZigZag, Span<int> outTrend, Span<int> outPivotIdx, int outStride )
@@ -891,9 +863,9 @@ public partial class Core
       int today = 0;
       int outIdx = 0;
       int trend = 0;
-      int pivotIdx = 0;
       int barsSincePivot = 0;
       int barIdx = 0;
+      int isExt = 0;
       double s = 0;
       double up = 0;
       double dn = 0;
@@ -949,20 +921,12 @@ public partial class Core
       trend = -1;
       pivot = inLow[today];
       barIdx = today;
-      pivotIdx = barIdx;
       barsSincePivot = 0;
       today = today + 1;
       outIdx = 0;
       while( today <= endIdx ) {
-         /* Bars since the pivot's own bar, carried rather than recomputed as
-          * `today - pivotIdx`: a difference of two absolute indices has no meaning
-          * to a stream, which sees one bar at a time.
-          *
-          * barIdx is the absolute bar number the index output names, carried in
-          * its own right rather than read off the loop cursor. A stream has a
-          * cursor only into its own history, so the cursor cannot survive into the
-          * per-bar transition; outPivotIdx still has to name the bar the pivot
-          * sits on, and this is what lets it.
+         /* The pivot's bar is barIdx - barsSincePivot. Both are carried: a stream
+          * has no cursor to read a bar number from.
           */
          barsSincePivot = barsSincePivot + 1;
          barIdx = barIdx + 1;
@@ -976,32 +940,31 @@ public partial class Core
             if( inHigh[today] >= pivot * up && barsSincePivot >= optInMinTrendLength ) {
                trend = 1;
                pivot = inHigh[today];
-               pivotIdx = barIdx;
                barsSincePivot = 0;
-            } else if( inLow[today] <= pivot ) {
-               /* Ties extend. At an equal price the pivot moves to the LATER bar,
-                * so outZigZag does not change and outPivotIdx does: that movement
-                * is the only thing the index output carries and the price output
-                * cannot.
+            } else {
+               /* Ties extend: at an equal price the pivot moves to the later bar,
+                * which only outPivotIdx shows.
+                *
+                * A select, not a branch: on moving prices the extension is taken
+                * on a share of the bars no predictor follows.
                 */
-               pivot = inLow[today];
-               pivotIdx = barIdx;
-               barsSincePivot = 0;
+               isExt = (inLow[today] <= pivot) ? 1 : 0;
+               pivot = MinLt(pivot, inLow[today]);
+               barsSincePivot = barsSincePivot - isExt * barsSincePivot;
             }
          } else if( inLow[today] <= pivot * dn && barsSincePivot >= optInMinTrendLength ) {
             trend = -1;
             pivot = inLow[today];
-            pivotIdx = barIdx;
             barsSincePivot = 0;
-         } else if( inHigh[today] >= pivot ) {
-            pivot = inHigh[today];
-            pivotIdx = barIdx;
-            barsSincePivot = 0;
+         } else {
+            isExt = (inHigh[today] >= pivot) ? 1 : 0;
+            pivot = MaxGt(pivot, inHigh[today]);
+            barsSincePivot = barsSincePivot - isExt * barsSincePivot;
          }
          if( today >= startIdx ) {
             outZigZag[outIdx * outStride] = pivot;
             outTrend[outIdx * outStride] = trend;
-            outPivotIdx[outIdx * outStride] = pivotIdx;
+            outPivotIdx[outIdx * outStride] = barIdx - barsSincePivot;
             outIdx = outIdx + 1;
          }
          today = today + 1;
@@ -1012,7 +975,6 @@ public partial class Core
       sp.optInSensitivity = optInSensitivity;
       sp.optInMinTrendLength = optInMinTrendLength;
       sp.trend = trend;
-      sp.pivotIdx = pivotIdx;
       sp.barsSincePivot = barsSincePivot;
       sp.barIdx = barIdx;
       sp.up = up;

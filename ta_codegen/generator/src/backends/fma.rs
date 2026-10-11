@@ -87,6 +87,8 @@ pub struct FmaVarSets {
     pub sentinel_vars: HashSet<String>,
     /// [`super::select_chain::recurrent_select_targets`] of the same body.
     pub recurrent_select_targets: HashSet<String>,
+    /// Running extremes the body carries from one loop pass to the next.
+    pub running_extreme_targets: HashSet<String>,
 }
 
 impl FmaVarSets {
@@ -145,6 +147,7 @@ pub fn build_fma_var_sets(
         int_output_names,
         sentinel_vars,
         recurrent_select_targets: super::select_chain::recurrent_select_targets(body),
+        running_extreme_targets: super::select_chain::running_extreme_targets(body),
     }
 }
 

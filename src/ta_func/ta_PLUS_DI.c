@@ -338,7 +338,7 @@ TA_LIB_API TA_RetCode TA_PLUS_DI( int    startIdx,
       tempReal = diffP - diffM;
       plusDM1 = (tempReal > 0.0) ? diffP : 0.0;
       tempReal = prevPlusDM + plusDM1;
-      prevPlusDM = (prevPlusDM > tempReal) ? prevPlusDM : tempReal;
+      prevPlusDM = TA_MAX_GT(prevPlusDM, tempReal);
       double _true_range_1;
       double range_1 = prevHigh - prevLow;
       double tmp_1 = fabs(prevHigh - prevClose);
@@ -588,7 +588,7 @@ TA_RetCode TA_S_PLUS_DI( int    startIdx,
       tempReal = diffP - diffM;
       plusDM1 = (tempReal > 0.0) ? diffP : 0.0;
       tempReal = prevPlusDM + plusDM1;
-      prevPlusDM = (prevPlusDM > tempReal) ? prevPlusDM : tempReal;
+      prevPlusDM = TA_MAX_GT(prevPlusDM, tempReal);
       double _true_range_1;
       double range_1 = prevHigh - prevLow;
       double tmp_1 = fabs(prevHigh - prevClose);
@@ -1183,7 +1183,7 @@ static TA_RetCode TA_PLUS_DI_OpenImpl( struct TA_PLUS_DI_Stream **stream, const 
          tempReal = diffP - diffM;
          plusDM1 = (tempReal > 0.0) ? diffP : 0.0;
          tempReal = prevPlusDM + plusDM1;
-         prevPlusDM = (prevPlusDM > tempReal) ? prevPlusDM : tempReal;
+         prevPlusDM = TA_MAX_GT(prevPlusDM, tempReal);
          double _true_range_3;
          double range_3 = prevHigh - prevLow;
          double tmp_3 = fabs(prevHigh - prevClose);

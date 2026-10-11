@@ -55,6 +55,7 @@
  *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
  *  100826 KL,CC  Creation (#487).
+ *  101126 MF,CC  The extension step is a select; the pivot index is derived (#546).
  */
 
 TA_LIB_API int TA_ZIGZAG_Lookback( double optInSensitivity, int optInMinTrendLength )
@@ -103,9 +104,9 @@ TA_LIB_API TA_RetCode TA_ZIGZAG( int    startIdx,
    int today;
    int outIdx;
    int trend;
-   int pivotIdx;
    int barsSincePivot;
    int barIdx;
+   int isExt;
    double s;
    double up;
    double dn;
@@ -166,21 +167,13 @@ TA_LIB_API TA_RetCode TA_ZIGZAG( int    startIdx,
    trend = -1;
    pivot = inLow[today];
    barIdx = today;
-   pivotIdx = barIdx;
    barsSincePivot = 0;
    today = today + 1;
    outIdx = 0;
    while( today <= endIdx )
    {
-      /* Bars since the pivot's own bar, carried rather than recomputed as
-       * `today - pivotIdx`: a difference of two absolute indices has no meaning
-       * to a stream, which sees one bar at a time.
-       *
-       * barIdx is the absolute bar number the index output names, carried in
-       * its own right rather than read off the loop cursor. A stream has a
-       * cursor only into its own history, so the cursor cannot survive into the
-       * per-bar transition; outPivotIdx still has to name the bar the pivot
-       * sits on, and this is what lets it.
+      /* The pivot's bar is barIdx - barsSincePivot. Both are carried: a stream
+       * has no cursor to read a bar number from.
        */
       barsSincePivot = barsSincePivot + 1;
       barIdx = barIdx + 1;
@@ -196,36 +189,35 @@ TA_LIB_API TA_RetCode TA_ZIGZAG( int    startIdx,
          {
             trend = 1;
             pivot = inHigh[today];
-            pivotIdx = barIdx;
             barsSincePivot = 0;
-         } else if( inLow[today] <= pivot )
+         } else 
          {
-            /* Ties extend. At an equal price the pivot moves to the LATER bar,
-             * so outZigZag does not change and outPivotIdx does: that movement
-             * is the only thing the index output carries and the price output
-             * cannot.
+            /* Ties extend: at an equal price the pivot moves to the later bar,
+             * which only outPivotIdx shows.
+             *
+             * A select, not a branch: on moving prices the extension is taken
+             * on a share of the bars no predictor follows.
              */
-            pivot = inLow[today];
-            pivotIdx = barIdx;
-            barsSincePivot = 0;
+            isExt = (inLow[today] <= pivot) ? 1 : 0;
+            pivot = TA_MIN_LT(pivot, inLow[today]);
+            barsSincePivot = barsSincePivot - isExt * barsSincePivot;
          }
       } else if( inLow[today] <= pivot * dn && barsSincePivot >= optInMinTrendLength )
       {
          trend = -1;
          pivot = inLow[today];
-         pivotIdx = barIdx;
          barsSincePivot = 0;
-      } else if( inHigh[today] >= pivot )
+      } else 
       {
-         pivot = inHigh[today];
-         pivotIdx = barIdx;
-         barsSincePivot = 0;
+         isExt = (inHigh[today] >= pivot) ? 1 : 0;
+         pivot = TA_MAX_GT(pivot, inHigh[today]);
+         barsSincePivot = barsSincePivot - isExt * barsSincePivot;
       }
       if( today >= startIdx )
       {
          outZigZag[outIdx] = pivot;
          outTrend[outIdx] = trend;
-         outPivotIdx[outIdx] = pivotIdx;
+         outPivotIdx[outIdx] = barIdx - barsSincePivot;
          outIdx = outIdx + 1;
       }
       today = today + 1;
@@ -251,9 +243,9 @@ TA_RetCode TA_S_ZIGZAG( int    startIdx,
    int today;
    int outIdx;
    int trend;
-   int pivotIdx;
    int barsSincePivot;
    int barIdx;
+   int isExt;
    double s;
    double up;
    double dn;
@@ -305,7 +297,6 @@ TA_RetCode TA_S_ZIGZAG( int    startIdx,
    trend = -1;
    pivot = (double)inLow[today];
    barIdx = today;
-   pivotIdx = barIdx;
    barsSincePivot = 0;
    today = today + 1;
    outIdx = 0;
@@ -319,31 +310,29 @@ TA_RetCode TA_S_ZIGZAG( int    startIdx,
          {
             trend = 1;
             pivot = (double)inHigh[today];
-            pivotIdx = barIdx;
             barsSincePivot = 0;
-         } else if( (double)inLow[today] <= pivot )
+         } else 
          {
-            pivot = (double)inLow[today];
-            pivotIdx = barIdx;
-            barsSincePivot = 0;
+            isExt = ((double)inLow[today] <= pivot) ? 1 : 0;
+            pivot = TA_MIN_LT(pivot, (double)inLow[today]);
+            barsSincePivot = barsSincePivot - isExt * barsSincePivot;
          }
       } else if( (double)inLow[today] <= pivot * dn && barsSincePivot >= optInMinTrendLength )
       {
          trend = -1;
          pivot = (double)inLow[today];
-         pivotIdx = barIdx;
          barsSincePivot = 0;
-      } else if( (double)inHigh[today] >= pivot )
+      } else 
       {
-         pivot = (double)inHigh[today];
-         pivotIdx = barIdx;
-         barsSincePivot = 0;
+         isExt = ((double)inHigh[today] >= pivot) ? 1 : 0;
+         pivot = TA_MAX_GT(pivot, (double)inHigh[today]);
+         barsSincePivot = barsSincePivot - isExt * barsSincePivot;
       }
       if( today >= startIdx )
       {
          outZigZag[outIdx] = pivot;
          outTrend[outIdx] = trend;
-         outPivotIdx[outIdx] = pivotIdx;
+         outPivotIdx[outIdx] = barIdx - barsSincePivot;
          outIdx = outIdx + 1;
       }
       today = today + 1;
@@ -366,7 +355,6 @@ struct TA_ZIGZAG_Stream {
    double optInSensitivity;
    int optInMinTrendLength;
    int trend;
-   int pivotIdx;
    int barsSincePivot;
    int barIdx;
    double up;
@@ -378,15 +366,10 @@ struct TA_ZIGZAG_Stream {
 /* Private function, not in public API. */
 static void TA_ZIGZAG_StepImpl( struct TA_ZIGZAG_Stream *sp, double inHigh, double inLow, double *outZigZag, int *outTrend, int *outPivotIdx )
 {
-   /* Bars since the pivot's own bar, carried rather than recomputed as
-    * `today - pivotIdx`: a difference of two absolute indices has no meaning
-    * to a stream, which sees one bar at a time.
-    *
-    * barIdx is the absolute bar number the index output names, carried in
-    * its own right rather than read off the loop cursor. A stream has a
-    * cursor only into its own history, so the cursor cannot survive into the
-    * per-bar transition; outPivotIdx still has to name the bar the pivot
-    * sits on, and this is what lets it.
+   int isExt;
+
+   /* The pivot's bar is barIdx - barsSincePivot. Both are carried: a stream
+    * has no cursor to read a bar number from.
     */
    sp->barsSincePivot = sp->barsSincePivot + 1;
    sp->barIdx = sp->barIdx + 1;
@@ -402,34 +385,33 @@ static void TA_ZIGZAG_StepImpl( struct TA_ZIGZAG_Stream *sp, double inHigh, doub
       {
          sp->trend = 1;
          sp->pivot = inHigh;
-         sp->pivotIdx = sp->barIdx;
          sp->barsSincePivot = 0;
-      } else if( inLow <= sp->pivot )
+      } else 
       {
-         /* Ties extend. At an equal price the pivot moves to the LATER bar,
-          * so outZigZag does not change and outPivotIdx does: that movement
-          * is the only thing the index output carries and the price output
-          * cannot.
+         /* Ties extend: at an equal price the pivot moves to the later bar,
+          * which only outPivotIdx shows.
+          *
+          * A select, not a branch: on moving prices the extension is taken
+          * on a share of the bars no predictor follows.
           */
-         sp->pivot = inLow;
-         sp->pivotIdx = sp->barIdx;
-         sp->barsSincePivot = 0;
+         isExt = (inLow <= sp->pivot) ? 1 : 0;
+         sp->pivot = TA_MIN_LT(sp->pivot, inLow);
+         sp->barsSincePivot = sp->barsSincePivot - isExt * sp->barsSincePivot;
       }
    } else if( inLow <= sp->pivot * sp->dn && sp->barsSincePivot >= sp->optInMinTrendLength )
    {
       sp->trend = -1;
       sp->pivot = inLow;
-      sp->pivotIdx = sp->barIdx;
       sp->barsSincePivot = 0;
-   } else if( inHigh >= sp->pivot )
+   } else 
    {
-      sp->pivot = inHigh;
-      sp->pivotIdx = sp->barIdx;
-      sp->barsSincePivot = 0;
+      isExt = (inHigh >= sp->pivot) ? 1 : 0;
+      sp->pivot = TA_MAX_GT(sp->pivot, inHigh);
+      sp->barsSincePivot = sp->barsSincePivot - isExt * sp->barsSincePivot;
    }
    *outZigZag= sp->pivot;
    *outTrend= sp->trend;
-   *outPivotIdx= sp->pivotIdx;
+   *outPivotIdx= sp->barIdx - sp->barsSincePivot;
    sp->cur_outZigZag = *outZigZag;
    sp->cur_outTrend = *outTrend;
    sp->cur_outPivotIdx = *outPivotIdx;
@@ -467,9 +449,9 @@ static TA_RetCode TA_ZIGZAG_OpenImpl( struct TA_ZIGZAG_Stream **stream, const do
       int today;
       int outIdx;
       int trend = 0;
-      int pivotIdx = 0;
       int barsSincePivot = 0;
       int barIdx = 0;
+      int isExt;
       double s;
       double up = 0.0;
       double dn = 0.0;
@@ -501,21 +483,13 @@ static TA_RetCode TA_ZIGZAG_OpenImpl( struct TA_ZIGZAG_Stream **stream, const do
       trend = -1;
       pivot = inLow[today];
       barIdx = today;
-      pivotIdx = barIdx;
       barsSincePivot = 0;
       today = today + 1;
       outIdx = 0;
       while( today <= endIdx )
       {
-         /* Bars since the pivot's own bar, carried rather than recomputed as
-          * `today - pivotIdx`: a difference of two absolute indices has no meaning
-          * to a stream, which sees one bar at a time.
-          *
-          * barIdx is the absolute bar number the index output names, carried in
-          * its own right rather than read off the loop cursor. A stream has a
-          * cursor only into its own history, so the cursor cannot survive into the
-          * per-bar transition; outPivotIdx still has to name the bar the pivot
-          * sits on, and this is what lets it.
+         /* The pivot's bar is barIdx - barsSincePivot. Both are carried: a stream
+          * has no cursor to read a bar number from.
           */
          barsSincePivot = barsSincePivot + 1;
          barIdx = barIdx + 1;
@@ -531,36 +505,35 @@ static TA_RetCode TA_ZIGZAG_OpenImpl( struct TA_ZIGZAG_Stream **stream, const do
             {
                trend = 1;
                pivot = inHigh[today];
-               pivotIdx = barIdx;
                barsSincePivot = 0;
-            } else if( inLow[today] <= pivot )
+            } else 
             {
-               /* Ties extend. At an equal price the pivot moves to the LATER bar,
-                * so outZigZag does not change and outPivotIdx does: that movement
-                * is the only thing the index output carries and the price output
-                * cannot.
+               /* Ties extend: at an equal price the pivot moves to the later bar,
+                * which only outPivotIdx shows.
+                *
+                * A select, not a branch: on moving prices the extension is taken
+                * on a share of the bars no predictor follows.
                 */
-               pivot = inLow[today];
-               pivotIdx = barIdx;
-               barsSincePivot = 0;
+               isExt = (inLow[today] <= pivot) ? 1 : 0;
+               pivot = TA_MIN_LT(pivot, inLow[today]);
+               barsSincePivot = barsSincePivot - isExt * barsSincePivot;
             }
          } else if( inLow[today] <= pivot * dn && barsSincePivot >= optInMinTrendLength )
          {
             trend = -1;
             pivot = inLow[today];
-            pivotIdx = barIdx;
             barsSincePivot = 0;
-         } else if( inHigh[today] >= pivot )
+         } else 
          {
-            pivot = inHigh[today];
-            pivotIdx = barIdx;
-            barsSincePivot = 0;
+            isExt = (inHigh[today] >= pivot) ? 1 : 0;
+            pivot = TA_MAX_GT(pivot, inHigh[today]);
+            barsSincePivot = barsSincePivot - isExt * barsSincePivot;
          }
          if( today >= startIdx )
          {
             outZigZag[outIdx * outStride] = pivot;
             outTrend[outIdx * outStride] = trend;
-            outPivotIdx[outIdx * outStride] = pivotIdx;
+            outPivotIdx[outIdx * outStride] = barIdx - barsSincePivot;
             outIdx = outIdx + 1;
          }
          today = today + 1;
@@ -575,7 +548,6 @@ static TA_RetCode TA_ZIGZAG_OpenImpl( struct TA_ZIGZAG_Stream **stream, const do
       sp->optInSensitivity = optInSensitivity;
       sp->optInMinTrendLength = optInMinTrendLength;
       sp->trend = trend;
-      sp->pivotIdx = pivotIdx;
       sp->barsSincePivot = barsSincePivot;
       sp->barIdx = barIdx;
       sp->up = up;
@@ -652,10 +624,10 @@ TA_LIB_API TA_RetCode TA_ZIGZAG_Update( TA_ZIGZAG_Stream *stream, double inHigh,
 TA_LIB_API TA_RetCode TA_ZIGZAG_Peek( const TA_ZIGZAG_Stream *stream, double inHigh, double inLow, double *outZigZag, int *outTrend, int *outPivotIdx )
 {
    const struct TA_ZIGZAG_Stream *sp = stream;
+   int isExt;
    int barIdx;
    int barsSincePivot;
    double pivot;
-   int pivotIdx;
    int trend;
 
    if( !stream || !outZigZag || !outTrend || !outPivotIdx ) return TA_BAD_PARAM;
@@ -663,17 +635,9 @@ TA_LIB_API TA_RetCode TA_ZIGZAG_Peek( const TA_ZIGZAG_Stream *stream, double inH
    barIdx = sp->barIdx;
    barsSincePivot = sp->barsSincePivot;
    pivot = sp->pivot;
-   pivotIdx = sp->pivotIdx;
    trend = sp->trend;
-   /* Bars since the pivot's own bar, carried rather than recomputed as
-    * `today - pivotIdx`: a difference of two absolute indices has no meaning
-    * to a stream, which sees one bar at a time.
-    *
-    * barIdx is the absolute bar number the index output names, carried in
-    * its own right rather than read off the loop cursor. A stream has a
-    * cursor only into its own history, so the cursor cannot survive into the
-    * per-bar transition; outPivotIdx still has to name the bar the pivot
-    * sits on, and this is what lets it.
+   /* The pivot's bar is barIdx - barsSincePivot. Both are carried: a stream
+    * has no cursor to read a bar number from.
     */
    barsSincePivot = barsSincePivot + 1;
    barIdx = barIdx + 1;
@@ -689,34 +653,33 @@ TA_LIB_API TA_RetCode TA_ZIGZAG_Peek( const TA_ZIGZAG_Stream *stream, double inH
       {
          trend = 1;
          pivot = inHigh;
-         pivotIdx = barIdx;
          barsSincePivot = 0;
-      } else if( inLow <= pivot )
+      } else 
       {
-         /* Ties extend. At an equal price the pivot moves to the LATER bar,
-          * so outZigZag does not change and outPivotIdx does: that movement
-          * is the only thing the index output carries and the price output
-          * cannot.
+         /* Ties extend: at an equal price the pivot moves to the later bar,
+          * which only outPivotIdx shows.
+          *
+          * A select, not a branch: on moving prices the extension is taken
+          * on a share of the bars no predictor follows.
           */
-         pivot = inLow;
-         pivotIdx = barIdx;
-         barsSincePivot = 0;
+         isExt = (inLow <= pivot) ? 1 : 0;
+         pivot = TA_MIN_LT(pivot, inLow);
+         barsSincePivot = barsSincePivot - isExt * barsSincePivot;
       }
    } else if( inLow <= pivot * sp->dn && barsSincePivot >= sp->optInMinTrendLength )
    {
       trend = -1;
       pivot = inLow;
-      pivotIdx = barIdx;
       barsSincePivot = 0;
-   } else if( inHigh >= pivot )
+   } else 
    {
-      pivot = inHigh;
-      pivotIdx = barIdx;
-      barsSincePivot = 0;
+      isExt = (inHigh >= pivot) ? 1 : 0;
+      pivot = TA_MAX_GT(pivot, inHigh);
+      barsSincePivot = barsSincePivot - isExt * barsSincePivot;
    }
    *outZigZag= pivot;
    *outTrend= trend;
-   *outPivotIdx= pivotIdx;
+   *outPivotIdx= barIdx - barsSincePivot;
    return TA_SUCCESS;
 }
 

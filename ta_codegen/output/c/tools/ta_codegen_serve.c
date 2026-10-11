@@ -7205,7 +7205,6 @@ static int sv_steq_TA_ZIGZAG( const struct TA_ZIGZAG_Stream *a, const struct TA_
    if( sv_xtier_ne(a->optInSensitivity, b->optInSensitivity, z) ) { *w = "optInSensitivity"; return 1; }
    if( a->optInMinTrendLength != b->optInMinTrendLength ) { *w = "optInMinTrendLength"; return 1; }
    if( a->trend != b->trend ) { *w = "trend"; return 1; }
-   if( a->pivotIdx != b->pivotIdx ) { *w = "pivotIdx"; return 1; }
    if( a->barsSincePivot != b->barsSincePivot ) { *w = "barsSincePivot"; return 1; }
    if( a->barIdx != b->barIdx ) { *w = "barIdx"; return 1; }
    if( sv_xtier_ne(a->up, b->up, z) ) { *w = "up"; return 1; }

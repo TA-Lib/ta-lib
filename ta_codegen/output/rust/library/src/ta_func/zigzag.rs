@@ -53,6 +53,7 @@
  *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
  *  100826 KL,CC  Creation (#487).
+ *  101126 MF,CC  The extension step is a select; the pivot index is derived (#546).
  */
 
 // Import types from parent module
@@ -177,9 +178,9 @@ impl Core {
         let mut today: usize = 0_usize;
         let mut outIdx: usize = 0_usize;
         let mut trend: i32 = 0_i32;
-        let mut pivotIdx: usize = 0_usize;
         let mut barsSincePivot: usize = 0_usize;
         let mut barIdx: usize = 0_usize;
+        let mut isExt: usize = 0_usize;
         let mut s: f64 = 0.0_f64;
         let mut up: f64 = 0.0_f64;
         let mut dn: f64 = 0.0_f64;
@@ -209,20 +210,12 @@ impl Core {
         trend = -1;
         pivot = inLow[today];
         barIdx = today;
-        pivotIdx = barIdx;
         barsSincePivot = 0;
         today = today + 1;
         outIdx = 0;
         while today <= endIdx {
-            // Bars since the pivot's own bar, carried rather than recomputed as
-            // `today - pivotIdx`: a difference of two absolute indices has no meaning
-            // to a stream, which sees one bar at a time.
-            //
-            // barIdx is the absolute bar number the index output names, carried in
-            // its own right rather than read off the loop cursor. A stream has a
-            // cursor only into its own history, so the cursor cannot survive into the
-            // per-bar transition; outPivotIdx still has to name the bar the pivot
-            // sits on, and this is what lets it.
+            // The pivot's bar is barIdx - barsSincePivot. Both are carried: a stream
+            // has no cursor to read a bar number from.
             barsSincePivot = barsSincePivot + 1;
             barIdx = barIdx + 1;
             // Reversal is tested BEFORE extension. On an outside bar that both makes
@@ -234,31 +227,30 @@ impl Core {
                 if inHigh[today] >= pivot * up && barsSincePivot >= ((optInMinTrendLength) as usize) {
                     trend = 1;
                     pivot = inHigh[today];
-                    pivotIdx = barIdx;
                     barsSincePivot = 0;
-                } else if inLow[today] <= pivot {
-                    // Ties extend. At an equal price the pivot moves to the LATER bar,
-                    // so outZigZag does not change and outPivotIdx does: that movement
-                    // is the only thing the index output carries and the price output
-                    // cannot.
-                    pivot = inLow[today];
-                    pivotIdx = barIdx;
-                    barsSincePivot = 0;
+                } else {
+                    // Ties extend: at an equal price the pivot moves to the later bar,
+                    // which only outPivotIdx shows.
+                    //
+                    // A select, not a branch: on moving prices the extension is taken
+                    // on a share of the bars no predictor follows.
+                    isExt = (if inLow[today] <= pivot { 1 } else { 0 });
+                    pivot = (if pivot < inLow[today] { pivot } else { inLow[today] });
+                    barsSincePivot = barsSincePivot - isExt * barsSincePivot;
                 }
             } else if inLow[today] <= pivot * dn && barsSincePivot >= ((optInMinTrendLength) as usize) {
                 trend = -1;
                 pivot = inLow[today];
-                pivotIdx = barIdx;
                 barsSincePivot = 0;
-            } else if inHigh[today] >= pivot {
-                pivot = inHigh[today];
-                pivotIdx = barIdx;
-                barsSincePivot = 0;
+            } else {
+                isExt = (if inHigh[today] >= pivot { 1 } else { 0 });
+                pivot = (if pivot > inHigh[today] { pivot } else { inHigh[today] });
+                barsSincePivot = barsSincePivot - isExt * barsSincePivot;
             }
             if today >= startIdx {
                 outZigZag[outIdx] = pivot;
                 outTrend[outIdx] = (trend) as i32;
-                outPivotIdx[outIdx] = (pivotIdx) as i32;
+                outPivotIdx[outIdx] = (barIdx - barsSincePivot) as i32;
                 outIdx = outIdx + 1;
             }
             today = today + 1;
@@ -443,7 +435,6 @@ struct ZigzagStreamState {
     optInSensitivity: f64,
     optInMinTrendLength: i32,
     trend: i32,
-    pivotIdx: usize,
     barsSincePivot: usize,
     barIdx: usize,
     up: f64,
@@ -461,15 +452,9 @@ struct ZigzagStreamState {
 #[allow(unused_parens)]
 impl Core {
     fn zigzag_step_impl(sp: &mut ZigzagStreamState, inHigh: f64, inLow: f64, outZigZag: &mut f64, outTrend: &mut i32, outPivotIdx: &mut i32) {
-        // Bars since the pivot's own bar, carried rather than recomputed as
-        // `today - pivotIdx`: a difference of two absolute indices has no meaning
-        // to a stream, which sees one bar at a time.
-        //
-        // barIdx is the absolute bar number the index output names, carried in
-        // its own right rather than read off the loop cursor. A stream has a
-        // cursor only into its own history, so the cursor cannot survive into the
-        // per-bar transition; outPivotIdx still has to name the bar the pivot
-        // sits on, and this is what lets it.
+        let mut isExt: usize = 0_usize;
+        // The pivot's bar is barIdx - barsSincePivot. Both are carried: a stream
+        // has no cursor to read a bar number from.
         sp.barsSincePivot = sp.barsSincePivot + 1;
         sp.barIdx = sp.barIdx + 1;
         // Reversal is tested BEFORE extension. On an outside bar that both makes
@@ -481,30 +466,29 @@ impl Core {
             if inHigh >= sp.pivot * sp.up && sp.barsSincePivot >= ((sp.optInMinTrendLength) as usize) {
                 sp.trend = 1;
                 sp.pivot = inHigh;
-                sp.pivotIdx = sp.barIdx;
                 sp.barsSincePivot = 0;
-            } else if inLow <= sp.pivot {
-                // Ties extend. At an equal price the pivot moves to the LATER bar,
-                // so outZigZag does not change and outPivotIdx does: that movement
-                // is the only thing the index output carries and the price output
-                // cannot.
-                sp.pivot = inLow;
-                sp.pivotIdx = sp.barIdx;
-                sp.barsSincePivot = 0;
+            } else {
+                // Ties extend: at an equal price the pivot moves to the later bar,
+                // which only outPivotIdx shows.
+                //
+                // A select, not a branch: on moving prices the extension is taken
+                // on a share of the bars no predictor follows.
+                isExt = (if inLow <= sp.pivot { 1 } else { 0 });
+                sp.pivot = (if sp.pivot < inLow { sp.pivot } else { inLow });
+                sp.barsSincePivot = sp.barsSincePivot - isExt * sp.barsSincePivot;
             }
         } else if inLow <= sp.pivot * sp.dn && sp.barsSincePivot >= ((sp.optInMinTrendLength) as usize) {
             sp.trend = -1;
             sp.pivot = inLow;
-            sp.pivotIdx = sp.barIdx;
             sp.barsSincePivot = 0;
-        } else if inHigh >= sp.pivot {
-            sp.pivot = inHigh;
-            sp.pivotIdx = sp.barIdx;
-            sp.barsSincePivot = 0;
+        } else {
+            isExt = (if inHigh >= sp.pivot { 1 } else { 0 });
+            sp.pivot = (if sp.pivot > inHigh { sp.pivot } else { inHigh });
+            sp.barsSincePivot = sp.barsSincePivot - isExt * sp.barsSincePivot;
         }
         (*outZigZag) = sp.pivot;
         (*outTrend) = (sp.trend) as i32;
-        (*outPivotIdx) = (sp.pivotIdx) as i32;
+        (*outPivotIdx) = (sp.barIdx - sp.barsSincePivot) as i32;
         sp.cur_outZigZag = (*outZigZag);
         sp.cur_outTrend = (*outTrend);
         sp.cur_outPivotIdx = (*outPivotIdx);
@@ -548,9 +532,9 @@ impl Core {
         let mut today: usize = 0_usize;
         let mut outIdx: usize = 0_usize;
         let mut trend: i32 = 0_i32;
-        let mut pivotIdx: usize = 0_usize;
         let mut barsSincePivot: usize = 0_usize;
         let mut barIdx: usize = 0_usize;
+        let mut isExt: usize = 0_usize;
         let mut s: f64 = 0.0_f64;
         let mut up: f64 = 0.0_f64;
         let mut dn: f64 = 0.0_f64;
@@ -578,20 +562,12 @@ impl Core {
         trend = -1;
         pivot = inLow[today];
         barIdx = today;
-        pivotIdx = barIdx;
         barsSincePivot = 0;
         today = today + 1;
         outIdx = 0;
         while today <= endIdx {
-            // Bars since the pivot's own bar, carried rather than recomputed as
-            // `today - pivotIdx`: a difference of two absolute indices has no meaning
-            // to a stream, which sees one bar at a time.
-            //
-            // barIdx is the absolute bar number the index output names, carried in
-            // its own right rather than read off the loop cursor. A stream has a
-            // cursor only into its own history, so the cursor cannot survive into the
-            // per-bar transition; outPivotIdx still has to name the bar the pivot
-            // sits on, and this is what lets it.
+            // The pivot's bar is barIdx - barsSincePivot. Both are carried: a stream
+            // has no cursor to read a bar number from.
             barsSincePivot = barsSincePivot + 1;
             barIdx = barIdx + 1;
             // Reversal is tested BEFORE extension. On an outside bar that both makes
@@ -603,31 +579,30 @@ impl Core {
                 if inHigh[today] >= pivot * up && barsSincePivot >= ((optInMinTrendLength) as usize) {
                     trend = 1;
                     pivot = inHigh[today];
-                    pivotIdx = barIdx;
                     barsSincePivot = 0;
-                } else if inLow[today] <= pivot {
-                    // Ties extend. At an equal price the pivot moves to the LATER bar,
-                    // so outZigZag does not change and outPivotIdx does: that movement
-                    // is the only thing the index output carries and the price output
-                    // cannot.
-                    pivot = inLow[today];
-                    pivotIdx = barIdx;
-                    barsSincePivot = 0;
+                } else {
+                    // Ties extend: at an equal price the pivot moves to the later bar,
+                    // which only outPivotIdx shows.
+                    //
+                    // A select, not a branch: on moving prices the extension is taken
+                    // on a share of the bars no predictor follows.
+                    isExt = (if inLow[today] <= pivot { 1 } else { 0 });
+                    pivot = (if pivot < inLow[today] { pivot } else { inLow[today] });
+                    barsSincePivot = barsSincePivot - isExt * barsSincePivot;
                 }
             } else if inLow[today] <= pivot * dn && barsSincePivot >= ((optInMinTrendLength) as usize) {
                 trend = -1;
                 pivot = inLow[today];
-                pivotIdx = barIdx;
                 barsSincePivot = 0;
-            } else if inHigh[today] >= pivot {
-                pivot = inHigh[today];
-                pivotIdx = barIdx;
-                barsSincePivot = 0;
+            } else {
+                isExt = (if inHigh[today] >= pivot { 1 } else { 0 });
+                pivot = (if pivot > inHigh[today] { pivot } else { inHigh[today] });
+                barsSincePivot = barsSincePivot - isExt * barsSincePivot;
             }
             if today >= startIdx {
                 outZigZag[(outIdx * outStride) as usize] = pivot;
                 outTrend[(outIdx * outStride) as usize] = (trend) as i32;
-                outPivotIdx[(outIdx * outStride) as usize] = (pivotIdx) as i32;
+                outPivotIdx[(outIdx * outStride) as usize] = (barIdx - barsSincePivot) as i32;
                 outIdx = outIdx + 1;
             }
             today = today + 1;
@@ -640,7 +615,6 @@ impl Core {
             optInSensitivity,
             optInMinTrendLength,
             trend,
-            pivotIdx,
             barsSincePivot,
             barIdx,
             up,
@@ -841,20 +815,13 @@ impl ZigzagStream {
             let outZigZag = &mut outZigZag;
             let outTrend = &mut outTrend;
             let outPivotIdx = &mut outPivotIdx;
+            let mut isExt: usize = 0_usize;
             let mut barIdx = sp.barIdx;
             let mut barsSincePivot = sp.barsSincePivot;
             let mut pivot = sp.pivot;
-            let mut pivotIdx = sp.pivotIdx;
             let mut trend = sp.trend;
-            // Bars since the pivot's own bar, carried rather than recomputed as
-            // `today - pivotIdx`: a difference of two absolute indices has no meaning
-            // to a stream, which sees one bar at a time.
-            //
-            // barIdx is the absolute bar number the index output names, carried in
-            // its own right rather than read off the loop cursor. A stream has a
-            // cursor only into its own history, so the cursor cannot survive into the
-            // per-bar transition; outPivotIdx still has to name the bar the pivot
-            // sits on, and this is what lets it.
+            // The pivot's bar is barIdx - barsSincePivot. Both are carried: a stream
+            // has no cursor to read a bar number from.
             barsSincePivot = barsSincePivot + 1;
             barIdx = barIdx + 1;
             // Reversal is tested BEFORE extension. On an outside bar that both makes
@@ -866,30 +833,29 @@ impl ZigzagStream {
                 if inHigh >= pivot * sp.up && barsSincePivot >= ((sp.optInMinTrendLength) as usize) {
                     trend = 1;
                     pivot = inHigh;
-                    pivotIdx = barIdx;
                     barsSincePivot = 0;
-                } else if inLow <= pivot {
-                    // Ties extend. At an equal price the pivot moves to the LATER bar,
-                    // so outZigZag does not change and outPivotIdx does: that movement
-                    // is the only thing the index output carries and the price output
-                    // cannot.
-                    pivot = inLow;
-                    pivotIdx = barIdx;
-                    barsSincePivot = 0;
+                } else {
+                    // Ties extend: at an equal price the pivot moves to the later bar,
+                    // which only outPivotIdx shows.
+                    //
+                    // A select, not a branch: on moving prices the extension is taken
+                    // on a share of the bars no predictor follows.
+                    isExt = (if inLow <= pivot { 1 } else { 0 });
+                    pivot = (if pivot < inLow { pivot } else { inLow });
+                    barsSincePivot = barsSincePivot - isExt * barsSincePivot;
                 }
             } else if inLow <= pivot * sp.dn && barsSincePivot >= ((sp.optInMinTrendLength) as usize) {
                 trend = -1;
                 pivot = inLow;
-                pivotIdx = barIdx;
                 barsSincePivot = 0;
-            } else if inHigh >= pivot {
-                pivot = inHigh;
-                pivotIdx = barIdx;
-                barsSincePivot = 0;
+            } else {
+                isExt = (if inHigh >= pivot { 1 } else { 0 });
+                pivot = (if pivot > inHigh { pivot } else { inHigh });
+                barsSincePivot = barsSincePivot - isExt * barsSincePivot;
             }
             (*outZigZag) = pivot;
             (*outTrend) = (trend) as i32;
-            (*outPivotIdx) = (pivotIdx) as i32;
+            (*outPivotIdx) = (barIdx - barsSincePivot) as i32;
         }
         Ok((outZigZag, outTrend, outPivotIdx))
     }

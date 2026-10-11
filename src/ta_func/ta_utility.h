@@ -294,6 +294,23 @@
    #define max(a, b)  (((a) > (b)) ? (a) : (b))
 #endif
 
+/* A running `a = a < b ? a : b` or `a = a > b ? a : b`. On ARM64 a double pair
+ * is the one instruction the target has for it, which a compiler may not pick
+ * for the ternary: the two differ on a NaN operand and on the sign of a zero
+ * result. Every other target and type keeps the ternary.
+ */
+#if defined(__aarch64__) && (defined(__GNUC__) || defined(__clang__))
+   #define TA_MIN_LT(a, b) __builtin_choose_expr( \
+      __builtin_types_compatible_p(__typeof__((a) + (b)), double), \
+      __builtin_fmin((a), (b)), (((a) < (b)) ? (a) : (b)))
+   #define TA_MAX_GT(a, b) __builtin_choose_expr( \
+      __builtin_types_compatible_p(__typeof__((a) + (b)), double), \
+      __builtin_fmax((a), (b)), (((a) > (b)) ? (a) : (b)))
+#else
+   #define TA_MIN_LT(a, b) (((a) < (b)) ? (a) : (b))
+   #define TA_MAX_GT(a, b) (((a) > (b)) ? (a) : (b))
+#endif
+
 /* Candlestick macros (used by candlestick functions, where the parameters are always called inClose, inOpen, etc.
  * Don't use i++ or func(i) with these macros !
  */
