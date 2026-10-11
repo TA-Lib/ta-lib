@@ -12486,6 +12486,123 @@ fn legs_KURTOSIS(r: &mut Report) {
     r.legs_done("KURTOSIS", 1);
 }
 
+const V_KVO: &[(&str, i32, i32, i32)] = &[
+    ("defaults", i32::MIN, i32::MIN, i32::MIN),
+    ("minimums", 2i32, 2i32, 2i32),
+];
+
+fn sub_KVO(r: &mut Report) {
+    let core = Core::new();
+    for &(label, optInFastPeriod, optInSlowPeriod, optInSignalPeriod) in V_KVO {
+        let Ok(lb) = core.kvo_lookback(optInFastPeriod, optInSlowPeriod, optInSignalPeriod) else { continue; };
+        r.control("KVO", label, run(|| {
+            let inHigh: Vec<f64> = Vec::with_capacity(1);
+            let inLow: Vec<f64> = Vec::with_capacity(1);
+            let inClose: Vec<f64> = Vec::with_capacity(1);
+            let inVolume: Vec<f64> = Vec::with_capacity(1);
+            let mut outKVO: Vec<f64> = Vec::with_capacity(1);
+            let mut outKVOSignal: Vec<f64> = Vec::with_capacity(1);
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.kvo_impl(0, lb, &inHigh, &inLow, &inClose, &inVolume, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, &mut _b, &mut _n, &mut outKVO, &mut outKVOSignal);
+            (rc, _n)
+        }));
+        if lb < 1 { r.no_quiet_range("KVO", label); continue; }
+        r.quiet("KVO", label, lb, run(|| {
+            let inHigh: Vec<f64> = Vec::with_capacity(1);
+            let inLow: Vec<f64> = Vec::with_capacity(1);
+            let inClose: Vec<f64> = Vec::with_capacity(1);
+            let inVolume: Vec<f64> = Vec::with_capacity(1);
+            let mut outKVO: Vec<f64> = Vec::with_capacity(1);
+            let mut outKVOSignal: Vec<f64> = Vec::with_capacity(1);
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.kvo_impl(0, lb - 1, &inHigh, &inLow, &inClose, &inVolume, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, &mut _b, &mut _n, &mut outKVO, &mut outKVOSignal);
+            (rc, _n)
+        }));
+    }
+}
+
+fn legs_KVO(r: &mut Report) {
+    let core = Core::new();
+    let optInFastPeriod = i32::MIN;
+    let optInSlowPeriod = i32::MIN;
+    let optInSignalPeriod = i32::MIN;
+    let Ok(lb) = core.kvo_lookback(optInFastPeriod, optInSlowPeriod, optInSignalPeriod) else { r.no_legs("KVO"); return; };
+    let (startIdx, endIdx) = (lb, lb + 4);
+    {
+        let inHigh: Vec<f64> = series("high", endIdx + 1);
+        let inLow: Vec<f64> = series("low", endIdx + 1);
+        let inClose: Vec<f64> = series("close", endIdx + 1);
+        let inVolume: Vec<f64> = series("volume", endIdx + 1);
+        let mut outKVO: Vec<f64> = vec![Default::default(); 5];
+        let mut outKVOSignal: Vec<f64> = vec![Default::default(); 5];
+        r.legs_control("KVO", run(|| {
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.kvo_impl(startIdx, endIdx, &inHigh, &inLow, &inClose, &inVolume, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, &mut _b, &mut _n, &mut outKVO, &mut outKVOSignal);
+            (rc, _n)
+        }));
+    }
+    {
+        let inHigh: Vec<f64> = Vec::with_capacity(1);
+        let inLow: Vec<f64> = series("low", endIdx + 1);
+        let inClose: Vec<f64> = series("close", endIdx + 1);
+        let inVolume: Vec<f64> = series("volume", endIdx + 1);
+        let mut outKVO: Vec<f64> = vec![Default::default(); 5];
+        let mut outKVOSignal: Vec<f64> = vec![Default::default(); 5];
+        r.leg("KVO", "inHigh", 0, run(|| {
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.kvo_impl(startIdx, endIdx, &inHigh, &inLow, &inClose, &inVolume, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, &mut _b, &mut _n, &mut outKVO, &mut outKVOSignal);
+            (rc, _n)
+        }));
+    }
+    {
+        let inHigh: Vec<f64> = series("high", endIdx + 1);
+        let inLow: Vec<f64> = Vec::with_capacity(1);
+        let inClose: Vec<f64> = series("close", endIdx + 1);
+        let inVolume: Vec<f64> = series("volume", endIdx + 1);
+        let mut outKVO: Vec<f64> = vec![Default::default(); 5];
+        let mut outKVOSignal: Vec<f64> = vec![Default::default(); 5];
+        r.leg("KVO", "inLow", 1, run(|| {
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.kvo_impl(startIdx, endIdx, &inHigh, &inLow, &inClose, &inVolume, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, &mut _b, &mut _n, &mut outKVO, &mut outKVOSignal);
+            (rc, _n)
+        }));
+    }
+    {
+        let inHigh: Vec<f64> = series("high", endIdx + 1);
+        let inLow: Vec<f64> = series("low", endIdx + 1);
+        let inClose: Vec<f64> = Vec::with_capacity(1);
+        let inVolume: Vec<f64> = series("volume", endIdx + 1);
+        let mut outKVO: Vec<f64> = vec![Default::default(); 5];
+        let mut outKVOSignal: Vec<f64> = vec![Default::default(); 5];
+        r.leg("KVO", "inClose", 2, run(|| {
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.kvo_impl(startIdx, endIdx, &inHigh, &inLow, &inClose, &inVolume, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, &mut _b, &mut _n, &mut outKVO, &mut outKVOSignal);
+            (rc, _n)
+        }));
+    }
+    {
+        let inHigh: Vec<f64> = series("high", endIdx + 1);
+        let inLow: Vec<f64> = series("low", endIdx + 1);
+        let inClose: Vec<f64> = series("close", endIdx + 1);
+        let inVolume: Vec<f64> = Vec::with_capacity(1);
+        let mut outKVO: Vec<f64> = vec![Default::default(); 5];
+        let mut outKVOSignal: Vec<f64> = vec![Default::default(); 5];
+        r.leg("KVO", "inVolume", 3, run(|| {
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.kvo_impl(startIdx, endIdx, &inHigh, &inLow, &inClose, &inVolume, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, &mut _b, &mut _n, &mut outKVO, &mut outKVOSignal);
+            (rc, _n)
+        }));
+    }
+    r.legs_done("KVO", 4);
+}
+
 const V_LINEARREG: &[(&str, i32)] = &[
     ("defaults", i32::MIN),
     ("minimums", 2i32),
@@ -19691,6 +19808,7 @@ const PROBES: &[(&str, Probe, Probe)] = &[
     ("KST", sub_KST, legs_KST),
     ("KSTEXT", sub_KSTEXT, legs_KSTEXT),
     ("KURTOSIS", sub_KURTOSIS, legs_KURTOSIS),
+    ("KVO", sub_KVO, legs_KVO),
     ("LINEARREG", sub_LINEARREG, legs_LINEARREG),
     ("LINEARREG_ANGLE", sub_LINEARREG_ANGLE, legs_LINEARREG_ANGLE),
     ("LINEARREG_INTERCEPT", sub_LINEARREG_INTERCEPT, legs_LINEARREG_INTERCEPT),
@@ -19827,7 +19945,7 @@ fn no_phantom_io() {
     // The corpus is the generator's, not a list kept by hand: a probe that
     // stopped being emitted is a shrinking sweep, which is the one way this
     // file can fail open.
-    assert_eq!(PROBES.len(), 233, "probe count");
+    assert_eq!(PROBES.len(), 234, "probe count");
     assert_eq!(
         PROBES.len(),
         crate::abstract_api::funcs().count(),
