@@ -92751,6 +92751,1367 @@ class Core {
      *
      *  MMDDYY BY     Description
      *  -------------------------------------------------------------------
+     *  100626 MF,CC  Initial version (#479).
+     */
+
+       /**
+        * Number of leading input bars {@link Core#dosc} consumes before it can
+        * produce its first value.
+        * <p>Equivalently, the index of the first bar with a value when the whole
+        * series is requested. Feed at least {@code lookback + 1} bars to get any
+        * output.
+        *
+        * @param optInTimePeriod Period of the RSI (default 14; range 2..100000;
+        *        {@code Integer.MIN_VALUE} selects the default).
+        * @param optInFirstPeriod Period of the first smoothing, applied to the RSI
+        *        (default 5; range 2..100000; {@code Integer.MIN_VALUE} selects the
+        *        default).
+        * @param optInSecondPeriod Period of the second smoothing, applied to the
+        *        first (default 3; range 2..100000; {@code Integer.MIN_VALUE} selects the
+        *        default).
+        * @param optInSignalPeriod Period of the simple average subtracted from the
+        *        smoothed line (default 9; range 2..100000; {@code Integer.MIN_VALUE}
+        *        selects the default).
+        * @return The lookback, or {@code -1} if a parameter is out of range.
+        */
+       public int doscLookback( int optInTimePeriod, int optInFirstPeriod, int optInSecondPeriod, int optInSignalPeriod )
+       {
+          if( optInTimePeriod == Integer.MIN_VALUE ) {
+             optInTimePeriod = 14;
+          } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
+             return -1;
+          }
+          if( optInFirstPeriod == Integer.MIN_VALUE ) {
+             optInFirstPeriod = 5;
+          } else if( optInFirstPeriod < 2 || optInFirstPeriod > 100000 ) {
+             return -1;
+          }
+          if( optInSecondPeriod == Integer.MIN_VALUE ) {
+             optInSecondPeriod = 3;
+          } else if( optInSecondPeriod < 2 || optInSecondPeriod > 100000 ) {
+             return -1;
+          }
+          if( optInSignalPeriod == Integer.MIN_VALUE ) {
+             optInSignalPeriod = 9;
+          } else if( optInSignalPeriod < 2 || optInSignalPeriod > 100000 ) {
+             return -1;
+          }
+          /* Wilder's RSI, the two exponential smoothings stacked on it and the
+           * simple average taken over the result. Every term is exactly the lookback
+           * of the function it comes from, so none of them is restated here -- which
+           * is what makes DOSC inherit TA_FUNC_UNST_RSI and TA_FUNC_UNST_EMA from its
+           * callees rather than take an id of its own, and what carries the Auto
+           * warm-up levels of #492 through all three of them.
+           *
+           * The EMA term appears TWICE, once per smoothing stage, so a warm
+           * TA_SetUnstablePeriod(TA_FUNC_UNST_EMA, k) moves the lookback by 2k and
+           * not by k.
+           */
+          return rsiLookback(optInTimePeriod) + emaLookback(optInFirstPeriod) + emaLookback(optInSecondPeriod) + smaLookback(optInSignalPeriod) ;
+
+       }
+       /**
+        * How many bars ahead (positive) or behind (negative) of the bar that
+        * computed it a chart draws one output of {@link Core#dosc}.
+        * <p>Every output of this function is drawn at its own bar, so the answer is
+        * 0.
+        *
+        * @param optInTimePeriod Period of the RSI (default 14; range 2..100000;
+        *        {@code Integer.MIN_VALUE} selects the default).
+        * @param optInFirstPeriod Period of the first smoothing, applied to the RSI
+        *        (default 5; range 2..100000; {@code Integer.MIN_VALUE} selects the
+        *        default).
+        * @param optInSecondPeriod Period of the second smoothing, applied to the
+        *        first (default 3; range 2..100000; {@code Integer.MIN_VALUE} selects the
+        *        default).
+        * @param optInSignalPeriod Period of the simple average subtracted from the
+        *        smoothed line (default 9; range 2..100000; {@code Integer.MIN_VALUE}
+        *        selects the default).
+        * @param outputIdx Position of the output in the batch signature, from 0.
+        * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+        *        out of range or the index names no output.
+        */
+       public int doscDisplayShift( int optInTimePeriod, int optInFirstPeriod, int optInSecondPeriod, int optInSignalPeriod, int outputIdx )
+       {
+          if( doscLookback( optInTimePeriod, optInFirstPeriod, optInSecondPeriod, optInSignalPeriod ) < 0 ) {
+             return Integer.MIN_VALUE;
+          }
+          if( outputIdx < 0 || outputIdx >= 1 ) {
+             return Integer.MIN_VALUE;
+          }
+          return 0;
+       }
+       RetCode doscImpl( int startIdx,
+                         int endIdx,
+                         double inReal[],
+                         int optInTimePeriod,
+                         int optInFirstPeriod,
+                         int optInSecondPeriod,
+                         int optInSignalPeriod,
+                         MInteger outBegIdx,
+                         MInteger outNBElement,
+                         double outReal[] )
+       {
+          double k1 = 0;
+          double beta1 = 0;
+          double k2 = 0;
+          double beta2 = 0;
+          double invPeriod = 0;
+          double prevGain = 0;
+          double prevLoss = 0;
+          double prevValue = 0;
+          double gainDelta = 0;
+          double tempValue1 = 0;
+          double tempValue2 = 0;
+          double rsiValue = 0;
+          double ema1 = 0;
+          double ema2 = 0;
+          double sum1 = 0;
+          double sum2 = 0;
+          double sumSignal = 0;
+          int lookbackTotal = 0;
+          int lookbackRSI = 0;
+          int lookbackEMA1 = 0;
+          int lookbackEMA2 = 0;
+          int skipRSI = 0;
+          int today = 0;
+          int i = 0;
+          int outIdx = 0;
+          int rsiBar = 0;
+          int nRsi = 0;
+          int n1 = 0;
+          int n2 = 0;
+          double[] dsBuffer;
+          int dsBuffer_Idx = 0;
+          int maxIdx_dsBuffer = (32)-1;
+          if( (startIdx < 0) || (startIdx > INDEX_MAX) ) {
+             return RetCode.OUT_OF_RANGE_START_INDEX ;
+          }
+          if( (endIdx < 0) || (endIdx > INDEX_MAX) || (endIdx < startIdx)) {
+             return RetCode.OUT_OF_RANGE_END_INDEX ;
+          }
+          if( optInTimePeriod == Integer.MIN_VALUE ) {
+             optInTimePeriod = 14;
+          } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
+             return RetCode.BAD_PARAM;
+          }
+          if( optInFirstPeriod == Integer.MIN_VALUE ) {
+             optInFirstPeriod = 5;
+          } else if( optInFirstPeriod < 2 || optInFirstPeriod > 100000 ) {
+             return RetCode.BAD_PARAM;
+          }
+          if( optInSecondPeriod == Integer.MIN_VALUE ) {
+             optInSecondPeriod = 3;
+          } else if( optInSecondPeriod < 2 || optInSecondPeriod > 100000 ) {
+             return RetCode.BAD_PARAM;
+          }
+          if( optInSignalPeriod == Integer.MIN_VALUE ) {
+             optInSignalPeriod = 9;
+          } else if( optInSignalPeriod < 2 || optInSignalPeriod > 100000 ) {
+             return RetCode.BAD_PARAM;
+          }
+          /* Constance Brown's "triple smoothed derivative of RSI plotted as a
+           * histogram" (MTA Journal, 1994): MACD's histogram construction applied to
+           * a double-smoothed RSI.
+           *
+           *    S1_t   = EMA(RSI(x, t), f)_t
+           *    DS_t   = EMA(S1, s)_t
+           *    DOSC_t = DS_t - SMA(DS, g)_t
+           *
+           * This walks the chain in one pass, with each stage's arithmetic spelled
+           * exactly as its callee spells it: rsi.c's Wilder recursion, ema.c's seed
+           * and step, and sma.c's add-new / snapshot / subtract-old running sum. The
+           * intermediate series are never materialised -- the double-smoothed line
+           * goes straight into a ring of the last `signal` values -- and the result
+           * is bit-identical to TA_RSI -> TA_EMA -> TA_EMA -> TA_SMA -> TA_SUB
+           * rather than merely close, which is what the composition gate holds.
+           *
+           * Every stage boundary below is the callee's LOOKBACK, not (period-1), so
+           * each stage seeds on the values its predecessor would have published and a
+           * warm unstable period folds in. The counters are compared BEFORE they are
+           * subtracted, never after: written as `n = nRsi - skipRSI; if( n >= 0 )`
+           * this is correct in C, where the counters are signed, and broken in the
+           * Rust backend, which renders them usize (the lesson smi.c records).
+           */
+          /* This ptr will point on a circular buffer of at least
+           * "optInSignalPeriod" element.
+           */
+          lookbackTotal = doscLookback(optInTimePeriod, optInFirstPeriod, optInSecondPeriod, optInSignalPeriod);
+          /* Move up the start index if there is not
+           * enough initial data.
+           */
+          if( startIdx < lookbackTotal ) {
+             startIdx = lookbackTotal;
+          }
+          /* Make sure there is still something to evaluate. */
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.SUCCESS ;
+          }
+          if( optInSignalPeriod < 1 ) return RetCode.INTERNAL_ERROR;
+          dsBuffer = new double[optInSignalPeriod];
+          maxIdx_dsBuffer = (optInSignalPeriod)-1;
+          dsBuffer_Idx = 0;
+          lookbackRSI = rsiLookback(optInTimePeriod);
+          lookbackEMA1 = emaLookback(optInFirstPeriod);
+          lookbackEMA2 = emaLookback(optInSecondPeriod);
+          /* The RSI values the composed chain never publishes: TA_RSI entered at the
+           * first bar the first smoothing needs has already consumed its own
+           * unstable period by then. Taking the difference of the two lookbacks
+           * rather than reading TA_GetUnstablePeriod is what keeps this correct under
+           * the Auto levels, where the count is a function of the period.
+           */
+          skipRSI = lookbackRSI - optInTimePeriod;
+          /* ema.c's constants: k and beta must sum to exactly 1.0, or a flat input
+           * drifts off its level.
+           */
+          beta1 = (double)(optInFirstPeriod - 1) / (double)(optInFirstPeriod + 1);
+          k1 = 1.0 - beta1;
+          beta1 = 1.0 - k1;
+          beta2 = (double)(optInSecondPeriod - 1) / (double)(optInSecondPeriod + 1);
+          k2 = 1.0 - beta2;
+          beta2 = 1.0 - k2;
+          ema1 = 0.0;
+          ema2 = 0.0;
+          sum1 = 0.0;
+          sum2 = 0.0;
+          sumSignal = 0.0;
+          nRsi = 0;
+          /* Wilder's seed, exactly as rsi.c accumulates it: one simple sum of the
+           * first optInTimePeriod changes, each side taken unconditionally, then
+           * both scaled by 1/period.
+           */
+          invPeriod = 1.0 / (double)optInTimePeriod;
+          today = startIdx - lookbackTotal;
+          rsiBar = today + optInTimePeriod;
+          prevValue = inReal[today];
+          prevGain = 0.0;
+          prevLoss = 0.0;
+          today = today + 1;
+          for( i = optInTimePeriod; i > 0; i -= 1 ) {
+             tempValue1 = inReal[today];
+             today = today + 1;
+             tempValue2 = tempValue1 - prevValue;
+             prevValue = tempValue1;
+             gainDelta = (tempValue2 > 0.0) ? tempValue2 : 0.0;
+             prevGain += gainDelta;
+             prevLoss += gainDelta - tempValue2;
+          }
+          prevLoss *= invPeriod;
+          prevGain *= invPeriod;
+          /* rsi.c answers the neutral 50 when neither a gain nor a loss has been seen
+           * since the seed, the 0/0 case of issue #480; the one-sided cases are 0 and
+           * 100 and reach the division.
+           */
+          tempValue1 = prevGain + prevLoss;
+          if( tempValue1 > 0.0 ) {
+             rsiValue = 100.0 * (prevGain / tempValue1);
+          } else {
+             rsiValue = 50.0;
+          }
+          /* Warm-up. Feeds every RSI value before startIdx through the chain and
+           * leaves rsiValue holding startIdx's own. Nothing is emitted here: the
+           * first bar whose signal window is full is startIdx, by construction of
+           * the lookback.
+           */
+          while( rsiBar < startIdx ) {
+             if( nRsi >= skipRSI ) {
+                n1 = nRsi - skipRSI;
+                if( n1 < optInFirstPeriod ) {
+                   sum1 = sum1 + rsiValue;
+                   if( n1 == optInFirstPeriod - 1 ) {
+                      ema1 = sum1 / optInFirstPeriod;
+                   }
+                } else {
+                   ema1 = Math.fma(beta1, ema1, k1 * rsiValue);
+                }
+                if( n1 >= lookbackEMA1 ) {
+                   n2 = n1 - lookbackEMA1;
+                   if( n2 < optInSecondPeriod ) {
+                      sum2 = sum2 + ema1;
+                      if( n2 == optInSecondPeriod - 1 ) {
+                         ema2 = sum2 / optInSecondPeriod;
+                      }
+                   } else {
+                      ema2 = Math.fma(beta2, ema2, k2 * ema1);
+                   }
+                   if( n2 >= lookbackEMA2 ) {
+                      dsBuffer[dsBuffer_Idx] = ema2;
+                      sumSignal = sumSignal + ema2;
+                      dsBuffer_Idx++;
+                      if( dsBuffer_Idx > maxIdx_dsBuffer ) { dsBuffer_Idx = 0; }
+                   }
+                }
+             }
+             nRsi = nRsi + 1;
+             tempValue1 = inReal[today];
+             today = today + 1;
+             tempValue2 = tempValue1 - prevValue;
+             prevValue = tempValue1;
+             prevLoss *= (double)(optInTimePeriod - 1);
+             prevGain *= (double)(optInTimePeriod - 1);
+             gainDelta = (tempValue2 > 0.0) ? tempValue2 : 0.0;
+             prevGain += gainDelta;
+             prevLoss += gainDelta - tempValue2;
+             prevLoss *= invPeriod;
+             prevGain *= invPeriod;
+             tempValue1 = prevGain + prevLoss;
+             if( tempValue1 > 0.0 ) {
+                rsiValue = 100.0 * (prevGain / tempValue1);
+             } else {
+                rsiValue = 50.0;
+             }
+             rsiBar = rsiBar + 1;
+          }
+          /* The first output. Every stage is past its seed here -- the shortest
+           * reachable case, periods 2/2/2/2, still arrives with n1 = 3, n2 = 2 and a
+           * signal window one short of full -- so from this bar on the chain is three
+           * pure recursions and a running sum, with nothing left to branch on. That
+           * is what keeps the managed peek frames from carrying a seeded output
+           * local: the store below and the one in the stable loop always run.
+           */
+          ema1 = Math.fma(beta1, ema1, k1 * rsiValue);
+          ema2 = Math.fma(beta2, ema2, k2 * ema1);
+          dsBuffer[dsBuffer_Idx] = ema2;
+          sumSignal = sumSignal + ema2;
+          outReal[0] = ema2 - sumSignal / (double)optInSignalPeriod;
+          outIdx = 1;
+          dsBuffer_Idx++;
+          if( dsBuffer_Idx > maxIdx_dsBuffer ) { dsBuffer_Idx = 0; }
+          sumSignal = sumSignal - dsBuffer[dsBuffer_Idx];
+          /* Stable zone. */
+          while( today <= endIdx ) {
+             tempValue1 = inReal[today];
+             today = today + 1;
+             tempValue2 = tempValue1 - prevValue;
+             prevValue = tempValue1;
+             prevLoss *= (double)(optInTimePeriod - 1);
+             prevGain *= (double)(optInTimePeriod - 1);
+             gainDelta = (tempValue2 > 0.0) ? tempValue2 : 0.0;
+             prevGain += gainDelta;
+             prevLoss += gainDelta - tempValue2;
+             prevLoss *= invPeriod;
+             prevGain *= invPeriod;
+             tempValue1 = prevGain + prevLoss;
+             if( tempValue1 > 0.0 ) {
+                rsiValue = 100.0 * (prevGain / tempValue1);
+             } else {
+                rsiValue = 50.0;
+             }
+             ema1 = Math.fma(beta1, ema1, k1 * rsiValue);
+             ema2 = Math.fma(beta2, ema2, k2 * ema1);
+             dsBuffer[dsBuffer_Idx] = ema2;
+             sumSignal = sumSignal + ema2;
+             outReal[outIdx] = ema2 - sumSignal / (double)optInSignalPeriod;
+             outIdx = outIdx + 1;
+             dsBuffer_Idx++;
+             if( dsBuffer_Idx > maxIdx_dsBuffer ) { dsBuffer_Idx = 0; }
+             sumSignal = sumSignal - dsBuffer[dsBuffer_Idx];
+          }
+          outNBElement.value = outIdx;
+          outBegIdx.value = startIdx;
+          return RetCode.SUCCESS ;
+       }
+       RetCode doscImpl( int startIdx,
+                         int endIdx,
+                         float inReal[],
+                         int optInTimePeriod,
+                         int optInFirstPeriod,
+                         int optInSecondPeriod,
+                         int optInSignalPeriod,
+                         MInteger outBegIdx,
+                         MInteger outNBElement,
+                         double outReal[] )
+       {
+          double k1 = 0;
+          double beta1 = 0;
+          double k2 = 0;
+          double beta2 = 0;
+          double invPeriod = 0;
+          double prevGain = 0;
+          double prevLoss = 0;
+          double prevValue = 0;
+          double gainDelta = 0;
+          double tempValue1 = 0;
+          double tempValue2 = 0;
+          double rsiValue = 0;
+          double ema1 = 0;
+          double ema2 = 0;
+          double sum1 = 0;
+          double sum2 = 0;
+          double sumSignal = 0;
+          int lookbackTotal = 0;
+          int lookbackRSI = 0;
+          int lookbackEMA1 = 0;
+          int lookbackEMA2 = 0;
+          int skipRSI = 0;
+          int today = 0;
+          int i = 0;
+          int outIdx = 0;
+          int rsiBar = 0;
+          int nRsi = 0;
+          int n1 = 0;
+          int n2 = 0;
+          double[] dsBuffer;
+          int dsBuffer_Idx = 0;
+          int maxIdx_dsBuffer = (32)-1;
+          if( (startIdx < 0) || (startIdx > INDEX_MAX) ) {
+             return RetCode.OUT_OF_RANGE_START_INDEX ;
+          }
+          if( (endIdx < 0) || (endIdx > INDEX_MAX) || (endIdx < startIdx)) {
+             return RetCode.OUT_OF_RANGE_END_INDEX ;
+          }
+          if( optInTimePeriod == Integer.MIN_VALUE ) {
+             optInTimePeriod = 14;
+          } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
+             return RetCode.BAD_PARAM;
+          }
+          if( optInFirstPeriod == Integer.MIN_VALUE ) {
+             optInFirstPeriod = 5;
+          } else if( optInFirstPeriod < 2 || optInFirstPeriod > 100000 ) {
+             return RetCode.BAD_PARAM;
+          }
+          if( optInSecondPeriod == Integer.MIN_VALUE ) {
+             optInSecondPeriod = 3;
+          } else if( optInSecondPeriod < 2 || optInSecondPeriod > 100000 ) {
+             return RetCode.BAD_PARAM;
+          }
+          if( optInSignalPeriod == Integer.MIN_VALUE ) {
+             optInSignalPeriod = 9;
+          } else if( optInSignalPeriod < 2 || optInSignalPeriod > 100000 ) {
+             return RetCode.BAD_PARAM;
+          }
+          lookbackTotal = doscLookback(optInTimePeriod, optInFirstPeriod, optInSecondPeriod, optInSignalPeriod);
+          if( startIdx < lookbackTotal ) {
+             startIdx = lookbackTotal;
+          }
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.SUCCESS ;
+          }
+          if( optInSignalPeriod < 1 ) return RetCode.INTERNAL_ERROR;
+          dsBuffer = new double[optInSignalPeriod];
+          maxIdx_dsBuffer = (optInSignalPeriod)-1;
+          dsBuffer_Idx = 0;
+          lookbackRSI = rsiLookback(optInTimePeriod);
+          lookbackEMA1 = emaLookback(optInFirstPeriod);
+          lookbackEMA2 = emaLookback(optInSecondPeriod);
+          skipRSI = lookbackRSI - optInTimePeriod;
+          beta1 = (double)(optInFirstPeriod - 1) / (double)(optInFirstPeriod + 1);
+          k1 = 1.0 - beta1;
+          beta1 = 1.0 - k1;
+          beta2 = (double)(optInSecondPeriod - 1) / (double)(optInSecondPeriod + 1);
+          k2 = 1.0 - beta2;
+          beta2 = 1.0 - k2;
+          ema1 = 0.0;
+          ema2 = 0.0;
+          sum1 = 0.0;
+          sum2 = 0.0;
+          sumSignal = 0.0;
+          nRsi = 0;
+          invPeriod = 1.0 / (double)optInTimePeriod;
+          today = startIdx - lookbackTotal;
+          rsiBar = today + optInTimePeriod;
+          prevValue = (double)inReal[today];
+          prevGain = 0.0;
+          prevLoss = 0.0;
+          today = today + 1;
+          for( i = optInTimePeriod; i > 0; i -= 1 ) {
+             tempValue1 = (double)inReal[today];
+             today = today + 1;
+             tempValue2 = tempValue1 - prevValue;
+             prevValue = tempValue1;
+             gainDelta = (tempValue2 > 0.0) ? tempValue2 : 0.0;
+             prevGain += gainDelta;
+             prevLoss += gainDelta - tempValue2;
+          }
+          prevLoss *= invPeriod;
+          prevGain *= invPeriod;
+          tempValue1 = prevGain + prevLoss;
+          if( tempValue1 > 0.0 ) {
+             rsiValue = 100.0 * (prevGain / tempValue1);
+          } else {
+             rsiValue = 50.0;
+          }
+          while( rsiBar < startIdx ) {
+             if( nRsi >= skipRSI ) {
+                n1 = nRsi - skipRSI;
+                if( n1 < optInFirstPeriod ) {
+                   sum1 = sum1 + rsiValue;
+                   if( n1 == optInFirstPeriod - 1 ) {
+                      ema1 = sum1 / optInFirstPeriod;
+                   }
+                } else {
+                   ema1 = Math.fma(beta1, ema1, k1 * rsiValue);
+                }
+                if( n1 >= lookbackEMA1 ) {
+                   n2 = n1 - lookbackEMA1;
+                   if( n2 < optInSecondPeriod ) {
+                      sum2 = sum2 + ema1;
+                      if( n2 == optInSecondPeriod - 1 ) {
+                         ema2 = sum2 / optInSecondPeriod;
+                      }
+                   } else {
+                      ema2 = Math.fma(beta2, ema2, k2 * ema1);
+                   }
+                   if( n2 >= lookbackEMA2 ) {
+                      dsBuffer[dsBuffer_Idx] = ema2;
+                      sumSignal = sumSignal + ema2;
+                      dsBuffer_Idx++;
+                      if( dsBuffer_Idx > maxIdx_dsBuffer ) { dsBuffer_Idx = 0; }
+                   }
+                }
+             }
+             nRsi = nRsi + 1;
+             tempValue1 = (double)inReal[today];
+             today = today + 1;
+             tempValue2 = tempValue1 - prevValue;
+             prevValue = tempValue1;
+             prevLoss *= (double)(optInTimePeriod - 1);
+             prevGain *= (double)(optInTimePeriod - 1);
+             gainDelta = (tempValue2 > 0.0) ? tempValue2 : 0.0;
+             prevGain += gainDelta;
+             prevLoss += gainDelta - tempValue2;
+             prevLoss *= invPeriod;
+             prevGain *= invPeriod;
+             tempValue1 = prevGain + prevLoss;
+             if( tempValue1 > 0.0 ) {
+                rsiValue = 100.0 * (prevGain / tempValue1);
+             } else {
+                rsiValue = 50.0;
+             }
+             rsiBar = rsiBar + 1;
+          }
+          ema1 = Math.fma(beta1, ema1, k1 * rsiValue);
+          ema2 = Math.fma(beta2, ema2, k2 * ema1);
+          dsBuffer[dsBuffer_Idx] = ema2;
+          sumSignal = sumSignal + ema2;
+          outReal[0] = ema2 - sumSignal / (double)optInSignalPeriod;
+          outIdx = 1;
+          dsBuffer_Idx++;
+          if( dsBuffer_Idx > maxIdx_dsBuffer ) { dsBuffer_Idx = 0; }
+          sumSignal = sumSignal - dsBuffer[dsBuffer_Idx];
+          while( today <= endIdx ) {
+             tempValue1 = (double)inReal[today];
+             today = today + 1;
+             tempValue2 = tempValue1 - prevValue;
+             prevValue = tempValue1;
+             prevLoss *= (double)(optInTimePeriod - 1);
+             prevGain *= (double)(optInTimePeriod - 1);
+             gainDelta = (tempValue2 > 0.0) ? tempValue2 : 0.0;
+             prevGain += gainDelta;
+             prevLoss += gainDelta - tempValue2;
+             prevLoss *= invPeriod;
+             prevGain *= invPeriod;
+             tempValue1 = prevGain + prevLoss;
+             if( tempValue1 > 0.0 ) {
+                rsiValue = 100.0 * (prevGain / tempValue1);
+             } else {
+                rsiValue = 50.0;
+             }
+             ema1 = Math.fma(beta1, ema1, k1 * rsiValue);
+             ema2 = Math.fma(beta2, ema2, k2 * ema1);
+             dsBuffer[dsBuffer_Idx] = ema2;
+             sumSignal = sumSignal + ema2;
+             outReal[outIdx] = ema2 - sumSignal / (double)optInSignalPeriod;
+             outIdx = outIdx + 1;
+             dsBuffer_Idx++;
+             if( dsBuffer_Idx > maxIdx_dsBuffer ) { dsBuffer_Idx = 0; }
+             sumSignal = sumSignal - dsBuffer[dsBuffer_Idx];
+          }
+          outNBElement.value = outIdx;
+          outBegIdx.value = startIdx;
+          return RetCode.SUCCESS ;
+       }
+       /**
+        * Derivative Oscillator: Wilder's RSI, smoothed by two exponential averages
+        * in series, with a simple average of that smoothed line subtracted from it.
+        * Constance Brown's reading is that the RSI's own swings are too noisy to
+        * time with, so she smooths it twice and then plots the distance from its
+        * own average as a histogram — MACD's histogram construction, applied to a
+        * smoothed RSI rather than to price. The result is in RSI points, centred on
+        * zero: crossings of the zero line mark the turn, and the height measures
+        * how far the smoothed RSI has run from its mean.
+        * <p>Formula and more info at <a
+        * href="https://ta-lib.org/functions/dosc">ta-lib.org/functions/dosc</a>.
+        * <p><b>Notes</b>
+        * <ul>
+        * <li>Every stage is a call to a function TA-Lib already ships, so the output is identical, bit for bit, to {@code TA_RSI} followed by two {@code TA_EMA} calls, a {@code TA_SMA} and a {@code TA_SUB}. The shortest expression of that chain takes five calls and three intermediate buffers; this computes it in one pass without materialising them.</li>
+        * <li>Each exponential average is seeded with a simple average of its own first inputs, the same seeding TA-Lib's EMA uses, and the second seeds on what the first publishes. {@code TA_SetUnstablePeriod} on either {@code TA_FUNC_UNST_RSI} or {@code TA_FUNC_UNST_EMA} discards more of that warm-up, and the EMA setting counts twice because there are two exponential stages. Implementations seeding each stage from a single first sample differ over the transient and agree once it decays.</li>
+        * <li>The degenerate reading is whatever {@code TA_RSI} answers when neither a gain nor a loss has been seen since the seed. Some other implementations answer 100 there and will disagree over that stretch.</li>
+        * <li>The periods are independent: the stages commute, so no ordering between the two smoothing periods is required or checked. A signal period of 1 would make the output identically zero, so the minimum is 2.</li>
+        * </ul>
+        * <p>Values are written only where the indicator is defined. The returned
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#doscLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
+        *
+        * @param startIdx First bar of the requested range (inclusive).
+        * @param endIdx Last bar of the requested range (inclusive).
+        * @param inReal Input series, usually the close.
+        * @param optInTimePeriod Period of the RSI (default 14; range 2..100000;
+        *        {@code Integer.MIN_VALUE} selects the default).
+        * @param optInFirstPeriod Period of the first smoothing, applied to the RSI
+        *        (default 5; range 2..100000; {@code Integer.MIN_VALUE} selects the
+        *        default).
+        * @param optInSecondPeriod Period of the second smoothing, applied to the
+        *        first (default 3; range 2..100000; {@code Integer.MIN_VALUE} selects the
+        *        default).
+        * @param optInSignalPeriod Period of the simple average subtracted from the
+        *        smoothed line (default 9; range 2..100000; {@code Integer.MIN_VALUE}
+        *        selects the default).
+        * @param outReal Derivative Oscillator, in RSI points, centred on zero. Must
+        *        hold at least {@code endIdx - max(startIdx, doscLookback(...)) + 1}
+        *        values, and never be empty: an empty array is an absent output.
+        * @return The range written: {@code begIdx} is the first bar with a value,
+        *        {@code count} how many were written.
+        * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
+        *        negative or above {@link Core#INDEX_MAX}, or {@code endIdx < startIdx}.
+        * @throws IllegalArgumentException if an optional parameter is outside its
+        *        documented range, two outputs share one array, or an array is absent or
+        *        too short for the range requested — any input this function
+        *        <i>declares</i> that does not reach {@code endIdx}, or an output that
+        *        cannot hold the values produced. Declared, not read: a few candlestick
+        *        patterns take an OHLC series they never index, and it is required all the
+        *        same. An output this function documents as declinable is the one
+        *        exception: {@code null} is how you decline it. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
+        *
+        * @see Core#rsi
+        * @see Core#stochrsi
+        * @see Core#macd
+        * @see Core#ac
+        */
+       public OutRange dosc( int startIdx,
+                             int endIdx,
+                             double inReal[],
+                             int optInTimePeriod,
+                             int optInFirstPeriod,
+                             int optInSecondPeriod,
+                             int optInSignalPeriod,
+                             double outReal[] )
+       {
+          requireIndexRange("DOSC", startIdx, endIdx);
+          int guardStart = clampedStart("DOSC", startIdx, doscLookback(optInTimePeriod, optInFirstPeriod, optInSecondPeriod, optInSignalPeriod));
+          int guardInLen = endIdx + 1;
+          int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("DOSC", "inReal", inReal, guardInLen);
+          requireLength("DOSC", "outReal", outReal, guardOutLen);
+          MInteger outBegIdx = new MInteger();
+          MInteger outNBElement = new MInteger();
+          RetCode retCode = doscImpl(startIdx, endIdx, inReal, optInTimePeriod, optInFirstPeriod, optInSecondPeriod, optInSignalPeriod, outBegIdx, outNBElement, outReal);
+          if( retCode != RetCode.SUCCESS ) {
+             throw failure("DOSC", retCode);
+          }
+          return new OutRange(outBegIdx.value, outNBElement.value);
+       }
+       /**
+        * Derivative Oscillator: Wilder's RSI, smoothed by two exponential averages
+        * in series, with a simple average of that smoothed line subtracted from it.
+        * Constance Brown's reading is that the RSI's own swings are too noisy to
+        * time with, so she smooths it twice and then plots the distance from its
+        * own average as a histogram — MACD's histogram construction, applied to a
+        * smoothed RSI rather than to price. The result is in RSI points, centred on
+        * zero: crossings of the zero line mark the turn, and the height measures
+        * how far the smoothed RSI has run from its mean.
+        * <p>Formula and more info at <a
+        * href="https://ta-lib.org/functions/dosc">ta-lib.org/functions/dosc</a>.
+        * <p><b>Notes</b>
+        * <ul>
+        * <li>Every stage is a call to a function TA-Lib already ships, so the output is identical, bit for bit, to {@code TA_RSI} followed by two {@code TA_EMA} calls, a {@code TA_SMA} and a {@code TA_SUB}. The shortest expression of that chain takes five calls and three intermediate buffers; this computes it in one pass without materialising them.</li>
+        * <li>Each exponential average is seeded with a simple average of its own first inputs, the same seeding TA-Lib's EMA uses, and the second seeds on what the first publishes. {@code TA_SetUnstablePeriod} on either {@code TA_FUNC_UNST_RSI} or {@code TA_FUNC_UNST_EMA} discards more of that warm-up, and the EMA setting counts twice because there are two exponential stages. Implementations seeding each stage from a single first sample differ over the transient and agree once it decays.</li>
+        * <li>The degenerate reading is whatever {@code TA_RSI} answers when neither a gain nor a loss has been seen since the seed. Some other implementations answer 100 there and will disagree over that stretch.</li>
+        * <li>The periods are independent: the stages commute, so no ordering between the two smoothing periods is required or checked. A signal period of 1 would make the output identically zero, so the minimum is 2.</li>
+        * </ul>
+        * <p>This is the {@code float[]} overload. The arithmetic is performed in
+        * {@code double} before being written to the {@code double[]} output, so a
+        * result beyond {@code float} range is still representable.
+        * <p>Values are written only where the indicator is defined. The returned
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#doscLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
+        *
+        * @param startIdx First bar of the requested range (inclusive).
+        * @param endIdx Last bar of the requested range (inclusive).
+        * @param inReal Input series, usually the close.
+        * @param optInTimePeriod Period of the RSI (default 14; range 2..100000;
+        *        {@code Integer.MIN_VALUE} selects the default).
+        * @param optInFirstPeriod Period of the first smoothing, applied to the RSI
+        *        (default 5; range 2..100000; {@code Integer.MIN_VALUE} selects the
+        *        default).
+        * @param optInSecondPeriod Period of the second smoothing, applied to the
+        *        first (default 3; range 2..100000; {@code Integer.MIN_VALUE} selects the
+        *        default).
+        * @param optInSignalPeriod Period of the simple average subtracted from the
+        *        smoothed line (default 9; range 2..100000; {@code Integer.MIN_VALUE}
+        *        selects the default).
+        * @param outReal Derivative Oscillator, in RSI points, centred on zero. Must
+        *        hold at least {@code endIdx - max(startIdx, doscLookback(...)) + 1}
+        *        values, and never be empty: an empty array is an absent output.
+        * @return The range written: {@code begIdx} is the first bar with a value,
+        *        {@code count} how many were written.
+        * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
+        *        negative or above {@link Core#INDEX_MAX}, or {@code endIdx < startIdx}.
+        * @throws IllegalArgumentException if an optional parameter is outside its
+        *        documented range, two outputs share one array, or an array is absent or
+        *        too short for the range requested — any input this function
+        *        <i>declares</i> that does not reach {@code endIdx}, or an output that
+        *        cannot hold the values produced. Declared, not read: a few candlestick
+        *        patterns take an OHLC series they never index, and it is required all the
+        *        same. An output this function documents as declinable is the one
+        *        exception: {@code null} is how you decline it. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
+        *
+        * @see Core#rsi
+        * @see Core#stochrsi
+        * @see Core#macd
+        * @see Core#ac
+        */
+       public OutRange dosc( int startIdx,
+                             int endIdx,
+                             float inReal[],
+                             int optInTimePeriod,
+                             int optInFirstPeriod,
+                             int optInSecondPeriod,
+                             int optInSignalPeriod,
+                             double outReal[] )
+       {
+          requireIndexRange("DOSC", startIdx, endIdx);
+          int guardStart = clampedStart("DOSC", startIdx, doscLookback(optInTimePeriod, optInFirstPeriod, optInSecondPeriod, optInSignalPeriod));
+          int guardInLen = endIdx + 1;
+          int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("DOSC", "inReal", inReal, guardInLen);
+          requireLength("DOSC", "outReal", outReal, guardOutLen);
+          MInteger outBegIdx = new MInteger();
+          MInteger outNBElement = new MInteger();
+          RetCode retCode = doscImpl(startIdx, endIdx, inReal, optInTimePeriod, optInFirstPeriod, optInSecondPeriod, optInSignalPeriod, outBegIdx, outNBElement, outReal);
+          if( retCode != RetCode.SUCCESS ) {
+             throw failure("DOSC", retCode);
+          }
+          return new OutRange(outBegIdx.value, outNBElement.value);
+       }
+    /**** Streaming API *****/
+
+       /**
+        * A live DOSC stream (unrelated to {@code java.util.stream}): one value per
+        * closed bar, bit-identical to {@link Core#dosc} over the same series.
+        * Open with {@link Core#doscOpen}; there is no close — the handle is
+        * ordinary heap state, unreferenced handles are simply garbage-collected.
+        * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
+        * {@code value} and {@code clone} must not race with an {@code update} on
+        * the same handle. With no concurrent {@code update}, {@code peek}/
+        * {@code value}/{@code clone} never write the stream and may be called
+        * concurrently after safe publication. Independent streams (a
+        * {@code clone()} result included) are fully independent.
+        * <p>Not serializable by design: to checkpoint, retain the history and
+        * re-open — the result is bit-identical by contract.
+        */
+       public static final class DoscStream {
+          private Core core;
+          private int optInTimePeriod;
+          private int optInFirstPeriod;
+          private int optInSecondPeriod;
+          private int optInSignalPeriod;
+          private double k1;
+          private double beta1;
+          private double k2;
+          private double beta2;
+          private double invPeriod;
+          private double prevGain;
+          private double prevLoss;
+          private double prevValue;
+          private double ema1;
+          private double ema2;
+          private double sumSignal;
+          private int dsBuffer_Idx;
+          private int maxIdx_dsBuffer;
+          private int cbSize_dsBuffer;
+          private double[] cb_dsBuffer;
+          private double cur_outReal;
+          private int outRangeBegIdx;
+          private int outRangeCount;
+
+          private DoscStream( Core core ) { this.core = core; }
+
+          /**
+           * The bars this stream has an output for, in the input series'
+           * coordinates: {@code [begIdx, begIdx + count)}.
+           * <p>It is what {@link Core#dosc} reports over the same bars: the
+           * opener sets it to {@code (lookback, historyLen - lookback)}, every
+           * accepted {@code update} adds one to the count — a rejected one
+           * changes nothing, and neither does {@code peek} — and
+           * {@code clone()} carries it verbatim. A plain
+           * {@code open} hands back only the last value, a subset of this range,
+           * because the caller chose not to take the fill.
+           * <p>The last bar it can reach is {@link Core#INDEX_MAX}; past that
+           * {@code update} and {@code advance} throw
+           * {@link IndexOutOfBoundsException}.
+           */
+          public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
+
+          /**
+           * Count one bar this stream was not fed: {@link #outRange()} advances
+           * by one and nothing else moves — {@link #value()} keeps answering the previous
+           * output, which is this bar's output too.
+           * <p>For a bar the caller leaves out: one an {@code update} rejected
+           * and that will not be re-fed, or a session with no print. Without it
+           * two handles on one feed drift a bar apart when only one of them skips.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#INDEX_MAX}, the last one the batch tier
+           * can address and the last this handle will count. {@code update}
+           * throws the same there.
+           */
+          public void advance() {
+             if( this.outRangeBegIdx + this.outRangeCount > INDEX_MAX )
+                throw failure("DOSC advance", RetCode.OUT_OF_RANGE_END_INDEX);
+             this.outRangeCount++;
+          }
+
+          private DoscStream( DoscStream other ) {
+             this.core = other.core;
+             this.optInTimePeriod = other.optInTimePeriod;
+             this.optInFirstPeriod = other.optInFirstPeriod;
+             this.optInSecondPeriod = other.optInSecondPeriod;
+             this.optInSignalPeriod = other.optInSignalPeriod;
+             this.k1 = other.k1;
+             this.beta1 = other.beta1;
+             this.k2 = other.k2;
+             this.beta2 = other.beta2;
+             this.invPeriod = other.invPeriod;
+             this.prevGain = other.prevGain;
+             this.prevLoss = other.prevLoss;
+             this.prevValue = other.prevValue;
+             this.ema1 = other.ema1;
+             this.ema2 = other.ema2;
+             this.sumSignal = other.sumSignal;
+             this.dsBuffer_Idx = other.dsBuffer_Idx;
+             this.maxIdx_dsBuffer = other.maxIdx_dsBuffer;
+             this.cbSize_dsBuffer = other.cbSize_dsBuffer;
+             this.cb_dsBuffer = other.cb_dsBuffer.clone();
+             this.cur_outReal = other.cur_outReal;
+             this.outRangeBegIdx = other.outRangeBegIdx;
+             this.outRangeCount = other.outRangeCount;
+          }
+
+          /**
+           * Commit one closed bar, returning the new current value.
+           * <p>Throws {@link IllegalArgumentException} if any bar value is not
+           * finite (NaN or an infinity). That check runs before anything is
+           * written, so nothing moves — {@link #outRange()} included — and
+           * {@link #value()} still answers the previous value. Re-feed the bar when a
+           * corrected value arrives, or call {@link #advance()} to count it and
+           * carry on; two handles on one feed drift a bar apart if neither
+           * happens.
+           * This is the one place the streaming tier is stricter than
+           * the batch API, which computes on whatever it is given: a handle
+           * retains its state, so a single non-finite bar would poison every
+           * later value it produces.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#INDEX_MAX}, which no re-feed clears: the
+           * handle has run out of index domain and only a shorter history can
+           * start a new one.
+           */
+          public double update( double inReal ) {
+             if( this.outRangeBegIdx + this.outRangeCount > INDEX_MAX )
+                throw failure("DOSC update", RetCode.OUT_OF_RANGE_END_INDEX);
+             if( !Double.isFinite(inReal) )
+                throw nonFiniteBar("DOSC update", "inReal");
+             core.doscStepImpl(this, inReal);
+             this.outRangeCount++;
+             return this.cur_outReal;
+          }
+
+          /**
+           * Evaluate a forming bar without committing — bit-identical to what the
+           * next {@code update} with the same bar would return — the same
+           * transition, with every store it would make carried in a local instead.
+           * Never writes this handle, so peeks may run concurrently with each other.
+           * <p>It counts no bar, so it keeps answering past the
+           * {@link Core#INDEX_MAX} ceiling {@code update} stops at.
+           */
+          public double peek( double inReal ) {
+             if( !Double.isFinite(inReal) )
+                throw nonFiniteBar("DOSC peek", "inReal");
+             DoscStream sp = this;
+             double gainDelta = 0.0;
+             double tempValue1 = 0.0;
+             double tempValue2 = 0.0;
+             double rsiValue = 0.0;
+             double cur_outReal = 0.0;
+             double ema1 = sp.ema1;
+             double ema2 = sp.ema2;
+             double prevGain = sp.prevGain;
+             double prevLoss = sp.prevLoss;
+             double prevValue = sp.prevValue;
+             double sumSignal = sp.sumSignal;
+             tempValue1 = inReal;
+             tempValue2 = tempValue1 - prevValue;
+             prevValue = tempValue1;
+             prevLoss *= (double)(sp.optInTimePeriod - 1);
+             prevGain *= (double)(sp.optInTimePeriod - 1);
+             gainDelta = (tempValue2 > 0.0) ? tempValue2 : 0.0;
+             prevGain += gainDelta;
+             prevLoss += gainDelta - tempValue2;
+             prevLoss *= sp.invPeriod;
+             prevGain *= sp.invPeriod;
+             tempValue1 = prevGain + prevLoss;
+             if( tempValue1 > 0.0 ) {
+                rsiValue = 100.0 * (prevGain / tempValue1);
+             } else {
+                rsiValue = 50.0;
+             }
+             ema1 = Math.fma(sp.beta1, ema1, sp.k1 * rsiValue);
+             ema2 = Math.fma(sp.beta2, ema2, sp.k2 * ema1);
+             sumSignal = sumSignal + ema2;
+             cur_outReal = ema2 - sumSignal / (double)sp.optInSignalPeriod;
+             return cur_outReal;
+          }
+
+          /**
+           * The value at the last bar this stream counted — the bar
+           * {@link #outRange()} ends on. The last history bar right after open,
+           * then whatever the latest accepted {@code update} returned.
+           * A pure field read; {@code peek} does not change it.
+           */
+          public double value() {
+             return this.cur_outReal;
+          }
+
+          /**
+           * An independent fork of this stream: both evolve separately from here
+           * on. Buffers are copied and sub-streams cloned recursively; the
+           * {@link Core} reference is shared, since a {@code Core} is immutable
+           * for a stream's lifetime.
+           *
+           * <p>Not the {@code Cloneable} protocol: this calls a copy constructor,
+           * never {@code super.clone()}, so it throws nothing.
+           *
+           * @return an independent stream at the same bar
+           */
+          @Override
+          public DoscStream clone() {
+             return new DoscStream(this);
+          }
+       }
+       private void doscStepImpl( DoscStream sp, double inReal )
+       {
+          double gainDelta = 0.0;
+          double tempValue1 = 0.0;
+          double tempValue2 = 0.0;
+          double rsiValue = 0.0;
+          tempValue1 = inReal;
+          tempValue2 = tempValue1 - sp.prevValue;
+          sp.prevValue = tempValue1;
+          sp.prevLoss *= (double)(sp.optInTimePeriod - 1);
+          sp.prevGain *= (double)(sp.optInTimePeriod - 1);
+          gainDelta = (tempValue2 > 0.0) ? tempValue2 : 0.0;
+          sp.prevGain += gainDelta;
+          sp.prevLoss += gainDelta - tempValue2;
+          sp.prevLoss *= sp.invPeriod;
+          sp.prevGain *= sp.invPeriod;
+          tempValue1 = sp.prevGain + sp.prevLoss;
+          if( tempValue1 > 0.0 ) {
+             rsiValue = 100.0 * (sp.prevGain / tempValue1);
+          } else {
+             rsiValue = 50.0;
+          }
+          sp.ema1 = Math.fma(sp.beta1, sp.ema1, sp.k1 * rsiValue);
+          sp.ema2 = Math.fma(sp.beta2, sp.ema2, sp.k2 * sp.ema1);
+          sp.cb_dsBuffer[sp.dsBuffer_Idx] = sp.ema2;
+          sp.sumSignal = sp.sumSignal + sp.ema2;
+          sp.cur_outReal = sp.ema2 - sp.sumSignal / (double)sp.optInSignalPeriod;
+          sp.dsBuffer_Idx = sp.dsBuffer_Idx + 1;
+          if( sp.dsBuffer_Idx > sp.maxIdx_dsBuffer ) {
+             sp.dsBuffer_Idx = 0;
+          }
+          sp.sumSignal = sp.sumSignal - sp.cb_dsBuffer[sp.dsBuffer_Idx];
+       }
+       private RetCode doscOpenImpl( DoscStream sp, double inReal[], int startIdx, int optInTimePeriod, int optInFirstPeriod, int optInSecondPeriod, int optInSignalPeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+       {
+          double k1 = 0;
+          double beta1 = 0;
+          double k2 = 0;
+          double beta2 = 0;
+          double invPeriod = 0;
+          double prevGain = 0;
+          double prevLoss = 0;
+          double prevValue = 0;
+          double gainDelta = 0;
+          double tempValue1 = 0;
+          double tempValue2 = 0;
+          double rsiValue = 0;
+          double ema1 = 0;
+          double ema2 = 0;
+          double sum1 = 0;
+          double sum2 = 0;
+          double sumSignal = 0;
+          int lookbackTotal = 0;
+          int lookbackRSI = 0;
+          int lookbackEMA1 = 0;
+          int lookbackEMA2 = 0;
+          int skipRSI = 0;
+          int today = 0;
+          int i = 0;
+          int outIdx = 0;
+          int rsiBar = 0;
+          int nRsi = 0;
+          int n1 = 0;
+          int n2 = 0;
+          double[] dsBuffer;
+          int dsBuffer_Idx = 0;
+          int maxIdx_dsBuffer = (32)-1;
+          int historyLen = inReal.length;
+          int endIdx = historyLen - 1;
+          if( historyLen < 1 ) {
+             return RetCode.OUT_OF_RANGE_START_INDEX;
+          }
+          if( historyLen > INDEX_MAX + 1 ) {
+             return RetCode.OUT_OF_RANGE_END_INDEX;
+          }
+          if( optInTimePeriod == Integer.MIN_VALUE ) {
+             optInTimePeriod = 14;
+          } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
+             return RetCode.BAD_PARAM;
+          }
+          if( optInFirstPeriod == Integer.MIN_VALUE ) {
+             optInFirstPeriod = 5;
+          } else if( optInFirstPeriod < 2 || optInFirstPeriod > 100000 ) {
+             return RetCode.BAD_PARAM;
+          }
+          if( optInSecondPeriod == Integer.MIN_VALUE ) {
+             optInSecondPeriod = 3;
+          } else if( optInSecondPeriod < 2 || optInSecondPeriod > 100000 ) {
+             return RetCode.BAD_PARAM;
+          }
+          if( optInSignalPeriod == Integer.MIN_VALUE ) {
+             optInSignalPeriod = 9;
+          } else if( optInSignalPeriod < 2 || optInSignalPeriod > 100000 ) {
+             return RetCode.BAD_PARAM;
+          }
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.INSUFFICIENT_HISTORY;
+          }
+          /* Constance Brown's "triple smoothed derivative of RSI plotted as a
+           * histogram" (MTA Journal, 1994): MACD's histogram construction applied to
+           * a double-smoothed RSI.
+           *
+           *    S1_t   = EMA(RSI(x, t), f)_t
+           *    DS_t   = EMA(S1, s)_t
+           *    DOSC_t = DS_t - SMA(DS, g)_t
+           *
+           * This walks the chain in one pass, with each stage's arithmetic spelled
+           * exactly as its callee spells it: rsi.c's Wilder recursion, ema.c's seed
+           * and step, and sma.c's add-new / snapshot / subtract-old running sum. The
+           * intermediate series are never materialised -- the double-smoothed line
+           * goes straight into a ring of the last `signal` values -- and the result
+           * is bit-identical to TA_RSI -> TA_EMA -> TA_EMA -> TA_SMA -> TA_SUB
+           * rather than merely close, which is what the composition gate holds.
+           *
+           * Every stage boundary below is the callee's LOOKBACK, not (period-1), so
+           * each stage seeds on the values its predecessor would have published and a
+           * warm unstable period folds in. The counters are compared BEFORE they are
+           * subtracted, never after: written as `n = nRsi - skipRSI; if( n >= 0 )`
+           * this is correct in C, where the counters are signed, and broken in the
+           * Rust backend, which renders them usize (the lesson smi.c records).
+           */
+          /* This ptr will point on a circular buffer of at least
+           * "optInSignalPeriod" element.
+           */
+          lookbackTotal = doscLookback(optInTimePeriod, optInFirstPeriod, optInSecondPeriod, optInSignalPeriod);
+          /* Move up the start index if there is not
+           * enough initial data.
+           */
+          if( startIdx < lookbackTotal ) {
+             startIdx = lookbackTotal;
+          }
+          /* Make sure there is still something to evaluate. */
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.INSUFFICIENT_HISTORY ;
+          }
+          if( optInSignalPeriod < 1 ) return RetCode.INTERNAL_ERROR;
+          dsBuffer = new double[optInSignalPeriod];
+          maxIdx_dsBuffer = (optInSignalPeriod)-1;
+          dsBuffer_Idx = 0;
+          lookbackRSI = rsiLookback(optInTimePeriod);
+          lookbackEMA1 = emaLookback(optInFirstPeriod);
+          lookbackEMA2 = emaLookback(optInSecondPeriod);
+          /* The RSI values the composed chain never publishes: TA_RSI entered at the
+           * first bar the first smoothing needs has already consumed its own
+           * unstable period by then. Taking the difference of the two lookbacks
+           * rather than reading TA_GetUnstablePeriod is what keeps this correct under
+           * the Auto levels, where the count is a function of the period.
+           */
+          skipRSI = lookbackRSI - optInTimePeriod;
+          /* ema.c's constants: k and beta must sum to exactly 1.0, or a flat input
+           * drifts off its level.
+           */
+          beta1 = (double)(optInFirstPeriod - 1) / (double)(optInFirstPeriod + 1);
+          k1 = 1.0 - beta1;
+          beta1 = 1.0 - k1;
+          beta2 = (double)(optInSecondPeriod - 1) / (double)(optInSecondPeriod + 1);
+          k2 = 1.0 - beta2;
+          beta2 = 1.0 - k2;
+          ema1 = 0.0;
+          ema2 = 0.0;
+          sum1 = 0.0;
+          sum2 = 0.0;
+          sumSignal = 0.0;
+          nRsi = 0;
+          /* Wilder's seed, exactly as rsi.c accumulates it: one simple sum of the
+           * first optInTimePeriod changes, each side taken unconditionally, then
+           * both scaled by 1/period.
+           */
+          invPeriod = 1.0 / (double)optInTimePeriod;
+          today = startIdx - lookbackTotal;
+          rsiBar = today + optInTimePeriod;
+          prevValue = inReal[today];
+          prevGain = 0.0;
+          prevLoss = 0.0;
+          today = today + 1;
+          for( i = optInTimePeriod; i > 0; i -= 1 ) {
+             tempValue1 = inReal[today];
+             today = today + 1;
+             tempValue2 = tempValue1 - prevValue;
+             prevValue = tempValue1;
+             gainDelta = (tempValue2 > 0.0) ? tempValue2 : 0.0;
+             prevGain += gainDelta;
+             prevLoss += gainDelta - tempValue2;
+          }
+          prevLoss *= invPeriod;
+          prevGain *= invPeriod;
+          /* rsi.c answers the neutral 50 when neither a gain nor a loss has been seen
+           * since the seed, the 0/0 case of issue #480; the one-sided cases are 0 and
+           * 100 and reach the division.
+           */
+          tempValue1 = prevGain + prevLoss;
+          if( tempValue1 > 0.0 ) {
+             rsiValue = 100.0 * (prevGain / tempValue1);
+          } else {
+             rsiValue = 50.0;
+          }
+          /* Warm-up. Feeds every RSI value before startIdx through the chain and
+           * leaves rsiValue holding startIdx's own. Nothing is emitted here: the
+           * first bar whose signal window is full is startIdx, by construction of
+           * the lookback.
+           */
+          while( rsiBar < startIdx ) {
+             if( nRsi >= skipRSI ) {
+                n1 = nRsi - skipRSI;
+                if( n1 < optInFirstPeriod ) {
+                   sum1 = sum1 + rsiValue;
+                   if( n1 == optInFirstPeriod - 1 ) {
+                      ema1 = sum1 / optInFirstPeriod;
+                   }
+                } else {
+                   ema1 = Math.fma(beta1, ema1, k1 * rsiValue);
+                }
+                if( n1 >= lookbackEMA1 ) {
+                   n2 = n1 - lookbackEMA1;
+                   if( n2 < optInSecondPeriod ) {
+                      sum2 = sum2 + ema1;
+                      if( n2 == optInSecondPeriod - 1 ) {
+                         ema2 = sum2 / optInSecondPeriod;
+                      }
+                   } else {
+                      ema2 = Math.fma(beta2, ema2, k2 * ema1);
+                   }
+                   if( n2 >= lookbackEMA2 ) {
+                      dsBuffer[dsBuffer_Idx] = ema2;
+                      sumSignal = sumSignal + ema2;
+                      dsBuffer_Idx++;
+                      if( dsBuffer_Idx > maxIdx_dsBuffer ) { dsBuffer_Idx = 0; }
+                   }
+                }
+             }
+             nRsi = nRsi + 1;
+             tempValue1 = inReal[today];
+             today = today + 1;
+             tempValue2 = tempValue1 - prevValue;
+             prevValue = tempValue1;
+             prevLoss *= (double)(optInTimePeriod - 1);
+             prevGain *= (double)(optInTimePeriod - 1);
+             gainDelta = (tempValue2 > 0.0) ? tempValue2 : 0.0;
+             prevGain += gainDelta;
+             prevLoss += gainDelta - tempValue2;
+             prevLoss *= invPeriod;
+             prevGain *= invPeriod;
+             tempValue1 = prevGain + prevLoss;
+             if( tempValue1 > 0.0 ) {
+                rsiValue = 100.0 * (prevGain / tempValue1);
+             } else {
+                rsiValue = 50.0;
+             }
+             rsiBar = rsiBar + 1;
+          }
+          /* The first output. Every stage is past its seed here -- the shortest
+           * reachable case, periods 2/2/2/2, still arrives with n1 = 3, n2 = 2 and a
+           * signal window one short of full -- so from this bar on the chain is three
+           * pure recursions and a running sum, with nothing left to branch on. That
+           * is what keeps the managed peek frames from carrying a seeded output
+           * local: the store below and the one in the stable loop always run.
+           */
+          ema1 = Math.fma(beta1, ema1, k1 * rsiValue);
+          ema2 = Math.fma(beta2, ema2, k2 * ema1);
+          dsBuffer[dsBuffer_Idx] = ema2;
+          sumSignal = sumSignal + ema2;
+          outReal[0 * outStride] = ema2 - sumSignal / (double)optInSignalPeriod;
+          outIdx = 1;
+          dsBuffer_Idx++;
+          if( dsBuffer_Idx > maxIdx_dsBuffer ) { dsBuffer_Idx = 0; }
+          sumSignal = sumSignal - dsBuffer[dsBuffer_Idx];
+          /* Stable zone. */
+          while( today <= endIdx ) {
+             tempValue1 = inReal[today];
+             today = today + 1;
+             tempValue2 = tempValue1 - prevValue;
+             prevValue = tempValue1;
+             prevLoss *= (double)(optInTimePeriod - 1);
+             prevGain *= (double)(optInTimePeriod - 1);
+             gainDelta = (tempValue2 > 0.0) ? tempValue2 : 0.0;
+             prevGain += gainDelta;
+             prevLoss += gainDelta - tempValue2;
+             prevLoss *= invPeriod;
+             prevGain *= invPeriod;
+             tempValue1 = prevGain + prevLoss;
+             if( tempValue1 > 0.0 ) {
+                rsiValue = 100.0 * (prevGain / tempValue1);
+             } else {
+                rsiValue = 50.0;
+             }
+             ema1 = Math.fma(beta1, ema1, k1 * rsiValue);
+             ema2 = Math.fma(beta2, ema2, k2 * ema1);
+             dsBuffer[dsBuffer_Idx] = ema2;
+             sumSignal = sumSignal + ema2;
+             outReal[outIdx * outStride] = ema2 - sumSignal / (double)optInSignalPeriod;
+             outIdx = outIdx + 1;
+             dsBuffer_Idx++;
+             if( dsBuffer_Idx > maxIdx_dsBuffer ) { dsBuffer_Idx = 0; }
+             sumSignal = sumSignal - dsBuffer[dsBuffer_Idx];
+          }
+          outNBElement.value = outIdx;
+          outBegIdx.value = startIdx;
+          /* Capture the live batch state into the handle. */
+          int capCb_dsBuffer = maxIdx_dsBuffer + 1;
+          if( capCb_dsBuffer > historyLen + 1 ) {
+             return RetCode.INTERNAL_ERROR;
+          }
+          sp.optInTimePeriod = optInTimePeriod;
+          sp.optInFirstPeriod = optInFirstPeriod;
+          sp.optInSecondPeriod = optInSecondPeriod;
+          sp.optInSignalPeriod = optInSignalPeriod;
+          sp.k1 = k1;
+          sp.beta1 = beta1;
+          sp.k2 = k2;
+          sp.beta2 = beta2;
+          sp.invPeriod = invPeriod;
+          sp.prevGain = prevGain;
+          sp.prevLoss = prevLoss;
+          sp.prevValue = prevValue;
+          sp.ema1 = ema1;
+          sp.ema2 = ema2;
+          sp.sumSignal = sumSignal;
+          sp.dsBuffer_Idx = dsBuffer_Idx;
+          sp.maxIdx_dsBuffer = maxIdx_dsBuffer;
+          sp.cbSize_dsBuffer = capCb_dsBuffer;
+          sp.cb_dsBuffer = dsBuffer;
+          sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
+          return RetCode.SUCCESS;
+       }
+       /* doscOpenAndFill anchored at startIdx — the composed-open fusion seam. */
+       DoscStream doscOpenAndFillInternal( double inReal[], int startIdx, int optInTimePeriod, int optInFirstPeriod, int optInSecondPeriod, int optInSignalPeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+       {
+          DoscStream sp = new DoscStream(this);
+          RetCode retCode = doscOpenImpl(sp, inReal, startIdx, optInTimePeriod, optInFirstPeriod, optInSecondPeriod, optInSignalPeriod, outBegIdx, outNBElement, outReal, 1);
+          sp.outRangeBegIdx = outBegIdx.value;
+          sp.outRangeCount = outNBElement.value;
+          if( retCode == RetCode.SUCCESS ) {
+             return sp;
+          }
+          if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
+             throw insufficientHistory("DOSC openAndFill", inReal.length, startIdx, doscLookback(optInTimePeriod, optInFirstPeriod, optInSecondPeriod, optInSignalPeriod));
+          }
+          throw streamFailure("DOSC openAndFill", retCode);
+       }
+       /* Internal startIdx-anchored open behind doscOpen (composition seam). */
+       DoscStream doscOpenInternal( double inReal[], int startIdx, int optInTimePeriod, int optInFirstPeriod, int optInSecondPeriod, int optInSignalPeriod )
+       {
+          DoscStream sp = new DoscStream(this);
+          MInteger outBegIdx = new MInteger();
+          MInteger outNBElement = new MInteger();
+          double[] sink_outReal = new double[1];
+          RetCode retCode = doscOpenImpl(sp, inReal, startIdx, optInTimePeriod, optInFirstPeriod, optInSecondPeriod, optInSignalPeriod, outBegIdx, outNBElement, sink_outReal, 0);
+          sp.outRangeBegIdx = outBegIdx.value;
+          sp.outRangeCount = outNBElement.value;
+          if( retCode == RetCode.SUCCESS ) {
+             return sp;
+          }
+          if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
+             throw insufficientHistory("DOSC open", inReal.length, startIdx, doscLookback(optInTimePeriod, optInFirstPeriod, optInSecondPeriod, optInSignalPeriod));
+          }
+          throw streamFailure("DOSC open", retCode);
+       }
+       /**
+        * Open a live DOSC stream over the warm-up history; the handle's
+        * {@code value()} starts at the last history bar's value — bit-identical
+        * to {@link Core#dosc} at that bar.
+        * <p>The history must hold at least {@code doscLookback(...) + 1} bars
+        * (unstable-period aware), or {@link InsufficientHistoryException} is
+        * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
+        * ({@link Integer#MIN_VALUE} selects a parameter's documented default,
+        * as in the batch API). An EMPTY history throws
+        * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
+        * names no bar — and a null argument {@link IllegalArgumentException},
+        * both ahead of everything above.
+        */
+       public DoscStream doscOpen( double inReal[], int optInTimePeriod, int optInFirstPeriod, int optInSecondPeriod, int optInSignalPeriod )
+       {
+          requireArgument("DOSC open", "inReal", inReal);
+          requireHistory("DOSC open", inReal.length);
+          return doscOpenInternal(inReal, 0, optInTimePeriod, optInFirstPeriod, optInSecondPeriod, optInSignalPeriod);
+       }
+       /**
+        * {@link Core#doscOpen} that also fills the output array(s) bit-identically
+        * to {@link Core#dosc} over the whole history in the same single pass
+        * (no separate batch call needed for the warm-up plot). Output arrays must
+        * not alias the inputs or each other, and must hold
+        * {@code historyLen - lookback} values — both checked before anything is
+        * written, so an undersized array is an {@link IllegalArgumentException}
+        * naming it rather than a fault from inside the fill.
+        * <p>The range written is on the returned handle:
+        * {@link DoscStream#outRange()}.
+        */
+       public DoscStream doscOpenAndFill( double inReal[], int optInTimePeriod, int optInFirstPeriod, int optInSecondPeriod, int optInSignalPeriod, double outReal[] )
+       {
+          requireArgument("DOSC openAndFill", "inReal", inReal);
+          requireHistory("DOSC openAndFill", inReal.length);
+          int guardOutLen = openFillCount("DOSC openAndFill", inReal.length, doscLookback(optInTimePeriod, optInFirstPeriod, optInSecondPeriod, optInSignalPeriod));
+          requireLength("DOSC openAndFill", "outReal", outReal, guardOutLen);
+          if( (Object)outReal == (Object)inReal ) {
+             throw streamFailure("DOSC openAndFill", RetCode.BAD_PARAM);
+          }
+          MInteger outBegIdx = new MInteger();
+          MInteger outNBElement = new MInteger();
+          return doscOpenAndFillInternal(inReal, 0, optInTimePeriod, optInFirstPeriod, optInSecondPeriod, optInSignalPeriod, outBegIdx, outNBElement, outReal);
+       }
+    /* List of contributors:
+     *
+     *  Initial  Name/description
+     *  -------------------------------------------------------------------
+     *  MF       Mario Fortier
+     *  CC       Claude Code (AI assistant)
+     *
+     * Change history:
+     *
+     *  MMDDYY BY     Description
+     *  -------------------------------------------------------------------
      *  090426 MF,CC  Initial version (#363).
      *  100126 MF,CC  Display shift (#489).
      */
@@ -223628,7 +224989,7 @@ class Core {
 
 public class TaCodegenServe {
     static Core core = new Core();
-    static final String SPLICED_GENCODE_DIGEST = "049e396a8fe9f58f";
+    static final String SPLICED_GENCODE_DIGEST = "937112eec8d5b773";
     static final int MAX_ARRAY_SIZE = 200000;
     static double[] refOpen = new double[MAX_ARRAY_SIZE];
     static double[] refHigh = new double[MAX_ARRAY_SIZE];
@@ -224212,6 +225573,10 @@ public class TaCodegenServe {
             new AbsIn[]{ new AbsIn(0,"inPriceHL",6) },
             new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period","Time period",20.0, 0,0,0,0,0,0, 2,100000,4,200,1, null) },
             new AbsOut[]{ new AbsOut(0,"outRealUpperBand",2048), new AbsOut(0,"outRealMiddleBand",1), new AbsOut(0,"outRealLowerBand",4096) }));
+        ABSTRACT.put("DOSC", new AbsFunc("DOSC", "Momentum Indicators", "Derivative Oscillator", 33554432,
+            new AbsIn[]{ new AbsIn(1,"inReal",0) },
+            new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period","Period of the RSI",14.0, 0,0,0,0,0,0, 2,100000,4,200,1, null), new AbsOpt(2,"optInFirstPeriod",0,"First Smoothing Period","Period of the first smoothing, applied to the RSI",5.0, 0,0,0,0,0,0, 2,100000,2,50,1, null), new AbsOpt(2,"optInSecondPeriod",0,"Second Smoothing Period","Period of the second smoothing, applied to the first",3.0, 0,0,0,0,0,0, 2,100000,2,50,1, null), new AbsOpt(2,"optInSignalPeriod",0,"Signal Period","Period of the simple average subtracted from the smoothed line",9.0, 0,0,0,0,0,0, 2,100000,2,50,1, null) },
+            new AbsOut[]{ new AbsOut(0,"outReal",16) }));
         ABSTRACT.put("DPO", new AbsFunc("DPO", "Momentum Indicators", "Detrended Price Oscillator", 33554434,
             new AbsIn[]{ new AbsIn(1,"inReal",0) },
             new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period","Time period",20.0, 0,0,0,0,0,0, 2,100000,10,60,5, null) },
@@ -224940,6 +226305,7 @@ public class TaCodegenServe {
         "TA_DEMA",
         "TA_DIV",
         "TA_DONCHIAN",
+        "TA_DOSC",
         "TA_DPO",
         "TA_DX",
         "TA_EFI",
@@ -225177,132 +226543,133 @@ public class TaCodegenServe {
             case 102: return handle_DEMA(json);
             case 103: return handle_DIV(json);
             case 104: return handle_DONCHIAN(json);
-            case 105: return handle_DPO(json);
-            case 106: return handle_DX(json);
-            case 107: return handle_EFI(json);
-            case 108: return handle_EMA(json);
-            case 109: return handle_EMV(json);
-            case 110: return handle_ER(json);
-            case 111: return handle_ERI(json);
-            case 112: return handle_EXP(json);
-            case 113: return handle_FISHER(json);
-            case 114: return handle_FLOOR(json);
-            case 115: return handle_FOSC(json);
-            case 116: return handle_FRACTAL(json);
-            case 117: return handle_FRAMA(json);
-            case 118: return handle_HA(json);
-            case 119: return handle_HMA(json);
-            case 120: return handle_HT_DCPERIOD(json);
-            case 121: return handle_HT_DCPHASE(json);
-            case 122: return handle_HT_PHASOR(json);
-            case 123: return handle_HT_SINE(json);
-            case 124: return handle_HT_TRENDLINE(json);
-            case 125: return handle_HT_TRENDMODE(json);
-            case 126: return handle_IBS(json);
-            case 127: return handle_IMI(json);
-            case 128: return handle_KAMA(json);
-            case 129: return handle_KC(json);
-            case 130: return handle_KDJ(json);
-            case 131: return handle_KST(json);
-            case 132: return handle_KSTEXT(json);
-            case 133: return handle_KURTOSIS(json);
-            case 134: return handle_LINEARREG(json);
-            case 135: return handle_LINEARREG_ANGLE(json);
-            case 136: return handle_LINEARREG_INTERCEPT(json);
-            case 137: return handle_LINEARREG_SLOPE(json);
-            case 138: return handle_LN(json);
-            case 139: return handle_LOG10(json);
-            case 140: return handle_MA(json);
-            case 141: return handle_MACD(json);
-            case 142: return handle_MACDEXT(json);
-            case 143: return handle_MACDFIX(json);
-            case 144: return handle_MAMA(json);
-            case 145: return handle_MARKETFI(json);
-            case 146: return handle_MASSI(json);
-            case 147: return handle_MAVP(json);
-            case 148: return handle_MAX(json);
-            case 149: return handle_MAXINDEX(json);
-            case 150: return handle_MCGD(json);
-            case 151: return handle_MEDIAN(json);
-            case 152: return handle_MEDPRICE(json);
-            case 153: return handle_MFI(json);
-            case 154: return handle_MIDPOINT(json);
-            case 155: return handle_MIDPRICE(json);
-            case 156: return handle_MIN(json);
-            case 157: return handle_MININDEX(json);
-            case 158: return handle_MINMAX(json);
-            case 159: return handle_MINMAXINDEX(json);
-            case 160: return handle_MINUS_DI(json);
-            case 161: return handle_MINUS_DM(json);
-            case 162: return handle_MOM(json);
-            case 163: return handle_MULT(json);
-            case 164: return handle_NATR(json);
-            case 165: return handle_NVI(json);
-            case 166: return handle_OBV(json);
-            case 167: return handle_PERCENTB(json);
-            case 168: return handle_PERCENTILE(json);
-            case 169: return handle_PERCENTRANK(json);
-            case 170: return handle_PLUS_DI(json);
-            case 171: return handle_PLUS_DM(json);
-            case 172: return handle_PPO(json);
-            case 173: return handle_PSO(json);
-            case 174: return handle_PVI(json);
-            case 175: return handle_PVO(json);
-            case 176: return handle_PVT(json);
-            case 177: return handle_QSTICK(json);
-            case 178: return handle_RMA(json);
-            case 179: return handle_ROC(json);
-            case 180: return handle_ROCP(json);
-            case 181: return handle_ROCR(json);
-            case 182: return handle_ROCR100(json);
-            case 183: return handle_ROGERSSATCHELL(json);
-            case 184: return handle_RSI(json);
-            case 185: return handle_RVI(json);
-            case 186: return handle_RVIR(json);
-            case 187: return handle_RVOL(json);
-            case 188: return handle_SAR(json);
-            case 189: return handle_SAREXT(json);
-            case 190: return handle_SI(json);
-            case 191: return handle_SIN(json);
-            case 192: return handle_SINH(json);
-            case 193: return handle_SMA(json);
-            case 194: return handle_SMI(json);
-            case 195: return handle_SQRT(json);
-            case 196: return handle_STC(json);
-            case 197: return handle_STDDEV(json);
-            case 198: return handle_STOCH(json);
-            case 199: return handle_STOCHF(json);
-            case 200: return handle_STOCHRSI(json);
-            case 201: return handle_SUB(json);
-            case 202: return handle_SUM(json);
-            case 203: return handle_SUPERTREND(json);
-            case 204: return handle_SWAK_2PHP(json);
-            case 205: return handle_SWAK_BP(json);
-            case 206: return handle_SWAK_BUTTER(json);
-            case 207: return handle_SWAK_GAUSS(json);
-            case 208: return handle_SWAK_HP(json);
-            case 209: return handle_T3(json);
-            case 210: return handle_TAN(json);
-            case 211: return handle_TANH(json);
-            case 212: return handle_TEMA(json);
-            case 213: return handle_TRANGE(json);
-            case 214: return handle_TRIMA(json);
-            case 215: return handle_TRIX(json);
-            case 216: return handle_TSF(json);
-            case 217: return handle_TSI(json);
-            case 218: return handle_TYPPRICE(json);
-            case 219: return handle_ULTOSC(json);
-            case 220: return handle_VAR(json);
-            case 221: return handle_VHF(json);
-            case 222: return handle_VIDYA(json);
-            case 223: return handle_VORTEX(json);
-            case 224: return handle_VWAP(json);
-            case 225: return handle_VWMA(json);
-            case 226: return handle_WAD(json);
-            case 227: return handle_WCLPRICE(json);
-            case 228: return handle_WILLR(json);
-            case 229: return handle_WMA(json);
-            case 230: return handle_ZLEMA(json);
+            case 105: return handle_DOSC(json);
+            case 106: return handle_DPO(json);
+            case 107: return handle_DX(json);
+            case 108: return handle_EFI(json);
+            case 109: return handle_EMA(json);
+            case 110: return handle_EMV(json);
+            case 111: return handle_ER(json);
+            case 112: return handle_ERI(json);
+            case 113: return handle_EXP(json);
+            case 114: return handle_FISHER(json);
+            case 115: return handle_FLOOR(json);
+            case 116: return handle_FOSC(json);
+            case 117: return handle_FRACTAL(json);
+            case 118: return handle_FRAMA(json);
+            case 119: return handle_HA(json);
+            case 120: return handle_HMA(json);
+            case 121: return handle_HT_DCPERIOD(json);
+            case 122: return handle_HT_DCPHASE(json);
+            case 123: return handle_HT_PHASOR(json);
+            case 124: return handle_HT_SINE(json);
+            case 125: return handle_HT_TRENDLINE(json);
+            case 126: return handle_HT_TRENDMODE(json);
+            case 127: return handle_IBS(json);
+            case 128: return handle_IMI(json);
+            case 129: return handle_KAMA(json);
+            case 130: return handle_KC(json);
+            case 131: return handle_KDJ(json);
+            case 132: return handle_KST(json);
+            case 133: return handle_KSTEXT(json);
+            case 134: return handle_KURTOSIS(json);
+            case 135: return handle_LINEARREG(json);
+            case 136: return handle_LINEARREG_ANGLE(json);
+            case 137: return handle_LINEARREG_INTERCEPT(json);
+            case 138: return handle_LINEARREG_SLOPE(json);
+            case 139: return handle_LN(json);
+            case 140: return handle_LOG10(json);
+            case 141: return handle_MA(json);
+            case 142: return handle_MACD(json);
+            case 143: return handle_MACDEXT(json);
+            case 144: return handle_MACDFIX(json);
+            case 145: return handle_MAMA(json);
+            case 146: return handle_MARKETFI(json);
+            case 147: return handle_MASSI(json);
+            case 148: return handle_MAVP(json);
+            case 149: return handle_MAX(json);
+            case 150: return handle_MAXINDEX(json);
+            case 151: return handle_MCGD(json);
+            case 152: return handle_MEDIAN(json);
+            case 153: return handle_MEDPRICE(json);
+            case 154: return handle_MFI(json);
+            case 155: return handle_MIDPOINT(json);
+            case 156: return handle_MIDPRICE(json);
+            case 157: return handle_MIN(json);
+            case 158: return handle_MININDEX(json);
+            case 159: return handle_MINMAX(json);
+            case 160: return handle_MINMAXINDEX(json);
+            case 161: return handle_MINUS_DI(json);
+            case 162: return handle_MINUS_DM(json);
+            case 163: return handle_MOM(json);
+            case 164: return handle_MULT(json);
+            case 165: return handle_NATR(json);
+            case 166: return handle_NVI(json);
+            case 167: return handle_OBV(json);
+            case 168: return handle_PERCENTB(json);
+            case 169: return handle_PERCENTILE(json);
+            case 170: return handle_PERCENTRANK(json);
+            case 171: return handle_PLUS_DI(json);
+            case 172: return handle_PLUS_DM(json);
+            case 173: return handle_PPO(json);
+            case 174: return handle_PSO(json);
+            case 175: return handle_PVI(json);
+            case 176: return handle_PVO(json);
+            case 177: return handle_PVT(json);
+            case 178: return handle_QSTICK(json);
+            case 179: return handle_RMA(json);
+            case 180: return handle_ROC(json);
+            case 181: return handle_ROCP(json);
+            case 182: return handle_ROCR(json);
+            case 183: return handle_ROCR100(json);
+            case 184: return handle_ROGERSSATCHELL(json);
+            case 185: return handle_RSI(json);
+            case 186: return handle_RVI(json);
+            case 187: return handle_RVIR(json);
+            case 188: return handle_RVOL(json);
+            case 189: return handle_SAR(json);
+            case 190: return handle_SAREXT(json);
+            case 191: return handle_SI(json);
+            case 192: return handle_SIN(json);
+            case 193: return handle_SINH(json);
+            case 194: return handle_SMA(json);
+            case 195: return handle_SMI(json);
+            case 196: return handle_SQRT(json);
+            case 197: return handle_STC(json);
+            case 198: return handle_STDDEV(json);
+            case 199: return handle_STOCH(json);
+            case 200: return handle_STOCHF(json);
+            case 201: return handle_STOCHRSI(json);
+            case 202: return handle_SUB(json);
+            case 203: return handle_SUM(json);
+            case 204: return handle_SUPERTREND(json);
+            case 205: return handle_SWAK_2PHP(json);
+            case 206: return handle_SWAK_BP(json);
+            case 207: return handle_SWAK_BUTTER(json);
+            case 208: return handle_SWAK_GAUSS(json);
+            case 209: return handle_SWAK_HP(json);
+            case 210: return handle_T3(json);
+            case 211: return handle_TAN(json);
+            case 212: return handle_TANH(json);
+            case 213: return handle_TEMA(json);
+            case 214: return handle_TRANGE(json);
+            case 215: return handle_TRIMA(json);
+            case 216: return handle_TRIX(json);
+            case 217: return handle_TSF(json);
+            case 218: return handle_TSI(json);
+            case 219: return handle_TYPPRICE(json);
+            case 220: return handle_ULTOSC(json);
+            case 221: return handle_VAR(json);
+            case 222: return handle_VHF(json);
+            case 223: return handle_VIDYA(json);
+            case 224: return handle_VORTEX(json);
+            case 225: return handle_VWAP(json);
+            case 226: return handle_VWMA(json);
+            case 227: return handle_WAD(json);
+            case 228: return handle_WCLPRICE(json);
+            case 229: return handle_WILLR(json);
+            case 230: return handle_WMA(json);
+            case 231: return handle_ZLEMA(json);
             default: return null;
         }
     }
@@ -241918,6 +243285,151 @@ public class TaCodegenServe {
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
         rideDonchian(core, json, endIdx, inHigh, inLow, optInTimePeriod, sb);
+        sb.append("}");
+        return sb.toString();
+    }
+
+    static String handle_DOSC(String json) {
+        int startIdx = jsonInt(json, "startIdx");
+        int endIdx = jsonInt(json, "endIdx");
+        int use_preloaded = jsonInt(json, "use_preloaded");
+        int bench_iters = jsonInt(json, "iters");
+        if (bench_iters < 1) bench_iters = 1;
+        double[] inReal;
+        if (use_preloaded != 0 && refN > 0) {
+            inReal = new double[MAX_ARRAY_SIZE];
+            System.arraycopy(refClose, 0, inReal, 0, refN);
+        } else {
+            inReal = jsonDoubleArray(json, "inReal");
+        }
+        boolean _optRejected = false;
+        int optInTimePeriod = jsonInt(json, "optInTimePeriod");
+        int optInFirstPeriod = jsonInt(json, "optInFirstPeriod");
+        int optInSecondPeriod = jsonInt(json, "optInSecondPeriod");
+        int optInSignalPeriod = jsonInt(json, "optInSignalPeriod");
+        // The output buffers are sized to the count the call actually PRODUCES --
+        // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
+        // never below one. Not to the width of the requested range: that is the bound the
+        // managed backends check and the Rust asserts state, and at the range width it was
+        // slack by exactly the lookback, so no call could ever approach it.
+        // The pad is there because a bound is a MINIMUM, never an equality. A caller
+        // re-using a pre-allocated buffer passes a larger one, and that is not an error --
+        // the reported OutRange is what says which part was written. So the harness sends
+        // both: the startIdx axis sends no pad (the bound is reachable) while the
+        // full-range value comparison sends one (slack is legal). Sizing every call one way
+        // would silently drop the other property.
+        // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
+        // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
+        // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
+        // sizes and cannot make the check, so an exact buffer would test nothing there.
+        int _lb = core.doscLookback(optInTimePeriod, optInFirstPeriod, optInSecondPeriod, optInSignalPeriod);
+        int _cs = startIdx > _lb ? startIdx : _lb;
+        int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
+        double[] outArr0 = new double[_outLen];
+        MInteger outBegIdx = new MInteger();
+        MInteger outNBElement = new MInteger();
+        RetCode rc = RetCode.SUCCESS;
+        int bench_mode = jsonInt(json, "bench_mode");
+        double[] _warm_inReal = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inReal, 0, endIdx + 1);
+        long startNs = 0;
+        for (int _bi = 0; _bi <= bench_iters; _bi++) {
+        if (_bi == 1) startNs = System.nanoTime();
+        if (bench_mode == 0) {
+        if (jsonInt(json, "timed") != 0) {
+            if (_optRejected) {
+                rc = RetCode.BAD_PARAM;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
+            try {
+                rc = core.doscImpl(startIdx, endIdx, inReal, optInTimePeriod, optInFirstPeriod, optInSecondPeriod, optInSignalPeriod, outBegIdx, outNBElement, outArr0);
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TALibFailure)) throw _e;
+                rc = ((TALibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+            }
+        } else {
+            if (_optRejected) {
+                rc = RetCode.BAD_PARAM;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
+            try {
+                OutRange _pr = core.dosc(startIdx, endIdx, inReal, optInTimePeriod, optInFirstPeriod, optInSecondPeriod, optInSignalPeriod, outArr0);
+                outBegIdx.value = _pr.begIdx();
+                outNBElement.value = _pr.count();
+                rc = RetCode.SUCCESS;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TALibFailure)) throw _e;
+                rc = ((TALibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+            }
+        }
+        }
+        else if (_optRejected) { rc = RetCode.BAD_PARAM; }
+        else { try {
+            if (bench_mode == 1) {
+                core.doscOpen(_warm_inReal, optInTimePeriod, optInFirstPeriod, optInSecondPeriod, optInSignalPeriod);
+            } else {
+                Core.DoscStream _wh = core.doscOpenAndFill(_warm_inReal, optInTimePeriod, optInFirstPeriod, optInSecondPeriod, optInSignalPeriod, outArr0);
+                outBegIdx.value = _wh.outRange().begIdx();
+                outNBElement.value = _wh.outRange().count();
+            }
+            rc = RetCode.SUCCESS;
+        } catch (RuntimeException _e) { rc = _e instanceof TALibFailure ? ((TALibFailure)_e).retCode() : RetCode.BAD_PARAM; } }
+        }
+        long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        int usedFloat = 0;
+        if (jsonInt(json, "use_float") != 0) {
+            float[] f_inReal = new float[inReal.length];
+            for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
+            if (_optRejected) {
+                rc = RetCode.BAD_PARAM;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
+            try {
+                OutRange _fr = core.dosc(startIdx, endIdx, f_inReal, optInTimePeriod, optInFirstPeriod, optInSecondPeriod, optInSignalPeriod, outArr0);
+                outBegIdx.value = _fr.begIdx();
+                outNBElement.value = _fr.count();
+                rc = RetCode.SUCCESS;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TALibFailure)) throw _e;
+                rc = ((TALibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+            }
+            usedFloat = 1;
+        }
+        if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
+            long _h = svHashInit();
+            if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
+                _h = svHashF64(_h, outArr0, outNBElement.value);
+            }
+            _h = svHashFin(_h);
+            StringBuilder hb = new StringBuilder();
+            hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            rideDosc(core, json, endIdx, inReal, optInTimePeriod, optInFirstPeriod, optInSecondPeriod, optInSignalPeriod, hb);
+            hb.append("}");
+            return hb.toString();
+        }
+        StringBuilder sb = new StringBuilder();
+        sb.append("{\"retCode\":").append(rc.toInt());
+        sb.append(",\"outBegIdx\":").append(outBegIdx.value);
+        sb.append(",\"outNBElement\":").append(outNBElement.value);
+        sb.append(",\"out_len\":").append(_outLen);
+        sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
+        sb.append(",\"used_float\":").append(usedFloat);
+        sb.append(",\"timing_ns\":").append(elapsedNs);
+        rideDosc(core, json, endIdx, inReal, optInTimePeriod, optInFirstPeriod, optInSecondPeriod, optInSignalPeriod, sb);
         sb.append("}");
         return sb.toString();
     }
@@ -278641,6 +280153,181 @@ public class TaCodegenServe {
         return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign[0] + diag + "}";
     }
 
+    static String sv_DOSC(String json) {
+        int svShape = jsonInt(json, "gen_shape");
+        int svSeed = jsonInt(json, "gen_seed");
+        int svN = jsonInt(json, "gen_n");
+        if (svN < 2) svN = 2;
+        if (svN > 256) svN = 256;
+        int svK = jsonInt(json, "unstablePeriod");
+        int optInTimePeriod = json.contains("\"optInTimePeriod\"") ? jsonInt(json, "optInTimePeriod") : 14;
+        int optInFirstPeriod = json.contains("\"optInFirstPeriod\"") ? jsonInt(json, "optInFirstPeriod") : 5;
+        int optInSecondPeriod = json.contains("\"optInSecondPeriod\"") ? jsonInt(json, "optInSecondPeriod") : 3;
+        int optInSignalPeriod = json.contains("\"optInSignalPeriod\"") ? jsonInt(json, "optInSignalPeriod") : 9;
+        double[] fz_o = new double[svN];
+        double[] fz_h = new double[svN];
+        double[] fz_l = new double[svN];
+        double[] fz_c = new double[svN];
+        double[] fz_v = new double[svN];
+        double[] fz_oi = new double[svN];
+        FuzzData.fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
+        double[] b0 = new double[svN];
+        long legs = 0;
+        boolean allOk = true;
+        boolean peekAll = true;
+        long peekReps = 0;
+        long peekRejects = 0;
+        boolean peekRepAll = true;
+        int fillChecked = 0;
+        boolean fillOk = true;
+        MInteger beg = new MInteger();
+        MInteger nb = new MInteger();
+        String diag = "";
+        int rangeChecked = 0;
+        boolean rangeOk = true;
+        long rangeLegs = 0;
+        int rangeSites = 0;
+        long[] zsign = { 0 };
+        int rounds = 1;
+        for (int rd = 0; rd < rounds; rd++) {
+            Core c2 = new Core();
+            c2.unstablePeriod[5] = svK;
+            c2.unstablePeriod[21] = svK;
+            RetCode rc;
+            try { rc = c2.doscImpl(0, svN - 1, fz_c, optInTimePeriod, optInFirstPeriod, optInSecondPeriod, optInSignalPeriod, beg, nb, b0); }
+            catch (RuntimeException _sve) { if (!(_sve instanceof TALibFailure)) throw _sve; rc = ((TALibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
+            int lb = c2.doscLookback(optInTimePeriod, optInFirstPeriod, optInSecondPeriod, optInSignalPeriod);
+            if (rc != RetCode.SUCCESS || nb.value == 0) {
+                boolean openRejects;
+                try { c2.doscOpen(fz_c, optInTimePeriod, optInFirstPeriod, optInSecondPeriod, optInSignalPeriod); openRejects = false; } catch (IllegalArgumentException _e) { openRejects = true; }
+                return "{\"retCode\":" + rc.toInt() + ",\"legs\":0,\"nb\":" + nb.value + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (openRejects ? 1 : 0) + ",\"peek_ok\":1}";
+            }
+            fillChecked = 1;
+            try {
+                double[] f0 = new double[svN];
+                java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                Core.DoscStream _fh = c2.doscOpenAndFill(fz_c, optInTimePeriod, optInFirstPeriod, optInSecondPeriod, optInSignalPeriod, f0);
+                OutRange _fr = _fh.outRange();
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
+                if (_fr.begIdx() != beg.value || _fr.count() != nb.value) rangeOk = false;
+                if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
+                else {
+                    for (int i = 0; i < nb.value; i++) if (svXtierNe(f0[i], b0[i], zsign)) fillOk = false;
+                    for (int i = nb.value; i < svN; i++) if (f0[i] != (double)-1.2345678901234e300) fillOk = false;
+                }
+                try { c2.doscOpenAndFill(fz_c, optInTimePeriod, optInFirstPeriod, optInSecondPeriod, optInSignalPeriod, fz_c); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
+            } catch (IllegalArgumentException _e) { fillOk = false; }
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
+            java.util.Arrays.sort(pcs);
+            int prevP = -1;
+            for (int pi = 0; pi < pcs.length; pi++) {
+                int p = pcs[pi];
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
+                prevP = p;
+                Core.DoscStream st;
+                try { st = c2.doscOpen(java.util.Arrays.copyOf(fz_c, p), optInTimePeriod, optInFirstPeriod, optInSecondPeriod, optInSignalPeriod); }
+                catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"openRejectP\":" + p; continue; }
+                legs++;
+                if (svXtierNe(st.value(), b0[p - 1 - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
+                for (int t = p; t < svN; t++) {
+                    boolean pkTook = true;
+                    double pk = 0;
+                    try { pk = st.peek(fz_c[t]); } catch (IllegalArgumentException _e) { pkTook = false; peekRejects++; }
+                    if (t % 7 == 0) {
+                        boolean rpTook = pkTook;
+                        try { st.peek(fz_c[t - 1]); } catch (IllegalArgumentException _e) { peekRejects++; }
+                        double rp = 0;
+                        try { rp = st.peek(fz_c[t]); } catch (IllegalArgumentException _e) { rpTook = false; }
+                        if (rpTook) {
+                            peekReps++;
+                            if (svBne(rp, pk)) peekRepAll = false;
+                        } else { peekRejects++; }
+                    }
+                    double up = st.update(fz_c[t]);
+                    if (pkTook && svBne(pk, up)) peekAll = false;
+                    try { st.peek(fz_c[t - 1]); } catch (IllegalArgumentException _e) { peekRejects++; }
+                    if (svBne(st.value(), up)) allOk = false;
+                    if (svXtierNe(up, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b0[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up)) + "\""; }
+                }
+                if (allOk) {
+                    rangeChecked = 1; rangeLegs++; rangeSites |= 2;
+                    if (st.outRange().begIdx() != beg.value || st.outRange().count() != nb.value) rangeOk = false;
+                    rangeLegs++; rangeSites |= 16;
+                    st.advance();
+                    if (st.outRange().begIdx() != beg.value || st.outRange().count() != nb.value + 1) rangeOk = false;
+                }
+            }
+            {
+                int p0 = lb + 1;
+                if (p0 <= svN - 1) {
+                    try {
+                        double[] f0 = new double[svN];
+                        java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                        Core.DoscStream sA = c2.doscOpenAndFill(java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod, optInFirstPeriod, optInSecondPeriod, optInSignalPeriod, f0);
+                        int mid = (p0 + svN) / 2;
+                        for (int t = p0; t < mid; t++) {
+                            double uA = sA.update(fz_c[t]);
+                            if (svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
+                        Core.DoscStream sB = sA.clone();
+                        sB.advance();
+                        sB.advance();
+                        double[] fk0 = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            double uB = sB.update(fz_c[t]);
+                            fk0[t] = uB;
+                            if (svXtierNe(uB, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
+                        for (int t = mid; t < svN; t++) {
+                            double uA = sA.update(fz_c[t]);
+                            if (svBne(uA, fk0[t]) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
+                        if (allOk) {
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 8;
+                            if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 2) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                        }
+                    } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
+                }
+            }
+            if (lb >= 1 && lb < svN) {
+                try { c2.doscOpen(java.util.Arrays.copyOf(fz_c, lb), optInTimePeriod, optInFirstPeriod, optInSecondPeriod, optInSignalPeriod); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryAccepted\":1"; }
+                catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                    try { c2.doscOpenAndFill(java.util.Arrays.copyOf(fz_c, lb), optInTimePeriod, optInFirstPeriod, optInSecondPeriod, optInSignalPeriod, f0); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                    catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
+            }
+            try {
+                Core.DoscStream sD = c2.doscOpen(fz_c, Integer.MIN_VALUE, Integer.MIN_VALUE, Integer.MIN_VALUE, Integer.MIN_VALUE);
+                Core.DoscStream sE = c2.doscOpen(fz_c, 14, 5, 3, 9);
+                if (svBne(sD.value(), sE.value())) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
+            } catch (IllegalArgumentException _e) { /* defaults need more history than svN — skip */ }
+            {
+                int Sidx = lb + (svN - lb) / 3;
+                if (Sidx > lb && Sidx < svN - 1) {
+                    MInteger begS = new MInteger();
+                    MInteger nbS = new MInteger();
+                    RetCode rcS;
+                    try { rcS = c2.doscImpl(Sidx, svN - 1, fz_c, optInTimePeriod, optInFirstPeriod, optInSecondPeriod, optInSignalPeriod, begS, nbS, b0); }
+                    catch (RuntimeException _sve) { if (!(_sve instanceof TALibFailure)) throw _sve; rcS = ((TALibFailure) _sve).retCode(); }
+                    if (rcS == RetCode.SUCCESS && nbS.value > 0) {
+                        try {
+                            Core.DoscStream stA = c2.doscOpenInternal(java.util.Arrays.copyOf(fz_c, svN), Sidx, optInTimePeriod, optInFirstPeriod, optInSecondPeriod, optInSignalPeriod);
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 4;
+                            if (stA.outRange().begIdx() != begS.value || stA.outRange().count() != nbS.value) rangeOk = false;
+                        } catch (IllegalArgumentException _e) { rangeOk = false; if (diag.isEmpty()) diag = ",\"anchoredOpenRejected\":1"; }
+                    }
+                }
+            }
+        }
+        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign[0] + diag + "}";
+    }
+
     static String sv_DPO(String json) {
         int svShape = jsonInt(json, "gen_shape");
         int svSeed = jsonInt(json, "gen_seed");
@@ -301036,6 +302723,7 @@ public class TaCodegenServe {
         case "TA_DEMA": return sv_DEMA(json);
         case "TA_DIV": return sv_DIV(json);
         case "TA_DONCHIAN": return sv_DONCHIAN(json);
+        case "TA_DOSC": return sv_DOSC(json);
         case "TA_DPO": return sv_DPO(json);
         case "TA_DX": return sv_DX(json);
         case "TA_EFI": return sv_EFI(json);
@@ -311877,6 +313565,106 @@ public class TaCodegenServe {
                         if (cmp && svXtierNe(rb0[k], fb0[k], r.benign)) { cmp = false; r.out = 0; r.batch = Double.doubleToRawLongBits(rb0[k]); r.stream = Double.doubleToRawLongBits(fb0[k]); }
                         if (cmp && svXtierNe(rb1[k], fb1[k], r.benign)) { cmp = false; r.out = 1; r.batch = Double.doubleToRawLongBits(rb1[k]); r.stream = Double.doubleToRawLongBits(fb1[k]); }
                         if (cmp && svXtierNe(rb2[k], fb2[k], r.benign)) { cmp = false; r.out = 2; r.batch = Double.doubleToRawLongBits(rb2[k]); r.stream = Double.doubleToRawLongBits(fb2[k]); }
+                        if (cmp) r.fillBars++;
+                        if (!cmp) { r.ok = false; r.leg = 2; r.bar = beg + k; break; }
+                    }
+                }
+            } catch (RuntimeException _e) { r.ok = false; r.leg = 2; }
+        }
+
+        if (r.ok) {
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
+            rideSeenOpen[slot] = r.openBars; rideSeenFill[slot] = r.fillBars;
+        }
+    }
+
+    static void rideDosc(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, int optInFirstPeriod, int optInSecondPeriod, int optInSignalPeriod, StringBuilder sb) {
+        if (!rideGate(json)) return;
+        RideResult r = new RideResult();
+        rideBodyDosc(core, json, endIdx, inReal, optInTimePeriod, optInFirstPeriod, optInSecondPeriod, optInSignalPeriod, r);
+        r.emit(sb);
+    }
+
+    @SuppressWarnings("unused")
+    static void rideBodyDosc(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, int optInFirstPeriod, int optInSecondPeriod, int optInSignalPeriod, RideResult r) {
+        try { r.lb = core.doscLookback(optInTimePeriod, optInFirstPeriod, optInSecondPeriod, optInSignalPeriod); } catch (RuntimeException _e) { r.lb = -1; }
+        int lb = r.lb;
+        int navail = endIdx + 1;
+        if (inReal.length < navail) navail = inReal.length;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
+        if (m > navail) m = navail;
+        r.m = m;
+        if (m > RIDE_MAX_BARS) { r.skip = 1; return; }
+        if (m < 1) { r.skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
+        if (!rideFinite(inReal, m) || false) { r.skip = 4; return; }
+
+        long hash = 0xcbf29ce484222325L;
+        hash = rideMixStr(hash, "TA_DOSC");
+        hash = rideMix(hash, m);
+        hash = rideMix(hash, rideGen);
+        hash = rideMix(hash, jsonInt(json, "unstablePeriod"));
+        hash = rideMix(hash, optInTimePeriod);
+        hash = rideMix(hash, optInFirstPeriod);
+        hash = rideMix(hash, optInSecondPeriod);
+        hash = rideMix(hash, optInSignalPeriod);
+        hash = rideMixArr(hash, inReal, m);
+        int slot = (int) Math.floorMod(hash, (long) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash) {
+            r.dedup = 1; r.openBars = rideSeenOpen[slot]; r.fillBars = rideSeenFill[slot]; return;
+        }
+
+        double[] rb0 = new double[m];
+        int beg = 0;
+        int nb = 0;
+        String clsB = "";
+        boolean rejected = false;
+        try { OutRange _rr = core.dosc(0, m - 1, java.util.Arrays.copyOf(inReal, m), optInTimePeriod, optInFirstPeriod, optInSecondPeriod, optInSignalPeriod, rb0); beg = _rr.begIdx(); nb = _rr.count(); }
+        catch (RuntimeException _e) { r.rcBatch = rideCode(_e); clsB = _e.getClass().getName(); rejected = true; }
+        if (rejected) {
+            String clsO = "", clsF = "";
+            try { core.doscOpen(java.util.Arrays.copyOf(inReal, m), optInTimePeriod, optInFirstPeriod, optInSecondPeriod, optInSignalPeriod); } catch (RuntimeException _e) { r.rcOpen = rideCode(_e); clsO = _e.getClass().getName(); }
+            double[] fb0 = new double[m];
+            try { core.doscOpenAndFill(java.util.Arrays.copyOf(inReal, m), optInTimePeriod, optInFirstPeriod, optInSecondPeriod, optInSignalPeriod, fb0); } catch (RuntimeException _e) { r.rcFill = rideCode(_e); clsF = _e.getClass().getName(); }
+            boolean cmpO = r.rcOpen == r.rcBatch && clsO.equals(clsB);
+            if (cmpO) r.rej++;
+            if (!cmpO) { r.ok = false; r.leg = r.rcOpen == r.rcBatch ? 4 : 3; }
+            boolean cmpF = r.rcFill == r.rcBatch && clsF.equals(clsB);
+            if (cmpF) r.rej++;
+            if (!cmpF) { r.ok = false; r.leg = r.rcFill == r.rcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.skip = 7; return; }
+        if (nb == 0) { r.skip = 5; return; }
+        if (beg != lb) { r.skip = 6; return; }
+
+        try {
+            boolean cmp;
+            Core.DoscStream st = core.doscOpen(java.util.Arrays.copyOf(inReal, lb + 1), optInTimePeriod, optInFirstPeriod, optInSecondPeriod, optInSignalPeriod);
+            double uv = st.value();
+            cmp = true;
+            if (cmp && svXtierNe(rb0[lb - beg], uv, r.benign)) { cmp = false; r.out = 0; r.batch = Double.doubleToRawLongBits(rb0[lb - beg]); r.stream = Double.doubleToRawLongBits(uv); }
+            if (cmp) r.openBars++;
+            if (!cmp) { r.ok = false; r.leg = 1; r.bar = lb; }
+            for (int t = lb + 1; r.ok && t < m; t++) {
+                double uv2 = st.update(inReal[t]);
+                uv = uv2;
+                cmp = true;
+                if (cmp && svXtierNe(rb0[t - beg], uv, r.benign)) { cmp = false; r.out = 0; r.batch = Double.doubleToRawLongBits(rb0[t - beg]); r.stream = Double.doubleToRawLongBits(uv); }
+                if (cmp) r.openBars++;
+                if (!cmp) { r.ok = false; r.leg = 1; r.bar = t; }
+            }
+        } catch (RuntimeException _e) { r.ok = false; r.leg = 1; }
+
+        if (r.ok) {
+            double[] fb0 = new double[m];
+            try {
+                Core.DoscStream st2 = core.doscOpenAndFill(java.util.Arrays.copyOf(inReal, m), optInTimePeriod, optInFirstPeriod, optInSecondPeriod, optInSignalPeriod, fb0);
+                if (st2.outRange().begIdx() != beg || st2.outRange().count() != nb) { r.ok = false; r.leg = 2; }
+                if (r.ok) {
+                    for (int k = 0; k < nb; k++) {
+                        boolean cmp = true;
+                        if (cmp && svXtierNe(rb0[k], fb0[k], r.benign)) { cmp = false; r.out = 0; r.batch = Double.doubleToRawLongBits(rb0[k]); r.stream = Double.doubleToRawLongBits(fb0[k]); }
                         if (cmp) r.fillBars++;
                         if (!cmp) { r.ok = false; r.leg = 2; r.bar = beg + k; break; }
                     }

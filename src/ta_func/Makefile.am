@@ -108,6 +108,7 @@ libta_func_la_SOURCES = ta_utility.c \
 	ta_DEMA.c \
 	ta_DIV.c \
 	ta_DONCHIAN.c \
+	ta_DOSC.c \
 	ta_DPO.c \
 	ta_DX.c \
 	ta_EFI.c \

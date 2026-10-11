@@ -766,6 +766,11 @@ static const UnstableLookup UNSTABLE_MAP[] = {
      * any entry it classified EPSILON and moved 0.25% where ~1e-13 was allowed. */
     {"KC",           TA_FUNC_UNST_EMA},
     {"KC",           TA_FUNC_UNST_ATR},
+    /* DOSC inherits two ids as well: RSI for its first stage and EMA for the
+     * two smoothings stacked on it. The EMA row has to be here even though
+     * KC already carries one -- the map is keyed by function, not by id. */
+    {"DOSC",         TA_FUNC_UNST_RSI},
+    {"DOSC",         TA_FUNC_UNST_EMA},
     /* SMI's three EMA stages are seeded and advanced exactly as ema.c does,
      * and its lookback is the sum of three ema_lookback() terms, so the whole
      * pipeline shifts with UNST_EMA. Measured: outBegIdx 45 -> 54 at the
