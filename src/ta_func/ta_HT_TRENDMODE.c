@@ -501,7 +501,14 @@ TA_LIB_API TA_RetCode TA_HT_TRENDMODE( int    startIdx,
       /* Compute Dominant Cycle Phase */
       prevDCPhase = DCPhase;
       DCPeriod = smoothPeriod + 0.5;
-      DCPeriodInt = (int)DCPeriod;
+      /* A NaN period has no int value, and C leaves converting one undefined. */
+      if( DCPeriod >= 0.0 )
+      {
+         DCPeriodInt = (int)DCPeriod;
+      } else 
+      {
+         DCPeriodInt = 0;
+      }
       realPart = 0.0;
       imagPart = 0.0;
       /* idx is used to iterate for up to 50 of the last
@@ -553,7 +560,14 @@ TA_LIB_API TA_RetCode TA_HT_TRENDMODE( int    startIdx,
       leadSine = sin((DCPhase + 45) * deg2Rad);
       /* Compute Trendline */
       DCPeriod = smoothPeriod + 0.5;
-      DCPeriodInt = (int)DCPeriod;
+      /* A NaN period has no int value, and C leaves converting one undefined. */
+      if( DCPeriod >= 0.0 )
+      {
+         DCPeriodInt = (int)DCPeriod;
+      } else 
+      {
+         DCPeriodInt = 0;
+      }
       /* Average the RAW price over the dominant cycle period.
        * Unlike the DC-phase loop above (which reads the smoothPrice
        * circular buffer), the iTrend average reads the raw price,
@@ -967,7 +981,13 @@ TA_RetCode TA_S_HT_TRENDMODE( int    startIdx,
       smoothPeriod = fma(0.67, smoothPeriod, 0.33 * period);
       prevDCPhase = DCPhase;
       DCPeriod = smoothPeriod + 0.5;
-      DCPeriodInt = (int)DCPeriod;
+      if( DCPeriod >= 0.0 )
+      {
+         DCPeriodInt = (int)DCPeriod;
+      } else 
+      {
+         DCPeriodInt = 0;
+      }
       realPart = 0.0;
       imagPart = 0.0;
       idx = smoothPrice_Idx;
@@ -1014,7 +1034,13 @@ TA_RetCode TA_S_HT_TRENDMODE( int    startIdx,
       sine = sin(DCPhase * deg2Rad);
       leadSine = sin((DCPhase + 45) * deg2Rad);
       DCPeriod = smoothPeriod + 0.5;
-      DCPeriodInt = (int)DCPeriod;
+      if( DCPeriod >= 0.0 )
+      {
+         DCPeriodInt = (int)DCPeriod;
+      } else 
+      {
+         DCPeriodInt = 0;
+      }
       tempReal = 0.0;
       for( j = 0; j < 50; j += 1 )
       {
@@ -1325,7 +1351,14 @@ static TA_FMA_STEP_INLINE void TA_HT_TRENDMODE_StepImpl( struct TA_HT_TRENDMODE_
    /* Compute Dominant Cycle Phase */
    prevDCPhase = sp->DCPhase;
    DCPeriod = sp->smoothPeriod + 0.5;
-   DCPeriodInt = (int)DCPeriod;
+   /* A NaN period has no int value, and C leaves converting one undefined. */
+   if( DCPeriod >= 0.0 )
+   {
+      DCPeriodInt = (int)DCPeriod;
+   } else 
+   {
+      DCPeriodInt = 0;
+   }
    realPart = 0.0;
    imagPart = 0.0;
    /* idx is used to iterate for up to 50 of the last
@@ -1377,7 +1410,14 @@ static TA_FMA_STEP_INLINE void TA_HT_TRENDMODE_StepImpl( struct TA_HT_TRENDMODE_
    sp->leadSine = sin((sp->DCPhase + 45) * sp->deg2Rad);
    /* Compute Trendline */
    DCPeriod = sp->smoothPeriod + 0.5;
-   DCPeriodInt = (int)DCPeriod;
+   /* A NaN period has no int value, and C leaves converting one undefined. */
+   if( DCPeriod >= 0.0 )
+   {
+      DCPeriodInt = (int)DCPeriod;
+   } else 
+   {
+      DCPeriodInt = 0;
+   }
    /* Average the RAW price over the dominant cycle period.
     * Unlike the DC-phase loop above (which reads the smoothPrice
     * circular buffer), the iTrend average reads the raw price,
@@ -1861,7 +1901,14 @@ static TA_FMA_STEP_INLINE TA_RetCode TA_HT_TRENDMODE_OpenImpl( struct TA_HT_TREN
          /* Compute Dominant Cycle Phase */
          prevDCPhase = DCPhase;
          DCPeriod = smoothPeriod + 0.5;
-         DCPeriodInt = (int)DCPeriod;
+         /* A NaN period has no int value, and C leaves converting one undefined. */
+         if( DCPeriod >= 0.0 )
+         {
+            DCPeriodInt = (int)DCPeriod;
+         } else 
+         {
+            DCPeriodInt = 0;
+         }
          realPart = 0.0;
          imagPart = 0.0;
          /* idx is used to iterate for up to 50 of the last
@@ -1913,7 +1960,14 @@ static TA_FMA_STEP_INLINE TA_RetCode TA_HT_TRENDMODE_OpenImpl( struct TA_HT_TREN
          leadSine = sin((DCPhase + 45) * deg2Rad);
          /* Compute Trendline */
          DCPeriod = smoothPeriod + 0.5;
-         DCPeriodInt = (int)DCPeriod;
+         /* A NaN period has no int value, and C leaves converting one undefined. */
+         if( DCPeriod >= 0.0 )
+         {
+            DCPeriodInt = (int)DCPeriod;
+         } else 
+         {
+            DCPeriodInt = 0;
+         }
          /* Average the RAW price over the dominant cycle period.
           * Unlike the DC-phase loop above (which reads the smoothPrice
           * circular buffer), the iTrend average reads the raw price,
@@ -2398,7 +2452,14 @@ TA_LIB_API TA_RetCode TA_HT_TRENDMODE_Peek( const TA_HT_TRENDMODE_Stream *stream
    /* Compute Dominant Cycle Phase */
    prevDCPhase = DCPhase;
    DCPeriod = smoothPeriod + 0.5;
-   DCPeriodInt = (int)DCPeriod;
+   /* A NaN period has no int value, and C leaves converting one undefined. */
+   if( DCPeriod >= 0.0 )
+   {
+      DCPeriodInt = (int)DCPeriod;
+   } else 
+   {
+      DCPeriodInt = 0;
+   }
    realPart = 0.0;
    imagPart = 0.0;
    /* idx is used to iterate for up to 50 of the last
@@ -2450,7 +2511,14 @@ TA_LIB_API TA_RetCode TA_HT_TRENDMODE_Peek( const TA_HT_TRENDMODE_Stream *stream
    leadSine = sin((DCPhase + 45) * sp->deg2Rad);
    /* Compute Trendline */
    DCPeriod = smoothPeriod + 0.5;
-   DCPeriodInt = (int)DCPeriod;
+   /* A NaN period has no int value, and C leaves converting one undefined. */
+   if( DCPeriod >= 0.0 )
+   {
+      DCPeriodInt = (int)DCPeriod;
+   } else 
+   {
+      DCPeriodInt = 0;
+   }
    /* Average the RAW price over the dominant cycle period.
     * Unlike the DC-phase loop above (which reads the smoothPrice
     * circular buffer), the iTrend average reads the raw price,
