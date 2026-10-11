@@ -191497,6 +191497,1319 @@ class Core {
           MInteger outNBElement = new MInteger();
           return sqrtOpenAndFillInternal(inReal, 0, outBegIdx, outNBElement, outReal);
        }
+    /* List of contributors:
+     *
+     *  Initial  Name/description
+     *  -------------------------------------------------------------------
+     *  MF       Mario Fortier
+     *  KL       Kevin Lin (@kevinlincg)
+     *  CC       Claude Code (AI assistant)
+     *
+     * Change history:
+     *
+     *  MMDDYY BY     Description
+     *  -------------------------------------------------------------------
+     *  100826 KL,CC  Creation (#488).
+     *  101126 MF,CC  Reject factors out of order (#488).
+     *  101126 MF,CC  DEV in one loop instead of three calls (#488).
+     *  101126 MF,CC  Both bands from one rounded deviation, as bbands (#488).
+     */
+
+       /**
+        * Number of leading input bars {@link Core#sqzmom} consumes before it can
+        * produce its first value.
+        * <p>Equivalently, the index of the first bar with a value when the whole
+        * series is requested. Feed at least {@code lookback + 1} bars to get any
+        * output.
+        *
+        * @param optInBBPeriod Number of bars in the Bollinger Band window (default
+        *        20; range 2..100000; {@code Integer.MIN_VALUE} selects the default).
+        * @param optInNbDev Number of standard deviations the Bollinger Bands are
+        *        placed at (default 2; minimum 0; {@link Core#REAL_DEFAULT} selects the
+        *        default).
+        * @param optInKCPeriod Number of bars in the Keltner Channel, the true-range
+        *        mean and the regression (default 20; range 2..100000;
+        *        {@code Integer.MIN_VALUE} selects the default).
+        * @param optInFactorWide Keltner width, in true-range means, of the widest
+        *        channel (default 2; minimum 0; {@link Core#REAL_DEFAULT} selects the
+        *        default).
+        * @param optInFactorNormal Keltner width of the classic channel (default
+        *        1.5; minimum 0; {@link Core#REAL_DEFAULT} selects the default).
+        * @param optInFactorNarrow Keltner width of the tightest channel (default 1;
+        *        minimum 0; {@link Core#REAL_DEFAULT} selects the default).
+        * @return The lookback, or {@code -1} if a parameter is out of range.
+        */
+       public int sqzmomLookback( int optInBBPeriod, double optInNbDev, int optInKCPeriod, double optInFactorWide, double optInFactorNormal, double optInFactorNarrow )
+       {
+          if( optInBBPeriod == Integer.MIN_VALUE ) {
+             optInBBPeriod = 20;
+          } else if( optInBBPeriod < 2 || optInBBPeriod > 100000 ) {
+             return -1;
+          }
+          if( optInNbDev == REAL_DEFAULT ) {
+             optInNbDev = 2e0;
+          } else if( !(optInNbDev >= 0e0 && optInNbDev <= REAL_MAX) ) {
+             return -1;
+          }
+          if( optInKCPeriod == Integer.MIN_VALUE ) {
+             optInKCPeriod = 20;
+          } else if( optInKCPeriod < 2 || optInKCPeriod > 100000 ) {
+             return -1;
+          }
+          if( optInFactorWide == REAL_DEFAULT ) {
+             optInFactorWide = 2e0;
+          } else if( !(optInFactorWide >= 0e0 && optInFactorWide <= REAL_MAX) ) {
+             return -1;
+          }
+          if( optInFactorNormal == REAL_DEFAULT ) {
+             optInFactorNormal = 1.5e0;
+          } else if( !(optInFactorNormal >= 0e0 && optInFactorNormal <= REAL_MAX) ) {
+             return -1;
+          }
+          if( optInFactorNarrow == REAL_DEFAULT ) {
+             optInFactorNarrow = 1e0;
+          } else if( !(optInFactorNarrow >= 0e0 && optInFactorNarrow <= REAL_MAX) ) {
+             return -1;
+          }
+          int lookbackTotal;
+          int leg;
+          /* The range check cannot order the three factors; without this the lookback
+           * answers a usable number for a call that cannot run.
+           */
+          if( optInFactorNormal > optInFactorWide || optInFactorNarrow > optInFactorNormal ) {
+             return -1 ;
+          }
+          /* Three chains reach the first bar at which both outputs exist, and the
+           * first output is the longest of them:
+           *
+           *   bands        sma(b) / stddev(b)           = b-1
+           *   compression  trange -> sma(k)             = 1 + (k-1) = k
+           *   momentum     midprice(k) -> linearreg(k)  = (k-1) + (k-1) = 2(k-1)
+           *
+           * The Keltner centre, sma(k) on the close, is k-1 and never dominates the
+           * momentum chain it also feeds. At b = k = 20 the three read 19, 20 and 38,
+           * which is where pandas, ta4j and trading-signals put their first value.
+           * The factors scale a band that already exists, so they do not enter.
+           */
+          lookbackTotal = smaLookback(optInBBPeriod);
+          leg = stddevLookback(optInBBPeriod, 1.0);
+          if( leg > lookbackTotal ) {
+             lookbackTotal = leg;
+          }
+          leg = trangeLookback() + smaLookback(optInKCPeriod);
+          if( leg > lookbackTotal ) {
+             lookbackTotal = leg;
+          }
+          leg = midpriceLookback(optInKCPeriod) + linearregLookback(optInKCPeriod);
+          if( leg > lookbackTotal ) {
+             lookbackTotal = leg;
+          }
+          return lookbackTotal ;
+
+       }
+       /**
+        * How many bars ahead (positive) or behind (negative) of the bar that
+        * computed it a chart draws one output of {@link Core#sqzmom}.
+        * <p>Every output of this function is drawn at its own bar, so the answer is
+        * 0.
+        *
+        * @param optInBBPeriod Number of bars in the Bollinger Band window (default
+        *        20; range 2..100000; {@code Integer.MIN_VALUE} selects the default).
+        * @param optInNbDev Number of standard deviations the Bollinger Bands are
+        *        placed at (default 2; minimum 0; {@link Core#REAL_DEFAULT} selects the
+        *        default).
+        * @param optInKCPeriod Number of bars in the Keltner Channel, the true-range
+        *        mean and the regression (default 20; range 2..100000;
+        *        {@code Integer.MIN_VALUE} selects the default).
+        * @param optInFactorWide Keltner width, in true-range means, of the widest
+        *        channel (default 2; minimum 0; {@link Core#REAL_DEFAULT} selects the
+        *        default).
+        * @param optInFactorNormal Keltner width of the classic channel (default
+        *        1.5; minimum 0; {@link Core#REAL_DEFAULT} selects the default).
+        * @param optInFactorNarrow Keltner width of the tightest channel (default 1;
+        *        minimum 0; {@link Core#REAL_DEFAULT} selects the default).
+        * @param outputIdx Position of the output in the batch signature, from 0.
+        * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+        *        out of range or the index names no output.
+        */
+       public int sqzmomDisplayShift( int optInBBPeriod, double optInNbDev, int optInKCPeriod, double optInFactorWide, double optInFactorNormal, double optInFactorNarrow, int outputIdx )
+       {
+          if( sqzmomLookback( optInBBPeriod, optInNbDev, optInKCPeriod, optInFactorWide, optInFactorNormal, optInFactorNarrow ) < 0 ) {
+             return Integer.MIN_VALUE;
+          }
+          if( outputIdx < 0 || outputIdx >= 2 ) {
+             return Integer.MIN_VALUE;
+          }
+          return 0;
+       }
+       RetCode sqzmomImpl( int startIdx,
+                           int endIdx,
+                           double inHigh[],
+                           double inLow[],
+                           double inClose[],
+                           int optInBBPeriod,
+                           double optInNbDev,
+                           int optInKCPeriod,
+                           double optInFactorWide,
+                           double optInFactorNormal,
+                           double optInFactorNarrow,
+                           MInteger outBegIdx,
+                           MInteger outNBElement,
+                           double outMomentum[],
+                           int outSqueeze[] )
+       {
+          RetCode retCode;
+          int lookbackTotal = 0;
+          int stageLookback = 0;
+          int stageIdx = 0;
+          int stageLen = 0;
+          int i = 0;
+          int n = 0;
+          MInteger tempBegIdx = new MInteger();
+          MInteger tempNbElement = new MInteger();
+          double[] tempDev;
+          double[] tempWork;
+          double[] tempKCM;
+          double[] tempMid;
+          double[] tempSD;
+          double dev = 0;
+          double up = 0;
+          double lo = 0;
+          double centre = 0;
+          double band = 0;
+          if( (startIdx < 0) || (startIdx > INDEX_MAX) ) {
+             return RetCode.OUT_OF_RANGE_START_INDEX ;
+          }
+          if( (endIdx < 0) || (endIdx > INDEX_MAX) || (endIdx < startIdx)) {
+             return RetCode.OUT_OF_RANGE_END_INDEX ;
+          }
+          if( optInBBPeriod == Integer.MIN_VALUE ) {
+             optInBBPeriod = 20;
+          } else if( optInBBPeriod < 2 || optInBBPeriod > 100000 ) {
+             return RetCode.BAD_PARAM;
+          }
+          if( optInNbDev == REAL_DEFAULT ) {
+             optInNbDev = 2e0;
+          } else if( !(optInNbDev >= 0e0 && optInNbDev <= REAL_MAX) ) {
+             return RetCode.BAD_PARAM;
+          }
+          if( optInKCPeriod == Integer.MIN_VALUE ) {
+             optInKCPeriod = 20;
+          } else if( optInKCPeriod < 2 || optInKCPeriod > 100000 ) {
+             return RetCode.BAD_PARAM;
+          }
+          if( optInFactorWide == REAL_DEFAULT ) {
+             optInFactorWide = 2e0;
+          } else if( !(optInFactorWide >= 0e0 && optInFactorWide <= REAL_MAX) ) {
+             return RetCode.BAD_PARAM;
+          }
+          if( optInFactorNormal == REAL_DEFAULT ) {
+             optInFactorNormal = 1.5e0;
+          } else if( !(optInFactorNormal >= 0e0 && optInFactorNormal <= REAL_MAX) ) {
+             return RetCode.BAD_PARAM;
+          }
+          if( optInFactorNarrow == REAL_DEFAULT ) {
+             optInFactorNarrow = 1e0;
+          } else if( !(optInFactorNarrow >= 0e0 && optInFactorNarrow <= REAL_MAX) ) {
+             return RetCode.BAD_PARAM;
+          }
+          /* Each rolling statistic is a call to the shipped function, so it carries
+           * that function's own arithmetic bit for bit:
+           *
+           *   BBU, BBL = sma(close, b) +/- nbdev * stddev(close, b, 1.0)
+           *   KCM      = sma(close, k)
+           *   BAND     = sma(trange(high,low,close), k)      the simple mean of TR
+           *   DMID     = midprice(high, low, k)
+           *   DEV      = close - (DMID + KCM)/2
+           *   momentum = linearreg(DEV, k)
+           *
+           * A composed sub-call cannot be handed an MA-type constant, so the bands
+           * are the sma + stddev pair and not a bbands call.
+           *
+           * Two chains need their input one window earlier than the first output bar:
+           * sma(k) over TR, and linearreg(k) over DEV. Both windows are k-1 long, so
+           * one staged range serves both.
+           */
+          /* A channel wider than the one it should nest in breaks the ladder: a bar
+           * could then be inside "narrow" and outside "normal". Ties are allowed, and
+           * wide == normal is the classic on/off/none squeeze.
+           */
+          if( optInFactorNormal > optInFactorWide || optInFactorNarrow > optInFactorNormal ) {
+             return RetCode.BAD_PARAM ;
+          }
+          lookbackTotal = sqzmomLookback(optInBBPeriod, optInNbDev, optInKCPeriod, optInFactorWide, optInFactorNormal, optInFactorNarrow);
+          if( lookbackTotal > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.SUCCESS ;
+          }
+          if( startIdx < lookbackTotal ) {
+             startIdx = lookbackTotal;
+          }
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.SUCCESS ;
+          }
+          n = endIdx - startIdx + 1;
+          stageLookback = linearregLookback(optInKCPeriod);
+          stageIdx = startIdx - stageLookback;
+          stageLen = n + stageLookback;
+          tempDev = new double[(int)(stageLen * 1)];
+          tempWork = new double[(int)(stageLen * 1)];
+          tempKCM = new double[(int)(n * 1)];
+          tempMid = new double[(int)(n * 1)];
+          tempSD = new double[(int)(n * 1)];
+          /* The momentum anchor: the Donchian midpoint and the Keltner centre, averaged.
+           * midprice is bit-identical to donchian's middle band.
+           */
+          OutRange _xr0 = midprice(stageIdx, endIdx, inHigh, inLow, optInKCPeriod, tempDev);
+          outBegIdx.value = _xr0.begIdx();
+          outNBElement.value = _xr0.count();
+          retCode = RetCode.SUCCESS;
+          OutRange _xr1 = sma(stageIdx, endIdx, inClose, optInKCPeriod, tempWork);
+          tempBegIdx.value = _xr1.begIdx();
+          tempNbElement.value = _xr1.count();
+          retCode = RetCode.SUCCESS;
+          /* DEV, over the staged range. The close is read at the index midprice
+           * reported for the range, which is what lets this loop stream: keep
+           * outBegIdx as midprice's receiver, and reuse it for no call above here.
+           */
+          for( i = 0; i < stageLen; i += 1 ) {
+             tempDev[i] = inClose[outBegIdx.value + i] - (tempDev[i] + tempWork[i]) / 2.0;
+          }
+          /* The compression band: the simple mean of the true range, not an ATR.
+           * trange's own lookback is 1, and stageIdx is at least 1 because the
+           * compression chain alone puts lookbackTotal at k or more.
+           */
+          OutRange _xr2 = trange(stageIdx, endIdx, inHigh, inLow, inClose, tempWork);
+          tempBegIdx.value = _xr2.begIdx();
+          tempNbElement.value = _xr2.count();
+          retCode = RetCode.SUCCESS;
+          OutRange _xr3 = sma(0, stageLen - 1, tempWork, optInKCPeriod, tempWork);
+          tempBegIdx.value = _xr3.begIdx();
+          tempNbElement.value = _xr3.count();
+          retCode = RetCode.SUCCESS;
+          OutRange _xr4 = sma(startIdx, endIdx, inClose, optInBBPeriod, tempMid);
+          tempBegIdx.value = _xr4.begIdx();
+          tempNbElement.value = _xr4.count();
+          retCode = RetCode.SUCCESS;
+          OutRange _xr5 = stddev(startIdx, endIdx, inClose, optInBBPeriod, 1.0, tempSD);
+          tempBegIdx.value = _xr5.begIdx();
+          tempNbElement.value = _xr5.count();
+          retCode = RetCode.SUCCESS;
+          OutRange _xr6 = sma(startIdx, endIdx, inClose, optInKCPeriod, tempKCM);
+          tempBegIdx.value = _xr6.begIdx();
+          tempNbElement.value = _xr6.count();
+          retCode = RetCode.SUCCESS;
+          /* LAST of the calls, because it is the first to write a caller buffer. Every
+           * read of high, low and close is above it, so an output aliased onto one of
+           * them -- which the abstract layer tests on purpose -- is still intact when it
+           * is read.
+           *
+           * The regression window closes on the first output bar, so entering it at 0 of
+           * the staged range puts its first fitted value on startIdx.
+           */
+          OutRange _xr7 = linearreg(0, stageLen - 1, tempDev, optInKCPeriod, outMomentum);
+          tempBegIdx.value = _xr7.begIdx();
+          tempNbElement.value = _xr7.count();
+          retCode = RetCode.SUCCESS;
+          /* The ordinal. Every comparison is strict: a band exactly on a channel
+           * edge is not inside that channel and not outside it either.
+           *
+           * Keep the deviation a rounded product added to and subtracted from the
+           * middle band, as bbands does. Written as one expression per band, the
+           * upper one contracts into a fused multiply-add and the lower one cannot,
+           * and a band within one ulp of an edge then changes level.
+           */
+          for( i = 0; i < n; i += 1 ) {
+             dev = tempSD[i] * optInNbDev;
+             up = tempMid[i] + dev;
+             lo = tempMid[i] - dev;
+             centre = tempKCM[i];
+             band = tempWork[i];
+             if( lo > centre - optInFactorNarrow * band && up < centre + optInFactorNarrow * band ) {
+                outSqueeze[i] = 3;
+             } else if( lo > centre - optInFactorNormal * band && up < centre + optInFactorNormal * band ) {
+                outSqueeze[i] = 2;
+             } else if( lo > centre - optInFactorWide * band && up < centre + optInFactorWide * band ) {
+                outSqueeze[i] = 1;
+             } else if( lo < centre - optInFactorWide * band && up > centre + optInFactorWide * band ) {
+                outSqueeze[i] = -1;
+             } else {
+                outSqueeze[i] = 0;
+             }
+          }
+          outBegIdx.value = startIdx;
+          outNBElement.value = n;
+          return RetCode.SUCCESS ;
+       }
+       RetCode sqzmomImpl( int startIdx,
+                           int endIdx,
+                           float inHigh[],
+                           float inLow[],
+                           float inClose[],
+                           int optInBBPeriod,
+                           double optInNbDev,
+                           int optInKCPeriod,
+                           double optInFactorWide,
+                           double optInFactorNormal,
+                           double optInFactorNarrow,
+                           MInteger outBegIdx,
+                           MInteger outNBElement,
+                           double outMomentum[],
+                           int outSqueeze[] )
+       {
+          RetCode retCode;
+          int lookbackTotal = 0;
+          int stageLookback = 0;
+          int stageIdx = 0;
+          int stageLen = 0;
+          int i = 0;
+          int n = 0;
+          MInteger tempBegIdx = new MInteger();
+          MInteger tempNbElement = new MInteger();
+          double[] tempDev;
+          double[] tempWork;
+          double[] tempKCM;
+          double[] tempMid;
+          double[] tempSD;
+          double dev = 0;
+          double up = 0;
+          double lo = 0;
+          double centre = 0;
+          double band = 0;
+          if( (startIdx < 0) || (startIdx > INDEX_MAX) ) {
+             return RetCode.OUT_OF_RANGE_START_INDEX ;
+          }
+          if( (endIdx < 0) || (endIdx > INDEX_MAX) || (endIdx < startIdx)) {
+             return RetCode.OUT_OF_RANGE_END_INDEX ;
+          }
+          if( optInBBPeriod == Integer.MIN_VALUE ) {
+             optInBBPeriod = 20;
+          } else if( optInBBPeriod < 2 || optInBBPeriod > 100000 ) {
+             return RetCode.BAD_PARAM;
+          }
+          if( optInNbDev == REAL_DEFAULT ) {
+             optInNbDev = 2e0;
+          } else if( !(optInNbDev >= 0e0 && optInNbDev <= REAL_MAX) ) {
+             return RetCode.BAD_PARAM;
+          }
+          if( optInKCPeriod == Integer.MIN_VALUE ) {
+             optInKCPeriod = 20;
+          } else if( optInKCPeriod < 2 || optInKCPeriod > 100000 ) {
+             return RetCode.BAD_PARAM;
+          }
+          if( optInFactorWide == REAL_DEFAULT ) {
+             optInFactorWide = 2e0;
+          } else if( !(optInFactorWide >= 0e0 && optInFactorWide <= REAL_MAX) ) {
+             return RetCode.BAD_PARAM;
+          }
+          if( optInFactorNormal == REAL_DEFAULT ) {
+             optInFactorNormal = 1.5e0;
+          } else if( !(optInFactorNormal >= 0e0 && optInFactorNormal <= REAL_MAX) ) {
+             return RetCode.BAD_PARAM;
+          }
+          if( optInFactorNarrow == REAL_DEFAULT ) {
+             optInFactorNarrow = 1e0;
+          } else if( !(optInFactorNarrow >= 0e0 && optInFactorNarrow <= REAL_MAX) ) {
+             return RetCode.BAD_PARAM;
+          }
+          if( optInFactorNormal > optInFactorWide || optInFactorNarrow > optInFactorNormal ) {
+             return RetCode.BAD_PARAM ;
+          }
+          lookbackTotal = sqzmomLookback(optInBBPeriod, optInNbDev, optInKCPeriod, optInFactorWide, optInFactorNormal, optInFactorNarrow);
+          if( lookbackTotal > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.SUCCESS ;
+          }
+          if( startIdx < lookbackTotal ) {
+             startIdx = lookbackTotal;
+          }
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.SUCCESS ;
+          }
+          n = endIdx - startIdx + 1;
+          stageLookback = linearregLookback(optInKCPeriod);
+          stageIdx = startIdx - stageLookback;
+          stageLen = n + stageLookback;
+          tempDev = new double[(int)(stageLen * 1)];
+          tempWork = new double[(int)(stageLen * 1)];
+          tempKCM = new double[(int)(n * 1)];
+          tempMid = new double[(int)(n * 1)];
+          tempSD = new double[(int)(n * 1)];
+          OutRange _xr0 = midprice(stageIdx, endIdx, inHigh, inLow, optInKCPeriod, tempDev);
+          outBegIdx.value = _xr0.begIdx();
+          outNBElement.value = _xr0.count();
+          retCode = RetCode.SUCCESS;
+          OutRange _xr1 = sma(stageIdx, endIdx, inClose, optInKCPeriod, tempWork);
+          tempBegIdx.value = _xr1.begIdx();
+          tempNbElement.value = _xr1.count();
+          retCode = RetCode.SUCCESS;
+          for( i = 0; i < stageLen; i += 1 ) {
+             tempDev[i] = (double)inClose[outBegIdx.value + i] - (tempDev[i] + tempWork[i]) / 2.0;
+          }
+          OutRange _xr2 = trange(stageIdx, endIdx, inHigh, inLow, inClose, tempWork);
+          tempBegIdx.value = _xr2.begIdx();
+          tempNbElement.value = _xr2.count();
+          retCode = RetCode.SUCCESS;
+          OutRange _xr3 = sma(0, stageLen - 1, tempWork, optInKCPeriod, tempWork);
+          tempBegIdx.value = _xr3.begIdx();
+          tempNbElement.value = _xr3.count();
+          retCode = RetCode.SUCCESS;
+          OutRange _xr4 = sma(startIdx, endIdx, inClose, optInBBPeriod, tempMid);
+          tempBegIdx.value = _xr4.begIdx();
+          tempNbElement.value = _xr4.count();
+          retCode = RetCode.SUCCESS;
+          OutRange _xr5 = stddev(startIdx, endIdx, inClose, optInBBPeriod, 1.0, tempSD);
+          tempBegIdx.value = _xr5.begIdx();
+          tempNbElement.value = _xr5.count();
+          retCode = RetCode.SUCCESS;
+          OutRange _xr6 = sma(startIdx, endIdx, inClose, optInKCPeriod, tempKCM);
+          tempBegIdx.value = _xr6.begIdx();
+          tempNbElement.value = _xr6.count();
+          retCode = RetCode.SUCCESS;
+          OutRange _xr7 = linearreg(0, stageLen - 1, tempDev, optInKCPeriod, outMomentum);
+          tempBegIdx.value = _xr7.begIdx();
+          tempNbElement.value = _xr7.count();
+          retCode = RetCode.SUCCESS;
+          for( i = 0; i < n; i += 1 ) {
+             dev = tempSD[i] * optInNbDev;
+             up = tempMid[i] + dev;
+             lo = tempMid[i] - dev;
+             centre = tempKCM[i];
+             band = tempWork[i];
+             if( lo > centre - optInFactorNarrow * band && up < centre + optInFactorNarrow * band ) {
+                outSqueeze[i] = 3;
+             } else if( lo > centre - optInFactorNormal * band && up < centre + optInFactorNormal * band ) {
+                outSqueeze[i] = 2;
+             } else if( lo > centre - optInFactorWide * band && up < centre + optInFactorWide * band ) {
+                outSqueeze[i] = 1;
+             } else if( lo < centre - optInFactorWide * band && up > centre + optInFactorWide * band ) {
+                outSqueeze[i] = -1;
+             } else {
+                outSqueeze[i] = 0;
+             }
+          }
+          outBegIdx.value = startIdx;
+          outNBElement.value = n;
+          return RetCode.SUCCESS ;
+       }
+       /**
+        * John Carter's TTM Squeeze, in the form LazyBear published on TradingView
+        * in 2014. Volatility compression is read by comparing the Bollinger Bands
+        * against a Keltner Channel: when the bands sit inside the channel the
+        * market is coiled, and when they push outside it the coil has released.
+        * LazyBear replaced Carter's simple momentum with a linear regression of the
+        * close against a Donchian/SMA anchor, which is the histogram that
+        * StockCharts, ta4j and trading-signals compute, and pandas-ta with
+        * {@code lazybear=True}. "Squeeze Pro" tests the bands against three Keltner
+        * widths instead of one, so compression becomes a level rather than a
+        * boolean. {@code outSqueeze} carries that level: 3, 2 and 1 for the narrow,
+        * normal and wide channels, -1 once the bands are outside the wide channel,
+        * and 0 in between. The classic squeeze-on flag is
+        * {@code outSqueeze &gt;= 2}, and with {@code wide == normal} the three
+        * states are exactly LazyBear's on / off / none.
+        * <p>Formula and more info at <a
+        * href="https://ta-lib.org/functions/sqzmom">ta-lib.org/functions/sqzmom</a>.
+        * <p><b>Notes</b>
+        * <ul>
+        * <li>{@code BAND} is the simple mean of the true range over {@code k} bars, not an ATR: no Wilder smoothing, and so no unstable period anywhere in this function.</li>
+        * <li>The anchor is written three ways across the sources — {@code avg(avg(HH,LL), SMA)}, {@code ((HH+LL)/2 + SMA)/2} and {@code 0.25*(HH+LL) + 0.5*SMA}. All three give the same double, because scaling by a power of two is exact.</li>
+        * <li>The three channels share a centre and {@code BAND &gt;= 0}, so they nest: inside the narrow one implies inside the normal one implies inside the wide one. The ordinal is therefore monotone, and the factors are required only to be ordered {@code wide &gt;= normal &gt;= narrow &gt;= 0}, not strictly. Factors out of that order are rejected with {@code TA_BAD_PARAM}.</li>
+        * <li>The momentum window is the Keltner period, as in LazyBear's script, pandas and trading-signals.</li>
+        * <li>The three chains that feed the outputs do not reach their first value together. The first output bar is the latest of them, so where {@code b} is much larger than {@code k} the momentum exists before the state does and is still withheld until both do. pandas emits the earlier momentum; a capture compared against it must start at the later bar.</li>
+        * </ul>
+        * <p>Values are written only where the indicator is defined. The returned
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#sqzmomLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
+        *
+        * @param startIdx First bar of the requested range (inclusive).
+        * @param endIdx Last bar of the requested range (inclusive).
+        * @param inHigh High price of each bar.
+        * @param inLow Low price of each bar.
+        * @param inClose Closing price of each bar.
+        * @param optInBBPeriod Number of bars in the Bollinger Band window (default
+        *        20; range 2..100000; {@code Integer.MIN_VALUE} selects the default).
+        * @param optInNbDev Number of standard deviations the Bollinger Bands are
+        *        placed at (default 2; minimum 0; {@link Core#REAL_DEFAULT} selects the
+        *        default).
+        * @param optInKCPeriod Number of bars in the Keltner Channel, the true-range
+        *        mean and the regression (default 20; range 2..100000;
+        *        {@code Integer.MIN_VALUE} selects the default).
+        * @param optInFactorWide Keltner width, in true-range means, of the widest
+        *        channel (default 2; minimum 0; {@link Core#REAL_DEFAULT} selects the
+        *        default).
+        * @param optInFactorNormal Keltner width of the classic channel (default
+        *        1.5; minimum 0; {@link Core#REAL_DEFAULT} selects the default).
+        * @param optInFactorNarrow Keltner width of the tightest channel (default 1;
+        *        minimum 0; {@link Core#REAL_DEFAULT} selects the default).
+        * @param outMomentum Linear regression of the close against the Donchian/SMA
+        *        anchor. Must hold at least
+        *        {@code endIdx - max(startIdx, sqzmomLookback(...)) + 1} values, and never
+        *        be empty: an empty array is an absent output.
+        * @param outSqueeze Compression level: 3 narrow, 2 normal, 1 wide, -1
+        *        released, 0 otherwise. Must hold at least
+        *        {@code endIdx - max(startIdx, sqzmomLookback(...)) + 1} values, and never
+        *        be empty: an empty array is an absent output.
+        * @return The range written: {@code begIdx} is the first bar with a value,
+        *        {@code count} how many were written.
+        * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
+        *        negative or above {@link Core#INDEX_MAX}, or {@code endIdx < startIdx}.
+        * @throws IllegalArgumentException if an optional parameter is outside its
+        *        documented range, two outputs share one array, or an array is absent or
+        *        too short for the range requested — any input this function
+        *        <i>declares</i> that does not reach {@code endIdx}, or an output that
+        *        cannot hold the values produced. Declared, not read: a few candlestick
+        *        patterns take an OHLC series they never index, and it is required all the
+        *        same. An output this function documents as declinable is the one
+        *        exception: {@code null} is how you decline it. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
+        *
+        * @see Core#bbands
+        * @see Core#kc
+        * @see Core#trange
+        * @see Core#midprice
+        * @see Core#linearreg
+        */
+       public OutRange sqzmom( int startIdx,
+                               int endIdx,
+                               double inHigh[],
+                               double inLow[],
+                               double inClose[],
+                               int optInBBPeriod,
+                               double optInNbDev,
+                               int optInKCPeriod,
+                               double optInFactorWide,
+                               double optInFactorNormal,
+                               double optInFactorNarrow,
+                               double outMomentum[],
+                               int outSqueeze[] )
+       {
+          requireIndexRange("SQZMOM", startIdx, endIdx);
+          int guardStart = clampedStart("SQZMOM", startIdx, sqzmomLookback(optInBBPeriod, optInNbDev, optInKCPeriod, optInFactorWide, optInFactorNormal, optInFactorNarrow));
+          int guardInLen = endIdx + 1;
+          int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("SQZMOM", "inHigh", inHigh, guardInLen);
+          requireLength("SQZMOM", "inLow", inLow, guardInLen);
+          requireLength("SQZMOM", "inClose", inClose, guardInLen);
+          requireLength("SQZMOM", "outMomentum", outMomentum, guardOutLen);
+          requireLength("SQZMOM", "outSqueeze", outSqueeze, guardOutLen);
+          MInteger outBegIdx = new MInteger();
+          MInteger outNBElement = new MInteger();
+          RetCode retCode = sqzmomImpl(startIdx, endIdx, inHigh, inLow, inClose, optInBBPeriod, optInNbDev, optInKCPeriod, optInFactorWide, optInFactorNormal, optInFactorNarrow, outBegIdx, outNBElement, outMomentum, outSqueeze);
+          if( retCode != RetCode.SUCCESS ) {
+             throw failure("SQZMOM", retCode);
+          }
+          return new OutRange(outBegIdx.value, outNBElement.value);
+       }
+       /**
+        * John Carter's TTM Squeeze, in the form LazyBear published on TradingView
+        * in 2014. Volatility compression is read by comparing the Bollinger Bands
+        * against a Keltner Channel: when the bands sit inside the channel the
+        * market is coiled, and when they push outside it the coil has released.
+        * LazyBear replaced Carter's simple momentum with a linear regression of the
+        * close against a Donchian/SMA anchor, which is the histogram that
+        * StockCharts, ta4j and trading-signals compute, and pandas-ta with
+        * {@code lazybear=True}. "Squeeze Pro" tests the bands against three Keltner
+        * widths instead of one, so compression becomes a level rather than a
+        * boolean. {@code outSqueeze} carries that level: 3, 2 and 1 for the narrow,
+        * normal and wide channels, -1 once the bands are outside the wide channel,
+        * and 0 in between. The classic squeeze-on flag is
+        * {@code outSqueeze &gt;= 2}, and with {@code wide == normal} the three
+        * states are exactly LazyBear's on / off / none.
+        * <p>Formula and more info at <a
+        * href="https://ta-lib.org/functions/sqzmom">ta-lib.org/functions/sqzmom</a>.
+        * <p><b>Notes</b>
+        * <ul>
+        * <li>{@code BAND} is the simple mean of the true range over {@code k} bars, not an ATR: no Wilder smoothing, and so no unstable period anywhere in this function.</li>
+        * <li>The anchor is written three ways across the sources — {@code avg(avg(HH,LL), SMA)}, {@code ((HH+LL)/2 + SMA)/2} and {@code 0.25*(HH+LL) + 0.5*SMA}. All three give the same double, because scaling by a power of two is exact.</li>
+        * <li>The three channels share a centre and {@code BAND &gt;= 0}, so they nest: inside the narrow one implies inside the normal one implies inside the wide one. The ordinal is therefore monotone, and the factors are required only to be ordered {@code wide &gt;= normal &gt;= narrow &gt;= 0}, not strictly. Factors out of that order are rejected with {@code TA_BAD_PARAM}.</li>
+        * <li>The momentum window is the Keltner period, as in LazyBear's script, pandas and trading-signals.</li>
+        * <li>The three chains that feed the outputs do not reach their first value together. The first output bar is the latest of them, so where {@code b} is much larger than {@code k} the momentum exists before the state does and is still withheld until both do. pandas emits the earlier momentum; a capture compared against it must start at the later bar.</li>
+        * </ul>
+        * <p>This is the {@code float[]} overload. The arithmetic is performed in
+        * {@code double} before being written to the {@code double[]} output, so a
+        * result beyond {@code float} range is still representable.
+        * <p>Values are written only where the indicator is defined. The returned
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#sqzmomLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
+        *
+        * @param startIdx First bar of the requested range (inclusive).
+        * @param endIdx Last bar of the requested range (inclusive).
+        * @param inHigh High price of each bar.
+        * @param inLow Low price of each bar.
+        * @param inClose Closing price of each bar.
+        * @param optInBBPeriod Number of bars in the Bollinger Band window (default
+        *        20; range 2..100000; {@code Integer.MIN_VALUE} selects the default).
+        * @param optInNbDev Number of standard deviations the Bollinger Bands are
+        *        placed at (default 2; minimum 0; {@link Core#REAL_DEFAULT} selects the
+        *        default).
+        * @param optInKCPeriod Number of bars in the Keltner Channel, the true-range
+        *        mean and the regression (default 20; range 2..100000;
+        *        {@code Integer.MIN_VALUE} selects the default).
+        * @param optInFactorWide Keltner width, in true-range means, of the widest
+        *        channel (default 2; minimum 0; {@link Core#REAL_DEFAULT} selects the
+        *        default).
+        * @param optInFactorNormal Keltner width of the classic channel (default
+        *        1.5; minimum 0; {@link Core#REAL_DEFAULT} selects the default).
+        * @param optInFactorNarrow Keltner width of the tightest channel (default 1;
+        *        minimum 0; {@link Core#REAL_DEFAULT} selects the default).
+        * @param outMomentum Linear regression of the close against the Donchian/SMA
+        *        anchor. Must hold at least
+        *        {@code endIdx - max(startIdx, sqzmomLookback(...)) + 1} values, and never
+        *        be empty: an empty array is an absent output.
+        * @param outSqueeze Compression level: 3 narrow, 2 normal, 1 wide, -1
+        *        released, 0 otherwise. Must hold at least
+        *        {@code endIdx - max(startIdx, sqzmomLookback(...)) + 1} values, and never
+        *        be empty: an empty array is an absent output.
+        * @return The range written: {@code begIdx} is the first bar with a value,
+        *        {@code count} how many were written.
+        * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
+        *        negative or above {@link Core#INDEX_MAX}, or {@code endIdx < startIdx}.
+        * @throws IllegalArgumentException if an optional parameter is outside its
+        *        documented range, two outputs share one array, or an array is absent or
+        *        too short for the range requested — any input this function
+        *        <i>declares</i> that does not reach {@code endIdx}, or an output that
+        *        cannot hold the values produced. Declared, not read: a few candlestick
+        *        patterns take an OHLC series they never index, and it is required all the
+        *        same. An output this function documents as declinable is the one
+        *        exception: {@code null} is how you decline it. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
+        *
+        * @see Core#bbands
+        * @see Core#kc
+        * @see Core#trange
+        * @see Core#midprice
+        * @see Core#linearreg
+        */
+       public OutRange sqzmom( int startIdx,
+                               int endIdx,
+                               float inHigh[],
+                               float inLow[],
+                               float inClose[],
+                               int optInBBPeriod,
+                               double optInNbDev,
+                               int optInKCPeriod,
+                               double optInFactorWide,
+                               double optInFactorNormal,
+                               double optInFactorNarrow,
+                               double outMomentum[],
+                               int outSqueeze[] )
+       {
+          requireIndexRange("SQZMOM", startIdx, endIdx);
+          int guardStart = clampedStart("SQZMOM", startIdx, sqzmomLookback(optInBBPeriod, optInNbDev, optInKCPeriod, optInFactorWide, optInFactorNormal, optInFactorNarrow));
+          int guardInLen = endIdx + 1;
+          int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("SQZMOM", "inHigh", inHigh, guardInLen);
+          requireLength("SQZMOM", "inLow", inLow, guardInLen);
+          requireLength("SQZMOM", "inClose", inClose, guardInLen);
+          requireLength("SQZMOM", "outMomentum", outMomentum, guardOutLen);
+          requireLength("SQZMOM", "outSqueeze", outSqueeze, guardOutLen);
+          MInteger outBegIdx = new MInteger();
+          MInteger outNBElement = new MInteger();
+          RetCode retCode = sqzmomImpl(startIdx, endIdx, inHigh, inLow, inClose, optInBBPeriod, optInNbDev, optInKCPeriod, optInFactorWide, optInFactorNormal, optInFactorNarrow, outBegIdx, outNBElement, outMomentum, outSqueeze);
+          if( retCode != RetCode.SUCCESS ) {
+             throw failure("SQZMOM", retCode);
+          }
+          return new OutRange(outBegIdx.value, outNBElement.value);
+       }
+    /**** Streaming API *****/
+
+       /**
+        * A live SQZMOM stream (unrelated to {@code java.util.stream}): one value per
+        * closed bar, bit-identical to {@link Core#sqzmom} over the same series.
+        * Open with {@link Core#sqzmomOpen}; there is no close — the handle is
+        * ordinary heap state, unreferenced handles are simply garbage-collected.
+        * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
+        * {@code value} and {@code clone} must not race with an {@code update} on
+        * the same handle. With no concurrent {@code update}, {@code peek}/
+        * {@code value}/{@code clone} never write the stream and may be called
+        * concurrently after safe publication. Independent streams (a
+        * {@code clone()} result included) are fully independent.
+        * <p>Not serializable by design: to checkpoint, retain the history and
+        * re-open — the result is bit-identical by contract.
+        */
+       public static final class SqzmomStream {
+          private Core core;
+          private int optInBBPeriod;
+          private double optInNbDev;
+          private int optInKCPeriod;
+          private double optInFactorWide;
+          private double optInFactorNormal;
+          private double optInFactorNarrow;
+          private double cur_outMomentum;
+          private int cur_outSqueeze;
+          private MidpriceStream sub0;
+          private SmaStream sub1;
+          private TrangeStream sub2;
+          private SmaStream sub3;
+          private SmaStream sub4;
+          private StddevStream sub5;
+          private SmaStream sub6;
+          private LinearregStream sub7;
+          private int outRangeBegIdx;
+          private int outRangeCount;
+
+          private SqzmomStream( Core core ) { this.core = core; }
+
+          /**
+           * The bars this stream has an output for, in the input series'
+           * coordinates: {@code [begIdx, begIdx + count)}.
+           * <p>It is what {@link Core#sqzmom} reports over the same bars: the
+           * opener sets it to {@code (lookback, historyLen - lookback)}, every
+           * accepted {@code update} adds one to the count — a rejected one
+           * changes nothing, and neither does {@code peek} — and
+           * {@code clone()} carries it verbatim. A plain
+           * {@code open} hands back only the last value, a subset of this range,
+           * because the caller chose not to take the fill.
+           * <p>The last bar it can reach is {@link Core#INDEX_MAX}; past that
+           * {@code update} and {@code advance} throw
+           * {@link IndexOutOfBoundsException}.
+           */
+          public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
+
+          /**
+           * Count one bar this stream was not fed: {@link #outRange()} advances
+           * by one and nothing else moves — {@link #value(SqzmomOut)} keeps answering the previous
+           * output, which is this bar's output too.
+           * <p>For a bar the caller leaves out: one an {@code update} rejected
+           * and that will not be re-fed, or a session with no print. Without it
+           * two handles on one feed drift a bar apart when only one of them skips.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#INDEX_MAX}, the last one the batch tier
+           * can address and the last this handle will count. {@code update}
+           * throws the same there.
+           */
+          public void advance() {
+             if( this.outRangeBegIdx + this.outRangeCount > INDEX_MAX )
+                throw failure("SQZMOM advance", RetCode.OUT_OF_RANGE_END_INDEX);
+             this.outRangeCount++;
+          }
+
+          private SqzmomStream( SqzmomStream other ) {
+             this.core = other.core;
+             this.optInBBPeriod = other.optInBBPeriod;
+             this.optInNbDev = other.optInNbDev;
+             this.optInKCPeriod = other.optInKCPeriod;
+             this.optInFactorWide = other.optInFactorWide;
+             this.optInFactorNormal = other.optInFactorNormal;
+             this.optInFactorNarrow = other.optInFactorNarrow;
+             this.cur_outMomentum = other.cur_outMomentum;
+             this.cur_outSqueeze = other.cur_outSqueeze;
+             this.sub0 = new MidpriceStream(other.sub0);
+             this.sub1 = new SmaStream(other.sub1);
+             this.sub2 = new TrangeStream(other.sub2);
+             this.sub3 = new SmaStream(other.sub3);
+             this.sub4 = new SmaStream(other.sub4);
+             this.sub5 = new StddevStream(other.sub5);
+             this.sub6 = new SmaStream(other.sub6);
+             this.sub7 = new LinearregStream(other.sub7);
+             this.outRangeBegIdx = other.outRangeBegIdx;
+             this.outRangeCount = other.outRangeCount;
+          }
+
+          /**
+           * Commit one closed bar, writing the new current values into the {@code out} the CALLER owns.
+           * <p>Throws {@link IllegalArgumentException} if any bar value is not
+           * finite (NaN or an infinity). That check runs before anything is
+           * written, so nothing moves — {@link #outRange()} included — and
+           * {@link #value(SqzmomOut)} still answers the previous value. Re-feed the bar when a
+           * corrected value arrives, or call {@link #advance()} to count it and
+           * carry on; two handles on one feed drift a bar apart if neither
+           * happens.
+           * This is the one place the streaming tier is stricter than
+           * the batch API, which computes on whatever it is given: a handle
+           * retains its state, so a single non-finite bar would poison every
+           * later value it produces.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#INDEX_MAX}, which no re-feed clears: the
+           * handle has run out of index domain and only a shorter history can
+           * start a new one.
+           */
+          public void update( double inHigh, double inLow, double inClose, SqzmomOut out ) {
+             if( this.outRangeBegIdx + this.outRangeCount > INDEX_MAX )
+                throw failure("SQZMOM update", RetCode.OUT_OF_RANGE_END_INDEX);
+             requireArgument("SQZMOM update", "out", out);
+             if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
+                throw nonFiniteBar("SQZMOM update", !Double.isFinite(inHigh) ? "inHigh" : !Double.isFinite(inLow) ? "inLow" : "inClose");
+             core.sqzmomStepImpl(this, inHigh, inLow, inClose);
+             this.outRangeCount++;
+             out.momentum = this.cur_outMomentum;
+             out.squeeze = this.cur_outSqueeze;
+          }
+
+          /**
+           * Evaluate a forming bar without committing — bit-identical to what the
+           * next {@code update} with the same bar would write — the same
+           * transition, with every store it would make carried in a local instead.
+           * Never writes this handle, so peeks may run concurrently with each other.
+           * <p>It counts no bar, so it keeps answering past the
+           * {@link Core#INDEX_MAX} ceiling {@code update} stops at.
+           */
+          public void peek( double inHigh, double inLow, double inClose, SqzmomOut out ) {
+             requireArgument("SQZMOM peek", "out", out);
+             if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
+                throw nonFiniteBar("SQZMOM peek", !Double.isFinite(inHigh) ? "inHigh" : !Double.isFinite(inLow) ? "inLow" : "inClose");
+             SqzmomStream sp = this;
+             double band = 0.0;
+             double centre = 0.0;
+             double dev = 0.0;
+             double lo = 0.0;
+             double up = 0.0;
+             double cur_tempDev = 0.0;
+             double cur_tempWork = 0.0;
+             double cur_tempMid = 0.0;
+             double cur_tempSD = 0.0;
+             double cur_tempKCM = 0.0;
+             double cur_outMomentum = 0.0;
+             int cur_outSqueeze = 0;
+             /* Pipeline the new bar through the sub-streams (batch tail order). */
+             cur_tempDev = sp.sub0.peek(inHigh, inLow);
+             cur_tempWork = sp.sub1.peek(inClose);
+             /* Combine map (batch tail, per bar). */
+             cur_tempDev = inClose - (cur_tempDev + cur_tempWork) / 2.0;
+             cur_tempWork = sp.sub2.peek(inHigh, inLow, inClose);
+             cur_tempWork = sp.sub3.peek(cur_tempWork);
+             cur_tempMid = sp.sub4.peek(inClose);
+             cur_tempSD = sp.sub5.peek(inClose);
+             cur_tempKCM = sp.sub6.peek(inClose);
+             cur_outMomentum = sp.sub7.peek(cur_tempDev);
+             /* Combine map (batch tail, per bar). */
+             dev = cur_tempSD * sp.optInNbDev;
+             up = cur_tempMid + dev;
+             lo = cur_tempMid - dev;
+             centre = cur_tempKCM;
+             band = cur_tempWork;
+             if( lo > centre - sp.optInFactorNarrow * band && up < centre + sp.optInFactorNarrow * band ) {
+                cur_outSqueeze = 3;
+             } else if( lo > centre - sp.optInFactorNormal * band && up < centre + sp.optInFactorNormal * band ) {
+                cur_outSqueeze = 2;
+             } else if( lo > centre - sp.optInFactorWide * band && up < centre + sp.optInFactorWide * band ) {
+                cur_outSqueeze = 1;
+             } else if( lo < centre - sp.optInFactorWide * band && up > centre + sp.optInFactorWide * band ) {
+                cur_outSqueeze = -1;
+             } else {
+                cur_outSqueeze = 0;
+             }
+             out.momentum = cur_outMomentum;
+             out.squeeze = cur_outSqueeze;
+          }
+
+          /**
+           * The value at the last bar this stream counted — the bar
+           * {@link #outRange()} ends on. The last history bar right after open,
+           * then whatever the latest accepted {@code update} wrote.
+           * A pure field read; {@code peek} does not change it. Overwrites {@code out}.
+           */
+          public void value( SqzmomOut out ) {
+             requireArgument("SQZMOM value", "out", out);
+             out.momentum = this.cur_outMomentum;
+             out.squeeze = this.cur_outSqueeze;
+          }
+
+          /**
+           * An independent fork of this stream: both evolve separately from here
+           * on. Buffers are copied and sub-streams cloned recursively; the
+           * {@link Core} reference is shared, since a {@code Core} is immutable
+           * for a stream's lifetime.
+           *
+           * <p>Not the {@code Cloneable} protocol: this calls a copy constructor,
+           * never {@code super.clone()}, so it throws nothing.
+           *
+           * @return an independent stream at the same bar
+           */
+          @Override
+          public SqzmomStream clone() {
+             return new SqzmomStream(this);
+          }
+       }
+
+       /**
+        * The outputs of one SQZMOM bar, written by the stream into an object the
+        * CALLER owns. Allocate one and reuse it: {@code update}, {@code peek}
+        * and {@code value} overwrite its fields, so the sink itself costs
+        * nothing per bar.
+        *
+        * <p><b>Its contents are only valid until the next call that writes it.</b>
+        * It is a mutable buffer, not a reading: a reference kept past that call,
+        * or one put in a collection, sees the value change underneath it. Copy the
+        * fields out if the reading has to outlive the call.
+        *
+        * <p>Deliberately no {@code equals} or {@code hashCode}: a mutable type
+        * with value equality breaks the {@code HashMap}/{@code HashSet}
+        * invariant the moment a reused instance becomes a key. Compare the fields.
+        */
+       public static final class SqzmomOut {
+          /** Linear regression of the close against the Donchian/SMA anchor. */
+          public double momentum;
+          /** Compression level: 3 narrow, 2 normal, 1 wide, -1 released, 0 otherwise. */
+          public int squeeze;
+       }
+       private void sqzmomStepImpl( SqzmomStream sp, double inHigh, double inLow, double inClose )
+       {
+          double band = 0.0;
+          double centre = 0.0;
+          double dev = 0.0;
+          double lo = 0.0;
+          double up = 0.0;
+          double cur_tempDev = 0.0;
+          double cur_tempWork = 0.0;
+          double cur_tempMid = 0.0;
+          double cur_tempSD = 0.0;
+          double cur_tempKCM = 0.0;
+          double cur_outMomentum = 0.0;
+          int cur_outSqueeze = 0;
+          /* Pipeline the new bar through the sub-streams (batch tail order). */
+          cur_tempDev = sp.sub0.update(inHigh, inLow);
+          cur_tempWork = sp.sub1.update(inClose);
+          /* Combine map (batch tail, per bar). */
+          cur_tempDev = inClose - (cur_tempDev + cur_tempWork) / 2.0;
+          cur_tempWork = sp.sub2.update(inHigh, inLow, inClose);
+          cur_tempWork = sp.sub3.update(cur_tempWork);
+          cur_tempMid = sp.sub4.update(inClose);
+          cur_tempSD = sp.sub5.update(inClose);
+          cur_tempKCM = sp.sub6.update(inClose);
+          cur_outMomentum = sp.sub7.update(cur_tempDev);
+          /* Combine map (batch tail, per bar). */
+          dev = cur_tempSD * sp.optInNbDev;
+          up = cur_tempMid + dev;
+          lo = cur_tempMid - dev;
+          centre = cur_tempKCM;
+          band = cur_tempWork;
+          if( lo > centre - sp.optInFactorNarrow * band && up < centre + sp.optInFactorNarrow * band ) {
+             cur_outSqueeze = 3;
+          } else if( lo > centre - sp.optInFactorNormal * band && up < centre + sp.optInFactorNormal * band ) {
+             cur_outSqueeze = 2;
+          } else if( lo > centre - sp.optInFactorWide * band && up < centre + sp.optInFactorWide * band ) {
+             cur_outSqueeze = 1;
+          } else if( lo < centre - sp.optInFactorWide * band && up > centre + sp.optInFactorWide * band ) {
+             cur_outSqueeze = -1;
+          } else {
+             cur_outSqueeze = 0;
+          }
+          sp.cur_outMomentum = cur_outMomentum;
+          sp.cur_outSqueeze = cur_outSqueeze;
+       }
+       private RetCode sqzmomOpenImpl( SqzmomStream sp, double inHigh[], double inLow[], double inClose[], int startIdx, int optInBBPeriod, double optInNbDev, int optInKCPeriod, double optInFactorWide, double optInFactorNormal, double optInFactorNarrow, MInteger outBegIdx, MInteger outNBElement, double outMomentum[], int outSqueeze[], int outStride )
+       {
+          RetCode retCode;
+          int lookbackTotal = 0;
+          int stageLookback = 0;
+          int stageIdx = 0;
+          int stageLen = 0;
+          int i = 0;
+          int n = 0;
+          MInteger tempBegIdx = new MInteger();
+          MInteger tempNbElement = new MInteger();
+          double[] tempDev;
+          double[] tempWork;
+          double[] tempKCM;
+          double[] tempMid;
+          double[] tempSD;
+          double dev = 0;
+          double up = 0;
+          double lo = 0;
+          double centre = 0;
+          double band = 0;
+          int historyLen = inHigh.length;
+          int endIdx = historyLen - 1;
+          if( historyLen < 1 ) {
+             return RetCode.OUT_OF_RANGE_START_INDEX;
+          }
+          if( historyLen > INDEX_MAX + 1 ) {
+             return RetCode.OUT_OF_RANGE_END_INDEX;
+          }
+          if( inLow.length != inHigh.length || inClose.length != inHigh.length ) {
+             return RetCode.BAD_PARAM;
+          }
+          if( optInBBPeriod == Integer.MIN_VALUE ) {
+             optInBBPeriod = 20;
+          } else if( optInBBPeriod < 2 || optInBBPeriod > 100000 ) {
+             return RetCode.BAD_PARAM;
+          }
+          if( optInNbDev == REAL_DEFAULT ) {
+             optInNbDev = 2e0;
+          } else if( !(optInNbDev >= 0e0 && optInNbDev <= REAL_MAX) ) {
+             return RetCode.BAD_PARAM;
+          }
+          if( optInKCPeriod == Integer.MIN_VALUE ) {
+             optInKCPeriod = 20;
+          } else if( optInKCPeriod < 2 || optInKCPeriod > 100000 ) {
+             return RetCode.BAD_PARAM;
+          }
+          if( optInFactorWide == REAL_DEFAULT ) {
+             optInFactorWide = 2e0;
+          } else if( !(optInFactorWide >= 0e0 && optInFactorWide <= REAL_MAX) ) {
+             return RetCode.BAD_PARAM;
+          }
+          if( optInFactorNormal == REAL_DEFAULT ) {
+             optInFactorNormal = 1.5e0;
+          } else if( !(optInFactorNormal >= 0e0 && optInFactorNormal <= REAL_MAX) ) {
+             return RetCode.BAD_PARAM;
+          }
+          if( optInFactorNarrow == REAL_DEFAULT ) {
+             optInFactorNarrow = 1e0;
+          } else if( !(optInFactorNarrow >= 0e0 && optInFactorNarrow <= REAL_MAX) ) {
+             return RetCode.BAD_PARAM;
+          }
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.INSUFFICIENT_HISTORY;
+          }
+          if( historyLen < sqzmomLookback(optInBBPeriod, optInNbDev, optInKCPeriod, optInFactorWide, optInFactorNormal, optInFactorNarrow) + 1 ) {
+             return RetCode.INSUFFICIENT_HISTORY;
+          }
+          double[] sc_outMomentum = outStride == 1 ? outMomentum : new double[historyLen];
+          int[] sc_outSqueeze = outStride == 1 ? outSqueeze : new int[historyLen];
+          /* Each rolling statistic is a call to the shipped function, so it carries
+           * that function's own arithmetic bit for bit:
+           *
+           *   BBU, BBL = sma(close, b) +/- nbdev * stddev(close, b, 1.0)
+           *   KCM      = sma(close, k)
+           *   BAND     = sma(trange(high,low,close), k)      the simple mean of TR
+           *   DMID     = midprice(high, low, k)
+           *   DEV      = close - (DMID + KCM)/2
+           *   momentum = linearreg(DEV, k)
+           *
+           * A composed sub-call cannot be handed an MA-type constant, so the bands
+           * are the sma + stddev pair and not a bbands call.
+           *
+           * Two chains need their input one window earlier than the first output bar:
+           * sma(k) over TR, and linearreg(k) over DEV. Both windows are k-1 long, so
+           * one staged range serves both.
+           */
+          /* A channel wider than the one it should nest in breaks the ladder: a bar
+           * could then be inside "narrow" and outside "normal". Ties are allowed, and
+           * wide == normal is the classic on/off/none squeeze.
+           */
+          if( optInFactorNormal > optInFactorWide || optInFactorNarrow > optInFactorNormal ) {
+             return RetCode.BAD_PARAM ;
+          }
+          lookbackTotal = sqzmomLookback(optInBBPeriod, optInNbDev, optInKCPeriod, optInFactorWide, optInFactorNormal, optInFactorNarrow);
+          if( lookbackTotal > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.INSUFFICIENT_HISTORY ;
+          }
+          if( startIdx < lookbackTotal ) {
+             startIdx = lookbackTotal;
+          }
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.INSUFFICIENT_HISTORY ;
+          }
+          n = endIdx - startIdx + 1;
+          stageLookback = linearregLookback(optInKCPeriod);
+          stageIdx = startIdx - stageLookback;
+          stageLen = n + stageLookback;
+          tempDev = new double[(int)(stageLen * 1)];
+          tempWork = new double[(int)(stageLen * 1)];
+          tempKCM = new double[(int)(n * 1)];
+          tempMid = new double[(int)(n * 1)];
+          tempSD = new double[(int)(n * 1)];
+          /* The momentum anchor: the Donchian midpoint and the Keltner centre, averaged.
+           * midprice is bit-identical to donchian's middle band.
+           */
+          /* Sub-stream 0: midprice over `inHigh, inLow`, warmed from bar 0 up to the
+           * sub-call's own startIdx (the seeding point). */
+          MidpriceStream sub0 = midpriceOpenAndFillInternal(inHigh, inLow, stageIdx, optInKCPeriod, outBegIdx, outNBElement, tempDev);
+          retCode = RetCode.SUCCESS;
+          /* Sub-stream 1: sma over `inClose`, warmed from bar 0 up to the
+           * sub-call's own startIdx (the seeding point). */
+          SmaStream sub1 = smaOpenAndFillInternal(inClose, stageIdx, optInKCPeriod, tempBegIdx, tempNbElement, tempWork);
+          retCode = RetCode.SUCCESS;
+          /* DEV, over the staged range. The close is read at the index midprice
+           * reported for the range, which is what lets this loop stream: keep
+           * outBegIdx as midprice's receiver, and reuse it for no call above here.
+           */
+          for( i = 0; i < stageLen; i += 1 ) {
+             tempDev[i] = inClose[outBegIdx.value + i] - (tempDev[i] + tempWork[i]) / 2.0;
+          }
+          /* The compression band: the simple mean of the true range, not an ATR.
+           * trange's own lookback is 1, and stageIdx is at least 1 because the
+           * compression chain alone puts lookbackTotal at k or more.
+           */
+          /* Sub-stream 2: trange over `inHigh, inLow, inClose`, warmed from bar 0 up to the
+           * sub-call's own startIdx (the seeding point). */
+          TrangeStream sub2 = trangeOpenAndFillInternal(inHigh, inLow, inClose, stageIdx, tempBegIdx, tempNbElement, tempWork);
+          retCode = RetCode.SUCCESS;
+          /* Sub-stream 3: sma over `tempWork`, warmed from bar 0 up to the
+           * sub-call's own startIdx (the seeding point). */
+          SmaStream sub3 = smaOpenInternal(java.util.Arrays.copyOfRange(tempWork, 0, (stageLen - 1) + 1), 0, optInKCPeriod);
+          OutRange _xr0 = sma(0, stageLen - 1, tempWork, optInKCPeriod, tempWork);
+          tempBegIdx.value = _xr0.begIdx();
+          tempNbElement.value = _xr0.count();
+          retCode = RetCode.SUCCESS;
+          /* Sub-stream 4: sma over `inClose`, warmed from bar 0 up to the
+           * sub-call's own startIdx (the seeding point). */
+          SmaStream sub4 = smaOpenAndFillInternal(inClose, startIdx, optInBBPeriod, tempBegIdx, tempNbElement, tempMid);
+          retCode = RetCode.SUCCESS;
+          /* Sub-stream 5: stddev over `inClose`, warmed from bar 0 up to the
+           * sub-call's own startIdx (the seeding point). */
+          StddevStream sub5 = stddevOpenAndFillInternal(inClose, startIdx, optInBBPeriod, 1.0, tempBegIdx, tempNbElement, tempSD);
+          retCode = RetCode.SUCCESS;
+          /* Sub-stream 6: sma over `inClose`, warmed from bar 0 up to the
+           * sub-call's own startIdx (the seeding point). */
+          SmaStream sub6 = smaOpenAndFillInternal(inClose, startIdx, optInKCPeriod, tempBegIdx, tempNbElement, tempKCM);
+          retCode = RetCode.SUCCESS;
+          /* LAST of the calls, because it is the first to write a caller buffer. Every
+           * read of high, low and close is above it, so an output aliased onto one of
+           * them -- which the abstract layer tests on purpose -- is still intact when it
+           * is read.
+           *
+           * The regression window closes on the first output bar, so entering it at 0 of
+           * the staged range puts its first fitted value on startIdx.
+           */
+          /* Sub-stream 7: linearreg over `tempDev`, warmed from bar 0 up to the
+           * sub-call's own startIdx (the seeding point). */
+          LinearregStream sub7 = linearregOpenAndFillInternal(java.util.Arrays.copyOfRange(tempDev, 0, (stageLen - 1) + 1), 0, optInKCPeriod, tempBegIdx, tempNbElement, sc_outMomentum);
+          retCode = RetCode.SUCCESS;
+          /* The ordinal. Every comparison is strict: a band exactly on a channel
+           * edge is not inside that channel and not outside it either.
+           *
+           * Keep the deviation a rounded product added to and subtracted from the
+           * middle band, as bbands does. Written as one expression per band, the
+           * upper one contracts into a fused multiply-add and the lower one cannot,
+           * and a band within one ulp of an edge then changes level.
+           */
+          for( i = 0; i < n; i += 1 ) {
+             dev = tempSD[i] * optInNbDev;
+             up = tempMid[i] + dev;
+             lo = tempMid[i] - dev;
+             centre = tempKCM[i];
+             band = tempWork[i];
+             if( lo > centre - optInFactorNarrow * band && up < centre + optInFactorNarrow * band ) {
+                sc_outSqueeze[i] = 3;
+             } else if( lo > centre - optInFactorNormal * band && up < centre + optInFactorNormal * band ) {
+                sc_outSqueeze[i] = 2;
+             } else if( lo > centre - optInFactorWide * band && up < centre + optInFactorWide * band ) {
+                sc_outSqueeze[i] = 1;
+             } else if( lo < centre - optInFactorWide * band && up > centre + optInFactorWide * band ) {
+                sc_outSqueeze[i] = -1;
+             } else {
+                sc_outSqueeze[i] = 0;
+             }
+          }
+          outBegIdx.value = startIdx;
+          outNBElement.value = n;
+          /* Capture the live producer state + sub handles. */
+          if( outNBElement.value < 1 ) {
+             return RetCode.INSUFFICIENT_HISTORY;
+          }
+          sp.optInBBPeriod = optInBBPeriod;
+          sp.optInNbDev = optInNbDev;
+          sp.optInKCPeriod = optInKCPeriod;
+          sp.optInFactorWide = optInFactorWide;
+          sp.optInFactorNormal = optInFactorNormal;
+          sp.optInFactorNarrow = optInFactorNarrow;
+          sp.sub0 = sub0;
+          sp.sub1 = sub1;
+          sp.sub2 = sub2;
+          sp.sub3 = sub3;
+          sp.sub4 = sub4;
+          sp.sub5 = sub5;
+          sp.sub6 = sub6;
+          sp.sub7 = sub7;
+          sp.cur_outMomentum = sc_outMomentum[outNBElement.value - 1];
+          sp.cur_outSqueeze = sc_outSqueeze[outNBElement.value - 1];
+          return RetCode.SUCCESS;
+       }
+       /* sqzmomOpenAndFill anchored at startIdx — the composed-open fusion seam. */
+       SqzmomStream sqzmomOpenAndFillInternal( double inHigh[], double inLow[], double inClose[], int startIdx, int optInBBPeriod, double optInNbDev, int optInKCPeriod, double optInFactorWide, double optInFactorNormal, double optInFactorNarrow, MInteger outBegIdx, MInteger outNBElement, double outMomentum[], int outSqueeze[] )
+       {
+          SqzmomStream sp = new SqzmomStream(this);
+          RetCode retCode = sqzmomOpenImpl(sp, inHigh, inLow, inClose, startIdx, optInBBPeriod, optInNbDev, optInKCPeriod, optInFactorWide, optInFactorNormal, optInFactorNarrow, outBegIdx, outNBElement, outMomentum, outSqueeze, 1);
+          sp.outRangeBegIdx = outBegIdx.value;
+          sp.outRangeCount = outNBElement.value;
+          if( retCode == RetCode.SUCCESS ) {
+             return sp;
+          }
+          if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
+             throw insufficientHistory("SQZMOM openAndFill", inHigh.length, startIdx, sqzmomLookback(optInBBPeriod, optInNbDev, optInKCPeriod, optInFactorWide, optInFactorNormal, optInFactorNarrow));
+          }
+          throw streamFailure("SQZMOM openAndFill", retCode);
+       }
+       /* Internal startIdx-anchored open behind sqzmomOpen (composition seam). */
+       SqzmomStream sqzmomOpenInternal( double inHigh[], double inLow[], double inClose[], int startIdx, int optInBBPeriod, double optInNbDev, int optInKCPeriod, double optInFactorWide, double optInFactorNormal, double optInFactorNarrow )
+       {
+          SqzmomStream sp = new SqzmomStream(this);
+          MInteger outBegIdx = new MInteger();
+          MInteger outNBElement = new MInteger();
+          double[] sink_outMomentum = new double[1];
+          int[] sink_outSqueeze = new int[1];
+          RetCode retCode = sqzmomOpenImpl(sp, inHigh, inLow, inClose, startIdx, optInBBPeriod, optInNbDev, optInKCPeriod, optInFactorWide, optInFactorNormal, optInFactorNarrow, outBegIdx, outNBElement, sink_outMomentum, sink_outSqueeze, 0);
+          sp.outRangeBegIdx = outBegIdx.value;
+          sp.outRangeCount = outNBElement.value;
+          if( retCode == RetCode.SUCCESS ) {
+             return sp;
+          }
+          if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
+             throw insufficientHistory("SQZMOM open", inHigh.length, startIdx, sqzmomLookback(optInBBPeriod, optInNbDev, optInKCPeriod, optInFactorWide, optInFactorNormal, optInFactorNarrow));
+          }
+          throw streamFailure("SQZMOM open", retCode);
+       }
+       /**
+        * Open a live SQZMOM stream over the warm-up history; the handle's
+        * {@code value()} starts at the last history bar's value — bit-identical
+        * to {@link Core#sqzmom} at that bar.
+        * <p>The history must hold at least {@code sqzmomLookback(...) + 1} bars
+        * (unstable-period aware), or {@link InsufficientHistoryException} is
+        * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
+        * ({@link Integer#MIN_VALUE} and {@link Core#REAL_DEFAULT} select a
+        * parameter's documented default, as in the batch API). An EMPTY history throws
+        * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
+        * names no bar — and a null argument {@link IllegalArgumentException},
+        * both ahead of everything above.
+        */
+       public SqzmomStream sqzmomOpen( double inHigh[], double inLow[], double inClose[], int optInBBPeriod, double optInNbDev, int optInKCPeriod, double optInFactorWide, double optInFactorNormal, double optInFactorNarrow )
+       {
+          requireArgument("SQZMOM open", "inHigh", inHigh);
+          requireHistory("SQZMOM open", inHigh.length);
+          requireArgument("SQZMOM open", "inLow", inLow);
+          requireArgument("SQZMOM open", "inClose", inClose);
+          requireHistoryLength("SQZMOM open", "inLow", inLow.length, inHigh.length);
+          requireHistoryLength("SQZMOM open", "inClose", inClose.length, inHigh.length);
+          return sqzmomOpenInternal(inHigh, inLow, inClose, 0, optInBBPeriod, optInNbDev, optInKCPeriod, optInFactorWide, optInFactorNormal, optInFactorNarrow);
+       }
+       /**
+        * {@link Core#sqzmomOpen} that also fills the output array(s) bit-identically
+        * to {@link Core#sqzmom} over the whole history in the same single pass
+        * (no separate batch call needed for the warm-up plot). Output arrays must
+        * not alias the inputs or each other, and must hold
+        * {@code historyLen - lookback} values — both checked before anything is
+        * written, so an undersized array is an {@link IllegalArgumentException}
+        * naming it rather than a fault from inside the fill.
+        * <p>The range written is on the returned handle:
+        * {@link SqzmomStream#outRange()}.
+        */
+       public SqzmomStream sqzmomOpenAndFill( double inHigh[], double inLow[], double inClose[], int optInBBPeriod, double optInNbDev, int optInKCPeriod, double optInFactorWide, double optInFactorNormal, double optInFactorNarrow, double outMomentum[], int outSqueeze[] )
+       {
+          requireArgument("SQZMOM openAndFill", "inHigh", inHigh);
+          requireHistory("SQZMOM openAndFill", inHigh.length);
+          requireArgument("SQZMOM openAndFill", "inLow", inLow);
+          requireArgument("SQZMOM openAndFill", "inClose", inClose);
+          int guardOutLen = openFillCount("SQZMOM openAndFill", inHigh.length, sqzmomLookback(optInBBPeriod, optInNbDev, optInKCPeriod, optInFactorWide, optInFactorNormal, optInFactorNarrow));
+          requireHistoryLength("SQZMOM openAndFill", "inLow", inLow.length, inHigh.length);
+          requireHistoryLength("SQZMOM openAndFill", "inClose", inClose.length, inHigh.length);
+          requireLength("SQZMOM openAndFill", "outMomentum", outMomentum, guardOutLen);
+          requireLength("SQZMOM openAndFill", "outSqueeze", outSqueeze, guardOutLen);
+          if( (Object)outMomentum == (Object)inHigh || (Object)outMomentum == (Object)inLow || (Object)outMomentum == (Object)inClose || (Object)outSqueeze == (Object)inHigh || (Object)outSqueeze == (Object)inLow || (Object)outSqueeze == (Object)inClose || (Object)outMomentum == (Object)outSqueeze ) {
+             throw streamFailure("SQZMOM openAndFill", RetCode.BAD_PARAM);
+          }
+          MInteger outBegIdx = new MInteger();
+          MInteger outNBElement = new MInteger();
+          return sqzmomOpenAndFillInternal(inHigh, inLow, inClose, 0, optInBBPeriod, optInNbDev, optInKCPeriod, optInFactorWide, optInFactorNormal, optInFactorNarrow, outBegIdx, outNBElement, outMomentum, outSqueeze);
+       }
     /* Schaff Trend Cycle, created by Doug Schaff (FX-Strategy.com), who released
      * its code in "Releasing the Code to the Schaff Trend Cycle", FXStreet.com,
      * February 15, 2008,
@@ -225502,1041 +226815,6 @@ class Core {
      *  Initial  Name/description
      *  -------------------------------------------------------------------
      *  MF       Mario Fortier
-     *  KL       Kevin Lin (@kevinlincg)
-     *  CC       Claude Code (AI assistant)
-     *
-     * Change history:
-     *
-     *  MMDDYY BY     Description
-     *  -------------------------------------------------------------------
-     *  100826 KL,CC  Creation (#487).
-     */
-
-       /**
-        * Number of leading input bars {@link Core#zigzag} consumes before it can
-        * produce its first value.
-        * <p>Equivalently, the index of the first bar with a value when the whole
-        * series is requested. Feed at least {@code lookback + 1} bars to get any
-        * output.
-        *
-        * @param optInSensitivity Minimum move away from the current extreme that
-        *        reverses the leg, in percent (default 5; range 0..100;
-        *        {@link Core#REAL_DEFAULT} selects the default).
-        * @param optInMinTrendLength Minimum number of bars between two pivots
-        *        (default 1; range 1..100000; {@code Integer.MIN_VALUE} selects the
-        *        default).
-        * @return The lookback, or {@code -1} if a parameter is out of range.
-        */
-       public int zigzagLookback( double optInSensitivity, int optInMinTrendLength )
-       {
-          if( optInSensitivity == REAL_DEFAULT ) {
-             optInSensitivity = 5e0;
-          } else if( !(optInSensitivity >= 0e0 && optInSensitivity <= 1e2) ) {
-             return -1;
-          }
-          if( optInMinTrendLength == Integer.MIN_VALUE ) {
-             optInMinTrendLength = 1;
-          } else if( optInMinTrendLength < 1 || optInMinTrendLength > 100000 ) {
-             return -1;
-          }
-          /* The first bar at which a reversal off the seed can fire. The gate counts
-           * from the pivot's OWN bar and the seed is a pivot like any other, so the
-           * earliest reversal is optInMinTrendLength bars after the seed, which sits
-           * that many bars before the first output.
-           *
-           * Independent of the sensitivity: the threshold decides WHETHER a reversal
-           * fires, never how early it may. sar_lookback is the precedent for a
-           * constant lookback whose state is seeded from the bar before startIdx.
-           */
-          return optInMinTrendLength ;
-
-       }
-       /**
-        * How many bars ahead (positive) or behind (negative) of the bar that
-        * computed it a chart draws one output of {@link Core#zigzag}.
-        * <p>Every output of this function is drawn at its own bar, so the answer is
-        * 0.
-        *
-        * @param optInSensitivity Minimum move away from the current extreme that
-        *        reverses the leg, in percent (default 5; range 0..100;
-        *        {@link Core#REAL_DEFAULT} selects the default).
-        * @param optInMinTrendLength Minimum number of bars between two pivots
-        *        (default 1; range 1..100000; {@code Integer.MIN_VALUE} selects the
-        *        default).
-        * @param outputIdx Position of the output in the batch signature, from 0.
-        * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
-        *        out of range or the index names no output.
-        */
-       public int zigzagDisplayShift( double optInSensitivity, int optInMinTrendLength, int outputIdx )
-       {
-          if( zigzagLookback( optInSensitivity, optInMinTrendLength ) < 0 ) {
-             return Integer.MIN_VALUE;
-          }
-          if( outputIdx < 0 || outputIdx >= 3 ) {
-             return Integer.MIN_VALUE;
-          }
-          return 0;
-       }
-       RetCode zigzagImpl( int startIdx,
-                           int endIdx,
-                           double inHigh[],
-                           double inLow[],
-                           double optInSensitivity,
-                           int optInMinTrendLength,
-                           MInteger outBegIdx,
-                           MInteger outNBElement,
-                           double outZigZag[],
-                           int outTrend[],
-                           int outPivotIdx[] )
-       {
-          int lookbackTotal = 0;
-          int today = 0;
-          int outIdx = 0;
-          int trend = 0;
-          int pivotIdx = 0;
-          int barsSincePivot = 0;
-          int barIdx = 0;
-          double s = 0;
-          double up = 0;
-          double dn = 0;
-          double pivot = 0;
-          if( (startIdx < 0) || (startIdx > INDEX_MAX) ) {
-             return RetCode.OUT_OF_RANGE_START_INDEX ;
-          }
-          if( (endIdx < 0) || (endIdx > INDEX_MAX) || (endIdx < startIdx)) {
-             return RetCode.OUT_OF_RANGE_END_INDEX ;
-          }
-          if( optInSensitivity == REAL_DEFAULT ) {
-             optInSensitivity = 5e0;
-          } else if( !(optInSensitivity >= 0e0 && optInSensitivity <= 1e2) ) {
-             return RetCode.BAD_PARAM;
-          }
-          if( optInMinTrendLength == Integer.MIN_VALUE ) {
-             optInMinTrendLength = 1;
-          } else if( optInMinTrendLength < 1 || optInMinTrendLength > 100000 ) {
-             return RetCode.BAD_PARAM;
-          }
-          if( outTrend == outPivotIdx ) {
-             return RetCode.BAD_PARAM ;
-          }
-          lookbackTotal = zigzagLookback(optInSensitivity, optInMinTrendLength);
-          if( startIdx < lookbackTotal ) {
-             startIdx = lookbackTotal;
-          }
-          if( startIdx > endIdx ) {
-             outBegIdx.value = 0;
-             outNBElement.value = 0;
-             return RetCode.SUCCESS ;
-          }
-          /* Percent in, fraction inside. Each factor is rounded once, here, rather
-           * than rebuilt per bar: the threshold is `pivot * up` in binary64, which is
-           * the expression order the oracle uses.
-           */
-          s = optInSensitivity / 100.0;
-          up = 1.0 + s;
-          dn = 1.0 - s;
-          /* The seed: a down leg whose extreme is the low of the bar
-           * optInMinTrendLength before the first output. Because the gate counts the
-           * seed bar like every other pivot, the first reversal can fire exactly at
-           * the first output bar, not one later.
-           */
-          today = startIdx - lookbackTotal;
-          trend = -1;
-          pivot = inLow[today];
-          barIdx = today;
-          pivotIdx = barIdx;
-          barsSincePivot = 0;
-          today = today + 1;
-          outIdx = 0;
-          while( today <= endIdx ) {
-             /* Bars since the pivot's own bar, carried rather than recomputed as
-              * `today - pivotIdx`: a difference of two absolute indices has no meaning
-              * to a stream, which sees one bar at a time. talipp's gate is written the
-              * same way (`len(input) - pivot.position`), and the counter resets with
-              * the pivot so the two expressions are equal at every bar.
-              *
-              * barIdx is the absolute bar number the index output names, carried in
-              * its own right rather than read off the loop cursor. A stream has a
-              * cursor only into its own history, so the cursor cannot survive into the
-              * per-bar transition; outPivotIdx still has to name the bar the pivot
-              * sits on, and this is what lets it.
-              */
-             barsSincePivot = barsSincePivot + 1;
-             barIdx = barIdx + 1;
-             /* Reversal is tested BEFORE extension. On an outside bar that both makes
-              * a new extreme and clears the threshold, the leg reverses and the old
-              * pivot stays where it was; testing extension first would move the pivot
-              * and lose the reversal, which is a whole leg of difference rather than a
-              * rounding.
-              */
-             if( trend == -1 ) {
-                if( inHigh[today] >= pivot * up && barsSincePivot >= optInMinTrendLength ) {
-                   trend = 1;
-                   pivot = inHigh[today];
-                   pivotIdx = barIdx;
-                   barsSincePivot = 0;
-                } else if( inLow[today] <= pivot ) {
-                   /* Ties extend. At an equal price the pivot moves to the LATER bar,
-                    * so outZigZag does not change and outPivotIdx does: that movement
-                    * is the only thing the index output carries and the price output
-                    * cannot.
-                    */
-                   pivot = inLow[today];
-                   pivotIdx = barIdx;
-                   barsSincePivot = 0;
-                }
-             } else if( inLow[today] <= pivot * dn && barsSincePivot >= optInMinTrendLength ) {
-                trend = -1;
-                pivot = inLow[today];
-                pivotIdx = barIdx;
-                barsSincePivot = 0;
-             } else if( inHigh[today] >= pivot ) {
-                pivot = inHigh[today];
-                pivotIdx = barIdx;
-                barsSincePivot = 0;
-             }
-             if( today >= startIdx ) {
-                outZigZag[outIdx] = pivot;
-                outTrend[outIdx] = trend;
-                outPivotIdx[outIdx] = pivotIdx;
-                outIdx = outIdx + 1;
-             }
-             today = today + 1;
-          }
-          outBegIdx.value = startIdx;
-          outNBElement.value = outIdx;
-          return RetCode.SUCCESS ;
-       }
-       RetCode zigzagImpl( int startIdx,
-                           int endIdx,
-                           float inHigh[],
-                           float inLow[],
-                           double optInSensitivity,
-                           int optInMinTrendLength,
-                           MInteger outBegIdx,
-                           MInteger outNBElement,
-                           double outZigZag[],
-                           int outTrend[],
-                           int outPivotIdx[] )
-       {
-          int lookbackTotal = 0;
-          int today = 0;
-          int outIdx = 0;
-          int trend = 0;
-          int pivotIdx = 0;
-          int barsSincePivot = 0;
-          int barIdx = 0;
-          double s = 0;
-          double up = 0;
-          double dn = 0;
-          double pivot = 0;
-          if( (startIdx < 0) || (startIdx > INDEX_MAX) ) {
-             return RetCode.OUT_OF_RANGE_START_INDEX ;
-          }
-          if( (endIdx < 0) || (endIdx > INDEX_MAX) || (endIdx < startIdx)) {
-             return RetCode.OUT_OF_RANGE_END_INDEX ;
-          }
-          if( optInSensitivity == REAL_DEFAULT ) {
-             optInSensitivity = 5e0;
-          } else if( !(optInSensitivity >= 0e0 && optInSensitivity <= 1e2) ) {
-             return RetCode.BAD_PARAM;
-          }
-          if( optInMinTrendLength == Integer.MIN_VALUE ) {
-             optInMinTrendLength = 1;
-          } else if( optInMinTrendLength < 1 || optInMinTrendLength > 100000 ) {
-             return RetCode.BAD_PARAM;
-          }
-          if( outTrend == outPivotIdx ) {
-             return RetCode.BAD_PARAM ;
-          }
-          lookbackTotal = zigzagLookback(optInSensitivity, optInMinTrendLength);
-          if( startIdx < lookbackTotal ) {
-             startIdx = lookbackTotal;
-          }
-          if( startIdx > endIdx ) {
-             outBegIdx.value = 0;
-             outNBElement.value = 0;
-             return RetCode.SUCCESS ;
-          }
-          s = optInSensitivity / 100.0;
-          up = 1.0 + s;
-          dn = 1.0 - s;
-          today = startIdx - lookbackTotal;
-          trend = -1;
-          pivot = (double)inLow[today];
-          barIdx = today;
-          pivotIdx = barIdx;
-          barsSincePivot = 0;
-          today = today + 1;
-          outIdx = 0;
-          while( today <= endIdx ) {
-             barsSincePivot = barsSincePivot + 1;
-             barIdx = barIdx + 1;
-             if( trend == -1 ) {
-                if( (double)inHigh[today] >= pivot * up && barsSincePivot >= optInMinTrendLength ) {
-                   trend = 1;
-                   pivot = (double)inHigh[today];
-                   pivotIdx = barIdx;
-                   barsSincePivot = 0;
-                } else if( (double)inLow[today] <= pivot ) {
-                   pivot = (double)inLow[today];
-                   pivotIdx = barIdx;
-                   barsSincePivot = 0;
-                }
-             } else if( (double)inLow[today] <= pivot * dn && barsSincePivot >= optInMinTrendLength ) {
-                trend = -1;
-                pivot = (double)inLow[today];
-                pivotIdx = barIdx;
-                barsSincePivot = 0;
-             } else if( (double)inHigh[today] >= pivot ) {
-                pivot = (double)inHigh[today];
-                pivotIdx = barIdx;
-                barsSincePivot = 0;
-             }
-             if( today >= startIdx ) {
-                outZigZag[outIdx] = pivot;
-                outTrend[outIdx] = trend;
-                outPivotIdx[outIdx] = pivotIdx;
-                outIdx = outIdx + 1;
-             }
-             today = today + 1;
-          }
-          outBegIdx.value = startIdx;
-          outNBElement.value = outIdx;
-          return RetCode.SUCCESS ;
-       }
-       /**
-        * The percent-filter swing line. A leg runs from the last confirmed pivot to
-        * the most extreme price since it, and it reverses only when price moves at
-        * least {@code optInSensitivity} percent away from that extreme and at least
-        * {@code optInMinTrendLength} bars have passed since the pivot's own bar.
-        * Achelis describes the chart form and warns that <i>"the last 'leg'
-        * displayed in a Zig Zag chart can change"</i>. This function does not emit
-        * the chart line, which is drawn with hindsight. It emits the causal state
-        * the line is drawn from, one row per bar and final once emitted: the price
-        * of the swing extreme currently being tracked, the absolute bar index of
-        * that extreme, and whether the current leg is up or down. The chart is
-        * rebuilt exactly from the outputs. A pivot is confirmed at bar
-        * {@code i &gt; outBegIdx} whenever {@code outTrend[i]} differs from
-        * {@code outTrend[i-1]}, and that pivot is
-        * {@code (outPivotIdx[i-1], outZigZag[i-1])}. The last, still-open pivot is
-        * {@code (outPivotIdx[last], outZigZag[last])} — the leg Achelis warns
-        * about.
-        * <p>Formula and more info at <a
-        * href="https://ta-lib.org/functions/zigzag">ta-lib.org/functions/zigzag</a>.
-        * <p><b>Notes</b>
-        * <ul>
-        * <li><b>Reversal is tested before extension.</b> On an outside bar that both makes a new extreme and clears the threshold, the leg reverses and the old pivot stays where it was. The other order moves the pivot to the new extreme and defers the reversal to the next bar, against a threshold that has just moved further away: on the 252-bar regtest corpus at 5 percent that costs one bar (R TTR, which takes that order, places the swing low at 148 where this places it at 147), but a range narrower than the sensitivity after the outside bar keeps it from ever firing, and the leg is then lost rather than delayed.</li>
-        * <li><b>Ties extend.</b> The comparisons are {@code &lt;=} and {@code &gt;=}, so at an equal price the pivot moves to the later bar: {@code outZigZag} does not change and {@code outPivotIdx} does. That movement is the only thing the index output carries and the price output cannot.</li>
-        * <li><b>The gate counts from the pivot's own bar, the seed included.</b> No reversal can fire before the first output bar; the first one can fire exactly there.</li>
-        * <li><b>The seed is a low.</b> A series that only rises therefore reports an up leg from its first reversal and never returns to a down leg.</li>
-        * <li>The lookback is {@code optInMinTrendLength} and does not depend on the sensitivity: the threshold decides whether a reversal fires, never how early it may.</li>
-        * <li>{@code optInSensitivity} is a percent, as Achelis, StockCharts, TTR, Skender and TradingView take it. 0 and 1 are degenerate but defined: at 0 a reversal fires on almost every bar the gate allows, and at 100 no downward reversal fires on positive prices.</li>
-        * <li>The value at a bar depends on where the caller started, through the seed; the function is {@code path_dependent} for that reason, as SAR and SUPERTREND are.</li>
-        * </ul>
-        * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are, and the
-        * library never pads with NaN. A valid range that ends before
-        * {@link Core#zigzagLookback} is a <b>success with no values</b>
-        * ({@code count() == 0}), not an error.
-        *
-        * @param startIdx First bar of the requested range (inclusive).
-        * @param endIdx Last bar of the requested range (inclusive).
-        * @param inHigh High price of each bar.
-        * @param inLow Low price of each bar.
-        * @param optInSensitivity Minimum move away from the current extreme that
-        *        reverses the leg, in percent (default 5; range 0..100;
-        *        {@link Core#REAL_DEFAULT} selects the default).
-        * @param optInMinTrendLength Minimum number of bars between two pivots
-        *        (default 1; range 1..100000; {@code Integer.MIN_VALUE} selects the
-        *        default).
-        * @param outZigZag Price of the swing extreme currently being tracked. Must
-        *        hold at least {@code endIdx - max(startIdx, zigzagLookback(...)) + 1}
-        *        values, and never be empty: an empty array is an absent output.
-        * @param outTrend +1 while the leg is up, -1 while it is down. Must hold at
-        *        least {@code endIdx - max(startIdx, zigzagLookback(...)) + 1} values, and
-        *        never be empty: an empty array is an absent output.
-        * @param outPivotIdx Absolute index, into the input, of the bar that extreme
-        *        sits on. Must hold at least
-        *        {@code endIdx - max(startIdx, zigzagLookback(...)) + 1} values, and never
-        *        be empty: an empty array is an absent output.
-        * @return The range written: {@code begIdx} is the first bar with a value,
-        *        {@code count} how many were written.
-        * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
-        *        negative or above {@link Core#INDEX_MAX}, or {@code endIdx < startIdx}.
-        * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, two outputs share one array, or an array is absent or
-        *        too short for the range requested — any input this function
-        *        <i>declares</i> that does not reach {@code endIdx}, or an output that
-        *        cannot hold the values produced. Declared, not read: a few candlestick
-        *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        *
-        * @see Core#sar
-        * @see Core#supertrend
-        * @see Core#minmaxindex
-        * @see Core#midprice
-        */
-       public OutRange zigzag( int startIdx,
-                               int endIdx,
-                               double inHigh[],
-                               double inLow[],
-                               double optInSensitivity,
-                               int optInMinTrendLength,
-                               double outZigZag[],
-                               int outTrend[],
-                               int outPivotIdx[] )
-       {
-          requireIndexRange("ZIGZAG", startIdx, endIdx);
-          int guardStart = clampedStart("ZIGZAG", startIdx, zigzagLookback(optInSensitivity, optInMinTrendLength));
-          int guardInLen = endIdx + 1;
-          int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
-          requireLength("ZIGZAG", "inHigh", inHigh, guardInLen);
-          requireLength("ZIGZAG", "inLow", inLow, guardInLen);
-          requireLength("ZIGZAG", "outZigZag", outZigZag, guardOutLen);
-          requireLength("ZIGZAG", "outTrend", outTrend, guardOutLen);
-          requireLength("ZIGZAG", "outPivotIdx", outPivotIdx, guardOutLen);
-          MInteger outBegIdx = new MInteger();
-          MInteger outNBElement = new MInteger();
-          RetCode retCode = zigzagImpl(startIdx, endIdx, inHigh, inLow, optInSensitivity, optInMinTrendLength, outBegIdx, outNBElement, outZigZag, outTrend, outPivotIdx);
-          if( retCode != RetCode.SUCCESS ) {
-             throw failure("ZIGZAG", retCode);
-          }
-          return new OutRange(outBegIdx.value, outNBElement.value);
-       }
-       /**
-        * The percent-filter swing line. A leg runs from the last confirmed pivot to
-        * the most extreme price since it, and it reverses only when price moves at
-        * least {@code optInSensitivity} percent away from that extreme and at least
-        * {@code optInMinTrendLength} bars have passed since the pivot's own bar.
-        * Achelis describes the chart form and warns that <i>"the last 'leg'
-        * displayed in a Zig Zag chart can change"</i>. This function does not emit
-        * the chart line, which is drawn with hindsight. It emits the causal state
-        * the line is drawn from, one row per bar and final once emitted: the price
-        * of the swing extreme currently being tracked, the absolute bar index of
-        * that extreme, and whether the current leg is up or down. The chart is
-        * rebuilt exactly from the outputs. A pivot is confirmed at bar
-        * {@code i &gt; outBegIdx} whenever {@code outTrend[i]} differs from
-        * {@code outTrend[i-1]}, and that pivot is
-        * {@code (outPivotIdx[i-1], outZigZag[i-1])}. The last, still-open pivot is
-        * {@code (outPivotIdx[last], outZigZag[last])} — the leg Achelis warns
-        * about.
-        * <p>Formula and more info at <a
-        * href="https://ta-lib.org/functions/zigzag">ta-lib.org/functions/zigzag</a>.
-        * <p><b>Notes</b>
-        * <ul>
-        * <li><b>Reversal is tested before extension.</b> On an outside bar that both makes a new extreme and clears the threshold, the leg reverses and the old pivot stays where it was. The other order moves the pivot to the new extreme and defers the reversal to the next bar, against a threshold that has just moved further away: on the 252-bar regtest corpus at 5 percent that costs one bar (R TTR, which takes that order, places the swing low at 148 where this places it at 147), but a range narrower than the sensitivity after the outside bar keeps it from ever firing, and the leg is then lost rather than delayed.</li>
-        * <li><b>Ties extend.</b> The comparisons are {@code &lt;=} and {@code &gt;=}, so at an equal price the pivot moves to the later bar: {@code outZigZag} does not change and {@code outPivotIdx} does. That movement is the only thing the index output carries and the price output cannot.</li>
-        * <li><b>The gate counts from the pivot's own bar, the seed included.</b> No reversal can fire before the first output bar; the first one can fire exactly there.</li>
-        * <li><b>The seed is a low.</b> A series that only rises therefore reports an up leg from its first reversal and never returns to a down leg.</li>
-        * <li>The lookback is {@code optInMinTrendLength} and does not depend on the sensitivity: the threshold decides whether a reversal fires, never how early it may.</li>
-        * <li>{@code optInSensitivity} is a percent, as Achelis, StockCharts, TTR, Skender and TradingView take it. 0 and 1 are degenerate but defined: at 0 a reversal fires on almost every bar the gate allows, and at 100 no downward reversal fires on positive prices.</li>
-        * <li>The value at a bar depends on where the caller started, through the seed; the function is {@code path_dependent} for that reason, as SAR and SUPERTREND are.</li>
-        * </ul>
-        * <p>This is the {@code float[]} overload. The arithmetic is performed in
-        * {@code double} before being written to the {@code double[]} output, so a
-        * result beyond {@code float} range is still representable.
-        * <p>Values are written only where the indicator is defined. The returned
-        * {@link OutRange} says where they start and how many there are, and the
-        * library never pads with NaN. A valid range that ends before
-        * {@link Core#zigzagLookback} is a <b>success with no values</b>
-        * ({@code count() == 0}), not an error.
-        *
-        * @param startIdx First bar of the requested range (inclusive).
-        * @param endIdx Last bar of the requested range (inclusive).
-        * @param inHigh High price of each bar.
-        * @param inLow Low price of each bar.
-        * @param optInSensitivity Minimum move away from the current extreme that
-        *        reverses the leg, in percent (default 5; range 0..100;
-        *        {@link Core#REAL_DEFAULT} selects the default).
-        * @param optInMinTrendLength Minimum number of bars between two pivots
-        *        (default 1; range 1..100000; {@code Integer.MIN_VALUE} selects the
-        *        default).
-        * @param outZigZag Price of the swing extreme currently being tracked. Must
-        *        hold at least {@code endIdx - max(startIdx, zigzagLookback(...)) + 1}
-        *        values, and never be empty: an empty array is an absent output.
-        * @param outTrend +1 while the leg is up, -1 while it is down. Must hold at
-        *        least {@code endIdx - max(startIdx, zigzagLookback(...)) + 1} values, and
-        *        never be empty: an empty array is an absent output.
-        * @param outPivotIdx Absolute index, into the input, of the bar that extreme
-        *        sits on. Must hold at least
-        *        {@code endIdx - max(startIdx, zigzagLookback(...)) + 1} values, and never
-        *        be empty: an empty array is an absent output.
-        * @return The range written: {@code begIdx} is the first bar with a value,
-        *        {@code count} how many were written.
-        * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
-        *        negative or above {@link Core#INDEX_MAX}, or {@code endIdx < startIdx}.
-        * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, two outputs share one array, or an array is absent or
-        *        too short for the range requested — any input this function
-        *        <i>declares</i> that does not reach {@code endIdx}, or an output that
-        *        cannot hold the values produced. Declared, not read: a few candlestick
-        *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        *
-        * @see Core#sar
-        * @see Core#supertrend
-        * @see Core#minmaxindex
-        * @see Core#midprice
-        */
-       public OutRange zigzag( int startIdx,
-                               int endIdx,
-                               float inHigh[],
-                               float inLow[],
-                               double optInSensitivity,
-                               int optInMinTrendLength,
-                               double outZigZag[],
-                               int outTrend[],
-                               int outPivotIdx[] )
-       {
-          requireIndexRange("ZIGZAG", startIdx, endIdx);
-          int guardStart = clampedStart("ZIGZAG", startIdx, zigzagLookback(optInSensitivity, optInMinTrendLength));
-          int guardInLen = endIdx + 1;
-          int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
-          requireLength("ZIGZAG", "inHigh", inHigh, guardInLen);
-          requireLength("ZIGZAG", "inLow", inLow, guardInLen);
-          requireLength("ZIGZAG", "outZigZag", outZigZag, guardOutLen);
-          requireLength("ZIGZAG", "outTrend", outTrend, guardOutLen);
-          requireLength("ZIGZAG", "outPivotIdx", outPivotIdx, guardOutLen);
-          MInteger outBegIdx = new MInteger();
-          MInteger outNBElement = new MInteger();
-          RetCode retCode = zigzagImpl(startIdx, endIdx, inHigh, inLow, optInSensitivity, optInMinTrendLength, outBegIdx, outNBElement, outZigZag, outTrend, outPivotIdx);
-          if( retCode != RetCode.SUCCESS ) {
-             throw failure("ZIGZAG", retCode);
-          }
-          return new OutRange(outBegIdx.value, outNBElement.value);
-       }
-    /**** Streaming API *****/
-
-       /**
-        * A live ZIGZAG stream (unrelated to {@code java.util.stream}): one value per
-        * closed bar, bit-identical to {@link Core#zigzag} over the same series.
-        * Open with {@link Core#zigzagOpen}; there is no close — the handle is
-        * ordinary heap state, unreferenced handles are simply garbage-collected.
-        * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
-        * {@code value} and {@code clone} must not race with an {@code update} on
-        * the same handle. With no concurrent {@code update}, {@code peek}/
-        * {@code value}/{@code clone} never write the stream and may be called
-        * concurrently after safe publication. Independent streams (a
-        * {@code clone()} result included) are fully independent.
-        * <p>Not serializable by design: to checkpoint, retain the history and
-        * re-open — the result is bit-identical by contract.
-        */
-       public static final class ZigzagStream {
-          private Core core;
-          private double optInSensitivity;
-          private int optInMinTrendLength;
-          private int trend;
-          private int pivotIdx;
-          private int barsSincePivot;
-          private int barIdx;
-          private double up;
-          private double dn;
-          private double pivot;
-          private double cur_outZigZag;
-          private int cur_outTrend;
-          private int cur_outPivotIdx;
-          private int outRangeBegIdx;
-          private int outRangeCount;
-
-          private ZigzagStream( Core core ) { this.core = core; }
-
-          /**
-           * The bars this stream has an output for, in the input series'
-           * coordinates: {@code [begIdx, begIdx + count)}.
-           * <p>It is what {@link Core#zigzag} reports over the same bars: the
-           * opener sets it to {@code (lookback, historyLen - lookback)}, every
-           * accepted {@code update} adds one to the count — a rejected one
-           * changes nothing, and neither does {@code peek} — and
-           * {@code clone()} carries it verbatim. A plain
-           * {@code open} hands back only the last value, a subset of this range,
-           * because the caller chose not to take the fill.
-           * <p>The last bar it can reach is {@link Core#INDEX_MAX}; past that
-           * {@code update} and {@code advance} throw
-           * {@link IndexOutOfBoundsException}.
-           */
-          public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
-
-          /**
-           * Count one bar this stream was not fed: {@link #outRange()} advances
-           * by one and nothing else moves — {@link #value(ZigzagOut)} keeps answering the previous
-           * output, which is this bar's output too.
-           * <p>For a bar the caller leaves out: one an {@code update} rejected
-           * and that will not be re-fed, or a session with no print. Without it
-           * two handles on one feed drift a bar apart when only one of them skips.
-           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
-           * has reached bar {@link Core#INDEX_MAX}, the last one the batch tier
-           * can address and the last this handle will count. {@code update}
-           * throws the same there.
-           */
-          public void advance() {
-             if( this.outRangeBegIdx + this.outRangeCount > INDEX_MAX )
-                throw failure("ZIGZAG advance", RetCode.OUT_OF_RANGE_END_INDEX);
-             this.outRangeCount++;
-          }
-
-          private ZigzagStream( ZigzagStream other ) {
-             this.core = other.core;
-             this.optInSensitivity = other.optInSensitivity;
-             this.optInMinTrendLength = other.optInMinTrendLength;
-             this.trend = other.trend;
-             this.pivotIdx = other.pivotIdx;
-             this.barsSincePivot = other.barsSincePivot;
-             this.barIdx = other.barIdx;
-             this.up = other.up;
-             this.dn = other.dn;
-             this.pivot = other.pivot;
-             this.cur_outZigZag = other.cur_outZigZag;
-             this.cur_outTrend = other.cur_outTrend;
-             this.cur_outPivotIdx = other.cur_outPivotIdx;
-             this.outRangeBegIdx = other.outRangeBegIdx;
-             this.outRangeCount = other.outRangeCount;
-          }
-
-          /**
-           * Commit one closed bar, writing the new current values into the {@code out} the CALLER owns.
-           * <p>Throws {@link IllegalArgumentException} if any bar value is not
-           * finite (NaN or an infinity). That check runs before anything is
-           * written, so nothing moves — {@link #outRange()} included — and
-           * {@link #value(ZigzagOut)} still answers the previous value. Re-feed the bar when a
-           * corrected value arrives, or call {@link #advance()} to count it and
-           * carry on; two handles on one feed drift a bar apart if neither
-           * happens.
-           * This is the one place the streaming tier is stricter than
-           * the batch API, which computes on whatever it is given: a handle
-           * retains its state, so a single non-finite bar would poison every
-           * later value it produces.
-           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
-           * has reached bar {@link Core#INDEX_MAX}, which no re-feed clears: the
-           * handle has run out of index domain and only a shorter history can
-           * start a new one.
-           */
-          public void update( double inHigh, double inLow, ZigzagOut out ) {
-             if( this.outRangeBegIdx + this.outRangeCount > INDEX_MAX )
-                throw failure("ZIGZAG update", RetCode.OUT_OF_RANGE_END_INDEX);
-             requireArgument("ZIGZAG update", "out", out);
-             if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) )
-                throw nonFiniteBar("ZIGZAG update", !Double.isFinite(inHigh) ? "inHigh" : "inLow");
-             core.zigzagStepImpl(this, inHigh, inLow);
-             this.outRangeCount++;
-             out.zigZag = this.cur_outZigZag;
-             out.trend = this.cur_outTrend;
-             out.pivotIdx = this.cur_outPivotIdx;
-          }
-
-          /**
-           * Evaluate a forming bar without committing — bit-identical to what the
-           * next {@code update} with the same bar would write — the same
-           * transition, with every store it would make carried in a local instead.
-           * Never writes this handle, so peeks may run concurrently with each other.
-           * <p>It counts no bar, so it keeps answering past the
-           * {@link Core#INDEX_MAX} ceiling {@code update} stops at.
-           */
-          public void peek( double inHigh, double inLow, ZigzagOut out ) {
-             requireArgument("ZIGZAG peek", "out", out);
-             if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) )
-                throw nonFiniteBar("ZIGZAG peek", !Double.isFinite(inHigh) ? "inHigh" : "inLow");
-             ZigzagStream sp = this;
-             int barIdx = sp.barIdx;
-             int barsSincePivot = sp.barsSincePivot;
-             int cur_outPivotIdx = 0;
-             int cur_outTrend = 0;
-             double cur_outZigZag = 0.0;
-             double pivot = sp.pivot;
-             int pivotIdx = sp.pivotIdx;
-             int trend = sp.trend;
-             /* Bars since the pivot's own bar, carried rather than recomputed as
-              * `today - pivotIdx`: a difference of two absolute indices has no meaning
-              * to a stream, which sees one bar at a time. talipp's gate is written the
-              * same way (`len(input) - pivot.position`), and the counter resets with
-              * the pivot so the two expressions are equal at every bar.
-              *
-              * barIdx is the absolute bar number the index output names, carried in
-              * its own right rather than read off the loop cursor. A stream has a
-              * cursor only into its own history, so the cursor cannot survive into the
-              * per-bar transition; outPivotIdx still has to name the bar the pivot
-              * sits on, and this is what lets it.
-              */
-             barsSincePivot = barsSincePivot + 1;
-             barIdx = barIdx + 1;
-             /* Reversal is tested BEFORE extension. On an outside bar that both makes
-              * a new extreme and clears the threshold, the leg reverses and the old
-              * pivot stays where it was; testing extension first would move the pivot
-              * and lose the reversal, which is a whole leg of difference rather than a
-              * rounding.
-              */
-             if( trend == -1 ) {
-                if( inHigh >= pivot * sp.up && barsSincePivot >= sp.optInMinTrendLength ) {
-                   trend = 1;
-                   pivot = inHigh;
-                   pivotIdx = barIdx;
-                   barsSincePivot = 0;
-                } else if( inLow <= pivot ) {
-                   /* Ties extend. At an equal price the pivot moves to the LATER bar,
-                    * so outZigZag does not change and outPivotIdx does: that movement
-                    * is the only thing the index output carries and the price output
-                    * cannot.
-                    */
-                   pivot = inLow;
-                   pivotIdx = barIdx;
-                   barsSincePivot = 0;
-                }
-             } else if( inLow <= pivot * sp.dn && barsSincePivot >= sp.optInMinTrendLength ) {
-                trend = -1;
-                pivot = inLow;
-                pivotIdx = barIdx;
-                barsSincePivot = 0;
-             } else if( inHigh >= pivot ) {
-                pivot = inHigh;
-                pivotIdx = barIdx;
-                barsSincePivot = 0;
-             }
-             cur_outZigZag = pivot;
-             cur_outTrend = trend;
-             cur_outPivotIdx = pivotIdx;
-             out.zigZag = cur_outZigZag;
-             out.trend = cur_outTrend;
-             out.pivotIdx = cur_outPivotIdx;
-          }
-
-          /**
-           * The value at the last bar this stream counted — the bar
-           * {@link #outRange()} ends on. The last history bar right after open,
-           * then whatever the latest accepted {@code update} wrote.
-           * A pure field read; {@code peek} does not change it. Overwrites {@code out}.
-           */
-          public void value( ZigzagOut out ) {
-             requireArgument("ZIGZAG value", "out", out);
-             out.zigZag = this.cur_outZigZag;
-             out.trend = this.cur_outTrend;
-             out.pivotIdx = this.cur_outPivotIdx;
-          }
-
-          /**
-           * An independent fork of this stream: both evolve separately from here
-           * on. Buffers are copied and sub-streams cloned recursively; the
-           * {@link Core} reference is shared, since a {@code Core} is immutable
-           * for a stream's lifetime.
-           *
-           * <p>Not the {@code Cloneable} protocol: this calls a copy constructor,
-           * never {@code super.clone()}, so it throws nothing.
-           *
-           * @return an independent stream at the same bar
-           */
-          @Override
-          public ZigzagStream clone() {
-             return new ZigzagStream(this);
-          }
-       }
-
-       /**
-        * The outputs of one ZIGZAG bar, written by the stream into an object the
-        * CALLER owns. Allocate one and reuse it: {@code update}, {@code peek}
-        * and {@code value} overwrite its fields, so the sink itself costs
-        * nothing per bar.
-        *
-        * <p><b>Its contents are only valid until the next call that writes it.</b>
-        * It is a mutable buffer, not a reading: a reference kept past that call,
-        * or one put in a collection, sees the value change underneath it. Copy the
-        * fields out if the reading has to outlive the call.
-        *
-        * <p>Deliberately no {@code equals} or {@code hashCode}: a mutable type
-        * with value equality breaks the {@code HashMap}/{@code HashSet}
-        * invariant the moment a reused instance becomes a key. Compare the fields.
-        */
-       public static final class ZigzagOut {
-          /** Price of the swing extreme currently being tracked. */
-          public double zigZag;
-          /** +1 while the leg is up, -1 while it is down. */
-          public int trend;
-          /** Absolute index, into the input, of the bar that extreme sits on. */
-          public int pivotIdx;
-       }
-       private void zigzagStepImpl( ZigzagStream sp, double inHigh, double inLow )
-       {
-          /* Bars since the pivot's own bar, carried rather than recomputed as
-           * `today - pivotIdx`: a difference of two absolute indices has no meaning
-           * to a stream, which sees one bar at a time. talipp's gate is written the
-           * same way (`len(input) - pivot.position`), and the counter resets with
-           * the pivot so the two expressions are equal at every bar.
-           *
-           * barIdx is the absolute bar number the index output names, carried in
-           * its own right rather than read off the loop cursor. A stream has a
-           * cursor only into its own history, so the cursor cannot survive into the
-           * per-bar transition; outPivotIdx still has to name the bar the pivot
-           * sits on, and this is what lets it.
-           */
-          sp.barsSincePivot = sp.barsSincePivot + 1;
-          sp.barIdx = sp.barIdx + 1;
-          /* Reversal is tested BEFORE extension. On an outside bar that both makes
-           * a new extreme and clears the threshold, the leg reverses and the old
-           * pivot stays where it was; testing extension first would move the pivot
-           * and lose the reversal, which is a whole leg of difference rather than a
-           * rounding.
-           */
-          if( sp.trend == -1 ) {
-             if( inHigh >= sp.pivot * sp.up && sp.barsSincePivot >= sp.optInMinTrendLength ) {
-                sp.trend = 1;
-                sp.pivot = inHigh;
-                sp.pivotIdx = sp.barIdx;
-                sp.barsSincePivot = 0;
-             } else if( inLow <= sp.pivot ) {
-                /* Ties extend. At an equal price the pivot moves to the LATER bar,
-                 * so outZigZag does not change and outPivotIdx does: that movement
-                 * is the only thing the index output carries and the price output
-                 * cannot.
-                 */
-                sp.pivot = inLow;
-                sp.pivotIdx = sp.barIdx;
-                sp.barsSincePivot = 0;
-             }
-          } else if( inLow <= sp.pivot * sp.dn && sp.barsSincePivot >= sp.optInMinTrendLength ) {
-             sp.trend = -1;
-             sp.pivot = inLow;
-             sp.pivotIdx = sp.barIdx;
-             sp.barsSincePivot = 0;
-          } else if( inHigh >= sp.pivot ) {
-             sp.pivot = inHigh;
-             sp.pivotIdx = sp.barIdx;
-             sp.barsSincePivot = 0;
-          }
-          sp.cur_outZigZag = sp.pivot;
-          sp.cur_outTrend = sp.trend;
-          sp.cur_outPivotIdx = sp.pivotIdx;
-       }
-       private RetCode zigzagOpenImpl( ZigzagStream sp, double inHigh[], double inLow[], int startIdx, double optInSensitivity, int optInMinTrendLength, MInteger outBegIdx, MInteger outNBElement, double outZigZag[], int outTrend[], int outPivotIdx[], int outStride )
-       {
-          int lookbackTotal = 0;
-          int today = 0;
-          int outIdx = 0;
-          int trend = 0;
-          int pivotIdx = 0;
-          int barsSincePivot = 0;
-          int barIdx = 0;
-          double s = 0;
-          double up = 0;
-          double dn = 0;
-          double pivot = 0;
-          int historyLen = inHigh.length;
-          int endIdx = historyLen - 1;
-          if( historyLen < 1 ) {
-             return RetCode.OUT_OF_RANGE_START_INDEX;
-          }
-          if( historyLen > INDEX_MAX + 1 ) {
-             return RetCode.OUT_OF_RANGE_END_INDEX;
-          }
-          if( inLow.length != inHigh.length ) {
-             return RetCode.BAD_PARAM;
-          }
-          if( optInSensitivity == REAL_DEFAULT ) {
-             optInSensitivity = 5e0;
-          } else if( !(optInSensitivity >= 0e0 && optInSensitivity <= 1e2) ) {
-             return RetCode.BAD_PARAM;
-          }
-          if( optInMinTrendLength == Integer.MIN_VALUE ) {
-             optInMinTrendLength = 1;
-          } else if( optInMinTrendLength < 1 || optInMinTrendLength > 100000 ) {
-             return RetCode.BAD_PARAM;
-          }
-          if( startIdx > endIdx ) {
-             outBegIdx.value = 0;
-             outNBElement.value = 0;
-             return RetCode.INSUFFICIENT_HISTORY;
-          }
-          lookbackTotal = zigzagLookback(optInSensitivity, optInMinTrendLength);
-          if( startIdx < lookbackTotal ) {
-             startIdx = lookbackTotal;
-          }
-          if( startIdx > endIdx ) {
-             outBegIdx.value = 0;
-             outNBElement.value = 0;
-             return RetCode.INSUFFICIENT_HISTORY ;
-          }
-          /* Percent in, fraction inside. Each factor is rounded once, here, rather
-           * than rebuilt per bar: the threshold is `pivot * up` in binary64, which is
-           * the expression order the oracle uses.
-           */
-          s = optInSensitivity / 100.0;
-          up = 1.0 + s;
-          dn = 1.0 - s;
-          /* The seed: a down leg whose extreme is the low of the bar
-           * optInMinTrendLength before the first output. Because the gate counts the
-           * seed bar like every other pivot, the first reversal can fire exactly at
-           * the first output bar, not one later.
-           */
-          today = startIdx - lookbackTotal;
-          trend = -1;
-          pivot = inLow[today];
-          barIdx = today;
-          pivotIdx = barIdx;
-          barsSincePivot = 0;
-          today = today + 1;
-          outIdx = 0;
-          while( today <= endIdx ) {
-             /* Bars since the pivot's own bar, carried rather than recomputed as
-              * `today - pivotIdx`: a difference of two absolute indices has no meaning
-              * to a stream, which sees one bar at a time. talipp's gate is written the
-              * same way (`len(input) - pivot.position`), and the counter resets with
-              * the pivot so the two expressions are equal at every bar.
-              *
-              * barIdx is the absolute bar number the index output names, carried in
-              * its own right rather than read off the loop cursor. A stream has a
-              * cursor only into its own history, so the cursor cannot survive into the
-              * per-bar transition; outPivotIdx still has to name the bar the pivot
-              * sits on, and this is what lets it.
-              */
-             barsSincePivot = barsSincePivot + 1;
-             barIdx = barIdx + 1;
-             /* Reversal is tested BEFORE extension. On an outside bar that both makes
-              * a new extreme and clears the threshold, the leg reverses and the old
-              * pivot stays where it was; testing extension first would move the pivot
-              * and lose the reversal, which is a whole leg of difference rather than a
-              * rounding.
-              */
-             if( trend == -1 ) {
-                if( inHigh[today] >= pivot * up && barsSincePivot >= optInMinTrendLength ) {
-                   trend = 1;
-                   pivot = inHigh[today];
-                   pivotIdx = barIdx;
-                   barsSincePivot = 0;
-                } else if( inLow[today] <= pivot ) {
-                   /* Ties extend. At an equal price the pivot moves to the LATER bar,
-                    * so outZigZag does not change and outPivotIdx does: that movement
-                    * is the only thing the index output carries and the price output
-                    * cannot.
-                    */
-                   pivot = inLow[today];
-                   pivotIdx = barIdx;
-                   barsSincePivot = 0;
-                }
-             } else if( inLow[today] <= pivot * dn && barsSincePivot >= optInMinTrendLength ) {
-                trend = -1;
-                pivot = inLow[today];
-                pivotIdx = barIdx;
-                barsSincePivot = 0;
-             } else if( inHigh[today] >= pivot ) {
-                pivot = inHigh[today];
-                pivotIdx = barIdx;
-                barsSincePivot = 0;
-             }
-             if( today >= startIdx ) {
-                outZigZag[outIdx * outStride] = pivot;
-                outTrend[outIdx * outStride] = trend;
-                outPivotIdx[outIdx * outStride] = pivotIdx;
-                outIdx = outIdx + 1;
-             }
-             today = today + 1;
-          }
-          outBegIdx.value = startIdx;
-          outNBElement.value = outIdx;
-          /* Capture the live batch state into the handle. */
-          sp.optInSensitivity = optInSensitivity;
-          sp.optInMinTrendLength = optInMinTrendLength;
-          sp.trend = trend;
-          sp.pivotIdx = pivotIdx;
-          sp.barsSincePivot = barsSincePivot;
-          sp.barIdx = barIdx;
-          sp.up = up;
-          sp.dn = dn;
-          sp.pivot = pivot;
-          sp.cur_outZigZag = outZigZag[(outNBElement.value - 1) * outStride];
-          sp.cur_outTrend = outTrend[(outNBElement.value - 1) * outStride];
-          sp.cur_outPivotIdx = outPivotIdx[(outNBElement.value - 1) * outStride];
-          return RetCode.SUCCESS;
-       }
-       /* zigzagOpenAndFill anchored at startIdx — the composed-open fusion seam. */
-       ZigzagStream zigzagOpenAndFillInternal( double inHigh[], double inLow[], int startIdx, double optInSensitivity, int optInMinTrendLength, MInteger outBegIdx, MInteger outNBElement, double outZigZag[], int outTrend[], int outPivotIdx[] )
-       {
-          ZigzagStream sp = new ZigzagStream(this);
-          RetCode retCode = zigzagOpenImpl(sp, inHigh, inLow, startIdx, optInSensitivity, optInMinTrendLength, outBegIdx, outNBElement, outZigZag, outTrend, outPivotIdx, 1);
-          sp.outRangeBegIdx = outBegIdx.value;
-          sp.outRangeCount = outNBElement.value;
-          if( retCode == RetCode.SUCCESS ) {
-             return sp;
-          }
-          if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
-             throw insufficientHistory("ZIGZAG openAndFill", inHigh.length, startIdx, zigzagLookback(optInSensitivity, optInMinTrendLength));
-          }
-          throw streamFailure("ZIGZAG openAndFill", retCode);
-       }
-       /* Internal startIdx-anchored open behind zigzagOpen (composition seam). */
-       ZigzagStream zigzagOpenInternal( double inHigh[], double inLow[], int startIdx, double optInSensitivity, int optInMinTrendLength )
-       {
-          ZigzagStream sp = new ZigzagStream(this);
-          MInteger outBegIdx = new MInteger();
-          MInteger outNBElement = new MInteger();
-          double[] sink_outZigZag = new double[1];
-          int[] sink_outTrend = new int[1];
-          int[] sink_outPivotIdx = new int[1];
-          RetCode retCode = zigzagOpenImpl(sp, inHigh, inLow, startIdx, optInSensitivity, optInMinTrendLength, outBegIdx, outNBElement, sink_outZigZag, sink_outTrend, sink_outPivotIdx, 0);
-          sp.outRangeBegIdx = outBegIdx.value;
-          sp.outRangeCount = outNBElement.value;
-          if( retCode == RetCode.SUCCESS ) {
-             return sp;
-          }
-          if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
-             throw insufficientHistory("ZIGZAG open", inHigh.length, startIdx, zigzagLookback(optInSensitivity, optInMinTrendLength));
-          }
-          throw streamFailure("ZIGZAG open", retCode);
-       }
-       /**
-        * Open a live ZIGZAG stream over the warm-up history; the handle's
-        * {@code value()} starts at the last history bar's value — bit-identical
-        * to {@link Core#zigzag} at that bar.
-        * <p>The history must hold at least {@code zigzagLookback(...) + 1} bars
-        * (unstable-period aware), or {@link InsufficientHistoryException} is
-        * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
-        * ({@link Core#REAL_DEFAULT} and {@link Integer#MIN_VALUE} select a
-        * parameter's documented default, as in the batch API). An EMPTY history throws
-        * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
-        * names no bar — and a null argument {@link IllegalArgumentException},
-        * both ahead of everything above.
-        */
-       public ZigzagStream zigzagOpen( double inHigh[], double inLow[], double optInSensitivity, int optInMinTrendLength )
-       {
-          requireArgument("ZIGZAG open", "inHigh", inHigh);
-          requireHistory("ZIGZAG open", inHigh.length);
-          requireArgument("ZIGZAG open", "inLow", inLow);
-          requireHistoryLength("ZIGZAG open", "inLow", inLow.length, inHigh.length);
-          return zigzagOpenInternal(inHigh, inLow, 0, optInSensitivity, optInMinTrendLength);
-       }
-       /**
-        * {@link Core#zigzagOpen} that also fills the output array(s) bit-identically
-        * to {@link Core#zigzag} over the whole history in the same single pass
-        * (no separate batch call needed for the warm-up plot). Output arrays must
-        * not alias the inputs or each other, and must hold
-        * {@code historyLen - lookback} values — both checked before anything is
-        * written, so an undersized array is an {@link IllegalArgumentException}
-        * naming it rather than a fault from inside the fill.
-        * <p>The range written is on the returned handle:
-        * {@link ZigzagStream#outRange()}.
-        */
-       public ZigzagStream zigzagOpenAndFill( double inHigh[], double inLow[], double optInSensitivity, int optInMinTrendLength, double outZigZag[], int outTrend[], int outPivotIdx[] )
-       {
-          requireArgument("ZIGZAG openAndFill", "inHigh", inHigh);
-          requireHistory("ZIGZAG openAndFill", inHigh.length);
-          requireArgument("ZIGZAG openAndFill", "inLow", inLow);
-          int guardOutLen = openFillCount("ZIGZAG openAndFill", inHigh.length, zigzagLookback(optInSensitivity, optInMinTrendLength));
-          requireHistoryLength("ZIGZAG openAndFill", "inLow", inLow.length, inHigh.length);
-          requireLength("ZIGZAG openAndFill", "outZigZag", outZigZag, guardOutLen);
-          requireLength("ZIGZAG openAndFill", "outTrend", outTrend, guardOutLen);
-          requireLength("ZIGZAG openAndFill", "outPivotIdx", outPivotIdx, guardOutLen);
-          if( (Object)outZigZag == (Object)inHigh || (Object)outZigZag == (Object)inLow || (Object)outTrend == (Object)inHigh || (Object)outTrend == (Object)inLow || (Object)outPivotIdx == (Object)inHigh || (Object)outPivotIdx == (Object)inLow || (Object)outZigZag == (Object)outTrend || (Object)outZigZag == (Object)outPivotIdx || (Object)outTrend == (Object)outPivotIdx ) {
-             throw streamFailure("ZIGZAG openAndFill", RetCode.BAD_PARAM);
-          }
-          MInteger outBegIdx = new MInteger();
-          MInteger outNBElement = new MInteger();
-          return zigzagOpenAndFillInternal(inHigh, inLow, 0, optInSensitivity, optInMinTrendLength, outBegIdx, outNBElement, outZigZag, outTrend, outPivotIdx);
-       }
-    /* List of contributors:
-     *
-     *  Initial  Name/description
-     *  -------------------------------------------------------------------
-     *  MF       Mario Fortier
      *  CC       Claude Code (AI assistant)
      *
      * Change history:
@@ -227361,7 +227639,7 @@ class Core {
 
 public class TaCodegenServe {
     static Core core = new Core();
-    static final String SPLICED_GENCODE_DIGEST = "b1624c09f0c1c3bd";
+    static final String SPLICED_GENCODE_DIGEST = "b45777a289fd5c76";
     static final int MAX_ARRAY_SIZE = 200000;
     static double[] refOpen = new double[MAX_ARRAY_SIZE];
     static double[] refHigh = new double[MAX_ARRAY_SIZE];
@@ -228313,6 +228591,10 @@ public class TaCodegenServe {
             new AbsIn[]{ new AbsIn(1,"inReal",0) },
             new AbsOpt[]{  },
             new AbsOut[]{ new AbsOut(0,"outReal",1) }));
+        ABSTRACT.put("SQZMOM", new AbsFunc("SQZMOM", "Momentum Indicators", "Squeeze Momentum and Level", 33554432,
+            new AbsIn[]{ new AbsIn(0,"inPriceHLC",14) },
+            new AbsOpt[]{ new AbsOpt(2,"optInBBPeriod",0,"BB Period","Period of the Bollinger Bands",20.0, 0,0,0,0,0,0, 2,100000,4,200,1, null), new AbsOpt(0,"optInNbDev",0,"Deviations","Deviation multiplier for both Bollinger Bands",2.0, 0.0,3e37,2,1.0,3.0,0.5, 0,0,0,0,0, null), new AbsOpt(2,"optInKCPeriod",0,"KC Period","Period of the Keltner Channel, and of the momentum regression",20.0, 0,0,0,0,0,0, 2,100000,4,200,1, null), new AbsOpt(0,"optInFactorWide",0,"Wide Factor","Keltner width for the widest compression test",2.0, 0.0,3e37,1,1.0,3.0,0.5, 0,0,0,0,0, null), new AbsOpt(0,"optInFactorNormal",0,"Normal Factor","Keltner width for the classic squeeze test",1.5, 0.0,3e37,1,1.0,3.0,0.5, 0,0,0,0,0, null), new AbsOpt(0,"optInFactorNarrow",0,"Narrow Factor","Keltner width for the tightest compression test",1.0, 0.0,3e37,1,0.5,2.0,0.5, 0,0,0,0,0, null) },
+            new AbsOut[]{ new AbsOut(0,"outMomentum",16), new AbsOut(1,"outSqueeze",1) }));
         ABSTRACT.put("STC", new AbsFunc("STC", "Momentum Indicators", "Schaff Trend Cycle", 167772160,
             new AbsIn[]{ new AbsIn(1,"inReal",0) },
             new AbsOpt[]{ new AbsOpt(2,"optInFastPeriod",0,"Fast Period","Period of the fast EMA",23.0, 0,0,0,0,0,0, 2,100000,4,200,1, null), new AbsOpt(2,"optInSlowPeriod",0,"Slow Period","Period of the slow EMA",50.0, 0,0,0,0,0,0, 2,100000,4,200,1, null), new AbsOpt(2,"optInCyclePeriod",0,"Cycle Period","Window of both stochastic stages",10.0, 0,0,0,0,0,0, 2,100000,2,200,1, null) },
@@ -228453,10 +228735,6 @@ public class TaCodegenServe {
             new AbsIn[]{ new AbsIn(1,"inReal",0) },
             new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period","Time period",30.0, 0,0,0,0,0,0, 1,100000,1,200,1, null) },
             new AbsOut[]{ new AbsOut(0,"outReal",1) }));
-        ABSTRACT.put("ZIGZAG", new AbsFunc("ZIGZAG", "Overlap Studies", "Zig Zag", 587202560,
-            new AbsIn[]{ new AbsIn(0,"inPriceHL",6) },
-            new AbsOpt[]{ new AbsOpt(0,"optInSensitivity",1048576,"Sensitivity","Minimum move away from the current extreme that reverses the leg, in percent",5.0, 0.0,100.0,2,1.0,20.0,1.0, 0,0,0,0,0, null), new AbsOpt(2,"optInMinTrendLength",0,"Minimum Trend Length","Minimum number of bars between two pivots",1.0, 0,0,0,0,0,0, 1,100000,1,20,1, null) },
-            new AbsOut[]{ new AbsOut(0,"outZigZag",1), new AbsOut(1,"outTrend",1), new AbsOut(1,"outPivotIdx",1) }));
         ABSTRACT.put("ZLEMA", new AbsFunc("ZLEMA", "Overlap Studies", "Zero-Lag Exponential Moving Average", 50331649,
             new AbsIn[]{ new AbsIn(1,"inReal",0) },
             new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period","Time period",30.0, 0,0,0,0,0,0, 1,100000,1,200,1, null) },
@@ -228777,6 +229055,7 @@ public class TaCodegenServe {
         "TA_SMA",
         "TA_SMI",
         "TA_SQRT",
+        "TA_SQZMOM",
         "TA_STC",
         "TA_STDDEV",
         "TA_STOCH",
@@ -228812,7 +229091,6 @@ public class TaCodegenServe {
         "TA_WCLPRICE",
         "TA_WILLR",
         "TA_WMA",
-        "TA_ZIGZAG",
         "TA_ZLEMA",
     };
     static final java.util.HashMap<String, Integer> FUNC_INDEX = new java.util.HashMap<>();
@@ -229017,42 +229295,42 @@ public class TaCodegenServe {
             case 194: return handle_SMA(json);
             case 195: return handle_SMI(json);
             case 196: return handle_SQRT(json);
-            case 197: return handle_STC(json);
-            case 198: return handle_STDDEV(json);
-            case 199: return handle_STOCH(json);
-            case 200: return handle_STOCHF(json);
-            case 201: return handle_STOCHRSI(json);
-            case 202: return handle_SUB(json);
-            case 203: return handle_SUM(json);
-            case 204: return handle_SUPERTREND(json);
-            case 205: return handle_SWAK_2PHP(json);
-            case 206: return handle_SWAK_BP(json);
-            case 207: return handle_SWAK_BUTTER(json);
-            case 208: return handle_SWAK_GAUSS(json);
-            case 209: return handle_SWAK_HP(json);
-            case 210: return handle_T3(json);
-            case 211: return handle_TAN(json);
-            case 212: return handle_TANH(json);
-            case 213: return handle_TEMA(json);
-            case 214: return handle_TRANGE(json);
-            case 215: return handle_TRIMA(json);
-            case 216: return handle_TRIX(json);
-            case 217: return handle_TSF(json);
-            case 218: return handle_TSI(json);
-            case 219: return handle_TYPPRICE(json);
-            case 220: return handle_ULTOSC(json);
-            case 221: return handle_VAR(json);
-            case 222: return handle_VHF(json);
-            case 223: return handle_VIDYA(json);
-            case 224: return handle_VORTEX(json);
-            case 225: return handle_VWAP(json);
-            case 226: return handle_VWMA(json);
-            case 227: return handle_WAD(json);
-            case 228: return handle_WAVETREND(json);
-            case 229: return handle_WCLPRICE(json);
-            case 230: return handle_WILLR(json);
-            case 231: return handle_WMA(json);
-            case 232: return handle_ZIGZAG(json);
+            case 197: return handle_SQZMOM(json);
+            case 198: return handle_STC(json);
+            case 199: return handle_STDDEV(json);
+            case 200: return handle_STOCH(json);
+            case 201: return handle_STOCHF(json);
+            case 202: return handle_STOCHRSI(json);
+            case 203: return handle_SUB(json);
+            case 204: return handle_SUM(json);
+            case 205: return handle_SUPERTREND(json);
+            case 206: return handle_SWAK_2PHP(json);
+            case 207: return handle_SWAK_BP(json);
+            case 208: return handle_SWAK_BUTTER(json);
+            case 209: return handle_SWAK_GAUSS(json);
+            case 210: return handle_SWAK_HP(json);
+            case 211: return handle_T3(json);
+            case 212: return handle_TAN(json);
+            case 213: return handle_TANH(json);
+            case 214: return handle_TEMA(json);
+            case 215: return handle_TRANGE(json);
+            case 216: return handle_TRIMA(json);
+            case 217: return handle_TRIX(json);
+            case 218: return handle_TSF(json);
+            case 219: return handle_TSI(json);
+            case 220: return handle_TYPPRICE(json);
+            case 221: return handle_ULTOSC(json);
+            case 222: return handle_VAR(json);
+            case 223: return handle_VHF(json);
+            case 224: return handle_VIDYA(json);
+            case 225: return handle_VORTEX(json);
+            case 226: return handle_VWAP(json);
+            case 227: return handle_VWMA(json);
+            case 228: return handle_WAD(json);
+            case 229: return handle_WAVETREND(json);
+            case 230: return handle_WCLPRICE(json);
+            case 231: return handle_WILLR(json);
+            case 232: return handle_WMA(json);
             case 233: return handle_ZLEMA(json);
             default: return null;
         }
@@ -259289,6 +259567,170 @@ public class TaCodegenServe {
         return sb.toString();
     }
 
+    static String handle_SQZMOM(String json) {
+        int startIdx = jsonInt(json, "startIdx");
+        int endIdx = jsonInt(json, "endIdx");
+        int use_preloaded = jsonInt(json, "use_preloaded");
+        int bench_iters = jsonInt(json, "iters");
+        if (bench_iters < 1) bench_iters = 1;
+        double[] inHigh;
+        double[] inLow;
+        double[] inClose;
+        if (use_preloaded != 0 && refN > 0) {
+            inHigh = new double[MAX_ARRAY_SIZE];
+            System.arraycopy(refHigh, 0, inHigh, 0, refN);
+            inLow = new double[MAX_ARRAY_SIZE];
+            System.arraycopy(refLow, 0, inLow, 0, refN);
+            inClose = new double[MAX_ARRAY_SIZE];
+            System.arraycopy(refClose, 0, inClose, 0, refN);
+        } else {
+            inHigh = jsonDoubleArray(json, "inHigh");
+            inLow = jsonDoubleArray(json, "inLow");
+            inClose = jsonDoubleArray(json, "inClose");
+        }
+        boolean _optRejected = false;
+        int optInBBPeriod = jsonInt(json, "optInBBPeriod");
+        double optInNbDev = jsonDouble(json, "optInNbDev");
+        int optInKCPeriod = jsonInt(json, "optInKCPeriod");
+        double optInFactorWide = jsonDouble(json, "optInFactorWide");
+        double optInFactorNormal = jsonDouble(json, "optInFactorNormal");
+        double optInFactorNarrow = jsonDouble(json, "optInFactorNarrow");
+        // The output buffers are sized to the count the call actually PRODUCES --
+        // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
+        // never below one. Not to the width of the requested range: that is the bound the
+        // managed backends check and the Rust asserts state, and at the range width it was
+        // slack by exactly the lookback, so no call could ever approach it.
+        // The pad is there because a bound is a MINIMUM, never an equality. A caller
+        // re-using a pre-allocated buffer passes a larger one, and that is not an error --
+        // the reported OutRange is what says which part was written. So the harness sends
+        // both: the startIdx axis sends no pad (the bound is reachable) while the
+        // full-range value comparison sends one (slack is legal). Sizing every call one way
+        // would silently drop the other property.
+        // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
+        // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
+        // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
+        // sizes and cannot make the check, so an exact buffer would test nothing there.
+        int _lb = core.sqzmomLookback(optInBBPeriod, optInNbDev, optInKCPeriod, optInFactorWide, optInFactorNormal, optInFactorNarrow);
+        int _cs = startIdx > _lb ? startIdx : _lb;
+        int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
+        double[] outArr0 = new double[_outLen];
+        int[] outArr1 = new int[_outLen];
+        MInteger outBegIdx = new MInteger();
+        MInteger outNBElement = new MInteger();
+        RetCode rc = RetCode.SUCCESS;
+        int bench_mode = jsonInt(json, "bench_mode");
+        double[] _warm_inHigh = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inHigh, 0, endIdx + 1);
+        double[] _warm_inLow = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inLow, 0, endIdx + 1);
+        double[] _warm_inClose = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inClose, 0, endIdx + 1);
+        long startNs = 0;
+        for (int _bi = 0; _bi <= bench_iters; _bi++) {
+        if (_bi == 1) startNs = System.nanoTime();
+        if (bench_mode == 0) {
+        if (jsonInt(json, "timed") != 0) {
+            if (_optRejected) {
+                rc = RetCode.BAD_PARAM;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
+            try {
+                rc = core.sqzmomImpl(startIdx, endIdx, inHigh, inLow, inClose, optInBBPeriod, optInNbDev, optInKCPeriod, optInFactorWide, optInFactorNormal, optInFactorNarrow, outBegIdx, outNBElement, outArr0, outArr1);
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TALibFailure)) throw _e;
+                rc = ((TALibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+            }
+        } else {
+            if (_optRejected) {
+                rc = RetCode.BAD_PARAM;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
+            try {
+                OutRange _pr = core.sqzmom(startIdx, endIdx, inHigh, inLow, inClose, optInBBPeriod, optInNbDev, optInKCPeriod, optInFactorWide, optInFactorNormal, optInFactorNarrow, outArr0, outArr1);
+                outBegIdx.value = _pr.begIdx();
+                outNBElement.value = _pr.count();
+                rc = RetCode.SUCCESS;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TALibFailure)) throw _e;
+                rc = ((TALibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+            }
+        }
+        }
+        else if (_optRejected) { rc = RetCode.BAD_PARAM; }
+        else { try {
+            if (bench_mode == 1) {
+                core.sqzmomOpen(_warm_inHigh, _warm_inLow, _warm_inClose, optInBBPeriod, optInNbDev, optInKCPeriod, optInFactorWide, optInFactorNormal, optInFactorNarrow);
+            } else {
+                Core.SqzmomStream _wh = core.sqzmomOpenAndFill(_warm_inHigh, _warm_inLow, _warm_inClose, optInBBPeriod, optInNbDev, optInKCPeriod, optInFactorWide, optInFactorNormal, optInFactorNarrow, outArr0, outArr1);
+                outBegIdx.value = _wh.outRange().begIdx();
+                outNBElement.value = _wh.outRange().count();
+            }
+            rc = RetCode.SUCCESS;
+        } catch (RuntimeException _e) { rc = _e instanceof TALibFailure ? ((TALibFailure)_e).retCode() : RetCode.BAD_PARAM; } }
+        }
+        long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        int usedFloat = 0;
+        if (jsonInt(json, "use_float") != 0) {
+            float[] f_inHigh = new float[inHigh.length];
+            for (int _fi = 0; _fi < inHigh.length; _fi++) f_inHigh[_fi] = (float)inHigh[_fi];
+            float[] f_inLow = new float[inLow.length];
+            for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
+            float[] f_inClose = new float[inClose.length];
+            for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
+            if (_optRejected) {
+                rc = RetCode.BAD_PARAM;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
+            try {
+                OutRange _fr = core.sqzmom(startIdx, endIdx, f_inHigh, f_inLow, f_inClose, optInBBPeriod, optInNbDev, optInKCPeriod, optInFactorWide, optInFactorNormal, optInFactorNarrow, outArr0, outArr1);
+                outBegIdx.value = _fr.begIdx();
+                outNBElement.value = _fr.count();
+                rc = RetCode.SUCCESS;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TALibFailure)) throw _e;
+                rc = ((TALibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+            }
+            usedFloat = 1;
+        }
+        if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
+            long _h = svHashInit();
+            if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
+                _h = svHashF64(_h, outArr0, outNBElement.value);
+                _h = svHashI32(_h, outArr1, outNBElement.value);
+            }
+            _h = svHashFin(_h);
+            StringBuilder hb = new StringBuilder();
+            hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            rideSqzmom(core, json, endIdx, inHigh, inLow, inClose, optInBBPeriod, optInNbDev, optInKCPeriod, optInFactorWide, optInFactorNormal, optInFactorNarrow, hb);
+            hb.append("}");
+            return hb.toString();
+        }
+        StringBuilder sb = new StringBuilder();
+        sb.append("{\"retCode\":").append(rc.toInt());
+        sb.append(",\"outBegIdx\":").append(outBegIdx.value);
+        sb.append(",\"outNBElement\":").append(outNBElement.value);
+        sb.append(",\"out_len\":").append(_outLen);
+        sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
+        sb.append(",\"outInteger\":").append(intArrayToJson(outArr1, outNBElement.value));
+        sb.append(",\"used_float\":").append(usedFloat);
+        sb.append(",\"timing_ns\":").append(elapsedNs);
+        rideSqzmom(core, json, endIdx, inHigh, inLow, inClose, optInBBPeriod, optInNbDev, optInKCPeriod, optInFactorWide, optInFactorNormal, optInFactorNarrow, sb);
+        sb.append("}");
+        return sb.toString();
+    }
+
     static String handle_STC(String json) {
         int startIdx = jsonInt(json, "startIdx");
         int endIdx = jsonInt(json, "endIdx");
@@ -264492,162 +264934,6 @@ public class TaCodegenServe {
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
         rideWma(core, json, endIdx, inReal, optInTimePeriod, sb);
-        sb.append("}");
-        return sb.toString();
-    }
-
-    static String handle_ZIGZAG(String json) {
-        int startIdx = jsonInt(json, "startIdx");
-        int endIdx = jsonInt(json, "endIdx");
-        int use_preloaded = jsonInt(json, "use_preloaded");
-        int bench_iters = jsonInt(json, "iters");
-        if (bench_iters < 1) bench_iters = 1;
-        double[] inHigh;
-        double[] inLow;
-        if (use_preloaded != 0 && refN > 0) {
-            inHigh = new double[MAX_ARRAY_SIZE];
-            System.arraycopy(refHigh, 0, inHigh, 0, refN);
-            inLow = new double[MAX_ARRAY_SIZE];
-            System.arraycopy(refLow, 0, inLow, 0, refN);
-        } else {
-            inHigh = jsonDoubleArray(json, "inHigh");
-            inLow = jsonDoubleArray(json, "inLow");
-        }
-        boolean _optRejected = false;
-        double optInSensitivity = jsonDouble(json, "optInSensitivity");
-        int optInMinTrendLength = jsonInt(json, "optInMinTrendLength");
-        // The output buffers are sized to the count the call actually PRODUCES --
-        // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
-        // never below one. Not to the width of the requested range: that is the bound the
-        // managed backends check and the Rust asserts state, and at the range width it was
-        // slack by exactly the lookback, so no call could ever approach it.
-        // The pad is there because a bound is a MINIMUM, never an equality. A caller
-        // re-using a pre-allocated buffer passes a larger one, and that is not an error --
-        // the reported OutRange is what says which part was written. So the harness sends
-        // both: the startIdx axis sends no pad (the bound is reachable) while the
-        // full-range value comparison sends one (slack is legal). Sizing every call one way
-        // would silently drop the other property.
-        // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
-        // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off.
-        // An empty output is an absent one, so sizing to zero here would turn the second
-        // into a rejection of the buffer.
-        // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
-        // sizes and cannot make the check, so an exact buffer would test nothing there.
-        int _lb = core.zigzagLookback(optInSensitivity, optInMinTrendLength);
-        int _cs = startIdx > _lb ? startIdx : _lb;
-        int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
-        double[] outArr0 = new double[_outLen];
-        int[] outArr1 = new int[_outLen];
-        int[] outArr2 = new int[_outLen];
-        MInteger outBegIdx = new MInteger();
-        MInteger outNBElement = new MInteger();
-        RetCode rc = RetCode.SUCCESS;
-        int bench_mode = jsonInt(json, "bench_mode");
-        double[] _warm_inHigh = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inHigh, 0, endIdx + 1);
-        double[] _warm_inLow = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inLow, 0, endIdx + 1);
-        long startNs = 0;
-        for (int _bi = 0; _bi <= bench_iters; _bi++) {
-        if (_bi == 1) startNs = System.nanoTime();
-        if (bench_mode == 0) {
-        if (jsonInt(json, "timed") != 0) {
-            if (_optRejected) {
-                rc = RetCode.BAD_PARAM;
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-            } else {
-            try {
-                rc = core.zigzagImpl(startIdx, endIdx, inHigh, inLow, optInSensitivity, optInMinTrendLength, outBegIdx, outNBElement, outArr0, outArr1, outArr2);
-            } catch (RuntimeException _e) {
-                if (!(_e instanceof TALibFailure)) throw _e;
-                rc = ((TALibFailure) _e).retCode();
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-            }
-            }
-        } else {
-            if (_optRejected) {
-                rc = RetCode.BAD_PARAM;
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-            } else {
-            try {
-                OutRange _pr = core.zigzag(startIdx, endIdx, inHigh, inLow, optInSensitivity, optInMinTrendLength, outArr0, outArr1, outArr2);
-                outBegIdx.value = _pr.begIdx();
-                outNBElement.value = _pr.count();
-                rc = RetCode.SUCCESS;
-            } catch (RuntimeException _e) {
-                if (!(_e instanceof TALibFailure)) throw _e;
-                rc = ((TALibFailure) _e).retCode();
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-            }
-            }
-        }
-        }
-        else if (_optRejected) { rc = RetCode.BAD_PARAM; }
-        else { try {
-            if (bench_mode == 1) {
-                core.zigzagOpen(_warm_inHigh, _warm_inLow, optInSensitivity, optInMinTrendLength);
-            } else {
-                Core.ZigzagStream _wh = core.zigzagOpenAndFill(_warm_inHigh, _warm_inLow, optInSensitivity, optInMinTrendLength, outArr0, outArr1, outArr2);
-                outBegIdx.value = _wh.outRange().begIdx();
-                outNBElement.value = _wh.outRange().count();
-            }
-            rc = RetCode.SUCCESS;
-        } catch (RuntimeException _e) { rc = _e instanceof TALibFailure ? ((TALibFailure)_e).retCode() : RetCode.BAD_PARAM; } }
-        }
-        long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
-        int usedFloat = 0;
-        if (jsonInt(json, "use_float") != 0) {
-            float[] f_inHigh = new float[inHigh.length];
-            for (int _fi = 0; _fi < inHigh.length; _fi++) f_inHigh[_fi] = (float)inHigh[_fi];
-            float[] f_inLow = new float[inLow.length];
-            for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
-            if (_optRejected) {
-                rc = RetCode.BAD_PARAM;
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-            } else {
-            try {
-                OutRange _fr = core.zigzag(startIdx, endIdx, f_inHigh, f_inLow, optInSensitivity, optInMinTrendLength, outArr0, outArr1, outArr2);
-                outBegIdx.value = _fr.begIdx();
-                outNBElement.value = _fr.count();
-                rc = RetCode.SUCCESS;
-            } catch (RuntimeException _e) {
-                if (!(_e instanceof TALibFailure)) throw _e;
-                rc = ((TALibFailure) _e).retCode();
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-            }
-            }
-            usedFloat = 1;
-        }
-        if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
-            long _h = svHashInit();
-            if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
-                _h = svHashF64(_h, outArr0, outNBElement.value);
-                _h = svHashI32(_h, outArr1, outNBElement.value);
-                _h = svHashI32(_h, outArr2, outNBElement.value);
-            }
-            _h = svHashFin(_h);
-            StringBuilder hb = new StringBuilder();
-            hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
-            rideZigzag(core, json, endIdx, inHigh, inLow, optInSensitivity, optInMinTrendLength, hb);
-            hb.append("}");
-            return hb.toString();
-        }
-        StringBuilder sb = new StringBuilder();
-        sb.append("{\"retCode\":").append(rc.toInt());
-        sb.append(",\"outBegIdx\":").append(outBegIdx.value);
-        sb.append(",\"outNBElement\":").append(outNBElement.value);
-        sb.append(",\"out_len\":").append(_outLen);
-        sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
-        sb.append(",\"outInteger\":").append(intArrayToJson(outArr1, outNBElement.value));
-        sb.append(",\"outInteger1\":").append(intArrayToJson(outArr2, outNBElement.value));
-        sb.append(",\"used_float\":").append(usedFloat);
-        sb.append(",\"timing_ns\":").append(elapsedNs);
-        rideZigzag(core, json, endIdx, inHigh, inLow, optInSensitivity, optInMinTrendLength, sb);
         sb.append("}");
         return sb.toString();
     }
@@ -299173,6 +299459,209 @@ public class TaCodegenServe {
         return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign[0] + diag + "}";
     }
 
+    static String sv_SQZMOM(String json) {
+        int svShape = jsonInt(json, "gen_shape");
+        int svSeed = jsonInt(json, "gen_seed");
+        int svN = jsonInt(json, "gen_n");
+        if (svN < 2) svN = 2;
+        if (svN > 256) svN = 256;
+        int svK = jsonInt(json, "unstablePeriod");
+        int optInBBPeriod = json.contains("\"optInBBPeriod\"") ? jsonInt(json, "optInBBPeriod") : 20;
+        double optInNbDev = json.contains("\"optInNbDev\"") ? jsonDouble(json, "optInNbDev") : 2e0;
+        int optInKCPeriod = json.contains("\"optInKCPeriod\"") ? jsonInt(json, "optInKCPeriod") : 20;
+        double optInFactorWide = json.contains("\"optInFactorWide\"") ? jsonDouble(json, "optInFactorWide") : 2e0;
+        double optInFactorNormal = json.contains("\"optInFactorNormal\"") ? jsonDouble(json, "optInFactorNormal") : 1.5e0;
+        double optInFactorNarrow = json.contains("\"optInFactorNarrow\"") ? jsonDouble(json, "optInFactorNarrow") : 1e0;
+        double[] fz_o = new double[svN];
+        double[] fz_h = new double[svN];
+        double[] fz_l = new double[svN];
+        double[] fz_c = new double[svN];
+        double[] fz_v = new double[svN];
+        double[] fz_oi = new double[svN];
+        FuzzData.fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
+        double[] b0 = new double[svN];
+        int[] b1 = new int[svN];
+        long legs = 0;
+        boolean allOk = true;
+        boolean peekAll = true;
+        long peekReps = 0;
+        long peekRejects = 0;
+        boolean peekRepAll = true;
+        int fillChecked = 0;
+        boolean fillOk = true;
+        MInteger beg = new MInteger();
+        MInteger nb = new MInteger();
+        String diag = "";
+        int rangeChecked = 0;
+        boolean rangeOk = true;
+        long rangeLegs = 0;
+        int rangeSites = 0;
+        long[] zsign = { 0 };
+        int rounds = 1;
+        for (int rd = 0; rd < rounds; rd++) {
+            Core c2 = new Core();
+            RetCode rc;
+            try { rc = c2.sqzmomImpl(0, svN - 1, fz_h, fz_l, fz_c, optInBBPeriod, optInNbDev, optInKCPeriod, optInFactorWide, optInFactorNormal, optInFactorNarrow, beg, nb, b0, b1); }
+            catch (RuntimeException _sve) { if (!(_sve instanceof TALibFailure)) throw _sve; rc = ((TALibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
+            int lb = c2.sqzmomLookback(optInBBPeriod, optInNbDev, optInKCPeriod, optInFactorWide, optInFactorNormal, optInFactorNarrow);
+            if (rc != RetCode.SUCCESS || nb.value == 0) {
+                boolean openRejects;
+                try { c2.sqzmomOpen(fz_h, fz_l, fz_c, optInBBPeriod, optInNbDev, optInKCPeriod, optInFactorWide, optInFactorNormal, optInFactorNarrow); openRejects = false; } catch (IllegalArgumentException _e) { openRejects = true; }
+                return "{\"retCode\":" + rc.toInt() + ",\"legs\":0,\"nb\":" + nb.value + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (openRejects ? 1 : 0) + ",\"peek_ok\":1}";
+            }
+            fillChecked = 1;
+            try {
+                double[] f0 = new double[svN];
+                java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                int[] f1 = new int[svN];
+                java.util.Arrays.fill(f1, (int)-987654321);
+                Core.SqzmomStream _fh = c2.sqzmomOpenAndFill(fz_h, fz_l, fz_c, optInBBPeriod, optInNbDev, optInKCPeriod, optInFactorWide, optInFactorNormal, optInFactorNarrow, f0, f1);
+                OutRange _fr = _fh.outRange();
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
+                if (_fr.begIdx() != beg.value || _fr.count() != nb.value) rangeOk = false;
+                if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
+                else {
+                    for (int i = 0; i < nb.value; i++) if (svXtierNe(f0[i], b0[i], zsign)) fillOk = false;
+                    for (int i = 0; i < nb.value; i++) if (f1[i] != b1[i]) fillOk = false;
+                    for (int i = nb.value; i < svN; i++) if (f0[i] != (double)-1.2345678901234e300) fillOk = false;
+                    for (int i = nb.value; i < svN; i++) if (f1[i] != (int)-987654321) fillOk = false;
+                }
+                try { c2.sqzmomOpenAndFill(fz_h, fz_l, fz_c, optInBBPeriod, optInNbDev, optInKCPeriod, optInFactorWide, optInFactorNormal, optInFactorNarrow, fz_h, f1); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
+            } catch (IllegalArgumentException _e) { fillOk = false; }
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
+            java.util.Arrays.sort(pcs);
+            int prevP = -1;
+            for (int pi = 0; pi < pcs.length; pi++) {
+                int p = pcs[pi];
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
+                prevP = p;
+                Core.SqzmomStream st;
+                try { st = c2.sqzmomOpen(java.util.Arrays.copyOf(fz_h, p), java.util.Arrays.copyOf(fz_l, p), java.util.Arrays.copyOf(fz_c, p), optInBBPeriod, optInNbDev, optInKCPeriod, optInFactorWide, optInFactorNormal, optInFactorNarrow); }
+                catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"openRejectP\":" + p; continue; }
+                legs++;
+                Core.SqzmomOut v0 = new Core.SqzmomOut(); st.value(v0);
+                if (svXtierNe(v0.momentum, b0[p - 1 - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
+                if (v0.squeeze != b1[p - 1 - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":1,\"where\":\"open\""; }
+                Core.SqzmomOut pk = new Core.SqzmomOut();
+                Core.SqzmomOut up = new Core.SqzmomOut();
+                Core.SqzmomOut vc = new Core.SqzmomOut();
+                Core.SqzmomOut rp = new Core.SqzmomOut();
+                for (int t = p; t < svN; t++) {
+                    boolean pkTook = true;
+                    try { st.peek(fz_h[t], fz_l[t], fz_c[t], pk); } catch (IllegalArgumentException _e) { pkTook = false; peekRejects++; }
+                    if (t % 7 == 0) {
+                        boolean rpTook = pkTook;
+                        try { st.peek(fz_h[t - 1], fz_l[t - 1], fz_c[t - 1], rp); } catch (IllegalArgumentException _e) { peekRejects++; }
+                        try { st.peek(fz_h[t], fz_l[t], fz_c[t], rp); } catch (IllegalArgumentException _e) { rpTook = false; }
+                        if (rpTook) {
+                            peekReps++;
+                            if (svBne(rp.momentum, pk.momentum)) peekRepAll = false;
+                            if (rp.squeeze != pk.squeeze) peekRepAll = false;
+                        } else { peekRejects++; }
+                    }
+                    st.update(fz_h[t], fz_l[t], fz_c[t], up);
+                    if (pkTook && svBne(pk.momentum, up.momentum)) peekAll = false;
+                    if (pkTook && pk.squeeze != up.squeeze) peekAll = false;
+                    try { st.peek(fz_h[t - 1], fz_l[t - 1], fz_c[t - 1], pk); } catch (IllegalArgumentException _e) { peekRejects++; }
+                    st.value(vc);
+                    if (svBne(vc.momentum, up.momentum)) allOk = false;
+                    if (vc.squeeze != up.squeeze) allOk = false;
+                    if (svXtierNe(up.momentum, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b0[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.momentum)) + "\""; }
+                    if (up.squeeze != b1[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":1,\"batchv\":\"" + b1[t - beg.value] + "\",\"streamv\":\"" + up.squeeze + "\""; }
+                }
+                if (allOk) {
+                    rangeChecked = 1; rangeLegs++; rangeSites |= 2;
+                    if (st.outRange().begIdx() != beg.value || st.outRange().count() != nb.value) rangeOk = false;
+                    rangeLegs++; rangeSites |= 16;
+                    st.advance();
+                    if (st.outRange().begIdx() != beg.value || st.outRange().count() != nb.value + 1) rangeOk = false;
+                }
+            }
+            {
+                int p0 = lb + 1;
+                if (p0 <= svN - 1) {
+                    try {
+                        double[] f0 = new double[svN];
+                        java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                        int[] f1 = new int[svN];
+                        java.util.Arrays.fill(f1, (int)-987654321);
+                        Core.SqzmomStream sA = c2.sqzmomOpenAndFill(java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0), optInBBPeriod, optInNbDev, optInKCPeriod, optInFactorWide, optInFactorNormal, optInFactorNarrow, f0, f1);
+                        int mid = (p0 + svN) / 2;
+                        Core.SqzmomOut uA = new Core.SqzmomOut();
+                        Core.SqzmomOut uB = new Core.SqzmomOut();
+                        for (int t = p0; t < mid; t++) {
+                            sA.update(fz_h[t], fz_l[t], fz_c[t], uA);
+                            if (svXtierNe(uA.momentum, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (uA.squeeze != b1[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
+                        Core.SqzmomStream sB = sA.clone();
+                        sB.advance();
+                        sB.advance();
+                        double[] fk0 = new double[svN];
+                        int[] fk1 = new int[svN];
+                        for (int t = mid; t < svN; t++) {
+                            sB.update(fz_h[t], fz_l[t], fz_c[t], uB);
+                            fk0[t] = uB.momentum;
+                            if (svXtierNe(uB.momentum, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            fk1[t] = uB.squeeze;
+                            if (uB.squeeze != b1[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
+                        for (int t = mid; t < svN; t++) {
+                            sA.update(fz_h[t], fz_l[t], fz_c[t], uA);
+                            if (svBne(uA.momentum, fk0[t]) || svXtierNe(uA.momentum, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (uA.squeeze != fk1[t] || uA.squeeze != b1[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
+                        if (allOk) {
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 8;
+                            if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 2) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                        }
+                    } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
+                }
+            }
+            if (lb >= 1 && lb < svN) {
+                try { c2.sqzmomOpen(java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb), java.util.Arrays.copyOf(fz_c, lb), optInBBPeriod, optInNbDev, optInKCPeriod, optInFactorWide, optInFactorNormal, optInFactorNarrow); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryAccepted\":1"; }
+                catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                    int[] f1 = new int[svN];
+                    java.util.Arrays.fill(f1, (int)-987654321);
+                    try { c2.sqzmomOpenAndFill(java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb), java.util.Arrays.copyOf(fz_c, lb), optInBBPeriod, optInNbDev, optInKCPeriod, optInFactorWide, optInFactorNormal, optInFactorNarrow, f0, f1); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                    catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
+            }
+            try {
+                Core.SqzmomStream sD = c2.sqzmomOpen(fz_h, fz_l, fz_c, Integer.MIN_VALUE, optInNbDev, Integer.MIN_VALUE, optInFactorWide, optInFactorNormal, optInFactorNarrow);
+                Core.SqzmomStream sE = c2.sqzmomOpen(fz_h, fz_l, fz_c, 20, optInNbDev, 20, optInFactorWide, optInFactorNormal, optInFactorNarrow);
+                Core.SqzmomOut vD = new Core.SqzmomOut(); sD.value(vD);
+                Core.SqzmomOut vE = new Core.SqzmomOut(); sE.value(vE);
+                if (svBne(vD.momentum, vE.momentum)) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
+                if (vD.squeeze != vE.squeeze) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
+            } catch (IllegalArgumentException _e) { /* defaults need more history than svN — skip */ }
+            {
+                int Sidx = lb + (svN - lb) / 3;
+                if (Sidx > lb && Sidx < svN - 1) {
+                    MInteger begS = new MInteger();
+                    MInteger nbS = new MInteger();
+                    RetCode rcS;
+                    try { rcS = c2.sqzmomImpl(Sidx, svN - 1, fz_h, fz_l, fz_c, optInBBPeriod, optInNbDev, optInKCPeriod, optInFactorWide, optInFactorNormal, optInFactorNarrow, begS, nbS, b0, b1); }
+                    catch (RuntimeException _sve) { if (!(_sve instanceof TALibFailure)) throw _sve; rcS = ((TALibFailure) _sve).retCode(); }
+                    if (rcS == RetCode.SUCCESS && nbS.value > 0) {
+                        try {
+                            Core.SqzmomStream stA = c2.sqzmomOpenInternal(java.util.Arrays.copyOf(fz_h, svN), java.util.Arrays.copyOf(fz_l, svN), java.util.Arrays.copyOf(fz_c, svN), Sidx, optInBBPeriod, optInNbDev, optInKCPeriod, optInFactorWide, optInFactorNormal, optInFactorNarrow);
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 4;
+                            if (stA.outRange().begIdx() != begS.value || stA.outRange().count() != nbS.value) rangeOk = false;
+                        } catch (IllegalArgumentException _e) { rangeOk = false; if (diag.isEmpty()) diag = ",\"anchoredOpenRejected\":1"; }
+                    }
+                }
+            }
+        }
+        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign[0] + diag + "}";
+    }
+
     static String sv_STC(String json) {
         int svShape = jsonInt(json, "gen_shape");
         int svSeed = jsonInt(json, "gen_seed");
@@ -305327,225 +305816,6 @@ public class TaCodegenServe {
         return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign[0] + diag + "}";
     }
 
-    static String sv_ZIGZAG(String json) {
-        int svShape = jsonInt(json, "gen_shape");
-        int svSeed = jsonInt(json, "gen_seed");
-        int svN = jsonInt(json, "gen_n");
-        if (svN < 2) svN = 2;
-        if (svN > 256) svN = 256;
-        int svK = jsonInt(json, "unstablePeriod");
-        double optInSensitivity = json.contains("\"optInSensitivity\"") ? jsonDouble(json, "optInSensitivity") : 5e0;
-        int optInMinTrendLength = json.contains("\"optInMinTrendLength\"") ? jsonInt(json, "optInMinTrendLength") : 1;
-        double[] fz_o = new double[svN];
-        double[] fz_h = new double[svN];
-        double[] fz_l = new double[svN];
-        double[] fz_c = new double[svN];
-        double[] fz_v = new double[svN];
-        double[] fz_oi = new double[svN];
-        FuzzData.fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
-        double[] b0 = new double[svN];
-        int[] b1 = new int[svN];
-        int[] b2 = new int[svN];
-        long legs = 0;
-        boolean allOk = true;
-        boolean peekAll = true;
-        long peekReps = 0;
-        long peekRejects = 0;
-        boolean peekRepAll = true;
-        int fillChecked = 0;
-        boolean fillOk = true;
-        MInteger beg = new MInteger();
-        MInteger nb = new MInteger();
-        String diag = "";
-        int rangeChecked = 0;
-        boolean rangeOk = true;
-        long rangeLegs = 0;
-        int rangeSites = 0;
-        long[] zsign = { 0 };
-        int rounds = 1;
-        for (int rd = 0; rd < rounds; rd++) {
-            Core c2 = new Core();
-            RetCode rc;
-            try { rc = c2.zigzagImpl(0, svN - 1, fz_h, fz_l, optInSensitivity, optInMinTrendLength, beg, nb, b0, b1, b2); }
-            catch (RuntimeException _sve) { if (!(_sve instanceof TALibFailure)) throw _sve; rc = ((TALibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
-            int lb = c2.zigzagLookback(optInSensitivity, optInMinTrendLength);
-            if (rc != RetCode.SUCCESS || nb.value == 0) {
-                boolean openRejects;
-                try { c2.zigzagOpen(fz_h, fz_l, optInSensitivity, optInMinTrendLength); openRejects = false; } catch (IllegalArgumentException _e) { openRejects = true; }
-                return "{\"retCode\":" + rc.toInt() + ",\"legs\":0,\"nb\":" + nb.value + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (openRejects ? 1 : 0) + ",\"peek_ok\":1}";
-            }
-            fillChecked = 1;
-            try {
-                double[] f0 = new double[svN];
-                java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
-                int[] f1 = new int[svN];
-                java.util.Arrays.fill(f1, (int)-987654321);
-                int[] f2 = new int[svN];
-                java.util.Arrays.fill(f2, (int)-987654321);
-                Core.ZigzagStream _fh = c2.zigzagOpenAndFill(fz_h, fz_l, optInSensitivity, optInMinTrendLength, f0, f1, f2);
-                OutRange _fr = _fh.outRange();
-                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
-                if (_fr.begIdx() != beg.value || _fr.count() != nb.value) rangeOk = false;
-                if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
-                else {
-                    for (int i = 0; i < nb.value; i++) if (svXtierNe(f0[i], b0[i], zsign)) fillOk = false;
-                    for (int i = 0; i < nb.value; i++) if (f1[i] != b1[i]) fillOk = false;
-                    for (int i = 0; i < nb.value; i++) if (f2[i] != b2[i]) fillOk = false;
-                    for (int i = nb.value; i < svN; i++) if (f0[i] != (double)-1.2345678901234e300) fillOk = false;
-                    for (int i = nb.value; i < svN; i++) if (f1[i] != (int)-987654321) fillOk = false;
-                    for (int i = nb.value; i < svN; i++) if (f2[i] != (int)-987654321) fillOk = false;
-                }
-                try { c2.zigzagOpenAndFill(fz_h, fz_l, optInSensitivity, optInMinTrendLength, fz_h, f1, f2); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
-            } catch (IllegalArgumentException _e) { fillOk = false; }
-            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
-            java.util.Arrays.sort(pcs);
-            int prevP = -1;
-            for (int pi = 0; pi < pcs.length; pi++) {
-                int p = pcs[pi];
-                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
-                prevP = p;
-                Core.ZigzagStream st;
-                try { st = c2.zigzagOpen(java.util.Arrays.copyOf(fz_h, p), java.util.Arrays.copyOf(fz_l, p), optInSensitivity, optInMinTrendLength); }
-                catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"openRejectP\":" + p; continue; }
-                legs++;
-                Core.ZigzagOut v0 = new Core.ZigzagOut(); st.value(v0);
-                if (svXtierNe(v0.zigZag, b0[p - 1 - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
-                if (v0.trend != b1[p - 1 - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":1,\"where\":\"open\""; }
-                if (v0.pivotIdx != b2[p - 1 - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":2,\"where\":\"open\""; }
-                Core.ZigzagOut pk = new Core.ZigzagOut();
-                Core.ZigzagOut up = new Core.ZigzagOut();
-                Core.ZigzagOut vc = new Core.ZigzagOut();
-                Core.ZigzagOut rp = new Core.ZigzagOut();
-                for (int t = p; t < svN; t++) {
-                    boolean pkTook = true;
-                    try { st.peek(fz_h[t], fz_l[t], pk); } catch (IllegalArgumentException _e) { pkTook = false; peekRejects++; }
-                    if (t % 7 == 0) {
-                        boolean rpTook = pkTook;
-                        try { st.peek(fz_h[t - 1], fz_l[t - 1], rp); } catch (IllegalArgumentException _e) { peekRejects++; }
-                        try { st.peek(fz_h[t], fz_l[t], rp); } catch (IllegalArgumentException _e) { rpTook = false; }
-                        if (rpTook) {
-                            peekReps++;
-                            if (svBne(rp.zigZag, pk.zigZag)) peekRepAll = false;
-                            if (rp.trend != pk.trend) peekRepAll = false;
-                            if (rp.pivotIdx != pk.pivotIdx) peekRepAll = false;
-                        } else { peekRejects++; }
-                    }
-                    st.update(fz_h[t], fz_l[t], up);
-                    if (pkTook && svBne(pk.zigZag, up.zigZag)) peekAll = false;
-                    if (pkTook && pk.trend != up.trend) peekAll = false;
-                    if (pkTook && pk.pivotIdx != up.pivotIdx) peekAll = false;
-                    try { st.peek(fz_h[t - 1], fz_l[t - 1], pk); } catch (IllegalArgumentException _e) { peekRejects++; }
-                    st.value(vc);
-                    if (svBne(vc.zigZag, up.zigZag)) allOk = false;
-                    if (vc.trend != up.trend) allOk = false;
-                    if (vc.pivotIdx != up.pivotIdx) allOk = false;
-                    if (svXtierNe(up.zigZag, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b0[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.zigZag)) + "\""; }
-                    if (up.trend != b1[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":1,\"batchv\":\"" + b1[t - beg.value] + "\",\"streamv\":\"" + up.trend + "\""; }
-                    if (up.pivotIdx != b2[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":2,\"batchv\":\"" + b2[t - beg.value] + "\",\"streamv\":\"" + up.pivotIdx + "\""; }
-                }
-                if (allOk) {
-                    rangeChecked = 1; rangeLegs++; rangeSites |= 2;
-                    if (st.outRange().begIdx() != beg.value || st.outRange().count() != nb.value) rangeOk = false;
-                    rangeLegs++; rangeSites |= 16;
-                    st.advance();
-                    if (st.outRange().begIdx() != beg.value || st.outRange().count() != nb.value + 1) rangeOk = false;
-                }
-            }
-            {
-                int p0 = lb + 1;
-                if (p0 <= svN - 1) {
-                    try {
-                        double[] f0 = new double[svN];
-                        java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
-                        int[] f1 = new int[svN];
-                        java.util.Arrays.fill(f1, (int)-987654321);
-                        int[] f2 = new int[svN];
-                        java.util.Arrays.fill(f2, (int)-987654321);
-                        Core.ZigzagStream sA = c2.zigzagOpenAndFill(java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), optInSensitivity, optInMinTrendLength, f0, f1, f2);
-                        int mid = (p0 + svN) / 2;
-                        Core.ZigzagOut uA = new Core.ZigzagOut();
-                        Core.ZigzagOut uB = new Core.ZigzagOut();
-                        for (int t = p0; t < mid; t++) {
-                            sA.update(fz_h[t], fz_l[t], uA);
-                            if (svXtierNe(uA.zigZag, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
-                            if (uA.trend != b1[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
-                            if (uA.pivotIdx != b2[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
-                        }
-                        Core.ZigzagStream sB = sA.clone();
-                        sB.advance();
-                        sB.advance();
-                        double[] fk0 = new double[svN];
-                        int[] fk1 = new int[svN];
-                        int[] fk2 = new int[svN];
-                        for (int t = mid; t < svN; t++) {
-                            sB.update(fz_h[t], fz_l[t], uB);
-                            fk0[t] = uB.zigZag;
-                            if (svXtierNe(uB.zigZag, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
-                            fk1[t] = uB.trend;
-                            if (uB.trend != b1[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
-                            fk2[t] = uB.pivotIdx;
-                            if (uB.pivotIdx != b2[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
-                        }
-                        for (int t = mid; t < svN; t++) {
-                            sA.update(fz_h[t], fz_l[t], uA);
-                            if (svBne(uA.zigZag, fk0[t]) || svXtierNe(uA.zigZag, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
-                            if (uA.trend != fk1[t] || uA.trend != b1[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
-                            if (uA.pivotIdx != fk2[t] || uA.pivotIdx != b2[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
-                        }
-                        if (allOk) {
-                            rangeChecked = 1; rangeLegs++; rangeSites |= 8;
-                            if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 2) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
-                        }
-                    } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
-                }
-            }
-            if (lb >= 1 && lb < svN) {
-                try { c2.zigzagOpen(java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb), optInSensitivity, optInMinTrendLength); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryAccepted\":1"; }
-                catch (InsufficientHistoryException _e) { /* expected, typed */ }
-                catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
-                {
-                    double[] f0 = new double[svN];
-                    java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
-                    int[] f1 = new int[svN];
-                    java.util.Arrays.fill(f1, (int)-987654321);
-                    int[] f2 = new int[svN];
-                    java.util.Arrays.fill(f2, (int)-987654321);
-                    try { c2.zigzagOpenAndFill(java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb), optInSensitivity, optInMinTrendLength, f0, f1, f2); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillAccepted\":1"; }
-                    catch (InsufficientHistoryException _e) { /* expected, typed */ }
-                    catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillWrongType\":1"; }
-                }
-            }
-            try {
-                Core.ZigzagStream sD = c2.zigzagOpen(fz_h, fz_l, optInSensitivity, Integer.MIN_VALUE);
-                Core.ZigzagStream sE = c2.zigzagOpen(fz_h, fz_l, optInSensitivity, 1);
-                Core.ZigzagOut vD = new Core.ZigzagOut(); sD.value(vD);
-                Core.ZigzagOut vE = new Core.ZigzagOut(); sE.value(vE);
-                if (svBne(vD.zigZag, vE.zigZag)) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
-                if (vD.trend != vE.trend) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
-                if (vD.pivotIdx != vE.pivotIdx) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
-            } catch (IllegalArgumentException _e) { /* defaults need more history than svN — skip */ }
-            {
-                int Sidx = lb + (svN - lb) / 3;
-                if (Sidx > lb && Sidx < svN - 1) {
-                    MInteger begS = new MInteger();
-                    MInteger nbS = new MInteger();
-                    RetCode rcS;
-                    try { rcS = c2.zigzagImpl(Sidx, svN - 1, fz_h, fz_l, optInSensitivity, optInMinTrendLength, begS, nbS, b0, b1, b2); }
-                    catch (RuntimeException _sve) { if (!(_sve instanceof TALibFailure)) throw _sve; rcS = ((TALibFailure) _sve).retCode(); }
-                    if (rcS == RetCode.SUCCESS && nbS.value > 0) {
-                        try {
-                            Core.ZigzagStream stA = c2.zigzagOpenInternal(java.util.Arrays.copyOf(fz_h, svN), java.util.Arrays.copyOf(fz_l, svN), Sidx, optInSensitivity, optInMinTrendLength);
-                            rangeChecked = 1; rangeLegs++; rangeSites |= 4;
-                            if (stA.outRange().begIdx() != begS.value || stA.outRange().count() != nbS.value) rangeOk = false;
-                        } catch (IllegalArgumentException _e) { rangeOk = false; if (diag.isEmpty()) diag = ",\"anchoredOpenRejected\":1"; }
-                    }
-                }
-            }
-        }
-        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign[0] + diag + "}";
-    }
-
     static String sv_ZLEMA(String json) {
         int svShape = jsonInt(json, "gen_shape");
         int svSeed = jsonInt(json, "gen_seed");
@@ -305937,6 +306207,7 @@ public class TaCodegenServe {
         case "TA_SMA": return sv_SMA(json);
         case "TA_SMI": return sv_SMI(json);
         case "TA_SQRT": return sv_SQRT(json);
+        case "TA_SQZMOM": return sv_SQZMOM(json);
         case "TA_STC": return sv_STC(json);
         case "TA_STDDEV": return sv_STDDEV(json);
         case "TA_STOCH": return sv_STOCH(json);
@@ -305972,7 +306243,6 @@ public class TaCodegenServe {
         case "TA_WCLPRICE": return sv_WCLPRICE(json);
         case "TA_WILLR": return sv_WILLR(json);
         case "TA_WMA": return sv_WMA(json);
-        case "TA_ZIGZAG": return sv_ZIGZAG(json);
         case "TA_ZLEMA": return sv_ZLEMA(json);
         default: return "{\"error\":\"not_streamable\"}";
         }
@@ -325907,6 +326177,117 @@ public class TaCodegenServe {
         }
     }
 
+    static void rideSqzmom(Core core, String json, int endIdx, double[] inHigh, double[] inLow, double[] inClose, int optInBBPeriod, double optInNbDev, int optInKCPeriod, double optInFactorWide, double optInFactorNormal, double optInFactorNarrow, StringBuilder sb) {
+        if (!rideGate(json)) return;
+        RideResult r = new RideResult();
+        rideBodySqzmom(core, json, endIdx, inHigh, inLow, inClose, optInBBPeriod, optInNbDev, optInKCPeriod, optInFactorWide, optInFactorNormal, optInFactorNarrow, r);
+        r.emit(sb);
+    }
+
+    @SuppressWarnings("unused")
+    static void rideBodySqzmom(Core core, String json, int endIdx, double[] inHigh, double[] inLow, double[] inClose, int optInBBPeriod, double optInNbDev, int optInKCPeriod, double optInFactorWide, double optInFactorNormal, double optInFactorNarrow, RideResult r) {
+        try { r.lb = core.sqzmomLookback(optInBBPeriod, optInNbDev, optInKCPeriod, optInFactorWide, optInFactorNormal, optInFactorNarrow); } catch (RuntimeException _e) { r.lb = -1; }
+        int lb = r.lb;
+        int navail = endIdx + 1;
+        if (inHigh.length < navail) navail = inHigh.length;
+        if (inLow.length < navail) navail = inLow.length;
+        if (inClose.length < navail) navail = inClose.length;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
+        if (m > navail) m = navail;
+        r.m = m;
+        if (m > RIDE_MAX_BARS) { r.skip = 1; return; }
+        if (m < 1) { r.skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
+        if (!rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
+
+        long hash = 0xcbf29ce484222325L;
+        hash = rideMixStr(hash, "TA_SQZMOM");
+        hash = rideMix(hash, m);
+        hash = rideMix(hash, rideGen);
+        hash = rideMix(hash, jsonInt(json, "unstablePeriod"));
+        hash = rideMix(hash, optInBBPeriod);
+        hash = rideMix(hash, Double.doubleToRawLongBits(optInNbDev));
+        hash = rideMix(hash, optInKCPeriod);
+        hash = rideMix(hash, Double.doubleToRawLongBits(optInFactorWide));
+        hash = rideMix(hash, Double.doubleToRawLongBits(optInFactorNormal));
+        hash = rideMix(hash, Double.doubleToRawLongBits(optInFactorNarrow));
+        hash = rideMixArr(hash, inHigh, m);
+        hash = rideMixArr(hash, inLow, m);
+        hash = rideMixArr(hash, inClose, m);
+        int slot = (int) Math.floorMod(hash, (long) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash) {
+            r.dedup = 1; r.openBars = rideSeenOpen[slot]; r.fillBars = rideSeenFill[slot]; return;
+        }
+
+        double[] rb0 = new double[m];
+        int[] rib0 = new int[m];
+        int beg = 0;
+        int nb = 0;
+        String clsB = "";
+        boolean rejected = false;
+        try { OutRange _rr = core.sqzmom(0, m - 1, java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m), optInBBPeriod, optInNbDev, optInKCPeriod, optInFactorWide, optInFactorNormal, optInFactorNarrow, rb0, rib0); beg = _rr.begIdx(); nb = _rr.count(); }
+        catch (RuntimeException _e) { r.rcBatch = rideCode(_e); clsB = _e.getClass().getName(); rejected = true; }
+        if (rejected) {
+            String clsO = "", clsF = "";
+            try { core.sqzmomOpen(java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m), optInBBPeriod, optInNbDev, optInKCPeriod, optInFactorWide, optInFactorNormal, optInFactorNarrow); } catch (RuntimeException _e) { r.rcOpen = rideCode(_e); clsO = _e.getClass().getName(); }
+            double[] fb0 = new double[m];
+            int[] fib0 = new int[m];
+            try { core.sqzmomOpenAndFill(java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m), optInBBPeriod, optInNbDev, optInKCPeriod, optInFactorWide, optInFactorNormal, optInFactorNarrow, fb0, fib0); } catch (RuntimeException _e) { r.rcFill = rideCode(_e); clsF = _e.getClass().getName(); }
+            boolean cmpO = r.rcOpen == r.rcBatch && clsO.equals(clsB);
+            if (cmpO) r.rej++;
+            if (!cmpO) { r.ok = false; r.leg = r.rcOpen == r.rcBatch ? 4 : 3; }
+            boolean cmpF = r.rcFill == r.rcBatch && clsF.equals(clsB);
+            if (cmpF) r.rej++;
+            if (!cmpF) { r.ok = false; r.leg = r.rcFill == r.rcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.skip = 7; return; }
+        if (nb == 0) { r.skip = 5; return; }
+        if (beg != lb) { r.skip = 6; return; }
+
+        try {
+            boolean cmp;
+            Core.SqzmomStream st = core.sqzmomOpen(java.util.Arrays.copyOf(inHigh, lb + 1), java.util.Arrays.copyOf(inLow, lb + 1), java.util.Arrays.copyOf(inClose, lb + 1), optInBBPeriod, optInNbDev, optInKCPeriod, optInFactorWide, optInFactorNormal, optInFactorNarrow);
+            Core.SqzmomOut uo = new Core.SqzmomOut(); st.value(uo);
+            cmp = true;
+            if (cmp && svXtierNe(rb0[lb - beg], uo.momentum, r.benign)) { cmp = false; r.out = 0; r.batch = Double.doubleToRawLongBits(rb0[lb - beg]); r.stream = Double.doubleToRawLongBits(uo.momentum); }
+            if (cmp && (int) uo.squeeze != rib0[lb - beg]) { cmp = false; r.out = 1; r.batch = Double.doubleToRawLongBits(rib0[lb - beg]); r.stream = Double.doubleToRawLongBits(uo.squeeze); }
+            if (cmp) r.openBars++;
+            if (!cmp) { r.ok = false; r.leg = 1; r.bar = lb; }
+            for (int t = lb + 1; r.ok && t < m; t++) {
+                st.update(inHigh[t], inLow[t], inClose[t], uo);
+                cmp = true;
+                if (cmp && svXtierNe(rb0[t - beg], uo.momentum, r.benign)) { cmp = false; r.out = 0; r.batch = Double.doubleToRawLongBits(rb0[t - beg]); r.stream = Double.doubleToRawLongBits(uo.momentum); }
+                if (cmp && (int) uo.squeeze != rib0[t - beg]) { cmp = false; r.out = 1; r.batch = Double.doubleToRawLongBits(rib0[t - beg]); r.stream = Double.doubleToRawLongBits(uo.squeeze); }
+                if (cmp) r.openBars++;
+                if (!cmp) { r.ok = false; r.leg = 1; r.bar = t; }
+            }
+        } catch (RuntimeException _e) { r.ok = false; r.leg = 1; }
+
+        if (r.ok) {
+            double[] fb0 = new double[m];
+            int[] fib0 = new int[m];
+            try {
+                Core.SqzmomStream st2 = core.sqzmomOpenAndFill(java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m), optInBBPeriod, optInNbDev, optInKCPeriod, optInFactorWide, optInFactorNormal, optInFactorNarrow, fb0, fib0);
+                if (st2.outRange().begIdx() != beg || st2.outRange().count() != nb) { r.ok = false; r.leg = 2; }
+                if (r.ok) {
+                    for (int k = 0; k < nb; k++) {
+                        boolean cmp = true;
+                        if (cmp && svXtierNe(rb0[k], fb0[k], r.benign)) { cmp = false; r.out = 0; r.batch = Double.doubleToRawLongBits(rb0[k]); r.stream = Double.doubleToRawLongBits(fb0[k]); }
+                        if (cmp && fib0[k] != rib0[k]) { cmp = false; r.out = 1; r.batch = Double.doubleToRawLongBits(rib0[k]); r.stream = Double.doubleToRawLongBits(fib0[k]); }
+                        if (cmp) r.fillBars++;
+                        if (!cmp) { r.ok = false; r.leg = 2; r.bar = beg + k; break; }
+                    }
+                }
+            } catch (RuntimeException _e) { r.ok = false; r.leg = 2; }
+        }
+
+        if (r.ok) {
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
+            rideSeenOpen[slot] = r.openBars; rideSeenFill[slot] = r.fillBars;
+        }
+    }
+
     static void rideStc(Core core, String json, int endIdx, double[] inReal, int optInFastPeriod, int optInSlowPeriod, int optInCyclePeriod, StringBuilder sb) {
         if (!rideGate(json)) return;
         RideResult r = new RideResult();
@@ -329387,117 +329768,6 @@ public class TaCodegenServe {
                     for (int k = 0; k < nb; k++) {
                         boolean cmp = true;
                         if (cmp && svXtierNe(rb0[k], fb0[k], r.benign)) { cmp = false; r.out = 0; r.batch = Double.doubleToRawLongBits(rb0[k]); r.stream = Double.doubleToRawLongBits(fb0[k]); }
-                        if (cmp) r.fillBars++;
-                        if (!cmp) { r.ok = false; r.leg = 2; r.bar = beg + k; break; }
-                    }
-                }
-            } catch (RuntimeException _e) { r.ok = false; r.leg = 2; }
-        }
-
-        if (r.ok) {
-            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
-            rideSeenOpen[slot] = r.openBars; rideSeenFill[slot] = r.fillBars;
-        }
-    }
-
-    static void rideZigzag(Core core, String json, int endIdx, double[] inHigh, double[] inLow, double optInSensitivity, int optInMinTrendLength, StringBuilder sb) {
-        if (!rideGate(json)) return;
-        RideResult r = new RideResult();
-        rideBodyZigzag(core, json, endIdx, inHigh, inLow, optInSensitivity, optInMinTrendLength, r);
-        r.emit(sb);
-    }
-
-    @SuppressWarnings("unused")
-    static void rideBodyZigzag(Core core, String json, int endIdx, double[] inHigh, double[] inLow, double optInSensitivity, int optInMinTrendLength, RideResult r) {
-        try { r.lb = core.zigzagLookback(optInSensitivity, optInMinTrendLength); } catch (RuntimeException _e) { r.lb = -1; }
-        int lb = r.lb;
-        int navail = endIdx + 1;
-        if (inHigh.length < navail) navail = inHigh.length;
-        if (inLow.length < navail) navail = inLow.length;
-        int m = lb >= 0 ? 2 * lb + 10 : navail;
-        if (m > navail) m = navail;
-        r.m = m;
-        if (m > RIDE_MAX_BARS) { r.skip = 1; return; }
-        if (m < 1) { r.skip = 2; return; }
-        if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
-        if (!rideFinite(inHigh, m) || !rideFinite(inLow, m) || false) { r.skip = 4; return; }
-
-        long hash = 0xcbf29ce484222325L;
-        hash = rideMixStr(hash, "TA_ZIGZAG");
-        hash = rideMix(hash, m);
-        hash = rideMix(hash, rideGen);
-        hash = rideMix(hash, jsonInt(json, "unstablePeriod"));
-        hash = rideMix(hash, Double.doubleToRawLongBits(optInSensitivity));
-        hash = rideMix(hash, optInMinTrendLength);
-        hash = rideMixArr(hash, inHigh, m);
-        hash = rideMixArr(hash, inLow, m);
-        int slot = (int) Math.floorMod(hash, (long) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash) {
-            r.dedup = 1; r.openBars = rideSeenOpen[slot]; r.fillBars = rideSeenFill[slot]; return;
-        }
-
-        double[] rb0 = new double[m];
-        int[] rib0 = new int[m];
-        int[] rib1 = new int[m];
-        int beg = 0;
-        int nb = 0;
-        String clsB = "";
-        boolean rejected = false;
-        try { OutRange _rr = core.zigzag(0, m - 1, java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), optInSensitivity, optInMinTrendLength, rb0, rib0, rib1); beg = _rr.begIdx(); nb = _rr.count(); }
-        catch (RuntimeException _e) { r.rcBatch = rideCode(_e); clsB = _e.getClass().getName(); rejected = true; }
-        if (rejected) {
-            String clsO = "", clsF = "";
-            try { core.zigzagOpen(java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), optInSensitivity, optInMinTrendLength); } catch (RuntimeException _e) { r.rcOpen = rideCode(_e); clsO = _e.getClass().getName(); }
-            double[] fb0 = new double[m];
-            int[] fib0 = new int[m];
-            int[] fib1 = new int[m];
-            try { core.zigzagOpenAndFill(java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), optInSensitivity, optInMinTrendLength, fb0, fib0, fib1); } catch (RuntimeException _e) { r.rcFill = rideCode(_e); clsF = _e.getClass().getName(); }
-            boolean cmpO = r.rcOpen == r.rcBatch && clsO.equals(clsB);
-            if (cmpO) r.rej++;
-            if (!cmpO) { r.ok = false; r.leg = r.rcOpen == r.rcBatch ? 4 : 3; }
-            boolean cmpF = r.rcFill == r.rcBatch && clsF.equals(clsB);
-            if (cmpF) r.rej++;
-            if (!cmpF) { r.ok = false; r.leg = r.rcFill == r.rcBatch ? 4 : 3; }
-            return;
-        }
-        if (lb < 0) { r.skip = 7; return; }
-        if (nb == 0) { r.skip = 5; return; }
-        if (beg != lb) { r.skip = 6; return; }
-
-        try {
-            boolean cmp;
-            Core.ZigzagStream st = core.zigzagOpen(java.util.Arrays.copyOf(inHigh, lb + 1), java.util.Arrays.copyOf(inLow, lb + 1), optInSensitivity, optInMinTrendLength);
-            Core.ZigzagOut uo = new Core.ZigzagOut(); st.value(uo);
-            cmp = true;
-            if (cmp && svXtierNe(rb0[lb - beg], uo.zigZag, r.benign)) { cmp = false; r.out = 0; r.batch = Double.doubleToRawLongBits(rb0[lb - beg]); r.stream = Double.doubleToRawLongBits(uo.zigZag); }
-            if (cmp && (int) uo.trend != rib0[lb - beg]) { cmp = false; r.out = 1; r.batch = Double.doubleToRawLongBits(rib0[lb - beg]); r.stream = Double.doubleToRawLongBits(uo.trend); }
-            if (cmp && (int) uo.pivotIdx != rib1[lb - beg]) { cmp = false; r.out = 2; r.batch = Double.doubleToRawLongBits(rib1[lb - beg]); r.stream = Double.doubleToRawLongBits(uo.pivotIdx); }
-            if (cmp) r.openBars++;
-            if (!cmp) { r.ok = false; r.leg = 1; r.bar = lb; }
-            for (int t = lb + 1; r.ok && t < m; t++) {
-                st.update(inHigh[t], inLow[t], uo);
-                cmp = true;
-                if (cmp && svXtierNe(rb0[t - beg], uo.zigZag, r.benign)) { cmp = false; r.out = 0; r.batch = Double.doubleToRawLongBits(rb0[t - beg]); r.stream = Double.doubleToRawLongBits(uo.zigZag); }
-                if (cmp && (int) uo.trend != rib0[t - beg]) { cmp = false; r.out = 1; r.batch = Double.doubleToRawLongBits(rib0[t - beg]); r.stream = Double.doubleToRawLongBits(uo.trend); }
-                if (cmp && (int) uo.pivotIdx != rib1[t - beg]) { cmp = false; r.out = 2; r.batch = Double.doubleToRawLongBits(rib1[t - beg]); r.stream = Double.doubleToRawLongBits(uo.pivotIdx); }
-                if (cmp) r.openBars++;
-                if (!cmp) { r.ok = false; r.leg = 1; r.bar = t; }
-            }
-        } catch (RuntimeException _e) { r.ok = false; r.leg = 1; }
-
-        if (r.ok) {
-            double[] fb0 = new double[m];
-            int[] fib0 = new int[m];
-            int[] fib1 = new int[m];
-            try {
-                Core.ZigzagStream st2 = core.zigzagOpenAndFill(java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), optInSensitivity, optInMinTrendLength, fb0, fib0, fib1);
-                if (st2.outRange().begIdx() != beg || st2.outRange().count() != nb) { r.ok = false; r.leg = 2; }
-                if (r.ok) {
-                    for (int k = 0; k < nb; k++) {
-                        boolean cmp = true;
-                        if (cmp && svXtierNe(rb0[k], fb0[k], r.benign)) { cmp = false; r.out = 0; r.batch = Double.doubleToRawLongBits(rb0[k]); r.stream = Double.doubleToRawLongBits(fb0[k]); }
-                        if (cmp && fib0[k] != rib0[k]) { cmp = false; r.out = 1; r.batch = Double.doubleToRawLongBits(rib0[k]); r.stream = Double.doubleToRawLongBits(fib0[k]); }
-                        if (cmp && fib1[k] != rib1[k]) { cmp = false; r.out = 2; r.batch = Double.doubleToRawLongBits(rib1[k]); r.stream = Double.doubleToRawLongBits(fib1[k]); }
                         if (cmp) r.fillBars++;
                         if (!cmp) { r.ok = false; r.leg = 2; r.bar = beg + k; break; }
                     }

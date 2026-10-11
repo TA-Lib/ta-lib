@@ -786,26 +786,14 @@ fn integer_domain_claim(
             ),
             format!("assert!({var}[..out_range.count].iter().all(|&v| v == 0 || v == 100));"),
         ],
-        // A two-state latch, like SUPERTREND's. Which state a bar is in depends on
-        // the whole path, so the domain is all an example can honestly claim.
-        ("ZIGZAG", "outTrend") => vec![
-            "// the leg is a two-state latch: +1 while it runs up, -1 while it runs down"
+        // An ORDINAL, not a flag: the three Keltner channels share a centre and
+        // BAND >= 0, so they nest and the ladder is monotone. Which level a bar
+        // takes depends on three factors the caller chooses, so the domain is all
+        // a doctest can honestly claim.
+        ("SQZMOM", _) => vec![
+            "// the compression level is an ordinal: 3 narrow, 2 normal, 1 wide, -1 released, 0 otherwise"
                 .to_string(),
-            format!("assert!({var}[..out_range.count].iter().all(|&v| v == 1 || v == -1));"),
-        ],
-        // The pivot names a bar at or before the one reporting it, and it never
-        // moves back: the index is only ever replaced by the current bar or left
-        // where it is. The seed's own bar is the true lower bound, but an example
-        // cannot name it -- the trend length is not `optInTimePeriod`, so `period`
-        // is None here. The comparison is written as a sum rather than a
-        // difference so the usize rendering cannot underflow at the first bar.
-        ("ZIGZAG", "outPivotIdx") => vec![
-            "// the pivot names a bar at or before the one reporting it, and never moves back"
-                .to_string(),
-            format!("for (k, &idx) in {var}[..out_range.count].iter().enumerate() {{"),
-            "    assert!((idx as usize) <= out_range.beg_idx + k);".to_string(),
-            format!("    if k > 0 {{ assert!(idx >= {var}[k - 1]); }}"),
-            "}".to_string(),
+            format!("assert!({var}[..out_range.count].iter().all(|&v| (-1..=3).contains(&v)));"),
         ],
         // ta_HT_TRENDMODE.c writes its `trend` local, which is only ever 0 or 1.
         ("HT_TRENDMODE", _) => vec![

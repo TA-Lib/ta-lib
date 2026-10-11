@@ -971,6 +971,7 @@ static ErrorNumber testTAFunction_ALL( void )
    DO_TEST( test_func_zigzag,   "ZIGZAG" );
    DO_TEST( test_func_wavetrend, "WAVETREND" );
    DO_TEST( test_func_dosc, "DOSC" );
+   DO_TEST( test_func_sqzmom,   "SQZMOM" );
    DO_TEST( test_func_pso, "PSO" );
    DO_TEST( test_func_rogerssatchell, "ROGERSSATCHELL" );
    DO_TEST( test_func_emv,       "EMV" );
