@@ -52,6 +52,7 @@
  *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
  *  100126 MF,CC  First version (#491).
+ *  101126 MF,CC  Each lookback is asked once per call (#522).
  */
 
 // Import types from parent module
@@ -354,6 +355,10 @@ impl Core {
         let mut lookbackSignal: usize = 0_usize;
         let mut lookbackMA: usize = 0_usize;
         let mut sigStart: usize = 0_usize;
+        let mut lookbackMA1: usize = 0_usize;
+        let mut lookbackMA2: usize = 0_usize;
+        let mut lookbackMA3: usize = 0_usize;
+        let mut lookbackMA4: usize = 0_usize;
         let mut tempInteger: usize = 0_usize;
         let mut tempBegIdx: usize = 0_usize;
         let mut rocNb: usize = 0_usize;
@@ -366,8 +371,26 @@ impl Core {
         // its legs left to right. Changing either breaks the equality.
         (*outBegIdx) = 0;
         (*outNBElement) = 0;
+        // lookbackTotal must stay kstext_lookback() of the same parameters.
         lookbackSignal = self.ma_lookback(optInSignalPeriod, optInSignalMAType).unwrap_or(usize::MAX);
-        lookbackTotal = self.kstext_lookback(optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInMA1Period, optInMA2Period, optInMA3Period, optInMA4Period, optInSignalPeriod, optInROCMAType, optInSignalMAType).unwrap_or(usize::MAX);
+        lookbackMA1 = self.ma_lookback(optInMA1Period, optInROCMAType).unwrap_or(usize::MAX);
+        lookbackMA2 = self.ma_lookback(optInMA2Period, optInROCMAType).unwrap_or(usize::MAX);
+        lookbackMA3 = self.ma_lookback(optInMA3Period, optInROCMAType).unwrap_or(usize::MAX);
+        lookbackMA4 = self.ma_lookback(optInMA4Period, optInROCMAType).unwrap_or(usize::MAX);
+        lookbackTotal = ((optInROC1Period) as usize) + lookbackMA1;
+        tempInteger = ((optInROC2Period) as usize) + lookbackMA2;
+        if tempInteger > lookbackTotal {
+            lookbackTotal = tempInteger;
+        }
+        tempInteger = ((optInROC3Period) as usize) + lookbackMA3;
+        if tempInteger > lookbackTotal {
+            lookbackTotal = tempInteger;
+        }
+        tempInteger = ((optInROC4Period) as usize) + lookbackMA4;
+        if tempInteger > lookbackTotal {
+            lookbackTotal = tempInteger;
+        }
+        lookbackTotal += lookbackSignal;
         if startIdx < lookbackTotal {
             startIdx = lookbackTotal;
         }
@@ -377,23 +400,20 @@ impl Core {
         sigStart = startIdx - lookbackSignal;
         // Both buffers are sized by the longest leg average: a rate of change
         // starts its average's lookback before sigStart.
-        lookbackMA = self.ma_lookback(optInMA1Period, optInROCMAType).unwrap_or(usize::MAX);
-        tempInteger = self.ma_lookback(optInMA2Period, optInROCMAType).unwrap_or(usize::MAX);
-        if tempInteger > lookbackMA {
-            lookbackMA = tempInteger;
+        lookbackMA = lookbackMA1;
+        if lookbackMA2 > lookbackMA {
+            lookbackMA = lookbackMA2;
         }
-        tempInteger = self.ma_lookback(optInMA3Period, optInROCMAType).unwrap_or(usize::MAX);
-        if tempInteger > lookbackMA {
-            lookbackMA = tempInteger;
+        if lookbackMA3 > lookbackMA {
+            lookbackMA = lookbackMA3;
         }
-        tempInteger = self.ma_lookback(optInMA4Period, optInROCMAType).unwrap_or(usize::MAX);
-        if tempInteger > lookbackMA {
-            lookbackMA = tempInteger;
+        if lookbackMA4 > lookbackMA {
+            lookbackMA = lookbackMA4;
         }
         tempInteger = endIdx - sigStart + 1 + lookbackMA;
         kstBuffer = vec![0.0_f64; (tempInteger * 1) as usize];
         tempBuffer = vec![0.0_f64; (tempInteger * 1) as usize];
-        let _xr0 = match self.roc(sigStart - self.ma_lookback(optInMA1Period, optInROCMAType).unwrap_or(usize::MAX), endIdx, inReal, optInROC1Period, &mut kstBuffer[..]) { Ok(_r) => _r, Err(_e) => return _e };
+        let _xr0 = match self.roc(sigStart - lookbackMA1, endIdx, inReal, optInROC1Period, &mut kstBuffer[..]) { Ok(_r) => _r, Err(_e) => return _e };
         tempBegIdx = _xr0.beg_idx;
         rocNb = _xr0.count;
         retCode = RetCode::Success;
@@ -401,7 +421,7 @@ impl Core {
         tempBegIdx = _xr1.beg_idx;
         kstNb = _xr1.count;
         retCode = RetCode::Success;
-        let _xr2 = match self.roc(sigStart - self.ma_lookback(optInMA2Period, optInROCMAType).unwrap_or(usize::MAX), endIdx, inReal, optInROC2Period, &mut tempBuffer[..]) { Ok(_r) => _r, Err(_e) => return _e };
+        let _xr2 = match self.roc(sigStart - lookbackMA2, endIdx, inReal, optInROC2Period, &mut tempBuffer[..]) { Ok(_r) => _r, Err(_e) => return _e };
         tempBegIdx = _xr2.beg_idx;
         rocNb = _xr2.count;
         retCode = RetCode::Success;
@@ -419,7 +439,7 @@ impl Core {
                 i += 1;
             }
         }
-        let _xr4 = match self.roc(sigStart - self.ma_lookback(optInMA3Period, optInROCMAType).unwrap_or(usize::MAX), endIdx, inReal, optInROC3Period, &mut tempBuffer[..]) { Ok(_r) => _r, Err(_e) => return _e };
+        let _xr4 = match self.roc(sigStart - lookbackMA3, endIdx, inReal, optInROC3Period, &mut tempBuffer[..]) { Ok(_r) => _r, Err(_e) => return _e };
         tempBegIdx = _xr4.beg_idx;
         rocNb = _xr4.count;
         retCode = RetCode::Success;
@@ -437,7 +457,7 @@ impl Core {
                 i += 1;
             }
         }
-        let _xr6 = match self.roc(sigStart - self.ma_lookback(optInMA4Period, optInROCMAType).unwrap_or(usize::MAX), endIdx, inReal, optInROC4Period, &mut tempBuffer[..]) { Ok(_r) => _r, Err(_e) => return _e };
+        let _xr6 = match self.roc(sigStart - lookbackMA4, endIdx, inReal, optInROC4Period, &mut tempBuffer[..]) { Ok(_r) => _r, Err(_e) => return _e };
         tempBegIdx = _xr6.beg_idx;
         rocNb = _xr6.count;
         retCode = RetCode::Success;
@@ -808,6 +828,10 @@ impl Core {
         let mut lookbackSignal: usize = 0_usize;
         let mut lookbackMA: usize = 0_usize;
         let mut sigStart: usize = 0_usize;
+        let mut lookbackMA1: usize = 0_usize;
+        let mut lookbackMA2: usize = 0_usize;
+        let mut lookbackMA3: usize = 0_usize;
+        let mut lookbackMA4: usize = 0_usize;
         let mut tempInteger: usize = 0_usize;
         let mut tempBegIdx: usize = 0_usize;
         let mut rocNb: usize = 0_usize;
@@ -820,8 +844,26 @@ impl Core {
         // its legs left to right. Changing either breaks the equality.
         (*outBegIdx) = 0;
         (*outNBElement) = 0;
+        // lookbackTotal must stay kstext_lookback() of the same parameters.
         lookbackSignal = self.ma_lookback(optInSignalPeriod, optInSignalMAType)?;
-        lookbackTotal = self.kstext_lookback(optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInMA1Period, optInMA2Period, optInMA3Period, optInMA4Period, optInSignalPeriod, optInROCMAType, optInSignalMAType)?;
+        lookbackMA1 = self.ma_lookback(optInMA1Period, optInROCMAType)?;
+        lookbackMA2 = self.ma_lookback(optInMA2Period, optInROCMAType)?;
+        lookbackMA3 = self.ma_lookback(optInMA3Period, optInROCMAType)?;
+        lookbackMA4 = self.ma_lookback(optInMA4Period, optInROCMAType)?;
+        lookbackTotal = ((optInROC1Period) as usize) + lookbackMA1;
+        tempInteger = ((optInROC2Period) as usize) + lookbackMA2;
+        if tempInteger > lookbackTotal {
+            lookbackTotal = tempInteger;
+        }
+        tempInteger = ((optInROC3Period) as usize) + lookbackMA3;
+        if tempInteger > lookbackTotal {
+            lookbackTotal = tempInteger;
+        }
+        tempInteger = ((optInROC4Period) as usize) + lookbackMA4;
+        if tempInteger > lookbackTotal {
+            lookbackTotal = tempInteger;
+        }
+        lookbackTotal += lookbackSignal;
         if startIdx < lookbackTotal {
             startIdx = lookbackTotal;
         }
@@ -831,25 +873,22 @@ impl Core {
         sigStart = startIdx - lookbackSignal;
         // Both buffers are sized by the longest leg average: a rate of change
         // starts its average's lookback before sigStart.
-        lookbackMA = self.ma_lookback(optInMA1Period, optInROCMAType)?;
-        tempInteger = self.ma_lookback(optInMA2Period, optInROCMAType)?;
-        if tempInteger > lookbackMA {
-            lookbackMA = tempInteger;
+        lookbackMA = lookbackMA1;
+        if lookbackMA2 > lookbackMA {
+            lookbackMA = lookbackMA2;
         }
-        tempInteger = self.ma_lookback(optInMA3Period, optInROCMAType)?;
-        if tempInteger > lookbackMA {
-            lookbackMA = tempInteger;
+        if lookbackMA3 > lookbackMA {
+            lookbackMA = lookbackMA3;
         }
-        tempInteger = self.ma_lookback(optInMA4Period, optInROCMAType)?;
-        if tempInteger > lookbackMA {
-            lookbackMA = tempInteger;
+        if lookbackMA4 > lookbackMA {
+            lookbackMA = lookbackMA4;
         }
         tempInteger = endIdx - sigStart + 1 + lookbackMA;
         kstBuffer = vec![0.0_f64; (tempInteger * 1) as usize];
         tempBuffer = vec![0.0_f64; (tempInteger * 1) as usize];
         // Sub-stream 0: roc over `inReal`, warmed from bar 0 up to the
         // sub-call's own startIdx (the seeding point).
-        let sub0 = self.roc_open_and_fill_internal(&inReal[..((endIdx) as usize) + 1], ((sigStart) as usize).saturating_sub((self.ma_lookback(optInMA1Period, optInROCMAType)?) as usize), optInROC1Period, &mut tempBegIdx, &mut rocNb, &mut kstBuffer[..])?;
+        let sub0 = self.roc_open_and_fill_internal(&inReal[..((endIdx) as usize) + 1], ((sigStart) as usize).saturating_sub((lookbackMA1) as usize), optInROC1Period, &mut tempBegIdx, &mut rocNb, &mut kstBuffer[..])?;
         retCode = RetCode::Success;
         // Sub-stream 1: ma over `kstBuffer`, warmed from bar 0 up to the
         // sub-call's own startIdx (the seeding point).
@@ -860,7 +899,7 @@ impl Core {
         retCode = RetCode::Success;
         // Sub-stream 2: roc over `inReal`, warmed from bar 0 up to the
         // sub-call's own startIdx (the seeding point).
-        let sub2 = self.roc_open_and_fill_internal(&inReal[..((endIdx) as usize) + 1], ((sigStart) as usize).saturating_sub((self.ma_lookback(optInMA2Period, optInROCMAType)?) as usize), optInROC2Period, &mut tempBegIdx, &mut rocNb, &mut tempBuffer[..])?;
+        let sub2 = self.roc_open_and_fill_internal(&inReal[..((endIdx) as usize) + 1], ((sigStart) as usize).saturating_sub((lookbackMA2) as usize), optInROC2Period, &mut tempBegIdx, &mut rocNb, &mut tempBuffer[..])?;
         retCode = RetCode::Success;
         // Sub-stream 3: ma over `tempBuffer`, warmed from bar 0 up to the
         // sub-call's own startIdx (the seeding point).
@@ -877,7 +916,7 @@ impl Core {
         }
         // Sub-stream 4: roc over `inReal`, warmed from bar 0 up to the
         // sub-call's own startIdx (the seeding point).
-        let sub4 = self.roc_open_and_fill_internal(&inReal[..((endIdx) as usize) + 1], ((sigStart) as usize).saturating_sub((self.ma_lookback(optInMA3Period, optInROCMAType)?) as usize), optInROC3Period, &mut tempBegIdx, &mut rocNb, &mut tempBuffer[..])?;
+        let sub4 = self.roc_open_and_fill_internal(&inReal[..((endIdx) as usize) + 1], ((sigStart) as usize).saturating_sub((lookbackMA3) as usize), optInROC3Period, &mut tempBegIdx, &mut rocNb, &mut tempBuffer[..])?;
         retCode = RetCode::Success;
         // Sub-stream 5: ma over `tempBuffer`, warmed from bar 0 up to the
         // sub-call's own startIdx (the seeding point).
@@ -894,7 +933,7 @@ impl Core {
         }
         // Sub-stream 6: roc over `inReal`, warmed from bar 0 up to the
         // sub-call's own startIdx (the seeding point).
-        let sub6 = self.roc_open_and_fill_internal(&inReal[..((endIdx) as usize) + 1], ((sigStart) as usize).saturating_sub((self.ma_lookback(optInMA4Period, optInROCMAType)?) as usize), optInROC4Period, &mut tempBegIdx, &mut rocNb, &mut tempBuffer[..])?;
+        let sub6 = self.roc_open_and_fill_internal(&inReal[..((endIdx) as usize) + 1], ((sigStart) as usize).saturating_sub((lookbackMA4) as usize), optInROC4Period, &mut tempBegIdx, &mut rocNb, &mut tempBuffer[..])?;
         retCode = RetCode::Success;
         // Sub-stream 7: ma over `tempBuffer`, warmed from bar 0 up to the
         // sub-call's own startIdx (the seeding point).
