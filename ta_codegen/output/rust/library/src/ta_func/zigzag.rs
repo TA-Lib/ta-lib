@@ -99,8 +99,7 @@ impl Core {
         // that many bars before the first output.
         //
         // Independent of the sensitivity: the threshold decides WHETHER a reversal
-        // fires, never how early it may. sar_lookback is the precedent for a
-        // constant lookback whose state is seeded from the bar before startIdx.
+        // fires, never how early it may.
         return Ok((optInMinTrendLength) as usize);
     }
     /// Display shift of one output of [`Core::zigzag`]: how many bars ahead (positive) or behind
@@ -217,9 +216,7 @@ impl Core {
         while today <= endIdx {
             // Bars since the pivot's own bar, carried rather than recomputed as
             // `today - pivotIdx`: a difference of two absolute indices has no meaning
-            // to a stream, which sees one bar at a time. talipp's gate is written the
-            // same way (`len(input) - pivot.position`), and the counter resets with
-            // the pivot so the two expressions are equal at every bar.
+            // to a stream, which sees one bar at a time.
             //
             // barIdx is the absolute bar number the index output names, carried in
             // its own right rather than read off the loop cursor. A stream has a
@@ -278,9 +275,12 @@ impl Core {
     /// hindsight. It emits the causal state the line is drawn from, one row per bar and final once
     /// emitted: the price of the swing extreme currently being tracked, the absolute bar index of
     /// that extreme, and whether the current leg is up or down. The chart is rebuilt exactly from
-    /// the outputs. A pivot is confirmed at bar `i > outBegIdx` whenever `outTrend[i]` differs from
-    /// `outTrend[i-1]`, and that pivot is `(outPivotIdx[i-1], outZigZag[i-1])`. The last,
-    /// still-open pivot is `(outPivotIdx[last], outZigZag[last])` — the leg Achelis warns about.
+    /// the outputs and the seed. A pivot is confirmed at bar `i > outBegIdx` whenever `outTrend[i]`
+    /// differs from `outTrend[i-1]`, and that pivot is `(outPivotIdx[i-1], outZigZag[i-1])`. When
+    /// `outTrend[outBegIdx]` is +1 a reversal fired on the first output bar, and the pivot it
+    /// confirmed is the seed, `(outBegIdx - optInMinTrendLength, inLow[outBegIdx -
+    /// optInMinTrendLength])`, which no output row carries. The last, still-open pivot is
+    /// `(outPivotIdx[last], outZigZag[last])` — the leg Achelis warns about.
     ///
     /// Formula and more info at [ta-lib.org/functions/zigzag](https://ta-lib.org/functions/zigzag).
     ///
@@ -463,9 +463,7 @@ impl Core {
     fn zigzag_step_impl(sp: &mut ZigzagStreamState, inHigh: f64, inLow: f64, outZigZag: &mut f64, outTrend: &mut i32, outPivotIdx: &mut i32) {
         // Bars since the pivot's own bar, carried rather than recomputed as
         // `today - pivotIdx`: a difference of two absolute indices has no meaning
-        // to a stream, which sees one bar at a time. talipp's gate is written the
-        // same way (`len(input) - pivot.position`), and the counter resets with
-        // the pivot so the two expressions are equal at every bar.
+        // to a stream, which sees one bar at a time.
         //
         // barIdx is the absolute bar number the index output names, carried in
         // its own right rather than read off the loop cursor. A stream has a
@@ -587,9 +585,7 @@ impl Core {
         while today <= endIdx {
             // Bars since the pivot's own bar, carried rather than recomputed as
             // `today - pivotIdx`: a difference of two absolute indices has no meaning
-            // to a stream, which sees one bar at a time. talipp's gate is written the
-            // same way (`len(input) - pivot.position`), and the counter resets with
-            // the pivot so the two expressions are equal at every bar.
+            // to a stream, which sees one bar at a time.
             //
             // barIdx is the absolute bar number the index output names, carried in
             // its own right rather than read off the loop cursor. A stream has a
@@ -852,9 +848,7 @@ impl ZigzagStream {
             let mut trend = sp.trend;
             // Bars since the pivot's own bar, carried rather than recomputed as
             // `today - pivotIdx`: a difference of two absolute indices has no meaning
-            // to a stream, which sees one bar at a time. talipp's gate is written the
-            // same way (`len(input) - pivot.position`), and the counter resets with
-            // the pivot so the two expressions are equal at every bar.
+            // to a stream, which sees one bar at a time.
             //
             // barIdx is the absolute bar number the index output names, carried in
             // its own right rather than read off the loop cursor. A stream has a

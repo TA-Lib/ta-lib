@@ -73,8 +73,7 @@ TA_LIB_API int TA_ZIGZAG_Lookback( double optInSensitivity, int optInMinTrendLen
     * that many bars before the first output.
     *
     * Independent of the sensitivity: the threshold decides WHETHER a reversal
-    * fires, never how early it may. sar_lookback is the precedent for a
-    * constant lookback whose state is seeded from the bar before startIdx.
+    * fires, never how early it may.
     */
    return optInMinTrendLength;
 }
@@ -175,9 +174,7 @@ TA_LIB_API TA_RetCode TA_ZIGZAG( int    startIdx,
    {
       /* Bars since the pivot's own bar, carried rather than recomputed as
        * `today - pivotIdx`: a difference of two absolute indices has no meaning
-       * to a stream, which sees one bar at a time. talipp's gate is written the
-       * same way (`len(input) - pivot.position`), and the counter resets with
-       * the pivot so the two expressions are equal at every bar.
+       * to a stream, which sees one bar at a time.
        *
        * barIdx is the absolute bar number the index output names, carried in
        * its own right rather than read off the loop cursor. A stream has a
@@ -383,9 +380,7 @@ static void TA_ZIGZAG_StepImpl( struct TA_ZIGZAG_Stream *sp, double inHigh, doub
 {
    /* Bars since the pivot's own bar, carried rather than recomputed as
     * `today - pivotIdx`: a difference of two absolute indices has no meaning
-    * to a stream, which sees one bar at a time. talipp's gate is written the
-    * same way (`len(input) - pivot.position`), and the counter resets with
-    * the pivot so the two expressions are equal at every bar.
+    * to a stream, which sees one bar at a time.
     *
     * barIdx is the absolute bar number the index output names, carried in
     * its own right rather than read off the loop cursor. A stream has a
@@ -514,9 +509,7 @@ static TA_RetCode TA_ZIGZAG_OpenImpl( struct TA_ZIGZAG_Stream **stream, const do
       {
          /* Bars since the pivot's own bar, carried rather than recomputed as
           * `today - pivotIdx`: a difference of two absolute indices has no meaning
-          * to a stream, which sees one bar at a time. talipp's gate is written the
-          * same way (`len(input) - pivot.position`), and the counter resets with
-          * the pivot so the two expressions are equal at every bar.
+          * to a stream, which sees one bar at a time.
           *
           * barIdx is the absolute bar number the index output names, carried in
           * its own right rather than read off the loop cursor. A stream has a
@@ -674,9 +667,7 @@ TA_LIB_API TA_RetCode TA_ZIGZAG_Peek( const TA_ZIGZAG_Stream *stream, double inH
    trend = sp->trend;
    /* Bars since the pivot's own bar, carried rather than recomputed as
     * `today - pivotIdx`: a difference of two absolute indices has no meaning
-    * to a stream, which sees one bar at a time. talipp's gate is written the
-    * same way (`len(input) - pivot.position`), and the counter resets with
-    * the pivot so the two expressions are equal at every bar.
+    * to a stream, which sees one bar at a time.
     *
     * barIdx is the absolute bar number the index output names, carried in
     * its own right rather than read off the loop cursor. A stream has a

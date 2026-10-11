@@ -23,8 +23,7 @@ int zigzag_lookback( double optInSensitivity, int optInMinTrendLength )
     * that many bars before the first output.
     *
     * Independent of the sensitivity: the threshold decides WHETHER a reversal
-    * fires, never how early it may. sar_lookback is the precedent for a
-    * constant lookback whose state is seeded from the bar before startIdx.
+    * fires, never how early it may.
     */
    return optInMinTrendLength;
 }
@@ -80,9 +79,7 @@ TA_RetCode zigzag(int startIdx, int endIdx,
    {
       /* Bars since the pivot's own bar, carried rather than recomputed as
        * `today - pivotIdx`: a difference of two absolute indices has no meaning
-       * to a stream, which sees one bar at a time. talipp's gate is written the
-       * same way (`len(input) - pivot.position`), and the counter resets with
-       * the pivot so the two expressions are equal at every bar.
+       * to a stream, which sees one bar at a time.
        *
        * barIdx is the absolute bar number the index output names, carried in
        * its own right rather than read off the loop cursor. A stream has a

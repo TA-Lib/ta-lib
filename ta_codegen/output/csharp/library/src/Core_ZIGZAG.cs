@@ -89,8 +89,7 @@ public partial class Core
        * that many bars before the first output.
        *
        * Independent of the sensitivity: the threshold decides WHETHER a reversal
-       * fires, never how early it may. sar_lookback is the precedent for a
-       * constant lookback whose state is seeded from the bar before startIdx.
+       * fires, never how early it may.
        */
       return optInMinTrendLength ;
 
@@ -199,9 +198,7 @@ public partial class Core
       while( today <= endIdx ) {
          /* Bars since the pivot's own bar, carried rather than recomputed as
           * `today - pivotIdx`: a difference of two absolute indices has no meaning
-          * to a stream, which sees one bar at a time. talipp's gate is written the
-          * same way (`len(input) - pivot.position`), and the counter resets with
-          * the pivot so the two expressions are equal at every bar.
+          * to a stream, which sees one bar at a time.
           *
           * barIdx is the absolute bar number the index output names, carried in
           * its own right rather than read off the loop cursor. A stream has a
@@ -369,11 +366,15 @@ public partial class Core
    /// the line is drawn from, one row per bar and final once emitted: the price
    /// of the swing extreme currently being tracked, the absolute bar index of
    /// that extreme, and whether the current leg is up or down. The chart is
-   /// rebuilt exactly from the outputs. A pivot is confirmed at bar <c>i &gt;
-   /// outBegIdx</c> whenever <c>outTrend[i]</c> differs from
+   /// rebuilt exactly from the outputs and the seed. A pivot is confirmed at bar
+   /// <c>i &gt; outBegIdx</c> whenever <c>outTrend[i]</c> differs from
    /// <c>outTrend[i-1]</c>, and that pivot is <c>(outPivotIdx[i-1],
-   /// outZigZag[i-1])</c>. The last, still-open pivot is <c>(outPivotIdx[last],
-   /// outZigZag[last])</c> — the leg Achelis warns about.
+   /// outZigZag[i-1])</c>. When <c>outTrend[outBegIdx]</c> is +1 a reversal
+   /// fired on the first output bar, and the pivot it confirmed is the seed,
+   /// <c>(outBegIdx - optInMinTrendLength, inLow[outBegIdx -
+   /// optInMinTrendLength])</c>, which no output row carries. The last,
+   /// still-open pivot is <c>(outPivotIdx[last], outZigZag[last])</c> — the leg
+   /// Achelis warns about.
    /// </summary>
    /// <remarks>
    /// <para>
@@ -384,9 +385,10 @@ public partial class Core
    /// <item><description><b>Reversal is tested before extension.</b> On an outside bar that both makes a new extreme and clears the threshold, the leg reverses and the old pivot stays where it was. The other order moves the pivot to the new extreme and defers the reversal to the next bar, against a threshold that has just moved further away: on the 252-bar regtest corpus at 5 percent that costs one bar (R TTR, which takes that order, places the swing low at 148 where this places it at 147), but a range narrower than the sensitivity after the outside bar keeps it from ever firing, and the leg is then lost rather than delayed.</description></item>
    /// <item><description><b>Ties extend.</b> The comparisons are <c>&lt;=</c> and <c>&gt;=</c>, so at an equal price the pivot moves to the later bar: <c>outZigZag</c> does not change and <c>outPivotIdx</c> does. That movement is the only thing the index output carries and the price output cannot.</description></item>
    /// <item><description><b>The gate counts from the pivot's own bar, the seed included.</b> No reversal can fire before the first output bar; the first one can fire exactly there.</description></item>
-   /// <item><description><b>The seed is a low.</b> A series that only rises therefore reports an up leg from its first reversal and never returns to a down leg.</description></item>
+   /// <item><description><b>The seed is a low.</b> The first reversal is therefore always upward. A down reversal compares a bar's low with the tracked high, so a rising series stays on its up leg only while no low falls <c>optInSensitivity</c> percent under that high on a bar the gate allows.</description></item>
+   /// <item><description><b>The input must be positive.</b> The threshold is a percent of the pivot: at a pivot of 0 it sits on the pivot and below 0 on the wrong side of it, so the leg reverses on nearly every bar the gate allows. The output is undefined for such input and no error is returned. A series that crosses zero, such as an oscillator or a spread, needs an absolute reversal amount, which this function does not have.</description></item>
    /// <item><description>The lookback is <c>optInMinTrendLength</c> and does not depend on the sensitivity: the threshold decides whether a reversal fires, never how early it may.</description></item>
-   /// <item><description><c>optInSensitivity</c> is a percent, as Achelis, StockCharts, TTR, Skender and TradingView take it. 0 and 1 are degenerate but defined: at 0 a reversal fires on almost every bar the gate allows, and at 100 no downward reversal fires on positive prices.</description></item>
+   /// <item><description><c>optInSensitivity</c> is a percent, as Achelis, StockCharts, TTR, Skender and TradingView take it. 0 and 100 are degenerate but defined: at 0 a reversal fires on almost every bar the gate allows, and at 100 no downward reversal fires on positive prices.</description></item>
    /// <item><description>The value at a bar depends on where the caller started, through the seed; the function is <c>path_dependent</c> for that reason, as SAR and SUPERTREND are.</description></item>
    /// </list>
    /// <para>
@@ -484,11 +486,15 @@ public partial class Core
    /// the line is drawn from, one row per bar and final once emitted: the price
    /// of the swing extreme currently being tracked, the absolute bar index of
    /// that extreme, and whether the current leg is up or down. The chart is
-   /// rebuilt exactly from the outputs. A pivot is confirmed at bar <c>i &gt;
-   /// outBegIdx</c> whenever <c>outTrend[i]</c> differs from
+   /// rebuilt exactly from the outputs and the seed. A pivot is confirmed at bar
+   /// <c>i &gt; outBegIdx</c> whenever <c>outTrend[i]</c> differs from
    /// <c>outTrend[i-1]</c>, and that pivot is <c>(outPivotIdx[i-1],
-   /// outZigZag[i-1])</c>. The last, still-open pivot is <c>(outPivotIdx[last],
-   /// outZigZag[last])</c> — the leg Achelis warns about.
+   /// outZigZag[i-1])</c>. When <c>outTrend[outBegIdx]</c> is +1 a reversal
+   /// fired on the first output bar, and the pivot it confirmed is the seed,
+   /// <c>(outBegIdx - optInMinTrendLength, inLow[outBegIdx -
+   /// optInMinTrendLength])</c>, which no output row carries. The last,
+   /// still-open pivot is <c>(outPivotIdx[last], outZigZag[last])</c> — the leg
+   /// Achelis warns about.
    /// </summary>
    /// <remarks>
    /// <para>
@@ -499,9 +505,10 @@ public partial class Core
    /// <item><description><b>Reversal is tested before extension.</b> On an outside bar that both makes a new extreme and clears the threshold, the leg reverses and the old pivot stays where it was. The other order moves the pivot to the new extreme and defers the reversal to the next bar, against a threshold that has just moved further away: on the 252-bar regtest corpus at 5 percent that costs one bar (R TTR, which takes that order, places the swing low at 148 where this places it at 147), but a range narrower than the sensitivity after the outside bar keeps it from ever firing, and the leg is then lost rather than delayed.</description></item>
    /// <item><description><b>Ties extend.</b> The comparisons are <c>&lt;=</c> and <c>&gt;=</c>, so at an equal price the pivot moves to the later bar: <c>outZigZag</c> does not change and <c>outPivotIdx</c> does. That movement is the only thing the index output carries and the price output cannot.</description></item>
    /// <item><description><b>The gate counts from the pivot's own bar, the seed included.</b> No reversal can fire before the first output bar; the first one can fire exactly there.</description></item>
-   /// <item><description><b>The seed is a low.</b> A series that only rises therefore reports an up leg from its first reversal and never returns to a down leg.</description></item>
+   /// <item><description><b>The seed is a low.</b> The first reversal is therefore always upward. A down reversal compares a bar's low with the tracked high, so a rising series stays on its up leg only while no low falls <c>optInSensitivity</c> percent under that high on a bar the gate allows.</description></item>
+   /// <item><description><b>The input must be positive.</b> The threshold is a percent of the pivot: at a pivot of 0 it sits on the pivot and below 0 on the wrong side of it, so the leg reverses on nearly every bar the gate allows. The output is undefined for such input and no error is returned. A series that crosses zero, such as an oscillator or a spread, needs an absolute reversal amount, which this function does not have.</description></item>
    /// <item><description>The lookback is <c>optInMinTrendLength</c> and does not depend on the sensitivity: the threshold decides whether a reversal fires, never how early it may.</description></item>
-   /// <item><description><c>optInSensitivity</c> is a percent, as Achelis, StockCharts, TTR, Skender and TradingView take it. 0 and 1 are degenerate but defined: at 0 a reversal fires on almost every bar the gate allows, and at 100 no downward reversal fires on positive prices.</description></item>
+   /// <item><description><c>optInSensitivity</c> is a percent, as Achelis, StockCharts, TTR, Skender and TradingView take it. 0 and 100 are degenerate but defined: at 0 a reversal fires on almost every bar the gate allows, and at 100 no downward reversal fires on positive prices.</description></item>
    /// <item><description>The value at a bar depends on where the caller started, through the seed; the function is <c>path_dependent</c> for that reason, as SAR and SUPERTREND are.</description></item>
    /// </list>
    /// <para>
@@ -760,9 +767,7 @@ public partial class Core
          int trend = sp.trend;
          /* Bars since the pivot's own bar, carried rather than recomputed as
           * `today - pivotIdx`: a difference of two absolute indices has no meaning
-          * to a stream, which sees one bar at a time. talipp's gate is written the
-          * same way (`len(input) - pivot.position`), and the counter resets with
-          * the pivot so the two expressions are equal at every bar.
+          * to a stream, which sees one bar at a time.
           *
           * barIdx is the absolute bar number the index output names, carried in
           * its own right rather than read off the loop cursor. A stream has a
@@ -831,9 +836,7 @@ public partial class Core
    {
       /* Bars since the pivot's own bar, carried rather than recomputed as
        * `today - pivotIdx`: a difference of two absolute indices has no meaning
-       * to a stream, which sees one bar at a time. talipp's gate is written the
-       * same way (`len(input) - pivot.position`), and the counter resets with
-       * the pivot so the two expressions are equal at every bar.
+       * to a stream, which sees one bar at a time.
        *
        * barIdx is the absolute bar number the index output names, carried in
        * its own right rather than read off the loop cursor. A stream has a
@@ -953,9 +956,7 @@ public partial class Core
       while( today <= endIdx ) {
          /* Bars since the pivot's own bar, carried rather than recomputed as
           * `today - pivotIdx`: a difference of two absolute indices has no meaning
-          * to a stream, which sees one bar at a time. talipp's gate is written the
-          * same way (`len(input) - pivot.position`), and the counter resets with
-          * the pivot so the two expressions are equal at every bar.
+          * to a stream, which sees one bar at a time.
           *
           * barIdx is the absolute bar number the index output names, carried in
           * its own right rather than read off the loop cursor. A stream has a

@@ -6,7 +6,7 @@ The percent-filter swing line. A leg runs from the last confirmed pivot to the m
 
 This function does not emit the chart line, which is drawn with hindsight. It emits the causal state the line is drawn from, one row per bar and final once emitted: the price of the swing extreme currently being tracked, the absolute bar index of that extreme, and whether the current leg is up or down.
 
-The chart is rebuilt exactly from the outputs. A pivot is confirmed at bar `i > outBegIdx` whenever `outTrend[i]` differs from `outTrend[i-1]`, and that pivot is `(outPivotIdx[i-1], outZigZag[i-1])`. The last, still-open pivot is `(outPivotIdx[last], outZigZag[last])` — the leg Achelis warns about.
+The chart is rebuilt exactly from the outputs and the seed. A pivot is confirmed at bar `i > outBegIdx` whenever `outTrend[i]` differs from `outTrend[i-1]`, and that pivot is `(outPivotIdx[i-1], outZigZag[i-1])`. When `outTrend[outBegIdx]` is +1 a reversal fired on the first output bar, and the pivot it confirmed is the seed, `(outBegIdx - optInMinTrendLength, inLow[outBegIdx - optInMinTrendLength])`, which no output row carries. The last, still-open pivot is `(outPivotIdx[last], outZigZag[last])` — the leg Achelis warns about.
 
 ## Formula
 
@@ -29,9 +29,10 @@ With `H = inHigh`, `L = inLow`, `m = optInMinTrendLength`, `s = optInSensitivity
 - **Reversal is tested before extension.** On an outside bar that both makes a new extreme and clears the threshold, the leg reverses and the old pivot stays where it was. The other order moves the pivot to the new extreme and defers the reversal to the next bar, against a threshold that has just moved further away: on the 252-bar regtest corpus at 5 percent that costs one bar (R TTR, which takes that order, places the swing low at 148 where this places it at 147), but a range narrower than the sensitivity after the outside bar keeps it from ever firing, and the leg is then lost rather than delayed.
 - **Ties extend.** The comparisons are `<=` and `>=`, so at an equal price the pivot moves to the later bar: `outZigZag` does not change and `outPivotIdx` does. That movement is the only thing the index output carries and the price output cannot.
 - **The gate counts from the pivot's own bar, the seed included.** No reversal can fire before the first output bar; the first one can fire exactly there.
-- **The seed is a low.** A series that only rises therefore reports an up leg from its first reversal and never returns to a down leg.
+- **The seed is a low.** The first reversal is therefore always upward. A down reversal compares a bar's low with the tracked high, so a rising series stays on its up leg only while no low falls `optInSensitivity` percent under that high on a bar the gate allows.
+- **The input must be positive.** The threshold is a percent of the pivot: at a pivot of 0 it sits on the pivot and below 0 on the wrong side of it, so the leg reverses on nearly every bar the gate allows. The output is undefined for such input and no error is returned. A series that crosses zero, such as an oscillator or a spread, needs an absolute reversal amount, which this function does not have.
 - The lookback is `optInMinTrendLength` and does not depend on the sensitivity: the threshold decides whether a reversal fires, never how early it may.
-- `optInSensitivity` is a percent, as Achelis, StockCharts, TTR, Skender and TradingView take it. 0 and 1 are degenerate but defined: at 0 a reversal fires on almost every bar the gate allows, and at 100 no downward reversal fires on positive prices.
+- `optInSensitivity` is a percent, as Achelis, StockCharts, TTR, Skender and TradingView take it. 0 and 100 are degenerate but defined: at 0 a reversal fires on almost every bar the gate allows, and at 100 no downward reversal fires on positive prices.
 - The value at a bar depends on where the caller started, through the seed; the function is `path_dependent` for that reason, as SAR and SUPERTREND are.
 
 ## Inputs
