@@ -86,6 +86,7 @@ ta_regtest_SOURCES = ta_regtest.c \
 	ta_test_func/test_alma.c \
 	ta_test_func/test_stc.c \
 	ta_test_func/test_auto_stabilization.c \
+	ta_test_func/test_transcendental_ref.c \
 	ta_test_func/test_swak.c \
 	ta_test_func/test_fractal.c \
 	ta_test_func/test_ha.c \

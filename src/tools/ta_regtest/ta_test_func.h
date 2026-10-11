@@ -97,5 +97,6 @@ ErrorNumber test_func_stream_finite( TA_History *history );
 ErrorNumber test_func_open_contract( TA_History *history );
 ErrorNumber test_func_unstable_shift( TA_History *history );
 ErrorNumber test_func_auto_stabilization( TA_History *history );
+ErrorNumber test_func_transcendental_ref( TA_History *history );
 
 #endif

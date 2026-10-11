@@ -1033,6 +1033,9 @@ static ErrorNumber testTAFunction_ALL( void )
    DO_TEST_LBL_NOSV( test_func_auto_stabilization,
             "UNSTABLE,LOOKBACK,AUTO",
             "Unstable period Auto levels" );
+   DO_TEST_LBL_NOSV( test_func_transcendental_ref,
+            "TRANSCENDENTAL,GOLDEN",
+            "Transcendental reference values" );
 
    return TA_TEST_PASS; /* All tests succeeded. */
 }

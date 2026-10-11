@@ -609,6 +609,10 @@ typedef enum
   TA_AUTO_STABILIZATION_FAIL                = 1720,
   TA_AUTO_STABILIZATION_VACUOUS             = 1721,
 
+  /* (#540) Transcendental outputs against their committed values. */
+  TA_TRANSCENDENTAL_REF_FAIL         = 1722,
+  TA_TRANSCENDENTAL_REF_VACUOUS      = 1723,
+
   /* Error code related to bug fix documentented on SourceForge. */
   TA_TEST_FAIL_BUG1359452_1  = 2000,
   TA_TEST_FAIL_BUG1359452_2  = 2001,
