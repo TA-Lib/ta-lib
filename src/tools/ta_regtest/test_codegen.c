@@ -766,6 +766,10 @@ static const UnstableLookup UNSTABLE_MAP[] = {
      * any entry it classified EPSILON and moved 0.25% where ~1e-13 was allowed. */
     {"KC",           TA_FUNC_UNST_EMA},
     {"KC",           TA_FUNC_UNST_ATR},
+    /* WAVETREND inherits EMA three times over -- the price average, the
+     * deviation average and the oscillator smoothing -- all under one id,
+     * so one row carries all three. */
+    {"WAVETREND",    TA_FUNC_UNST_EMA},
     /* DOSC inherits two ids as well: RSI for its first stage and EMA for the
      * two smoothings stacked on it. The EMA row has to be here even though
      * KC already carries one -- the map is keyed by function, not by id. */

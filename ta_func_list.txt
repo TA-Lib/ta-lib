@@ -226,6 +226,7 @@ VORTEX              Vortex Indicator
 VWAP                Volume Weighted Average Price
 VWMA                Volume Weighted Moving Average
 WAD                 Williams' Accumulation/Distribution
+WAVETREND           WaveTrend Oscillator
 WCLPRICE            Weighted Close Price
 WILLR               Williams' %R
 WMA                 Weighted Moving Average

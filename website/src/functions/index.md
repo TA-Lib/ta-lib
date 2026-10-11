@@ -111,6 +111,7 @@ All technical-analysis functions, grouped by category. Each page documents the f
 - [VHF](/functions/vhf.md) — Vertical Horizontal Filter
 - [VORTEX](/functions/vortex.md) — Vortex Indicator
 - [WAD](/functions/wad.md) — Williams' Accumulation/Distribution
+- [WAVETREND](/functions/wavetrend.md) — WaveTrend Oscillator
 - [WILLR](/functions/willr.md) — Williams' %R
 
 ## Overlap Studies
