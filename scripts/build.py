@@ -498,13 +498,16 @@ def check_regtest_source_lists(root_dir: str) -> bool:
     # nothing: the runtime floors only judge a group that ran.
     regtest_dir = os.path.dirname(func_dir)
     with open(os.path.join(regtest_dir, 'ta_regtest.c'), encoding='utf-8') as f:
-        runner = re.sub(r'/\*.*?\*/|//[^\n]*', '', f.read(), flags=re.S)
+        runner = re.sub(r'"(?:\\.|[^"\\\n])*"|/\*.*?\*/|//[^\n]*',
+                        lambda m: m.group(0) if m.group(0)[0] == '"' else '',
+                        f.read(), flags=re.S)
     registered = set(re.findall(r'\bDO_TEST\w*\(\s*(\w+)\s*,', runner))
     groups = 0
     for entry in sorted(e for e in union if e.endswith('.c')):
         with open(os.path.join(regtest_dir, entry), encoding='utf-8') as f:
             defined = re.findall(
-                r'^ErrorNumber\s+(\w+)\s*\(\s*TA_History\s*\*[^;{]*\{',
+                r'^(?:extern\s+)?ErrorNumber\s+(\w+)\s*'
+                r'\(\s*(?:const\s+)?TA_History\b[^;{,)]*\)[^;{]*\{',
                 f.read(), re.M)
         if not defined and entry in on_disk:
             print(f"Error: {entry} defines no group this check can see. A group "
