@@ -65,10 +65,14 @@
  *        nothing. This leg reads the normal factor off the data, (BBU -
  *        KCM)/BAND at a chosen bar, which puts that bar's upper band on the
  *        edge, and requires that some bar really is within a few ulps of it.
- *        Three bars at a deviation of 2.0, then every bar at 2.5: only a
- *        multiplier that is not a power of two tells a fused band from a
- *        rounded one, and only on some bars. It sees a band that is too wide,
- *        not one that is too narrow; leg 11 decides both.
+ *        Three bars at a deviation of 2.0, then every bar at 2.5, upper edge
+ *        and then lower edge, at the factor read and at one ulp either side
+ *        of it, at 20/20 and at 14/20 where only one band ties at a time: only
+ *        a multiplier that is not a power of two
+ *        tells a fused band from a rounded one, and only on some bars. A
+ *        tuned bar sits just outside its channel, so the leg sees a Bollinger
+ *        band that comes out an ulp narrower, not one an ulp wider; leg 11
+ *        decides both.
  *     3. LOOKBACK. TA_SQZMOM_Lookback against the max of the chains, the
  *        call's own begIdx against it, and no change under an unstable period.
  *     4. NESTING. A premise of the reference, not a test of TA_SQZMOM: the
@@ -121,11 +125,12 @@ extern double gDataClose[];
  * 11 cases; the bars each produces are 214, 226, 214, 250, 203, 233, 233, 212,
  * 54, 214 and 214, which is 2267, and each bar compares both outputs. */
 #define SQZ_COMPOSE_CMP   4534
-#define SQZ_BOUNDARY_CMP 46438   /* 3 + 214 tuned runs x 214 bars */
-/* One bar per tuned run lands on the edge -- the bar the factor was read from.
- * The floor is what stops the leg passing when the tuning lands nowhere near
- * one, which would make it leg 1 again. */
-#define SQZ_BOUNDARY_EDGE  217
+#define SQZ_BOUNDARY_CMP 550194  /* 3 + 12*214 tuned runs x 214 bars */
+/* A tuned run lands one bar on the edge, the bar the factor was read from,
+ * unless that bar's band is on the far side of the centre. The floor is what
+ * stops the leg passing when the tuning lands nowhere near an edge, which
+ * would make it leg 1 again. */
+#define SQZ_BOUNDARY_EDGE 1800
 #define SQZ_LOOKBACK_CMP    23   /* 11 cases x (lookback, begIdx), and the unstable-period check */
 #define SQZ_NEST_CMP      2267   /* the same 2267 bars, one check each */
 #define SQZ_FLAT_CMP       428   /* 214 bars, both outputs */
@@ -924,15 +929,17 @@ static ErrorNumber sqzLegBoundary( TA_History *history )
 
    nbBars = (int)history->nbBars;
 
-   for( t = 0; t < 3 + 214; t++ )
+   for( t = 0; t < 3 + 12*214; t++ )
    {
       double tuned;
-      int bar = ( t < 3 ) ? tuneBar[t] : 38 + (t - 3);
+      int lower = ( t >= 3 ) && ((t - 3) / (3*214)) % 2;
+      int nudge = ( t < 3 ) ? 0 : ((t - 3) / 214) % 3 - 1;
+      int bar = ( t < 3 ) ? tuneBar[t] : 38 + (t - 3) % 214;
 
-      c.bbPeriod = 20; c.nbDev = ( t < 3 ) ? 2.0 : 2.5; c.kcPeriod = 20;
+      c.bbPeriod = ( t < 3 + 6*214 ) ? 20 : 14; c.nbDev = ( t < 3 ) ? 2.0 : 2.5; c.kcPeriod = 20;
       c.wide = 2.0; c.normal = 1.5; c.narrow = 1.0; c.wantLookback = -1;
 
-      /* First pass: read the factor at which bar flips its upper test. */
+      /* First pass: read the factor that puts this bar on its edge. */
       if( (e = sqzReference( history->high, history->low, history->close,
                              nbBars, &c, 0, &refBeg, &refNb )) != TA_TEST_PASS )
          return e;
@@ -944,13 +951,16 @@ static ErrorNumber sqzLegBoundary( TA_History *history )
                  "has a zero band\n", bar );
          return TA_TESTUTIL_TFRR_BAD_PARAM;
       }
-      tuned = (refBBU[i] - refKCM[i]) / refBand[i];
+      tuned = lower ? (refKCM[i] - refBBL[i]) / refBand[i]
+                    : (refBBU[i] - refKCM[i]) / refBand[i];
+      /* One ulp either side as well: the edge is a rounded product, and it
+       * has to land on the band itself for the last bit of the band to count. */
+      if( nudge != 0 )
+         tuned = nextafter( tuned, nudge > 0 ? 1e300 : 0.0 );
+      /* A band on the far side of the centre has no edge to sit on; the run
+       * still compares every bar, at the card's factor. */
       if( !(tuned > 0.0) )
-      {
-         printf( "Fail: SQZMOM boundary leg, bar %d gives a non-positive "
-                 "factor %.17g\n", bar, tuned );
-         return TA_TESTUTIL_TFRR_BAD_PARAM;
-      }
+         tuned = 1.5;
 
       /* Second pass at that factor: the chosen bar now sits on the edge. */
       c.wide = tuned + 0.5; c.normal = tuned; c.narrow = tuned - 0.5;
@@ -992,8 +1002,9 @@ static ErrorNumber sqzLegBoundary( TA_History *history )
 
          /* How many bars actually landed on an edge: without at least a few,
           * this leg is leg 1 again under another name. */
-         edge = refKCM[i] + c.normal * refBand[i];
-         gap  = fabs( refBBU[i] - edge );
+         edge = lower ? refKCM[i] - c.normal * refBand[i]
+                      : refKCM[i] + c.normal * refBand[i];
+         gap  = fabs( ( lower ? refBBL[i] : refBBU[i] ) - edge );
          ulp  = fabs( edge ) * 2.220446049250313e-16;
          if( gap <= 4.0 * ulp )
             g_sqzBoundaryEdge++;
