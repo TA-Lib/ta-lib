@@ -47,13 +47,17 @@
  *  Initial  Name/description
  *  -------------------------------------------------------------------
  *  MF       Mario Fortier
+ *  KL       Kevin Lin (@kevinlincg)
  *  CC       Claude Code (AI assistant)
  *
  * Change history:
  *
  *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
- *  100626 MF,CC  Initial version (#476).
+ *  100626 KL,CC  Initial version (#476).
+ *  101126 MF,CC  The EMA betas stay as the divide wrote them above a
+ *                period of 2. The fixpoint test waits for a seeded
+ *                average.
  */
 
 TA_LIB_API int TA_WAVETREND_Lookback( int optInChannelPeriod, int optInAveragePeriod, int optInSignalPeriod )
@@ -70,15 +74,8 @@ TA_LIB_API int TA_WAVETREND_Lookback( int optInChannelPeriod, int optInAveragePe
       optInSignalPeriod = 4;
    else if( (int)optInSignalPeriod < 1 || (int)optInSignalPeriod > 100000 )
       return -1;
-   /* Two exponential averages over the channel period -- one of the typical
-    * price, one of the absolute distance from it -- then the oscillator's own
-    * smoothing and the simple average that makes the signal line. Every term
-    * is exactly the lookback of the function it comes from, so none of them is
-    * restated here: that is what makes WAVETREND inherit TA_FUNC_UNST_EMA from
-    * its callees rather than take an id of its own.
-    *
-    * The EMA term appears THREE times, so a warm
-    * TA_SetUnstablePeriod(TA_FUNC_UNST_EMA, k) moves the lookback by 3k.
+   /* Keep every term a callee's own lookback: that is how WAVETREND inherits
+    * TA_FUNC_UNST_EMA, once per exponential stage.
     */
    return TA_EMA_Lookback(optInChannelPeriod) + TA_EMA_Lookback(optInChannelPeriod) + TA_EMA_Lookback(optInAveragePeriod) + TA_SMA_Lookback(optInSignalPeriod);
 }
@@ -132,7 +129,6 @@ TA_LIB_API TA_RetCode TA_WAVETREND( int    startIdx,
    int nAp;
    int nDev;
    int nCi;
-   int nSig;
    double local_wtBuffer[32];
    double *wtBuffer = &local_wtBuffer[0];
    int wtBuffer_Idx;
@@ -185,11 +181,9 @@ TA_LIB_API TA_RetCode TA_WAVETREND( int    startIdx,
     * an SMA and takes the mean deviation around that window's own SMA, where
     * this uses two exponential averages.
     *
-    * Each stage seeds the way ema.c and sma.c seed, and each stage boundary
-    * below is the callee's LOOKBACK rather than (period-1), so the result is
-    * bit-identical to the composed chain on moving data and a warm unstable
-    * period folds in. The two guards are what the chain cannot express; they
-    * are the reason this ships as a function.
+    * Bit-identical to the composed chain on moving data: each stage seeds as
+    * ema.c and sma.c do, and each stage boundary is the callee's LOOKBACK,
+    * never (period-1), or an EMA unstable period breaks it.
     */
    /* This ptr will point on a circular buffer of at least
     * "optInSignalPeriod" element.
@@ -226,12 +220,24 @@ TA_LIB_API TA_RetCode TA_WAVETREND( int    startIdx,
    wtBuffer_Idx = 0;
    lookbackChannel = TA_EMA_Lookback(optInChannelPeriod);
    lookbackAverage = TA_EMA_Lookback(optInAveragePeriod);
+   /* k and beta must sum to exactly 1.0, or a flat input drifts off its
+    * level. Each subtraction is exact only from an operand in [0.5,1): at a
+    * period of 2 or less that is k, above it beta. Above it beta stays as the
+    * divide wrote it: a register last written by a subtraction costs each FMA
+    * reading it one more cycle on Intel P-cores.
+    */
    beta1 = (double)(optInChannelPeriod - 1) / (double)(optInChannelPeriod + 1);
    k1 = 1.0 - beta1;
-   beta1 = 1.0 - k1;
+   if( beta1 < 0.5 )
+   {
+      beta1 = 1.0 - k1;
+   }
    beta2 = (double)(optInAveragePeriod - 1) / (double)(optInAveragePeriod + 1);
    k2 = 1.0 - beta2;
-   beta2 = 1.0 - k2;
+   if( beta2 < 0.5 )
+   {
+      beta2 = 1.0 - k2;
+   }
    esa = 0.0;
    d = 0.0;
    ci = 0.0;
@@ -241,12 +247,6 @@ TA_LIB_API TA_RetCode TA_WAVETREND( int    startIdx,
    sumCi = 0.0;
    sumSignal = 0.0;
    nAp = 0;
-   /* The fixpoint test compares against the previous bar's pair. Starting both
-    * at 0.0 cannot make it fire spuriously: it would need a bar whose typical
-    * price and whose exponential average are both exactly zero, and a zero
-    * typical price makes the numerator zero anyway, which is what the test
-    * would have substituted.
-    */
    prevAp = 0.0;
    prevEsa = 0.0;
    today = startIdx - lookbackTotal;
@@ -284,18 +284,17 @@ TA_LIB_API TA_RetCode TA_WAVETREND( int    startIdx,
           * but rounding. When the pair has not moved, the average has reached
           * its fixpoint and the distance is exactly that residue, so the
           * numerator is taken as zero. The test is exact, so it is
-          * independent of scale and period, unlike a fixed epsilon band.
+          * independent of scale and period.
+          *
+          * Only once prevEsa is an average: on the bar that seeds esa it is
+          * still the 0.0 placeholder, which a seed of exactly 0.0 equals.
           */
          num = ap - esa;
-         if( ap == prevAp && esa == prevEsa )
+         if( nAp >= optInChannelPeriod && ap == prevAp && esa == prevEsa )
          {
             num = 0.0;
          }
-         dev = num;
-         if( dev < 0.0 )
-         {
-            dev = -dev;
-         }
+         dev = fabs(num);
          if( nDev < optInChannelPeriod )
          {
             sumD = sumD + dev;
@@ -373,11 +372,7 @@ TA_LIB_API TA_RetCode TA_WAVETREND( int    startIdx,
       {
          num = 0.0;
       }
-      dev = num;
-      if( dev < 0.0 )
-      {
-         dev = -dev;
-      }
+      dev = fabs(num);
       d = fma(beta1, d, k1 * dev);
       scaledDev = 0.015 * d;
       if( scaledDev > 0.0 )
@@ -446,7 +441,6 @@ TA_RetCode TA_S_WAVETREND( int    startIdx,
    int nAp;
    int nDev;
    int nCi;
-   int nSig;
    double local_wtBuffer[32];
    double *wtBuffer = &local_wtBuffer[0];
    int wtBuffer_Idx;
@@ -514,10 +508,16 @@ TA_RetCode TA_S_WAVETREND( int    startIdx,
    lookbackAverage = TA_EMA_Lookback(optInAveragePeriod);
    beta1 = (double)(optInChannelPeriod - 1) / (double)(optInChannelPeriod + 1);
    k1 = 1.0 - beta1;
-   beta1 = 1.0 - k1;
+   if( beta1 < 0.5 )
+   {
+      beta1 = 1.0 - k1;
+   }
    beta2 = (double)(optInAveragePeriod - 1) / (double)(optInAveragePeriod + 1);
    k2 = 1.0 - beta2;
-   beta2 = 1.0 - k2;
+   if( beta2 < 0.5 )
+   {
+      beta2 = 1.0 - k2;
+   }
    esa = 0.0;
    d = 0.0;
    ci = 0.0;
@@ -548,15 +548,11 @@ TA_RetCode TA_S_WAVETREND( int    startIdx,
       {
          nDev = nAp - lookbackChannel;
          num = ap - esa;
-         if( ap == prevAp && esa == prevEsa )
+         if( nAp >= optInChannelPeriod && ap == prevAp && esa == prevEsa )
          {
             num = 0.0;
          }
-         dev = num;
-         if( dev < 0.0 )
-         {
-            dev = -dev;
-         }
+         dev = fabs(num);
          if( nDev < optInChannelPeriod )
          {
             sumD = sumD + dev;
@@ -617,11 +613,7 @@ TA_RetCode TA_S_WAVETREND( int    startIdx,
       {
          num = 0.0;
       }
-      dev = num;
-      if( dev < 0.0 )
-      {
-         dev = -dev;
-      }
+      dev = fabs(num);
       d = fma(beta1, d, k1 * dev);
       scaledDev = 0.015 * d;
       if( scaledDev > 0.0 )
@@ -709,11 +701,7 @@ static TA_FMA_STEP_INLINE void TA_WAVETREND_StepImpl( struct TA_WAVETREND_Stream
    {
       num = 0.0;
    }
-   dev = num;
-   if( dev < 0.0 )
-   {
-      dev = -dev;
-   }
+   dev = fabs(num);
    sp->d = fma(sp->beta1, sp->d, sp->k1 * dev);
    scaledDev = 0.015 * sp->d;
    if( scaledDev > 0.0 )
@@ -805,7 +793,6 @@ static TA_FMA_STEP_INLINE TA_RetCode TA_WAVETREND_OpenImpl( struct TA_WAVETREND_
       int nAp;
       int nDev;
       int nCi;
-      int nSig;
       /* LazyBear's WaveTrend Oscillator (TradingView, 2014), lines 14 to 21: the
        * typical price's distance from its own exponential average, normalised by
        * an exponential average of that distance's absolute value and by Lambert's
@@ -821,11 +808,9 @@ static TA_FMA_STEP_INLINE TA_RetCode TA_WAVETREND_OpenImpl( struct TA_WAVETREND_
        * an SMA and takes the mean deviation around that window's own SMA, where
        * this uses two exponential averages.
        *
-       * Each stage seeds the way ema.c and sma.c seed, and each stage boundary
-       * below is the callee's LOOKBACK rather than (period-1), so the result is
-       * bit-identical to the composed chain on moving data and a warm unstable
-       * period folds in. The two guards are what the chain cannot express; they
-       * are the reason this ships as a function.
+       * Bit-identical to the composed chain on moving data: each stage seeds as
+       * ema.c and sma.c do, and each stage boundary is the callee's LOOKBACK,
+       * never (period-1), or an EMA unstable period breaks it.
        */
       /* This ptr will point on a circular buffer of at least
        * "optInSignalPeriod" element.
@@ -862,12 +847,24 @@ static TA_FMA_STEP_INLINE TA_RetCode TA_WAVETREND_OpenImpl( struct TA_WAVETREND_
       wtBuffer_Idx = 0;
       lookbackChannel = TA_EMA_Lookback(optInChannelPeriod);
       lookbackAverage = TA_EMA_Lookback(optInAveragePeriod);
+      /* k and beta must sum to exactly 1.0, or a flat input drifts off its
+       * level. Each subtraction is exact only from an operand in [0.5,1): at a
+       * period of 2 or less that is k, above it beta. Above it beta stays as the
+       * divide wrote it: a register last written by a subtraction costs each FMA
+       * reading it one more cycle on Intel P-cores.
+       */
       beta1 = (double)(optInChannelPeriod - 1) / (double)(optInChannelPeriod + 1);
       k1 = 1.0 - beta1;
-      beta1 = 1.0 - k1;
+      if( beta1 < 0.5 )
+      {
+         beta1 = 1.0 - k1;
+      }
       beta2 = (double)(optInAveragePeriod - 1) / (double)(optInAveragePeriod + 1);
       k2 = 1.0 - beta2;
-      beta2 = 1.0 - k2;
+      if( beta2 < 0.5 )
+      {
+         beta2 = 1.0 - k2;
+      }
       esa = 0.0;
       d = 0.0;
       ci = 0.0;
@@ -877,12 +874,6 @@ static TA_FMA_STEP_INLINE TA_RetCode TA_WAVETREND_OpenImpl( struct TA_WAVETREND_
       sumCi = 0.0;
       sumSignal = 0.0;
       nAp = 0;
-      /* The fixpoint test compares against the previous bar's pair. Starting both
-       * at 0.0 cannot make it fire spuriously: it would need a bar whose typical
-       * price and whose exponential average are both exactly zero, and a zero
-       * typical price makes the numerator zero anyway, which is what the test
-       * would have substituted.
-       */
       prevAp = 0.0;
       prevEsa = 0.0;
       today = startIdx - lookbackTotal;
@@ -920,18 +911,17 @@ static TA_FMA_STEP_INLINE TA_RetCode TA_WAVETREND_OpenImpl( struct TA_WAVETREND_
              * but rounding. When the pair has not moved, the average has reached
              * its fixpoint and the distance is exactly that residue, so the
              * numerator is taken as zero. The test is exact, so it is
-             * independent of scale and period, unlike a fixed epsilon band.
+             * independent of scale and period.
+             *
+             * Only once prevEsa is an average: on the bar that seeds esa it is
+             * still the 0.0 placeholder, which a seed of exactly 0.0 equals.
              */
             num = ap - esa;
-            if( ap == prevAp && esa == prevEsa )
+            if( nAp >= optInChannelPeriod && ap == prevAp && esa == prevEsa )
             {
                num = 0.0;
             }
-            dev = num;
-            if( dev < 0.0 )
-            {
-               dev = -dev;
-            }
+            dev = fabs(num);
             if( nDev < optInChannelPeriod )
             {
                sumD = sumD + dev;
@@ -1009,11 +999,7 @@ static TA_FMA_STEP_INLINE TA_RetCode TA_WAVETREND_OpenImpl( struct TA_WAVETREND_
          {
             num = 0.0;
          }
-         dev = num;
-         if( dev < 0.0 )
-         {
-            dev = -dev;
-         }
+         dev = fabs(num);
          d = fma(beta1, d, k1 * dev);
          scaledDev = 0.015 * d;
          if( scaledDev > 0.0 )
@@ -1183,11 +1169,7 @@ TA_LIB_API TA_RetCode TA_WAVETREND_Peek( const TA_WAVETREND_Stream *stream, doub
    {
       num = 0.0;
    }
-   dev = num;
-   if( dev < 0.0 )
-   {
-      dev = -dev;
-   }
+   dev = fabs(num);
    d = fma(sp->beta1, d, sp->k1 * dev);
    scaledDev = 0.015 * d;
    if( scaledDev > 0.0 )

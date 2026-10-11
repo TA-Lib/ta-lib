@@ -44,6 +44,7 @@
  *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
  *  100626 KL,CC  First version (proposal WAVETREND, #476).
+ *  101126 MF,CC  Golden rows captured from LEAN.
  */
 
 /* Description:
@@ -71,9 +72,10 @@
  *   |WT1| decaying rather than drifting. The naive form walks to -66.67 on
  *   the same data, so the margin is thirteen orders of magnitude.
  *
- *   The GOLDEN leg holds the formula, from a 60-digit evaluation over the
- *   committed corpus. MEASURED: the library reproduces those 28 rows to
- *   3.9e-13 by |a-b|/max(|b|,1); the tolerance is 1e-11.
+ *   The GOLDEN leg holds the formula: LEAN's WaveTrendOscillator, an
+ *   independent implementation computing in decimal, over the committed
+ *   corpus. MEASURED: the library is within 1.1e-12 of LEAN by
+ *   |a-b|/max(|b|,1) on every bar of the four sets; the tolerance is 1e-11.
  *
  *   Every comparison count is pinned, so a leg that stops comparing fails.
  *
@@ -114,8 +116,13 @@
 #define WT_FLAT_CMP      915
 /* Both outputs of the 120-bar subnormal series past its 41-bar lookback. */
 #define WT_SUBNORMAL_CMP 158
-/* outWT1 and outWT2 each aliased onto each of the three price inputs. */
-#define WT_ALIAS_CMP       6
+/* 8 ways of aliasing the outputs onto the inputs, every output bar of
+ * 10/21/4 and of 2/1/1: 8 * ((252 - 41) + (252 - 2)). */
+#define WT_ALIAS_CMP    3688
+
+/* 6 output bars of the zero-seed series, both outputs, then both outputs of
+ * the 100-bar flat series past its 41-bar lookback. */
+#define WT_EDGE_CMP      130
 
 static int g_wtGoldenCmp;
 static int g_wtComposeCmp;
@@ -123,6 +130,7 @@ static int g_wtLookbackCmp;
 static int g_wtFlatCmp;
 static int g_wtSubnormalCmp;
 static int g_wtAliasCmp;
+static int g_wtEdgeCmp;
 
 typedef struct
 {
@@ -134,47 +142,49 @@ typedef struct
    double wt2;
 } WtGolden;
 
-/* From a 60-digit evaluation of LazyBear's lines 14-21 over the committed
- * corpus, rounded once to 17 significant digits. The 2/1/1 set is the
- * minimum-period edge, where the signal average is the identity and WT2
- * equals WT1. The fixpoint guard fires on none of these bars (asserted by the
- * composition leg), so the reference needs neither guard.
+/* LEAN's WaveTrendOscillator (QuantConnect.Indicators 2.5.18090, LEAN
+ * 5b0c997) over the committed corpus: ta-lib-oracles 6819d77,
+ * capture_476_wavetrend.py. The 2/1/1 set is the minimum-period edge, where
+ * the signal average is the identity and WT2 equals WT1. The fixpoint guard
+ * fires on none of these bars (asserted by the composition leg), and LEAN
+ * carries neither guard.
  */
 static const WtGolden wtGolden[] =
 {
-   { 10, 21, 4,  41, -32.909502909801517, -35.577882554674595 },
-   { 10, 21, 4,  42, -20.583680564892962, -32.466423000898438 },
-   { 10, 21, 4,  43,  -9.6666585870679391, -25.847097821526958 },
-   { 10, 21, 4,  49,  21.558617340463968,  18.256459235159582 },
-   { 10, 21, 4, 100,  31.754477452876667,  35.185325674282076 },
-   { 10, 21, 4, 180,  21.493853896217523,  33.670405176952414 },
-   { 10, 21, 4, 251,   1.0710257379549579,  9.7580185658593059 },
-   {  9, 12, 3,  29, -38.247606870206724, -49.836743081550097 },
-   {  9, 12, 3,  30, -36.032800850706288, -41.343217219324757 },
-   {  9, 12, 3,  31, -28.899828458036886, -34.393412059649968 },
-   {  9, 12, 3,  37, -14.452827314168218,  -1.1132545806795429 },
-   {  9, 12, 3, 100,  19.378125951031727,  19.398425093876611 },
-   {  9, 12, 3, 180,   6.2391084601602849, 17.642319988529582 },
-   {  9, 12, 3, 251, -14.212903944253124,  -1.8011575760496956 },
-   { 20, 40, 8,  84,  41.243192011668476,  32.020669787566014 },
-   { 20, 40, 8,  85,  42.288131514897707,  35.068390556783733 },
-   { 20, 40, 8,  86,  43.973123006190576,  37.463036688332551 },
-   { 20, 40, 8,  92,  57.17828639945882,   49.410145559922178 },
-   { 20, 40, 8, 100,  51.796332577396917,  55.700767108596402 },
-   { 20, 40, 8, 180,  31.527395644500178,  37.030062098878687 },
-   { 20, 40, 8, 251,  15.053683866420357,  15.910860452397158 },
-   {  2,  1, 1,   2,  58.663148636763438,  58.663148636763438 },
-   {  2,  1, 1,   3,  34.63638976717445,   34.63638976717445  },
-   {  2,  1, 1,   4, -44.031531531531527, -44.031531531531527 },
-   {  2,  1, 1,  10,  87.43921937446396,   87.43921937446396  },
-   {  2,  1, 1, 100,  27.785318786918545,  27.785318786918545 },
-   {  2,  1, 1, 180, -58.057334981372314, -58.057334981372314 },
-   {  2,  1, 1, 251, -91.185932853846495, -91.185932853846495 }
+   { 10, 21, 4,  41,      -32.909502909801517,      -35.577882554674588 },
+   { 10, 21, 4,  42,      -20.583680564892958,       -32.46642300089843 },
+   { 10, 21, 4,  43,      -9.6666585870679373,      -25.847097821526958 },
+   { 10, 21, 4,  49,       21.558617340463968,       18.256459235159582 },
+   { 10, 21, 4, 100,        31.75447745287666,       35.185325674282076 },
+   { 10, 21, 4, 180,       21.493853896217523,       33.670405176952414 },
+   { 10, 21, 4, 251,       1.0710257379549455,       9.7580185658593024 },
+   {  9, 12, 3,  29,      -38.247606870206731,      -49.836743081550097 },
+   {  9, 12, 3,  30,      -36.032800850706295,      -41.343217219324757 },
+   {  9, 12, 3,  31,      -28.899828458036893,      -34.393412059649968 },
+   {  9, 12, 3,  37,      -14.452827314168209,      -1.1132545806795364 },
+   {  9, 12, 3, 100,       19.378125951031716,       19.398425093876607 },
+   {  9, 12, 3, 180,       6.2391084601602893,       17.642319988529586 },
+   {  9, 12, 3, 251,      -14.212903944253139,      -1.8011575760496961 },
+   { 20, 40, 8,  84,       41.243192011668476,       32.020669787566014 },
+   { 20, 40, 8,  85,       42.288131514897707,       35.068390556783733 },
+   { 20, 40, 8,  86,       43.973123006190583,       37.463036688332551 },
+   { 20, 40, 8,  92,        57.17828639945882,       49.410145559922178 },
+   { 20, 40, 8, 100,       51.796332577396917,       55.700767108596402 },
+   { 20, 40, 8, 180,       31.527395644500182,       37.030062098878687 },
+   { 20, 40, 8, 251,       15.053683866420355,       15.910860452397158 },
+   {  2,  1, 1,   2,        58.66314863676341,        58.66314863676341 },
+   {  2,  1, 1,   3,       34.636389767174478,       34.636389767174478 },
+   {  2,  1, 1,   4,      -44.031531531531535,      -44.031531531531535 },
+   {  2,  1, 1,  10,       87.439219374463974,       87.439219374463974 },
+   {  2,  1, 1, 100,       27.785318786918413,       27.785318786918413 },
+   {  2,  1, 1, 180,      -58.057334981372321,      -58.057334981372321 },
+   {  2,  1, 1, 251,      -91.185932853846509,      -91.185932853846509 }
 };
 
 #define WT_NB_GOLDEN ((int)(sizeof(wtGolden)/sizeof(wtGolden[0])))
 
-/* MEASURED: 3.854e-13 by |a-b|/max(|b|,1) over the rows above. */
+/* MEASURED: at most 1.1e-12 by |a-b|/max(|b|,1), on every bar of the four
+ * sets. */
 #define WT_GOLDEN_TOL 1e-11
 
 static ErrorNumber test_wt_golden  ( const TA_History *history );
@@ -183,6 +193,7 @@ static ErrorNumber test_wt_lookback( const TA_History *history );
 static ErrorNumber test_wt_flat    ( const TA_History *history );
 static ErrorNumber test_wt_subnormal( void );
 static ErrorNumber test_wt_aliasing( const TA_History *history );
+static ErrorNumber test_wt_edges   ( void );
 static ErrorNumber test_wt_range   ( const TA_History *history );
 
 /**** Global functions definitions.   ****/
@@ -197,6 +208,7 @@ ErrorNumber test_func_wavetrend( TA_History *history )
    g_wtFlatCmp = 0;
    g_wtSubnormalCmp = 0;
    g_wtAliasCmp = 0;
+   g_wtEdgeCmp = 0;
 
    if( history->nbBars != WT_NB_BAR )
    {
@@ -223,6 +235,9 @@ ErrorNumber test_func_wavetrend( TA_History *history )
    retValue = test_wt_aliasing( history );
    if( retValue != TA_TEST_PASS ) return retValue;
 
+   retValue = test_wt_edges();
+   if( retValue != TA_TEST_PASS ) return retValue;
+
    retValue = test_wt_range( history );
    if( retValue != TA_TEST_PASS ) return retValue;
 
@@ -231,15 +246,16 @@ ErrorNumber test_func_wavetrend( TA_History *history )
     || g_wtLookbackCmp != WT_LOOKBACK_CMP
     || g_wtFlatCmp     != WT_FLAT_CMP
     || g_wtSubnormalCmp != WT_SUBNORMAL_CMP
-    || g_wtAliasCmp    != WT_ALIAS_CMP )
+    || g_wtAliasCmp    != WT_ALIAS_CMP
+    || g_wtEdgeCmp     != WT_EDGE_CMP )
    {
       printf( "Fail: TA_WAVETREND comparison counts (golden %d, compose %d, "
-              "lookback %d, flat %d, subnormal %d, alias %d) are not what this "
-              "file asserts (%d, %d, %d, %d, %d, %d)\n",
+              "lookback %d, flat %d, subnormal %d, alias %d, edge %d) are not "
+              "what this file asserts (%d, %d, %d, %d, %d, %d, %d)\n",
               g_wtGoldenCmp, g_wtComposeCmp, g_wtLookbackCmp, g_wtFlatCmp,
-              g_wtSubnormalCmp, g_wtAliasCmp,
+              g_wtSubnormalCmp, g_wtAliasCmp, g_wtEdgeCmp,
               WT_GOLDEN_CMP, WT_COMPOSE_CMP, WT_LOOKBACK_CMP, WT_FLAT_CMP,
-              WT_SUBNORMAL_CMP, WT_ALIAS_CMP );
+              WT_SUBNORMAL_CMP, WT_ALIAS_CMP, WT_EDGE_CMP );
       return TA_TESTUTIL_TFRR_BAD_CALCULATION;
    }
 
@@ -248,7 +264,7 @@ ErrorNumber test_func_wavetrend( TA_History *history )
 
 /**** Local functions definitions.     ****/
 
-/* (1) GOLDEN: the formula, from 60 digits over the committed corpus. */
+/* (1) GOLDEN: the formula, against LEAN over the committed corpus. */
 static ErrorNumber test_wt_golden( const TA_History *history )
 {
    TA_RetCode rc;
@@ -525,7 +541,7 @@ static ErrorNumber test_wt_lookback( const TA_History *history )
  * the guarded output. The properties below are pinned instead, each measured
  * against this implementation:
  *
- *   channel 10, 450 flat bars: WT1 leaves the last moving bar at -24.4 and
+ *   channel 10, 450 flat bars: WT1 is at -24.4 on the first flat bar and
  *   decays to -6.5e-12 by bar 575, turning geometric between bars 300 and 325
  *   where the average freezes. The naive form is at -66.67 over the same
  *   stretch, so WT_FLAT_SETTLED is thirteen orders of magnitude clear of it.
@@ -576,11 +592,9 @@ static ErrorNumber test_wt_flat( const TA_History *history )
          return TA_TESTUTIL_TFRR_BAD_RETCODE;
       }
 
-      /* The reference bar is the first OUTPUT bar that is also flat. At a
-       * channel period of 100 the lookback (244) runs past the start of the
-       * flat run (150), so WT_FLAT_MOVE - begIdx is negative and indexing by
-       * it reads outside the buffer -- which the plain build happened to
-       * survive and ASan did not.
+      /* The reference bar is the first OUTPUT bar that is also flat: at a
+       * channel period of 100 the lookback (244) is past the start of the
+       * flat run (150).
        */
       firstFlatIdx = WT_FLAT_MOVE - (int)begIdx;
       if( firstFlatIdx < 0 )
@@ -589,9 +603,8 @@ static ErrorNumber test_wt_flat( const TA_History *history )
 
       for( k = 0; k < (int)nbElement; k++ )
       {
-         /* Finite everywhere. The chain this replaces emits NaN here once the
-          * flat prefix is long enough to zero the deviation average, and
-          * carries it into every later bar. */
+         /* The unguarded chain stays finite on this series too: the growth
+          * check below is the one that fails without the guard. */
          if( !isfinite( w1[k] ) || !isfinite( w2[k] ) )
          {
             printf( "Fail: TA_WAVETREND flat bar %d (%d/%d/%d): WT1 %.17g "
@@ -697,66 +710,150 @@ static ErrorNumber test_wt_subnormal( void )
    return TA_TEST_PASS;
 }
 
-/* (5) Either output may be any of the three inputs. */
+/* (5) The outputs may be the inputs, both at once included. 2/1/1 is the
+ * shortest lookback, 2: the closest a write ever comes to the bar being read.
+ */
 static ErrorNumber test_wt_aliasing( const TA_History *history )
 {
+   static const int n1Set[] = { 10, 2 };
+   static const int n2Set[] = { 21, 1 };
+   static const int n3Set[] = {  4, 1 };
+   /* Which input outWT1 and outWT2 land on; -1 is a separate buffer. */
+   static const int alias1[] = { 0, 1, 2, -1, -1, -1, 0, 2 };
+   static const int alias2[] = { -1, -1, -1, 0, 1, 2, 1, 0 };
    const TA_Real *src[3];
-   static const char * const name[3] = { "inHigh", "inLow", "inClose" };
    static TA_Real r1[WT_NB_BAR], r2[WT_NB_BAR];
-   static TA_Real work[WT_NB_BAR], other[WT_NB_BAR];
+   static TA_Real in[3][WT_NB_BAR], spare1[WT_NB_BAR], spare2[WT_NB_BAR];
+   TA_Real *o1, *o2;
    TA_RetCode rc;
    TA_Integer begIdx, nbElement, begIdx2, nbElement2;
-   int which, slot, i, nb;
+   int set, c, k, i, nb;
 
    nb = (int)history->nbBars;
-
-   rc = TA_WAVETREND( 0, nb-1, history->high, history->low, history->close,
-                      10, 21, 4, &begIdx, &nbElement, r1, r2 );
-   if( rc != TA_SUCCESS )
-   {
-      printf( "Fail: TA_WAVETREND aliasing: the baseline call failed\n" );
-      return TA_TESTUTIL_TFRR_BAD_RETCODE;
-   }
-
    src[0] = history->high;
    src[1] = history->low;
    src[2] = history->close;
 
-   for( which = 0; which < 3; which++ )
+   for( set = 0; set < 2; set++ )
    {
-      for( slot = 0; slot < 2; slot++ )
+      rc = TA_WAVETREND( 0, nb-1, history->high, history->low, history->close,
+                         n1Set[set], n2Set[set], n3Set[set],
+                         &begIdx, &nbElement, r1, r2 );
+      if( rc != TA_SUCCESS )
       {
-         for( i = 0; i < nb; i++ )
-            work[i] = src[which][i];
+         printf( "Fail: TA_WAVETREND aliasing: the baseline call failed\n" );
+         return TA_TESTUTIL_TFRR_BAD_RETCODE;
+      }
 
-         rc = TA_WAVETREND( 0, nb-1,
-                            which == 0 ? work : history->high,
-                            which == 1 ? work : history->low,
-                            which == 2 ? work : history->close,
-                            10, 21, 4, &begIdx2, &nbElement2,
-                            slot == 0 ? work : other,
-                            slot == 0 ? other : work );
+      for( c = 0; c < 8; c++ )
+      {
+         for( k = 0; k < 3; k++ )
+            for( i = 0; i < nb; i++ )
+               in[k][i] = src[k][i];
+         o1 = alias1[c] < 0 ? spare1 : in[alias1[c]];
+         o2 = alias2[c] < 0 ? spare2 : in[alias2[c]];
+
+         rc = TA_WAVETREND( 0, nb-1, in[0], in[1], in[2],
+                            n1Set[set], n2Set[set], n3Set[set],
+                            &begIdx2, &nbElement2, o1, o2 );
          if( rc != TA_SUCCESS || begIdx2 != begIdx || nbElement2 != nbElement )
          {
-            printf( "Fail: TA_WAVETREND with outWT%d aliased onto %s answered "
-                    "rc=%d\n", slot + 1, name[which], (int)rc );
+            printf( "Fail: TA_WAVETREND aliasing case %d (%d/%d/%d) answered "
+                    "rc=%d\n", c, n1Set[set], n2Set[set], n3Set[set], (int)rc );
             return TA_TESTUTIL_TFRR_BAD_RETCODE;
          }
          for( i = 0; i < (int)nbElement; i++ )
          {
-            double gotW1 = slot == 0 ? work[i] : other[i];
-            double gotW2 = slot == 0 ? other[i] : work[i];
-            if( gotW1 != r1[i] || gotW2 != r2[i] )
+            if( memcmp( &o1[i], &r1[i], sizeof(TA_Real) ) != 0
+             || memcmp( &o2[i], &r2[i], sizeof(TA_Real) ) != 0 )
             {
-               printf( "Fail: TA_WAVETREND with outWT%d aliased onto %s "
+               printf( "Fail: TA_WAVETREND aliasing case %d (%d/%d/%d) "
                        "differs at bar %d: %.17g/%.17g vs %.17g/%.17g\n",
-                       slot + 1, name[which], (int)begIdx + i,
-                       gotW1, gotW2, r1[i], r2[i] );
+                       c, n1Set[set], n2Set[set], n3Set[set],
+                       (int)begIdx + i, o1[i], o2[i], r1[i], r2[i] );
                return TA_TESTUTIL_TFRR_BAD_CALCULATION;
             }
+            g_wtAliasCmp++;
          }
-         g_wtAliasCmp++;
       }
+   }
+
+   return TA_TEST_PASS;
+}
+
+/* (5c) Two series where a placeholder could pass for a value.
+ *
+ * ZERO SEED: the first three typical prices sum to exactly 0.0 and the last
+ * two are equal, so on the bar that seeds the price average the fixpoint test
+ * would match the 0.0 the previous-average slot starts at. Prices are moving,
+ * so the answer is the plain chain's, bit for bit.
+ *
+ * FLAT FROM BAR 0: the deviation average is exactly 0.0 on every bar, where
+ * the chain divides 0 by 0. Every output is exactly 0, from the same first
+ * bar as on moving prices.
+ */
+static ErrorNumber test_wt_edges( void )
+{
+   static const double x[10] = { -2.0, 1.0, 1.0, 3.0, -1.0, 2.0, 5.0, 4.0, -3.0, 1.0 };
+   static double flat[100];
+   static TA_Real w1[100], w2[100];
+   TA_Real ap[10], esa[10], dev[10], d[10], ci;
+   TA_RetCode rc;
+   TA_Integer begIdx, nbElement, bA, nA, bE, nE, bD, nD;
+   int i;
+
+   rc = TA_WAVETREND( 0, 9, x, x, x, 3, 1, 1, &begIdx, &nbElement, w1, w2 );
+   if( rc != TA_SUCCESS || begIdx != 4 || nbElement != 6 )
+   {
+      printf( "Fail: TA_WAVETREND zero seed rc=%d begIdx=%d n=%d\n",
+              (int)rc, (int)begIdx, (int)nbElement );
+      return TA_TESTUTIL_TFRR_BAD_RETCODE;
+   }
+   rc = TA_TYPPRICE( 0, 9, x, x, x, &bA, &nA, ap );
+   if( rc == TA_SUCCESS ) rc = TA_EMA( 0, 9, ap, 3, &bE, &nE, esa );
+   if( rc != TA_SUCCESS || bE != 2 || nE != 8 || esa[0] != 0.0 )
+   {
+      printf( "Fail: TA_WAVETREND zero seed: the series no longer seeds the "
+              "average at exactly 0.0\n" );
+      return TA_TESTUTIL_TFRR_BAD_PARAM;
+   }
+   for( i = 0; i < 8; i++ )
+      dev[i] = fabs( ap[i + 2] - esa[i] );
+   rc = TA_EMA( 0, 7, dev, 3, &bD, &nD, d );
+   if( rc != TA_SUCCESS || bD != 2 || nD != 6 )
+      return TA_TESTUTIL_TFRR_BAD_RETCODE;
+   for( i = 0; i < 6; i++ )
+   {
+      ci = (ap[i + 4] - esa[i + 2]) / (0.015 * d[i]);
+      if( memcmp( &w1[i], &ci, sizeof(ci) ) != 0
+       || memcmp( &w2[i], &ci, sizeof(ci) ) != 0 )
+      {
+         printf( "Fail: TA_WAVETREND zero seed bar %d: WT1 %.17g WT2 %.17g, "
+                 "the chain gives %.17g\n", i + 4, w1[i], w2[i], ci );
+         return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+      }
+      g_wtEdgeCmp += 2;
+   }
+
+   for( i = 0; i < 100; i++ )
+      flat[i] = 100.0;
+   rc = TA_WAVETREND( 0, 99, flat, flat, flat, 10, 21, 4,
+                      &begIdx, &nbElement, w1, w2 );
+   if( rc != TA_SUCCESS || begIdx != 41 || nbElement != 59 )
+   {
+      printf( "Fail: TA_WAVETREND flat from bar 0 rc=%d begIdx=%d n=%d\n",
+              (int)rc, (int)begIdx, (int)nbElement );
+      return TA_TESTUTIL_TFRR_BAD_RETCODE;
+   }
+   for( i = 0; i < (int)nbElement; i++ )
+   {
+      if( w1[i] != 0.0 || w2[i] != 0.0 )
+      {
+         printf( "Fail: TA_WAVETREND flat from bar 0, bar %d: WT1 %.17g "
+                 "WT2 %.17g, expected exactly 0\n", 41 + i, w1[i], w2[i] );
+         return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+      }
+      g_wtEdgeCmp += 2;
    }
 
    return TA_TEST_PASS;

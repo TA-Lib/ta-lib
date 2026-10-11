@@ -45,13 +45,17 @@
  *  Initial  Name/description
  *  -------------------------------------------------------------------
  *  MF       Mario Fortier
+ *  KL       Kevin Lin (@kevinlincg)
  *  CC       Claude Code (AI assistant)
  *
  * Change history:
  *
  *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
- *  100626 MF,CC  Initial version (#476).
+ *  100626 KL,CC  Initial version (#476).
+ *  101126 MF,CC  The EMA betas stay as the divide wrote them above a
+ *                period of 2. The fixpoint test waits for a seeded
+ *                average.
  */
 
 // Import types from parent module
@@ -97,15 +101,8 @@ impl Core {
         } else if (((optInSignalPeriod) as i32) < 1) || (((optInSignalPeriod) as i32) > 100000) {
             return Err(RetCode::BadParam);
         }
-        // Two exponential averages over the channel period -- one of the typical
-        // price, one of the absolute distance from it -- then the oscillator's own
-        // smoothing and the simple average that makes the signal line. Every term
-        // is exactly the lookback of the function it comes from, so none of them is
-        // restated here: that is what makes WAVETREND inherit TA_FUNC_UNST_EMA from
-        // its callees rather than take an id of its own.
-        //
-        // The EMA term appears THREE times, so a warm
-        // TA_SetUnstablePeriod(TA_FUNC_UNST_EMA, k) moves the lookback by 3k.
+        // Keep every term a callee's own lookback: that is how WAVETREND inherits
+        // TA_FUNC_UNST_EMA, once per exponential stage.
         return Ok((self.ema_lookback(optInChannelPeriod)? + self.ema_lookback(optInChannelPeriod)? + self.ema_lookback(optInAveragePeriod)? + self.sma_lookback(optInSignalPeriod)?) as usize);
     }
     /// Display shift of one output of [`Core::wavetrend`]: how many bars ahead (positive) or behind
@@ -251,7 +248,6 @@ impl Core {
         let mut nAp: usize = 0_usize;
         let mut nDev: usize = 0_usize;
         let mut nCi: usize = 0_usize;
-        let nSig: usize = 0_usize;
         let mut local_wtBuffer: [f64; 32] = [0.0_f64; 32];
         let mut heap_wtBuffer: Vec<f64> = Vec::new();
         let mut wtBuffer: &mut [f64] = &mut [];
@@ -271,11 +267,9 @@ impl Core {
         // an SMA and takes the mean deviation around that window's own SMA, where
         // this uses two exponential averages.
         //
-        // Each stage seeds the way ema.c and sma.c seed, and each stage boundary
-        // below is the callee's LOOKBACK rather than (period-1), so the result is
-        // bit-identical to the composed chain on moving data and a warm unstable
-        // period folds in. The two guards are what the chain cannot express; they
-        // are the reason this ships as a function.
+        // Bit-identical to the composed chain on moving data: each stage seeds as
+        // ema.c and sma.c do, and each stage boundary is the callee's LOOKBACK,
+        // never (period-1), or an EMA unstable period breaks it.
         // This ptr will point on a circular buffer of at least
         // "optInSignalPeriod" element.
         lookbackTotal = self.wavetrend_lookback(optInChannelPeriod, optInAveragePeriod, optInSignalPeriod).unwrap_or(usize::MAX);
@@ -303,12 +297,21 @@ impl Core {
         wtBuffer_Idx = 0;
         lookbackChannel = self.ema_lookback(optInChannelPeriod).unwrap_or(usize::MAX);
         lookbackAverage = self.ema_lookback(optInAveragePeriod).unwrap_or(usize::MAX);
+        // k and beta must sum to exactly 1.0, or a flat input drifts off its
+        // level. Each subtraction is exact only from an operand in [0.5,1): at a
+        // period of 2 or less that is k, above it beta. Above it beta stays as the
+        // divide wrote it: a register last written by a subtraction costs each FMA
+        // reading it one more cycle on Intel P-cores.
         beta1 = ((optInChannelPeriod - 1) as f64) / ((optInChannelPeriod + 1) as f64);
         k1 = 1.0 - beta1;
-        beta1 = 1.0 - k1;
+        if beta1 < 0.5 {
+            beta1 = 1.0 - k1;
+        }
         beta2 = ((optInAveragePeriod - 1) as f64) / ((optInAveragePeriod + 1) as f64);
         k2 = 1.0 - beta2;
-        beta2 = 1.0 - k2;
+        if beta2 < 0.5 {
+            beta2 = 1.0 - k2;
+        }
         esa = 0.0;
         d = 0.0;
         ci = 0.0;
@@ -318,11 +321,6 @@ impl Core {
         sumCi = 0.0;
         sumSignal = 0.0;
         nAp = 0;
-        // The fixpoint test compares against the previous bar's pair. Starting both
-        // at 0.0 cannot make it fire spuriously: it would need a bar whose typical
-        // price and whose exponential average are both exactly zero, and a zero
-        // typical price makes the numerator zero anyway, which is what the test
-        // would have substituted.
         prevAp = 0.0;
         prevEsa = 0.0;
         today = startIdx - lookbackTotal;
@@ -353,15 +351,15 @@ impl Core {
                 // but rounding. When the pair has not moved, the average has reached
                 // its fixpoint and the distance is exactly that residue, so the
                 // numerator is taken as zero. The test is exact, so it is
-                // independent of scale and period, unlike a fixed epsilon band.
+                // independent of scale and period.
+                //
+                // Only once prevEsa is an average: on the bar that seeds esa it is
+                // still the 0.0 placeholder, which a seed of exactly 0.0 equals.
                 num = ap - esa;
-                if ap == prevAp && esa == prevEsa {
+                if nAp >= ((optInChannelPeriod) as usize) && ap == prevAp && esa == prevEsa {
                     num = 0.0;
                 }
-                dev = num;
-                if dev < 0.0 {
-                    dev = -dev;
-                }
+                dev = (num).abs();
                 if nDev < ((optInChannelPeriod) as usize) {
                     sumD = sumD + dev;
                     if nDev == ((optInChannelPeriod - 1) as usize) {
@@ -424,10 +422,7 @@ impl Core {
             if ap == prevAp && esa == prevEsa {
                 num = 0.0;
             }
-            dev = num;
-            if dev < 0.0 {
-                dev = -dev;
-            }
+            dev = (num).abs();
             d = (beta1 as f64).mul_add(d, k1 * dev);
             scaledDev = 0.015 * d;
             if scaledDev > 0.0 {
@@ -653,10 +648,7 @@ impl Core {
         if ap == sp.prevAp && sp.esa == sp.prevEsa {
             num = 0.0;
         }
-        dev = num;
-        if dev < 0.0 {
-            dev = -dev;
-        }
+        dev = (num).abs();
         sp.d = (sp.beta1 as f64).mul_add(sp.d, sp.k1 * dev);
         scaledDev = 0.015 * sp.d;
         if scaledDev > 0.0 {
@@ -763,7 +755,6 @@ impl Core {
         let mut nAp: usize = 0_usize;
         let mut nDev: usize = 0_usize;
         let mut nCi: usize = 0_usize;
-        let mut nSig: usize = 0_usize;
         let mut wtBuffer: Vec<f64> = Vec::new();
         let mut wtBuffer_Idx: usize = 0;
         let mut maxIdx_wtBuffer: usize = 31;
@@ -782,11 +773,9 @@ impl Core {
         // an SMA and takes the mean deviation around that window's own SMA, where
         // this uses two exponential averages.
         //
-        // Each stage seeds the way ema.c and sma.c seed, and each stage boundary
-        // below is the callee's LOOKBACK rather than (period-1), so the result is
-        // bit-identical to the composed chain on moving data and a warm unstable
-        // period folds in. The two guards are what the chain cannot express; they
-        // are the reason this ships as a function.
+        // Bit-identical to the composed chain on moving data: each stage seeds as
+        // ema.c and sma.c do, and each stage boundary is the callee's LOOKBACK,
+        // never (period-1), or an EMA unstable period breaks it.
         // This ptr will point on a circular buffer of at least
         // "optInSignalPeriod" element.
         lookbackTotal = self.wavetrend_lookback(optInChannelPeriod, optInAveragePeriod, optInSignalPeriod)?;
@@ -807,12 +796,21 @@ impl Core {
         wtBuffer_Idx = 0;
         lookbackChannel = self.ema_lookback(optInChannelPeriod)?;
         lookbackAverage = self.ema_lookback(optInAveragePeriod)?;
+        // k and beta must sum to exactly 1.0, or a flat input drifts off its
+        // level. Each subtraction is exact only from an operand in [0.5,1): at a
+        // period of 2 or less that is k, above it beta. Above it beta stays as the
+        // divide wrote it: a register last written by a subtraction costs each FMA
+        // reading it one more cycle on Intel P-cores.
         beta1 = ((optInChannelPeriod - 1) as f64) / ((optInChannelPeriod + 1) as f64);
         k1 = 1.0 - beta1;
-        beta1 = 1.0 - k1;
+        if beta1 < 0.5 {
+            beta1 = 1.0 - k1;
+        }
         beta2 = ((optInAveragePeriod - 1) as f64) / ((optInAveragePeriod + 1) as f64);
         k2 = 1.0 - beta2;
-        beta2 = 1.0 - k2;
+        if beta2 < 0.5 {
+            beta2 = 1.0 - k2;
+        }
         esa = 0.0;
         d = 0.0;
         ci = 0.0;
@@ -822,11 +820,6 @@ impl Core {
         sumCi = 0.0;
         sumSignal = 0.0;
         nAp = 0;
-        // The fixpoint test compares against the previous bar's pair. Starting both
-        // at 0.0 cannot make it fire spuriously: it would need a bar whose typical
-        // price and whose exponential average are both exactly zero, and a zero
-        // typical price makes the numerator zero anyway, which is what the test
-        // would have substituted.
         prevAp = 0.0;
         prevEsa = 0.0;
         today = startIdx - lookbackTotal;
@@ -857,15 +850,15 @@ impl Core {
                 // but rounding. When the pair has not moved, the average has reached
                 // its fixpoint and the distance is exactly that residue, so the
                 // numerator is taken as zero. The test is exact, so it is
-                // independent of scale and period, unlike a fixed epsilon band.
+                // independent of scale and period.
+                //
+                // Only once prevEsa is an average: on the bar that seeds esa it is
+                // still the 0.0 placeholder, which a seed of exactly 0.0 equals.
                 num = ap - esa;
-                if ap == prevAp && esa == prevEsa {
+                if nAp >= ((optInChannelPeriod) as usize) && ap == prevAp && esa == prevEsa {
                     num = 0.0;
                 }
-                dev = num;
-                if dev < 0.0 {
-                    dev = -dev;
-                }
+                dev = (num).abs();
                 if nDev < ((optInChannelPeriod) as usize) {
                     sumD = sumD + dev;
                     if nDev == ((optInChannelPeriod - 1) as usize) {
@@ -928,10 +921,7 @@ impl Core {
             if ap == prevAp && esa == prevEsa {
                 num = 0.0;
             }
-            dev = num;
-            if dev < 0.0 {
-                dev = -dev;
-            }
+            dev = (num).abs();
             d = (beta1 as f64).mul_add(d, k1 * dev);
             scaledDev = 0.015 * d;
             if scaledDev > 0.0 {
@@ -1197,10 +1187,7 @@ impl WavetrendStream {
             if ap == sp.prevAp && esa == sp.prevEsa {
                 num = 0.0;
             }
-            dev = num;
-            if dev < 0.0 {
-                dev = -dev;
-            }
+            dev = (num).abs();
             d = (sp.beta1 as f64).mul_add(d, sp.k1 * dev);
             scaledDev = 0.015 * d;
             if scaledDev > 0.0 {

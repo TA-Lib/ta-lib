@@ -47,13 +47,17 @@ public partial class Core
     *  Initial  Name/description
     *  -------------------------------------------------------------------
     *  MF       Mario Fortier
+    *  KL       Kevin Lin (@kevinlincg)
     *  CC       Claude Code (AI assistant)
     *
     * Change history:
     *
     *  MMDDYY BY     Description
     *  -------------------------------------------------------------------
-    *  100626 MF,CC  Initial version (#476).
+    *  100626 KL,CC  Initial version (#476).
+    *  101126 MF,CC  The EMA betas stay as the divide wrote them above a
+    *                period of 2. The fixpoint test waits for a seeded
+    *                average.
     */
    /// <summary>
    /// Number of leading input bars <c>Wavetrend</c> consumes before it can
@@ -88,15 +92,8 @@ public partial class Core
       } else if( optInSignalPeriod < 1 || optInSignalPeriod > 100000 ) {
          return -1;
       }
-      /* Two exponential averages over the channel period -- one of the typical
-       * price, one of the absolute distance from it -- then the oscillator's own
-       * smoothing and the simple average that makes the signal line. Every term
-       * is exactly the lookback of the function it comes from, so none of them is
-       * restated here: that is what makes WAVETREND inherit TA_FUNC_UNST_EMA from
-       * its callees rather than take an id of its own.
-       *
-       * The EMA term appears THREE times, so a warm
-       * TA_SetUnstablePeriod(TA_FUNC_UNST_EMA, k) moves the lookback by 3k.
+      /* Keep every term a callee's own lookback: that is how WAVETREND inherits
+       * TA_FUNC_UNST_EMA, once per exponential stage.
        */
       return EmaLookback(optInChannelPeriod) + EmaLookback(optInChannelPeriod) + EmaLookback(optInAveragePeriod) + SmaLookback(optInSignalPeriod) ;
 
@@ -168,7 +165,6 @@ public partial class Core
       int nAp = 0;
       int nDev = 0;
       int nCi = 0;
-      int nSig = 0;
       double[] wtBuffer;
       int wtBuffer_Idx = 0;
       int maxIdx_wtBuffer = (32)-1;
@@ -214,11 +210,9 @@ public partial class Core
        * an SMA and takes the mean deviation around that window's own SMA, where
        * this uses two exponential averages.
        *
-       * Each stage seeds the way ema.c and sma.c seed, and each stage boundary
-       * below is the callee's LOOKBACK rather than (period-1), so the result is
-       * bit-identical to the composed chain on moving data and a warm unstable
-       * period folds in. The two guards are what the chain cannot express; they
-       * are the reason this ships as a function.
+       * Bit-identical to the composed chain on moving data: each stage seeds as
+       * ema.c and sma.c do, and each stage boundary is the callee's LOOKBACK,
+       * never (period-1), or an EMA unstable period breaks it.
        */
       /* This ptr will point on a circular buffer of at least
        * "optInSignalPeriod" element.
@@ -242,12 +236,22 @@ public partial class Core
       wtBuffer_Idx = 0;
       lookbackChannel = EmaLookback(optInChannelPeriod);
       lookbackAverage = EmaLookback(optInAveragePeriod);
+      /* k and beta must sum to exactly 1.0, or a flat input drifts off its
+       * level. Each subtraction is exact only from an operand in [0.5,1): at a
+       * period of 2 or less that is k, above it beta. Above it beta stays as the
+       * divide wrote it: a register last written by a subtraction costs each FMA
+       * reading it one more cycle on Intel P-cores.
+       */
       beta1 = (double)(optInChannelPeriod - 1) / (double)(optInChannelPeriod + 1);
       k1 = 1.0 - beta1;
-      beta1 = 1.0 - k1;
+      if( beta1 < 0.5 ) {
+         beta1 = 1.0 - k1;
+      }
       beta2 = (double)(optInAveragePeriod - 1) / (double)(optInAveragePeriod + 1);
       k2 = 1.0 - beta2;
-      beta2 = 1.0 - k2;
+      if( beta2 < 0.5 ) {
+         beta2 = 1.0 - k2;
+      }
       esa = 0.0;
       d = 0.0;
       ci = 0.0;
@@ -257,12 +261,6 @@ public partial class Core
       sumCi = 0.0;
       sumSignal = 0.0;
       nAp = 0;
-      /* The fixpoint test compares against the previous bar's pair. Starting both
-       * at 0.0 cannot make it fire spuriously: it would need a bar whose typical
-       * price and whose exponential average are both exactly zero, and a zero
-       * typical price makes the numerator zero anyway, which is what the test
-       * would have substituted.
-       */
       prevAp = 0.0;
       prevEsa = 0.0;
       today = startIdx - lookbackTotal;
@@ -295,16 +293,16 @@ public partial class Core
              * but rounding. When the pair has not moved, the average has reached
              * its fixpoint and the distance is exactly that residue, so the
              * numerator is taken as zero. The test is exact, so it is
-             * independent of scale and period, unlike a fixed epsilon band.
+             * independent of scale and period.
+             *
+             * Only once prevEsa is an average: on the bar that seeds esa it is
+             * still the 0.0 placeholder, which a seed of exactly 0.0 equals.
              */
             num = ap - esa;
-            if( ap == prevAp && esa == prevEsa ) {
+            if( nAp >= optInChannelPeriod && ap == prevAp && esa == prevEsa ) {
                num = 0.0;
             }
-            dev = num;
-            if( dev < 0.0 ) {
-               dev = -dev;
-            }
+            dev = Math.Abs(num);
             if( nDev < optInChannelPeriod ) {
                sumD = sumD + dev;
                if( nDev == optInChannelPeriod - 1 ) {
@@ -370,10 +368,7 @@ public partial class Core
          if( ap == prevAp && esa == prevEsa ) {
             num = 0.0;
          }
-         dev = num;
-         if( dev < 0.0 ) {
-            dev = -dev;
-         }
+         dev = Math.Abs(num);
          d = Math.FusedMultiplyAdd(beta1, d, k1 * dev);
          scaledDev = 0.015 * d;
          if( scaledDev > 0.0 ) {
@@ -439,7 +434,6 @@ public partial class Core
       int nAp = 0;
       int nDev = 0;
       int nCi = 0;
-      int nSig = 0;
       double[] wtBuffer;
       int wtBuffer_Idx = 0;
       int maxIdx_wtBuffer = (32)-1;
@@ -487,10 +481,14 @@ public partial class Core
       lookbackAverage = EmaLookback(optInAveragePeriod);
       beta1 = (double)(optInChannelPeriod - 1) / (double)(optInChannelPeriod + 1);
       k1 = 1.0 - beta1;
-      beta1 = 1.0 - k1;
+      if( beta1 < 0.5 ) {
+         beta1 = 1.0 - k1;
+      }
       beta2 = (double)(optInAveragePeriod - 1) / (double)(optInAveragePeriod + 1);
       k2 = 1.0 - beta2;
-      beta2 = 1.0 - k2;
+      if( beta2 < 0.5 ) {
+         beta2 = 1.0 - k2;
+      }
       esa = 0.0;
       d = 0.0;
       ci = 0.0;
@@ -516,13 +514,10 @@ public partial class Core
          if( nAp >= lookbackChannel ) {
             nDev = nAp - lookbackChannel;
             num = ap - esa;
-            if( ap == prevAp && esa == prevEsa ) {
+            if( nAp >= optInChannelPeriod && ap == prevAp && esa == prevEsa ) {
                num = 0.0;
             }
-            dev = num;
-            if( dev < 0.0 ) {
-               dev = -dev;
-            }
+            dev = Math.Abs(num);
             if( nDev < optInChannelPeriod ) {
                sumD = sumD + dev;
                if( nDev == optInChannelPeriod - 1 ) {
@@ -571,10 +566,7 @@ public partial class Core
          if( ap == prevAp && esa == prevEsa ) {
             num = 0.0;
          }
-         dev = num;
-         if( dev < 0.0 ) {
-            dev = -dev;
-         }
+         dev = Math.Abs(num);
          d = Math.FusedMultiplyAdd(beta1, d, k1 * dev);
          scaledDev = 0.015 * d;
          if( scaledDev > 0.0 ) {
@@ -1002,10 +994,7 @@ public partial class Core
          if( ap == sp.prevAp && esa == sp.prevEsa ) {
             num = 0.0;
          }
-         dev = num;
-         if( dev < 0.0 ) {
-            dev = -dev;
-         }
+         dev = Math.Abs(num);
          d = Math.FusedMultiplyAdd(sp.beta1, d, sp.k1 * dev);
          scaledDev = 0.015 * d;
          if( scaledDev > 0.0 ) {
@@ -1050,10 +1039,7 @@ public partial class Core
       if( ap == sp.prevAp && sp.esa == sp.prevEsa ) {
          num = 0.0;
       }
-      dev = num;
-      if( dev < 0.0 ) {
-         dev = -dev;
-      }
+      dev = Math.Abs(num);
       sp.d = Math.FusedMultiplyAdd(sp.beta1, sp.d, sp.k1 * dev);
       scaledDev = 0.015 * sp.d;
       if( scaledDev > 0.0 ) {
@@ -1105,7 +1091,6 @@ public partial class Core
       int nAp = 0;
       int nDev = 0;
       int nCi = 0;
-      int nSig = 0;
       double[] wtBuffer = [];
       int wtBuffer_Idx = 0;
       int maxIdx_wtBuffer = (32)-1;
@@ -1155,11 +1140,9 @@ public partial class Core
        * an SMA and takes the mean deviation around that window's own SMA, where
        * this uses two exponential averages.
        *
-       * Each stage seeds the way ema.c and sma.c seed, and each stage boundary
-       * below is the callee's LOOKBACK rather than (period-1), so the result is
-       * bit-identical to the composed chain on moving data and a warm unstable
-       * period folds in. The two guards are what the chain cannot express; they
-       * are the reason this ships as a function.
+       * Bit-identical to the composed chain on moving data: each stage seeds as
+       * ema.c and sma.c do, and each stage boundary is the callee's LOOKBACK,
+       * never (period-1), or an EMA unstable period breaks it.
        */
       /* This ptr will point on a circular buffer of at least
        * "optInSignalPeriod" element.
@@ -1183,12 +1166,22 @@ public partial class Core
       wtBuffer_Idx = 0;
       lookbackChannel = EmaLookback(optInChannelPeriod);
       lookbackAverage = EmaLookback(optInAveragePeriod);
+      /* k and beta must sum to exactly 1.0, or a flat input drifts off its
+       * level. Each subtraction is exact only from an operand in [0.5,1): at a
+       * period of 2 or less that is k, above it beta. Above it beta stays as the
+       * divide wrote it: a register last written by a subtraction costs each FMA
+       * reading it one more cycle on Intel P-cores.
+       */
       beta1 = (double)(optInChannelPeriod - 1) / (double)(optInChannelPeriod + 1);
       k1 = 1.0 - beta1;
-      beta1 = 1.0 - k1;
+      if( beta1 < 0.5 ) {
+         beta1 = 1.0 - k1;
+      }
       beta2 = (double)(optInAveragePeriod - 1) / (double)(optInAveragePeriod + 1);
       k2 = 1.0 - beta2;
-      beta2 = 1.0 - k2;
+      if( beta2 < 0.5 ) {
+         beta2 = 1.0 - k2;
+      }
       esa = 0.0;
       d = 0.0;
       ci = 0.0;
@@ -1198,12 +1191,6 @@ public partial class Core
       sumCi = 0.0;
       sumSignal = 0.0;
       nAp = 0;
-      /* The fixpoint test compares against the previous bar's pair. Starting both
-       * at 0.0 cannot make it fire spuriously: it would need a bar whose typical
-       * price and whose exponential average are both exactly zero, and a zero
-       * typical price makes the numerator zero anyway, which is what the test
-       * would have substituted.
-       */
       prevAp = 0.0;
       prevEsa = 0.0;
       today = startIdx - lookbackTotal;
@@ -1236,16 +1223,16 @@ public partial class Core
              * but rounding. When the pair has not moved, the average has reached
              * its fixpoint and the distance is exactly that residue, so the
              * numerator is taken as zero. The test is exact, so it is
-             * independent of scale and period, unlike a fixed epsilon band.
+             * independent of scale and period.
+             *
+             * Only once prevEsa is an average: on the bar that seeds esa it is
+             * still the 0.0 placeholder, which a seed of exactly 0.0 equals.
              */
             num = ap - esa;
-            if( ap == prevAp && esa == prevEsa ) {
+            if( nAp >= optInChannelPeriod && ap == prevAp && esa == prevEsa ) {
                num = 0.0;
             }
-            dev = num;
-            if( dev < 0.0 ) {
-               dev = -dev;
-            }
+            dev = Math.Abs(num);
             if( nDev < optInChannelPeriod ) {
                sumD = sumD + dev;
                if( nDev == optInChannelPeriod - 1 ) {
@@ -1311,10 +1298,7 @@ public partial class Core
          if( ap == prevAp && esa == prevEsa ) {
             num = 0.0;
          }
-         dev = num;
-         if( dev < 0.0 ) {
-            dev = -dev;
-         }
+         dev = Math.Abs(num);
          d = Math.FusedMultiplyAdd(beta1, d, k1 * dev);
          scaledDev = 0.015 * d;
          if( scaledDev > 0.0 ) {
