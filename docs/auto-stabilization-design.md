@@ -5,7 +5,7 @@ ruled by the owner (section 9). Implemented in this tree, except the function-pa
 sections 5 and 8 describe the change, and "today" there is the tree before it. The measurements are reproducible from
 [`studies/auto-stabilization/`](studies/auto-stabilization/README.md). The rules have been
 re-sized since: the table of record is
-[`website/src/api/unstable-period/README.md`](../website/src/api/unstable-period/README.md), and the
+[`website/src/spec/auto-stabilization/README.md`](../website/src/spec/auto-stabilization/README.md), and the
 counts quoted here are the design's.
 
 ## 1. Summary
@@ -780,7 +780,7 @@ compare at every bar both report.
 
 | Page | Change |
 |---|---|
-| `api/unstable-period` | Auto under approach 3, leading with `PREC_4`; what a level means (section 2.1); the rule table; the tiers; what the promise is and is not. The figure's "stable" boundary is drawn at 1e-3 of price and would contradict the Auto count: redraw or recaption |
+| `api/unstable-period` | Auto under approach 3, leading with `PREC_4`; what a level means (section 2.1). The rule table, the tiers, and what the promise is and is not: `spec/auto-stabilization`. The figure's "stable" boundary is drawn at 1e-3 of price and would contradict the Auto count: redraw or recaption |
 | `functions/stability` and every function page (generated) | none: ruled out (section 9, D9) |
 | spec rL6 | "adds exactly that many bars" holds for a count; under Auto the id adds its rule's count |
 | spec rL8 | under Auto a `period1_identity` function has a lookback of 0 at a period of 1 |
@@ -795,8 +795,8 @@ compare at every bar both report.
 | input `.md` files that state a fixed-count relation by hand (MASSI, ERI, STC and others) | reworded so they hold for both |
 | `docs/ta_codegen_input_code.md`, the contributor page and the `new-ta-func` skill | an id needs a rule, its tier and its helper; the read takes two arguments, only in its owner's lookback |
 
-The level's meaning is on the Unstable Period page only, with links to the specification's
-rules for the mechanics (section 9, D5).
+The level's meaning, the count per id and the cases no level covers are in the specification
+(`spec/auto-stabilization`); the Unstable Period page introduces a level and links there (section 9, D5).
 
 ## 8. Order of work
 
@@ -895,7 +895,7 @@ difference, at `PREC_4` and `PREC_8`.)
 **D4. A level as a plain value in Rust, Java and C#.** Ruled (owner, 2026-10-04): a plain
 constant through the existing builder call, like the other backends. No signature changes.
 
-**D5. Publishing the tolerance.** Ruled (owner, 2026-10-04): split by audience. The Unstable
+**D5. Publishing the tolerance.** Ruled (owner, 2026-10-10), superseding what follows: the count per id, the tiers, what a level targets and the cases no level covers are specification material, on their own page (`spec/auto-stabilization`); the Unstable Period page stays simple and links there. Ruled (owner, 2026-10-04): split by audience. The Unstable
 Period page explains a level for a human reader: the significant-digits wording of section 2.1,
 the count per id, and which counts are proven and which are sized by measurement. The
 specification states the mechanics only, each held exactly by a test: the setter accepts a count

@@ -373,6 +373,9 @@ final class Dispatch {
          case "DONCHIAN":
             return core.donchian(
                startIdx, endIdx, h.price(0, 1), h.price(0, 2), h.intOpt(0), h.realOutput(0), h.realOutput(1), h.realOutput(2));
+         case "DOSC":
+            return core.dosc(
+               startIdx, endIdx, h.realInput(0), h.intOpt(0), h.intOpt(1), h.intOpt(2), h.intOpt(3), h.realOutput(0));
          case "DPO":
             return core.dpo(
                startIdx, endIdx, h.realInput(0), h.intOpt(0), h.realOutput(0));
@@ -742,6 +745,9 @@ final class Dispatch {
          case "WAD":
             return core.wad(
                startIdx, endIdx, h.price(0, 1), h.price(0, 2), h.price(0, 3), h.realOutput(0));
+         case "WAVETREND":
+            return core.wavetrend(
+               startIdx, endIdx, h.price(0, 1), h.price(0, 2), h.price(0, 3), h.intOpt(0), h.intOpt(1), h.intOpt(2), h.realOutput(0), h.realOutput(1));
          case "WCLPRICE":
             return core.wclprice(
                startIdx, endIdx, h.price(0, 1), h.price(0, 2), h.price(0, 3), h.realOutput(0));
@@ -975,6 +981,8 @@ final class Dispatch {
             return core.divLookback();
          case "DONCHIAN":
             return core.donchianLookback(h.intOpt(0));
+         case "DOSC":
+            return core.doscLookback(h.intOpt(0), h.intOpt(1), h.intOpt(2), h.intOpt(3));
          case "DPO":
             return core.dpoLookback(h.intOpt(0));
          case "DX":
@@ -1221,6 +1229,8 @@ final class Dispatch {
             return core.vwmaLookback(h.intOpt(0));
          case "WAD":
             return core.wadLookback();
+         case "WAVETREND":
+            return core.wavetrendLookback(h.intOpt(0), h.intOpt(1), h.intOpt(2));
          case "WCLPRICE":
             return core.wclpriceLookback();
          case "WILLR":
@@ -1447,6 +1457,8 @@ final class Dispatch {
             return core.divDisplayShift(outputIdx);
          case "DONCHIAN":
             return core.donchianDisplayShift(h.intOpt(0), outputIdx);
+         case "DOSC":
+            return core.doscDisplayShift(h.intOpt(0), h.intOpt(1), h.intOpt(2), h.intOpt(3), outputIdx);
          case "DPO":
             return core.dpoDisplayShift(h.intOpt(0), outputIdx);
          case "DX":
@@ -1693,6 +1705,8 @@ final class Dispatch {
             return core.vwmaDisplayShift(h.intOpt(0), outputIdx);
          case "WAD":
             return core.wadDisplayShift(outputIdx);
+         case "WAVETREND":
+            return core.wavetrendDisplayShift(h.intOpt(0), h.intOpt(1), h.intOpt(2), outputIdx);
          case "WCLPRICE":
             return core.wclpriceDisplayShift(outputIdx);
          case "WILLR":

@@ -225,6 +225,7 @@ public final class Functions {
       put(m, f_DEMA());
       put(m, f_DIV());
       put(m, f_DONCHIAN());
+      put(m, f_DOSC());
       put(m, f_DPO());
       put(m, f_DX());
       put(m, f_EFI());
@@ -348,6 +349,7 @@ public final class Functions {
       put(m, f_VWAP());
       put(m, f_VWMA());
       put(m, f_WAD());
+      put(m, f_WAVETREND());
       put(m, f_WCLPRICE());
       put(m, f_WILLR());
       put(m, f_WMA());
@@ -1967,6 +1969,39 @@ public final class Functions {
             new OutputInfo(OutputType.REAL, "outRealUpperBand", 0x00000800),
             new OutputInfo(OutputType.REAL, "outRealMiddleBand", 0x00000001),
             new OutputInfo(OutputType.REAL, "outRealLowerBand", 0x00001000)
+         ));
+   }
+
+   private static FuncInfo f_DOSC() {
+      return new FuncInfo(
+         "DOSC", "Momentum Indicators", "Derivative Oscillator", 0x02000000,
+         List.of(
+            new InputInfo(InputType.REAL, "inReal", 0x00000000)
+         ),
+         List.of(
+            new OptInputInfo(
+               OptInputType.INTEGER_RANGE, "optInTimePeriod", 0x00000000,
+               "Time Period", "Period of the RSI", 14.0,
+               0.0, 0.0, 0, 0.0, 0.0, 0.0,
+               2, 100000, 4, 200, 1, null),
+            new OptInputInfo(
+               OptInputType.INTEGER_RANGE, "optInFirstPeriod", 0x00000000,
+               "First Smoothing Period", "Period of the first smoothing, applied to the RSI", 5.0,
+               0.0, 0.0, 0, 0.0, 0.0, 0.0,
+               2, 100000, 2, 50, 1, null),
+            new OptInputInfo(
+               OptInputType.INTEGER_RANGE, "optInSecondPeriod", 0x00000000,
+               "Second Smoothing Period", "Period of the second smoothing, applied to the first", 3.0,
+               0.0, 0.0, 0, 0.0, 0.0, 0.0,
+               2, 100000, 2, 50, 1, null),
+            new OptInputInfo(
+               OptInputType.INTEGER_RANGE, "optInSignalPeriod", 0x00000000,
+               "Signal Period", "Period of the simple average subtracted from the smoothed line", 9.0,
+               0.0, 0.0, 0, 0.0, 0.0, 0.0,
+               2, 100000, 2, 50, 1, null)
+         ),
+         List.of(
+            new OutputInfo(OutputType.REAL, "outReal", 0x00000010)
          ));
    }
 
@@ -4457,6 +4492,35 @@ public final class Functions {
          List.of(),
          List.of(
             new OutputInfo(OutputType.REAL, "outReal", 0x00000001)
+         ));
+   }
+
+   private static FuncInfo f_WAVETREND() {
+      return new FuncInfo(
+         "WAVETREND", "Momentum Indicators", "WaveTrend Oscillator", 0x02000000,
+         List.of(
+            new InputInfo(InputType.PRICE, "inPriceHLC", 0x0000000E)
+         ),
+         List.of(
+            new OptInputInfo(
+               OptInputType.INTEGER_RANGE, "optInChannelPeriod", 0x00000000,
+               "Channel Period", "Period of the price channel, used by both the average and the deviation", 10.0,
+               0.0, 0.0, 0, 0.0, 0.0, 0.0,
+               2, 100000, 2, 200, 1, null),
+            new OptInputInfo(
+               OptInputType.INTEGER_RANGE, "optInAveragePeriod", 0x00000000,
+               "Average Period", "Smoothing for the oscillator line", 21.0,
+               0.0, 0.0, 0, 0.0, 0.0, 0.0,
+               1, 100000, 1, 200, 1, null),
+            new OptInputInfo(
+               OptInputType.INTEGER_RANGE, "optInSignalPeriod", 0x00000000,
+               "Signal Period", "Simple average of the oscillator line, making the signal line", 4.0,
+               0.0, 0.0, 0, 0.0, 0.0, 0.0,
+               1, 100000, 1, 50, 1, null)
+         ),
+         List.of(
+            new OutputInfo(OutputType.REAL, "outWT1", 0x00000001),
+            new OutputInfo(OutputType.REAL, "outWT2", 0x00000004)
          ));
    }
 

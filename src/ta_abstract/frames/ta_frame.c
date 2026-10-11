@@ -2913,6 +2913,36 @@ int TA_DONCHIAN_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
 {
    return TA_DONCHIAN_DisplayShift( params->optIn[0].data.optInInteger, outputIdx );
 }
+TA_RetCode TA_DOSC_FramePP( const TA_ParamHolderPriv *params,
+                           int            startIdx,
+                           int            endIdx,
+                           int           *outBegIdx,
+                           int           *outNBElement )
+{
+   return TA_DOSC(
+               startIdx,
+               endIdx,
+               params->in[0].data.inReal, /* inReal */
+               params->optIn[0].data.optInInteger, /* optInTimePeriod*/
+               params->optIn[1].data.optInInteger, /* optInFirstPeriod*/
+               params->optIn[2].data.optInInteger, /* optInSecondPeriod*/
+               params->optIn[3].data.optInInteger, /* optInSignalPeriod*/
+               outBegIdx, 
+               outNBElement, 
+               params->out[0].data.outReal /*  outReal */
+               );
+}
+unsigned int TA_DOSC_FramePPLB( const TA_ParamHolderPriv *params )
+{
+   return TA_DOSC_Lookback(params->optIn[0].data.optInInteger, /* optInTimePeriod*/
+                    params->optIn[1].data.optInInteger, /* optInFirstPeriod*/
+                    params->optIn[2].data.optInInteger, /* optInSecondPeriod*/
+                    params->optIn[3].data.optInInteger /* optInSignalPeriod*/ );
+}
+int TA_DOSC_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+{
+   return TA_DOSC_DisplayShift( params->optIn[0].data.optInInteger, params->optIn[1].data.optInInteger, params->optIn[2].data.optInInteger, params->optIn[3].data.optInInteger, outputIdx );
+}
 TA_RetCode TA_DPO_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
                            int            endIdx,
@@ -6169,6 +6199,37 @@ int TA_WAD_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
 {
    (void)params;
    return TA_WAD_DisplayShift( outputIdx );
+}
+TA_RetCode TA_WAVETREND_FramePP( const TA_ParamHolderPriv *params,
+                           int            startIdx,
+                           int            endIdx,
+                           int           *outBegIdx,
+                           int           *outNBElement )
+{
+   return TA_WAVETREND(
+               startIdx,
+               endIdx,
+               params->in[0].data.inPrice.high, /* inHigh */
+               params->in[0].data.inPrice.low, /* inLow */
+               params->in[0].data.inPrice.close, /* inClose */
+               params->optIn[0].data.optInInteger, /* optInChannelPeriod*/
+               params->optIn[1].data.optInInteger, /* optInAveragePeriod*/
+               params->optIn[2].data.optInInteger, /* optInSignalPeriod*/
+               outBegIdx, 
+               outNBElement, 
+               params->out[0].data.outReal, /*  outWT1 */
+               params->out[1].data.outReal /*  outWT2 */
+               );
+}
+unsigned int TA_WAVETREND_FramePPLB( const TA_ParamHolderPriv *params )
+{
+   return TA_WAVETREND_Lookback(params->optIn[0].data.optInInteger, /* optInChannelPeriod*/
+                    params->optIn[1].data.optInInteger, /* optInAveragePeriod*/
+                    params->optIn[2].data.optInInteger /* optInSignalPeriod*/ );
+}
+int TA_WAVETREND_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+{
+   return TA_WAVETREND_DisplayShift( params->optIn[0].data.optInInteger, params->optIn[1].data.optInInteger, params->optIn[2].data.optInInteger, outputIdx );
 }
 TA_RetCode TA_WCLPRICE_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,

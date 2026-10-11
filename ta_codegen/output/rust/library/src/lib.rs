@@ -178,7 +178,7 @@
 //! * [`TAN`](Core::tan) — Vector Trigonometric Tan
 //! * [`TANH`](Core::tanh) — Vector Trigonometric Tanh
 //!
-//! ## Momentum Indicators (60)
+//! ## Momentum Indicators (62)
 //!
 //! * [`AC`](Core::ac) — Accelerator/Decelerator Oscillator
 //! * [`ADX`](Core::adx) — Average Directional Movement Index
@@ -198,6 +198,7 @@
 //! * [`COPPOCK`](Core::coppock) — Coppock Curve
 //! * [`CRSI`](Core::crsi) — Connors Relative Strength Index
 //! * [`CTI`](Core::cti) — Correlation Trend Indicator
+//! * [`DOSC`](Core::dosc) — Derivative Oscillator
 //! * [`DPO`](Core::dpo) — Detrended Price Oscillator
 //! * [`DX`](Core::dx) — Directional Movement Index
 //! * [`ER`](Core::er) — Kaufman Efficiency Ratio
@@ -239,6 +240,7 @@
 //! * [`VHF`](Core::vhf) — Vertical Horizontal Filter
 //! * [`VORTEX`](Core::vortex) — Vortex Indicator
 //! * [`WAD`](Core::wad) — Williams' Accumulation/Distribution
+//! * [`WAVETREND`](Core::wavetrend) — WaveTrend Oscillator
 //! * [`WILLR`](Core::willr) — Williams' %R
 //!
 //! ## Overlap Studies (32)

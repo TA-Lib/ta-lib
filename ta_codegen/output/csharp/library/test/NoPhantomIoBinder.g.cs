@@ -749,6 +749,12 @@ internal static class NoPhantomIoBinder
                 startIdx, endIdx, c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.IntOpt(0), out int b, out int n, c.RealOut(0), c.RealOut(1), c.RealOut(2));
             return new CallOutcome(rc, b, n);
         },
+        ["DOSC"] = static (core, c, startIdx, endIdx) =>
+        {
+            RetCode rc = core.DoscImpl(
+                startIdx, endIdx, c.Series(0), c.IntOpt(0), c.IntOpt(1), c.IntOpt(2), c.IntOpt(3), out int b, out int n, c.RealOut(0));
+            return new CallOutcome(rc, b, n);
+        },
         ["DPO"] = static (core, c, startIdx, endIdx) =>
         {
             RetCode rc = core.DpoImpl(
@@ -1487,6 +1493,12 @@ internal static class NoPhantomIoBinder
                 startIdx, endIdx, c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         },
+        ["WAVETREND"] = static (core, c, startIdx, endIdx) =>
+        {
+            RetCode rc = core.WavetrendImpl(
+                startIdx, endIdx, c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.IntOpt(0), c.IntOpt(1), c.IntOpt(2), out int b, out int n, c.RealOut(0), c.RealOut(1));
+            return new CallOutcome(rc, b, n);
+        },
         ["WCLPRICE"] = static (core, c, startIdx, endIdx) =>
         {
             RetCode rc = core.WclpriceImpl(
@@ -2144,6 +2156,12 @@ internal static class NoPhantomIoBinder
         {
             RetCode rc = core.DonchianImpl(
                 startIdx, endIdx, Narrow(c.Price(0, PriceComponents.High)), Narrow(c.Price(0, PriceComponents.Low)), c.IntOpt(0), out int b, out int n, c.RealOut(0), c.RealOut(1), c.RealOut(2));
+            return new CallOutcome(rc, b, n);
+        },
+        ["DOSC"] = static (core, c, startIdx, endIdx) =>
+        {
+            RetCode rc = core.DoscImpl(
+                startIdx, endIdx, Narrow(c.Series(0)), c.IntOpt(0), c.IntOpt(1), c.IntOpt(2), c.IntOpt(3), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         },
         ["DPO"] = static (core, c, startIdx, endIdx) =>
@@ -2884,6 +2902,12 @@ internal static class NoPhantomIoBinder
                 startIdx, endIdx, Narrow(c.Price(0, PriceComponents.High)), Narrow(c.Price(0, PriceComponents.Low)), Narrow(c.Price(0, PriceComponents.Close)), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         },
+        ["WAVETREND"] = static (core, c, startIdx, endIdx) =>
+        {
+            RetCode rc = core.WavetrendImpl(
+                startIdx, endIdx, Narrow(c.Price(0, PriceComponents.High)), Narrow(c.Price(0, PriceComponents.Low)), Narrow(c.Price(0, PriceComponents.Close)), c.IntOpt(0), c.IntOpt(1), c.IntOpt(2), out int b, out int n, c.RealOut(0), c.RealOut(1));
+            return new CallOutcome(rc, b, n);
+        },
         ["WCLPRICE"] = static (core, c, startIdx, endIdx) =>
         {
             RetCode rc = core.WclpriceImpl(
@@ -3018,6 +3042,7 @@ internal static class NoPhantomIoBinder
         ["DEMA"] = static (core, c) => core.DemaOpen(c.Series(0), c.IntOpt(0)),
         ["DIV"] = static (core, c) => core.DivOpen(c.Series(0), c.Series(1)),
         ["DONCHIAN"] = static (core, c) => core.DonchianOpen(c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.IntOpt(0)),
+        ["DOSC"] = static (core, c) => core.DoscOpen(c.Series(0), c.IntOpt(0), c.IntOpt(1), c.IntOpt(2), c.IntOpt(3)),
         ["DPO"] = static (core, c) => core.DpoOpen(c.Series(0), c.IntOpt(0)),
         ["DX"] = static (core, c) => core.DxOpen(c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.IntOpt(0)),
         ["EFI"] = static (core, c) => core.EfiOpen(c.Price(0, PriceComponents.Close), c.Price(0, PriceComponents.Volume), c.IntOpt(0)),
@@ -3141,6 +3166,7 @@ internal static class NoPhantomIoBinder
         ["VWAP"] = static (core, c) => core.VwapOpen(c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.Price(0, PriceComponents.Volume)),
         ["VWMA"] = static (core, c) => core.VwmaOpen(c.Series(0), c.Price(1, PriceComponents.Volume), c.IntOpt(0)),
         ["WAD"] = static (core, c) => core.WadOpen(c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close)),
+        ["WAVETREND"] = static (core, c) => core.WavetrendOpen(c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.IntOpt(0), c.IntOpt(1), c.IntOpt(2)),
         ["WCLPRICE"] = static (core, c) => core.WclpriceOpen(c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close)),
         ["WILLR"] = static (core, c) => core.WillrOpen(c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.IntOpt(0)),
         ["WMA"] = static (core, c) => core.WmaOpen(c.Series(0), c.IntOpt(0)),

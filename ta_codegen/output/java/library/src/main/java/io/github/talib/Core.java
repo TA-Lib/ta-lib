@@ -93108,6 +93108,1343 @@ public final class Core {
  *  Initial  Name/description
  *  -------------------------------------------------------------------
  *  MF       Mario Fortier
+ *  KL       Kevin Lin (@kevinlincg)
+ *  CC       Claude Code (AI assistant)
+ *
+ * Change history:
+ *
+ *  MMDDYY BY     Description
+ *  -------------------------------------------------------------------
+ *  100626 KL,CC  Initial version (#479).
+ *  101026 MF,CC  The EMA betas stay as the divide wrote them above a
+ *                period of 2.
+ */
+
+   /**
+    * Number of leading input bars {@link Core#dosc} consumes before it can
+    * produce its first value.
+    * <p>Equivalently, the index of the first bar with a value when the whole
+    * series is requested. Feed at least {@code lookback + 1} bars to get any
+    * output.
+    *
+    * @param optInTimePeriod Period of the RSI (default 14; range 2..100000;
+    *        {@code Integer.MIN_VALUE} selects the default).
+    * @param optInFirstPeriod Period of the first smoothing, applied to the RSI
+    *        (default 5; range 2..100000; {@code Integer.MIN_VALUE} selects the
+    *        default).
+    * @param optInSecondPeriod Period of the second smoothing, applied to the
+    *        first (default 3; range 2..100000; {@code Integer.MIN_VALUE} selects the
+    *        default).
+    * @param optInSignalPeriod Period of the simple average subtracted from the
+    *        smoothed line (default 9; range 2..100000; {@code Integer.MIN_VALUE}
+    *        selects the default).
+    * @return The lookback, or {@code -1} if a parameter is out of range.
+    */
+   public int doscLookback( int optInTimePeriod, int optInFirstPeriod, int optInSecondPeriod, int optInSignalPeriod )
+   {
+      if( optInTimePeriod == Integer.MIN_VALUE ) {
+         optInTimePeriod = 14;
+      } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
+         return -1;
+      }
+      if( optInFirstPeriod == Integer.MIN_VALUE ) {
+         optInFirstPeriod = 5;
+      } else if( optInFirstPeriod < 2 || optInFirstPeriod > 100000 ) {
+         return -1;
+      }
+      if( optInSecondPeriod == Integer.MIN_VALUE ) {
+         optInSecondPeriod = 3;
+      } else if( optInSecondPeriod < 2 || optInSecondPeriod > 100000 ) {
+         return -1;
+      }
+      if( optInSignalPeriod == Integer.MIN_VALUE ) {
+         optInSignalPeriod = 9;
+      } else if( optInSignalPeriod < 2 || optInSignalPeriod > 100000 ) {
+         return -1;
+      }
+      /* Keep every term a callee's lookback call: that is how DOSC inherits
+       * TA_FUNC_UNST_RSI and TA_FUNC_UNST_EMA with no id of its own. The EMA
+       * term counts twice, once per smoothing stage.
+       */
+      return rsiLookback(optInTimePeriod) + emaLookback(optInFirstPeriod) + emaLookback(optInSecondPeriod) + smaLookback(optInSignalPeriod) ;
+
+   }
+   /**
+    * How many bars ahead (positive) or behind (negative) of the bar that
+    * computed it a chart draws one output of {@link Core#dosc}.
+    * <p>Every output of this function is drawn at its own bar, so the answer is
+    * 0.
+    *
+    * @param optInTimePeriod Period of the RSI (default 14; range 2..100000;
+    *        {@code Integer.MIN_VALUE} selects the default).
+    * @param optInFirstPeriod Period of the first smoothing, applied to the RSI
+    *        (default 5; range 2..100000; {@code Integer.MIN_VALUE} selects the
+    *        default).
+    * @param optInSecondPeriod Period of the second smoothing, applied to the
+    *        first (default 3; range 2..100000; {@code Integer.MIN_VALUE} selects the
+    *        default).
+    * @param optInSignalPeriod Period of the simple average subtracted from the
+    *        smoothed line (default 9; range 2..100000; {@code Integer.MIN_VALUE}
+    *        selects the default).
+    * @param outputIdx Position of the output in the batch signature, from 0.
+    * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+    *        out of range or the index names no output.
+    */
+   public int doscDisplayShift( int optInTimePeriod, int optInFirstPeriod, int optInSecondPeriod, int optInSignalPeriod, int outputIdx )
+   {
+      if( doscLookback( optInTimePeriod, optInFirstPeriod, optInSecondPeriod, optInSignalPeriod ) < 0 ) {
+         return Integer.MIN_VALUE;
+      }
+      if( outputIdx < 0 || outputIdx >= 1 ) {
+         return Integer.MIN_VALUE;
+      }
+      return 0;
+   }
+   RetCode doscImpl( int startIdx,
+                     int endIdx,
+                     double inReal[],
+                     int optInTimePeriod,
+                     int optInFirstPeriod,
+                     int optInSecondPeriod,
+                     int optInSignalPeriod,
+                     MInteger outBegIdx,
+                     MInteger outNBElement,
+                     double outReal[] )
+   {
+      double k1 = 0;
+      double beta1 = 0;
+      double k2 = 0;
+      double beta2 = 0;
+      double invPeriod = 0;
+      double prevGain = 0;
+      double prevLoss = 0;
+      double prevValue = 0;
+      double gainDelta = 0;
+      double tempValue1 = 0;
+      double tempValue2 = 0;
+      double rsiValue = 0;
+      double ema1 = 0;
+      double ema2 = 0;
+      double sum1 = 0;
+      double sum2 = 0;
+      double sumSignal = 0;
+      int lookbackTotal = 0;
+      int lookbackRSI = 0;
+      int lookbackEMA1 = 0;
+      int lookbackEMA2 = 0;
+      int skipRSI = 0;
+      int today = 0;
+      int i = 0;
+      int outIdx = 0;
+      int rsiBar = 0;
+      int nRsi = 0;
+      int n1 = 0;
+      int n2 = 0;
+      double[] dsBuffer;
+      int dsBuffer_Idx = 0;
+      int maxIdx_dsBuffer = (32)-1;
+      if( (startIdx < 0) || (startIdx > INDEX_MAX) ) {
+         return RetCode.OUT_OF_RANGE_START_INDEX ;
+      }
+      if( (endIdx < 0) || (endIdx > INDEX_MAX) || (endIdx < startIdx)) {
+         return RetCode.OUT_OF_RANGE_END_INDEX ;
+      }
+      if( optInTimePeriod == Integer.MIN_VALUE ) {
+         optInTimePeriod = 14;
+      } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
+         return RetCode.BAD_PARAM;
+      }
+      if( optInFirstPeriod == Integer.MIN_VALUE ) {
+         optInFirstPeriod = 5;
+      } else if( optInFirstPeriod < 2 || optInFirstPeriod > 100000 ) {
+         return RetCode.BAD_PARAM;
+      }
+      if( optInSecondPeriod == Integer.MIN_VALUE ) {
+         optInSecondPeriod = 3;
+      } else if( optInSecondPeriod < 2 || optInSecondPeriod > 100000 ) {
+         return RetCode.BAD_PARAM;
+      }
+      if( optInSignalPeriod == Integer.MIN_VALUE ) {
+         optInSignalPeriod = 9;
+      } else if( optInSignalPeriod < 2 || optInSignalPeriod > 100000 ) {
+         return RetCode.BAD_PARAM;
+      }
+      /* Constance Brown's "triple smoothed derivative of RSI plotted as a
+       * histogram" (MTA Journal, 1994): MACD's histogram construction applied to
+       * a double-smoothed RSI.
+       *
+       *    S1_t   = EMA(RSI(x, t), f)_t
+       *    DS_t   = EMA(S1, s)_t
+       *    DOSC_t = DS_t - SMA(DS, g)_t
+       *
+       * The output must stay bit-identical to
+       * TA_RSI -> TA_EMA -> TA_EMA -> TA_SMA -> TA_SUB, so every stage keeps its
+       * callee's operation order, and every stage boundary is the callee's
+       * LOOKBACK, not (period-1): a warm unstable period then folds in.
+       *
+       * Compare the counters BEFORE subtracting them: the Rust backend renders
+       * them usize, where `n = nRsi - skipRSI; if( n >= 0 )` underflows.
+       */
+      /* This ptr will point on a circular buffer of at least
+       * "optInSignalPeriod" element.
+       */
+      lookbackTotal = doscLookback(optInTimePeriod, optInFirstPeriod, optInSecondPeriod, optInSignalPeriod);
+      /* Move up the start index if there is not
+       * enough initial data.
+       */
+      if( startIdx < lookbackTotal ) {
+         startIdx = lookbackTotal;
+      }
+      /* Make sure there is still something to evaluate. */
+      if( startIdx > endIdx ) {
+         outBegIdx.value = 0;
+         outNBElement.value = 0;
+         return RetCode.SUCCESS ;
+      }
+      if( optInSignalPeriod < 1 ) return RetCode.INTERNAL_ERROR;
+      dsBuffer = new double[optInSignalPeriod];
+      maxIdx_dsBuffer = (optInSignalPeriod)-1;
+      dsBuffer_Idx = 0;
+      lookbackRSI = rsiLookback(optInTimePeriod);
+      lookbackEMA1 = emaLookback(optInFirstPeriod);
+      lookbackEMA2 = emaLookback(optInSecondPeriod);
+      /* The RSI values the composed chain never publishes. Derive the count
+       * from the lookback, never from TA_GetUnstablePeriod: under the Auto
+       * levels it is a function of the period.
+       */
+      skipRSI = lookbackRSI - optInTimePeriod;
+      /* k and beta must sum to exactly 1.0, or a flat input drifts off its
+       * level. Each subtraction is exact only from an operand in [0.5,1): at a
+       * period of 2 that is k, above it beta. Above it beta stays as the divide
+       * wrote it: a register last written by a subtraction costs each FMA
+       * reading it one more cycle on Intel P-cores.
+       */
+      beta1 = (double)(optInFirstPeriod - 1) / (double)(optInFirstPeriod + 1);
+      k1 = 1.0 - beta1;
+      if( beta1 < 0.5 ) {
+         beta1 = 1.0 - k1;
+      }
+      beta2 = (double)(optInSecondPeriod - 1) / (double)(optInSecondPeriod + 1);
+      k2 = 1.0 - beta2;
+      if( beta2 < 0.5 ) {
+         beta2 = 1.0 - k2;
+      }
+      ema1 = 0.0;
+      ema2 = 0.0;
+      sum1 = 0.0;
+      sum2 = 0.0;
+      sumSignal = 0.0;
+      nRsi = 0;
+      invPeriod = 1.0 / (double)optInTimePeriod;
+      today = startIdx - lookbackTotal;
+      rsiBar = today + optInTimePeriod;
+      prevValue = inReal[today];
+      prevGain = 0.0;
+      prevLoss = 0.0;
+      today = today + 1;
+      for( i = optInTimePeriod; i > 0; i -= 1 ) {
+         tempValue1 = inReal[today];
+         today = today + 1;
+         tempValue2 = tempValue1 - prevValue;
+         prevValue = tempValue1;
+         gainDelta = (tempValue2 > 0.0) ? tempValue2 : 0.0;
+         prevGain += gainDelta;
+         prevLoss += gainDelta - tempValue2;
+      }
+      prevLoss *= invPeriod;
+      prevGain *= invPeriod;
+      tempValue1 = prevGain + prevLoss;
+      if( tempValue1 > 0.0 ) {
+         rsiValue = 100.0 * (prevGain / tempValue1);
+      } else {
+         rsiValue = 50.0;
+      }
+      /* Warm-up. Feeds every RSI value before startIdx through the chain and
+       * leaves rsiValue holding startIdx's own. Nothing is emitted here: the
+       * first bar whose signal window is full is startIdx, by construction of
+       * the lookback.
+       */
+      while( rsiBar < startIdx ) {
+         if( nRsi >= skipRSI ) {
+            n1 = nRsi - skipRSI;
+            if( n1 < optInFirstPeriod ) {
+               sum1 = sum1 + rsiValue;
+               if( n1 == optInFirstPeriod - 1 ) {
+                  ema1 = sum1 / optInFirstPeriod;
+               }
+            } else {
+               ema1 = Math.fma(beta1, ema1, k1 * rsiValue);
+            }
+            if( n1 >= lookbackEMA1 ) {
+               n2 = n1 - lookbackEMA1;
+               if( n2 < optInSecondPeriod ) {
+                  sum2 = sum2 + ema1;
+                  if( n2 == optInSecondPeriod - 1 ) {
+                     ema2 = sum2 / optInSecondPeriod;
+                  }
+               } else {
+                  ema2 = Math.fma(beta2, ema2, k2 * ema1);
+               }
+               if( n2 >= lookbackEMA2 ) {
+                  dsBuffer[dsBuffer_Idx] = ema2;
+                  sumSignal = sumSignal + ema2;
+                  dsBuffer_Idx++;
+                  if( dsBuffer_Idx > maxIdx_dsBuffer ) { dsBuffer_Idx = 0; }
+               }
+            }
+         }
+         nRsi = nRsi + 1;
+         tempValue1 = inReal[today];
+         today = today + 1;
+         tempValue2 = tempValue1 - prevValue;
+         prevValue = tempValue1;
+         prevLoss *= (double)(optInTimePeriod - 1);
+         prevGain *= (double)(optInTimePeriod - 1);
+         gainDelta = (tempValue2 > 0.0) ? tempValue2 : 0.0;
+         prevGain += gainDelta;
+         prevLoss += gainDelta - tempValue2;
+         prevLoss *= invPeriod;
+         prevGain *= invPeriod;
+         tempValue1 = prevGain + prevLoss;
+         if( tempValue1 > 0.0 ) {
+            rsiValue = 100.0 * (prevGain / tempValue1);
+         } else {
+            rsiValue = 50.0;
+         }
+         rsiBar = rsiBar + 1;
+      }
+      /* The first output. Every stage is past its seed here, even at periods
+       * 2/2/2/2, so the store below and the one in the stable loop are
+       * unconditional. Keep them so: under a guard, the managed peek frames
+       * seed a dead output local.
+       */
+      ema1 = Math.fma(beta1, ema1, k1 * rsiValue);
+      ema2 = Math.fma(beta2, ema2, k2 * ema1);
+      dsBuffer[dsBuffer_Idx] = ema2;
+      sumSignal = sumSignal + ema2;
+      outReal[0] = ema2 - sumSignal / (double)optInSignalPeriod;
+      outIdx = 1;
+      dsBuffer_Idx++;
+      if( dsBuffer_Idx > maxIdx_dsBuffer ) { dsBuffer_Idx = 0; }
+      sumSignal = sumSignal - dsBuffer[dsBuffer_Idx];
+      /* Stable zone. */
+      while( today <= endIdx ) {
+         tempValue1 = inReal[today];
+         today = today + 1;
+         tempValue2 = tempValue1 - prevValue;
+         prevValue = tempValue1;
+         prevLoss *= (double)(optInTimePeriod - 1);
+         prevGain *= (double)(optInTimePeriod - 1);
+         gainDelta = (tempValue2 > 0.0) ? tempValue2 : 0.0;
+         prevGain += gainDelta;
+         prevLoss += gainDelta - tempValue2;
+         prevLoss *= invPeriod;
+         prevGain *= invPeriod;
+         tempValue1 = prevGain + prevLoss;
+         if( tempValue1 > 0.0 ) {
+            rsiValue = 100.0 * (prevGain / tempValue1);
+         } else {
+            rsiValue = 50.0;
+         }
+         ema1 = Math.fma(beta1, ema1, k1 * rsiValue);
+         ema2 = Math.fma(beta2, ema2, k2 * ema1);
+         dsBuffer[dsBuffer_Idx] = ema2;
+         sumSignal = sumSignal + ema2;
+         outReal[outIdx] = ema2 - sumSignal / (double)optInSignalPeriod;
+         outIdx = outIdx + 1;
+         dsBuffer_Idx++;
+         if( dsBuffer_Idx > maxIdx_dsBuffer ) { dsBuffer_Idx = 0; }
+         sumSignal = sumSignal - dsBuffer[dsBuffer_Idx];
+      }
+      outNBElement.value = outIdx;
+      outBegIdx.value = startIdx;
+      return RetCode.SUCCESS ;
+   }
+   RetCode doscImpl( int startIdx,
+                     int endIdx,
+                     float inReal[],
+                     int optInTimePeriod,
+                     int optInFirstPeriod,
+                     int optInSecondPeriod,
+                     int optInSignalPeriod,
+                     MInteger outBegIdx,
+                     MInteger outNBElement,
+                     double outReal[] )
+   {
+      double k1 = 0;
+      double beta1 = 0;
+      double k2 = 0;
+      double beta2 = 0;
+      double invPeriod = 0;
+      double prevGain = 0;
+      double prevLoss = 0;
+      double prevValue = 0;
+      double gainDelta = 0;
+      double tempValue1 = 0;
+      double tempValue2 = 0;
+      double rsiValue = 0;
+      double ema1 = 0;
+      double ema2 = 0;
+      double sum1 = 0;
+      double sum2 = 0;
+      double sumSignal = 0;
+      int lookbackTotal = 0;
+      int lookbackRSI = 0;
+      int lookbackEMA1 = 0;
+      int lookbackEMA2 = 0;
+      int skipRSI = 0;
+      int today = 0;
+      int i = 0;
+      int outIdx = 0;
+      int rsiBar = 0;
+      int nRsi = 0;
+      int n1 = 0;
+      int n2 = 0;
+      double[] dsBuffer;
+      int dsBuffer_Idx = 0;
+      int maxIdx_dsBuffer = (32)-1;
+      if( (startIdx < 0) || (startIdx > INDEX_MAX) ) {
+         return RetCode.OUT_OF_RANGE_START_INDEX ;
+      }
+      if( (endIdx < 0) || (endIdx > INDEX_MAX) || (endIdx < startIdx)) {
+         return RetCode.OUT_OF_RANGE_END_INDEX ;
+      }
+      if( optInTimePeriod == Integer.MIN_VALUE ) {
+         optInTimePeriod = 14;
+      } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
+         return RetCode.BAD_PARAM;
+      }
+      if( optInFirstPeriod == Integer.MIN_VALUE ) {
+         optInFirstPeriod = 5;
+      } else if( optInFirstPeriod < 2 || optInFirstPeriod > 100000 ) {
+         return RetCode.BAD_PARAM;
+      }
+      if( optInSecondPeriod == Integer.MIN_VALUE ) {
+         optInSecondPeriod = 3;
+      } else if( optInSecondPeriod < 2 || optInSecondPeriod > 100000 ) {
+         return RetCode.BAD_PARAM;
+      }
+      if( optInSignalPeriod == Integer.MIN_VALUE ) {
+         optInSignalPeriod = 9;
+      } else if( optInSignalPeriod < 2 || optInSignalPeriod > 100000 ) {
+         return RetCode.BAD_PARAM;
+      }
+      lookbackTotal = doscLookback(optInTimePeriod, optInFirstPeriod, optInSecondPeriod, optInSignalPeriod);
+      if( startIdx < lookbackTotal ) {
+         startIdx = lookbackTotal;
+      }
+      if( startIdx > endIdx ) {
+         outBegIdx.value = 0;
+         outNBElement.value = 0;
+         return RetCode.SUCCESS ;
+      }
+      if( optInSignalPeriod < 1 ) return RetCode.INTERNAL_ERROR;
+      dsBuffer = new double[optInSignalPeriod];
+      maxIdx_dsBuffer = (optInSignalPeriod)-1;
+      dsBuffer_Idx = 0;
+      lookbackRSI = rsiLookback(optInTimePeriod);
+      lookbackEMA1 = emaLookback(optInFirstPeriod);
+      lookbackEMA2 = emaLookback(optInSecondPeriod);
+      skipRSI = lookbackRSI - optInTimePeriod;
+      beta1 = (double)(optInFirstPeriod - 1) / (double)(optInFirstPeriod + 1);
+      k1 = 1.0 - beta1;
+      if( beta1 < 0.5 ) {
+         beta1 = 1.0 - k1;
+      }
+      beta2 = (double)(optInSecondPeriod - 1) / (double)(optInSecondPeriod + 1);
+      k2 = 1.0 - beta2;
+      if( beta2 < 0.5 ) {
+         beta2 = 1.0 - k2;
+      }
+      ema1 = 0.0;
+      ema2 = 0.0;
+      sum1 = 0.0;
+      sum2 = 0.0;
+      sumSignal = 0.0;
+      nRsi = 0;
+      invPeriod = 1.0 / (double)optInTimePeriod;
+      today = startIdx - lookbackTotal;
+      rsiBar = today + optInTimePeriod;
+      prevValue = (double)inReal[today];
+      prevGain = 0.0;
+      prevLoss = 0.0;
+      today = today + 1;
+      for( i = optInTimePeriod; i > 0; i -= 1 ) {
+         tempValue1 = (double)inReal[today];
+         today = today + 1;
+         tempValue2 = tempValue1 - prevValue;
+         prevValue = tempValue1;
+         gainDelta = (tempValue2 > 0.0) ? tempValue2 : 0.0;
+         prevGain += gainDelta;
+         prevLoss += gainDelta - tempValue2;
+      }
+      prevLoss *= invPeriod;
+      prevGain *= invPeriod;
+      tempValue1 = prevGain + prevLoss;
+      if( tempValue1 > 0.0 ) {
+         rsiValue = 100.0 * (prevGain / tempValue1);
+      } else {
+         rsiValue = 50.0;
+      }
+      while( rsiBar < startIdx ) {
+         if( nRsi >= skipRSI ) {
+            n1 = nRsi - skipRSI;
+            if( n1 < optInFirstPeriod ) {
+               sum1 = sum1 + rsiValue;
+               if( n1 == optInFirstPeriod - 1 ) {
+                  ema1 = sum1 / optInFirstPeriod;
+               }
+            } else {
+               ema1 = Math.fma(beta1, ema1, k1 * rsiValue);
+            }
+            if( n1 >= lookbackEMA1 ) {
+               n2 = n1 - lookbackEMA1;
+               if( n2 < optInSecondPeriod ) {
+                  sum2 = sum2 + ema1;
+                  if( n2 == optInSecondPeriod - 1 ) {
+                     ema2 = sum2 / optInSecondPeriod;
+                  }
+               } else {
+                  ema2 = Math.fma(beta2, ema2, k2 * ema1);
+               }
+               if( n2 >= lookbackEMA2 ) {
+                  dsBuffer[dsBuffer_Idx] = ema2;
+                  sumSignal = sumSignal + ema2;
+                  dsBuffer_Idx++;
+                  if( dsBuffer_Idx > maxIdx_dsBuffer ) { dsBuffer_Idx = 0; }
+               }
+            }
+         }
+         nRsi = nRsi + 1;
+         tempValue1 = (double)inReal[today];
+         today = today + 1;
+         tempValue2 = tempValue1 - prevValue;
+         prevValue = tempValue1;
+         prevLoss *= (double)(optInTimePeriod - 1);
+         prevGain *= (double)(optInTimePeriod - 1);
+         gainDelta = (tempValue2 > 0.0) ? tempValue2 : 0.0;
+         prevGain += gainDelta;
+         prevLoss += gainDelta - tempValue2;
+         prevLoss *= invPeriod;
+         prevGain *= invPeriod;
+         tempValue1 = prevGain + prevLoss;
+         if( tempValue1 > 0.0 ) {
+            rsiValue = 100.0 * (prevGain / tempValue1);
+         } else {
+            rsiValue = 50.0;
+         }
+         rsiBar = rsiBar + 1;
+      }
+      ema1 = Math.fma(beta1, ema1, k1 * rsiValue);
+      ema2 = Math.fma(beta2, ema2, k2 * ema1);
+      dsBuffer[dsBuffer_Idx] = ema2;
+      sumSignal = sumSignal + ema2;
+      outReal[0] = ema2 - sumSignal / (double)optInSignalPeriod;
+      outIdx = 1;
+      dsBuffer_Idx++;
+      if( dsBuffer_Idx > maxIdx_dsBuffer ) { dsBuffer_Idx = 0; }
+      sumSignal = sumSignal - dsBuffer[dsBuffer_Idx];
+      while( today <= endIdx ) {
+         tempValue1 = (double)inReal[today];
+         today = today + 1;
+         tempValue2 = tempValue1 - prevValue;
+         prevValue = tempValue1;
+         prevLoss *= (double)(optInTimePeriod - 1);
+         prevGain *= (double)(optInTimePeriod - 1);
+         gainDelta = (tempValue2 > 0.0) ? tempValue2 : 0.0;
+         prevGain += gainDelta;
+         prevLoss += gainDelta - tempValue2;
+         prevLoss *= invPeriod;
+         prevGain *= invPeriod;
+         tempValue1 = prevGain + prevLoss;
+         if( tempValue1 > 0.0 ) {
+            rsiValue = 100.0 * (prevGain / tempValue1);
+         } else {
+            rsiValue = 50.0;
+         }
+         ema1 = Math.fma(beta1, ema1, k1 * rsiValue);
+         ema2 = Math.fma(beta2, ema2, k2 * ema1);
+         dsBuffer[dsBuffer_Idx] = ema2;
+         sumSignal = sumSignal + ema2;
+         outReal[outIdx] = ema2 - sumSignal / (double)optInSignalPeriod;
+         outIdx = outIdx + 1;
+         dsBuffer_Idx++;
+         if( dsBuffer_Idx > maxIdx_dsBuffer ) { dsBuffer_Idx = 0; }
+         sumSignal = sumSignal - dsBuffer[dsBuffer_Idx];
+      }
+      outNBElement.value = outIdx;
+      outBegIdx.value = startIdx;
+      return RetCode.SUCCESS ;
+   }
+   /**
+    * Derivative Oscillator: Wilder's RSI, smoothed by two exponential averages
+    * in series, with a simple average of that smoothed line subtracted from it.
+    * Constance Brown's reading is that the RSI's own swings are too noisy to
+    * time with, so she smooths it twice and then plots the distance from its
+    * own average as a histogram — MACD's histogram construction, applied to a
+    * smoothed RSI rather than to price. The result is in RSI points, centred on
+    * zero: crossings of the zero line mark the turn, and the height measures
+    * how far the smoothed RSI has run from its mean.
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/dosc">ta-lib.org/functions/dosc</a>.
+    * <p><b>Notes</b>
+    * <ul>
+    * <li>Every stage is a function TA-Lib already ships, and the output is identical, bit for bit, to {@code TA_RSI} followed by two {@code TA_EMA} calls, a {@code TA_SMA} and a {@code TA_SUB}. That chain takes five calls and their intermediate buffers; this computes it in one pass without materialising them.</li>
+    * <li>Each exponential average is seeded with a simple average of its own first inputs, the same seeding TA-Lib's EMA uses, and the second seeds on what the first publishes. {@code TA_SetUnstablePeriod} on either {@code TA_FUNC_UNST_RSI} or {@code TA_FUNC_UNST_EMA} discards more of that warm-up, and the EMA setting counts twice because there are two exponential stages. Implementations seeding each stage from a single first sample differ over the transient and agree once it decays.</li>
+    * <li>The degenerate reading is whatever {@code TA_RSI} answers when neither a gain nor a loss has been seen since the seed. Some other implementations answer 100 there and will disagree over that stretch.</li>
+    * <li>The periods are independent: no ordering between the two smoothing periods is required or checked. Swapping them changes the outputs, most at the start: each average is seeded on its own inputs, and that difference decays to rounding level. A signal period of 1 would make the output identically zero, so the minimum is 2.</li>
+    * </ul>
+    * <p>Values are written only where the indicator is defined. The returned
+    * {@link OutRange} says where they start and how many there are, and the
+    * library never pads with NaN. A valid range that ends before
+    * {@link Core#doscLookback} is a <b>success with no values</b>
+    * ({@code count() == 0}), not an error.
+    *
+    * @param startIdx First bar of the requested range (inclusive).
+    * @param endIdx Last bar of the requested range (inclusive).
+    * @param inReal Input series, usually the close.
+    * @param optInTimePeriod Period of the RSI (default 14; range 2..100000;
+    *        {@code Integer.MIN_VALUE} selects the default).
+    * @param optInFirstPeriod Period of the first smoothing, applied to the RSI
+    *        (default 5; range 2..100000; {@code Integer.MIN_VALUE} selects the
+    *        default).
+    * @param optInSecondPeriod Period of the second smoothing, applied to the
+    *        first (default 3; range 2..100000; {@code Integer.MIN_VALUE} selects the
+    *        default).
+    * @param optInSignalPeriod Period of the simple average subtracted from the
+    *        smoothed line (default 9; range 2..100000; {@code Integer.MIN_VALUE}
+    *        selects the default).
+    * @param outReal Derivative Oscillator, in RSI points, centred on zero. Must
+    *        hold at least {@code endIdx - max(startIdx, doscLookback(...)) + 1}
+    *        values, and never be empty: an empty array is an absent output.
+    * @return The range written: {@code begIdx} is the first bar with a value,
+    *        {@code count} how many were written.
+    * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
+    *        negative or above {@link Core#INDEX_MAX}, or {@code endIdx < startIdx}.
+    * @throws IllegalArgumentException if an optional parameter is outside its
+    *        documented range, two outputs share one array, or an array is absent or
+    *        too short for the range requested — any input this function
+    *        <i>declares</i> that does not reach {@code endIdx}, or an output that
+    *        cannot hold the values produced. Declared, not read: a few candlestick
+    *        patterns take an OHLC series they never index, and it is required all the
+    *        same. An output this function documents as declinable is the one
+    *        exception: {@code null} is how you decline it. Checked before anything is
+    *        written, so a rejected call leaves every buffer untouched.
+    *
+    * @see Core#rsi
+    * @see Core#stochrsi
+    * @see Core#macd
+    * @see Core#ac
+    */
+   public OutRange dosc( int startIdx,
+                         int endIdx,
+                         double inReal[],
+                         int optInTimePeriod,
+                         int optInFirstPeriod,
+                         int optInSecondPeriod,
+                         int optInSignalPeriod,
+                         double outReal[] )
+   {
+      requireIndexRange("DOSC", startIdx, endIdx);
+      int guardStart = clampedStart("DOSC", startIdx, doscLookback(optInTimePeriod, optInFirstPeriod, optInSecondPeriod, optInSignalPeriod));
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      requireLength("DOSC", "inReal", inReal, guardInLen);
+      requireLength("DOSC", "outReal", outReal, guardOutLen);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      RetCode retCode = doscImpl(startIdx, endIdx, inReal, optInTimePeriod, optInFirstPeriod, optInSecondPeriod, optInSignalPeriod, outBegIdx, outNBElement, outReal);
+      if( retCode != RetCode.SUCCESS ) {
+         throw failure("DOSC", retCode);
+      }
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   /**
+    * Derivative Oscillator: Wilder's RSI, smoothed by two exponential averages
+    * in series, with a simple average of that smoothed line subtracted from it.
+    * Constance Brown's reading is that the RSI's own swings are too noisy to
+    * time with, so she smooths it twice and then plots the distance from its
+    * own average as a histogram — MACD's histogram construction, applied to a
+    * smoothed RSI rather than to price. The result is in RSI points, centred on
+    * zero: crossings of the zero line mark the turn, and the height measures
+    * how far the smoothed RSI has run from its mean.
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/dosc">ta-lib.org/functions/dosc</a>.
+    * <p><b>Notes</b>
+    * <ul>
+    * <li>Every stage is a function TA-Lib already ships, and the output is identical, bit for bit, to {@code TA_RSI} followed by two {@code TA_EMA} calls, a {@code TA_SMA} and a {@code TA_SUB}. That chain takes five calls and their intermediate buffers; this computes it in one pass without materialising them.</li>
+    * <li>Each exponential average is seeded with a simple average of its own first inputs, the same seeding TA-Lib's EMA uses, and the second seeds on what the first publishes. {@code TA_SetUnstablePeriod} on either {@code TA_FUNC_UNST_RSI} or {@code TA_FUNC_UNST_EMA} discards more of that warm-up, and the EMA setting counts twice because there are two exponential stages. Implementations seeding each stage from a single first sample differ over the transient and agree once it decays.</li>
+    * <li>The degenerate reading is whatever {@code TA_RSI} answers when neither a gain nor a loss has been seen since the seed. Some other implementations answer 100 there and will disagree over that stretch.</li>
+    * <li>The periods are independent: no ordering between the two smoothing periods is required or checked. Swapping them changes the outputs, most at the start: each average is seeded on its own inputs, and that difference decays to rounding level. A signal period of 1 would make the output identically zero, so the minimum is 2.</li>
+    * </ul>
+    * <p>This is the {@code float[]} overload. The arithmetic is performed in
+    * {@code double} before being written to the {@code double[]} output, so a
+    * result beyond {@code float} range is still representable.
+    * <p>Values are written only where the indicator is defined. The returned
+    * {@link OutRange} says where they start and how many there are, and the
+    * library never pads with NaN. A valid range that ends before
+    * {@link Core#doscLookback} is a <b>success with no values</b>
+    * ({@code count() == 0}), not an error.
+    *
+    * @param startIdx First bar of the requested range (inclusive).
+    * @param endIdx Last bar of the requested range (inclusive).
+    * @param inReal Input series, usually the close.
+    * @param optInTimePeriod Period of the RSI (default 14; range 2..100000;
+    *        {@code Integer.MIN_VALUE} selects the default).
+    * @param optInFirstPeriod Period of the first smoothing, applied to the RSI
+    *        (default 5; range 2..100000; {@code Integer.MIN_VALUE} selects the
+    *        default).
+    * @param optInSecondPeriod Period of the second smoothing, applied to the
+    *        first (default 3; range 2..100000; {@code Integer.MIN_VALUE} selects the
+    *        default).
+    * @param optInSignalPeriod Period of the simple average subtracted from the
+    *        smoothed line (default 9; range 2..100000; {@code Integer.MIN_VALUE}
+    *        selects the default).
+    * @param outReal Derivative Oscillator, in RSI points, centred on zero. Must
+    *        hold at least {@code endIdx - max(startIdx, doscLookback(...)) + 1}
+    *        values, and never be empty: an empty array is an absent output.
+    * @return The range written: {@code begIdx} is the first bar with a value,
+    *        {@code count} how many were written.
+    * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
+    *        negative or above {@link Core#INDEX_MAX}, or {@code endIdx < startIdx}.
+    * @throws IllegalArgumentException if an optional parameter is outside its
+    *        documented range, two outputs share one array, or an array is absent or
+    *        too short for the range requested — any input this function
+    *        <i>declares</i> that does not reach {@code endIdx}, or an output that
+    *        cannot hold the values produced. Declared, not read: a few candlestick
+    *        patterns take an OHLC series they never index, and it is required all the
+    *        same. An output this function documents as declinable is the one
+    *        exception: {@code null} is how you decline it. Checked before anything is
+    *        written, so a rejected call leaves every buffer untouched.
+    *
+    * @see Core#rsi
+    * @see Core#stochrsi
+    * @see Core#macd
+    * @see Core#ac
+    */
+   public OutRange dosc( int startIdx,
+                         int endIdx,
+                         float inReal[],
+                         int optInTimePeriod,
+                         int optInFirstPeriod,
+                         int optInSecondPeriod,
+                         int optInSignalPeriod,
+                         double outReal[] )
+   {
+      requireIndexRange("DOSC", startIdx, endIdx);
+      int guardStart = clampedStart("DOSC", startIdx, doscLookback(optInTimePeriod, optInFirstPeriod, optInSecondPeriod, optInSignalPeriod));
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      requireLength("DOSC", "inReal", inReal, guardInLen);
+      requireLength("DOSC", "outReal", outReal, guardOutLen);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      RetCode retCode = doscImpl(startIdx, endIdx, inReal, optInTimePeriod, optInFirstPeriod, optInSecondPeriod, optInSignalPeriod, outBegIdx, outNBElement, outReal);
+      if( retCode != RetCode.SUCCESS ) {
+         throw failure("DOSC", retCode);
+      }
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+/**** Streaming API *****/
+
+   /**
+    * A live DOSC stream (unrelated to {@code java.util.stream}): one value per
+    * closed bar, bit-identical to {@link Core#dosc} over the same series.
+    * Open with {@link Core#doscOpen}; there is no close — the handle is
+    * ordinary heap state, unreferenced handles are simply garbage-collected.
+    * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
+    * {@code value} and {@code clone} must not race with an {@code update} on
+    * the same handle. With no concurrent {@code update}, {@code peek}/
+    * {@code value}/{@code clone} never write the stream and may be called
+    * concurrently after safe publication. Independent streams (a
+    * {@code clone()} result included) are fully independent.
+    * <p>Not serializable by design: to checkpoint, retain the history and
+    * re-open — the result is bit-identical by contract.
+    */
+   public static final class DoscStream {
+      private Core core;
+      private int optInTimePeriod;
+      private int optInFirstPeriod;
+      private int optInSecondPeriod;
+      private int optInSignalPeriod;
+      private double k1;
+      private double beta1;
+      private double k2;
+      private double beta2;
+      private double invPeriod;
+      private double prevGain;
+      private double prevLoss;
+      private double prevValue;
+      private double ema1;
+      private double ema2;
+      private double sumSignal;
+      private int dsBuffer_Idx;
+      private int maxIdx_dsBuffer;
+      private int cbSize_dsBuffer;
+      private double[] cb_dsBuffer;
+      private double cur_outReal;
+      private int outRangeBegIdx;
+      private int outRangeCount;
+
+      private DoscStream( Core core ) { this.core = core; }
+
+      /**
+       * The bars this stream has an output for, in the input series'
+       * coordinates: {@code [begIdx, begIdx + count)}.
+       * <p>It is what {@link Core#dosc} reports over the same bars: the
+       * opener sets it to {@code (lookback, historyLen - lookback)}, every
+       * accepted {@code update} adds one to the count — a rejected one
+       * changes nothing, and neither does {@code peek} — and
+       * {@code clone()} carries it verbatim. A plain
+       * {@code open} hands back only the last value, a subset of this range,
+       * because the caller chose not to take the fill.
+       * <p>The last bar it can reach is {@link Core#INDEX_MAX}; past that
+       * {@code update} and {@code advance} throw
+       * {@link IndexOutOfBoundsException}.
+       */
+      public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
+
+      /**
+       * Count one bar this stream was not fed: {@link #outRange()} advances
+       * by one and nothing else moves — {@link #value()} keeps answering the previous
+       * output, which is this bar's output too.
+       * <p>For a bar the caller leaves out: one an {@code update} rejected
+       * and that will not be re-fed, or a session with no print. Without it
+       * two handles on one feed drift a bar apart when only one of them skips.
+       * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+       * has reached bar {@link Core#INDEX_MAX}, the last one the batch tier
+       * can address and the last this handle will count. {@code update}
+       * throws the same there.
+       */
+      public void advance() {
+         if( this.outRangeBegIdx + this.outRangeCount > INDEX_MAX )
+            throw failure("DOSC advance", RetCode.OUT_OF_RANGE_END_INDEX);
+         this.outRangeCount++;
+      }
+
+      private DoscStream( DoscStream other ) {
+         this.core = other.core;
+         this.optInTimePeriod = other.optInTimePeriod;
+         this.optInFirstPeriod = other.optInFirstPeriod;
+         this.optInSecondPeriod = other.optInSecondPeriod;
+         this.optInSignalPeriod = other.optInSignalPeriod;
+         this.k1 = other.k1;
+         this.beta1 = other.beta1;
+         this.k2 = other.k2;
+         this.beta2 = other.beta2;
+         this.invPeriod = other.invPeriod;
+         this.prevGain = other.prevGain;
+         this.prevLoss = other.prevLoss;
+         this.prevValue = other.prevValue;
+         this.ema1 = other.ema1;
+         this.ema2 = other.ema2;
+         this.sumSignal = other.sumSignal;
+         this.dsBuffer_Idx = other.dsBuffer_Idx;
+         this.maxIdx_dsBuffer = other.maxIdx_dsBuffer;
+         this.cbSize_dsBuffer = other.cbSize_dsBuffer;
+         this.cb_dsBuffer = other.cb_dsBuffer.clone();
+         this.cur_outReal = other.cur_outReal;
+         this.outRangeBegIdx = other.outRangeBegIdx;
+         this.outRangeCount = other.outRangeCount;
+      }
+
+      /**
+       * Commit one closed bar, returning the new current value.
+       * <p>Throws {@link IllegalArgumentException} if any bar value is not
+       * finite (NaN or an infinity). That check runs before anything is
+       * written, so nothing moves — {@link #outRange()} included — and
+       * {@link #value()} still answers the previous value. Re-feed the bar when a
+       * corrected value arrives, or call {@link #advance()} to count it and
+       * carry on; two handles on one feed drift a bar apart if neither
+       * happens.
+       * This is the one place the streaming tier is stricter than
+       * the batch API, which computes on whatever it is given: a handle
+       * retains its state, so a single non-finite bar would poison every
+       * later value it produces.
+       * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+       * has reached bar {@link Core#INDEX_MAX}, which no re-feed clears: the
+       * handle has run out of index domain and only a shorter history can
+       * start a new one.
+       */
+      public double update( double inReal ) {
+         if( this.outRangeBegIdx + this.outRangeCount > INDEX_MAX )
+            throw failure("DOSC update", RetCode.OUT_OF_RANGE_END_INDEX);
+         if( !Double.isFinite(inReal) )
+            throw nonFiniteBar("DOSC update", "inReal");
+         core.doscStepImpl(this, inReal);
+         this.outRangeCount++;
+         return this.cur_outReal;
+      }
+
+      /**
+       * Evaluate a forming bar without committing — bit-identical to what the
+       * next {@code update} with the same bar would return — the same
+       * transition, with every store it would make carried in a local instead.
+       * Never writes this handle, so peeks may run concurrently with each other.
+       * <p>It counts no bar, so it keeps answering past the
+       * {@link Core#INDEX_MAX} ceiling {@code update} stops at.
+       */
+      public double peek( double inReal ) {
+         if( !Double.isFinite(inReal) )
+            throw nonFiniteBar("DOSC peek", "inReal");
+         DoscStream sp = this;
+         double gainDelta = 0.0;
+         double tempValue1 = 0.0;
+         double tempValue2 = 0.0;
+         double rsiValue = 0.0;
+         double cur_outReal = 0.0;
+         double ema1 = sp.ema1;
+         double ema2 = sp.ema2;
+         double prevGain = sp.prevGain;
+         double prevLoss = sp.prevLoss;
+         double prevValue = sp.prevValue;
+         double sumSignal = sp.sumSignal;
+         tempValue1 = inReal;
+         tempValue2 = tempValue1 - prevValue;
+         prevValue = tempValue1;
+         prevLoss *= (double)(sp.optInTimePeriod - 1);
+         prevGain *= (double)(sp.optInTimePeriod - 1);
+         gainDelta = (tempValue2 > 0.0) ? tempValue2 : 0.0;
+         prevGain += gainDelta;
+         prevLoss += gainDelta - tempValue2;
+         prevLoss *= sp.invPeriod;
+         prevGain *= sp.invPeriod;
+         tempValue1 = prevGain + prevLoss;
+         if( tempValue1 > 0.0 ) {
+            rsiValue = 100.0 * (prevGain / tempValue1);
+         } else {
+            rsiValue = 50.0;
+         }
+         ema1 = Math.fma(sp.beta1, ema1, sp.k1 * rsiValue);
+         ema2 = Math.fma(sp.beta2, ema2, sp.k2 * ema1);
+         sumSignal = sumSignal + ema2;
+         cur_outReal = ema2 - sumSignal / (double)sp.optInSignalPeriod;
+         return cur_outReal;
+      }
+
+      /**
+       * The value at the last bar this stream counted — the bar
+       * {@link #outRange()} ends on. The last history bar right after open,
+       * then whatever the latest accepted {@code update} returned.
+       * A pure field read; {@code peek} does not change it.
+       */
+      public double value() {
+         return this.cur_outReal;
+      }
+
+      /**
+       * An independent fork of this stream: both evolve separately from here
+       * on. Buffers are copied and sub-streams cloned recursively; the
+       * {@link Core} reference is shared, since a {@code Core} is immutable
+       * for a stream's lifetime.
+       *
+       * <p>Not the {@code Cloneable} protocol: this calls a copy constructor,
+       * never {@code super.clone()}, so it throws nothing.
+       *
+       * @return an independent stream at the same bar
+       */
+      @Override
+      public DoscStream clone() {
+         return new DoscStream(this);
+      }
+   }
+   private void doscStepImpl( DoscStream sp, double inReal )
+   {
+      double gainDelta = 0.0;
+      double tempValue1 = 0.0;
+      double tempValue2 = 0.0;
+      double rsiValue = 0.0;
+      tempValue1 = inReal;
+      tempValue2 = tempValue1 - sp.prevValue;
+      sp.prevValue = tempValue1;
+      sp.prevLoss *= (double)(sp.optInTimePeriod - 1);
+      sp.prevGain *= (double)(sp.optInTimePeriod - 1);
+      gainDelta = (tempValue2 > 0.0) ? tempValue2 : 0.0;
+      sp.prevGain += gainDelta;
+      sp.prevLoss += gainDelta - tempValue2;
+      sp.prevLoss *= sp.invPeriod;
+      sp.prevGain *= sp.invPeriod;
+      tempValue1 = sp.prevGain + sp.prevLoss;
+      if( tempValue1 > 0.0 ) {
+         rsiValue = 100.0 * (sp.prevGain / tempValue1);
+      } else {
+         rsiValue = 50.0;
+      }
+      sp.ema1 = Math.fma(sp.beta1, sp.ema1, sp.k1 * rsiValue);
+      sp.ema2 = Math.fma(sp.beta2, sp.ema2, sp.k2 * sp.ema1);
+      sp.cb_dsBuffer[sp.dsBuffer_Idx] = sp.ema2;
+      sp.sumSignal = sp.sumSignal + sp.ema2;
+      sp.cur_outReal = sp.ema2 - sp.sumSignal / (double)sp.optInSignalPeriod;
+      sp.dsBuffer_Idx = sp.dsBuffer_Idx + 1;
+      if( sp.dsBuffer_Idx > sp.maxIdx_dsBuffer ) {
+         sp.dsBuffer_Idx = 0;
+      }
+      sp.sumSignal = sp.sumSignal - sp.cb_dsBuffer[sp.dsBuffer_Idx];
+   }
+   private RetCode doscOpenImpl( DoscStream sp, double inReal[], int startIdx, int optInTimePeriod, int optInFirstPeriod, int optInSecondPeriod, int optInSignalPeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+   {
+      double k1 = 0;
+      double beta1 = 0;
+      double k2 = 0;
+      double beta2 = 0;
+      double invPeriod = 0;
+      double prevGain = 0;
+      double prevLoss = 0;
+      double prevValue = 0;
+      double gainDelta = 0;
+      double tempValue1 = 0;
+      double tempValue2 = 0;
+      double rsiValue = 0;
+      double ema1 = 0;
+      double ema2 = 0;
+      double sum1 = 0;
+      double sum2 = 0;
+      double sumSignal = 0;
+      int lookbackTotal = 0;
+      int lookbackRSI = 0;
+      int lookbackEMA1 = 0;
+      int lookbackEMA2 = 0;
+      int skipRSI = 0;
+      int today = 0;
+      int i = 0;
+      int outIdx = 0;
+      int rsiBar = 0;
+      int nRsi = 0;
+      int n1 = 0;
+      int n2 = 0;
+      double[] dsBuffer;
+      int dsBuffer_Idx = 0;
+      int maxIdx_dsBuffer = (32)-1;
+      int historyLen = inReal.length;
+      int endIdx = historyLen - 1;
+      if( historyLen < 1 ) {
+         return RetCode.OUT_OF_RANGE_START_INDEX;
+      }
+      if( historyLen > INDEX_MAX + 1 ) {
+         return RetCode.OUT_OF_RANGE_END_INDEX;
+      }
+      if( optInTimePeriod == Integer.MIN_VALUE ) {
+         optInTimePeriod = 14;
+      } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
+         return RetCode.BAD_PARAM;
+      }
+      if( optInFirstPeriod == Integer.MIN_VALUE ) {
+         optInFirstPeriod = 5;
+      } else if( optInFirstPeriod < 2 || optInFirstPeriod > 100000 ) {
+         return RetCode.BAD_PARAM;
+      }
+      if( optInSecondPeriod == Integer.MIN_VALUE ) {
+         optInSecondPeriod = 3;
+      } else if( optInSecondPeriod < 2 || optInSecondPeriod > 100000 ) {
+         return RetCode.BAD_PARAM;
+      }
+      if( optInSignalPeriod == Integer.MIN_VALUE ) {
+         optInSignalPeriod = 9;
+      } else if( optInSignalPeriod < 2 || optInSignalPeriod > 100000 ) {
+         return RetCode.BAD_PARAM;
+      }
+      if( startIdx > endIdx ) {
+         outBegIdx.value = 0;
+         outNBElement.value = 0;
+         return RetCode.INSUFFICIENT_HISTORY;
+      }
+      /* Constance Brown's "triple smoothed derivative of RSI plotted as a
+       * histogram" (MTA Journal, 1994): MACD's histogram construction applied to
+       * a double-smoothed RSI.
+       *
+       *    S1_t   = EMA(RSI(x, t), f)_t
+       *    DS_t   = EMA(S1, s)_t
+       *    DOSC_t = DS_t - SMA(DS, g)_t
+       *
+       * The output must stay bit-identical to
+       * TA_RSI -> TA_EMA -> TA_EMA -> TA_SMA -> TA_SUB, so every stage keeps its
+       * callee's operation order, and every stage boundary is the callee's
+       * LOOKBACK, not (period-1): a warm unstable period then folds in.
+       *
+       * Compare the counters BEFORE subtracting them: the Rust backend renders
+       * them usize, where `n = nRsi - skipRSI; if( n >= 0 )` underflows.
+       */
+      /* This ptr will point on a circular buffer of at least
+       * "optInSignalPeriod" element.
+       */
+      lookbackTotal = doscLookback(optInTimePeriod, optInFirstPeriod, optInSecondPeriod, optInSignalPeriod);
+      /* Move up the start index if there is not
+       * enough initial data.
+       */
+      if( startIdx < lookbackTotal ) {
+         startIdx = lookbackTotal;
+      }
+      /* Make sure there is still something to evaluate. */
+      if( startIdx > endIdx ) {
+         outBegIdx.value = 0;
+         outNBElement.value = 0;
+         return RetCode.INSUFFICIENT_HISTORY ;
+      }
+      if( optInSignalPeriod < 1 ) return RetCode.INTERNAL_ERROR;
+      dsBuffer = new double[optInSignalPeriod];
+      maxIdx_dsBuffer = (optInSignalPeriod)-1;
+      dsBuffer_Idx = 0;
+      lookbackRSI = rsiLookback(optInTimePeriod);
+      lookbackEMA1 = emaLookback(optInFirstPeriod);
+      lookbackEMA2 = emaLookback(optInSecondPeriod);
+      /* The RSI values the composed chain never publishes. Derive the count
+       * from the lookback, never from TA_GetUnstablePeriod: under the Auto
+       * levels it is a function of the period.
+       */
+      skipRSI = lookbackRSI - optInTimePeriod;
+      /* k and beta must sum to exactly 1.0, or a flat input drifts off its
+       * level. Each subtraction is exact only from an operand in [0.5,1): at a
+       * period of 2 that is k, above it beta. Above it beta stays as the divide
+       * wrote it: a register last written by a subtraction costs each FMA
+       * reading it one more cycle on Intel P-cores.
+       */
+      beta1 = (double)(optInFirstPeriod - 1) / (double)(optInFirstPeriod + 1);
+      k1 = 1.0 - beta1;
+      if( beta1 < 0.5 ) {
+         beta1 = 1.0 - k1;
+      }
+      beta2 = (double)(optInSecondPeriod - 1) / (double)(optInSecondPeriod + 1);
+      k2 = 1.0 - beta2;
+      if( beta2 < 0.5 ) {
+         beta2 = 1.0 - k2;
+      }
+      ema1 = 0.0;
+      ema2 = 0.0;
+      sum1 = 0.0;
+      sum2 = 0.0;
+      sumSignal = 0.0;
+      nRsi = 0;
+      invPeriod = 1.0 / (double)optInTimePeriod;
+      today = startIdx - lookbackTotal;
+      rsiBar = today + optInTimePeriod;
+      prevValue = inReal[today];
+      prevGain = 0.0;
+      prevLoss = 0.0;
+      today = today + 1;
+      for( i = optInTimePeriod; i > 0; i -= 1 ) {
+         tempValue1 = inReal[today];
+         today = today + 1;
+         tempValue2 = tempValue1 - prevValue;
+         prevValue = tempValue1;
+         gainDelta = (tempValue2 > 0.0) ? tempValue2 : 0.0;
+         prevGain += gainDelta;
+         prevLoss += gainDelta - tempValue2;
+      }
+      prevLoss *= invPeriod;
+      prevGain *= invPeriod;
+      tempValue1 = prevGain + prevLoss;
+      if( tempValue1 > 0.0 ) {
+         rsiValue = 100.0 * (prevGain / tempValue1);
+      } else {
+         rsiValue = 50.0;
+      }
+      /* Warm-up. Feeds every RSI value before startIdx through the chain and
+       * leaves rsiValue holding startIdx's own. Nothing is emitted here: the
+       * first bar whose signal window is full is startIdx, by construction of
+       * the lookback.
+       */
+      while( rsiBar < startIdx ) {
+         if( nRsi >= skipRSI ) {
+            n1 = nRsi - skipRSI;
+            if( n1 < optInFirstPeriod ) {
+               sum1 = sum1 + rsiValue;
+               if( n1 == optInFirstPeriod - 1 ) {
+                  ema1 = sum1 / optInFirstPeriod;
+               }
+            } else {
+               ema1 = Math.fma(beta1, ema1, k1 * rsiValue);
+            }
+            if( n1 >= lookbackEMA1 ) {
+               n2 = n1 - lookbackEMA1;
+               if( n2 < optInSecondPeriod ) {
+                  sum2 = sum2 + ema1;
+                  if( n2 == optInSecondPeriod - 1 ) {
+                     ema2 = sum2 / optInSecondPeriod;
+                  }
+               } else {
+                  ema2 = Math.fma(beta2, ema2, k2 * ema1);
+               }
+               if( n2 >= lookbackEMA2 ) {
+                  dsBuffer[dsBuffer_Idx] = ema2;
+                  sumSignal = sumSignal + ema2;
+                  dsBuffer_Idx++;
+                  if( dsBuffer_Idx > maxIdx_dsBuffer ) { dsBuffer_Idx = 0; }
+               }
+            }
+         }
+         nRsi = nRsi + 1;
+         tempValue1 = inReal[today];
+         today = today + 1;
+         tempValue2 = tempValue1 - prevValue;
+         prevValue = tempValue1;
+         prevLoss *= (double)(optInTimePeriod - 1);
+         prevGain *= (double)(optInTimePeriod - 1);
+         gainDelta = (tempValue2 > 0.0) ? tempValue2 : 0.0;
+         prevGain += gainDelta;
+         prevLoss += gainDelta - tempValue2;
+         prevLoss *= invPeriod;
+         prevGain *= invPeriod;
+         tempValue1 = prevGain + prevLoss;
+         if( tempValue1 > 0.0 ) {
+            rsiValue = 100.0 * (prevGain / tempValue1);
+         } else {
+            rsiValue = 50.0;
+         }
+         rsiBar = rsiBar + 1;
+      }
+      /* The first output. Every stage is past its seed here, even at periods
+       * 2/2/2/2, so the store below and the one in the stable loop are
+       * unconditional. Keep them so: under a guard, the managed peek frames
+       * seed a dead output local.
+       */
+      ema1 = Math.fma(beta1, ema1, k1 * rsiValue);
+      ema2 = Math.fma(beta2, ema2, k2 * ema1);
+      dsBuffer[dsBuffer_Idx] = ema2;
+      sumSignal = sumSignal + ema2;
+      outReal[0 * outStride] = ema2 - sumSignal / (double)optInSignalPeriod;
+      outIdx = 1;
+      dsBuffer_Idx++;
+      if( dsBuffer_Idx > maxIdx_dsBuffer ) { dsBuffer_Idx = 0; }
+      sumSignal = sumSignal - dsBuffer[dsBuffer_Idx];
+      /* Stable zone. */
+      while( today <= endIdx ) {
+         tempValue1 = inReal[today];
+         today = today + 1;
+         tempValue2 = tempValue1 - prevValue;
+         prevValue = tempValue1;
+         prevLoss *= (double)(optInTimePeriod - 1);
+         prevGain *= (double)(optInTimePeriod - 1);
+         gainDelta = (tempValue2 > 0.0) ? tempValue2 : 0.0;
+         prevGain += gainDelta;
+         prevLoss += gainDelta - tempValue2;
+         prevLoss *= invPeriod;
+         prevGain *= invPeriod;
+         tempValue1 = prevGain + prevLoss;
+         if( tempValue1 > 0.0 ) {
+            rsiValue = 100.0 * (prevGain / tempValue1);
+         } else {
+            rsiValue = 50.0;
+         }
+         ema1 = Math.fma(beta1, ema1, k1 * rsiValue);
+         ema2 = Math.fma(beta2, ema2, k2 * ema1);
+         dsBuffer[dsBuffer_Idx] = ema2;
+         sumSignal = sumSignal + ema2;
+         outReal[outIdx * outStride] = ema2 - sumSignal / (double)optInSignalPeriod;
+         outIdx = outIdx + 1;
+         dsBuffer_Idx++;
+         if( dsBuffer_Idx > maxIdx_dsBuffer ) { dsBuffer_Idx = 0; }
+         sumSignal = sumSignal - dsBuffer[dsBuffer_Idx];
+      }
+      outNBElement.value = outIdx;
+      outBegIdx.value = startIdx;
+      /* Capture the live batch state into the handle. */
+      int capCb_dsBuffer = maxIdx_dsBuffer + 1;
+      if( capCb_dsBuffer > historyLen + 1 ) {
+         return RetCode.INTERNAL_ERROR;
+      }
+      sp.optInTimePeriod = optInTimePeriod;
+      sp.optInFirstPeriod = optInFirstPeriod;
+      sp.optInSecondPeriod = optInSecondPeriod;
+      sp.optInSignalPeriod = optInSignalPeriod;
+      sp.k1 = k1;
+      sp.beta1 = beta1;
+      sp.k2 = k2;
+      sp.beta2 = beta2;
+      sp.invPeriod = invPeriod;
+      sp.prevGain = prevGain;
+      sp.prevLoss = prevLoss;
+      sp.prevValue = prevValue;
+      sp.ema1 = ema1;
+      sp.ema2 = ema2;
+      sp.sumSignal = sumSignal;
+      sp.dsBuffer_Idx = dsBuffer_Idx;
+      sp.maxIdx_dsBuffer = maxIdx_dsBuffer;
+      sp.cbSize_dsBuffer = capCb_dsBuffer;
+      sp.cb_dsBuffer = dsBuffer;
+      sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
+      return RetCode.SUCCESS;
+   }
+   /* doscOpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   DoscStream doscOpenAndFillInternal( double inReal[], int startIdx, int optInTimePeriod, int optInFirstPeriod, int optInSecondPeriod, int optInSignalPeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   {
+      DoscStream sp = new DoscStream(this);
+      RetCode retCode = doscOpenImpl(sp, inReal, startIdx, optInTimePeriod, optInFirstPeriod, optInSecondPeriod, optInSignalPeriod, outBegIdx, outNBElement, outReal, 1);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
+      if( retCode == RetCode.SUCCESS ) {
+         return sp;
+      }
+      if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
+         throw insufficientHistory("DOSC openAndFill", inReal.length, startIdx, doscLookback(optInTimePeriod, optInFirstPeriod, optInSecondPeriod, optInSignalPeriod));
+      }
+      throw streamFailure("DOSC openAndFill", retCode);
+   }
+   /* Internal startIdx-anchored open behind doscOpen (composition seam). */
+   DoscStream doscOpenInternal( double inReal[], int startIdx, int optInTimePeriod, int optInFirstPeriod, int optInSecondPeriod, int optInSignalPeriod )
+   {
+      DoscStream sp = new DoscStream(this);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      double[] sink_outReal = new double[1];
+      RetCode retCode = doscOpenImpl(sp, inReal, startIdx, optInTimePeriod, optInFirstPeriod, optInSecondPeriod, optInSignalPeriod, outBegIdx, outNBElement, sink_outReal, 0);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
+      if( retCode == RetCode.SUCCESS ) {
+         return sp;
+      }
+      if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
+         throw insufficientHistory("DOSC open", inReal.length, startIdx, doscLookback(optInTimePeriod, optInFirstPeriod, optInSecondPeriod, optInSignalPeriod));
+      }
+      throw streamFailure("DOSC open", retCode);
+   }
+   /**
+    * Open a live DOSC stream over the warm-up history; the handle's
+    * {@code value()} starts at the last history bar's value — bit-identical
+    * to {@link Core#dosc} at that bar.
+    * <p>The history must hold at least {@code doscLookback(...) + 1} bars
+    * (unstable-period aware), or {@link InsufficientHistoryException} is
+    * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
+    * ({@link Integer#MIN_VALUE} selects a parameter's documented default,
+    * as in the batch API). An EMPTY history throws
+    * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
+    * names no bar — and a null argument {@link IllegalArgumentException},
+    * both ahead of everything above.
+    */
+   public DoscStream doscOpen( double inReal[], int optInTimePeriod, int optInFirstPeriod, int optInSecondPeriod, int optInSignalPeriod )
+   {
+      requireArgument("DOSC open", "inReal", inReal);
+      requireHistory("DOSC open", inReal.length);
+      return doscOpenInternal(inReal, 0, optInTimePeriod, optInFirstPeriod, optInSecondPeriod, optInSignalPeriod);
+   }
+   /**
+    * {@link Core#doscOpen} that also fills the output array(s) bit-identically
+    * to {@link Core#dosc} over the whole history in the same single pass
+    * (no separate batch call needed for the warm-up plot). Output arrays must
+    * not alias the inputs or each other, and must hold
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
+    * <p>The range written is on the returned handle:
+    * {@link DoscStream#outRange()}.
+    */
+   public DoscStream doscOpenAndFill( double inReal[], int optInTimePeriod, int optInFirstPeriod, int optInSecondPeriod, int optInSignalPeriod, double outReal[] )
+   {
+      requireArgument("DOSC openAndFill", "inReal", inReal);
+      requireHistory("DOSC openAndFill", inReal.length);
+      int guardOutLen = openFillCount("DOSC openAndFill", inReal.length, doscLookback(optInTimePeriod, optInFirstPeriod, optInSecondPeriod, optInSignalPeriod));
+      requireLength("DOSC openAndFill", "outReal", outReal, guardOutLen);
+      if( (Object)outReal == (Object)inReal ) {
+         throw streamFailure("DOSC openAndFill", RetCode.BAD_PARAM);
+      }
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      return doscOpenAndFillInternal(inReal, 0, optInTimePeriod, optInFirstPeriod, optInSecondPeriod, optInSignalPeriod, outBegIdx, outNBElement, outReal);
+   }
+/* List of contributors:
+ *
+ *  Initial  Name/description
+ *  -------------------------------------------------------------------
+ *  MF       Mario Fortier
  *  CC       Claude Code (AI assistant)
  *
  * Change history:
@@ -110310,7 +111647,12 @@ public final class Core {
          smoothPeriod = Math.fma(0.67, smoothPeriod, 0.33 * period);
          /* Compute Dominant Cycle Phase */
          DCPeriod = smoothPeriod + 0.5;
-         DCPeriodInt = (int)DCPeriod;
+         /* A NaN period has no int value, and C leaves converting one undefined. */
+         if( DCPeriod >= 0.0 ) {
+            DCPeriodInt = (int)DCPeriod;
+         } else {
+            DCPeriodInt = 0;
+         }
          realPart = 0.0;
          imagPart = 0.0;
          /* idx is used to iterate for up to 50 of the last
@@ -110657,7 +111999,11 @@ public final class Core {
          period = Math.fma(0.2, period, 0.8 * tempReal);
          smoothPeriod = Math.fma(0.67, smoothPeriod, 0.33 * period);
          DCPeriod = smoothPeriod + 0.5;
-         DCPeriodInt = (int)DCPeriod;
+         if( DCPeriod >= 0.0 ) {
+            DCPeriodInt = (int)DCPeriod;
+         } else {
+            DCPeriodInt = 0;
+         }
          realPart = 0.0;
          imagPart = 0.0;
          idx = smoothPrice_Idx;
@@ -111213,7 +112559,12 @@ public final class Core {
          smoothPeriod = Math.fma(0.67, smoothPeriod, 0.33 * period);
          /* Compute Dominant Cycle Phase */
          DCPeriod = smoothPeriod + 0.5;
-         DCPeriodInt = (int)DCPeriod;
+         /* A NaN period has no int value, and C leaves converting one undefined. */
+         if( DCPeriod >= 0.0 ) {
+            DCPeriodInt = (int)DCPeriod;
+         } else {
+            DCPeriodInt = 0;
+         }
          realPart = 0.0;
          imagPart = 0.0;
          /* idx is used to iterate for up to 50 of the last
@@ -111439,7 +112790,12 @@ public final class Core {
       sp.smoothPeriod = Math.fma(0.67, sp.smoothPeriod, 0.33 * sp.period);
       /* Compute Dominant Cycle Phase */
       DCPeriod = sp.smoothPeriod + 0.5;
-      DCPeriodInt = (int)DCPeriod;
+      /* A NaN period has no int value, and C leaves converting one undefined. */
+      if( DCPeriod >= 0.0 ) {
+         DCPeriodInt = (int)DCPeriod;
+      } else {
+         DCPeriodInt = 0;
+      }
       realPart = 0.0;
       imagPart = 0.0;
       /* idx is used to iterate for up to 50 of the last
@@ -111852,7 +113208,12 @@ public final class Core {
          smoothPeriod = Math.fma(0.67, smoothPeriod, 0.33 * period);
          /* Compute Dominant Cycle Phase */
          DCPeriod = smoothPeriod + 0.5;
-         DCPeriodInt = (int)DCPeriod;
+         /* A NaN period has no int value, and C leaves converting one undefined. */
+         if( DCPeriod >= 0.0 ) {
+            DCPeriodInt = (int)DCPeriod;
+         } else {
+            DCPeriodInt = 0;
+         }
          realPart = 0.0;
          imagPart = 0.0;
          /* idx is used to iterate for up to 50 of the last
@@ -114285,7 +115646,12 @@ public final class Core {
          smoothPeriod = Math.fma(0.67, smoothPeriod, 0.33 * period);
          /* Compute Dominant Cycle Phase */
          DCPeriod = smoothPeriod + 0.5;
-         DCPeriodInt = (int)DCPeriod;
+         /* A NaN period has no int value, and C leaves converting one undefined. */
+         if( DCPeriod >= 0.0 ) {
+            DCPeriodInt = (int)DCPeriod;
+         } else {
+            DCPeriodInt = 0;
+         }
          realPart = 0.0;
          imagPart = 0.0;
          /* idx is used to iterate for up to 50 of the last
@@ -114639,7 +116005,11 @@ public final class Core {
          period = Math.fma(0.2, period, 0.8 * tempReal);
          smoothPeriod = Math.fma(0.67, smoothPeriod, 0.33 * period);
          DCPeriod = smoothPeriod + 0.5;
-         DCPeriodInt = (int)DCPeriod;
+         if( DCPeriod >= 0.0 ) {
+            DCPeriodInt = (int)DCPeriod;
+         } else {
+            DCPeriodInt = 0;
+         }
          realPart = 0.0;
          imagPart = 0.0;
          idx = smoothPrice_Idx;
@@ -115210,7 +116580,12 @@ public final class Core {
          smoothPeriod = Math.fma(0.67, smoothPeriod, 0.33 * period);
          /* Compute Dominant Cycle Phase */
          DCPeriod = smoothPeriod + 0.5;
-         DCPeriodInt = (int)DCPeriod;
+         /* A NaN period has no int value, and C leaves converting one undefined. */
+         if( DCPeriod >= 0.0 ) {
+            DCPeriodInt = (int)DCPeriod;
+         } else {
+            DCPeriodInt = 0;
+         }
          realPart = 0.0;
          imagPart = 0.0;
          /* idx is used to iterate for up to 50 of the last
@@ -115462,7 +116837,12 @@ public final class Core {
       sp.smoothPeriod = Math.fma(0.67, sp.smoothPeriod, 0.33 * sp.period);
       /* Compute Dominant Cycle Phase */
       DCPeriod = sp.smoothPeriod + 0.5;
-      DCPeriodInt = (int)DCPeriod;
+      /* A NaN period has no int value, and C leaves converting one undefined. */
+      if( DCPeriod >= 0.0 ) {
+         DCPeriodInt = (int)DCPeriod;
+      } else {
+         DCPeriodInt = 0;
+      }
       realPart = 0.0;
       imagPart = 0.0;
       /* idx is used to iterate for up to 50 of the last
@@ -115878,7 +117258,12 @@ public final class Core {
          smoothPeriod = Math.fma(0.67, smoothPeriod, 0.33 * period);
          /* Compute Dominant Cycle Phase */
          DCPeriod = smoothPeriod + 0.5;
-         DCPeriodInt = (int)DCPeriod;
+         /* A NaN period has no int value, and C leaves converting one undefined. */
+         if( DCPeriod >= 0.0 ) {
+            DCPeriodInt = (int)DCPeriod;
+         } else {
+            DCPeriodInt = 0;
+         }
          realPart = 0.0;
          imagPart = 0.0;
          /* idx is used to iterate for up to 50 of the last
@@ -116488,7 +117873,12 @@ public final class Core {
          smoothPeriod = Math.fma(0.67, smoothPeriod, 0.33 * period);
          /* Compute Trendline */
          DCPeriod = smoothPeriod + 0.5;
-         DCPeriodInt = (int)DCPeriod;
+         /* A NaN period has no int value, and C leaves converting one undefined. */
+         if( DCPeriod >= 0.0 ) {
+            DCPeriodInt = (int)DCPeriod;
+         } else {
+            DCPeriodInt = 0;
+         }
          /* Average the RAW price over the dominant cycle period
           * (Ehlers, "Rocket Science for Traders": the Instantaneous
           * Trendline sums Price — not SmoothPrice, which only feeds
@@ -116813,7 +118203,11 @@ public final class Core {
          period = Math.fma(0.2, period, 0.8 * tempReal);
          smoothPeriod = Math.fma(0.67, smoothPeriod, 0.33 * period);
          DCPeriod = smoothPeriod + 0.5;
-         DCPeriodInt = (int)DCPeriod;
+         if( DCPeriod >= 0.0 ) {
+            DCPeriodInt = (int)DCPeriod;
+         } else {
+            DCPeriodInt = 0;
+         }
          tempReal = 0.0;
          for( i = 0; i < 50; i += 1 ) {
             if( i < DCPeriodInt ) {
@@ -117336,7 +118730,12 @@ public final class Core {
          smoothPeriod = Math.fma(0.67, smoothPeriod, 0.33 * period);
          /* Compute Trendline */
          DCPeriod = smoothPeriod + 0.5;
-         DCPeriodInt = (int)DCPeriod;
+         /* A NaN period has no int value, and C leaves converting one undefined. */
+         if( DCPeriod >= 0.0 ) {
+            DCPeriodInt = (int)DCPeriod;
+         } else {
+            DCPeriodInt = 0;
+         }
          /* Average the RAW price over the dominant cycle period
           * (Ehlers, "Rocket Science for Traders": the Instantaneous
           * Trendline sums Price — not SmoothPrice, which only feeds
@@ -117545,7 +118944,12 @@ public final class Core {
       sp.smoothPeriod = Math.fma(0.67, sp.smoothPeriod, 0.33 * sp.period);
       /* Compute Trendline */
       DCPeriod = sp.smoothPeriod + 0.5;
-      DCPeriodInt = (int)DCPeriod;
+      /* A NaN period has no int value, and C leaves converting one undefined. */
+      if( DCPeriod >= 0.0 ) {
+         DCPeriodInt = (int)DCPeriod;
+      } else {
+         DCPeriodInt = 0;
+      }
       /* Average the RAW price over the dominant cycle period
        * (Ehlers, "Rocket Science for Traders": the Instantaneous
        * Trendline sums Price — not SmoothPrice, which only feeds
@@ -117932,7 +119336,12 @@ public final class Core {
          smoothPeriod = Math.fma(0.67, smoothPeriod, 0.33 * period);
          /* Compute Trendline */
          DCPeriod = smoothPeriod + 0.5;
-         DCPeriodInt = (int)DCPeriod;
+         /* A NaN period has no int value, and C leaves converting one undefined. */
+         if( DCPeriod >= 0.0 ) {
+            DCPeriodInt = (int)DCPeriod;
+         } else {
+            DCPeriodInt = 0;
+         }
          /* Average the RAW price over the dominant cycle period
           * (Ehlers, "Rocket Science for Traders": the Instantaneous
           * Trendline sums Price — not SmoothPrice, which only feeds
@@ -118564,7 +119973,12 @@ public final class Core {
          /* Compute Dominant Cycle Phase */
          prevDCPhase = DCPhase;
          DCPeriod = smoothPeriod + 0.5;
-         DCPeriodInt = (int)DCPeriod;
+         /* A NaN period has no int value, and C leaves converting one undefined. */
+         if( DCPeriod >= 0.0 ) {
+            DCPeriodInt = (int)DCPeriod;
+         } else {
+            DCPeriodInt = 0;
+         }
          realPart = 0.0;
          imagPart = 0.0;
          /* idx is used to iterate for up to 50 of the last
@@ -118607,7 +120021,12 @@ public final class Core {
          leadSine = Math.sin((DCPhase + 45) * deg2Rad);
          /* Compute Trendline */
          DCPeriod = smoothPeriod + 0.5;
-         DCPeriodInt = (int)DCPeriod;
+         /* A NaN period has no int value, and C leaves converting one undefined. */
+         if( DCPeriod >= 0.0 ) {
+            DCPeriodInt = (int)DCPeriod;
+         } else {
+            DCPeriodInt = 0;
+         }
          /* Average the RAW price over the dominant cycle period.
           * Unlike the DC-phase loop above (which reads the smoothPrice
           * circular buffer), the iTrend average reads the raw price,
@@ -118988,7 +120407,11 @@ public final class Core {
          smoothPeriod = Math.fma(0.67, smoothPeriod, 0.33 * period);
          prevDCPhase = DCPhase;
          DCPeriod = smoothPeriod + 0.5;
-         DCPeriodInt = (int)DCPeriod;
+         if( DCPeriod >= 0.0 ) {
+            DCPeriodInt = (int)DCPeriod;
+         } else {
+            DCPeriodInt = 0;
+         }
          realPart = 0.0;
          imagPart = 0.0;
          idx = smoothPrice_Idx;
@@ -119026,7 +120449,11 @@ public final class Core {
          sine = Math.sin(DCPhase * deg2Rad);
          leadSine = Math.sin((DCPhase + 45) * deg2Rad);
          DCPeriod = smoothPeriod + 0.5;
-         DCPeriodInt = (int)DCPeriod;
+         if( DCPeriod >= 0.0 ) {
+            DCPeriodInt = (int)DCPeriod;
+         } else {
+            DCPeriodInt = 0;
+         }
          tempReal = 0.0;
          for( j = 0; j < 50; j += 1 ) {
             if( j < DCPeriodInt ) {
@@ -119613,7 +121040,12 @@ public final class Core {
          /* Compute Dominant Cycle Phase */
          prevDCPhase = DCPhase;
          DCPeriod = smoothPeriod + 0.5;
-         DCPeriodInt = (int)DCPeriod;
+         /* A NaN period has no int value, and C leaves converting one undefined. */
+         if( DCPeriod >= 0.0 ) {
+            DCPeriodInt = (int)DCPeriod;
+         } else {
+            DCPeriodInt = 0;
+         }
          realPart = 0.0;
          imagPart = 0.0;
          /* idx is used to iterate for up to 50 of the last
@@ -119656,7 +121088,12 @@ public final class Core {
          leadSine = Math.sin((DCPhase + 45) * sp.deg2Rad);
          /* Compute Trendline */
          DCPeriod = smoothPeriod + 0.5;
-         DCPeriodInt = (int)DCPeriod;
+         /* A NaN period has no int value, and C leaves converting one undefined. */
+         if( DCPeriod >= 0.0 ) {
+            DCPeriodInt = (int)DCPeriod;
+         } else {
+            DCPeriodInt = 0;
+         }
          /* Average the RAW price over the dominant cycle period.
           * Unlike the DC-phase loop above (which reads the smoothPrice
           * circular buffer), the iTrend average reads the raw price,
@@ -119899,7 +121336,12 @@ public final class Core {
       /* Compute Dominant Cycle Phase */
       prevDCPhase = sp.DCPhase;
       DCPeriod = sp.smoothPeriod + 0.5;
-      DCPeriodInt = (int)DCPeriod;
+      /* A NaN period has no int value, and C leaves converting one undefined. */
+      if( DCPeriod >= 0.0 ) {
+         DCPeriodInt = (int)DCPeriod;
+      } else {
+         DCPeriodInt = 0;
+      }
       realPart = 0.0;
       imagPart = 0.0;
       /* idx is used to iterate for up to 50 of the last
@@ -119942,7 +121384,12 @@ public final class Core {
       sp.leadSine = Math.sin((sp.DCPhase + 45) * sp.deg2Rad);
       /* Compute Trendline */
       DCPeriod = sp.smoothPeriod + 0.5;
-      DCPeriodInt = (int)DCPeriod;
+      /* A NaN period has no int value, and C leaves converting one undefined. */
+      if( DCPeriod >= 0.0 ) {
+         DCPeriodInt = (int)DCPeriod;
+      } else {
+         DCPeriodInt = 0;
+      }
       /* Average the RAW price over the dominant cycle period.
        * Unlike the DC-phase loop above (which reads the smoothPrice
        * circular buffer), the iTrend average reads the raw price,
@@ -120395,7 +121842,12 @@ public final class Core {
          /* Compute Dominant Cycle Phase */
          prevDCPhase = DCPhase;
          DCPeriod = smoothPeriod + 0.5;
-         DCPeriodInt = (int)DCPeriod;
+         /* A NaN period has no int value, and C leaves converting one undefined. */
+         if( DCPeriod >= 0.0 ) {
+            DCPeriodInt = (int)DCPeriod;
+         } else {
+            DCPeriodInt = 0;
+         }
          realPart = 0.0;
          imagPart = 0.0;
          /* idx is used to iterate for up to 50 of the last
@@ -120438,7 +121890,12 @@ public final class Core {
          leadSine = Math.sin((DCPhase + 45) * deg2Rad);
          /* Compute Trendline */
          DCPeriod = smoothPeriod + 0.5;
-         DCPeriodInt = (int)DCPeriod;
+         /* A NaN period has no int value, and C leaves converting one undefined. */
+         if( DCPeriod >= 0.0 ) {
+            DCPeriodInt = (int)DCPeriod;
+         } else {
+            DCPeriodInt = 0;
+         }
          /* Average the RAW price over the dominant cycle period.
           * Unlike the DC-phase loop above (which reads the smoothPrice
           * circular buffer), the iTrend average reads the raw price,
@@ -221123,6 +222580,1367 @@ public final class Core {
  *  Initial  Name/description
  *  -------------------------------------------------------------------
  *  MF       Mario Fortier
+ *  KL       Kevin Lin (@kevinlincg)
+ *  CC       Claude Code (AI assistant)
+ *
+ * Change history:
+ *
+ *  MMDDYY BY     Description
+ *  -------------------------------------------------------------------
+ *  100626 KL,CC  Initial version (#476).
+ *  101126 MF,CC  The EMA betas stay as the divide wrote them above a
+ *                period of 2. The fixpoint test waits for a seeded
+ *                average.
+ */
+
+   /**
+    * Number of leading input bars {@link Core#wavetrend} consumes before it can
+    * produce its first value.
+    * <p>Equivalently, the index of the first bar with a value when the whole
+    * series is requested. Feed at least {@code lookback + 1} bars to get any
+    * output.
+    *
+    * @param optInChannelPeriod Period of the price channel, used by both the
+    *        average and the deviation (default 10; range 2..100000;
+    *        {@code Integer.MIN_VALUE} selects the default).
+    * @param optInAveragePeriod Smoothing for the oscillator line (default 21;
+    *        range 1..100000; {@code Integer.MIN_VALUE} selects the default).
+    * @param optInSignalPeriod Period of the simple average making the signal
+    *        line (default 4; range 1..100000; {@code Integer.MIN_VALUE} selects the
+    *        default).
+    * @return The lookback, or {@code -1} if a parameter is out of range.
+    */
+   public int wavetrendLookback( int optInChannelPeriod, int optInAveragePeriod, int optInSignalPeriod )
+   {
+      if( optInChannelPeriod == Integer.MIN_VALUE ) {
+         optInChannelPeriod = 10;
+      } else if( optInChannelPeriod < 2 || optInChannelPeriod > 100000 ) {
+         return -1;
+      }
+      if( optInAveragePeriod == Integer.MIN_VALUE ) {
+         optInAveragePeriod = 21;
+      } else if( optInAveragePeriod < 1 || optInAveragePeriod > 100000 ) {
+         return -1;
+      }
+      if( optInSignalPeriod == Integer.MIN_VALUE ) {
+         optInSignalPeriod = 4;
+      } else if( optInSignalPeriod < 1 || optInSignalPeriod > 100000 ) {
+         return -1;
+      }
+      /* Keep every term a callee's own lookback: that is how WAVETREND inherits
+       * TA_FUNC_UNST_EMA, once per exponential stage.
+       */
+      return emaLookback(optInChannelPeriod) + emaLookback(optInChannelPeriod) + emaLookback(optInAveragePeriod) + smaLookback(optInSignalPeriod) ;
+
+   }
+   /**
+    * How many bars ahead (positive) or behind (negative) of the bar that
+    * computed it a chart draws one output of {@link Core#wavetrend}.
+    * <p>Every output of this function is drawn at its own bar, so the answer is
+    * 0.
+    *
+    * @param optInChannelPeriod Period of the price channel, used by both the
+    *        average and the deviation (default 10; range 2..100000;
+    *        {@code Integer.MIN_VALUE} selects the default).
+    * @param optInAveragePeriod Smoothing for the oscillator line (default 21;
+    *        range 1..100000; {@code Integer.MIN_VALUE} selects the default).
+    * @param optInSignalPeriod Period of the simple average making the signal
+    *        line (default 4; range 1..100000; {@code Integer.MIN_VALUE} selects the
+    *        default).
+    * @param outputIdx Position of the output in the batch signature, from 0.
+    * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+    *        out of range or the index names no output.
+    */
+   public int wavetrendDisplayShift( int optInChannelPeriod, int optInAveragePeriod, int optInSignalPeriod, int outputIdx )
+   {
+      if( wavetrendLookback( optInChannelPeriod, optInAveragePeriod, optInSignalPeriod ) < 0 ) {
+         return Integer.MIN_VALUE;
+      }
+      if( outputIdx < 0 || outputIdx >= 2 ) {
+         return Integer.MIN_VALUE;
+      }
+      return 0;
+   }
+   RetCode wavetrendImpl( int startIdx,
+                          int endIdx,
+                          double inHigh[],
+                          double inLow[],
+                          double inClose[],
+                          int optInChannelPeriod,
+                          int optInAveragePeriod,
+                          int optInSignalPeriod,
+                          MInteger outBegIdx,
+                          MInteger outNBElement,
+                          double outWT1[],
+                          double outWT2[] )
+   {
+      double k1 = 0;
+      double beta1 = 0;
+      double k2 = 0;
+      double beta2 = 0;
+      double ap = 0;
+      double esa = 0;
+      double dev = 0;
+      double d = 0;
+      double ci = 0;
+      double wt1 = 0;
+      double prevAp = 0;
+      double prevEsa = 0;
+      double num = 0;
+      double scaledDev = 0;
+      double sumEsa = 0;
+      double sumD = 0;
+      double sumCi = 0;
+      double sumSignal = 0;
+      int lookbackTotal = 0;
+      int lookbackChannel = 0;
+      int lookbackAverage = 0;
+      int today = 0;
+      int outIdx = 0;
+      int nAp = 0;
+      int nDev = 0;
+      int nCi = 0;
+      double[] wtBuffer;
+      int wtBuffer_Idx = 0;
+      int maxIdx_wtBuffer = (32)-1;
+      if( (startIdx < 0) || (startIdx > INDEX_MAX) ) {
+         return RetCode.OUT_OF_RANGE_START_INDEX ;
+      }
+      if( (endIdx < 0) || (endIdx > INDEX_MAX) || (endIdx < startIdx)) {
+         return RetCode.OUT_OF_RANGE_END_INDEX ;
+      }
+      if( optInChannelPeriod == Integer.MIN_VALUE ) {
+         optInChannelPeriod = 10;
+      } else if( optInChannelPeriod < 2 || optInChannelPeriod > 100000 ) {
+         return RetCode.BAD_PARAM;
+      }
+      if( optInAveragePeriod == Integer.MIN_VALUE ) {
+         optInAveragePeriod = 21;
+      } else if( optInAveragePeriod < 1 || optInAveragePeriod > 100000 ) {
+         return RetCode.BAD_PARAM;
+      }
+      if( optInSignalPeriod == Integer.MIN_VALUE ) {
+         optInSignalPeriod = 4;
+      } else if( optInSignalPeriod < 1 || optInSignalPeriod > 100000 ) {
+         return RetCode.BAD_PARAM;
+      }
+      if( outWT1 == outWT2 ) {
+         return RetCode.BAD_PARAM ;
+      }
+      /* LazyBear's WaveTrend Oscillator (TradingView, 2014), lines 14 to 21: the
+       * typical price's distance from its own exponential average, normalised by
+       * an exponential average of that distance's absolute value and by Lambert's
+       * CCI constant, then smoothed.
+       *
+       *    ap  = (H + L + C)/3
+       *    esa = EMA(ap, n1)
+       *    d   = EMA(|ap - esa|, n1)
+       *    ci  = (ap - esa) / (0.015 * d)
+       *    WT1 = EMA(ci, n2)        WT2 = SMA(WT1, n3)
+       *
+       * The middle stage is an exponential CCI, not TA_CCI: cci.c averages with
+       * an SMA and takes the mean deviation around that window's own SMA, where
+       * this uses two exponential averages.
+       *
+       * Bit-identical to the composed chain on moving data: each stage seeds as
+       * ema.c and sma.c do, and each stage boundary is the callee's LOOKBACK,
+       * never (period-1), or an EMA unstable period breaks it.
+       */
+      /* This ptr will point on a circular buffer of at least
+       * "optInSignalPeriod" element.
+       */
+      lookbackTotal = wavetrendLookback(optInChannelPeriod, optInAveragePeriod, optInSignalPeriod);
+      /* Move up the start index if there is not
+       * enough initial data.
+       */
+      if( startIdx < lookbackTotal ) {
+         startIdx = lookbackTotal;
+      }
+      /* Make sure there is still something to evaluate. */
+      if( startIdx > endIdx ) {
+         outBegIdx.value = 0;
+         outNBElement.value = 0;
+         return RetCode.SUCCESS ;
+      }
+      if( optInSignalPeriod < 1 ) return RetCode.INTERNAL_ERROR;
+      wtBuffer = new double[optInSignalPeriod];
+      maxIdx_wtBuffer = (optInSignalPeriod)-1;
+      wtBuffer_Idx = 0;
+      lookbackChannel = emaLookback(optInChannelPeriod);
+      lookbackAverage = emaLookback(optInAveragePeriod);
+      /* k and beta must sum to exactly 1.0, or a flat input drifts off its
+       * level. Each subtraction is exact only from an operand in [0.5,1): at a
+       * period of 2 or less that is k, above it beta. Above it beta stays as the
+       * divide wrote it: a register last written by a subtraction costs each FMA
+       * reading it one more cycle on Intel P-cores.
+       */
+      beta1 = (double)(optInChannelPeriod - 1) / (double)(optInChannelPeriod + 1);
+      k1 = 1.0 - beta1;
+      if( beta1 < 0.5 ) {
+         beta1 = 1.0 - k1;
+      }
+      beta2 = (double)(optInAveragePeriod - 1) / (double)(optInAveragePeriod + 1);
+      k2 = 1.0 - beta2;
+      if( beta2 < 0.5 ) {
+         beta2 = 1.0 - k2;
+      }
+      esa = 0.0;
+      d = 0.0;
+      ci = 0.0;
+      wt1 = 0.0;
+      sumEsa = 0.0;
+      sumD = 0.0;
+      sumCi = 0.0;
+      sumSignal = 0.0;
+      nAp = 0;
+      prevAp = 0.0;
+      prevEsa = 0.0;
+      today = startIdx - lookbackTotal;
+      /* Warm-up. Runs through startIdx inclusive: the last pass is the one that
+       * completes the signal window, so it leaves the first output in the state.
+       */
+      while( today <= startIdx ) {
+         ap = (inHigh[today] + inLow[today] + inClose[today]) / 3.0;
+         /* Stage 1: the exponential average of the typical price. */
+         if( nAp < optInChannelPeriod ) {
+            sumEsa = sumEsa + ap;
+            if( nAp == optInChannelPeriod - 1 ) {
+               esa = sumEsa / optInChannelPeriod;
+            }
+         } else {
+            esa = Math.fma(beta1, esa, k1 * ap);
+         }
+         /* Stage 2: the exponential average of the absolute distance, over what
+          * stage 1 publishes. The counter is compared before it is subtracted,
+          * never after: the Rust backend renders these as usize.
+          */
+         if( nAp >= lookbackChannel ) {
+            nDev = nAp - lookbackChannel;
+            /* GUARD 1, the fixpoint test. With a constant input the exponential
+             * step stops moving once k*|ap - esa| falls under half an ulp, and
+             * esa then FREEZES up to (n1+1)/4 ulps away from the price. That
+             * frozen residue is a real non-zero distance, so the naive form
+             * divides it by its own exponential average and walks to
+             * +/-1/0.015 = +/-66.67 -- an extreme reading produced by nothing
+             * but rounding. When the pair has not moved, the average has reached
+             * its fixpoint and the distance is exactly that residue, so the
+             * numerator is taken as zero. The test is exact, so it is
+             * independent of scale and period.
+             *
+             * Only once prevEsa is an average: on the bar that seeds esa it is
+             * still the 0.0 placeholder, which a seed of exactly 0.0 equals.
+             */
+            num = ap - esa;
+            if( nAp >= optInChannelPeriod && ap == prevAp && esa == prevEsa ) {
+               num = 0.0;
+            }
+            dev = Math.abs(num);
+            if( nDev < optInChannelPeriod ) {
+               sumD = sumD + dev;
+               if( nDev == optInChannelPeriod - 1 ) {
+                  d = sumD / optInChannelPeriod;
+               }
+            } else {
+               d = Math.fma(beta1, d, k1 * dev);
+            }
+            /* Stage 3: the oscillator, then its own smoothing. */
+            if( nDev >= lookbackChannel ) {
+               nCi = nDev - lookbackChannel;
+               /* GUARD 2, the exact divisor. Test the PRODUCT the division uses,
+                * not the deviation: 0.015*d underflows to zero while d is still
+                * non-zero (#395). A zero divisor is 0/0 -- no distance against no
+                * average distance -- so the oscillator reads its neutral 0.0
+                * (#112), as tsi.c does.
+                */
+               scaledDev = 0.015 * d;
+               if( scaledDev > 0.0 ) {
+                  ci = num / scaledDev;
+               } else {
+                  ci = 0.0;
+               }
+               if( nCi < optInAveragePeriod ) {
+                  sumCi = sumCi + ci;
+                  if( nCi == optInAveragePeriod - 1 ) {
+                     wt1 = sumCi / optInAveragePeriod;
+                  }
+               } else {
+                  wt1 = Math.fma(beta2, wt1, k2 * ci);
+               }
+               if( nCi >= lookbackAverage ) {
+                  wtBuffer[wtBuffer_Idx] = wt1;
+                  sumSignal = sumSignal + wt1;
+                  wtBuffer_Idx++;
+                  if( wtBuffer_Idx > maxIdx_wtBuffer ) { wtBuffer_Idx = 0; }
+               }
+            }
+         }
+         prevAp = ap;
+         prevEsa = esa;
+         nAp = nAp + 1;
+         today = today + 1;
+      }
+      /* The first output. The warm-up's last pass stored this bar's WT1 into the
+       * ring and added it to the running sum, so the average is ready here.
+       */
+      outWT1[0] = wt1;
+      outWT2[0] = sumSignal / (double)optInSignalPeriod;
+      outIdx = 1;
+      sumSignal = sumSignal - wtBuffer[wtBuffer_Idx];
+      /* Stable zone. One bar past the first output every stage is past its seed,
+       * at every reachable parameter triple: the shortest case, 2/1/1, arrives
+       * with the deviation average and the oscillator smoothing both one bar
+       * into their recursions. So nothing here branches on a counter, and the
+       * stores always run -- which is what keeps the managed backends' peek
+       * frames from carrying a seeded output local.
+       */
+      while( today <= endIdx ) {
+         ap = (inHigh[today] + inLow[today] + inClose[today]) / 3.0;
+         esa = Math.fma(beta1, esa, k1 * ap);
+         num = ap - esa;
+         if( ap == prevAp && esa == prevEsa ) {
+            num = 0.0;
+         }
+         dev = Math.abs(num);
+         d = Math.fma(beta1, d, k1 * dev);
+         scaledDev = 0.015 * d;
+         if( scaledDev > 0.0 ) {
+            ci = num / scaledDev;
+         } else {
+            ci = 0.0;
+         }
+         wt1 = Math.fma(beta2, wt1, k2 * ci);
+         wtBuffer[wtBuffer_Idx] = wt1;
+         sumSignal = sumSignal + wt1;
+         outWT1[outIdx] = wt1;
+         outWT2[outIdx] = sumSignal / (double)optInSignalPeriod;
+         outIdx = outIdx + 1;
+         wtBuffer_Idx++;
+         if( wtBuffer_Idx > maxIdx_wtBuffer ) { wtBuffer_Idx = 0; }
+         sumSignal = sumSignal - wtBuffer[wtBuffer_Idx];
+         prevAp = ap;
+         prevEsa = esa;
+         today = today + 1;
+      }
+      outNBElement.value = outIdx;
+      outBegIdx.value = startIdx;
+      return RetCode.SUCCESS ;
+   }
+   RetCode wavetrendImpl( int startIdx,
+                          int endIdx,
+                          float inHigh[],
+                          float inLow[],
+                          float inClose[],
+                          int optInChannelPeriod,
+                          int optInAveragePeriod,
+                          int optInSignalPeriod,
+                          MInteger outBegIdx,
+                          MInteger outNBElement,
+                          double outWT1[],
+                          double outWT2[] )
+   {
+      double k1 = 0;
+      double beta1 = 0;
+      double k2 = 0;
+      double beta2 = 0;
+      double ap = 0;
+      double esa = 0;
+      double dev = 0;
+      double d = 0;
+      double ci = 0;
+      double wt1 = 0;
+      double prevAp = 0;
+      double prevEsa = 0;
+      double num = 0;
+      double scaledDev = 0;
+      double sumEsa = 0;
+      double sumD = 0;
+      double sumCi = 0;
+      double sumSignal = 0;
+      int lookbackTotal = 0;
+      int lookbackChannel = 0;
+      int lookbackAverage = 0;
+      int today = 0;
+      int outIdx = 0;
+      int nAp = 0;
+      int nDev = 0;
+      int nCi = 0;
+      double[] wtBuffer;
+      int wtBuffer_Idx = 0;
+      int maxIdx_wtBuffer = (32)-1;
+      if( (startIdx < 0) || (startIdx > INDEX_MAX) ) {
+         return RetCode.OUT_OF_RANGE_START_INDEX ;
+      }
+      if( (endIdx < 0) || (endIdx > INDEX_MAX) || (endIdx < startIdx)) {
+         return RetCode.OUT_OF_RANGE_END_INDEX ;
+      }
+      if( optInChannelPeriod == Integer.MIN_VALUE ) {
+         optInChannelPeriod = 10;
+      } else if( optInChannelPeriod < 2 || optInChannelPeriod > 100000 ) {
+         return RetCode.BAD_PARAM;
+      }
+      if( optInAveragePeriod == Integer.MIN_VALUE ) {
+         optInAveragePeriod = 21;
+      } else if( optInAveragePeriod < 1 || optInAveragePeriod > 100000 ) {
+         return RetCode.BAD_PARAM;
+      }
+      if( optInSignalPeriod == Integer.MIN_VALUE ) {
+         optInSignalPeriod = 4;
+      } else if( optInSignalPeriod < 1 || optInSignalPeriod > 100000 ) {
+         return RetCode.BAD_PARAM;
+      }
+      if( outWT1 == outWT2 ) {
+         return RetCode.BAD_PARAM ;
+      }
+      lookbackTotal = wavetrendLookback(optInChannelPeriod, optInAveragePeriod, optInSignalPeriod);
+      if( startIdx < lookbackTotal ) {
+         startIdx = lookbackTotal;
+      }
+      if( startIdx > endIdx ) {
+         outBegIdx.value = 0;
+         outNBElement.value = 0;
+         return RetCode.SUCCESS ;
+      }
+      if( optInSignalPeriod < 1 ) return RetCode.INTERNAL_ERROR;
+      wtBuffer = new double[optInSignalPeriod];
+      maxIdx_wtBuffer = (optInSignalPeriod)-1;
+      wtBuffer_Idx = 0;
+      lookbackChannel = emaLookback(optInChannelPeriod);
+      lookbackAverage = emaLookback(optInAveragePeriod);
+      beta1 = (double)(optInChannelPeriod - 1) / (double)(optInChannelPeriod + 1);
+      k1 = 1.0 - beta1;
+      if( beta1 < 0.5 ) {
+         beta1 = 1.0 - k1;
+      }
+      beta2 = (double)(optInAveragePeriod - 1) / (double)(optInAveragePeriod + 1);
+      k2 = 1.0 - beta2;
+      if( beta2 < 0.5 ) {
+         beta2 = 1.0 - k2;
+      }
+      esa = 0.0;
+      d = 0.0;
+      ci = 0.0;
+      wt1 = 0.0;
+      sumEsa = 0.0;
+      sumD = 0.0;
+      sumCi = 0.0;
+      sumSignal = 0.0;
+      nAp = 0;
+      prevAp = 0.0;
+      prevEsa = 0.0;
+      today = startIdx - lookbackTotal;
+      while( today <= startIdx ) {
+         ap = ((double)inHigh[today] + (double)inLow[today] + (double)inClose[today]) / 3.0;
+         if( nAp < optInChannelPeriod ) {
+            sumEsa = sumEsa + ap;
+            if( nAp == optInChannelPeriod - 1 ) {
+               esa = sumEsa / optInChannelPeriod;
+            }
+         } else {
+            esa = Math.fma(beta1, esa, k1 * ap);
+         }
+         if( nAp >= lookbackChannel ) {
+            nDev = nAp - lookbackChannel;
+            num = ap - esa;
+            if( nAp >= optInChannelPeriod && ap == prevAp && esa == prevEsa ) {
+               num = 0.0;
+            }
+            dev = Math.abs(num);
+            if( nDev < optInChannelPeriod ) {
+               sumD = sumD + dev;
+               if( nDev == optInChannelPeriod - 1 ) {
+                  d = sumD / optInChannelPeriod;
+               }
+            } else {
+               d = Math.fma(beta1, d, k1 * dev);
+            }
+            if( nDev >= lookbackChannel ) {
+               nCi = nDev - lookbackChannel;
+               scaledDev = 0.015 * d;
+               if( scaledDev > 0.0 ) {
+                  ci = num / scaledDev;
+               } else {
+                  ci = 0.0;
+               }
+               if( nCi < optInAveragePeriod ) {
+                  sumCi = sumCi + ci;
+                  if( nCi == optInAveragePeriod - 1 ) {
+                     wt1 = sumCi / optInAveragePeriod;
+                  }
+               } else {
+                  wt1 = Math.fma(beta2, wt1, k2 * ci);
+               }
+               if( nCi >= lookbackAverage ) {
+                  wtBuffer[wtBuffer_Idx] = wt1;
+                  sumSignal = sumSignal + wt1;
+                  wtBuffer_Idx++;
+                  if( wtBuffer_Idx > maxIdx_wtBuffer ) { wtBuffer_Idx = 0; }
+               }
+            }
+         }
+         prevAp = ap;
+         prevEsa = esa;
+         nAp = nAp + 1;
+         today = today + 1;
+      }
+      outWT1[0] = wt1;
+      outWT2[0] = sumSignal / (double)optInSignalPeriod;
+      outIdx = 1;
+      sumSignal = sumSignal - wtBuffer[wtBuffer_Idx];
+      while( today <= endIdx ) {
+         ap = ((double)inHigh[today] + (double)inLow[today] + (double)inClose[today]) / 3.0;
+         esa = Math.fma(beta1, esa, k1 * ap);
+         num = ap - esa;
+         if( ap == prevAp && esa == prevEsa ) {
+            num = 0.0;
+         }
+         dev = Math.abs(num);
+         d = Math.fma(beta1, d, k1 * dev);
+         scaledDev = 0.015 * d;
+         if( scaledDev > 0.0 ) {
+            ci = num / scaledDev;
+         } else {
+            ci = 0.0;
+         }
+         wt1 = Math.fma(beta2, wt1, k2 * ci);
+         wtBuffer[wtBuffer_Idx] = wt1;
+         sumSignal = sumSignal + wt1;
+         outWT1[outIdx] = wt1;
+         outWT2[outIdx] = sumSignal / (double)optInSignalPeriod;
+         outIdx = outIdx + 1;
+         wtBuffer_Idx++;
+         if( wtBuffer_Idx > maxIdx_wtBuffer ) { wtBuffer_Idx = 0; }
+         sumSignal = sumSignal - wtBuffer[wtBuffer_Idx];
+         prevAp = ap;
+         prevEsa = esa;
+         today = today + 1;
+      }
+      outNBElement.value = outIdx;
+      outBegIdx.value = startIdx;
+      return RetCode.SUCCESS ;
+   }
+   /**
+    * WaveTrend Oscillator: how far the typical price sits from its own
+    * exponential average, divided by an exponential average of that distance
+    * and by Lambert's CCI constant, then smoothed. The reading is the plain
+    * stochastic's complaint answered a different way — rather than bounding the
+    * oscillator by construction, it scales it by how far price has recently
+    * been travelling, so the same numeric level means the same thing in a quiet
+    * market and a fast one. The oscillator line and its short simple average
+    * cross; the crossings that matter are the ones beyond the extremes, which
+    * the author draws at ±53 and ±60.
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/wavetrend">ta-lib.org/functions/wavetrend</a>.
+    * <p><b>Notes</b>
+    * <ul>
+    * <li>The middle stage is an exponential CCI, not {@code TA_CCI}: CCI averages with a simple moving average and takes the mean deviation around that window's own average, where this uses two exponential averages.</li>
+    * <li>On a market that has stopped moving, the exponential average stops moving too — once its step falls under half an ulp it freezes, a few ulps away from the price. That frozen gap is a real non-zero distance, so dividing by its own average walks the oscillator to ±66.67, an extreme reading produced by nothing but rounding. This answers 0 instead, by taking the distance as zero whenever the price and its average both repeat. Implementations without that test drift to the extreme on flat data, at a bar that depends on their arithmetic.</li>
+    * <li>A zero divisor is tested on the scaled deviation, the quantity the division actually uses, and answers the neutral 0 rather than dividing.</li>
+    * <li>Each exponential average is seeded with a simple average of its own first inputs, the same seeding TA-Lib's EMA uses, and each seeds on what the stage before it publishes. {@code TA_SetUnstablePeriod(TA_FUNC_UNST_EMA, ...)} discards more of that warm-up, and it counts three times because there are three exponential stages.</li>
+    * <li>The difference the author also plots is {@code TA_SUB(outWT1, outWT2)}.</li>
+    * </ul>
+    * <p>Values are written only where the indicator is defined. The returned
+    * {@link OutRange} says where they start and how many there are, and the
+    * library never pads with NaN. A valid range that ends before
+    * {@link Core#wavetrendLookback} is a <b>success with no values</b>
+    * ({@code count() == 0}), not an error.
+    *
+    * @param startIdx First bar of the requested range (inclusive).
+    * @param endIdx Last bar of the requested range (inclusive).
+    * @param inHigh High price series.
+    * @param inLow Low price series.
+    * @param inClose Close price series.
+    * @param optInChannelPeriod Period of the price channel, used by both the
+    *        average and the deviation (default 10; range 2..100000;
+    *        {@code Integer.MIN_VALUE} selects the default).
+    * @param optInAveragePeriod Smoothing for the oscillator line (default 21;
+    *        range 1..100000; {@code Integer.MIN_VALUE} selects the default).
+    * @param optInSignalPeriod Period of the simple average making the signal
+    *        line (default 4; range 1..100000; {@code Integer.MIN_VALUE} selects the
+    *        default).
+    * @param outWT1 WaveTrend oscillator line. Must hold at least
+    *        {@code endIdx - max(startIdx, wavetrendLookback(...)) + 1} values, and
+    *        never be empty: an empty array is an absent output.
+    * @param outWT2 Simple average of the oscillator line. Must hold at least
+    *        {@code endIdx - max(startIdx, wavetrendLookback(...)) + 1} values, and
+    *        never be empty: an empty array is an absent output.
+    * @return The range written: {@code begIdx} is the first bar with a value,
+    *        {@code count} how many were written.
+    * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
+    *        negative or above {@link Core#INDEX_MAX}, or {@code endIdx < startIdx}.
+    * @throws IllegalArgumentException if an optional parameter is outside its
+    *        documented range, two outputs share one array, or an array is absent or
+    *        too short for the range requested — any input this function
+    *        <i>declares</i> that does not reach {@code endIdx}, or an output that
+    *        cannot hold the values produced. Declared, not read: a few candlestick
+    *        patterns take an OHLC series they never index, and it is required all the
+    *        same. An output this function documents as declinable is the one
+    *        exception: {@code null} is how you decline it. Checked before anything is
+    *        written, so a rejected call leaves every buffer untouched.
+    *
+    * @see Core#cci
+    * @see Core#smi
+    * @see Core#stochrsi
+    * @see Core#tsi
+    */
+   public OutRange wavetrend( int startIdx,
+                              int endIdx,
+                              double inHigh[],
+                              double inLow[],
+                              double inClose[],
+                              int optInChannelPeriod,
+                              int optInAveragePeriod,
+                              int optInSignalPeriod,
+                              double outWT1[],
+                              double outWT2[] )
+   {
+      requireIndexRange("WAVETREND", startIdx, endIdx);
+      int guardStart = clampedStart("WAVETREND", startIdx, wavetrendLookback(optInChannelPeriod, optInAveragePeriod, optInSignalPeriod));
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      requireLength("WAVETREND", "inHigh", inHigh, guardInLen);
+      requireLength("WAVETREND", "inLow", inLow, guardInLen);
+      requireLength("WAVETREND", "inClose", inClose, guardInLen);
+      requireLength("WAVETREND", "outWT1", outWT1, guardOutLen);
+      requireLength("WAVETREND", "outWT2", outWT2, guardOutLen);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      RetCode retCode = wavetrendImpl(startIdx, endIdx, inHigh, inLow, inClose, optInChannelPeriod, optInAveragePeriod, optInSignalPeriod, outBegIdx, outNBElement, outWT1, outWT2);
+      if( retCode != RetCode.SUCCESS ) {
+         throw failure("WAVETREND", retCode);
+      }
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   /**
+    * WaveTrend Oscillator: how far the typical price sits from its own
+    * exponential average, divided by an exponential average of that distance
+    * and by Lambert's CCI constant, then smoothed. The reading is the plain
+    * stochastic's complaint answered a different way — rather than bounding the
+    * oscillator by construction, it scales it by how far price has recently
+    * been travelling, so the same numeric level means the same thing in a quiet
+    * market and a fast one. The oscillator line and its short simple average
+    * cross; the crossings that matter are the ones beyond the extremes, which
+    * the author draws at ±53 and ±60.
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/wavetrend">ta-lib.org/functions/wavetrend</a>.
+    * <p><b>Notes</b>
+    * <ul>
+    * <li>The middle stage is an exponential CCI, not {@code TA_CCI}: CCI averages with a simple moving average and takes the mean deviation around that window's own average, where this uses two exponential averages.</li>
+    * <li>On a market that has stopped moving, the exponential average stops moving too — once its step falls under half an ulp it freezes, a few ulps away from the price. That frozen gap is a real non-zero distance, so dividing by its own average walks the oscillator to ±66.67, an extreme reading produced by nothing but rounding. This answers 0 instead, by taking the distance as zero whenever the price and its average both repeat. Implementations without that test drift to the extreme on flat data, at a bar that depends on their arithmetic.</li>
+    * <li>A zero divisor is tested on the scaled deviation, the quantity the division actually uses, and answers the neutral 0 rather than dividing.</li>
+    * <li>Each exponential average is seeded with a simple average of its own first inputs, the same seeding TA-Lib's EMA uses, and each seeds on what the stage before it publishes. {@code TA_SetUnstablePeriod(TA_FUNC_UNST_EMA, ...)} discards more of that warm-up, and it counts three times because there are three exponential stages.</li>
+    * <li>The difference the author also plots is {@code TA_SUB(outWT1, outWT2)}.</li>
+    * </ul>
+    * <p>This is the {@code float[]} overload. The arithmetic is performed in
+    * {@code double} before being written to the {@code double[]} output, so a
+    * result beyond {@code float} range is still representable.
+    * <p>Values are written only where the indicator is defined. The returned
+    * {@link OutRange} says where they start and how many there are, and the
+    * library never pads with NaN. A valid range that ends before
+    * {@link Core#wavetrendLookback} is a <b>success with no values</b>
+    * ({@code count() == 0}), not an error.
+    *
+    * @param startIdx First bar of the requested range (inclusive).
+    * @param endIdx Last bar of the requested range (inclusive).
+    * @param inHigh High price series.
+    * @param inLow Low price series.
+    * @param inClose Close price series.
+    * @param optInChannelPeriod Period of the price channel, used by both the
+    *        average and the deviation (default 10; range 2..100000;
+    *        {@code Integer.MIN_VALUE} selects the default).
+    * @param optInAveragePeriod Smoothing for the oscillator line (default 21;
+    *        range 1..100000; {@code Integer.MIN_VALUE} selects the default).
+    * @param optInSignalPeriod Period of the simple average making the signal
+    *        line (default 4; range 1..100000; {@code Integer.MIN_VALUE} selects the
+    *        default).
+    * @param outWT1 WaveTrend oscillator line. Must hold at least
+    *        {@code endIdx - max(startIdx, wavetrendLookback(...)) + 1} values, and
+    *        never be empty: an empty array is an absent output.
+    * @param outWT2 Simple average of the oscillator line. Must hold at least
+    *        {@code endIdx - max(startIdx, wavetrendLookback(...)) + 1} values, and
+    *        never be empty: an empty array is an absent output.
+    * @return The range written: {@code begIdx} is the first bar with a value,
+    *        {@code count} how many were written.
+    * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
+    *        negative or above {@link Core#INDEX_MAX}, or {@code endIdx < startIdx}.
+    * @throws IllegalArgumentException if an optional parameter is outside its
+    *        documented range, two outputs share one array, or an array is absent or
+    *        too short for the range requested — any input this function
+    *        <i>declares</i> that does not reach {@code endIdx}, or an output that
+    *        cannot hold the values produced. Declared, not read: a few candlestick
+    *        patterns take an OHLC series they never index, and it is required all the
+    *        same. An output this function documents as declinable is the one
+    *        exception: {@code null} is how you decline it. Checked before anything is
+    *        written, so a rejected call leaves every buffer untouched.
+    *
+    * @see Core#cci
+    * @see Core#smi
+    * @see Core#stochrsi
+    * @see Core#tsi
+    */
+   public OutRange wavetrend( int startIdx,
+                              int endIdx,
+                              float inHigh[],
+                              float inLow[],
+                              float inClose[],
+                              int optInChannelPeriod,
+                              int optInAveragePeriod,
+                              int optInSignalPeriod,
+                              double outWT1[],
+                              double outWT2[] )
+   {
+      requireIndexRange("WAVETREND", startIdx, endIdx);
+      int guardStart = clampedStart("WAVETREND", startIdx, wavetrendLookback(optInChannelPeriod, optInAveragePeriod, optInSignalPeriod));
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      requireLength("WAVETREND", "inHigh", inHigh, guardInLen);
+      requireLength("WAVETREND", "inLow", inLow, guardInLen);
+      requireLength("WAVETREND", "inClose", inClose, guardInLen);
+      requireLength("WAVETREND", "outWT1", outWT1, guardOutLen);
+      requireLength("WAVETREND", "outWT2", outWT2, guardOutLen);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      RetCode retCode = wavetrendImpl(startIdx, endIdx, inHigh, inLow, inClose, optInChannelPeriod, optInAveragePeriod, optInSignalPeriod, outBegIdx, outNBElement, outWT1, outWT2);
+      if( retCode != RetCode.SUCCESS ) {
+         throw failure("WAVETREND", retCode);
+      }
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+/**** Streaming API *****/
+
+   /**
+    * A live WAVETREND stream (unrelated to {@code java.util.stream}): one value per
+    * closed bar, bit-identical to {@link Core#wavetrend} over the same series.
+    * Open with {@link Core#wavetrendOpen}; there is no close — the handle is
+    * ordinary heap state, unreferenced handles are simply garbage-collected.
+    * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
+    * {@code value} and {@code clone} must not race with an {@code update} on
+    * the same handle. With no concurrent {@code update}, {@code peek}/
+    * {@code value}/{@code clone} never write the stream and may be called
+    * concurrently after safe publication. Independent streams (a
+    * {@code clone()} result included) are fully independent.
+    * <p>Not serializable by design: to checkpoint, retain the history and
+    * re-open — the result is bit-identical by contract.
+    */
+   public static final class WavetrendStream {
+      private Core core;
+      private int optInChannelPeriod;
+      private int optInAveragePeriod;
+      private int optInSignalPeriod;
+      private double k1;
+      private double beta1;
+      private double k2;
+      private double beta2;
+      private double esa;
+      private double d;
+      private double wt1;
+      private double prevAp;
+      private double prevEsa;
+      private double sumSignal;
+      private int wtBuffer_Idx;
+      private int maxIdx_wtBuffer;
+      private int cbSize_wtBuffer;
+      private double[] cb_wtBuffer;
+      private double cur_outWT1;
+      private double cur_outWT2;
+      private int outRangeBegIdx;
+      private int outRangeCount;
+
+      private WavetrendStream( Core core ) { this.core = core; }
+
+      /**
+       * The bars this stream has an output for, in the input series'
+       * coordinates: {@code [begIdx, begIdx + count)}.
+       * <p>It is what {@link Core#wavetrend} reports over the same bars: the
+       * opener sets it to {@code (lookback, historyLen - lookback)}, every
+       * accepted {@code update} adds one to the count — a rejected one
+       * changes nothing, and neither does {@code peek} — and
+       * {@code clone()} carries it verbatim. A plain
+       * {@code open} hands back only the last value, a subset of this range,
+       * because the caller chose not to take the fill.
+       * <p>The last bar it can reach is {@link Core#INDEX_MAX}; past that
+       * {@code update} and {@code advance} throw
+       * {@link IndexOutOfBoundsException}.
+       */
+      public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
+
+      /**
+       * Count one bar this stream was not fed: {@link #outRange()} advances
+       * by one and nothing else moves — {@link #value(WavetrendOut)} keeps answering the previous
+       * output, which is this bar's output too.
+       * <p>For a bar the caller leaves out: one an {@code update} rejected
+       * and that will not be re-fed, or a session with no print. Without it
+       * two handles on one feed drift a bar apart when only one of them skips.
+       * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+       * has reached bar {@link Core#INDEX_MAX}, the last one the batch tier
+       * can address and the last this handle will count. {@code update}
+       * throws the same there.
+       */
+      public void advance() {
+         if( this.outRangeBegIdx + this.outRangeCount > INDEX_MAX )
+            throw failure("WAVETREND advance", RetCode.OUT_OF_RANGE_END_INDEX);
+         this.outRangeCount++;
+      }
+
+      private WavetrendStream( WavetrendStream other ) {
+         this.core = other.core;
+         this.optInChannelPeriod = other.optInChannelPeriod;
+         this.optInAveragePeriod = other.optInAveragePeriod;
+         this.optInSignalPeriod = other.optInSignalPeriod;
+         this.k1 = other.k1;
+         this.beta1 = other.beta1;
+         this.k2 = other.k2;
+         this.beta2 = other.beta2;
+         this.esa = other.esa;
+         this.d = other.d;
+         this.wt1 = other.wt1;
+         this.prevAp = other.prevAp;
+         this.prevEsa = other.prevEsa;
+         this.sumSignal = other.sumSignal;
+         this.wtBuffer_Idx = other.wtBuffer_Idx;
+         this.maxIdx_wtBuffer = other.maxIdx_wtBuffer;
+         this.cbSize_wtBuffer = other.cbSize_wtBuffer;
+         this.cb_wtBuffer = other.cb_wtBuffer.clone();
+         this.cur_outWT1 = other.cur_outWT1;
+         this.cur_outWT2 = other.cur_outWT2;
+         this.outRangeBegIdx = other.outRangeBegIdx;
+         this.outRangeCount = other.outRangeCount;
+      }
+
+      /**
+       * Commit one closed bar, writing the new current values into the {@code out} the CALLER owns.
+       * <p>Throws {@link IllegalArgumentException} if any bar value is not
+       * finite (NaN or an infinity). That check runs before anything is
+       * written, so nothing moves — {@link #outRange()} included — and
+       * {@link #value(WavetrendOut)} still answers the previous value. Re-feed the bar when a
+       * corrected value arrives, or call {@link #advance()} to count it and
+       * carry on; two handles on one feed drift a bar apart if neither
+       * happens.
+       * This is the one place the streaming tier is stricter than
+       * the batch API, which computes on whatever it is given: a handle
+       * retains its state, so a single non-finite bar would poison every
+       * later value it produces.
+       * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+       * has reached bar {@link Core#INDEX_MAX}, which no re-feed clears: the
+       * handle has run out of index domain and only a shorter history can
+       * start a new one.
+       */
+      public void update( double inHigh, double inLow, double inClose, WavetrendOut out ) {
+         if( this.outRangeBegIdx + this.outRangeCount > INDEX_MAX )
+            throw failure("WAVETREND update", RetCode.OUT_OF_RANGE_END_INDEX);
+         requireArgument("WAVETREND update", "out", out);
+         if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
+            throw nonFiniteBar("WAVETREND update", !Double.isFinite(inHigh) ? "inHigh" : !Double.isFinite(inLow) ? "inLow" : "inClose");
+         core.wavetrendStepImpl(this, inHigh, inLow, inClose);
+         this.outRangeCount++;
+         out.wT1 = this.cur_outWT1;
+         out.wT2 = this.cur_outWT2;
+      }
+
+      /**
+       * Evaluate a forming bar without committing — bit-identical to what the
+       * next {@code update} with the same bar would write — the same
+       * transition, with every store it would make carried in a local instead.
+       * Never writes this handle, so peeks may run concurrently with each other.
+       * <p>It counts no bar, so it keeps answering past the
+       * {@link Core#INDEX_MAX} ceiling {@code update} stops at.
+       */
+      public void peek( double inHigh, double inLow, double inClose, WavetrendOut out ) {
+         requireArgument("WAVETREND peek", "out", out);
+         if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
+            throw nonFiniteBar("WAVETREND peek", !Double.isFinite(inHigh) ? "inHigh" : !Double.isFinite(inLow) ? "inLow" : "inClose");
+         WavetrendStream sp = this;
+         double ap = 0.0;
+         double dev = 0.0;
+         double ci = 0.0;
+         double num = 0.0;
+         double scaledDev = 0.0;
+         double cur_outWT1 = 0.0;
+         double cur_outWT2 = 0.0;
+         double d = sp.d;
+         double esa = sp.esa;
+         double sumSignal = sp.sumSignal;
+         double wt1 = sp.wt1;
+         ap = (inHigh + inLow + inClose) / 3.0;
+         esa = Math.fma(sp.beta1, esa, sp.k1 * ap);
+         num = ap - esa;
+         if( ap == sp.prevAp && esa == sp.prevEsa ) {
+            num = 0.0;
+         }
+         dev = Math.abs(num);
+         d = Math.fma(sp.beta1, d, sp.k1 * dev);
+         scaledDev = 0.015 * d;
+         if( scaledDev > 0.0 ) {
+            ci = num / scaledDev;
+         } else {
+            ci = 0.0;
+         }
+         wt1 = Math.fma(sp.beta2, wt1, sp.k2 * ci);
+         sumSignal = sumSignal + wt1;
+         cur_outWT1 = wt1;
+         cur_outWT2 = sumSignal / (double)sp.optInSignalPeriod;
+         out.wT1 = cur_outWT1;
+         out.wT2 = cur_outWT2;
+      }
+
+      /**
+       * The value at the last bar this stream counted — the bar
+       * {@link #outRange()} ends on. The last history bar right after open,
+       * then whatever the latest accepted {@code update} wrote.
+       * A pure field read; {@code peek} does not change it. Overwrites {@code out}.
+       */
+      public void value( WavetrendOut out ) {
+         requireArgument("WAVETREND value", "out", out);
+         out.wT1 = this.cur_outWT1;
+         out.wT2 = this.cur_outWT2;
+      }
+
+      /**
+       * An independent fork of this stream: both evolve separately from here
+       * on. Buffers are copied and sub-streams cloned recursively; the
+       * {@link Core} reference is shared, since a {@code Core} is immutable
+       * for a stream's lifetime.
+       *
+       * <p>Not the {@code Cloneable} protocol: this calls a copy constructor,
+       * never {@code super.clone()}, so it throws nothing.
+       *
+       * @return an independent stream at the same bar
+       */
+      @Override
+      public WavetrendStream clone() {
+         return new WavetrendStream(this);
+      }
+   }
+
+   /**
+    * The outputs of one WAVETREND bar, written by the stream into an object the
+    * CALLER owns. Allocate one and reuse it: {@code update}, {@code peek}
+    * and {@code value} overwrite its fields, so the sink itself costs
+    * nothing per bar.
+    *
+    * <p><b>Its contents are only valid until the next call that writes it.</b>
+    * It is a mutable buffer, not a reading: a reference kept past that call,
+    * or one put in a collection, sees the value change underneath it. Copy the
+    * fields out if the reading has to outlive the call.
+    *
+    * <p>Deliberately no {@code equals} or {@code hashCode}: a mutable type
+    * with value equality breaks the {@code HashMap}/{@code HashSet}
+    * invariant the moment a reused instance becomes a key. Compare the fields.
+    */
+   public static final class WavetrendOut {
+      /** WaveTrend oscillator line. */
+      public double wT1;
+      /** Simple average of the oscillator line. */
+      public double wT2;
+   }
+   private void wavetrendStepImpl( WavetrendStream sp, double inHigh, double inLow, double inClose )
+   {
+      double ap = 0.0;
+      double dev = 0.0;
+      double ci = 0.0;
+      double num = 0.0;
+      double scaledDev = 0.0;
+      ap = (inHigh + inLow + inClose) / 3.0;
+      sp.esa = Math.fma(sp.beta1, sp.esa, sp.k1 * ap);
+      num = ap - sp.esa;
+      if( ap == sp.prevAp && sp.esa == sp.prevEsa ) {
+         num = 0.0;
+      }
+      dev = Math.abs(num);
+      sp.d = Math.fma(sp.beta1, sp.d, sp.k1 * dev);
+      scaledDev = 0.015 * sp.d;
+      if( scaledDev > 0.0 ) {
+         ci = num / scaledDev;
+      } else {
+         ci = 0.0;
+      }
+      sp.wt1 = Math.fma(sp.beta2, sp.wt1, sp.k2 * ci);
+      sp.cb_wtBuffer[sp.wtBuffer_Idx] = sp.wt1;
+      sp.sumSignal = sp.sumSignal + sp.wt1;
+      sp.cur_outWT1 = sp.wt1;
+      sp.cur_outWT2 = sp.sumSignal / (double)sp.optInSignalPeriod;
+      sp.wtBuffer_Idx = sp.wtBuffer_Idx + 1;
+      if( sp.wtBuffer_Idx > sp.maxIdx_wtBuffer ) {
+         sp.wtBuffer_Idx = 0;
+      }
+      sp.sumSignal = sp.sumSignal - sp.cb_wtBuffer[sp.wtBuffer_Idx];
+      sp.prevAp = ap;
+      sp.prevEsa = sp.esa;
+   }
+   private RetCode wavetrendOpenImpl( WavetrendStream sp, double inHigh[], double inLow[], double inClose[], int startIdx, int optInChannelPeriod, int optInAveragePeriod, int optInSignalPeriod, MInteger outBegIdx, MInteger outNBElement, double outWT1[], double outWT2[], int outStride )
+   {
+      double k1 = 0;
+      double beta1 = 0;
+      double k2 = 0;
+      double beta2 = 0;
+      double ap = 0;
+      double esa = 0;
+      double dev = 0;
+      double d = 0;
+      double ci = 0;
+      double wt1 = 0;
+      double prevAp = 0;
+      double prevEsa = 0;
+      double num = 0;
+      double scaledDev = 0;
+      double sumEsa = 0;
+      double sumD = 0;
+      double sumCi = 0;
+      double sumSignal = 0;
+      int lookbackTotal = 0;
+      int lookbackChannel = 0;
+      int lookbackAverage = 0;
+      int today = 0;
+      int outIdx = 0;
+      int nAp = 0;
+      int nDev = 0;
+      int nCi = 0;
+      double[] wtBuffer;
+      int wtBuffer_Idx = 0;
+      int maxIdx_wtBuffer = (32)-1;
+      int historyLen = inHigh.length;
+      int endIdx = historyLen - 1;
+      if( historyLen < 1 ) {
+         return RetCode.OUT_OF_RANGE_START_INDEX;
+      }
+      if( historyLen > INDEX_MAX + 1 ) {
+         return RetCode.OUT_OF_RANGE_END_INDEX;
+      }
+      if( inLow.length != inHigh.length || inClose.length != inHigh.length ) {
+         return RetCode.BAD_PARAM;
+      }
+      if( optInChannelPeriod == Integer.MIN_VALUE ) {
+         optInChannelPeriod = 10;
+      } else if( optInChannelPeriod < 2 || optInChannelPeriod > 100000 ) {
+         return RetCode.BAD_PARAM;
+      }
+      if( optInAveragePeriod == Integer.MIN_VALUE ) {
+         optInAveragePeriod = 21;
+      } else if( optInAveragePeriod < 1 || optInAveragePeriod > 100000 ) {
+         return RetCode.BAD_PARAM;
+      }
+      if( optInSignalPeriod == Integer.MIN_VALUE ) {
+         optInSignalPeriod = 4;
+      } else if( optInSignalPeriod < 1 || optInSignalPeriod > 100000 ) {
+         return RetCode.BAD_PARAM;
+      }
+      if( startIdx > endIdx ) {
+         outBegIdx.value = 0;
+         outNBElement.value = 0;
+         return RetCode.INSUFFICIENT_HISTORY;
+      }
+      /* LazyBear's WaveTrend Oscillator (TradingView, 2014), lines 14 to 21: the
+       * typical price's distance from its own exponential average, normalised by
+       * an exponential average of that distance's absolute value and by Lambert's
+       * CCI constant, then smoothed.
+       *
+       *    ap  = (H + L + C)/3
+       *    esa = EMA(ap, n1)
+       *    d   = EMA(|ap - esa|, n1)
+       *    ci  = (ap - esa) / (0.015 * d)
+       *    WT1 = EMA(ci, n2)        WT2 = SMA(WT1, n3)
+       *
+       * The middle stage is an exponential CCI, not TA_CCI: cci.c averages with
+       * an SMA and takes the mean deviation around that window's own SMA, where
+       * this uses two exponential averages.
+       *
+       * Bit-identical to the composed chain on moving data: each stage seeds as
+       * ema.c and sma.c do, and each stage boundary is the callee's LOOKBACK,
+       * never (period-1), or an EMA unstable period breaks it.
+       */
+      /* This ptr will point on a circular buffer of at least
+       * "optInSignalPeriod" element.
+       */
+      lookbackTotal = wavetrendLookback(optInChannelPeriod, optInAveragePeriod, optInSignalPeriod);
+      /* Move up the start index if there is not
+       * enough initial data.
+       */
+      if( startIdx < lookbackTotal ) {
+         startIdx = lookbackTotal;
+      }
+      /* Make sure there is still something to evaluate. */
+      if( startIdx > endIdx ) {
+         outBegIdx.value = 0;
+         outNBElement.value = 0;
+         return RetCode.INSUFFICIENT_HISTORY ;
+      }
+      if( optInSignalPeriod < 1 ) return RetCode.INTERNAL_ERROR;
+      wtBuffer = new double[optInSignalPeriod];
+      maxIdx_wtBuffer = (optInSignalPeriod)-1;
+      wtBuffer_Idx = 0;
+      lookbackChannel = emaLookback(optInChannelPeriod);
+      lookbackAverage = emaLookback(optInAveragePeriod);
+      /* k and beta must sum to exactly 1.0, or a flat input drifts off its
+       * level. Each subtraction is exact only from an operand in [0.5,1): at a
+       * period of 2 or less that is k, above it beta. Above it beta stays as the
+       * divide wrote it: a register last written by a subtraction costs each FMA
+       * reading it one more cycle on Intel P-cores.
+       */
+      beta1 = (double)(optInChannelPeriod - 1) / (double)(optInChannelPeriod + 1);
+      k1 = 1.0 - beta1;
+      if( beta1 < 0.5 ) {
+         beta1 = 1.0 - k1;
+      }
+      beta2 = (double)(optInAveragePeriod - 1) / (double)(optInAveragePeriod + 1);
+      k2 = 1.0 - beta2;
+      if( beta2 < 0.5 ) {
+         beta2 = 1.0 - k2;
+      }
+      esa = 0.0;
+      d = 0.0;
+      ci = 0.0;
+      wt1 = 0.0;
+      sumEsa = 0.0;
+      sumD = 0.0;
+      sumCi = 0.0;
+      sumSignal = 0.0;
+      nAp = 0;
+      prevAp = 0.0;
+      prevEsa = 0.0;
+      today = startIdx - lookbackTotal;
+      /* Warm-up. Runs through startIdx inclusive: the last pass is the one that
+       * completes the signal window, so it leaves the first output in the state.
+       */
+      while( today <= startIdx ) {
+         ap = (inHigh[today] + inLow[today] + inClose[today]) / 3.0;
+         /* Stage 1: the exponential average of the typical price. */
+         if( nAp < optInChannelPeriod ) {
+            sumEsa = sumEsa + ap;
+            if( nAp == optInChannelPeriod - 1 ) {
+               esa = sumEsa / optInChannelPeriod;
+            }
+         } else {
+            esa = Math.fma(beta1, esa, k1 * ap);
+         }
+         /* Stage 2: the exponential average of the absolute distance, over what
+          * stage 1 publishes. The counter is compared before it is subtracted,
+          * never after: the Rust backend renders these as usize.
+          */
+         if( nAp >= lookbackChannel ) {
+            nDev = nAp - lookbackChannel;
+            /* GUARD 1, the fixpoint test. With a constant input the exponential
+             * step stops moving once k*|ap - esa| falls under half an ulp, and
+             * esa then FREEZES up to (n1+1)/4 ulps away from the price. That
+             * frozen residue is a real non-zero distance, so the naive form
+             * divides it by its own exponential average and walks to
+             * +/-1/0.015 = +/-66.67 -- an extreme reading produced by nothing
+             * but rounding. When the pair has not moved, the average has reached
+             * its fixpoint and the distance is exactly that residue, so the
+             * numerator is taken as zero. The test is exact, so it is
+             * independent of scale and period.
+             *
+             * Only once prevEsa is an average: on the bar that seeds esa it is
+             * still the 0.0 placeholder, which a seed of exactly 0.0 equals.
+             */
+            num = ap - esa;
+            if( nAp >= optInChannelPeriod && ap == prevAp && esa == prevEsa ) {
+               num = 0.0;
+            }
+            dev = Math.abs(num);
+            if( nDev < optInChannelPeriod ) {
+               sumD = sumD + dev;
+               if( nDev == optInChannelPeriod - 1 ) {
+                  d = sumD / optInChannelPeriod;
+               }
+            } else {
+               d = Math.fma(beta1, d, k1 * dev);
+            }
+            /* Stage 3: the oscillator, then its own smoothing. */
+            if( nDev >= lookbackChannel ) {
+               nCi = nDev - lookbackChannel;
+               /* GUARD 2, the exact divisor. Test the PRODUCT the division uses,
+                * not the deviation: 0.015*d underflows to zero while d is still
+                * non-zero (#395). A zero divisor is 0/0 -- no distance against no
+                * average distance -- so the oscillator reads its neutral 0.0
+                * (#112), as tsi.c does.
+                */
+               scaledDev = 0.015 * d;
+               if( scaledDev > 0.0 ) {
+                  ci = num / scaledDev;
+               } else {
+                  ci = 0.0;
+               }
+               if( nCi < optInAveragePeriod ) {
+                  sumCi = sumCi + ci;
+                  if( nCi == optInAveragePeriod - 1 ) {
+                     wt1 = sumCi / optInAveragePeriod;
+                  }
+               } else {
+                  wt1 = Math.fma(beta2, wt1, k2 * ci);
+               }
+               if( nCi >= lookbackAverage ) {
+                  wtBuffer[wtBuffer_Idx] = wt1;
+                  sumSignal = sumSignal + wt1;
+                  wtBuffer_Idx++;
+                  if( wtBuffer_Idx > maxIdx_wtBuffer ) { wtBuffer_Idx = 0; }
+               }
+            }
+         }
+         prevAp = ap;
+         prevEsa = esa;
+         nAp = nAp + 1;
+         today = today + 1;
+      }
+      /* The first output. The warm-up's last pass stored this bar's WT1 into the
+       * ring and added it to the running sum, so the average is ready here.
+       */
+      outWT1[0 * outStride] = wt1;
+      outWT2[0 * outStride] = sumSignal / (double)optInSignalPeriod;
+      outIdx = 1;
+      sumSignal = sumSignal - wtBuffer[wtBuffer_Idx];
+      /* Stable zone. One bar past the first output every stage is past its seed,
+       * at every reachable parameter triple: the shortest case, 2/1/1, arrives
+       * with the deviation average and the oscillator smoothing both one bar
+       * into their recursions. So nothing here branches on a counter, and the
+       * stores always run -- which is what keeps the managed backends' peek
+       * frames from carrying a seeded output local.
+       */
+      while( today <= endIdx ) {
+         ap = (inHigh[today] + inLow[today] + inClose[today]) / 3.0;
+         esa = Math.fma(beta1, esa, k1 * ap);
+         num = ap - esa;
+         if( ap == prevAp && esa == prevEsa ) {
+            num = 0.0;
+         }
+         dev = Math.abs(num);
+         d = Math.fma(beta1, d, k1 * dev);
+         scaledDev = 0.015 * d;
+         if( scaledDev > 0.0 ) {
+            ci = num / scaledDev;
+         } else {
+            ci = 0.0;
+         }
+         wt1 = Math.fma(beta2, wt1, k2 * ci);
+         wtBuffer[wtBuffer_Idx] = wt1;
+         sumSignal = sumSignal + wt1;
+         outWT1[outIdx * outStride] = wt1;
+         outWT2[outIdx * outStride] = sumSignal / (double)optInSignalPeriod;
+         outIdx = outIdx + 1;
+         wtBuffer_Idx++;
+         if( wtBuffer_Idx > maxIdx_wtBuffer ) { wtBuffer_Idx = 0; }
+         sumSignal = sumSignal - wtBuffer[wtBuffer_Idx];
+         prevAp = ap;
+         prevEsa = esa;
+         today = today + 1;
+      }
+      outNBElement.value = outIdx;
+      outBegIdx.value = startIdx;
+      /* Capture the live batch state into the handle. */
+      int capCb_wtBuffer = maxIdx_wtBuffer + 1;
+      if( capCb_wtBuffer > historyLen + 1 ) {
+         return RetCode.INTERNAL_ERROR;
+      }
+      sp.optInChannelPeriod = optInChannelPeriod;
+      sp.optInAveragePeriod = optInAveragePeriod;
+      sp.optInSignalPeriod = optInSignalPeriod;
+      sp.k1 = k1;
+      sp.beta1 = beta1;
+      sp.k2 = k2;
+      sp.beta2 = beta2;
+      sp.esa = esa;
+      sp.d = d;
+      sp.wt1 = wt1;
+      sp.prevAp = prevAp;
+      sp.prevEsa = prevEsa;
+      sp.sumSignal = sumSignal;
+      sp.wtBuffer_Idx = wtBuffer_Idx;
+      sp.maxIdx_wtBuffer = maxIdx_wtBuffer;
+      sp.cbSize_wtBuffer = capCb_wtBuffer;
+      sp.cb_wtBuffer = wtBuffer;
+      sp.cur_outWT1 = outWT1[(outNBElement.value - 1) * outStride];
+      sp.cur_outWT2 = outWT2[(outNBElement.value - 1) * outStride];
+      return RetCode.SUCCESS;
+   }
+   /* wavetrendOpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   WavetrendStream wavetrendOpenAndFillInternal( double inHigh[], double inLow[], double inClose[], int startIdx, int optInChannelPeriod, int optInAveragePeriod, int optInSignalPeriod, MInteger outBegIdx, MInteger outNBElement, double outWT1[], double outWT2[] )
+   {
+      WavetrendStream sp = new WavetrendStream(this);
+      RetCode retCode = wavetrendOpenImpl(sp, inHigh, inLow, inClose, startIdx, optInChannelPeriod, optInAveragePeriod, optInSignalPeriod, outBegIdx, outNBElement, outWT1, outWT2, 1);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
+      if( retCode == RetCode.SUCCESS ) {
+         return sp;
+      }
+      if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
+         throw insufficientHistory("WAVETREND openAndFill", inHigh.length, startIdx, wavetrendLookback(optInChannelPeriod, optInAveragePeriod, optInSignalPeriod));
+      }
+      throw streamFailure("WAVETREND openAndFill", retCode);
+   }
+   /* Internal startIdx-anchored open behind wavetrendOpen (composition seam). */
+   WavetrendStream wavetrendOpenInternal( double inHigh[], double inLow[], double inClose[], int startIdx, int optInChannelPeriod, int optInAveragePeriod, int optInSignalPeriod )
+   {
+      WavetrendStream sp = new WavetrendStream(this);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      double[] sink_outWT1 = new double[1];
+      double[] sink_outWT2 = new double[1];
+      RetCode retCode = wavetrendOpenImpl(sp, inHigh, inLow, inClose, startIdx, optInChannelPeriod, optInAveragePeriod, optInSignalPeriod, outBegIdx, outNBElement, sink_outWT1, sink_outWT2, 0);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
+      if( retCode == RetCode.SUCCESS ) {
+         return sp;
+      }
+      if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
+         throw insufficientHistory("WAVETREND open", inHigh.length, startIdx, wavetrendLookback(optInChannelPeriod, optInAveragePeriod, optInSignalPeriod));
+      }
+      throw streamFailure("WAVETREND open", retCode);
+   }
+   /**
+    * Open a live WAVETREND stream over the warm-up history; the handle's
+    * {@code value()} starts at the last history bar's value — bit-identical
+    * to {@link Core#wavetrend} at that bar.
+    * <p>The history must hold at least {@code wavetrendLookback(...) + 1} bars
+    * (unstable-period aware), or {@link InsufficientHistoryException} is
+    * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
+    * ({@link Integer#MIN_VALUE} selects a parameter's documented default,
+    * as in the batch API). An EMPTY history throws
+    * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
+    * names no bar — and a null argument {@link IllegalArgumentException},
+    * both ahead of everything above.
+    */
+   public WavetrendStream wavetrendOpen( double inHigh[], double inLow[], double inClose[], int optInChannelPeriod, int optInAveragePeriod, int optInSignalPeriod )
+   {
+      requireArgument("WAVETREND open", "inHigh", inHigh);
+      requireHistory("WAVETREND open", inHigh.length);
+      requireArgument("WAVETREND open", "inLow", inLow);
+      requireArgument("WAVETREND open", "inClose", inClose);
+      requireHistoryLength("WAVETREND open", "inLow", inLow.length, inHigh.length);
+      requireHistoryLength("WAVETREND open", "inClose", inClose.length, inHigh.length);
+      return wavetrendOpenInternal(inHigh, inLow, inClose, 0, optInChannelPeriod, optInAveragePeriod, optInSignalPeriod);
+   }
+   /**
+    * {@link Core#wavetrendOpen} that also fills the output array(s) bit-identically
+    * to {@link Core#wavetrend} over the whole history in the same single pass
+    * (no separate batch call needed for the warm-up plot). Output arrays must
+    * not alias the inputs or each other, and must hold
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
+    * <p>The range written is on the returned handle:
+    * {@link WavetrendStream#outRange()}.
+    */
+   public WavetrendStream wavetrendOpenAndFill( double inHigh[], double inLow[], double inClose[], int optInChannelPeriod, int optInAveragePeriod, int optInSignalPeriod, double outWT1[], double outWT2[] )
+   {
+      requireArgument("WAVETREND openAndFill", "inHigh", inHigh);
+      requireHistory("WAVETREND openAndFill", inHigh.length);
+      requireArgument("WAVETREND openAndFill", "inLow", inLow);
+      requireArgument("WAVETREND openAndFill", "inClose", inClose);
+      int guardOutLen = openFillCount("WAVETREND openAndFill", inHigh.length, wavetrendLookback(optInChannelPeriod, optInAveragePeriod, optInSignalPeriod));
+      requireHistoryLength("WAVETREND openAndFill", "inLow", inLow.length, inHigh.length);
+      requireHistoryLength("WAVETREND openAndFill", "inClose", inClose.length, inHigh.length);
+      requireLength("WAVETREND openAndFill", "outWT1", outWT1, guardOutLen);
+      requireLength("WAVETREND openAndFill", "outWT2", outWT2, guardOutLen);
+      if( (Object)outWT1 == (Object)inHigh || (Object)outWT1 == (Object)inLow || (Object)outWT1 == (Object)inClose || (Object)outWT2 == (Object)inHigh || (Object)outWT2 == (Object)inLow || (Object)outWT2 == (Object)inClose || (Object)outWT1 == (Object)outWT2 ) {
+         throw streamFailure("WAVETREND openAndFill", RetCode.BAD_PARAM);
+      }
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      return wavetrendOpenAndFillInternal(inHigh, inLow, inClose, 0, optInChannelPeriod, optInAveragePeriod, optInSignalPeriod, outBegIdx, outNBElement, outWT1, outWT2);
+   }
+/* List of contributors:
+ *
+ *  Initial  Name/description
+ *  -------------------------------------------------------------------
+ *  MF       Mario Fortier
  *
  *
  * Change history:
@@ -224594,7 +227412,7 @@ public final class Core {
     * <p><b>Notes</b>
     * <ul>
     * <li><b>The paper this indicator is usually credited to describes a different filter.</b> Ehlers and Way's <i>Zero Lag (Well, Almost)</i> specifies an error-correcting EMA with a per-bar gain search; neither the de-lagged series nor the {@code (n-1)/2} lag appears anywhere in it. What TA-Lib ships here is the de-lagged-EMA construction published under the "zero lag" name by Tulip Indicators, pandas-ta, TradingView Pine and others, for which no primary source is traceable.</li>
-    * <li>{@code lag} <b>truncates</b>: {@code Integer((n-1)/2)}. For an even period that is one bar shorter than the round-to-nearest convention some descriptions use, which moves the whole line, not just its warm-up. Tulip Indicators, pandas-ta and Pine all truncate.</li>
+    * <li>{@code lag} <b>truncates</b>: {@code Integer((n-1)/2)}. For an even period that is one bar shorter than the round-to-nearest convention some descriptions use, which moves the whole line, not just its warm-up. Tulip Indicators, pandas-ta and Pine all truncate. R's TTR instead takes the lag as {@code (n+1)/2} without truncating, and for an even period interpolates between the two bars either side of it: a de-lag one to one and a half bars longer than this one, so its line stays apart from these values however long the series runs.</li>
     * <li>The de-lag is computed as {@code 2 * Price - Price[lag]} in one rounding, rather than the algebraically equal {@code Price + (Price - Price[lag])} that Tulip Indicators, TradingView Pine and the Wikipedia statement use. The second form's extra rounding is one unit in the last place of the larger price — negligible against the de-lagged value, except where that value nearly cancels. When price is near double its value {@code lag} bars ago the two forms differ by about 5e-12 relative, so expect that much disagreement against those implementations on a strongly trending series, and do not attribute it to the seed or the smoothing factor.</li>
     * <li>Implementations disagree on how the inner EMA is seeded — TA-Lib uses its own EMA convention (the simple average of the first {@code n} de-lagged values), where Tulip Indicators seeds from a single raw price and so emits its first value earlier and converges to these values only after many bars.</li>
     * <li>ZLEMA inherits EMA's unstable period rather than owning one: {@code TA_SetUnstablePeriod(TA_FUNC_UNST_EMA, ...)} moves ZLEMA's first output too.</li>
@@ -224676,7 +227494,7 @@ public final class Core {
     * <p><b>Notes</b>
     * <ul>
     * <li><b>The paper this indicator is usually credited to describes a different filter.</b> Ehlers and Way's <i>Zero Lag (Well, Almost)</i> specifies an error-correcting EMA with a per-bar gain search; neither the de-lagged series nor the {@code (n-1)/2} lag appears anywhere in it. What TA-Lib ships here is the de-lagged-EMA construction published under the "zero lag" name by Tulip Indicators, pandas-ta, TradingView Pine and others, for which no primary source is traceable.</li>
-    * <li>{@code lag} <b>truncates</b>: {@code Integer((n-1)/2)}. For an even period that is one bar shorter than the round-to-nearest convention some descriptions use, which moves the whole line, not just its warm-up. Tulip Indicators, pandas-ta and Pine all truncate.</li>
+    * <li>{@code lag} <b>truncates</b>: {@code Integer((n-1)/2)}. For an even period that is one bar shorter than the round-to-nearest convention some descriptions use, which moves the whole line, not just its warm-up. Tulip Indicators, pandas-ta and Pine all truncate. R's TTR instead takes the lag as {@code (n+1)/2} without truncating, and for an even period interpolates between the two bars either side of it: a de-lag one to one and a half bars longer than this one, so its line stays apart from these values however long the series runs.</li>
     * <li>The de-lag is computed as {@code 2 * Price - Price[lag]} in one rounding, rather than the algebraically equal {@code Price + (Price - Price[lag])} that Tulip Indicators, TradingView Pine and the Wikipedia statement use. The second form's extra rounding is one unit in the last place of the larger price — negligible against the de-lagged value, except where that value nearly cancels. When price is near double its value {@code lag} bars ago the two forms differ by about 5e-12 relative, so expect that much disagreement against those implementations on a strongly trending series, and do not attribute it to the seed or the smoothing factor.</li>
     * <li>Implementations disagree on how the inner EMA is seeded — TA-Lib uses its own EMA convention (the simple average of the first {@code n} de-lagged values), where Tulip Indicators seeds from a single raw price and so emits its first value earlier and converges to these values only after many bars.</li>
     * <li>ZLEMA inherits EMA's unstable period rather than owning one: {@code TA_SetUnstablePeriod(TA_FUNC_UNST_EMA, ...)} moves ZLEMA's first output too.</li>

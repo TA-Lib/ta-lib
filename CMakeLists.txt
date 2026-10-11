@@ -35,10 +35,10 @@ if(ENABLE_SANITIZERS)
     endif()
     # Must be set before any target is defined so the flags apply to the
     # library and the tools alike (compile AND link).
-    set(TA_SANITIZER_FLAGS -fsanitize=address,undefined -fno-sanitize-recover=all -fno-omit-frame-pointer)
+    set(TA_SANITIZER_FLAGS -fsanitize=address,undefined,float-cast-overflow -fno-sanitize-recover=all -fno-omit-frame-pointer)
     add_compile_options(${TA_SANITIZER_FLAGS})
     add_link_options(${TA_SANITIZER_FLAGS})
-    message(STATUS "ENABLE_SANITIZERS: ON (-fsanitize=address,undefined -fno-sanitize-recover=all)")
+    message(STATUS "ENABLE_SANITIZERS: ON (-fsanitize=address,undefined,float-cast-overflow -fno-sanitize-recover=all)")
 endif()
 
 # FMA numerical contract (PR #96): indicators use explicit fma(); fused ones are
@@ -416,6 +416,7 @@ set(LIB_SOURCES
 	"${CMAKE_CURRENT_SOURCE_DIR}/src/ta_func/ta_DEMA.c"
 	"${CMAKE_CURRENT_SOURCE_DIR}/src/ta_func/ta_DIV.c"
 	"${CMAKE_CURRENT_SOURCE_DIR}/src/ta_func/ta_DONCHIAN.c"
+	"${CMAKE_CURRENT_SOURCE_DIR}/src/ta_func/ta_DOSC.c"
 	"${CMAKE_CURRENT_SOURCE_DIR}/src/ta_func/ta_DPO.c"
 	"${CMAKE_CURRENT_SOURCE_DIR}/src/ta_func/ta_DX.c"
 	"${CMAKE_CURRENT_SOURCE_DIR}/src/ta_func/ta_EFI.c"
@@ -539,6 +540,7 @@ set(LIB_SOURCES
 	"${CMAKE_CURRENT_SOURCE_DIR}/src/ta_func/ta_VWAP.c"
 	"${CMAKE_CURRENT_SOURCE_DIR}/src/ta_func/ta_VWMA.c"
 	"${CMAKE_CURRENT_SOURCE_DIR}/src/ta_func/ta_WAD.c"
+	"${CMAKE_CURRENT_SOURCE_DIR}/src/ta_func/ta_WAVETREND.c"
 	"${CMAKE_CURRENT_SOURCE_DIR}/src/ta_func/ta_WCLPRICE.c"
 	"${CMAKE_CURRENT_SOURCE_DIR}/src/ta_func/ta_WILLR.c"
 	"${CMAKE_CURRENT_SOURCE_DIR}/src/ta_func/ta_WMA.c"
@@ -815,6 +817,7 @@ if(_TA_BUILD_TOOLS)
 		"${CMAKE_CURRENT_SOURCE_DIR}/src/tools/ta_regtest/ta_test_func/test_composite1.c"
 		"${CMAKE_CURRENT_SOURCE_DIR}/src/tools/ta_regtest/ta_test_func/test_composite2.c"
 		"${CMAKE_CURRENT_SOURCE_DIR}/src/tools/ta_regtest/ta_test_func/test_marketfi.c"
+		"${CMAKE_CURRENT_SOURCE_DIR}/src/tools/ta_regtest/ta_test_func/test_dosc.c"
 		"${CMAKE_CURRENT_SOURCE_DIR}/src/tools/ta_regtest/ta_test_func/test_fisher.c"
 		"${CMAKE_CURRENT_SOURCE_DIR}/src/tools/ta_regtest/ta_test_func/test_kvo.c"
 		"${CMAKE_CURRENT_SOURCE_DIR}/src/tools/ta_regtest/ta_test_func/test_pso.c"
@@ -837,6 +840,7 @@ if(_TA_BUILD_TOOLS)
 		"${CMAKE_CURRENT_SOURCE_DIR}/src/tools/ta_regtest/ta_test_func/test_eri.c"
 		"${CMAKE_CURRENT_SOURCE_DIR}/src/tools/ta_regtest/ta_test_func/test_cumsum.c"
 		"${CMAKE_CURRENT_SOURCE_DIR}/src/tools/ta_regtest/ta_test_func/test_zlema.c"
+		"${CMAKE_CURRENT_SOURCE_DIR}/src/tools/ta_regtest/ta_test_func/test_wavetrend.c"
 		"${CMAKE_CURRENT_SOURCE_DIR}/src/tools/ta_regtest/ta_test_func/test_vhf.c"
 		"${CMAKE_CURRENT_SOURCE_DIR}/src/tools/ta_regtest/ta_test_func/test_rvi.c"
 		"${CMAKE_CURRENT_SOURCE_DIR}/src/tools/ta_regtest/ta_test_func/test_rvir.c"
@@ -847,6 +851,7 @@ if(_TA_BUILD_TOOLS)
 		"${CMAKE_CURRENT_SOURCE_DIR}/src/tools/ta_regtest/ta_test_func/test_alma.c"
 		"${CMAKE_CURRENT_SOURCE_DIR}/src/tools/ta_regtest/ta_test_func/test_stc.c"
 		"${CMAKE_CURRENT_SOURCE_DIR}/src/tools/ta_regtest/ta_test_func/test_auto_stabilization.c"
+		"${CMAKE_CURRENT_SOURCE_DIR}/src/tools/ta_regtest/ta_test_func/test_transcendental_ref.c"
 		"${CMAKE_CURRENT_SOURCE_DIR}/src/tools/ta_regtest/ta_test_func/test_swak.c"
 		"${CMAKE_CURRENT_SOURCE_DIR}/src/tools/ta_regtest/ta_test_func/test_fractal.c"
 		"${CMAKE_CURRENT_SOURCE_DIR}/src/tools/ta_regtest/ta_test_func/test_ha.c"

@@ -11,6 +11,31 @@
   }
 }
 
+.home-cards {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1rem;
+  margin: 1.5rem 0;
+
+  @media (max-width: 719px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.home-card {
+  padding: 1rem 1.25rem;
+  border: 1px solid var(--vp-c-border, var(--vp-c-divider, rgba(127, 127, 127, 0.3)));
+  border-radius: 8px;
+
+  h4 {
+    margin: 0 0 0.4rem;
+  }
+
+  p {
+    margin: 0;
+  }
+}
+
 // Hide hope-theme's auto "TA-Lib" page-title bar (from frontmatter `title:`)
 // on the homepage only — the hero image already carries the branding.
 body:has(.home-hero) .vp-page-title {
@@ -156,6 +181,22 @@ body .vp-toc-placeholder {
   }
 }
 
+// FAQ (`containerClass: faq` in its frontmatter): each question is an `h2`, sized
+// down to a question, with its answer indented under it. Keep the questions direct
+// children of the content root, with no wrapper element: the theme's anchor
+// offset for the fixed navbar reaches direct children only.
+.faq #markdown-content {
+  > h2 {
+    font-size: 1.3rem;
+    border-bottom: none;
+    padding-bottom: 0;
+  }
+
+  > :not(h2) {
+    margin-inline-start: 1.5rem;
+  }
+}
+
 // Anchor scroll-offset for headings inside `.credits`.
 // The theme offsets scroll targets for its fixed navbar via padding-top/negative
 // margin-top, but only on *direct* children of the content root
@@ -168,6 +209,15 @@ body .vp-toc-placeholder {
   padding-top: calc(1rem + var(--navbar-height));
   margin-bottom: 0.5rem;
   outline: none;
+}
+
+// Inline `<a id="..."></a>` targets: `scroll-margin-top` has no effect, because the
+// router scrolls to the element's rectangle. Keep each target empty and inside
+// its line of text: alone in a paragraph it adds a blank line.
+[vp-content] #markdown-content a[id]:empty {
+  display: inline-block;
+  position: relative;
+  top: calc(-2rem - var(--navbar-height));
 }
 
 // ---------------------------------------------------------------------------

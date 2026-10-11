@@ -56,6 +56,7 @@ ta_regtest_SOURCES = ta_regtest.c \
 	ta_test_func/test_marketfi.c \
 	ta_test_func/test_fisher.c \
 	ta_test_func/test_kvo.c \
+	ta_test_func/test_dosc.c \
 	ta_test_func/test_pso.c \
 	ta_test_func/test_rogerssatchell.c \
 	ta_test_func/test_emv.c \
@@ -76,6 +77,7 @@ ta_regtest_SOURCES = ta_regtest.c \
 	ta_test_func/test_eri.c \
 	ta_test_func/test_cumsum.c \
 	ta_test_func/test_zlema.c \
+	ta_test_func/test_wavetrend.c \
 	ta_test_func/test_vhf.c \
 	ta_test_func/test_rvi.c \
 	ta_test_func/test_rvir.c \
@@ -86,6 +88,7 @@ ta_regtest_SOURCES = ta_regtest.c \
 	ta_test_func/test_alma.c \
 	ta_test_func/test_stc.c \
 	ta_test_func/test_auto_stabilization.c \
+	ta_test_func/test_transcendental_ref.c \
 	ta_test_func/test_swak.c \
 	ta_test_func/test_fractal.c \
 	ta_test_func/test_ha.c \

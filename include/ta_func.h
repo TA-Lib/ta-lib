@@ -9284,6 +9284,111 @@ TA_LIB_API TA_RetCode TA_DONCHIAN_Advance( TA_DONCHIAN_Stream *stream );
 TA_LIB_API TA_RetCode TA_DONCHIAN_Clone( const TA_DONCHIAN_Stream *stream, TA_DONCHIAN_Stream **clone );
 
 /*
+ * TA_DOSC - Derivative Oscillator
+ * 
+ * Input  = double
+ * Output = double
+ * 
+ * Optional Parameters
+ * -------------------
+ * optInTimePeriod:(From 2 to 100000)
+ *    Period of the RSI
+ * 
+ * optInFirstPeriod:(From 2 to 100000)
+ *    Period of the first smoothing, applied to the RSI
+ * 
+ * optInSecondPeriod:(From 2 to 100000)
+ *    Period of the second smoothing, applied to the first
+ * 
+ * optInSignalPeriod:(From 2 to 100000)
+ *    Period of the simple average subtracted from the smoothed line
+ * 
+ * 
+ */
+TA_LIB_API TA_RetCode TA_DOSC( int    startIdx,
+                               int    endIdx,
+                                          const double inReal[],
+                                          int           optInTimePeriod, /* From 2 to 100000 */
+                                          int           optInFirstPeriod, /* From 2 to 100000 */
+                                          int           optInSecondPeriod, /* From 2 to 100000 */
+                                          int           optInSignalPeriod, /* From 2 to 100000 */
+                                          int          *outBegIdx,
+                                          int          *outNBElement,
+                                          double        outReal[] );
+
+TA_LIB_API TA_RetCode TA_S_DOSC( int    startIdx,
+                                 int    endIdx,
+                                            const float  inReal[],
+                                            int           optInTimePeriod, /* From 2 to 100000 */
+                                            int           optInFirstPeriod, /* From 2 to 100000 */
+                                            int           optInSecondPeriod, /* From 2 to 100000 */
+                                            int           optInSignalPeriod, /* From 2 to 100000 */
+                                            int          *outBegIdx,
+                                            int          *outNBElement,
+                                            double        outReal[] );
+
+TA_LIB_API int TA_DOSC_Lookback( int           optInTimePeriod, /* From 2 to 100000 */
+                                          int           optInFirstPeriod, /* From 2 to 100000 */
+                                          int           optInSecondPeriod, /* From 2 to 100000 */
+                                          int           optInSignalPeriod );  /* From 2 to 100000 */
+TA_LIB_API int TA_DOSC_DisplayShift( int optInTimePeriod, int optInFirstPeriod, int optInSecondPeriod, int optInSignalPeriod, int outputIdx );
+
+
+
+/*
+ * Streaming API for TA_DOSC: incremental per-bar evaluation.
+ */
+typedef struct TA_DOSC_Stream TA_DOSC_Stream;
+
+TA_LIB_API TA_RetCode TA_DOSC_Open( TA_DOSC_Stream **stream, const double inReal[], int historyLen, int optInTimePeriod, int optInFirstPeriod, int optInSecondPeriod, int optInSignalPeriod, double *outReal );
+
+TA_LIB_API TA_RetCode TA_DOSC_Update( TA_DOSC_Stream *stream, double inReal, double *outReal );
+
+TA_LIB_API TA_RetCode TA_DOSC_Peek( const TA_DOSC_Stream *stream, double inReal, double *outReal );
+
+TA_LIB_API TA_RetCode TA_DOSC_Close( TA_DOSC_Stream *stream );
+
+/*
+ * OpenAndFill: like Open, but a single pass ALSO fills the caller's arrays
+ * with the whole warm-up history. The fill is bit-identical to
+ * TA_DOSC( 0, historyLen-1, ... ).
+ */
+TA_LIB_API TA_RetCode TA_DOSC_OpenAndFill( TA_DOSC_Stream **stream, const double inReal[], int historyLen, int optInTimePeriod, int optInFirstPeriod, int optInSecondPeriod, int optInSignalPeriod, int *outBegIdx, int *outNBElement, double outReal[] );
+
+/*
+ * Value: the value(s) at the last bar the stream counted (the bar
+ * TA_DOSC_OutRange ends on), without recomputing. Seeded by Open, refreshed by
+ * every accepted Update, left alone by Peek.
+ */
+TA_LIB_API TA_RetCode TA_DOSC_Value( const TA_DOSC_Stream *stream, double *outReal );
+
+/*
+ * OutRange: the bars this stream has an output for, in the input series'
+ * coordinates. That is [*outBegIdx, *outBegIdx + *outNBElement), the range
+ * TA_DOSC reports over the same bars. Open seeds it; every accepted Update and every
+ * TA_DOSC_Advance adds one; a rejected Update and a Peek change nothing. The
+ * last bar it can reach is TA_INDEX_MAX: past that Update and Advance answer
+ * TA_OUT_OF_RANGE_END_INDEX, and the handle is done.
+ */
+TA_LIB_API TA_RetCode TA_DOSC_OutRange( const TA_DOSC_Stream *stream, int *outBegIdx, int *outNBElement );
+
+/*
+ * Advance: count one bar this stream was not fed (one an Update rejected and
+ * that will not be re-fed, or a session with no print). The range moves by one
+ * and nothing else does, so TA_DOSC_Value keeps answering the previous output,
+ * which is this bar's output too. TA_OUT_OF_RANGE_END_INDEX once the range has
+ * reached TA_INDEX_MAX.
+ */
+TA_LIB_API TA_RetCode TA_DOSC_Advance( TA_DOSC_Stream *stream );
+
+/*
+ * Clone: fork the stream. The fork is an independent stream at the same bar,
+ * owning its own copy of everything the original owns. Both must be closed.
+ * The fork carries the value and the range verbatim.
+ */
+TA_LIB_API TA_RetCode TA_DOSC_Clone( const TA_DOSC_Stream *stream, TA_DOSC_Stream **clone );
+
+/*
  * TA_DPO - Detrended Price Oscillator
  * 
  * Input  = double
@@ -20461,6 +20566,111 @@ TA_LIB_API TA_RetCode TA_WAD_Advance( TA_WAD_Stream *stream );
  * The fork carries the value and the range verbatim.
  */
 TA_LIB_API TA_RetCode TA_WAD_Clone( const TA_WAD_Stream *stream, TA_WAD_Stream **clone );
+
+/*
+ * TA_WAVETREND - WaveTrend Oscillator
+ * 
+ * Input  = High, Low, Close
+ * Output = double, double
+ * 
+ * Optional Parameters
+ * -------------------
+ * optInChannelPeriod:(From 2 to 100000)
+ *    Period of the price channel, used by both the average and the deviation
+ * 
+ * optInAveragePeriod:(From 1 to 100000)
+ *    Smoothing for the oscillator line
+ * 
+ * optInSignalPeriod:(From 1 to 100000)
+ *    Simple average of the oscillator line, making the signal line
+ * 
+ * 
+ */
+TA_LIB_API TA_RetCode TA_WAVETREND( int    startIdx,
+                                    int    endIdx,
+                                               const double inHigh[],
+                                               const double inLow[],
+                                               const double inClose[],
+                                               int           optInChannelPeriod, /* From 2 to 100000 */
+                                               int           optInAveragePeriod, /* From 1 to 100000 */
+                                               int           optInSignalPeriod, /* From 1 to 100000 */
+                                               int          *outBegIdx,
+                                               int          *outNBElement,
+                                               double        outWT1[],
+                                               double        outWT2[] );
+
+TA_LIB_API TA_RetCode TA_S_WAVETREND( int    startIdx,
+                                      int    endIdx,
+                                                 const float  inHigh[],
+                                                 const float  inLow[],
+                                                 const float  inClose[],
+                                                 int           optInChannelPeriod, /* From 2 to 100000 */
+                                                 int           optInAveragePeriod, /* From 1 to 100000 */
+                                                 int           optInSignalPeriod, /* From 1 to 100000 */
+                                                 int          *outBegIdx,
+                                                 int          *outNBElement,
+                                                 double        outWT1[],
+                                                 double        outWT2[] );
+
+TA_LIB_API int TA_WAVETREND_Lookback( int           optInChannelPeriod, /* From 2 to 100000 */
+                                               int           optInAveragePeriod, /* From 1 to 100000 */
+                                               int           optInSignalPeriod );  /* From 1 to 100000 */
+TA_LIB_API int TA_WAVETREND_DisplayShift( int optInChannelPeriod, int optInAveragePeriod, int optInSignalPeriod, int outputIdx );
+
+
+
+/*
+ * Streaming API for TA_WAVETREND: incremental per-bar evaluation.
+ */
+typedef struct TA_WAVETREND_Stream TA_WAVETREND_Stream;
+
+TA_LIB_API TA_RetCode TA_WAVETREND_Open( TA_WAVETREND_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], int historyLen, int optInChannelPeriod, int optInAveragePeriod, int optInSignalPeriod, double *outWT1, double *outWT2 );
+
+TA_LIB_API TA_RetCode TA_WAVETREND_Update( TA_WAVETREND_Stream *stream, double inHigh, double inLow, double inClose, double *outWT1, double *outWT2 );
+
+TA_LIB_API TA_RetCode TA_WAVETREND_Peek( const TA_WAVETREND_Stream *stream, double inHigh, double inLow, double inClose, double *outWT1, double *outWT2 );
+
+TA_LIB_API TA_RetCode TA_WAVETREND_Close( TA_WAVETREND_Stream *stream );
+
+/*
+ * OpenAndFill: like Open, but a single pass ALSO fills the caller's arrays
+ * with the whole warm-up history. The fill is bit-identical to
+ * TA_WAVETREND( 0, historyLen-1, ... ).
+ */
+TA_LIB_API TA_RetCode TA_WAVETREND_OpenAndFill( TA_WAVETREND_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], int historyLen, int optInChannelPeriod, int optInAveragePeriod, int optInSignalPeriod, int *outBegIdx, int *outNBElement, double outWT1[], double outWT2[] );
+
+/*
+ * Value: the value(s) at the last bar the stream counted (the bar
+ * TA_WAVETREND_OutRange ends on), without recomputing. Seeded by Open, refreshed by
+ * every accepted Update, left alone by Peek.
+ */
+TA_LIB_API TA_RetCode TA_WAVETREND_Value( const TA_WAVETREND_Stream *stream, double *outWT1, double *outWT2 );
+
+/*
+ * OutRange: the bars this stream has an output for, in the input series'
+ * coordinates. That is [*outBegIdx, *outBegIdx + *outNBElement), the range
+ * TA_WAVETREND reports over the same bars. Open seeds it; every accepted Update and every
+ * TA_WAVETREND_Advance adds one; a rejected Update and a Peek change nothing. The
+ * last bar it can reach is TA_INDEX_MAX: past that Update and Advance answer
+ * TA_OUT_OF_RANGE_END_INDEX, and the handle is done.
+ */
+TA_LIB_API TA_RetCode TA_WAVETREND_OutRange( const TA_WAVETREND_Stream *stream, int *outBegIdx, int *outNBElement );
+
+/*
+ * Advance: count one bar this stream was not fed (one an Update rejected and
+ * that will not be re-fed, or a session with no print). The range moves by one
+ * and nothing else does, so TA_WAVETREND_Value keeps answering the previous output,
+ * which is this bar's output too. TA_OUT_OF_RANGE_END_INDEX once the range has
+ * reached TA_INDEX_MAX.
+ */
+TA_LIB_API TA_RetCode TA_WAVETREND_Advance( TA_WAVETREND_Stream *stream );
+
+/*
+ * Clone: fork the stream. The fork is an independent stream at the same bar,
+ * owning its own copy of everything the original owns. Both must be closed.
+ * The fork carries the value and the range verbatim.
+ */
+TA_LIB_API TA_RetCode TA_WAVETREND_Clone( const TA_WAVETREND_Stream *stream, TA_WAVETREND_Stream **clone );
 
 /*
  * TA_WCLPRICE - Weighted Close Price

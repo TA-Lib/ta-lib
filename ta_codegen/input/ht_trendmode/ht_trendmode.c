@@ -393,7 +393,11 @@ TA_RetCode ht_trendmode(int startIdx, int endIdx,
       /* Compute Dominant Cycle Phase */
       prevDCPhase = DCPhase;
       DCPeriod    = smoothPeriod+0.5;
-      DCPeriodInt = (int)DCPeriod;
+      /* A NaN period has no int value, and C leaves converting one undefined. */
+      if( DCPeriod >= 0.0 )
+         DCPeriodInt = (int)DCPeriod;
+      else
+         DCPeriodInt = 0;
       realPart = 0.0;
       imagPart = 0.0;
 
@@ -439,7 +443,11 @@ TA_RetCode ht_trendmode(int startIdx, int endIdx,
 
       /* Compute Trendline */
       DCPeriod    = smoothPeriod+0.5;
-      DCPeriodInt = (int)DCPeriod;
+      /* A NaN period has no int value, and C leaves converting one undefined. */
+      if( DCPeriod >= 0.0 )
+         DCPeriodInt = (int)DCPeriod;
+      else
+         DCPeriodInt = 0;
 
       /* Average the RAW price over the dominant cycle period.
        * Unlike the DC-phase loop above (which reads the smoothPrice

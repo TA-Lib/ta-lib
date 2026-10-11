@@ -24,6 +24,9 @@
  * those optional parameters set (FastPeriod=12,MAType=3).
  * CENSUS_NEEDS=<file> also writes each trial's need at K = 10 and 19, for a
  * tail the three quantiles do not show.
+ * CENSUS_TRIAL=<t> runs that one trial of each row. A worstT replays while the
+ * row's lookback and counts stand: the later start and the series length are
+ * drawn from them.
  * Columns: lookback, at 0; live, the trials counted: the two starts differ and
  * the series leaves more ages to compare than the PREC_8 count; auto4 and
  * auto8, the counts; need<K> p50/p99/max over the live trials; over<K>, live
@@ -54,7 +57,7 @@ static int g_trials, g_list;
 static double g_drift = 0.001, g_level = 100.0, g_tick = 0.01;
 static unsigned long long g_seed, rng_s;
 static double fH[NMAX], fL[NMAX], fC[NMAX];
-static int fN, g_period;
+static int fN, g_period, g_trial = -1;
 static FILE *g_needs;
 static const char *g_set;
 
@@ -218,7 +221,7 @@ static void each(const TA_FuncInfo *fi, void *opaque)
          static const char *kinds[NKIND+1] = { "rw", "tr", "rb", "csv" };
          long over[4] = {0,0,0,0}, never = 0, live = 0;
          int worstT[2] = {-1,-1}, worst[2] = {0,0};
-         for( t = 0; t < g_trials; t++ )
+         for( t = g_trial < 0 ? 0 : g_trial; t < (g_trial < 0 ? g_trials : g_trial + 1); t++ )
          {
             int D, n, begB, nbB, lb2, first, last, age, nd[4] = {0,0,0,0}, ok;
             double SF = 0.0, R[MAXOUT];
@@ -311,10 +314,11 @@ int main(int argc, char **argv)
       if( fN < 400 ) return 2;
    }
    if( getenv("CENSUS_PERIOD") ) g_period = atoi(getenv("CENSUS_PERIOD"));
+   if( getenv("CENSUS_TRIAL") ) g_trial = atoi(getenv("CENSUS_TRIAL"));
    g_set = getenv("CENSUS_SET");
    if( getenv("CENSUS_NEEDS") && !(g_needs = fopen(getenv("CENSUS_NEEDS"), "w")) ) return 2;
    if( TA_Initialize() != TA_SUCCESS ) return 2;
-   if( !g_list && !g_only )
+   if( !g_list )
       printf("func\tcfg\tkind\tlookback\tlive\tauto4\tp50_10\tp99_10\tmax_10\tover10\tover7\tauto8\tp50_19\tp99_19\tmax_19\tover19\tover16\tnever\tworstT10\tworstT19\n");
    TA_ForEachFunc(each, NULL);
    TA_Shutdown();

@@ -196,7 +196,7 @@ What enters a lookback, in C, in a bare run:
 - rL8 under an Auto level: `test_auto_stabilization.c` asks every function flagged
   identity at a period of 1, owner of an id or not, for its lookback at a
   period of 1 with every id on each level, and requires 0.
-- rL6 under an Auto level: the count leg of `test_auto_stabilization.c`. With one id
+- rL6 under an Auto level, and rZ1: the count leg of `test_auto_stabilization.c`. With one id
   on a level, its owner's lookback minus its lookback at 0 must equal the
   rule, computed from the file's own copy of the rule table, and the owner
   must report the bits it reports at 0, starting that many bars later. It
@@ -206,6 +206,9 @@ What enters a lookback, in C, in a bare run:
   fails. `test_stc.c` holds the STC line to `TA_EMA(fast) - TA_EMA(slow)` bit
   for bit under each level: the fast leg is placed by its own lookback, which
   under a level is not the slow leg's.
+- rZ2: the same file's offset check asks CKSP and ADOSC for their lookback with
+  the id they inherit on a count of 30 and on each level: a count adds
+  exactly 30 bars, a level the owner's count plus the function's own.
 - rL5, rL7 and rL9: `abstract_lookback_under_settings` (`test_abstract.c`), for
   every function at its default parameters: another range type and factor on
   every candle setting moves no lookback; seven more bars on every averaging
@@ -483,12 +486,16 @@ in its shipped registry, and `abstract_verify_for_each_func` requires each
 server's enumeration to be C's, as a set (Java's server enumerates a table of
 its own).
 
-rA7: the generator's `the_spec_flag_catalog_is_complete` requires every flag
-member of the three ports to carry the value of the C `#define` its catalog row
-names. The same test holds the catalog itself, which is more than rA7 asks: a
-row for every flag `#define` of `ta_abstract.h`, no port flag without a row, no
-flag family beyond the four it reads, and "No function sets it" exactly on the
-flags no function carries.
+rA7: the generator's `the_spec_flag_catalog_is_complete` requires each port's
+flag type to carry the values of the C `#define`s of its family, one member per
+value, with none of its own (an alias member and C#'s `None` aside); Rust lacks
+none, and Java and C# lack only the
+flags whose catalog row says so. It matches by value: a port member's name is
+not held, so two members exchanging values would pass here. The same test holds
+the catalog itself, which is more than rA7 asks: a row for every flag `#define`
+of `ta_abstract.h`, no flag family beyond those it reads, the flag types the
+specification page names, and "No function sets it" exactly on the flags no
+function carries.
 
 ### Settings rules
 
@@ -529,7 +536,7 @@ the fused clones gcc builds, since under clang the FMA dispatch compiles away.
 ### Auto levels
 
 What the specification states about a level is mapped above: rT3 and rT12
-under Settings rules, rL1, rL4 and rL6 under Lookback rules. Two more legs run
+under Settings rules, rL1, rL4, rL6, rZ1 and rZ2 under Lookback rules. Two more legs run
 under each level.
 
 Stream against batch: `stream_verify`'s unstable-period leg runs one more pass
@@ -543,9 +550,9 @@ compared at `PREC_8`. The default all-EMA vector reports too few bars on the 240
 series to show it. A floor on the output bars compared under a level keeps
 the passes from comparing nothing.
 
-Two starts: the second leg of `test_auto_stabilization.c`, in a bare run. It holds
-what the [Unstable Period](https://ta-lib.org/api/unstable-period/) page says
-a level means, which is not a specification rule. Every function runs on three
+Two starts: the second leg of `test_auto_stabilization.c`, in a bare run. It is the
+check behind what the specification says [a level targets](https://ta-lib.org/spec/auto-stabilization/#target),
+which is not a numbered rule: the leg bounds the difference against the seed's, not the digits of the value. Every function runs on three
 synthetic 8192-bar series (a random walk, alternating trends, a range), from
 bar 0 and from six later starts, at the defaults, with every integer parameter
 at its minimum and tripled, at every MA type, and at the real parameters a
@@ -570,6 +577,22 @@ bar handed in. One counter per class and a floor on the bars compared, per
 series for a window and per call for a converging one, keep the leg from
 passing on nothing; a call that fails or reports no lookback is a failure.
 
+Sampled starts: `scripts/auto_stabilization_sample.py`, its own nightly job. The
+leg above runs three series from six starts, which cannot show how often a
+count sized by measurement runs short. The script runs the census of
+`docs/studies/auto-stabilization/` on a fixed seed, for every function that
+owns an unstable id, at its defaults and with its periods tripled and at their
+minimum, on a random walk, a flipping trend, a range-bound series and windows
+of the IBM daily series. Each row is held to `census_table.tsv`: a ceiling on
+the share of starts whose need passes the count at each level, the largest
+need, and the starts that never converge. The trial that set the largest need
+of each row when the table was made is replayed. A row on either side without
+its counterpart fails, so a function that gains an unstable id brings its rows,
+and so does a row whose lookback or count moved: a trial's start and length
+follow them, so a re-sized rule is calibrated again.
+The [known exceptions](https://ta-lib.org/spec/auto-stabilization/#exceptions)
+are rows like any other: their ceiling is the share measured, not zero.
+
 ### Versions and determinism
 
 rV2: `testEnumValueContract` pins C's numbers. `MAType` reaches every language
@@ -585,7 +608,7 @@ member.
 rV3: `rust_matype_emits_every_yaml_variant_and_its_frozen_shape` and
 `rust_template_enums_are_non_exhaustive` (generator suite).
 
-rD2's set of functions: `the_transcendental_flag_is_what_the_sources_call`
+rD1's set of functions: `the_transcendental_flag_is_what_the_sources_call`
 (generator suite) derives it from the indicator sources and requires the same
 set to carry `TA_FUNC_FLG_USES_TRANSCENDENTAL`, the flag that moves a Java or C#
 comparison from bitwise to a tolerance.
@@ -595,6 +618,34 @@ exception: where the batch tier is a vector kernel, `regtest_vmath_batch`
 (`test_util.c`) alone moves a comparison of a kernel value with a one-value
 result from bitwise to `fuzz_vmath_near`, and `test_elementary_lanes` holds
 every element of a batch call to one function of one value on every platform.
+
+rD2: `CODEGEN_TRANSCENDENTAL_TOL` (`test_codegen.h`) is the rule's figure and
+its shape, 1e-9 relative above a magnitude of 1 and absolute below. It holds
+every Java and C# call that evaluates a transcendental function against C, on
+one machine, in `--codegen` and `--xlang-hash`. Elsewhere on one machine the
+comparisons are bitwise or the kernel lane's `fuzz_vmath_near`, both tighter:
+that one allows `FUZZ_VMATH_MAX_STEPS` (8) adjacent doubles of the same sign,
+under 1.8e-15 of the value, which is where a stream stands against its batch
+call for a transcendental function.
+HT_DCPHASE, HT_SINE and HT_TRENDMODE are skipped on the constant series
+(`xlang_illcond`), where their phase is undefined and two languages can differ
+outright.
+
+rD3: it states what is not promised, so no test holds it. What a level does
+bound between two starts is the second leg under [Auto levels](#auto-levels),
+and how often a count runs short is the sampled census there.
+
+rD2 between machines ([across machines](https://ta-lib.org/spec/versions/#machines)): no machine is compared with another. Each is held on its own to the suite's
+reference values, which bounds two machines indirectly. `ta_test_legacy` replays
+the v0.6.4 values, frozen at 17 digits, on every platform, each function within
+its own bound, all under 1e-9. The Hilbert functions and the elementary ones, whose
+value follows the host math library, have no v0.6.4 row:
+`test_transcendental_ref.c` holds every function
+flagged `TA_FUNC_FLG_USES_TRANSCENDENTAL`, those among them, to
+values committed once, at rD2's figure and shape, and a flagged function
+without a row fails. Known gap: a function added after v0.6.4 that calls no
+transcendental function has no frozen value; its hand-written values are
+compared at 0.01.
 
 The build-flags caller item: `the_three_build_systems_carry_the_same_flags`
 (generator suite) requires the statements that set `-ffp-contract=off`,

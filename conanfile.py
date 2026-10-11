@@ -11,7 +11,7 @@ class TaLibConan(ConanFile):
 
     license = "BSD-3-Clause"
     url = "https://github.com/ta-lib/ta-lib"
-    description = "TA-Lib provides common functions for the technical analysis of stock/future/commodity market data."
+    description = "Technical analysis for price series: indicators and candlestick pattern recognition, with a batch and a streaming API."
     topics = ("technical-analysis", "finance", "trading")
 
     package_type = "library"

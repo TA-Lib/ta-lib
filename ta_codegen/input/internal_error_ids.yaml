@@ -18,7 +18,7 @@
 # Written by `ta_codegen generate`. Do not renumber by hand -- the number is
 # the only thing a bug report carries, and it has to mean the same guard in the
 # next release as it did in the last.
-next: 495
+next: 499
 sites:
   AC.cbsize.oscBuffer: 184
   AC.circbuf.oscBuffer: 181
@@ -181,6 +181,8 @@ sites:
   CVI.cbsize.emaRing: 417
   CVI.circbuf.emaRing: 416
   DONCHIAN.extrema: 403
+  DOSC.cbsize.dsBuffer: 496
+  DOSC.circbuf.dsBuffer: 495
   DPO.ringcap.dispIdx: 409
   DPO.ringcap.trailingIdx: 410
   EFI.dualmode: 318
@@ -323,6 +325,8 @@ sites:
   VIDYA.ringcap.trailingIdx: 458
   VORTEX.ringlag.trailingIdx: 424
   VWMA.ringcap.trailingIdx: 395
+  WAVETREND.cbsize.wtBuffer: 498
+  WAVETREND.circbuf.wtBuffer: 497
   WILLR.circbuf.preHighest: 397
   WILLR.circbuf.preLowest: 399
   WILLR.circbuf.sufHighest: 396

@@ -6,19 +6,20 @@
 Reads the repository's stargazers from the GitHub API and rewrites the SVG.
 Without a token the API allows 60 requests an hour, one per hundred stars.
 
-The x axis ends at the newest star, not at today, so a run with no new star
-rewrites the same bytes.
+The figure is rewritten only when the star count went up: a short answer from
+the API must not shrink it.
+--dry-run reports the decision and writes nothing.
 """
-import json, os, sys, urllib.request
+import json, os, re, sys, urllib.request
 from datetime import datetime, timezone
 from pathlib import Path
 
 REPO = 'TA-Lib/ta-lib'
-SINCE = 2022
+SINCE = 2025
 OUT = Path(__file__).resolve().parent.parent / 'website/src/.vuepress/public/assets/images/star-history.svg'
 
 W, H = 800, 400
-L, R, T, B = 62, 772, 56, 356
+L, R, T, B = 62, 772, 28, 356
 
 
 def fetch():
@@ -67,7 +68,7 @@ def render(stamps):
 
     label = f'{REPO} GitHub stars since {SINCE}: {total:,}'
     out = [
-        f'<svg xmlns="http://www.w3.org/2000/svg" width="{W}" height="{H}" viewBox="0 0 {W} {H}" role="img" aria-label="{label}">',
+        f'<svg xmlns="http://www.w3.org/2000/svg" width="{W}" height="{H}" viewBox="0 0 {W} {H}" role="img" aria-label="{label}" data-stars="{total}">',
         f'<title>{label}</title>',
         '<style>',
         '.bg{fill:#ffffff;stroke:#d0d7de}.ink{fill:#1f2328}.mute{fill:#59636e}.grid{stroke:#e6e9ed}.axis{stroke:#8c959f}',
@@ -77,7 +78,6 @@ def render(stamps):
         'text{font-family:system-ui,-apple-system,Segoe UI,Helvetica,Arial,sans-serif}',
         '</style>',
         f'<rect class="bg" x=".5" y=".5" width="{W - 1}" height="{H - 1}" rx="12"/>',
-        f'<text class="ink" x="{L}" y="32" font-size="18" font-weight="600">GitHub stars since {SINCE}</text>',
     ]
     for v in range(0, ymax + 1, step):
         out.append(f'<line class="{"grid" if v else "axis"}" x1="{L}" y1="{y(v):.1f}" x2="{R}" y2="{y(v):.1f}"/>')
@@ -97,12 +97,27 @@ def render(stamps):
     return '\n'.join(out) + '\n'
 
 
+def drawn_count():
+    if not OUT.exists():
+        return 0
+    found = re.search(r'<svg[^>]* data-stars="(\d+)"', OUT.read_text())
+    if not found:
+        sys.exit(f'{OUT}: no data-stars count to compare against; not overwriting')
+    return int(found.group(1))
+
+
 def main():
+    dry_run = '--dry-run' in sys.argv[1:]
+    drawn = drawn_count()
     stamps = fetch()
     if not stamps:
         sys.exit('no stargazers returned')
-    OUT.write_text(render(stamps))
-    print(f'{OUT}: {len(stamps):,} stars')
+    if len(stamps) <= drawn:
+        print(f'{OUT}: kept at {drawn:,} stars (the API returned {len(stamps):,})')
+        return
+    if not dry_run:
+        OUT.write_text(render(stamps))
+    print(f"{OUT}: {drawn:,} -> {len(stamps):,} stars{' (dry run, not written)' if dry_run else ''}")
 
 
 if __name__ == '__main__':

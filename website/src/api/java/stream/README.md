@@ -4,7 +4,9 @@ description: "Java streaming API for live feeds: a stream carries indicator stat
 toc: false
 ---
 
-The **streaming API** is built for live feeds: open a stream once, then feed it one bar at a time. The stream carries its state from bar to bar, so a new bar never costs a pass over the history: most indicators do constant work per bar, and the ones that work over their window, such as AVGDEV, CCI, MEDIAN and the rolling extremes, take time at most proportional to the window's length. Every value is **bit-identical** to what the [batch method](/api/java/) (`core.sma`, `core.rsi`, …) would return by recomputing over the whole array.
+The **streaming API** is built for live feeds: open a stream once, then feed it one bar at a time. The stream carries its state from bar to bar, so a new bar never costs a pass over the history.
+
+Every value is **bit-identical** to what the [batch method](/api/java/) would return by recomputing over the whole array (see [detailed specs](/spec/streaming/#rh1) for a few exceptions).
 
 Each streamable function adds two factory methods on `Core` and a handful of methods on its stream (a class nested in `Core`, e.g. `Core.SmaStream` — unrelated to `java.util.stream`):
 

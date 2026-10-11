@@ -25,7 +25,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           # Full history is required: `plugins.git: false` only hides the
           # contributors/last-updated UI — data.git.updatedTime is still

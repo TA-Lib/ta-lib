@@ -252,6 +252,8 @@ pub enum FuncId {
     DIV,
     /// Donchian Channels — [`Core::donchian`](crate::Core::donchian).
     DONCHIAN,
+    /// Derivative Oscillator — [`Core::dosc`](crate::Core::dosc).
+    DOSC,
     /// Detrended Price Oscillator — [`Core::dpo`](crate::Core::dpo).
     DPO,
     /// Directional Movement Index — [`Core::dx`](crate::Core::dx).
@@ -310,8 +312,6 @@ pub enum FuncId {
     KSTEXT,
     /// Rolling Excess Kurtosis — [`Core::kurtosis`](crate::Core::kurtosis).
     KURTOSIS,
-    /// Klinger Volume Oscillator — [`Core::kvo`](crate::Core::kvo).
-    KVO,
     /// Linear Regression — [`Core::linearreg`](crate::Core::linearreg).
     LINEARREG,
     /// Linear Regression Angle — [`Core::linearreg_angle`](crate::Core::linearreg_angle).
@@ -498,6 +498,8 @@ pub enum FuncId {
     VWMA,
     /// Williams' Accumulation/Distribution — [`Core::wad`](crate::Core::wad).
     WAD,
+    /// WaveTrend Oscillator — [`Core::wavetrend`](crate::Core::wavetrend).
+    WAVETREND,
     /// Weighted Close Price — [`Core::wclprice`](crate::Core::wclprice).
     WCLPRICE,
     /// Williams' %R — [`Core::willr`](crate::Core::willr).
@@ -510,7 +512,7 @@ pub enum FuncId {
 
 impl FuncId {
     /// Number of functions in the registry.
-    pub const COUNT: usize = 232;
+    pub const COUNT: usize = 233;
     /// Metadata for this function (O(1) index into the const table).
     #[inline] pub fn info(self) -> &'static FuncInfo { &FUNC_TABLE[self as usize] }
     /// Upper-case TA name, e.g. "RSI".
@@ -855,7 +857,7 @@ impl FuncInfo {
 
 /// Backing storage for [`FUNCS`], indexed by [`FuncId`]. Link-time const, in
 /// `.rodata`. Private, so its length is nobody's business but this module's.
-static FUNC_TABLE: [FuncInfo; 232] = [
+static FUNC_TABLE: [FuncInfo; 233] = [
     FuncInfo {
         id: FuncId::AC,
         name: "AC",
@@ -2012,6 +2014,17 @@ static FUNC_TABLE: [FuncInfo; 232] = [
         unst_id: None,
     },
     FuncInfo {
+        id: FuncId::DOSC,
+        name: "DOSC",
+        group: Group::MomentumIndicators,
+        hint: "Derivative Oscillator",
+        flags: FuncFlags(0x02000000),
+        inputs: &[InputInfo { param_name: "inReal", kind: InputType::Real, flags: InputFlags(0x00000000) }, ],
+        opt_inputs: &[OptInputInfo { param_name: "optInTimePeriod", display_name: "Time Period", hint: "Period of the RSI", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 2, max: 100000, default: 14, suggested: (4, 200, 1) } }, OptInputInfo { param_name: "optInFirstPeriod", display_name: "First Smoothing Period", hint: "Period of the first smoothing, applied to the RSI", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 2, max: 100000, default: 5, suggested: (2, 50, 1) } }, OptInputInfo { param_name: "optInSecondPeriod", display_name: "Second Smoothing Period", hint: "Period of the second smoothing, applied to the first", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 2, max: 100000, default: 3, suggested: (2, 50, 1) } }, OptInputInfo { param_name: "optInSignalPeriod", display_name: "Signal Period", hint: "Period of the simple average subtracted from the smoothed line", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 2, max: 100000, default: 9, suggested: (2, 50, 1) } }, ],
+        outputs: &[OutputInfo { param_name: "outReal", kind: OutputType::Real, flags: OutputFlags(0x00000010) }, ],
+        unst_id: None,
+    },
+    FuncInfo {
         id: FuncId::DPO,
         name: "DPO",
         group: Group::MomentumIndicators,
@@ -2328,17 +2341,6 @@ static FUNC_TABLE: [FuncInfo; 232] = [
         inputs: &[InputInfo { param_name: "inReal", kind: InputType::Real, flags: InputFlags(0x00000000) }, ],
         opt_inputs: &[OptInputInfo { param_name: "optInTimePeriod", display_name: "Time Period", hint: "Time period", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 4, max: 10000, default: 30, suggested: (10, 200, 5) } }, ],
         outputs: &[OutputInfo { param_name: "outReal", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, ],
-        unst_id: None,
-    },
-    FuncInfo {
-        id: FuncId::KVO,
-        name: "KVO",
-        group: Group::VolumeIndicators,
-        hint: "Klinger Volume Oscillator",
-        flags: FuncFlags(0x02000000),
-        inputs: &[InputInfo { param_name: "inPriceHLCV", kind: InputType::Price, flags: InputFlags(0x0000001e) }, ],
-        opt_inputs: &[OptInputInfo { param_name: "optInFastPeriod", display_name: "Fast Period", hint: "Period of the faster smoothing of the volume force", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 2, max: 100000, default: 34, suggested: (4, 200, 1) } }, OptInputInfo { param_name: "optInSlowPeriod", display_name: "Slow Period", hint: "Period of the slower smoothing of the volume force", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 2, max: 100000, default: 55, suggested: (4, 200, 1) } }, OptInputInfo { param_name: "optInSignalPeriod", display_name: "Signal Period", hint: "Smoothing for the trigger line", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 2, max: 100000, default: 13, suggested: (2, 200, 1) } }, ],
-        outputs: &[OutputInfo { param_name: "outKVO", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, OutputInfo { param_name: "outKVOSignal", kind: OutputType::Real, flags: OutputFlags(0x00000004) }, ],
         unst_id: None,
     },
     FuncInfo {
@@ -3365,6 +3367,17 @@ static FUNC_TABLE: [FuncInfo; 232] = [
         unst_id: None,
     },
     FuncInfo {
+        id: FuncId::WAVETREND,
+        name: "WAVETREND",
+        group: Group::MomentumIndicators,
+        hint: "WaveTrend Oscillator",
+        flags: FuncFlags(0x02000000),
+        inputs: &[InputInfo { param_name: "inPriceHLC", kind: InputType::Price, flags: InputFlags(0x0000000e) }, ],
+        opt_inputs: &[OptInputInfo { param_name: "optInChannelPeriod", display_name: "Channel Period", hint: "Period of the price channel, used by both the average and the deviation", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 2, max: 100000, default: 10, suggested: (2, 200, 1) } }, OptInputInfo { param_name: "optInAveragePeriod", display_name: "Average Period", hint: "Smoothing for the oscillator line", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 1, max: 100000, default: 21, suggested: (1, 200, 1) } }, OptInputInfo { param_name: "optInSignalPeriod", display_name: "Signal Period", hint: "Simple average of the oscillator line, making the signal line", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 1, max: 100000, default: 4, suggested: (1, 50, 1) } }, ],
+        outputs: &[OutputInfo { param_name: "outWT1", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, OutputInfo { param_name: "outWT2", kind: OutputType::Real, flags: OutputFlags(0x00000004) }, ],
+        unst_id: None,
+    },
+    FuncInfo {
         id: FuncId::WCLPRICE,
         name: "WCLPRICE",
         group: Group::PriceTransform,
@@ -3531,6 +3544,7 @@ fn get_func_handle_exact(name: &str) -> Option<FuncId> {
         "DEMA" => FuncId::DEMA,
         "DIV" => FuncId::DIV,
         "DONCHIAN" => FuncId::DONCHIAN,
+        "DOSC" => FuncId::DOSC,
         "DPO" => FuncId::DPO,
         "DX" => FuncId::DX,
         "EFI" => FuncId::EFI,
@@ -3560,7 +3574,6 @@ fn get_func_handle_exact(name: &str) -> Option<FuncId> {
         "KST" => FuncId::KST,
         "KSTEXT" => FuncId::KSTEXT,
         "KURTOSIS" => FuncId::KURTOSIS,
-        "KVO" => FuncId::KVO,
         "LINEARREG" => FuncId::LINEARREG,
         "LINEARREG_ANGLE" => FuncId::LINEARREG_ANGLE,
         "LINEARREG_INTERCEPT" => FuncId::LINEARREG_INTERCEPT,
@@ -3654,6 +3667,7 @@ fn get_func_handle_exact(name: &str) -> Option<FuncId> {
         "VWAP" => FuncId::VWAP,
         "VWMA" => FuncId::VWMA,
         "WAD" => FuncId::WAD,
+        "WAVETREND" => FuncId::WAVETREND,
         "WCLPRICE" => FuncId::WCLPRICE,
         "WILLR" => FuncId::WILLR,
         "WMA" => FuncId::WMA,
@@ -4031,6 +4045,7 @@ impl<'a> ParamHolder<'a> {
             FuncId::DEMA => self.core.dema_lookback(self.int_opt[0]),
             FuncId::DIV => self.core.div_lookback(),
             FuncId::DONCHIAN => self.core.donchian_lookback(self.int_opt[0]),
+            FuncId::DOSC => self.core.dosc_lookback(self.int_opt[0], self.int_opt[1], self.int_opt[2], self.int_opt[3]),
             FuncId::DPO => self.core.dpo_lookback(self.int_opt[0]),
             FuncId::DX => self.core.dx_lookback(self.int_opt[0]),
             FuncId::EFI => self.core.efi_lookback(self.int_opt[0]),
@@ -4060,7 +4075,6 @@ impl<'a> ParamHolder<'a> {
             FuncId::KST => self.core.kst_lookback(self.int_opt[0], self.int_opt[1], self.int_opt[2], self.int_opt[3], self.int_opt[4], self.int_opt[5], self.int_opt[6], self.int_opt[7], self.int_opt[8]),
             FuncId::KSTEXT => self.core.kstext_lookback(self.int_opt[0], self.int_opt[1], self.int_opt[2], self.int_opt[3], self.int_opt[4], self.int_opt[5], self.int_opt[6], self.int_opt[7], self.int_opt[8], MAType::try_from(self.int_opt[9])?, MAType::try_from(self.int_opt[10])?),
             FuncId::KURTOSIS => self.core.kurtosis_lookback(self.int_opt[0]),
-            FuncId::KVO => self.core.kvo_lookback(self.int_opt[0], self.int_opt[1], self.int_opt[2]),
             FuncId::LINEARREG => self.core.linearreg_lookback(self.int_opt[0]),
             FuncId::LINEARREG_ANGLE => self.core.linearreg_angle_lookback(self.int_opt[0]),
             FuncId::LINEARREG_INTERCEPT => self.core.linearreg_intercept_lookback(self.int_opt[0]),
@@ -4154,6 +4168,7 @@ impl<'a> ParamHolder<'a> {
             FuncId::VWAP => self.core.vwap_lookback(),
             FuncId::VWMA => self.core.vwma_lookback(self.int_opt[0]),
             FuncId::WAD => self.core.wad_lookback(),
+            FuncId::WAVETREND => self.core.wavetrend_lookback(self.int_opt[0], self.int_opt[1], self.int_opt[2]),
             FuncId::WCLPRICE => self.core.wclprice_lookback(),
             FuncId::WILLR => self.core.willr_lookback(self.int_opt[0]),
             FuncId::WMA => self.core.wma_lookback(self.int_opt[0]),
@@ -4276,6 +4291,7 @@ impl<'a> ParamHolder<'a> {
             FuncId::DEMA => self.core.dema_display_shift(self.int_opt[0], output_idx),
             FuncId::DIV => self.core.div_display_shift(output_idx),
             FuncId::DONCHIAN => self.core.donchian_display_shift(self.int_opt[0], output_idx),
+            FuncId::DOSC => self.core.dosc_display_shift(self.int_opt[0], self.int_opt[1], self.int_opt[2], self.int_opt[3], output_idx),
             FuncId::DPO => self.core.dpo_display_shift(self.int_opt[0], output_idx),
             FuncId::DX => self.core.dx_display_shift(self.int_opt[0], output_idx),
             FuncId::EFI => self.core.efi_display_shift(self.int_opt[0], output_idx),
@@ -4305,7 +4321,6 @@ impl<'a> ParamHolder<'a> {
             FuncId::KST => self.core.kst_display_shift(self.int_opt[0], self.int_opt[1], self.int_opt[2], self.int_opt[3], self.int_opt[4], self.int_opt[5], self.int_opt[6], self.int_opt[7], self.int_opt[8], output_idx),
             FuncId::KSTEXT => self.core.kstext_display_shift(self.int_opt[0], self.int_opt[1], self.int_opt[2], self.int_opt[3], self.int_opt[4], self.int_opt[5], self.int_opt[6], self.int_opt[7], self.int_opt[8], MAType::try_from(self.int_opt[9])?, MAType::try_from(self.int_opt[10])?, output_idx),
             FuncId::KURTOSIS => self.core.kurtosis_display_shift(self.int_opt[0], output_idx),
-            FuncId::KVO => self.core.kvo_display_shift(self.int_opt[0], self.int_opt[1], self.int_opt[2], output_idx),
             FuncId::LINEARREG => self.core.linearreg_display_shift(self.int_opt[0], output_idx),
             FuncId::LINEARREG_ANGLE => self.core.linearreg_angle_display_shift(self.int_opt[0], output_idx),
             FuncId::LINEARREG_INTERCEPT => self.core.linearreg_intercept_display_shift(self.int_opt[0], output_idx),
@@ -4399,6 +4414,7 @@ impl<'a> ParamHolder<'a> {
             FuncId::VWAP => self.core.vwap_display_shift(output_idx),
             FuncId::VWMA => self.core.vwma_display_shift(self.int_opt[0], output_idx),
             FuncId::WAD => self.core.wad_display_shift(output_idx),
+            FuncId::WAVETREND => self.core.wavetrend_display_shift(self.int_opt[0], self.int_opt[1], self.int_opt[2], output_idx),
             FuncId::WCLPRICE => self.core.wclprice_display_shift(output_idx),
             FuncId::WILLR => self.core.willr_display_shift(self.int_opt[0], output_idx),
             FuncId::WMA => self.core.wma_display_shift(self.int_opt[0], output_idx),
@@ -5942,6 +5958,18 @@ impl<'a> ParamHolder<'a> {
                     Err(e) => e,
                 }
             }
+            FuncId::DOSC => {
+                let i0 = self.real_in[0].ok_or(RetCode::InputNotAllInitialize)?;
+                if self.real_out[0].is_none() { return Err(RetCode::OutputNotAllInitialize); }
+                Self::check_range(start_idx, end_idx)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let res = self.core.dosc(start_idx, end_idx, i0, self.int_opt[0], self.int_opt[1], self.int_opt[2], self.int_opt[3], &mut *o0);
+                self.real_out[0] = Some(o0);
+                match res {
+                    Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
+                    Err(e) => e,
+                }
+            }
             FuncId::DPO => {
                 let i0 = self.real_in[0].ok_or(RetCode::InputNotAllInitialize)?;
                 if self.real_out[0].is_none() { return Err(RetCode::OutputNotAllInitialize); }
@@ -6337,23 +6365,6 @@ impl<'a> ParamHolder<'a> {
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.kurtosis(start_idx, end_idx, i0, self.int_opt[0], &mut *o0);
                 self.real_out[0] = Some(o0);
-                match res {
-                    Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
-                    Err(e) => e,
-                }
-            }
-            FuncId::KVO => {
-                let i0_1 = self.price[0][1].ok_or(RetCode::InputNotAllInitialize)?;
-                let i0_2 = self.price[0][2].ok_or(RetCode::InputNotAllInitialize)?;
-                let i0_3 = self.price[0][3].ok_or(RetCode::InputNotAllInitialize)?;
-                let i0_4 = self.price[0][4].ok_or(RetCode::InputNotAllInitialize)?;
-                if self.real_out[0].is_none() || self.real_out[1].is_none() { return Err(RetCode::OutputNotAllInitialize); }
-                Self::check_range(start_idx, end_idx)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
-                let mut o1 = self.real_out[1].take().ok_or(RetCode::OutputNotAllInitialize)?;
-                let res = self.core.kvo(start_idx, end_idx, i0_1, i0_2, i0_3, i0_4, self.int_opt[0], self.int_opt[1], self.int_opt[2], &mut *o0, &mut *o1);
-                self.real_out[0] = Some(o0);
-                self.real_out[1] = Some(o1);
                 match res {
                     Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
                     Err(e) => e,
@@ -7574,6 +7585,22 @@ impl<'a> ParamHolder<'a> {
                     Err(e) => e,
                 }
             }
+            FuncId::WAVETREND => {
+                let i0_1 = self.price[0][1].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_2 = self.price[0][2].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_3 = self.price[0][3].ok_or(RetCode::InputNotAllInitialize)?;
+                if self.real_out[0].is_none() || self.real_out[1].is_none() { return Err(RetCode::OutputNotAllInitialize); }
+                Self::check_range(start_idx, end_idx)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let mut o1 = self.real_out[1].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let res = self.core.wavetrend(start_idx, end_idx, i0_1, i0_2, i0_3, self.int_opt[0], self.int_opt[1], self.int_opt[2], &mut *o0, &mut *o1);
+                self.real_out[0] = Some(o0);
+                self.real_out[1] = Some(o1);
+                match res {
+                    Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
+                    Err(e) => e,
+                }
+            }
             FuncId::WCLPRICE => {
                 let i0_1 = self.price[0][1].ok_or(RetCode::InputNotAllInitialize)?;
                 let i0_2 = self.price[0][2].ok_or(RetCode::InputNotAllInitialize)?;
@@ -8080,6 +8107,17 @@ mod binder_tests {
 /// (embedded via `include_str!`), which C's `TA_FunctionDescriptionXML` also bakes.
 pub fn function_description_xml() -> &'static str {
     include_str!("ta_func_api.xml")
+}
+
+/// Rust analog of C's `TA_GetRuntimeInfo()`: a run-time state of this library, by key.
+/// The keys: <https://ta-lib.org/spec/abstract/#runtime-info>.
+///
+/// An unknown key is [`RetCode::BadParam`].
+pub fn get_runtime_info(key: &str) -> Result<i32, crate::RetCode> {
+    match key {
+        "vmath.transcendental" | "count.initialize" | "count.shutdown" => Ok(0),
+        _ => Err(crate::RetCode::BadParam),
+    }
 }
 
 #[cfg(test)]

@@ -34,10 +34,10 @@ toc: false
 <ul>
   <li>The lifecycle of the library (<a href="#init">TA_Initialize / TA_Shutdown</a>).</li>
   <li>The global settings (e.g. <a href="/api/unstable-period/">TA_SetUnstablePeriod</a>, <a href="/api/candle-settings/">TA_SetCandleSettings</a>).</li>
-  <li>Every <a href="#ta_func">TA function</a>, each processing a whole array of data at once.</li>
+  <li>Every <a href="#ta_func">TA function</a> in batch form, processing a whole array of data at once.</li>
+  <li>Every TA function in <a href="/api/stream/">streaming form</a>, processing a live feed one bar at a time without recomputing the history.</li>
   <li>An optional <a href="#abstract">Abstract API</a> for calling those functions dynamically.</li>
 </ul>
-<p>To process a live feed one bar at a time instead, see the companion <a href="/api/stream/">C/C++ Streaming API</a>.</p>
 <p>You must first <a href="/install/c/">install the C/C++ library</a>, which will provide all the shared/static libraries and headers needed to compile and link your program.</p>
 
 ## 2.0 How to add TA-Lib to your app {#build}
@@ -230,8 +230,7 @@ Error 2(TA_BAD_PARAM): A parameter is out of range
 
 ### 4.2 Numerical Stability {#numerical_stability}
 
-<a id="unstable_period"></a>
-<p>Your value changed when you fed the same bar more history? That is by design: recursive functions converge as history accumulates. See <a href="/api/unstable-period/">Unstable Period</a> for how to mitigate that.</p>
+<p><a id="unstable_period"></a>Your value changed when you fed the same bar more history? That is by design: recursive functions converge as history accumulates. See <a href="/api/unstable-period/">Unstable Period</a> for how to mitigate that.</p>
 <p>Rounding is a separate axis: floating-point error accumulates over a very long series, which is one reason a call is capped at <a href="#index_range">TA_INDEX_MAX</a>.</p>
 <p>Every function documentation page carries a <a href="/functions/stability">numerical-stability property</a>: how much the value at a given bar depends on where the series you passed in begins.</p>
 

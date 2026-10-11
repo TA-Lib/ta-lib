@@ -103,6 +103,7 @@ CVI                 Chaikin's Volatility
 DEMA                Double Exponential Moving Average
 DIV                 Vector Arithmetic Div
 DONCHIAN            Donchian Channels
+DOSC                Derivative Oscillator
 DPO                 Detrended Price Oscillator
 DX                  Directional Movement Index
 EFI                 Elder's Force Index
@@ -226,6 +227,7 @@ VORTEX              Vortex Indicator
 VWAP                Volume Weighted Average Price
 VWMA                Volume Weighted Moving Average
 WAD                 Williams' Accumulation/Distribution
+WAVETREND           WaveTrend Oscillator
 WCLPRICE            Weighted Close Price
 WILLR               Williams' %R
 WMA                 Weighted Moving Average

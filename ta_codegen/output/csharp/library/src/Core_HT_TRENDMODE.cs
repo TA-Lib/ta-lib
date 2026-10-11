@@ -505,7 +505,12 @@ public partial class Core
          /* Compute Dominant Cycle Phase */
          prevDCPhase = DCPhase;
          DCPeriod = smoothPeriod + 0.5;
-         DCPeriodInt = (int)DCPeriod;
+         /* A NaN period has no int value, and C leaves converting one undefined. */
+         if( DCPeriod >= 0.0 ) {
+            DCPeriodInt = (int)DCPeriod;
+         } else {
+            DCPeriodInt = 0;
+         }
          realPart = 0.0;
          imagPart = 0.0;
          /* idx is used to iterate for up to 50 of the last
@@ -548,7 +553,12 @@ public partial class Core
          leadSine = Math.Sin((DCPhase + 45) * deg2Rad);
          /* Compute Trendline */
          DCPeriod = smoothPeriod + 0.5;
-         DCPeriodInt = (int)DCPeriod;
+         /* A NaN period has no int value, and C leaves converting one undefined. */
+         if( DCPeriod >= 0.0 ) {
+            DCPeriodInt = (int)DCPeriod;
+         } else {
+            DCPeriodInt = 0;
+         }
          /* Average the RAW price over the dominant cycle period.
           * Unlike the DC-phase loop above (which reads the smoothPrice
           * circular buffer), the iTrend average reads the raw price,
@@ -934,7 +944,11 @@ public partial class Core
          smoothPeriod = Math.FusedMultiplyAdd(0.67, smoothPeriod, 0.33 * period);
          prevDCPhase = DCPhase;
          DCPeriod = smoothPeriod + 0.5;
-         DCPeriodInt = (int)DCPeriod;
+         if( DCPeriod >= 0.0 ) {
+            DCPeriodInt = (int)DCPeriod;
+         } else {
+            DCPeriodInt = 0;
+         }
          realPart = 0.0;
          imagPart = 0.0;
          idx = smoothPrice_Idx;
@@ -972,7 +986,11 @@ public partial class Core
          sine = Math.Sin(DCPhase * deg2Rad);
          leadSine = Math.Sin((DCPhase + 45) * deg2Rad);
          DCPeriod = smoothPeriod + 0.5;
-         DCPeriodInt = (int)DCPeriod;
+         if( DCPeriod >= 0.0 ) {
+            DCPeriodInt = (int)DCPeriod;
+         } else {
+            DCPeriodInt = 0;
+         }
          tempReal = 0.0;
          for( j = 0; j < 50; j += 1 ) {
             if( j < DCPeriodInt ) {
@@ -1614,7 +1632,12 @@ public partial class Core
          /* Compute Dominant Cycle Phase */
          prevDCPhase = DCPhase;
          DCPeriod = smoothPeriod + 0.5;
-         DCPeriodInt = (int)DCPeriod;
+         /* A NaN period has no int value, and C leaves converting one undefined. */
+         if( DCPeriod >= 0.0 ) {
+            DCPeriodInt = (int)DCPeriod;
+         } else {
+            DCPeriodInt = 0;
+         }
          realPart = 0.0;
          imagPart = 0.0;
          /* idx is used to iterate for up to 50 of the last
@@ -1657,7 +1680,12 @@ public partial class Core
          leadSine = Math.Sin((DCPhase + 45) * sp.deg2Rad);
          /* Compute Trendline */
          DCPeriod = smoothPeriod + 0.5;
-         DCPeriodInt = (int)DCPeriod;
+         /* A NaN period has no int value, and C leaves converting one undefined. */
+         if( DCPeriod >= 0.0 ) {
+            DCPeriodInt = (int)DCPeriod;
+         } else {
+            DCPeriodInt = 0;
+         }
          /* Average the RAW price over the dominant cycle period.
           * Unlike the DC-phase loop above (which reads the smoothPrice
           * circular buffer), the iTrend average reads the raw price,
@@ -1891,7 +1919,12 @@ public partial class Core
       /* Compute Dominant Cycle Phase */
       prevDCPhase = sp.DCPhase;
       DCPeriod = sp.smoothPeriod + 0.5;
-      DCPeriodInt = (int)DCPeriod;
+      /* A NaN period has no int value, and C leaves converting one undefined. */
+      if( DCPeriod >= 0.0 ) {
+         DCPeriodInt = (int)DCPeriod;
+      } else {
+         DCPeriodInt = 0;
+      }
       realPart = 0.0;
       imagPart = 0.0;
       /* idx is used to iterate for up to 50 of the last
@@ -1934,7 +1967,12 @@ public partial class Core
       sp.leadSine = Math.Sin((sp.DCPhase + 45) * sp.deg2Rad);
       /* Compute Trendline */
       DCPeriod = sp.smoothPeriod + 0.5;
-      DCPeriodInt = (int)DCPeriod;
+      /* A NaN period has no int value, and C leaves converting one undefined. */
+      if( DCPeriod >= 0.0 ) {
+         DCPeriodInt = (int)DCPeriod;
+      } else {
+         DCPeriodInt = 0;
+      }
       /* Average the RAW price over the dominant cycle period.
        * Unlike the DC-phase loop above (which reads the smoothPrice
        * circular buffer), the iTrend average reads the raw price,
@@ -2390,7 +2428,12 @@ public partial class Core
          /* Compute Dominant Cycle Phase */
          prevDCPhase = DCPhase;
          DCPeriod = smoothPeriod + 0.5;
-         DCPeriodInt = (int)DCPeriod;
+         /* A NaN period has no int value, and C leaves converting one undefined. */
+         if( DCPeriod >= 0.0 ) {
+            DCPeriodInt = (int)DCPeriod;
+         } else {
+            DCPeriodInt = 0;
+         }
          realPart = 0.0;
          imagPart = 0.0;
          /* idx is used to iterate for up to 50 of the last
@@ -2433,7 +2476,12 @@ public partial class Core
          leadSine = Math.Sin((DCPhase + 45) * deg2Rad);
          /* Compute Trendline */
          DCPeriod = smoothPeriod + 0.5;
-         DCPeriodInt = (int)DCPeriod;
+         /* A NaN period has no int value, and C leaves converting one undefined. */
+         if( DCPeriod >= 0.0 ) {
+            DCPeriodInt = (int)DCPeriod;
+         } else {
+            DCPeriodInt = 0;
+         }
          /* Average the RAW price over the dominant cycle period.
           * Unlike the DC-phase loop above (which reads the smoothPrice
           * circular buffer), the iTrend average reads the raw price,

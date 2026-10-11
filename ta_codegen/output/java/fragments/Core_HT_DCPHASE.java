@@ -415,7 +415,12 @@
          smoothPeriod = Math.fma(0.67, smoothPeriod, 0.33 * period);
          /* Compute Dominant Cycle Phase */
          DCPeriod = smoothPeriod + 0.5;
-         DCPeriodInt = (int)DCPeriod;
+         /* A NaN period has no int value, and C leaves converting one undefined. */
+         if( DCPeriod >= 0.0 ) {
+            DCPeriodInt = (int)DCPeriod;
+         } else {
+            DCPeriodInt = 0;
+         }
          realPart = 0.0;
          imagPart = 0.0;
          /* idx is used to iterate for up to 50 of the last
@@ -762,7 +767,11 @@
          period = Math.fma(0.2, period, 0.8 * tempReal);
          smoothPeriod = Math.fma(0.67, smoothPeriod, 0.33 * period);
          DCPeriod = smoothPeriod + 0.5;
-         DCPeriodInt = (int)DCPeriod;
+         if( DCPeriod >= 0.0 ) {
+            DCPeriodInt = (int)DCPeriod;
+         } else {
+            DCPeriodInt = 0;
+         }
          realPart = 0.0;
          imagPart = 0.0;
          idx = smoothPrice_Idx;
@@ -1318,7 +1327,12 @@
          smoothPeriod = Math.fma(0.67, smoothPeriod, 0.33 * period);
          /* Compute Dominant Cycle Phase */
          DCPeriod = smoothPeriod + 0.5;
-         DCPeriodInt = (int)DCPeriod;
+         /* A NaN period has no int value, and C leaves converting one undefined. */
+         if( DCPeriod >= 0.0 ) {
+            DCPeriodInt = (int)DCPeriod;
+         } else {
+            DCPeriodInt = 0;
+         }
          realPart = 0.0;
          imagPart = 0.0;
          /* idx is used to iterate for up to 50 of the last
@@ -1544,7 +1558,12 @@
       sp.smoothPeriod = Math.fma(0.67, sp.smoothPeriod, 0.33 * sp.period);
       /* Compute Dominant Cycle Phase */
       DCPeriod = sp.smoothPeriod + 0.5;
-      DCPeriodInt = (int)DCPeriod;
+      /* A NaN period has no int value, and C leaves converting one undefined. */
+      if( DCPeriod >= 0.0 ) {
+         DCPeriodInt = (int)DCPeriod;
+      } else {
+         DCPeriodInt = 0;
+      }
       realPart = 0.0;
       imagPart = 0.0;
       /* idx is used to iterate for up to 50 of the last
@@ -1957,7 +1976,12 @@
          smoothPeriod = Math.fma(0.67, smoothPeriod, 0.33 * period);
          /* Compute Dominant Cycle Phase */
          DCPeriod = smoothPeriod + 0.5;
-         DCPeriodInt = (int)DCPeriod;
+         /* A NaN period has no int value, and C leaves converting one undefined. */
+         if( DCPeriod >= 0.0 ) {
+            DCPeriodInt = (int)DCPeriod;
+         } else {
+            DCPeriodInt = 0;
+         }
          realPart = 0.0;
          imagPart = 0.0;
          /* idx is used to iterate for up to 50 of the last

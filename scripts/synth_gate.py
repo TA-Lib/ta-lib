@@ -286,9 +286,7 @@ def main():
         # Read off the per-language tally, one line per server:
         #   `  Java: 14 passed, 0 failed, 0 skipped`
         # Their sum is what the --function filter admitted, so a filter that
-        # matched nothing reads 0 and fails here. That matters more than it
-        # sounds: a `--function=` naming nothing exits 0 (the filter matches a
-        # GROUP TAG as well as a name), so the exit code alone is no evidence.
+        # admitted fewer than every fixture fails here.
         #
         # This replaces a parse of "Stream verify: N functions, M legs", which
         # `d8af8b5d9` removed when ta_regtest stopped printing its coverage and

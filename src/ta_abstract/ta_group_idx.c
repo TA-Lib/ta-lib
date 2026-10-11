@@ -145,6 +145,7 @@ extern const TA_FuncDef TA_DEF_CVI;
 extern const TA_FuncDef TA_DEF_DEMA;
 extern const TA_FuncDef TA_DEF_DIV;
 extern const TA_FuncDef TA_DEF_DONCHIAN;
+extern const TA_FuncDef TA_DEF_DOSC;
 extern const TA_FuncDef TA_DEF_DPO;
 extern const TA_FuncDef TA_DEF_DX;
 extern const TA_FuncDef TA_DEF_EFI;
@@ -268,6 +269,7 @@ extern const TA_FuncDef TA_DEF_VORTEX;
 extern const TA_FuncDef TA_DEF_VWAP;
 extern const TA_FuncDef TA_DEF_VWMA;
 extern const TA_FuncDef TA_DEF_WAD;
+extern const TA_FuncDef TA_DEF_WAVETREND;
 extern const TA_FuncDef TA_DEF_WCLPRICE;
 extern const TA_FuncDef TA_DEF_WILLR;
 extern const TA_FuncDef TA_DEF_WMA;
@@ -378,6 +380,7 @@ const TA_FuncDef *TA_PerGroupFunc_4[] = {
 &TA_DEF_COPPOCK,
 &TA_DEF_CRSI,
 &TA_DEF_CTI,
+&TA_DEF_DOSC,
 &TA_DEF_DPO,
 &TA_DEF_DX,
 &TA_DEF_ER,
@@ -419,6 +422,7 @@ const TA_FuncDef *TA_PerGroupFunc_4[] = {
 &TA_DEF_VHF,
 &TA_DEF_VORTEX,
 &TA_DEF_WAD,
+&TA_DEF_WAVETREND,
 &TA_DEF_WILLR,
 NULL };
 #define SIZE_GROUP_4 ((sizeof(TA_PerGroupFunc_4)/sizeof(const TA_FuncDef *))-1)

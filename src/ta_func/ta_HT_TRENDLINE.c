@@ -459,7 +459,14 @@ TA_LIB_API TA_RetCode TA_HT_TRENDLINE( int    startIdx,
       smoothPeriod = fma(0.67, smoothPeriod, 0.33 * period);
       /* Compute Trendline */
       DCPeriod = smoothPeriod + 0.5;
-      DCPeriodInt = (int)DCPeriod;
+      /* A NaN period has no int value, and C leaves converting one undefined. */
+      if( DCPeriod >= 0.0 )
+      {
+         DCPeriodInt = (int)DCPeriod;
+      } else 
+      {
+         DCPeriodInt = 0;
+      }
       /* Average the RAW price over the dominant cycle period
        * (Ehlers, "Rocket Science for Traders": the Instantaneous
        * Trendline sums Price — not SmoothPrice, which only feeds
@@ -809,7 +816,13 @@ TA_RetCode TA_S_HT_TRENDLINE( int    startIdx,
       period = fma(0.2, period, 0.8 * tempReal);
       smoothPeriod = fma(0.67, smoothPeriod, 0.33 * period);
       DCPeriod = smoothPeriod + 0.5;
-      DCPeriodInt = (int)DCPeriod;
+      if( DCPeriod >= 0.0 )
+      {
+         DCPeriodInt = (int)DCPeriod;
+      } else 
+      {
+         DCPeriodInt = 0;
+      }
       tempReal = 0.0;
       for( i = 0; i < 50; i += 1 )
       {
@@ -1072,7 +1085,14 @@ static TA_FMA_STEP_INLINE void TA_HT_TRENDLINE_StepImpl( struct TA_HT_TRENDLINE_
    sp->smoothPeriod = fma(0.67, sp->smoothPeriod, 0.33 * sp->period);
    /* Compute Trendline */
    DCPeriod = sp->smoothPeriod + 0.5;
-   DCPeriodInt = (int)DCPeriod;
+   /* A NaN period has no int value, and C leaves converting one undefined. */
+   if( DCPeriod >= 0.0 )
+   {
+      DCPeriodInt = (int)DCPeriod;
+   } else 
+   {
+      DCPeriodInt = 0;
+   }
    /* Average the RAW price over the dominant cycle period
     * (Ehlers, "Rocket Science for Traders": the Instantaneous
     * Trendline sums Price — not SmoothPrice, which only feeds
@@ -1481,7 +1501,14 @@ static TA_FMA_STEP_INLINE TA_RetCode TA_HT_TRENDLINE_OpenImpl( struct TA_HT_TREN
          smoothPeriod = fma(0.67, smoothPeriod, 0.33 * period);
          /* Compute Trendline */
          DCPeriod = smoothPeriod + 0.5;
-         DCPeriodInt = (int)DCPeriod;
+         /* A NaN period has no int value, and C leaves converting one undefined. */
+         if( DCPeriod >= 0.0 )
+         {
+            DCPeriodInt = (int)DCPeriod;
+         } else 
+         {
+            DCPeriodInt = 0;
+         }
          /* Average the RAW price over the dominant cycle period
           * (Ehlers, "Rocket Science for Traders": the Instantaneous
           * Trendline sums Price — not SmoothPrice, which only feeds
@@ -1899,7 +1926,14 @@ TA_LIB_API TA_RetCode TA_HT_TRENDLINE_Peek( const TA_HT_TRENDLINE_Stream *stream
    smoothPeriod = fma(0.67, smoothPeriod, 0.33 * period);
    /* Compute Trendline */
    DCPeriod = smoothPeriod + 0.5;
-   DCPeriodInt = (int)DCPeriod;
+   /* A NaN period has no int value, and C leaves converting one undefined. */
+   if( DCPeriod >= 0.0 )
+   {
+      DCPeriodInt = (int)DCPeriod;
+   } else 
+   {
+      DCPeriodInt = 0;
+   }
    /* Average the RAW price over the dominant cycle period
     * (Ehlers, "Rocket Science for Traders": the Instantaneous
     * Trendline sums Price — not SmoothPrice, which only feeds

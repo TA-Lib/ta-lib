@@ -1202,6 +1202,17 @@ unsigned int TA_DONCHIAN_FramePPLB( const TA_ParamHolderPriv *params )
 int TA_DONCHIAN_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
 ;
 
+TA_RetCode TA_DOSC_FramePP( const TA_ParamHolderPriv *params,
+                           int            startIdx,
+                           int            endIdx,
+                           int           *outBegIdx,
+                           int           *outNBElement )
+;
+unsigned int TA_DOSC_FramePPLB( const TA_ParamHolderPriv *params )
+;
+int TA_DOSC_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+;
+
 TA_RetCode TA_DPO_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
                            int            endIdx,
@@ -2553,6 +2564,17 @@ TA_RetCode TA_WAD_FramePP( const TA_ParamHolderPriv *params,
 unsigned int TA_WAD_FramePPLB( const TA_ParamHolderPriv *params )
 ;
 int TA_WAD_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+;
+
+TA_RetCode TA_WAVETREND_FramePP( const TA_ParamHolderPriv *params,
+                           int            startIdx,
+                           int            endIdx,
+                           int           *outBegIdx,
+                           int           *outNBElement )
+;
+unsigned int TA_WAVETREND_FramePPLB( const TA_ParamHolderPriv *params )
+;
+int TA_WAVETREND_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
 ;
 
 TA_RetCode TA_WCLPRICE_FramePP( const TA_ParamHolderPriv *params,

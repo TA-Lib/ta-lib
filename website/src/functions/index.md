@@ -69,6 +69,7 @@ All technical-analysis functions, grouped by category. Each page documents the f
 - [COPPOCK](/functions/coppock.md) — Coppock Curve
 - [CRSI](/functions/crsi.md) — Connors Relative Strength Index
 - [CTI](/functions/cti.md) — Correlation Trend Indicator
+- [DOSC](/functions/dosc.md) — Derivative Oscillator
 - [DPO](/functions/dpo.md) — Detrended Price Oscillator
 - [DX](/functions/dx.md) — Directional Movement Index
 - [ER](/functions/er.md) — Kaufman Efficiency Ratio
@@ -110,6 +111,7 @@ All technical-analysis functions, grouped by category. Each page documents the f
 - [VHF](/functions/vhf.md) — Vertical Horizontal Filter
 - [VORTEX](/functions/vortex.md) — Vortex Indicator
 - [WAD](/functions/wad.md) — Williams' Accumulation/Distribution
+- [WAVETREND](/functions/wavetrend.md) — WaveTrend Oscillator
 - [WILLR](/functions/willr.md) — Williams' %R
 
 ## Overlap Studies

@@ -1,0 +1,40 @@
+name: DOSC
+group: Momentum Indicators
+hint: Derivative Oscillator
+flags: [stream]
+inputs:
+  - name: inReal
+    type: real
+optional_inputs:
+  - name: optInTimePeriod
+    type: integer
+    display_name: Time Period
+    hint: Period of the RSI
+    range: [2, 100000]
+    default: 14
+    suggested: [4, 200, 1]
+  - name: optInFirstPeriod
+    type: integer
+    display_name: First Smoothing Period
+    hint: Period of the first smoothing, applied to the RSI
+    range: [2, 100000]
+    default: 5
+    suggested: [2, 50, 1]
+  - name: optInSecondPeriod
+    type: integer
+    display_name: Second Smoothing Period
+    hint: Period of the second smoothing, applied to the first
+    range: [2, 100000]
+    default: 3
+    suggested: [2, 50, 1]
+  - name: optInSignalPeriod
+    type: integer
+    display_name: Signal Period
+    hint: Period of the simple average subtracted from the smoothed line
+    range: [2, 100000]
+    default: 9
+    suggested: [2, 50, 1]
+outputs:
+  - name: outReal
+    type: real
+    flags: [histogram]

@@ -358,6 +358,7 @@ typedef enum
   TA_CODEGEN_RIDE_MISMATCH           = 1119,
   TA_CODEGEN_RIDE_VACUOUS            = 1120,
   TA_CODEGEN_TIER_SERIES_TOO_SHORT   = 1121,
+  TA_CODEGEN_RUNTIME_INFO            = 1122,
 
   /* Abstract codegen test errors */
   TA_ABSTRACT_LOOKBACK_MISMATCH      = 1200,
@@ -460,8 +461,7 @@ typedef enum
   TA_STREAM_SHORT_HISTORY_CONTROL    = 1598,
   TA_STREAM_SHORT_HISTORY_VACUOUS    = 1599,
 
-  /* --function= named something no test group covers, on a run that had
-   * nothing else to do. Reported rather than passed silently. */
+  /* An entry of the --function= list matched nothing the run could select. */
   TA_REGTEST_FILTER_MATCHED_NOTHING  = 1600,
 
   /* Streaming empty-history rejection (rule rS1 / TA_OUT_OF_RANGE_START_INDEX). */
@@ -608,6 +608,10 @@ typedef enum
   /* The Auto levels of the unstable period: counts and two-start agreement. */
   TA_AUTO_STABILIZATION_FAIL                = 1720,
   TA_AUTO_STABILIZATION_VACUOUS             = 1721,
+
+  /* (#540) Transcendental outputs against their committed values. */
+  TA_TRANSCENDENTAL_REF_FAIL         = 1722,
+  TA_TRANSCENDENTAL_REF_VACUOUS      = 1723,
 
   /* Error code related to bug fix documentented on SourceForge. */
   TA_TEST_FAIL_BUG1359452_1  = 2000,
