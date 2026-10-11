@@ -197,5 +197,9 @@ int ema_lookback(int optInTimePeriod)
 - **`src/tools/ta_regtest/ta_test_func/test_auto_stabilization.c`** keeps its own copy of
   every rule and its own list of owners: add the id to both, and a vector for each real
   parameter the rule reads. A bare `bin/ta_regtest` runs it.
+- **`docs/studies/auto-stabilization/census_table.tsv`** holds the function's census rows,
+  with its lookback and counts. No PR check reads it: a new or re-sized rule fails the
+  nightly `scripts/auto_stabilization_sample.py` until the table is printed again by its
+  `--calibrate`, from a full census of both seeds.
 - **The issue the function was specified on** gets the `rules_vs_need.py` lines and, for
   a proven rule, the `rules_check.py` lines.

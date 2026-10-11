@@ -182,7 +182,8 @@ static void trOneFunction( const TA_FuncInfo *funcInfo, void *opaque )
    }
    if( outSeen != (1u << funcInfo->nbOutput) - 1 )
    {
-      printf( "\n  transcendental reference: %s is flagged and has an output with no committed value", funcInfo->name );
+      printf( "\n  transcendental reference: %s is flagged and has an output with no committed value "
+              "(TA_TRANSCENDENTAL_REF=print writes the rows)", funcInfo->name );
       trNbFail++;
    }
 }
