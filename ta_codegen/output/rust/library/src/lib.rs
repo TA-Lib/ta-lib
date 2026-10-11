@@ -241,6 +241,7 @@
 //! * [`VHF`](Core::vhf) — Vertical Horizontal Filter
 //! * [`VORTEX`](Core::vortex) — Vortex Indicator
 //! * [`WAD`](Core::wad) — Williams' Accumulation/Distribution
+//! * [`WAVETREND`](Core::wavetrend) — WaveTrend Oscillator
 //! * [`WILLR`](Core::willr) — Williams' %R
 //!
 //! ## Overlap Studies (32)
