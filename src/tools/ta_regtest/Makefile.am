@@ -78,6 +78,7 @@ ta_regtest_SOURCES = ta_regtest.c \
 	ta_test_func/test_eri.c \
 	ta_test_func/test_cumsum.c \
 	ta_test_func/test_zlema.c \
+	ta_test_func/test_zigzag.c \
 	ta_test_func/test_wavetrend.c \
 	ta_test_func/test_vhf.c \
 	ta_test_func/test_rvi.c \

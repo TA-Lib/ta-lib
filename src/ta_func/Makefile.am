@@ -237,4 +237,5 @@ libta_func_la_SOURCES = ta_utility.c \
 	ta_WCLPRICE.c \
 	ta_WILLR.c \
 	ta_WMA.c \
+	ta_ZIGZAG.c \
 	ta_ZLEMA.c

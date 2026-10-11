@@ -40,6 +40,101 @@ pub fn recurrent_select_targets(body: &[Statement]) -> HashSet<String> {
     out
 }
 
+/// Targets of a running minimum or maximum, `x = x < y ? x : y` or
+/// `x = x > y ? x : y`, that only ever read the `x` an earlier pass of their
+/// loop left. That select alone carries its latency from bar to bar. A clamp
+/// of a value the same pass computed does not, and what it selects may be data
+/// whose zero sign a test pins, so a doubt is a refusal: the select must sit in
+/// a loop, and no statement that can run in the same pass may touch `x`, other
+/// than a running extreme of it.
+///
+/// Keyed by name, because the stream tier renders a rewritten copy of the
+/// analysed body: one select of a name refused keeps every one a ternary.
+#[must_use]
+pub fn running_extreme_targets(body: &[Statement]) -> HashSet<String> {
+    let (mut carried, mut refused) = (HashSet::new(), HashSet::new());
+    running_extremes(body, None, &mut carried, &mut refused);
+    carried.retain(|name| !refused.contains(name));
+    carried
+}
+
+/// `beside` is `None` outside every loop, and inside one the statements of the
+/// pass that run on the way to, or after, `stmts`.
+fn running_extremes<'a>(
+    stmts: &'a [Statement],
+    beside: Option<&[&'a Statement]>,
+    carried: &mut HashSet<String>,
+    refused: &mut HashSet<String>,
+) {
+    for (i, s) in stmts.iter().enumerate() {
+        let mut around: Vec<&Statement> = beside.map(<[_]>::to_vec).unwrap_or_default();
+        around.extend(stmts.iter().enumerate().filter(|(j, _)| *j != i).map(|(_, o)| o));
+        if let Statement::Assign { target: Expr::Var(t), value, compound: false } = s {
+            if running_extreme_of(t, value).is_some() {
+                if beside.is_some() && !around.iter().any(|o| touches(o, t)) {
+                    carried.insert(t.clone());
+                } else {
+                    refused.insert(t.clone());
+                }
+            }
+        }
+        match s {
+            Statement::While { body, .. } | Statement::DoWhile { body, .. } | Statement::For { body, .. } => {
+                running_extremes(body, Some(&[]), carried, refused);
+            }
+            Statement::ForC { init, update, body, .. } => {
+                running_extremes(body, Some(&[update.as_ref()]), carried, refused);
+                for part in [init, update] {
+                    running_extremes(std::slice::from_ref(part.as_ref()), None, carried, refused);
+                }
+            }
+            _ => {
+                for b in nested_bodies(s).0 {
+                    running_extremes(b, beside.map(|_| around.as_slice()), carried, refused);
+                }
+            }
+        }
+    }
+}
+
+/// Whether `s`, or anything nested in it, may give `name` a value: an
+/// assignment other than a running extreme of it, a declaration, or an
+/// expression statement that so much as mentions it.
+fn touches(s: &Statement, name: &str) -> bool {
+    let own = match s {
+        Statement::Assign { target: Expr::Var(t), value, compound } => {
+            t == name && (*compound || running_extreme_of(name, value).is_none())
+        }
+        Statement::VarDecl { name: declared, .. } => declared == name,
+        Statement::Expr(e) => {
+            let mut mentioned = false;
+            crate::streaming::walk_expr(e, &mut |x| {
+                mentioned |= matches!(x, Expr::Var(n) if n == name);
+            });
+            mentioned
+        }
+        _ => false,
+    };
+    own || nested_bodies(s).0.iter().any(|b| b.iter().any(|n| touches(n, name)))
+}
+
+/// For `x < y ? x : y` and `x > y ? x : y` in that operand order, with `y`
+/// free of side effects: whether it is the maximum, and `y`.
+pub(crate) fn running_extreme_of<'e>(target: &str, value: &'e Expr) -> Option<(bool, &'e Expr)> {
+    let Expr::Ternary(cond, then_expr, else_expr) = value else { return None };
+    let Expr::BinOp(l, op, r) = cond.as_ref() else { return None };
+    let is_max = match op {
+        BinOp::Less => false,
+        BinOp::Greater => true,
+        _ => return None,
+    };
+    let is_target = |e: &Expr| matches!(e, Expr::Var(n) if n == target);
+    let (l, r) = (l.as_ref(), r.as_ref());
+    let pure = !crate::streaming::expr_effect(r, &|n| super::builtins::MathFn::from_name(n).is_some());
+    (pure && is_target(l) && is_target(then_expr) && crate::streaming::exprs_equal(else_expr, r))
+        .then_some((is_max, r))
+}
+
 /// Name -> whether its dependence on the planted select passed through
 /// arithmetic.
 type Taint = HashMap<String, bool>;

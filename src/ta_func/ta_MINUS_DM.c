@@ -259,7 +259,7 @@ TA_LIB_API TA_RetCode TA_MINUS_DM( int    startIdx,
       tempReal = diffM - diffP;
       minusDM1 = (tempReal > 0.0) ? diffM : 0.0;
       tempReal = prevMinusDM + minusDM1;
-      prevMinusDM = (prevMinusDM > tempReal) ? prevMinusDM : tempReal;
+      prevMinusDM = TA_MAX_GT(prevMinusDM, tempReal);
    }
    /* Process subsequent DM */
    /* Skip the unstable period. */
@@ -401,7 +401,7 @@ TA_RetCode TA_S_MINUS_DM( int    startIdx,
       tempReal = diffM - diffP;
       minusDM1 = (tempReal > 0.0) ? diffM : 0.0;
       tempReal = prevMinusDM + minusDM1;
-      prevMinusDM = (prevMinusDM > tempReal) ? prevMinusDM : tempReal;
+      prevMinusDM = TA_MAX_GT(prevMinusDM, tempReal);
    }
    i = lookbackTotal - (optInTimePeriod - 1);
    while( i-- != 0 )
@@ -789,7 +789,7 @@ static TA_RetCode TA_MINUS_DM_OpenImpl( struct TA_MINUS_DM_Stream **stream, cons
          tempReal = diffM - diffP;
          minusDM1 = (tempReal > 0.0) ? diffM : 0.0;
          tempReal = prevMinusDM + minusDM1;
-         prevMinusDM = (prevMinusDM > tempReal) ? prevMinusDM : tempReal;
+         prevMinusDM = TA_MAX_GT(prevMinusDM, tempReal);
       }
       /* Process subsequent DM */
       /* Skip the unstable period. */

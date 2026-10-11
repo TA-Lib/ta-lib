@@ -274,6 +274,7 @@ extern const TA_FuncDef TA_DEF_WAVETREND;
 extern const TA_FuncDef TA_DEF_WCLPRICE;
 extern const TA_FuncDef TA_DEF_WILLR;
 extern const TA_FuncDef TA_DEF_WMA;
+extern const TA_FuncDef TA_DEF_ZIGZAG;
 extern const TA_FuncDef TA_DEF_ZLEMA;
 
 const TA_FuncDef *TA_PerGroupFunc_0[] = {
@@ -343,6 +344,7 @@ const TA_FuncDef *TA_PerGroupFunc_2[] = {
 &TA_DEF_VIDYA,
 &TA_DEF_VWMA,
 &TA_DEF_WMA,
+&TA_DEF_ZIGZAG,
 &TA_DEF_ZLEMA,
 NULL };
 #define SIZE_GROUP_2 ((sizeof(TA_PerGroupFunc_2)/sizeof(const TA_FuncDef *))-1)

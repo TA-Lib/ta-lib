@@ -428,24 +428,145 @@ fn c_address_of_renders_ampersand() {
 
 #[test]
 fn c_ternary_expression() {
-    let stmt = ir::Statement::Assign {
+    let var = |n: &str| Box::new(ir::Expr::Var(n.to_string()));
+    let rendered = render_c_stmt(&ir::Statement::Assign {
         target: ir::Expr::Var("x".to_string()),
         value: ir::Expr::Ternary(
-            Box::new(ir::Expr::BinOp(
-                Box::new(ir::Expr::Var("a".to_string())),
-                ir::BinOp::Greater,
-                Box::new(ir::Expr::Var("b".to_string())),
-            )),
-            Box::new(ir::Expr::Var("a".to_string())),
-            Box::new(ir::Expr::Var("b".to_string())),
+            Box::new(ir::Expr::BinOp(var("a"), ir::BinOp::Greater, var("b"))),
+            var("a"),
+            var("b"),
         ),
         compound: false,
-    };
-    let rendered = render_c_stmt(&stmt);
+    });
     assert!(
         rendered.contains("?") && rendered.contains(":"),
         "C ternary should render as (cond) ? (then) : (else): {rendered}"
     );
+}
+
+/// What the analysis keeps of `stmts`, the statements of one pass of a `while`
+/// when `looped`.
+fn running_targets(stmts: Vec<ir::Statement>, looped: bool) -> Vec<String> {
+    let body = if looped {
+        vec![ir::Statement::While { condition: ir::Expr::Var("more".to_string()), body: stmts }]
+    } else {
+        stmts
+    };
+    let mut names: Vec<String> =
+        backends::select_chain::running_extreme_targets(&body).into_iter().collect();
+    names.sort();
+    names
+}
+
+/// The C macro for a running extreme is the target's own instruction on ARM64,
+/// which can answer a pair of zeros with the other sign than the ternary. So
+/// it may reach only a value the previous pass left, and only in the operand
+/// order whose ternary the macro falls back to.
+#[test]
+fn a_running_extreme_is_only_the_select_that_reads_the_previous_pass() {
+    let var = |n: &str| Box::new(ir::Expr::Var(n.to_string()));
+    let select = |l: &str, op: ir::BinOp, r: &str, t: &str, e: &str| ir::Statement::Assign {
+        target: ir::Expr::Var("x".to_string()),
+        value: ir::Expr::Ternary(Box::new(ir::Expr::BinOp(var(l), op, var(r))), var(t), var(e)),
+        compound: false,
+    };
+    let min = || select("x", ir::BinOp::Less, "y", "x", "y");
+    let assign = |target: &str, from: &str| ir::Statement::Assign {
+        target: ir::Expr::Var(target.to_string()),
+        value: ir::Expr::Var(from.to_string()),
+        compound: false,
+    };
+    let branch = |then_body: Vec<ir::Statement>, else_body: Vec<ir::Statement>| ir::Statement::If {
+        condition: ir::Expr::Var("c".to_string()),
+        then_body,
+        else_body,
+        cond_comments: Vec::new(),
+    };
+    let x = vec!["x".to_string()];
+    let none: Vec<String> = Vec::new();
+
+    assert_eq!(running_targets(vec![min()], true), x);
+    assert_eq!(running_targets(vec![select("x", ir::BinOp::Greater, "y", "x", "y")], true), x);
+    assert_eq!(running_targets(vec![assign("other", "y"), min()], true), x);
+    // One arm restarts the extreme and the other extends it.
+    assert_eq!(running_targets(vec![branch(vec![assign("x", "y")], vec![min()])], true), x);
+    // The loop's own pass is what counts, not the pass of a loop around it.
+    assert_eq!(
+        running_targets(
+            vec![
+                assign("x", "fresh"),
+                ir::Statement::While { condition: ir::Expr::Var("inner".to_string()), body: vec![min()] },
+            ],
+            true
+        ),
+        x
+    );
+
+    // A clamp of this pass's own value, wherever and however the pass may set it.
+    assert_eq!(running_targets(vec![assign("x", "fresh"), min()], true), none);
+    assert_eq!(running_targets(vec![min(), assign("x", "fresh")], true), none);
+    assert_eq!(running_targets(vec![branch(vec![assign("x", "a")], vec![]), min()], true), none);
+    assert_eq!(
+        running_targets(vec![assign("x", "fresh"), branch(vec![min()], vec![])], true),
+        none
+    );
+    assert_eq!(
+        running_targets(
+            vec![
+                ir::Statement::VarDecl {
+                    var_type: ir::VarType::Real,
+                    name: "x".to_string(),
+                    init: Some(ir::Expr::Var("fresh".to_string())),
+                },
+                min(),
+            ],
+            true
+        ),
+        none
+    );
+    assert_eq!(
+        running_targets(
+            vec![
+                ir::Statement::Expr(ir::Expr::FuncCall("fill".to_string(), vec![*var("x")])),
+                min(),
+            ],
+            true
+        ),
+        none
+    );
+    // No loop, nothing carried; and one such select refuses the name everywhere.
+    assert_eq!(running_targets(vec![min()], false), none);
+    assert_eq!(
+        running_targets(
+            vec![
+                min(),
+                ir::Statement::While { condition: ir::Expr::Var("more".to_string()), body: vec![min()] },
+            ],
+            false
+        ),
+        none
+    );
+    // Any other operand order or comparison.
+    assert_eq!(running_targets(vec![select("x", ir::BinOp::Less, "y", "y", "x")], true), none);
+    assert_eq!(running_targets(vec![select("y", ir::BinOp::Greater, "x", "x", "y")], true), none);
+    assert_eq!(running_targets(vec![select("x", ir::BinOp::LessEq, "y", "x", "y")], true), none);
+}
+
+/// The two shipped shapes, on the emitted C: ZIGZAG's pivot is carried from
+/// bar to bar, PERCENTILE's clamp is of a value computed in the same bar and
+/// its tests pin the sign of a zero result.
+#[test]
+fn c_running_extreme_macro_reaches_zigzag_and_not_percentile() {
+    let enums = common::load_enums();
+    let (zigzag, _) = common::load_indicator("zigzag");
+    let c = common::generate_all(&zigzag, &enums).c;
+    assert!(c.contains("pivot = TA_MIN_LT(pivot, inLow[today]);"), "batch pivot minimum");
+    assert!(c.contains("pivot = TA_MAX_GT(pivot, inHigh[today]);"), "batch pivot maximum");
+    assert!(c.contains("sp->pivot = TA_MIN_LT(sp->pivot, inLow);"), "stream pivot minimum");
+    let (percentile, _) = common::load_indicator("percentile");
+    let c = common::generate_all(&percentile, &enums).c;
+    assert!(c.contains("? result : hiV"), "PERCENTILE's clamp is still in the body");
+    assert!(!c.contains("TA_MIN_LT(") && !c.contains("TA_MAX_GT("), "and is still a ternary");
 }
 
 // ---------------------------------------------------------------------------

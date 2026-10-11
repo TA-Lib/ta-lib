@@ -1743,7 +1743,14 @@ impl StatementEmitter for CStmt<'_> {
             }
         }
         let target_str = render_assign_target(target, self.ctx, self.registry, self.helpers);
-        let value_str = render_expr(&new_value, self.ctx, self.registry, self.helpers);
+        let value_str = match running_min_max(target, &new_value, self.ctx) {
+            Some((name, r)) => format!(
+                "{name}({}, {})",
+                target_str.trim_end(),
+                render_expr(r, self.ctx, self.registry, self.helpers)
+            ),
+            None => render_expr(&new_value, self.ctx, self.registry, self.helpers),
+        };
         if let Some(base) = nullable_target_base(target, self.ctx.nullable_outputs) {
             // Writing into a nullable output — guard it so a NULL (discarded)
             // output is skipped. The `outIdx` advance rides the non-nullable
@@ -2429,6 +2436,25 @@ impl ExprEmitter for CExpr<'_> {
         let e = if matches!(else_expr, Expr::Ternary(..)) { format!("({e})") } else { e };
         format!("{c} ? {t} : {e}")
     }
+}
+
+/// A running minimum or maximum the body carries from bar to bar, which
+/// `ta_utility.h` spells as the target's own instruction where it has one.
+/// Keep the operands in the input's order: the macro's fallback is the same
+/// ternary, and another order is other object code on every target it does
+/// nothing for.
+fn running_min_max<'e>(
+    target: &Expr,
+    value: &'e Expr,
+    ctx: &CRenderCtx,
+) -> Option<(&'static str, &'e Expr)> {
+    let Expr::Var(name) = target else { return None };
+    let carried = ctx.fma.is_some_and(|f| f.running_extreme_targets.contains(fma::stream_base(name)));
+    if !carried {
+        return None;
+    }
+    let (is_max, r) = super::select_chain::running_extreme_of(name, value)?;
+    Some((if is_max { "TA_MAX_GT" } else { "TA_MIN_LT" }, r))
 }
 
 fn render_expr(

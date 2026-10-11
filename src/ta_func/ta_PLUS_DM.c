@@ -261,7 +261,7 @@ TA_LIB_API TA_RetCode TA_PLUS_DM( int    startIdx,
       tempReal = diffP - diffM;
       plusDM1 = (tempReal > 0.0) ? diffP : 0.0;
       tempReal = prevPlusDM + plusDM1;
-      prevPlusDM = (prevPlusDM > tempReal) ? prevPlusDM : tempReal;
+      prevPlusDM = TA_MAX_GT(prevPlusDM, tempReal);
    }
    /* Process subsequent DM */
    /* Skip the unstable period. */
@@ -403,7 +403,7 @@ TA_RetCode TA_S_PLUS_DM( int    startIdx,
       tempReal = diffP - diffM;
       plusDM1 = (tempReal > 0.0) ? diffP : 0.0;
       tempReal = prevPlusDM + plusDM1;
-      prevPlusDM = (prevPlusDM > tempReal) ? prevPlusDM : tempReal;
+      prevPlusDM = TA_MAX_GT(prevPlusDM, tempReal);
    }
    i = lookbackTotal - (optInTimePeriod - 1);
    while( i-- != 0 )
@@ -791,7 +791,7 @@ static TA_RetCode TA_PLUS_DM_OpenImpl( struct TA_PLUS_DM_Stream **stream, const 
          tempReal = diffP - diffM;
          plusDM1 = (tempReal > 0.0) ? diffP : 0.0;
          tempReal = prevPlusDM + plusDM1;
-         prevPlusDM = (prevPlusDM > tempReal) ? prevPlusDM : tempReal;
+         prevPlusDM = TA_MAX_GT(prevPlusDM, tempReal);
       }
       /* Process subsequent DM */
       /* Skip the unstable period. */
