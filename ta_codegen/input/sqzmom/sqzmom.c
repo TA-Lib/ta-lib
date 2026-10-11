@@ -12,6 +12,7 @@
  *  -------------------------------------------------------------------
  *  100826 KL,CC  Creation (#488).
  *  101126 MF,CC  Reject factors out of order (#488).
+ *  101126 MF,CC  DEV in one loop instead of three calls (#488).
  */
 
 int sqzmom_lookback( int optInBBPeriod,
@@ -98,16 +99,11 @@ TA_RetCode sqzmom(int startIdx, int endIdx,
     * it is what bbands' own stream tier composes; taking the pair here keeps
     * every optional argument a parameter or a literal.
     *
-    * DEV is built from shipped functions too, not in a loop of its own:
-    * medprice is (a+b)/2 over any two series, and sma at a period of 1 is the
-    * identity -- a one-element sum divided by 1.0, exact for every double --
-    * which is what puts the close into the staged range's own indexing so that
-    * sub can take the difference.
-    *
     * Two chains need their input one window earlier than the first output bar:
     * sma(k) over TR, and linearreg(k) over DEV. Both windows are k-1 long, so
     * one staged range serves both.
     */
+
    /* A channel wider than the one it should nest in breaks the ladder: a bar
     * could then be inside "narrow" and outside "normal". Ties are allowed, and
     * wide == normal is the classic on/off/none squeeze.
@@ -191,7 +187,7 @@ TA_RetCode sqzmom(int startIdx, int endIdx,
     * midprice is bit-identical to donchian's middle band.
     */
    retCode = midprice( stageIdx, endIdx, inHigh, inLow, optInKCPeriod,
-      &tempBegIdx, &tempNbElement, tempDev );
+      outBegIdx, outNBElement, tempDev );
    if( retCode != TA_SUCCESS )
    {
       free( tempDev );
@@ -218,51 +214,12 @@ TA_RetCode sqzmom(int startIdx, int endIdx,
       return retCode;
    }
 
-   /* tempDev becomes (DMID + KCM)/2 in place: medprice reads and writes the same
-    * index, so the overwrite is safe.
+   /* DEV, over the staged range. The close is read at the index midprice
+    * reported for the range, which is what lets this loop stream: keep
+    * outBegIdx as midprice's receiver, and reuse it for no call above here.
     */
-   retCode = medprice( 0, stageLen-1, tempDev, tempWork,
-      &tempBegIdx, &tempNbElement, tempDev );
-   if( retCode != TA_SUCCESS )
-   {
-      free( tempDev );
-      free( tempWork );
-      free( tempKCM );
-      free( tempMid );
-      free( tempSD );
-      *outBegIdx = 0;
-      *outNBElement = 0;
-      return retCode;
-   }
-
-   /* The close over the staged range, in that range's own indexing. */
-   retCode = sma( stageIdx, endIdx, inClose, 1,
-      &tempBegIdx, &tempNbElement, tempWork );
-   if( retCode != TA_SUCCESS )
-   {
-      free( tempDev );
-      free( tempWork );
-      free( tempKCM );
-      free( tempMid );
-      free( tempSD );
-      *outBegIdx = 0;
-      *outNBElement = 0;
-      return retCode;
-   }
-
-   retCode = sub( 0, stageLen-1, tempWork, tempDev,
-      &tempBegIdx, &tempNbElement, tempDev );
-   if( retCode != TA_SUCCESS )
-   {
-      free( tempDev );
-      free( tempWork );
-      free( tempKCM );
-      free( tempMid );
-      free( tempSD );
-      *outBegIdx = 0;
-      *outNBElement = 0;
-      return retCode;
-   }
+   for( i = 0; i < stageLen; i++ )
+      tempDev[i] = inClose[*outBegIdx+i] - (tempDev[i]+tempWork[i])/2.0;
 
    /* The compression band: the simple mean of the true range, not an ATR.
     * trange's own lookback is 1, and stageIdx is at least 1 because the

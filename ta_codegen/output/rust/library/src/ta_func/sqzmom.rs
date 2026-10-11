@@ -54,6 +54,7 @@
  *  -------------------------------------------------------------------
  *  100826 KL,CC  Creation (#488).
  *  101126 MF,CC  Reject factors out of order (#488).
+ *  101126 MF,CC  DEV in one loop instead of three calls (#488).
  */
 
 // Import types from parent module
@@ -330,12 +331,6 @@ impl Core {
         // it is what bbands' own stream tier composes; taking the pair here keeps
         // every optional argument a parameter or a literal.
         //
-        // DEV is built from shipped functions too, not in a loop of its own:
-        // medprice is (a+b)/2 over any two series, and sma at a period of 1 is the
-        // identity -- a one-element sum divided by 1.0, exact for every double --
-        // which is what puts the close into the staged range's own indexing so that
-        // sub can take the difference.
-        //
         // Two chains need their input one window earlier than the first output bar:
         // sma(k) over TR, and linearreg(k) over DEV. Both windows are k-1 long, so
         // one staged range serves both.
@@ -359,6 +354,7 @@ impl Core {
             (*outNBElement) = 0;
             return RetCode::Success;
         }
+        let inClose = &inClose[..=endIdx];
         n = endIdx - startIdx + 1;
         stageLookback = self.linearreg_lookback(optInKCPeriod).unwrap_or(usize::MAX);
         stageIdx = startIdx - stageLookback;
@@ -371,50 +367,49 @@ impl Core {
         // The momentum anchor: the Donchian midpoint and the Keltner centre, averaged.
         // midprice is bit-identical to donchian's middle band.
         let _xr0 = match self.midprice(stageIdx, endIdx, inHigh, inLow, optInKCPeriod, &mut tempDev[..]) { Ok(_r) => _r, Err(_e) => return _e };
-        tempBegIdx = _xr0.beg_idx;
-        tempNbElement = _xr0.count;
+        (*outBegIdx) = _xr0.beg_idx;
+        (*outNBElement) = _xr0.count;
         retCode = RetCode::Success;
         let _xr1 = match self.sma(stageIdx, endIdx, inClose, optInKCPeriod, &mut tempWork[..]) { Ok(_r) => _r, Err(_e) => return _e };
         tempBegIdx = _xr1.beg_idx;
         tempNbElement = _xr1.count;
         retCode = RetCode::Success;
-        // tempDev becomes (DMID + KCM)/2 in place: medprice reads and writes the same
-        // index, so the overwrite is safe.
-        let _xr2 = match ({ let mut _tempDev_alias: Vec<f64> = vec![0.0_f64; tempDev.len()]; let _rc = self.medprice(0, stageLen - 1, &tempDev, &tempWork, &mut _tempDev_alias[..]); std::mem::swap(&mut tempDev, &mut _tempDev_alias); _rc }) { Ok(_r) => _r, Err(_e) => return _e };
-        tempBegIdx = _xr2.beg_idx;
-        tempNbElement = _xr2.count;
-        retCode = RetCode::Success;
-        // The close over the staged range, in that range's own indexing.
-        let _xr3 = match self.sma(stageIdx, endIdx, inClose, 1, &mut tempWork[..]) { Ok(_r) => _r, Err(_e) => return _e };
-        tempBegIdx = _xr3.beg_idx;
-        tempNbElement = _xr3.count;
-        retCode = RetCode::Success;
-        let _xr4 = match ({ let mut _tempDev_alias: Vec<f64> = vec![0.0_f64; tempDev.len()]; let _rc = self.sub(0, stageLen - 1, &tempWork, &tempDev, &mut _tempDev_alias[..]); std::mem::swap(&mut tempDev, &mut _tempDev_alias); _rc }) { Ok(_r) => _r, Err(_e) => return _e };
-        tempBegIdx = _xr4.beg_idx;
-        tempNbElement = _xr4.count;
-        retCode = RetCode::Success;
+        // DEV, over the staged range. The close is read at the index midprice
+        // reported for the range, which is what lets this loop stream: keep
+        // outBegIdx as midprice's receiver, and reuse it for no call above here.
+        i = 0;
+        if i < stageLen {
+            let _wn: usize = stageLen - i;
+            let _w0 = &inClose[((*outBegIdx) + i) as usize..][.._wn];
+            let _w1 = &mut tempDev[i..][.._wn];
+            let _w2 = &tempWork[i..][.._wn];
+            for _wk in 0.._wn {
+                _w1[_wk] = _w0[_wk] - (_w1[_wk] + _w2[_wk]) / 2.0;
+                i += 1;
+            }
+        }
         // The compression band: the simple mean of the true range, not an ATR.
         // trange's own lookback is 1, and stageIdx is at least 1 because the
         // compression chain alone puts lookbackTotal at k or more.
-        let _xr5 = match self.trange(stageIdx, endIdx, inHigh, inLow, inClose, &mut tempWork[..]) { Ok(_r) => _r, Err(_e) => return _e };
+        let _xr2 = match self.trange(stageIdx, endIdx, inHigh, inLow, inClose, &mut tempWork[..]) { Ok(_r) => _r, Err(_e) => return _e };
+        tempBegIdx = _xr2.beg_idx;
+        tempNbElement = _xr2.count;
+        retCode = RetCode::Success;
+        let _xr3 = match ({ let mut _tempWork_alias: Vec<f64> = vec![0.0_f64; tempWork.len()]; let _rc = self.sma(0, stageLen - 1, &tempWork, optInKCPeriod, &mut _tempWork_alias[..]); std::mem::swap(&mut tempWork, &mut _tempWork_alias); _rc }) { Ok(_r) => _r, Err(_e) => return _e };
+        tempBegIdx = _xr3.beg_idx;
+        tempNbElement = _xr3.count;
+        retCode = RetCode::Success;
+        let _xr4 = match self.sma(startIdx, endIdx, inClose, optInBBPeriod, &mut tempMid[..]) { Ok(_r) => _r, Err(_e) => return _e };
+        tempBegIdx = _xr4.beg_idx;
+        tempNbElement = _xr4.count;
+        retCode = RetCode::Success;
+        let _xr5 = match self.stddev(startIdx, endIdx, inClose, optInBBPeriod, 1.0, &mut tempSD[..]) { Ok(_r) => _r, Err(_e) => return _e };
         tempBegIdx = _xr5.beg_idx;
         tempNbElement = _xr5.count;
         retCode = RetCode::Success;
-        let _xr6 = match ({ let mut _tempWork_alias: Vec<f64> = vec![0.0_f64; tempWork.len()]; let _rc = self.sma(0, stageLen - 1, &tempWork, optInKCPeriod, &mut _tempWork_alias[..]); std::mem::swap(&mut tempWork, &mut _tempWork_alias); _rc }) { Ok(_r) => _r, Err(_e) => return _e };
+        let _xr6 = match self.sma(startIdx, endIdx, inClose, optInKCPeriod, &mut tempKCM[..]) { Ok(_r) => _r, Err(_e) => return _e };
         tempBegIdx = _xr6.beg_idx;
         tempNbElement = _xr6.count;
-        retCode = RetCode::Success;
-        let _xr7 = match self.sma(startIdx, endIdx, inClose, optInBBPeriod, &mut tempMid[..]) { Ok(_r) => _r, Err(_e) => return _e };
-        tempBegIdx = _xr7.beg_idx;
-        tempNbElement = _xr7.count;
-        retCode = RetCode::Success;
-        let _xr8 = match self.stddev(startIdx, endIdx, inClose, optInBBPeriod, 1.0, &mut tempSD[..]) { Ok(_r) => _r, Err(_e) => return _e };
-        tempBegIdx = _xr8.beg_idx;
-        tempNbElement = _xr8.count;
-        retCode = RetCode::Success;
-        let _xr9 = match self.sma(startIdx, endIdx, inClose, optInKCPeriod, &mut tempKCM[..]) { Ok(_r) => _r, Err(_e) => return _e };
-        tempBegIdx = _xr9.beg_idx;
-        tempNbElement = _xr9.count;
         retCode = RetCode::Success;
         // LAST of the calls, because it is the first to write a caller buffer. Every
         // read of high, low and close is above it, so an output aliased onto one of
@@ -423,9 +418,9 @@ impl Core {
         //
         // The regression window closes on the first output bar, so entering it at 0 of
         // the staged range puts its first fitted value on startIdx.
-        let _xr10 = match self.linearreg(0, stageLen - 1, &tempDev, optInKCPeriod, outMomentum) { Ok(_r) => _r, Err(_e) => return _e };
-        tempBegIdx = _xr10.beg_idx;
-        tempNbElement = _xr10.count;
+        let _xr7 = match self.linearreg(0, stageLen - 1, &tempDev, optInKCPeriod, outMomentum) { Ok(_r) => _r, Err(_e) => return _e };
+        tempBegIdx = _xr7.beg_idx;
+        tempNbElement = _xr7.count;
         retCode = RetCode::Success;
         // The ordinal. The three Keltner widths share the centre and BAND >= 0, so
         // the tests nest: inside(narrow) implies inside(normal) implies inside(wide).
@@ -646,15 +641,12 @@ struct SqzmomStreamState {
     optInFactorNarrow: f64,
     sub0: MidpriceStream,
     sub1: SmaStream,
-    sub2: MedpriceStream,
+    sub2: TrangeStream,
     sub3: SmaStream,
-    sub4: SubStream,
-    sub5: TrangeStream,
+    sub4: SmaStream,
+    sub5: StddevStream,
     sub6: SmaStream,
-    sub7: SmaStream,
-    sub8: StddevStream,
-    sub9: SmaStream,
-    sub10: LinearregStream,
+    sub7: LinearregStream,
     cur_outMomentum: f64,
     cur_outSqueeze: i32,
 }
@@ -681,15 +673,14 @@ impl Core {
         // Pipeline the new bar through the sub-streams (batch tail order).
         cur_tempDev = sp.sub0.update(inHigh, inLow)?;
         cur_tempWork = sp.sub1.update(inClose)?;
-        cur_tempDev = sp.sub2.update(cur_tempDev, cur_tempWork)?;
-        cur_tempWork = sp.sub3.update(inClose)?;
-        cur_tempDev = sp.sub4.update(cur_tempWork, cur_tempDev)?;
-        cur_tempWork = sp.sub5.update(inHigh, inLow, inClose)?;
-        cur_tempWork = sp.sub6.update(cur_tempWork)?;
-        cur_tempMid = sp.sub7.update(inClose)?;
-        cur_tempSD = sp.sub8.update(inClose)?;
-        cur_tempKCM = sp.sub9.update(inClose)?;
-        cur_outMomentum = sp.sub10.update(cur_tempDev)?;
+        // Combine map (batch tail, per bar).
+        cur_tempDev = inClose - (cur_tempDev + cur_tempWork) / 2.0;
+        cur_tempWork = sp.sub2.update(inHigh, inLow, inClose)?;
+        cur_tempWork = sp.sub3.update(cur_tempWork)?;
+        cur_tempMid = sp.sub4.update(inClose)?;
+        cur_tempSD = sp.sub5.update(inClose)?;
+        cur_tempKCM = sp.sub6.update(inClose)?;
+        cur_outMomentum = sp.sub7.update(cur_tempDev)?;
         // Combine map (batch tail, per bar).
         up = (cur_tempSD as f64).mul_add(sp.optInNbDev, cur_tempMid);
         lo = cur_tempMid - cur_tempSD * sp.optInNbDev;
@@ -824,12 +815,6 @@ impl Core {
         // it is what bbands' own stream tier composes; taking the pair here keeps
         // every optional argument a parameter or a literal.
         //
-        // DEV is built from shipped functions too, not in a loop of its own:
-        // medprice is (a+b)/2 over any two series, and sma at a period of 1 is the
-        // identity -- a one-element sum divided by 1.0, exact for every double --
-        // which is what puts the close into the staged range's own indexing so that
-        // sub can take the difference.
-        //
         // Two chains need their input one window earlier than the first output bar:
         // sma(k) over TR, and linearreg(k) over DEV. Both windows are k-1 long, so
         // one staged range serves both.
@@ -866,58 +851,46 @@ impl Core {
         // midprice is bit-identical to donchian's middle band.
         // Sub-stream 0: midprice over `inHigh, inLow`, warmed from bar 0 up to the
         // sub-call's own startIdx (the seeding point).
-        let sub0 = self.midprice_open_and_fill_internal(&inHigh[..((endIdx) as usize) + 1], &inLow[..((endIdx) as usize) + 1], ((stageIdx) as usize), optInKCPeriod, &mut tempBegIdx, &mut tempNbElement, &mut tempDev[..])?;
+        let sub0 = self.midprice_open_and_fill_internal(&inHigh[..((endIdx) as usize) + 1], &inLow[..((endIdx) as usize) + 1], ((stageIdx) as usize), optInKCPeriod, outBegIdx, outNBElement, &mut tempDev[..])?;
         retCode = RetCode::Success;
         // Sub-stream 1: sma over `inClose`, warmed from bar 0 up to the
         // sub-call's own startIdx (the seeding point).
         let sub1 = self.sma_open_and_fill_internal(&inClose[..((endIdx) as usize) + 1], ((stageIdx) as usize), optInKCPeriod, &mut tempBegIdx, &mut tempNbElement, &mut tempWork[..])?;
         retCode = RetCode::Success;
-        // tempDev becomes (DMID + KCM)/2 in place: medprice reads and writes the same
-        // index, so the overwrite is safe.
-        // Sub-stream 2: medprice over `tempDev, tempWork`, warmed from bar 0 up to the
-        // sub-call's own startIdx (the seeding point).
-        let (sub2, _) = self.medprice_open_internal(&tempDev[..((stageLen - 1) as usize) + 1], &tempWork[..((stageLen - 1) as usize) + 1], ((0) as usize))?;
-        let _xr0 = match ({ let mut _tempDev_alias: Vec<f64> = vec![0.0_f64; tempDev.len()]; let _rc = self.medprice(0, stageLen - 1, &tempDev, &tempWork, &mut _tempDev_alias[..]); std::mem::swap(&mut tempDev, &mut _tempDev_alias); _rc }) { Ok(_r) => _r, Err(_e) => return Err(_e) };
-        tempBegIdx = _xr0.beg_idx;
-        tempNbElement = _xr0.count;
-        retCode = RetCode::Success;
-        // The close over the staged range, in that range's own indexing.
-        // Sub-stream 3: sma over `inClose`, warmed from bar 0 up to the
-        // sub-call's own startIdx (the seeding point).
-        let sub3 = self.sma_open_and_fill_internal(&inClose[..((endIdx) as usize) + 1], ((stageIdx) as usize), 1, &mut tempBegIdx, &mut tempNbElement, &mut tempWork[..])?;
-        retCode = RetCode::Success;
-        // Sub-stream 4: sub over `tempWork, tempDev`, warmed from bar 0 up to the
-        // sub-call's own startIdx (the seeding point).
-        let (sub4, _) = self.sub_open_internal(&tempWork[..((stageLen - 1) as usize) + 1], &tempDev[..((stageLen - 1) as usize) + 1], ((0) as usize))?;
-        let _xr1 = match ({ let mut _tempDev_alias: Vec<f64> = vec![0.0_f64; tempDev.len()]; let _rc = self.sub(0, stageLen - 1, &tempWork, &tempDev, &mut _tempDev_alias[..]); std::mem::swap(&mut tempDev, &mut _tempDev_alias); _rc }) { Ok(_r) => _r, Err(_e) => return Err(_e) };
-        tempBegIdx = _xr1.beg_idx;
-        tempNbElement = _xr1.count;
-        retCode = RetCode::Success;
+        // DEV, over the staged range. The close is read at the index midprice
+        // reported for the range, which is what lets this loop stream: keep
+        // outBegIdx as midprice's receiver, and reuse it for no call above here.
+        // for( i = 0; i < stageLen; i += 1 )
+        i = 0;
+        while i < stageLen {
+            tempDev[i] = inClose[((*outBegIdx) + i) as usize] - (tempDev[i] + tempWork[i]) / 2.0;
+            i += 1;
+        }
         // The compression band: the simple mean of the true range, not an ATR.
         // trange's own lookback is 1, and stageIdx is at least 1 because the
         // compression chain alone puts lookbackTotal at k or more.
-        // Sub-stream 5: trange over `inHigh, inLow, inClose`, warmed from bar 0 up to the
+        // Sub-stream 2: trange over `inHigh, inLow, inClose`, warmed from bar 0 up to the
         // sub-call's own startIdx (the seeding point).
-        let sub5 = self.trange_open_and_fill_internal(&inHigh[..((endIdx) as usize) + 1], &inLow[..((endIdx) as usize) + 1], &inClose[..((endIdx) as usize) + 1], ((stageIdx) as usize), &mut tempBegIdx, &mut tempNbElement, &mut tempWork[..])?;
+        let sub2 = self.trange_open_and_fill_internal(&inHigh[..((endIdx) as usize) + 1], &inLow[..((endIdx) as usize) + 1], &inClose[..((endIdx) as usize) + 1], ((stageIdx) as usize), &mut tempBegIdx, &mut tempNbElement, &mut tempWork[..])?;
         retCode = RetCode::Success;
-        // Sub-stream 6: sma over `tempWork`, warmed from bar 0 up to the
+        // Sub-stream 3: sma over `tempWork`, warmed from bar 0 up to the
         // sub-call's own startIdx (the seeding point).
-        let (sub6, _) = self.sma_open_internal(&tempWork[..((stageLen - 1) as usize) + 1], ((0) as usize), optInKCPeriod)?;
-        let _xr2 = match ({ let mut _tempWork_alias: Vec<f64> = vec![0.0_f64; tempWork.len()]; let _rc = self.sma(0, stageLen - 1, &tempWork, optInKCPeriod, &mut _tempWork_alias[..]); std::mem::swap(&mut tempWork, &mut _tempWork_alias); _rc }) { Ok(_r) => _r, Err(_e) => return Err(_e) };
-        tempBegIdx = _xr2.beg_idx;
-        tempNbElement = _xr2.count;
+        let (sub3, _) = self.sma_open_internal(&tempWork[..((stageLen - 1) as usize) + 1], ((0) as usize), optInKCPeriod)?;
+        let _xr0 = match ({ let mut _tempWork_alias: Vec<f64> = vec![0.0_f64; tempWork.len()]; let _rc = self.sma(0, stageLen - 1, &tempWork, optInKCPeriod, &mut _tempWork_alias[..]); std::mem::swap(&mut tempWork, &mut _tempWork_alias); _rc }) { Ok(_r) => _r, Err(_e) => return Err(_e) };
+        tempBegIdx = _xr0.beg_idx;
+        tempNbElement = _xr0.count;
         retCode = RetCode::Success;
-        // Sub-stream 7: sma over `inClose`, warmed from bar 0 up to the
+        // Sub-stream 4: sma over `inClose`, warmed from bar 0 up to the
         // sub-call's own startIdx (the seeding point).
-        let sub7 = self.sma_open_and_fill_internal(&inClose[..((endIdx) as usize) + 1], ((startIdx) as usize), optInBBPeriod, &mut tempBegIdx, &mut tempNbElement, &mut tempMid[..])?;
+        let sub4 = self.sma_open_and_fill_internal(&inClose[..((endIdx) as usize) + 1], ((startIdx) as usize), optInBBPeriod, &mut tempBegIdx, &mut tempNbElement, &mut tempMid[..])?;
         retCode = RetCode::Success;
-        // Sub-stream 8: stddev over `inClose`, warmed from bar 0 up to the
+        // Sub-stream 5: stddev over `inClose`, warmed from bar 0 up to the
         // sub-call's own startIdx (the seeding point).
-        let sub8 = self.stddev_open_and_fill_internal(&inClose[..((endIdx) as usize) + 1], ((startIdx) as usize), optInBBPeriod, 1.0, &mut tempBegIdx, &mut tempNbElement, &mut tempSD[..])?;
+        let sub5 = self.stddev_open_and_fill_internal(&inClose[..((endIdx) as usize) + 1], ((startIdx) as usize), optInBBPeriod, 1.0, &mut tempBegIdx, &mut tempNbElement, &mut tempSD[..])?;
         retCode = RetCode::Success;
-        // Sub-stream 9: sma over `inClose`, warmed from bar 0 up to the
+        // Sub-stream 6: sma over `inClose`, warmed from bar 0 up to the
         // sub-call's own startIdx (the seeding point).
-        let sub9 = self.sma_open_and_fill_internal(&inClose[..((endIdx) as usize) + 1], ((startIdx) as usize), optInKCPeriod, &mut tempBegIdx, &mut tempNbElement, &mut tempKCM[..])?;
+        let sub6 = self.sma_open_and_fill_internal(&inClose[..((endIdx) as usize) + 1], ((startIdx) as usize), optInKCPeriod, &mut tempBegIdx, &mut tempNbElement, &mut tempKCM[..])?;
         retCode = RetCode::Success;
         // LAST of the calls, because it is the first to write a caller buffer. Every
         // read of high, low and close is above it, so an output aliased onto one of
@@ -926,9 +899,9 @@ impl Core {
         //
         // The regression window closes on the first output bar, so entering it at 0 of
         // the staged range puts its first fitted value on startIdx.
-        // Sub-stream 10: linearreg over `tempDev`, warmed from bar 0 up to the
+        // Sub-stream 7: linearreg over `tempDev`, warmed from bar 0 up to the
         // sub-call's own startIdx (the seeding point).
-        let sub10 = self.linearreg_open_and_fill_internal(&tempDev[..((stageLen - 1) as usize) + 1], ((0) as usize), optInKCPeriod, &mut tempBegIdx, &mut tempNbElement, &mut sc_outMomentum[..])?;
+        let sub7 = self.linearreg_open_and_fill_internal(&tempDev[..((stageLen - 1) as usize) + 1], ((0) as usize), optInKCPeriod, &mut tempBegIdx, &mut tempNbElement, &mut sc_outMomentum[..])?;
         retCode = RetCode::Success;
         // The ordinal. The three Keltner widths share the centre and BAND >= 0, so
         // the tests nest: inside(narrow) implies inside(normal) implies inside(wide).
@@ -979,9 +952,6 @@ impl Core {
             sub5,
             sub6,
             sub7,
-            sub8,
-            sub9,
-            sub10,
         };
         state.cur_outMomentum = sc_outMomentum[*outNBElement - 1];
         state.cur_outSqueeze = sc_outSqueeze[*outNBElement - 1];
@@ -1196,15 +1166,14 @@ impl SqzmomStream {
             // Pipeline the new bar through the sub-streams (batch tail order).
             cur_tempDev = sp.sub0.peek(inHigh, inLow)?;
             cur_tempWork = sp.sub1.peek(inClose)?;
-            cur_tempDev = sp.sub2.peek(cur_tempDev, cur_tempWork)?;
-            cur_tempWork = sp.sub3.peek(inClose)?;
-            cur_tempDev = sp.sub4.peek(cur_tempWork, cur_tempDev)?;
-            cur_tempWork = sp.sub5.peek(inHigh, inLow, inClose)?;
-            cur_tempWork = sp.sub6.peek(cur_tempWork)?;
-            cur_tempMid = sp.sub7.peek(inClose)?;
-            cur_tempSD = sp.sub8.peek(inClose)?;
-            cur_tempKCM = sp.sub9.peek(inClose)?;
-            cur_outMomentum = sp.sub10.peek(cur_tempDev)?;
+            // Combine map (batch tail, per bar).
+            cur_tempDev = inClose - (cur_tempDev + cur_tempWork) / 2.0;
+            cur_tempWork = sp.sub2.peek(inHigh, inLow, inClose)?;
+            cur_tempWork = sp.sub3.peek(cur_tempWork)?;
+            cur_tempMid = sp.sub4.peek(inClose)?;
+            cur_tempSD = sp.sub5.peek(inClose)?;
+            cur_tempKCM = sp.sub6.peek(inClose)?;
+            cur_outMomentum = sp.sub7.peek(cur_tempDev)?;
             // Combine map (batch tail, per bar).
             up = (cur_tempSD as f64).mul_add(sp.optInNbDev, cur_tempMid);
             lo = cur_tempMid - cur_tempSD * sp.optInNbDev;

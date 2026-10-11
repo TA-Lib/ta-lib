@@ -6361,23 +6361,17 @@ static int sv_steq_TA_SQZMOM( const struct TA_SQZMOM_Stream *a, const struct TA_
    if( (a->sub1 == NULL) != (b->sub1 == NULL) ) { *w = "sub1"; return 1; }
    if( a->sub1 && sv_steq_TA_SMA( a->sub1, b->sub1, w, z ) ) return 1;
    if( (a->sub2 == NULL) != (b->sub2 == NULL) ) { *w = "sub2"; return 1; }
-   if( a->sub2 && sv_steq_TA_MEDPRICE( a->sub2, b->sub2, w, z ) ) return 1;
+   if( a->sub2 && sv_steq_TA_TRANGE( a->sub2, b->sub2, w, z ) ) return 1;
    if( (a->sub3 == NULL) != (b->sub3 == NULL) ) { *w = "sub3"; return 1; }
    if( a->sub3 && sv_steq_TA_SMA( a->sub3, b->sub3, w, z ) ) return 1;
    if( (a->sub4 == NULL) != (b->sub4 == NULL) ) { *w = "sub4"; return 1; }
-   if( a->sub4 && sv_steq_TA_SUB( a->sub4, b->sub4, w, z ) ) return 1;
+   if( a->sub4 && sv_steq_TA_SMA( a->sub4, b->sub4, w, z ) ) return 1;
    if( (a->sub5 == NULL) != (b->sub5 == NULL) ) { *w = "sub5"; return 1; }
-   if( a->sub5 && sv_steq_TA_TRANGE( a->sub5, b->sub5, w, z ) ) return 1;
+   if( a->sub5 && sv_steq_TA_STDDEV( a->sub5, b->sub5, w, z ) ) return 1;
    if( (a->sub6 == NULL) != (b->sub6 == NULL) ) { *w = "sub6"; return 1; }
    if( a->sub6 && sv_steq_TA_SMA( a->sub6, b->sub6, w, z ) ) return 1;
    if( (a->sub7 == NULL) != (b->sub7 == NULL) ) { *w = "sub7"; return 1; }
-   if( a->sub7 && sv_steq_TA_SMA( a->sub7, b->sub7, w, z ) ) return 1;
-   if( (a->sub8 == NULL) != (b->sub8 == NULL) ) { *w = "sub8"; return 1; }
-   if( a->sub8 && sv_steq_TA_STDDEV( a->sub8, b->sub8, w, z ) ) return 1;
-   if( (a->sub9 == NULL) != (b->sub9 == NULL) ) { *w = "sub9"; return 1; }
-   if( a->sub9 && sv_steq_TA_SMA( a->sub9, b->sub9, w, z ) ) return 1;
-   if( (a->sub10 == NULL) != (b->sub10 == NULL) ) { *w = "sub10"; return 1; }
-   if( a->sub10 && sv_steq_TA_LINEARREG( a->sub10, b->sub10, w, z ) ) return 1;
+   if( a->sub7 && sv_steq_TA_LINEARREG( a->sub7, b->sub7, w, z ) ) return 1;
    return 0;
 }
 

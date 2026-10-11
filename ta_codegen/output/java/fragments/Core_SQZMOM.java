@@ -12,6 +12,7 @@
  *  -------------------------------------------------------------------
  *  100826 KL,CC  Creation (#488).
  *  101126 MF,CC  Reject factors out of order (#488).
+ *  101126 MF,CC  DEV in one loop instead of three calls (#488).
  */
 
    /**
@@ -226,12 +227,6 @@
        * it is what bbands' own stream tier composes; taking the pair here keeps
        * every optional argument a parameter or a literal.
        *
-       * DEV is built from shipped functions too, not in a loop of its own:
-       * medprice is (a+b)/2 over any two series, and sma at a period of 1 is the
-       * identity -- a one-element sum divided by 1.0, exact for every double --
-       * which is what puts the close into the staged range's own indexing so that
-       * sub can take the difference.
-       *
        * Two chains need their input one window earlier than the first output bar:
        * sma(k) over TR, and linearreg(k) over DEV. Both windows are k-1 long, so
        * one staged range serves both.
@@ -270,52 +265,43 @@
        * midprice is bit-identical to donchian's middle band.
        */
       OutRange _xr0 = midprice(stageIdx, endIdx, inHigh, inLow, optInKCPeriod, tempDev);
-      tempBegIdx.value = _xr0.begIdx();
-      tempNbElement.value = _xr0.count();
+      outBegIdx.value = _xr0.begIdx();
+      outNBElement.value = _xr0.count();
       retCode = RetCode.SUCCESS;
       OutRange _xr1 = sma(stageIdx, endIdx, inClose, optInKCPeriod, tempWork);
       tempBegIdx.value = _xr1.begIdx();
       tempNbElement.value = _xr1.count();
       retCode = RetCode.SUCCESS;
-      /* tempDev becomes (DMID + KCM)/2 in place: medprice reads and writes the same
-       * index, so the overwrite is safe.
+      /* DEV, over the staged range. The close is read at the index midprice
+       * reported for the range, which is what lets this loop stream: keep
+       * outBegIdx as midprice's receiver, and reuse it for no call above here.
        */
-      OutRange _xr2 = medprice(0, stageLen - 1, tempDev, tempWork, tempDev);
-      tempBegIdx.value = _xr2.begIdx();
-      tempNbElement.value = _xr2.count();
-      retCode = RetCode.SUCCESS;
-      /* The close over the staged range, in that range's own indexing. */
-      OutRange _xr3 = sma(stageIdx, endIdx, inClose, 1, tempWork);
-      tempBegIdx.value = _xr3.begIdx();
-      tempNbElement.value = _xr3.count();
-      retCode = RetCode.SUCCESS;
-      OutRange _xr4 = sub(0, stageLen - 1, tempWork, tempDev, tempDev);
-      tempBegIdx.value = _xr4.begIdx();
-      tempNbElement.value = _xr4.count();
-      retCode = RetCode.SUCCESS;
+      for( i = 0; i < stageLen; i += 1 ) {
+         tempDev[i] = inClose[outBegIdx.value + i] - (tempDev[i] + tempWork[i]) / 2.0;
+      }
       /* The compression band: the simple mean of the true range, not an ATR.
        * trange's own lookback is 1, and stageIdx is at least 1 because the
        * compression chain alone puts lookbackTotal at k or more.
        */
-      OutRange _xr5 = trange(stageIdx, endIdx, inHigh, inLow, inClose, tempWork);
+      OutRange _xr2 = trange(stageIdx, endIdx, inHigh, inLow, inClose, tempWork);
+      tempBegIdx.value = _xr2.begIdx();
+      tempNbElement.value = _xr2.count();
+      retCode = RetCode.SUCCESS;
+      OutRange _xr3 = sma(0, stageLen - 1, tempWork, optInKCPeriod, tempWork);
+      tempBegIdx.value = _xr3.begIdx();
+      tempNbElement.value = _xr3.count();
+      retCode = RetCode.SUCCESS;
+      OutRange _xr4 = sma(startIdx, endIdx, inClose, optInBBPeriod, tempMid);
+      tempBegIdx.value = _xr4.begIdx();
+      tempNbElement.value = _xr4.count();
+      retCode = RetCode.SUCCESS;
+      OutRange _xr5 = stddev(startIdx, endIdx, inClose, optInBBPeriod, 1.0, tempSD);
       tempBegIdx.value = _xr5.begIdx();
       tempNbElement.value = _xr5.count();
       retCode = RetCode.SUCCESS;
-      OutRange _xr6 = sma(0, stageLen - 1, tempWork, optInKCPeriod, tempWork);
+      OutRange _xr6 = sma(startIdx, endIdx, inClose, optInKCPeriod, tempKCM);
       tempBegIdx.value = _xr6.begIdx();
       tempNbElement.value = _xr6.count();
-      retCode = RetCode.SUCCESS;
-      OutRange _xr7 = sma(startIdx, endIdx, inClose, optInBBPeriod, tempMid);
-      tempBegIdx.value = _xr7.begIdx();
-      tempNbElement.value = _xr7.count();
-      retCode = RetCode.SUCCESS;
-      OutRange _xr8 = stddev(startIdx, endIdx, inClose, optInBBPeriod, 1.0, tempSD);
-      tempBegIdx.value = _xr8.begIdx();
-      tempNbElement.value = _xr8.count();
-      retCode = RetCode.SUCCESS;
-      OutRange _xr9 = sma(startIdx, endIdx, inClose, optInKCPeriod, tempKCM);
-      tempBegIdx.value = _xr9.begIdx();
-      tempNbElement.value = _xr9.count();
       retCode = RetCode.SUCCESS;
       /* LAST of the calls, because it is the first to write a caller buffer. Every
        * read of high, low and close is above it, so an output aliased onto one of
@@ -325,9 +311,9 @@
        * The regression window closes on the first output bar, so entering it at 0 of
        * the staged range puts its first fitted value on startIdx.
        */
-      OutRange _xr10 = linearreg(0, stageLen - 1, tempDev, optInKCPeriod, outMomentum);
-      tempBegIdx.value = _xr10.begIdx();
-      tempNbElement.value = _xr10.count();
+      OutRange _xr7 = linearreg(0, stageLen - 1, tempDev, optInKCPeriod, outMomentum);
+      tempBegIdx.value = _xr7.begIdx();
+      tempNbElement.value = _xr7.count();
       retCode = RetCode.SUCCESS;
       /* The ordinal. The three Keltner widths share the centre and BAND >= 0, so
        * the tests nest: inside(narrow) implies inside(normal) implies inside(wide).
@@ -453,48 +439,39 @@
       tempMid = new double[(int)(n * 1)];
       tempSD = new double[(int)(n * 1)];
       OutRange _xr0 = midprice(stageIdx, endIdx, inHigh, inLow, optInKCPeriod, tempDev);
-      tempBegIdx.value = _xr0.begIdx();
-      tempNbElement.value = _xr0.count();
+      outBegIdx.value = _xr0.begIdx();
+      outNBElement.value = _xr0.count();
       retCode = RetCode.SUCCESS;
       OutRange _xr1 = sma(stageIdx, endIdx, inClose, optInKCPeriod, tempWork);
       tempBegIdx.value = _xr1.begIdx();
       tempNbElement.value = _xr1.count();
       retCode = RetCode.SUCCESS;
-      OutRange _xr2 = medprice(0, stageLen - 1, tempDev, tempWork, tempDev);
+      for( i = 0; i < stageLen; i += 1 ) {
+         tempDev[i] = (double)inClose[outBegIdx.value + i] - (tempDev[i] + tempWork[i]) / 2.0;
+      }
+      OutRange _xr2 = trange(stageIdx, endIdx, inHigh, inLow, inClose, tempWork);
       tempBegIdx.value = _xr2.begIdx();
       tempNbElement.value = _xr2.count();
       retCode = RetCode.SUCCESS;
-      OutRange _xr3 = sma(stageIdx, endIdx, inClose, 1, tempWork);
+      OutRange _xr3 = sma(0, stageLen - 1, tempWork, optInKCPeriod, tempWork);
       tempBegIdx.value = _xr3.begIdx();
       tempNbElement.value = _xr3.count();
       retCode = RetCode.SUCCESS;
-      OutRange _xr4 = sub(0, stageLen - 1, tempWork, tempDev, tempDev);
+      OutRange _xr4 = sma(startIdx, endIdx, inClose, optInBBPeriod, tempMid);
       tempBegIdx.value = _xr4.begIdx();
       tempNbElement.value = _xr4.count();
       retCode = RetCode.SUCCESS;
-      OutRange _xr5 = trange(stageIdx, endIdx, inHigh, inLow, inClose, tempWork);
+      OutRange _xr5 = stddev(startIdx, endIdx, inClose, optInBBPeriod, 1.0, tempSD);
       tempBegIdx.value = _xr5.begIdx();
       tempNbElement.value = _xr5.count();
       retCode = RetCode.SUCCESS;
-      OutRange _xr6 = sma(0, stageLen - 1, tempWork, optInKCPeriod, tempWork);
+      OutRange _xr6 = sma(startIdx, endIdx, inClose, optInKCPeriod, tempKCM);
       tempBegIdx.value = _xr6.begIdx();
       tempNbElement.value = _xr6.count();
       retCode = RetCode.SUCCESS;
-      OutRange _xr7 = sma(startIdx, endIdx, inClose, optInBBPeriod, tempMid);
+      OutRange _xr7 = linearreg(0, stageLen - 1, tempDev, optInKCPeriod, outMomentum);
       tempBegIdx.value = _xr7.begIdx();
       tempNbElement.value = _xr7.count();
-      retCode = RetCode.SUCCESS;
-      OutRange _xr8 = stddev(startIdx, endIdx, inClose, optInBBPeriod, 1.0, tempSD);
-      tempBegIdx.value = _xr8.begIdx();
-      tempNbElement.value = _xr8.count();
-      retCode = RetCode.SUCCESS;
-      OutRange _xr9 = sma(startIdx, endIdx, inClose, optInKCPeriod, tempKCM);
-      tempBegIdx.value = _xr9.begIdx();
-      tempNbElement.value = _xr9.count();
-      retCode = RetCode.SUCCESS;
-      OutRange _xr10 = linearreg(0, stageLen - 1, tempDev, optInKCPeriod, outMomentum);
-      tempBegIdx.value = _xr10.begIdx();
-      tempNbElement.value = _xr10.count();
       retCode = RetCode.SUCCESS;
       for( i = 0; i < n; i += 1 ) {
          up = Math.fma(tempSD[i], optInNbDev, tempMid[i]);
@@ -768,15 +745,12 @@
       private int cur_outSqueeze;
       private MidpriceStream sub0;
       private SmaStream sub1;
-      private MedpriceStream sub2;
+      private TrangeStream sub2;
       private SmaStream sub3;
-      private SubStream sub4;
-      private TrangeStream sub5;
+      private SmaStream sub4;
+      private StddevStream sub5;
       private SmaStream sub6;
-      private SmaStream sub7;
-      private StddevStream sub8;
-      private SmaStream sub9;
-      private LinearregStream sub10;
+      private LinearregStream sub7;
       private int outRangeBegIdx;
       private int outRangeCount;
 
@@ -828,15 +802,12 @@
          this.cur_outSqueeze = other.cur_outSqueeze;
          this.sub0 = new MidpriceStream(other.sub0);
          this.sub1 = new SmaStream(other.sub1);
-         this.sub2 = new MedpriceStream(other.sub2);
+         this.sub2 = new TrangeStream(other.sub2);
          this.sub3 = new SmaStream(other.sub3);
-         this.sub4 = new SubStream(other.sub4);
-         this.sub5 = new TrangeStream(other.sub5);
+         this.sub4 = new SmaStream(other.sub4);
+         this.sub5 = new StddevStream(other.sub5);
          this.sub6 = new SmaStream(other.sub6);
-         this.sub7 = new SmaStream(other.sub7);
-         this.sub8 = new StddevStream(other.sub8);
-         this.sub9 = new SmaStream(other.sub9);
-         this.sub10 = new LinearregStream(other.sub10);
+         this.sub7 = new LinearregStream(other.sub7);
          this.outRangeBegIdx = other.outRangeBegIdx;
          this.outRangeCount = other.outRangeCount;
       }
@@ -898,15 +869,14 @@
          /* Pipeline the new bar through the sub-streams (batch tail order). */
          cur_tempDev = sp.sub0.peek(inHigh, inLow);
          cur_tempWork = sp.sub1.peek(inClose);
-         cur_tempDev = sp.sub2.peek(cur_tempDev, cur_tempWork);
-         cur_tempWork = sp.sub3.peek(inClose);
-         cur_tempDev = sp.sub4.peek(cur_tempWork, cur_tempDev);
-         cur_tempWork = sp.sub5.peek(inHigh, inLow, inClose);
-         cur_tempWork = sp.sub6.peek(cur_tempWork);
-         cur_tempMid = sp.sub7.peek(inClose);
-         cur_tempSD = sp.sub8.peek(inClose);
-         cur_tempKCM = sp.sub9.peek(inClose);
-         cur_outMomentum = sp.sub10.peek(cur_tempDev);
+         /* Combine map (batch tail, per bar). */
+         cur_tempDev = inClose - (cur_tempDev + cur_tempWork) / 2.0;
+         cur_tempWork = sp.sub2.peek(inHigh, inLow, inClose);
+         cur_tempWork = sp.sub3.peek(cur_tempWork);
+         cur_tempMid = sp.sub4.peek(inClose);
+         cur_tempSD = sp.sub5.peek(inClose);
+         cur_tempKCM = sp.sub6.peek(inClose);
+         cur_outMomentum = sp.sub7.peek(cur_tempDev);
          /* Combine map (batch tail, per bar). */
          up = Math.fma(cur_tempSD, sp.optInNbDev, cur_tempMid);
          lo = cur_tempMid - cur_tempSD * sp.optInNbDev;
@@ -993,15 +963,14 @@
       /* Pipeline the new bar through the sub-streams (batch tail order). */
       cur_tempDev = sp.sub0.update(inHigh, inLow);
       cur_tempWork = sp.sub1.update(inClose);
-      cur_tempDev = sp.sub2.update(cur_tempDev, cur_tempWork);
-      cur_tempWork = sp.sub3.update(inClose);
-      cur_tempDev = sp.sub4.update(cur_tempWork, cur_tempDev);
-      cur_tempWork = sp.sub5.update(inHigh, inLow, inClose);
-      cur_tempWork = sp.sub6.update(cur_tempWork);
-      cur_tempMid = sp.sub7.update(inClose);
-      cur_tempSD = sp.sub8.update(inClose);
-      cur_tempKCM = sp.sub9.update(inClose);
-      cur_outMomentum = sp.sub10.update(cur_tempDev);
+      /* Combine map (batch tail, per bar). */
+      cur_tempDev = inClose - (cur_tempDev + cur_tempWork) / 2.0;
+      cur_tempWork = sp.sub2.update(inHigh, inLow, inClose);
+      cur_tempWork = sp.sub3.update(cur_tempWork);
+      cur_tempMid = sp.sub4.update(inClose);
+      cur_tempSD = sp.sub5.update(inClose);
+      cur_tempKCM = sp.sub6.update(inClose);
+      cur_outMomentum = sp.sub7.update(cur_tempDev);
       /* Combine map (batch tail, per bar). */
       up = Math.fma(cur_tempSD, sp.optInNbDev, cur_tempMid);
       lo = cur_tempMid - cur_tempSD * sp.optInNbDev;
@@ -1107,12 +1076,6 @@
        * it is what bbands' own stream tier composes; taking the pair here keeps
        * every optional argument a parameter or a literal.
        *
-       * DEV is built from shipped functions too, not in a loop of its own:
-       * medprice is (a+b)/2 over any two series, and sma at a period of 1 is the
-       * identity -- a one-element sum divided by 1.0, exact for every double --
-       * which is what puts the close into the staged range's own indexing so that
-       * sub can take the difference.
-       *
        * Two chains need their input one window earlier than the first output bar:
        * sma(k) over TR, and linearreg(k) over DEV. Both windows are k-1 long, so
        * one staged range serves both.
@@ -1152,60 +1115,45 @@
        */
       /* Sub-stream 0: midprice over `inHigh, inLow`, warmed from bar 0 up to the
        * sub-call's own startIdx (the seeding point). */
-      MidpriceStream sub0 = midpriceOpenAndFillInternal(inHigh, inLow, stageIdx, optInKCPeriod, tempBegIdx, tempNbElement, tempDev);
+      MidpriceStream sub0 = midpriceOpenAndFillInternal(inHigh, inLow, stageIdx, optInKCPeriod, outBegIdx, outNBElement, tempDev);
       retCode = RetCode.SUCCESS;
       /* Sub-stream 1: sma over `inClose`, warmed from bar 0 up to the
        * sub-call's own startIdx (the seeding point). */
       SmaStream sub1 = smaOpenAndFillInternal(inClose, stageIdx, optInKCPeriod, tempBegIdx, tempNbElement, tempWork);
       retCode = RetCode.SUCCESS;
-      /* tempDev becomes (DMID + KCM)/2 in place: medprice reads and writes the same
-       * index, so the overwrite is safe.
+      /* DEV, over the staged range. The close is read at the index midprice
+       * reported for the range, which is what lets this loop stream: keep
+       * outBegIdx as midprice's receiver, and reuse it for no call above here.
        */
-      /* Sub-stream 2: medprice over `tempDev, tempWork`, warmed from bar 0 up to the
-       * sub-call's own startIdx (the seeding point). */
-      MedpriceStream sub2 = medpriceOpenInternal(java.util.Arrays.copyOfRange(tempDev, 0, (stageLen - 1) + 1), java.util.Arrays.copyOfRange(tempWork, 0, (stageLen - 1) + 1), 0);
-      OutRange _xr0 = medprice(0, stageLen - 1, tempDev, tempWork, tempDev);
-      tempBegIdx.value = _xr0.begIdx();
-      tempNbElement.value = _xr0.count();
-      retCode = RetCode.SUCCESS;
-      /* The close over the staged range, in that range's own indexing. */
-      /* Sub-stream 3: sma over `inClose`, warmed from bar 0 up to the
-       * sub-call's own startIdx (the seeding point). */
-      SmaStream sub3 = smaOpenAndFillInternal(inClose, stageIdx, 1, tempBegIdx, tempNbElement, tempWork);
-      retCode = RetCode.SUCCESS;
-      /* Sub-stream 4: sub over `tempWork, tempDev`, warmed from bar 0 up to the
-       * sub-call's own startIdx (the seeding point). */
-      SubStream sub4 = subOpenInternal(java.util.Arrays.copyOfRange(tempWork, 0, (stageLen - 1) + 1), java.util.Arrays.copyOfRange(tempDev, 0, (stageLen - 1) + 1), 0);
-      OutRange _xr1 = sub(0, stageLen - 1, tempWork, tempDev, tempDev);
-      tempBegIdx.value = _xr1.begIdx();
-      tempNbElement.value = _xr1.count();
-      retCode = RetCode.SUCCESS;
+      for( i = 0; i < stageLen; i += 1 ) {
+         tempDev[i] = inClose[outBegIdx.value + i] - (tempDev[i] + tempWork[i]) / 2.0;
+      }
       /* The compression band: the simple mean of the true range, not an ATR.
        * trange's own lookback is 1, and stageIdx is at least 1 because the
        * compression chain alone puts lookbackTotal at k or more.
        */
-      /* Sub-stream 5: trange over `inHigh, inLow, inClose`, warmed from bar 0 up to the
+      /* Sub-stream 2: trange over `inHigh, inLow, inClose`, warmed from bar 0 up to the
        * sub-call's own startIdx (the seeding point). */
-      TrangeStream sub5 = trangeOpenAndFillInternal(inHigh, inLow, inClose, stageIdx, tempBegIdx, tempNbElement, tempWork);
+      TrangeStream sub2 = trangeOpenAndFillInternal(inHigh, inLow, inClose, stageIdx, tempBegIdx, tempNbElement, tempWork);
       retCode = RetCode.SUCCESS;
-      /* Sub-stream 6: sma over `tempWork`, warmed from bar 0 up to the
+      /* Sub-stream 3: sma over `tempWork`, warmed from bar 0 up to the
        * sub-call's own startIdx (the seeding point). */
-      SmaStream sub6 = smaOpenInternal(java.util.Arrays.copyOfRange(tempWork, 0, (stageLen - 1) + 1), 0, optInKCPeriod);
-      OutRange _xr2 = sma(0, stageLen - 1, tempWork, optInKCPeriod, tempWork);
-      tempBegIdx.value = _xr2.begIdx();
-      tempNbElement.value = _xr2.count();
+      SmaStream sub3 = smaOpenInternal(java.util.Arrays.copyOfRange(tempWork, 0, (stageLen - 1) + 1), 0, optInKCPeriod);
+      OutRange _xr0 = sma(0, stageLen - 1, tempWork, optInKCPeriod, tempWork);
+      tempBegIdx.value = _xr0.begIdx();
+      tempNbElement.value = _xr0.count();
       retCode = RetCode.SUCCESS;
-      /* Sub-stream 7: sma over `inClose`, warmed from bar 0 up to the
+      /* Sub-stream 4: sma over `inClose`, warmed from bar 0 up to the
        * sub-call's own startIdx (the seeding point). */
-      SmaStream sub7 = smaOpenAndFillInternal(inClose, startIdx, optInBBPeriod, tempBegIdx, tempNbElement, tempMid);
+      SmaStream sub4 = smaOpenAndFillInternal(inClose, startIdx, optInBBPeriod, tempBegIdx, tempNbElement, tempMid);
       retCode = RetCode.SUCCESS;
-      /* Sub-stream 8: stddev over `inClose`, warmed from bar 0 up to the
+      /* Sub-stream 5: stddev over `inClose`, warmed from bar 0 up to the
        * sub-call's own startIdx (the seeding point). */
-      StddevStream sub8 = stddevOpenAndFillInternal(inClose, startIdx, optInBBPeriod, 1.0, tempBegIdx, tempNbElement, tempSD);
+      StddevStream sub5 = stddevOpenAndFillInternal(inClose, startIdx, optInBBPeriod, 1.0, tempBegIdx, tempNbElement, tempSD);
       retCode = RetCode.SUCCESS;
-      /* Sub-stream 9: sma over `inClose`, warmed from bar 0 up to the
+      /* Sub-stream 6: sma over `inClose`, warmed from bar 0 up to the
        * sub-call's own startIdx (the seeding point). */
-      SmaStream sub9 = smaOpenAndFillInternal(inClose, startIdx, optInKCPeriod, tempBegIdx, tempNbElement, tempKCM);
+      SmaStream sub6 = smaOpenAndFillInternal(inClose, startIdx, optInKCPeriod, tempBegIdx, tempNbElement, tempKCM);
       retCode = RetCode.SUCCESS;
       /* LAST of the calls, because it is the first to write a caller buffer. Every
        * read of high, low and close is above it, so an output aliased onto one of
@@ -1215,9 +1163,9 @@
        * The regression window closes on the first output bar, so entering it at 0 of
        * the staged range puts its first fitted value on startIdx.
        */
-      /* Sub-stream 10: linearreg over `tempDev`, warmed from bar 0 up to the
+      /* Sub-stream 7: linearreg over `tempDev`, warmed from bar 0 up to the
        * sub-call's own startIdx (the seeding point). */
-      LinearregStream sub10 = linearregOpenAndFillInternal(java.util.Arrays.copyOfRange(tempDev, 0, (stageLen - 1) + 1), 0, optInKCPeriod, tempBegIdx, tempNbElement, sc_outMomentum);
+      LinearregStream sub7 = linearregOpenAndFillInternal(java.util.Arrays.copyOfRange(tempDev, 0, (stageLen - 1) + 1), 0, optInKCPeriod, tempBegIdx, tempNbElement, sc_outMomentum);
       retCode = RetCode.SUCCESS;
       /* The ordinal. The three Keltner widths share the centre and BAND >= 0, so
        * the tests nest: inside(narrow) implies inside(normal) implies inside(wide).
@@ -1262,9 +1210,6 @@
       sp.sub5 = sub5;
       sp.sub6 = sub6;
       sp.sub7 = sub7;
-      sp.sub8 = sub8;
-      sp.sub9 = sub9;
-      sp.sub10 = sub10;
       sp.cur_outMomentum = sc_outMomentum[outNBElement.value - 1];
       sp.cur_outSqueeze = sc_outSqueeze[outNBElement.value - 1];
       return RetCode.SUCCESS;
