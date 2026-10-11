@@ -11,7 +11,8 @@ warm-unstable / min-under-K / candle shape / zero-sum shape), and fails on:
   - a server crash or panic (non-zero exit, stderr panic marker),
   - any response with "ok":0 or "peek_ok":0 (bit-exactness must ALSO hold in
     debug — a debug/release numeric divergence would be a real defect),
-  - vacuity (no response with a non-zero "legs" count).
+  - a response other than not_streamable that compared nothing ("legs":0), or a
+    run with no leg at all.
 
 Run:  python3 scripts/rust_stream_debug.py
 """
@@ -76,16 +77,19 @@ def main():
     legs_total = 0
     not_streamable = 0
     for req, line in zip(flat, lines):
-        m = re.search(r'"legs":(\d+)', line)
-        if m:
-            legs_total += int(m.group(1))
         if '"error":"not_streamable"' in line:
             # A tier not yet emitted for Rust: visible, not fatal here (the
             # ta_regtest SET-MISMATCH gate owns completeness).
             not_streamable += 1
             continue
+        m = re.search(r'"legs":(\d+)', line)
+        legs = int(m.group(1)) if m else 0
+        legs_total += legs
         if '"ok":0' in line or '"peek_ok":0' in line or '"fill_ok":0' in line:
             print(f"FAIL: {req}\n  -> {line}")
+            failures += 1
+        elif legs == 0:
+            print(f"FAIL: compared nothing: {req}\n  -> {line}")
             failures += 1
     if legs_total <= 0:
         print("FAIL: vacuous run (no legs executed)")
