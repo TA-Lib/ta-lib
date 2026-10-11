@@ -503,7 +503,12 @@ impl Core {
             smoothPeriod = (0.67 as f64).mul_add(smoothPeriod, 0.33 * period);
             // Compute Dominant Cycle Phase
             DCPeriod = smoothPeriod + 0.5;
-            DCPeriodInt = (DCPeriod) as i32;
+            // A NaN period has no int value, and C leaves converting one undefined.
+            if DCPeriod >= 0.0 {
+                DCPeriodInt = (DCPeriod) as i32;
+            } else {
+                DCPeriodInt = 0;
+            }
             realPart = 0.0;
             imagPart = 0.0;
             // idx is used to iterate for up to 50 of the last
@@ -899,7 +904,12 @@ impl Core {
         sp.smoothPeriod = (0.67 as f64).mul_add(sp.smoothPeriod, 0.33 * sp.period);
         // Compute Dominant Cycle Phase
         DCPeriod = sp.smoothPeriod + 0.5;
-        DCPeriodInt = (DCPeriod) as i32;
+        // A NaN period has no int value, and C leaves converting one undefined.
+        if DCPeriod >= 0.0 {
+            DCPeriodInt = (DCPeriod) as i32;
+        } else {
+            DCPeriodInt = 0;
+        }
         realPart = 0.0;
         imagPart = 0.0;
         // idx is used to iterate for up to 50 of the last
@@ -1338,7 +1348,12 @@ impl Core {
             smoothPeriod = (0.67 as f64).mul_add(smoothPeriod, 0.33 * period);
             // Compute Dominant Cycle Phase
             DCPeriod = smoothPeriod + 0.5;
-            DCPeriodInt = (DCPeriod) as i32;
+            // A NaN period has no int value, and C leaves converting one undefined.
+            if DCPeriod >= 0.0 {
+                DCPeriodInt = (DCPeriod) as i32;
+            } else {
+                DCPeriodInt = 0;
+            }
             realPart = 0.0;
             imagPart = 0.0;
             // idx is used to iterate for up to 50 of the last
@@ -1812,7 +1827,12 @@ impl HtSineStream {
             smoothPeriod = (0.67 as f64).mul_add(smoothPeriod, 0.33 * period);
             // Compute Dominant Cycle Phase
             DCPeriod = smoothPeriod + 0.5;
-            DCPeriodInt = (DCPeriod) as i32;
+            // A NaN period has no int value, and C leaves converting one undefined.
+            if DCPeriod >= 0.0 {
+                DCPeriodInt = (DCPeriod) as i32;
+            } else {
+                DCPeriodInt = 0;
+            }
             realPart = 0.0;
             imagPart = 0.0;
             // idx is used to iterate for up to 50 of the last

@@ -35,10 +35,10 @@ if(ENABLE_SANITIZERS)
     endif()
     # Must be set before any target is defined so the flags apply to the
     # library and the tools alike (compile AND link).
-    set(TA_SANITIZER_FLAGS -fsanitize=address,undefined -fno-sanitize-recover=all -fno-omit-frame-pointer)
+    set(TA_SANITIZER_FLAGS -fsanitize=address,undefined,float-cast-overflow -fno-sanitize-recover=all -fno-omit-frame-pointer)
     add_compile_options(${TA_SANITIZER_FLAGS})
     add_link_options(${TA_SANITIZER_FLAGS})
-    message(STATUS "ENABLE_SANITIZERS: ON (-fsanitize=address,undefined -fno-sanitize-recover=all)")
+    message(STATUS "ENABLE_SANITIZERS: ON (-fsanitize=address,undefined,float-cast-overflow -fno-sanitize-recover=all)")
 endif()
 
 # FMA numerical contract (PR #96): indicators use explicit fma(); fused ones are
