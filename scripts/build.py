@@ -177,7 +177,8 @@ def show_help():
                         empty one (rS1). Pure text; also run as part of
                         regen-check.
     check-source-lists  Verify the CMake and autotools ta_regtest source
-                        lists agree (no build; pure text check)
+                        lists agree and every test group they compile is
+                        called by ta_regtest.c (no build; pure text check)
     check-cargo-lock    Verify both committed Cargo.lock files still satisfy
                         their manifests (resolve only, no build). Also the
                         first thing regen-check does, because any later cargo
@@ -425,7 +426,8 @@ def check_regtest_source_lists(root_dir: str) -> bool:
     used by the dist "end-user simulation" nightly). The lists are maintained
     by hand in parallel: a file added to only one of them compiles fine under
     CMake locally and then breaks the autotools nightly. Returns True when
-    the lists are identical.
+    the lists are identical, cover ta_test_func/, and every test group they
+    compile has its DO_TEST row.
     """
     import re
 
@@ -492,8 +494,34 @@ def check_regtest_source_lists(root_dir: str) -> bool:
                   f"so nothing compiles or runs it")
         return False
 
+    # A group that is compiled and never called links cleanly and fails
+    # nothing: the runtime floors only judge a group that ran.
+    regtest_dir = os.path.dirname(func_dir)
+    with open(os.path.join(regtest_dir, 'ta_regtest.c'), encoding='utf-8') as f:
+        runner = re.sub(r'/\*.*?\*/|//[^\n]*', '', f.read(), flags=re.S)
+    registered = set(re.findall(r'\bDO_TEST\w*\(\s*(\w+)\s*,', runner))
+    groups = 0
+    for entry in sorted(e for e in union if e.endswith('.c')):
+        with open(os.path.join(regtest_dir, entry), encoding='utf-8') as f:
+            defined = re.findall(
+                r'^ErrorNumber\s+(\w+)\s*\(\s*TA_History\s*\*[^;{]*\{',
+                f.read(), re.M)
+        if not defined and entry in on_disk:
+            print(f"Error: {entry} defines no group this check can see. A group "
+                  f"is a non-static 'ErrorNumber <name>( TA_History * )'.")
+            ok = False
+        for name in defined:
+            groups += 1
+            if name not in registered:
+                print(f"Error: {entry} defines {name}, which no DO_TEST row in "
+                      f"ta_regtest.c calls, so the group never runs")
+                ok = False
+    if not ok:
+        return False
+
     print(f"ta_regtest source lists agree across CMake and autotools "
-          f"({len(cmake_set)} files) and cover every ta_test_func/*.c. OK.")
+          f"({len(cmake_set)} files) and cover every ta_test_func/*.c; "
+          f"each of their {groups} groups has a DO_TEST row. OK.")
     return True
 
 
