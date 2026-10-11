@@ -544,6 +544,7 @@ set(LIB_SOURCES
 	"${CMAKE_CURRENT_SOURCE_DIR}/src/ta_func/ta_WCLPRICE.c"
 	"${CMAKE_CURRENT_SOURCE_DIR}/src/ta_func/ta_WILLR.c"
 	"${CMAKE_CURRENT_SOURCE_DIR}/src/ta_func/ta_WMA.c"
+	"${CMAKE_CURRENT_SOURCE_DIR}/src/ta_func/ta_ZIGZAG.c"
 	"${CMAKE_CURRENT_SOURCE_DIR}/src/ta_func/ta_ZLEMA.c"
 	"${CMAKE_CURRENT_SOURCE_DIR}/src/ta_abstract/frames/ta_frame.c"
 	"${CMAKE_CURRENT_SOURCE_DIR}/src/ta_abstract/ta_func_api.c"
