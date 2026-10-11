@@ -47,7 +47,7 @@
    #include "ta_func.h"
 #endif
 
-#define TA_META_FRAME_SIZE 233
+#define TA_META_FRAME_SIZE 234
 
 TA_RetCode TA_AC_MetaRide( int startIdx, int endIdx, const double inHigh[], const double inLow[], int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod, int *outBegIdx, int *outNBElement, double outReal[] );
 TA_RetCode TA_S_AC_MetaRide( int startIdx, int endIdx, const float inHigh[], const float inLow[], int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod, int *outBegIdx, int *outNBElement, double outReal[] );
@@ -7493,7 +7493,7 @@ TA_RetCode TA_ZIGZAG_MetaRide( int startIdx, int endIdx, const double inHigh[], 
       const void *in[] = { inHigh, inLow };
       const void *out[] = { outZigZag, outTrend, outPivotIdx };
       int shift[] = { TA_ZIGZAG_DisplayShift( optInSensitivity, optInMinTrendLength, 0 ), TA_ZIGZAG_DisplayShift( optInSensitivity, optInMinTrendLength, 1 ), TA_ZIGZAG_DisplayShift( optInSensitivity, optInMinTrendLength, 2 ) };
-      meta_ride_check( 231, 0, startIdx, endIdx, in, 2,
+      meta_ride_check( 232, 0, startIdx, endIdx, in, 2,
                        *outBegIdx, *outNBElement,
                        TA_ZIGZAG_Lookback( optInSensitivity, optInMinTrendLength ), shift, out );
    }
@@ -7507,7 +7507,7 @@ TA_RetCode TA_S_ZIGZAG_MetaRide( int startIdx, int endIdx, const float inHigh[],
       const void *in[] = { inHigh, inLow };
       const void *out[] = { outZigZag, outTrend, outPivotIdx };
       int shift[] = { TA_ZIGZAG_DisplayShift( optInSensitivity, optInMinTrendLength, 0 ), TA_ZIGZAG_DisplayShift( optInSensitivity, optInMinTrendLength, 1 ), TA_ZIGZAG_DisplayShift( optInSensitivity, optInMinTrendLength, 2 ) };
-      meta_ride_check( 231, 1, startIdx, endIdx, in, 2,
+      meta_ride_check( 232, 1, startIdx, endIdx, in, 2,
                        *outBegIdx, *outNBElement,
                        TA_ZIGZAG_Lookback( optInSensitivity, optInMinTrendLength ), shift, out );
    }
@@ -7522,7 +7522,7 @@ TA_RetCode TA_ZLEMA_MetaRide( int startIdx, int endIdx, const double inReal[], i
       const void *in[] = { inReal };
       const void *out[] = { outReal };
       int shift[] = { TA_ZLEMA_DisplayShift( optInTimePeriod, 0 ) };
-      meta_ride_check( 232, 0, startIdx, endIdx, in, 1,
+      meta_ride_check( 233, 0, startIdx, endIdx, in, 1,
                        *outBegIdx, *outNBElement,
                        TA_ZLEMA_Lookback( optInTimePeriod ), shift, out );
    }
@@ -7536,7 +7536,7 @@ TA_RetCode TA_S_ZLEMA_MetaRide( int startIdx, int endIdx, const float inReal[], 
       const void *in[] = { inReal };
       const void *out[] = { outReal };
       int shift[] = { TA_ZLEMA_DisplayShift( optInTimePeriod, 0 ) };
-      meta_ride_check( 232, 1, startIdx, endIdx, in, 1,
+      meta_ride_check( 233, 1, startIdx, endIdx, in, 1,
                        *outBegIdx, *outNBElement,
                        TA_ZLEMA_Lookback( optInTimePeriod ), shift, out );
    }
