@@ -38,6 +38,90 @@
 #include "ta_abstract.h"
 #include "ta_def_ui.h"
 
+/* ZIGZAG BEGIN */
+static const TA_RealRange TA_DEF_ZIGZAG_Sensitivity =
+{
+   0.0,
+   100.0,
+   2,
+   1.0,
+   20.0,
+   1.0
+};
+
+static const TA_OptInputParameterInfo TA_DEF_UI_D_ZIGZAG_Sensitivity =
+{
+   TA_OptInput_RealRange,
+   "optInSensitivity",
+   TA_OPTIN_IS_PERCENT,
+
+   "Sensitivity",
+   (const void *)&TA_DEF_ZIGZAG_Sensitivity,
+   5.0,
+   "Minimum move away from the current extreme that reverses the leg, in percent",
+
+   NULL
+};
+
+static const TA_IntegerRange TA_DEF_ZIGZAG_MinTrendLength =
+{
+   1,
+   100000,
+   1,
+   20,
+   1
+};
+
+static const TA_OptInputParameterInfo TA_DEF_UI_D_ZIGZAG_MinTrendLength =
+{
+   TA_OptInput_IntegerRange,
+   "optInMinTrendLength",
+   0,
+
+   "Minimum Trend Length",
+   (const void *)&TA_DEF_ZIGZAG_MinTrendLength,
+   1,
+   "Minimum number of bars between two pivots",
+
+   NULL
+};
+
+const TA_OutputParameterInfo TA_DEF_UI_Output_Real_ZIGZAG_outZigZag =
+                               { TA_Output_Real, "outZigZag", TA_OUT_LINE };
+
+const TA_OutputParameterInfo TA_DEF_UI_Output_Integer_ZIGZAG_outTrend =
+                               { TA_Output_Integer, "outTrend", TA_OUT_LINE };
+
+const TA_OutputParameterInfo TA_DEF_UI_Output_Integer_ZIGZAG_outPivotIdx =
+                               { TA_Output_Integer, "outPivotIdx", TA_OUT_LINE };
+
+static const TA_InputParameterInfo    *TA_ZIGZAG_Inputs[]    =
+{
+  &TA_DEF_UI_Input_Price_HL,
+  NULL
+};
+
+static const TA_OutputParameterInfo   *TA_ZIGZAG_Outputs[]   =
+{
+  &TA_DEF_UI_Output_Real_ZIGZAG_outZigZag,
+  &TA_DEF_UI_Output_Integer_ZIGZAG_outTrend,
+  &TA_DEF_UI_Output_Integer_ZIGZAG_outPivotIdx,
+  NULL
+};
+
+static const TA_OptInputParameterInfo *TA_ZIGZAG_OptInputs[] =
+{ &TA_DEF_UI_D_ZIGZAG_Sensitivity,
+  &TA_DEF_UI_D_ZIGZAG_MinTrendLength,
+  NULL
+};
+
+DEF_FUNCTION( ZIGZAG,
+              TA_GroupId_OverlapStudies,
+              "Zig Zag",
+              TA_FUNC_FLG_OVERLAP | TA_FUNC_FLG_STREAM | TA_FUNC_FLG_PATH_DEP
+             );
+/* ZIGZAG END */
+
 /* ZLEMA BEGIN */
 static const TA_InputParameterInfo    *TA_ZLEMA_Inputs[]    =
 {
@@ -69,6 +153,7 @@ DEF_FUNCTION( ZLEMA,
  ****************************************************************************/
 const TA_FuncDef *TA_DEF_TableZ[] =
 {
+   ADD_TO_TABLE(ZIGZAG),
    ADD_TO_TABLE(ZLEMA),
    NULL
 };
