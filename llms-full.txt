@@ -20,7 +20,7 @@ This documentation is built from the main branch and can be ahead of the newest 
 - **Streaming.** Every function also streams: open it on history, update it once per closed bar, and peek at the forming bar without changing state. Every value is bit-identical to the batch call over the same bars ([exact rule](https://ta-lib.org/spec/streaming/index.md)). Each language's streaming page: [C](https://ta-lib.org/api/stream/index.md), [Rust](https://ta-lib.org/api/rust/stream/index.md), [Java](https://ta-lib.org/api/java/stream/index.md), [C#](https://ta-lib.org/api/csharp/stream/index.md).
 - **Numerical stability.** Each function page says whether a bar's value depends on where the series begins: [start-independent, initial unstable period, path-dependent, or depends on the MA type](https://ta-lib.org/functions/stability.md). A recursive function converges as history grows; a path-dependent one, such as AD, OBV or SAR, never does.
 - **Stability at run time.** In the metadata, `TA_FUNC_FLG_PATH_DEP` marks every path-dependent function and `TA_FUNC_FLG_UNST_PER` every function with its own unstable-period setting, with the same bits in Rust, Java and C#. A function unstable only through a callee, such as DEMA or MACD through EMA, carries neither flag, so the function page is the complete classification.
-- **Unstable period.** [Setting it](https://ta-lib.org/api/unstable-period/index.md) for a recursive function such as EMA, RSI or ADX drops more leading outputs, the ones its seed still distorts: a count drops that many, an Auto level (`TA_UNSTABLE_AUTO_PREC_4`, `TA_UNSTABLE_AUTO_PREC_8`) drops the count the function's rule gives for the call's parameters. The default, 0, drops nothing, and a getter returns what was set, so ask the lookback for the bars a level adds. It follows the function wherever it runs, so EMA's setting also moves MACD and DEMA.
+- **Unstable period.** [Setting it](https://ta-lib.org/api/unstable-period/index.md) for a recursive function such as EMA, RSI or ADX drops more leading outputs, the ones its seed still distorts: a count drops that many, an Auto level (`TA_UNSTABLE_AUTO_PREC_4`, `TA_UNSTABLE_AUTO_PREC_8`) drops the count the function's [rule](https://ta-lib.org/spec/auto-stabilization/index.md) gives for the call's parameters. The default, 0, drops nothing, and a getter returns what was set, so ask the lookback for the bars a level adds. It follows the function wherever it runs, so EMA's setting also moves MACD and DEMA.
 - **Abstract API.** Enumerate every function at run time, with its group, inputs, parameters (type, range, default), outputs and flags, then call it by name: the [Abstract API](https://ta-lib.org/api/abstract/index.md) page, with examples in C, Rust, Java and C#. Its rules and the list of every flag: the [specification](https://ta-lib.org/spec/abstract/index.md).
 - **Candlestick settings.** The `CDL*` pattern functions judge bodies, shadows and distances against [tunable thresholds](https://ta-lib.org/api/candle-settings/index.md).
 - **Settings and threads.** In C, call `TA_Initialize` once, and only once, per process, before any other TA call, and do not use the library after `TA_Shutdown`. The unstable period and the candle settings are process-wide: change them only while no TA function is running and no stream is open; `TA_Shutdown` counts as a change ([specification](https://ta-lib.org/spec/settings-threads/index.md)). Between changes the TA functions are safe to call from any number of threads (the "High-performance Multi-threading" section of the [C API page](https://ta-lib.org/api/index.md)). In Rust, Java and C#, settings live in an immutable `Core` built with a builder, so differently configured instances coexist and one instance is shared across threads freely. The exceptions are a stream handle, which has one writer (an update must not race with any other call on it; clone it to fork), and two objects to confine to one thread: a parameter holder of the Abstract API and, in Java and C#, a `Core` builder ([specification](https://ta-lib.org/spec/settings-threads/index.md)).
@@ -262,9 +262,7 @@ Error 2(TA_BAD_PARAM): A parameter is out of range
 
 ### 4.2 Numerical Stability {#numerical_stability}
 
-<a id="unstable_period"></a>
-
-<p>Your value changed when you fed the same bar more history? That is by design: recursive functions converge as history accumulates. See <a href="/api/unstable-period/">Unstable Period</a> for how to mitigate that.</p>
+<p><a id="unstable_period"></a>Your value changed when you fed the same bar more history? That is by design: recursive functions converge as history accumulates. See <a href="/api/unstable-period/">Unstable Period</a> for how to mitigate that.</p>
 <p>Rounding is a separate axis: floating-point error accumulates over a very long series, which is one reason a call is capped at <a href="#index_range">TA_INDEX_MAX</a>.</p>
 <p>Every function documentation page carries a <a href="/functions/stability">numerical-stability property</a>: how much the value at a given bar depends on where the series you passed in begins.</p>
 
@@ -1798,13 +1796,13 @@ A function with at least one shifted output carries the display-shift flag, and 
 ---
 url: 'https://ta-lib.org/api/unstable-period/index.md'
 description: >-
-  How many warm-up bars TA-Lib discards from recursive indicators such as EMA,
-  RSI and ADX before reporting their output, and how to set it in C, Rust, Java
-  and C#.
+  Why recursive indicators such as EMA, RSI and ADX start out unstable, and how
+  TA-Lib discards those bars for you: Auto-Stabilization for every function, or
+  a setting per function, in C, Rust, Java and C#.
 ---
 # Unstable Period
 
-**TL;DR:** Some indicators need a warm-up before their output settles. TA-Lib can discard those bars for you, so unstable values never reach your application.
+**TL;DR:** Some indicators need a number of bars before their output settles. TA-Lib can discard those bars for you, and one setting covers every function that has them.
 
 ## Why it exists
 
@@ -1857,7 +1855,7 @@ Some indicators have "memory". Each output depends on the previous one, seeded f
 <text class="uf-zone" x="259.2" y="315" text-anchor="middle">unstable</text>
 <text class="uf-zone" x="600.2" y="315" text-anchor="middle">stable</text>
 </svg>
-<figcaption id="uf-cap">Three 20-bar EMAs of the same prices, each fed from a different starting bar. From bar 65 on they differ by less than a thousandth of the price, too little to see at this scale. An Auto level waits longer, until the digits it names stop moving.</figcaption>
+<figcaption id="uf-cap">Three 20-bar EMAs of the same prices, each fed from a different starting bar. From bar 65 on they differ by less than a thousandth of the price, too little to see at this scale. Auto-Stabilization waits longer: it discards 100 bars for this EMA at <code>PREC_4</code>.</figcaption>
 </figure>
 
 This is inherent to the algorithms, not something specific to TA-Lib: every implementation has to seed the recursion somewhere.
@@ -1870,9 +1868,79 @@ There are three distinct approaches, from the most common to the most rigorous:
 
 2. **Scrub it yourself.** TA-Lib stays at its default (unstable period `0`) and returns everything it can compute; your code decides how many leading outputs to drop.
 
-3. **Let TA-Lib do it.** Set an unstable period and the function stops emitting the leading values the seed still distorts. The setting is either [Auto-Stabilization](/api/unstable-period/#auto), a level that sizes the count from each call's parameters, or a fixed number of bars.
+3. **Let TA-Lib do it.** Set an unstable period and the function stops emitting the leading values the seed still distorts. The simplest way is [Auto-Stabilization](/api/unstable-period/#auto): a one-time setting that does it all. [Advanced Fine-Tuning](/api/unstable-period/#fine-tuning) covers the rest: a stricter level, or your own number of bars, for all functions or for one.
 
-## API
+## Auto-Stabilization (Recommended) {#auto}
+
+With Auto-Stabilization, each function works out by itself how many leading bars to discard. The easiest way is to enable it once, for every function, at initialization:
+
+::: code-tabs#lang
+
+@tab C
+
+```c
+/* Once, after TA_Initialize: */
+TA_SetUnstablePeriod( TA_FUNC_UNST_ALL, TA_UNSTABLE_AUTO_PREC_4 );
+```
+
+@tab Rust
+
+```rust
+use ta_lib::{Core, FuncUnstId};
+
+let core = Core::builder()
+    .unstable_period(FuncUnstId::ALL, Core::UNSTABLE_AUTO_PREC_4)
+    .build()?;
+```
+
+@tab Java
+
+```java
+import io.github.talib.Core;
+import io.github.talib.FuncUnstId;
+
+Core core = Core.builder()
+    .unstablePeriod(FuncUnstId.ALL, Core.UNSTABLE_AUTO_PREC_4)
+    .build();
+```
+
+@tab C#
+
+```csharp
+using TALib;
+
+Core core = Core.Builder()
+    .UnstablePeriod(FuncUnstId.ALL, Core.UnstableAutoPrec4)
+    .Build();
+```
+
+:::
+
+In C the setting is process-wide. In Rust, Java and C# it belongs to `core`: make your calls on that object.
+
+The number of bars comes from the parameters of each call: a 200-bar EMA drops more than a 30-bar one. Indicators built on another, such as MACD on EMA, follow along.
+
+`PREC_4` is a level: it targets 4 significant digits. Once those bars are gone, the first four digits of a value (`45.67`, `1.234`, `0.0001234`) no longer depend on where your data starts. For an oscillator that crosses zero, such as MACD, count the digits from the size of its swing.
+
+The lookback is the number of bars before the first output. It grows mostly with the period:
+
+| Call | Lookback at `0` | Lookback at `PREC_4` |
+| --- | --: | --: |
+| EMA(30) | 29 | 179 |
+| EMA(200) | 199 | 1199 |
+| RSI(14) | 14 | 154 |
+| MACD(12, 26, 9) | 33 | 208 |
+
+Use the usual [lookback](/api/#output_size) function to find the number for a call. Without more history than that, a batch call succeeds with no output and a stream cannot open.
+
+`PREC_4` is a numerical target, and typical market conditions meet it. It is not a guarantee: some functions fall short when prices stay flat, hold a narrow range or climb steadily for many bars, and for some of those no number of bars is enough. The count behind each function, and the [known exceptions](/spec/auto-stabilization/#exceptions), are in the [specification](/spec/auto-stabilization/).
+
+## Advanced Fine-Tuning {#fine-tuning}
+
+For finer control, set the unstable period yourself: choose its value, and the functions it applies to.
+
+* **The value** is an Auto level or a fixed number of bars.
+* **The functions** are all of them (`ALL`) or one. Each function with an unstable period has its own id.
 
 ::: code-tabs#lang
 
@@ -1943,13 +2011,14 @@ int v = core.UnstablePeriod(FuncUnstId.RSI);   // Core.UnstableAutoPrec8
 
 :::
 
-`id` selects which function to affect. The value is one of:
+The value is one of:
 
 * **An Auto level**, `TA_UNSTABLE_AUTO_PREC_4` or `TA_UNSTABLE_AUTO_PREC_8` (a constant
-  on `Core` in Rust, Java and C#): the function discards the number of bars its
-  [rule](/api/unstable-period/#rules) gives for the call's parameters.
-* **A count**, from `0` to `TA_INDEX_MAX`: the function discards that many bars, whatever
-  its parameters.
+  on `Core` in Rust, Java and C#): the function works out the number of bars from the
+  call's parameters. `PREC_8` targets eight significant digits and needs more bars
+  (EMA(30): 314 instead of 179); some outputs cannot show that many, so start with `PREC_4`.
+* **A count**, from `0` to `TA_INDEX_MAX`: a fixed number of bars that is yours to choose.
+  The function discards that many, whatever its parameters.
 
 The default, `0`, discards nothing: you get every value the function can compute.
 
@@ -1961,154 +2030,13 @@ ask for its [lookback](/spec/lookback/#ask).
 The setting follows the function wherever it runs: whether you call it directly, or
 another indicator uses it internally. The EMA id therefore affects EMA itself and
 every indicator built on one, such as MACD and DEMA, which can drop a different
-number of bars than EMA ([rL6](/spec/lookback/#rl6)).
+number of bars than EMA.
 
 In C, the unstable period and the candle settings are process-wide. Change them
 only while no TA function is running and no stream is open
 ([specification](/spec/settings-threads/#idle-settings)).
 
-## Auto-Stabilization {#auto}
-
-`PREC_n`: once the unstable outputs are discarded, the first `n` significant digits of a value no
-longer depend on where the data starts. Significant digits, not decimals: at `PREC_4`
-that is `45.67y`, `1.234y` or `0.0001234y`, with `y` the first digit that can still move.
-
-* **An output that stays away from zero** holds this as stated: the moving averages and
-  everything on the price scale, ATR, NATR, RSI, the DI and DM pairs, ADX, RVI, STC, the
-  Hilbert period and trendline. On the price scale the count usually delivers about two
-  digits more.
-* **An output that reaches zero** has no leading digits to keep there, so count the
-  digits from the size of its swing: CMO, DX, the high-pass and band-pass SWAK filters,
-  HT_PHASOR, HT_SINE, HT_DCPHASE, and the oscillators centred on zero such as MACD, APO,
-  PPO, TRIX and FISHER. At `PREC_4` two starts differ by about one ten-thousandth of the swing.
-  Outputs that divide by a state (DX, CMO, STOCHRSI, PPO, PVO) can be a few times above
-  that at the count.
-
-Start with `PREC_4`. `PREC_8` asks more than some outputs can show: where rounding in a
-function's own arithmetic is larger than the level, the last digits keep moving.
-
-The cost in bars is set mostly by the period, so no level makes a long period cheap:
-
-| Call | Lookback at `0` | `PREC_4` | `PREC_8` |
-| --- | --: | --: | --: |
-| EMA(30) | 29 | 179 | 314 |
-| EMA(200) | 199 | 1199 | 2099 |
-| RSI(14) | 14 | 154 | 280 |
-| MACD(12, 26, 9) | 33 | 208 | 366 |
-
-A batch call whose range ends before the lookback succeeds with no output, and a stream
-needs the lookback plus one bar to open: size your history from the lookback call.
-
-The exact behaviour is in the specification: the values a setter accepts
-([rT3](/spec/settings-threads/#rt3)), what a getter returns
-([rT12](/spec/settings-threads/#rt12)), what a level adds to a lookback
-([rL6](/spec/lookback/#rl6)) and what a lookback depends on
-([rL5](/spec/lookback/#rl5)).
-
-## Bars discarded under a level {#rules}
-
-Each id has one rule. `n` is the function's period. `K` is 10 at `PREC_4` and 19 at
-`PREC_8`; `X` is the level's digit count, 4 or 8.
-
-* `E(n) = ceil(K*n/2)`, for an EMA.
-* `W(n) = ceil(K*(2*n-1)/2)`, for Wilder smoothing whose output is the smoothed value.
-* `H = 80 + 50*X`, for the Hilbert transform functions.
-
-| Id | Bars discarded | `PREC_4` / `PREC_8` at the defaults | Sized by |
-| --- | --- | --- | --- |
-| `EMA` | `E(n)` | 150 / 285 | proof |
-| `RMA`, `ATR`, `PLUS_DM`, `MINUS_DM` | `W(n)` | RMA 295 / 561, the others 135 / 257 | proof |
-| `NATR`, `RSI`, `CMO`, `PLUS_DI`, `MINUS_DI`, `DX`, `RVI` | `K*n` | 140 / 266 | proof, ratio |
-| `ADX` | `(K+6)*n` | 224 / 350 | proof, ratio |
-| `HA` | `ceil(13*K/9)` | 15 / 28 | proof |
-| `SWAK_HP` | `ceil(K*n/6)` | 34 / 64 | proof |
-| `SWAK_GAUSS`, `SWAK_BUTTER`, `SWAK_2PHP` | `ceil((K+3)*(n+2)/9)` | 32 / 54 | proof |
-| `SWAK_BP` | `ceil((K+1)*n/(6*delta))` | 367 / 667 | proof |
-| `FISHER` | `ceil(5*(K+6)/2)` | 40 / 63 | proof, limiter |
-| `T3` | `ceil(11*(X+4)*n/8)` | 55 / 83 | measurement |
-| `KAMA` | `25*X*isqrt(n)` | 500 / 1000 | measurement |
-| `FRAMA` | `9*(X+4)*(isqrt(n)+2)/2`, at most `99*K` | 216 / 324 | measurement |
-| `VIDYA` | `2*X*(n+1)*isqrt(m)`, `m` the CMO period, at most `TA_INDEX_MAX` | 312 / 624 | measurement |
-| `MCGD` | `5*X*n` | 280 / 560 | measurement |
-| `HT_DCPERIOD`, `HT_DCPHASE`, `HT_PHASOR`, `HT_SINE` | `H` | 280 / 480 | measurement |
-| `HT_TRENDLINE`, `HT_TRENDMODE` | `120 + 20*X` | 200 / 280 | measurement |
-| `MAMA` | `H + ceil(2*K/max(fast, slow))` | 320 / 556 | measurement |
-| `STC` | `ceil(5*K/2) + 3*(s+1)`, `s = max(fast, slow)`, on top of the `E(s)` it inherits | 178 / 201 | measurement |
-
-`isqrt` is the integer square root. The `E`, `W`, `K*n`, `T3`, `KAMA` and `VIDYA` rules give 0
-at a period of 1, where the function does no smoothing.
-
-* **Proof.** The count bounds what is left of the seed, for any input. "Ratio" marks an
-  output that divides by a smoothed value or by a price, "limiter" a state that is
-  snapped at a limit: see the [limits](/api/unstable-period/#limits).
-* **Measurement.** The count is a formula sized on measured series, with margin. It is
-  not a bound.
-
-A function that owns no id gets its count through the functions it is built on, as it
-does with a fixed count: MACD discards `E(max(fast, slow)) + E(signal)` bars, DEMA
-`2*E(n)`, and KC the longer of its EMA and ATR paths. A function with an MA-type
-parameter takes the count of the type selected, and a windowed type such as SMA adds
-none. A function can add to the count it inherits for what it does with the value,
-under a level only: CKSP adds its stop period less one, and ADOSC `ceil((15*f + 3*t)/8)` bars, `f` the
-shorter of its two periods, `s` the longer and `t` the sum of `min(f, s/2^j)` for `j`
-from 1 to 16, in integer divisions.
-Each [function page](/functions/) names what it inherits from.
-
-## What a level does not promise {#limits}
-
-* **Not bit-identity.** A level bounds how much of the seed is left; two starts then
-  agree to the level's digits, not to the last bit.
-* **The `E` and `W` counts have no bar to spare.** At a long period the count is the
-  exact number of bars the level needs, so the first value kept can sit above the
-  level's threshold by the rounding of the arithmetic. The digits a level names hold.
-* **A flat market freezes a ratio.** RSI, CMO, the DI pair, DX, RVI, TSI, SMI and STC
-  divide one smoothed series by another, and ADX averages such a ratio. When prices
-  stop moving both series shrink together, and the ratio keeps its dependence on the
-  start for any warm-up.
-* **A limiter can restart a difference, or hold it.** FISHER replaces a smoothed position
-  beyond 0.99 by 0.999. Two starts on either side of 0.99 differ again by a visible
-  amount, at any bar, and the count restarts from there. While the price holds close
-  to the top or the bottom of its channel without resting on it, the start that crossed
-  stays across and the two do not meet for any warm-up.
-* **The adaptive averages are sized for a market that trends or wanders.** KAMA, FRAMA
-  and VIDYA slow down by design in a range-bound market and then need several times
-  their count. Where that matters, set a fixed count on that id. FRAMA's slowest rate
-  is known, so `99*K` bars hold its level on any input.
-* **HT_TRENDLINE agrees exactly or not at all.** It averages the price over a cycle
-  period cut to a whole number of bars, so two starts are equal once their whole
-  periods have agreed for four bars. A level sets how rare a later disagreement is,
-  not how small: on random walks about one start in 2,500 has one past the `PREC_4`
-  count and one in 400,000 past the `PREC_8` count. HT_TRENDMODE is a flag and behaves
-  the same way: about one start in 15,000 and one in 150,000.
-* **CVI is a ratio of an inherited value.** It divides its EMA by the same EMA some
-  bars earlier, so like the ratio ids it can sit above the level's threshold at the
-  count it inherits, e.g. for up to 14 bars at the defaults.
-* **T3 is sized on price series.** A start whose six stages nearly cancel in the first
-  outputs shows its difference later and can need a fifth more than the count; it is
-  rare on prices, and a fixed count of `20*n` on that id covers it at either level.
-* **The Hilbert transform functions need an input that moves.** While the input holds
-  one value for a whole dominant cycle, as an oscillator pinned at 0 or 100 does, the
-  phase is undefined: HT_DCPHASE, HT_SINE and HT_TRENDMODE from two starts can differ by
-  any amount on those bars, and MAMA does not converge. When the input moves again every
-  Hilbert function starts its warm-up over.
-* **MAMA needs a price that is fine against its tick.** On a bar where its in-phase
-  component is zero to rounding, which a price worth few ticks makes frequent, two starts
-  can take different alphas: the difference reopens by up to the distance from the price
-  to the line, and where it keeps happening it stays open. A trending series shows none
-  at any tick. On a range-bound series, the share of starts still apart past the `PREC_4`
-  count is about 5% at a price worth 500 ticks, 1% at 1,000, 0.3% at 2,000, 0.1% at
-  5,000 and none at 100,000; a random walk shows about a tenth of that.
-* **MCGD is sized for a line that tracks the price.** Its rate falls as the line trails,
-  to zero at 20% under the price, and past that it amplifies its start. In a steady rise
-  the count runs short once the period times the rise per bar passes about 0.06, and the
-  line stays 20% under from about 0.10: for a period of 100 on daily bars, a year that
-  gains 16% and one that gains 29%. Past the second, two starts agree only after the
-  price comes back to the line.
-* **A path-dependent function stays path-dependent.** No level changes AD, OBV or SAR.
-  SUPERTREND computes an ATR, so a level lengthens its lookback and promises nothing
-  about its line.
-
-## Functions with an unstable period
+### Functions with an unstable period
 
 <!-- ta_codegen:begin unstable-func-list -->
 
@@ -2123,11 +2051,12 @@ Each [function page](/functions/) names what it inherits from.
 | Java | `FuncUnstId.<NAME>` | [FuncUnstId.java](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/library/src/main/java/io/github/talib/FuncUnstId.java) |
 | C# | `FuncUnstId.<NAME>` | [FuncUnstId.cs](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/FuncUnstId.cs) |
 
-`<NAME>` may also be `ALL`, which targets every function above at once.
+`<NAME>` may also be `ALL`, which selects every function above at once.
 
 ## See also
 
-* [C/C++ Core API](/api/) / [Rust Core API](/api/rust/)
+* [Specification](/spec/auto-stabilization/): the count behind each function, and the known exceptions
+* Core API: [C/C++](/api/), [Rust](/api/rust/), [Java](/api/java/), [C#](/api/csharp/)
 * [Candlestick Settings](/api/candle-settings/)
 
 ---
@@ -2327,11 +2256,13 @@ description: >-
 
 Written as a reference for AI agents integrating TA-Lib. For a lighter introduction written for people, start with the API pages for [C/C++](/api/), [Rust](/api/rust/), [Java](/api/java/) or [C#](/api/csharp/).
 
-The rules cover the four native APIs (C, Rust, Java, C#). Each rule has one home page, states what the code does, and is written in C's spelling. This page maps that shared vocabulary onto Rust, Java and C#; a rule that introduces a language-specific name gives all four spellings itself.
+The rules use C's spelling. This page maps that shared vocabulary onto the other languages.
+
+An AI agent is expected to read the code for exact signatures and names. The specification states the invariants: behaviour an integrator can rely on across languages and releases.
 
 ## Scope {#scope}
 
-* The four native APIs: batch, lookback, display shift, streams, settings, and the [Abstract API](/spec/abstract/).
+* The native APIs (C, Rust, Java, C#): batch, lookback, display shift, streams, settings, and the [Abstract API](/spec/abstract/).
 * A wrapper keeps its own conventions. ta-lib-python aligns outputs to the input and fills the warm-up with NaN; the native APIs do not ([rW3](/spec/inputs-outputs/#rw3)).
 * Published packages and their versions: [Install](/install/).
 * Owned by other pages: [Unstable Period](/api/unstable-period/), [Candlestick Settings](/api/candle-settings/) (model and defaults), streaming in [C](/api/stream/), [Rust](/api/rust/stream/), [Java](/api/java/stream/) and [C#](/api/csharp/stream/), [Numerical Stability](/functions/stability), and the [function pages](/functions/): inputs, outputs in order, parameters (type, default, accepted values), stability category, flags.
@@ -2345,6 +2276,7 @@ In the order a caller meets them:
 |---|---|---|
 | [Batch Inputs and Outputs](/spec/inputs-outputs/) | what a call takes, what a successful call writes, pattern outputs, computing in place | `rP` parameters, `rW` writes |
 | [Lookback and Shift](/spec/lookback/) | lookback call, what enters it, display shift, stability from metadata | `rL` lookback |
+| [Auto-Stabilization](/spec/auto-stabilization/) | the bars an Auto level adds for each id, what a level targets, the known exceptions | `rZ` Auto-Stabilization |
 | [Streaming](/spec/streaming/) | bit-identity with batch, opening, advancing, accessors | `rH` handle behaviour, `rS` stream opening, `rU` update |
 | [Abstract API and Metadata](/spec/abstract/) | what the Abstract API provides, its rules and return codes, run-time information, the catalog of metadata flags | `rA` Abstract API |
 | [Settings and Threads](/spec/settings-threads/) | C lifecycle and settings, `Core`, setting validation, threads | `rT` settings and threads |
@@ -2415,7 +2347,7 @@ Every function has this surface; in Rust, Java and C# the calls are methods of a
 | settings: default, builder | process-wide ([settings](/spec/settings-threads/#idle-settings)) | `Core::new()`, `Core::builder()` | `Core.DEFAULT`, `Core.builder()` | `Core.Default`, `Core.Builder()` |
 | output range | `outBegIdx`, `outNBElement` | `OutRange { beg_idx, count }`, `EMPTY`, `is_empty()` | `OutRange(begIdx, count)`, `EMPTY`, `isEmpty()` | `OutRange(BegIdx, Count)`, `Empty`, `IsEmpty` |
 
-Setters per language: [Unstable Period](/api/unstable-period/), [Candlestick Settings](/api/candle-settings/). C has no public candle-setting type: a setting is the four arguments of `TA_SetCandleSettings`.
+Setters per language: [Unstable Period](/api/unstable-period/), [Candlestick Settings](/api/candle-settings/). C has no public candle-setting type: a setting is the arguments of `TA_SetCandleSettings`.
 
 Enum types drop C's `TA_`. Members:
 
@@ -2432,11 +2364,24 @@ Constants: C prefixes `TA_` (`TA_INDEX_MAX`); Rust, Java and C# hold them on `Co
 | Constant | Value |
 |---|---|
 | `INDEX_MAX` | 100000000, the largest index |
-| `UNSTABLE_AUTO_PREC_4` | `INDEX_MAX + 4`, an Auto level of the unstable period ([rT3](/spec/settings-threads/#rt3)) |
+| `UNSTABLE_AUTO_PREC_4` | `INDEX_MAX + 4`, an Auto level of the unstable period ([rT3](/spec/settings-threads/#rt3), [rZ1](/spec/auto-stabilization/#rz1)) |
 | `UNSTABLE_AUTO_PREC_8` | `INDEX_MAX + 8`, an Auto level of the unstable period |
 | `REAL_DEFAULT` | -4e37, selects a real parameter's default ([rP3](/spec/inputs-outputs/#rp3)) |
 | `INTEGER_DEFAULT` | `INT_MIN`, selects an integer parameter's default |
 | `REAL_MIN`, `REAL_MAX` | -3e37, 3e37 ([input domain](/spec/inputs-outputs/#input-domain)) |
+
+### Metadata flags {#flag-names}
+
+One type holds the flags of each word. What each flag means: [flags](/spec/abstract/#flags).
+
+| Flags of | C prefix | Rust, Java | C# |
+|---|---|---|---|
+| a function | `TA_FUNC_FLG_` | `FuncFlags` | `FuncFlags` |
+| a price input | `TA_IN_PRICE_` | `InputFlags` | `PriceComponents` |
+| an optional parameter | `TA_OPTIN_` | `OptInputFlags` | `OptInputFlags` |
+| an output | `TA_OUT_` | `OutputFlags` | `OutputFlags` |
+
+Members are upper case in Rust and Java and UpperCamel in C#, and can use other words than C's: read them from the type. Each C# flag enum also has `None`, the empty word.
 
 ## How a failure reaches the caller {#failures}
 
@@ -2572,7 +2517,7 @@ The lookback is how many input bars a function consumes before its first output.
 ## The caller must {#caller}
 
 * <a id="ask"></a>**Ask for the lookback, never compute it.** Call the function's lookback call with the parameters of the batch call, under the same settings. A formula written from a function's description goes wrong as soon as an unstable period or an MA type enters ([rL6](/spec/lookback/#rl6)).
-* <a id="start"></a>**Not compare values from different starts bit for bit.** Whether a value depends on where the series starts is the function's numerical stability; each [function page](/functions/) names its category ([categories](/functions/stability)). Only a start-independent function gives the same value at a bar for any `startIdx`, and then only up to rounding error; for any other, a call with a later `startIdx` is not a slice of a call from 0. A stream opened later in a series raises the same question: [rH2](/spec/streaming/#rh2).
+* <a id="start"></a>**Not compare values from different starts bit for bit.** Whether a value depends on where the series starts is the function's numerical stability; each [function page](/functions/) names its [category](/functions/stability). Only a start-independent function gives the same value at a bar for any `startIdx`, and then only up to rounding error; for any other, a call with a later `startIdx` is not a slice of a call from 0. A stream opened later in a series raises the same question: [rH2](/spec/streaming/#rh2).
 
 ## Definition {#definition}
 
@@ -2594,10 +2539,10 @@ Every function has a lookback call. It takes exactly the batch call's optional p
 <a id="rl6"></a>**rL6** An unstable period adds bars to the lookback of the function that owns its id:
 
 * A count adds exactly that many bars. MINUS_DI, MINUS_DM, PLUS_DI and PLUS_DM at period 1 take none and keep a lookback of 1.
-* An Auto level adds the count of the owner's [rule](/api/unstable-period/#rules) for that level, computed from the call's optional parameters. It can be 0.
+* An Auto level adds the owner's count for that level ([rZ1](/spec/auto-stabilization/#rz1)), computed from the call's optional parameters. It can be 0.
 * Either way, for a batch call from bar 0, the values the owner still reports are unchanged, bit for bit.
 * A function computed through the owner, directly or through an MA type the caller selects, also takes the lengthening, and how much depends on the function. It can count more than once (through EMA, DEMA counts it twice and TEMA three times), count only where its path is the longest (KC takes the longer of its EMA and ATR paths), or not count at all (an MA stage at period 1 or of the `DISABLED` type takes none).
-* Under an Auto level only, such a function may add bars of its own for how it uses the owner's value (CKSP adds its stop period less one).
+* Under an Auto level only, such a function may add bars of its own for how it uses the owner's value ([rZ2](/spec/auto-stabilization/#rz2)).
 
 Accepted values: [rT3](/spec/settings-threads/#rt3). The functions that own an id, and how to set one: [Unstable Period](/api/unstable-period/). An inheriting function names its source in the Numerical Stability line of its [function page](/functions/).
 
@@ -2631,6 +2576,93 @@ What the [metadata](/spec/abstract/) says about a function's numerical stability
 ---
 
 ---
+url: 'https://ta-lib.org/spec/auto-stabilization/index.md'
+description: >-
+  The bars an Auto level of the unstable period adds for each function, what a
+  level targets, and the known exceptions.
+---
+# Auto-Stabilization
+
+*Part of TA-Lib's [specification](/spec/), a reference for AI-agent-driven integration.*
+
+The bars an Auto level of the unstable period discards, and the known exceptions. What a level is and how to set one: [Unstable Period](/api/unstable-period/#auto). Accepted values: [rT3](/spec/settings-threads/#rt3). How the bars enter a lookback: [rL6](/spec/lookback/#rl6).
+
+## The caller must {#caller}
+
+* <a id="ask"></a>**Read the bars a level adds from the lookback call**, never from the table below ([ask](/spec/lookback/#ask)). The table says what that call computes. Validate against the release you ship ([pin](/spec/versions/#pin)).
+* <a id="tolerance"></a>**Compare two starts with a tolerance, under a level too.** A level bounds what is left of the seed: two starts agree to the level's digits, not to the last bit ([rD3](/spec/versions/#rd3)).
+  * The `E` and `W` counts of [rZ1](/spec/auto-stabilization/#rz1) have no bar to spare. At a long period the first value kept can sit above the level's threshold by the rounding of the arithmetic; the digits the level names still hold.
+  * An output that divides by a state (DX, CMO, STOCHRSI, PPO, PVO) can sit a few times above the threshold at the count.
+  * CVI divides its EMA by the same EMA some bars earlier, and can sit above the threshold for some bars past the count it inherits.
+* <a id="check-exceptions"></a>**Check the [known exceptions](/spec/auto-stabilization/#exceptions) for the functions you use.**
+
+## Bars a level adds {#bars}
+
+<a id="rz1"></a>**rZ1** Under an Auto level, the function that owns an id adds the count of its row to its lookback. Each row is integer arithmetic, except `SWAK_BP` and `MAMA`: theirs is the `double` expression as written, rounded up. `X` is the level's digit count and `K` its factor: `PREC_4` is `X = 4`, `K = 10`; `PREC_8` is `X = 8`, `K = 19`. `K` is the level's number of e-folds: a `proof` count leaves at most `e^-K` of the seed's weight in the function's state. The level's threshold is `e^-K` of the largest difference two starts show at a setting of 0. `n` is the function's period, `isqrt` the integer square root, `E(n) = ceil(K*n/2)`, `W(n) = ceil(K*(2*n-1)/2)` and `H = 80 + 50*X`.
+
+| Id | Bars added | Sized by |
+|---|---|---|
+| `EMA` | `E(n)` | proof |
+| `RMA`, `ATR`, `PLUS_DM`, `MINUS_DM` | `W(n)` | proof |
+| `NATR`, `RSI`, `CMO`, `PLUS_DI`, `MINUS_DI`, `DX`, `RVI` | `K*n` | proof, ratio |
+| `ADX` | `(K+6)*n` | proof, ratio |
+| `HA` | `ceil(13*K/9)` | proof |
+| `SWAK_HP` | `ceil(K*n/6)` | proof |
+| `SWAK_GAUSS`, `SWAK_BUTTER`, `SWAK_2PHP` | `ceil((K+3)*(n+2)/9)` | proof |
+| `SWAK_BP` | `ceil((K+1)*n/(6*delta))` | proof |
+| `FISHER` | `ceil(5*(K+6)/2)` | proof, limiter |
+| `T3` | `ceil(11*(X+4)*n/8)` | measurement |
+| `KAMA` | `25*X*isqrt(n)` | measurement |
+| `FRAMA` | `9*(X+4)*(isqrt(n)+2)/2`, at most `99*K` | measurement |
+| `VIDYA` | `2*X*(n+1)*isqrt(m)`, `m` the CMO period, at most `TA_INDEX_MAX` | measurement |
+| `MCGD` | `5*X*n` | measurement |
+| `HT_DCPERIOD`, `HT_DCPHASE`, `HT_PHASOR`, `HT_SINE` | `H` | measurement |
+| `HT_TRENDLINE`, `HT_TRENDMODE` | `120 + 20*X` | measurement |
+| `MAMA` | `H + ceil(2*K/max(fast, slow))`, `fast` and `slow` its two limits | measurement |
+| `STC` | `ceil(5*K/2) + 3*(s+1)`, `s = max(fast, slow)`, on top of the `E(s)` it inherits | measurement |
+
+The `E`, `W`, `K*n`, `T3`, `KAMA` and `VIDYA` rows give 0 at a period of 1, where the function does no smoothing.
+
+`proof`: the count bounds what is left of the seed, for any input. `measurement`: the count is a formula sized on measured series, with margin; it is not a bound ([a longer count](/spec/auto-stabilization/#fixed-count)). `ratio` marks an output that divides by a smoothed value or by a price, `limiter` a state snapped at a limit ([no level](/spec/auto-stabilization/#no-level)).
+
+<a id="rz2"></a>**rZ2** Under a level, a function that owns no id adds these bars of its own to the count it inherits ([rL6](/spec/lookback/#rl6)); under a count it adds none. CKSP adds its stop period less one to ATR's count. ADOSC adds `ceil((15*f + 3*t)/8)` to EMA's count at the longer of its two periods, with `f` the shorter period, `s` the longer, and `t` the sum of `min(f, s/2^j)` for `j` from 1 to 16, in integer divisions.
+
+## What a level targets {#target}
+
+`PREC_n` targets `n` significant digits: past the count, the first `n` significant digits of a value no longer depend on where the series starts. Like [rD2](/spec/versions/#rd2), it is a target, not a promise.
+
+* An output that stays away from zero is measured against its value: the moving averages and every output on the price scale, ATR, NATR, RSI, the DI and DM pairs, ADX, RVI, STC, the Hilbert period and trendline.
+* An output that reaches zero has no leading digit to keep there, and is measured against the size of its swing, two starts differing by about `10^-n` of it: CMO, DX, SWAK_HP, SWAK_BP, HT_PHASOR, HT_SINE, HT_DCPHASE, and the oscillators centred on zero such as MACD, APO, PPO, TRIX and FISHER.
+
+At `PREC_8`, where the rounding of a function's own arithmetic is larger than the level, the last digits keep moving.
+
+## Known exceptions {#exceptions}
+
+Outside the cases below, a level is expected to meet its target, within the [tolerance](/spec/auto-stabilization/#tolerance) above and, at `PREC_8`, down to the function's own rounding. Each exception, the path-dependent one aside, also reaches every function computed through the one it names, directly or as an MA type ([rL6](/spec/lookback/#rl6)). Most of those tied to the market need a condition that persists for many bars: prices that stay flat, hold a narrow range, or climb steadily.
+
+<a id="exact-or-not"></a>**HT_TRENDLINE and HT_TRENDMODE agree exactly or not at all.** HT_TRENDLINE averages the price over a cycle period cut to a whole number of bars, so two starts are equal once their whole periods have agreed for four bars; HT_TRENDMODE is a flag. A level sets how rare a later disagreement is, not how small: no tolerance absorbs it.
+
+<a id="fixed-count"></a>**A longer count covers these.** A `measurement` row of [rZ1](/spec/auto-stabilization/#rz1) is not a bound. Set a count on that id, in a call after the one that sets the level.
+
+* KAMA, FRAMA and VIDYA are sized for a market that trends or wanders. They slow down by design in a range-bound market and then need several times their count. `99*K` bars hold FRAMA's level on any input; VIDYA has no such bound (below).
+* T3: a start whose six stages nearly cancel in the first outputs shows its difference later and can need a fifth more than the count. A count of `20*n` covers it at either level.
+* MCGD is sized for a line that tracks the price: its rate falls as the line trails. In a steady rise the count runs short once the period times the rise per bar passes about 0.06.
+
+<a id="no-level"></a>**No level, and no count, covers these.**
+
+* A flat market. RSI, CMO, the DI pair, DX, RVI, TSI, SMI and STC divide one smoothed series by another, and ADX averages such a ratio. When prices stop moving both series shrink together, and the ratio keeps its dependence on the start.
+* A limiter. FISHER replaces a smoothed position beyond 0.99 by 0.999. Two starts on either side of 0.99 differ again by a visible amount, at any bar, and the count restarts from there. While the price holds close to the top or the bottom of its channel without resting on it, the two do not meet.
+* A Hilbert input that rests on one value for a whole dominant cycle, as an oscillator pinned at 0 or 100 does. The phase is undefined: HT_DCPHASE, HT_SINE and HT_TRENDMODE from two starts can differ by any amount on those bars, and MAMA does not converge. When the input moves again, every Hilbert function starts over.
+* A price worth a few thousand ticks or less, for MAMA. On a bar where its in-phase component is zero to rounding, two starts can take different alphas: the difference reopens by up to the distance from the price to the line, and stays open where that keeps happening. A trending series shows none.
+* MCGD in a steady rise whose period times the rise per bar passes about 0.10. The line stays 20% under the price, where its rate is zero, and past that it amplifies its start: two starts agree only after the price comes back to the line.
+* VIDYA while its CMO rests at 0, as on a balanced range or a flat market. Its coefficient is 0 and it keeps its seed.
+* CRSI, while closes keep moving in one direction. Two starts carry different streaks until the first reversal after the later start, so a run longer than the count leaves their difference past it.
+* STOCHRSI with the MAMA or VIDYA type. Its FastK rests at 0 or 100, where MAMA does not converge and VIDYA's coefficient is 0.
+* A path-dependent function, which stays path-dependent: no level changes AD, OBV or SAR ([metadata](/spec/lookback/#metadata)). SUPERTREND computes an ATR, so a level lengthens its lookback and promises nothing about its line.
+
+---
+
+---
 url: 'https://ta-lib.org/spec/streaming/index.md'
 description: >-
   The streaming contract in C, Rust, Java and C#: what the caller must do,
@@ -2654,7 +2686,7 @@ Every function streams ([rH9](/spec/streaming/#rh9)): `Open` or `OpenAndFill` on
 
 ## Definition
 
-<a id="rh1"></a>**rH1** Open a stream on bars 0 to k, then `Update` it with bars k+1 to t, with no `Advance`. At every bar the stream reported (Open's value for bar k, each Update's for its bar), the value is bit-identical to what `batch(0, t)` writes for that bar, and `OutRange` equals the range `batch(0, t)` reports. This holds under the same parameters and settings. Two exceptions: a zero output may differ in sign, `+0.0` against `-0.0`, which compare equal; and a value that depends on a transcendental function may differ in the last bits ([transcendental functions](/spec/versions/#transcendental)).
+<a id="rh1"></a>**rH1** Open a stream on bars 0 to k, then `Update` it with bars k+1 to t, with no `Advance`. At every bar the stream reported (Open's value for bar k, each Update's for its bar), the value is bit-identical to what `batch(0, t)` writes for that bar, and `OutRange` equals the range `batch(0, t)` reports. This holds under the same parameters and settings. Exceptions: a zero output may differ in sign, `+0.0` against `-0.0`, which compare equal; and a value that depends on a transcendental function may differ in the last bits ([transcendental functions](/spec/versions/#transcendental)).
 
 <a id="rh2"></a>**rH2** The history given to `Open` defines bar 0. State is carried forward from bar to bar and never re-seeded, so a stream opened on a later start equals the batch call over that shorter series. Which functions' values depend on the start: [/functions/stability](/functions/stability).
 
@@ -2773,7 +2805,7 @@ What a descriptor holds:
 | optional parameter | name, display name, hint, [flags](/spec/abstract/#flags-display), kind, default, and its accepted values ([rP2](/spec/inputs-outputs/#rp2)): for a range its bounds, a suggested sweep (start, end, increment) and, for a real range, a display precision; for a list its named values |
 | output | name, kind, [flags](/spec/abstract/#flags) |
 
-In Rust, Java and C# the function descriptor also holds the descriptors of its inputs, optional parameters and outputs. In C it holds their three counts and the function's handle, and each parameter descriptor comes from its getter, by index from 0. Rust's also holds `id`, the `FuncId` that `get_func_handle` returns.
+In Rust, Java and C# the function descriptor also holds the descriptors of its inputs, optional parameters and outputs. In C it holds their counts and the function's handle, and each parameter descriptor comes from its getter, by index from 0. Rust's also holds `id`, the `FuncId` that `get_func_handle` returns.
 
 A slot is one input, one optional parameter or one output. A bind call names it by its position among the function's inputs, optional parameters or outputs, from 0. A price input is one input, whatever number of series it consumes. An MA-type parameter is an integer list of the MA types.
 
@@ -2828,74 +2860,72 @@ Every key is answered in the four languages, and the answer can differ with the 
 
 ## Flags {#flags}
 
-A function, an input, an optional parameter and an output each carry one word of flags. The four tables below list every flag. A rule that depends on a flag is on the page of its topic, linked from the flag's row.
+A function, an input, an optional parameter and an output each carry one word of flags. The tables below list every flag under its C name; [Rust, Java and C# spell them](/spec/#flag-names) in their own flag types. A rule that depends on a flag is on the page of its topic, linked from the flag's row.
 
 ### Capability {#flags-capability}
 
 What a function or an output supports.
 
-| C | Rust | Java | C# | Meaning |
-|---|---|---|---|---|
-| `TA_FUNC_FLG_STREAM` | `FuncFlags::STREAM` | `FuncFlags.STREAMING` | `FuncFlags.Stream` | The function has a streaming API. Every function carries it ([rH9](/spec/streaming/#rh9)). |
-| `TA_FUNC_FLG_CANDLESTICK` | `FuncFlags::CANDLESTICK` | `FuncFlags.CANDLESTICK` | `FuncFlags.Candlestick` | A candlestick pattern function (`CDL*`): its lookback can depend on the candle settings ([rL7](/spec/lookback/#rl7)) and every integer output is a pattern output ([rW8](/spec/inputs-outputs/#rw8)). |
-| `TA_OUT_NULLABLE` | `OutputFlags::NULLABLE` | `OutputFlags.NULLABLE` | `OutputFlags.Nullable` | The typed call lets the caller decline this output ([rW5](/spec/inputs-outputs/#rw5)). A holder still needs it bound ([bind all](/spec/abstract/#bind-all)). |
+| Flag | Meaning |
+|---|---|
+| `TA_FUNC_FLG_STREAM` | The function has a streaming API. Every function carries it ([rH9](/spec/streaming/#rh9)). |
+| `TA_FUNC_FLG_CANDLESTICK` | A candlestick pattern function (`CDL*`): its lookback can depend on the candle settings ([rL7](/spec/lookback/#rl7)) and every integer output is a pattern output ([rW8](/spec/inputs-outputs/#rw8)). |
+| `TA_OUT_NULLABLE` | The typed call lets the caller decline this output ([rW5](/spec/inputs-outputs/#rw5)). A holder still needs it bound ([bind all](/spec/abstract/#bind-all)). |
 
 ### Price components {#flags-price}
 
 The series a price input consumes. The price bind call requires each of them and ignores the others. C# also has a `SetPriceInput` that binds one series at a time: a consumed series left unbound then fails the call ([rA3](/spec/abstract/#ra3)).
 
-| C | Rust | Java | C# | Meaning |
-|---|---|---|---|---|
-| `TA_IN_PRICE_OPEN` | `InputFlags::PRICE_OPEN` | `InputFlags.PRICE_OPEN` | `PriceComponents.Open` | The open. |
-| `TA_IN_PRICE_HIGH` | `InputFlags::PRICE_HIGH` | `InputFlags.PRICE_HIGH` | `PriceComponents.High` | The high. |
-| `TA_IN_PRICE_LOW` | `InputFlags::PRICE_LOW` | `InputFlags.PRICE_LOW` | `PriceComponents.Low` | The low. |
-| `TA_IN_PRICE_CLOSE` | `InputFlags::PRICE_CLOSE` | `InputFlags.PRICE_CLOSE` | `PriceComponents.Close` | The close. |
-| `TA_IN_PRICE_VOLUME` | `InputFlags::PRICE_VOLUME` | `InputFlags.PRICE_VOLUME` | `PriceComponents.Volume` | The volume. |
-| `TA_IN_PRICE_OPENINTEREST` | `InputFlags::PRICE_OPENINTEREST` | `InputFlags.PRICE_OPENINTEREST` | `PriceComponents.OpenInterest` | The open interest. No function sets it. |
-| `TA_IN_PRICE_TIMESTAMP` | `InputFlags::PRICE_TIMESTAMP` | none | none | A timestamp. No function sets it, and no setter takes one. |
+| Flag | Meaning |
+|---|---|
+| `TA_IN_PRICE_OPEN` | The open. |
+| `TA_IN_PRICE_HIGH` | The high. |
+| `TA_IN_PRICE_LOW` | The low. |
+| `TA_IN_PRICE_CLOSE` | The close. |
+| `TA_IN_PRICE_VOLUME` | The volume. |
+| `TA_IN_PRICE_OPENINTEREST` | The open interest. No function sets it. |
+| `TA_IN_PRICE_TIMESTAMP` | A timestamp. No function sets it, and no setter takes one. Java and C# have no member for it. |
 
 ### Numerical property {#flags-numerical}
 
 What can be said of the values a function writes.
 
-| C | Rust | Java | C# | Meaning |
-|---|---|---|---|---|
-| `TA_FUNC_FLG_UNST_PER` | `FuncFlags::UNSTABLE_PERIOD` | `FuncFlags.UNSTABLE_PERIOD` | `FuncFlags.UnstablePeriod` | The function owns an unstable-period id ([rL6](/spec/lookback/#rl6), [stability](/spec/lookback/#metadata)). |
-| `TA_FUNC_FLG_PATH_DEP` | `FuncFlags::PATH_DEPENDENT` | `FuncFlags.PATH_DEPENDENT` | `FuncFlags.PathDependent` | Path-dependent: the value at a bar depends on where the range starts, and never converges ([stability](/spec/lookback/#metadata)). |
-| `TA_FUNC_FLG_NAN_INF_OUT` | `FuncFlags::NAN_INF_OUTPUT` | `FuncFlags.NAN_INF_OUTPUT` | `FuncFlags.NanInfOutput` | A successful call can write NaN or ±Inf on ordinary finite input ([rW6](/spec/inputs-outputs/#rw6)). |
-| `TA_FUNC_FLG_PERIOD1_IDENTITY` | `FuncFlags::PERIOD1_IDENTITY` | `FuncFlags.PERIOD1_IDENTITY` | `FuncFlags.Period1Identity` | At a period of 1 every output value is a bit-for-bit copy of its input ([rL8](/spec/lookback/#rl8)). |
-| `TA_FUNC_FLG_USES_TRANSCENDENTAL` | `FuncFlags::USES_TRANSCENDENTAL` | `FuncFlags.USES_TRANSCENDENTAL` | `FuncFlags.UsesTranscendental` | The function calls a transcendental function, so a value may differ ([transcendental functions](/spec/versions/#transcendental)); TA-Lib targets a difference below 1e-9. Not set on a function that reaches one only when an MA-type parameter selects `MAMA` or `ALMA`. |
-| `TA_OUT_POSITIVE` | `OutputFlags::POSITIVE` | `OutputFlags.POSITIVE` | `OutputFlags.Positive` | Positive values occur ([rW8](/spec/inputs-outputs/#rw8)). |
-| `TA_OUT_NEGATIVE` | `OutputFlags::NEGATIVE` | `OutputFlags.NEGATIVE` | `OutputFlags.Negative` | Negative values occur ([rW8](/spec/inputs-outputs/#rw8)). |
-| `TA_OUT_ZERO` | `OutputFlags::ZERO` | `OutputFlags.ZERO` | `OutputFlags.Zero` | 0 occurs; on a pattern output, no pattern on that bar ([rW8](/spec/inputs-outputs/#rw8)). |
-| `TA_OUT_PATTERN_BOOL` | `OutputFlags::PATTERN_BOOL` | `OutputFlags.PATTERN_BOOL` | `OutputFlags.PatternBool` | A pattern output whose values are 0 and 100 ([rW8](/spec/inputs-outputs/#rw8)). |
-| `TA_OUT_PATTERN_BULL_BEAR` | `OutputFlags::PATTERN_BULL_BEAR` | `OutputFlags.PATTERN_BULL_BEAR` | `OutputFlags.PatternBullBear` | A pattern output whose sign is a call: + bullish, - bearish ([rW8](/spec/inputs-outputs/#rw8)). |
-| `TA_OUT_PATTERN_WEAK` | `OutputFlags::PATTERN_WEAK` | `OutputFlags.PATTERN_WEAK` | `OutputFlags.PatternWeak` | Adds level 80: a weaker form of the pattern, on the same bar ([rW8](/spec/inputs-outputs/#rw8)). |
-| `TA_OUT_PATTERN_CONFIRM` | `OutputFlags::PATTERN_CONFIRM` | `OutputFlags.PATTERN_CONFIRM` | `OutputFlags.PatternConfirm` | Adds level 200: this bar confirms the output's live pattern ([rW8](/spec/inputs-outputs/#rw8)). |
+| Flag | Meaning |
+|---|---|
+| `TA_FUNC_FLG_UNST_PER` | The function owns an unstable-period id ([rL6](/spec/lookback/#rl6), [stability](/spec/lookback/#metadata)). |
+| `TA_FUNC_FLG_PATH_DEP` | Path-dependent: the value at a bar depends on where the range starts, and never converges ([stability](/spec/lookback/#metadata)). |
+| `TA_FUNC_FLG_NAN_INF_OUT` | A successful call can write NaN or ±Inf on ordinary finite input ([rW6](/spec/inputs-outputs/#rw6)). |
+| `TA_FUNC_FLG_PERIOD1_IDENTITY` | At a period of 1 every output value is a bit-for-bit copy of its input ([rL8](/spec/lookback/#rl8)). |
+| `TA_FUNC_FLG_USES_TRANSCENDENTAL` | The function calls a transcendental function, so a value may differ ([transcendental functions](/spec/versions/#transcendental)); TA-Lib targets a difference below 1e-9 ([rD2](/spec/versions/#rd2)). Not set on a function that reaches one only when an MA-type parameter selects `MAMA` or `ALMA`. |
+| `TA_OUT_POSITIVE` | Positive values occur ([rW8](/spec/inputs-outputs/#rw8)). |
+| `TA_OUT_NEGATIVE` | Negative values occur ([rW8](/spec/inputs-outputs/#rw8)). |
+| `TA_OUT_ZERO` | 0 occurs; on a pattern output, no pattern on that bar ([rW8](/spec/inputs-outputs/#rw8)). |
+| `TA_OUT_PATTERN_BOOL` | A pattern output whose values are 0 and 100 ([rW8](/spec/inputs-outputs/#rw8)). |
+| `TA_OUT_PATTERN_BULL_BEAR` | A pattern output whose sign is a call: + bullish, - bearish ([rW8](/spec/inputs-outputs/#rw8)). |
+| `TA_OUT_PATTERN_WEAK` | Adds level 80: a weaker form of the pattern, on the same bar ([rW8](/spec/inputs-outputs/#rw8)). |
+| `TA_OUT_PATTERN_CONFIRM` | Adds level 200: this bar confirms the output's live pattern ([rW8](/spec/inputs-outputs/#rw8)). |
 
 ### Display hint {#flags-display}
 
 How a chart or a settings dialog should present a function, an output or an optional parameter. No value depends on one.
 
-| C | Rust | Java | C# | Meaning |
-|---|---|---|---|---|
-| `TA_FUNC_FLG_OVERLAP` | `FuncFlags::OVERLAP` | `FuncFlags.OVERLAP_STUDY` | `FuncFlags.Overlap` | The output is on the scale of the input: draw it over the price series. |
-| `TA_FUNC_FLG_VOLUME` | `FuncFlags::VOLUME` | `FuncFlags.VOLUME_USED` | `FuncFlags.VolumeUsed` | Draw the output over the volume data. No function sets it. |
-| `TA_FUNC_FLG_DISPLAY_SHIFT` | `FuncFlags::DISPLAY_SHIFT` | `FuncFlags.DISPLAY_SHIFT` | `FuncFlags.DisplayShift` | At least one output carries `TA_OUT_DISPLAY_SHIFT` ([rL10](/spec/lookback/#rl10)). |
-| `TA_OUT_DISPLAY_SHIFT` | `OutputFlags::DISPLAY_SHIFT` | `OutputFlags.DISPLAY_SHIFT` | `OutputFlags.DisplayShift` | A chart draws the output ahead of or behind the bar that computed it ([rL9](/spec/lookback/#rl9), [rL10](/spec/lookback/#rl10)). |
-| `TA_OUT_LINE` | `OutputFlags::LINE` | `OutputFlags.LINE` | `OutputFlags.Line` | Draw as a connected line. |
-| `TA_OUT_DOT_LINE` | `OutputFlags::DOT_LINE` | `OutputFlags.DOT_LINE` | `OutputFlags.DotLine` | Draw as a dotted line. No function sets it. |
-| `TA_OUT_DASH_LINE` | `OutputFlags::DASH_LINE` | `OutputFlags.DASH_LINE` | `OutputFlags.DashLine` | Draw as a dashed line. |
-| `TA_OUT_DOT` | `OutputFlags::DOT` | `OutputFlags.DOT` | `OutputFlags.Dot` | Draw as dots only. No function sets it. |
-| `TA_OUT_HISTO` | `OutputFlags::HISTO` | `OutputFlags.HISTOGRAM` | `OutputFlags.Histogram` | Draw as a histogram. |
-| `TA_OUT_UPPER_LIMIT` | `OutputFlags::UPPER_LIMIT` | `OutputFlags.UPPER_LIMIT` | `OutputFlags.UpperLimit` | The values are an upper limit, such as the upper line of a band. |
-| `TA_OUT_LOWER_LIMIT` | `OutputFlags::LOWER_LIMIT` | `OutputFlags.LOWER_LIMIT` | `OutputFlags.LowerLimit` | The values are a lower limit, such as the lower line of a band. |
-| `TA_OPTIN_IS_PERCENT` | `OptInputFlags::IS_PERCENT` | `OptInputFlags.IS_PERCENT` | `OptInputFlags.IsPercent` | The parameter is a percentage. |
-| `TA_OPTIN_IS_DEGREE` | `OptInputFlags::IS_DEGREE` | `OptInputFlags.IS_DEGREE` | `OptInputFlags.IsDegree` | The parameter is an angle in degrees. No function sets it. |
-| `TA_OPTIN_IS_CURRENCY` | `OptInputFlags::IS_CURRENCY` | `OptInputFlags.IS_CURRENCY` | `OptInputFlags.IsCurrency` | The parameter is a currency amount. No function sets it. |
-| `TA_OPTIN_ADVANCED` | `OptInputFlags::ADVANCED` | `OptInputFlags.ADVANCED` | `OptInputFlags.Advanced` | The parameter is rarely changed: an application may hide it. No function sets it. |
-
-C#'s four flag enums each also have `None`, the empty word.
+| Flag | Meaning |
+|---|---|
+| `TA_FUNC_FLG_OVERLAP` | The output is on the scale of the input: draw it over the price series. |
+| `TA_FUNC_FLG_VOLUME` | Draw the output over the volume data. No function sets it. |
+| `TA_FUNC_FLG_DISPLAY_SHIFT` | At least one output carries `TA_OUT_DISPLAY_SHIFT` ([rL10](/spec/lookback/#rl10)). |
+| `TA_OUT_DISPLAY_SHIFT` | A chart draws the output ahead of or behind the bar that computed it ([rL9](/spec/lookback/#rl9), [rL10](/spec/lookback/#rl10)). |
+| `TA_OUT_LINE` | Draw as a connected line. |
+| `TA_OUT_DOT_LINE` | Draw as a dotted line. No function sets it. |
+| `TA_OUT_DASH_LINE` | Draw as a dashed line. |
+| `TA_OUT_DOT` | Draw as dots only. No function sets it. |
+| `TA_OUT_HISTO` | Draw as a histogram. |
+| `TA_OUT_UPPER_LIMIT` | The values are an upper limit, such as the upper line of a band. |
+| `TA_OUT_LOWER_LIMIT` | The values are a lower limit, such as the lower line of a band. |
+| `TA_OPTIN_IS_PERCENT` | The parameter is a percentage. |
+| `TA_OPTIN_IS_DEGREE` | The parameter is an angle in degrees. No function sets it. |
+| `TA_OPTIN_IS_CURRENCY` | The parameter is a currency amount. No function sets it. |
+| `TA_OPTIN_ADVANCED` | The parameter is rarely changed: an application may hide it. No function sets it. |
 
 ---
 
@@ -3047,7 +3077,7 @@ Where the same call gives the same bits, and what a release keeps and may add.
 ## The caller must {#caller}
 
 * <a id="tolerance"></a>**Compare a transcendental call with a tolerance**: across languages, across machines, and a stream against a batch call ([transcendental functions](/spec/versions/#transcendental)). Their difference starts in the last bits of one math-library result and can grow through the function's arithmetic; the HT\_\* outputs that round a computed period to whole bars can differ outright on some inputs.
-* <a id="build-flags"></a>**Build C from source with the project's floating-point flags.** [rD1](/spec/versions/#rd1) and [rD2](/spec/versions/#rd2) hold for C only when the compiler evaluates every `double` operation as written:
+* <a id="build-flags"></a>**Build C from source with the project's floating-point flags.** [rD1](/spec/versions/#rd1) holds for C only when the compiler evaluates every `double` operation as written:
 
   | Condition | GCC and Clang | Build files in the source tree |
   |---|---|---|
@@ -3055,17 +3085,19 @@ Where the same call gives the same bits, and what a release keeps and may add.
   | no value-changing optimization | no `-ffast-math` or `-Ofast`, nor any part of them but `-fno-math-errno` | none uses them |
   | no extended-precision intermediates | on 32-bit x86, `-msse2 -mfpmath=sse` | only CMake's i386 cross-build toolchain, `cmake/toolchain-linux-i386.cmake`; a native 32-bit x86 build does not pass it, so add it yourself |
 
-  Under MSVC or clang-cl, CMake passes no floating-point option; no condition is stated for them, and rD1 and rD2 are not promised for C built with them.
+  Under MSVC or clang-cl, CMake passes no floating-point option; no condition is stated for them, and rD1 is not promised for C built with them.
 * <a id="enumerate"></a>**Enumerate, never hard-code a list.** A release may add functions, MA types, unstable-period ids, candle settings, return codes, metadata flags and run-time information keys ([rV3](/spec/versions/#rv3)). Enumerate functions through the [Abstract API](/spec/abstract/#provides), bound an MA-type value with the enum your code was built with ([rP2](/spec/inputs-outputs/#rp2)), give every `switch` or `match` over a TA-Lib enum a default branch, and ignore a metadata flag you do not know ([unknown flag](/spec/abstract/#unknown-flag)).
 * <a id="pin"></a>**Validate against the release you ship.** No rule covers output values from one release to the next, nor API compatibility of the Rust, Java and C# packages between releases beyond rV2 and rV3. Which versions and packages exist: [Install](/install/).
 
 ## Determinism {#determinism}
 
-In this spec, **bit-identical** means the same return code, the same output range, and every output element with the same bits, except that a NaN matches any NaN: no math library specifies a NaN's payload. **The same call** means the same function, input values, `startIdx` and `endIdx`, optional parameters and settings.
+In this spec, **bit-identical** means the same return code, the same output range, and every output element with the same bits, a NaN matching any NaN. **The same call** means the same function, input values, `startIdx` and `endIdx`, optional parameters and settings.
 
-<a id="rd1"></a>**rD1** On one machine, C and Rust are bit-identical for every call that evaluates no transcendental function. A call that evaluates one may differ in the last bits ([transcendental functions](/spec/versions/#transcendental)).
+<a id="rd1"></a>**rD1** On one machine, C, Rust, Java and C# give bit-identical results. The exception is a call that evaluates a [transcendental function](/spec/versions/#transcendental): it may differ in the last bits.
 
-<a id="rd2"></a>**rD2** On one machine, Java and C# are bit-identical to C for every call that evaluates no transcendental function. A call that evaluates one may differ from C's: Java's and .NET's math libraries can round a transcendental result differently from the C library in the last bit, which is beyond TA-Lib's control.
+<a id="rd2"></a>**rD2** Where rD1 or [rH1](/spec/streaming/#rh1) lets two results differ, they agree to within 1e-9: absolute for a value below 1 in magnitude, relative above it. TA-Lib targets this and verifies it in CI across a wide range of series. It is not a promise for every input: a degenerate one, such as a flat series, can exceed it.
+
+<a id="rd3"></a>**rD3** A difference caused by the unstable period falls outside rD2's target: values a function computes for the same bar from [different starts](/spec/lookback/#start) can differ by far more than 1e-9. Handling the [unstable period](/api/unstable-period/) is the caller's choice and responsibility, and TA-Lib provides a solution: numerical [Auto-Stabilization](/api/unstable-period/#auto), whose counts and limits are [specified](/spec/auto-stabilization/).
 
 ### Transcendental functions {#transcendental}
 
@@ -3073,7 +3105,7 @@ A **transcendental function** here is `exp`, `log`, `log10`, or a trigonometric,
 
 ### Across machines {#machines}
 
-No rule promises the same bits on two machines. The same call can give different values on a different CPU, compiler or math library, and a release may compute a function differently on one CPU family than on another.
+No rule promises the same bits on two machines. The same call can give different values on a different CPU, compiler or math library, and a release may compute a function differently on one CPU family than on another. TA-Lib targets the same 1e-9 there ([rD2](/spec/versions/#rd2)).
 
 Each release is checked on every supported platform against the regression suite's reference values, some compared exactly and some within a tolerance.
 
@@ -3089,8 +3121,8 @@ Each release is checked on every supported platform against the regression suite
 | an output in place on its input, and in a separate buffer | bit-identical | [rW7](/spec/inputs-outputs/#rw7) |
 | a declinable output declined, and supplied | the other outputs bit-identical | [rW5](/spec/inputs-outputs/#rw5) |
 | a `float` input, and the `double` call on its widened values | bit-identical | [rP4](/spec/inputs-outputs/#rp4) |
-| the same call on two machines | not bit-identical in general | [across machines](/spec/versions/#machines) |
-| the same bar from batch calls with different `startIdx` | not bit-identical in general | [different starts](/spec/lookback/#start) |
+| the same call on two machines | not bit-identical in general; target below 1e-9 | [across machines](/spec/versions/#machines) |
+| the same bar from batch calls with different `startIdx` | not bit-identical in general; outside the 1e-9 target | [different starts](/spec/lookback/#start), [rD3](/spec/versions/#rd3), [what a level targets](/spec/auto-stabilization/#target) |
 
 ## Releases {#releases}
 
@@ -3182,6 +3214,7 @@ All technical-analysis functions, grouped by category. Each page documents the f
 * [COPPOCK](/functions/coppock.md) — Coppock Curve
 * [CRSI](/functions/crsi.md) — Connors Relative Strength Index
 * [CTI](/functions/cti.md) — Correlation Trend Indicator
+* [DOSC](/functions/dosc.md) — Derivative Oscillator
 * [DPO](/functions/dpo.md) — Detrended Price Oscillator
 * [DX](/functions/dx.md) — Directional Movement Index
 * [ER](/functions/er.md) — Kaufman Efficiency Ratio
@@ -3223,6 +3256,7 @@ All technical-analysis functions, grouped by category. Each page documents the f
 * [VHF](/functions/vhf.md) — Vertical Horizontal Filter
 * [VORTEX](/functions/vortex.md) — Vortex Indicator
 * [WAD](/functions/wad.md) — Williams' Accumulation/Distribution
+* [WAVETREND](/functions/wavetrend.md) — WaveTrend Oscillator
 * [WILLR](/functions/willr.md) — Williams' %R
 
 ## Overlap Studies
@@ -3715,7 +3749,7 @@ If this page and the repo disagree, the repo wins; it is versioned with the code
 * Your function may be called with an output array aliasing one of its inputs — `outReal == inClose` is a supported, tested calling convention. Within a bar, read every input value you need *before* writing that bar's output; a trailing index can reach the slot you just wrote. Carry what you need in a scalar. Every function is checked, bitwise, on every input/output pair.
 * Emit each value at the bar whose data computes it. A chart that plots the line shifted forward or backward does not shift the output array, and no output may read a bar after its own.
 * A decaying recursion the function defines itself (a Wilder or EMA-style update, an adaptive alpha, IIR filter poles) gets its own `TA_FUNC_UNST_<NAME>` id. One the primary source defines as a call to a function that already has an unstable period (EMA, RSI, ATR) is inherited through that callee's lookback and gets no id; one function can have both. Finite windows and non-decaying state (running sums, resets, pivots, counts) get none.
-* An id needs a rule: the bars an [Auto level](/api/unstable-period/#rules) discards, as a function of the call's parameters. [`docs/auto-stabilization-rule.md`](https://github.com/TA-Lib/ta-lib/blob/main/docs/auto-stabilization-rule.md) is how to find it, size it against a measured need and record it.
+* An id needs a rule: the bars an [Auto level](/spec/auto-stabilization/#rz1) discards, as a function of the call's parameters. [`docs/auto-stabilization-rule.md`](https://github.com/TA-Lib/ta-lib/blob/main/docs/auto-stabilization-rule.md) is how to find it, size it against a measured need and record it.
 * Enums, groups and other shared surfaces are generated; search the generator before hand-adding one anywhere.
 * If `generate` panics on a C construct, do not contort the algorithm to dodge the parser. Match the style of a shipped input file, or raise it on the spec issue: parser extensions are generator changes and need maintainer sign-off.
 
