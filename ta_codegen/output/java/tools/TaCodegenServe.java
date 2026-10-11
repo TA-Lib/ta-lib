@@ -127960,6 +127960,7 @@ class Core {
      *  MMDDYY BY     Description
      *  -------------------------------------------------------------------
      *  100126 MF,CC  First version (#491).
+     *  101126 MF,CC  Each lookback is asked once per call (#522).
      */
 
        /**
@@ -128146,6 +128147,10 @@ class Core {
           int lookbackSignal = 0;
           int lookbackMA = 0;
           int sigStart = 0;
+          int lookbackMA1 = 0;
+          int lookbackMA2 = 0;
+          int lookbackMA3 = 0;
+          int lookbackMA4 = 0;
           int tempInteger = 0;
           MInteger tempBegIdx = new MInteger();
           MInteger rocNb = new MInteger();
@@ -128219,8 +128224,26 @@ class Core {
            */
           outBegIdx.value = 0;
           outNBElement.value = 0;
+          /* lookbackTotal must stay kstext_lookback() of the same parameters. */
           lookbackSignal = maLookback(optInSignalPeriod, optInSignalMAType);
-          lookbackTotal = kstextLookback(optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInMA1Period, optInMA2Period, optInMA3Period, optInMA4Period, optInSignalPeriod, optInROCMAType, optInSignalMAType);
+          lookbackMA1 = maLookback(optInMA1Period, optInROCMAType);
+          lookbackMA2 = maLookback(optInMA2Period, optInROCMAType);
+          lookbackMA3 = maLookback(optInMA3Period, optInROCMAType);
+          lookbackMA4 = maLookback(optInMA4Period, optInROCMAType);
+          lookbackTotal = optInROC1Period + lookbackMA1;
+          tempInteger = optInROC2Period + lookbackMA2;
+          if( tempInteger > lookbackTotal ) {
+             lookbackTotal = tempInteger;
+          }
+          tempInteger = optInROC3Period + lookbackMA3;
+          if( tempInteger > lookbackTotal ) {
+             lookbackTotal = tempInteger;
+          }
+          tempInteger = optInROC4Period + lookbackMA4;
+          if( tempInteger > lookbackTotal ) {
+             lookbackTotal = tempInteger;
+          }
+          lookbackTotal += lookbackSignal;
           if( startIdx < lookbackTotal ) {
              startIdx = lookbackTotal;
           }
@@ -128231,23 +128254,20 @@ class Core {
           /* Both buffers are sized by the longest leg average: a rate of change
            * starts its average's lookback before sigStart.
            */
-          lookbackMA = maLookback(optInMA1Period, optInROCMAType);
-          tempInteger = maLookback(optInMA2Period, optInROCMAType);
-          if( tempInteger > lookbackMA ) {
-             lookbackMA = tempInteger;
+          lookbackMA = lookbackMA1;
+          if( lookbackMA2 > lookbackMA ) {
+             lookbackMA = lookbackMA2;
           }
-          tempInteger = maLookback(optInMA3Period, optInROCMAType);
-          if( tempInteger > lookbackMA ) {
-             lookbackMA = tempInteger;
+          if( lookbackMA3 > lookbackMA ) {
+             lookbackMA = lookbackMA3;
           }
-          tempInteger = maLookback(optInMA4Period, optInROCMAType);
-          if( tempInteger > lookbackMA ) {
-             lookbackMA = tempInteger;
+          if( lookbackMA4 > lookbackMA ) {
+             lookbackMA = lookbackMA4;
           }
           tempInteger = endIdx - sigStart + 1 + lookbackMA;
           kstBuffer = new double[(int)(tempInteger * 1)];
           tempBuffer = new double[(int)(tempInteger * 1)];
-          OutRange _xr0 = roc(sigStart - maLookback(optInMA1Period, optInROCMAType), endIdx, inReal, optInROC1Period, kstBuffer);
+          OutRange _xr0 = roc(sigStart - lookbackMA1, endIdx, inReal, optInROC1Period, kstBuffer);
           tempBegIdx.value = _xr0.begIdx();
           rocNb.value = _xr0.count();
           retCode = RetCode.SUCCESS;
@@ -128255,7 +128275,7 @@ class Core {
           tempBegIdx.value = _xr1.begIdx();
           kstNb.value = _xr1.count();
           retCode = RetCode.SUCCESS;
-          OutRange _xr2 = roc(sigStart - maLookback(optInMA2Period, optInROCMAType), endIdx, inReal, optInROC2Period, tempBuffer);
+          OutRange _xr2 = roc(sigStart - lookbackMA2, endIdx, inReal, optInROC2Period, tempBuffer);
           tempBegIdx.value = _xr2.begIdx();
           rocNb.value = _xr2.count();
           retCode = RetCode.SUCCESS;
@@ -128266,7 +128286,7 @@ class Core {
           for( i = 0; i < kstNb.value; i += 1 ) {
              kstBuffer[i] = Math.fma(2.0, tempBuffer[i], kstBuffer[i]);
           }
-          OutRange _xr4 = roc(sigStart - maLookback(optInMA3Period, optInROCMAType), endIdx, inReal, optInROC3Period, tempBuffer);
+          OutRange _xr4 = roc(sigStart - lookbackMA3, endIdx, inReal, optInROC3Period, tempBuffer);
           tempBegIdx.value = _xr4.begIdx();
           rocNb.value = _xr4.count();
           retCode = RetCode.SUCCESS;
@@ -128277,7 +128297,7 @@ class Core {
           for( i = 0; i < kstNb.value; i += 1 ) {
              kstBuffer[i] = Math.fma(3.0, tempBuffer[i], kstBuffer[i]);
           }
-          OutRange _xr6 = roc(sigStart - maLookback(optInMA4Period, optInROCMAType), endIdx, inReal, optInROC4Period, tempBuffer);
+          OutRange _xr6 = roc(sigStart - lookbackMA4, endIdx, inReal, optInROC4Period, tempBuffer);
           tempBegIdx.value = _xr6.begIdx();
           rocNb.value = _xr6.count();
           retCode = RetCode.SUCCESS;
@@ -128324,6 +128344,10 @@ class Core {
           int lookbackSignal = 0;
           int lookbackMA = 0;
           int sigStart = 0;
+          int lookbackMA1 = 0;
+          int lookbackMA2 = 0;
+          int lookbackMA3 = 0;
+          int lookbackMA4 = 0;
           int tempInteger = 0;
           MInteger tempBegIdx = new MInteger();
           MInteger rocNb = new MInteger();
@@ -128394,7 +128418,24 @@ class Core {
           outBegIdx.value = 0;
           outNBElement.value = 0;
           lookbackSignal = maLookback(optInSignalPeriod, optInSignalMAType);
-          lookbackTotal = kstextLookback(optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInMA1Period, optInMA2Period, optInMA3Period, optInMA4Period, optInSignalPeriod, optInROCMAType, optInSignalMAType);
+          lookbackMA1 = maLookback(optInMA1Period, optInROCMAType);
+          lookbackMA2 = maLookback(optInMA2Period, optInROCMAType);
+          lookbackMA3 = maLookback(optInMA3Period, optInROCMAType);
+          lookbackMA4 = maLookback(optInMA4Period, optInROCMAType);
+          lookbackTotal = optInROC1Period + lookbackMA1;
+          tempInteger = optInROC2Period + lookbackMA2;
+          if( tempInteger > lookbackTotal ) {
+             lookbackTotal = tempInteger;
+          }
+          tempInteger = optInROC3Period + lookbackMA3;
+          if( tempInteger > lookbackTotal ) {
+             lookbackTotal = tempInteger;
+          }
+          tempInteger = optInROC4Period + lookbackMA4;
+          if( tempInteger > lookbackTotal ) {
+             lookbackTotal = tempInteger;
+          }
+          lookbackTotal += lookbackSignal;
           if( startIdx < lookbackTotal ) {
              startIdx = lookbackTotal;
           }
@@ -128402,23 +128443,20 @@ class Core {
              return RetCode.SUCCESS ;
           }
           sigStart = startIdx - lookbackSignal;
-          lookbackMA = maLookback(optInMA1Period, optInROCMAType);
-          tempInteger = maLookback(optInMA2Period, optInROCMAType);
-          if( tempInteger > lookbackMA ) {
-             lookbackMA = tempInteger;
+          lookbackMA = lookbackMA1;
+          if( lookbackMA2 > lookbackMA ) {
+             lookbackMA = lookbackMA2;
           }
-          tempInteger = maLookback(optInMA3Period, optInROCMAType);
-          if( tempInteger > lookbackMA ) {
-             lookbackMA = tempInteger;
+          if( lookbackMA3 > lookbackMA ) {
+             lookbackMA = lookbackMA3;
           }
-          tempInteger = maLookback(optInMA4Period, optInROCMAType);
-          if( tempInteger > lookbackMA ) {
-             lookbackMA = tempInteger;
+          if( lookbackMA4 > lookbackMA ) {
+             lookbackMA = lookbackMA4;
           }
           tempInteger = endIdx - sigStart + 1 + lookbackMA;
           kstBuffer = new double[(int)(tempInteger * 1)];
           tempBuffer = new double[(int)(tempInteger * 1)];
-          OutRange _xr0 = roc(sigStart - maLookback(optInMA1Period, optInROCMAType), endIdx, inReal, optInROC1Period, kstBuffer);
+          OutRange _xr0 = roc(sigStart - lookbackMA1, endIdx, inReal, optInROC1Period, kstBuffer);
           tempBegIdx.value = _xr0.begIdx();
           rocNb.value = _xr0.count();
           retCode = RetCode.SUCCESS;
@@ -128426,7 +128464,7 @@ class Core {
           tempBegIdx.value = _xr1.begIdx();
           kstNb.value = _xr1.count();
           retCode = RetCode.SUCCESS;
-          OutRange _xr2 = roc(sigStart - maLookback(optInMA2Period, optInROCMAType), endIdx, inReal, optInROC2Period, tempBuffer);
+          OutRange _xr2 = roc(sigStart - lookbackMA2, endIdx, inReal, optInROC2Period, tempBuffer);
           tempBegIdx.value = _xr2.begIdx();
           rocNb.value = _xr2.count();
           retCode = RetCode.SUCCESS;
@@ -128437,7 +128475,7 @@ class Core {
           for( i = 0; i < kstNb.value; i += 1 ) {
              kstBuffer[i] = Math.fma(2.0, tempBuffer[i], kstBuffer[i]);
           }
-          OutRange _xr4 = roc(sigStart - maLookback(optInMA3Period, optInROCMAType), endIdx, inReal, optInROC3Period, tempBuffer);
+          OutRange _xr4 = roc(sigStart - lookbackMA3, endIdx, inReal, optInROC3Period, tempBuffer);
           tempBegIdx.value = _xr4.begIdx();
           rocNb.value = _xr4.count();
           retCode = RetCode.SUCCESS;
@@ -128448,7 +128486,7 @@ class Core {
           for( i = 0; i < kstNb.value; i += 1 ) {
              kstBuffer[i] = Math.fma(3.0, tempBuffer[i], kstBuffer[i]);
           }
-          OutRange _xr6 = roc(sigStart - maLookback(optInMA4Period, optInROCMAType), endIdx, inReal, optInROC4Period, tempBuffer);
+          OutRange _xr6 = roc(sigStart - lookbackMA4, endIdx, inReal, optInROC4Period, tempBuffer);
           tempBegIdx.value = _xr6.begIdx();
           rocNb.value = _xr6.count();
           retCode = RetCode.SUCCESS;
@@ -128959,6 +128997,10 @@ class Core {
           int lookbackSignal = 0;
           int lookbackMA = 0;
           int sigStart = 0;
+          int lookbackMA1 = 0;
+          int lookbackMA2 = 0;
+          int lookbackMA3 = 0;
+          int lookbackMA4 = 0;
           int tempInteger = 0;
           MInteger tempBegIdx = new MInteger();
           MInteger rocNb = new MInteger();
@@ -129041,8 +129083,26 @@ class Core {
            */
           outBegIdx.value = 0;
           outNBElement.value = 0;
+          /* lookbackTotal must stay kstext_lookback() of the same parameters. */
           lookbackSignal = maLookback(optInSignalPeriod, optInSignalMAType);
-          lookbackTotal = kstextLookback(optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInMA1Period, optInMA2Period, optInMA3Period, optInMA4Period, optInSignalPeriod, optInROCMAType, optInSignalMAType);
+          lookbackMA1 = maLookback(optInMA1Period, optInROCMAType);
+          lookbackMA2 = maLookback(optInMA2Period, optInROCMAType);
+          lookbackMA3 = maLookback(optInMA3Period, optInROCMAType);
+          lookbackMA4 = maLookback(optInMA4Period, optInROCMAType);
+          lookbackTotal = optInROC1Period + lookbackMA1;
+          tempInteger = optInROC2Period + lookbackMA2;
+          if( tempInteger > lookbackTotal ) {
+             lookbackTotal = tempInteger;
+          }
+          tempInteger = optInROC3Period + lookbackMA3;
+          if( tempInteger > lookbackTotal ) {
+             lookbackTotal = tempInteger;
+          }
+          tempInteger = optInROC4Period + lookbackMA4;
+          if( tempInteger > lookbackTotal ) {
+             lookbackTotal = tempInteger;
+          }
+          lookbackTotal += lookbackSignal;
           if( startIdx < lookbackTotal ) {
              startIdx = lookbackTotal;
           }
@@ -129053,25 +129113,22 @@ class Core {
           /* Both buffers are sized by the longest leg average: a rate of change
            * starts its average's lookback before sigStart.
            */
-          lookbackMA = maLookback(optInMA1Period, optInROCMAType);
-          tempInteger = maLookback(optInMA2Period, optInROCMAType);
-          if( tempInteger > lookbackMA ) {
-             lookbackMA = tempInteger;
+          lookbackMA = lookbackMA1;
+          if( lookbackMA2 > lookbackMA ) {
+             lookbackMA = lookbackMA2;
           }
-          tempInteger = maLookback(optInMA3Period, optInROCMAType);
-          if( tempInteger > lookbackMA ) {
-             lookbackMA = tempInteger;
+          if( lookbackMA3 > lookbackMA ) {
+             lookbackMA = lookbackMA3;
           }
-          tempInteger = maLookback(optInMA4Period, optInROCMAType);
-          if( tempInteger > lookbackMA ) {
-             lookbackMA = tempInteger;
+          if( lookbackMA4 > lookbackMA ) {
+             lookbackMA = lookbackMA4;
           }
           tempInteger = endIdx - sigStart + 1 + lookbackMA;
           kstBuffer = new double[(int)(tempInteger * 1)];
           tempBuffer = new double[(int)(tempInteger * 1)];
           /* Sub-stream 0: roc over `inReal`, warmed from bar 0 up to the
            * sub-call's own startIdx (the seeding point). */
-          RocStream sub0 = rocOpenAndFillInternal(inReal, sigStart - maLookback(optInMA1Period, optInROCMAType), optInROC1Period, tempBegIdx, rocNb, kstBuffer);
+          RocStream sub0 = rocOpenAndFillInternal(inReal, sigStart - lookbackMA1, optInROC1Period, tempBegIdx, rocNb, kstBuffer);
           retCode = RetCode.SUCCESS;
           /* Sub-stream 1: ma over `kstBuffer`, warmed from bar 0 up to the
            * sub-call's own startIdx (the seeding point). */
@@ -129082,7 +129139,7 @@ class Core {
           retCode = RetCode.SUCCESS;
           /* Sub-stream 2: roc over `inReal`, warmed from bar 0 up to the
            * sub-call's own startIdx (the seeding point). */
-          RocStream sub2 = rocOpenAndFillInternal(inReal, sigStart - maLookback(optInMA2Period, optInROCMAType), optInROC2Period, tempBegIdx, rocNb, tempBuffer);
+          RocStream sub2 = rocOpenAndFillInternal(inReal, sigStart - lookbackMA2, optInROC2Period, tempBegIdx, rocNb, tempBuffer);
           retCode = RetCode.SUCCESS;
           /* Sub-stream 3: ma over `tempBuffer`, warmed from bar 0 up to the
            * sub-call's own startIdx (the seeding point). */
@@ -129096,7 +129153,7 @@ class Core {
           }
           /* Sub-stream 4: roc over `inReal`, warmed from bar 0 up to the
            * sub-call's own startIdx (the seeding point). */
-          RocStream sub4 = rocOpenAndFillInternal(inReal, sigStart - maLookback(optInMA3Period, optInROCMAType), optInROC3Period, tempBegIdx, rocNb, tempBuffer);
+          RocStream sub4 = rocOpenAndFillInternal(inReal, sigStart - lookbackMA3, optInROC3Period, tempBegIdx, rocNb, tempBuffer);
           retCode = RetCode.SUCCESS;
           /* Sub-stream 5: ma over `tempBuffer`, warmed from bar 0 up to the
            * sub-call's own startIdx (the seeding point). */
@@ -129110,7 +129167,7 @@ class Core {
           }
           /* Sub-stream 6: roc over `inReal`, warmed from bar 0 up to the
            * sub-call's own startIdx (the seeding point). */
-          RocStream sub6 = rocOpenAndFillInternal(inReal, sigStart - maLookback(optInMA4Period, optInROCMAType), optInROC4Period, tempBegIdx, rocNb, tempBuffer);
+          RocStream sub6 = rocOpenAndFillInternal(inReal, sigStart - lookbackMA4, optInROC4Period, tempBegIdx, rocNb, tempBuffer);
           retCode = RetCode.SUCCESS;
           /* Sub-stream 7: ma over `tempBuffer`, warmed from bar 0 up to the
            * sub-call's own startIdx (the seeding point). */
@@ -228637,7 +228694,7 @@ class Core {
 
 public class TaCodegenServe {
     static Core core = new Core();
-    static final String SPLICED_GENCODE_DIGEST = "5d4cb3737f6711be";
+    static final String SPLICED_GENCODE_DIGEST = "4373c0e024ac6e13";
     static final int MAX_ARRAY_SIZE = 200000;
     static double[] refOpen = new double[MAX_ARRAY_SIZE];
     static double[] refHigh = new double[MAX_ARRAY_SIZE];
