@@ -36,7 +36,7 @@ pub const FUSING_INVENTORY: &[&str] = &[
     "adosc", "apo", "atr", "bbands", "bbw", "cdlabandonedbaby",
     "cdlmorningdojistar", "cdlmorningstar", "cdlpiercing", "cdlthrusting", "cksp",
     "cvi",
-    "dema", "efi", "ema", "eri", "fisher", "fosc", "frama", "ht_dcperiod", "ht_dcphase", "ht_phasor", "ht_sine",
+    "dema", "dosc", "efi", "ema", "eri", "fisher", "fosc", "frama", "ht_dcperiod", "ht_dcphase", "ht_phasor", "ht_sine",
     "ht_trendline", "ht_trendmode", "kama", "kst", "kstext", "kurtosis", "linearreg", "macd",
     "macdfix", "mama", "massi", "natr", "percentb", "ppo", "pso", "pvo", "rma", "rvi",
     "sar", "sarext", "smi", "sqzmom", "stc", "supertrend",

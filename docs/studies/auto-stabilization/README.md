@@ -13,7 +13,8 @@ how the value at a bar computed from a later start approaches the value computed
 | `rules_vs_need.py` | Sets the count the library discards at each level, for every function that owns an unstable id, against the measured need |
 | `rules_check.py` | Checks the one-pole, SWAK and FISHER rules against the kernels at seven values of K and a grid of periods, and ADOSC's at both levels, with no library involved. The calibrated rules are not in it: section 3 of `results.txt` holds those. For T3, a calibrated rule, it computes what the seed that shows latest needs against the largest difference it causes, with the bound it meets: more than the count |
 | `tie_break.c` | Compares MAXINDEX and MININDEX from two starts on a series full of equal extremes. It counted mismatches at the commit `results.txt` names, and counts none since a tie names the most recent bar (#503) |
-| `results.txt` | The output of the probe and its scripts at the commit named on its first line. Rules re-sized since are in the [specification](../../../website/src/spec/auto-stabilization/README.md), and the census is rerun, not recorded |
+| `results.txt` | The output of the probe and its scripts at the commit named on its first line. Rules re-sized since are in the [specification](../../../website/src/spec/auto-stabilization/README.md) |
+| `census_table.tsv` | What the nightly holds a sample of the census to, per function, parameters and series kind: `scripts/auto_stabilization_sample.py` checks it and, with `--calibrate`, prints it |
 
 ## Running it
 
@@ -65,8 +66,8 @@ Link the static library by path. `-lta-lib` picks up an installed TA-Lib instead
 ## Measured frequencies
 
 How often a case the [specification](../../../website/src/spec/auto-stabilization/README.md)
-lists as outside a level was seen. The census is rerun, not recorded, so these date from the
-run that sized the rules.
+lists as outside a level was seen. These date from the run that sized the rules; `census_table.tsv`
+holds the shares the nightly samples.
 
 - **HT_TRENDLINE.** On random walks about one start in 2,500 has a disagreement past the
   `PREC_4` count and one in 400,000 past the `PREC_8` count.

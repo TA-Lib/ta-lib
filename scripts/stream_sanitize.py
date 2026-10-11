@@ -8,17 +8,15 @@ functions (Open/Update/Peek/Close, rings, sub-handles). This drives them:
   1. Build the C JSON-RPC server as ONE translation unit with
      `-fsanitize=address,undefined,float-cast-overflow` (address bundles LeakSanitizer on Linux).
   2. Feed it `stream_verify` requests for every stream-flagged function (defaults,
-     the minimum period — the smallest ring — and, for recursive functions, an
-     unstable-period leg), built from the input YAML metadata.
+     the minimum period — the smallest ring — a large period, and, for recursive
+     functions, an unstable-period leg), built from the input YAML metadata.
   3. Close stdin so the server hits EOF and exits its read loop CLEANLY — this is
      what lets LeakSanitizer run at process exit (driving it through ta_regtest
      kills the server, so LSan stays silent). ASan/UBSan errors abort mid-run.
   4. Fail if the server's stderr shows any sanitizer diagnostic, if it exits
-     non-zero, if a request went unanswered, or if no leg actually ran (vacuous).
+     non-zero, if a request went unanswered, or if a request compared nothing.
   5. Fail on the VALUE signal the responses already carry (`ok` / `peek_ok` /
-     `fill_ok`). This is a memory-safety gate by design, but the flags are in
-     the stdout it parses anyway, and discarding them let a +1 ring rotation
-     print PASS while every response reported a batch-vs-stream mismatch (#240).
+     `fill_ok`): a leg whose stream disagrees with batch must not read as clean.
 
 This is the "sanitizer legs" follow-up for the stream servers. It only detects
 issues on paths that actually execute — allocation-failure branches (which
@@ -56,14 +54,25 @@ def build_server():
     print(f"  built {SERVER_BIN}")
 
 
-def opt_value(oi, which):
+# What the large leg adds to each integer default. Odd: a parity flip against the
+# (often even) default, so a parity-branched dual mode (TRIMA) sanitizes its odd arm.
+LARGE_STEP = 41
+# The functions whose large leg compares nothing at LARGE_STEP, and the step that
+# does. A new function in that position fails the run until it has a row here.
+LARGE_STEP_FOR = {
+    "FRAMA": 40,  # refuses an odd period
+    "T3": 21,     # the lookback must leave bars on the server's series
+}
+
+
+def opt_value(oi, which, large_step):
     """`which` in {'default','min','large'}; return the value in the param's type.
 
     Falls back to the default when the range bound is a non-numeric sentinel
     (`TA_REAL_MIN`, `TA_INTEGER_MIN`, ...) — those are unbounded markers, not
-    values to feed a stream open. `'large'` is default+40 (clamped to the range)
-    for a plain integer param, exercising a big ring/window under the sanitizers;
-    enum/real params keep their default there.
+    values to feed a stream open. `'large'` is default+large_step (clamped to
+    the range) for a plain integer param, exercising a big ring/window under
+    the sanitizers; enum/real params keep their default there.
     """
     typ = oi.get("type", "integer")
     is_int = typ.startswith("enum") or typ == "integer"
@@ -76,9 +85,7 @@ def opt_value(oi, which):
         except (TypeError, ValueError):
             return default
     if which == "large" and typ == "integer":
-        # +41 (odd): large ring/window AND a parity flip vs the (often even)
-        # default, so a parity-branched dual mode (TRIMA) sanitizes its odd arm.
-        big = int(default) + 41
+        big = int(default) + large_step
         if rng:
             try:
                 big = min(big, int(rng[1]))
@@ -91,6 +98,7 @@ def opt_value(oi, which):
 def requests_for(func):
     """stream_verify requests for one streamable function definition."""
     name = func["name"]
+    large_step = LARGE_STEP_FOR.get(name, LARGE_STEP)
     opts = func.get("optional_inputs") or []
     unstable = "unstable_period" in (func.get("flags") or [])
     reqs = []
@@ -101,7 +109,7 @@ def requests_for(func):
             "gen_n": 320, "unstablePeriod": unst,
         }
         for oi in opts:
-            params[oi["name"]] = opt_value(oi, which)
+            params[oi["name"]] = opt_value(oi, which, large_step)
         return json.dumps({"method": "stream_verify", "params": params},
                           separators=(",", ":"))
 
@@ -151,21 +159,17 @@ def load_streamable():
 def read_responses(stdout):
     """Parse the server's stream_verify responses.
 
-    Returns `(verified, answered, value_fails)`: the number of responses that
-    reported a non-zero leg count (the non-vacuity signal), the number of
-    responses seen at all, and a list of human-readable failures.
-
-    The `ok` / `peek_ok` / `fill_ok` flags were already in this stdout and were
-    thrown away, so a run whose legs all reported a batch-vs-stream mismatch
-    still printed PASS (#240). They are cheap to read and are read here.
+    Returns `(legs, value_fails)`: each response's leg count in request order
+    (0 for one that compared nothing or could not be read), and a list of
+    human-readable failures.
     """
-    verified = answered = 0
+    legs = []
     fails = []
     for ln in stdout.splitlines():
         ln = ln.strip()
         if not ln:
             continue
-        answered += 1
+        legs.append(0)
         try:
             r = json.loads(ln)
         except ValueError:
@@ -176,14 +180,13 @@ def read_responses(stdout):
             # answering "not_streamable" is a set mismatch, not a skip.
             fails.append("server error: %s  (%s)" % (r["error"], ln[:160]))
             continue
-        if r.get("legs", 0):
-            verified += 1
+        legs[-1] = r.get("legs", 0)
         for flag in ("ok", "peek_ok"):
             if r.get(flag, 1) != 1:
                 fails.append("%s=0 in %s" % (flag, ln[:200]))
         if r.get("fill_checked") == 1 and r.get("fill_ok") != 1:
             fails.append("fill_ok=0 in %s" % ln[:200])
-    return verified, answered, fails
+    return legs, fails
 
 
 def main():
@@ -192,8 +195,10 @@ def main():
     reqs = [r for func in funcs for r in requests_for(func)]
     print(f"Driving {len(funcs)} stream-flagged functions with {len(reqs)} stream_verify legs...")
 
+    # Apple clang has no LeakSanitizer, and asking for it aborts the server at startup.
+    leaks = sys.platform.startswith("linux")
     env = dict(os.environ)
-    env["ASAN_OPTIONS"] = "detect_leaks=1:halt_on_error=1:abort_on_error=1"
+    env["ASAN_OPTIONS"] = "detect_leaks=%d:halt_on_error=1:abort_on_error=1" % leaks
     env["UBSAN_OPTIONS"] = "print_stacktrace=1:halt_on_error=1"
     # Clean EOF -> the server exits its read loop -> LeakSanitizer runs at exit.
     proc = subprocess.run([SERVER_BIN], input=("\n".join(reqs) + "\n").encode(),
@@ -205,10 +210,10 @@ def main():
     hits = [ln for ln in stderr.splitlines() if any(m in ln for m in markers)]
 
     stdout = proc.stdout.decode(errors="replace")
-    verified, answered, value_fails = read_responses(stdout)
+    legs, value_fails = read_responses(stdout)
 
-    print(f"server exit={proc.returncode}  responses={answered}/{len(reqs)}  "
-          f"legs-verified(non-zero)={verified}  value-mismatches={len(value_fails)}")
+    print(f"server exit={proc.returncode}  responses={len(legs)}/{len(reqs)}  "
+          f"value-mismatches={len(value_fails)}")
     if hits:
         print("\n!!! SANITIZER DIAGNOSTIC(S):")
         print(stderr)
@@ -217,13 +222,10 @@ def main():
         print("\n!!! server exited non-zero under sanitizers:")
         print(stderr[-4000:])
         return 1
-    if verified == 0:
-        print("\n!!! vacuous: no stream leg verified — broken server or filter?")
-        return 1
     # One response per request. A short count is the server dying or wedging
     # part-way; without this the legs that never ran read as "clean".
-    if answered != len(reqs):
-        print(f"\n!!! {len(reqs) - answered} request(s) went unanswered — the "
+    if len(legs) != len(reqs):
+        print(f"\n!!! {len(reqs) - len(legs)} request(s) went unanswered — the "
               f"server stopped part-way through the sweep.")
         return 1
     if value_fails:
@@ -234,12 +236,18 @@ def main():
         if len(value_fails) > 20:
             print("   ... and %d more" % (len(value_fails) - 20))
         print("\nThese are VALUE failures, not memory ones — the same signal "
-              "ta_regtest --codegen reports. They are checked here because the "
-              "responses are already parsed for the non-vacuity count above, "
-              "and discarding them let a +1 ring rotation print PASS (#240).")
+              "ta_regtest --codegen reports.")
         return 1
-    print("PASS — C stream API is ASan/UBSan/LSan clean, and every leg it drove "
-          "matched batch bitwise.")
+    # A request whose stream open is refused answers with every flag set and no leg run.
+    dead = [req for req, n in zip(reqs, legs) if not n]
+    if dead or not reqs:
+        print(f"\n!!! {len(dead)} of {len(reqs)} request(s) answered and compared "
+              f"nothing (for a large leg, add a LARGE_STEP_FOR row):")
+        for req in dead:
+            print("   %s" % req)
+        return 1
+    print("PASS — C stream API is ASan/UBSan%s clean, and every leg it drove "
+          "matched batch bitwise." % ("/LSan" if leaks else " (no LeakSanitizer here)"))
     return 0
 
 

@@ -26,6 +26,7 @@ Pass/fail only — build something, drive it, exit non-zero. Each is one nightly
 | `stream_sanitize.py` | `stream-sanitizers` | The C streaming API under ASan/UBSan/LSan — paths the batch sanitizer job never calls |
 | `thread_sanitize.py` | `stream-sanitizers` | The C library on several threads under ThreadSanitizer (clang); its driver is `thread_sanitize.c` |
 | `rust_stream_debug.py` | `cross-language-rust-debug` | The Rust streaming API under debug overflow checks; reuses the request generator from `stream_sanitize.py` |
+| `auto_stabilization_sample.py` | `auto-stabilization-sample` | A reduced Auto-Stabilization census against `docs/studies/auto-stabilization/census_table.tsv`: per function, parameters and series kind, the share of starts that need more than the count, the largest need, and the replay of the trial that set it. `--calibrate` prints a new table from full census runs |
 | `bench_icount.py` | `dev-nightly` (`icount` job) | Retired instructions for all ~1000 C entry points against `.github/perf/icount-baseline-<arch>.tsv`, and again with `--shape=peg` against `icount-baseline-<arch>-peg.tsv`. Counts, not time: exact on a shared runner, which is what lets a 10% threshold mean anything. The baseline only ever moves down, so a sub-threshold regression is never absorbed; raising a row takes `--accept`, which names the rows and leaves every other row's accumulated best alone. Read its header for what a count cannot see |
 
 Everything else CI gates on lives in `ta_regtest` (C), `abi.py check`, or a step

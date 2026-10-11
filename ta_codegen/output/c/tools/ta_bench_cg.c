@@ -131,6 +131,7 @@
 #include "ta_DEMA.c"
 #include "ta_DIV.c"
 #include "ta_DONCHIAN.c"
+#include "ta_DOSC.c"
 #include "ta_DPO.c"
 #include "ta_DX.c"
 #include "ta_EFI.c"
@@ -2045,6 +2046,22 @@ static void bench_all(const char *filter, int iters) {
             g_sink += g_outBuf2[0];
         }
         printf("DONCHIAN %lld\n", best / iters);
+        fflush(stdout);
+    }
+    if( func_matches(filter, "DOSC") ) {
+        long long best = 0;
+        for( int pass = 0; pass < 3; pass++ ) {
+            int outBegIdx, outNBElement;
+            long long t0 = get_nanotime();
+            for( int it = 0; it < iters; it++ ) {
+                TA_DOSC(0, g_nPoints - 1, g_close, 14, 5, 3, 9, &outBegIdx, &outNBElement, g_outBuf0);
+            }
+            long long elapsed = get_nanotime() - t0;
+            if( !best || elapsed < best ) best = elapsed;
+            g_sink += outNBElement;
+            g_sink += g_outBuf0[0];
+        }
+        printf("DOSC %lld\n", best / iters);
         fflush(stdout);
     }
     if( func_matches(filter, "DPO") ) {

@@ -4549,6 +4549,54 @@ static const TA_VOptSpec TA_VOpt_DONCHIAN[] = {
    { "optInTimePeriod", TA_VOPT_INT, 2.0, 100000.0, 20.0 },
 };
 
+static TA_RetCode TA_DOSC_VFrameD( int startIdx, int endIdx,
+                  const double *const in[], const double optIn[],
+                  int *outBegIdx, int *outNBElement,
+                  double *const outReal[], int *const outInteger[] )
+{
+   (void)outInteger;
+   return TA_DOSC(
+               startIdx,
+               endIdx,
+               in[0] /* inReal */,
+               (int)optIn[0] /* optInTimePeriod */,
+               (int)optIn[1] /* optInFirstPeriod */,
+               (int)optIn[2] /* optInSecondPeriod */,
+               (int)optIn[3] /* optInSignalPeriod */,
+               outBegIdx,
+               outNBElement,
+               outReal[0] /* outReal */
+               );
+}
+static TA_RetCode TA_DOSC_VFrameS( int startIdx, int endIdx,
+                  const float *const in[], const double optIn[],
+                  int *outBegIdx, int *outNBElement,
+                  double *const outReal[], int *const outInteger[] )
+{
+   (void)outInteger;
+   return TA_S_DOSC(
+               startIdx,
+               endIdx,
+               in[0] /* inReal */,
+               (int)optIn[0] /* optInTimePeriod */,
+               (int)optIn[1] /* optInFirstPeriod */,
+               (int)optIn[2] /* optInSecondPeriod */,
+               (int)optIn[3] /* optInSignalPeriod */,
+               outBegIdx,
+               outNBElement,
+               outReal[0] /* outReal */
+               );
+}
+
+static const TA_VInputKind TA_VIn_DOSC[] = { TA_VIN_REAL };
+static const int TA_VOutIsInt_DOSC[] = { 0 };
+static const TA_VOptSpec TA_VOpt_DOSC[] = {
+   { "optInTimePeriod", TA_VOPT_INT, 2.0, 100000.0, 14.0 },
+   { "optInFirstPeriod", TA_VOPT_INT, 2.0, 100000.0, 5.0 },
+   { "optInSecondPeriod", TA_VOPT_INT, 2.0, 100000.0, 3.0 },
+   { "optInSignalPeriod", TA_VOPT_INT, 2.0, 100000.0, 9.0 },
+};
+
 static TA_RetCode TA_DPO_VFrameD( int startIdx, int endIdx,
                   const double *const in[], const double optIn[],
                   int *outBegIdx, int *outNBElement,
@@ -10103,6 +10151,8 @@ static const TA_VariantEntry TA_VariantTable[] = {
      2, TA_VIn_DIV, 0, NULL, 1, TA_VOutIsInt_DIV, 0 },
    { "DONCHIAN", TA_DONCHIAN_VFrameD, TA_DONCHIAN_VFrameS,
      2, TA_VIn_DONCHIAN, 1, TA_VOpt_DONCHIAN, 3, TA_VOutIsInt_DONCHIAN, 0 },
+   { "DOSC", TA_DOSC_VFrameD, TA_DOSC_VFrameS,
+     1, TA_VIn_DOSC, 4, TA_VOpt_DOSC, 1, TA_VOutIsInt_DOSC, 0 },
    { "DPO", TA_DPO_VFrameD, TA_DPO_VFrameS,
      1, TA_VIn_DPO, 1, TA_VOpt_DPO, 1, TA_VOutIsInt_DPO, 0 },
    { "DX", TA_DX_VFrameD, TA_DX_VFrameS,
@@ -10359,6 +10409,6 @@ static const TA_VariantEntry TA_VariantTable[] = {
      1, TA_VIn_ZLEMA, 1, TA_VOpt_ZLEMA, 1, TA_VOutIsInt_ZLEMA, 0 },
 };
 
-#define TA_VARIANT_TABLE_SIZE 232
+#define TA_VARIANT_TABLE_SIZE 233
 
 #endif /* TA_VARIANT_FRAME_H */

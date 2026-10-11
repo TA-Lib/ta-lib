@@ -145,6 +145,7 @@ extern const TA_FuncDef TA_DEF_CVI;
 extern const TA_FuncDef TA_DEF_DEMA;
 extern const TA_FuncDef TA_DEF_DIV;
 extern const TA_FuncDef TA_DEF_DONCHIAN;
+extern const TA_FuncDef TA_DEF_DOSC;
 extern const TA_FuncDef TA_DEF_DPO;
 extern const TA_FuncDef TA_DEF_DX;
 extern const TA_FuncDef TA_DEF_EFI;
@@ -378,6 +379,7 @@ const TA_FuncDef *TA_PerGroupFunc_4[] = {
 &TA_DEF_COPPOCK,
 &TA_DEF_CRSI,
 &TA_DEF_CTI,
+&TA_DEF_DOSC,
 &TA_DEF_DPO,
 &TA_DEF_DX,
 &TA_DEF_ER,
