@@ -1418,7 +1418,7 @@ jobs:
   # Memory-safety gate for the STREAMING tier. The `sanitizers` job above runs
   # only the batch C-reference suite; it never calls the generated stream
   # functions (Open/Update/Peek/Close, rings, sub-handles). This builds the C
-  # JSON-RPC stream server single-TU with -fsanitize=address,undefined (address
+  # JSON-RPC stream server single-TU under the sanitizers (address
   # bundles LeakSanitizer) and drives stream_verify for every stream-flagged
   # function, closing stdin so the server exits CLEANLY and LeakSanitizer runs at
   # exit (driving it through ta_regtest kills the server, so LSan would stay

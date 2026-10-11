@@ -534,7 +534,12 @@ impl Core {
             // Compute Dominant Cycle Phase
             prevDCPhase = DCPhase;
             DCPeriod = smoothPeriod + 0.5;
-            DCPeriodInt = (DCPeriod) as i32;
+            // A NaN period has no int value, and C leaves converting one undefined.
+            if DCPeriod >= 0.0 {
+                DCPeriodInt = (DCPeriod) as i32;
+            } else {
+                DCPeriodInt = 0;
+            }
             realPart = 0.0;
             imagPart = 0.0;
             // idx is used to iterate for up to 50 of the last
@@ -579,7 +584,12 @@ impl Core {
             leadSine = ((DCPhase + 45_f64) * deg2Rad).sin();
             // Compute Trendline
             DCPeriod = smoothPeriod + 0.5;
-            DCPeriodInt = (DCPeriod) as i32;
+            // A NaN period has no int value, and C leaves converting one undefined.
+            if DCPeriod >= 0.0 {
+                DCPeriodInt = (DCPeriod) as i32;
+            } else {
+                DCPeriodInt = 0;
+            }
             // Average the RAW price over the dominant cycle period.
             // Unlike the DC-phase loop above (which reads the smoothPrice
             // circular buffer), the iTrend average reads the raw price,
@@ -994,7 +1004,12 @@ impl Core {
         // Compute Dominant Cycle Phase
         prevDCPhase = sp.DCPhase;
         DCPeriod = sp.smoothPeriod + 0.5;
-        DCPeriodInt = (DCPeriod) as i32;
+        // A NaN period has no int value, and C leaves converting one undefined.
+        if DCPeriod >= 0.0 {
+            DCPeriodInt = (DCPeriod) as i32;
+        } else {
+            DCPeriodInt = 0;
+        }
         realPart = 0.0;
         imagPart = 0.0;
         // idx is used to iterate for up to 50 of the last
@@ -1039,7 +1054,12 @@ impl Core {
         sp.leadSine = ((sp.DCPhase + 45_f64) * sp.deg2Rad).sin();
         // Compute Trendline
         DCPeriod = sp.smoothPeriod + 0.5;
-        DCPeriodInt = (DCPeriod) as i32;
+        // A NaN period has no int value, and C leaves converting one undefined.
+        if DCPeriod >= 0.0 {
+            DCPeriodInt = (DCPeriod) as i32;
+        } else {
+            DCPeriodInt = 0;
+        }
         // Average the RAW price over the dominant cycle period.
         // Unlike the DC-phase loop above (which reads the smoothPrice
         // circular buffer), the iTrend average reads the raw price,
@@ -1497,7 +1517,12 @@ impl Core {
             // Compute Dominant Cycle Phase
             prevDCPhase = DCPhase;
             DCPeriod = smoothPeriod + 0.5;
-            DCPeriodInt = (DCPeriod) as i32;
+            // A NaN period has no int value, and C leaves converting one undefined.
+            if DCPeriod >= 0.0 {
+                DCPeriodInt = (DCPeriod) as i32;
+            } else {
+                DCPeriodInt = 0;
+            }
             realPart = 0.0;
             imagPart = 0.0;
             // idx is used to iterate for up to 50 of the last
@@ -1542,7 +1567,12 @@ impl Core {
             leadSine = ((DCPhase + 45_f64) * deg2Rad).sin();
             // Compute Trendline
             DCPeriod = smoothPeriod + 0.5;
-            DCPeriodInt = (DCPeriod) as i32;
+            // A NaN period has no int value, and C leaves converting one undefined.
+            if DCPeriod >= 0.0 {
+                DCPeriodInt = (DCPeriod) as i32;
+            } else {
+                DCPeriodInt = 0;
+            }
             // Average the RAW price over the dominant cycle period.
             // Unlike the DC-phase loop above (which reads the smoothPrice
             // circular buffer), the iTrend average reads the raw price,
@@ -2043,7 +2073,12 @@ impl HtTrendmodeStream {
             // Compute Dominant Cycle Phase
             prevDCPhase = DCPhase;
             DCPeriod = smoothPeriod + 0.5;
-            DCPeriodInt = (DCPeriod) as i32;
+            // A NaN period has no int value, and C leaves converting one undefined.
+            if DCPeriod >= 0.0 {
+                DCPeriodInt = (DCPeriod) as i32;
+            } else {
+                DCPeriodInt = 0;
+            }
             realPart = 0.0;
             imagPart = 0.0;
             // idx is used to iterate for up to 50 of the last
@@ -2088,7 +2123,12 @@ impl HtTrendmodeStream {
             leadSine = ((DCPhase + 45_f64) * sp.deg2Rad).sin();
             // Compute Trendline
             DCPeriod = smoothPeriod + 0.5;
-            DCPeriodInt = (DCPeriod) as i32;
+            // A NaN period has no int value, and C leaves converting one undefined.
+            if DCPeriod >= 0.0 {
+                DCPeriodInt = (DCPeriod) as i32;
+            } else {
+                DCPeriodInt = 0;
+            }
             // Average the RAW price over the dominant cycle period.
             // Unlike the DC-phase loop above (which reads the smoothPrice
             // circular buffer), the iTrend average reads the raw price,

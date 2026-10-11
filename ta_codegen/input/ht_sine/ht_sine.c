@@ -367,7 +367,11 @@ TA_RetCode ht_sine(int startIdx, int endIdx,
 
       /* Compute Dominant Cycle Phase */
       DCPeriod    = smoothPeriod+0.5;
-      DCPeriodInt = (int)DCPeriod;
+      /* A NaN period has no int value, and C leaves converting one undefined. */
+      if( DCPeriod >= 0.0 )
+         DCPeriodInt = (int)DCPeriod;
+      else
+         DCPeriodInt = 0;
       realPart = 0.0;
       imagPart = 0.0;
 

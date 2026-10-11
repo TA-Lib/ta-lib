@@ -368,7 +368,11 @@ TA_RetCode ht_trendline(int startIdx, int endIdx,
 
       /* Compute Trendline */
       DCPeriod    = smoothPeriod+0.5;
-      DCPeriodInt = (int)DCPeriod;
+      /* A NaN period has no int value, and C leaves converting one undefined. */
+      if( DCPeriod >= 0.0 )
+         DCPeriodInt = (int)DCPeriod;
+      else
+         DCPeriodInt = 0;
 
       /* Average the RAW price over the dominant cycle period
        * (Ehlers, "Rocket Science for Traders": the Instantaneous
