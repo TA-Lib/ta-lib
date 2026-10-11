@@ -231,6 +231,7 @@ libta_func_la_SOURCES = ta_utility.c \
 	ta_VWAP.c \
 	ta_VWMA.c \
 	ta_WAD.c \
+	ta_WAVETREND.c \
 	ta_WCLPRICE.c \
 	ta_WILLR.c \
 	ta_WMA.c \

@@ -348,6 +348,7 @@ public final class Functions {
       put(m, f_VWAP());
       put(m, f_VWMA());
       put(m, f_WAD());
+      put(m, f_WAVETREND());
       put(m, f_WCLPRICE());
       put(m, f_WILLR());
       put(m, f_WMA());
@@ -4461,6 +4462,35 @@ public final class Functions {
          List.of(),
          List.of(
             new OutputInfo(OutputType.REAL, "outReal", 0x00000001)
+         ));
+   }
+
+   private static FuncInfo f_WAVETREND() {
+      return new FuncInfo(
+         "WAVETREND", "Momentum Indicators", "WaveTrend Oscillator", 0x02000000,
+         List.of(
+            new InputInfo(InputType.PRICE, "inPriceHLC", 0x0000000E)
+         ),
+         List.of(
+            new OptInputInfo(
+               OptInputType.INTEGER_RANGE, "optInChannelPeriod", 0x00000000,
+               "Channel Period", "Period of the price channel, used by both the average and the deviation", 10.0,
+               0.0, 0.0, 0, 0.0, 0.0, 0.0,
+               2, 100000, 2, 200, 1, null),
+            new OptInputInfo(
+               OptInputType.INTEGER_RANGE, "optInAveragePeriod", 0x00000000,
+               "Average Period", "Smoothing for the oscillator line", 21.0,
+               0.0, 0.0, 0, 0.0, 0.0, 0.0,
+               1, 100000, 1, 200, 1, null),
+            new OptInputInfo(
+               OptInputType.INTEGER_RANGE, "optInSignalPeriod", 0x00000000,
+               "Signal Period", "Simple average of the oscillator line, making the signal line", 4.0,
+               0.0, 0.0, 0, 0.0, 0.0, 0.0,
+               1, 100000, 1, 50, 1, null)
+         ),
+         List.of(
+            new OutputInfo(OutputType.REAL, "outWT1", 0x00000001),
+            new OutputInfo(OutputType.REAL, "outWT2", 0x00000004)
          ));
    }
 

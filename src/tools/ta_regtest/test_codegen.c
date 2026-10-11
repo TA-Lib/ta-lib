@@ -764,6 +764,10 @@ static const UnstableLookup UNSTABLE_MAP[] = {
      * tightens around it. Measured with only UNST_EMA listed, KC moved 1.8%
      * across startIdx at unstable period 140 where 0.15% was allowed. Without
      * any entry it classified EPSILON and moved 0.25% where ~1e-13 was allowed. */
+    /* WAVETREND inherits EMA three times over -- the price average, the
+     * deviation average and the oscillator smoothing -- but the map is
+     * keyed by function and id, so one row carries all three. */
+    {"WAVETREND",    TA_FUNC_UNST_EMA},
     {"KC",           TA_FUNC_UNST_EMA},
     {"KC",           TA_FUNC_UNST_ATR},
     /* DOSC inherits two ids as well: RSI for its first stage and EMA for the

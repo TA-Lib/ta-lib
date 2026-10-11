@@ -220932,6 +220932,1383 @@ class Core {
      *  Initial  Name/description
      *  -------------------------------------------------------------------
      *  MF       Mario Fortier
+     *  CC       Claude Code (AI assistant)
+     *
+     * Change history:
+     *
+     *  MMDDYY BY     Description
+     *  -------------------------------------------------------------------
+     *  100626 MF,CC  Initial version (#476).
+     */
+
+       /**
+        * Number of leading input bars {@link Core#wavetrend} consumes before it can
+        * produce its first value.
+        * <p>Equivalently, the index of the first bar with a value when the whole
+        * series is requested. Feed at least {@code lookback + 1} bars to get any
+        * output.
+        *
+        * @param optInChannelPeriod Period of the price channel, used by both the
+        *        average and the deviation (default 10; range 2..100000;
+        *        {@code Integer.MIN_VALUE} selects the default).
+        * @param optInAveragePeriod Smoothing for the oscillator line (default 21;
+        *        range 1..100000; {@code Integer.MIN_VALUE} selects the default).
+        * @param optInSignalPeriod Period of the simple average making the signal
+        *        line (default 4; range 1..100000; {@code Integer.MIN_VALUE} selects the
+        *        default).
+        * @return The lookback, or {@code -1} if a parameter is out of range.
+        */
+       public int wavetrendLookback( int optInChannelPeriod, int optInAveragePeriod, int optInSignalPeriod )
+       {
+          if( optInChannelPeriod == Integer.MIN_VALUE ) {
+             optInChannelPeriod = 10;
+          } else if( optInChannelPeriod < 2 || optInChannelPeriod > 100000 ) {
+             return -1;
+          }
+          if( optInAveragePeriod == Integer.MIN_VALUE ) {
+             optInAveragePeriod = 21;
+          } else if( optInAveragePeriod < 1 || optInAveragePeriod > 100000 ) {
+             return -1;
+          }
+          if( optInSignalPeriod == Integer.MIN_VALUE ) {
+             optInSignalPeriod = 4;
+          } else if( optInSignalPeriod < 1 || optInSignalPeriod > 100000 ) {
+             return -1;
+          }
+          /* Two exponential averages over the channel period -- one of the typical
+           * price, one of the absolute distance from it -- then the oscillator's own
+           * smoothing and the simple average that makes the signal line. Every term
+           * is exactly the lookback of the function it comes from, so none of them is
+           * restated here: that is what makes WAVETREND inherit TA_FUNC_UNST_EMA from
+           * its callees rather than take an id of its own.
+           *
+           * The EMA term appears THREE times, so a warm
+           * TA_SetUnstablePeriod(TA_FUNC_UNST_EMA, k) moves the lookback by 3k.
+           */
+          return emaLookback(optInChannelPeriod) + emaLookback(optInChannelPeriod) + emaLookback(optInAveragePeriod) + smaLookback(optInSignalPeriod) ;
+
+       }
+       /**
+        * How many bars ahead (positive) or behind (negative) of the bar that
+        * computed it a chart draws one output of {@link Core#wavetrend}.
+        * <p>Every output of this function is drawn at its own bar, so the answer is
+        * 0.
+        *
+        * @param optInChannelPeriod Period of the price channel, used by both the
+        *        average and the deviation (default 10; range 2..100000;
+        *        {@code Integer.MIN_VALUE} selects the default).
+        * @param optInAveragePeriod Smoothing for the oscillator line (default 21;
+        *        range 1..100000; {@code Integer.MIN_VALUE} selects the default).
+        * @param optInSignalPeriod Period of the simple average making the signal
+        *        line (default 4; range 1..100000; {@code Integer.MIN_VALUE} selects the
+        *        default).
+        * @param outputIdx Position of the output in the batch signature, from 0.
+        * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+        *        out of range or the index names no output.
+        */
+       public int wavetrendDisplayShift( int optInChannelPeriod, int optInAveragePeriod, int optInSignalPeriod, int outputIdx )
+       {
+          if( wavetrendLookback( optInChannelPeriod, optInAveragePeriod, optInSignalPeriod ) < 0 ) {
+             return Integer.MIN_VALUE;
+          }
+          if( outputIdx < 0 || outputIdx >= 2 ) {
+             return Integer.MIN_VALUE;
+          }
+          return 0;
+       }
+       RetCode wavetrendImpl( int startIdx,
+                              int endIdx,
+                              double inHigh[],
+                              double inLow[],
+                              double inClose[],
+                              int optInChannelPeriod,
+                              int optInAveragePeriod,
+                              int optInSignalPeriod,
+                              MInteger outBegIdx,
+                              MInteger outNBElement,
+                              double outWT1[],
+                              double outWT2[] )
+       {
+          double k1 = 0;
+          double beta1 = 0;
+          double k2 = 0;
+          double beta2 = 0;
+          double ap = 0;
+          double esa = 0;
+          double dev = 0;
+          double d = 0;
+          double ci = 0;
+          double wt1 = 0;
+          double prevAp = 0;
+          double prevEsa = 0;
+          double num = 0;
+          double scaledDev = 0;
+          double sumEsa = 0;
+          double sumD = 0;
+          double sumCi = 0;
+          double sumSignal = 0;
+          int lookbackTotal = 0;
+          int lookbackChannel = 0;
+          int lookbackAverage = 0;
+          int today = 0;
+          int outIdx = 0;
+          int nAp = 0;
+          int nDev = 0;
+          int nCi = 0;
+          int nSig = 0;
+          double[] wtBuffer;
+          int wtBuffer_Idx = 0;
+          int maxIdx_wtBuffer = (32)-1;
+          if( (startIdx < 0) || (startIdx > INDEX_MAX) ) {
+             return RetCode.OUT_OF_RANGE_START_INDEX ;
+          }
+          if( (endIdx < 0) || (endIdx > INDEX_MAX) || (endIdx < startIdx)) {
+             return RetCode.OUT_OF_RANGE_END_INDEX ;
+          }
+          if( optInChannelPeriod == Integer.MIN_VALUE ) {
+             optInChannelPeriod = 10;
+          } else if( optInChannelPeriod < 2 || optInChannelPeriod > 100000 ) {
+             return RetCode.BAD_PARAM;
+          }
+          if( optInAveragePeriod == Integer.MIN_VALUE ) {
+             optInAveragePeriod = 21;
+          } else if( optInAveragePeriod < 1 || optInAveragePeriod > 100000 ) {
+             return RetCode.BAD_PARAM;
+          }
+          if( optInSignalPeriod == Integer.MIN_VALUE ) {
+             optInSignalPeriod = 4;
+          } else if( optInSignalPeriod < 1 || optInSignalPeriod > 100000 ) {
+             return RetCode.BAD_PARAM;
+          }
+          if( outWT1 == outWT2 ) {
+             return RetCode.BAD_PARAM ;
+          }
+          /* LazyBear's WaveTrend Oscillator (TradingView, 2014), lines 14 to 21: the
+           * typical price's distance from its own exponential average, normalised by
+           * an exponential average of that distance's absolute value and by Lambert's
+           * CCI constant, then smoothed.
+           *
+           *    ap  = (H + L + C)/3
+           *    esa = EMA(ap, n1)
+           *    d   = EMA(|ap - esa|, n1)
+           *    ci  = (ap - esa) / (0.015 * d)
+           *    WT1 = EMA(ci, n2)        WT2 = SMA(WT1, n3)
+           *
+           * The middle stage is an exponential CCI, not TA_CCI: cci.c averages with
+           * an SMA and takes the mean deviation around that window's own SMA, where
+           * this uses two exponential averages.
+           *
+           * Each stage seeds the way ema.c and sma.c seed, and each stage boundary
+           * below is the callee's LOOKBACK rather than (period-1), so the result is
+           * bit-identical to the composed chain on moving data and a warm unstable
+           * period folds in. The two guards are what the chain cannot express; they
+           * are the reason this ships as a function.
+           */
+          /* This ptr will point on a circular buffer of at least
+           * "optInSignalPeriod" element.
+           */
+          lookbackTotal = wavetrendLookback(optInChannelPeriod, optInAveragePeriod, optInSignalPeriod);
+          /* Move up the start index if there is not
+           * enough initial data.
+           */
+          if( startIdx < lookbackTotal ) {
+             startIdx = lookbackTotal;
+          }
+          /* Make sure there is still something to evaluate. */
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.SUCCESS ;
+          }
+          if( optInSignalPeriod < 1 ) return RetCode.INTERNAL_ERROR;
+          wtBuffer = new double[optInSignalPeriod];
+          maxIdx_wtBuffer = (optInSignalPeriod)-1;
+          wtBuffer_Idx = 0;
+          lookbackChannel = emaLookback(optInChannelPeriod);
+          lookbackAverage = emaLookback(optInAveragePeriod);
+          beta1 = (double)(optInChannelPeriod - 1) / (double)(optInChannelPeriod + 1);
+          k1 = 1.0 - beta1;
+          beta1 = 1.0 - k1;
+          beta2 = (double)(optInAveragePeriod - 1) / (double)(optInAveragePeriod + 1);
+          k2 = 1.0 - beta2;
+          beta2 = 1.0 - k2;
+          esa = 0.0;
+          d = 0.0;
+          ci = 0.0;
+          wt1 = 0.0;
+          sumEsa = 0.0;
+          sumD = 0.0;
+          sumCi = 0.0;
+          sumSignal = 0.0;
+          nAp = 0;
+          /* The fixpoint test compares against the previous bar's pair. Starting both
+           * at 0.0 cannot make it fire spuriously: it would need a bar whose typical
+           * price and whose exponential average are both exactly zero, and a zero
+           * typical price makes the numerator zero anyway, which is what the test
+           * would have substituted.
+           */
+          prevAp = 0.0;
+          prevEsa = 0.0;
+          today = startIdx - lookbackTotal;
+          /* Warm-up. Runs through startIdx inclusive: the last pass is the one that
+           * completes the signal window, so it leaves the first output in the state.
+           */
+          while( today <= startIdx ) {
+             ap = (inHigh[today] + inLow[today] + inClose[today]) / 3.0;
+             /* Stage 1: the exponential average of the typical price. */
+             if( nAp < optInChannelPeriod ) {
+                sumEsa = sumEsa + ap;
+                if( nAp == optInChannelPeriod - 1 ) {
+                   esa = sumEsa / optInChannelPeriod;
+                }
+             } else {
+                esa = Math.fma(beta1, esa, k1 * ap);
+             }
+             /* Stage 2: the exponential average of the absolute distance, over what
+              * stage 1 publishes. The counter is compared before it is subtracted,
+              * never after: the Rust backend renders these as usize.
+              */
+             if( nAp >= lookbackChannel ) {
+                nDev = nAp - lookbackChannel;
+                /* GUARD 1, the fixpoint test. With a constant input the exponential
+                 * step stops moving once k*|ap - esa| falls under half an ulp, and
+                 * esa then FREEZES up to (n1+1)/4 ulps away from the price. That
+                 * frozen residue is a real non-zero distance, so the naive form
+                 * divides it by its own exponential average and walks to
+                 * +/-1/0.015 = +/-66.67 -- an extreme reading produced by nothing
+                 * but rounding. When the pair has not moved, the average has reached
+                 * its fixpoint and the distance is exactly that residue, so the
+                 * numerator is taken as zero. The test is exact, so it is
+                 * independent of scale and period, unlike a fixed epsilon band.
+                 */
+                num = ap - esa;
+                if( ap == prevAp && esa == prevEsa ) {
+                   num = 0.0;
+                }
+                dev = num;
+                if( dev < 0.0 ) {
+                   dev = -dev;
+                }
+                if( nDev < optInChannelPeriod ) {
+                   sumD = sumD + dev;
+                   if( nDev == optInChannelPeriod - 1 ) {
+                      d = sumD / optInChannelPeriod;
+                   }
+                } else {
+                   d = Math.fma(beta1, d, k1 * dev);
+                }
+                /* Stage 3: the oscillator, then its own smoothing. */
+                if( nDev >= lookbackChannel ) {
+                   nCi = nDev - lookbackChannel;
+                   /* GUARD 2, the exact divisor. Test the PRODUCT the division uses,
+                    * not the deviation: 0.015*d underflows to zero while d is still
+                    * non-zero (#395). A zero divisor is 0/0 -- no distance against no
+                    * average distance -- so the oscillator reads its neutral 0.0
+                    * (#112), as tsi.c does.
+                    */
+                   scaledDev = 0.015 * d;
+                   if( scaledDev > 0.0 ) {
+                      ci = num / scaledDev;
+                   } else {
+                      ci = 0.0;
+                   }
+                   if( nCi < optInAveragePeriod ) {
+                      sumCi = sumCi + ci;
+                      if( nCi == optInAveragePeriod - 1 ) {
+                         wt1 = sumCi / optInAveragePeriod;
+                      }
+                   } else {
+                      wt1 = Math.fma(beta2, wt1, k2 * ci);
+                   }
+                   if( nCi >= lookbackAverage ) {
+                      wtBuffer[wtBuffer_Idx] = wt1;
+                      sumSignal = sumSignal + wt1;
+                      wtBuffer_Idx++;
+                      if( wtBuffer_Idx > maxIdx_wtBuffer ) { wtBuffer_Idx = 0; }
+                   }
+                }
+             }
+             prevAp = ap;
+             prevEsa = esa;
+             nAp = nAp + 1;
+             today = today + 1;
+          }
+          /* The first output. The warm-up's last pass stored this bar's WT1 into the
+           * ring and added it to the running sum, so the average is ready here.
+           */
+          outWT1[0] = wt1;
+          outWT2[0] = sumSignal / (double)optInSignalPeriod;
+          outIdx = 1;
+          sumSignal = sumSignal - wtBuffer[wtBuffer_Idx];
+          /* Stable zone. One bar past the first output every stage is past its seed,
+           * at every reachable parameter triple: the shortest case, 2/1/1, arrives
+           * with the deviation average and the oscillator smoothing both one bar
+           * into their recursions. So nothing here branches on a counter, and the
+           * stores always run -- which is what keeps the managed backends' peek
+           * frames from carrying a seeded output local.
+           */
+          while( today <= endIdx ) {
+             ap = (inHigh[today] + inLow[today] + inClose[today]) / 3.0;
+             esa = Math.fma(beta1, esa, k1 * ap);
+             num = ap - esa;
+             if( ap == prevAp && esa == prevEsa ) {
+                num = 0.0;
+             }
+             dev = num;
+             if( dev < 0.0 ) {
+                dev = -dev;
+             }
+             d = Math.fma(beta1, d, k1 * dev);
+             scaledDev = 0.015 * d;
+             if( scaledDev > 0.0 ) {
+                ci = num / scaledDev;
+             } else {
+                ci = 0.0;
+             }
+             wt1 = Math.fma(beta2, wt1, k2 * ci);
+             wtBuffer[wtBuffer_Idx] = wt1;
+             sumSignal = sumSignal + wt1;
+             outWT1[outIdx] = wt1;
+             outWT2[outIdx] = sumSignal / (double)optInSignalPeriod;
+             outIdx = outIdx + 1;
+             wtBuffer_Idx++;
+             if( wtBuffer_Idx > maxIdx_wtBuffer ) { wtBuffer_Idx = 0; }
+             sumSignal = sumSignal - wtBuffer[wtBuffer_Idx];
+             prevAp = ap;
+             prevEsa = esa;
+             today = today + 1;
+          }
+          outNBElement.value = outIdx;
+          outBegIdx.value = startIdx;
+          return RetCode.SUCCESS ;
+       }
+       RetCode wavetrendImpl( int startIdx,
+                              int endIdx,
+                              float inHigh[],
+                              float inLow[],
+                              float inClose[],
+                              int optInChannelPeriod,
+                              int optInAveragePeriod,
+                              int optInSignalPeriod,
+                              MInteger outBegIdx,
+                              MInteger outNBElement,
+                              double outWT1[],
+                              double outWT2[] )
+       {
+          double k1 = 0;
+          double beta1 = 0;
+          double k2 = 0;
+          double beta2 = 0;
+          double ap = 0;
+          double esa = 0;
+          double dev = 0;
+          double d = 0;
+          double ci = 0;
+          double wt1 = 0;
+          double prevAp = 0;
+          double prevEsa = 0;
+          double num = 0;
+          double scaledDev = 0;
+          double sumEsa = 0;
+          double sumD = 0;
+          double sumCi = 0;
+          double sumSignal = 0;
+          int lookbackTotal = 0;
+          int lookbackChannel = 0;
+          int lookbackAverage = 0;
+          int today = 0;
+          int outIdx = 0;
+          int nAp = 0;
+          int nDev = 0;
+          int nCi = 0;
+          int nSig = 0;
+          double[] wtBuffer;
+          int wtBuffer_Idx = 0;
+          int maxIdx_wtBuffer = (32)-1;
+          if( (startIdx < 0) || (startIdx > INDEX_MAX) ) {
+             return RetCode.OUT_OF_RANGE_START_INDEX ;
+          }
+          if( (endIdx < 0) || (endIdx > INDEX_MAX) || (endIdx < startIdx)) {
+             return RetCode.OUT_OF_RANGE_END_INDEX ;
+          }
+          if( optInChannelPeriod == Integer.MIN_VALUE ) {
+             optInChannelPeriod = 10;
+          } else if( optInChannelPeriod < 2 || optInChannelPeriod > 100000 ) {
+             return RetCode.BAD_PARAM;
+          }
+          if( optInAveragePeriod == Integer.MIN_VALUE ) {
+             optInAveragePeriod = 21;
+          } else if( optInAveragePeriod < 1 || optInAveragePeriod > 100000 ) {
+             return RetCode.BAD_PARAM;
+          }
+          if( optInSignalPeriod == Integer.MIN_VALUE ) {
+             optInSignalPeriod = 4;
+          } else if( optInSignalPeriod < 1 || optInSignalPeriod > 100000 ) {
+             return RetCode.BAD_PARAM;
+          }
+          if( outWT1 == outWT2 ) {
+             return RetCode.BAD_PARAM ;
+          }
+          lookbackTotal = wavetrendLookback(optInChannelPeriod, optInAveragePeriod, optInSignalPeriod);
+          if( startIdx < lookbackTotal ) {
+             startIdx = lookbackTotal;
+          }
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.SUCCESS ;
+          }
+          if( optInSignalPeriod < 1 ) return RetCode.INTERNAL_ERROR;
+          wtBuffer = new double[optInSignalPeriod];
+          maxIdx_wtBuffer = (optInSignalPeriod)-1;
+          wtBuffer_Idx = 0;
+          lookbackChannel = emaLookback(optInChannelPeriod);
+          lookbackAverage = emaLookback(optInAveragePeriod);
+          beta1 = (double)(optInChannelPeriod - 1) / (double)(optInChannelPeriod + 1);
+          k1 = 1.0 - beta1;
+          beta1 = 1.0 - k1;
+          beta2 = (double)(optInAveragePeriod - 1) / (double)(optInAveragePeriod + 1);
+          k2 = 1.0 - beta2;
+          beta2 = 1.0 - k2;
+          esa = 0.0;
+          d = 0.0;
+          ci = 0.0;
+          wt1 = 0.0;
+          sumEsa = 0.0;
+          sumD = 0.0;
+          sumCi = 0.0;
+          sumSignal = 0.0;
+          nAp = 0;
+          prevAp = 0.0;
+          prevEsa = 0.0;
+          today = startIdx - lookbackTotal;
+          while( today <= startIdx ) {
+             ap = ((double)inHigh[today] + (double)inLow[today] + (double)inClose[today]) / 3.0;
+             if( nAp < optInChannelPeriod ) {
+                sumEsa = sumEsa + ap;
+                if( nAp == optInChannelPeriod - 1 ) {
+                   esa = sumEsa / optInChannelPeriod;
+                }
+             } else {
+                esa = Math.fma(beta1, esa, k1 * ap);
+             }
+             if( nAp >= lookbackChannel ) {
+                nDev = nAp - lookbackChannel;
+                num = ap - esa;
+                if( ap == prevAp && esa == prevEsa ) {
+                   num = 0.0;
+                }
+                dev = num;
+                if( dev < 0.0 ) {
+                   dev = -dev;
+                }
+                if( nDev < optInChannelPeriod ) {
+                   sumD = sumD + dev;
+                   if( nDev == optInChannelPeriod - 1 ) {
+                      d = sumD / optInChannelPeriod;
+                   }
+                } else {
+                   d = Math.fma(beta1, d, k1 * dev);
+                }
+                if( nDev >= lookbackChannel ) {
+                   nCi = nDev - lookbackChannel;
+                   scaledDev = 0.015 * d;
+                   if( scaledDev > 0.0 ) {
+                      ci = num / scaledDev;
+                   } else {
+                      ci = 0.0;
+                   }
+                   if( nCi < optInAveragePeriod ) {
+                      sumCi = sumCi + ci;
+                      if( nCi == optInAveragePeriod - 1 ) {
+                         wt1 = sumCi / optInAveragePeriod;
+                      }
+                   } else {
+                      wt1 = Math.fma(beta2, wt1, k2 * ci);
+                   }
+                   if( nCi >= lookbackAverage ) {
+                      wtBuffer[wtBuffer_Idx] = wt1;
+                      sumSignal = sumSignal + wt1;
+                      wtBuffer_Idx++;
+                      if( wtBuffer_Idx > maxIdx_wtBuffer ) { wtBuffer_Idx = 0; }
+                   }
+                }
+             }
+             prevAp = ap;
+             prevEsa = esa;
+             nAp = nAp + 1;
+             today = today + 1;
+          }
+          outWT1[0] = wt1;
+          outWT2[0] = sumSignal / (double)optInSignalPeriod;
+          outIdx = 1;
+          sumSignal = sumSignal - wtBuffer[wtBuffer_Idx];
+          while( today <= endIdx ) {
+             ap = ((double)inHigh[today] + (double)inLow[today] + (double)inClose[today]) / 3.0;
+             esa = Math.fma(beta1, esa, k1 * ap);
+             num = ap - esa;
+             if( ap == prevAp && esa == prevEsa ) {
+                num = 0.0;
+             }
+             dev = num;
+             if( dev < 0.0 ) {
+                dev = -dev;
+             }
+             d = Math.fma(beta1, d, k1 * dev);
+             scaledDev = 0.015 * d;
+             if( scaledDev > 0.0 ) {
+                ci = num / scaledDev;
+             } else {
+                ci = 0.0;
+             }
+             wt1 = Math.fma(beta2, wt1, k2 * ci);
+             wtBuffer[wtBuffer_Idx] = wt1;
+             sumSignal = sumSignal + wt1;
+             outWT1[outIdx] = wt1;
+             outWT2[outIdx] = sumSignal / (double)optInSignalPeriod;
+             outIdx = outIdx + 1;
+             wtBuffer_Idx++;
+             if( wtBuffer_Idx > maxIdx_wtBuffer ) { wtBuffer_Idx = 0; }
+             sumSignal = sumSignal - wtBuffer[wtBuffer_Idx];
+             prevAp = ap;
+             prevEsa = esa;
+             today = today + 1;
+          }
+          outNBElement.value = outIdx;
+          outBegIdx.value = startIdx;
+          return RetCode.SUCCESS ;
+       }
+       /**
+        * WaveTrend Oscillator: how far the typical price sits from its own
+        * exponential average, divided by an exponential average of that distance
+        * and by Lambert's CCI constant, then smoothed. The reading is the plain
+        * stochastic's complaint answered a different way — rather than bounding the
+        * oscillator by construction, it scales it by how far price has recently
+        * been travelling, so the same numeric level means the same thing in a quiet
+        * market and a fast one. The oscillator line and its short simple average
+        * cross; the crossings that matter are the ones beyond the extremes, which
+        * the author draws at ±53 and ±60.
+        * <p>Formula and more info at <a
+        * href="https://ta-lib.org/functions/wavetrend">ta-lib.org/functions/wavetrend</a>.
+        * <p><b>Notes</b>
+        * <ul>
+        * <li>The middle stage is an exponential CCI, not {@code TA_CCI}: CCI averages with a simple moving average and takes the mean deviation around that window's own average, where this uses two exponential averages.</li>
+        * <li>On a market that has stopped moving, the exponential average stops moving too — once its step falls under half an ulp it freezes, a few ulps away from the price. That frozen gap is a real non-zero distance, so dividing by its own average walks the oscillator to ±66.67, an extreme reading produced by nothing but rounding. This answers 0 instead, by taking the distance as zero whenever the price and its average both repeat. Implementations without that test drift to the extreme on flat data, at a bar that depends on their arithmetic.</li>
+        * <li>A zero divisor is tested on the scaled deviation, the quantity the division actually uses, and answers the neutral 0 rather than dividing.</li>
+        * <li>Each exponential average is seeded with a simple average of its own first inputs, the same seeding TA-Lib's EMA uses, and each seeds on what the stage before it publishes. {@code TA_SetUnstablePeriod(TA_FUNC_UNST_EMA, ...)} discards more of that warm-up, and it counts three times because there are three exponential stages.</li>
+        * <li>The difference the author also plots is {@code TA_SUB(outWT1, outWT2)}.</li>
+        * </ul>
+        * <p>Values are written only where the indicator is defined. The returned
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#wavetrendLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
+        *
+        * @param startIdx First bar of the requested range (inclusive).
+        * @param endIdx Last bar of the requested range (inclusive).
+        * @param inHigh High price series.
+        * @param inLow Low price series.
+        * @param inClose Close price series.
+        * @param optInChannelPeriod Period of the price channel, used by both the
+        *        average and the deviation (default 10; range 2..100000;
+        *        {@code Integer.MIN_VALUE} selects the default).
+        * @param optInAveragePeriod Smoothing for the oscillator line (default 21;
+        *        range 1..100000; {@code Integer.MIN_VALUE} selects the default).
+        * @param optInSignalPeriod Period of the simple average making the signal
+        *        line (default 4; range 1..100000; {@code Integer.MIN_VALUE} selects the
+        *        default).
+        * @param outWT1 WaveTrend oscillator line. Must hold at least
+        *        {@code endIdx - max(startIdx, wavetrendLookback(...)) + 1} values, and
+        *        never be empty: an empty array is an absent output.
+        * @param outWT2 Simple average of the oscillator line. Must hold at least
+        *        {@code endIdx - max(startIdx, wavetrendLookback(...)) + 1} values, and
+        *        never be empty: an empty array is an absent output.
+        * @return The range written: {@code begIdx} is the first bar with a value,
+        *        {@code count} how many were written.
+        * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
+        *        negative or above {@link Core#INDEX_MAX}, or {@code endIdx < startIdx}.
+        * @throws IllegalArgumentException if an optional parameter is outside its
+        *        documented range, two outputs share one array, or an array is absent or
+        *        too short for the range requested — any input this function
+        *        <i>declares</i> that does not reach {@code endIdx}, or an output that
+        *        cannot hold the values produced. Declared, not read: a few candlestick
+        *        patterns take an OHLC series they never index, and it is required all the
+        *        same. An output this function documents as declinable is the one
+        *        exception: {@code null} is how you decline it. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
+        *
+        * @see Core#cci
+        * @see Core#smi
+        * @see Core#stochrsi
+        * @see Core#tsi
+        */
+       public OutRange wavetrend( int startIdx,
+                                  int endIdx,
+                                  double inHigh[],
+                                  double inLow[],
+                                  double inClose[],
+                                  int optInChannelPeriod,
+                                  int optInAveragePeriod,
+                                  int optInSignalPeriod,
+                                  double outWT1[],
+                                  double outWT2[] )
+       {
+          requireIndexRange("WAVETREND", startIdx, endIdx);
+          int guardStart = clampedStart("WAVETREND", startIdx, wavetrendLookback(optInChannelPeriod, optInAveragePeriod, optInSignalPeriod));
+          int guardInLen = endIdx + 1;
+          int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("WAVETREND", "inHigh", inHigh, guardInLen);
+          requireLength("WAVETREND", "inLow", inLow, guardInLen);
+          requireLength("WAVETREND", "inClose", inClose, guardInLen);
+          requireLength("WAVETREND", "outWT1", outWT1, guardOutLen);
+          requireLength("WAVETREND", "outWT2", outWT2, guardOutLen);
+          MInteger outBegIdx = new MInteger();
+          MInteger outNBElement = new MInteger();
+          RetCode retCode = wavetrendImpl(startIdx, endIdx, inHigh, inLow, inClose, optInChannelPeriod, optInAveragePeriod, optInSignalPeriod, outBegIdx, outNBElement, outWT1, outWT2);
+          if( retCode != RetCode.SUCCESS ) {
+             throw failure("WAVETREND", retCode);
+          }
+          return new OutRange(outBegIdx.value, outNBElement.value);
+       }
+       /**
+        * WaveTrend Oscillator: how far the typical price sits from its own
+        * exponential average, divided by an exponential average of that distance
+        * and by Lambert's CCI constant, then smoothed. The reading is the plain
+        * stochastic's complaint answered a different way — rather than bounding the
+        * oscillator by construction, it scales it by how far price has recently
+        * been travelling, so the same numeric level means the same thing in a quiet
+        * market and a fast one. The oscillator line and its short simple average
+        * cross; the crossings that matter are the ones beyond the extremes, which
+        * the author draws at ±53 and ±60.
+        * <p>Formula and more info at <a
+        * href="https://ta-lib.org/functions/wavetrend">ta-lib.org/functions/wavetrend</a>.
+        * <p><b>Notes</b>
+        * <ul>
+        * <li>The middle stage is an exponential CCI, not {@code TA_CCI}: CCI averages with a simple moving average and takes the mean deviation around that window's own average, where this uses two exponential averages.</li>
+        * <li>On a market that has stopped moving, the exponential average stops moving too — once its step falls under half an ulp it freezes, a few ulps away from the price. That frozen gap is a real non-zero distance, so dividing by its own average walks the oscillator to ±66.67, an extreme reading produced by nothing but rounding. This answers 0 instead, by taking the distance as zero whenever the price and its average both repeat. Implementations without that test drift to the extreme on flat data, at a bar that depends on their arithmetic.</li>
+        * <li>A zero divisor is tested on the scaled deviation, the quantity the division actually uses, and answers the neutral 0 rather than dividing.</li>
+        * <li>Each exponential average is seeded with a simple average of its own first inputs, the same seeding TA-Lib's EMA uses, and each seeds on what the stage before it publishes. {@code TA_SetUnstablePeriod(TA_FUNC_UNST_EMA, ...)} discards more of that warm-up, and it counts three times because there are three exponential stages.</li>
+        * <li>The difference the author also plots is {@code TA_SUB(outWT1, outWT2)}.</li>
+        * </ul>
+        * <p>This is the {@code float[]} overload. The arithmetic is performed in
+        * {@code double} before being written to the {@code double[]} output, so a
+        * result beyond {@code float} range is still representable.
+        * <p>Values are written only where the indicator is defined. The returned
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#wavetrendLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
+        *
+        * @param startIdx First bar of the requested range (inclusive).
+        * @param endIdx Last bar of the requested range (inclusive).
+        * @param inHigh High price series.
+        * @param inLow Low price series.
+        * @param inClose Close price series.
+        * @param optInChannelPeriod Period of the price channel, used by both the
+        *        average and the deviation (default 10; range 2..100000;
+        *        {@code Integer.MIN_VALUE} selects the default).
+        * @param optInAveragePeriod Smoothing for the oscillator line (default 21;
+        *        range 1..100000; {@code Integer.MIN_VALUE} selects the default).
+        * @param optInSignalPeriod Period of the simple average making the signal
+        *        line (default 4; range 1..100000; {@code Integer.MIN_VALUE} selects the
+        *        default).
+        * @param outWT1 WaveTrend oscillator line. Must hold at least
+        *        {@code endIdx - max(startIdx, wavetrendLookback(...)) + 1} values, and
+        *        never be empty: an empty array is an absent output.
+        * @param outWT2 Simple average of the oscillator line. Must hold at least
+        *        {@code endIdx - max(startIdx, wavetrendLookback(...)) + 1} values, and
+        *        never be empty: an empty array is an absent output.
+        * @return The range written: {@code begIdx} is the first bar with a value,
+        *        {@code count} how many were written.
+        * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
+        *        negative or above {@link Core#INDEX_MAX}, or {@code endIdx < startIdx}.
+        * @throws IllegalArgumentException if an optional parameter is outside its
+        *        documented range, two outputs share one array, or an array is absent or
+        *        too short for the range requested — any input this function
+        *        <i>declares</i> that does not reach {@code endIdx}, or an output that
+        *        cannot hold the values produced. Declared, not read: a few candlestick
+        *        patterns take an OHLC series they never index, and it is required all the
+        *        same. An output this function documents as declinable is the one
+        *        exception: {@code null} is how you decline it. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
+        *
+        * @see Core#cci
+        * @see Core#smi
+        * @see Core#stochrsi
+        * @see Core#tsi
+        */
+       public OutRange wavetrend( int startIdx,
+                                  int endIdx,
+                                  float inHigh[],
+                                  float inLow[],
+                                  float inClose[],
+                                  int optInChannelPeriod,
+                                  int optInAveragePeriod,
+                                  int optInSignalPeriod,
+                                  double outWT1[],
+                                  double outWT2[] )
+       {
+          requireIndexRange("WAVETREND", startIdx, endIdx);
+          int guardStart = clampedStart("WAVETREND", startIdx, wavetrendLookback(optInChannelPeriod, optInAveragePeriod, optInSignalPeriod));
+          int guardInLen = endIdx + 1;
+          int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("WAVETREND", "inHigh", inHigh, guardInLen);
+          requireLength("WAVETREND", "inLow", inLow, guardInLen);
+          requireLength("WAVETREND", "inClose", inClose, guardInLen);
+          requireLength("WAVETREND", "outWT1", outWT1, guardOutLen);
+          requireLength("WAVETREND", "outWT2", outWT2, guardOutLen);
+          MInteger outBegIdx = new MInteger();
+          MInteger outNBElement = new MInteger();
+          RetCode retCode = wavetrendImpl(startIdx, endIdx, inHigh, inLow, inClose, optInChannelPeriod, optInAveragePeriod, optInSignalPeriod, outBegIdx, outNBElement, outWT1, outWT2);
+          if( retCode != RetCode.SUCCESS ) {
+             throw failure("WAVETREND", retCode);
+          }
+          return new OutRange(outBegIdx.value, outNBElement.value);
+       }
+    /**** Streaming API *****/
+
+       /**
+        * A live WAVETREND stream (unrelated to {@code java.util.stream}): one value per
+        * closed bar, bit-identical to {@link Core#wavetrend} over the same series.
+        * Open with {@link Core#wavetrendOpen}; there is no close — the handle is
+        * ordinary heap state, unreferenced handles are simply garbage-collected.
+        * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
+        * {@code value} and {@code clone} must not race with an {@code update} on
+        * the same handle. With no concurrent {@code update}, {@code peek}/
+        * {@code value}/{@code clone} never write the stream and may be called
+        * concurrently after safe publication. Independent streams (a
+        * {@code clone()} result included) are fully independent.
+        * <p>Not serializable by design: to checkpoint, retain the history and
+        * re-open — the result is bit-identical by contract.
+        */
+       public static final class WavetrendStream {
+          private Core core;
+          private int optInChannelPeriod;
+          private int optInAveragePeriod;
+          private int optInSignalPeriod;
+          private double k1;
+          private double beta1;
+          private double k2;
+          private double beta2;
+          private double esa;
+          private double d;
+          private double wt1;
+          private double prevAp;
+          private double prevEsa;
+          private double sumSignal;
+          private int wtBuffer_Idx;
+          private int maxIdx_wtBuffer;
+          private int cbSize_wtBuffer;
+          private double[] cb_wtBuffer;
+          private double cur_outWT1;
+          private double cur_outWT2;
+          private int outRangeBegIdx;
+          private int outRangeCount;
+
+          private WavetrendStream( Core core ) { this.core = core; }
+
+          /**
+           * The bars this stream has an output for, in the input series'
+           * coordinates: {@code [begIdx, begIdx + count)}.
+           * <p>It is what {@link Core#wavetrend} reports over the same bars: the
+           * opener sets it to {@code (lookback, historyLen - lookback)}, every
+           * accepted {@code update} adds one to the count — a rejected one
+           * changes nothing, and neither does {@code peek} — and
+           * {@code clone()} carries it verbatim. A plain
+           * {@code open} hands back only the last value, a subset of this range,
+           * because the caller chose not to take the fill.
+           * <p>The last bar it can reach is {@link Core#INDEX_MAX}; past that
+           * {@code update} and {@code advance} throw
+           * {@link IndexOutOfBoundsException}.
+           */
+          public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
+
+          /**
+           * Count one bar this stream was not fed: {@link #outRange()} advances
+           * by one and nothing else moves — {@link #value(WavetrendOut)} keeps answering the previous
+           * output, which is this bar's output too.
+           * <p>For a bar the caller leaves out: one an {@code update} rejected
+           * and that will not be re-fed, or a session with no print. Without it
+           * two handles on one feed drift a bar apart when only one of them skips.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#INDEX_MAX}, the last one the batch tier
+           * can address and the last this handle will count. {@code update}
+           * throws the same there.
+           */
+          public void advance() {
+             if( this.outRangeBegIdx + this.outRangeCount > INDEX_MAX )
+                throw failure("WAVETREND advance", RetCode.OUT_OF_RANGE_END_INDEX);
+             this.outRangeCount++;
+          }
+
+          private WavetrendStream( WavetrendStream other ) {
+             this.core = other.core;
+             this.optInChannelPeriod = other.optInChannelPeriod;
+             this.optInAveragePeriod = other.optInAveragePeriod;
+             this.optInSignalPeriod = other.optInSignalPeriod;
+             this.k1 = other.k1;
+             this.beta1 = other.beta1;
+             this.k2 = other.k2;
+             this.beta2 = other.beta2;
+             this.esa = other.esa;
+             this.d = other.d;
+             this.wt1 = other.wt1;
+             this.prevAp = other.prevAp;
+             this.prevEsa = other.prevEsa;
+             this.sumSignal = other.sumSignal;
+             this.wtBuffer_Idx = other.wtBuffer_Idx;
+             this.maxIdx_wtBuffer = other.maxIdx_wtBuffer;
+             this.cbSize_wtBuffer = other.cbSize_wtBuffer;
+             this.cb_wtBuffer = other.cb_wtBuffer.clone();
+             this.cur_outWT1 = other.cur_outWT1;
+             this.cur_outWT2 = other.cur_outWT2;
+             this.outRangeBegIdx = other.outRangeBegIdx;
+             this.outRangeCount = other.outRangeCount;
+          }
+
+          /**
+           * Commit one closed bar, writing the new current values into the {@code out} the CALLER owns.
+           * <p>Throws {@link IllegalArgumentException} if any bar value is not
+           * finite (NaN or an infinity). That check runs before anything is
+           * written, so nothing moves — {@link #outRange()} included — and
+           * {@link #value(WavetrendOut)} still answers the previous value. Re-feed the bar when a
+           * corrected value arrives, or call {@link #advance()} to count it and
+           * carry on; two handles on one feed drift a bar apart if neither
+           * happens.
+           * This is the one place the streaming tier is stricter than
+           * the batch API, which computes on whatever it is given: a handle
+           * retains its state, so a single non-finite bar would poison every
+           * later value it produces.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#INDEX_MAX}, which no re-feed clears: the
+           * handle has run out of index domain and only a shorter history can
+           * start a new one.
+           */
+          public void update( double inHigh, double inLow, double inClose, WavetrendOut out ) {
+             if( this.outRangeBegIdx + this.outRangeCount > INDEX_MAX )
+                throw failure("WAVETREND update", RetCode.OUT_OF_RANGE_END_INDEX);
+             requireArgument("WAVETREND update", "out", out);
+             if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
+                throw nonFiniteBar("WAVETREND update", !Double.isFinite(inHigh) ? "inHigh" : !Double.isFinite(inLow) ? "inLow" : "inClose");
+             core.wavetrendStepImpl(this, inHigh, inLow, inClose);
+             this.outRangeCount++;
+             out.wT1 = this.cur_outWT1;
+             out.wT2 = this.cur_outWT2;
+          }
+
+          /**
+           * Evaluate a forming bar without committing — bit-identical to what the
+           * next {@code update} with the same bar would write — the same
+           * transition, with every store it would make carried in a local instead.
+           * Never writes this handle, so peeks may run concurrently with each other.
+           * <p>It counts no bar, so it keeps answering past the
+           * {@link Core#INDEX_MAX} ceiling {@code update} stops at.
+           */
+          public void peek( double inHigh, double inLow, double inClose, WavetrendOut out ) {
+             requireArgument("WAVETREND peek", "out", out);
+             if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
+                throw nonFiniteBar("WAVETREND peek", !Double.isFinite(inHigh) ? "inHigh" : !Double.isFinite(inLow) ? "inLow" : "inClose");
+             WavetrendStream sp = this;
+             double ap = 0.0;
+             double dev = 0.0;
+             double ci = 0.0;
+             double num = 0.0;
+             double scaledDev = 0.0;
+             double cur_outWT1 = 0.0;
+             double cur_outWT2 = 0.0;
+             double d = sp.d;
+             double esa = sp.esa;
+             double sumSignal = sp.sumSignal;
+             double wt1 = sp.wt1;
+             ap = (inHigh + inLow + inClose) / 3.0;
+             esa = Math.fma(sp.beta1, esa, sp.k1 * ap);
+             num = ap - esa;
+             if( ap == sp.prevAp && esa == sp.prevEsa ) {
+                num = 0.0;
+             }
+             dev = num;
+             if( dev < 0.0 ) {
+                dev = -dev;
+             }
+             d = Math.fma(sp.beta1, d, sp.k1 * dev);
+             scaledDev = 0.015 * d;
+             if( scaledDev > 0.0 ) {
+                ci = num / scaledDev;
+             } else {
+                ci = 0.0;
+             }
+             wt1 = Math.fma(sp.beta2, wt1, sp.k2 * ci);
+             sumSignal = sumSignal + wt1;
+             cur_outWT1 = wt1;
+             cur_outWT2 = sumSignal / (double)sp.optInSignalPeriod;
+             out.wT1 = cur_outWT1;
+             out.wT2 = cur_outWT2;
+          }
+
+          /**
+           * The value at the last bar this stream counted — the bar
+           * {@link #outRange()} ends on. The last history bar right after open,
+           * then whatever the latest accepted {@code update} wrote.
+           * A pure field read; {@code peek} does not change it. Overwrites {@code out}.
+           */
+          public void value( WavetrendOut out ) {
+             requireArgument("WAVETREND value", "out", out);
+             out.wT1 = this.cur_outWT1;
+             out.wT2 = this.cur_outWT2;
+          }
+
+          /**
+           * An independent fork of this stream: both evolve separately from here
+           * on. Buffers are copied and sub-streams cloned recursively; the
+           * {@link Core} reference is shared, since a {@code Core} is immutable
+           * for a stream's lifetime.
+           *
+           * <p>Not the {@code Cloneable} protocol: this calls a copy constructor,
+           * never {@code super.clone()}, so it throws nothing.
+           *
+           * @return an independent stream at the same bar
+           */
+          @Override
+          public WavetrendStream clone() {
+             return new WavetrendStream(this);
+          }
+       }
+
+       /**
+        * The outputs of one WAVETREND bar, written by the stream into an object the
+        * CALLER owns. Allocate one and reuse it: {@code update}, {@code peek}
+        * and {@code value} overwrite its fields, so the sink itself costs
+        * nothing per bar.
+        *
+        * <p><b>Its contents are only valid until the next call that writes it.</b>
+        * It is a mutable buffer, not a reading: a reference kept past that call,
+        * or one put in a collection, sees the value change underneath it. Copy the
+        * fields out if the reading has to outlive the call.
+        *
+        * <p>Deliberately no {@code equals} or {@code hashCode}: a mutable type
+        * with value equality breaks the {@code HashMap}/{@code HashSet}
+        * invariant the moment a reused instance becomes a key. Compare the fields.
+        */
+       public static final class WavetrendOut {
+          /** WaveTrend oscillator line. */
+          public double wT1;
+          /** Simple average of the oscillator line. */
+          public double wT2;
+       }
+       private void wavetrendStepImpl( WavetrendStream sp, double inHigh, double inLow, double inClose )
+       {
+          double ap = 0.0;
+          double dev = 0.0;
+          double ci = 0.0;
+          double num = 0.0;
+          double scaledDev = 0.0;
+          ap = (inHigh + inLow + inClose) / 3.0;
+          sp.esa = Math.fma(sp.beta1, sp.esa, sp.k1 * ap);
+          num = ap - sp.esa;
+          if( ap == sp.prevAp && sp.esa == sp.prevEsa ) {
+             num = 0.0;
+          }
+          dev = num;
+          if( dev < 0.0 ) {
+             dev = -dev;
+          }
+          sp.d = Math.fma(sp.beta1, sp.d, sp.k1 * dev);
+          scaledDev = 0.015 * sp.d;
+          if( scaledDev > 0.0 ) {
+             ci = num / scaledDev;
+          } else {
+             ci = 0.0;
+          }
+          sp.wt1 = Math.fma(sp.beta2, sp.wt1, sp.k2 * ci);
+          sp.cb_wtBuffer[sp.wtBuffer_Idx] = sp.wt1;
+          sp.sumSignal = sp.sumSignal + sp.wt1;
+          sp.cur_outWT1 = sp.wt1;
+          sp.cur_outWT2 = sp.sumSignal / (double)sp.optInSignalPeriod;
+          sp.wtBuffer_Idx = sp.wtBuffer_Idx + 1;
+          if( sp.wtBuffer_Idx > sp.maxIdx_wtBuffer ) {
+             sp.wtBuffer_Idx = 0;
+          }
+          sp.sumSignal = sp.sumSignal - sp.cb_wtBuffer[sp.wtBuffer_Idx];
+          sp.prevAp = ap;
+          sp.prevEsa = sp.esa;
+       }
+       private RetCode wavetrendOpenImpl( WavetrendStream sp, double inHigh[], double inLow[], double inClose[], int startIdx, int optInChannelPeriod, int optInAveragePeriod, int optInSignalPeriod, MInteger outBegIdx, MInteger outNBElement, double outWT1[], double outWT2[], int outStride )
+       {
+          double k1 = 0;
+          double beta1 = 0;
+          double k2 = 0;
+          double beta2 = 0;
+          double ap = 0;
+          double esa = 0;
+          double dev = 0;
+          double d = 0;
+          double ci = 0;
+          double wt1 = 0;
+          double prevAp = 0;
+          double prevEsa = 0;
+          double num = 0;
+          double scaledDev = 0;
+          double sumEsa = 0;
+          double sumD = 0;
+          double sumCi = 0;
+          double sumSignal = 0;
+          int lookbackTotal = 0;
+          int lookbackChannel = 0;
+          int lookbackAverage = 0;
+          int today = 0;
+          int outIdx = 0;
+          int nAp = 0;
+          int nDev = 0;
+          int nCi = 0;
+          int nSig = 0;
+          double[] wtBuffer;
+          int wtBuffer_Idx = 0;
+          int maxIdx_wtBuffer = (32)-1;
+          int historyLen = inHigh.length;
+          int endIdx = historyLen - 1;
+          if( historyLen < 1 ) {
+             return RetCode.OUT_OF_RANGE_START_INDEX;
+          }
+          if( historyLen > INDEX_MAX + 1 ) {
+             return RetCode.OUT_OF_RANGE_END_INDEX;
+          }
+          if( inLow.length != inHigh.length || inClose.length != inHigh.length ) {
+             return RetCode.BAD_PARAM;
+          }
+          if( optInChannelPeriod == Integer.MIN_VALUE ) {
+             optInChannelPeriod = 10;
+          } else if( optInChannelPeriod < 2 || optInChannelPeriod > 100000 ) {
+             return RetCode.BAD_PARAM;
+          }
+          if( optInAveragePeriod == Integer.MIN_VALUE ) {
+             optInAveragePeriod = 21;
+          } else if( optInAveragePeriod < 1 || optInAveragePeriod > 100000 ) {
+             return RetCode.BAD_PARAM;
+          }
+          if( optInSignalPeriod == Integer.MIN_VALUE ) {
+             optInSignalPeriod = 4;
+          } else if( optInSignalPeriod < 1 || optInSignalPeriod > 100000 ) {
+             return RetCode.BAD_PARAM;
+          }
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.INSUFFICIENT_HISTORY;
+          }
+          /* LazyBear's WaveTrend Oscillator (TradingView, 2014), lines 14 to 21: the
+           * typical price's distance from its own exponential average, normalised by
+           * an exponential average of that distance's absolute value and by Lambert's
+           * CCI constant, then smoothed.
+           *
+           *    ap  = (H + L + C)/3
+           *    esa = EMA(ap, n1)
+           *    d   = EMA(|ap - esa|, n1)
+           *    ci  = (ap - esa) / (0.015 * d)
+           *    WT1 = EMA(ci, n2)        WT2 = SMA(WT1, n3)
+           *
+           * The middle stage is an exponential CCI, not TA_CCI: cci.c averages with
+           * an SMA and takes the mean deviation around that window's own SMA, where
+           * this uses two exponential averages.
+           *
+           * Each stage seeds the way ema.c and sma.c seed, and each stage boundary
+           * below is the callee's LOOKBACK rather than (period-1), so the result is
+           * bit-identical to the composed chain on moving data and a warm unstable
+           * period folds in. The two guards are what the chain cannot express; they
+           * are the reason this ships as a function.
+           */
+          /* This ptr will point on a circular buffer of at least
+           * "optInSignalPeriod" element.
+           */
+          lookbackTotal = wavetrendLookback(optInChannelPeriod, optInAveragePeriod, optInSignalPeriod);
+          /* Move up the start index if there is not
+           * enough initial data.
+           */
+          if( startIdx < lookbackTotal ) {
+             startIdx = lookbackTotal;
+          }
+          /* Make sure there is still something to evaluate. */
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.INSUFFICIENT_HISTORY ;
+          }
+          if( optInSignalPeriod < 1 ) return RetCode.INTERNAL_ERROR;
+          wtBuffer = new double[optInSignalPeriod];
+          maxIdx_wtBuffer = (optInSignalPeriod)-1;
+          wtBuffer_Idx = 0;
+          lookbackChannel = emaLookback(optInChannelPeriod);
+          lookbackAverage = emaLookback(optInAveragePeriod);
+          beta1 = (double)(optInChannelPeriod - 1) / (double)(optInChannelPeriod + 1);
+          k1 = 1.0 - beta1;
+          beta1 = 1.0 - k1;
+          beta2 = (double)(optInAveragePeriod - 1) / (double)(optInAveragePeriod + 1);
+          k2 = 1.0 - beta2;
+          beta2 = 1.0 - k2;
+          esa = 0.0;
+          d = 0.0;
+          ci = 0.0;
+          wt1 = 0.0;
+          sumEsa = 0.0;
+          sumD = 0.0;
+          sumCi = 0.0;
+          sumSignal = 0.0;
+          nAp = 0;
+          /* The fixpoint test compares against the previous bar's pair. Starting both
+           * at 0.0 cannot make it fire spuriously: it would need a bar whose typical
+           * price and whose exponential average are both exactly zero, and a zero
+           * typical price makes the numerator zero anyway, which is what the test
+           * would have substituted.
+           */
+          prevAp = 0.0;
+          prevEsa = 0.0;
+          today = startIdx - lookbackTotal;
+          /* Warm-up. Runs through startIdx inclusive: the last pass is the one that
+           * completes the signal window, so it leaves the first output in the state.
+           */
+          while( today <= startIdx ) {
+             ap = (inHigh[today] + inLow[today] + inClose[today]) / 3.0;
+             /* Stage 1: the exponential average of the typical price. */
+             if( nAp < optInChannelPeriod ) {
+                sumEsa = sumEsa + ap;
+                if( nAp == optInChannelPeriod - 1 ) {
+                   esa = sumEsa / optInChannelPeriod;
+                }
+             } else {
+                esa = Math.fma(beta1, esa, k1 * ap);
+             }
+             /* Stage 2: the exponential average of the absolute distance, over what
+              * stage 1 publishes. The counter is compared before it is subtracted,
+              * never after: the Rust backend renders these as usize.
+              */
+             if( nAp >= lookbackChannel ) {
+                nDev = nAp - lookbackChannel;
+                /* GUARD 1, the fixpoint test. With a constant input the exponential
+                 * step stops moving once k*|ap - esa| falls under half an ulp, and
+                 * esa then FREEZES up to (n1+1)/4 ulps away from the price. That
+                 * frozen residue is a real non-zero distance, so the naive form
+                 * divides it by its own exponential average and walks to
+                 * +/-1/0.015 = +/-66.67 -- an extreme reading produced by nothing
+                 * but rounding. When the pair has not moved, the average has reached
+                 * its fixpoint and the distance is exactly that residue, so the
+                 * numerator is taken as zero. The test is exact, so it is
+                 * independent of scale and period, unlike a fixed epsilon band.
+                 */
+                num = ap - esa;
+                if( ap == prevAp && esa == prevEsa ) {
+                   num = 0.0;
+                }
+                dev = num;
+                if( dev < 0.0 ) {
+                   dev = -dev;
+                }
+                if( nDev < optInChannelPeriod ) {
+                   sumD = sumD + dev;
+                   if( nDev == optInChannelPeriod - 1 ) {
+                      d = sumD / optInChannelPeriod;
+                   }
+                } else {
+                   d = Math.fma(beta1, d, k1 * dev);
+                }
+                /* Stage 3: the oscillator, then its own smoothing. */
+                if( nDev >= lookbackChannel ) {
+                   nCi = nDev - lookbackChannel;
+                   /* GUARD 2, the exact divisor. Test the PRODUCT the division uses,
+                    * not the deviation: 0.015*d underflows to zero while d is still
+                    * non-zero (#395). A zero divisor is 0/0 -- no distance against no
+                    * average distance -- so the oscillator reads its neutral 0.0
+                    * (#112), as tsi.c does.
+                    */
+                   scaledDev = 0.015 * d;
+                   if( scaledDev > 0.0 ) {
+                      ci = num / scaledDev;
+                   } else {
+                      ci = 0.0;
+                   }
+                   if( nCi < optInAveragePeriod ) {
+                      sumCi = sumCi + ci;
+                      if( nCi == optInAveragePeriod - 1 ) {
+                         wt1 = sumCi / optInAveragePeriod;
+                      }
+                   } else {
+                      wt1 = Math.fma(beta2, wt1, k2 * ci);
+                   }
+                   if( nCi >= lookbackAverage ) {
+                      wtBuffer[wtBuffer_Idx] = wt1;
+                      sumSignal = sumSignal + wt1;
+                      wtBuffer_Idx++;
+                      if( wtBuffer_Idx > maxIdx_wtBuffer ) { wtBuffer_Idx = 0; }
+                   }
+                }
+             }
+             prevAp = ap;
+             prevEsa = esa;
+             nAp = nAp + 1;
+             today = today + 1;
+          }
+          /* The first output. The warm-up's last pass stored this bar's WT1 into the
+           * ring and added it to the running sum, so the average is ready here.
+           */
+          outWT1[0 * outStride] = wt1;
+          outWT2[0 * outStride] = sumSignal / (double)optInSignalPeriod;
+          outIdx = 1;
+          sumSignal = sumSignal - wtBuffer[wtBuffer_Idx];
+          /* Stable zone. One bar past the first output every stage is past its seed,
+           * at every reachable parameter triple: the shortest case, 2/1/1, arrives
+           * with the deviation average and the oscillator smoothing both one bar
+           * into their recursions. So nothing here branches on a counter, and the
+           * stores always run -- which is what keeps the managed backends' peek
+           * frames from carrying a seeded output local.
+           */
+          while( today <= endIdx ) {
+             ap = (inHigh[today] + inLow[today] + inClose[today]) / 3.0;
+             esa = Math.fma(beta1, esa, k1 * ap);
+             num = ap - esa;
+             if( ap == prevAp && esa == prevEsa ) {
+                num = 0.0;
+             }
+             dev = num;
+             if( dev < 0.0 ) {
+                dev = -dev;
+             }
+             d = Math.fma(beta1, d, k1 * dev);
+             scaledDev = 0.015 * d;
+             if( scaledDev > 0.0 ) {
+                ci = num / scaledDev;
+             } else {
+                ci = 0.0;
+             }
+             wt1 = Math.fma(beta2, wt1, k2 * ci);
+             wtBuffer[wtBuffer_Idx] = wt1;
+             sumSignal = sumSignal + wt1;
+             outWT1[outIdx * outStride] = wt1;
+             outWT2[outIdx * outStride] = sumSignal / (double)optInSignalPeriod;
+             outIdx = outIdx + 1;
+             wtBuffer_Idx++;
+             if( wtBuffer_Idx > maxIdx_wtBuffer ) { wtBuffer_Idx = 0; }
+             sumSignal = sumSignal - wtBuffer[wtBuffer_Idx];
+             prevAp = ap;
+             prevEsa = esa;
+             today = today + 1;
+          }
+          outNBElement.value = outIdx;
+          outBegIdx.value = startIdx;
+          /* Capture the live batch state into the handle. */
+          int capCb_wtBuffer = maxIdx_wtBuffer + 1;
+          if( capCb_wtBuffer > historyLen + 1 ) {
+             return RetCode.INTERNAL_ERROR;
+          }
+          sp.optInChannelPeriod = optInChannelPeriod;
+          sp.optInAveragePeriod = optInAveragePeriod;
+          sp.optInSignalPeriod = optInSignalPeriod;
+          sp.k1 = k1;
+          sp.beta1 = beta1;
+          sp.k2 = k2;
+          sp.beta2 = beta2;
+          sp.esa = esa;
+          sp.d = d;
+          sp.wt1 = wt1;
+          sp.prevAp = prevAp;
+          sp.prevEsa = prevEsa;
+          sp.sumSignal = sumSignal;
+          sp.wtBuffer_Idx = wtBuffer_Idx;
+          sp.maxIdx_wtBuffer = maxIdx_wtBuffer;
+          sp.cbSize_wtBuffer = capCb_wtBuffer;
+          sp.cb_wtBuffer = wtBuffer;
+          sp.cur_outWT1 = outWT1[(outNBElement.value - 1) * outStride];
+          sp.cur_outWT2 = outWT2[(outNBElement.value - 1) * outStride];
+          return RetCode.SUCCESS;
+       }
+       /* wavetrendOpenAndFill anchored at startIdx — the composed-open fusion seam. */
+       WavetrendStream wavetrendOpenAndFillInternal( double inHigh[], double inLow[], double inClose[], int startIdx, int optInChannelPeriod, int optInAveragePeriod, int optInSignalPeriod, MInteger outBegIdx, MInteger outNBElement, double outWT1[], double outWT2[] )
+       {
+          WavetrendStream sp = new WavetrendStream(this);
+          RetCode retCode = wavetrendOpenImpl(sp, inHigh, inLow, inClose, startIdx, optInChannelPeriod, optInAveragePeriod, optInSignalPeriod, outBegIdx, outNBElement, outWT1, outWT2, 1);
+          sp.outRangeBegIdx = outBegIdx.value;
+          sp.outRangeCount = outNBElement.value;
+          if( retCode == RetCode.SUCCESS ) {
+             return sp;
+          }
+          if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
+             throw insufficientHistory("WAVETREND openAndFill", inHigh.length, startIdx, wavetrendLookback(optInChannelPeriod, optInAveragePeriod, optInSignalPeriod));
+          }
+          throw streamFailure("WAVETREND openAndFill", retCode);
+       }
+       /* Internal startIdx-anchored open behind wavetrendOpen (composition seam). */
+       WavetrendStream wavetrendOpenInternal( double inHigh[], double inLow[], double inClose[], int startIdx, int optInChannelPeriod, int optInAveragePeriod, int optInSignalPeriod )
+       {
+          WavetrendStream sp = new WavetrendStream(this);
+          MInteger outBegIdx = new MInteger();
+          MInteger outNBElement = new MInteger();
+          double[] sink_outWT1 = new double[1];
+          double[] sink_outWT2 = new double[1];
+          RetCode retCode = wavetrendOpenImpl(sp, inHigh, inLow, inClose, startIdx, optInChannelPeriod, optInAveragePeriod, optInSignalPeriod, outBegIdx, outNBElement, sink_outWT1, sink_outWT2, 0);
+          sp.outRangeBegIdx = outBegIdx.value;
+          sp.outRangeCount = outNBElement.value;
+          if( retCode == RetCode.SUCCESS ) {
+             return sp;
+          }
+          if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
+             throw insufficientHistory("WAVETREND open", inHigh.length, startIdx, wavetrendLookback(optInChannelPeriod, optInAveragePeriod, optInSignalPeriod));
+          }
+          throw streamFailure("WAVETREND open", retCode);
+       }
+       /**
+        * Open a live WAVETREND stream over the warm-up history; the handle's
+        * {@code value()} starts at the last history bar's value — bit-identical
+        * to {@link Core#wavetrend} at that bar.
+        * <p>The history must hold at least {@code wavetrendLookback(...) + 1} bars
+        * (unstable-period aware), or {@link InsufficientHistoryException} is
+        * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
+        * ({@link Integer#MIN_VALUE} selects a parameter's documented default,
+        * as in the batch API). An EMPTY history throws
+        * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
+        * names no bar — and a null argument {@link IllegalArgumentException},
+        * both ahead of everything above.
+        */
+       public WavetrendStream wavetrendOpen( double inHigh[], double inLow[], double inClose[], int optInChannelPeriod, int optInAveragePeriod, int optInSignalPeriod )
+       {
+          requireArgument("WAVETREND open", "inHigh", inHigh);
+          requireHistory("WAVETREND open", inHigh.length);
+          requireArgument("WAVETREND open", "inLow", inLow);
+          requireArgument("WAVETREND open", "inClose", inClose);
+          requireHistoryLength("WAVETREND open", "inLow", inLow.length, inHigh.length);
+          requireHistoryLength("WAVETREND open", "inClose", inClose.length, inHigh.length);
+          return wavetrendOpenInternal(inHigh, inLow, inClose, 0, optInChannelPeriod, optInAveragePeriod, optInSignalPeriod);
+       }
+       /**
+        * {@link Core#wavetrendOpen} that also fills the output array(s) bit-identically
+        * to {@link Core#wavetrend} over the whole history in the same single pass
+        * (no separate batch call needed for the warm-up plot). Output arrays must
+        * not alias the inputs or each other, and must hold
+        * {@code historyLen - lookback} values — both checked before anything is
+        * written, so an undersized array is an {@link IllegalArgumentException}
+        * naming it rather than a fault from inside the fill.
+        * <p>The range written is on the returned handle:
+        * {@link WavetrendStream#outRange()}.
+        */
+       public WavetrendStream wavetrendOpenAndFill( double inHigh[], double inLow[], double inClose[], int optInChannelPeriod, int optInAveragePeriod, int optInSignalPeriod, double outWT1[], double outWT2[] )
+       {
+          requireArgument("WAVETREND openAndFill", "inHigh", inHigh);
+          requireHistory("WAVETREND openAndFill", inHigh.length);
+          requireArgument("WAVETREND openAndFill", "inLow", inLow);
+          requireArgument("WAVETREND openAndFill", "inClose", inClose);
+          int guardOutLen = openFillCount("WAVETREND openAndFill", inHigh.length, wavetrendLookback(optInChannelPeriod, optInAveragePeriod, optInSignalPeriod));
+          requireHistoryLength("WAVETREND openAndFill", "inLow", inLow.length, inHigh.length);
+          requireHistoryLength("WAVETREND openAndFill", "inClose", inClose.length, inHigh.length);
+          requireLength("WAVETREND openAndFill", "outWT1", outWT1, guardOutLen);
+          requireLength("WAVETREND openAndFill", "outWT2", outWT2, guardOutLen);
+          if( (Object)outWT1 == (Object)inHigh || (Object)outWT1 == (Object)inLow || (Object)outWT1 == (Object)inClose || (Object)outWT2 == (Object)inHigh || (Object)outWT2 == (Object)inLow || (Object)outWT2 == (Object)inClose || (Object)outWT1 == (Object)outWT2 ) {
+             throw streamFailure("WAVETREND openAndFill", RetCode.BAD_PARAM);
+          }
+          MInteger outBegIdx = new MInteger();
+          MInteger outNBElement = new MInteger();
+          return wavetrendOpenAndFillInternal(inHigh, inLow, inClose, 0, optInChannelPeriod, optInAveragePeriod, optInSignalPeriod, outBegIdx, outNBElement, outWT1, outWT2);
+       }
+    /* List of contributors:
+     *
+     *  Initial  Name/description
+     *  -------------------------------------------------------------------
+     *  MF       Mario Fortier
      *
      *
      * Change history:
@@ -224965,7 +226342,7 @@ class Core {
 
 public class TaCodegenServe {
     static Core core = new Core();
-    static final String SPLICED_GENCODE_DIGEST = "2a523af4410d7f67";
+    static final String SPLICED_GENCODE_DIGEST = "2de7994a944dde78";
     static final int MAX_ARRAY_SIZE = 200000;
     static double[] refOpen = new double[MAX_ARRAY_SIZE];
     static double[] refHigh = new double[MAX_ARRAY_SIZE];
@@ -226041,6 +227418,10 @@ public class TaCodegenServe {
             new AbsIn[]{ new AbsIn(0,"inPriceHLC",14) },
             new AbsOpt[]{  },
             new AbsOut[]{ new AbsOut(0,"outReal",1) }));
+        ABSTRACT.put("WAVETREND", new AbsFunc("WAVETREND", "Momentum Indicators", "WaveTrend Oscillator", 33554432,
+            new AbsIn[]{ new AbsIn(0,"inPriceHLC",14) },
+            new AbsOpt[]{ new AbsOpt(2,"optInChannelPeriod",0,"Channel Period","Period of the price channel, used by both the average and the deviation",10.0, 0,0,0,0,0,0, 2,100000,2,200,1, null), new AbsOpt(2,"optInAveragePeriod",0,"Average Period","Smoothing for the oscillator line",21.0, 0,0,0,0,0,0, 1,100000,1,200,1, null), new AbsOpt(2,"optInSignalPeriod",0,"Signal Period","Simple average of the oscillator line, making the signal line",4.0, 0,0,0,0,0,0, 1,100000,1,50,1, null) },
+            new AbsOut[]{ new AbsOut(0,"outWT1",1), new AbsOut(0,"outWT2",4) }));
         ABSTRACT.put("WCLPRICE", new AbsFunc("WCLPRICE", "Price Transform", "Weighted Close Price", 50331648,
             new AbsIn[]{ new AbsIn(0,"inPriceHLC",14) },
             new AbsOpt[]{  },
@@ -226404,6 +227785,7 @@ public class TaCodegenServe {
         "TA_VWAP",
         "TA_VWMA",
         "TA_WAD",
+        "TA_WAVETREND",
         "TA_WCLPRICE",
         "TA_WILLR",
         "TA_WMA",
@@ -226642,10 +228024,11 @@ public class TaCodegenServe {
             case 225: return handle_VWAP(json);
             case 226: return handle_VWMA(json);
             case 227: return handle_WAD(json);
-            case 228: return handle_WCLPRICE(json);
-            case 229: return handle_WILLR(json);
-            case 230: return handle_WMA(json);
-            case 231: return handle_ZLEMA(json);
+            case 228: return handle_WAVETREND(json);
+            case 229: return handle_WCLPRICE(json);
+            case 230: return handle_WILLR(json);
+            case 231: return handle_WMA(json);
+            case 232: return handle_ZLEMA(json);
             default: return null;
         }
     }
@@ -261470,6 +262853,167 @@ public class TaCodegenServe {
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
         rideWad(core, json, endIdx, inHigh, inLow, inClose, sb);
+        sb.append("}");
+        return sb.toString();
+    }
+
+    static String handle_WAVETREND(String json) {
+        int startIdx = jsonInt(json, "startIdx");
+        int endIdx = jsonInt(json, "endIdx");
+        int use_preloaded = jsonInt(json, "use_preloaded");
+        int bench_iters = jsonInt(json, "iters");
+        if (bench_iters < 1) bench_iters = 1;
+        double[] inHigh;
+        double[] inLow;
+        double[] inClose;
+        if (use_preloaded != 0 && refN > 0) {
+            inHigh = new double[MAX_ARRAY_SIZE];
+            System.arraycopy(refHigh, 0, inHigh, 0, refN);
+            inLow = new double[MAX_ARRAY_SIZE];
+            System.arraycopy(refLow, 0, inLow, 0, refN);
+            inClose = new double[MAX_ARRAY_SIZE];
+            System.arraycopy(refClose, 0, inClose, 0, refN);
+        } else {
+            inHigh = jsonDoubleArray(json, "inHigh");
+            inLow = jsonDoubleArray(json, "inLow");
+            inClose = jsonDoubleArray(json, "inClose");
+        }
+        boolean _optRejected = false;
+        int optInChannelPeriod = jsonInt(json, "optInChannelPeriod");
+        int optInAveragePeriod = jsonInt(json, "optInAveragePeriod");
+        int optInSignalPeriod = jsonInt(json, "optInSignalPeriod");
+        // The output buffers are sized to the count the call actually PRODUCES --
+        // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
+        // never below one. Not to the width of the requested range: that is the bound the
+        // managed backends check and the Rust asserts state, and at the range width it was
+        // slack by exactly the lookback, so no call could ever approach it.
+        // The pad is there because a bound is a MINIMUM, never an equality. A caller
+        // re-using a pre-allocated buffer passes a larger one, and that is not an error --
+        // the reported OutRange is what says which part was written. So the harness sends
+        // both: the startIdx axis sends no pad (the bound is reachable) while the
+        // full-range value comparison sends one (slack is legal). Sizing every call one way
+        // would silently drop the other property.
+        // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
+        // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
+        // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
+        // sizes and cannot make the check, so an exact buffer would test nothing there.
+        int _lb = core.wavetrendLookback(optInChannelPeriod, optInAveragePeriod, optInSignalPeriod);
+        int _cs = startIdx > _lb ? startIdx : _lb;
+        int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
+        double[] outArr0 = new double[_outLen];
+        double[] outArr1 = new double[_outLen];
+        MInteger outBegIdx = new MInteger();
+        MInteger outNBElement = new MInteger();
+        RetCode rc = RetCode.SUCCESS;
+        int bench_mode = jsonInt(json, "bench_mode");
+        double[] _warm_inHigh = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inHigh, 0, endIdx + 1);
+        double[] _warm_inLow = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inLow, 0, endIdx + 1);
+        double[] _warm_inClose = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inClose, 0, endIdx + 1);
+        long startNs = 0;
+        for (int _bi = 0; _bi <= bench_iters; _bi++) {
+        if (_bi == 1) startNs = System.nanoTime();
+        if (bench_mode == 0) {
+        if (jsonInt(json, "timed") != 0) {
+            if (_optRejected) {
+                rc = RetCode.BAD_PARAM;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
+            try {
+                rc = core.wavetrendImpl(startIdx, endIdx, inHigh, inLow, inClose, optInChannelPeriod, optInAveragePeriod, optInSignalPeriod, outBegIdx, outNBElement, outArr0, outArr1);
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TALibFailure)) throw _e;
+                rc = ((TALibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+            }
+        } else {
+            if (_optRejected) {
+                rc = RetCode.BAD_PARAM;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
+            try {
+                OutRange _pr = core.wavetrend(startIdx, endIdx, inHigh, inLow, inClose, optInChannelPeriod, optInAveragePeriod, optInSignalPeriod, outArr0, outArr1);
+                outBegIdx.value = _pr.begIdx();
+                outNBElement.value = _pr.count();
+                rc = RetCode.SUCCESS;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TALibFailure)) throw _e;
+                rc = ((TALibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+            }
+        }
+        }
+        else if (_optRejected) { rc = RetCode.BAD_PARAM; }
+        else { try {
+            if (bench_mode == 1) {
+                core.wavetrendOpen(_warm_inHigh, _warm_inLow, _warm_inClose, optInChannelPeriod, optInAveragePeriod, optInSignalPeriod);
+            } else {
+                Core.WavetrendStream _wh = core.wavetrendOpenAndFill(_warm_inHigh, _warm_inLow, _warm_inClose, optInChannelPeriod, optInAveragePeriod, optInSignalPeriod, outArr0, outArr1);
+                outBegIdx.value = _wh.outRange().begIdx();
+                outNBElement.value = _wh.outRange().count();
+            }
+            rc = RetCode.SUCCESS;
+        } catch (RuntimeException _e) { rc = _e instanceof TALibFailure ? ((TALibFailure)_e).retCode() : RetCode.BAD_PARAM; } }
+        }
+        long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        int usedFloat = 0;
+        if (jsonInt(json, "use_float") != 0) {
+            float[] f_inHigh = new float[inHigh.length];
+            for (int _fi = 0; _fi < inHigh.length; _fi++) f_inHigh[_fi] = (float)inHigh[_fi];
+            float[] f_inLow = new float[inLow.length];
+            for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
+            float[] f_inClose = new float[inClose.length];
+            for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
+            if (_optRejected) {
+                rc = RetCode.BAD_PARAM;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
+            try {
+                OutRange _fr = core.wavetrend(startIdx, endIdx, f_inHigh, f_inLow, f_inClose, optInChannelPeriod, optInAveragePeriod, optInSignalPeriod, outArr0, outArr1);
+                outBegIdx.value = _fr.begIdx();
+                outNBElement.value = _fr.count();
+                rc = RetCode.SUCCESS;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TALibFailure)) throw _e;
+                rc = ((TALibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+            }
+            usedFloat = 1;
+        }
+        if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
+            long _h = svHashInit();
+            if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
+                _h = svHashF64(_h, outArr0, outNBElement.value);
+                _h = svHashF64(_h, outArr1, outNBElement.value);
+            }
+            _h = svHashFin(_h);
+            StringBuilder hb = new StringBuilder();
+            hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            rideWavetrend(core, json, endIdx, inHigh, inLow, inClose, optInChannelPeriod, optInAveragePeriod, optInSignalPeriod, hb);
+            hb.append("}");
+            return hb.toString();
+        }
+        StringBuilder sb = new StringBuilder();
+        sb.append("{\"retCode\":").append(rc.toInt());
+        sb.append(",\"outBegIdx\":").append(outBegIdx.value);
+        sb.append(",\"outNBElement\":").append(outNBElement.value);
+        sb.append(",\"out_len\":").append(_outLen);
+        sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
+        sb.append(",\"outReal1\":").append(doubleArrayToJson(outArr1, outNBElement.value));
+        sb.append(",\"used_float\":").append(usedFloat);
+        sb.append(",\"timing_ns\":").append(elapsedNs);
+        rideWavetrend(core, json, endIdx, inHigh, inLow, inClose, optInChannelPeriod, optInAveragePeriod, optInSignalPeriod, sb);
         sb.append("}");
         return sb.toString();
     }
@@ -301896,6 +303440,208 @@ public class TaCodegenServe {
         return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign[0] + diag + "}";
     }
 
+    static String sv_WAVETREND(String json) {
+        int svShape = jsonInt(json, "gen_shape");
+        int svSeed = jsonInt(json, "gen_seed");
+        int svN = jsonInt(json, "gen_n");
+        if (svN < 2) svN = 2;
+        if (svN > 256) svN = 256;
+        int svK = jsonInt(json, "unstablePeriod");
+        int optInChannelPeriod = json.contains("\"optInChannelPeriod\"") ? jsonInt(json, "optInChannelPeriod") : 10;
+        int optInAveragePeriod = json.contains("\"optInAveragePeriod\"") ? jsonInt(json, "optInAveragePeriod") : 21;
+        int optInSignalPeriod = json.contains("\"optInSignalPeriod\"") ? jsonInt(json, "optInSignalPeriod") : 4;
+        double[] fz_o = new double[svN];
+        double[] fz_h = new double[svN];
+        double[] fz_l = new double[svN];
+        double[] fz_c = new double[svN];
+        double[] fz_v = new double[svN];
+        double[] fz_oi = new double[svN];
+        FuzzData.fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
+        double[] b0 = new double[svN];
+        double[] b1 = new double[svN];
+        long legs = 0;
+        boolean allOk = true;
+        boolean peekAll = true;
+        long peekReps = 0;
+        long peekRejects = 0;
+        boolean peekRepAll = true;
+        int fillChecked = 0;
+        boolean fillOk = true;
+        MInteger beg = new MInteger();
+        MInteger nb = new MInteger();
+        String diag = "";
+        int rangeChecked = 0;
+        boolean rangeOk = true;
+        long rangeLegs = 0;
+        int rangeSites = 0;
+        long[] zsign = { 0 };
+        int rounds = 1;
+        for (int rd = 0; rd < rounds; rd++) {
+            Core c2 = new Core();
+            c2.unstablePeriod[5] = svK;
+            RetCode rc;
+            try { rc = c2.wavetrendImpl(0, svN - 1, fz_h, fz_l, fz_c, optInChannelPeriod, optInAveragePeriod, optInSignalPeriod, beg, nb, b0, b1); }
+            catch (RuntimeException _sve) { if (!(_sve instanceof TALibFailure)) throw _sve; rc = ((TALibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
+            int lb = c2.wavetrendLookback(optInChannelPeriod, optInAveragePeriod, optInSignalPeriod);
+            if (rc != RetCode.SUCCESS || nb.value == 0) {
+                boolean openRejects;
+                try { c2.wavetrendOpen(fz_h, fz_l, fz_c, optInChannelPeriod, optInAveragePeriod, optInSignalPeriod); openRejects = false; } catch (IllegalArgumentException _e) { openRejects = true; }
+                return "{\"retCode\":" + rc.toInt() + ",\"legs\":0,\"nb\":" + nb.value + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (openRejects ? 1 : 0) + ",\"peek_ok\":1}";
+            }
+            fillChecked = 1;
+            try {
+                double[] f0 = new double[svN];
+                java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                double[] f1 = new double[svN];
+                java.util.Arrays.fill(f1, (double)-1.2345678901234e300);
+                Core.WavetrendStream _fh = c2.wavetrendOpenAndFill(fz_h, fz_l, fz_c, optInChannelPeriod, optInAveragePeriod, optInSignalPeriod, f0, f1);
+                OutRange _fr = _fh.outRange();
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
+                if (_fr.begIdx() != beg.value || _fr.count() != nb.value) rangeOk = false;
+                if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
+                else {
+                    for (int i = 0; i < nb.value; i++) if (svXtierNe(f0[i], b0[i], zsign)) fillOk = false;
+                    for (int i = 0; i < nb.value; i++) if (svXtierNe(f1[i], b1[i], zsign)) fillOk = false;
+                    for (int i = nb.value; i < svN; i++) if (f0[i] != (double)-1.2345678901234e300) fillOk = false;
+                    for (int i = nb.value; i < svN; i++) if (f1[i] != (double)-1.2345678901234e300) fillOk = false;
+                }
+                try { c2.wavetrendOpenAndFill(fz_h, fz_l, fz_c, optInChannelPeriod, optInAveragePeriod, optInSignalPeriod, fz_h, f1); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
+                try { c2.wavetrendOpenAndFill(fz_h, fz_l, fz_c, optInChannelPeriod, optInAveragePeriod, optInSignalPeriod, f0, f0); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases output */ }
+            } catch (IllegalArgumentException _e) { fillOk = false; }
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
+            java.util.Arrays.sort(pcs);
+            int prevP = -1;
+            for (int pi = 0; pi < pcs.length; pi++) {
+                int p = pcs[pi];
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
+                prevP = p;
+                Core.WavetrendStream st;
+                try { st = c2.wavetrendOpen(java.util.Arrays.copyOf(fz_h, p), java.util.Arrays.copyOf(fz_l, p), java.util.Arrays.copyOf(fz_c, p), optInChannelPeriod, optInAveragePeriod, optInSignalPeriod); }
+                catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"openRejectP\":" + p; continue; }
+                legs++;
+                Core.WavetrendOut v0 = new Core.WavetrendOut(); st.value(v0);
+                if (svXtierNe(v0.wT1, b0[p - 1 - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
+                if (svXtierNe(v0.wT2, b1[p - 1 - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":1,\"where\":\"open\""; }
+                Core.WavetrendOut pk = new Core.WavetrendOut();
+                Core.WavetrendOut up = new Core.WavetrendOut();
+                Core.WavetrendOut vc = new Core.WavetrendOut();
+                Core.WavetrendOut rp = new Core.WavetrendOut();
+                for (int t = p; t < svN; t++) {
+                    boolean pkTook = true;
+                    try { st.peek(fz_h[t], fz_l[t], fz_c[t], pk); } catch (IllegalArgumentException _e) { pkTook = false; peekRejects++; }
+                    if (t % 7 == 0) {
+                        boolean rpTook = pkTook;
+                        try { st.peek(fz_h[t - 1], fz_l[t - 1], fz_c[t - 1], rp); } catch (IllegalArgumentException _e) { peekRejects++; }
+                        try { st.peek(fz_h[t], fz_l[t], fz_c[t], rp); } catch (IllegalArgumentException _e) { rpTook = false; }
+                        if (rpTook) {
+                            peekReps++;
+                            if (svBne(rp.wT1, pk.wT1)) peekRepAll = false;
+                            if (svBne(rp.wT2, pk.wT2)) peekRepAll = false;
+                        } else { peekRejects++; }
+                    }
+                    st.update(fz_h[t], fz_l[t], fz_c[t], up);
+                    if (pkTook && svBne(pk.wT1, up.wT1)) peekAll = false;
+                    if (pkTook && svBne(pk.wT2, up.wT2)) peekAll = false;
+                    try { st.peek(fz_h[t - 1], fz_l[t - 1], fz_c[t - 1], pk); } catch (IllegalArgumentException _e) { peekRejects++; }
+                    st.value(vc);
+                    if (svBne(vc.wT1, up.wT1)) allOk = false;
+                    if (svBne(vc.wT2, up.wT2)) allOk = false;
+                    if (svXtierNe(up.wT1, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b0[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.wT1)) + "\""; }
+                    if (svXtierNe(up.wT2, b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":1,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b1[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.wT2)) + "\""; }
+                }
+                if (allOk) {
+                    rangeChecked = 1; rangeLegs++; rangeSites |= 2;
+                    if (st.outRange().begIdx() != beg.value || st.outRange().count() != nb.value) rangeOk = false;
+                    rangeLegs++; rangeSites |= 16;
+                    st.advance();
+                    if (st.outRange().begIdx() != beg.value || st.outRange().count() != nb.value + 1) rangeOk = false;
+                }
+            }
+            {
+                int p0 = lb + 1;
+                if (p0 <= svN - 1) {
+                    try {
+                        double[] f0 = new double[svN];
+                        java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                        double[] f1 = new double[svN];
+                        java.util.Arrays.fill(f1, (double)-1.2345678901234e300);
+                        Core.WavetrendStream sA = c2.wavetrendOpenAndFill(java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0), optInChannelPeriod, optInAveragePeriod, optInSignalPeriod, f0, f1);
+                        int mid = (p0 + svN) / 2;
+                        Core.WavetrendOut uA = new Core.WavetrendOut();
+                        Core.WavetrendOut uB = new Core.WavetrendOut();
+                        for (int t = p0; t < mid; t++) {
+                            sA.update(fz_h[t], fz_l[t], fz_c[t], uA);
+                            if (svXtierNe(uA.wT1, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svXtierNe(uA.wT2, b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
+                        Core.WavetrendStream sB = sA.clone();
+                        sB.advance();
+                        sB.advance();
+                        double[] fk0 = new double[svN];
+                        double[] fk1 = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            sB.update(fz_h[t], fz_l[t], fz_c[t], uB);
+                            fk0[t] = uB.wT1;
+                            if (svXtierNe(uB.wT1, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            fk1[t] = uB.wT2;
+                            if (svXtierNe(uB.wT2, b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
+                        for (int t = mid; t < svN; t++) {
+                            sA.update(fz_h[t], fz_l[t], fz_c[t], uA);
+                            if (svBne(uA.wT1, fk0[t]) || svXtierNe(uA.wT1, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svBne(uA.wT2, fk1[t]) || svXtierNe(uA.wT2, b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
+                        if (allOk) {
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 8;
+                            if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 2) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                        }
+                    } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
+                }
+            }
+            if (lb >= 1 && lb < svN) {
+                try { c2.wavetrendOpen(java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb), java.util.Arrays.copyOf(fz_c, lb), optInChannelPeriod, optInAveragePeriod, optInSignalPeriod); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryAccepted\":1"; }
+                catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                    double[] f1 = new double[svN];
+                    java.util.Arrays.fill(f1, (double)-1.2345678901234e300);
+                    try { c2.wavetrendOpenAndFill(java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb), java.util.Arrays.copyOf(fz_c, lb), optInChannelPeriod, optInAveragePeriod, optInSignalPeriod, f0, f1); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                    catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
+            }
+            try {
+                Core.WavetrendStream sD = c2.wavetrendOpen(fz_h, fz_l, fz_c, Integer.MIN_VALUE, Integer.MIN_VALUE, Integer.MIN_VALUE);
+                Core.WavetrendStream sE = c2.wavetrendOpen(fz_h, fz_l, fz_c, 10, 21, 4);
+                Core.WavetrendOut vD = new Core.WavetrendOut(); sD.value(vD);
+                Core.WavetrendOut vE = new Core.WavetrendOut(); sE.value(vE);
+                if (svBne(vD.wT1, vE.wT1)) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
+                if (svBne(vD.wT2, vE.wT2)) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
+            } catch (IllegalArgumentException _e) { /* defaults need more history than svN — skip */ }
+            {
+                int Sidx = lb + (svN - lb) / 3;
+                if (Sidx > lb && Sidx < svN - 1) {
+                    MInteger begS = new MInteger();
+                    MInteger nbS = new MInteger();
+                    RetCode rcS;
+                    try { rcS = c2.wavetrendImpl(Sidx, svN - 1, fz_h, fz_l, fz_c, optInChannelPeriod, optInAveragePeriod, optInSignalPeriod, begS, nbS, b0, b1); }
+                    catch (RuntimeException _sve) { if (!(_sve instanceof TALibFailure)) throw _sve; rcS = ((TALibFailure) _sve).retCode(); }
+                    if (rcS == RetCode.SUCCESS && nbS.value > 0) {
+                        try {
+                            Core.WavetrendStream stA = c2.wavetrendOpenInternal(java.util.Arrays.copyOf(fz_h, svN), java.util.Arrays.copyOf(fz_l, svN), java.util.Arrays.copyOf(fz_c, svN), Sidx, optInChannelPeriod, optInAveragePeriod, optInSignalPeriod);
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 4;
+                            if (stA.outRange().begIdx() != begS.value || stA.outRange().count() != nbS.value) rangeOk = false;
+                        } catch (IllegalArgumentException _e) { rangeOk = false; if (diag.isEmpty()) diag = ",\"anchoredOpenRejected\":1"; }
+                    }
+                }
+            }
+        }
+        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign[0] + diag + "}";
+    }
+
     static String sv_WCLPRICE(String json) {
         int svShape = jsonInt(json, "gen_shape");
         int svSeed = jsonInt(json, "gen_seed");
@@ -302822,6 +304568,7 @@ public class TaCodegenServe {
         case "TA_VWAP": return sv_VWAP(json);
         case "TA_VWMA": return sv_VWMA(json);
         case "TA_WAD": return sv_WAD(json);
+        case "TA_WAVETREND": return sv_WAVETREND(json);
         case "TA_WCLPRICE": return sv_WCLPRICE(json);
         case "TA_WILLR": return sv_WILLR(json);
         case "TA_WMA": return sv_WMA(json);
@@ -325833,6 +327580,114 @@ public class TaCodegenServe {
                     for (int k = 0; k < nb; k++) {
                         boolean cmp = true;
                         if (cmp && svXtierNe(rb0[k], fb0[k], r.benign)) { cmp = false; r.out = 0; r.batch = Double.doubleToRawLongBits(rb0[k]); r.stream = Double.doubleToRawLongBits(fb0[k]); }
+                        if (cmp) r.fillBars++;
+                        if (!cmp) { r.ok = false; r.leg = 2; r.bar = beg + k; break; }
+                    }
+                }
+            } catch (RuntimeException _e) { r.ok = false; r.leg = 2; }
+        }
+
+        if (r.ok) {
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
+            rideSeenOpen[slot] = r.openBars; rideSeenFill[slot] = r.fillBars;
+        }
+    }
+
+    static void rideWavetrend(Core core, String json, int endIdx, double[] inHigh, double[] inLow, double[] inClose, int optInChannelPeriod, int optInAveragePeriod, int optInSignalPeriod, StringBuilder sb) {
+        if (!rideGate(json)) return;
+        RideResult r = new RideResult();
+        rideBodyWavetrend(core, json, endIdx, inHigh, inLow, inClose, optInChannelPeriod, optInAveragePeriod, optInSignalPeriod, r);
+        r.emit(sb);
+    }
+
+    @SuppressWarnings("unused")
+    static void rideBodyWavetrend(Core core, String json, int endIdx, double[] inHigh, double[] inLow, double[] inClose, int optInChannelPeriod, int optInAveragePeriod, int optInSignalPeriod, RideResult r) {
+        try { r.lb = core.wavetrendLookback(optInChannelPeriod, optInAveragePeriod, optInSignalPeriod); } catch (RuntimeException _e) { r.lb = -1; }
+        int lb = r.lb;
+        int navail = endIdx + 1;
+        if (inHigh.length < navail) navail = inHigh.length;
+        if (inLow.length < navail) navail = inLow.length;
+        if (inClose.length < navail) navail = inClose.length;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
+        if (m > navail) m = navail;
+        r.m = m;
+        if (m > RIDE_MAX_BARS) { r.skip = 1; return; }
+        if (m < 1) { r.skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
+        if (!rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
+
+        long hash = 0xcbf29ce484222325L;
+        hash = rideMixStr(hash, "TA_WAVETREND");
+        hash = rideMix(hash, m);
+        hash = rideMix(hash, rideGen);
+        hash = rideMix(hash, jsonInt(json, "unstablePeriod"));
+        hash = rideMix(hash, optInChannelPeriod);
+        hash = rideMix(hash, optInAveragePeriod);
+        hash = rideMix(hash, optInSignalPeriod);
+        hash = rideMixArr(hash, inHigh, m);
+        hash = rideMixArr(hash, inLow, m);
+        hash = rideMixArr(hash, inClose, m);
+        int slot = (int) Math.floorMod(hash, (long) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash) {
+            r.dedup = 1; r.openBars = rideSeenOpen[slot]; r.fillBars = rideSeenFill[slot]; return;
+        }
+
+        double[] rb0 = new double[m];
+        double[] rb1 = new double[m];
+        int beg = 0;
+        int nb = 0;
+        String clsB = "";
+        boolean rejected = false;
+        try { OutRange _rr = core.wavetrend(0, m - 1, java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m), optInChannelPeriod, optInAveragePeriod, optInSignalPeriod, rb0, rb1); beg = _rr.begIdx(); nb = _rr.count(); }
+        catch (RuntimeException _e) { r.rcBatch = rideCode(_e); clsB = _e.getClass().getName(); rejected = true; }
+        if (rejected) {
+            String clsO = "", clsF = "";
+            try { core.wavetrendOpen(java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m), optInChannelPeriod, optInAveragePeriod, optInSignalPeriod); } catch (RuntimeException _e) { r.rcOpen = rideCode(_e); clsO = _e.getClass().getName(); }
+            double[] fb0 = new double[m];
+            double[] fb1 = new double[m];
+            try { core.wavetrendOpenAndFill(java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m), optInChannelPeriod, optInAveragePeriod, optInSignalPeriod, fb0, fb1); } catch (RuntimeException _e) { r.rcFill = rideCode(_e); clsF = _e.getClass().getName(); }
+            boolean cmpO = r.rcOpen == r.rcBatch && clsO.equals(clsB);
+            if (cmpO) r.rej++;
+            if (!cmpO) { r.ok = false; r.leg = r.rcOpen == r.rcBatch ? 4 : 3; }
+            boolean cmpF = r.rcFill == r.rcBatch && clsF.equals(clsB);
+            if (cmpF) r.rej++;
+            if (!cmpF) { r.ok = false; r.leg = r.rcFill == r.rcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.skip = 7; return; }
+        if (nb == 0) { r.skip = 5; return; }
+        if (beg != lb) { r.skip = 6; return; }
+
+        try {
+            boolean cmp;
+            Core.WavetrendStream st = core.wavetrendOpen(java.util.Arrays.copyOf(inHigh, lb + 1), java.util.Arrays.copyOf(inLow, lb + 1), java.util.Arrays.copyOf(inClose, lb + 1), optInChannelPeriod, optInAveragePeriod, optInSignalPeriod);
+            Core.WavetrendOut uo = new Core.WavetrendOut(); st.value(uo);
+            cmp = true;
+            if (cmp && svXtierNe(rb0[lb - beg], uo.wT1, r.benign)) { cmp = false; r.out = 0; r.batch = Double.doubleToRawLongBits(rb0[lb - beg]); r.stream = Double.doubleToRawLongBits(uo.wT1); }
+            if (cmp && svXtierNe(rb1[lb - beg], uo.wT2, r.benign)) { cmp = false; r.out = 1; r.batch = Double.doubleToRawLongBits(rb1[lb - beg]); r.stream = Double.doubleToRawLongBits(uo.wT2); }
+            if (cmp) r.openBars++;
+            if (!cmp) { r.ok = false; r.leg = 1; r.bar = lb; }
+            for (int t = lb + 1; r.ok && t < m; t++) {
+                st.update(inHigh[t], inLow[t], inClose[t], uo);
+                cmp = true;
+                if (cmp && svXtierNe(rb0[t - beg], uo.wT1, r.benign)) { cmp = false; r.out = 0; r.batch = Double.doubleToRawLongBits(rb0[t - beg]); r.stream = Double.doubleToRawLongBits(uo.wT1); }
+                if (cmp && svXtierNe(rb1[t - beg], uo.wT2, r.benign)) { cmp = false; r.out = 1; r.batch = Double.doubleToRawLongBits(rb1[t - beg]); r.stream = Double.doubleToRawLongBits(uo.wT2); }
+                if (cmp) r.openBars++;
+                if (!cmp) { r.ok = false; r.leg = 1; r.bar = t; }
+            }
+        } catch (RuntimeException _e) { r.ok = false; r.leg = 1; }
+
+        if (r.ok) {
+            double[] fb0 = new double[m];
+            double[] fb1 = new double[m];
+            try {
+                Core.WavetrendStream st2 = core.wavetrendOpenAndFill(java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m), optInChannelPeriod, optInAveragePeriod, optInSignalPeriod, fb0, fb1);
+                if (st2.outRange().begIdx() != beg || st2.outRange().count() != nb) { r.ok = false; r.leg = 2; }
+                if (r.ok) {
+                    for (int k = 0; k < nb; k++) {
+                        boolean cmp = true;
+                        if (cmp && svXtierNe(rb0[k], fb0[k], r.benign)) { cmp = false; r.out = 0; r.batch = Double.doubleToRawLongBits(rb0[k]); r.stream = Double.doubleToRawLongBits(fb0[k]); }
+                        if (cmp && svXtierNe(rb1[k], fb1[k], r.benign)) { cmp = false; r.out = 1; r.batch = Double.doubleToRawLongBits(rb1[k]); r.stream = Double.doubleToRawLongBits(fb1[k]); }
                         if (cmp) r.fillBars++;
                         if (!cmp) { r.ok = false; r.leg = 2; r.bar = beg + k; break; }
                     }

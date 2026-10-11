@@ -498,6 +498,8 @@ pub enum FuncId {
     VWMA,
     /// Williams' Accumulation/Distribution — [`Core::wad`](crate::Core::wad).
     WAD,
+    /// WaveTrend Oscillator — [`Core::wavetrend`](crate::Core::wavetrend).
+    WAVETREND,
     /// Weighted Close Price — [`Core::wclprice`](crate::Core::wclprice).
     WCLPRICE,
     /// Williams' %R — [`Core::willr`](crate::Core::willr).
@@ -510,7 +512,7 @@ pub enum FuncId {
 
 impl FuncId {
     /// Number of functions in the registry.
-    pub const COUNT: usize = 232;
+    pub const COUNT: usize = 233;
     /// Metadata for this function (O(1) index into the const table).
     #[inline] pub fn info(self) -> &'static FuncInfo { &FUNC_TABLE[self as usize] }
     /// Upper-case TA name, e.g. "RSI".
@@ -855,7 +857,7 @@ impl FuncInfo {
 
 /// Backing storage for [`FUNCS`], indexed by [`FuncId`]. Link-time const, in
 /// `.rodata`. Private, so its length is nobody's business but this module's.
-static FUNC_TABLE: [FuncInfo; 232] = [
+static FUNC_TABLE: [FuncInfo; 233] = [
     FuncInfo {
         id: FuncId::AC,
         name: "AC",
@@ -3365,6 +3367,17 @@ static FUNC_TABLE: [FuncInfo; 232] = [
         unst_id: None,
     },
     FuncInfo {
+        id: FuncId::WAVETREND,
+        name: "WAVETREND",
+        group: Group::MomentumIndicators,
+        hint: "WaveTrend Oscillator",
+        flags: FuncFlags(0x02000000),
+        inputs: &[InputInfo { param_name: "inPriceHLC", kind: InputType::Price, flags: InputFlags(0x0000000e) }, ],
+        opt_inputs: &[OptInputInfo { param_name: "optInChannelPeriod", display_name: "Channel Period", hint: "Period of the price channel, used by both the average and the deviation", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 2, max: 100000, default: 10, suggested: (2, 200, 1) } }, OptInputInfo { param_name: "optInAveragePeriod", display_name: "Average Period", hint: "Smoothing for the oscillator line", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 1, max: 100000, default: 21, suggested: (1, 200, 1) } }, OptInputInfo { param_name: "optInSignalPeriod", display_name: "Signal Period", hint: "Simple average of the oscillator line, making the signal line", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 1, max: 100000, default: 4, suggested: (1, 50, 1) } }, ],
+        outputs: &[OutputInfo { param_name: "outWT1", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, OutputInfo { param_name: "outWT2", kind: OutputType::Real, flags: OutputFlags(0x00000004) }, ],
+        unst_id: None,
+    },
+    FuncInfo {
         id: FuncId::WCLPRICE,
         name: "WCLPRICE",
         group: Group::PriceTransform,
@@ -3654,6 +3667,7 @@ fn get_func_handle_exact(name: &str) -> Option<FuncId> {
         "VWAP" => FuncId::VWAP,
         "VWMA" => FuncId::VWMA,
         "WAD" => FuncId::WAD,
+        "WAVETREND" => FuncId::WAVETREND,
         "WCLPRICE" => FuncId::WCLPRICE,
         "WILLR" => FuncId::WILLR,
         "WMA" => FuncId::WMA,
@@ -4154,6 +4168,7 @@ impl<'a> ParamHolder<'a> {
             FuncId::VWAP => self.core.vwap_lookback(),
             FuncId::VWMA => self.core.vwma_lookback(self.int_opt[0]),
             FuncId::WAD => self.core.wad_lookback(),
+            FuncId::WAVETREND => self.core.wavetrend_lookback(self.int_opt[0], self.int_opt[1], self.int_opt[2]),
             FuncId::WCLPRICE => self.core.wclprice_lookback(),
             FuncId::WILLR => self.core.willr_lookback(self.int_opt[0]),
             FuncId::WMA => self.core.wma_lookback(self.int_opt[0]),
@@ -4399,6 +4414,7 @@ impl<'a> ParamHolder<'a> {
             FuncId::VWAP => self.core.vwap_display_shift(output_idx),
             FuncId::VWMA => self.core.vwma_display_shift(self.int_opt[0], output_idx),
             FuncId::WAD => self.core.wad_display_shift(output_idx),
+            FuncId::WAVETREND => self.core.wavetrend_display_shift(self.int_opt[0], self.int_opt[1], self.int_opt[2], output_idx),
             FuncId::WCLPRICE => self.core.wclprice_display_shift(output_idx),
             FuncId::WILLR => self.core.willr_display_shift(self.int_opt[0], output_idx),
             FuncId::WMA => self.core.wma_display_shift(self.int_opt[0], output_idx),
@@ -7564,6 +7580,22 @@ impl<'a> ParamHolder<'a> {
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.wad(start_idx, end_idx, i0_1, i0_2, i0_3, &mut *o0);
                 self.real_out[0] = Some(o0);
+                match res {
+                    Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
+                    Err(e) => e,
+                }
+            }
+            FuncId::WAVETREND => {
+                let i0_1 = self.price[0][1].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_2 = self.price[0][2].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_3 = self.price[0][3].ok_or(RetCode::InputNotAllInitialize)?;
+                if self.real_out[0].is_none() || self.real_out[1].is_none() { return Err(RetCode::OutputNotAllInitialize); }
+                Self::check_range(start_idx, end_idx)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let mut o1 = self.real_out[1].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let res = self.core.wavetrend(start_idx, end_idx, i0_1, i0_2, i0_3, self.int_opt[0], self.int_opt[1], self.int_opt[2], &mut *o0, &mut *o1);
+                self.real_out[0] = Some(o0);
+                self.real_out[1] = Some(o1);
                 match res {
                     Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
                     Err(e) => e,

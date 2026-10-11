@@ -1,0 +1,37 @@
+name: WAVETREND
+group: Momentum Indicators
+hint: WaveTrend Oscillator
+flags: [stream]
+inputs:
+  - name: inPriceHLC
+    type: price
+    price_components: [high, low, close]
+optional_inputs:
+  - name: optInChannelPeriod
+    type: integer
+    display_name: Channel Period
+    hint: Period of the price channel, used by both the average and the deviation
+    range: [2, 100000]
+    default: 10
+    suggested: [2, 200, 1]
+  - name: optInAveragePeriod
+    type: integer
+    display_name: Average Period
+    hint: Smoothing for the oscillator line
+    range: [1, 100000]
+    default: 21
+    suggested: [1, 200, 1]
+  - name: optInSignalPeriod
+    type: integer
+    display_name: Signal Period
+    hint: Simple average of the oscillator line, making the signal line
+    range: [1, 100000]
+    default: 4
+    suggested: [1, 50, 1]
+outputs:
+  - name: outWT1
+    type: real
+    flags: [line]
+  - name: outWT2
+    type: real
+    flags: [dash_line]

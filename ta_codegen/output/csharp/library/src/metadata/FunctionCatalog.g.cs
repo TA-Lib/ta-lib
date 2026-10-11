@@ -343,6 +343,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
             MakeVwap(),
             MakeVwma(),
             MakeWad(),
+            MakeWavetrend(),
             MakeWclprice(),
             MakeWillr(),
             MakeWma(),
@@ -5726,6 +5727,33 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
         invoke: static (core, c, startIdx, endIdx) =>
             core.Wad(
                 startIdx, endIdx, c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.RealOut(0)));
+
+    private static FuncInfo MakeWavetrend() => new(
+        name: "WAVETREND",
+        group: FunctionGroup.MomentumIndicators,
+        hint: "WaveTrend Oscillator",
+        flags: FuncFlags.Stream,
+        unstableId: null,
+        inputs:
+        [
+            new InputInfo(InputKind.Price, "inPriceHLC", PriceComponents.High | PriceComponents.Low | PriceComponents.Close, [PriceComponents.High, PriceComponents.Low, PriceComponents.Close]),
+        ],
+        optInputs:
+        [
+            new OptInputInfo("optInChannelPeriod", "Channel Period", "Period of the price channel, used by both the average and the deviation", OptInputFlags.None, new OptInputDomain.IntegerRange(2, 100000, 10, 2, 200, 1)),
+            new OptInputInfo("optInAveragePeriod", "Average Period", "Smoothing for the oscillator line", OptInputFlags.None, new OptInputDomain.IntegerRange(1, 100000, 21, 1, 200, 1)),
+            new OptInputInfo("optInSignalPeriod", "Signal Period", "Simple average of the oscillator line, making the signal line", OptInputFlags.None, new OptInputDomain.IntegerRange(1, 100000, 4, 1, 50, 1)),
+        ],
+        outputs:
+        [
+            new OutputInfo(OutputKind.Real, "outWT1", OutputFlags.Line),
+            new OutputInfo(OutputKind.Real, "outWT2", OutputFlags.DashLine),
+        ],
+        lookback: static (core, c) => core.WavetrendLookback(c.IntOpt(0), c.IntOpt(1), c.IntOpt(2)),
+        displayShift: static (core, c, outputIdx) => core.WavetrendDisplayShift(c.IntOpt(0), c.IntOpt(1), c.IntOpt(2), outputIdx),
+        invoke: static (core, c, startIdx, endIdx) =>
+            core.Wavetrend(
+                startIdx, endIdx, c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.IntOpt(0), c.IntOpt(1), c.IntOpt(2), c.RealOut(0), c.RealOut(1)));
 
     private static FuncInfo MakeWclprice() => new(
         name: "WCLPRICE",

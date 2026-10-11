@@ -19165,6 +19165,103 @@ fn legs_WAD(r: &mut Report) {
     r.legs_done("WAD", 3);
 }
 
+const V_WAVETREND: &[(&str, i32, i32, i32)] = &[
+    ("defaults", i32::MIN, i32::MIN, i32::MIN),
+    ("minimums", 2i32, 1i32, 1i32),
+];
+
+fn sub_WAVETREND(r: &mut Report) {
+    let core = Core::new();
+    for &(label, optInChannelPeriod, optInAveragePeriod, optInSignalPeriod) in V_WAVETREND {
+        let Ok(lb) = core.wavetrend_lookback(optInChannelPeriod, optInAveragePeriod, optInSignalPeriod) else { continue; };
+        r.control("WAVETREND", label, run(|| {
+            let inHigh: Vec<f64> = Vec::with_capacity(1);
+            let inLow: Vec<f64> = Vec::with_capacity(1);
+            let inClose: Vec<f64> = Vec::with_capacity(1);
+            let mut outWT1: Vec<f64> = Vec::with_capacity(1);
+            let mut outWT2: Vec<f64> = Vec::with_capacity(1);
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.wavetrend_impl(0, lb, &inHigh, &inLow, &inClose, optInChannelPeriod, optInAveragePeriod, optInSignalPeriod, &mut _b, &mut _n, &mut outWT1, &mut outWT2);
+            (rc, _n)
+        }));
+        if lb < 1 { r.no_quiet_range("WAVETREND", label); continue; }
+        r.quiet("WAVETREND", label, lb, run(|| {
+            let inHigh: Vec<f64> = Vec::with_capacity(1);
+            let inLow: Vec<f64> = Vec::with_capacity(1);
+            let inClose: Vec<f64> = Vec::with_capacity(1);
+            let mut outWT1: Vec<f64> = Vec::with_capacity(1);
+            let mut outWT2: Vec<f64> = Vec::with_capacity(1);
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.wavetrend_impl(0, lb - 1, &inHigh, &inLow, &inClose, optInChannelPeriod, optInAveragePeriod, optInSignalPeriod, &mut _b, &mut _n, &mut outWT1, &mut outWT2);
+            (rc, _n)
+        }));
+    }
+}
+
+fn legs_WAVETREND(r: &mut Report) {
+    let core = Core::new();
+    let optInChannelPeriod = i32::MIN;
+    let optInAveragePeriod = i32::MIN;
+    let optInSignalPeriod = i32::MIN;
+    let Ok(lb) = core.wavetrend_lookback(optInChannelPeriod, optInAveragePeriod, optInSignalPeriod) else { r.no_legs("WAVETREND"); return; };
+    let (startIdx, endIdx) = (lb, lb + 4);
+    {
+        let inHigh: Vec<f64> = series("high", endIdx + 1);
+        let inLow: Vec<f64> = series("low", endIdx + 1);
+        let inClose: Vec<f64> = series("close", endIdx + 1);
+        let mut outWT1: Vec<f64> = vec![Default::default(); 5];
+        let mut outWT2: Vec<f64> = vec![Default::default(); 5];
+        r.legs_control("WAVETREND", run(|| {
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.wavetrend_impl(startIdx, endIdx, &inHigh, &inLow, &inClose, optInChannelPeriod, optInAveragePeriod, optInSignalPeriod, &mut _b, &mut _n, &mut outWT1, &mut outWT2);
+            (rc, _n)
+        }));
+    }
+    {
+        let inHigh: Vec<f64> = Vec::with_capacity(1);
+        let inLow: Vec<f64> = series("low", endIdx + 1);
+        let inClose: Vec<f64> = series("close", endIdx + 1);
+        let mut outWT1: Vec<f64> = vec![Default::default(); 5];
+        let mut outWT2: Vec<f64> = vec![Default::default(); 5];
+        r.leg("WAVETREND", "inHigh", 0, run(|| {
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.wavetrend_impl(startIdx, endIdx, &inHigh, &inLow, &inClose, optInChannelPeriod, optInAveragePeriod, optInSignalPeriod, &mut _b, &mut _n, &mut outWT1, &mut outWT2);
+            (rc, _n)
+        }));
+    }
+    {
+        let inHigh: Vec<f64> = series("high", endIdx + 1);
+        let inLow: Vec<f64> = Vec::with_capacity(1);
+        let inClose: Vec<f64> = series("close", endIdx + 1);
+        let mut outWT1: Vec<f64> = vec![Default::default(); 5];
+        let mut outWT2: Vec<f64> = vec![Default::default(); 5];
+        r.leg("WAVETREND", "inLow", 1, run(|| {
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.wavetrend_impl(startIdx, endIdx, &inHigh, &inLow, &inClose, optInChannelPeriod, optInAveragePeriod, optInSignalPeriod, &mut _b, &mut _n, &mut outWT1, &mut outWT2);
+            (rc, _n)
+        }));
+    }
+    {
+        let inHigh: Vec<f64> = series("high", endIdx + 1);
+        let inLow: Vec<f64> = series("low", endIdx + 1);
+        let inClose: Vec<f64> = Vec::with_capacity(1);
+        let mut outWT1: Vec<f64> = vec![Default::default(); 5];
+        let mut outWT2: Vec<f64> = vec![Default::default(); 5];
+        r.leg("WAVETREND", "inClose", 2, run(|| {
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.wavetrend_impl(startIdx, endIdx, &inHigh, &inLow, &inClose, optInChannelPeriod, optInAveragePeriod, optInSignalPeriod, &mut _b, &mut _n, &mut outWT1, &mut outWT2);
+            (rc, _n)
+        }));
+    }
+    r.legs_done("WAVETREND", 3);
+}
+
 const V_WCLPRICE: &[&str] = &[
     "defaults",
 ];
@@ -19687,6 +19784,7 @@ const PROBES: &[(&str, Probe, Probe)] = &[
     ("VWAP", sub_VWAP, legs_VWAP),
     ("VWMA", sub_VWMA, legs_VWMA),
     ("WAD", sub_WAD, legs_WAD),
+    ("WAVETREND", sub_WAVETREND, legs_WAVETREND),
     ("WCLPRICE", sub_WCLPRICE, legs_WCLPRICE),
     ("WILLR", sub_WILLR, legs_WILLR),
     ("WMA", sub_WMA, legs_WMA),
@@ -19729,7 +19827,7 @@ fn no_phantom_io() {
     // The corpus is the generator's, not a list kept by hand: a probe that
     // stopped being emitted is a shrinking sweep, which is the one way this
     // file can fail open.
-    assert_eq!(PROBES.len(), 232, "probe count");
+    assert_eq!(PROBES.len(), 233, "probe count");
     assert_eq!(
         PROBES.len(),
         crate::abstract_api::funcs().count(),
