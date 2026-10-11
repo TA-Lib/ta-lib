@@ -47,7 +47,7 @@
    #include "ta_func.h"
 #endif
 
-#define TA_META_FRAME_SIZE 232
+#define TA_META_FRAME_SIZE 233
 
 TA_RetCode TA_AC_MetaRide( int startIdx, int endIdx, const double inHigh[], const double inLow[], int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod, int *outBegIdx, int *outNBElement, double outReal[] );
 TA_RetCode TA_S_AC_MetaRide( int startIdx, int endIdx, const float inHigh[], const float inLow[], int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod, int *outBegIdx, int *outNBElement, double outReal[] );
@@ -511,6 +511,8 @@ TA_RetCode TA_WILLR_MetaRide( int startIdx, int endIdx, const double inHigh[], c
 TA_RetCode TA_S_WILLR_MetaRide( int startIdx, int endIdx, const float inHigh[], const float inLow[], const float inClose[], int optInTimePeriod, int *outBegIdx, int *outNBElement, double outReal[] );
 TA_RetCode TA_WMA_MetaRide( int startIdx, int endIdx, const double inReal[], int optInTimePeriod, int *outBegIdx, int *outNBElement, double outReal[] );
 TA_RetCode TA_S_WMA_MetaRide( int startIdx, int endIdx, const float inReal[], int optInTimePeriod, int *outBegIdx, int *outNBElement, double outReal[] );
+TA_RetCode TA_ZIGZAG_MetaRide( int startIdx, int endIdx, const double inHigh[], const double inLow[], double optInSensitivity, int optInMinTrendLength, int *outBegIdx, int *outNBElement, double outZigZag[], int outTrend[], int outPivotIdx[] );
+TA_RetCode TA_S_ZIGZAG_MetaRide( int startIdx, int endIdx, const float inHigh[], const float inLow[], double optInSensitivity, int optInMinTrendLength, int *outBegIdx, int *outNBElement, double outZigZag[], int outTrend[], int outPivotIdx[] );
 TA_RetCode TA_ZLEMA_MetaRide( int startIdx, int endIdx, const double inReal[], int optInTimePeriod, int *outBegIdx, int *outNBElement, double outReal[] );
 TA_RetCode TA_S_ZLEMA_MetaRide( int startIdx, int endIdx, const float inReal[], int optInTimePeriod, int *outBegIdx, int *outNBElement, double outReal[] );
 
@@ -748,6 +750,7 @@ const char *const TA_MetaFrameName[TA_META_FRAME_SIZE] = {
    "WCLPRICE",
    "WILLR",
    "WMA",
+   "ZIGZAG",
    "ZLEMA",
 };
 
@@ -7450,6 +7453,35 @@ TA_RetCode TA_S_WMA_MetaRide( int startIdx, int endIdx, const float inReal[], in
    return retCode;
 }
 
+TA_RetCode TA_ZIGZAG_MetaRide( int startIdx, int endIdx, const double inHigh[], const double inLow[], double optInSensitivity, int optInMinTrendLength, int *outBegIdx, int *outNBElement, double outZigZag[], int outTrend[], int outPivotIdx[] )
+{
+   TA_RetCode retCode = TA_ZIGZAG( startIdx, endIdx, inHigh, inLow, optInSensitivity, optInMinTrendLength, outBegIdx, outNBElement, outZigZag, outTrend, outPivotIdx );
+   if( retCode == TA_SUCCESS )
+   {
+      const void *in[] = { inHigh, inLow };
+      const void *out[] = { outZigZag, outTrend, outPivotIdx };
+      int shift[] = { TA_ZIGZAG_DisplayShift( optInSensitivity, optInMinTrendLength, 0 ), TA_ZIGZAG_DisplayShift( optInSensitivity, optInMinTrendLength, 1 ), TA_ZIGZAG_DisplayShift( optInSensitivity, optInMinTrendLength, 2 ) };
+      meta_ride_check( 231, 0, startIdx, endIdx, in, 2,
+                       *outBegIdx, *outNBElement,
+                       TA_ZIGZAG_Lookback( optInSensitivity, optInMinTrendLength ), shift, out );
+   }
+   return retCode;
+}
+TA_RetCode TA_S_ZIGZAG_MetaRide( int startIdx, int endIdx, const float inHigh[], const float inLow[], double optInSensitivity, int optInMinTrendLength, int *outBegIdx, int *outNBElement, double outZigZag[], int outTrend[], int outPivotIdx[] )
+{
+   TA_RetCode retCode = TA_S_ZIGZAG( startIdx, endIdx, inHigh, inLow, optInSensitivity, optInMinTrendLength, outBegIdx, outNBElement, outZigZag, outTrend, outPivotIdx );
+   if( retCode == TA_SUCCESS )
+   {
+      const void *in[] = { inHigh, inLow };
+      const void *out[] = { outZigZag, outTrend, outPivotIdx };
+      int shift[] = { TA_ZIGZAG_DisplayShift( optInSensitivity, optInMinTrendLength, 0 ), TA_ZIGZAG_DisplayShift( optInSensitivity, optInMinTrendLength, 1 ), TA_ZIGZAG_DisplayShift( optInSensitivity, optInMinTrendLength, 2 ) };
+      meta_ride_check( 231, 1, startIdx, endIdx, in, 2,
+                       *outBegIdx, *outNBElement,
+                       TA_ZIGZAG_Lookback( optInSensitivity, optInMinTrendLength ), shift, out );
+   }
+   return retCode;
+}
+
 TA_RetCode TA_ZLEMA_MetaRide( int startIdx, int endIdx, const double inReal[], int optInTimePeriod, int *outBegIdx, int *outNBElement, double outReal[] )
 {
    TA_RetCode retCode = TA_ZLEMA( startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal );
@@ -7458,7 +7490,7 @@ TA_RetCode TA_ZLEMA_MetaRide( int startIdx, int endIdx, const double inReal[], i
       const void *in[] = { inReal };
       const void *out[] = { outReal };
       int shift[] = { TA_ZLEMA_DisplayShift( optInTimePeriod, 0 ) };
-      meta_ride_check( 231, 0, startIdx, endIdx, in, 1,
+      meta_ride_check( 232, 0, startIdx, endIdx, in, 1,
                        *outBegIdx, *outNBElement,
                        TA_ZLEMA_Lookback( optInTimePeriod ), shift, out );
    }
@@ -7472,7 +7504,7 @@ TA_RetCode TA_S_ZLEMA_MetaRide( int startIdx, int endIdx, const float inReal[], 
       const void *in[] = { inReal };
       const void *out[] = { outReal };
       int shift[] = { TA_ZLEMA_DisplayShift( optInTimePeriod, 0 ) };
-      meta_ride_check( 231, 1, startIdx, endIdx, in, 1,
+      meta_ride_check( 232, 1, startIdx, endIdx, in, 1,
                        *outBegIdx, *outNBElement,
                        TA_ZLEMA_Lookback( optInTimePeriod ), shift, out );
    }
@@ -7943,6 +7975,8 @@ TA_RetCode TA_S_ZLEMA_MetaRide( int startIdx, int endIdx, const float inReal[], 
 #define TA_S_WILLR TA_S_WILLR_MetaRide
 #define TA_WMA TA_WMA_MetaRide
 #define TA_S_WMA TA_S_WMA_MetaRide
+#define TA_ZIGZAG TA_ZIGZAG_MetaRide
+#define TA_S_ZIGZAG TA_S_ZIGZAG_MetaRide
 #define TA_ZLEMA TA_ZLEMA_MetaRide
 #define TA_S_ZLEMA TA_S_ZLEMA_MetaRide
 

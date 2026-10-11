@@ -19398,6 +19398,89 @@ fn legs_WMA(r: &mut Report) {
     r.legs_done("WMA", 1);
 }
 
+const V_ZIGZAG: &[(&str, f64, i32)] = &[
+    ("defaults", Core::REAL_DEFAULT, i32::MIN),
+    ("minimums", 0.0f64, 1i32),
+];
+
+fn sub_ZIGZAG(r: &mut Report) {
+    let core = Core::new();
+    for &(label, optInSensitivity, optInMinTrendLength) in V_ZIGZAG {
+        let Ok(lb) = core.zigzag_lookback(optInSensitivity, optInMinTrendLength) else { continue; };
+        r.control("ZIGZAG", label, run(|| {
+            let inHigh: Vec<f64> = Vec::with_capacity(1);
+            let inLow: Vec<f64> = Vec::with_capacity(1);
+            let mut outZigZag: Vec<f64> = Vec::with_capacity(1);
+            let mut outTrend: Vec<i32> = Vec::with_capacity(1);
+            let mut outPivotIdx: Vec<i32> = Vec::with_capacity(1);
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.zigzag_impl(0, lb, &inHigh, &inLow, optInSensitivity, optInMinTrendLength, &mut _b, &mut _n, &mut outZigZag, &mut outTrend, &mut outPivotIdx);
+            (rc, _n)
+        }));
+        if lb < 1 { r.no_quiet_range("ZIGZAG", label); continue; }
+        r.quiet("ZIGZAG", label, lb, run(|| {
+            let inHigh: Vec<f64> = Vec::with_capacity(1);
+            let inLow: Vec<f64> = Vec::with_capacity(1);
+            let mut outZigZag: Vec<f64> = Vec::with_capacity(1);
+            let mut outTrend: Vec<i32> = Vec::with_capacity(1);
+            let mut outPivotIdx: Vec<i32> = Vec::with_capacity(1);
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.zigzag_impl(0, lb - 1, &inHigh, &inLow, optInSensitivity, optInMinTrendLength, &mut _b, &mut _n, &mut outZigZag, &mut outTrend, &mut outPivotIdx);
+            (rc, _n)
+        }));
+    }
+}
+
+fn legs_ZIGZAG(r: &mut Report) {
+    let core = Core::new();
+    let optInSensitivity = Core::REAL_DEFAULT;
+    let optInMinTrendLength = i32::MIN;
+    let Ok(lb) = core.zigzag_lookback(optInSensitivity, optInMinTrendLength) else { r.no_legs("ZIGZAG"); return; };
+    let (startIdx, endIdx) = (lb, lb + 4);
+    {
+        let inHigh: Vec<f64> = series("high", endIdx + 1);
+        let inLow: Vec<f64> = series("low", endIdx + 1);
+        let mut outZigZag: Vec<f64> = vec![Default::default(); 5];
+        let mut outTrend: Vec<i32> = vec![Default::default(); 5];
+        let mut outPivotIdx: Vec<i32> = vec![Default::default(); 5];
+        r.legs_control("ZIGZAG", run(|| {
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.zigzag_impl(startIdx, endIdx, &inHigh, &inLow, optInSensitivity, optInMinTrendLength, &mut _b, &mut _n, &mut outZigZag, &mut outTrend, &mut outPivotIdx);
+            (rc, _n)
+        }));
+    }
+    {
+        let inHigh: Vec<f64> = Vec::with_capacity(1);
+        let inLow: Vec<f64> = series("low", endIdx + 1);
+        let mut outZigZag: Vec<f64> = vec![Default::default(); 5];
+        let mut outTrend: Vec<i32> = vec![Default::default(); 5];
+        let mut outPivotIdx: Vec<i32> = vec![Default::default(); 5];
+        r.leg("ZIGZAG", "inHigh", 0, run(|| {
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.zigzag_impl(startIdx, endIdx, &inHigh, &inLow, optInSensitivity, optInMinTrendLength, &mut _b, &mut _n, &mut outZigZag, &mut outTrend, &mut outPivotIdx);
+            (rc, _n)
+        }));
+    }
+    {
+        let inHigh: Vec<f64> = series("high", endIdx + 1);
+        let inLow: Vec<f64> = Vec::with_capacity(1);
+        let mut outZigZag: Vec<f64> = vec![Default::default(); 5];
+        let mut outTrend: Vec<i32> = vec![Default::default(); 5];
+        let mut outPivotIdx: Vec<i32> = vec![Default::default(); 5];
+        r.leg("ZIGZAG", "inLow", 1, run(|| {
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.zigzag_impl(startIdx, endIdx, &inHigh, &inLow, optInSensitivity, optInMinTrendLength, &mut _b, &mut _n, &mut outZigZag, &mut outTrend, &mut outPivotIdx);
+            (rc, _n)
+        }));
+    }
+    r.legs_done("ZIGZAG", 2);
+}
+
 const V_ZLEMA: &[(&str, i32)] = &[
     ("defaults", i32::MIN),
     ("minimums", 1i32),
@@ -19690,6 +19773,7 @@ const PROBES: &[(&str, Probe, Probe)] = &[
     ("WCLPRICE", sub_WCLPRICE, legs_WCLPRICE),
     ("WILLR", sub_WILLR, legs_WILLR),
     ("WMA", sub_WMA, legs_WMA),
+    ("ZIGZAG", sub_ZIGZAG, legs_ZIGZAG),
     ("ZLEMA", sub_ZLEMA, legs_ZLEMA),
 ];
 
@@ -19729,7 +19813,7 @@ fn no_phantom_io() {
     // The corpus is the generator's, not a list kept by hand: a probe that
     // stopped being emitted is a shrinking sweep, which is the one way this
     // file can fail open.
-    assert_eq!(PROBES.len(), 232, "probe count");
+    assert_eq!(PROBES.len(), 233, "probe count");
     assert_eq!(
         PROBES.len(),
         crate::abstract_api::funcs().count(),

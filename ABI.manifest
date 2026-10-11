@@ -4,7 +4,7 @@ format 9
 soname libta-lib.so.1
 version-info 3:0:2
 headers ta_abstract.h ta_common.h ta_defs.h ta_func.h ta_libc.h
-function-count 3057
+function-count 3070
 platform pointer=8 long=8 int=4 enum=4
 type TA_FuncInfo sizeof=48 name:const_char_*=0 group:const_char_*=8 hint:const_char_*=16 flags:TA_FuncFlags=24 nbInput:unsigned_int=28 nbOptInput:unsigned_int=32 nbOutput:unsigned_int=36 handle:const_TA_FuncHandle_*=40
 type TA_InputParameterInfo sizeof=24 type:TA_InputParameterType=0 paramName:const_char_*=8 flags:TA_InputFlags=16
@@ -2541,6 +2541,7 @@ function TA_RetCode TA_S_WAD(int, int, const float *, const float *, const float
 function TA_RetCode TA_S_WCLPRICE(int, int, const float *, const float *, const float *, int *, int *, double *)
 function TA_RetCode TA_S_WILLR(int, int, const float *, const float *, const float *, int, int *, int *, double *)
 function TA_RetCode TA_S_WMA(int, int, const float *, int, int *, int *, double *)
+function TA_RetCode TA_S_ZIGZAG(int, int, const float *, const float *, double, int, int *, int *, double *, int *, int *)
 function TA_RetCode TA_S_ZLEMA(int, int, const float *, int, int *, int *, double *)
 function TA_RetCode TA_SetCandleSettings(TA_CandleSettingType, TA_RangeType, int, double)
 function TA_RetCode TA_SetCompatibility(TA_Compatibility)
@@ -2763,6 +2764,16 @@ function TA_RetCode TA_WMA_OutRange(const TA_WMA_Stream *, int *, int *)
 function TA_RetCode TA_WMA_Peek(const TA_WMA_Stream *, double, double *)
 function TA_RetCode TA_WMA_Update(TA_WMA_Stream *, double, double *)
 function TA_RetCode TA_WMA_Value(const TA_WMA_Stream *, double *)
+function TA_RetCode TA_ZIGZAG(int, int, const double *, const double *, double, int, int *, int *, double *, int *, int *)
+function TA_RetCode TA_ZIGZAG_Advance(TA_ZIGZAG_Stream *)
+function TA_RetCode TA_ZIGZAG_Clone(const TA_ZIGZAG_Stream *, TA_ZIGZAG_Stream **)
+function TA_RetCode TA_ZIGZAG_Close(TA_ZIGZAG_Stream *)
+function TA_RetCode TA_ZIGZAG_Open(TA_ZIGZAG_Stream **, const double *, const double *, int, double, int, double *, int *, int *)
+function TA_RetCode TA_ZIGZAG_OpenAndFill(TA_ZIGZAG_Stream **, const double *, const double *, int, double, int, int *, int *, double *, int *, int *)
+function TA_RetCode TA_ZIGZAG_OutRange(const TA_ZIGZAG_Stream *, int *, int *)
+function TA_RetCode TA_ZIGZAG_Peek(const TA_ZIGZAG_Stream *, double, double, double *, int *, int *)
+function TA_RetCode TA_ZIGZAG_Update(TA_ZIGZAG_Stream *, double, double, double *, int *, int *)
+function TA_RetCode TA_ZIGZAG_Value(const TA_ZIGZAG_Stream *, double *, int *, int *)
 function TA_RetCode TA_ZLEMA(int, int, const double *, int, int *, int *, double *)
 function TA_RetCode TA_ZLEMA_Advance(TA_ZLEMA_Stream *)
 function TA_RetCode TA_ZLEMA_Clone(const TA_ZLEMA_Stream *, TA_ZLEMA_Stream **)
@@ -3244,6 +3255,8 @@ function int TA_WILLR_DisplayShift(int, int)
 function int TA_WILLR_Lookback(int)
 function int TA_WMA_DisplayShift(int, int)
 function int TA_WMA_Lookback(int)
+function int TA_ZIGZAG_DisplayShift(double, int, int)
+function int TA_ZIGZAG_Lookback(double, int)
 function int TA_ZLEMA_DisplayShift(int, int)
 function int TA_ZLEMA_Lookback(int)
 function unsigned int TA_GetUnstablePeriod(TA_FuncUnstId)

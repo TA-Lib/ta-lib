@@ -9843,6 +9843,52 @@ static const TA_VOptSpec TA_VOpt_WMA[] = {
    { "optInTimePeriod", TA_VOPT_INT, 1.0, 100000.0, 30.0 },
 };
 
+static TA_RetCode TA_ZIGZAG_VFrameD( int startIdx, int endIdx,
+                  const double *const in[], const double optIn[],
+                  int *outBegIdx, int *outNBElement,
+                  double *const outReal[], int *const outInteger[] )
+{
+   return TA_ZIGZAG(
+               startIdx,
+               endIdx,
+               in[0] /* inHigh */,
+               in[1] /* inLow */,
+               optIn[0] /* optInSensitivity */,
+               (int)optIn[1] /* optInMinTrendLength */,
+               outBegIdx,
+               outNBElement,
+               outReal[0] /* outZigZag */,
+               outInteger[1] /* outTrend */,
+               outInteger[2] /* outPivotIdx */
+               );
+}
+static TA_RetCode TA_ZIGZAG_VFrameS( int startIdx, int endIdx,
+                  const float *const in[], const double optIn[],
+                  int *outBegIdx, int *outNBElement,
+                  double *const outReal[], int *const outInteger[] )
+{
+   return TA_S_ZIGZAG(
+               startIdx,
+               endIdx,
+               in[0] /* inHigh */,
+               in[1] /* inLow */,
+               optIn[0] /* optInSensitivity */,
+               (int)optIn[1] /* optInMinTrendLength */,
+               outBegIdx,
+               outNBElement,
+               outReal[0] /* outZigZag */,
+               outInteger[1] /* outTrend */,
+               outInteger[2] /* outPivotIdx */
+               );
+}
+
+static const TA_VInputKind TA_VIn_ZIGZAG[] = { TA_VIN_HIGH, TA_VIN_LOW };
+static const int TA_VOutIsInt_ZIGZAG[] = { 0, 1, 1 };
+static const TA_VOptSpec TA_VOpt_ZIGZAG[] = {
+   { "optInSensitivity", TA_VOPT_REAL, 0.0, 100.0, 5.0 },
+   { "optInMinTrendLength", TA_VOPT_INT, 1.0, 100000.0, 1.0 },
+};
+
 static TA_RetCode TA_ZLEMA_VFrameD( int startIdx, int endIdx,
                   const double *const in[], const double optIn[],
                   int *outBegIdx, int *outNBElement,
@@ -10345,10 +10391,12 @@ static const TA_VariantEntry TA_VariantTable[] = {
      3, TA_VIn_WILLR, 1, TA_VOpt_WILLR, 1, TA_VOutIsInt_WILLR, 0 },
    { "WMA", TA_WMA_VFrameD, TA_WMA_VFrameS,
      1, TA_VIn_WMA, 1, TA_VOpt_WMA, 1, TA_VOutIsInt_WMA, 0 },
+   { "ZIGZAG", TA_ZIGZAG_VFrameD, TA_ZIGZAG_VFrameS,
+     2, TA_VIn_ZIGZAG, 2, TA_VOpt_ZIGZAG, 3, TA_VOutIsInt_ZIGZAG, 0 },
    { "ZLEMA", TA_ZLEMA_VFrameD, TA_ZLEMA_VFrameS,
      1, TA_VIn_ZLEMA, 1, TA_VOpt_ZLEMA, 1, TA_VOutIsInt_ZLEMA, 0 },
 };
 
-#define TA_VARIANT_TABLE_SIZE 232
+#define TA_VARIANT_TABLE_SIZE 233
 
 #endif /* TA_VARIANT_FRAME_H */

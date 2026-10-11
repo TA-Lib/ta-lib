@@ -9299,6 +9299,48 @@ static TA_RetCode TA_WMA_SFrameClose( void *stream )
    return TA_WMA_Close( (TA_WMA_Stream *)stream );
 }
 
+static TA_RetCode TA_ZIGZAG_SFrameOpen( void **stream,
+                  const double *const in[], int historyLen,
+                  const double optIn[],
+                  double *const outReal[], int *const outInteger[] )
+{
+   return TA_ZIGZAG_Open(
+               (TA_ZIGZAG_Stream **)stream,
+               in[0] /* inHigh */,
+               in[1] /* inLow */,
+               historyLen,
+               optIn[0] /* optInSensitivity */,
+               (int)optIn[1] /* optInMinTrendLength */,
+               outReal[0] /* outZigZag */,
+               outInteger[1] /* outTrend */,
+               outInteger[2] /* outPivotIdx */
+               );
+}
+static TA_RetCode TA_ZIGZAG_SFrameFill( void **stream,
+                  const double *const in[], int historyLen,
+                  const double optIn[],
+                  int *outBegIdx, int *outNBElement,
+                  double *const outReal[], int *const outInteger[] )
+{
+   return TA_ZIGZAG_OpenAndFill(
+               (TA_ZIGZAG_Stream **)stream,
+               in[0] /* inHigh */,
+               in[1] /* inLow */,
+               historyLen,
+               optIn[0] /* optInSensitivity */,
+               (int)optIn[1] /* optInMinTrendLength */,
+               outBegIdx,
+               outNBElement,
+               outReal[0] /* outZigZag */,
+               outInteger[1] /* outTrend */,
+               outInteger[2] /* outPivotIdx */
+               );
+}
+static TA_RetCode TA_ZIGZAG_SFrameClose( void *stream )
+{
+   return TA_ZIGZAG_Close( (TA_ZIGZAG_Stream *)stream );
+}
+
 static TA_RetCode TA_ZLEMA_SFrameOpen( void **stream,
                   const double *const in[], int historyLen,
                   const double optIn[],
@@ -9798,10 +9840,12 @@ static const TA_StreamEntry TA_StreamTable[] = {
      3, TA_VIn_WILLR, 1, TA_VOpt_WILLR, 1, TA_VOutIsInt_WILLR },
    { "WMA", TA_WMA_SFrameOpen, TA_WMA_SFrameFill, TA_WMA_SFrameClose,
      1, TA_VIn_WMA, 1, TA_VOpt_WMA, 1, TA_VOutIsInt_WMA },
+   { "ZIGZAG", TA_ZIGZAG_SFrameOpen, TA_ZIGZAG_SFrameFill, TA_ZIGZAG_SFrameClose,
+     2, TA_VIn_ZIGZAG, 2, TA_VOpt_ZIGZAG, 3, TA_VOutIsInt_ZIGZAG },
    { "ZLEMA", TA_ZLEMA_SFrameOpen, TA_ZLEMA_SFrameFill, TA_ZLEMA_SFrameClose,
      1, TA_VIn_ZLEMA, 1, TA_VOpt_ZLEMA, 1, TA_VOutIsInt_ZLEMA },
 };
 
-#define TA_STREAM_TABLE_SIZE 232
+#define TA_STREAM_TABLE_SIZE 233
 
 #endif /* TA_STREAM_FRAME_H */

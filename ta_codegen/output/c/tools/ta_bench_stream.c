@@ -293,6 +293,7 @@ static void bench_tracked_free(void *p) {
 #include "ta_WCLPRICE.c"
 #include "ta_WILLR.c"
 #include "ta_WMA.c"
+#include "ta_ZIGZAG.c"
 #include "ta_ZLEMA.c"
 #include "ta_MA.c"
 
@@ -16006,6 +16007,83 @@ static void bench_stream_all(const char *filter, int iters) {
             g_sink += acc + nb;
             if( st ) { g_ta_track = 0; TA_WMA_Close(st); }
             bench_stream_row("WMA", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
+        }
+        fflush(stdout);
+    }
+    if( func_matches(filter, "ZIGZAG") ) {
+        long long best_b = 0, best_u = -1, best_p = -1;
+        int begIdx = 0, nb = 0;
+        size_t handle_bytes = 0;
+        double acc = 0.0;
+        const double optInSensitivity = bench_opaque_double(5.000000000000000);
+        const int optInMinTrendLength = bench_opaque_int(1);
+        int lb = TA_ZIGZAG_Lookback(optInSensitivity, optInMinTrendLength);
+        bench_rt_reserve((long long)lb + iters);
+        for( int pass = 0; pass < 3; pass++ ) {
+            int t = lb < 0 ? 0 : lb;
+            long long t0 = get_nanotime();
+            for( int it = 0; it < iters; it++ ) {
+                g_rt_high[t] = g_high[it & BENCH_MASK];
+                g_rt_low[t] = g_low[it & BENCH_MASK];
+                TA_ZIGZAG(t, t, g_rt_high, g_rt_low, optInSensitivity, optInMinTrendLength, &begIdx, &nb, g_outBuf0, g_outIntBuf0, g_outIntBuf1);
+                acc += g_outBuf0[0];
+                acc += (double)g_outIntBuf0[0];
+                acc += (double)g_outIntBuf1[0];
+                t++;
+            }
+            long long el = get_nanotime() - t0;
+            if( !best_b || el < best_b ) best_b = el;
+        }
+        TA_ZIGZAG_Stream *st = NULL;
+            double v0 = 0.0;
+            int iv0 = 0;
+            int iv1 = 0;
+        g_trk_reset(); g_ta_track = 1;
+        TA_RetCode orc = TA_ZIGZAG_Open(&st, g_high, g_low, g_nPoints, optInSensitivity, optInMinTrendLength, &v0, &iv0, &iv1);
+        g_ta_track = 0; handle_bytes = g_ta_live_bytes;
+        if( orc == TA_SUCCESS && st ) {
+            int blk = (iters >= 64) ? 32 : 1;
+            int nblk = iters / blk; int npk = nblk * blk; if( npk < 1 ) npk = 1;
+            for( int pass = 0; pass < 3; pass++ ) {
+                long long t0 = get_nanotime();
+                for( int it = 0; it < iters; it++ ) {
+                    TA_ZIGZAG_Update(st, g_high[it & BENCH_MASK], g_low[it & BENCH_MASK], &v0, &iv0, &iv1);
+                    acc += v0;
+                    acc += (double)iv0;
+                    acc += (double)iv1;
+                }
+                long long tu = get_nanotime() - t0;
+                if( best_u < 0 || tu < best_u ) best_u = tu;
+            }
+            for( int pass = 0; pass < 3; pass++ ) {
+                long long tp = 0;
+                for( int b = 0; b < nblk; b++ ) {
+                    long long t0 = get_nanotime();
+                    for( int j = 0; j < blk; j++ ) {
+                        int it = b * blk + j;
+                        TA_ZIGZAG_Peek(st, g_high[it & BENCH_MASK], g_low[it & BENCH_MASK], &v0, &iv0, &iv1);
+                        acc += v0;
+                        acc += (double)iv0;
+                        acc += (double)iv1;
+                    }
+                    tp += get_nanotime() - t0;
+                    for( int j = 0; j < blk; j++ ) {
+                        int it = b * blk + j;
+                        TA_ZIGZAG_Update(st, g_high[it & BENCH_MASK], g_low[it & BENCH_MASK], &v0, &iv0, &iv1);
+                        acc += v0;
+                        acc += (double)iv0;
+                        acc += (double)iv1;
+                    }
+                }
+                if( best_p < 0 || tp < best_p ) best_p = tp;
+            }
+            g_sink += acc + nb;
+            TA_ZIGZAG_Close(st);
+            bench_stream_row("ZIGZAG", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
+        } else {
+            g_sink += acc + nb;
+            if( st ) { g_ta_track = 0; TA_ZIGZAG_Close(st); }
+            bench_stream_row("ZIGZAG", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
         fflush(stdout);
     }
@@ -32290,6 +32368,86 @@ static void bench_stream_all_ctx(const char *filter, int iters) {
             g_sink += acc + nb;
             if( st ) { g_ta_track = 0; TA_WMA_Close(st); }
             bench_stream_row("WMA", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
+        }
+        fflush(stdout);
+    }
+    if( func_matches(filter, "ZIGZAG") ) {
+        long long best_b = 0, best_u = -1, best_p = -1;
+        int begIdx = 0, nb = 0;
+        size_t handle_bytes = 0;
+        double acc = 0.0;
+        const double optInSensitivity = bench_opaque_double(5.000000000000000);
+        const int optInMinTrendLength = bench_opaque_int(1);
+        int lb = TA_ZIGZAG_Lookback(optInSensitivity, optInMinTrendLength);
+        bench_rt_reserve((long long)lb + iters);
+        for( int pass = 0; pass < 3; pass++ ) {
+            int t = lb < 0 ? 0 : lb;
+            long long t0 = get_nanotime();
+            for( int it = 0; it < iters; it++ ) {
+                g_rt_high[t] = g_high[it & BENCH_MASK];
+                g_rt_low[t] = g_low[it & BENCH_MASK];
+                TA_ZIGZAG(t, t, g_rt_high, g_rt_low, optInSensitivity, optInMinTrendLength, &begIdx, &nb, g_outBuf0, g_outIntBuf0, g_outIntBuf1);
+                acc += g_outBuf0[0];
+                acc += (double)g_outIntBuf0[0];
+                acc += (double)g_outIntBuf1[0];
+                bench_context();
+                t++;
+            }
+            long long el = get_nanotime() - t0;
+            if( !best_b || el < best_b ) best_b = el;
+        }
+        TA_ZIGZAG_Stream *st = NULL;
+            double v0 = 0.0;
+            int iv0 = 0;
+            int iv1 = 0;
+        g_trk_reset(); g_ta_track = 1;
+        TA_RetCode orc = TA_ZIGZAG_Open(&st, g_high, g_low, g_nPoints, optInSensitivity, optInMinTrendLength, &v0, &iv0, &iv1);
+        g_ta_track = 0; handle_bytes = g_ta_live_bytes;
+        if( orc == TA_SUCCESS && st ) {
+            int blk = (iters >= 64) ? 32 : 1;
+            int nblk = iters / blk; int npk = nblk * blk; if( npk < 1 ) npk = 1;
+            for( int pass = 0; pass < 3; pass++ ) {
+                long long t0 = get_nanotime();
+                for( int it = 0; it < iters; it++ ) {
+                    TA_ZIGZAG_Update(st, g_high[it & BENCH_MASK], g_low[it & BENCH_MASK], &v0, &iv0, &iv1);
+                    acc += v0;
+                    acc += (double)iv0;
+                    acc += (double)iv1;
+                    bench_context();
+                }
+                long long tu = get_nanotime() - t0;
+                if( best_u < 0 || tu < best_u ) best_u = tu;
+            }
+            for( int pass = 0; pass < 3; pass++ ) {
+                long long tp = 0;
+                for( int b = 0; b < nblk; b++ ) {
+                    long long t0 = get_nanotime();
+                    for( int j = 0; j < blk; j++ ) {
+                        int it = b * blk + j;
+                        TA_ZIGZAG_Peek(st, g_high[it & BENCH_MASK], g_low[it & BENCH_MASK], &v0, &iv0, &iv1);
+                        acc += v0;
+                        acc += (double)iv0;
+                        acc += (double)iv1;
+                        bench_context();
+                    }
+                    tp += get_nanotime() - t0;
+                    for( int j = 0; j < blk; j++ ) {
+                        int it = b * blk + j;
+                        TA_ZIGZAG_Update(st, g_high[it & BENCH_MASK], g_low[it & BENCH_MASK], &v0, &iv0, &iv1);
+                        acc += v0;
+                        acc += (double)iv0;
+                        acc += (double)iv1;
+                    }
+                }
+                if( best_p < 0 || tp < best_p ) best_p = tp;
+            }
+            g_sink += acc + nb;
+            TA_ZIGZAG_Close(st);
+            bench_stream_row("ZIGZAG", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
+        } else {
+            g_sink += acc + nb;
+            if( st ) { g_ta_track = 0; TA_ZIGZAG_Close(st); }
+            bench_stream_row("ZIGZAG", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
         fflush(stdout);
     }

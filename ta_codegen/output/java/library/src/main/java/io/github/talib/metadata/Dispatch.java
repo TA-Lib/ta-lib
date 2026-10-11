@@ -751,6 +751,9 @@ final class Dispatch {
          case "WMA":
             return core.wma(
                startIdx, endIdx, h.realInput(0), h.intOpt(0), h.realOutput(0));
+         case "ZIGZAG":
+            return core.zigzag(
+               startIdx, endIdx, h.price(0, 1), h.price(0, 2), h.realOpt(0), h.intOpt(1), h.realOutput(0), h.intOutput(1), h.intOutput(2));
          case "ZLEMA":
             return core.zlema(
                startIdx, endIdx, h.realInput(0), h.intOpt(0), h.realOutput(0));
@@ -1227,6 +1230,8 @@ final class Dispatch {
             return core.willrLookback(h.intOpt(0));
          case "WMA":
             return core.wmaLookback(h.intOpt(0));
+         case "ZIGZAG":
+            return core.zigzagLookback(h.realOpt(0), h.intOpt(1));
          case "ZLEMA":
             return core.zlemaLookback(h.intOpt(0));
          default:
@@ -1699,6 +1704,8 @@ final class Dispatch {
             return core.willrDisplayShift(h.intOpt(0), outputIdx);
          case "WMA":
             return core.wmaDisplayShift(h.intOpt(0), outputIdx);
+         case "ZIGZAG":
+            return core.zigzagDisplayShift(h.realOpt(0), h.intOpt(1), outputIdx);
          case "ZLEMA":
             return core.zlemaDisplayShift(h.intOpt(0), outputIdx);
          default:

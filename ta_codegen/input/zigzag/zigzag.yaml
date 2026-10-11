@@ -1,0 +1,35 @@
+name: ZIGZAG
+group: Overlap Studies
+hint: Zig Zag
+flags: [overlap, stream, path_dependent]
+inputs:
+  - name: inPriceHL
+    type: price
+    price_components: [high, low]
+optional_inputs:
+  - name: optInSensitivity
+    type: real
+    display_name: Sensitivity
+    hint: Minimum move away from the current extreme that reverses the leg, in percent
+    range: [0, 100]
+    default: 5
+    precision: 2
+    flags: [percent]
+    suggested: [1, 20, 1]
+  - name: optInMinTrendLength
+    type: integer
+    display_name: Minimum Trend Length
+    hint: Minimum number of bars between two pivots
+    range: [1, 100000]
+    default: 1
+    suggested: [1, 20, 1]
+outputs:
+  - name: outZigZag
+    type: real
+    flags: [line]
+  - name: outTrend
+    type: integer
+    flags: [line]
+  - name: outPivotIdx
+    type: integer
+    flags: [line]

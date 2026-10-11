@@ -2588,6 +2588,17 @@ unsigned int TA_WMA_FramePPLB( const TA_ParamHolderPriv *params )
 int TA_WMA_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
 ;
 
+TA_RetCode TA_ZIGZAG_FramePP( const TA_ParamHolderPriv *params,
+                           int            startIdx,
+                           int            endIdx,
+                           int           *outBegIdx,
+                           int           *outNBElement )
+;
+unsigned int TA_ZIGZAG_FramePPLB( const TA_ParamHolderPriv *params )
+;
+int TA_ZIGZAG_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+;
+
 TA_RetCode TA_ZLEMA_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
                            int            endIdx,

@@ -346,6 +346,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
             MakeWclprice(),
             MakeWillr(),
             MakeWma(),
+            MakeZigzag(),
             MakeZlema(),
         ];
         _byName = _all.ToFrozenDictionary(f => f.Name, StringComparer.OrdinalIgnoreCase);
@@ -5795,6 +5796,33 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
         invoke: static (core, c, startIdx, endIdx) =>
             core.Wma(
                 startIdx, endIdx, c.Series(0), c.IntOpt(0), c.RealOut(0)));
+
+    private static FuncInfo MakeZigzag() => new(
+        name: "ZIGZAG",
+        group: FunctionGroup.OverlapStudies,
+        hint: "Zig Zag",
+        flags: FuncFlags.Overlap | FuncFlags.Stream | FuncFlags.PathDependent,
+        unstableId: null,
+        inputs:
+        [
+            new InputInfo(InputKind.Price, "inPriceHL", PriceComponents.High | PriceComponents.Low, [PriceComponents.High, PriceComponents.Low]),
+        ],
+        optInputs:
+        [
+            new OptInputInfo("optInSensitivity", "Sensitivity", "Minimum move away from the current extreme that reverses the leg, in percent", OptInputFlags.IsPercent, new OptInputDomain.RealRange(0.0, 100.0, 2, 5.0, 1.0, 20.0, 1.0)),
+            new OptInputInfo("optInMinTrendLength", "Minimum Trend Length", "Minimum number of bars between two pivots", OptInputFlags.None, new OptInputDomain.IntegerRange(1, 100000, 1, 1, 20, 1)),
+        ],
+        outputs:
+        [
+            new OutputInfo(OutputKind.Real, "outZigZag", OutputFlags.Line),
+            new OutputInfo(OutputKind.Integer, "outTrend", OutputFlags.Line),
+            new OutputInfo(OutputKind.Integer, "outPivotIdx", OutputFlags.Line),
+        ],
+        lookback: static (core, c) => core.ZigzagLookback(c.RealOpt(0), c.IntOpt(1)),
+        displayShift: static (core, c, outputIdx) => core.ZigzagDisplayShift(c.RealOpt(0), c.IntOpt(1), outputIdx),
+        invoke: static (core, c, startIdx, endIdx) =>
+            core.Zigzag(
+                startIdx, endIdx, c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.RealOpt(0), c.IntOpt(1), c.RealOut(0), c.IntOut(1), c.IntOut(2)));
 
     private static FuncInfo MakeZlema() => new(
         name: "ZLEMA",
