@@ -587,7 +587,9 @@ of the IBM daily series. Each row is held to `census_table.tsv`: a ceiling on
 the share of starts whose need passes the count at each level, the largest
 need, and the starts that never converge. The trial that set the largest need
 of each row when the table was made is replayed. A row on either side without
-its counterpart fails, so a function that gains an unstable id brings its rows.
+its counterpart fails, so a function that gains an unstable id brings its rows,
+and so does a row whose lookback or count moved: a trial's start and length
+follow them, so a re-sized rule is calibrated again.
 The [known exceptions](https://ta-lib.org/spec/auto-stabilization/#exceptions)
 are rows like any other: their ceiling is the share measured, not zero.
 
@@ -636,9 +638,10 @@ and how often a count runs short is the sampled census there.
 rD2 between machines ([across machines](https://ta-lib.org/spec/versions/#machines)): no machine is compared with another. Each is held on its own to the suite's
 reference values, which bounds two machines indirectly. `ta_test_legacy` replays
 the v0.6.4 values, frozen at 17 digits, on every platform, each function within
-its own bound, all under 1e-9. A function whose value depends on the host math
-library has no v0.6.4 row: `test_transcendental_ref.c` holds every function
-flagged `TA_FUNC_FLG_USES_TRANSCENDENTAL`, the Hilbert functions among them, to
+its own bound, all under 1e-9. The Hilbert functions and the elementary ones, whose
+value follows the host math library, have no v0.6.4 row:
+`test_transcendental_ref.c` holds every function
+flagged `TA_FUNC_FLG_USES_TRANSCENDENTAL`, those among them, to
 values committed once, at rD2's figure and shape, and a flagged function
 without a row fails. Known gap: a function added after v0.6.4 that calls no
 transcendental function has no frozen value; its hand-written values are

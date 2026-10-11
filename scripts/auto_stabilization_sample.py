@@ -5,9 +5,11 @@ Runs a reduced census (docs/studies/auto-stabilization/auto_stabilization_census
 against this tree's static library and holds each row to the committed table
 beside it, census_table.tsv:
 
+  - the lookback and the two counts, which a trial's start and length are
+    drawn from: a row where one moved is calibrated again, not compared;
   - the share of starts whose need passes the count, at each level;
-  - the largest need, in the sample and in the replay of the trial that set
-    the largest need of each row when the table was made;
+  - the largest need of the sample, and that of the trial that set the
+    largest need of each row in the full runs the table was made from;
   - the starts that never converge, and the trials that count at all.
 
 The sample is the first trials of one seed, so on one machine it is the same
@@ -48,15 +50,17 @@ CALIBRATION_SEEDS = (1, 2)
 # What a ceiling adds to the sampled share, in points: MARGIN_SPREAD times the
 # row's largest difference between two calibration machines, at least
 # MARGIN_FLOOR. A need may pass the largest one calibrated by NEED_SLACK.
-MARGIN_FLOOR = 1.0
+MARGIN_FLOOR = 0.25
 MARGIN_SPREAD = 3.0
 NEED_SLACK = 0.02
 LIVE_SLACK = 0.05
 
 COLS = ("func cfg kind lookback live auto4 p50_10 p99_10 max_10 over10 over7 "
         "auto8 p50_19 p99_19 max_19 over19 over16 never worstT10 worstT19").split()
-TABLE_COLS = ("func cfg kind live_min share10_max share19_max need10_max need19_max "
-              "never_max worst10 worst19").split()
+TABLE_COLS = ("func cfg kind lookback auto4 auto8 live_min share10_max share19_max "
+              "need10_max need19_max replay10_max replay19_max never_max worst10 worst19").split()
+TABLE_INTS = ("lookback auto4 auto8 live_min need10_max need19_max "
+              "replay10_max replay19_max never_max").split()
 
 
 def parse(text, where):
@@ -132,7 +136,7 @@ def read_table():
             if len(p) != len(TABLE_COLS):
                 raise SystemExit(f"FAIL: {TABLE}: a row of {len(p)} columns")
             r = dict(zip(TABLE_COLS, p))
-            for c in ("live_min", "need10_max", "need19_max", "never_max"):
+            for c in TABLE_INTS:
                 r[c] = int(r[c])
             for c in ("share10_max", "share19_max"):
                 r[c] = float(r[c])
@@ -157,6 +161,11 @@ def check(exe, pool):
     nb = {"share": 0, "share_above_0": 0, "need": 0, "replay": 0}
     for key in sorted(set(got) & set(table)):
         r, t = got[key], table[key]
+        moved = [c for c in ("lookback", "auto4", "auto8") if r[c] != t[c]]
+        if moved:
+            fails.append(f"{key}: {', '.join(f'{c} is {r[c]}, was {t[c]}' for c in moved)}: "
+                         "the row's trials are no longer the table's, calibrate it again")
+            continue
         if r["live"] < t["live_min"]:
             fails.append(f"{key}: {r['live']} live trials, at least {t['live_min']} expected")
             continue
@@ -185,9 +194,9 @@ def check(exe, pool):
                 fails.append(f"{key}: the replay of seed {job[1]} trial {job[2]} is not a live trial")
                 continue
             nb["replay"] += 1
-            if r[f"max_{lvl}"] > t[f"need{lvl}_max"]:
+            if r[f"max_{lvl}"] > t[f"replay{lvl}_max"]:
                 fails.append(f"{key}: seed {job[1]} trial {job[2]} needs {r[f'max_{lvl}']} bars at e^-{lvl}, "
-                             f"largest allowed {t[f'need{lvl}_max']}")
+                             f"largest allowed {t[f'replay{lvl}_max']}")
 
     if not fails and (nb["share"] != 2 * len(table) or nb["replay"] != 2 * len(table) or nb["share_above_0"] == 0):
         fails.append(f"vacuous: {nb} over {len(table)} rows")
@@ -228,16 +237,19 @@ def calibrate(exe, pool, dirs):
     print("\t".join(TABLE_COLS))
     for key in keys:
         r = got[key]
-        line = [key[0], key[1], key[2], str(int(r["live"] * (1 - LIVE_SLACK)))]
+        line = [key[0], key[1], key[2], str(r["lookback"]), str(r["auto4"]), str(r["auto8"]),
+                str(int(r["live"] * (1 - LIVE_SLACK)))]
         for over in ("over10", "over19"):
             spread = max(max(share(h[(s,) + key], over) for h in hosts) - min(share(h[(s,) + key], over) for h in hosts)
                          for s in CALIBRATION_SEEDS)
             line.append(f"{share(r, over) + max(MARGIN_FLOOR, MARGIN_SPREAD * spread):.2f}")
-        worst = []
+        worst, replay = [], []
         for mx, wt in (("max_10", "worstT10"), ("max_19", "worstT19")):
             top = max(((h[(s,) + key][mx], s, h[(s,) + key][wt]) for h in hosts for s in CALIBRATION_SEEDS))
-            line.append(str(int(math.ceil(top[0] * (1 + NEED_SLACK)))))
+            line.append(str(int(math.ceil(r[mx] * (1 + NEED_SLACK)))))
+            replay.append(str(int(math.ceil(top[0] * (1 + NEED_SLACK)))))
             worst.append(f"{top[1]}:{top[2]}")
+        line += replay
         line.append(str(max(max(h[(s,) + key]["never"] for h in hosts for s in CALIBRATION_SEEDS), r["never"])))
         print("\t".join(line + worst))
     return 0

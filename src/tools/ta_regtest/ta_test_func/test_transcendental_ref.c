@@ -53,7 +53,8 @@
  *   absolute below). No machine is compared with another: each one is held to
  *   the same table.
  *
- *   A flagged function with no row fails, so a new one brings its rows:
+ *   A flagged function with an output that has no row fails, so a new one
+ *   brings its rows:
  *   TA_TRANSCENDENTAL_REF=print writes the table, to be committed from one
  *   machine and then run on the others before it is trusted.
  *   TA_TRANSCENDENTAL_REF=measure prints the largest deviation instead of
@@ -103,15 +104,16 @@ static void trOneFunction( const TA_FuncInfo *funcInfo, void *opaque )
    const TrRef *r;
    TA_RetCode rc;
    unsigned int i;
-   int beg = 0, nb = 0, bar, nbRow = 0, isReal[TR_MAX_OUT];
+   int beg = 0, nb = 0, bar, isReal[TR_MAX_OUT];
+   unsigned int outSeen = 0;
    int math = !strcmp( funcInfo->group, "Math Transform" );
 
    (void)opaque;
    if( !(funcInfo->flags & TA_FUNC_FLG_USES_TRANSCENDENTAL) ) return;
    trNbFunc++;
 
-   rc = TA_ParamHolderAlloc( funcInfo->handle, &h );
-   if( funcInfo->nbOutput > TR_MAX_OUT ) rc = TA_BAD_PARAM;
+   rc = funcInfo->nbOutput > TR_MAX_OUT ? TA_BAD_PARAM : TA_ParamHolderAlloc( funcInfo->handle, &h );
+   if( rc != TA_SUCCESS ) h = NULL;
    for( i=0; i < funcInfo->nbInput && rc == TA_SUCCESS; i++ )
    {
       TA_GetInputParameterInfo( funcInfo->handle, i, &in );
@@ -131,7 +133,7 @@ static void trOneFunction( const TA_FuncInfo *funcInfo, void *opaque )
                      : TA_SetOutputParamIntegerPtr( h, i, trInt[i] );
    }
    if( rc == TA_SUCCESS ) rc = TA_CallFunc( h, 0, TR_N-1, &beg, &nb );
-   TA_ParamHolderFree( h );
+   if( h ) TA_ParamHolderFree( h );
    if( rc != TA_SUCCESS || nb <= 0 )
    {
       printf( "\n  transcendental reference: %s: call failed (%d), %d bars", funcInfo->name, (int)rc, nb );
@@ -153,7 +155,6 @@ static void trOneFunction( const TA_FuncInfo *funcInfo, void *opaque )
    {
       double got, d, limit;
       if( strcmp( r->name, funcInfo->name ) ) continue;
-      nbRow++;
       if( r->output < 0 || r->output >= (int)funcInfo->nbOutput || r->bar < beg || r->bar >= beg+nb )
       {
          printf( "\n  transcendental reference: %s output %d bar %d: outside the call's range %d..%d",
@@ -162,6 +163,7 @@ static void trOneFunction( const TA_FuncInfo *funcInfo, void *opaque )
          continue;
       }
       got = isReal[r->output] ? trReal[r->output][r->bar-beg] : (double)trInt[r->output][r->bar-beg];
+      outSeen |= 1u << r->output;
       limit = CODEGEN_TRANSCENDENTAL_TOL * fmax( 1.0, fabs( r->value ) );
       d = fabs( got - r->value );
       trNbCmp++;
@@ -178,9 +180,9 @@ static void trOneFunction( const TA_FuncInfo *funcInfo, void *opaque )
          trNbFail++;
       }
    }
-   if( nbRow == 0 )
+   if( outSeen != (1u << funcInfo->nbOutput) - 1 )
    {
-      printf( "\n  transcendental reference: %s is flagged and has no committed value", funcInfo->name );
+      printf( "\n  transcendental reference: %s is flagged and has an output with no committed value", funcInfo->name );
       trNbFail++;
    }
 }

@@ -24,8 +24,9 @@
  * those optional parameters set (FastPeriod=12,MAType=3).
  * CENSUS_NEEDS=<file> also writes each trial's need at K = 10 and 19, for a
  * tail the three quantiles do not show.
- * CENSUS_TRIAL=<t> runs that one trial of each row: the series depends on the
- * seed, the trial, the kind and the configuration only, so a worstT replays.
+ * CENSUS_TRIAL=<t> runs that one trial of each row. A worstT replays while the
+ * row's lookback and counts stand: the later start and the series length are
+ * drawn from them.
  * Columns: lookback, at 0; live, the trials counted: the two starts differ and
  * the series leaves more ages to compare than the PREC_8 count; auto4 and
  * auto8, the counts; need<K> p50/p99/max over the live trials; over<K>, live
