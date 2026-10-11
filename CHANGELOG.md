@@ -37,6 +37,7 @@ See [github commits](https://github.com/TA-Lib/ta-lib/commits) for complete list
   - PSO: Premier Stochastic Oscillator, Leibfarth's double-smoothed Fast %K squashed into -1 to +1 (#473)
   - RVIR: Relative Volatility Index, 1995 refined form (#416)
   - SI: Wilder Swing Index, each bar rated against the one before (#451)
+  - SQZMOM: Squeeze Momentum and Level, a regression-smoothed momentum plus how tightly the Bollinger Bands sit inside three Keltner Channels (#488)
   - STC: Schaff Trend Cycle, a MACD line run twice through a stochastic, each pass smoothed by half (#478)
   - SWAK_2PHP: Swiss Army Knife - Two-Pole High-Pass Filter, Ehlers' high-pass rolling off twice as steeply as SWAK_HP (#486)
   - SWAK_BP: Swiss Army Knife - Band-Pass Filter, Ehlers' resonator passing one period at unity gain and zero phase (#486)
