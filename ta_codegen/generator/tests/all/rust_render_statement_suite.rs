@@ -1146,8 +1146,8 @@ fn every_integer_output_carries_an_example_claim() {
         checked += 1;
     }
     assert_eq!(
-        checked, 67,
-        "expected the 67 integer-output functions, swept {checked}"
+        checked, 68,
+        "expected the 68 integer-output functions, swept {checked}"
     );
 }
 

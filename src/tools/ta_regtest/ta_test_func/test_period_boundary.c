@@ -2708,6 +2708,10 @@ static void pbSweepOneFunction( const TA_FuncInfo *funcInfo, void *opaque )
    int crossConstrained = ( strcmp( funcInfo->name, "MAVP" ) == 0 );
    /* The range cannot say "even": FRAMA must reject an odd period cleanly. */
    int evenOnly = ( strcmp( funcInfo->name, "FRAMA" ) == 0 );
+   /* SQZMOM orders its three real factors (wide >= normal >= narrow). Wide
+    * and normal at their range minimum of 0 fall below a sibling's default
+    * and are rejected; narrow at 0 crosses nothing and must compute. */
+   int isSqzmom = ( strcmp( funcInfo->name, "SQZMOM" ) == 0 );
 
    if( ctx->errNb != TA_TEST_PASS )
       return;   /* Already failed: skip the rest quietly. */
@@ -2826,7 +2830,10 @@ static void pbSweepOneFunction( const TA_FuncInfo *funcInfo, void *opaque )
          for( k = 0; k < nCand; k++ )
          {
             pbSweepRunCase( ctx, funcInfo, paramNb, optInfo, 1, 0, cand[k],
-                            PB_EXPECT_STRICT );
+                            ( isSqzmom && cand[k] < optInfo->defaultValue
+                              && ( strcmp( optInfo->paramName, "optInFactorWide" ) == 0
+                                || strcmp( optInfo->paramName, "optInFactorNormal" ) == 0 ) )
+                               ? PB_EXPECT_REJECT : PB_EXPECT_STRICT );
             if( ctx->errNb != TA_TEST_PASS ) return;
          }
          break;

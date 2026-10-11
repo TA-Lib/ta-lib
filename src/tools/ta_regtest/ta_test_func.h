@@ -45,6 +45,7 @@ ErrorNumber test_func_fisher( TA_History *history );
 ErrorNumber test_func_kvo( TA_History *history );
 ErrorNumber test_func_wavetrend( TA_History *history );
 ErrorNumber test_func_dosc( TA_History *history );
+ErrorNumber test_func_sqzmom( TA_History *history );
 ErrorNumber test_func_pso( TA_History *history );
 ErrorNumber test_func_rogerssatchell( TA_History *history );
 ErrorNumber test_func_emv     ( TA_History *history );

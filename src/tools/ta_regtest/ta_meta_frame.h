@@ -445,6 +445,8 @@ TA_RetCode TA_SMI_MetaRide( int startIdx, int endIdx, const double inHigh[], con
 TA_RetCode TA_S_SMI_MetaRide( int startIdx, int endIdx, const float inHigh[], const float inLow[], const float inClose[], int optInTimePeriod, int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod, int *outBegIdx, int *outNBElement, double outSMI[], double outSMISignal[] );
 TA_RetCode TA_SQRT_MetaRide( int startIdx, int endIdx, const double inReal[], int *outBegIdx, int *outNBElement, double outReal[] );
 TA_RetCode TA_S_SQRT_MetaRide( int startIdx, int endIdx, const float inReal[], int *outBegIdx, int *outNBElement, double outReal[] );
+TA_RetCode TA_SQZMOM_MetaRide( int startIdx, int endIdx, const double inHigh[], const double inLow[], const double inClose[], int optInBBPeriod, double optInNbDev, int optInKCPeriod, double optInFactorWide, double optInFactorNormal, double optInFactorNarrow, int *outBegIdx, int *outNBElement, double outMomentum[], int outSqueeze[] );
+TA_RetCode TA_S_SQZMOM_MetaRide( int startIdx, int endIdx, const float inHigh[], const float inLow[], const float inClose[], int optInBBPeriod, double optInNbDev, int optInKCPeriod, double optInFactorWide, double optInFactorNormal, double optInFactorNarrow, int *outBegIdx, int *outNBElement, double outMomentum[], int outSqueeze[] );
 TA_RetCode TA_STC_MetaRide( int startIdx, int endIdx, const double inReal[], int optInFastPeriod, int optInSlowPeriod, int optInCyclePeriod, int *outBegIdx, int *outNBElement, double outReal[] );
 TA_RetCode TA_S_STC_MetaRide( int startIdx, int endIdx, const float inReal[], int optInFastPeriod, int optInSlowPeriod, int optInCyclePeriod, int *outBegIdx, int *outNBElement, double outReal[] );
 TA_RetCode TA_STDDEV_MetaRide( int startIdx, int endIdx, const double inReal[], int optInTimePeriod, double optInNbDev, int *outBegIdx, int *outNBElement, double outReal[] );
@@ -719,6 +721,7 @@ const char *const TA_MetaFrameName[TA_META_FRAME_SIZE] = {
    "SMA",
    "SMI",
    "SQRT",
+   "SQZMOM",
    "STC",
    "STDDEV",
    "STOCH",
@@ -6499,6 +6502,35 @@ TA_RetCode TA_S_SQRT_MetaRide( int startIdx, int endIdx, const float inReal[], i
    return retCode;
 }
 
+TA_RetCode TA_SQZMOM_MetaRide( int startIdx, int endIdx, const double inHigh[], const double inLow[], const double inClose[], int optInBBPeriod, double optInNbDev, int optInKCPeriod, double optInFactorWide, double optInFactorNormal, double optInFactorNarrow, int *outBegIdx, int *outNBElement, double outMomentum[], int outSqueeze[] )
+{
+   TA_RetCode retCode = TA_SQZMOM( startIdx, endIdx, inHigh, inLow, inClose, optInBBPeriod, optInNbDev, optInKCPeriod, optInFactorWide, optInFactorNormal, optInFactorNarrow, outBegIdx, outNBElement, outMomentum, outSqueeze );
+   if( retCode == TA_SUCCESS )
+   {
+      const void *in[] = { inHigh, inLow, inClose };
+      const void *out[] = { outMomentum, outSqueeze };
+      int shift[] = { TA_SQZMOM_DisplayShift( optInBBPeriod, optInNbDev, optInKCPeriod, optInFactorWide, optInFactorNormal, optInFactorNarrow, 0 ), TA_SQZMOM_DisplayShift( optInBBPeriod, optInNbDev, optInKCPeriod, optInFactorWide, optInFactorNormal, optInFactorNarrow, 1 ) };
+      meta_ride_check( 197, 0, startIdx, endIdx, in, 3,
+                       *outBegIdx, *outNBElement,
+                       TA_SQZMOM_Lookback( optInBBPeriod, optInNbDev, optInKCPeriod, optInFactorWide, optInFactorNormal, optInFactorNarrow ), shift, out );
+   }
+   return retCode;
+}
+TA_RetCode TA_S_SQZMOM_MetaRide( int startIdx, int endIdx, const float inHigh[], const float inLow[], const float inClose[], int optInBBPeriod, double optInNbDev, int optInKCPeriod, double optInFactorWide, double optInFactorNormal, double optInFactorNarrow, int *outBegIdx, int *outNBElement, double outMomentum[], int outSqueeze[] )
+{
+   TA_RetCode retCode = TA_S_SQZMOM( startIdx, endIdx, inHigh, inLow, inClose, optInBBPeriod, optInNbDev, optInKCPeriod, optInFactorWide, optInFactorNormal, optInFactorNarrow, outBegIdx, outNBElement, outMomentum, outSqueeze );
+   if( retCode == TA_SUCCESS )
+   {
+      const void *in[] = { inHigh, inLow, inClose };
+      const void *out[] = { outMomentum, outSqueeze };
+      int shift[] = { TA_SQZMOM_DisplayShift( optInBBPeriod, optInNbDev, optInKCPeriod, optInFactorWide, optInFactorNormal, optInFactorNarrow, 0 ), TA_SQZMOM_DisplayShift( optInBBPeriod, optInNbDev, optInKCPeriod, optInFactorWide, optInFactorNormal, optInFactorNarrow, 1 ) };
+      meta_ride_check( 197, 1, startIdx, endIdx, in, 3,
+                       *outBegIdx, *outNBElement,
+                       TA_SQZMOM_Lookback( optInBBPeriod, optInNbDev, optInKCPeriod, optInFactorWide, optInFactorNormal, optInFactorNarrow ), shift, out );
+   }
+   return retCode;
+}
+
 TA_RetCode TA_STC_MetaRide( int startIdx, int endIdx, const double inReal[], int optInFastPeriod, int optInSlowPeriod, int optInCyclePeriod, int *outBegIdx, int *outNBElement, double outReal[] )
 {
    TA_RetCode retCode = TA_STC( startIdx, endIdx, inReal, optInFastPeriod, optInSlowPeriod, optInCyclePeriod, outBegIdx, outNBElement, outReal );
@@ -7941,6 +7973,8 @@ TA_RetCode TA_S_ZLEMA_MetaRide( int startIdx, int endIdx, const float inReal[], 
 #define TA_S_SMI TA_S_SMI_MetaRide
 #define TA_SQRT TA_SQRT_MetaRide
 #define TA_S_SQRT TA_S_SQRT_MetaRide
+#define TA_SQZMOM TA_SQZMOM_MetaRide
+#define TA_S_SQZMOM TA_S_SQZMOM_MetaRide
 #define TA_STC TA_STC_MetaRide
 #define TA_S_STC TA_S_STC_MetaRide
 #define TA_STDDEV TA_STDDEV_MetaRide
