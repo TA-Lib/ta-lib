@@ -47,13 +47,16 @@ public partial class Core
     *  Initial  Name/description
     *  -------------------------------------------------------------------
     *  MF       Mario Fortier
+    *  KL       Kevin Lin (@kevinlincg)
     *  CC       Claude Code (AI assistant)
     *
     * Change history:
     *
     *  MMDDYY BY     Description
     *  -------------------------------------------------------------------
-    *  100626 MF,CC  Initial version (#479).
+    *  100626 KL,CC  Initial version (#479).
+    *  101026 MF,CC  The EMA betas stay as the divide wrote them above a
+    *                period of 2.
     */
    /// <summary>
    /// Number of leading input bars <c>Dosc</c> consumes before it can produce
@@ -95,16 +98,9 @@ public partial class Core
       } else if( optInSignalPeriod < 2 || optInSignalPeriod > 100000 ) {
          return -1;
       }
-      /* Wilder's RSI, the two exponential smoothings stacked on it and the
-       * simple average taken over the result. Every term is exactly the lookback
-       * of the function it comes from, so none of them is restated here -- which
-       * is what makes DOSC inherit TA_FUNC_UNST_RSI and TA_FUNC_UNST_EMA from its
-       * callees rather than take an id of its own, and what carries the Auto
-       * warm-up levels of #492 through all three of them.
-       *
-       * The EMA term appears TWICE, once per smoothing stage, so a warm
-       * TA_SetUnstablePeriod(TA_FUNC_UNST_EMA, k) moves the lookback by 2k and
-       * not by k.
+      /* Keep every term a callee's lookback call: that is how DOSC inherits
+       * TA_FUNC_UNST_RSI and TA_FUNC_UNST_EMA with no id of its own. The EMA
+       * term counts twice, once per smoothing stage.
        */
       return RsiLookback(optInTimePeriod) + EmaLookback(optInFirstPeriod) + EmaLookback(optInSecondPeriod) + SmaLookback(optInSignalPeriod) ;
 
@@ -219,20 +215,13 @@ public partial class Core
        *    DS_t   = EMA(S1, s)_t
        *    DOSC_t = DS_t - SMA(DS, g)_t
        *
-       * This walks the chain in one pass, with each stage's arithmetic spelled
-       * exactly as its callee spells it: rsi.c's Wilder recursion, ema.c's seed
-       * and step, and sma.c's add-new / snapshot / subtract-old running sum. The
-       * intermediate series are never materialised -- the double-smoothed line
-       * goes straight into a ring of the last `signal` values -- and the result
-       * is bit-identical to TA_RSI -> TA_EMA -> TA_EMA -> TA_SMA -> TA_SUB
-       * rather than merely close, which is what the composition gate holds.
+       * The output must stay bit-identical to
+       * TA_RSI -> TA_EMA -> TA_EMA -> TA_SMA -> TA_SUB, so every stage keeps its
+       * callee's operation order, and every stage boundary is the callee's
+       * LOOKBACK, not (period-1): a warm unstable period then folds in.
        *
-       * Every stage boundary below is the callee's LOOKBACK, not (period-1), so
-       * each stage seeds on the values its predecessor would have published and a
-       * warm unstable period folds in. The counters are compared BEFORE they are
-       * subtracted, never after: written as `n = nRsi - skipRSI; if( n >= 0 )`
-       * this is correct in C, where the counters are signed, and broken in the
-       * Rust backend, which renders them usize (the lesson smi.c records).
+       * Compare the counters BEFORE subtracting them: the Rust backend renders
+       * them usize, where `n = nRsi - skipRSI; if( n >= 0 )` underflows.
        */
       /* This ptr will point on a circular buffer of at least
        * "optInSignalPeriod" element.
@@ -257,32 +246,33 @@ public partial class Core
       lookbackRSI = RsiLookback(optInTimePeriod);
       lookbackEMA1 = EmaLookback(optInFirstPeriod);
       lookbackEMA2 = EmaLookback(optInSecondPeriod);
-      /* The RSI values the composed chain never publishes: TA_RSI entered at the
-       * first bar the first smoothing needs has already consumed its own
-       * unstable period by then. Taking the difference of the two lookbacks
-       * rather than reading TA_GetUnstablePeriod is what keeps this correct under
-       * the Auto levels, where the count is a function of the period.
+      /* The RSI values the composed chain never publishes. Derive the count
+       * from the lookback, never from TA_GetUnstablePeriod: under the Auto
+       * levels it is a function of the period.
        */
       skipRSI = lookbackRSI - optInTimePeriod;
-      /* ema.c's constants: k and beta must sum to exactly 1.0, or a flat input
-       * drifts off its level.
+      /* k and beta must sum to exactly 1.0, or a flat input drifts off its
+       * level. Each subtraction is exact only from an operand in [0.5,1): at a
+       * period of 2 that is k, above it beta. Above it beta stays as the divide
+       * wrote it: a register last written by a subtraction costs each FMA
+       * reading it one more cycle on Intel P-cores.
        */
       beta1 = (double)(optInFirstPeriod - 1) / (double)(optInFirstPeriod + 1);
       k1 = 1.0 - beta1;
-      beta1 = 1.0 - k1;
+      if( beta1 < 0.5 ) {
+         beta1 = 1.0 - k1;
+      }
       beta2 = (double)(optInSecondPeriod - 1) / (double)(optInSecondPeriod + 1);
       k2 = 1.0 - beta2;
-      beta2 = 1.0 - k2;
+      if( beta2 < 0.5 ) {
+         beta2 = 1.0 - k2;
+      }
       ema1 = 0.0;
       ema2 = 0.0;
       sum1 = 0.0;
       sum2 = 0.0;
       sumSignal = 0.0;
       nRsi = 0;
-      /* Wilder's seed, exactly as rsi.c accumulates it: one simple sum of the
-       * first optInTimePeriod changes, each side taken unconditionally, then
-       * both scaled by 1/period.
-       */
       invPeriod = 1.0 / (double)optInTimePeriod;
       today = startIdx - lookbackTotal;
       rsiBar = today + optInTimePeriod;
@@ -301,10 +291,6 @@ public partial class Core
       }
       prevLoss *= invPeriod;
       prevGain *= invPeriod;
-      /* rsi.c answers the neutral 50 when neither a gain nor a loss has been seen
-       * since the seed, the 0/0 case of issue #480; the one-sided cases are 0 and
-       * 100 and reach the division.
-       */
       tempValue1 = prevGain + prevLoss;
       if( tempValue1 > 0.0 ) {
          rsiValue = 100.0 * (prevGain / tempValue1);
@@ -365,12 +351,10 @@ public partial class Core
          }
          rsiBar = rsiBar + 1;
       }
-      /* The first output. Every stage is past its seed here -- the shortest
-       * reachable case, periods 2/2/2/2, still arrives with n1 = 3, n2 = 2 and a
-       * signal window one short of full -- so from this bar on the chain is three
-       * pure recursions and a running sum, with nothing left to branch on. That
-       * is what keeps the managed peek frames from carrying a seeded output
-       * local: the store below and the one in the stable loop always run.
+      /* The first output. Every stage is past its seed here, even at periods
+       * 2/2/2/2, so the store below and the one in the stable loop are
+       * unconditional. Keep them so: under a guard, the managed peek frames
+       * seed a dead output local.
        */
       ema1 = Math.FusedMultiplyAdd(beta1, ema1, k1 * rsiValue);
       ema2 = Math.FusedMultiplyAdd(beta2, ema2, k2 * ema1);
@@ -507,10 +491,14 @@ public partial class Core
       skipRSI = lookbackRSI - optInTimePeriod;
       beta1 = (double)(optInFirstPeriod - 1) / (double)(optInFirstPeriod + 1);
       k1 = 1.0 - beta1;
-      beta1 = 1.0 - k1;
+      if( beta1 < 0.5 ) {
+         beta1 = 1.0 - k1;
+      }
       beta2 = (double)(optInSecondPeriod - 1) / (double)(optInSecondPeriod + 1);
       k2 = 1.0 - beta2;
-      beta2 = 1.0 - k2;
+      if( beta2 < 0.5 ) {
+         beta2 = 1.0 - k2;
+      }
       ema1 = 0.0;
       ema2 = 0.0;
       sum1 = 0.0;
@@ -647,10 +635,10 @@ public partial class Core
    /// <see href="https://ta-lib.org/functions/dosc">ta-lib.org/functions/dosc</see>.
    /// </para>
    /// <list type="bullet">
-   /// <item><description>Every stage is a call to a function TA-Lib already ships, so the output is identical, bit for bit, to <c>TA_RSI</c> followed by two <c>TA_EMA</c> calls, a <c>TA_SMA</c> and a <c>TA_SUB</c>. The shortest expression of that chain takes five calls and three intermediate buffers; this computes it in one pass without materialising them.</description></item>
+   /// <item><description>Every stage is a function TA-Lib already ships, and the output is identical, bit for bit, to <c>TA_RSI</c> followed by two <c>TA_EMA</c> calls, a <c>TA_SMA</c> and a <c>TA_SUB</c>. That chain takes five calls and their intermediate buffers; this computes it in one pass without materialising them.</description></item>
    /// <item><description>Each exponential average is seeded with a simple average of its own first inputs, the same seeding TA-Lib's EMA uses, and the second seeds on what the first publishes. <c>TA_SetUnstablePeriod</c> on either <c>TA_FUNC_UNST_RSI</c> or <c>TA_FUNC_UNST_EMA</c> discards more of that warm-up, and the EMA setting counts twice because there are two exponential stages. Implementations seeding each stage from a single first sample differ over the transient and agree once it decays.</description></item>
    /// <item><description>The degenerate reading is whatever <c>TA_RSI</c> answers when neither a gain nor a loss has been seen since the seed. Some other implementations answer 100 there and will disagree over that stretch.</description></item>
-   /// <item><description>The periods are independent: the stages commute, so no ordering between the two smoothing periods is required or checked. A signal period of 1 would make the output identically zero, so the minimum is 2.</description></item>
+   /// <item><description>The periods are independent: no ordering between the two smoothing periods is required or checked. Swapping them changes the outputs, most at the start: each average is seeded on its own inputs, and that difference decays to rounding level. A signal period of 1 would make the output identically zero, so the minimum is 2.</description></item>
    /// </list>
    /// <para>
    /// Values are written only where the indicator is defined. The returned
@@ -742,10 +730,10 @@ public partial class Core
    /// <see href="https://ta-lib.org/functions/dosc">ta-lib.org/functions/dosc</see>.
    /// </para>
    /// <list type="bullet">
-   /// <item><description>Every stage is a call to a function TA-Lib already ships, so the output is identical, bit for bit, to <c>TA_RSI</c> followed by two <c>TA_EMA</c> calls, a <c>TA_SMA</c> and a <c>TA_SUB</c>. The shortest expression of that chain takes five calls and three intermediate buffers; this computes it in one pass without materialising them.</description></item>
+   /// <item><description>Every stage is a function TA-Lib already ships, and the output is identical, bit for bit, to <c>TA_RSI</c> followed by two <c>TA_EMA</c> calls, a <c>TA_SMA</c> and a <c>TA_SUB</c>. That chain takes five calls and their intermediate buffers; this computes it in one pass without materialising them.</description></item>
    /// <item><description>Each exponential average is seeded with a simple average of its own first inputs, the same seeding TA-Lib's EMA uses, and the second seeds on what the first publishes. <c>TA_SetUnstablePeriod</c> on either <c>TA_FUNC_UNST_RSI</c> or <c>TA_FUNC_UNST_EMA</c> discards more of that warm-up, and the EMA setting counts twice because there are two exponential stages. Implementations seeding each stage from a single first sample differ over the transient and agree once it decays.</description></item>
    /// <item><description>The degenerate reading is whatever <c>TA_RSI</c> answers when neither a gain nor a loss has been seen since the seed. Some other implementations answer 100 there and will disagree over that stretch.</description></item>
-   /// <item><description>The periods are independent: the stages commute, so no ordering between the two smoothing periods is required or checked. A signal period of 1 would make the output identically zero, so the minimum is 2.</description></item>
+   /// <item><description>The periods are independent: no ordering between the two smoothing periods is required or checked. Swapping them changes the outputs, most at the start: each average is seeded on its own inputs, and that difference decays to rounding level. A signal period of 1 would make the output identically zero, so the minimum is 2.</description></item>
    /// </list>
    /// <para>
    /// This is the <c>float[]</c> overload: input elements are widened to
@@ -1142,20 +1130,13 @@ public partial class Core
        *    DS_t   = EMA(S1, s)_t
        *    DOSC_t = DS_t - SMA(DS, g)_t
        *
-       * This walks the chain in one pass, with each stage's arithmetic spelled
-       * exactly as its callee spells it: rsi.c's Wilder recursion, ema.c's seed
-       * and step, and sma.c's add-new / snapshot / subtract-old running sum. The
-       * intermediate series are never materialised -- the double-smoothed line
-       * goes straight into a ring of the last `signal` values -- and the result
-       * is bit-identical to TA_RSI -> TA_EMA -> TA_EMA -> TA_SMA -> TA_SUB
-       * rather than merely close, which is what the composition gate holds.
+       * The output must stay bit-identical to
+       * TA_RSI -> TA_EMA -> TA_EMA -> TA_SMA -> TA_SUB, so every stage keeps its
+       * callee's operation order, and every stage boundary is the callee's
+       * LOOKBACK, not (period-1): a warm unstable period then folds in.
        *
-       * Every stage boundary below is the callee's LOOKBACK, not (period-1), so
-       * each stage seeds on the values its predecessor would have published and a
-       * warm unstable period folds in. The counters are compared BEFORE they are
-       * subtracted, never after: written as `n = nRsi - skipRSI; if( n >= 0 )`
-       * this is correct in C, where the counters are signed, and broken in the
-       * Rust backend, which renders them usize (the lesson smi.c records).
+       * Compare the counters BEFORE subtracting them: the Rust backend renders
+       * them usize, where `n = nRsi - skipRSI; if( n >= 0 )` underflows.
        */
       /* This ptr will point on a circular buffer of at least
        * "optInSignalPeriod" element.
@@ -1180,32 +1161,33 @@ public partial class Core
       lookbackRSI = RsiLookback(optInTimePeriod);
       lookbackEMA1 = EmaLookback(optInFirstPeriod);
       lookbackEMA2 = EmaLookback(optInSecondPeriod);
-      /* The RSI values the composed chain never publishes: TA_RSI entered at the
-       * first bar the first smoothing needs has already consumed its own
-       * unstable period by then. Taking the difference of the two lookbacks
-       * rather than reading TA_GetUnstablePeriod is what keeps this correct under
-       * the Auto levels, where the count is a function of the period.
+      /* The RSI values the composed chain never publishes. Derive the count
+       * from the lookback, never from TA_GetUnstablePeriod: under the Auto
+       * levels it is a function of the period.
        */
       skipRSI = lookbackRSI - optInTimePeriod;
-      /* ema.c's constants: k and beta must sum to exactly 1.0, or a flat input
-       * drifts off its level.
+      /* k and beta must sum to exactly 1.0, or a flat input drifts off its
+       * level. Each subtraction is exact only from an operand in [0.5,1): at a
+       * period of 2 that is k, above it beta. Above it beta stays as the divide
+       * wrote it: a register last written by a subtraction costs each FMA
+       * reading it one more cycle on Intel P-cores.
        */
       beta1 = (double)(optInFirstPeriod - 1) / (double)(optInFirstPeriod + 1);
       k1 = 1.0 - beta1;
-      beta1 = 1.0 - k1;
+      if( beta1 < 0.5 ) {
+         beta1 = 1.0 - k1;
+      }
       beta2 = (double)(optInSecondPeriod - 1) / (double)(optInSecondPeriod + 1);
       k2 = 1.0 - beta2;
-      beta2 = 1.0 - k2;
+      if( beta2 < 0.5 ) {
+         beta2 = 1.0 - k2;
+      }
       ema1 = 0.0;
       ema2 = 0.0;
       sum1 = 0.0;
       sum2 = 0.0;
       sumSignal = 0.0;
       nRsi = 0;
-      /* Wilder's seed, exactly as rsi.c accumulates it: one simple sum of the
-       * first optInTimePeriod changes, each side taken unconditionally, then
-       * both scaled by 1/period.
-       */
       invPeriod = 1.0 / (double)optInTimePeriod;
       today = startIdx - lookbackTotal;
       rsiBar = today + optInTimePeriod;
@@ -1224,10 +1206,6 @@ public partial class Core
       }
       prevLoss *= invPeriod;
       prevGain *= invPeriod;
-      /* rsi.c answers the neutral 50 when neither a gain nor a loss has been seen
-       * since the seed, the 0/0 case of issue #480; the one-sided cases are 0 and
-       * 100 and reach the division.
-       */
       tempValue1 = prevGain + prevLoss;
       if( tempValue1 > 0.0 ) {
          rsiValue = 100.0 * (prevGain / tempValue1);
@@ -1288,12 +1266,10 @@ public partial class Core
          }
          rsiBar = rsiBar + 1;
       }
-      /* The first output. Every stage is past its seed here -- the shortest
-       * reachable case, periods 2/2/2/2, still arrives with n1 = 3, n2 = 2 and a
-       * signal window one short of full -- so from this bar on the chain is three
-       * pure recursions and a running sum, with nothing left to branch on. That
-       * is what keeps the managed peek frames from carrying a seeded output
-       * local: the store below and the one in the stable loop always run.
+      /* The first output. Every stage is past its seed here, even at periods
+       * 2/2/2/2, so the store below and the one in the stable loop are
+       * unconditional. Keep them so: under a guard, the managed peek frames
+       * seed a dead output local.
        */
       ema1 = Math.FusedMultiplyAdd(beta1, ema1, k1 * rsiValue);
       ema2 = Math.FusedMultiplyAdd(beta2, ema2, k2 * ema1);

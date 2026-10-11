@@ -44,6 +44,7 @@
  *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
  *  100626 KL,CC  First version (proposal DOSC, #479).
+ *  101026 MF,CC  Golden rows captured from LEAN.
  */
 
 /* Description:
@@ -61,10 +62,12 @@
  *   two inherited unstable periods INDEPENDENTLY: moved together, a stage
  *   reading the wrong callee's lookback would still line up.
  *
- *   The GOLDEN leg holds the formula, from a 60-digit evaluation over the
- *   committed corpus. MEASURED: the library reproduces those 32 rows to
- *   8.5e-14 absolute, which is the Wilder recursion's own accumulation
- *   amplified by the cancellation in DS - SMA(DS); the tolerance is 1e-12.
+ *   The GOLDEN leg holds the formula: LEAN's DerivativeOscillator, an
+ *   independent implementation computing in decimal, over the committed
+ *   corpus. MEASURED: the library is within 9.4e-14 absolute of LEAN on
+ *   every bar of the four sets, which is the Wilder recursion's own
+ *   accumulation amplified by the cancellation in DS - SMA(DS); the
+ *   tolerance is 1e-12.
  *
  *   The DEGENERATE leg pins what TA_DOSC inherits from TA_RSI when no gain
  *   and no loss has been seen. Note that a flat run alone cannot arbitrate
@@ -102,8 +105,8 @@
 #define DOSC_LOOKBACK_CMP    40
 /* 72 bars of exact zero inside the flat run, then 15 transient rows. */
 #define DOSC_DEGEN_CMP       87
-/* outReal aliased onto inReal. */
-#define DOSC_ALIAS_CMP        1
+/* outReal aliased onto inReal: every output bar of 14/5/3/9, 252 - 28. */
+#define DOSC_ALIAS_CMP      224
 
 static int g_doscGoldenCmp;
 static int g_doscComposeCmp;
@@ -121,56 +124,58 @@ typedef struct
    double value;
 } DoscGolden;
 
-/* From a 60-digit evaluation of the #479 formula over the committed corpus,
- * rounded once to 17 significant digits. The 2/2/2/2 set is the minimum-period
- * edge. The first rows of each set sit on the seeds, where a first-value EMA
- * seeding differs; by bar 100 that difference is gone.
+/* LEAN's DerivativeOscillator (QuantConnect.Indicators 2.5.18090, LEAN
+ * 5b0c997) over the committed corpus: ta-lib-oracles 26621f4,
+ * capture_479_dosc.py. The 2/2/2/2 set is the minimum-period edge. The
+ * first rows of each set sit on the seeds, where a first-value EMA seeding
+ * differs; by bar 100 that difference is gone.
  */
 static const DoscGolden doscGolden[] =
 {
-   { 14, 5, 3, 9,  28,  -0.32493339246440395 },
-   { 14, 5, 3, 9,  29,   1.1294804858305276  },
-   { 14, 5, 3, 9,  30,   1.8411745168139129  },
-   { 14, 5, 3, 9,  33,   3.3947072651925123  },
-   { 14, 5, 3, 9,  40,  -2.3604690875888581  },
-   { 14, 5, 3, 9, 100,  -6.7257040101749217  },
-   { 14, 5, 3, 9, 180,  -4.8983277148123285  },
-   { 14, 5, 3, 9, 251,  -1.3052378861986969  },
-   {  7, 2, 2, 3,  11,   6.3911107376778942  },
-   {  7, 2, 2, 3,  12,   4.9871202912720856  },
-   {  7, 2, 2, 3,  13,  -6.9909842984477359  },
-   {  7, 2, 2, 3,  16,  -2.9991129829473309  },
-   {  7, 2, 2, 3,  23,  -4.6347218582406544  },
-   {  7, 2, 2, 3, 100,   3.4948832639583238  },
-   {  7, 2, 2, 3, 180,  -0.5742141628081755  },
-   {  7, 2, 2, 3, 251,  -2.8784371609126027  },
-   { 21, 9, 5, 13, 45,   2.1398319394716627  },
-   { 21, 9, 5, 13, 46,   2.6849728905192842  },
-   { 21, 9, 5, 13, 47,   2.9293385772958467  },
-   { 21, 9, 5, 13, 50,   3.1363117509310663  },
-   { 21, 9, 5, 13, 57,  -2.0959620671606891  },
-   { 21, 9, 5, 13,100,  -1.8542800921709932  },
-   { 21, 9, 5, 13,180,   0.73800983568677381 },
-   { 21, 9, 5, 13,251,  -1.167076396328979   },
-   {  2, 2, 2, 2,   5,  -3.4694854393017427  },
-   {  2, 2, 2, 2,   6, -10.488256616386783   },
-   {  2, 2, 2, 2,   7,  -4.5134274384189839  },
-   {  2, 2, 2, 2,  10,  11.422684030342726   },
-   {  2, 2, 2, 2,  17,  -2.5478249156729516  },
-   {  2, 2, 2, 2, 100,   5.5705910166985504  },
-   {  2, 2, 2, 2, 180,   1.1696093963642138  },
-   {  2, 2, 2, 2, 251,  -7.2429724561874922  }
+   { 14, 5, 3,  9,  28,     -0.32493339246440361 },
+   { 14, 5, 3,  9,  29,       1.1294804858305274 },
+   { 14, 5, 3,  9,  30,       1.8411745168139122 },
+   { 14, 5, 3,  9,  33,       3.3947072651925119 },
+   { 14, 5, 3,  9,  40,      -2.3604690875888585 },
+   { 14, 5, 3,  9, 100,      -6.7257040101749208 },
+   { 14, 5, 3,  9, 180,      -4.8983277148123268 },
+   { 14, 5, 3,  9, 251,      -1.3052378861986971 },
+   {  7, 2, 2,  3,  11,       6.3911107376778906 },
+   {  7, 2, 2,  3,  12,       4.9871202912720838 },
+   {  7, 2, 2,  3,  13,      -6.9909842984477342 },
+   {  7, 2, 2,  3,  16,      -2.9991129829473304 },
+   {  7, 2, 2,  3,  23,      -4.6347218582406535 },
+   {  7, 2, 2,  3, 100,       3.4948832639583229 },
+   {  7, 2, 2,  3, 180,     -0.57421416280817572 },
+   {  7, 2, 2,  3, 251,      -2.8784371609126103 },
+   { 21, 9, 5, 13,  45,       2.1398319394716623 },
+   { 21, 9, 5, 13,  46,       2.6849728905192838 },
+   { 21, 9, 5, 13,  47,       2.9293385772958462 },
+   { 21, 9, 5, 13,  50,        3.136311750931065 },
+   { 21, 9, 5, 13,  57,      -2.0959620671606891 },
+   { 21, 9, 5, 13, 100,      -1.8542800921709923 },
+   { 21, 9, 5, 13, 180,       0.7380098356867747 },
+   { 21, 9, 5, 13, 251,       -1.167076396328979 },
+   {  2, 2, 2,  2,   5,      -3.4694854393017387 },
+   {  2, 2, 2,  2,   6,      -10.488256616386776 },
+   {  2, 2, 2,  2,   7,      -4.5134274384189714 },
+   {  2, 2, 2,  2,  10,       11.422684030342722 },
+   {  2, 2, 2,  2,  17,      -2.5478249156729422 },
+   {  2, 2, 2,  2, 100,       5.5705910166985495 },
+   {  2, 2, 2,  2, 180,       1.1696093963642131 },
+   {  2, 2, 2,  2, 251,       -7.242972456187502 }
 };
 
 #define DOSC_NB_GOLDEN ((int)(sizeof(doscGolden)/sizeof(doscGolden[0])))
 
-/* MEASURED: the library reproduces the rows above to 8.549e-14 absolute. */
+/* MEASURED: the library reproduces the rows above to 8.6e-14 absolute. */
 #define DOSC_GOLDEN_TOL 1e-12
 
 /* The flat-then-move run: bars 0 to 99 flat at 100.0, the committed closes
- * from bar 100 on. The transient rows below are a 60-digit evaluation under
- * TA_RSI's own 50.0 (#480). They are what pins that inherited value: a
- * different seed moves them by tens, where the flat run does not move at all.
+ * from bar 100 on. The transient rows below are an exact evaluation under
+ * TA_RSI's own 50.0 (#480), not LEAN's: LEAN answers 100 there. They are what
+ * pins that inherited value: a different one moves them by tens, where the
+ * flat run does not move at all.
  */
 #define DOSC_FLAT_TO 99
 
@@ -262,7 +267,7 @@ ErrorNumber test_func_dosc( TA_History *history )
 
 /**** Local functions definitions.     ****/
 
-/* (1) GOLDEN: the formula, from 60 digits over the committed corpus. */
+/* (1) GOLDEN: the formula, from LEAN over the committed corpus. */
 static ErrorNumber test_dosc_golden( const TA_History *history )
 {
    TA_RetCode rc;
@@ -354,7 +359,7 @@ static ErrorNumber test_dosc_compose( const TA_History *history )
           || TA_SetUnstablePeriod( TA_FUNC_UNST_EMA, uEmaSet[u] ) != TA_SUCCESS )
          {
             printf( "Fail: TA_DOSC compose could not set an unstable period\n" );
-            return TA_TESTUTIL_TFRR_BAD_RETCODE;
+            goto restore_bad;
          }
 
          L1 = TA_EMA_Lookback( fSet[set] );
@@ -600,8 +605,8 @@ static ErrorNumber test_dosc_aliasing( const TA_History *history )
                  "%.17g vs %.17g\n", (int)begIdx + i, work[i], ref[i] );
          return TA_TESTUTIL_TFRR_BAD_CALCULATION;
       }
+      g_doscAliasCmp++;
    }
-   g_doscAliasCmp++;
 
    return TA_TEST_PASS;
 }

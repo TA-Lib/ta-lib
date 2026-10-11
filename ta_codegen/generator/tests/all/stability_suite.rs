@@ -132,10 +132,10 @@ fn classification_matches_the_measured_library() {
     got.sort_unstable();
     assert_eq!(got, MATYPE_DEPENDENT, "set of MA-type-dependent functions changed");
 
-    // KC inherits from TWO different ids, and both matter: ta_regtest's UNSTABLE_MAP
-    // sweeps the set it is given and leaves the rest at zero, so a leg whose id is
-    // missing there never warms while the convergence envelope tightens around it.
-    // The INHERITED row above can name only one source, so assert the pair here.
+    // KC and DOSC each inherit from TWO different ids, and both matter: ta_regtest's
+    // UNSTABLE_MAP sweeps the set it is given and leaves the rest at zero, so a leg whose
+    // id is missing there never warms while the convergence envelope tightens around it.
+    // The INHERITED row above can name only one source, so assert each pair here.
     {
         let dosc = &st["DOSC"].inherited_from;
         assert!(

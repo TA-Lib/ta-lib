@@ -16,10 +16,10 @@ DOSC = DS - SMA(DS, signalPeriod)
 
 ## Notes
 
-- Every stage is a call to a function TA-Lib already ships, so the output is identical, bit for bit, to `TA_RSI` followed by two `TA_EMA` calls, a `TA_SMA` and a `TA_SUB`. The shortest expression of that chain takes five calls and three intermediate buffers; this computes it in one pass without materialising them.
+- Every stage is a function TA-Lib already ships, and the output is identical, bit for bit, to `TA_RSI` followed by two `TA_EMA` calls, a `TA_SMA` and a `TA_SUB`. That chain takes five calls and their intermediate buffers; this computes it in one pass without materialising them.
 - Each exponential average is seeded with a simple average of its own first inputs, the same seeding TA-Lib's EMA uses, and the second seeds on what the first publishes. `TA_SetUnstablePeriod` on either `TA_FUNC_UNST_RSI` or `TA_FUNC_UNST_EMA` discards more of that warm-up, and the EMA setting counts twice because there are two exponential stages. Implementations seeding each stage from a single first sample differ over the transient and agree once it decays.
 - The degenerate reading is whatever `TA_RSI` answers when neither a gain nor a loss has been seen since the seed. Some other implementations answer 100 there and will disagree over that stretch.
-- The periods are independent: the stages commute, so no ordering between the two smoothing periods is required or checked. A signal period of 1 would make the output identically zero, so the minimum is 2.
+- The periods are independent: no ordering between the two smoothing periods is required or checked. Swapping them changes the outputs, most at the start: each average is seeded on its own inputs, and that difference decays to rounding level. A signal period of 1 would make the output identically zero, so the minimum is 2.
 
 ## Inputs
 
@@ -46,4 +46,4 @@ RSI · STOCHRSI · MACD · AC
 
 ## References
 
-- Constance M. Brown, "The Derivative Oscillator: A New Approach to an Old Problem", *Journal of Technical Analysis* (MTA Journal), Issue 45, Winter-Spring 1994, pp. 45-50
+- Constance M. Brown, "The Derivative Oscillator: A New Approach for an Old Problem", *MTA Journal* (Market Technicians Association), Issue 42, Winter 1993-Spring 1994, pp. 45-55 and 61
