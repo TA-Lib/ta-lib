@@ -209,7 +209,7 @@ TA_LIB_API TA_RetCode TA_WAVETREND( int    startIdx,
       *outNBElement= 0;
       return TA_SUCCESS;
    }
-   if( optInSignalPeriod < 1 ) return TA_INTERNAL_ERROR(495);
+   if( optInSignalPeriod < 1 ) return TA_INTERNAL_ERROR(497);
    if( (int)optInSignalPeriod > (int)(sizeof(local_wtBuffer)/sizeof(double)) )
    {
       wtBuffer = TA_Malloc( sizeof(double)*optInSignalPeriod );
@@ -495,7 +495,7 @@ TA_RetCode TA_S_WAVETREND( int    startIdx,
       *outNBElement= 0;
       return TA_SUCCESS;
    }
-   if( optInSignalPeriod < 1 ) return TA_INTERNAL_ERROR(495);
+   if( optInSignalPeriod < 1 ) return TA_INTERNAL_ERROR(497);
    if( (int)optInSignalPeriod > (int)(sizeof(local_wtBuffer)/sizeof(double)) )
    {
       wtBuffer = TA_Malloc( sizeof(double)*optInSignalPeriod );
@@ -845,7 +845,7 @@ static TA_FMA_STEP_INLINE TA_RetCode TA_WAVETREND_OpenImpl( struct TA_WAVETREND_
          *outNBElement= 0;
          return TA_INSUFFICIENT_HISTORY;
       }
-      if( optInSignalPeriod < 1 ) return TA_INTERNAL_ERROR(495);
+      if( optInSignalPeriod < 1 ) return TA_INTERNAL_ERROR(497);
       if( (int)optInSignalPeriod > (int)(sizeof(local_wtBuffer)/sizeof(double)) )
       {
          wtBuffer = TA_Malloc( sizeof(double)*optInSignalPeriod );
@@ -1059,7 +1059,7 @@ static TA_FMA_STEP_INLINE TA_RetCode TA_WAVETREND_OpenImpl( struct TA_WAVETREND_
       sp->wtBuffer_Idx = wtBuffer_Idx;
       sp->maxIdx_wtBuffer = maxIdx_wtBuffer;
       sp->cbSize_wtBuffer = maxIdx_wtBuffer + 1;
-      if( sp->cbSize_wtBuffer < 1 || sp->cbSize_wtBuffer > historyLen + 1 ) { if( wtBuffer != &local_wtBuffer[0] ) { TA_Free( wtBuffer ); } TA_WAVETREND_ReleaseImpl( sp ); return TA_INTERNAL_ERROR(496); }
+      if( sp->cbSize_wtBuffer < 1 || sp->cbSize_wtBuffer > historyLen + 1 ) { if( wtBuffer != &local_wtBuffer[0] ) { TA_Free( wtBuffer ); } TA_WAVETREND_ReleaseImpl( sp ); return TA_INTERNAL_ERROR(498); }
       sp->cb_wtBuffer = (double *)TA_Malloc( sizeof(double) * (size_t)sp->cbSize_wtBuffer );
       if( !sp->cb_wtBuffer ) { if( wtBuffer != &local_wtBuffer[0] ) { TA_Free( wtBuffer ); } TA_WAVETREND_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
       memcpy( sp->cb_wtBuffer, wtBuffer, sizeof(double) * (size_t)sp->cbSize_wtBuffer );
