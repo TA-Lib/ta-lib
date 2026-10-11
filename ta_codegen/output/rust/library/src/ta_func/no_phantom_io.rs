@@ -10244,6 +10244,66 @@ fn legs_DONCHIAN(r: &mut Report) {
     r.legs_done("DONCHIAN", 2);
 }
 
+const V_DOSC: &[(&str, i32, i32, i32, i32)] = &[
+    ("defaults", i32::MIN, i32::MIN, i32::MIN, i32::MIN),
+    ("minimums", 2i32, 2i32, 2i32, 2i32),
+];
+
+fn sub_DOSC(r: &mut Report) {
+    let core = Core::new();
+    for &(label, optInTimePeriod, optInFirstPeriod, optInSecondPeriod, optInSignalPeriod) in V_DOSC {
+        let Ok(lb) = core.dosc_lookback(optInTimePeriod, optInFirstPeriod, optInSecondPeriod, optInSignalPeriod) else { continue; };
+        r.control("DOSC", label, run(|| {
+            let inReal: Vec<f64> = Vec::with_capacity(1);
+            let mut outReal: Vec<f64> = Vec::with_capacity(1);
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.dosc_impl(0, lb, &inReal, optInTimePeriod, optInFirstPeriod, optInSecondPeriod, optInSignalPeriod, &mut _b, &mut _n, &mut outReal);
+            (rc, _n)
+        }));
+        if lb < 1 { r.no_quiet_range("DOSC", label); continue; }
+        r.quiet("DOSC", label, lb, run(|| {
+            let inReal: Vec<f64> = Vec::with_capacity(1);
+            let mut outReal: Vec<f64> = Vec::with_capacity(1);
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.dosc_impl(0, lb - 1, &inReal, optInTimePeriod, optInFirstPeriod, optInSecondPeriod, optInSignalPeriod, &mut _b, &mut _n, &mut outReal);
+            (rc, _n)
+        }));
+    }
+}
+
+fn legs_DOSC(r: &mut Report) {
+    let core = Core::new();
+    let optInTimePeriod = i32::MIN;
+    let optInFirstPeriod = i32::MIN;
+    let optInSecondPeriod = i32::MIN;
+    let optInSignalPeriod = i32::MIN;
+    let Ok(lb) = core.dosc_lookback(optInTimePeriod, optInFirstPeriod, optInSecondPeriod, optInSignalPeriod) else { r.no_legs("DOSC"); return; };
+    let (startIdx, endIdx) = (lb, lb + 4);
+    {
+        let inReal: Vec<f64> = series("real", endIdx + 1);
+        let mut outReal: Vec<f64> = vec![Default::default(); 5];
+        r.legs_control("DOSC", run(|| {
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.dosc_impl(startIdx, endIdx, &inReal, optInTimePeriod, optInFirstPeriod, optInSecondPeriod, optInSignalPeriod, &mut _b, &mut _n, &mut outReal);
+            (rc, _n)
+        }));
+    }
+    {
+        let inReal: Vec<f64> = Vec::with_capacity(1);
+        let mut outReal: Vec<f64> = vec![Default::default(); 5];
+        r.leg("DOSC", "inReal", 0, run(|| {
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.dosc_impl(startIdx, endIdx, &inReal, optInTimePeriod, optInFirstPeriod, optInSecondPeriod, optInSignalPeriod, &mut _b, &mut _n, &mut outReal);
+            (rc, _n)
+        }));
+    }
+    r.legs_done("DOSC", 1);
+}
+
 const V_DPO: &[(&str, i32)] = &[
     ("defaults", i32::MIN),
     ("minimums", 2i32),
@@ -19601,6 +19661,7 @@ const PROBES: &[(&str, Probe, Probe)] = &[
     ("DEMA", sub_DEMA, legs_DEMA),
     ("DIV", sub_DIV, legs_DIV),
     ("DONCHIAN", sub_DONCHIAN, legs_DONCHIAN),
+    ("DOSC", sub_DOSC, legs_DOSC),
     ("DPO", sub_DPO, legs_DPO),
     ("DX", sub_DX, legs_DX),
     ("EFI", sub_EFI, legs_EFI),
@@ -19766,7 +19827,7 @@ fn no_phantom_io() {
     // The corpus is the generator's, not a list kept by hand: a probe that
     // stopped being emitted is a shrinking sweep, which is the one way this
     // file can fail open.
-    assert_eq!(PROBES.len(), 232, "probe count");
+    assert_eq!(PROBES.len(), 233, "probe count");
     assert_eq!(
         PROBES.len(),
         crate::abstract_api::funcs().count(),

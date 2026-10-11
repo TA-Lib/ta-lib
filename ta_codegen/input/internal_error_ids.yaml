@@ -181,6 +181,8 @@ sites:
   CVI.cbsize.emaRing: 417
   CVI.circbuf.emaRing: 416
   DONCHIAN.extrema: 403
+  DOSC.cbsize.dsBuffer: 496
+  DOSC.circbuf.dsBuffer: 495
   DPO.ringcap.dispIdx: 409
   DPO.ringcap.trailingIdx: 410
   EFI.dualmode: 318

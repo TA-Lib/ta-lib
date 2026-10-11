@@ -103,6 +103,7 @@ CVI                 Chaikin's Volatility
 DEMA                Double Exponential Moving Average
 DIV                 Vector Arithmetic Div
 DONCHIAN            Donchian Channels
+DOSC                Derivative Oscillator
 DPO                 Detrended Price Oscillator
 DX                  Directional Movement Index
 EFI                 Elder's Force Index
