@@ -191512,6 +191512,7 @@ class Core {
      *  100826 KL,CC  Creation (#488).
      *  101126 MF,CC  Reject factors out of order (#488).
      *  101126 MF,CC  DEV in one loop instead of three calls (#488).
+     *  101126 MF,CC  Both bands from one rounded deviation, as bbands (#488).
      */
 
        /**
@@ -191671,6 +191672,7 @@ class Core {
           double[] tempKCM;
           double[] tempMid;
           double[] tempSD;
+          double dev = 0;
           double up = 0;
           double lo = 0;
           double centre = 0;
@@ -191711,8 +191713,8 @@ class Core {
           } else if( !(optInFactorNarrow >= 0e0 && optInFactorNarrow <= REAL_MAX) ) {
              return RetCode.BAD_PARAM;
           }
-          /* Every leg is a shipped function, CALLED rather than transcribed, so both
-           * outputs carry each callee's own arithmetic bit for bit:
+          /* Each rolling statistic is a call to the shipped function, so it carries
+           * that function's own arithmetic bit for bit:
            *
            *   BBU, BBL = sma(close, b) +/- nbdev * stddev(close, b, 1.0)
            *   KCM      = sma(close, k)
@@ -191721,10 +191723,8 @@ class Core {
            *   DEV      = close - (DMID + KCM)/2
            *   momentum = linearreg(DEV, k)
            *
-           * The bands are taken as the MA + STDDEV pair rather than through bbands
-           * because bbands' SMA fast path states it is bit-identical to that pair, and
-           * it is what bbands' own stream tier composes; taking the pair here keeps
-           * every optional argument a parameter or a literal.
+           * A composed sub-call cannot be handed an MA-type constant, so the bands
+           * are the sma + stddev pair and not a bbands call.
            *
            * Two chains need their input one window earlier than the first output bar:
            * sma(k) over TR, and linearreg(k) over DEV. Both windows are k-1 long, so
@@ -191814,15 +191814,18 @@ class Core {
           tempBegIdx.value = _xr7.begIdx();
           tempNbElement.value = _xr7.count();
           retCode = RetCode.SUCCESS;
-          /* The ordinal. The three Keltner widths share the centre and BAND >= 0, so
-           * the tests nest: inside(narrow) implies inside(normal) implies inside(wide).
-           * Testing narrow first is what makes the ordinal monotone without comparing
-           * the factors to each other, which is why the card asks for
-           * `wide >= normal >= narrow >= 0` and not for a strict order.
+          /* The ordinal. Every comparison is strict: a band exactly on a channel
+           * edge is not inside that channel and not outside it either.
+           *
+           * Keep the deviation a rounded product added to and subtracted from the
+           * middle band, as bbands does. Written as one expression per band, the
+           * upper one contracts into a fused multiply-add and the lower one cannot,
+           * and a band within one ulp of an edge then changes level.
            */
           for( i = 0; i < n; i += 1 ) {
-             up = Math.fma(tempSD[i], optInNbDev, tempMid[i]);
-             lo = tempMid[i] - tempSD[i] * optInNbDev;
+             dev = tempSD[i] * optInNbDev;
+             up = tempMid[i] + dev;
+             lo = tempMid[i] - dev;
              centre = tempKCM[i];
              band = tempWork[i];
              if( lo > centre - optInFactorNarrow * band && up < centre + optInFactorNarrow * band ) {
@@ -191871,6 +191874,7 @@ class Core {
           double[] tempKCM;
           double[] tempMid;
           double[] tempSD;
+          double dev = 0;
           double up = 0;
           double lo = 0;
           double centre = 0;
@@ -191973,8 +191977,9 @@ class Core {
           tempNbElement.value = _xr7.count();
           retCode = RetCode.SUCCESS;
           for( i = 0; i < n; i += 1 ) {
-             up = Math.fma(tempSD[i], optInNbDev, tempMid[i]);
-             lo = tempMid[i] - tempSD[i] * optInNbDev;
+             dev = tempSD[i] * optInNbDev;
+             up = tempMid[i] + dev;
+             lo = tempMid[i] - dev;
              centre = tempKCM[i];
              band = tempWork[i];
              if( lo > centre - optInFactorNarrow * band && up < centre + optInFactorNarrow * band ) {
@@ -192000,14 +192005,14 @@ class Core {
         * market is coiled, and when they push outside it the coil has released.
         * LazyBear replaced Carter's simple momentum with a linear regression of the
         * close against a Donchian/SMA anchor, which is the histogram that
-        * StockCharts, pandas, ta4j and trading-signals all compute. "Squeeze Pro"
-        * tests the bands against three Keltner widths instead of one, so
-        * compression becomes a level rather than a boolean. {@code outSqueeze}
-        * carries that level: 3, 2 and 1 for the narrow, normal and wide channels,
-        * -1 once the bands are outside the wide channel, and 0 in between. The
-        * classic squeeze-on flag is {@code outSqueeze &gt;= 2}, and with
-        * {@code wide == normal} the three states are exactly LazyBear's on / off /
-        * none.
+        * StockCharts, ta4j and trading-signals compute, and pandas-ta with
+        * {@code lazybear=True}. "Squeeze Pro" tests the bands against three Keltner
+        * widths instead of one, so compression becomes a level rather than a
+        * boolean. {@code outSqueeze} carries that level: 3, 2 and 1 for the narrow,
+        * normal and wide channels, -1 once the bands are outside the wide channel,
+        * and 0 in between. The classic squeeze-on flag is
+        * {@code outSqueeze &gt;= 2}, and with {@code wide == normal} the three
+        * states are exactly LazyBear's on / off / none.
         * <p>Formula and more info at <a
         * href="https://ta-lib.org/functions/sqzmom">ta-lib.org/functions/sqzmom</a>.
         * <p><b>Notes</b>
@@ -192110,14 +192115,14 @@ class Core {
         * market is coiled, and when they push outside it the coil has released.
         * LazyBear replaced Carter's simple momentum with a linear regression of the
         * close against a Donchian/SMA anchor, which is the histogram that
-        * StockCharts, pandas, ta4j and trading-signals all compute. "Squeeze Pro"
-        * tests the bands against three Keltner widths instead of one, so
-        * compression becomes a level rather than a boolean. {@code outSqueeze}
-        * carries that level: 3, 2 and 1 for the narrow, normal and wide channels,
-        * -1 once the bands are outside the wide channel, and 0 in between. The
-        * classic squeeze-on flag is {@code outSqueeze &gt;= 2}, and with
-        * {@code wide == normal} the three states are exactly LazyBear's on / off /
-        * none.
+        * StockCharts, ta4j and trading-signals compute, and pandas-ta with
+        * {@code lazybear=True}. "Squeeze Pro" tests the bands against three Keltner
+        * widths instead of one, so compression becomes a level rather than a
+        * boolean. {@code outSqueeze} carries that level: 3, 2 and 1 for the narrow,
+        * normal and wide channels, -1 once the bands are outside the wide channel,
+        * and 0 in between. The classic squeeze-on flag is
+        * {@code outSqueeze &gt;= 2}, and with {@code wide == normal} the three
+        * states are exactly LazyBear's on / off / none.
         * <p>Formula and more info at <a
         * href="https://ta-lib.org/functions/sqzmom">ta-lib.org/functions/sqzmom</a>.
         * <p><b>Notes</b>
@@ -192356,6 +192361,7 @@ class Core {
              SqzmomStream sp = this;
              double band = 0.0;
              double centre = 0.0;
+             double dev = 0.0;
              double lo = 0.0;
              double up = 0.0;
              double cur_tempDev = 0.0;
@@ -192377,8 +192383,9 @@ class Core {
              cur_tempKCM = sp.sub6.peek(inClose);
              cur_outMomentum = sp.sub7.peek(cur_tempDev);
              /* Combine map (batch tail, per bar). */
-             up = Math.fma(cur_tempSD, sp.optInNbDev, cur_tempMid);
-             lo = cur_tempMid - cur_tempSD * sp.optInNbDev;
+             dev = cur_tempSD * sp.optInNbDev;
+             up = cur_tempMid + dev;
+             lo = cur_tempMid - dev;
              centre = cur_tempKCM;
              band = cur_tempWork;
              if( lo > centre - sp.optInFactorNarrow * band && up < centre + sp.optInFactorNarrow * band ) {
@@ -192450,6 +192457,7 @@ class Core {
        {
           double band = 0.0;
           double centre = 0.0;
+          double dev = 0.0;
           double lo = 0.0;
           double up = 0.0;
           double cur_tempDev = 0.0;
@@ -192471,8 +192479,9 @@ class Core {
           cur_tempKCM = sp.sub6.update(inClose);
           cur_outMomentum = sp.sub7.update(cur_tempDev);
           /* Combine map (batch tail, per bar). */
-          up = Math.fma(cur_tempSD, sp.optInNbDev, cur_tempMid);
-          lo = cur_tempMid - cur_tempSD * sp.optInNbDev;
+          dev = cur_tempSD * sp.optInNbDev;
+          up = cur_tempMid + dev;
+          lo = cur_tempMid - dev;
           centre = cur_tempKCM;
           band = cur_tempWork;
           if( lo > centre - sp.optInFactorNarrow * band && up < centre + sp.optInFactorNarrow * band ) {
@@ -192505,6 +192514,7 @@ class Core {
           double[] tempKCM;
           double[] tempMid;
           double[] tempSD;
+          double dev = 0;
           double up = 0;
           double lo = 0;
           double centre = 0;
@@ -192560,8 +192570,8 @@ class Core {
           }
           double[] sc_outMomentum = outStride == 1 ? outMomentum : new double[historyLen];
           int[] sc_outSqueeze = outStride == 1 ? outSqueeze : new int[historyLen];
-          /* Every leg is a shipped function, CALLED rather than transcribed, so both
-           * outputs carry each callee's own arithmetic bit for bit:
+          /* Each rolling statistic is a call to the shipped function, so it carries
+           * that function's own arithmetic bit for bit:
            *
            *   BBU, BBL = sma(close, b) +/- nbdev * stddev(close, b, 1.0)
            *   KCM      = sma(close, k)
@@ -192570,10 +192580,8 @@ class Core {
            *   DEV      = close - (DMID + KCM)/2
            *   momentum = linearreg(DEV, k)
            *
-           * The bands are taken as the MA + STDDEV pair rather than through bbands
-           * because bbands' SMA fast path states it is bit-identical to that pair, and
-           * it is what bbands' own stream tier composes; taking the pair here keeps
-           * every optional argument a parameter or a literal.
+           * A composed sub-call cannot be handed an MA-type constant, so the bands
+           * are the sma + stddev pair and not a bbands call.
            *
            * Two chains need their input one window earlier than the first output bar:
            * sma(k) over TR, and linearreg(k) over DEV. Both windows are k-1 long, so
@@ -192666,15 +192674,18 @@ class Core {
            * sub-call's own startIdx (the seeding point). */
           LinearregStream sub7 = linearregOpenAndFillInternal(java.util.Arrays.copyOfRange(tempDev, 0, (stageLen - 1) + 1), 0, optInKCPeriod, tempBegIdx, tempNbElement, sc_outMomentum);
           retCode = RetCode.SUCCESS;
-          /* The ordinal. The three Keltner widths share the centre and BAND >= 0, so
-           * the tests nest: inside(narrow) implies inside(normal) implies inside(wide).
-           * Testing narrow first is what makes the ordinal monotone without comparing
-           * the factors to each other, which is why the card asks for
-           * `wide >= normal >= narrow >= 0` and not for a strict order.
+          /* The ordinal. Every comparison is strict: a band exactly on a channel
+           * edge is not inside that channel and not outside it either.
+           *
+           * Keep the deviation a rounded product added to and subtracted from the
+           * middle band, as bbands does. Written as one expression per band, the
+           * upper one contracts into a fused multiply-add and the lower one cannot,
+           * and a band within one ulp of an edge then changes level.
            */
           for( i = 0; i < n; i += 1 ) {
-             up = Math.fma(tempSD[i], optInNbDev, tempMid[i]);
-             lo = tempMid[i] - tempSD[i] * optInNbDev;
+             dev = tempSD[i] * optInNbDev;
+             up = tempMid[i] + dev;
+             lo = tempMid[i] - dev;
              centre = tempKCM[i];
              band = tempWork[i];
              if( lo > centre - optInFactorNarrow * band && up < centre + optInFactorNarrow * band ) {
@@ -227628,7 +227639,7 @@ class Core {
 
 public class TaCodegenServe {
     static Core core = new Core();
-    static final String SPLICED_GENCODE_DIGEST = "d643fe5fd96ab5df";
+    static final String SPLICED_GENCODE_DIGEST = "b45777a289fd5c76";
     static final int MAX_ARRAY_SIZE = 200000;
     static double[] refOpen = new double[MAX_ARRAY_SIZE];
     static double[] refHigh = new double[MAX_ARRAY_SIZE];

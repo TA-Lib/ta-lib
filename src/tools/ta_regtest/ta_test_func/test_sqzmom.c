@@ -54,38 +54,30 @@
  *
  *   Test TA_SQZMOM.
  *
- *   Every leg of SQZMOM is a shipped function, so this file adds no numerical
- *   logic: it composes the card's formula out of the SAME public functions and
- *   requires the two to agree BIT FOR BIT. The reference deliberately calls
- *   TA_BBANDS, the function the card's formula names, while the implementation
- *   takes the MA + STDDEV pair instead -- so leg 1 tests that substitution
- *   rather than assuming it.
- *
  *   Legs:
- *     1. COMPOSITION. The formula through TA_BBANDS, TA_SMA, TA_TRANGE,
- *        TA_MIDPRICE and TA_LINEARREG, over five parameter triples. Bit for
- *        bit on both outputs. Also the leg that drives server_verify.
- *     2. THE ORDINAL AT ITS BOUNDARY. Leg 1's factors put every bar far from a
- *        Keltner edge, so the ordinal comparison there has almost no
- *        discrimination: scaling the band by 1+1e-7 moves not one bar. This
- *        leg sets the normal factor to a value read off the data itself --
- *        (BBU - KCM)/BAND at a chosen bar -- so that bar sits ON the edge, and
- *        asserts both that some bar really is within a few ulps of it (or the
- *        leg proved nothing) and that the two still agree. Tuned this way the
- *        comparison detects a relative band error of 6.2e-15.
- *     3. LOOKBACK. TA_SQZMOM_Lookback against the max of the four chains, and
- *        the call's own begIdx against it, at the triples the card measured
- *        against pandas, ta4j and trading-signals: 38 at (20,20), 26 at
- *        (20,14), 38 at (14,20).
- *     4. NESTING. The three channels share a centre and BAND >= 0, so they
- *        nest. Every bar reporting 3 must also satisfy the normal and wide
- *        tests, every 2 the wide test, and -1 must fail the wide test on both
- *        sides. A level the nesting forbids is a mis-ordered ladder.
+ *     1. COMPOSITION. The card's formula through TA_BBANDS, TA_SMA, TA_TRANGE,
+ *        TA_MIDPRICE and TA_LINEARREG, bit for bit on both outputs. The
+ *        reference calls TA_BBANDS where the implementation calls TA_SMA and
+ *        TA_STDDEV, so the leg tests that substitution. Also the leg that
+ *        drives server_verify.
+ *     2. THE ORDINAL AT ITS BOUNDARY. At leg 1's factors every bar sits far
+ *        from a Keltner edge and the ordinal comparison discriminates almost
+ *        nothing. This leg reads the normal factor off the data, (BBU -
+ *        KCM)/BAND at a chosen bar, which puts that bar's upper band on the
+ *        edge, and requires that some bar really is within a few ulps of it.
+ *        Three bars at a deviation of 2.0, then every bar at 2.5: only a
+ *        multiplier that is not a power of two tells a fused band from a
+ *        rounded one, and only on some bars. It sees a band that is too wide,
+ *        not one that is too narrow; leg 11 decides both.
+ *     3. LOOKBACK. TA_SQZMOM_Lookback against the max of the chains, the
+ *        call's own begIdx against it, and no change under an unstable period.
+ *     4. NESTING. A premise of the reference, not a test of TA_SQZMOM: the
+ *        composition's own levels nest, so leg 1 compares against an ordinal
+ *        that means what the card says.
  *     5. FLAT. A constant series has BAND == 0 and BBU == BBL == KCM, so no
- *        test is strictly satisfied on either side and every bar reads 0.
- *     6. ALIASING. Each output over each input in turn. The abstract layer
- *        caught this one: the body must read every bar input before it writes
- *        a caller buffer, which is why TA_LINEARREG runs last.
+ *        test is strictly satisfied on either side: level 0, momentum 0.
+ *     6. ALIASING. outMomentum over each input in turn: the body must read
+ *        every bar input before it writes a caller buffer.
  *     7. EDGES. A period below its range and factors out of order are
  *        rejected; nbdev == 0 collapses the bands onto the middle band, which
  *        is inside every channel of positive width, so every bar reads 3; a
@@ -96,12 +88,16 @@
  *     9. RANGE INDEPENDENCE, swept via doRangeTestEx.
  *    10. ORACLES. Legs 1 to 9 hold the implementation to a composition of
  *        TA-Lib's own functions, which a wrong formula passes. This leg holds
- *        it to two other libraries over the same 252 bars: pandas-ta-classic
- *        0.6.52 (squeeze, mamode sma, lazybear, the level folded from one call
- *        per factor) at 20/20, 14/20 and 20/14, and ta4j 0.22.6
- *        (SqueezeProIndicator) at 20/20. Both descend from LazyBear's script,
- *        so they check the transcription of that script, not each other.
+ *        it to two other libraries: pandas-ta-classic 0.6.52 (squeeze, mamode
+ *        sma, lazybear, the level folded from one call per factor) and ta4j
+ *        0.22.6 (SqueezeProIndicator), over the 252 reference bars and over
+ *        the first 252 bars of gData. Both descend from LazyBear's script, so
+ *        they check the transcription of that script, not each other.
  *        Captured by ta-lib-oracles capture_488_sqzmom.py at b6dd468.
+ *    11. TIES. Ramps whose bands land exactly on a channel edge, one
+ *        comparison of the ladder at a time. Every value is a multiple of
+ *        0.5, so the tie is exact on every machine, and each case reads a
+ *        different level if its one comparison stops being strict.
  */
 
 #include <stdio.h>
@@ -115,24 +111,29 @@
 
 /**** Local declarations.    ****/
 
+extern double gDataHigh[];
+extern double gDataLow[];
+extern double gDataClose[];
+
 #define SQZ_NB_BAR 252
 
 /* A leg that compares nothing passes silently without these counts.
  * 11 cases; the bars each produces are 214, 226, 214, 250, 203, 233, 233, 212,
  * 54, 214 and 214, which is 2267, and each bar compares both outputs. */
 #define SQZ_COMPOSE_CMP   4534
-#define SQZ_BOUNDARY_CMP   642   /* 3 tuned runs x 214 bars */
+#define SQZ_BOUNDARY_CMP 46438   /* 3 + 214 tuned runs x 214 bars */
 /* One bar per tuned run lands on the edge -- the bar the factor was read from.
  * The floor is what stops the leg passing when the tuning lands nowhere near
  * one, which would make it leg 1 again. */
-#define SQZ_BOUNDARY_EDGE    3
+#define SQZ_BOUNDARY_EDGE  217
 #define SQZ_LOOKBACK_CMP    23   /* 11 cases x (lookback, begIdx), and the unstable-period check */
 #define SQZ_NEST_CMP      2267   /* the same 2267 bars, one check each */
-#define SQZ_FLAT_CMP       214
-#define SQZ_ALIAS_CMP        6   /* 2 outputs x 3 inputs */
+#define SQZ_FLAT_CMP       428   /* 214 bars, both outputs */
+#define SQZ_ALIAS_CMP        3   /* outMomentum over each input */
 #define SQZ_EDGE_CMP       229   /* 3 return codes, the 214 bars of the nbDev=0 run, 8 on factor order, 4 on short series */
 #define SQZ_RANGE_CMP      590   /* 152 and 143 bars, both outputs */
-#define SQZ_ORACLE_CMP    1736   /* 214, 214, 226 and 214 bars, both outputs */
+#define SQZ_ORACLE_CMP    2592   /* 214, 214, 226, 214, 214 and 214 bars, both outputs */
+#define SQZ_TIE_CMP        272   /* 8 cases x 34 bars */
 
 static int g_sqzComposeCmp;
 static int g_sqzBoundaryCmp;
@@ -144,6 +145,7 @@ static int g_sqzAliasCmp;
 static int g_sqzEdgeCmp;
 static int g_sqzRangeCmp;
 static int g_sqzOracleCmp;
+static int g_sqzTieCmp;
 
 typedef struct
 {
@@ -503,6 +505,164 @@ static const char sqzOracleLvlJ2020[] =
    "222222111111111000000000000000000000000000000000000000000000000000011122"
    "222222111100000000000000000000000000000000001212222222222222110000000000"
    "0111000000000000000000000000000000000012210000000000000000000000001111";
+static const TA_Real sqzOracleMomGP2020[214] =
+{
+   -7.744067857142861, -7.840317857142857, -7.770589285714289,
+   -7.31531428571429, -6.882557142857143, -6.39099642857143,
+   -5.498503571428569, -4.4476821428571425, -3.6905071428571357,
+   -3.10817142857142, -2.6200249999999925, -2.410835714285707,
+   -2.236892857142853, -2.2016607142857088, -2.022028571428569,
+   -1.8091749999999975, -1.7301392857142806, -1.503528571428573,
+   -0.7797714285714301, -0.2127607142857162, 0.33448928571428205,
+   0.8490428571428508, 1.303999999999995, 1.516521428571421,
+   1.5268749999999938, 1.2040071428571388, 1.3664285714285667,
+   1.7647035714285666, 2.227074999999998, 2.737392857142855,
+   2.6831321428571404, 2.608560714285712, 2.2440249999999975,
+   1.9015642857142807, 1.6665535714285666, 1.1433678571428554,
+   0.41411785714285376, -0.4350250000000013, -0.948453571428574,
+   -1.396450000000001, -1.7363250000000003, -2.1106250000000015,
+   -2.1966500000000018, -2.4751857142857148, -2.9085357142857156,
+   -3.449264285714286, -3.603814285714287, -4.046746428571434,
+   -4.82321428571429, -5.29742142857143, -5.903317857142857,
+   -6.210757142857143, -6.062382142857143, -5.920914285714282,
+   -5.82069285714285, -5.578246428571422, -5.335710714285711,
+   -4.879503571428572, -4.369539285714289, -3.865614285714289,
+   -3.3819178571428594, -2.94119285714286, -2.5277464285714295,
+   -2.241989285714286, -1.9324678571428566, -1.6792499999999992,
+   -1.1352749999999983, -0.6721499999999994, -0.5060071428571415,
+   -0.3637607142857151, -0.2869428571428543, -0.3816785714285653,
+   -0.3339535714285673, -0.4874678571428488, -0.7038535714285605,
+   -0.7512249999999878, -1.0151571428571349, -0.8795999999999944,
+   -0.8645464285714253, -0.8735535714285692, -0.7076499999999992,
+   -0.5562571428571432, -0.7533392857142845, -1.1498357142857103,
+   -1.1769392857142846, -1.1112071428571402, -0.7883535714285694,
+   0.04531428571428653, 0.9394964285714316, 1.862628571428575,
+   2.8244321428571473, 3.6542964285714334, 4.285867857142861,
+   4.736617857142862, 5.148121428571434, 5.34155714285715,
+   5.398925000000005, 5.487657142857145, 5.617439285714291,
+   5.582178571428575, 5.605053571428573, 5.633735714285714,
+   5.195810714285717, 4.5387285714285746, 3.807917857142861,
+   3.1041892857142876, 2.133239285714291, 1.199571428571434,
+   0.4066785714285759, -0.2716357142857069, -0.8508428571428484,
+   -1.3050107142857073, -1.8043178571428529, -1.6267857142857123,
+   -1.312867857142856, -0.9266428571428578, -0.7918142857142829,
+   -0.7680678571428552, -0.5628499999999961, -0.12824999999999553,
+   0.13888928571428627, 0.22920357142857206, 0.42330000000000134,
+   0.4360035714285725, 0.39089285714285876, 0.35652857142857264,
+   0.22560357142857218, -0.2944499999999976, -0.8609535714285665,
+   -1.2810821428571373, -1.6885321428571374, -2.075971428571424,
+   -2.617953571428571, -2.8327999999999984, -2.902182142857143,
+   -2.896914285714287, -3.010560714285714, -3.205867857142859,
+   -3.262492857142857, -3.0206821428571446, -2.8050392857142885,
+   -2.6148071428571416, -2.416021428571426, -2.57717857142857,
+   -2.537946428571425, -2.5295642857142844, -2.4360928571428566,
+   -2.429275000000002, -2.0956678571428564, -1.6820785714285744,
+   -1.3455714285714304, -0.9704821428571484, -0.5505821428571473,
+   -0.2267857142857168, 0.046210714285710885, 0.3192035714285679,
+   0.3126107142857104, 0.1946785714285708, 0.2122464285714285,
+   0.308014285714286, 0.443221428571428, 0.6031035714285706,
+   0.4813535714285688, 0.2401678571428547, 0.07585714285714018,
+   -0.04255714285714873, -0.30477500000000224, -0.7054249999999997,
+   -0.7695392857142834, -0.7444178571428537, -0.8059142857142815,
+   -0.8144071428571387, -0.9012749999999935, -1.0667535714285659,
+   -1.216164285714281, -1.6671785714285685, -2.1751928571428585,
+   -2.6984357142857145, -3.3173214285714283, -3.8913285714285673,
+   -4.287803571428567, -4.577746428571424, -5.012824999999999,
+   -5.36415, -5.527228571428574, -5.771364285714287,
+   -5.921207142857142, -6.029267857142862, -5.955546428571433,
+   -5.731510714285717, -5.366482142857144, -4.9859214285714275,
+   -4.734564285714285, -4.373210714285715, -3.426692857142858,
+   -2.9400178571428572, -2.324232142857148, -1.5568214285714337,
+   -1.022610714285717, -0.6133500000000032, -0.1798142857142917,
+   0.019821428571423105, 0.12261071428570691, -0.04546785714286106,
+   -0.013907142857148003, -0.016500000000006843, 0.06714999999999405,
+   0.035089285714279494, 0.024446428571422985, 0.027603571428565843,
+   -0.1513071428571493, -0.44467142857143394, -0.8881178571428647,
+   -1.3989214285714358
+};
+static const char sqzOracleLvlGP2020[] =
+   "mmmmmmmmm11111111121111111111111111222211111mmmmmmmmmmmmmmmmmmmmm1222222"
+   "221111122222222211mmmmmmmmmmmmmmm12222211211111112222111111mmmmmmmmmmm1m"
+   "mmmmmmmm111111122222222222222221mmmmmmmmmmmmmmmmmmmm122223222222222211";
+static const TA_Real sqzOracleMomGJ2020[214] =
+{
+   -7.744067857142873, -7.840317857142871, -7.770589285714296,
+   -7.315314285714297, -6.882557142857152, -6.390996428571439,
+   -5.4985035714285795, -4.44768214285715, -3.690507142857149,
+   -3.108171428571433, -2.6200250000000054, -2.4108357142857217,
+   -2.236892857142861, -2.201660714285717, -2.0220285714285726,
+   -1.809175000000005, -1.730139285714289, -1.5035285714285767,
+   -0.7797714285714346, -0.21276071428571797, 0.33448928571428027,
+   0.8490428571428446, 1.3039999999999914, 1.5165214285714192,
+   1.5268749999999915, 1.2040071428571384, 1.3664285714285693,
+   1.7647035714285728, 2.227075000000003, 2.737392857142865,
+   2.6831321428571506, 2.60856071428573, 2.244025000000015,
+   1.9015642857143025, 1.666553571428591, 1.143367857142877,
+   0.41411785714287763, -0.43502499999997823, -0.948453571428546,
+   -1.3964499999999749, -1.7363249999999724, -2.110624999999972,
+   -2.1966499999999716, -2.475185714285688, -2.9085357142856907,
+   -3.4492642857142677, -3.6038142857142716, -4.046746428571421,
+   -4.823214285714279, -5.2974214285714325, -5.903317857142859,
+   -6.210757142857151, -6.062382142857157, -5.9209142857142965,
+   -5.82069285714287, -5.578246428571447, -5.335710714285733,
+   -4.879503571428592, -4.369539285714305, -3.8656142857143054,
+   -3.381917857142875, -2.941192857142875, -2.5277464285714455,
+   -2.2419892857143005, -1.9324678571428713, -1.679250000000014,
+   -1.1352750000000142, -0.6721500000000091, -0.5060071428571504,
+   -0.3637607142857213, -0.2869428571428614, -0.3816785714285835,
+   -0.3339535714285766, -0.48746785714286034, -0.7038535714285743,
+   -0.7512250000000034, -1.0151571428571486, -0.8796000000000062,
+   -0.8645464285714306, -0.8735535714285714, -0.7076499999999992,
+   -0.5562571428571417, -0.7533392857142829, -1.1498357142857083,
+   -1.176939285714282, -1.1112071428571368, -0.7883535714285663,
+   0.04531428571429075, 0.939496428571438, 1.86262857142858,
+   2.824432142857148, 3.654296428571442, 4.285867857142861,
+   4.7366178571428605, 5.148121428571436, 5.341557142857148,
+   5.398925000000013, 5.487657142857145, 5.6174392857142905,
+   5.582178571428571, 5.605053571428577, 5.63373571428572,
+   5.195810714285717, 4.538728571428578, 3.8079178571428614,
+   3.104189285714292, 2.1332392857142963, 1.1995714285714456,
+   0.40667857142858566, -0.27163571428570066, -0.8508428571428439,
+   -1.305010714285693, -1.8043178571428342, -1.6267857142857025,
+   -1.312867857142841, -0.9266428571428307, -0.7918142857142669,
+   -0.7680678571428423, -0.5628499999999832, -0.12824999999998354,
+   0.1388892857142956, 0.22920357142857917, 0.42330000000000634,
+   0.43600357142857504, 0.39089285714285804, 0.3565285714285711,
+   0.22560357142857246, -0.2944499999999972, -0.8609535714285688,
+   -1.2810821428571408, -1.688532142857131, -2.075971428571421,
+   -2.617953571428565, -2.8327999999999918, -2.9021821428571357,
+   -2.8969142857142742, -3.010560714285699, -3.205867857142838,
+   -3.262492857142835, -3.0206821428571224, -2.8050392857142654,
+   -2.6148071428571242, -2.416021428571412, -2.577178571428557,
+   -2.5379464285714137, -2.5295642857142724, -2.4360928571428473,
+   -2.4292749999999885, -2.095667857142846, -1.6820785714285602,
+   -1.3455714285714162, -0.9704821428571293, -0.5505821428571238,
+   -0.22678571428569683, 0.046210714285734866, 0.319203571428595,
+   0.3126107142857393, 0.19467857142859657, 0.2122464285714578,
+   0.308014285714318, 0.4432214285714622, 0.6031035714286013,
+   0.4813535714286026, 0.24016785714288602, 0.0758571428571706,
+   -0.04255714285711498, -0.30477499999997193, -0.7054249999999698,
+   -0.769539285714254, -0.7444178571428246, -0.8059142857142518,
+   -0.8144071428571085, -0.9012749999999645, -1.0667535714285368,
+   -1.2161642857142514, -1.6671785714285399, -2.1751928571428287,
+   -2.6984357142856865, -3.317321428571404, -3.891328571428545,
+   -4.28780357142854, -4.577746428571416, -5.012824999999978,
+   -5.364149999999981, -5.527228571428552, -5.771364285714284,
+   -5.921207142857128, -6.029267857142841, -5.955546428571424,
+   -5.7315107142857045, -5.3664821428571265, -4.9859214285714195,
+   -4.734564285714278, -4.373210714285705, -3.4266928571428465,
+   -2.940017857142845, -2.3242321428571344, -1.5568214285714177,
+   -1.0226107142857046, -0.613349999999997, -0.17981428571427216,
+   0.019821428571447086, 0.12261071428572734, -0.04546785714284596,
+   -0.013907142857135568, -0.016499999999986414, 0.06715000000000515,
+   0.03508928571429237, 0.024446428571437195, 0.027603571428571172,
+   -0.1513071428571422, -0.44467142857143216, -0.888117857142865,
+   -1.3989214285714358
+};
+static const char sqzOracleLvlGJ2020[] =
+   "000000000111111111211111111111111112222111110000000000000000000001222222"
+   "221111122222222211000000000000000122222112111111122221111110000000000010"
+   "0000000011111112222222222222222100000000000000000000122223222222222211";
 
 /**** Local functions declarations.    ****/
 
@@ -520,6 +680,7 @@ static ErrorNumber sqzLegEdges( TA_History *history );
 static ErrorNumber sqzLegSubRange( TA_History *history );
 static ErrorNumber sqzLegRange( TA_History *history );
 static ErrorNumber sqzLegOracles( TA_History *history );
+static ErrorNumber sqzLegTies( void );
 
 /**** Global functions definitions.   ****/
 
@@ -536,7 +697,7 @@ ErrorNumber test_func_sqzmom( TA_History *history )
 
    g_sqzComposeCmp = g_sqzBoundaryCmp = g_sqzBoundaryEdge = 0;
    g_sqzLookbackCmp = g_sqzNestCmp = g_sqzFlatCmp = 0;
-   g_sqzAliasCmp = g_sqzEdgeCmp = g_sqzRangeCmp = g_sqzOracleCmp = 0;
+   g_sqzAliasCmp = g_sqzEdgeCmp = g_sqzRangeCmp = g_sqzOracleCmp = g_sqzTieCmp = 0;
 
    if( (e = sqzLegCompose ( history )) != TA_TEST_PASS ) return e;
    if( (e = sqzLegBoundary( history )) != TA_TEST_PASS ) return e;
@@ -548,6 +709,7 @@ ErrorNumber test_func_sqzmom( TA_History *history )
    if( (e = sqzLegSubRange( history )) != TA_TEST_PASS ) return e;
    if( (e = sqzLegRange   ( history )) != TA_TEST_PASS ) return e;
    if( (e = sqzLegOracles ( history )) != TA_TEST_PASS ) return e;
+   if( (e = sqzLegTies    (         )) != TA_TEST_PASS ) return e;
 
    /* Every leg must have compared what it says it compares. Without these a
     * leg that silently stopped early reads exactly like a leg that passed. */
@@ -560,16 +722,17 @@ ErrorNumber test_func_sqzmom( TA_History *history )
        g_sqzAliasCmp    != SQZ_ALIAS_CMP    ||
        g_sqzEdgeCmp     != SQZ_EDGE_CMP     ||
        g_sqzRangeCmp    != SQZ_RANGE_CMP    ||
-       g_sqzOracleCmp   != SQZ_ORACLE_CMP )
+       g_sqzOracleCmp   != SQZ_ORACLE_CMP   ||
+       g_sqzTieCmp      != SQZ_TIE_CMP )
    {
-      printf( "Fail: SQZMOM comparison counts %d/%d/%d/%d/%d/%d/%d/%d/%d/%d, expected "
-              "%d/%d/>=%d/%d/%d/%d/%d/%d/%d/%d\n",
+      printf( "Fail: SQZMOM comparison counts %d/%d/%d/%d/%d/%d/%d/%d/%d/%d/%d, expected "
+              "%d/%d/>=%d/%d/%d/%d/%d/%d/%d/%d/%d\n",
               g_sqzComposeCmp, g_sqzBoundaryCmp, g_sqzBoundaryEdge,
               g_sqzLookbackCmp, g_sqzNestCmp, g_sqzFlatCmp, g_sqzAliasCmp,
-              g_sqzEdgeCmp, g_sqzRangeCmp, g_sqzOracleCmp,
+              g_sqzEdgeCmp, g_sqzRangeCmp, g_sqzOracleCmp, g_sqzTieCmp,
               SQZ_COMPOSE_CMP, SQZ_BOUNDARY_CMP, SQZ_BOUNDARY_EDGE,
               SQZ_LOOKBACK_CMP, SQZ_NEST_CMP, SQZ_FLAT_CMP, SQZ_ALIAS_CMP,
-              SQZ_EDGE_CMP, SQZ_RANGE_CMP, SQZ_ORACLE_CMP );
+              SQZ_EDGE_CMP, SQZ_RANGE_CMP, SQZ_ORACLE_CMP, SQZ_TIE_CMP );
       return TA_TESTUTIL_TFRR_BAD_CALCULATION;
    }
 
@@ -761,30 +924,31 @@ static ErrorNumber sqzLegBoundary( TA_History *history )
 
    nbBars = (int)history->nbBars;
 
-   for( t = 0; t < 3; t++ )
+   for( t = 0; t < 3 + 214; t++ )
    {
       double tuned;
+      int bar = ( t < 3 ) ? tuneBar[t] : 38 + (t - 3);
 
-      c.bbPeriod = 20; c.nbDev = 2.0; c.kcPeriod = 20;
+      c.bbPeriod = 20; c.nbDev = ( t < 3 ) ? 2.0 : 2.5; c.kcPeriod = 20;
       c.wide = 2.0; c.normal = 1.5; c.narrow = 1.0; c.wantLookback = -1;
 
-      /* First pass: read the factor at which tuneBar[t] flips its upper test. */
+      /* First pass: read the factor at which bar flips its upper test. */
       if( (e = sqzReference( history->high, history->low, history->close,
                              nbBars, &c, 0, &refBeg, &refNb )) != TA_TEST_PASS )
          return e;
 
-      i = tuneBar[t] - refBeg;
+      i = bar - refBeg;
       if( i < 0 || i >= refNb || !(refBand[i] > 0.0) )
       {
          printf( "Fail: SQZMOM boundary leg, bar %d is outside the output or "
-                 "has a zero band\n", tuneBar[t] );
+                 "has a zero band\n", bar );
          return TA_TESTUTIL_TFRR_BAD_PARAM;
       }
       tuned = (refBBU[i] - refKCM[i]) / refBand[i];
       if( !(tuned > 0.0) )
       {
          printf( "Fail: SQZMOM boundary leg, bar %d gives a non-positive "
-                 "factor %.17g\n", tuneBar[t], tuned );
+                 "factor %.17g\n", bar, tuned );
          return TA_TESTUTIL_TFRR_BAD_PARAM;
       }
 
@@ -986,25 +1150,30 @@ static ErrorNumber sqzLegFlat( void )
          return TA_TESTUTIL_TFRR_BAD_CALCULATION;
       }
       g_sqzFlatCmp++;
+
+      if( gotMom[i] != 0.0 )
+      {
+         printf( "Fail: SQZMOM flat bar %d outMomentum %.17g, expected 0\n",
+                 (int)begIdx+i, gotMom[i] );
+         return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+      }
+      g_sqzFlatCmp++;
    }
 
    return TA_TEST_PASS;
 }
 
-/* Leg 6. Aliasing. The body must read every bar input before it writes a caller
- * buffer. It did not at first: TA_LINEARREG wrote outMomentum in the middle and
- * TA_TRANGE then read a high or low the caller had aliased onto it. The
- * abstract layer caught that; this pins it in the group itself.
+/* Leg 6. Aliasing. The body must read every bar input before it writes a
+ * caller buffer. outSqueeze is an integer array and cannot be an input.
  */
 static ErrorNumber sqzLegAlias( TA_History *history )
 {
    static TA_Real buf[SQZ_NB_BAR];
    static TA_Real baseMom[SQZ_NB_BAR];
    static TA_Integer baseSqz[SQZ_NB_BAR];
-   static TA_Integer ibuf[SQZ_NB_BAR];
    TA_RetCode rc;
    TA_Integer begIdx, nbElement, baseBeg, baseNb;
-   int src, out, i, nbBars;
+   int src, i, nbBars;
 
    nbBars = (int)history->nbBars;
 
@@ -1017,51 +1186,34 @@ static ErrorNumber sqzLegAlias( TA_History *history )
       return TA_TESTUTIL_TFRR_BAD_RETCODE;
    }
 
-   for( out = 0; out < 2; out++ )
+   for( src = 0; src < 3; src++ )
    {
-      for( src = 0; src < 3; src++ )
+      const TA_Real *h = history->high, *l = history->low, *c = history->close;
+
+      memcpy( buf, src==0 ? history->high : src==1 ? history->low
+                                          : history->close,
+              nbBars * sizeof(TA_Real) );
+      if( src == 0 ) h = buf; else if( src == 1 ) l = buf; else c = buf;
+
+      rc = TA_SQZMOM( 0, nbBars-1, h, l, c, 20, 2.0, 20, 2.0, 1.5, 1.0,
+                      &begIdx, &nbElement, buf, gotSqz );
+      if( rc != TA_SUCCESS || begIdx != baseBeg || nbElement != baseNb )
       {
-         const TA_Real *h = history->high, *l = history->low, *c = history->close;
-
-         memcpy( buf, src==0 ? history->high : src==1 ? history->low
-                                             : history->close,
-                 nbBars * sizeof(TA_Real) );
-         if( src == 0 ) h = buf; else if( src == 1 ) l = buf; else c = buf;
-
-         rc = TA_SQZMOM( 0, nbBars-1, h, l, c, 20, 2.0, 20, 2.0, 1.5, 1.0,
-                         &begIdx, &nbElement,
-                         out==0 ? buf : gotMom,
-                         out==0 ? gotSqz : ibuf );
-         if( rc != TA_SUCCESS || begIdx != baseBeg || nbElement != baseNb )
-         {
-            printf( "Fail: SQZMOM alias out%d over input %d rc=%d\n",
-                    out, src, (int)rc );
-            return TA_TESTUTIL_TFRR_BAD_RETCODE;
-         }
-
-         for( i = 0; i < nbElement; i++ )
-         {
-            if( out == 0 )
-            {
-               if( memcmp( &buf[i], &baseMom[i], sizeof(TA_Real) ) != 0 ||
-                   gotSqz[i] != baseSqz[i] )
-                  goto aliasDiffers;
-            }
-            else
-            {
-               if( memcmp( &gotMom[i], &baseMom[i], sizeof(TA_Real) ) != 0 ||
-                   ibuf[i] != baseSqz[i] )
-                  goto aliasDiffers;
-            }
-         }
-         g_sqzAliasCmp++;
-         continue;
-
-      aliasDiffers:
-         printf( "Fail: SQZMOM out%d aliased over input %d differs at bar %d\n",
-                 out, src, baseBeg+i );
-         return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+         printf( "Fail: SQZMOM outMomentum over input %d rc=%d\n", src, (int)rc );
+         return TA_TESTUTIL_TFRR_BAD_RETCODE;
       }
+
+      for( i = 0; i < nbElement; i++ )
+      {
+         if( memcmp( &buf[i], &baseMom[i], sizeof(TA_Real) ) != 0 ||
+             gotSqz[i] != baseSqz[i] )
+         {
+            printf( "Fail: SQZMOM outMomentum aliased over input %d differs at "
+                    "bar %d\n", src, baseBeg+i );
+            return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+         }
+      }
+      g_sqzAliasCmp++;
    }
 
    return TA_TEST_PASS;
@@ -1293,46 +1445,52 @@ static ErrorNumber sqzLegRange( TA_History *history )
                          TA_TEST_UNST_NONE, (void *)history, 2, 0 );
 }
 
-/* Leg 10. Two other libraries over the same bars. The momentum is held to
- * 1e-13 of the largest close: the distance is the rounding of the running sums
- * in TA_SMA and TA_LINEARREG, which scales with the price and not with the
- * momentum, so a relative bound fails where the momentum crosses zero. The
- * level is exact.
+/* Leg 10. Two other libraries. The momentum is held to 1e-13 of the largest
+ * close: the distance is the rounding of the running sums in TA_SMA and
+ * TA_LINEARREG, which scales with the price and not with the momentum, so a
+ * relative bound fails where the momentum crosses zero. The level is exact.
+ * gData at 20/20 is what gives ta4j a level 3 to agree on, at bar 239.
  */
 static ErrorNumber sqzLegOracles( TA_History *history )
 {
    static const struct
    {
       const char *name;
-      int bbPeriod, kcPeriod, mergeOff;
+      int gData, bbPeriod, kcPeriod, mergeOff;
       const TA_Real *mom;
       const char *lvl;
-   } cap[4] =
+   } cap[6] =
    {
-      { "pandas", 20, 20, 0, sqzOracleMomP2020, sqzOracleLvlP2020 },
-      { "pandas", 14, 20, 0, sqzOracleMomP1420, sqzOracleLvlP1420 },
-      { "pandas", 20, 14, 0, sqzOracleMomP2014, sqzOracleLvlP2014 },
-      { "ta4j",   20, 20, 1, sqzOracleMomJ2020, sqzOracleLvlJ2020 },
+      { "pandas", 0, 20, 20, 0, sqzOracleMomP2020,  sqzOracleLvlP2020  },
+      { "pandas", 0, 14, 20, 0, sqzOracleMomP1420,  sqzOracleLvlP1420  },
+      { "pandas", 0, 20, 14, 0, sqzOracleMomP2014,  sqzOracleLvlP2014  },
+      { "ta4j",   0, 20, 20, 1, sqzOracleMomJ2020,  sqzOracleLvlJ2020  },
+      { "pandas", 1, 20, 20, 0, sqzOracleMomGP2020, sqzOracleLvlGP2020 },
+      { "ta4j",   1, 20, 20, 1, sqzOracleMomGJ2020, sqzOracleLvlGJ2020 },
    };
    TA_RetCode rc;
    TA_Integer begIdx, nbElement;
-   int t, i, nbBars, want, got;
-   double tol;
+   int t, i, want, got;
 
-   nbBars = (int)history->nbBars;
+   if( (int)history->nbBars != SQZ_NB_BAR )
+      return TA_TESTUTIL_TFRR_BAD_PARAM;
 
-   tol = 0.0;
-   for( i = 0; i < nbBars; i++ )
-      if( fabs( history->close[i] ) > tol ) tol = fabs( history->close[i] );
-   tol *= 1e-13;
-
-   for( t = 0; t < 4; t++ )
+   for( t = 0; t < 6; t++ )
    {
-      rc = TA_SQZMOM( 0, nbBars-1, history->high, history->low, history->close,
+      const TA_Real *high  = cap[t].gData ? gDataHigh  : history->high;
+      const TA_Real *low   = cap[t].gData ? gDataLow   : history->low;
+      const TA_Real *close = cap[t].gData ? gDataClose : history->close;
+      double tol = 0.0;
+
+      for( i = 0; i < SQZ_NB_BAR; i++ )
+         if( fabs( close[i] ) > tol ) tol = fabs( close[i] );
+      tol *= 1e-13;
+
+      rc = TA_SQZMOM( 0, SQZ_NB_BAR-1, high, low, close,
                       cap[t].bbPeriod, 2.0, cap[t].kcPeriod, 2.0, 1.5, 1.0,
                       &begIdx, &nbElement, gotMom, gotSqz );
       if( rc != TA_SUCCESS || nbElement != (int)strlen( cap[t].lvl )
-          || begIdx != nbBars - nbElement )
+          || begIdx != SQZ_NB_BAR - nbElement )
       {
          printf( "Fail: SQZMOM vs %s b=%d k=%d rc=%d begIdx=%d nbElement=%d, the "
                  "capture has %d bars\n", cap[t].name, cap[t].bbPeriod,
@@ -1364,6 +1522,72 @@ static ErrorNumber sqzLegOracles( TA_History *history )
             return TA_TESTUTIL_TFRR_BAD_CALCULATION;
          }
          g_sqzOracleCmp++;
+      }
+   }
+
+   return TA_TEST_PASS;
+}
+
+/* Leg 11. Exact ties. On a ramp of step 1 with high == low == close, at
+ * b = 2 and k = 4:
+ *
+ *   BAND = 1,  BBU - KCM = s + nbDev/2,  BBL - KCM = s - nbDev/2
+ *
+ * with s = +1 on the rising ramp and -1 on the falling one. A factor equal to
+ * one of those two distances puts that band exactly on that channel's edge.
+ * Each row names the one comparison it ties and the level a strict test
+ * gives; relaxing that comparison alone gives the other level.
+ */
+static ErrorNumber sqzLegTies( void )
+{
+   static const struct
+   {
+      int rising;
+      double nbDev, wide, normal, narrow;
+      int want, relaxed;
+      const char *tied;
+   } tie[8] =
+   {
+      { 1, 2.0, 3.0, 2.0, 1.0,  1,  2, "normal, upper" },
+      { 1, 2.0, 3.0, 2.5, 2.0,  2,  3, "narrow, upper" },
+      { 1, 2.0, 2.0, 1.0, 0.5,  0,  1, "wide, upper"   },
+      { 0, 2.0, 3.0, 2.0, 1.0,  1,  2, "normal, lower" },
+      { 0, 2.0, 3.0, 2.5, 2.0,  2,  3, "narrow, lower" },
+      { 0, 2.0, 2.0, 1.0, 0.5,  0,  1, "wide, lower"   },
+      { 0, 6.0, 2.0, 1.0, 0.5,  0, -1, "released, upper" },
+      { 1, 6.0, 2.0, 1.0, 0.5,  0, -1, "released, lower" },
+   };
+   static TA_Real ramp[40];
+   TA_RetCode rc;
+   TA_Integer begIdx, nbElement;
+   int t, i;
+
+   for( t = 0; t < 8; t++ )
+   {
+      for( i = 0; i < 40; i++ )
+         ramp[i] = tie[t].rising ? 100.0 + i : 1000.0 - i;
+
+      rc = TA_SQZMOM( 0, 39, ramp, ramp, ramp, 2, tie[t].nbDev, 4,
+                      tie[t].wide, tie[t].normal, tie[t].narrow,
+                      &begIdx, &nbElement, gotMom, gotSqz );
+      if( rc != TA_SUCCESS || begIdx != 6 || nbElement != 34 )
+      {
+         printf( "Fail: SQZMOM tie (%s) rc=%d begIdx=%d nbElement=%d\n",
+                 tie[t].tied, (int)rc, (int)begIdx, (int)nbElement );
+         return TA_TESTUTIL_TFRR_BAD_RETCODE;
+      }
+
+      for( i = 0; i < nbElement; i++ )
+      {
+         if( gotSqz[i] != tie[t].want )
+         {
+            printf( "Fail: SQZMOM tie (%s) bar %d outSqueeze %d, expected %d; a "
+                    "comparison that is no longer strict gives %d\n",
+                    tie[t].tied, (int)begIdx+i, (int)gotSqz[i], tie[t].want,
+                    tie[t].relaxed );
+            return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+         }
+         g_sqzTieCmp++;
       }
    }
 

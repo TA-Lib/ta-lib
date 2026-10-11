@@ -5,7 +5,7 @@ description: "John Carter's TTM Squeeze, in the form LazyBear published on Tradi
 
 ## Summary
 
-John Carter's TTM Squeeze, in the form LazyBear published on TradingView in 2014. Volatility compression is read by comparing the Bollinger Bands against a Keltner Channel: when the bands sit inside the channel the market is coiled, and when they push outside it the coil has released. LazyBear replaced Carter's simple momentum with a linear regression of the close against a Donchian/SMA anchor, which is the histogram that StockCharts, pandas, ta4j and trading-signals all compute.
+John Carter's TTM Squeeze, in the form LazyBear published on TradingView in 2014. Volatility compression is read by comparing the Bollinger Bands against a Keltner Channel: when the bands sit inside the channel the market is coiled, and when they push outside it the coil has released. LazyBear replaced Carter's simple momentum with a linear regression of the close against a Donchian/SMA anchor, which is the histogram that StockCharts, ta4j and trading-signals compute, and pandas-ta with `lazybear=True`.
 
 "Squeeze Pro" tests the bands against three Keltner widths instead of one, so compression becomes a level rather than a boolean. `outSqueeze` carries that level: 3, 2 and 1 for the narrow, normal and wide channels, -1 once the bands are outside the wide channel, and 0 in between. The classic squeeze-on flag is `outSqueeze >= 2`, and with `wide == normal` the three states are exactly LazyBear's on / off / none.
 

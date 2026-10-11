@@ -55,6 +55,7 @@
  *  100826 KL,CC  Creation (#488).
  *  101126 MF,CC  Reject factors out of order (#488).
  *  101126 MF,CC  DEV in one loop instead of three calls (#488).
+ *  101126 MF,CC  Both bands from one rounded deviation, as bbands (#488).
  */
 
 // Import types from parent module
@@ -197,52 +198,6 @@ impl Core {
         inHigh: &[f64],
         inLow: &[f64],
         inClose: &[f64],
-        optInBBPeriod: i32,
-        optInNbDev: f64,
-        optInKCPeriod: i32,
-        optInFactorWide: f64,
-        optInFactorNormal: f64,
-        optInFactorNarrow: f64,
-        outBegIdx: &mut usize,
-        outNBElement: &mut usize,
-        outMomentum: &mut [f64],
-        outSqueeze: &mut [i32],
-    ) -> RetCode {
-        #[cfg(target_arch = "x86_64")]
-        return ta_lib_dispatch::dispatch_fma!(self, sqzmom_impl_fma, sqzmom_impl_scalar, (startIdx, endIdx, inHigh, inLow, inClose, optInBBPeriod, optInNbDev, optInKCPeriod, optInFactorWide, optInFactorNormal, optInFactorNarrow, outBegIdx, outNBElement, outMomentum, outSqueeze));
-        #[cfg(not(target_arch = "x86_64"))]
-        self.sqzmom_impl_scalar(startIdx, endIdx, inHigh, inLow, inClose, optInBBPeriod, optInNbDev, optInKCPeriod, optInFactorWide, optInFactorNormal, optInFactorNarrow, outBegIdx, outNBElement, outMomentum, outSqueeze)
-    }
-    #[cfg(target_arch = "x86_64")]
-    #[target_feature(enable = "fma")]
-    fn sqzmom_impl_fma(
-        &self,
-        startIdx: usize,
-        endIdx: usize,
-        inHigh: &[f64],
-        inLow: &[f64],
-        inClose: &[f64],
-        optInBBPeriod: i32,
-        optInNbDev: f64,
-        optInKCPeriod: i32,
-        optInFactorWide: f64,
-        optInFactorNormal: f64,
-        optInFactorNarrow: f64,
-        outBegIdx: &mut usize,
-        outNBElement: &mut usize,
-        outMomentum: &mut [f64],
-        outSqueeze: &mut [i32],
-    ) -> RetCode {
-        self.sqzmom_impl_scalar(startIdx, endIdx, inHigh, inLow, inClose, optInBBPeriod, optInNbDev, optInKCPeriod, optInFactorWide, optInFactorNormal, optInFactorNarrow, outBegIdx, outNBElement, outMomentum, outSqueeze)
-    }
-    #[inline(always)]
-    fn sqzmom_impl_scalar(
-        &self,
-        startIdx: usize,
-        endIdx: usize,
-        inHigh: &[f64],
-        inLow: &[f64],
-        inClose: &[f64],
         mut optInBBPeriod: i32,
         mut optInNbDev: f64,
         mut optInKCPeriod: i32,
@@ -312,12 +267,13 @@ impl Core {
         let mut tempKCM: Vec<f64> = Vec::new();
         let mut tempMid: Vec<f64> = Vec::new();
         let mut tempSD: Vec<f64> = Vec::new();
+        let mut dev: f64 = 0.0_f64;
         let mut up: f64 = 0.0_f64;
         let mut lo: f64 = 0.0_f64;
         let mut centre: f64 = 0.0_f64;
         let mut band: f64 = 0.0_f64;
-        // Every leg is a shipped function, CALLED rather than transcribed, so both
-        // outputs carry each callee's own arithmetic bit for bit:
+        // Each rolling statistic is a call to the shipped function, so it carries
+        // that function's own arithmetic bit for bit:
         //
         //   BBU, BBL = sma(close, b) +/- nbdev * stddev(close, b, 1.0)
         //   KCM      = sma(close, k)
@@ -326,10 +282,8 @@ impl Core {
         //   DEV      = close - (DMID + KCM)/2
         //   momentum = linearreg(DEV, k)
         //
-        // The bands are taken as the MA + STDDEV pair rather than through bbands
-        // because bbands' SMA fast path states it is bit-identical to that pair, and
-        // it is what bbands' own stream tier composes; taking the pair here keeps
-        // every optional argument a parameter or a literal.
+        // A composed sub-call cannot be handed an MA-type constant, so the bands
+        // are the sma + stddev pair and not a bbands call.
         //
         // Two chains need their input one window earlier than the first output bar:
         // sma(k) over TR, and linearreg(k) over DEV. Both windows are k-1 long, so
@@ -422,16 +376,19 @@ impl Core {
         tempBegIdx = _xr7.beg_idx;
         tempNbElement = _xr7.count;
         retCode = RetCode::Success;
-        // The ordinal. The three Keltner widths share the centre and BAND >= 0, so
-        // the tests nest: inside(narrow) implies inside(normal) implies inside(wide).
-        // Testing narrow first is what makes the ordinal monotone without comparing
-        // the factors to each other, which is why the card asks for
-        // `wide >= normal >= narrow >= 0` and not for a strict order.
+        // The ordinal. Every comparison is strict: a band exactly on a channel
+        // edge is not inside that channel and not outside it either.
+        //
+        // Keep the deviation a rounded product added to and subtracted from the
+        // middle band, as bbands does. Written as one expression per band, the
+        // upper one contracts into a fused multiply-add and the lower one cannot,
+        // and a band within one ulp of an edge then changes level.
         // for( i = 0; i < n; i += 1 )
         i = 0;
         while i < n {
-            up = (tempSD[i] as f64).mul_add(optInNbDev, tempMid[i]);
-            lo = tempMid[i] - tempSD[i] * optInNbDev;
+            dev = tempSD[i] * optInNbDev;
+            up = tempMid[i] + dev;
+            lo = tempMid[i] - dev;
             centre = tempKCM[i];
             band = tempWork[i];
             if lo > centre - ((optInFactorNarrow) as f64) * band && up < centre + ((optInFactorNarrow) as f64) * band {
@@ -455,12 +412,13 @@ impl Core {
     /// compression is read by comparing the Bollinger Bands against a Keltner Channel: when the
     /// bands sit inside the channel the market is coiled, and when they push outside it the coil
     /// has released. LazyBear replaced Carter's simple momentum with a linear regression of the
-    /// close against a Donchian/SMA anchor, which is the histogram that StockCharts, pandas, ta4j
-    /// and trading-signals all compute. "Squeeze Pro" tests the bands against three Keltner widths
-    /// instead of one, so compression becomes a level rather than a boolean. `outSqueeze` carries
-    /// that level: 3, 2 and 1 for the narrow, normal and wide channels, -1 once the bands are
-    /// outside the wide channel, and 0 in between. The classic squeeze-on flag is `outSqueeze >=
-    /// 2`, and with `wide == normal` the three states are exactly LazyBear's on / off / none.
+    /// close against a Donchian/SMA anchor, which is the histogram that StockCharts, ta4j and
+    /// trading-signals compute, and pandas-ta with `lazybear=True`. "Squeeze Pro" tests the bands
+    /// against three Keltner widths instead of one, so compression becomes a level rather than a
+    /// boolean. `outSqueeze` carries that level: 3, 2 and 1 for the narrow, normal and wide
+    /// channels, -1 once the bands are outside the wide channel, and 0 in between. The classic
+    /// squeeze-on flag is `outSqueeze >= 2`, and with `wide == normal` the three states are exactly
+    /// LazyBear's on / off / none.
     ///
     /// Formula and more info at [ta-lib.org/functions/sqzmom](https://ta-lib.org/functions/sqzmom).
     ///
@@ -660,6 +618,7 @@ impl Core {
     fn sqzmom_step_impl(sp: &mut SqzmomStreamState, inHigh: f64, inLow: f64, inClose: f64, outMomentum: &mut f64, outSqueeze: &mut i32) -> Result<(), RetCode> {
         let mut band: f64 = 0.0_f64;
         let mut centre: f64 = 0.0_f64;
+        let mut dev: f64 = 0.0_f64;
         let mut lo: f64 = 0.0_f64;
         let mut up: f64 = 0.0_f64;
         let mut cur_tempDev: f64 = 0.0_f64;
@@ -682,8 +641,9 @@ impl Core {
         cur_tempKCM = sp.sub6.update(inClose)?;
         cur_outMomentum = sp.sub7.update(cur_tempDev)?;
         // Combine map (batch tail, per bar).
-        up = (cur_tempSD as f64).mul_add(sp.optInNbDev, cur_tempMid);
-        lo = cur_tempMid - cur_tempSD * sp.optInNbDev;
+        dev = cur_tempSD * sp.optInNbDev;
+        up = cur_tempMid + dev;
+        lo = cur_tempMid - dev;
         centre = cur_tempKCM;
         band = cur_tempWork;
         if lo > centre - ((sp.optInFactorNarrow) as f64) * band && up < centre + ((sp.optInFactorNarrow) as f64) * band {
@@ -705,24 +665,6 @@ impl Core {
     /// The single whole-history transcription behind [`Core::sqzmom_open_internal`]
     /// (stride 0, scalar sink) and [`Core::sqzmom_open_and_fill`] (stride 1, caller slices).
     pub(crate) fn sqzmom_open_impl(
-        &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize, optInBBPeriod: i32, optInNbDev: f64, optInKCPeriod: i32, optInFactorWide: f64, optInFactorNormal: f64, optInFactorNarrow: f64, outBegIdx: &mut usize, outNBElement: &mut usize, outMomentum: &mut [f64], outSqueeze: &mut [i32], outStride: usize,
-    ) -> Result<SqzmomStream, RetCode> {
-        #[cfg(target_arch = "x86_64")]
-        return ta_lib_dispatch::dispatch_fma!(self, sqzmom_open_impl_fma, sqzmom_open_impl_scalar, (inHigh, inLow, inClose, startIdx, optInBBPeriod, optInNbDev, optInKCPeriod, optInFactorWide, optInFactorNormal, optInFactorNarrow, outBegIdx, outNBElement, outMomentum, outSqueeze, outStride));
-        #[cfg(not(target_arch = "x86_64"))]
-        self.sqzmom_open_impl_scalar(inHigh, inLow, inClose, startIdx, optInBBPeriod, optInNbDev, optInKCPeriod, optInFactorWide, optInFactorNormal, optInFactorNarrow, outBegIdx, outNBElement, outMomentum, outSqueeze, outStride)
-    }
-
-    #[cfg(target_arch = "x86_64")]
-    #[target_feature(enable = "fma")]
-    fn sqzmom_open_impl_fma(
-        &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize, optInBBPeriod: i32, optInNbDev: f64, optInKCPeriod: i32, optInFactorWide: f64, optInFactorNormal: f64, optInFactorNarrow: f64, outBegIdx: &mut usize, outNBElement: &mut usize, outMomentum: &mut [f64], outSqueeze: &mut [i32], outStride: usize,
-    ) -> Result<SqzmomStream, RetCode> {
-        self.sqzmom_open_impl_scalar(inHigh, inLow, inClose, startIdx, optInBBPeriod, optInNbDev, optInKCPeriod, optInFactorWide, optInFactorNormal, optInFactorNarrow, outBegIdx, outNBElement, outMomentum, outSqueeze, outStride)
-    }
-
-    #[inline(always)]
-    fn sqzmom_open_impl_scalar(
         &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize, mut optInBBPeriod: i32, mut optInNbDev: f64, mut optInKCPeriod: i32, mut optInFactorWide: f64, mut optInFactorNormal: f64, mut optInFactorNarrow: f64, outBegIdx: &mut usize, outNBElement: &mut usize, outMomentum: &mut [f64], outSqueeze: &mut [i32], outStride: usize,
     ) -> Result<SqzmomStream, RetCode> {
         if inHigh.is_empty() {
@@ -796,12 +738,13 @@ impl Core {
         let mut tempKCM: Vec<f64> = Vec::new();
         let mut tempMid: Vec<f64> = Vec::new();
         let mut tempSD: Vec<f64> = Vec::new();
+        let mut dev: f64 = 0.0_f64;
         let mut up: f64 = 0.0_f64;
         let mut lo: f64 = 0.0_f64;
         let mut centre: f64 = 0.0_f64;
         let mut band: f64 = 0.0_f64;
-        // Every leg is a shipped function, CALLED rather than transcribed, so both
-        // outputs carry each callee's own arithmetic bit for bit:
+        // Each rolling statistic is a call to the shipped function, so it carries
+        // that function's own arithmetic bit for bit:
         //
         //   BBU, BBL = sma(close, b) +/- nbdev * stddev(close, b, 1.0)
         //   KCM      = sma(close, k)
@@ -810,10 +753,8 @@ impl Core {
         //   DEV      = close - (DMID + KCM)/2
         //   momentum = linearreg(DEV, k)
         //
-        // The bands are taken as the MA + STDDEV pair rather than through bbands
-        // because bbands' SMA fast path states it is bit-identical to that pair, and
-        // it is what bbands' own stream tier composes; taking the pair here keeps
-        // every optional argument a parameter or a literal.
+        // A composed sub-call cannot be handed an MA-type constant, so the bands
+        // are the sma + stddev pair and not a bbands call.
         //
         // Two chains need their input one window earlier than the first output bar:
         // sma(k) over TR, and linearreg(k) over DEV. Both windows are k-1 long, so
@@ -903,16 +844,19 @@ impl Core {
         // sub-call's own startIdx (the seeding point).
         let sub7 = self.linearreg_open_and_fill_internal(&tempDev[..((stageLen - 1) as usize) + 1], ((0) as usize), optInKCPeriod, &mut tempBegIdx, &mut tempNbElement, &mut sc_outMomentum[..])?;
         retCode = RetCode::Success;
-        // The ordinal. The three Keltner widths share the centre and BAND >= 0, so
-        // the tests nest: inside(narrow) implies inside(normal) implies inside(wide).
-        // Testing narrow first is what makes the ordinal monotone without comparing
-        // the factors to each other, which is why the card asks for
-        // `wide >= normal >= narrow >= 0` and not for a strict order.
+        // The ordinal. Every comparison is strict: a band exactly on a channel
+        // edge is not inside that channel and not outside it either.
+        //
+        // Keep the deviation a rounded product added to and subtracted from the
+        // middle band, as bbands does. Written as one expression per band, the
+        // upper one contracts into a fused multiply-add and the lower one cannot,
+        // and a band within one ulp of an edge then changes level.
         // for( i = 0; i < n; i += 1 )
         i = 0;
         while i < n {
-            up = (tempSD[i] as f64).mul_add(optInNbDev, tempMid[i]);
-            lo = tempMid[i] - tempSD[i] * optInNbDev;
+            dev = tempSD[i] * optInNbDev;
+            up = tempMid[i] + dev;
+            lo = tempMid[i] - dev;
             centre = tempKCM[i];
             band = tempWork[i];
             if lo > centre - ((optInFactorNarrow) as f64) * band && up < centre + ((optInFactorNarrow) as f64) * band {
@@ -1153,6 +1097,7 @@ impl SqzmomStream {
             let outSqueeze = &mut outSqueeze;
             let mut band: f64 = 0.0_f64;
             let mut centre: f64 = 0.0_f64;
+            let mut dev: f64 = 0.0_f64;
             let mut lo: f64 = 0.0_f64;
             let mut up: f64 = 0.0_f64;
             let mut cur_tempDev: f64 = 0.0_f64;
@@ -1175,8 +1120,9 @@ impl SqzmomStream {
             cur_tempKCM = sp.sub6.peek(inClose)?;
             cur_outMomentum = sp.sub7.peek(cur_tempDev)?;
             // Combine map (batch tail, per bar).
-            up = (cur_tempSD as f64).mul_add(sp.optInNbDev, cur_tempMid);
-            lo = cur_tempMid - cur_tempSD * sp.optInNbDev;
+            dev = cur_tempSD * sp.optInNbDev;
+            up = cur_tempMid + dev;
+            lo = cur_tempMid - dev;
             centre = cur_tempKCM;
             band = cur_tempWork;
             if lo > centre - ((sp.optInFactorNarrow) as f64) * band && up < centre + ((sp.optInFactorNarrow) as f64) * band {

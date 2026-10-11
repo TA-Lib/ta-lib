@@ -57,6 +57,7 @@
  *  100826 KL,CC  Creation (#488).
  *  101126 MF,CC  Reject factors out of order (#488).
  *  101126 MF,CC  DEV in one loop instead of three calls (#488).
+ *  101126 MF,CC  Both bands from one rounded deviation, as bbands (#488).
  */
 
 TA_LIB_API int TA_SQZMOM_Lookback( int optInBBPeriod, double optInNbDev, int optInKCPeriod, double optInFactorWide, double optInFactorNormal, double optInFactorNarrow )
@@ -134,7 +135,6 @@ TA_LIB_API int TA_SQZMOM_DisplayShift( int optInBBPeriod, double optInNbDev, int
    return 0;
 }
 
-TA_FMA_MULTIVERSION
 TA_LIB_API TA_RetCode TA_SQZMOM( int    startIdx,
                                  int    endIdx,
                                  const double inHigh[],
@@ -165,6 +165,7 @@ TA_LIB_API TA_RetCode TA_SQZMOM( int    startIdx,
    double *tempKCM;
    double *tempMid;
    double *tempSD;
+   double dev;
    double up;
    double lo;
    double centre;
@@ -214,8 +215,8 @@ TA_LIB_API TA_RetCode TA_SQZMOM( int    startIdx,
    if( (const void *)outMomentum == (const void *)outSqueeze )
       return TA_BAD_PARAM;
 
-   /* Every leg is a shipped function, CALLED rather than transcribed, so both
-    * outputs carry each callee's own arithmetic bit for bit:
+   /* Each rolling statistic is a call to the shipped function, so it carries
+    * that function's own arithmetic bit for bit:
     *
     *   BBU, BBL = sma(close, b) +/- nbdev * stddev(close, b, 1.0)
     *   KCM      = sma(close, k)
@@ -224,10 +225,8 @@ TA_LIB_API TA_RetCode TA_SQZMOM( int    startIdx,
     *   DEV      = close - (DMID + KCM)/2
     *   momentum = linearreg(DEV, k)
     *
-    * The bands are taken as the MA + STDDEV pair rather than through bbands
-    * because bbands' SMA fast path states it is bit-identical to that pair, and
-    * it is what bbands' own stream tier composes; taking the pair here keeps
-    * every optional argument a parameter or a literal.
+    * A composed sub-call cannot be handed an MA-type constant, so the bands
+    * are the sma + stddev pair and not a bbands call.
     *
     * Two chains need their input one window earlier than the first output bar:
     * sma(k) over TR, and linearreg(k) over DEV. Both windows are k-1 long, so
@@ -426,16 +425,19 @@ TA_LIB_API TA_RetCode TA_SQZMOM( int    startIdx,
       *outNBElement= 0;
       return retCode;
    }
-   /* The ordinal. The three Keltner widths share the centre and BAND >= 0, so
-    * the tests nest: inside(narrow) implies inside(normal) implies inside(wide).
-    * Testing narrow first is what makes the ordinal monotone without comparing
-    * the factors to each other, which is why the card asks for
-    * `wide >= normal >= narrow >= 0` and not for a strict order.
+   /* The ordinal. Every comparison is strict: a band exactly on a channel
+    * edge is not inside that channel and not outside it either.
+    *
+    * Keep the deviation a rounded product added to and subtracted from the
+    * middle band, as bbands does. Written as one expression per band, the
+    * upper one contracts into a fused multiply-add and the lower one cannot,
+    * and a band within one ulp of an edge then changes level.
     */
    for( i = 0; i < n; i += 1 )
    {
-      up = fma(tempSD[i], optInNbDev, tempMid[i]);
-      lo = tempMid[i] - tempSD[i] * optInNbDev;
+      dev = tempSD[i] * optInNbDev;
+      up = tempMid[i] + dev;
+      lo = tempMid[i] - dev;
       centre = tempKCM[i];
       band = tempWork[i];
       if( lo > centre - optInFactorNarrow * band && up < centre + optInFactorNarrow * band )
@@ -465,7 +467,6 @@ TA_LIB_API TA_RetCode TA_SQZMOM( int    startIdx,
    return TA_SUCCESS;
 }
 
-TA_FMA_MULTIVERSION
 TA_RetCode TA_S_SQZMOM( int    startIdx,
                         int    endIdx,
                         const float inHigh[],
@@ -496,6 +497,7 @@ TA_RetCode TA_S_SQZMOM( int    startIdx,
    double *tempKCM;
    double *tempMid;
    double *tempSD;
+   double dev;
    double up;
    double lo;
    double centre;
@@ -717,8 +719,9 @@ TA_RetCode TA_S_SQZMOM( int    startIdx,
    }
    for( i = 0; i < n; i += 1 )
    {
-      up = fma(tempSD[i], optInNbDev, tempMid[i]);
-      lo = tempMid[i] - tempSD[i] * optInNbDev;
+      dev = tempSD[i] * optInNbDev;
+      up = tempMid[i] + dev;
+      lo = tempMid[i] - dev;
       centre = tempKCM[i];
       band = tempWork[i];
       if( lo > centre - optInFactorNarrow * band && up < centre + optInFactorNarrow * band )
@@ -774,10 +777,11 @@ struct TA_SQZMOM_Stream {
 };
 
 /* Private function, not in public API. */
-static TA_FMA_STEP_INLINE TA_RetCode TA_SQZMOM_StepImpl( struct TA_SQZMOM_Stream *sp, double inHigh, double inLow, double inClose, double *outMomentum, int *outSqueeze )
+static TA_RetCode TA_SQZMOM_StepImpl( struct TA_SQZMOM_Stream *sp, double inHigh, double inLow, double inClose, double *outMomentum, int *outSqueeze )
 {
    double band;
    double centre;
+   double dev;
    double lo;
    double up;
    double cur_tempDev = 0.0;
@@ -825,8 +829,9 @@ static TA_FMA_STEP_INLINE TA_RetCode TA_SQZMOM_StepImpl( struct TA_SQZMOM_Stream
       if( subRc != TA_SUCCESS ) return subRc;
    }
    /* Combine map (batch tail, per bar). */
-   up = fma(cur_tempSD, sp->optInNbDev, cur_tempMid);
-   lo = cur_tempMid - cur_tempSD * sp->optInNbDev;
+   dev = cur_tempSD * sp->optInNbDev;
+   up = cur_tempMid + dev;
+   lo = cur_tempMid - dev;
    centre = cur_tempKCM;
    band = cur_tempWork;
    if( lo > centre - sp->optInFactorNarrow * band && up < centre + sp->optInFactorNarrow * band )
@@ -850,7 +855,7 @@ static TA_FMA_STEP_INLINE TA_RetCode TA_SQZMOM_StepImpl( struct TA_SQZMOM_Stream
    return TA_SUCCESS;
 }
 
-static TA_FMA_STEP_INLINE TA_RetCode TA_SQZMOM_OpenImpl( struct TA_SQZMOM_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, int optInBBPeriod, double optInNbDev, int optInKCPeriod, double optInFactorWide, double optInFactorNormal, double optInFactorNarrow, int *outBegIdx, int *outNBElement, double outMomentum[], int outSqueeze[], int outStride )
+static TA_RetCode TA_SQZMOM_OpenImpl( struct TA_SQZMOM_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, int optInBBPeriod, double optInNbDev, int optInKCPeriod, double optInFactorWide, double optInFactorNormal, double optInFactorNarrow, int *outBegIdx, int *outNBElement, double outMomentum[], int outSqueeze[], int outStride )
 {
    struct TA_SQZMOM_Stream *sp;
    int endIdx;
@@ -946,12 +951,13 @@ static TA_FMA_STEP_INLINE TA_RetCode TA_SQZMOM_OpenImpl( struct TA_SQZMOM_Stream
       double *tempKCM;
       double *tempMid;
       double *tempSD;
+      double dev;
       double up;
       double lo;
       double centre;
       double band;
-      /* Every leg is a shipped function, CALLED rather than transcribed, so both
-       * outputs carry each callee's own arithmetic bit for bit:
+      /* Each rolling statistic is a call to the shipped function, so it carries
+       * that function's own arithmetic bit for bit:
        *
        *   BBU, BBL = sma(close, b) +/- nbdev * stddev(close, b, 1.0)
        *   KCM      = sma(close, k)
@@ -960,10 +966,8 @@ static TA_FMA_STEP_INLINE TA_RetCode TA_SQZMOM_OpenImpl( struct TA_SQZMOM_Stream
        *   DEV      = close - (DMID + KCM)/2
        *   momentum = linearreg(DEV, k)
        *
-       * The bands are taken as the MA + STDDEV pair rather than through bbands
-       * because bbands' SMA fast path states it is bit-identical to that pair, and
-       * it is what bbands' own stream tier composes; taking the pair here keeps
-       * every optional argument a parameter or a literal.
+       * A composed sub-call cannot be handed an MA-type constant, so the bands
+       * are the sma + stddev pair and not a bbands call.
        *
        * Two chains need their input one window earlier than the first output bar:
        * sma(k) over TR, and linearreg(k) over DEV. Both windows are k-1 long, so
@@ -1280,16 +1284,19 @@ static TA_FMA_STEP_INLINE TA_RetCode TA_SQZMOM_OpenImpl( struct TA_SQZMOM_Stream
          TA_MIDPRICE_Close( sub0 ); TA_SMA_Close( sub1 ); TA_TRANGE_Close( sub2 ); TA_SMA_Close( sub3 ); TA_SMA_Close( sub4 ); TA_STDDEV_Close( sub5 ); TA_SMA_Close( sub6 ); TA_LINEARREG_Close( sub7 ); if( !outStride ) TA_Free( sc_outMomentum ); if( !outStride ) TA_Free( sc_outSqueeze );
          return retCode;
       }
-      /* The ordinal. The three Keltner widths share the centre and BAND >= 0, so
-       * the tests nest: inside(narrow) implies inside(normal) implies inside(wide).
-       * Testing narrow first is what makes the ordinal monotone without comparing
-       * the factors to each other, which is why the card asks for
-       * `wide >= normal >= narrow >= 0` and not for a strict order.
+      /* The ordinal. Every comparison is strict: a band exactly on a channel
+       * edge is not inside that channel and not outside it either.
+       *
+       * Keep the deviation a rounded product added to and subtracted from the
+       * middle band, as bbands does. Written as one expression per band, the
+       * upper one contracts into a fused multiply-add and the lower one cannot,
+       * and a band within one ulp of an edge then changes level.
        */
       for( i = 0; i < n; i += 1 )
       {
-         up = fma(tempSD[i], optInNbDev, tempMid[i]);
-         lo = tempMid[i] - tempSD[i] * optInNbDev;
+         dev = tempSD[i] * optInNbDev;
+         up = tempMid[i] + dev;
+         lo = tempMid[i] - dev;
          centre = tempKCM[i];
          band = tempWork[i];
          if( lo > centre - optInFactorNarrow * band && up < centre + optInFactorNarrow * band )
@@ -1351,17 +1358,8 @@ static TA_FMA_STEP_INLINE TA_RetCode TA_SQZMOM_OpenImpl( struct TA_SQZMOM_Stream
    }
 }
 
-TA_FMA_OPEN_CLONE static TA_RetCode TA_SQZMOM_OpenImplFma( struct TA_SQZMOM_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, int optInBBPeriod, double optInNbDev, int optInKCPeriod, double optInFactorWide, double optInFactorNormal, double optInFactorNarrow, int *outBegIdx, int *outNBElement, double outMomentum[], int outSqueeze[], int outStride )
-{
-   return TA_SQZMOM_OpenImpl( stream, inHigh, inLow, inClose, startIdx, historyLen, optInBBPeriod, optInNbDev, optInKCPeriod, optInFactorWide, optInFactorNormal, optInFactorNarrow, outBegIdx, outNBElement, outMomentum, outSqueeze, outStride );
-}
-
-TA_FMA_OPEN_PLAIN static TA_RetCode TA_SQZMOM_OpenImplPlain( struct TA_SQZMOM_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, int optInBBPeriod, double optInNbDev, int optInKCPeriod, double optInFactorWide, double optInFactorNormal, double optInFactorNarrow, int *outBegIdx, int *outNBElement, double outMomentum[], int outSqueeze[], int outStride )
-{
-   return TA_SQZMOM_OpenImpl( stream, inHigh, inLow, inClose, startIdx, historyLen, optInBBPeriod, optInNbDev, optInKCPeriod, optInFactorWide, optInFactorNormal, optInFactorNarrow, outBegIdx, outNBElement, outMomentum, outSqueeze, outStride );
-}
-
-TA_FMA_OPEN_CLONE static TA_RetCode TA_SQZMOM_OpenSinkFma( struct TA_SQZMOM_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, int optInBBPeriod, double optInNbDev, int optInKCPeriod, double optInFactorWide, double optInFactorNormal, double optInFactorNarrow, double *outMomentum, int *outSqueeze )
+/* Private function, not in public API. */
+TA_RetCode TA_SQZMOM_OpenInternal( struct TA_SQZMOM_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, int optInBBPeriod, double optInNbDev, int optInKCPeriod, double optInFactorWide, double optInFactorNormal, double optInFactorNarrow, double *outMomentum, int *outSqueeze )
 {
    TA_RetCode retCode;
    int dummyBegIdx = 0;
@@ -1377,23 +1375,6 @@ TA_FMA_OPEN_CLONE static TA_RetCode TA_SQZMOM_OpenSinkFma( struct TA_SQZMOM_Stre
    return retCode;
 }
 
-/* Private function, not in public API. */
-TA_RetCode TA_SQZMOM_OpenInternal( struct TA_SQZMOM_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, int optInBBPeriod, double optInNbDev, int optInKCPeriod, double optInFactorWide, double optInFactorNormal, double optInFactorNarrow, double *outMomentum, int *outSqueeze )
-{
-   TA_RetCode retCode;
-   int dummyBegIdx = 0;
-   int dummyNBElement = 0;
-   double sink_outMomentum = 0.0;
-   int sink_outSqueeze = 0;
-   retCode = TA_FMA_AVAILABLE ? TA_SQZMOM_OpenImplFma( stream, inHigh, inLow, inClose, startIdx, historyLen, optInBBPeriod, optInNbDev, optInKCPeriod, optInFactorWide, optInFactorNormal, optInFactorNarrow, &dummyBegIdx, &dummyNBElement, &sink_outMomentum, &sink_outSqueeze, 0 ) : TA_SQZMOM_OpenImplPlain( stream, inHigh, inLow, inClose, startIdx, historyLen, optInBBPeriod, optInNbDev, optInKCPeriod, optInFactorWide, optInFactorNormal, optInFactorNarrow, &dummyBegIdx, &dummyNBElement, &sink_outMomentum, &sink_outSqueeze, 0 );
-   if( retCode == TA_SUCCESS )
-   {
-      *outMomentum = sink_outMomentum;
-      *outSqueeze = sink_outSqueeze;
-   }
-   return retCode;
-}
-
 TA_LIB_API TA_RetCode TA_SQZMOM_Open( TA_SQZMOM_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], int historyLen, int optInBBPeriod, double optInNbDev, int optInKCPeriod, double optInFactorWide, double optInFactorNormal, double optInFactorNarrow, double *outMomentum, int *outSqueeze )
 {
    if( !stream ) return TA_BAD_PARAM;
@@ -1401,7 +1382,7 @@ TA_LIB_API TA_RetCode TA_SQZMOM_Open( TA_SQZMOM_Stream **stream, const double in
    if( historyLen < 1 ) return TA_OUT_OF_RANGE_START_INDEX;
    if( historyLen > TA_INDEX_MAX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
    if( !inHigh || !inLow || !inClose || !outMomentum || !outSqueeze ) return TA_BAD_PARAM;
-   return TA_FMA_AVAILABLE ? TA_SQZMOM_OpenSinkFma( stream, inHigh, inLow, inClose, 0, historyLen, optInBBPeriod, optInNbDev, optInKCPeriod, optInFactorWide, optInFactorNormal, optInFactorNarrow, outMomentum, outSqueeze ) : TA_SQZMOM_OpenInternal( stream, inHigh, inLow, inClose, 0, historyLen, optInBBPeriod, optInNbDev, optInKCPeriod, optInFactorWide, optInFactorNormal, optInFactorNarrow, outMomentum, outSqueeze );
+   return TA_SQZMOM_OpenInternal( stream, inHigh, inLow, inClose, 0, historyLen, optInBBPeriod, optInNbDev, optInKCPeriod, optInFactorWide, optInFactorNormal, optInFactorNarrow, outMomentum, outSqueeze );
 }
 
 TA_LIB_API TA_RetCode TA_SQZMOM_OpenAndFill( TA_SQZMOM_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], int historyLen, int optInBBPeriod, double optInNbDev, int optInKCPeriod, double optInFactorWide, double optInFactorNormal, double optInFactorNarrow, int *outBegIdx, int *outNBElement, double outMomentum[], int outSqueeze[] )
@@ -1418,10 +1399,9 @@ TA_LIB_API TA_RetCode TA_SQZMOM_OpenAndFill( TA_SQZMOM_Stream **stream, const do
 /* Private function, not in public API. */
 TA_RetCode TA_SQZMOM_OpenAndFillInternal( struct TA_SQZMOM_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, int optInBBPeriod, double optInNbDev, int optInKCPeriod, double optInFactorWide, double optInFactorNormal, double optInFactorNarrow, int *outBegIdx, int *outNBElement, double outMomentum[], int outSqueeze[] )
 {
-   return TA_FMA_AVAILABLE ? TA_SQZMOM_OpenImplFma( stream, inHigh, inLow, inClose, startIdx, historyLen, optInBBPeriod, optInNbDev, optInKCPeriod, optInFactorWide, optInFactorNormal, optInFactorNarrow, outBegIdx, outNBElement, outMomentum, outSqueeze, 1 ) : TA_SQZMOM_OpenImplPlain( stream, inHigh, inLow, inClose, startIdx, historyLen, optInBBPeriod, optInNbDev, optInKCPeriod, optInFactorWide, optInFactorNormal, optInFactorNarrow, outBegIdx, outNBElement, outMomentum, outSqueeze, 1 );
+   return TA_SQZMOM_OpenImpl( stream, inHigh, inLow, inClose, startIdx, historyLen, optInBBPeriod, optInNbDev, optInKCPeriod, optInFactorWide, optInFactorNormal, optInFactorNarrow, outBegIdx, outNBElement, outMomentum, outSqueeze, 1 );
 }
 
-TA_FMA_MULTIVERSION
 TA_LIB_API TA_RetCode TA_SQZMOM_Update( TA_SQZMOM_Stream *stream, double inHigh, double inLow, double inClose, double *outMomentum, int *outSqueeze )
 {
    TA_RetCode retCode;
@@ -1439,12 +1419,12 @@ TA_LIB_API TA_RetCode TA_SQZMOM_Update( TA_SQZMOM_Stream *stream, double inHigh,
    return TA_SUCCESS;
 }
 
-TA_FMA_MULTIVERSION
 TA_LIB_API TA_RetCode TA_SQZMOM_Peek( const TA_SQZMOM_Stream *stream, double inHigh, double inLow, double inClose, double *outMomentum, int *outSqueeze )
 {
    const struct TA_SQZMOM_Stream *sp = stream;
    double band;
    double centre;
+   double dev;
    double lo;
    double up;
    double cur_tempDev = 0.0;
@@ -1494,8 +1474,9 @@ TA_LIB_API TA_RetCode TA_SQZMOM_Peek( const TA_SQZMOM_Stream *stream, double inH
       if( subRc != TA_SUCCESS ) return subRc;
    }
    /* Combine map (batch tail, per bar). */
-   up = fma(cur_tempSD, sp->optInNbDev, cur_tempMid);
-   lo = cur_tempMid - cur_tempSD * sp->optInNbDev;
+   dev = cur_tempSD * sp->optInNbDev;
+   up = cur_tempMid + dev;
+   lo = cur_tempMid - dev;
    centre = cur_tempKCM;
    band = cur_tempWork;
    if( lo > centre - sp->optInFactorNarrow * band && up < centre + sp->optInFactorNarrow * band )
