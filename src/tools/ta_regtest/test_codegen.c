@@ -2247,6 +2247,7 @@ static TA_RangeStability stability_class(const TA_FuncInfo *funcInfo)
         "MOM", "ROC", "ROCP", "ROCR", "ROCR100",
         /* comparison-selected window extrema (cached min/max, no FP accumulation) */
         "MIN", "MAX", "MINMAX", "MIDPOINT", "MIDPRICE", "WILLR", "AROON", "AROONOSC",
+        "ICHIMOKU",
         /* fresh per-bar rescan (window re-summed in bar-absolute order each output) */
         "AVGDEV", "ALMA",
         /* running sums held exactly, so no rounding is carried across bars */

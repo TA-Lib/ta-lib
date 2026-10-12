@@ -43,7 +43,8 @@
  *
  *  MMDDYY BY   Description
  *  -------------------------------------------------------------------
- *  100726 KL,CC First version (proposal ICHIMOKU, #490).
+ *  100726 KL,CC First version (#490).
+ *  101126 MF,CC Golden values (#490).
  *
  */
 
@@ -93,11 +94,7 @@
 /* Leg 2: 63 output bars, plus the one count of how many of them
  * discriminate the two spellings. */
 #define ICH_SPANA_CMP     64
-/* 30 on x86-64 and on every platform that evaluates binary64 in binary64.
- * Held as a floor rather than an equality so that a host with a wider
- * evaluation format reports a weaker series rather than a false failure --
- * but a floor this far above zero still fails loudly if the series goes
- * flat. */
+/* A floor, not an equality: the count depends on the evaluation format. */
 #define ICH_SPANA_MIN_DISCRIM 20
 /* Leg 3: 8 triples, each checking _Lookback and then the call's begIdx. */
 #define ICH_LOOKBACK_CMP  16
@@ -147,12 +144,9 @@ static const IchTriple ichLookback[] =
 };
 #define ICH_NB_LOOKBACK ((int)(sizeof(ichLookback)/sizeof(ichLookback[0])))
 
-/* Leg 2's series. Four decimals and a range under a fifth of a point, so a
- * window's two extremes are close enough that halving twice and quartering
- * once land on different doubles. Built by searching random four-decimal
- * walks for the one that discriminates on the most bars at 3/5/7; the
- * values carry no meaning beyond that and the leg verifies the property
- * rather than trusting this comment.
+/* Leg 2's series: four decimals in a narrow range, so that halving twice
+ * and quartering once land on different doubles. The leg asserts that they
+ * do.
  */
 static const double ichSpanAHigh[ICH_SPANA_NB] =
 {

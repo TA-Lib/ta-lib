@@ -122951,7 +122951,7 @@ public final class Core {
     * <ul>
     * <li>Each line is {@code TA_MIDPRICE} over its own period, and Span A is {@code TA_MEDPRICE} of the Tenkan and Kijun lines: it halves two midpoints that are already rounded. Averaging the four extremes in one step is the same number in real arithmetic and can differ in the last bit.</li>
     * <li>The two spans are drawn {@code kijunPeriod} bars ahead of the bar that computed them. That is a display shift: {@code TA_ICHIMOKU_DisplayShift} reports it, and it changes nothing about the values, the lookback or the returned range. Every output is written at the bar that computed it, so the last {@code kijunPeriod} span values are the cloud a chart draws past the last bar.</li>
-    * <li>Hosoda's 26 counts the current bar, which is a chart offset of 25. Most platforms offset by 26, and that is what the display shift reports at the default periods; a caller who wants Hosoda's count draws the spans one bar earlier.</li>
+    * <li>Hosoda's 26 counts the current bar, which is a chart offset of 25. QuantConnect LEAN, pandas-ta and MetaTrader offset by 26, and that is what the display shift reports at the default periods; a caller who wants Hosoda's count draws the spans one bar earlier.</li>
     * <li>The lookback is the longest of the three periods less one. Nothing orders the three, so any of them can be the longest.</li>
     * <li>The Chikou span is the close drawn {@code kijunPeriod} bars back. It carries no computation and is not an output. Its usual signal, the close above the close {@code n} bars earlier, is {@code TA_MOM(close, n) &gt; 0}.</li>
     * </ul>
@@ -123050,7 +123050,7 @@ public final class Core {
     * <ul>
     * <li>Each line is {@code TA_MIDPRICE} over its own period, and Span A is {@code TA_MEDPRICE} of the Tenkan and Kijun lines: it halves two midpoints that are already rounded. Averaging the four extremes in one step is the same number in real arithmetic and can differ in the last bit.</li>
     * <li>The two spans are drawn {@code kijunPeriod} bars ahead of the bar that computed them. That is a display shift: {@code TA_ICHIMOKU_DisplayShift} reports it, and it changes nothing about the values, the lookback or the returned range. Every output is written at the bar that computed it, so the last {@code kijunPeriod} span values are the cloud a chart draws past the last bar.</li>
-    * <li>Hosoda's 26 counts the current bar, which is a chart offset of 25. Most platforms offset by 26, and that is what the display shift reports at the default periods; a caller who wants Hosoda's count draws the spans one bar earlier.</li>
+    * <li>Hosoda's 26 counts the current bar, which is a chart offset of 25. QuantConnect LEAN, pandas-ta and MetaTrader offset by 26, and that is what the display shift reports at the default periods; a caller who wants Hosoda's count draws the spans one bar earlier.</li>
     * <li>The lookback is the longest of the three periods less one. Nothing orders the three, so any of them can be the longest.</li>
     * <li>The Chikou span is the close drawn {@code kijunPeriod} bars back. It carries no computation and is not an output. Its usual signal, the close above the close {@code n} bars earlier, is {@code TA_MOM(close, n) &gt; 0}.</li>
     * </ul>
