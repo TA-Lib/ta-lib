@@ -122661,13 +122661,15 @@ public final class Core {
  *  Initial  Name/description
  *  -------------------------------------------------------------------
  *  MF       Mario Fortier
+ *  KL       Kevin Lin (@kevinlincg)
  *  CC       Claude Code (AI assistant)
  *
  * Change history:
  *
  *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
- *  100726 MF,CC  Initial version (#490).
+ *  100726 KL,CC  Creation (#490).
+ *  101126 MF,CC  Two scratch buffers; Senkou B is written in place (#490).
  */
 
    /**
@@ -122704,14 +122706,7 @@ public final class Core {
          return -1;
       }
       int longest;
-      /* Each line is a midpoint over its own window, so each needs its own
-       * window filled; the first bar that has all of them is the longest one's.
-       * The MAX is not simplified to the Senkou B period: nothing orders the
-       * three, and a kijun longer than senkouB dominates.
-       *
-       * Span A is the mean of the other two lines, so it adds nothing: it is
-       * ready on the bar they both are.
-       */
+      /* Nothing orders the three periods: any of them can be the longest. */
       longest = optInTenkanPeriod;
       if( optInKijunPeriod > longest ) {
          longest = optInKijunPeriod;
@@ -122764,16 +122759,7 @@ public final class Core {
       if( outputIdx == 0 || outputIdx == 1 ) {
          return 0;
       }
-      /* rL9: a shift of s means a chart draws the value computed at bar i at
-       * bar i + s. The two spans are the leading ones -- Goichi Hosoda draws
-       * them kijun bars into the future, which is what makes the cloud sit
-       * ahead of price -- so their shift is POSITIVE, where dpo.c's and
-       * fractal.c's are negative. The conversion and base lines are drawn on
-       * the bar that computed them.
-       *
-       * The shift reads the optional parameters and the output index only,
-       * never a setting (rL9).
-       */
+      /* Positive: the two spans are drawn ahead of the bar that computed them. */
       if( outputIdx == 2 || outputIdx == 3 ) {
          return optInKijunPeriod ;
       }
@@ -122802,7 +122788,6 @@ public final class Core {
       MInteger tempNbElement = new MInteger();
       double[] tempT;
       double[] tempK;
-      double[] tempB;
       if( (startIdx < 0) || (startIdx > INDEX_MAX) ) {
          return RetCode.OUT_OF_RANGE_START_INDEX ;
       }
@@ -122827,33 +122812,21 @@ public final class Core {
       if( outTenkanSen == outKijunSen || outTenkanSen == outSenkouSpanA || outTenkanSen == outSenkouSpanB || outKijunSen == outSenkouSpanA || outKijunSen == outSenkouSpanB || outSenkouSpanA == outSenkouSpanB ) {
          return RetCode.BAD_PARAM ;
       }
-      /* PROTOTYPE (#490 Q7): each line IS a midpoint over its own window, which is
-       * exactly what midprice computes, so the three scans are three midprice calls
-       * and Span A is the mean of two of them. MEASURED bit-identical to the fused
-       * loop over four parameter triples on the suite's corpus, every line, before
-       * this was written.
-       *
-       * The point is the stream tier: three windows of different periods cannot be
-       * one extrema automaton (the census refuses with "expected exactly one
-       * window-start variable"), but a composed body is a different tier.
-       *
-       * The three results go to temporaries and are copied at the end: every read of
-       * high and low has to happen before the first write to a caller buffer, or an
-       * output aliased onto an input is read after it has been overwritten.
-       */
+      outBegIdx.value = 0;
+      outNBElement.value = 0;
       lookbackTotal = ichimokuLookback(optInTenkanPeriod, optInKijunPeriod, optInSenkouBPeriod);
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
       }
       if( startIdx > endIdx ) {
-         outBegIdx.value = 0;
-         outNBElement.value = 0;
          return RetCode.SUCCESS ;
       }
       n = endIdx - startIdx + 1;
       tempT = new double[(int)(n * 1)];
       tempK = new double[(int)(n * 1)];
-      tempB = new double[(int)(n * 1)];
+      /* An output may alias inHigh or inLow: no output is written before the
+       * last midprice call, which is the last read of either input.
+       */
       OutRange _xr0 = midprice(startIdx, endIdx, inHigh, inLow, optInTenkanPeriod, tempT);
       tempBegIdx.value = _xr0.begIdx();
       tempNbElement.value = _xr0.count();
@@ -122862,11 +122835,13 @@ public final class Core {
       tempBegIdx.value = _xr1.begIdx();
       tempNbElement.value = _xr1.count();
       retCode = RetCode.SUCCESS;
-      OutRange _xr2 = midprice(startIdx, endIdx, inHigh, inLow, optInSenkouBPeriod, tempB);
+      OutRange _xr2 = midprice(startIdx, endIdx, inHigh, inLow, optInSenkouBPeriod, outSenkouSpanB);
       tempBegIdx.value = _xr2.begIdx();
       tempNbElement.value = _xr2.count();
       retCode = RetCode.SUCCESS;
-      /* Span A is the mean of the two lines, which medprice is over any two series. */
+      /* Span A halves the two rounded midpoints. (hh+ll+hh+ll)/4 is a different
+       * double in the last bit.
+       */
       OutRange _xr3 = medprice(0, n - 1, tempT, tempK, outSenkouSpanA);
       tempBegIdx.value = _xr3.begIdx();
       tempNbElement.value = _xr3.count();
@@ -122874,7 +122849,6 @@ public final class Core {
       for( i = 0; i < n; i += 1 ) {
          outTenkanSen[i] = tempT[i];
          outKijunSen[i] = tempK[i];
-         outSenkouSpanB[i] = tempB[i];
       }
       outBegIdx.value = startIdx;
       outNBElement.value = n;
@@ -122902,7 +122876,6 @@ public final class Core {
       MInteger tempNbElement = new MInteger();
       double[] tempT;
       double[] tempK;
-      double[] tempB;
       if( (startIdx < 0) || (startIdx > INDEX_MAX) ) {
          return RetCode.OUT_OF_RANGE_START_INDEX ;
       }
@@ -122927,19 +122900,18 @@ public final class Core {
       if( outTenkanSen == outKijunSen || outTenkanSen == outSenkouSpanA || outTenkanSen == outSenkouSpanB || outKijunSen == outSenkouSpanA || outKijunSen == outSenkouSpanB || outSenkouSpanA == outSenkouSpanB ) {
          return RetCode.BAD_PARAM ;
       }
+      outBegIdx.value = 0;
+      outNBElement.value = 0;
       lookbackTotal = ichimokuLookback(optInTenkanPeriod, optInKijunPeriod, optInSenkouBPeriod);
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
       }
       if( startIdx > endIdx ) {
-         outBegIdx.value = 0;
-         outNBElement.value = 0;
          return RetCode.SUCCESS ;
       }
       n = endIdx - startIdx + 1;
       tempT = new double[(int)(n * 1)];
       tempK = new double[(int)(n * 1)];
-      tempB = new double[(int)(n * 1)];
       OutRange _xr0 = midprice(startIdx, endIdx, inHigh, inLow, optInTenkanPeriod, tempT);
       tempBegIdx.value = _xr0.begIdx();
       tempNbElement.value = _xr0.count();
@@ -122948,7 +122920,7 @@ public final class Core {
       tempBegIdx.value = _xr1.begIdx();
       tempNbElement.value = _xr1.count();
       retCode = RetCode.SUCCESS;
-      OutRange _xr2 = midprice(startIdx, endIdx, inHigh, inLow, optInSenkouBPeriod, tempB);
+      OutRange _xr2 = midprice(startIdx, endIdx, inHigh, inLow, optInSenkouBPeriod, outSenkouSpanB);
       tempBegIdx.value = _xr2.begIdx();
       tempNbElement.value = _xr2.count();
       retCode = RetCode.SUCCESS;
@@ -122959,7 +122931,6 @@ public final class Core {
       for( i = 0; i < n; i += 1 ) {
          outTenkanSen[i] = tempT[i];
          outKijunSen[i] = tempK[i];
-         outSenkouSpanB[i] = tempB[i];
       }
       outBegIdx.value = startIdx;
       outNBElement.value = n;
@@ -122978,10 +122949,11 @@ public final class Core {
     * href="https://ta-lib.org/functions/ichimoku">ta-lib.org/functions/ichimoku</a>.
     * <p><b>Notes</b>
     * <ul>
-    * <li>Each line is {@code TA_MIDPRICE} over its own period, and Span A is {@code TA_MEDPRICE} of the other two lines. Span A halves the two midpoints after each has been rounded, rather than averaging the four extremes. The two spellings are the same number in real arithmetic and a different double in the last bit often enough to matter: on the 252-bar regression corpus the rate is 0% at the published 9/26 periods, 5.7% at 26/9, and 12.4% at 2/2, and on a four-decimal series at 3/5 it is 48%. The rate is not a function of the longer period alone: 9/26 and 26/9 share a 26-bar window and read 0% and 5.7%.</li>
-    * <li>The two spans are drawn {@code kijunPeriod} bars ahead of the bar that computed them. That is a display shift: it is reported through the display-shift call and changes nothing about the values, the lookback or the returned range. Every output is written at the bar that computed it.</li>
-    * <li>The lookback is the longest of the three periods less one. It is not the Senkou B period: nothing orders the three, so a base line longer than the second span dominates.</li>
-    * <li>The Chikou span, the close drawn backward, carries no computation and is not an output here: it is the input series with a display shift.</li>
+    * <li>Each line is {@code TA_MIDPRICE} over its own period, and Span A is {@code TA_MEDPRICE} of the Tenkan and Kijun lines: it halves two midpoints that are already rounded. Averaging the four extremes in one step is the same number in real arithmetic and can differ in the last bit.</li>
+    * <li>The two spans are drawn {@code kijunPeriod} bars ahead of the bar that computed them. That is a display shift: {@code TA_ICHIMOKU_DisplayShift} reports it, and it changes nothing about the values, the lookback or the returned range. Every output is written at the bar that computed it, so the last {@code kijunPeriod} span values are the cloud a chart draws past the last bar.</li>
+    * <li>Hosoda's 26 counts the current bar, which is a chart offset of 25. Most platforms offset by 26, and that is what the display shift reports at the default periods; a caller who wants Hosoda's count draws the spans one bar earlier.</li>
+    * <li>The lookback is the longest of the three periods less one. Nothing orders the three, so any of them can be the longest.</li>
+    * <li>The Chikou span is the close drawn {@code kijunPeriod} bars back. It carries no computation and is not an output. Its usual signal, the close above the close {@code n} bars earlier, is {@code TA_MOM(close, n) &gt; 0}.</li>
     * </ul>
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are, and the
@@ -123076,10 +123048,11 @@ public final class Core {
     * href="https://ta-lib.org/functions/ichimoku">ta-lib.org/functions/ichimoku</a>.
     * <p><b>Notes</b>
     * <ul>
-    * <li>Each line is {@code TA_MIDPRICE} over its own period, and Span A is {@code TA_MEDPRICE} of the other two lines. Span A halves the two midpoints after each has been rounded, rather than averaging the four extremes. The two spellings are the same number in real arithmetic and a different double in the last bit often enough to matter: on the 252-bar regression corpus the rate is 0% at the published 9/26 periods, 5.7% at 26/9, and 12.4% at 2/2, and on a four-decimal series at 3/5 it is 48%. The rate is not a function of the longer period alone: 9/26 and 26/9 share a 26-bar window and read 0% and 5.7%.</li>
-    * <li>The two spans are drawn {@code kijunPeriod} bars ahead of the bar that computed them. That is a display shift: it is reported through the display-shift call and changes nothing about the values, the lookback or the returned range. Every output is written at the bar that computed it.</li>
-    * <li>The lookback is the longest of the three periods less one. It is not the Senkou B period: nothing orders the three, so a base line longer than the second span dominates.</li>
-    * <li>The Chikou span, the close drawn backward, carries no computation and is not an output here: it is the input series with a display shift.</li>
+    * <li>Each line is {@code TA_MIDPRICE} over its own period, and Span A is {@code TA_MEDPRICE} of the Tenkan and Kijun lines: it halves two midpoints that are already rounded. Averaging the four extremes in one step is the same number in real arithmetic and can differ in the last bit.</li>
+    * <li>The two spans are drawn {@code kijunPeriod} bars ahead of the bar that computed them. That is a display shift: {@code TA_ICHIMOKU_DisplayShift} reports it, and it changes nothing about the values, the lookback or the returned range. Every output is written at the bar that computed it, so the last {@code kijunPeriod} span values are the cloud a chart draws past the last bar.</li>
+    * <li>Hosoda's 26 counts the current bar, which is a chart offset of 25. Most platforms offset by 26, and that is what the display shift reports at the default periods; a caller who wants Hosoda's count draws the spans one bar earlier.</li>
+    * <li>The lookback is the longest of the three periods less one. Nothing orders the three, so any of them can be the longest.</li>
+    * <li>The Chikou span is the close drawn {@code kijunPeriod} bars back. It carries no computation and is not an output. Its usual signal, the close above the close {@code n} bars earlier, is {@code TA_MOM(close, n) &gt; 0}.</li>
     * </ul>
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a
@@ -123296,20 +123269,18 @@ public final class Core {
          IchimokuStream sp = this;
          double cur_tempT = 0.0;
          double cur_tempK = 0.0;
-         double cur_tempB = 0.0;
+         double cur_outSenkouSpanB = 0.0;
          double cur_outSenkouSpanA = 0.0;
          double cur_outTenkanSen = 0.0;
          double cur_outKijunSen = 0.0;
-         double cur_outSenkouSpanB = 0.0;
          /* Pipeline the new bar through the sub-streams (batch tail order). */
          cur_tempT = sp.sub0.peek(inHigh, inLow);
          cur_tempK = sp.sub1.peek(inHigh, inLow);
-         cur_tempB = sp.sub2.peek(inHigh, inLow);
+         cur_outSenkouSpanB = sp.sub2.peek(inHigh, inLow);
          cur_outSenkouSpanA = sp.sub3.peek(cur_tempT, cur_tempK);
          /* Combine map (batch tail, per bar). */
          cur_outTenkanSen = cur_tempT;
          cur_outKijunSen = cur_tempK;
-         cur_outSenkouSpanB = cur_tempB;
          out.tenkanSen = cur_outTenkanSen;
          out.kijunSen = cur_outKijunSen;
          out.senkouSpanA = cur_outSenkouSpanA;
@@ -123376,20 +123347,18 @@ public final class Core {
    {
       double cur_tempT = 0.0;
       double cur_tempK = 0.0;
-      double cur_tempB = 0.0;
+      double cur_outSenkouSpanB = 0.0;
       double cur_outSenkouSpanA = 0.0;
       double cur_outTenkanSen = 0.0;
       double cur_outKijunSen = 0.0;
-      double cur_outSenkouSpanB = 0.0;
       /* Pipeline the new bar through the sub-streams (batch tail order). */
       cur_tempT = sp.sub0.update(inHigh, inLow);
       cur_tempK = sp.sub1.update(inHigh, inLow);
-      cur_tempB = sp.sub2.update(inHigh, inLow);
+      cur_outSenkouSpanB = sp.sub2.update(inHigh, inLow);
       cur_outSenkouSpanA = sp.sub3.update(cur_tempT, cur_tempK);
       /* Combine map (batch tail, per bar). */
       cur_outTenkanSen = cur_tempT;
       cur_outKijunSen = cur_tempK;
-      cur_outSenkouSpanB = cur_tempB;
       sp.cur_outTenkanSen = cur_outTenkanSen;
       sp.cur_outKijunSen = cur_outKijunSen;
       sp.cur_outSenkouSpanA = cur_outSenkouSpanA;
@@ -123405,7 +123374,6 @@ public final class Core {
       MInteger tempNbElement = new MInteger();
       double[] tempT;
       double[] tempK;
-      double[] tempB;
       int historyLen = inHigh.length;
       int endIdx = historyLen - 1;
       if( historyLen < 1 ) {
@@ -123444,33 +123412,21 @@ public final class Core {
       double[] sc_outKijunSen = outStride == 1 ? outKijunSen : new double[historyLen];
       double[] sc_outSenkouSpanA = outStride == 1 ? outSenkouSpanA : new double[historyLen];
       double[] sc_outSenkouSpanB = outStride == 1 ? outSenkouSpanB : new double[historyLen];
-      /* PROTOTYPE (#490 Q7): each line IS a midpoint over its own window, which is
-       * exactly what midprice computes, so the three scans are three midprice calls
-       * and Span A is the mean of two of them. MEASURED bit-identical to the fused
-       * loop over four parameter triples on the suite's corpus, every line, before
-       * this was written.
-       *
-       * The point is the stream tier: three windows of different periods cannot be
-       * one extrema automaton (the census refuses with "expected exactly one
-       * window-start variable"), but a composed body is a different tier.
-       *
-       * The three results go to temporaries and are copied at the end: every read of
-       * high and low has to happen before the first write to a caller buffer, or an
-       * output aliased onto an input is read after it has been overwritten.
-       */
+      outBegIdx.value = 0;
+      outNBElement.value = 0;
       lookbackTotal = ichimokuLookback(optInTenkanPeriod, optInKijunPeriod, optInSenkouBPeriod);
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
       }
       if( startIdx > endIdx ) {
-         outBegIdx.value = 0;
-         outNBElement.value = 0;
          return RetCode.INSUFFICIENT_HISTORY ;
       }
       n = endIdx - startIdx + 1;
       tempT = new double[(int)(n * 1)];
       tempK = new double[(int)(n * 1)];
-      tempB = new double[(int)(n * 1)];
+      /* An output may alias inHigh or inLow: no output is written before the
+       * last midprice call, which is the last read of either input.
+       */
       /* Sub-stream 0: midprice over `inHigh, inLow`, warmed from bar 0 up to the
        * sub-call's own startIdx (the seeding point). */
       MidpriceStream sub0 = midpriceOpenAndFillInternal(inHigh, inLow, startIdx, optInTenkanPeriod, tempBegIdx, tempNbElement, tempT);
@@ -123481,9 +123437,11 @@ public final class Core {
       retCode = RetCode.SUCCESS;
       /* Sub-stream 2: midprice over `inHigh, inLow`, warmed from bar 0 up to the
        * sub-call's own startIdx (the seeding point). */
-      MidpriceStream sub2 = midpriceOpenAndFillInternal(inHigh, inLow, startIdx, optInSenkouBPeriod, tempBegIdx, tempNbElement, tempB);
+      MidpriceStream sub2 = midpriceOpenAndFillInternal(inHigh, inLow, startIdx, optInSenkouBPeriod, tempBegIdx, tempNbElement, sc_outSenkouSpanB);
       retCode = RetCode.SUCCESS;
-      /* Span A is the mean of the two lines, which medprice is over any two series. */
+      /* Span A halves the two rounded midpoints. (hh+ll+hh+ll)/4 is a different
+       * double in the last bit.
+       */
       /* Sub-stream 3: medprice over `tempT, tempK`, warmed from bar 0 up to the
        * sub-call's own startIdx (the seeding point). */
       MedpriceStream sub3 = medpriceOpenAndFillInternal(java.util.Arrays.copyOfRange(tempT, 0, (n - 1) + 1), java.util.Arrays.copyOfRange(tempK, 0, (n - 1) + 1), 0, tempBegIdx, tempNbElement, sc_outSenkouSpanA);
@@ -123491,7 +123449,6 @@ public final class Core {
       for( i = 0; i < n; i += 1 ) {
          sc_outTenkanSen[i] = tempT[i];
          sc_outKijunSen[i] = tempK[i];
-         sc_outSenkouSpanB[i] = tempB[i];
       }
       outBegIdx.value = startIdx;
       outNBElement.value = n;

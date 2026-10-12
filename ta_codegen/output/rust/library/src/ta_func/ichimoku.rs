@@ -45,13 +45,15 @@
  *  Initial  Name/description
  *  -------------------------------------------------------------------
  *  MF       Mario Fortier
+ *  KL       Kevin Lin (@kevinlincg)
  *  CC       Claude Code (AI assistant)
  *
  * Change history:
  *
  *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
- *  100726 MF,CC  Initial version (#490).
+ *  100726 KL,CC  Creation (#490).
+ *  101126 MF,CC  Two scratch buffers; Senkou B is written in place (#490).
  */
 
 // Import types from parent module
@@ -97,13 +99,7 @@ impl Core {
             return Err(RetCode::BadParam);
         }
         let mut longest: usize = 0_usize;
-        // Each line is a midpoint over its own window, so each needs its own
-        // window filled; the first bar that has all of them is the longest one's.
-        // The MAX is not simplified to the Senkou B period: nothing orders the
-        // three, and a kijun longer than senkouB dominates.
-        //
-        // Span A is the mean of the other two lines, so it adds nothing: it is
-        // ready on the bar they both are.
+        // Nothing orders the three periods: any of them can be the longest.
         longest = (optInTenkanPeriod) as usize;
         if ((optInKijunPeriod) as usize) > longest {
             longest = (optInKijunPeriod) as usize;
@@ -154,15 +150,7 @@ impl Core {
             return Ok(0);
         }
         let outputIdx: i32 = outputIdx as i32;
-        // rL9: a shift of s means a chart draws the value computed at bar i at
-        // bar i + s. The two spans are the leading ones -- Goichi Hosoda draws
-        // them kijun bars into the future, which is what makes the cloud sit
-        // ahead of price -- so their shift is POSITIVE, where dpo.c's and
-        // fractal.c's are negative. The conversion and base lines are drawn on
-        // the bar that computed them.
-        //
-        // The shift reads the optional parameters and the output index only,
-        // never a setting (rL9).
+        // Positive: the two spans are drawn ahead of the bar that computed them.
         if outputIdx == 2 || outputIdx == 3 {
             return Ok(optInKijunPeriod);
         }
@@ -228,33 +216,20 @@ impl Core {
         let mut tempNbElement: usize = 0_usize;
         let mut tempT: Vec<f64> = Vec::new();
         let mut tempK: Vec<f64> = Vec::new();
-        let mut tempB: Vec<f64> = Vec::new();
-        // PROTOTYPE (#490 Q7): each line IS a midpoint over its own window, which is
-        // exactly what midprice computes, so the three scans are three midprice calls
-        // and Span A is the mean of two of them. MEASURED bit-identical to the fused
-        // loop over four parameter triples on the suite's corpus, every line, before
-        // this was written.
-        //
-        // The point is the stream tier: three windows of different periods cannot be
-        // one extrema automaton (the census refuses with "expected exactly one
-        // window-start variable"), but a composed body is a different tier.
-        //
-        // The three results go to temporaries and are copied at the end: every read of
-        // high and low has to happen before the first write to a caller buffer, or an
-        // output aliased onto an input is read after it has been overwritten.
+        (*outBegIdx) = 0;
+        (*outNBElement) = 0;
         lookbackTotal = self.ichimoku_lookback(optInTenkanPeriod, optInKijunPeriod, optInSenkouBPeriod).unwrap_or(usize::MAX);
         if startIdx < lookbackTotal {
             startIdx = lookbackTotal;
         }
         if startIdx > endIdx {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
             return RetCode::Success;
         }
         n = endIdx - startIdx + 1;
         tempT = vec![0.0_f64; (n * 1) as usize];
         tempK = vec![0.0_f64; (n * 1) as usize];
-        tempB = vec![0.0_f64; (n * 1) as usize];
+        // An output may alias inHigh or inLow: no output is written before the
+        // last midprice call, which is the last read of either input.
         let _xr0 = match self.midprice(startIdx, endIdx, inHigh, inLow, optInTenkanPeriod, &mut tempT[..]) { Ok(_r) => _r, Err(_e) => return _e };
         tempBegIdx = _xr0.beg_idx;
         tempNbElement = _xr0.count;
@@ -263,11 +238,12 @@ impl Core {
         tempBegIdx = _xr1.beg_idx;
         tempNbElement = _xr1.count;
         retCode = RetCode::Success;
-        let _xr2 = match self.midprice(startIdx, endIdx, inHigh, inLow, optInSenkouBPeriod, &mut tempB[..]) { Ok(_r) => _r, Err(_e) => return _e };
+        let _xr2 = match self.midprice(startIdx, endIdx, inHigh, inLow, optInSenkouBPeriod, outSenkouSpanB) { Ok(_r) => _r, Err(_e) => return _e };
         tempBegIdx = _xr2.beg_idx;
         tempNbElement = _xr2.count;
         retCode = RetCode::Success;
-        // Span A is the mean of the two lines, which medprice is over any two series.
+        // Span A halves the two rounded midpoints. (hh+ll+hh+ll)/4 is a different
+        // double in the last bit.
         let _xr3 = match self.medprice(0, n - 1, &tempT, &tempK, outSenkouSpanA) { Ok(_r) => _r, Err(_e) => return _e };
         tempBegIdx = _xr3.beg_idx;
         tempNbElement = _xr3.count;
@@ -276,15 +252,12 @@ impl Core {
         if i < n {
             let _wn: usize = n - i;
             let _w0 = &mut outKijunSen[i..][.._wn];
-            let _w1 = &mut outSenkouSpanB[i..][.._wn];
-            let _w2 = &mut outTenkanSen[i..][.._wn];
-            let _w3 = &tempB[i..][.._wn];
-            let _w4 = &tempK[i..][.._wn];
-            let _w5 = &tempT[i..][.._wn];
+            let _w1 = &mut outTenkanSen[i..][.._wn];
+            let _w2 = &tempK[i..][.._wn];
+            let _w3 = &tempT[i..][.._wn];
             for _wk in 0.._wn {
-                _w2[_wk] = ((_w5[_wk]) as f64);
-                _w0[_wk] = ((_w4[_wk]) as f64);
                 _w1[_wk] = ((_w3[_wk]) as f64);
+                _w0[_wk] = ((_w2[_wk]) as f64);
                 i += 1;
             }
         }
@@ -480,21 +453,19 @@ impl Core {
     fn ichimoku_step_impl(sp: &mut IchimokuStreamState, inHigh: f64, inLow: f64, outTenkanSen: &mut f64, outKijunSen: &mut f64, outSenkouSpanA: &mut f64, outSenkouSpanB: &mut f64) -> Result<(), RetCode> {
         let mut cur_tempT: f64 = 0.0_f64;
         let mut cur_tempK: f64 = 0.0_f64;
-        let mut cur_tempB: f64 = 0.0_f64;
+        let mut cur_outSenkouSpanB: f64 = 0.0_f64;
         let mut cur_outSenkouSpanA: f64 = 0.0_f64;
         let mut cur_outTenkanSen: f64 = 0.0_f64;
         let mut cur_outKijunSen: f64 = 0.0_f64;
-        let mut cur_outSenkouSpanB: f64 = 0.0_f64;
 
         // Pipeline the new bar through the sub-streams (batch tail order).
         cur_tempT = sp.sub0.update(inHigh, inLow)?;
         cur_tempK = sp.sub1.update(inHigh, inLow)?;
-        cur_tempB = sp.sub2.update(inHigh, inLow)?;
+        cur_outSenkouSpanB = sp.sub2.update(inHigh, inLow)?;
         cur_outSenkouSpanA = sp.sub3.update(cur_tempT, cur_tempK)?;
         // Combine map (batch tail, per bar).
         cur_outTenkanSen = cur_tempT;
         cur_outKijunSen = cur_tempK;
-        cur_outSenkouSpanB = cur_tempB;
         (*outTenkanSen) = cur_outTenkanSen;
         (*outKijunSen) = cur_outKijunSen;
         (*outSenkouSpanA) = cur_outSenkouSpanA;
@@ -565,33 +536,20 @@ impl Core {
         let mut tempNbElement: usize = 0_usize;
         let mut tempT: Vec<f64> = Vec::new();
         let mut tempK: Vec<f64> = Vec::new();
-        let mut tempB: Vec<f64> = Vec::new();
-        // PROTOTYPE (#490 Q7): each line IS a midpoint over its own window, which is
-        // exactly what midprice computes, so the three scans are three midprice calls
-        // and Span A is the mean of two of them. MEASURED bit-identical to the fused
-        // loop over four parameter triples on the suite's corpus, every line, before
-        // this was written.
-        //
-        // The point is the stream tier: three windows of different periods cannot be
-        // one extrema automaton (the census refuses with "expected exactly one
-        // window-start variable"), but a composed body is a different tier.
-        //
-        // The three results go to temporaries and are copied at the end: every read of
-        // high and low has to happen before the first write to a caller buffer, or an
-        // output aliased onto an input is read after it has been overwritten.
+        (*outBegIdx) = 0;
+        (*outNBElement) = 0;
         lookbackTotal = self.ichimoku_lookback(optInTenkanPeriod, optInKijunPeriod, optInSenkouBPeriod)?;
         if startIdx < lookbackTotal {
             startIdx = lookbackTotal;
         }
         if startIdx > endIdx {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
             return Err(RetCode::InsufficientHistory);
         }
         n = endIdx - startIdx + 1;
         tempT = vec![0.0_f64; (n * 1) as usize];
         tempK = vec![0.0_f64; (n * 1) as usize];
-        tempB = vec![0.0_f64; (n * 1) as usize];
+        // An output may alias inHigh or inLow: no output is written before the
+        // last midprice call, which is the last read of either input.
         // Sub-stream 0: midprice over `inHigh, inLow`, warmed from bar 0 up to the
         // sub-call's own startIdx (the seeding point).
         let sub0 = self.midprice_open_and_fill_internal(&inHigh[..((endIdx) as usize) + 1], &inLow[..((endIdx) as usize) + 1], ((startIdx) as usize), optInTenkanPeriod, &mut tempBegIdx, &mut tempNbElement, &mut tempT[..])?;
@@ -602,9 +560,10 @@ impl Core {
         retCode = RetCode::Success;
         // Sub-stream 2: midprice over `inHigh, inLow`, warmed from bar 0 up to the
         // sub-call's own startIdx (the seeding point).
-        let sub2 = self.midprice_open_and_fill_internal(&inHigh[..((endIdx) as usize) + 1], &inLow[..((endIdx) as usize) + 1], ((startIdx) as usize), optInSenkouBPeriod, &mut tempBegIdx, &mut tempNbElement, &mut tempB[..])?;
+        let sub2 = self.midprice_open_and_fill_internal(&inHigh[..((endIdx) as usize) + 1], &inLow[..((endIdx) as usize) + 1], ((startIdx) as usize), optInSenkouBPeriod, &mut tempBegIdx, &mut tempNbElement, &mut sc_outSenkouSpanB[..])?;
         retCode = RetCode::Success;
-        // Span A is the mean of the two lines, which medprice is over any two series.
+        // Span A halves the two rounded midpoints. (hh+ll+hh+ll)/4 is a different
+        // double in the last bit.
         // Sub-stream 3: medprice over `tempT, tempK`, warmed from bar 0 up to the
         // sub-call's own startIdx (the seeding point).
         let sub3 = self.medprice_open_and_fill_internal(&tempT[..((n - 1) as usize) + 1], &tempK[..((n - 1) as usize) + 1], ((0) as usize), &mut tempBegIdx, &mut tempNbElement, &mut sc_outSenkouSpanA[..])?;
@@ -614,7 +573,6 @@ impl Core {
         while i < n {
             sc_outTenkanSen[i] = tempT[i];
             sc_outKijunSen[i] = tempK[i];
-            sc_outSenkouSpanB[i] = tempB[i];
             i += 1;
         }
         (*outBegIdx) = startIdx;
@@ -868,21 +826,19 @@ impl IchimokuStream {
             let outSenkouSpanB = &mut outSenkouSpanB;
             let mut cur_tempT: f64 = 0.0_f64;
             let mut cur_tempK: f64 = 0.0_f64;
-            let mut cur_tempB: f64 = 0.0_f64;
+            let mut cur_outSenkouSpanB: f64 = 0.0_f64;
             let mut cur_outSenkouSpanA: f64 = 0.0_f64;
             let mut cur_outTenkanSen: f64 = 0.0_f64;
             let mut cur_outKijunSen: f64 = 0.0_f64;
-            let mut cur_outSenkouSpanB: f64 = 0.0_f64;
 
             // Pipeline the new bar through the sub-streams (batch tail order).
             cur_tempT = sp.sub0.peek(inHigh, inLow)?;
             cur_tempK = sp.sub1.peek(inHigh, inLow)?;
-            cur_tempB = sp.sub2.peek(inHigh, inLow)?;
+            cur_outSenkouSpanB = sp.sub2.peek(inHigh, inLow)?;
             cur_outSenkouSpanA = sp.sub3.peek(cur_tempT, cur_tempK)?;
             // Combine map (batch tail, per bar).
             cur_outTenkanSen = cur_tempT;
             cur_outKijunSen = cur_tempK;
-            cur_outSenkouSpanB = cur_tempB;
             (*outTenkanSen) = cur_outTenkanSen;
             (*outKijunSen) = cur_outKijunSen;
             (*outSenkouSpanA) = cur_outSenkouSpanA;

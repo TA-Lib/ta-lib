@@ -21,10 +21,11 @@ Senkou Span B = MID(senkouBPeriod)
 
 ## Notes
 
-- Each line is `TA_MIDPRICE` over its own period, and Span A is `TA_MEDPRICE` of the other two lines. Span A halves the two midpoints after each has been rounded, rather than averaging the four extremes. The two spellings are the same number in real arithmetic and a different double in the last bit often enough to matter: on the 252-bar regression corpus the rate is 0% at the published 9/26 periods, 5.7% at 26/9, and 12.4% at 2/2, and on a four-decimal series at 3/5 it is 48%. The rate is not a function of the longer period alone: 9/26 and 26/9 share a 26-bar window and read 0% and 5.7%.
-- The two spans are drawn `kijunPeriod` bars ahead of the bar that computed them. That is a display shift: it is reported through the display-shift call and changes nothing about the values, the lookback or the returned range. Every output is written at the bar that computed it.
-- The lookback is the longest of the three periods less one. It is not the Senkou B period: nothing orders the three, so a base line longer than the second span dominates.
-- The Chikou span, the close drawn backward, carries no computation and is not an output here: it is the input series with a display shift.
+- Each line is `TA_MIDPRICE` over its own period, and Span A is `TA_MEDPRICE` of the Tenkan and Kijun lines: it halves two midpoints that are already rounded. Averaging the four extremes in one step is the same number in real arithmetic and can differ in the last bit.
+- The two spans are drawn `kijunPeriod` bars ahead of the bar that computed them. That is a display shift: `TA_ICHIMOKU_DisplayShift` reports it, and it changes nothing about the values, the lookback or the returned range. Every output is written at the bar that computed it, so the last `kijunPeriod` span values are the cloud a chart draws past the last bar.
+- Hosoda's 26 counts the current bar, which is a chart offset of 25. Most platforms offset by 26, and that is what the display shift reports at the default periods; a caller who wants Hosoda's count draws the spans one bar earlier.
+- The lookback is the longest of the three periods less one. Nothing orders the three, so any of them can be the longest.
+- The Chikou span is the close drawn `kijunPeriod` bars back. It carries no computation and is not an output. Its usual signal, the close above the close `n` bars earlier, is `TA_MOM(close, n) > 0`.
 
 ## Inputs
 

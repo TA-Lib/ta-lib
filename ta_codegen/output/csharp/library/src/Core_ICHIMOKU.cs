@@ -47,13 +47,15 @@ public partial class Core
     *  Initial  Name/description
     *  -------------------------------------------------------------------
     *  MF       Mario Fortier
+    *  KL       Kevin Lin (@kevinlincg)
     *  CC       Claude Code (AI assistant)
     *
     * Change history:
     *
     *  MMDDYY BY     Description
     *  -------------------------------------------------------------------
-    *  100726 MF,CC  Initial version (#490).
+    *  100726 KL,CC  Creation (#490).
+    *  101126 MF,CC  Two scratch buffers; Senkou B is written in place (#490).
     */
    /// <summary>
    /// Number of leading input bars <c>Ichimoku</c> consumes before it can
@@ -89,14 +91,7 @@ public partial class Core
          return -1;
       }
       int longest = 0;
-      /* Each line is a midpoint over its own window, so each needs its own
-       * window filled; the first bar that has all of them is the longest one's.
-       * The MAX is not simplified to the Senkou B period: nothing orders the
-       * three, and a kijun longer than senkouB dominates.
-       *
-       * Span A is the mean of the other two lines, so it adds nothing: it is
-       * ready on the bar they both are.
-       */
+      /* Nothing orders the three periods: any of them can be the longest. */
       longest = optInTenkanPeriod;
       if( optInKijunPeriod > longest ) {
          longest = optInKijunPeriod;
@@ -149,16 +144,7 @@ public partial class Core
       if( outputIdx == 0 || outputIdx == 1 ) {
          return 0;
       }
-      /* rL9: a shift of s means a chart draws the value computed at bar i at
-       * bar i + s. The two spans are the leading ones -- Goichi Hosoda draws
-       * them kijun bars into the future, which is what makes the cloud sit
-       * ahead of price -- so their shift is POSITIVE, where dpo.c's and
-       * fractal.c's are negative. The conversion and base lines are drawn on
-       * the bar that computed them.
-       *
-       * The shift reads the optional parameters and the output index only,
-       * never a setting (rL9).
-       */
+      /* Positive: the two spans are drawn ahead of the bar that computed them. */
       if( outputIdx == 2 || outputIdx == 3 ) {
          return optInKijunPeriod ;
       }
@@ -189,7 +175,6 @@ public partial class Core
       int tempNbElement = 0;
       Span<double> tempT;
       Span<double> tempK;
-      Span<double> tempB;
       if( (startIdx < 0) || (startIdx > IndexMax) ) {
          return RetCode.OutOfRangeStartIndex ;
       }
@@ -217,30 +202,15 @@ public partial class Core
       if( (outTenkanSen.Overlaps(inHigh) && outTenkanSen != inHigh) || (outTenkanSen.Overlaps(inLow) && outTenkanSen != inLow) || (outKijunSen.Overlaps(inHigh) && outKijunSen != inHigh) || (outKijunSen.Overlaps(inLow) && outKijunSen != inLow) || (outSenkouSpanA.Overlaps(inHigh) && outSenkouSpanA != inHigh) || (outSenkouSpanA.Overlaps(inLow) && outSenkouSpanA != inLow) || (outSenkouSpanB.Overlaps(inHigh) && outSenkouSpanB != inHigh) || (outSenkouSpanB.Overlaps(inLow) && outSenkouSpanB != inLow) ) {
          return RetCode.BadParam ;
       }
-      double[]? _rent_tempB = null;
       double[]? _rent_tempK = null;
       double[]? _rent_tempT = null;
-      /* PROTOTYPE (#490 Q7): each line IS a midpoint over its own window, which is
-       * exactly what midprice computes, so the three scans are three midprice calls
-       * and Span A is the mean of two of them. MEASURED bit-identical to the fused
-       * loop over four parameter triples on the suite's corpus, every line, before
-       * this was written.
-       *
-       * The point is the stream tier: three windows of different periods cannot be
-       * one extrema automaton (the census refuses with "expected exactly one
-       * window-start variable"), but a composed body is a different tier.
-       *
-       * The three results go to temporaries and are copied at the end: every read of
-       * high and low has to happen before the first write to a caller buffer, or an
-       * output aliased onto an input is read after it has been overwritten.
-       */
+      outBegIdx = 0;
+      outNBElement = 0;
       lookbackTotal = IchimokuLookback(optInTenkanPeriod, optInKijunPeriod, optInSenkouBPeriod);
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
       }
       if( startIdx > endIdx ) {
-         outBegIdx = 0;
-         outNBElement = 0;
          return RetCode.Success ;
       }
       n = endIdx - startIdx + 1;
@@ -248,8 +218,9 @@ public partial class Core
       tempT = _rent_tempT.AsSpan(0, (int)(n * 1));
       _rent_tempK = System.Buffers.ArrayPool<double>.Shared.Rent((int)(n * 1));
       tempK = _rent_tempK.AsSpan(0, (int)(n * 1));
-      _rent_tempB = System.Buffers.ArrayPool<double>.Shared.Rent((int)(n * 1));
-      tempB = _rent_tempB.AsSpan(0, (int)(n * 1));
+      /* An output may alias inHigh or inLow: no output is written before the
+       * last midprice call, which is the last read of either input.
+       */
       OutRange _xr0 = Midprice(startIdx, endIdx, inHigh, inLow, optInTenkanPeriod, tempT);
       tempBegIdx = _xr0.BegIdx;
       tempNbElement = _xr0.Count;
@@ -258,11 +229,13 @@ public partial class Core
       tempBegIdx = _xr1.BegIdx;
       tempNbElement = _xr1.Count;
       retCode = RetCode.Success;
-      OutRange _xr2 = Midprice(startIdx, endIdx, inHigh, inLow, optInSenkouBPeriod, tempB);
+      OutRange _xr2 = Midprice(startIdx, endIdx, inHigh, inLow, optInSenkouBPeriod, outSenkouSpanB);
       tempBegIdx = _xr2.BegIdx;
       tempNbElement = _xr2.Count;
       retCode = RetCode.Success;
-      /* Span A is the mean of the two lines, which medprice is over any two series. */
+      /* Span A halves the two rounded midpoints. (hh+ll+hh+ll)/4 is a different
+       * double in the last bit.
+       */
       OutRange _xr3 = Medprice(0, n - 1, tempT, tempK, outSenkouSpanA);
       tempBegIdx = _xr3.BegIdx;
       tempNbElement = _xr3.Count;
@@ -270,11 +243,9 @@ public partial class Core
       for( i = 0; i < n; i += 1 ) {
          outTenkanSen[i] = tempT[i];
          outKijunSen[i] = tempK[i];
-         outSenkouSpanB[i] = tempB[i];
       }
       ReturnScratch(ref _rent_tempT);
       ReturnScratch(ref _rent_tempK);
-      ReturnScratch(ref _rent_tempB);
       outBegIdx = startIdx;
       outNBElement = n;
       return RetCode.Success ;
@@ -303,7 +274,6 @@ public partial class Core
       int tempNbElement = 0;
       Span<double> tempT;
       Span<double> tempK;
-      Span<double> tempB;
       if( (startIdx < 0) || (startIdx > IndexMax) ) {
          return RetCode.OutOfRangeStartIndex ;
       }
@@ -331,16 +301,15 @@ public partial class Core
       if( System.Runtime.InteropServices.MemoryMarshal.AsBytes(outTenkanSen).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inHigh)) || System.Runtime.InteropServices.MemoryMarshal.AsBytes(outTenkanSen).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inLow)) || System.Runtime.InteropServices.MemoryMarshal.AsBytes(outKijunSen).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inHigh)) || System.Runtime.InteropServices.MemoryMarshal.AsBytes(outKijunSen).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inLow)) || System.Runtime.InteropServices.MemoryMarshal.AsBytes(outSenkouSpanA).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inHigh)) || System.Runtime.InteropServices.MemoryMarshal.AsBytes(outSenkouSpanA).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inLow)) || System.Runtime.InteropServices.MemoryMarshal.AsBytes(outSenkouSpanB).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inHigh)) || System.Runtime.InteropServices.MemoryMarshal.AsBytes(outSenkouSpanB).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inLow)) ) {
          return RetCode.BadParam ;
       }
-      double[]? _rent_tempB = null;
       double[]? _rent_tempK = null;
       double[]? _rent_tempT = null;
+      outBegIdx = 0;
+      outNBElement = 0;
       lookbackTotal = IchimokuLookback(optInTenkanPeriod, optInKijunPeriod, optInSenkouBPeriod);
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
       }
       if( startIdx > endIdx ) {
-         outBegIdx = 0;
-         outNBElement = 0;
          return RetCode.Success ;
       }
       n = endIdx - startIdx + 1;
@@ -348,8 +317,6 @@ public partial class Core
       tempT = _rent_tempT.AsSpan(0, (int)(n * 1));
       _rent_tempK = System.Buffers.ArrayPool<double>.Shared.Rent((int)(n * 1));
       tempK = _rent_tempK.AsSpan(0, (int)(n * 1));
-      _rent_tempB = System.Buffers.ArrayPool<double>.Shared.Rent((int)(n * 1));
-      tempB = _rent_tempB.AsSpan(0, (int)(n * 1));
       OutRange _xr0 = Midprice(startIdx, endIdx, inHigh, inLow, optInTenkanPeriod, tempT);
       tempBegIdx = _xr0.BegIdx;
       tempNbElement = _xr0.Count;
@@ -358,7 +325,7 @@ public partial class Core
       tempBegIdx = _xr1.BegIdx;
       tempNbElement = _xr1.Count;
       retCode = RetCode.Success;
-      OutRange _xr2 = Midprice(startIdx, endIdx, inHigh, inLow, optInSenkouBPeriod, tempB);
+      OutRange _xr2 = Midprice(startIdx, endIdx, inHigh, inLow, optInSenkouBPeriod, outSenkouSpanB);
       tempBegIdx = _xr2.BegIdx;
       tempNbElement = _xr2.Count;
       retCode = RetCode.Success;
@@ -369,11 +336,9 @@ public partial class Core
       for( i = 0; i < n; i += 1 ) {
          outTenkanSen[i] = tempT[i];
          outKijunSen[i] = tempK[i];
-         outSenkouSpanB[i] = tempB[i];
       }
       ReturnScratch(ref _rent_tempT);
       ReturnScratch(ref _rent_tempK);
-      ReturnScratch(ref _rent_tempB);
       outBegIdx = startIdx;
       outNBElement = n;
       return RetCode.Success ;
@@ -394,10 +359,11 @@ public partial class Core
    /// <see href="https://ta-lib.org/functions/ichimoku">ta-lib.org/functions/ichimoku</see>.
    /// </para>
    /// <list type="bullet">
-   /// <item><description>Each line is <c>TA_MIDPRICE</c> over its own period, and Span A is <c>TA_MEDPRICE</c> of the other two lines. Span A halves the two midpoints after each has been rounded, rather than averaging the four extremes. The two spellings are the same number in real arithmetic and a different double in the last bit often enough to matter: on the 252-bar regression corpus the rate is 0% at the published 9/26 periods, 5.7% at 26/9, and 12.4% at 2/2, and on a four-decimal series at 3/5 it is 48%. The rate is not a function of the longer period alone: 9/26 and 26/9 share a 26-bar window and read 0% and 5.7%.</description></item>
-   /// <item><description>The two spans are drawn <c>kijunPeriod</c> bars ahead of the bar that computed them. That is a display shift: it is reported through the display-shift call and changes nothing about the values, the lookback or the returned range. Every output is written at the bar that computed it.</description></item>
-   /// <item><description>The lookback is the longest of the three periods less one. It is not the Senkou B period: nothing orders the three, so a base line longer than the second span dominates.</description></item>
-   /// <item><description>The Chikou span, the close drawn backward, carries no computation and is not an output here: it is the input series with a display shift.</description></item>
+   /// <item><description>Each line is <c>TA_MIDPRICE</c> over its own period, and Span A is <c>TA_MEDPRICE</c> of the Tenkan and Kijun lines: it halves two midpoints that are already rounded. Averaging the four extremes in one step is the same number in real arithmetic and can differ in the last bit.</description></item>
+   /// <item><description>The two spans are drawn <c>kijunPeriod</c> bars ahead of the bar that computed them. That is a display shift: <c>TA_ICHIMOKU_DisplayShift</c> reports it, and it changes nothing about the values, the lookback or the returned range. Every output is written at the bar that computed it, so the last <c>kijunPeriod</c> span values are the cloud a chart draws past the last bar.</description></item>
+   /// <item><description>Hosoda's 26 counts the current bar, which is a chart offset of 25. Most platforms offset by 26, and that is what the display shift reports at the default periods; a caller who wants Hosoda's count draws the spans one bar earlier.</description></item>
+   /// <item><description>The lookback is the longest of the three periods less one. Nothing orders the three, so any of them can be the longest.</description></item>
+   /// <item><description>The Chikou span is the close drawn <c>kijunPeriod</c> bars back. It carries no computation and is not an output. Its usual signal, the close above the close <c>n</c> bars earlier, is <c>TA_MOM(close, n) &gt; 0</c>.</description></item>
    /// </list>
    /// <para>
    /// Values are written only where the indicator is defined. The returned
@@ -507,10 +473,11 @@ public partial class Core
    /// <see href="https://ta-lib.org/functions/ichimoku">ta-lib.org/functions/ichimoku</see>.
    /// </para>
    /// <list type="bullet">
-   /// <item><description>Each line is <c>TA_MIDPRICE</c> over its own period, and Span A is <c>TA_MEDPRICE</c> of the other two lines. Span A halves the two midpoints after each has been rounded, rather than averaging the four extremes. The two spellings are the same number in real arithmetic and a different double in the last bit often enough to matter: on the 252-bar regression corpus the rate is 0% at the published 9/26 periods, 5.7% at 26/9, and 12.4% at 2/2, and on a four-decimal series at 3/5 it is 48%. The rate is not a function of the longer period alone: 9/26 and 26/9 share a 26-bar window and read 0% and 5.7%.</description></item>
-   /// <item><description>The two spans are drawn <c>kijunPeriod</c> bars ahead of the bar that computed them. That is a display shift: it is reported through the display-shift call and changes nothing about the values, the lookback or the returned range. Every output is written at the bar that computed it.</description></item>
-   /// <item><description>The lookback is the longest of the three periods less one. It is not the Senkou B period: nothing orders the three, so a base line longer than the second span dominates.</description></item>
-   /// <item><description>The Chikou span, the close drawn backward, carries no computation and is not an output here: it is the input series with a display shift.</description></item>
+   /// <item><description>Each line is <c>TA_MIDPRICE</c> over its own period, and Span A is <c>TA_MEDPRICE</c> of the Tenkan and Kijun lines: it halves two midpoints that are already rounded. Averaging the four extremes in one step is the same number in real arithmetic and can differ in the last bit.</description></item>
+   /// <item><description>The two spans are drawn <c>kijunPeriod</c> bars ahead of the bar that computed them. That is a display shift: <c>TA_ICHIMOKU_DisplayShift</c> reports it, and it changes nothing about the values, the lookback or the returned range. Every output is written at the bar that computed it, so the last <c>kijunPeriod</c> span values are the cloud a chart draws past the last bar.</description></item>
+   /// <item><description>Hosoda's 26 counts the current bar, which is a chart offset of 25. Most platforms offset by 26, and that is what the display shift reports at the default periods; a caller who wants Hosoda's count draws the spans one bar earlier.</description></item>
+   /// <item><description>The lookback is the longest of the three periods less one. Nothing orders the three, so any of them can be the longest.</description></item>
+   /// <item><description>The Chikou span is the close drawn <c>kijunPeriod</c> bars back. It carries no computation and is not an output. Its usual signal, the close above the close <c>n</c> bars earlier, is <c>TA_MOM(close, n) &gt; 0</c>.</description></item>
    /// </list>
    /// <para>
    /// This is the <c>float[]</c> overload: input elements are widened to
@@ -763,20 +730,18 @@ public partial class Core
          IchimokuStream sp = this;
          double cur_tempT = 0.0;
          double cur_tempK = 0.0;
-         double cur_tempB = 0.0;
+         double cur_outSenkouSpanB = 0.0;
          double cur_outSenkouSpanA = 0.0;
          double cur_outTenkanSen = 0.0;
          double cur_outKijunSen = 0.0;
-         double cur_outSenkouSpanB = 0.0;
          /* Pipeline the new bar through the sub-streams (batch tail order). */
          cur_tempT = sp.sub0.Peek(inHigh, inLow);
          cur_tempK = sp.sub1.Peek(inHigh, inLow);
-         cur_tempB = sp.sub2.Peek(inHigh, inLow);
+         cur_outSenkouSpanB = sp.sub2.Peek(inHigh, inLow);
          cur_outSenkouSpanA = sp.sub3.Peek(cur_tempT, cur_tempK);
          /* Combine map (batch tail, per bar). */
          cur_outTenkanSen = cur_tempT;
          cur_outKijunSen = cur_tempK;
-         cur_outSenkouSpanB = cur_tempB;
          return new IchimokuValue(cur_outTenkanSen, cur_outKijunSen, cur_outSenkouSpanA, cur_outSenkouSpanB);
       }
 
@@ -801,20 +766,18 @@ public partial class Core
    {
       double cur_tempT = 0.0;
       double cur_tempK = 0.0;
-      double cur_tempB = 0.0;
+      double cur_outSenkouSpanB = 0.0;
       double cur_outSenkouSpanA = 0.0;
       double cur_outTenkanSen = 0.0;
       double cur_outKijunSen = 0.0;
-      double cur_outSenkouSpanB = 0.0;
       /* Pipeline the new bar through the sub-streams (batch tail order). */
       cur_tempT = sp.sub0.Update(inHigh, inLow);
       cur_tempK = sp.sub1.Update(inHigh, inLow);
-      cur_tempB = sp.sub2.Update(inHigh, inLow);
+      cur_outSenkouSpanB = sp.sub2.Update(inHigh, inLow);
       cur_outSenkouSpanA = sp.sub3.Update(cur_tempT, cur_tempK);
       /* Combine map (batch tail, per bar). */
       cur_outTenkanSen = cur_tempT;
       cur_outKijunSen = cur_tempK;
-      cur_outSenkouSpanB = cur_tempB;
       sp.cur_outTenkanSen = cur_outTenkanSen;
       sp.cur_outKijunSen = cur_outKijunSen;
       sp.cur_outSenkouSpanA = cur_outSenkouSpanA;
@@ -833,7 +796,6 @@ public partial class Core
       int tempNbElement = 0;
       Span<double> tempT;
       Span<double> tempK;
-      Span<double> tempB;
       int historyLen = inHigh.Length;
       int endIdx = historyLen - 1;
       if( historyLen < 1 ) {
@@ -872,33 +834,21 @@ public partial class Core
       Span<double> sc_outKijunSen = outStride == 1 ? outKijunSen : new double[historyLen];
       Span<double> sc_outSenkouSpanA = outStride == 1 ? outSenkouSpanA : new double[historyLen];
       Span<double> sc_outSenkouSpanB = outStride == 1 ? outSenkouSpanB : new double[historyLen];
-      /* PROTOTYPE (#490 Q7): each line IS a midpoint over its own window, which is
-       * exactly what midprice computes, so the three scans are three midprice calls
-       * and Span A is the mean of two of them. MEASURED bit-identical to the fused
-       * loop over four parameter triples on the suite's corpus, every line, before
-       * this was written.
-       *
-       * The point is the stream tier: three windows of different periods cannot be
-       * one extrema automaton (the census refuses with "expected exactly one
-       * window-start variable"), but a composed body is a different tier.
-       *
-       * The three results go to temporaries and are copied at the end: every read of
-       * high and low has to happen before the first write to a caller buffer, or an
-       * output aliased onto an input is read after it has been overwritten.
-       */
+      outBegIdx = 0;
+      outNBElement = 0;
       lookbackTotal = IchimokuLookback(optInTenkanPeriod, optInKijunPeriod, optInSenkouBPeriod);
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
       }
       if( startIdx > endIdx ) {
-         outBegIdx = 0;
-         outNBElement = 0;
          return RetCode.InsufficientHistory ;
       }
       n = endIdx - startIdx + 1;
       tempT = new double[(int)(n * 1)];
       tempK = new double[(int)(n * 1)];
-      tempB = new double[(int)(n * 1)];
+      /* An output may alias inHigh or inLow: no output is written before the
+       * last midprice call, which is the last read of either input.
+       */
       /* Sub-stream 0: midprice over `inHigh, inLow`, warmed from bar 0 up to the
        * sub-call's own startIdx (the seeding point). */
       MidpriceStream sub0 = MidpriceOpenAndFillInternal(inHigh, inLow, startIdx, optInTenkanPeriod, out tempBegIdx, out tempNbElement, tempT);
@@ -909,9 +859,11 @@ public partial class Core
       retCode = RetCode.Success;
       /* Sub-stream 2: midprice over `inHigh, inLow`, warmed from bar 0 up to the
        * sub-call's own startIdx (the seeding point). */
-      MidpriceStream sub2 = MidpriceOpenAndFillInternal(inHigh, inLow, startIdx, optInSenkouBPeriod, out tempBegIdx, out tempNbElement, tempB);
+      MidpriceStream sub2 = MidpriceOpenAndFillInternal(inHigh, inLow, startIdx, optInSenkouBPeriod, out tempBegIdx, out tempNbElement, sc_outSenkouSpanB);
       retCode = RetCode.Success;
-      /* Span A is the mean of the two lines, which medprice is over any two series. */
+      /* Span A halves the two rounded midpoints. (hh+ll+hh+ll)/4 is a different
+       * double in the last bit.
+       */
       /* Sub-stream 3: medprice over `tempT, tempK`, warmed from bar 0 up to the
        * sub-call's own startIdx (the seeding point). */
       int subLen3 = (n - 1) + 1;
@@ -924,7 +876,6 @@ public partial class Core
       for( i = 0; i < n; i += 1 ) {
          sc_outTenkanSen[i] = tempT[i];
          sc_outKijunSen[i] = tempK[i];
-         sc_outSenkouSpanB[i] = tempB[i];
       }
       outBegIdx = startIdx;
       outNBElement = n;

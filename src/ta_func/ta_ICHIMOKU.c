@@ -47,13 +47,15 @@
  *  Initial  Name/description
  *  -------------------------------------------------------------------
  *  MF       Mario Fortier
+ *  KL       Kevin Lin (@kevinlincg)
  *  CC       Claude Code (AI assistant)
  *
  * Change history:
  *
  *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
- *  100726 MF,CC  Initial version (#490).
+ *  100726 KL,CC  Creation (#490).
+ *  101126 MF,CC  Two scratch buffers; Senkou B is written in place (#490).
  */
 
 TA_LIB_API int TA_ICHIMOKU_Lookback( int optInTenkanPeriod, int optInKijunPeriod, int optInSenkouBPeriod )
@@ -71,14 +73,7 @@ TA_LIB_API int TA_ICHIMOKU_Lookback( int optInTenkanPeriod, int optInKijunPeriod
       optInSenkouBPeriod = 52;
    else if( (int)optInSenkouBPeriod < 2 || (int)optInSenkouBPeriod > 100000 )
       return -1;
-   /* Each line is a midpoint over its own window, so each needs its own
-    * window filled; the first bar that has all of them is the longest one's.
-    * The MAX is not simplified to the Senkou B period: nothing orders the
-    * three, and a kijun longer than senkouB dominates.
-    *
-    * Span A is the mean of the other two lines, so it adds nothing: it is
-    * ready on the bar they both are.
-    */
+   /* Nothing orders the three periods: any of them can be the longest. */
    longest = optInTenkanPeriod;
    if( optInKijunPeriod > longest )
    {
@@ -111,16 +106,7 @@ TA_LIB_API int TA_ICHIMOKU_DisplayShift( int optInTenkanPeriod, int optInKijunPe
       return INT_MIN;
    if( outputIdx == 0 || outputIdx == 1 )
       return 0;
-   /* rL9: a shift of s means a chart draws the value computed at bar i at
-    * bar i + s. The two spans are the leading ones -- Goichi Hosoda draws
-    * them kijun bars into the future, which is what makes the cloud sit
-    * ahead of price -- so their shift is POSITIVE, where dpo.c's and
-    * fractal.c's are negative. The conversion and base lines are drawn on
-    * the bar that computed them.
-    *
-    * The shift reads the optional parameters and the output index only,
-    * never a setting (rL9).
-    */
+   /* Positive: the two spans are drawn ahead of the bar that computed them. */
    if( outputIdx == 2 || outputIdx == 3 )
    {
       return optInKijunPeriod;
@@ -150,7 +136,6 @@ TA_LIB_API TA_RetCode TA_ICHIMOKU( int    startIdx,
    int tempNbElement;
    double *tempT;
    double *tempK;
-   double *tempB;
 
    if( (startIdx < 0) || (startIdx > TA_INDEX_MAX) )
       return TA_OUT_OF_RANGE_START_INDEX;
@@ -186,20 +171,8 @@ TA_LIB_API TA_RetCode TA_ICHIMOKU( int    startIdx,
    if( outTenkanSen == outKijunSen || outTenkanSen == outSenkouSpanA || outTenkanSen == outSenkouSpanB || outKijunSen == outSenkouSpanA || outKijunSen == outSenkouSpanB || outSenkouSpanA == outSenkouSpanB )
       return TA_BAD_PARAM;
 
-   /* PROTOTYPE (#490 Q7): each line IS a midpoint over its own window, which is
-    * exactly what midprice computes, so the three scans are three midprice calls
-    * and Span A is the mean of two of them. MEASURED bit-identical to the fused
-    * loop over four parameter triples on the suite's corpus, every line, before
-    * this was written.
-    *
-    * The point is the stream tier: three windows of different periods cannot be
-    * one extrema automaton (the census refuses with "expected exactly one
-    * window-start variable"), but a composed body is a different tier.
-    *
-    * The three results go to temporaries and are copied at the end: every read of
-    * high and low has to happen before the first write to a caller buffer, or an
-    * output aliased onto an input is read after it has been overwritten.
-    */
+   *outBegIdx= 0;
+   *outNBElement= 0;
    lookbackTotal = TA_ICHIMOKU_Lookback(optInTenkanPeriod,optInKijunPeriod,optInSenkouBPeriod);
    if( startIdx < lookbackTotal )
    {
@@ -207,43 +180,28 @@ TA_LIB_API TA_RetCode TA_ICHIMOKU( int    startIdx,
    }
    if( startIdx > endIdx )
    {
-      *outBegIdx= 0;
-      *outNBElement= 0;
       return TA_SUCCESS;
    }
    n = endIdx - startIdx + 1;
    tempT = malloc(n * sizeof(double));
    if( !tempT )
    {
-      *outBegIdx= 0;
-      *outNBElement= 0;
       return TA_ALLOC_ERR;
    }
    tempK = malloc(n * sizeof(double));
    if( !tempK )
    {
       free(tempT);
-      *outBegIdx= 0;
-      *outNBElement= 0;
       return TA_ALLOC_ERR;
    }
-   tempB = malloc(n * sizeof(double));
-   if( !tempB )
-   {
-      free(tempT);
-      free(tempK);
-      *outBegIdx= 0;
-      *outNBElement= 0;
-      return TA_ALLOC_ERR;
-   }
+   /* An output may alias inHigh or inLow: no output is written before the
+    * last midprice call, which is the last read of either input.
+    */
    retCode = TA_MIDPRICE(startIdx,endIdx,inHigh,inLow,optInTenkanPeriod,&tempBegIdx,&tempNbElement,tempT);
    if( retCode != TA_SUCCESS )
    {
       free(tempT);
       free(tempK);
-      free(tempB);
-      *outBegIdx= 0;
-      *outNBElement= 0;
       return retCode;
    }
    retCode = TA_MIDPRICE(startIdx,endIdx,inHigh,inLow,optInKijunPeriod,&tempBegIdx,&tempNbElement,tempK);
@@ -251,41 +209,32 @@ TA_LIB_API TA_RetCode TA_ICHIMOKU( int    startIdx,
    {
       free(tempT);
       free(tempK);
-      free(tempB);
-      *outBegIdx= 0;
-      *outNBElement= 0;
       return retCode;
    }
-   retCode = TA_MIDPRICE(startIdx,endIdx,inHigh,inLow,optInSenkouBPeriod,&tempBegIdx,&tempNbElement,tempB);
+   retCode = TA_MIDPRICE(startIdx,endIdx,inHigh,inLow,optInSenkouBPeriod,&tempBegIdx,&tempNbElement,outSenkouSpanB);
    if( retCode != TA_SUCCESS )
    {
       free(tempT);
       free(tempK);
-      free(tempB);
-      *outBegIdx= 0;
-      *outNBElement= 0;
       return retCode;
    }
-   /* Span A is the mean of the two lines, which medprice is over any two series. */
+   /* Span A halves the two rounded midpoints. (hh+ll+hh+ll)/4 is a different
+    * double in the last bit.
+    */
    retCode = TA_MEDPRICE(0,n - 1,tempT,tempK,&tempBegIdx,&tempNbElement,outSenkouSpanA);
    if( retCode != TA_SUCCESS )
    {
       free(tempT);
       free(tempK);
-      free(tempB);
-      *outBegIdx= 0;
-      *outNBElement= 0;
       return retCode;
    }
    for( i = 0; i < n; i += 1 )
    {
       outTenkanSen[i] = tempT[i];
       outKijunSen[i] = tempK[i];
-      outSenkouSpanB[i] = tempB[i];
    }
    free(tempT);
    free(tempK);
-   free(tempB);
    *outBegIdx= startIdx;
    *outNBElement= n;
    return TA_SUCCESS;
@@ -313,7 +262,6 @@ TA_RetCode TA_S_ICHIMOKU( int    startIdx,
    int tempNbElement;
    double *tempT;
    double *tempK;
-   double *tempB;
 
    if( (startIdx < 0) || (startIdx > TA_INDEX_MAX) )
       return TA_OUT_OF_RANGE_START_INDEX;
@@ -349,6 +297,8 @@ TA_RetCode TA_S_ICHIMOKU( int    startIdx,
    if( outTenkanSen == outKijunSen || outTenkanSen == outSenkouSpanA || outTenkanSen == outSenkouSpanB || outKijunSen == outSenkouSpanA || outKijunSen == outSenkouSpanB || outSenkouSpanA == outSenkouSpanB )
       return TA_BAD_PARAM;
 
+   *outBegIdx= 0;
+   *outNBElement= 0;
    lookbackTotal = TA_ICHIMOKU_Lookback(optInTenkanPeriod,optInKijunPeriod,optInSenkouBPeriod);
    if( startIdx < lookbackTotal )
    {
@@ -356,33 +306,18 @@ TA_RetCode TA_S_ICHIMOKU( int    startIdx,
    }
    if( startIdx > endIdx )
    {
-      *outBegIdx= 0;
-      *outNBElement= 0;
       return TA_SUCCESS;
    }
    n = endIdx - startIdx + 1;
    tempT = malloc(n * sizeof(double));
    if( !tempT )
    {
-      *outBegIdx= 0;
-      *outNBElement= 0;
       return TA_ALLOC_ERR;
    }
    tempK = malloc(n * sizeof(double));
    if( !tempK )
    {
       free(tempT);
-      *outBegIdx= 0;
-      *outNBElement= 0;
-      return TA_ALLOC_ERR;
-   }
-   tempB = malloc(n * sizeof(double));
-   if( !tempB )
-   {
-      free(tempT);
-      free(tempK);
-      *outBegIdx= 0;
-      *outNBElement= 0;
       return TA_ALLOC_ERR;
    }
    retCode = TA_S_MIDPRICE(startIdx,endIdx,inHigh,inLow,optInTenkanPeriod,&tempBegIdx,&tempNbElement,tempT);
@@ -390,9 +325,6 @@ TA_RetCode TA_S_ICHIMOKU( int    startIdx,
    {
       free(tempT);
       free(tempK);
-      free(tempB);
-      *outBegIdx= 0;
-      *outNBElement= 0;
       return retCode;
    }
    retCode = TA_S_MIDPRICE(startIdx,endIdx,inHigh,inLow,optInKijunPeriod,&tempBegIdx,&tempNbElement,tempK);
@@ -400,19 +332,13 @@ TA_RetCode TA_S_ICHIMOKU( int    startIdx,
    {
       free(tempT);
       free(tempK);
-      free(tempB);
-      *outBegIdx= 0;
-      *outNBElement= 0;
       return retCode;
    }
-   retCode = TA_S_MIDPRICE(startIdx,endIdx,inHigh,inLow,optInSenkouBPeriod,&tempBegIdx,&tempNbElement,tempB);
+   retCode = TA_S_MIDPRICE(startIdx,endIdx,inHigh,inLow,optInSenkouBPeriod,&tempBegIdx,&tempNbElement,outSenkouSpanB);
    if( retCode != TA_SUCCESS )
    {
       free(tempT);
       free(tempK);
-      free(tempB);
-      *outBegIdx= 0;
-      *outNBElement= 0;
       return retCode;
    }
    retCode = TA_MEDPRICE(0,n - 1,tempT,tempK,&tempBegIdx,&tempNbElement,outSenkouSpanA);
@@ -420,20 +346,15 @@ TA_RetCode TA_S_ICHIMOKU( int    startIdx,
    {
       free(tempT);
       free(tempK);
-      free(tempB);
-      *outBegIdx= 0;
-      *outNBElement= 0;
       return retCode;
    }
    for( i = 0; i < n; i += 1 )
    {
       outTenkanSen[i] = tempT[i];
       outKijunSen[i] = tempK[i];
-      outSenkouSpanB[i] = tempB[i];
    }
    free(tempT);
    free(tempK);
-   free(tempB);
    *outBegIdx= startIdx;
    *outNBElement= n;
    return TA_SUCCESS;
@@ -464,11 +385,10 @@ static TA_RetCode TA_ICHIMOKU_StepImpl( struct TA_ICHIMOKU_Stream *sp, double in
 {
    double cur_tempT = 0.0;
    double cur_tempK = 0.0;
-   double cur_tempB = 0.0;
+   double cur_outSenkouSpanB = 0.0;
    double cur_outSenkouSpanA = 0.0;
    double cur_outTenkanSen = 0.0;
    double cur_outKijunSen = 0.0;
-   double cur_outSenkouSpanB = 0.0;
 
 
    /* Pipeline the new bar through the sub-streams (batch tail order). */
@@ -481,7 +401,7 @@ static TA_RetCode TA_ICHIMOKU_StepImpl( struct TA_ICHIMOKU_Stream *sp, double in
       if( subRc != TA_SUCCESS ) return subRc;
    }
    {
-      TA_RetCode subRc = TA_MIDPRICE_Update( sp->sub2, inHigh, inLow, &cur_tempB );
+      TA_RetCode subRc = TA_MIDPRICE_Update( sp->sub2, inHigh, inLow, &cur_outSenkouSpanB );
       if( subRc != TA_SUCCESS ) return subRc;
    }
    {
@@ -491,7 +411,6 @@ static TA_RetCode TA_ICHIMOKU_StepImpl( struct TA_ICHIMOKU_Stream *sp, double in
    /* Combine map (batch tail, per bar). */
    cur_outTenkanSen = cur_tempT;
    cur_outKijunSen = cur_tempK;
-   cur_outSenkouSpanB = cur_tempB;
    *outTenkanSen = cur_outTenkanSen;
    *outKijunSen = cur_outKijunSen;
    *outSenkouSpanA = cur_outSenkouSpanA;
@@ -581,21 +500,8 @@ static TA_RetCode TA_ICHIMOKU_OpenImpl( struct TA_ICHIMOKU_Stream **stream, cons
       int tempNbElement;
       double *tempT;
       double *tempK;
-      double *tempB;
-      /* PROTOTYPE (#490 Q7): each line IS a midpoint over its own window, which is
-       * exactly what midprice computes, so the three scans are three midprice calls
-       * and Span A is the mean of two of them. MEASURED bit-identical to the fused
-       * loop over four parameter triples on the suite's corpus, every line, before
-       * this was written.
-       *
-       * The point is the stream tier: three windows of different periods cannot be
-       * one extrema automaton (the census refuses with "expected exactly one
-       * window-start variable"), but a composed body is a different tier.
-       *
-       * The three results go to temporaries and are copied at the end: every read of
-       * high and low has to happen before the first write to a caller buffer, or an
-       * output aliased onto an input is read after it has been overwritten.
-       */
+      dummyBegIdx = 0;
+      dummyNBElement = 0;
       lookbackTotal = TA_ICHIMOKU_Lookback(optInTenkanPeriod,optInKijunPeriod,optInSenkouBPeriod);
       if( startIdx < lookbackTotal )
       {
@@ -603,8 +509,6 @@ static TA_RetCode TA_ICHIMOKU_OpenImpl( struct TA_ICHIMOKU_Stream **stream, cons
       }
       if( startIdx > endIdx )
       {
-         dummyBegIdx = 0;
-         dummyNBElement = 0;
          *outBegIdx = 0; *outNBElement = 0;
          TA_MIDPRICE_Close( sub0 ); TA_MIDPRICE_Close( sub1 ); TA_MIDPRICE_Close( sub2 ); TA_MEDPRICE_Close( sub3 ); if( !outStride ) TA_Free( sc_outTenkanSen ); if( !outStride ) TA_Free( sc_outKijunSen ); if( !outStride ) TA_Free( sc_outSenkouSpanA ); if( !outStride ) TA_Free( sc_outSenkouSpanB );
          return TA_INSUFFICIENT_HISTORY;
@@ -622,12 +526,9 @@ static TA_RetCode TA_ICHIMOKU_OpenImpl( struct TA_ICHIMOKU_Stream **stream, cons
          free( tempT ); TA_MIDPRICE_Close( sub0 ); TA_MIDPRICE_Close( sub1 ); TA_MIDPRICE_Close( sub2 ); TA_MEDPRICE_Close( sub3 ); if( !outStride ) TA_Free( sc_outTenkanSen ); if( !outStride ) TA_Free( sc_outKijunSen ); if( !outStride ) TA_Free( sc_outSenkouSpanA ); if( !outStride ) TA_Free( sc_outSenkouSpanB );
          return TA_ALLOC_ERR;
       }
-      tempB = malloc(n * sizeof(double));
-      if( !tempB )
-      {
-         free( tempT ); free( tempK ); TA_MIDPRICE_Close( sub0 ); TA_MIDPRICE_Close( sub1 ); TA_MIDPRICE_Close( sub2 ); TA_MEDPRICE_Close( sub3 ); if( !outStride ) TA_Free( sc_outTenkanSen ); if( !outStride ) TA_Free( sc_outKijunSen ); if( !outStride ) TA_Free( sc_outSenkouSpanA ); if( !outStride ) TA_Free( sc_outSenkouSpanB );
-         return TA_ALLOC_ERR;
-      }
+      /* An output may alias inHigh or inLow: no output is written before the
+       * last midprice call, which is the last read of either input.
+       */
       /* Sub-stream 0: midprice over `inHigh, inLow`, warmed from bar 0 up to the
        * sub-call's own startIdx (the seeding point). */
       {
@@ -636,7 +537,6 @@ static TA_RetCode TA_ICHIMOKU_OpenImpl( struct TA_ICHIMOKU_Stream **stream, cons
          {
             free(tempT);
             free(tempK);
-            free(tempB);
             TA_MIDPRICE_Close( sub0 ); TA_MIDPRICE_Close( sub1 ); TA_MIDPRICE_Close( sub2 ); TA_MEDPRICE_Close( sub3 ); if( !outStride ) TA_Free( sc_outTenkanSen ); if( !outStride ) TA_Free( sc_outKijunSen ); if( !outStride ) TA_Free( sc_outSenkouSpanA ); if( !outStride ) TA_Free( sc_outSenkouSpanB );
             return subRc;
          }
@@ -646,9 +546,6 @@ static TA_RetCode TA_ICHIMOKU_OpenImpl( struct TA_ICHIMOKU_Stream **stream, cons
       {
          free(tempT);
          free(tempK);
-         free(tempB);
-         dummyBegIdx = 0;
-         dummyNBElement = 0;
          TA_MIDPRICE_Close( sub0 ); TA_MIDPRICE_Close( sub1 ); TA_MIDPRICE_Close( sub2 ); TA_MEDPRICE_Close( sub3 ); if( !outStride ) TA_Free( sc_outTenkanSen ); if( !outStride ) TA_Free( sc_outKijunSen ); if( !outStride ) TA_Free( sc_outSenkouSpanA ); if( !outStride ) TA_Free( sc_outSenkouSpanB );
          return retCode;
       }
@@ -660,7 +557,6 @@ static TA_RetCode TA_ICHIMOKU_OpenImpl( struct TA_ICHIMOKU_Stream **stream, cons
          {
             free(tempT);
             free(tempK);
-            free(tempB);
             TA_MIDPRICE_Close( sub0 ); TA_MIDPRICE_Close( sub1 ); TA_MIDPRICE_Close( sub2 ); TA_MEDPRICE_Close( sub3 ); if( !outStride ) TA_Free( sc_outTenkanSen ); if( !outStride ) TA_Free( sc_outKijunSen ); if( !outStride ) TA_Free( sc_outSenkouSpanA ); if( !outStride ) TA_Free( sc_outSenkouSpanB );
             return subRc;
          }
@@ -670,21 +566,17 @@ static TA_RetCode TA_ICHIMOKU_OpenImpl( struct TA_ICHIMOKU_Stream **stream, cons
       {
          free(tempT);
          free(tempK);
-         free(tempB);
-         dummyBegIdx = 0;
-         dummyNBElement = 0;
          TA_MIDPRICE_Close( sub0 ); TA_MIDPRICE_Close( sub1 ); TA_MIDPRICE_Close( sub2 ); TA_MEDPRICE_Close( sub3 ); if( !outStride ) TA_Free( sc_outTenkanSen ); if( !outStride ) TA_Free( sc_outKijunSen ); if( !outStride ) TA_Free( sc_outSenkouSpanA ); if( !outStride ) TA_Free( sc_outSenkouSpanB );
          return retCode;
       }
       /* Sub-stream 2: midprice over `inHigh, inLow`, warmed from bar 0 up to the
        * sub-call's own startIdx (the seeding point). */
       {
-         subRc = TA_MIDPRICE_OpenAndFillInternal( &sub2, inHigh, inLow, (startIdx), (endIdx) + 1, optInSenkouBPeriod, &tempBegIdx, &tempNbElement, tempB );
+         subRc = TA_MIDPRICE_OpenAndFillInternal( &sub2, inHigh, inLow, (startIdx), (endIdx) + 1, optInSenkouBPeriod, &tempBegIdx, &tempNbElement, sc_outSenkouSpanB );
          if( subRc != TA_SUCCESS )
          {
             free(tempT);
             free(tempK);
-            free(tempB);
             TA_MIDPRICE_Close( sub0 ); TA_MIDPRICE_Close( sub1 ); TA_MIDPRICE_Close( sub2 ); TA_MEDPRICE_Close( sub3 ); if( !outStride ) TA_Free( sc_outTenkanSen ); if( !outStride ) TA_Free( sc_outKijunSen ); if( !outStride ) TA_Free( sc_outSenkouSpanA ); if( !outStride ) TA_Free( sc_outSenkouSpanB );
             return subRc;
          }
@@ -694,13 +586,12 @@ static TA_RetCode TA_ICHIMOKU_OpenImpl( struct TA_ICHIMOKU_Stream **stream, cons
       {
          free(tempT);
          free(tempK);
-         free(tempB);
-         dummyBegIdx = 0;
-         dummyNBElement = 0;
          TA_MIDPRICE_Close( sub0 ); TA_MIDPRICE_Close( sub1 ); TA_MIDPRICE_Close( sub2 ); TA_MEDPRICE_Close( sub3 ); if( !outStride ) TA_Free( sc_outTenkanSen ); if( !outStride ) TA_Free( sc_outKijunSen ); if( !outStride ) TA_Free( sc_outSenkouSpanA ); if( !outStride ) TA_Free( sc_outSenkouSpanB );
          return retCode;
       }
-      /* Span A is the mean of the two lines, which medprice is over any two series. */
+      /* Span A halves the two rounded midpoints. (hh+ll+hh+ll)/4 is a different
+       * double in the last bit.
+       */
       /* Sub-stream 3: medprice over `tempT, tempK`, warmed from bar 0 up to the
        * sub-call's own startIdx (the seeding point). */
       {
@@ -709,7 +600,6 @@ static TA_RetCode TA_ICHIMOKU_OpenImpl( struct TA_ICHIMOKU_Stream **stream, cons
          {
             free(tempT);
             free(tempK);
-            free(tempB);
             TA_MIDPRICE_Close( sub0 ); TA_MIDPRICE_Close( sub1 ); TA_MIDPRICE_Close( sub2 ); TA_MEDPRICE_Close( sub3 ); if( !outStride ) TA_Free( sc_outTenkanSen ); if( !outStride ) TA_Free( sc_outKijunSen ); if( !outStride ) TA_Free( sc_outSenkouSpanA ); if( !outStride ) TA_Free( sc_outSenkouSpanB );
             return subRc;
          }
@@ -719,9 +609,6 @@ static TA_RetCode TA_ICHIMOKU_OpenImpl( struct TA_ICHIMOKU_Stream **stream, cons
       {
          free(tempT);
          free(tempK);
-         free(tempB);
-         dummyBegIdx = 0;
-         dummyNBElement = 0;
          TA_MIDPRICE_Close( sub0 ); TA_MIDPRICE_Close( sub1 ); TA_MIDPRICE_Close( sub2 ); TA_MEDPRICE_Close( sub3 ); if( !outStride ) TA_Free( sc_outTenkanSen ); if( !outStride ) TA_Free( sc_outKijunSen ); if( !outStride ) TA_Free( sc_outSenkouSpanA ); if( !outStride ) TA_Free( sc_outSenkouSpanB );
          return retCode;
       }
@@ -729,11 +616,9 @@ static TA_RetCode TA_ICHIMOKU_OpenImpl( struct TA_ICHIMOKU_Stream **stream, cons
       {
          sc_outTenkanSen[i] = tempT[i];
          sc_outKijunSen[i] = tempK[i];
-         sc_outSenkouSpanB[i] = tempB[i];
       }
       free(tempT);
       free(tempK);
-      free(tempB);
       dummyBegIdx = startIdx;
       dummyNBElement = n;
 
@@ -842,11 +727,10 @@ TA_LIB_API TA_RetCode TA_ICHIMOKU_Peek( const TA_ICHIMOKU_Stream *stream, double
    const struct TA_ICHIMOKU_Stream *sp = stream;
    double cur_tempT = 0.0;
    double cur_tempK = 0.0;
-   double cur_tempB = 0.0;
+   double cur_outSenkouSpanB = 0.0;
    double cur_outSenkouSpanA = 0.0;
    double cur_outTenkanSen = 0.0;
    double cur_outKijunSen = 0.0;
-   double cur_outSenkouSpanB = 0.0;
 
    if( !stream || !outTenkanSen || !outKijunSen || !outSenkouSpanA || !outSenkouSpanB ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inHigh ) || !TA_IS_FINITE( inLow ) ) return TA_BAD_PARAM;
@@ -861,7 +745,7 @@ TA_LIB_API TA_RetCode TA_ICHIMOKU_Peek( const TA_ICHIMOKU_Stream *stream, double
       if( subRc != TA_SUCCESS ) return subRc;
    }
    {
-      TA_RetCode subRc = TA_MIDPRICE_Peek( (const TA_MIDPRICE_Stream *)sp->sub2, inHigh, inLow, &cur_tempB );
+      TA_RetCode subRc = TA_MIDPRICE_Peek( (const TA_MIDPRICE_Stream *)sp->sub2, inHigh, inLow, &cur_outSenkouSpanB );
       if( subRc != TA_SUCCESS ) return subRc;
    }
    {
@@ -871,7 +755,6 @@ TA_LIB_API TA_RetCode TA_ICHIMOKU_Peek( const TA_ICHIMOKU_Stream *stream, double
    /* Combine map (batch tail, per bar). */
    cur_outTenkanSen = cur_tempT;
    cur_outKijunSen = cur_tempK;
-   cur_outSenkouSpanB = cur_tempB;
    *outTenkanSen = cur_outTenkanSen;
    *outKijunSen = cur_outKijunSen;
    *outSenkouSpanA = cur_outSenkouSpanA;

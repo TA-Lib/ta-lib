@@ -1978,11 +1978,11 @@ fn composed_sub_call_destination_funcs() {
                  returns the count unmodified, so the final count IS that callee's count. The \
                  rocp buffer it ranks is entered optInRankPeriod bars before startIdx, so that \
                  count is endIdx-startIdx+1"),
-        ("ICHIMOKU", "medprice writes outSenkouSpanA and ICHIMOKU returns its count \
-                 unmodified. It has a lookback of 0 and is entered at 0 over the n elements \
-                 the three midprice calls produced, so its count IS n = endIdx-startIdx+1, \
-                 the expression ICHIMOKU returns. Equal through the INPUT LENGTH, as KC is, \
-                 not through a lookback identity between two callees"),
+        ("ICHIMOKU", "the last midprice writes outSenkouSpanB and medprice writes \
+                 outSenkouSpanA. midprice is entered at a startIdx already clamped to the \
+                 longest of the three lookbacks, so it clamps nothing and its count is \
+                 n = endIdx-startIdx+1. medprice has a lookback of 0 and is entered at 0 over \
+                 those n elements, so its count is n too: the expression ICHIMOKU returns"),
         ("KC", "the moving average is entered at exactly ema_lookback over a typical-price buffer \
                  that begins ema_lookback bars before startIdx, so it clamps nothing: its first \
                  output lands on startIdx and its count is endIdx-startIdx+1, the same expression \

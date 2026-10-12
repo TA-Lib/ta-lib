@@ -51,58 +51,24 @@
  *
  *   Test TA_ICHIMOKU (Goichi Hosoda's Ichimoku Kinko Hyo, #490).
  *
- *   ICHIMOKU publishes no number of its own: three of its four outputs are
- *   TA_MIDPRICE over three different windows, and the fourth is the mean of
- *   two of them. So the gate is not a transcribed golden table -- it is
- *   COMPOSITION, bit for bit, against the library's own TA_MIDPRICE. That
- *   is stronger than a table at a tolerance and it cannot go stale: if
- *   midprice.c ever changes how it spells a midpoint, this file fails until
- *   ichimoku.c follows.
- *
- *   The extrema are selections, so the comparison is bit-exact whichever
- *   scan each side uses -- ichimoku.c currently carries the cached-extreme
- *   plus rescan idiom and midprice.c the block scan (#490 Q6 is which one
- *   ICHIMOKU should keep, a cost question, not a value one). Every leg here
- *   holds under either, which is why this file was written before that
- *   ruling rather than after it.
- *
  *   Legs:
- *     1. COMPOSITION, six parameter triples over the committed corpus. Each
- *        line is memcmp'd against TA_MIDPRICE at its own period, and Span A
- *        against (tenkan + kijun)/2.0 computed from the outputs themselves.
- *        Also the leg that drives server_verify.
- *     2. SPAN A IS TWO HALVINGS, NOT ONE QUARTERING. In real arithmetic
- *        (midT + midK)/2 and (hiT + loT + hiK + loK)/4 are the same number;
- *        in binary64 they are not. How often they differ was measured, not
- *        assumed: on the committed corpus it is 0 of 227 bars at the
- *        published 9/26 -- a reader who only ever runs the defaults sees
- *        nothing -- and 25 of 248 at 3/5, 31 of 251 at 2/2. So leg 1 does
- *        discriminate, but only on the triples it happens to carry. This
- *        leg removes that dependency: a four-decimal series on which the
- *        two spellings disagree on 30 of 63 bars, scanned here rather than
- *        read back from the function's own outputs, with the disagreements
- *        COUNTED. If a future edit made the series stop discriminating the
- *        leg says so instead of passing green while testing nothing.
- *     3. LOOKBACK. max(tenkan, kijun, senkouB) - 1, asserted on triples
- *        where each of the three is the longest in turn -- the ordering
- *        the published defaults (9 < 26 < 52) never exercises and that a
- *        "senkouB is the longest" simplification would get wrong.
+ *     1. COMPOSITION. Each line against TA_MIDPRICE at its own period and
+ *        Span A against (tenkan + kijun)/2.0, bit for bit, on six parameter
+ *        triples. Also the leg that drives server_verify.
+ *     2. SPAN A IS TWO HALVINGS, NOT ONE QUARTERING. The corpus cannot tell
+ *        the two apart at the default periods, so this leg has its own
+ *        four-decimal series, scans the windows itself, and counts the bars
+ *        on which the two spellings differ against a floor.
+ *     3. LOOKBACK. max(tenkan, kijun, senkouB) - 1, on triples where each of
+ *        the three is the longest in turn.
  *     4. THE THREE WINDOWS ARE SEPARATE. Swapping the tenkan and senkouB
- *        periods swaps those two outputs bit for bit and leaves kijun
- *        alone; Span A, which reads tenkan, must NOT come back equal. The
- *        inequality is the control arm: without it the leg would also pass
- *        against a function that ignored its parameters.
- *     5. FLAT WINDOW. high = low = c on every bar: all four outputs are
- *        exactly c, including Span A, whose two halvings of c are c.
- *     6. DISPLAY SHIFT. The two leading spans are drawn kijun bars into the
- *        future and the two lines are drawn where they were computed, so
- *        the shift is +kijun for outputs 2 and 3 and 0 for 0 and 1 (rL9).
- *        It is metadata: the VALUES are written at the bar that computed
- *        them, which leg 1 is what proves.
+ *        periods swaps those two outputs and leaves kijun alone; Span A must
+ *        NOT come back equal, which is the control arm.
+ *     5. FLAT WINDOW. high = low = c: all four outputs are exactly c.
+ *     6. DISPLAY SHIFT. +kijun for the two spans, 0 for the two lines.
  *     7. ALIASING. Each of the four output buffers over each input.
- *     8. RANGE INDEPENDENCE, swept via doRangeTestEx. TA_STABLE_EXACT: a
- *        window is rebuilt from its own bars, so no earlier bar can leak
- *        into a later one and a short range answers what a long one does.
+ *     8. RANGE INDEPENDENCE, swept via doRangeTestEx at TA_STABLE_EXACT.
+ *     9. GOLDEN VALUES from outside TA-Lib: see ichGolden.
  */
 
 #include <stdio.h>
@@ -143,6 +109,8 @@
 #define ICH_SHIFT_CMP     16
 /* Leg 7: 4 output buffers x 2 inputs. */
 #define ICH_ALIAS_CMP      8
+/* Leg 9: 5 rows x 4 outputs. */
+#define ICH_GOLDEN_CMP    20
 
 static int g_ichComposeCmp;
 static int g_ichSpanACmp;
@@ -151,6 +119,7 @@ static int g_ichSwapCmp;
 static int g_ichFlatCmp;
 static int g_ichShiftCmp;
 static int g_ichAliasCmp;
+static int g_ichGoldenCmp;
 
 typedef struct { int tenkan; int kijun; int senkouB; } IchTriple;
 
@@ -206,6 +175,29 @@ static const double ichSpanALow[ICH_SPANA_NB] =
    100.0431,100.0241,100.0338,100.0434,100.0648,100.0791,100.0970,100.0965,100.1112
 };
 
+/* Leg 9. Source: pandas-ta-classic 0.6.52 ichimoku(high, low, close, 9, 26, 52)
+ * on the 252-bar corpus, columns ITS_9, IKS_26, ISA_9, ISB_26, which equal
+ * these doubles bit for bit; QuantConnect LEAN 2.5.18090 IchimokuKinkoHyo
+ * agrees within 2.3e-16 relative (it computes in decimal). Both draw the spans
+ * 26 bars ahead, so a span they print at bar b is the one computed at b - 26:
+ * `bar` below is the computing bar. Tolerance: none. Every operation is a
+ * comparison, an addition or a halving.
+ */
+typedef struct { int bar; int output; double value; } IchGolden;
+static const IchGolden ichGolden[ICH_GOLDEN_CMP] =
+{
+   {  77, 0,  93.4375 },            {  77, 1,  93.4375 },
+   {  51, 2,  88.414999999999992 }, {  51, 3,  90.25 },
+   { 100, 0, 115.4075 },            { 100, 1, 109.6725 },
+   {  74, 2,  87.765000000000001 }, {  74, 3,  87.452500000000001 },
+   { 150, 0, 123.125 },             { 150, 1, 128.375 },
+   { 124, 2, 123.75 },              { 124, 3, 106.75 },
+   { 200, 0, 111.53 },              { 200, 1, 119.435 },
+   { 174, 2, 129.29750000000001 },  { 174, 3, 128.375 },
+   { 251, 0, 108.685 },             { 251, 1, 111.965 },
+   { 225, 2, 101.1375 },            { 225, 3, 112.28 }
+};
+
 static ErrorNumber test_ich_compose ( const TA_History *history );
 static ErrorNumber test_ich_spana   ( void );
 static ErrorNumber test_ich_lookback( const TA_History *history );
@@ -214,6 +206,7 @@ static ErrorNumber test_ich_flat    ( void );
 static ErrorNumber test_ich_shift   ( void );
 static ErrorNumber test_ich_aliasing( const TA_History *history );
 static ErrorNumber test_ich_range   ( const TA_History *history );
+static ErrorNumber test_ich_golden  ( const TA_History *history );
 
 /**** Global functions definitions.   ****/
 
@@ -228,6 +221,7 @@ ErrorNumber test_func_ichimoku( TA_History *history )
    g_ichFlatCmp = 0;
    g_ichShiftCmp = 0;
    g_ichAliasCmp = 0;
+   g_ichGoldenCmp = 0;
 
    if( history->nbBars != ICH_NB_BAR )
    {
@@ -260,21 +254,25 @@ ErrorNumber test_func_ichimoku( TA_History *history )
    retValue = test_ich_range( history );
    if( retValue != TA_TEST_PASS ) return retValue;
 
+   retValue = test_ich_golden( history );
+   if( retValue != TA_TEST_PASS ) return retValue;
+
    if( g_ichComposeCmp  != ICH_COMPOSE_CMP
     || g_ichSpanACmp    != ICH_SPANA_CMP
     || g_ichLookbackCmp != ICH_LOOKBACK_CMP
     || g_ichSwapCmp     != ICH_SWAP_CMP
     || g_ichFlatCmp     != ICH_FLAT_CMP
     || g_ichShiftCmp    != ICH_SHIFT_CMP
-    || g_ichAliasCmp    != ICH_ALIAS_CMP )
+    || g_ichAliasCmp    != ICH_ALIAS_CMP
+    || g_ichGoldenCmp   != ICH_GOLDEN_CMP )
    {
       printf( "Fail: TA_ICHIMOKU comparison counts (compose %d, spanA %d, "
-              "lookback %d, swap %d, flat %d, shift %d, alias %d) are not what "
-              "this file asserts (%d, %d, %d, %d, %d, %d, %d)\n",
+              "lookback %d, swap %d, flat %d, shift %d, alias %d, golden %d) are "
+              "not what this file asserts (%d, %d, %d, %d, %d, %d, %d, %d)\n",
               g_ichComposeCmp, g_ichSpanACmp, g_ichLookbackCmp, g_ichSwapCmp,
-              g_ichFlatCmp, g_ichShiftCmp, g_ichAliasCmp,
+              g_ichFlatCmp, g_ichShiftCmp, g_ichAliasCmp, g_ichGoldenCmp,
               ICH_COMPOSE_CMP, ICH_SPANA_CMP, ICH_LOOKBACK_CMP, ICH_SWAP_CMP,
-              ICH_FLAT_CMP, ICH_SHIFT_CMP, ICH_ALIAS_CMP );
+              ICH_FLAT_CMP, ICH_SHIFT_CMP, ICH_ALIAS_CMP, ICH_GOLDEN_CMP );
       return TA_TESTUTIL_TFRR_BAD_CALCULATION;
    }
 
@@ -764,4 +762,39 @@ static ErrorNumber test_ich_range( const TA_History *history )
    return doRangeTestEx( ichRangeTestFunction,
                          TA_STABLE_EXACT, TA_TEST_UNST_NONE,
                          (void *)history, 4, 0 );
+}
+
+/* (9) Values from outside TA-Lib. */
+static ErrorNumber test_ich_golden( const TA_History *history )
+{
+   static TA_Real out[4][ICH_NB_BAR];
+   TA_RetCode rc;
+   TA_Integer begIdx, nbElement;
+   int g;
+
+   rc = TA_ICHIMOKU( 0, (int)history->nbBars-1, history->high, history->low,
+                     9, 26, 52, &begIdx, &nbElement,
+                     out[0], out[1], out[2], out[3] );
+   if( rc != TA_SUCCESS || begIdx != 51 || nbElement != ICH_NB_BAR - 51 )
+   {
+      printf( "Fail: TA_ICHIMOKU golden rc=%d range %d/%d\n",
+              (int)rc, (int)begIdx, (int)nbElement );
+      return TA_TESTUTIL_TFRR_BAD_RETCODE;
+   }
+
+   for( g = 0; g < ICH_GOLDEN_CMP; g++ )
+   {
+      double got = out[ichGolden[g].output][ichGolden[g].bar - begIdx];
+
+      if( got != ichGolden[g].value )
+      {
+         printf( "Fail: TA_ICHIMOKU golden output %d bar %d got %.17g, "
+                 "expected %.17g\n", ichGolden[g].output, ichGolden[g].bar,
+                 got, ichGolden[g].value );
+         return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+      }
+      g_ichGoldenCmp++;
+   }
+
+   return TA_TEST_PASS;
 }
