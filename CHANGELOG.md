@@ -6,7 +6,7 @@ Just re-install to upgrade. Older versions are automatically removed.
 
 See [github commits](https://github.com/TA-Lib/ta-lib/commits) for complete list of changes
 
-## [0.8.2] Not Released Yet
+## [0.8.3] Not Released Yet
 ### Added
 - Rust: the `ta-lib` crate is on crates.io (`cargo add ta-lib`). Its versions 0.1.x are an
   unrelated earlier crate that used the same name. (#179)
