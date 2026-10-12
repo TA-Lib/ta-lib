@@ -922,6 +922,7 @@ public partial class Core
    /// <see href="https://ta-lib.org/functions/cg">ta-lib.org/functions/cg</see>.
    /// </para>
    /// <list type="bullet">
+   /// <item><description><b>The input is assumed positive.</b> The sum of the window is the divisor. Near zero the divisor is small and the output very large; no error is returned. A series that reaches or crosses zero, such as an oscillator or a spread, has no meaningful result here.</description></item>
    /// <item><description>Ehlers' default input is the median price (H+L)/2: pass the output of MEDPRICE to reproduce it.</description></item>
    /// <item><description>His 2004 book presents the same oscillator shifted up by (optInTimePeriod+1)/2, so that a flat window reads 0: add (optInTimePeriod+1)/2 to the output to obtain that form.</description></item>
    /// <item><description>Where the window sums to exactly zero the author's listing keeps its previous value; TA-Lib returns -(optInTimePeriod+1)/2, so every value depends on its own window alone.</description></item>
@@ -1007,6 +1008,7 @@ public partial class Core
    /// <see href="https://ta-lib.org/functions/cg">ta-lib.org/functions/cg</see>.
    /// </para>
    /// <list type="bullet">
+   /// <item><description><b>The input is assumed positive.</b> The sum of the window is the divisor. Near zero the divisor is small and the output very large; no error is returned. A series that reaches or crosses zero, such as an oscillator or a spread, has no meaningful result here.</description></item>
    /// <item><description>Ehlers' default input is the median price (H+L)/2: pass the output of MEDPRICE to reproduce it.</description></item>
    /// <item><description>His 2004 book presents the same oscillator shifted up by (optInTimePeriod+1)/2, so that a flat window reads 0: add (optInTimePeriod+1)/2 to the output to obtain that form.</description></item>
    /// <item><description>Where the window sums to exactly zero the author's listing keeps its previous value; TA-Lib returns -(optInTimePeriod+1)/2, so every value depends on its own window alone.</description></item>

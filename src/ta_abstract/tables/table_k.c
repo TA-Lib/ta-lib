@@ -425,7 +425,7 @@ static const TA_OptInputParameterInfo *TA_KST_OptInputs[] =
 DEF_FUNCTION( KST,
               TA_GroupId_MomentumIndicators,
               "Know Sure Thing (Pring)",
-              TA_FUNC_FLG_STREAM
+              TA_FUNC_FLG_STREAM | TA_FUNC_FLG_POSITIVE_INPUT
              );
 /* KST END */
 
@@ -621,7 +621,7 @@ static const TA_OptInputParameterInfo *TA_KSTEXT_OptInputs[] =
 DEF_FUNCTION( KSTEXT,
               TA_GroupId_MomentumIndicators,
               "Know Sure Thing with controllable MA type",
-              TA_FUNC_FLG_STREAM
+              TA_FUNC_FLG_STREAM | TA_FUNC_FLG_POSITIVE_INPUT
              );
 /* KSTEXT END */
 

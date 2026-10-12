@@ -1,7 +1,7 @@
 name: KST
 group: Momentum Indicators
 hint: Know Sure Thing (Pring)
-flags: [stream]
+flags: [stream, positive_input]
 inputs:
   - name: inReal
     type: real

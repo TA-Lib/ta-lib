@@ -152,7 +152,7 @@ public partial class Core
    /// <see href="https://ta-lib.org/functions/sqrt">ta-lib.org/functions/sqrt</see>.
    /// </para>
    /// <list type="bullet">
-   /// <item><description>A negative input has no real square root, so those elements come out NaN.</description></item>
+   /// <item><description>A negative input has no real square root, so those elements come out NaN. A zero input gives 0.</description></item>
    /// </list>
    /// <para>
    /// Values are written only where the indicator is defined. The returned
@@ -221,7 +221,7 @@ public partial class Core
    /// <see href="https://ta-lib.org/functions/sqrt">ta-lib.org/functions/sqrt</see>.
    /// </para>
    /// <list type="bullet">
-   /// <item><description>A negative input has no real square root, so those elements come out NaN.</description></item>
+   /// <item><description>A negative input has no real square root, so those elements come out NaN. A zero input gives 0.</description></item>
    /// </list>
    /// <para>
    /// This is the <c>float[]</c> overload: input elements are widened to

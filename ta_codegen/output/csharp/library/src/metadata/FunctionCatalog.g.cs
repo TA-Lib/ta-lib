@@ -900,7 +900,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
         name: "BBW",
         group: FunctionGroup.VolatilityIndicators,
         hint: "Bollinger BandWidth",
-        flags: FuncFlags.Stream,
+        flags: FuncFlags.Stream | FuncFlags.PositiveInput,
         unstableId: null,
         inputs:
         [
@@ -2320,7 +2320,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
         name: "CG",
         group: FunctionGroup.MomentumIndicators,
         hint: "Center of Gravity Oscillator",
-        flags: FuncFlags.Stream,
+        flags: FuncFlags.Stream | FuncFlags.PositiveInput,
         unstableId: null,
         inputs:
         [
@@ -2491,7 +2491,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
         name: "COPPOCK",
         group: FunctionGroup.MomentumIndicators,
         hint: "Coppock Curve",
-        flags: FuncFlags.Stream,
+        flags: FuncFlags.Stream | FuncFlags.PositiveInput,
         unstableId: null,
         inputs:
         [
@@ -3016,7 +3016,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
         name: "FOSC",
         group: FunctionGroup.MomentumIndicators,
         hint: "Forecast Oscillator",
-        flags: FuncFlags.Stream,
+        flags: FuncFlags.Stream | FuncFlags.PositiveInput,
         unstableId: null,
         inputs:
         [
@@ -3393,7 +3393,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
         name: "KST",
         group: FunctionGroup.MomentumIndicators,
         hint: "Know Sure Thing (Pring)",
-        flags: FuncFlags.Stream,
+        flags: FuncFlags.Stream | FuncFlags.PositiveInput,
         unstableId: null,
         inputs:
         [
@@ -3426,7 +3426,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
         name: "KSTEXT",
         group: FunctionGroup.MomentumIndicators,
         hint: "Know Sure Thing with controllable MA type",
-        flags: FuncFlags.Stream,
+        flags: FuncFlags.Stream | FuncFlags.PositiveInput,
         unstableId: null,
         inputs:
         [
@@ -3608,7 +3608,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
         name: "LN",
         group: FunctionGroup.MathTransform,
         hint: "Vector Log Natural",
-        flags: FuncFlags.Stream | FuncFlags.NanInfOutput | FuncFlags.UsesTranscendental,
+        flags: FuncFlags.Stream | FuncFlags.NanInfOutput | FuncFlags.UsesTranscendental | FuncFlags.PositiveInput,
         unstableId: null,
         inputs:
         [
@@ -3629,7 +3629,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
         name: "LOG10",
         group: FunctionGroup.MathTransform,
         hint: "Vector Log10",
-        flags: FuncFlags.Stream | FuncFlags.NanInfOutput | FuncFlags.UsesTranscendental,
+        flags: FuncFlags.Stream | FuncFlags.NanInfOutput | FuncFlags.UsesTranscendental | FuncFlags.PositiveInput,
         unstableId: null,
         inputs:
         [
@@ -3907,7 +3907,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
         name: "MCGD",
         group: FunctionGroup.OverlapStudies,
         hint: "McGinley Dynamic",
-        flags: FuncFlags.Overlap | FuncFlags.Stream | FuncFlags.UnstablePeriod,
+        flags: FuncFlags.Overlap | FuncFlags.Stream | FuncFlags.UnstablePeriod | FuncFlags.PositiveInput,
         unstableId: FuncUnstId.MCGD,
         inputs:
         [
@@ -4240,7 +4240,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
         name: "NATR",
         group: FunctionGroup.VolatilityIndicators,
         hint: "Normalized Average True Range",
-        flags: FuncFlags.Stream | FuncFlags.UnstablePeriod,
+        flags: FuncFlags.Stream | FuncFlags.UnstablePeriod | FuncFlags.PositiveInput,
         unstableId: FuncUnstId.NATR,
         inputs:
         [
@@ -4264,7 +4264,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
         name: "NVI",
         group: FunctionGroup.VolumeIndicators,
         hint: "Negative Volume Index",
-        flags: FuncFlags.Stream | FuncFlags.PathDependent,
+        flags: FuncFlags.Stream | FuncFlags.PathDependent | FuncFlags.PositiveInput,
         unstableId: null,
         inputs:
         [
@@ -4431,7 +4431,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
         name: "PPO",
         group: FunctionGroup.MomentumIndicators,
         hint: "Percentage Price Oscillator",
-        flags: FuncFlags.Stream,
+        flags: FuncFlags.Stream | FuncFlags.PositiveInput,
         unstableId: null,
         inputs:
         [
@@ -4482,7 +4482,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
         name: "PVI",
         group: FunctionGroup.VolumeIndicators,
         hint: "Positive Volume Index",
-        flags: FuncFlags.Stream | FuncFlags.PathDependent,
+        flags: FuncFlags.Stream | FuncFlags.PathDependent | FuncFlags.PositiveInput,
         unstableId: null,
         inputs:
         [
@@ -4529,7 +4529,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
         name: "PVT",
         group: FunctionGroup.VolumeIndicators,
         hint: "Price Volume Trend",
-        flags: FuncFlags.Stream | FuncFlags.PathDependent,
+        flags: FuncFlags.Stream | FuncFlags.PathDependent | FuncFlags.PositiveInput,
         unstableId: null,
         inputs:
         [
@@ -4598,7 +4598,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
         name: "ROC",
         group: FunctionGroup.MomentumIndicators,
         hint: "Rate of change : ((price/prevPrice)-1)*100",
-        flags: FuncFlags.Stream,
+        flags: FuncFlags.Stream | FuncFlags.PositiveInput,
         unstableId: null,
         inputs:
         [
@@ -4622,7 +4622,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
         name: "ROCP",
         group: FunctionGroup.MomentumIndicators,
         hint: "Rate of change Percentage: (price-prevPrice)/prevPrice",
-        flags: FuncFlags.Stream,
+        flags: FuncFlags.Stream | FuncFlags.PositiveInput,
         unstableId: null,
         inputs:
         [
@@ -4646,7 +4646,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
         name: "ROCR",
         group: FunctionGroup.MomentumIndicators,
         hint: "Rate of change ratio: (price/prevPrice)",
-        flags: FuncFlags.Stream,
+        flags: FuncFlags.Stream | FuncFlags.PositiveInput,
         unstableId: null,
         inputs:
         [
@@ -4670,7 +4670,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
         name: "ROCR100",
         group: FunctionGroup.MomentumIndicators,
         hint: "Rate of change ratio 100 scale: (price/prevPrice)*100",
-        flags: FuncFlags.Stream,
+        flags: FuncFlags.Stream | FuncFlags.PositiveInput,
         unstableId: null,
         inputs:
         [
@@ -4694,7 +4694,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
         name: "ROGERSSATCHELL",
         group: FunctionGroup.VolatilityIndicators,
         hint: "Rogers-Satchell Volatility",
-        flags: FuncFlags.Stream | FuncFlags.UsesTranscendental,
+        flags: FuncFlags.Stream | FuncFlags.UsesTranscendental | FuncFlags.PositiveInput,
         unstableId: null,
         inputs:
         [
@@ -4991,7 +4991,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
         name: "SQRT",
         group: FunctionGroup.MathTransform,
         hint: "Vector Square Root",
-        flags: FuncFlags.Stream | FuncFlags.NanInfOutput,
+        flags: FuncFlags.Stream | FuncFlags.NanInfOutput | FuncFlags.PositiveInput,
         unstableId: null,
         inputs:
         [
@@ -5506,7 +5506,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
         name: "TRIX",
         group: FunctionGroup.MomentumIndicators,
         hint: "1-day Rate-Of-Change (ROC) of a Triple Smooth EMA",
-        flags: FuncFlags.Stream,
+        flags: FuncFlags.Stream | FuncFlags.PositiveInput,
         unstableId: null,
         inputs:
         [
@@ -5888,7 +5888,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
         name: "ZIGZAG",
         group: FunctionGroup.OverlapStudies,
         hint: "Zig Zag",
-        flags: FuncFlags.Overlap | FuncFlags.Stream | FuncFlags.PathDependent,
+        flags: FuncFlags.Overlap | FuncFlags.Stream | FuncFlags.PathDependent | FuncFlags.PositiveInput,
         unstableId: null,
         inputs:
         [

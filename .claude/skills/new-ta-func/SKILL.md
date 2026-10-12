@@ -225,7 +225,8 @@ call site. Then register it:
 3. **and, only if you added a new `.c` file**, the file in *both* `CMakeLists.txt`
    (`TA_REGTEST_SOURCES`, the hand-maintained block — not the generated `LIB_SOURCES`
    region) and `src/tools/ta_regtest/Makefile.am`. The autotools list is what the dist
-   nightly builds; `scripts/build.py check-source-lists` catches a one-sided edit.
+   nightly builds; `scripts/build.py check-source-lists` catches a one-sided edit, and a compiled
+   group that step 2 never registered.
 
 The sweep reaches the servers only on its own inputs: the 252-bar corpus, each
 parameter moved off its default one at a time. Route a golden call through

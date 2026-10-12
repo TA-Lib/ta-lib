@@ -370,6 +370,13 @@ const FUNC_FLAGS: &[(&str, &str, &str)] = &[
          languages, between a stream and a batch call, and between machines. Not set on a function \
          that reaches one only when an MA-type parameter selects MAMA or ALMA.",
     ),
+    (
+        "positive_input",
+        "PositiveInput",
+        "The function assumes its input is positive. A series that reaches or crosses zero, such \
+         as an oscillator or a spread, gets a successful call and an output that may have no \
+         meaning: the data is not checked.",
+    ),
 ];
 
 const OPT_FLAGS: &[(&str, &str, &str)] = &[

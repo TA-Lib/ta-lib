@@ -136,6 +136,9 @@ public enum FuncFlags : uint
 
     /// <summary>The function calls a transcendental math function, so a value may differ slightly between languages, between a stream and a batch call, and between machines. Not set on a function that reaches one only when an MA-type parameter selects MAMA or ALMA.</summary>
     UsesTranscendental = 0x00000004,
+
+    /// <summary>The function assumes its input is positive. A series that reaches or crosses zero, such as an oscillator or a spread, gets a successful call and an output that may have no meaning: the data is not checked.</summary>
+    PositiveInput = 0x00000008,
 }
 
 /// <summary>Which OHLCV components a price input consumes. Values match C's <c>TA_IN_PRICE_*</c>.</summary>

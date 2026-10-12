@@ -160,7 +160,7 @@ static const TA_OptInputParameterInfo *TA_FOSC_OptInputs[] =
 DEF_FUNCTION( FOSC,
               TA_GroupId_MomentumIndicators,
               "Forecast Oscillator",
-              TA_FUNC_FLG_STREAM
+              TA_FUNC_FLG_STREAM | TA_FUNC_FLG_POSITIVE_INPUT
              );
 /* FOSC END */
 

@@ -9,6 +9,10 @@ Average True Range expressed as a percentage of the current close, making volati
 NATR = (ATR / Close) * 100
 ATR: first value = SMA of TRANGE over period; then Wilder smoothing ATR_t = (ATR_{t-1}*(period-1) + TR_t) / period
 
+## Notes
+
+- **The input is assumed positive.** The close is the divisor. Where it is exactly 0 the output is 0. Near zero the divisor is small and the output very large; no error is returned. A series that reaches or crosses zero, such as an oscillator or a spread, has no meaningful result here.
+
 ## Inputs
 
 - `inHigh` — High price of each bar

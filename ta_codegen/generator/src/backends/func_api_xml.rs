@@ -74,6 +74,7 @@ pub(crate) const FUNC_FLAGS: &[(&str, &str)] = &[
     ("period1_identity", "Period 1 Identity"),
     ("display_shift", "Display Shift"),
     ("uses_transcendental", "Uses Transcendental"),
+    ("positive_input", "Positive Input"),
 ];
 
 fn write_func_flags(out: &mut String, flags: &[String]) {

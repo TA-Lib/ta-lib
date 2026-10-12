@@ -421,6 +421,10 @@
     * volatility; unit is percent of price.
     * <p>Formula and more info at <a
     * href="https://ta-lib.org/functions/natr">ta-lib.org/functions/natr</a>.
+    * <p><b>Notes</b>
+    * <ul>
+    * <li><b>The input is assumed positive.</b> The close is the divisor. Where it is exactly 0 the output is 0. Near zero the divisor is small and the output very large; no error is returned. A series that reaches or crosses zero, such as an oscillator or a spread, has no meaningful result here.</li>
+    * </ul>
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are, and the
     * library never pads with NaN. A valid range that ends before
@@ -487,6 +491,10 @@
     * volatility; unit is percent of price.
     * <p>Formula and more info at <a
     * href="https://ta-lib.org/functions/natr">ta-lib.org/functions/natr</a>.
+    * <p><b>Notes</b>
+    * <ul>
+    * <li><b>The input is assumed positive.</b> The close is the divisor. Where it is exactly 0 the output is 0. Near zero the divisor is small and the output very large; no error is returned. A series that reaches or crosses zero, such as an oscillator or a spread, has no meaningful result here.</li>
+    * </ul>
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a
     * result beyond {@code float} range is still representable.

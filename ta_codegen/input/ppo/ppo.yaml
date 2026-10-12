@@ -1,7 +1,7 @@
 name: PPO
 group: Momentum Indicators
 hint: Percentage Price Oscillator
-flags: [stream]
+flags: [stream, positive_input]
 inputs:
   - name: inReal
     type: real

@@ -118,7 +118,7 @@ static const TA_OptInputParameterInfo *TA_ZIGZAG_OptInputs[] =
 DEF_FUNCTION( ZIGZAG,
               TA_GroupId_OverlapStudies,
               "Zig Zag",
-              TA_FUNC_FLG_OVERLAP | TA_FUNC_FLG_STREAM | TA_FUNC_FLG_PATH_DEP
+              TA_FUNC_FLG_OVERLAP | TA_FUNC_FLG_STREAM | TA_FUNC_FLG_PATH_DEP | TA_FUNC_FLG_POSITIVE_INPUT
              );
 /* ZIGZAG END */
 

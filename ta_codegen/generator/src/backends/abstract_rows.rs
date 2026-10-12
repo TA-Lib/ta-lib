@@ -518,6 +518,7 @@ pub fn func_flag_bits(flags: &[String]) -> u32 {
             "period1_identity" => b |= 0x0000_0001, // TA_FUNC_FLG_PERIOD1_IDENTITY
             "display_shift" => b |= 0x0000_0002, // TA_FUNC_FLG_DISPLAY_SHIFT
             "uses_transcendental" => b |= 0x0000_0004, // TA_FUNC_FLG_USES_TRANSCENDENTAL
+            "positive_input" => b |= 0x0000_0008, // TA_FUNC_FLG_POSITIVE_INPUT
             _ => {}
         }
     }

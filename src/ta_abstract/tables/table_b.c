@@ -197,7 +197,7 @@ static const TA_OptInputParameterInfo *TA_BBW_OptInputs[] =
 DEF_FUNCTION( BBW,
               TA_GroupId_VolatilityIndicators,
               "Bollinger BandWidth",
-              TA_FUNC_FLG_STREAM
+              TA_FUNC_FLG_STREAM | TA_FUNC_FLG_POSITIVE_INPUT
              );
 /* BBW END */
 

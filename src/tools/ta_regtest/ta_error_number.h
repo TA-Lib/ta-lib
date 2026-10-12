@@ -241,6 +241,7 @@ typedef enum
   TA_ABS_TST_FAIL_LOOKBACK_SETTINGS_VACUOUS = 634,
   TA_ABS_TST_FAIL_FIRST_BAR                 = 635,
   TA_ABS_TST_FAIL_FIRST_BAR_VACUOUS         = 636,
+  TA_ABS_TST_FAIL_POSITIVE_INPUT_VACUOUS    = 637,
 
   /* Error code related to internal tests. */
   TA_INTERNAL_CIRC_BUFF_FAIL_0      = 700,

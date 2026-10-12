@@ -92,7 +92,7 @@
     * href="https://ta-lib.org/functions/sqrt">ta-lib.org/functions/sqrt</a>.
     * <p><b>Notes</b>
     * <ul>
-    * <li>A negative input has no real square root, so those elements come out NaN.</li>
+    * <li>A negative input has no real square root, so those elements come out NaN. A zero input gives 0.</li>
     * </ul>
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are, and the
@@ -145,7 +145,7 @@
     * href="https://ta-lib.org/functions/sqrt">ta-lib.org/functions/sqrt</a>.
     * <p><b>Notes</b>
     * <ul>
-    * <li>A negative input has no real square root, so those elements come out NaN.</li>
+    * <li>A negative input has no real square root, so those elements come out NaN. A zero input gives 0.</li>
     * </ul>
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a

@@ -1,7 +1,7 @@
 name: COPPOCK
 group: Momentum Indicators
 hint: Coppock Curve
-flags: [stream]
+flags: [stream, positive_input]
 inputs:
   - name: inReal
     type: real

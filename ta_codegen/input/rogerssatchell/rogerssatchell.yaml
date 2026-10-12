@@ -1,7 +1,7 @@
 name: ROGERSSATCHELL
 group: Volatility Indicators
 hint: Rogers-Satchell Volatility
-flags: [stream, uses_transcendental]
+flags: [stream, uses_transcendental, positive_input]
 inputs:
   - name: inPriceOHLC
     type: price

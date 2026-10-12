@@ -1721,7 +1721,7 @@ static const TA_OptInputParameterInfo *TA_CG_OptInputs[] =
 DEF_FUNCTION( CG,
               TA_GroupId_MomentumIndicators,
               "Center of Gravity Oscillator",
-              TA_FUNC_FLG_STREAM
+              TA_FUNC_FLG_STREAM | TA_FUNC_FLG_POSITIVE_INPUT
              );
 /* CG END */
 
@@ -2001,7 +2001,7 @@ static const TA_OptInputParameterInfo *TA_COPPOCK_OptInputs[] =
 DEF_FUNCTION( COPPOCK,
               TA_GroupId_MomentumIndicators,
               "Coppock Curve",
-              TA_FUNC_FLG_STREAM
+              TA_FUNC_FLG_STREAM | TA_FUNC_FLG_POSITIVE_INPUT
              );
 /* COPPOCK END */
 

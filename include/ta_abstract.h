@@ -260,6 +260,20 @@ typedef int TA_FuncFlags;
                                           * parameter selects MAMA or ALMA.
                                           * e.g. SIN, LN, HT_SINE.
                                           */
+#define TA_FUNC_FLG_POSITIVE_INPUT 0x00000008
+                                         /* The function assumes its input is
+                                          * positive: it divides by the input,
+                                          * takes its logarithm or root, or
+                                          * measures a percent of it. A series
+                                          * that reaches or crosses zero, such
+                                          * as an oscillator or a spread, gets
+                                          * TA_SUCCESS and an output that may
+                                          * have no meaning. Declaration only:
+                                          * the data is not checked. The
+                                          * function's page on ta-lib.org says
+                                          * what a zero or a negative value does.
+                                          * e.g. ROC, NATR, ZIGZAG, LN.
+                                          */
 
 typedef struct TA_FuncInfo
 {

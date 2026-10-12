@@ -304,6 +304,7 @@
     * href="https://ta-lib.org/functions/trix">ta-lib.org/functions/trix</a>.
     * <p><b>Notes</b>
     * <ul>
+    * <li><b>The input is assumed positive.</b> The previous triple-smoothed value is the divisor. Near zero the divisor is small and the output very large; no error is returned. A series that reaches or crosses zero, such as an oscillator or a spread, has no meaningful result here.</li>
     * <li>The final rate-of-change step yields 0 when the previous smoothed value is exactly zero, rather than being undefined.</li>
     * </ul>
     * <p>Values are written only where the indicator is defined. The returned
@@ -369,6 +370,7 @@
     * href="https://ta-lib.org/functions/trix">ta-lib.org/functions/trix</a>.
     * <p><b>Notes</b>
     * <ul>
+    * <li><b>The input is assumed positive.</b> The previous triple-smoothed value is the divisor. Near zero the divisor is small and the output very large; no error is returned. A series that reaches or crosses zero, such as an oscillator or a spread, has no meaningful result here.</li>
     * <li>The final rate-of-change step yields 0 when the previous smoothed value is exactly zero, rather than being undefined.</li>
     * </ul>
     * <p>This is the {@code float[]} overload. The arithmetic is performed in

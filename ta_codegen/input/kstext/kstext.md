@@ -22,6 +22,7 @@ MA_roc uses optInROCMAType, MA_signal uses optInSignalMAType
 
 ## Notes
 
+- **The input is assumed positive.** The price each rate of change looks back to is its divisor. Near zero the divisor is small and the output very large; no error is returned. A series that reaches or crosses zero, such as an oscillator or a spread, has no meaningful result here.
 - With both MA types set to `TA_MAType_SMA` the outputs are those of `KST`.
 - Both outputs start at the first bar where the signal line exists. A signal period of 1 disables signal-line smoothing for every signal MAType: the signal is then a copy of the line.
 - The unstable period of a selected MA type lengthens the lookback, for the legs and for the signal line separately.

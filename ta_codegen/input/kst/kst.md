@@ -20,6 +20,7 @@ X_k = optInROC{k}Period, A_k = optInSMA{k}Period, S = optInSignalPeriod
 
 ## Notes
 
+- **The input is assumed positive.** The price each rate of change looks back to is its divisor. Near zero the divisor is small and the output very large; no error is returned. A series that reaches or crosses zero, such as an oscillator or a spread, has no meaningful result here.
 - The weights are 1 to 4 and nothing divides by their total. Pring's daily table prints each leg's SMA period times its weight (a total of 120) only to show how much the longest leg dominates.
 - Both outputs start at the first bar where the signal line exists, so the first few bars where the KST line alone is defined are not emitted. Setting the signal period to 1 returns the line from its own first bar, and the signal output is then a copy of it.
 - Each rate of change follows `ROC`: a zero price in the denominator makes that term 0.

@@ -439,6 +439,13 @@ fn func_flags_class() -> String {
                  machines. Not set on a function that reaches one only when an MA-type \
                  parameter selects MAMA or ALMA.",
             ),
+            (
+                "POSITIVE_INPUT",
+                0x0000_0008,
+                "The function assumes its input is positive. A series that reaches or crosses \
+                 zero, such as an oscillator or a spread, gets a successful call and an output \
+                 that may have no meaning: the data is not checked.",
+            ),
         ],
         &[],
     )

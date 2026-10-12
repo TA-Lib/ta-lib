@@ -14,6 +14,7 @@ The series starts at zero on the first bar of the requested range.
 
 ## Notes
 
+- **The input is assumed positive.** The previous close is the divisor. Near zero the divisor is small and the output very large; no error is returned. A series that reaches or crosses zero, such as an oscillator or a spread, has no meaningful result here.
 - The absolute level is arbitrary and depends on where the accumulation started, so two ranges over the same data give curves of the same shape at different offsets.
 - Some libraries scale the per-bar term by 100. This implementation follows the fractional definition, which every primary reference below states.
 - A bar whose previous close is exactly zero contributes nothing and the running total is carried forward unchanged, rather than dividing by zero. A flat stretch of the output can therefore mean either genuine zero net accumulation or a run of zero previous closes.

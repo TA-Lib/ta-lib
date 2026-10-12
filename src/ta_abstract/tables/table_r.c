@@ -84,7 +84,7 @@ static const TA_OptInputParameterInfo *TA_ROC_OptInputs[] =
 DEF_FUNCTION( ROC,
               TA_GroupId_MomentumIndicators,
               "Rate of change : ((price/prevPrice)-1)*100",
-              TA_FUNC_FLG_STREAM
+              TA_FUNC_FLG_STREAM | TA_FUNC_FLG_POSITIVE_INPUT
              );
 /* ROC END */
 
@@ -109,7 +109,7 @@ static const TA_OptInputParameterInfo *TA_ROCP_OptInputs[] =
 DEF_FUNCTION( ROCP,
               TA_GroupId_MomentumIndicators,
               "Rate of change Percentage: (price-prevPrice)/prevPrice",
-              TA_FUNC_FLG_STREAM
+              TA_FUNC_FLG_STREAM | TA_FUNC_FLG_POSITIVE_INPUT
              );
 /* ROCP END */
 
@@ -134,7 +134,7 @@ static const TA_OptInputParameterInfo *TA_ROCR_OptInputs[] =
 DEF_FUNCTION( ROCR,
               TA_GroupId_MomentumIndicators,
               "Rate of change ratio: (price/prevPrice)",
-              TA_FUNC_FLG_STREAM
+              TA_FUNC_FLG_STREAM | TA_FUNC_FLG_POSITIVE_INPUT
              );
 /* ROCR END */
 
@@ -159,7 +159,7 @@ static const TA_OptInputParameterInfo *TA_ROCR100_OptInputs[] =
 DEF_FUNCTION( ROCR100,
               TA_GroupId_MomentumIndicators,
               "Rate of change ratio 100 scale: (price/prevPrice)*100",
-              TA_FUNC_FLG_STREAM
+              TA_FUNC_FLG_STREAM | TA_FUNC_FLG_POSITIVE_INPUT
              );
 /* ROCR100 END */
 
@@ -232,7 +232,7 @@ static const TA_OptInputParameterInfo *TA_ROGERSSATCHELL_OptInputs[] =
 DEF_FUNCTION( ROGERSSATCHELL,
               TA_GroupId_VolatilityIndicators,
               "Rogers-Satchell Volatility",
-              TA_FUNC_FLG_STREAM | TA_FUNC_FLG_USES_TRANSCENDENTAL
+              TA_FUNC_FLG_STREAM | TA_FUNC_FLG_USES_TRANSCENDENTAL | TA_FUNC_FLG_POSITIVE_INPUT
              );
 /* ROGERSSATCHELL END */
 

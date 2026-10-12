@@ -1,7 +1,7 @@
 name: ROCR
 group: Momentum Indicators
 hint: "Rate of change ratio: (price/prevPrice)"
-flags: [stream]
+flags: [stream, positive_input]
 inputs:
   - name: inReal
     type: real

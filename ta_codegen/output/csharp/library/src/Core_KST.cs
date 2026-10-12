@@ -798,6 +798,7 @@ public partial class Core
    /// <see href="https://ta-lib.org/functions/kst">ta-lib.org/functions/kst</see>.
    /// </para>
    /// <list type="bullet">
+   /// <item><description><b>The input is assumed positive.</b> The price each rate of change looks back to is its divisor. Near zero the divisor is small and the output very large; no error is returned. A series that reaches or crosses zero, such as an oscillator or a spread, has no meaningful result here.</description></item>
    /// <item><description>The weights are 1 to 4 and nothing divides by their total. Pring's daily table prints each leg's SMA period times its weight (a total of 120) only to show how much the longest leg dominates.</description></item>
    /// <item><description>Both outputs start at the first bar where the signal line exists, so the first few bars where the KST line alone is defined are not emitted. Setting the signal period to 1 returns the line from its own first bar, and the signal output is then a copy of it.</description></item>
    /// <item><description>Each rate of change follows <c>ROC</c>: a zero price in the denominator makes that term 0.</description></item>
@@ -916,6 +917,7 @@ public partial class Core
    /// <see href="https://ta-lib.org/functions/kst">ta-lib.org/functions/kst</see>.
    /// </para>
    /// <list type="bullet">
+   /// <item><description><b>The input is assumed positive.</b> The price each rate of change looks back to is its divisor. Near zero the divisor is small and the output very large; no error is returned. A series that reaches or crosses zero, such as an oscillator or a spread, has no meaningful result here.</description></item>
    /// <item><description>The weights are 1 to 4 and nothing divides by their total. Pring's daily table prints each leg's SMA period times its weight (a total of 120) only to show how much the longest leg dominates.</description></item>
    /// <item><description>Both outputs start at the first bar where the signal line exists, so the first few bars where the KST line alone is defined are not emitted. Setting the signal period to 1 returns the line from its own first bar, and the signal output is then a copy of it.</description></item>
    /// <item><description>Each rate of change follows <c>ROC</c>: a zero price in the denominator makes that term 0.</description></item>

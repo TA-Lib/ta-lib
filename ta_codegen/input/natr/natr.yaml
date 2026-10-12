@@ -1,7 +1,7 @@
 name: NATR
 group: Volatility Indicators
 hint: Normalized Average True Range
-flags: [unstable_period, stream]
+flags: [unstable_period, stream, positive_input]
 inputs:
   - name: inPriceHLC
     type: price

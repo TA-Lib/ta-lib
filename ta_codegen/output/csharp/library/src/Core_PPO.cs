@@ -724,6 +724,7 @@ public partial class Core
    /// <see href="https://ta-lib.org/functions/ppo">ta-lib.org/functions/ppo</see>.
    /// </para>
    /// <list type="bullet">
+   /// <item><description><b>The input is assumed positive.</b> The slow moving average is the divisor. Near zero the divisor is small and the output very large; no error is returned. A series that reaches or crosses zero, such as an oscillator or a spread, has no meaningful result here.</description></item>
    /// <item><description><c>optInMAType</c> applies to both the fast and slow moving average. <c>TA_MAType_MAMA</c> ignores its period argument, so with <c>optInMAType = TA_MAType_MAMA</c> the fast and slow MAs are identical, making the numerator — and therefore the output — zero at every bar.</description></item>
    /// <item><description>If the slow period is set smaller than the fast period, the two are swapped, as in <c>MACD</c>.</description></item>
    /// </list>
@@ -813,6 +814,7 @@ public partial class Core
    /// <see href="https://ta-lib.org/functions/ppo">ta-lib.org/functions/ppo</see>.
    /// </para>
    /// <list type="bullet">
+   /// <item><description><b>The input is assumed positive.</b> The slow moving average is the divisor. Near zero the divisor is small and the output very large; no error is returned. A series that reaches or crosses zero, such as an oscillator or a spread, has no meaningful result here.</description></item>
    /// <item><description><c>optInMAType</c> applies to both the fast and slow moving average. <c>TA_MAType_MAMA</c> ignores its period argument, so with <c>optInMAType = TA_MAType_MAMA</c> the fast and slow MAs are identical, making the numerator — and therefore the output — zero at every bar.</description></item>
    /// <item><description>If the slow period is set smaller than the fast period, the two are swapped, as in <c>MACD</c>.</description></item>
    /// </list>

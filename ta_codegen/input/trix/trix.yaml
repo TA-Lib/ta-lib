@@ -1,7 +1,7 @@
 name: TRIX
 group: Momentum Indicators
 hint: 1-day Rate-Of-Change (ROC) of a Triple Smooth EMA
-flags: [stream]
+flags: [stream, positive_input]
 inputs:
   - name: inReal
     type: real

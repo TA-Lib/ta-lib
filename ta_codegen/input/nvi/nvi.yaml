@@ -1,7 +1,7 @@
 name: NVI
 group: Volume Indicators
 hint: Negative Volume Index
-flags: [stream, path_dependent]
+flags: [stream, path_dependent, positive_input]
 inputs:
   - name: inPriceCV
     type: price

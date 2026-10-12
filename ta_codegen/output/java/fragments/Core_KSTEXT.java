@@ -569,6 +569,7 @@
     * href="https://ta-lib.org/functions/kstext">ta-lib.org/functions/kstext</a>.
     * <p><b>Notes</b>
     * <ul>
+    * <li><b>The input is assumed positive.</b> The price each rate of change looks back to is its divisor. Near zero the divisor is small and the output very large; no error is returned. A series that reaches or crosses zero, such as an oscillator or a spread, has no meaningful result here.</li>
     * <li>With both MA types set to {@code TA_MAType_SMA} the outputs are those of {@code KST}.</li>
     * <li>Both outputs start at the first bar where the signal line exists. A signal period of 1 disables signal-line smoothing for every signal MAType: the signal is then a copy of the line.</li>
     * <li>The unstable period of a selected MA type lengthens the lookback, for the legs and for the signal line separately.</li>
@@ -684,6 +685,7 @@
     * href="https://ta-lib.org/functions/kstext">ta-lib.org/functions/kstext</a>.
     * <p><b>Notes</b>
     * <ul>
+    * <li><b>The input is assumed positive.</b> The price each rate of change looks back to is its divisor. Near zero the divisor is small and the output very large; no error is returned. A series that reaches or crosses zero, such as an oscillator or a spread, has no meaningful result here.</li>
     * <li>With both MA types set to {@code TA_MAType_SMA} the outputs are those of {@code KST}.</li>
     * <li>Both outputs start at the first bar where the signal line exists. A signal period of 1 disables signal-line smoothing for every signal MAType: the signal is then a copy of the line.</li>
     * <li>The unstable period of a selected MA type lengthens the lookback, for the legs and for the signal line separately.</li>

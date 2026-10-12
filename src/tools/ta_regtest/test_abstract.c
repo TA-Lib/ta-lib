@@ -171,6 +171,7 @@ static ErrorNumber callWithDefaults( const char *funcName,
 /**** Local variables definitions.     ****/
 static double inputNegData[200];
 static double inputZeroData[200];
+static int    g_positiveInputMathZero = 0;
 static double inputRandFltEpsilon[200];
 static double inputRandDblEpsilon[200];
 static double inputRandomData[2000];
@@ -3088,6 +3089,14 @@ static void testDefault( const TA_FuncInfo *funcInfo, void *opaqueData )
       CALL( inputRandDblEpsilon );
    }
 
+   /* Zero is outside most Math domains, but it is the boundary of a declared
+    * positive input, where the call must still succeed. */
+   else if( funcInfo->flags & TA_FUNC_FLG_POSITIVE_INPUT )
+   {
+      CALL( inputZeroData );
+      g_positiveInputMathZero++;
+   }
+
    CALL( inputRandomData );
 
 #undef CALL
@@ -4813,7 +4822,14 @@ static ErrorNumber test_default_calls(void)
        inputRandDblEpsilon_int[i] = sign?1:-1;
    }
 
+   g_positiveInputMathZero = 0;
    TA_ForEachFunc( testDefault, &errNumber );
+   if( errNumber == TA_TEST_PASS && g_positiveInputMathZero == 0 )
+   {
+      printf( "Failed: no Math function declaring TA_FUNC_FLG_POSITIVE_INPUT was "
+              "called on the zero dataset\n" );
+      errNumber = TA_ABS_TST_FAIL_POSITIVE_INPUT_VACUOUS;
+   }
 
    /* Every multi-output function must reject output-buffer aliasing (issue #108). */
    if( errNumber == TA_TEST_PASS )
