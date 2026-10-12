@@ -10620,6 +10620,6 @@ static const TA_VariantEntry TA_VariantTable[] = {
      1, TA_VIn_ZLEMA, 1, TA_VOpt_ZLEMA, 1, TA_VOutIsInt_ZLEMA, 0 },
 };
 
-#define TA_VARIANT_TABLE_SIZE 236
+#define TA_VARIANT_TABLE_SIZE 237
 
 #endif /* TA_VARIANT_FRAME_H */
