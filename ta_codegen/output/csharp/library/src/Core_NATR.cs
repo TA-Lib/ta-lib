@@ -454,6 +454,9 @@ public partial class Core
    /// Formula and more info at
    /// <see href="https://ta-lib.org/functions/natr">ta-lib.org/functions/natr</see>.
    /// </para>
+   /// <list type="bullet">
+   /// <item><description><b>The input is assumed positive.</b> The close is the divisor. Where it is exactly 0 the output is 0. Near zero the divisor is small and the output very large; no error is returned. A series that reaches or crosses zero, such as an oscillator or a spread, has no meaningful result here.</description></item>
+   /// </list>
    /// <para>
    /// Values are written only where the indicator is defined. The returned
    /// <see cref="OutRange"/> says where they start and how many there are, and
@@ -535,6 +538,9 @@ public partial class Core
    /// Formula and more info at
    /// <see href="https://ta-lib.org/functions/natr">ta-lib.org/functions/natr</see>.
    /// </para>
+   /// <list type="bullet">
+   /// <item><description><b>The input is assumed positive.</b> The close is the divisor. Where it is exactly 0 the output is 0. Near zero the divisor is small and the output very large; no error is returned. A series that reaches or crosses zero, such as an oscillator or a spread, has no meaningful result here.</description></item>
+   /// </list>
    /// <para>
    /// This is the <c>float[]</c> overload: input elements are widened to
    /// <c>double</c> as they are read and all arithmetic is performed in

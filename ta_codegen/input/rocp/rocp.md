@@ -8,6 +8,10 @@ Rate of change expressed as a fraction of the price optInTimePeriod bars ago. No
 
 ROCP = (price - prevPrice) / prevPrice, prevPrice = inReal[i - optInTimePeriod]
 
+## Notes
+
+- **The input is assumed positive.** The price `optInTimePeriod` bars back is the divisor. Where it is exactly 0 the output is 0. Near zero the divisor is small and the output very large; no error is returned. A series that reaches or crosses zero, such as an oscillator or a spread, has no meaningful result here.
+
 ## Inputs
 
 - `inReal` — Source price series

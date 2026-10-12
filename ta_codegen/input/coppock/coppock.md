@@ -32,5 +32,6 @@ The classic defaults are 11/14/10 on monthly data. Wikipedia's daily-scale varia
 
 ## Notes
 
+- **The input is assumed positive.** The price each rate of change looks back to is its divisor. Near zero the divisor is small and the output very large; no error is returned. A series that reaches or crosses zero, such as an oscillator or a spread, has no meaningful result here.
 - The single fused pass is bit-identical to running `ROC + ROC` into [`WMA`](/functions/wma).
 - First output at `max(optInROC1Period, optInROC2Period) + optInWMAPeriod - 1`. Not start-dependent: each output depends only on its finite trailing window.

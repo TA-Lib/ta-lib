@@ -644,6 +644,7 @@ public partial class Core
    /// <see href="https://ta-lib.org/functions/kstext">ta-lib.org/functions/kstext</see>.
    /// </para>
    /// <list type="bullet">
+   /// <item><description><b>The input is assumed positive.</b> The price each rate of change looks back to is its divisor. Near zero the divisor is small and the output very large; no error is returned. A series that reaches or crosses zero, such as an oscillator or a spread, has no meaningful result here.</description></item>
    /// <item><description>With both MA types set to <c>TA_MAType_SMA</c> the outputs are those of <c>KST</c>.</description></item>
    /// <item><description>Both outputs start at the first bar where the signal line exists. A signal period of 1 disables signal-line smoothing for every signal MAType: the signal is then a copy of the line.</description></item>
    /// <item><description>The unstable period of a selected MA type lengthens the lookback, for the legs and for the signal line separately.</description></item>
@@ -773,6 +774,7 @@ public partial class Core
    /// <see href="https://ta-lib.org/functions/kstext">ta-lib.org/functions/kstext</see>.
    /// </para>
    /// <list type="bullet">
+   /// <item><description><b>The input is assumed positive.</b> The price each rate of change looks back to is its divisor. Near zero the divisor is small and the output very large; no error is returned. A series that reaches or crosses zero, such as an oscillator or a spread, has no meaningful result here.</description></item>
    /// <item><description>With both MA types set to <c>TA_MAType_SMA</c> the outputs are those of <c>KST</c>.</description></item>
    /// <item><description>Both outputs start at the first bar where the signal line exists. A signal period of 1 disables signal-line smoothing for every signal MAType: the signal is then a copy of the line.</description></item>
    /// <item><description>The unstable period of a selected MA type lengthens the lookback, for the legs and for the signal line separately.</description></item>

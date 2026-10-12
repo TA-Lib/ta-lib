@@ -10,7 +10,7 @@ outReal[i] = sqrt(inReal[i])
 
 ## Notes
 
-- A negative input has no real square root, so those elements come out NaN.
+- A negative input has no real square root, so those elements come out NaN. A zero input gives 0.
 
 ## Inputs
 

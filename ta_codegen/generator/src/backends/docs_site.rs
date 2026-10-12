@@ -407,7 +407,8 @@ fn flag_cell(label: &str, on: bool, tip: &str) -> String {
 ///   point to plot, so the caller has to decide what to draw there — the page's
 ///   `## Notes` say which inputs cause it), `Identity at Period 1`
 ///   (`period1_identity`), `Display Shift` (`display_shift`, derived from
-///   the output flags) and `Uses Transcendental` (`uses_transcendental`). Not all of them are display hints, which is why the
+///   the output flags), `Uses Transcendental` (`uses_transcendental`) and `Input Must Be Positive`
+///   (`positive_input`). Not all of them are display hints, which is why the
 ///   list carries no header: they are per-function properties of one shape — a
 ///   checkbox a caller reads off the page.
 ///
@@ -468,6 +469,13 @@ fn inject_flags(
              trigonometric or hyperbolic), so a value may differ slightly between languages, \
              between a stream and a batch call, and between machines. TA-Lib targets a \
              difference below 1e-9.",
+        ),
+        (
+            "Input Must Be Positive",
+            has("positive_input"),
+            "Assumes the input is positive, as a price is. A series that reaches or crosses \
+             zero, such as an oscillator or a spread, returns success and an output that may \
+             have no meaning. See Notes for what a zero or a negative value does.",
         ),
     ];
 

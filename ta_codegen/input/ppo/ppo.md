@@ -12,6 +12,7 @@ The standard form is exponential with periods 12 and 26 — ((12-day EMA - 26-da
 
 ## Notes
 
+- **The input is assumed positive.** The slow moving average is the divisor. Near zero the divisor is small and the output very large; no error is returned. A series that reaches or crosses zero, such as an oscillator or a spread, has no meaningful result here.
 - `optInMAType` applies to both the fast and slow moving average. `TA_MAType_MAMA` ignores its period argument, so with `optInMAType = TA_MAType_MAMA` the fast and slow MAs are identical, making the numerator — and therefore the output — zero at every bar.
 - If the slow period is set smaller than the fast period, the two are swapped, as in `MACD`.
 

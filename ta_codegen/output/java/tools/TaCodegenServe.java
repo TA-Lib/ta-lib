@@ -17988,6 +17988,7 @@ class Core {
         * href="https://ta-lib.org/functions/bbw">ta-lib.org/functions/bbw</a>.
         * <p><b>Notes</b>
         * <ul>
+        * <li><b>The input is assumed positive.</b> The middle band is the divisor. Where it is exactly 0 the output is 0. Near zero the divisor is small and the output very large; no error is returned. A series that reaches or crosses zero, such as an oscillator or a spread, has no meaningful result here.</li>
         * <li>With Bollinger's settings (a simple moving average and two deviations on each side) BBW is 400 times the window's coefficient of variation: its standard deviation divided by its mean.</li>
         * <li>The two deviation multipliers enter only through their sum.</li>
         * <li>The result is in percent: 10 means the bands are 10% of the middle band apart.</li>
@@ -18068,6 +18069,7 @@ class Core {
         * href="https://ta-lib.org/functions/bbw">ta-lib.org/functions/bbw</a>.
         * <p><b>Notes</b>
         * <ul>
+        * <li><b>The input is assumed positive.</b> The middle band is the divisor. Where it is exactly 0 the output is 0. Near zero the divisor is small and the output very large; no error is returned. A series that reaches or crosses zero, such as an oscillator or a spread, has no meaningful result here.</li>
         * <li>With Bollinger's settings (a simple moving average and two deviations on each side) BBW is 400 times the window's coefficient of variation: its standard deviation divided by its mean.</li>
         * <li>The two deviation multipliers enter only through their sum.</li>
         * <li>The result is in percent: 10 means the bands are 10% of the middle band apart.</li>
@@ -75100,6 +75102,7 @@ class Core {
         * href="https://ta-lib.org/functions/cg">ta-lib.org/functions/cg</a>.
         * <p><b>Notes</b>
         * <ul>
+        * <li><b>The input is assumed positive.</b> The sum of the window is the divisor. Near zero the divisor is small and the output very large; no error is returned. A series that reaches or crosses zero, such as an oscillator or a spread, has no meaningful result here.</li>
         * <li>Ehlers' default input is the median price (H+L)/2: pass the output of MEDPRICE to reproduce it.</li>
         * <li>His 2004 book presents the same oscillator shifted up by (optInTimePeriod+1)/2, so that a flat window reads 0: add (optInTimePeriod+1)/2 to the output to obtain that form.</li>
         * <li>Where the window sums to exactly zero the author's listing keeps its previous value; TA-Lib returns -(optInTimePeriod+1)/2, so every value depends on its own window alone.</li>
@@ -75170,6 +75173,7 @@ class Core {
         * href="https://ta-lib.org/functions/cg">ta-lib.org/functions/cg</a>.
         * <p><b>Notes</b>
         * <ul>
+        * <li><b>The input is assumed positive.</b> The sum of the window is the divisor. Near zero the divisor is small and the output very large; no error is returned. A series that reaches or crosses zero, such as an oscillator or a spread, has no meaningful result here.</li>
         * <li>Ehlers' default input is the median price (H+L)/2: pass the output of MEDPRICE to reproduce it.</li>
         * <li>His 2004 book presents the same oscillator shifted up by (optInTimePeriod+1)/2, so that a flat window reads 0: add (optInTimePeriod+1)/2 to the output to obtain that form.</li>
         * <li>Where the window sums to exactly zero the author's listing keeps its previous value; TA-Lib returns -(optInTimePeriod+1)/2, so every value depends on its own window alone.</li>
@@ -83751,6 +83755,7 @@ class Core {
         * href="https://ta-lib.org/functions/coppock">ta-lib.org/functions/coppock</a>.
         * <p><b>Notes</b>
         * <ul>
+        * <li><b>The input is assumed positive.</b> The price each rate of change looks back to is its divisor. Near zero the divisor is small and the output very large; no error is returned. A series that reaches or crosses zero, such as an oscillator or a spread, has no meaningful result here.</li>
         * <li>The single fused pass is bit-identical to running {@code ROC + ROC} into <a href="https://ta-lib.org/functions/wma">{@code WMA}</a>.</li>
         * <li>First output at {@code max(optInROC1Period, optInROC2Period) + optInWMAPeriod - 1}. Not start-dependent: each output depends only on its finite trailing window.</li>
         * </ul>
@@ -83818,6 +83823,7 @@ class Core {
         * href="https://ta-lib.org/functions/coppock">ta-lib.org/functions/coppock</a>.
         * <p><b>Notes</b>
         * <ul>
+        * <li><b>The input is assumed positive.</b> The price each rate of change looks back to is its divisor. Near zero the divisor is small and the output very large; no error is returned. A series that reaches or crosses zero, such as an oscillator or a spread, has no meaningful result here.</li>
         * <li>The single fused pass is bit-identical to running {@code ROC + ROC} into <a href="https://ta-lib.org/functions/wma">{@code WMA}</a>.</li>
         * <li>First output at {@code max(optInROC1Period, optInROC2Period) + optInWMAPeriod - 1}. Not start-dependent: each output depends only on its finite trailing window.</li>
         * </ul>
@@ -102954,6 +102960,7 @@ class Core {
         * href="https://ta-lib.org/functions/fosc">ta-lib.org/functions/fosc</a>.
         * <p><b>Notes</b>
         * <ul>
+        * <li><b>The input is assumed positive.</b> The current value is the divisor. Where it is exactly 0 the output is 0. Near zero the divisor is small and the output very large; no error is returned. A series that reaches or crosses zero, such as an oscillator or a spread, has no meaningful result here.</li>
         * <li>Several vendors publish a "Chande Forecast Oscillator (CFO)" that compares the close to the regression value of the window <i>ending at the same bar</i>, with no lag. FOSC is the lagged form Chande and Achelis describe.</li>
         * <li>The default window is Chande's own suggestion, shorter than the one TA-Lib's TSF and LINEARREG default to.</li>
         * </ul>
@@ -103021,6 +103028,7 @@ class Core {
         * href="https://ta-lib.org/functions/fosc">ta-lib.org/functions/fosc</a>.
         * <p><b>Notes</b>
         * <ul>
+        * <li><b>The input is assumed positive.</b> The current value is the divisor. Where it is exactly 0 the output is 0. Near zero the divisor is small and the output very large; no error is returned. A series that reaches or crosses zero, such as an oscillator or a spread, has no meaningful result here.</li>
         * <li>Several vendors publish a "Chande Forecast Oscillator (CFO)" that compares the close to the regression value of the window <i>ending at the same bar</i>, with no lag. FOSC is the lagged form Chande and Achelis describe.</li>
         * <li>The default window is Chande's own suggestion, shorter than the one TA-Lib's TSF and LINEARREG default to.</li>
         * </ul>
@@ -126823,6 +126831,7 @@ class Core {
         * href="https://ta-lib.org/functions/kst">ta-lib.org/functions/kst</a>.
         * <p><b>Notes</b>
         * <ul>
+        * <li><b>The input is assumed positive.</b> The price each rate of change looks back to is its divisor. Near zero the divisor is small and the output very large; no error is returned. A series that reaches or crosses zero, such as an oscillator or a spread, has no meaningful result here.</li>
         * <li>The weights are 1 to 4 and nothing divides by their total. Pring's daily table prints each leg's SMA period times its weight (a total of 120) only to show how much the longest leg dominates.</li>
         * <li>Both outputs start at the first bar where the signal line exists, so the first few bars where the KST line alone is defined are not emitted. Setting the signal period to 1 returns the line from its own first bar, and the signal output is then a copy of it.</li>
         * <li>Each rate of change follows {@code ROC}: a zero price in the denominator makes that term 0.</li>
@@ -126930,6 +126939,7 @@ class Core {
         * href="https://ta-lib.org/functions/kst">ta-lib.org/functions/kst</a>.
         * <p><b>Notes</b>
         * <ul>
+        * <li><b>The input is assumed positive.</b> The price each rate of change looks back to is its divisor. Near zero the divisor is small and the output very large; no error is returned. A series that reaches or crosses zero, such as an oscillator or a spread, has no meaningful result here.</li>
         * <li>The weights are 1 to 4 and nothing divides by their total. Pring's daily table prints each leg's SMA period times its weight (a total of 120) only to show how much the longest leg dominates.</li>
         * <li>Both outputs start at the first bar where the signal line exists, so the first few bars where the KST line alone is defined are not emitted. Setting the signal period to 1 returns the line from its own first bar, and the signal output is then a copy of it.</li>
         * <li>Each rate of change follows {@code ROC}: a zero price in the denominator makes that term 0.</li>
@@ -128519,6 +128529,7 @@ class Core {
         * href="https://ta-lib.org/functions/kstext">ta-lib.org/functions/kstext</a>.
         * <p><b>Notes</b>
         * <ul>
+        * <li><b>The input is assumed positive.</b> The price each rate of change looks back to is its divisor. Near zero the divisor is small and the output very large; no error is returned. A series that reaches or crosses zero, such as an oscillator or a spread, has no meaningful result here.</li>
         * <li>With both MA types set to {@code TA_MAType_SMA} the outputs are those of {@code KST}.</li>
         * <li>Both outputs start at the first bar where the signal line exists. A signal period of 1 disables signal-line smoothing for every signal MAType: the signal is then a copy of the line.</li>
         * <li>The unstable period of a selected MA type lengthens the lookback, for the legs and for the signal line separately.</li>
@@ -128634,6 +128645,7 @@ class Core {
         * href="https://ta-lib.org/functions/kstext">ta-lib.org/functions/kstext</a>.
         * <p><b>Notes</b>
         * <ul>
+        * <li><b>The input is assumed positive.</b> The price each rate of change looks back to is its divisor. Near zero the divisor is small and the output very large; no error is returned. A series that reaches or crosses zero, such as an oscillator or a spread, has no meaningful result here.</li>
         * <li>With both MA types set to {@code TA_MAType_SMA} the outputs are those of {@code KST}.</li>
         * <li>Both outputs start at the first bar where the signal line exists. A signal period of 1 disables signal-line smoothing for every signal MAType: the signal is then a copy of the line.</li>
         * <li>The unstable period of a selected MA type lengthens the lookback, for the legs and for the signal line separately.</li>
@@ -161969,6 +161981,10 @@ class Core {
         * volatility; unit is percent of price.
         * <p>Formula and more info at <a
         * href="https://ta-lib.org/functions/natr">ta-lib.org/functions/natr</a>.
+        * <p><b>Notes</b>
+        * <ul>
+        * <li><b>The input is assumed positive.</b> The close is the divisor. Where it is exactly 0 the output is 0. Near zero the divisor is small and the output very large; no error is returned. A series that reaches or crosses zero, such as an oscillator or a spread, has no meaningful result here.</li>
+        * </ul>
         * <p>Values are written only where the indicator is defined. The returned
         * {@link OutRange} says where they start and how many there are, and the
         * library never pads with NaN. A valid range that ends before
@@ -162035,6 +162051,10 @@ class Core {
         * volatility; unit is percent of price.
         * <p>Formula and more info at <a
         * href="https://ta-lib.org/functions/natr">ta-lib.org/functions/natr</a>.
+        * <p><b>Notes</b>
+        * <ul>
+        * <li><b>The input is assumed positive.</b> The close is the divisor. Where it is exactly 0 the output is 0. Near zero the divisor is small and the output very large; no error is returned. A series that reaches or crosses zero, such as an oscillator or a spread, has no meaningful result here.</li>
+        * </ul>
         * <p>This is the {@code float[]} overload. The arithmetic is performed in
         * {@code double} before being written to the {@code double[]} output, so a
         * result beyond {@code float} range is still representable.
@@ -162776,6 +162796,7 @@ class Core {
         * href="https://ta-lib.org/functions/nvi">ta-lib.org/functions/nvi</a>.
         * <p><b>Notes</b>
         * <ul>
+        * <li><b>The input is assumed positive.</b> The previous close is the divisor. Near zero the divisor is small and the output very large; no error is returned. A series that reaches or crosses zero, such as an oscillator or a spread, has no meaningful result here.</li>
         * <li>The index compounds, so it has no upper bound. If a run of large rises ever pushes it past the largest representable number, the last representable value is carried forward instead of returning infinity. Real price series stay far away from that.</li>
         * </ul>
         * <p>Values are written only where the indicator is defined. The returned
@@ -162836,6 +162857,7 @@ class Core {
         * href="https://ta-lib.org/functions/nvi">ta-lib.org/functions/nvi</a>.
         * <p><b>Notes</b>
         * <ul>
+        * <li><b>The input is assumed positive.</b> The previous close is the divisor. Near zero the divisor is small and the output very large; no error is returned. A series that reaches or crosses zero, such as an oscillator or a spread, has no meaningful result here.</li>
         * <li>The index compounds, so it has no upper bound. If a run of large rises ever pushes it past the largest representable number, the last representable value is carried forward instead of returning infinity. Real price series stay far away from that.</li>
         * </ul>
         * <p>This is the {@code float[]} overload. The arithmetic is performed in
@@ -170175,6 +170197,7 @@ class Core {
         * href="https://ta-lib.org/functions/ppo">ta-lib.org/functions/ppo</a>.
         * <p><b>Notes</b>
         * <ul>
+        * <li><b>The input is assumed positive.</b> The slow moving average is the divisor. Near zero the divisor is small and the output very large; no error is returned. A series that reaches or crosses zero, such as an oscillator or a spread, has no meaningful result here.</li>
         * <li>{@code optInMAType} applies to both the fast and slow moving average. {@code TA_MAType_MAMA} ignores its period argument, so with {@code optInMAType = TA_MAType_MAMA} the fast and slow MAs are identical, making the numerator — and therefore the output — zero at every bar.</li>
         * <li>If the slow period is set smaller than the fast period, the two are swapped, as in {@code MACD}.</li>
         * </ul>
@@ -170249,6 +170272,7 @@ class Core {
         * href="https://ta-lib.org/functions/ppo">ta-lib.org/functions/ppo</a>.
         * <p><b>Notes</b>
         * <ul>
+        * <li><b>The input is assumed positive.</b> The slow moving average is the divisor. Near zero the divisor is small and the output very large; no error is returned. A series that reaches or crosses zero, such as an oscillator or a spread, has no meaningful result here.</li>
         * <li>{@code optInMAType} applies to both the fast and slow moving average. {@code TA_MAType_MAMA} ignores its period argument, so with {@code optInMAType = TA_MAType_MAMA} the fast and slow MAs are identical, making the numerator — and therefore the output — zero at every bar.</li>
         * <li>If the slow period is set smaller than the fast period, the two are swapped, as in {@code MACD}.</li>
         * </ul>
@@ -172632,6 +172656,7 @@ class Core {
         * href="https://ta-lib.org/functions/pvi">ta-lib.org/functions/pvi</a>.
         * <p><b>Notes</b>
         * <ul>
+        * <li><b>The input is assumed positive.</b> The previous close is the divisor. Near zero the divisor is small and the output very large; no error is returned. A series that reaches or crosses zero, such as an oscillator or a spread, has no meaningful result here.</li>
         * <li>The index compounds, so it has no upper bound. If a run of large rises ever pushes it past the largest representable number, the last representable value is carried forward instead of returning infinity. Real price series stay far away from that.</li>
         * </ul>
         * <p>Values are written only where the indicator is defined. The returned
@@ -172692,6 +172717,7 @@ class Core {
         * href="https://ta-lib.org/functions/pvi">ta-lib.org/functions/pvi</a>.
         * <p><b>Notes</b>
         * <ul>
+        * <li><b>The input is assumed positive.</b> The previous close is the divisor. Near zero the divisor is small and the output very large; no error is returned. A series that reaches or crosses zero, such as an oscillator or a spread, has no meaningful result here.</li>
         * <li>The index compounds, so it has no upper bound. If a run of large rises ever pushes it past the largest representable number, the last representable value is carried forward instead of returning infinity. Real price series stay far away from that.</li>
         * </ul>
         * <p>This is the {@code float[]} overload. The arithmetic is performed in
@@ -174457,6 +174483,7 @@ class Core {
         * href="https://ta-lib.org/functions/pvt">ta-lib.org/functions/pvt</a>.
         * <p><b>Notes</b>
         * <ul>
+        * <li><b>The input is assumed positive.</b> The previous close is the divisor. Near zero the divisor is small and the output very large; no error is returned. A series that reaches or crosses zero, such as an oscillator or a spread, has no meaningful result here.</li>
         * <li>The absolute level is arbitrary and depends on where the accumulation started, so two ranges over the same data give curves of the same shape at different offsets.</li>
         * <li>Some libraries scale the per-bar term by 100. This implementation follows the fractional definition, which every primary reference below states.</li>
         * <li>A bar whose previous close is exactly zero contributes nothing and the running total is carried forward unchanged, rather than dividing by zero. A flat stretch of the output can therefore mean either genuine zero net accumulation or a run of zero previous closes.</li>
@@ -174529,6 +174556,7 @@ class Core {
         * href="https://ta-lib.org/functions/pvt">ta-lib.org/functions/pvt</a>.
         * <p><b>Notes</b>
         * <ul>
+        * <li><b>The input is assumed positive.</b> The previous close is the divisor. Near zero the divisor is small and the output very large; no error is returned. A series that reaches or crosses zero, such as an oscillator or a spread, has no meaningful result here.</li>
         * <li>The absolute level is arbitrary and depends on where the accumulation started, so two ranges over the same data give curves of the same shape at different offsets.</li>
         * <li>Some libraries scale the per-bar term by 100. This implementation follows the fractional definition, which every primary reference below states.</li>
         * <li>A bar whose previous close is exactly zero contributes nothing and the running total is carried forward unchanged, rather than dividing by zero. A flat stretch of the output can therefore mean either genuine zero net accumulation or a run of zero previous closes.</li>
@@ -176503,6 +176531,10 @@ class Core {
         * it fell; magnitude scales the move.
         * <p>Formula and more info at <a
         * href="https://ta-lib.org/functions/roc">ta-lib.org/functions/roc</a>.
+        * <p><b>Notes</b>
+        * <ul>
+        * <li><b>The input is assumed positive.</b> The price {@code optInTimePeriod} bars back is the divisor. Where it is exactly 0 the output is 0. Near zero the divisor is small and the output very large; no error is returned. A series that reaches or crosses zero, such as an oscillator or a spread, has no meaningful result here.</li>
+        * </ul>
         * <p>Values are written only where the indicator is defined. The returned
         * {@link OutRange} says where they start and how many there are, and the
         * library never pads with NaN. A valid range that ends before
@@ -176563,6 +176595,10 @@ class Core {
         * it fell; magnitude scales the move.
         * <p>Formula and more info at <a
         * href="https://ta-lib.org/functions/roc">ta-lib.org/functions/roc</a>.
+        * <p><b>Notes</b>
+        * <ul>
+        * <li><b>The input is assumed positive.</b> The price {@code optInTimePeriod} bars back is the divisor. Where it is exactly 0 the output is 0. Near zero the divisor is small and the output very large; no error is returned. A series that reaches or crosses zero, such as an oscillator or a spread, has no meaningful result here.</li>
+        * </ul>
         * <p>This is the {@code float[]} overload. The arithmetic is performed in
         * {@code double} before being written to the {@code double[]} output, so a
         * result beyond {@code float} range is still representable.
@@ -177155,6 +177191,10 @@ class Core {
         * vs N bars ago, &lt;0 falling; equals ROC/100.
         * <p>Formula and more info at <a
         * href="https://ta-lib.org/functions/rocp">ta-lib.org/functions/rocp</a>.
+        * <p><b>Notes</b>
+        * <ul>
+        * <li><b>The input is assumed positive.</b> The price {@code optInTimePeriod} bars back is the divisor. Where it is exactly 0 the output is 0. Near zero the divisor is small and the output very large; no error is returned. A series that reaches or crosses zero, such as an oscillator or a spread, has no meaningful result here.</li>
+        * </ul>
         * <p>Values are written only where the indicator is defined. The returned
         * {@link OutRange} says where they start and how many there are, and the
         * library never pads with NaN. A valid range that ends before
@@ -177215,6 +177255,10 @@ class Core {
         * vs N bars ago, &lt;0 falling; equals ROC/100.
         * <p>Formula and more info at <a
         * href="https://ta-lib.org/functions/rocp">ta-lib.org/functions/rocp</a>.
+        * <p><b>Notes</b>
+        * <ul>
+        * <li><b>The input is assumed positive.</b> The price {@code optInTimePeriod} bars back is the divisor. Where it is exactly 0 the output is 0. Near zero the divisor is small and the output very large; no error is returned. A series that reaches or crosses zero, such as an oscillator or a spread, has no meaningful result here.</li>
+        * </ul>
         * <p>This is the {@code float[]} overload. The arithmetic is performed in
         * {@code double} before being written to the {@code double[]} output, so a
         * result beyond {@code float} range is still representable.
@@ -177810,6 +177854,10 @@ class Core {
         * positive, centered at 1: &gt;1 rising, &lt;1 falling.
         * <p>Formula and more info at <a
         * href="https://ta-lib.org/functions/rocr">ta-lib.org/functions/rocr</a>.
+        * <p><b>Notes</b>
+        * <ul>
+        * <li><b>The input is assumed positive.</b> The price {@code optInTimePeriod} bars back is the divisor. Where it is exactly 0 the output is 0. Near zero the divisor is small and the output very large; no error is returned. A series that reaches or crosses zero, such as an oscillator or a spread, has no meaningful result here.</li>
+        * </ul>
         * <p>Values are written only where the indicator is defined. The returned
         * {@link OutRange} says where they start and how many there are, and the
         * library never pads with NaN. A valid range that ends before
@@ -177870,6 +177918,10 @@ class Core {
         * positive, centered at 1: &gt;1 rising, &lt;1 falling.
         * <p>Formula and more info at <a
         * href="https://ta-lib.org/functions/rocr">ta-lib.org/functions/rocr</a>.
+        * <p><b>Notes</b>
+        * <ul>
+        * <li><b>The input is assumed positive.</b> The price {@code optInTimePeriod} bars back is the divisor. Where it is exactly 0 the output is 0. Near zero the divisor is small and the output very large; no error is returned. A series that reaches or crosses zero, such as an oscillator or a spread, has no meaningful result here.</li>
+        * </ul>
         * <p>This is the {@code float[]} overload. The arithmetic is performed in
         * {@code double} before being written to the {@code double[]} output, so a
         * result beyond {@code float} range is still representable.
@@ -178466,6 +178518,10 @@ class Core {
         * fell.
         * <p>Formula and more info at <a
         * href="https://ta-lib.org/functions/rocr100">ta-lib.org/functions/rocr100</a>.
+        * <p><b>Notes</b>
+        * <ul>
+        * <li><b>The input is assumed positive.</b> The price {@code optInTimePeriod} bars back is the divisor. Where it is exactly 0 the output is 0. Near zero the divisor is small and the output very large; no error is returned. A series that reaches or crosses zero, such as an oscillator or a spread, has no meaningful result here.</li>
+        * </ul>
         * <p>Values are written only where the indicator is defined. The returned
         * {@link OutRange} says where they start and how many there are, and the
         * library never pads with NaN. A valid range that ends before
@@ -178527,6 +178583,10 @@ class Core {
         * fell.
         * <p>Formula and more info at <a
         * href="https://ta-lib.org/functions/rocr100">ta-lib.org/functions/rocr100</a>.
+        * <p><b>Notes</b>
+        * <ul>
+        * <li><b>The input is assumed positive.</b> The price {@code optInTimePeriod} bars back is the divisor. Where it is exactly 0 the output is 0. Near zero the divisor is small and the output very large; no error is returned. A series that reaches or crosses zero, such as an oscillator or a spread, has no meaningful result here.</li>
+        * </ul>
         * <p>This is the {@code float[]} overload. The arithmetic is performed in
         * {@code double} before being written to the {@code double[]} output, so a
         * result beyond {@code float} range is still representable.
@@ -191211,7 +191271,7 @@ class Core {
         * href="https://ta-lib.org/functions/sqrt">ta-lib.org/functions/sqrt</a>.
         * <p><b>Notes</b>
         * <ul>
-        * <li>A negative input has no real square root, so those elements come out NaN.</li>
+        * <li>A negative input has no real square root, so those elements come out NaN. A zero input gives 0.</li>
         * </ul>
         * <p>Values are written only where the indicator is defined. The returned
         * {@link OutRange} says where they start and how many there are, and the
@@ -191264,7 +191324,7 @@ class Core {
         * href="https://ta-lib.org/functions/sqrt">ta-lib.org/functions/sqrt</a>.
         * <p><b>Notes</b>
         * <ul>
-        * <li>A negative input has no real square root, so those elements come out NaN.</li>
+        * <li>A negative input has no real square root, so those elements come out NaN. A zero input gives 0.</li>
         * </ul>
         * <p>This is the {@code float[]} overload. The arithmetic is performed in
         * {@code double} before being written to the {@code double[]} output, so a
@@ -210640,6 +210700,7 @@ class Core {
         * href="https://ta-lib.org/functions/trix">ta-lib.org/functions/trix</a>.
         * <p><b>Notes</b>
         * <ul>
+        * <li><b>The input is assumed positive.</b> The previous triple-smoothed value is the divisor. Near zero the divisor is small and the output very large; no error is returned. A series that reaches or crosses zero, such as an oscillator or a spread, has no meaningful result here.</li>
         * <li>The final rate-of-change step yields 0 when the previous smoothed value is exactly zero, rather than being undefined.</li>
         * </ul>
         * <p>Values are written only where the indicator is defined. The returned
@@ -210705,6 +210766,7 @@ class Core {
         * href="https://ta-lib.org/functions/trix">ta-lib.org/functions/trix</a>.
         * <p><b>Notes</b>
         * <ul>
+        * <li><b>The input is assumed positive.</b> The previous triple-smoothed value is the divisor. Near zero the divisor is small and the output very large; no error is returned. A series that reaches or crosses zero, such as an oscillator or a spread, has no meaningful result here.</li>
         * <li>The final rate-of-change step yields 0 when the previous smoothed value is exactly zero, rather than being undefined.</li>
         * </ul>
         * <p>This is the {@code float[]} overload. The arithmetic is performed in
@@ -228694,7 +228756,7 @@ class Core {
 
 public class TaCodegenServe {
     static Core core = new Core();
-    static final String SPLICED_GENCODE_DIGEST = "4373c0e024ac6e13";
+    static final String SPLICED_GENCODE_DIGEST = "0097b6730fb6477f";
     static final int MAX_ARRAY_SIZE = 200000;
     static double[] refOpen = new double[MAX_ARRAY_SIZE];
     static double[] refHigh = new double[MAX_ARRAY_SIZE];
@@ -228942,7 +229004,7 @@ public class TaCodegenServe {
             new AbsIn[]{ new AbsIn(1,"inReal",0) },
             new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period","Time period",20.0, 0,0,0,0,0,0, 2,100000,4,200,1, null), new AbsOpt(0,"optInNbDevUp",0,"Deviations up","Deviation multiplier for upper band",2.0, -3e37,3e37,2,-2.0,2.0,0.2, 0,0,0,0,0, null), new AbsOpt(0,"optInNbDevDn",0,"Deviations down","Deviation multiplier for lower band",2.0, -3e37,3e37,2,-2.0,2.0,0.2, 0,0,0,0,0, null), new AbsOpt(3,"optInMAType",0,"MA Type","Type of Moving Average",0.0, 0,0,0,0,0,0, 0,0,0,0,0, "0=SMA;1=EMA;2=WMA;3=DEMA;4=TEMA;5=TRIMA;6=KAMA;7=MAMA;8=T3;9=HMA;10=DISABLED;11=DEFAULT;12=ZLEMA;13=RMA;14=VIDYA;15=ALMA") },
             new AbsOut[]{ new AbsOut(0,"outRealUpperBand",2048), new AbsOut(0,"outRealMiddleBand",1), new AbsOut(0,"outRealLowerBand",4096) }));
-        ABSTRACT.put("BBW", new AbsFunc("BBW", "Volatility Indicators", "Bollinger BandWidth", 33554432,
+        ABSTRACT.put("BBW", new AbsFunc("BBW", "Volatility Indicators", "Bollinger BandWidth", 33554440,
             new AbsIn[]{ new AbsIn(1,"inReal",0) },
             new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period","Time period",20.0, 0,0,0,0,0,0, 2,100000,4,200,1, null), new AbsOpt(0,"optInNbDevUp",0,"Deviations up","Deviation multiplier for upper band",2.0, -3e37,3e37,2,-2.0,2.0,0.2, 0,0,0,0,0, null), new AbsOpt(0,"optInNbDevDn",0,"Deviations down","Deviation multiplier for lower band",2.0, -3e37,3e37,2,-2.0,2.0,0.2, 0,0,0,0,0, null), new AbsOpt(3,"optInMAType",0,"MA Type","Type of Moving Average",0.0, 0,0,0,0,0,0, 0,0,0,0,0, "0=SMA;1=EMA;2=WMA;3=DEMA;4=TEMA;5=TRIMA;6=KAMA;7=MAMA;8=T3;9=HMA;10=DISABLED;11=DEFAULT;12=ZLEMA;13=RMA;14=VIDYA;15=ALMA") },
             new AbsOut[]{ new AbsOut(0,"outReal",1) }));
@@ -229206,7 +229268,7 @@ public class TaCodegenServe {
             new AbsIn[]{ new AbsIn(1,"inReal",0) },
             new AbsOpt[]{  },
             new AbsOut[]{ new AbsOut(0,"outReal",1) }));
-        ABSTRACT.put("CG", new AbsFunc("CG", "Momentum Indicators", "Center of Gravity Oscillator", 33554432,
+        ABSTRACT.put("CG", new AbsFunc("CG", "Momentum Indicators", "Center of Gravity Oscillator", 33554440,
             new AbsIn[]{ new AbsIn(1,"inReal",0) },
             new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period","Number of bars in the window",10.0, 0,0,0,0,0,0, 2,100000,4,200,1, null) },
             new AbsOut[]{ new AbsOut(0,"outReal",1) }));
@@ -229234,7 +229296,7 @@ public class TaCodegenServe {
             new AbsIn[]{ new AbsIn(1,"inReal",0) },
             new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period","Time period",14.0, 0,0,0,0,0,0, 2,100000,4,200,1, null) },
             new AbsOut[]{ new AbsOut(0,"outReal",1) }));
-        ABSTRACT.put("COPPOCK", new AbsFunc("COPPOCK", "Momentum Indicators", "Coppock Curve", 33554432,
+        ABSTRACT.put("COPPOCK", new AbsFunc("COPPOCK", "Momentum Indicators", "Coppock Curve", 33554440,
             new AbsIn[]{ new AbsIn(1,"inReal",0) },
             new AbsOpt[]{ new AbsOpt(2,"optInWMAPeriod",0,"WMA Period","Smoothing period for the ROC sum",10.0, 0,0,0,0,0,0, 1,100000,1,200,1, null), new AbsOpt(2,"optInROC1Period",0,"ROC-1 Period","Short rate-of-change period",11.0, 0,0,0,0,0,0, 1,100000,1,200,1, null), new AbsOpt(2,"optInROC2Period",0,"ROC-2 Period","Long rate-of-change period",14.0, 0,0,0,0,0,0, 1,100000,1,200,1, null) },
             new AbsOut[]{ new AbsOut(0,"outReal",1) }));
@@ -229322,7 +229384,7 @@ public class TaCodegenServe {
             new AbsIn[]{ new AbsIn(1,"inReal",0) },
             new AbsOpt[]{  },
             new AbsOut[]{ new AbsOut(0,"outReal",1) }));
-        ABSTRACT.put("FOSC", new AbsFunc("FOSC", "Momentum Indicators", "Forecast Oscillator", 33554432,
+        ABSTRACT.put("FOSC", new AbsFunc("FOSC", "Momentum Indicators", "Forecast Oscillator", 33554440,
             new AbsIn[]{ new AbsIn(1,"inReal",0) },
             new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period","Time period",5.0, 0,0,0,0,0,0, 2,100000,2,200,1, null) },
             new AbsOut[]{ new AbsOut(0,"outReal",1) }));
@@ -229386,11 +229448,11 @@ public class TaCodegenServe {
             new AbsIn[]{ new AbsIn(0,"inPriceHLC",14) },
             new AbsOpt[]{ new AbsOpt(2,"optInFastK_Period",0,"Fast-K Period","Time period for building the Fast-K line",9.0, 0,0,0,0,0,0, 1,100000,1,200,1, null), new AbsOpt(2,"optInSlowK_Period",0,"Slow-K Period","Smoothing for making the Slow-K line. Usually set to 3",3.0, 0,0,0,0,0,0, 1,100000,1,200,1, null), new AbsOpt(3,"optInSlowK_MAType",0,"Slow-K MA","Type of Moving Average for Slow-K",13.0, 0,0,0,0,0,0, 0,0,0,0,0, "0=SMA;1=EMA;2=WMA;3=DEMA;4=TEMA;5=TRIMA;6=KAMA;7=MAMA;8=T3;9=HMA;10=DISABLED;11=DEFAULT;12=ZLEMA;13=RMA;14=VIDYA;15=ALMA"), new AbsOpt(2,"optInSlowD_Period",0,"Slow-D Period","Smoothing for making the Slow-D line",3.0, 0,0,0,0,0,0, 1,100000,1,200,1, null), new AbsOpt(3,"optInSlowD_MAType",0,"Slow-D MA","Type of Moving Average for Slow-D",13.0, 0,0,0,0,0,0, 0,0,0,0,0, "0=SMA;1=EMA;2=WMA;3=DEMA;4=TEMA;5=TRIMA;6=KAMA;7=MAMA;8=T3;9=HMA;10=DISABLED;11=DEFAULT;12=ZLEMA;13=RMA;14=VIDYA;15=ALMA") },
             new AbsOut[]{ new AbsOut(0,"outK",1), new AbsOut(0,"outD",1), new AbsOut(0,"outJ",1) }));
-        ABSTRACT.put("KST", new AbsFunc("KST", "Momentum Indicators", "Know Sure Thing (Pring)", 33554432,
+        ABSTRACT.put("KST", new AbsFunc("KST", "Momentum Indicators", "Know Sure Thing (Pring)", 33554440,
             new AbsIn[]{ new AbsIn(1,"inReal",0) },
             new AbsOpt[]{ new AbsOpt(2,"optInROC1Period",0,"ROC-1 Period","Rate-of-change period of leg 1",10.0, 0,0,0,0,0,0, 1,100000,1,200,1, null), new AbsOpt(2,"optInROC2Period",0,"ROC-2 Period","Rate-of-change period of leg 2",15.0, 0,0,0,0,0,0, 1,100000,1,200,1, null), new AbsOpt(2,"optInROC3Period",0,"ROC-3 Period","Rate-of-change period of leg 3",20.0, 0,0,0,0,0,0, 1,100000,1,200,1, null), new AbsOpt(2,"optInROC4Period",0,"ROC-4 Period","Rate-of-change period of leg 4",30.0, 0,0,0,0,0,0, 1,100000,1,200,1, null), new AbsOpt(2,"optInSMA1Period",0,"SMA-1 Period","Smoothing period of leg 1",10.0, 0,0,0,0,0,0, 1,100000,1,200,1, null), new AbsOpt(2,"optInSMA2Period",0,"SMA-2 Period","Smoothing period of leg 2",10.0, 0,0,0,0,0,0, 1,100000,1,200,1, null), new AbsOpt(2,"optInSMA3Period",0,"SMA-3 Period","Smoothing period of leg 3",10.0, 0,0,0,0,0,0, 1,100000,1,200,1, null), new AbsOpt(2,"optInSMA4Period",0,"SMA-4 Period","Smoothing period of leg 4",15.0, 0,0,0,0,0,0, 1,100000,1,200,1, null), new AbsOpt(2,"optInSignalPeriod",0,"Signal Period","Smoothing period of the signal line",9.0, 0,0,0,0,0,0, 1,100000,1,200,1, null) },
             new AbsOut[]{ new AbsOut(0,"outKST",1), new AbsOut(0,"outKSTSignal",4) }));
-        ABSTRACT.put("KSTEXT", new AbsFunc("KSTEXT", "Momentum Indicators", "Know Sure Thing with controllable MA type", 33554432,
+        ABSTRACT.put("KSTEXT", new AbsFunc("KSTEXT", "Momentum Indicators", "Know Sure Thing with controllable MA type", 33554440,
             new AbsIn[]{ new AbsIn(1,"inReal",0) },
             new AbsOpt[]{ new AbsOpt(2,"optInROC1Period",0,"ROC-1 Period","Rate-of-change period of leg 1",10.0, 0,0,0,0,0,0, 1,100000,1,200,1, null), new AbsOpt(2,"optInROC2Period",0,"ROC-2 Period","Rate-of-change period of leg 2",15.0, 0,0,0,0,0,0, 1,100000,1,200,1, null), new AbsOpt(2,"optInROC3Period",0,"ROC-3 Period","Rate-of-change period of leg 3",20.0, 0,0,0,0,0,0, 1,100000,1,200,1, null), new AbsOpt(2,"optInROC4Period",0,"ROC-4 Period","Rate-of-change period of leg 4",30.0, 0,0,0,0,0,0, 1,100000,1,200,1, null), new AbsOpt(2,"optInMA1Period",0,"MA-1 Period","Smoothing period of leg 1",10.0, 0,0,0,0,0,0, 1,100000,1,200,1, null), new AbsOpt(2,"optInMA2Period",0,"MA-2 Period","Smoothing period of leg 2",10.0, 0,0,0,0,0,0, 1,100000,1,200,1, null), new AbsOpt(2,"optInMA3Period",0,"MA-3 Period","Smoothing period of leg 3",10.0, 0,0,0,0,0,0, 1,100000,1,200,1, null), new AbsOpt(2,"optInMA4Period",0,"MA-4 Period","Smoothing period of leg 4",15.0, 0,0,0,0,0,0, 1,100000,1,200,1, null), new AbsOpt(2,"optInSignalPeriod",0,"Signal Period","Smoothing period of the signal line",9.0, 0,0,0,0,0,0, 1,100000,1,200,1, null), new AbsOpt(3,"optInROCMAType",0,"ROC MA","Type of Moving Average smoothing the four legs",0.0, 0,0,0,0,0,0, 0,0,0,0,0, "0=SMA;1=EMA;2=WMA;3=DEMA;4=TEMA;5=TRIMA;6=KAMA;7=MAMA;8=T3;9=HMA;10=DISABLED;11=DEFAULT;12=ZLEMA;13=RMA;14=VIDYA;15=ALMA"), new AbsOpt(3,"optInSignalMAType",0,"Signal MA","Type of Moving Average for signal line",0.0, 0,0,0,0,0,0, 0,0,0,0,0, "0=SMA;1=EMA;2=WMA;3=DEMA;4=TEMA;5=TRIMA;6=KAMA;7=MAMA;8=T3;9=HMA;10=DISABLED;11=DEFAULT;12=ZLEMA;13=RMA;14=VIDYA;15=ALMA") },
             new AbsOut[]{ new AbsOut(0,"outKST",1), new AbsOut(0,"outKSTSignal",4) }));
@@ -229414,11 +229476,11 @@ public class TaCodegenServe {
             new AbsIn[]{ new AbsIn(1,"inReal",0) },
             new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period","Time period",14.0, 0,0,0,0,0,0, 2,100000,4,200,1, null) },
             new AbsOut[]{ new AbsOut(0,"outReal",1) }));
-        ABSTRACT.put("LN", new AbsFunc("LN", "Math Transform", "Vector Log Natural", 1107296260,
+        ABSTRACT.put("LN", new AbsFunc("LN", "Math Transform", "Vector Log Natural", 1107296268,
             new AbsIn[]{ new AbsIn(1,"inReal",0) },
             new AbsOpt[]{  },
             new AbsOut[]{ new AbsOut(0,"outReal",1) }));
-        ABSTRACT.put("LOG10", new AbsFunc("LOG10", "Math Transform", "Vector Log10", 1107296260,
+        ABSTRACT.put("LOG10", new AbsFunc("LOG10", "Math Transform", "Vector Log10", 1107296268,
             new AbsIn[]{ new AbsIn(1,"inReal",0) },
             new AbsOpt[]{  },
             new AbsOut[]{ new AbsOut(0,"outReal",1) }));
@@ -229462,7 +229524,7 @@ public class TaCodegenServe {
             new AbsIn[]{ new AbsIn(1,"inReal",0) },
             new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period","Time period",30.0, 0,0,0,0,0,0, 2,100000,4,200,1, null) },
             new AbsOut[]{ new AbsOut(1,"outInteger",1) }));
-        ABSTRACT.put("MCGD", new AbsFunc("MCGD", "Overlap Studies", "McGinley Dynamic", 184549376,
+        ABSTRACT.put("MCGD", new AbsFunc("MCGD", "Overlap Studies", "McGinley Dynamic", 184549384,
             new AbsIn[]{ new AbsIn(1,"inReal",0) },
             new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period","Time period",14.0, 0,0,0,0,0,0, 2,100000,2,200,1, null) },
             new AbsOut[]{ new AbsOut(0,"outReal",1) }));
@@ -229518,11 +229580,11 @@ public class TaCodegenServe {
             new AbsIn[]{ new AbsIn(1,"inReal0",0), new AbsIn(1,"inReal1",0) },
             new AbsOpt[]{  },
             new AbsOut[]{ new AbsOut(0,"outReal",1) }));
-        ABSTRACT.put("NATR", new AbsFunc("NATR", "Volatility Indicators", "Normalized Average True Range", 167772160,
+        ABSTRACT.put("NATR", new AbsFunc("NATR", "Volatility Indicators", "Normalized Average True Range", 167772168,
             new AbsIn[]{ new AbsIn(0,"inPriceHLC",14) },
             new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period","Time period",14.0, 0,0,0,0,0,0, 1,100000,1,200,1, null) },
             new AbsOut[]{ new AbsOut(0,"outReal",1) }));
-        ABSTRACT.put("NVI", new AbsFunc("NVI", "Volume Indicators", "Negative Volume Index", 570425344,
+        ABSTRACT.put("NVI", new AbsFunc("NVI", "Volume Indicators", "Negative Volume Index", 570425352,
             new AbsIn[]{ new AbsIn(0,"inPriceCV",24) },
             new AbsOpt[]{  },
             new AbsOut[]{ new AbsOut(0,"outReal",1) }));
@@ -229550,7 +229612,7 @@ public class TaCodegenServe {
             new AbsIn[]{ new AbsIn(0,"inPriceHL",6) },
             new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period","Time period",14.0, 0,0,0,0,0,0, 1,100000,1,200,1, null) },
             new AbsOut[]{ new AbsOut(0,"outReal",1) }));
-        ABSTRACT.put("PPO", new AbsFunc("PPO", "Momentum Indicators", "Percentage Price Oscillator", 33554432,
+        ABSTRACT.put("PPO", new AbsFunc("PPO", "Momentum Indicators", "Percentage Price Oscillator", 33554440,
             new AbsIn[]{ new AbsIn(1,"inReal",0) },
             new AbsOpt[]{ new AbsOpt(2,"optInFastPeriod",0,"Fast Period","Period of the fast MA",12.0, 0,0,0,0,0,0, 2,100000,4,200,1, null), new AbsOpt(2,"optInSlowPeriod",0,"Slow Period","Period of the slow MA",26.0, 0,0,0,0,0,0, 2,100000,4,200,1, null), new AbsOpt(3,"optInMAType",0,"MA Type","Type of Moving Average",1.0, 0,0,0,0,0,0, 0,0,0,0,0, "0=SMA;1=EMA;2=WMA;3=DEMA;4=TEMA;5=TRIMA;6=KAMA;7=MAMA;8=T3;9=HMA;10=DISABLED;11=DEFAULT;12=ZLEMA;13=RMA;14=VIDYA;15=ALMA") },
             new AbsOut[]{ new AbsOut(0,"outReal",1) }));
@@ -229558,7 +229620,7 @@ public class TaCodegenServe {
             new AbsIn[]{ new AbsIn(0,"inPriceHLC",14) },
             new AbsOpt[]{ new AbsOpt(2,"optInFastK_Period",0,"Fast-K Period","Time period for building the Fast-K line",8.0, 0,0,0,0,0,0, 1,100000,1,200,1, null), new AbsOpt(2,"optInEMAPeriod",0,"EMA Period","Period of each of the two smoothing passes",5.0, 0,0,0,0,0,0, 1,100000,1,200,1, null) },
             new AbsOut[]{ new AbsOut(0,"outReal",1) }));
-        ABSTRACT.put("PVI", new AbsFunc("PVI", "Volume Indicators", "Positive Volume Index", 570425344,
+        ABSTRACT.put("PVI", new AbsFunc("PVI", "Volume Indicators", "Positive Volume Index", 570425352,
             new AbsIn[]{ new AbsIn(0,"inPriceCV",24) },
             new AbsOpt[]{  },
             new AbsOut[]{ new AbsOut(0,"outReal",1) }));
@@ -229566,7 +229628,7 @@ public class TaCodegenServe {
             new AbsIn[]{ new AbsIn(0,"inPriceV",16) },
             new AbsOpt[]{ new AbsOpt(2,"optInFastPeriod",0,"Fast Period","Period of the fast MA",12.0, 0,0,0,0,0,0, 2,100000,4,200,1, null), new AbsOpt(2,"optInSlowPeriod",0,"Slow Period","Period of the slow MA",26.0, 0,0,0,0,0,0, 2,100000,4,200,1, null), new AbsOpt(3,"optInMAType",0,"MA Type","Type of Moving Average",1.0, 0,0,0,0,0,0, 0,0,0,0,0, "0=SMA;1=EMA;2=WMA;3=DEMA;4=TEMA;5=TRIMA;6=KAMA;7=MAMA;8=T3;9=HMA;10=DISABLED;11=DEFAULT;12=ZLEMA;13=RMA;14=VIDYA;15=ALMA") },
             new AbsOut[]{ new AbsOut(0,"outReal",1) }));
-        ABSTRACT.put("PVT", new AbsFunc("PVT", "Volume Indicators", "Price Volume Trend", 570425344,
+        ABSTRACT.put("PVT", new AbsFunc("PVT", "Volume Indicators", "Price Volume Trend", 570425352,
             new AbsIn[]{ new AbsIn(0,"inPriceCV",24) },
             new AbsOpt[]{  },
             new AbsOut[]{ new AbsOut(0,"outReal",1) }));
@@ -229578,23 +229640,23 @@ public class TaCodegenServe {
             new AbsIn[]{ new AbsIn(1,"inReal",0) },
             new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period","Time period",30.0, 0,0,0,0,0,0, 1,100000,1,200,1, null) },
             new AbsOut[]{ new AbsOut(0,"outReal",1) }));
-        ABSTRACT.put("ROC", new AbsFunc("ROC", "Momentum Indicators", "Rate of change : ((price/prevPrice)-1)*100", 33554432,
+        ABSTRACT.put("ROC", new AbsFunc("ROC", "Momentum Indicators", "Rate of change : ((price/prevPrice)-1)*100", 33554440,
             new AbsIn[]{ new AbsIn(1,"inReal",0) },
             new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period","Time period",10.0, 0,0,0,0,0,0, 1,100000,1,200,1, null) },
             new AbsOut[]{ new AbsOut(0,"outReal",1) }));
-        ABSTRACT.put("ROCP", new AbsFunc("ROCP", "Momentum Indicators", "Rate of change Percentage: (price-prevPrice)/prevPrice", 33554432,
+        ABSTRACT.put("ROCP", new AbsFunc("ROCP", "Momentum Indicators", "Rate of change Percentage: (price-prevPrice)/prevPrice", 33554440,
             new AbsIn[]{ new AbsIn(1,"inReal",0) },
             new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period","Time period",10.0, 0,0,0,0,0,0, 1,100000,1,200,1, null) },
             new AbsOut[]{ new AbsOut(0,"outReal",1) }));
-        ABSTRACT.put("ROCR", new AbsFunc("ROCR", "Momentum Indicators", "Rate of change ratio: (price/prevPrice)", 33554432,
+        ABSTRACT.put("ROCR", new AbsFunc("ROCR", "Momentum Indicators", "Rate of change ratio: (price/prevPrice)", 33554440,
             new AbsIn[]{ new AbsIn(1,"inReal",0) },
             new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period","Time period",10.0, 0,0,0,0,0,0, 1,100000,1,200,1, null) },
             new AbsOut[]{ new AbsOut(0,"outReal",1) }));
-        ABSTRACT.put("ROCR100", new AbsFunc("ROCR100", "Momentum Indicators", "Rate of change ratio 100 scale: (price/prevPrice)*100", 33554432,
+        ABSTRACT.put("ROCR100", new AbsFunc("ROCR100", "Momentum Indicators", "Rate of change ratio 100 scale: (price/prevPrice)*100", 33554440,
             new AbsIn[]{ new AbsIn(1,"inReal",0) },
             new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period","Time period",10.0, 0,0,0,0,0,0, 1,100000,1,200,1, null) },
             new AbsOut[]{ new AbsOut(0,"outReal",1) }));
-        ABSTRACT.put("ROGERSSATCHELL", new AbsFunc("ROGERSSATCHELL", "Volatility Indicators", "Rogers-Satchell Volatility", 33554436,
+        ABSTRACT.put("ROGERSSATCHELL", new AbsFunc("ROGERSSATCHELL", "Volatility Indicators", "Rogers-Satchell Volatility", 33554444,
             new AbsIn[]{ new AbsIn(0,"inPriceOHLC",15) },
             new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period","Number of bars in the window",10.0, 0,0,0,0,0,0, 1,100000,2,200,1, null), new AbsOpt(0,"optInAnnualization",0,"Annualization","Periods per year; 1 leaves the per-bar figure",252.0, 0.0,3e37,2,1.0,365.0,1.0, 0,0,0,0,0, null) },
             new AbsOut[]{ new AbsOut(0,"outReal",1) }));
@@ -229642,7 +229704,7 @@ public class TaCodegenServe {
             new AbsIn[]{ new AbsIn(0,"inPriceHLC",14) },
             new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period","Period of the high/low range",13.0, 0,0,0,0,0,0, 2,100000,4,200,1, null), new AbsOpt(2,"optInFastPeriod",0,"Fast Period","Period of the second smoothing, applied to the first",2.0, 0,0,0,0,0,0, 2,100000,2,200,1, null), new AbsOpt(2,"optInSlowPeriod",0,"Slow Period","Period of the first smoothing, applied to the raw momentum",25.0, 0,0,0,0,0,0, 2,100000,2,200,1, null), new AbsOpt(2,"optInSignalPeriod",0,"Signal Period","Smoothing for the signal line (period length)",9.0, 0,0,0,0,0,0, 2,100000,2,200,1, null) },
             new AbsOut[]{ new AbsOut(0,"outSMI",1), new AbsOut(0,"outSMISignal",4) }));
-        ABSTRACT.put("SQRT", new AbsFunc("SQRT", "Math Transform", "Vector Square Root", 1107296256,
+        ABSTRACT.put("SQRT", new AbsFunc("SQRT", "Math Transform", "Vector Square Root", 1107296264,
             new AbsIn[]{ new AbsIn(1,"inReal",0) },
             new AbsOpt[]{  },
             new AbsOut[]{ new AbsOut(0,"outReal",1) }));
@@ -229726,7 +229788,7 @@ public class TaCodegenServe {
             new AbsIn[]{ new AbsIn(1,"inReal",0) },
             new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period","Time period",30.0, 0,0,0,0,0,0, 1,100000,1,200,1, null) },
             new AbsOut[]{ new AbsOut(0,"outReal",1) }));
-        ABSTRACT.put("TRIX", new AbsFunc("TRIX", "Momentum Indicators", "1-day Rate-Of-Change (ROC) of a Triple Smooth EMA", 33554432,
+        ABSTRACT.put("TRIX", new AbsFunc("TRIX", "Momentum Indicators", "1-day Rate-Of-Change (ROC) of a Triple Smooth EMA", 33554440,
             new AbsIn[]{ new AbsIn(1,"inReal",0) },
             new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period","Time period",30.0, 0,0,0,0,0,0, 1,100000,1,200,1, null) },
             new AbsOut[]{ new AbsOut(0,"outReal",1) }));
@@ -229790,7 +229852,7 @@ public class TaCodegenServe {
             new AbsIn[]{ new AbsIn(1,"inReal",0) },
             new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period","Time period",30.0, 0,0,0,0,0,0, 1,100000,1,200,1, null) },
             new AbsOut[]{ new AbsOut(0,"outReal",1) }));
-        ABSTRACT.put("ZIGZAG", new AbsFunc("ZIGZAG", "Overlap Studies", "Zig Zag", 587202560,
+        ABSTRACT.put("ZIGZAG", new AbsFunc("ZIGZAG", "Overlap Studies", "Zig Zag", 587202568,
             new AbsIn[]{ new AbsIn(0,"inPriceHL",6) },
             new AbsOpt[]{ new AbsOpt(0,"optInSensitivity",1048576,"Sensitivity","Minimum move away from the current extreme that reverses the leg, in percent",5.0, 0.0,100.0,2,1.0,20.0,1.0, 0,0,0,0,0, null), new AbsOpt(2,"optInMinTrendLength",0,"Minimum Trend Length","Minimum number of bars between two pivots",1.0, 0,0,0,0,0,0, 1,100000,1,20,1, null) },
             new AbsOut[]{ new AbsOut(0,"outZigZag",1), new AbsOut(1,"outTrend",1), new AbsOut(1,"outPivotIdx",1) }));

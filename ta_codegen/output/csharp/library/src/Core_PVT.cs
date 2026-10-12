@@ -187,6 +187,7 @@ public partial class Core
    /// <see href="https://ta-lib.org/functions/pvt">ta-lib.org/functions/pvt</see>.
    /// </para>
    /// <list type="bullet">
+   /// <item><description><b>The input is assumed positive.</b> The previous close is the divisor. Near zero the divisor is small and the output very large; no error is returned. A series that reaches or crosses zero, such as an oscillator or a spread, has no meaningful result here.</description></item>
    /// <item><description>The absolute level is arbitrary and depends on where the accumulation started, so two ranges over the same data give curves of the same shape at different offsets.</description></item>
    /// <item><description>Some libraries scale the per-bar term by 100. This implementation follows the fractional definition, which every primary reference below states.</description></item>
    /// <item><description>A bar whose previous close is exactly zero contributes nothing and the running total is carried forward unchanged, rather than dividing by zero. A flat stretch of the output can therefore mean either genuine zero net accumulation or a run of zero previous closes.</description></item>
@@ -274,6 +275,7 @@ public partial class Core
    /// <see href="https://ta-lib.org/functions/pvt">ta-lib.org/functions/pvt</see>.
    /// </para>
    /// <list type="bullet">
+   /// <item><description><b>The input is assumed positive.</b> The previous close is the divisor. Near zero the divisor is small and the output very large; no error is returned. A series that reaches or crosses zero, such as an oscillator or a spread, has no meaningful result here.</description></item>
    /// <item><description>The absolute level is arbitrary and depends on where the accumulation started, so two ranges over the same data give curves of the same shape at different offsets.</description></item>
    /// <item><description>Some libraries scale the per-bar term by 100. This implementation follows the fractional definition, which every primary reference below states.</description></item>
    /// <item><description>A bar whose previous close is exactly zero contributes nothing and the running total is carried forward unchanged, rather than dividing by zero. A flat stretch of the output can therefore mean either genuine zero net accumulation or a run of zero previous closes.</description></item>

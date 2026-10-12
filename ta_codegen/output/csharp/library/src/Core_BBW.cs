@@ -646,6 +646,7 @@ public partial class Core
    /// <see href="https://ta-lib.org/functions/bbw">ta-lib.org/functions/bbw</see>.
    /// </para>
    /// <list type="bullet">
+   /// <item><description><b>The input is assumed positive.</b> The middle band is the divisor. Where it is exactly 0 the output is 0. Near zero the divisor is small and the output very large; no error is returned. A series that reaches or crosses zero, such as an oscillator or a spread, has no meaningful result here.</description></item>
    /// <item><description>With Bollinger's settings (a simple moving average and two deviations on each side) BBW is 400 times the window's coefficient of variation: its standard deviation divided by its mean.</description></item>
    /// <item><description>The two deviation multipliers enter only through their sum.</description></item>
    /// <item><description>The result is in percent: 10 means the bands are 10% of the middle band apart.</description></item>
@@ -741,6 +742,7 @@ public partial class Core
    /// <see href="https://ta-lib.org/functions/bbw">ta-lib.org/functions/bbw</see>.
    /// </para>
    /// <list type="bullet">
+   /// <item><description><b>The input is assumed positive.</b> The middle band is the divisor. Where it is exactly 0 the output is 0. Near zero the divisor is small and the output very large; no error is returned. A series that reaches or crosses zero, such as an oscillator or a spread, has no meaningful result here.</description></item>
    /// <item><description>With Bollinger's settings (a simple moving average and two deviations on each side) BBW is 400 times the window's coefficient of variation: its standard deviation divided by its mean.</description></item>
    /// <item><description>The two deviation multipliers enter only through their sum.</description></item>
    /// <item><description>The result is in percent: 10 means the bands are 10% of the middle band apart.</description></item>

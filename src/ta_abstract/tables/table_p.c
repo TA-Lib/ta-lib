@@ -322,7 +322,7 @@ static const TA_OptInputParameterInfo *TA_PPO_OptInputs[] =
 DEF_FUNCTION( PPO,
               TA_GroupId_MomentumIndicators,
               "Percentage Price Oscillator",
-              TA_FUNC_FLG_STREAM
+              TA_FUNC_FLG_STREAM | TA_FUNC_FLG_POSITIVE_INPUT
              );
 /* PPO END */
 
@@ -399,7 +399,7 @@ static const TA_OptInputParameterInfo *TA_PVI_OptInputs[] =
 DEF_FUNCTION( PVI,
               TA_GroupId_VolumeIndicators,
               "Positive Volume Index",
-              TA_FUNC_FLG_STREAM | TA_FUNC_FLG_PATH_DEP
+              TA_FUNC_FLG_STREAM | TA_FUNC_FLG_PATH_DEP | TA_FUNC_FLG_POSITIVE_INPUT
              );
 /* PVI END */
 
@@ -463,7 +463,7 @@ static const TA_OptInputParameterInfo *TA_PVT_OptInputs[] =
 DEF_FUNCTION( PVT,
               TA_GroupId_VolumeIndicators,
               "Price Volume Trend",
-              TA_FUNC_FLG_STREAM | TA_FUNC_FLG_PATH_DEP
+              TA_FUNC_FLG_STREAM | TA_FUNC_FLG_PATH_DEP | TA_FUNC_FLG_POSITIVE_INPUT
              );
 /* PVT END */
 

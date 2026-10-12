@@ -1665,6 +1665,10 @@ flag_newtype!(
     /// between machines. Not set on a function that reaches one only when an
     /// MA-type parameter selects MAMA or ALMA.
     USES_TRANSCENDENTAL = 0x0000_0004,
+    /// The function assumes its input is positive. A series that reaches or
+    /// crosses zero, such as an oscillator or a spread, gets a successful call
+    /// and an output that may have no meaning: the data is not checked.
+    POSITIVE_INPUT = 0x0000_0008,
 });
 flag_newtype!(
     /// Which OHLCV components an [`InputType::Price`] input reads

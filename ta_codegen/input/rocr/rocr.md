@@ -8,6 +8,10 @@ Rate of Change Ratio: the ratio of the current price to the price optInTimePerio
 
 ROCR = price / price[t - optInTimePeriod]
 
+## Notes
+
+- **The input is assumed positive.** The price `optInTimePeriod` bars back is the divisor. Where it is exactly 0 the output is 0. Near zero the divisor is small and the output very large; no error is returned. A series that reaches or crosses zero, such as an oscillator or a spread, has no meaningful result here.
+
 ## Inputs
 
 - `inReal` — Price series

@@ -18351,6 +18351,7 @@ public final class Core {
     * href="https://ta-lib.org/functions/bbw">ta-lib.org/functions/bbw</a>.
     * <p><b>Notes</b>
     * <ul>
+    * <li><b>The input is assumed positive.</b> The middle band is the divisor. Where it is exactly 0 the output is 0. Near zero the divisor is small and the output very large; no error is returned. A series that reaches or crosses zero, such as an oscillator or a spread, has no meaningful result here.</li>
     * <li>With Bollinger's settings (a simple moving average and two deviations on each side) BBW is 400 times the window's coefficient of variation: its standard deviation divided by its mean.</li>
     * <li>The two deviation multipliers enter only through their sum.</li>
     * <li>The result is in percent: 10 means the bands are 10% of the middle band apart.</li>
@@ -18431,6 +18432,7 @@ public final class Core {
     * href="https://ta-lib.org/functions/bbw">ta-lib.org/functions/bbw</a>.
     * <p><b>Notes</b>
     * <ul>
+    * <li><b>The input is assumed positive.</b> The middle band is the divisor. Where it is exactly 0 the output is 0. Near zero the divisor is small and the output very large; no error is returned. A series that reaches or crosses zero, such as an oscillator or a spread, has no meaningful result here.</li>
     * <li>With Bollinger's settings (a simple moving average and two deviations on each side) BBW is 400 times the window's coefficient of variation: its standard deviation divided by its mean.</li>
     * <li>The two deviation multipliers enter only through their sum.</li>
     * <li>The result is in percent: 10 means the bands are 10% of the middle band apart.</li>
@@ -75463,6 +75465,7 @@ public final class Core {
     * href="https://ta-lib.org/functions/cg">ta-lib.org/functions/cg</a>.
     * <p><b>Notes</b>
     * <ul>
+    * <li><b>The input is assumed positive.</b> The sum of the window is the divisor. Near zero the divisor is small and the output very large; no error is returned. A series that reaches or crosses zero, such as an oscillator or a spread, has no meaningful result here.</li>
     * <li>Ehlers' default input is the median price (H+L)/2: pass the output of MEDPRICE to reproduce it.</li>
     * <li>His 2004 book presents the same oscillator shifted up by (optInTimePeriod+1)/2, so that a flat window reads 0: add (optInTimePeriod+1)/2 to the output to obtain that form.</li>
     * <li>Where the window sums to exactly zero the author's listing keeps its previous value; TA-Lib returns -(optInTimePeriod+1)/2, so every value depends on its own window alone.</li>
@@ -75533,6 +75536,7 @@ public final class Core {
     * href="https://ta-lib.org/functions/cg">ta-lib.org/functions/cg</a>.
     * <p><b>Notes</b>
     * <ul>
+    * <li><b>The input is assumed positive.</b> The sum of the window is the divisor. Near zero the divisor is small and the output very large; no error is returned. A series that reaches or crosses zero, such as an oscillator or a spread, has no meaningful result here.</li>
     * <li>Ehlers' default input is the median price (H+L)/2: pass the output of MEDPRICE to reproduce it.</li>
     * <li>His 2004 book presents the same oscillator shifted up by (optInTimePeriod+1)/2, so that a flat window reads 0: add (optInTimePeriod+1)/2 to the output to obtain that form.</li>
     * <li>Where the window sums to exactly zero the author's listing keeps its previous value; TA-Lib returns -(optInTimePeriod+1)/2, so every value depends on its own window alone.</li>
@@ -84114,6 +84118,7 @@ public final class Core {
     * href="https://ta-lib.org/functions/coppock">ta-lib.org/functions/coppock</a>.
     * <p><b>Notes</b>
     * <ul>
+    * <li><b>The input is assumed positive.</b> The price each rate of change looks back to is its divisor. Near zero the divisor is small and the output very large; no error is returned. A series that reaches or crosses zero, such as an oscillator or a spread, has no meaningful result here.</li>
     * <li>The single fused pass is bit-identical to running {@code ROC + ROC} into <a href="https://ta-lib.org/functions/wma">{@code WMA}</a>.</li>
     * <li>First output at {@code max(optInROC1Period, optInROC2Period) + optInWMAPeriod - 1}. Not start-dependent: each output depends only on its finite trailing window.</li>
     * </ul>
@@ -84181,6 +84186,7 @@ public final class Core {
     * href="https://ta-lib.org/functions/coppock">ta-lib.org/functions/coppock</a>.
     * <p><b>Notes</b>
     * <ul>
+    * <li><b>The input is assumed positive.</b> The price each rate of change looks back to is its divisor. Near zero the divisor is small and the output very large; no error is returned. A series that reaches or crosses zero, such as an oscillator or a spread, has no meaningful result here.</li>
     * <li>The single fused pass is bit-identical to running {@code ROC + ROC} into <a href="https://ta-lib.org/functions/wma">{@code WMA}</a>.</li>
     * <li>First output at {@code max(optInROC1Period, optInROC2Period) + optInWMAPeriod - 1}. Not start-dependent: each output depends only on its finite trailing window.</li>
     * </ul>
@@ -103317,6 +103323,7 @@ public final class Core {
     * href="https://ta-lib.org/functions/fosc">ta-lib.org/functions/fosc</a>.
     * <p><b>Notes</b>
     * <ul>
+    * <li><b>The input is assumed positive.</b> The current value is the divisor. Where it is exactly 0 the output is 0. Near zero the divisor is small and the output very large; no error is returned. A series that reaches or crosses zero, such as an oscillator or a spread, has no meaningful result here.</li>
     * <li>Several vendors publish a "Chande Forecast Oscillator (CFO)" that compares the close to the regression value of the window <i>ending at the same bar</i>, with no lag. FOSC is the lagged form Chande and Achelis describe.</li>
     * <li>The default window is Chande's own suggestion, shorter than the one TA-Lib's TSF and LINEARREG default to.</li>
     * </ul>
@@ -103384,6 +103391,7 @@ public final class Core {
     * href="https://ta-lib.org/functions/fosc">ta-lib.org/functions/fosc</a>.
     * <p><b>Notes</b>
     * <ul>
+    * <li><b>The input is assumed positive.</b> The current value is the divisor. Where it is exactly 0 the output is 0. Near zero the divisor is small and the output very large; no error is returned. A series that reaches or crosses zero, such as an oscillator or a spread, has no meaningful result here.</li>
     * <li>Several vendors publish a "Chande Forecast Oscillator (CFO)" that compares the close to the regression value of the window <i>ending at the same bar</i>, with no lag. FOSC is the lagged form Chande and Achelis describe.</li>
     * <li>The default window is Chande's own suggestion, shorter than the one TA-Lib's TSF and LINEARREG default to.</li>
     * </ul>
@@ -127186,6 +127194,7 @@ public final class Core {
     * href="https://ta-lib.org/functions/kst">ta-lib.org/functions/kst</a>.
     * <p><b>Notes</b>
     * <ul>
+    * <li><b>The input is assumed positive.</b> The price each rate of change looks back to is its divisor. Near zero the divisor is small and the output very large; no error is returned. A series that reaches or crosses zero, such as an oscillator or a spread, has no meaningful result here.</li>
     * <li>The weights are 1 to 4 and nothing divides by their total. Pring's daily table prints each leg's SMA period times its weight (a total of 120) only to show how much the longest leg dominates.</li>
     * <li>Both outputs start at the first bar where the signal line exists, so the first few bars where the KST line alone is defined are not emitted. Setting the signal period to 1 returns the line from its own first bar, and the signal output is then a copy of it.</li>
     * <li>Each rate of change follows {@code ROC}: a zero price in the denominator makes that term 0.</li>
@@ -127293,6 +127302,7 @@ public final class Core {
     * href="https://ta-lib.org/functions/kst">ta-lib.org/functions/kst</a>.
     * <p><b>Notes</b>
     * <ul>
+    * <li><b>The input is assumed positive.</b> The price each rate of change looks back to is its divisor. Near zero the divisor is small and the output very large; no error is returned. A series that reaches or crosses zero, such as an oscillator or a spread, has no meaningful result here.</li>
     * <li>The weights are 1 to 4 and nothing divides by their total. Pring's daily table prints each leg's SMA period times its weight (a total of 120) only to show how much the longest leg dominates.</li>
     * <li>Both outputs start at the first bar where the signal line exists, so the first few bars where the KST line alone is defined are not emitted. Setting the signal period to 1 returns the line from its own first bar, and the signal output is then a copy of it.</li>
     * <li>Each rate of change follows {@code ROC}: a zero price in the denominator makes that term 0.</li>
@@ -128882,6 +128892,7 @@ public final class Core {
     * href="https://ta-lib.org/functions/kstext">ta-lib.org/functions/kstext</a>.
     * <p><b>Notes</b>
     * <ul>
+    * <li><b>The input is assumed positive.</b> The price each rate of change looks back to is its divisor. Near zero the divisor is small and the output very large; no error is returned. A series that reaches or crosses zero, such as an oscillator or a spread, has no meaningful result here.</li>
     * <li>With both MA types set to {@code TA_MAType_SMA} the outputs are those of {@code KST}.</li>
     * <li>Both outputs start at the first bar where the signal line exists. A signal period of 1 disables signal-line smoothing for every signal MAType: the signal is then a copy of the line.</li>
     * <li>The unstable period of a selected MA type lengthens the lookback, for the legs and for the signal line separately.</li>
@@ -128997,6 +129008,7 @@ public final class Core {
     * href="https://ta-lib.org/functions/kstext">ta-lib.org/functions/kstext</a>.
     * <p><b>Notes</b>
     * <ul>
+    * <li><b>The input is assumed positive.</b> The price each rate of change looks back to is its divisor. Near zero the divisor is small and the output very large; no error is returned. A series that reaches or crosses zero, such as an oscillator or a spread, has no meaningful result here.</li>
     * <li>With both MA types set to {@code TA_MAType_SMA} the outputs are those of {@code KST}.</li>
     * <li>Both outputs start at the first bar where the signal line exists. A signal period of 1 disables signal-line smoothing for every signal MAType: the signal is then a copy of the line.</li>
     * <li>The unstable period of a selected MA type lengthens the lookback, for the legs and for the signal line separately.</li>
@@ -162332,6 +162344,10 @@ public final class Core {
     * volatility; unit is percent of price.
     * <p>Formula and more info at <a
     * href="https://ta-lib.org/functions/natr">ta-lib.org/functions/natr</a>.
+    * <p><b>Notes</b>
+    * <ul>
+    * <li><b>The input is assumed positive.</b> The close is the divisor. Where it is exactly 0 the output is 0. Near zero the divisor is small and the output very large; no error is returned. A series that reaches or crosses zero, such as an oscillator or a spread, has no meaningful result here.</li>
+    * </ul>
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are, and the
     * library never pads with NaN. A valid range that ends before
@@ -162398,6 +162414,10 @@ public final class Core {
     * volatility; unit is percent of price.
     * <p>Formula and more info at <a
     * href="https://ta-lib.org/functions/natr">ta-lib.org/functions/natr</a>.
+    * <p><b>Notes</b>
+    * <ul>
+    * <li><b>The input is assumed positive.</b> The close is the divisor. Where it is exactly 0 the output is 0. Near zero the divisor is small and the output very large; no error is returned. A series that reaches or crosses zero, such as an oscillator or a spread, has no meaningful result here.</li>
+    * </ul>
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a
     * result beyond {@code float} range is still representable.
@@ -163139,6 +163159,7 @@ public final class Core {
     * href="https://ta-lib.org/functions/nvi">ta-lib.org/functions/nvi</a>.
     * <p><b>Notes</b>
     * <ul>
+    * <li><b>The input is assumed positive.</b> The previous close is the divisor. Near zero the divisor is small and the output very large; no error is returned. A series that reaches or crosses zero, such as an oscillator or a spread, has no meaningful result here.</li>
     * <li>The index compounds, so it has no upper bound. If a run of large rises ever pushes it past the largest representable number, the last representable value is carried forward instead of returning infinity. Real price series stay far away from that.</li>
     * </ul>
     * <p>Values are written only where the indicator is defined. The returned
@@ -163199,6 +163220,7 @@ public final class Core {
     * href="https://ta-lib.org/functions/nvi">ta-lib.org/functions/nvi</a>.
     * <p><b>Notes</b>
     * <ul>
+    * <li><b>The input is assumed positive.</b> The previous close is the divisor. Near zero the divisor is small and the output very large; no error is returned. A series that reaches or crosses zero, such as an oscillator or a spread, has no meaningful result here.</li>
     * <li>The index compounds, so it has no upper bound. If a run of large rises ever pushes it past the largest representable number, the last representable value is carried forward instead of returning infinity. Real price series stay far away from that.</li>
     * </ul>
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
@@ -170538,6 +170560,7 @@ public final class Core {
     * href="https://ta-lib.org/functions/ppo">ta-lib.org/functions/ppo</a>.
     * <p><b>Notes</b>
     * <ul>
+    * <li><b>The input is assumed positive.</b> The slow moving average is the divisor. Near zero the divisor is small and the output very large; no error is returned. A series that reaches or crosses zero, such as an oscillator or a spread, has no meaningful result here.</li>
     * <li>{@code optInMAType} applies to both the fast and slow moving average. {@code TA_MAType_MAMA} ignores its period argument, so with {@code optInMAType = TA_MAType_MAMA} the fast and slow MAs are identical, making the numerator — and therefore the output — zero at every bar.</li>
     * <li>If the slow period is set smaller than the fast period, the two are swapped, as in {@code MACD}.</li>
     * </ul>
@@ -170612,6 +170635,7 @@ public final class Core {
     * href="https://ta-lib.org/functions/ppo">ta-lib.org/functions/ppo</a>.
     * <p><b>Notes</b>
     * <ul>
+    * <li><b>The input is assumed positive.</b> The slow moving average is the divisor. Near zero the divisor is small and the output very large; no error is returned. A series that reaches or crosses zero, such as an oscillator or a spread, has no meaningful result here.</li>
     * <li>{@code optInMAType} applies to both the fast and slow moving average. {@code TA_MAType_MAMA} ignores its period argument, so with {@code optInMAType = TA_MAType_MAMA} the fast and slow MAs are identical, making the numerator — and therefore the output — zero at every bar.</li>
     * <li>If the slow period is set smaller than the fast period, the two are swapped, as in {@code MACD}.</li>
     * </ul>
@@ -172995,6 +173019,7 @@ public final class Core {
     * href="https://ta-lib.org/functions/pvi">ta-lib.org/functions/pvi</a>.
     * <p><b>Notes</b>
     * <ul>
+    * <li><b>The input is assumed positive.</b> The previous close is the divisor. Near zero the divisor is small and the output very large; no error is returned. A series that reaches or crosses zero, such as an oscillator or a spread, has no meaningful result here.</li>
     * <li>The index compounds, so it has no upper bound. If a run of large rises ever pushes it past the largest representable number, the last representable value is carried forward instead of returning infinity. Real price series stay far away from that.</li>
     * </ul>
     * <p>Values are written only where the indicator is defined. The returned
@@ -173055,6 +173080,7 @@ public final class Core {
     * href="https://ta-lib.org/functions/pvi">ta-lib.org/functions/pvi</a>.
     * <p><b>Notes</b>
     * <ul>
+    * <li><b>The input is assumed positive.</b> The previous close is the divisor. Near zero the divisor is small and the output very large; no error is returned. A series that reaches or crosses zero, such as an oscillator or a spread, has no meaningful result here.</li>
     * <li>The index compounds, so it has no upper bound. If a run of large rises ever pushes it past the largest representable number, the last representable value is carried forward instead of returning infinity. Real price series stay far away from that.</li>
     * </ul>
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
@@ -174820,6 +174846,7 @@ public final class Core {
     * href="https://ta-lib.org/functions/pvt">ta-lib.org/functions/pvt</a>.
     * <p><b>Notes</b>
     * <ul>
+    * <li><b>The input is assumed positive.</b> The previous close is the divisor. Near zero the divisor is small and the output very large; no error is returned. A series that reaches or crosses zero, such as an oscillator or a spread, has no meaningful result here.</li>
     * <li>The absolute level is arbitrary and depends on where the accumulation started, so two ranges over the same data give curves of the same shape at different offsets.</li>
     * <li>Some libraries scale the per-bar term by 100. This implementation follows the fractional definition, which every primary reference below states.</li>
     * <li>A bar whose previous close is exactly zero contributes nothing and the running total is carried forward unchanged, rather than dividing by zero. A flat stretch of the output can therefore mean either genuine zero net accumulation or a run of zero previous closes.</li>
@@ -174892,6 +174919,7 @@ public final class Core {
     * href="https://ta-lib.org/functions/pvt">ta-lib.org/functions/pvt</a>.
     * <p><b>Notes</b>
     * <ul>
+    * <li><b>The input is assumed positive.</b> The previous close is the divisor. Near zero the divisor is small and the output very large; no error is returned. A series that reaches or crosses zero, such as an oscillator or a spread, has no meaningful result here.</li>
     * <li>The absolute level is arbitrary and depends on where the accumulation started, so two ranges over the same data give curves of the same shape at different offsets.</li>
     * <li>Some libraries scale the per-bar term by 100. This implementation follows the fractional definition, which every primary reference below states.</li>
     * <li>A bar whose previous close is exactly zero contributes nothing and the running total is carried forward unchanged, rather than dividing by zero. A flat stretch of the output can therefore mean either genuine zero net accumulation or a run of zero previous closes.</li>
@@ -176866,6 +176894,10 @@ public final class Core {
     * it fell; magnitude scales the move.
     * <p>Formula and more info at <a
     * href="https://ta-lib.org/functions/roc">ta-lib.org/functions/roc</a>.
+    * <p><b>Notes</b>
+    * <ul>
+    * <li><b>The input is assumed positive.</b> The price {@code optInTimePeriod} bars back is the divisor. Where it is exactly 0 the output is 0. Near zero the divisor is small and the output very large; no error is returned. A series that reaches or crosses zero, such as an oscillator or a spread, has no meaningful result here.</li>
+    * </ul>
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are, and the
     * library never pads with NaN. A valid range that ends before
@@ -176926,6 +176958,10 @@ public final class Core {
     * it fell; magnitude scales the move.
     * <p>Formula and more info at <a
     * href="https://ta-lib.org/functions/roc">ta-lib.org/functions/roc</a>.
+    * <p><b>Notes</b>
+    * <ul>
+    * <li><b>The input is assumed positive.</b> The price {@code optInTimePeriod} bars back is the divisor. Where it is exactly 0 the output is 0. Near zero the divisor is small and the output very large; no error is returned. A series that reaches or crosses zero, such as an oscillator or a spread, has no meaningful result here.</li>
+    * </ul>
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a
     * result beyond {@code float} range is still representable.
@@ -177518,6 +177554,10 @@ public final class Core {
     * vs N bars ago, &lt;0 falling; equals ROC/100.
     * <p>Formula and more info at <a
     * href="https://ta-lib.org/functions/rocp">ta-lib.org/functions/rocp</a>.
+    * <p><b>Notes</b>
+    * <ul>
+    * <li><b>The input is assumed positive.</b> The price {@code optInTimePeriod} bars back is the divisor. Where it is exactly 0 the output is 0. Near zero the divisor is small and the output very large; no error is returned. A series that reaches or crosses zero, such as an oscillator or a spread, has no meaningful result here.</li>
+    * </ul>
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are, and the
     * library never pads with NaN. A valid range that ends before
@@ -177578,6 +177618,10 @@ public final class Core {
     * vs N bars ago, &lt;0 falling; equals ROC/100.
     * <p>Formula and more info at <a
     * href="https://ta-lib.org/functions/rocp">ta-lib.org/functions/rocp</a>.
+    * <p><b>Notes</b>
+    * <ul>
+    * <li><b>The input is assumed positive.</b> The price {@code optInTimePeriod} bars back is the divisor. Where it is exactly 0 the output is 0. Near zero the divisor is small and the output very large; no error is returned. A series that reaches or crosses zero, such as an oscillator or a spread, has no meaningful result here.</li>
+    * </ul>
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a
     * result beyond {@code float} range is still representable.
@@ -178173,6 +178217,10 @@ public final class Core {
     * positive, centered at 1: &gt;1 rising, &lt;1 falling.
     * <p>Formula and more info at <a
     * href="https://ta-lib.org/functions/rocr">ta-lib.org/functions/rocr</a>.
+    * <p><b>Notes</b>
+    * <ul>
+    * <li><b>The input is assumed positive.</b> The price {@code optInTimePeriod} bars back is the divisor. Where it is exactly 0 the output is 0. Near zero the divisor is small and the output very large; no error is returned. A series that reaches or crosses zero, such as an oscillator or a spread, has no meaningful result here.</li>
+    * </ul>
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are, and the
     * library never pads with NaN. A valid range that ends before
@@ -178233,6 +178281,10 @@ public final class Core {
     * positive, centered at 1: &gt;1 rising, &lt;1 falling.
     * <p>Formula and more info at <a
     * href="https://ta-lib.org/functions/rocr">ta-lib.org/functions/rocr</a>.
+    * <p><b>Notes</b>
+    * <ul>
+    * <li><b>The input is assumed positive.</b> The price {@code optInTimePeriod} bars back is the divisor. Where it is exactly 0 the output is 0. Near zero the divisor is small and the output very large; no error is returned. A series that reaches or crosses zero, such as an oscillator or a spread, has no meaningful result here.</li>
+    * </ul>
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a
     * result beyond {@code float} range is still representable.
@@ -178829,6 +178881,10 @@ public final class Core {
     * fell.
     * <p>Formula and more info at <a
     * href="https://ta-lib.org/functions/rocr100">ta-lib.org/functions/rocr100</a>.
+    * <p><b>Notes</b>
+    * <ul>
+    * <li><b>The input is assumed positive.</b> The price {@code optInTimePeriod} bars back is the divisor. Where it is exactly 0 the output is 0. Near zero the divisor is small and the output very large; no error is returned. A series that reaches or crosses zero, such as an oscillator or a spread, has no meaningful result here.</li>
+    * </ul>
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are, and the
     * library never pads with NaN. A valid range that ends before
@@ -178890,6 +178946,10 @@ public final class Core {
     * fell.
     * <p>Formula and more info at <a
     * href="https://ta-lib.org/functions/rocr100">ta-lib.org/functions/rocr100</a>.
+    * <p><b>Notes</b>
+    * <ul>
+    * <li><b>The input is assumed positive.</b> The price {@code optInTimePeriod} bars back is the divisor. Where it is exactly 0 the output is 0. Near zero the divisor is small and the output very large; no error is returned. A series that reaches or crosses zero, such as an oscillator or a spread, has no meaningful result here.</li>
+    * </ul>
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a
     * result beyond {@code float} range is still representable.
@@ -191574,7 +191634,7 @@ public final class Core {
     * href="https://ta-lib.org/functions/sqrt">ta-lib.org/functions/sqrt</a>.
     * <p><b>Notes</b>
     * <ul>
-    * <li>A negative input has no real square root, so those elements come out NaN.</li>
+    * <li>A negative input has no real square root, so those elements come out NaN. A zero input gives 0.</li>
     * </ul>
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are, and the
@@ -191627,7 +191687,7 @@ public final class Core {
     * href="https://ta-lib.org/functions/sqrt">ta-lib.org/functions/sqrt</a>.
     * <p><b>Notes</b>
     * <ul>
-    * <li>A negative input has no real square root, so those elements come out NaN.</li>
+    * <li>A negative input has no real square root, so those elements come out NaN. A zero input gives 0.</li>
     * </ul>
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a
@@ -211003,6 +211063,7 @@ public final class Core {
     * href="https://ta-lib.org/functions/trix">ta-lib.org/functions/trix</a>.
     * <p><b>Notes</b>
     * <ul>
+    * <li><b>The input is assumed positive.</b> The previous triple-smoothed value is the divisor. Near zero the divisor is small and the output very large; no error is returned. A series that reaches or crosses zero, such as an oscillator or a spread, has no meaningful result here.</li>
     * <li>The final rate-of-change step yields 0 when the previous smoothed value is exactly zero, rather than being undefined.</li>
     * </ul>
     * <p>Values are written only where the indicator is defined. The returned
@@ -211068,6 +211129,7 @@ public final class Core {
     * href="https://ta-lib.org/functions/trix">ta-lib.org/functions/trix</a>.
     * <p><b>Notes</b>
     * <ul>
+    * <li><b>The input is assumed positive.</b> The previous triple-smoothed value is the divisor. Near zero the divisor is small and the output very large; no error is returned. A series that reaches or crosses zero, such as an oscillator or a spread, has no meaningful result here.</li>
     * <li>The final rate-of-change step yields 0 when the previous smoothed value is exactly zero, rather than being undefined.</li>
     * </ul>
     * <p>This is the {@code float[]} overload. The arithmetic is performed in

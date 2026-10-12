@@ -14,6 +14,7 @@ where $\mathrm{upper}_t$, $\mathrm{middle}_t$ and $\mathrm{lower}_t$ are the [`B
 
 ## Notes
 
+- **The input is assumed positive.** The middle band is the divisor. Where it is exactly 0 the output is 0. Near zero the divisor is small and the output very large; no error is returned. A series that reaches or crosses zero, such as an oscillator or a spread, has no meaningful result here.
 - With Bollinger's settings (a simple moving average and two deviations on each side) BBW is 400 times the window's coefficient of variation: its standard deviation divided by its mean.
 - The two deviation multipliers enter only through their sum.
 - The result is in percent: 10 means the bands are 10% of the middle band apart.

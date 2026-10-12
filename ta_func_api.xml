@@ -1067,6 +1067,7 @@
 		<GroupId>Volatility Indicators</GroupId>
 		<Flags>
 			<Flag>Streaming</Flag>
+			<Flag>Positive Input</Flag>
 		</Flags>
 		<RequiredInputArguments>
 			<RequiredInputArgument>
@@ -4003,6 +4004,7 @@
 		<GroupId>Momentum Indicators</GroupId>
 		<Flags>
 			<Flag>Streaming</Flag>
+			<Flag>Positive Input</Flag>
 		</Flags>
 		<RequiredInputArguments>
 			<RequiredInputArgument>
@@ -4364,6 +4366,7 @@
 		<GroupId>Momentum Indicators</GroupId>
 		<Flags>
 			<Flag>Streaming</Flag>
+			<Flag>Positive Input</Flag>
 		</Flags>
 		<RequiredInputArguments>
 			<RequiredInputArgument>
@@ -5388,6 +5391,7 @@
 		<GroupId>Momentum Indicators</GroupId>
 		<Flags>
 			<Flag>Streaming</Flag>
+			<Flag>Positive Input</Flag>
 		</Flags>
 		<RequiredInputArguments>
 			<RequiredInputArgument>
@@ -6155,6 +6159,7 @@
 		<GroupId>Momentum Indicators</GroupId>
 		<Flags>
 			<Flag>Streaming</Flag>
+			<Flag>Positive Input</Flag>
 		</Flags>
 		<RequiredInputArguments>
 			<RequiredInputArgument>
@@ -6307,6 +6312,7 @@
 		<GroupId>Momentum Indicators</GroupId>
 		<Flags>
 			<Flag>Streaming</Flag>
+			<Flag>Positive Input</Flag>
 		</Flags>
 		<RequiredInputArguments>
 			<RequiredInputArgument>
@@ -6682,6 +6688,7 @@
 			<Flag>Streaming</Flag>
 			<Flag>Can Output NaN or +/-Inf</Flag>
 			<Flag>Uses Transcendental</Flag>
+			<Flag>Positive Input</Flag>
 		</Flags>
 		<RequiredInputArguments>
 			<RequiredInputArgument>
@@ -6710,6 +6717,7 @@
 			<Flag>Streaming</Flag>
 			<Flag>Can Output NaN or +/-Inf</Flag>
 			<Flag>Uses Transcendental</Flag>
+			<Flag>Positive Input</Flag>
 		</Flags>
 		<RequiredInputArguments>
 			<RequiredInputArgument>
@@ -7329,6 +7337,7 @@
 			<Flag>Overlap</Flag>
 			<Flag>Unstable Period</Flag>
 			<Flag>Streaming</Flag>
+			<Flag>Positive Input</Flag>
 		</Flags>
 		<RequiredInputArguments>
 			<RequiredInputArgument>
@@ -7932,6 +7941,7 @@
 		<Flags>
 			<Flag>Unstable Period</Flag>
 			<Flag>Streaming</Flag>
+			<Flag>Positive Input</Flag>
 		</Flags>
 		<RequiredInputArguments>
 			<RequiredInputArgument>
@@ -7982,6 +7992,7 @@
 		<Flags>
 			<Flag>Streaming</Flag>
 			<Flag>Path Dependent</Flag>
+			<Flag>Positive Input</Flag>
 		</Flags>
 		<RequiredInputArguments>
 			<RequiredInputArgument>
@@ -8314,6 +8325,7 @@
 		<GroupId>Momentum Indicators</GroupId>
 		<Flags>
 			<Flag>Streaming</Flag>
+			<Flag>Positive Input</Flag>
 		</Flags>
 		<RequiredInputArguments>
 			<RequiredInputArgument>
@@ -8438,6 +8450,7 @@
 		<Flags>
 			<Flag>Streaming</Flag>
 			<Flag>Path Dependent</Flag>
+			<Flag>Positive Input</Flag>
 		</Flags>
 		<RequiredInputArguments>
 			<RequiredInputArgument>
@@ -8529,6 +8542,7 @@
 		<Flags>
 			<Flag>Streaming</Flag>
 			<Flag>Path Dependent</Flag>
+			<Flag>Positive Input</Flag>
 		</Flags>
 		<RequiredInputArguments>
 			<RequiredInputArgument>
@@ -8648,6 +8662,7 @@
 		<GroupId>Momentum Indicators</GroupId>
 		<Flags>
 			<Flag>Streaming</Flag>
+			<Flag>Positive Input</Flag>
 		</Flags>
 		<RequiredInputArguments>
 			<RequiredInputArgument>
@@ -8689,6 +8704,7 @@
 		<GroupId>Momentum Indicators</GroupId>
 		<Flags>
 			<Flag>Streaming</Flag>
+			<Flag>Positive Input</Flag>
 		</Flags>
 		<RequiredInputArguments>
 			<RequiredInputArgument>
@@ -8730,6 +8746,7 @@
 		<GroupId>Momentum Indicators</GroupId>
 		<Flags>
 			<Flag>Streaming</Flag>
+			<Flag>Positive Input</Flag>
 		</Flags>
 		<RequiredInputArguments>
 			<RequiredInputArgument>
@@ -8771,6 +8788,7 @@
 		<GroupId>Momentum Indicators</GroupId>
 		<Flags>
 			<Flag>Streaming</Flag>
+			<Flag>Positive Input</Flag>
 		</Flags>
 		<RequiredInputArguments>
 			<RequiredInputArgument>
@@ -8813,6 +8831,7 @@
 		<Flags>
 			<Flag>Streaming</Flag>
 			<Flag>Uses Transcendental</Flag>
+			<Flag>Positive Input</Flag>
 		</Flags>
 		<RequiredInputArguments>
 			<RequiredInputArgument>
@@ -9533,6 +9552,7 @@
 		<Flags>
 			<Flag>Streaming</Flag>
 			<Flag>Can Output NaN or +/-Inf</Flag>
+			<Flag>Positive Input</Flag>
 		</Flags>
 		<RequiredInputArguments>
 			<RequiredInputArgument>
@@ -10662,6 +10682,7 @@
 		<GroupId>Momentum Indicators</GroupId>
 		<Flags>
 			<Flag>Streaming</Flag>
+			<Flag>Positive Input</Flag>
 		</Flags>
 		<RequiredInputArguments>
 			<RequiredInputArgument>
@@ -11452,6 +11473,7 @@
 			<Flag>Overlap</Flag>
 			<Flag>Streaming</Flag>
 			<Flag>Path Dependent</Flag>
+			<Flag>Positive Input</Flag>
 		</Flags>
 		<RequiredInputArguments>
 			<RequiredInputArgument>

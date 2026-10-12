@@ -1,7 +1,7 @@
 name: MCGD
 group: Overlap Studies
 hint: McGinley Dynamic
-flags: [overlap, unstable_period, stream]
+flags: [overlap, unstable_period, stream, positive_input]
 inputs:
   - name: inReal
     type: real

@@ -10,6 +10,7 @@ E1 = EMA(inReal, n); E2 = EMA(E1, n); E3 = EMA(E2, n); TRIX = ROC_1(E3) = 100 * 
 
 ## Notes
 
+- **The input is assumed positive.** The previous triple-smoothed value is the divisor. Near zero the divisor is small and the output very large; no error is returned. A series that reaches or crosses zero, such as an oscillator or a spread, has no meaningful result here.
 - The final rate-of-change step yields 0 when the previous smoothed value is exactly zero, rather than being undefined.
 
 ## Inputs

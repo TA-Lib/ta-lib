@@ -228,7 +228,7 @@ static const TA_OptInputParameterInfo *TA_TRIX_OptInputs[] =
 DEF_FUNCTION( TRIX,
               TA_GroupId_MomentumIndicators,
               "1-day Rate-Of-Change (ROC) of a Triple Smooth EMA",
-              TA_FUNC_FLG_STREAM
+              TA_FUNC_FLG_STREAM | TA_FUNC_FLG_POSITIVE_INPUT
              );
 /* TRIX END */
 

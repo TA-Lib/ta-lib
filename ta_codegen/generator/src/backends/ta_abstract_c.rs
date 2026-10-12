@@ -1665,6 +1665,7 @@ pub(crate) fn func_flag_to_c(flag: &str) -> Option<&'static str> {
         "period1_identity" => Some("TA_FUNC_FLG_PERIOD1_IDENTITY"),
         "display_shift" => Some("TA_FUNC_FLG_DISPLAY_SHIFT"),
         "uses_transcendental" => Some("TA_FUNC_FLG_USES_TRANSCENDENTAL"),
+        "positive_input" => Some("TA_FUNC_FLG_POSITIVE_INPUT"),
         _ => None,
     }
 }

@@ -607,7 +607,7 @@ static const TA_OptInputParameterInfo *TA_MCGD_OptInputs[] =
 DEF_FUNCTION( MCGD,
               TA_GroupId_OverlapStudies,
               "McGinley Dynamic",
-              TA_FUNC_FLG_OVERLAP | TA_FUNC_FLG_UNST_PER | TA_FUNC_FLG_STREAM
+              TA_FUNC_FLG_OVERLAP | TA_FUNC_FLG_UNST_PER | TA_FUNC_FLG_STREAM | TA_FUNC_FLG_POSITIVE_INPUT
              );
 /* MCGD END */
 

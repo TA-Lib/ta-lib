@@ -1,7 +1,7 @@
 name: KSTEXT
 group: Momentum Indicators
 hint: Know Sure Thing with controllable MA type
-flags: [stream]
+flags: [stream, positive_input]
 inputs:
   - name: inReal
     type: real

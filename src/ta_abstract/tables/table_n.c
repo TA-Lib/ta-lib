@@ -59,7 +59,7 @@ static const TA_OptInputParameterInfo *TA_NATR_OptInputs[] =
 DEF_FUNCTION( NATR,
               TA_GroupId_VolatilityIndicators,
               "Normalized Average True Range",
-              TA_FUNC_FLG_UNST_PER | TA_FUNC_FLG_STREAM
+              TA_FUNC_FLG_UNST_PER | TA_FUNC_FLG_STREAM | TA_FUNC_FLG_POSITIVE_INPUT
              );
 /* NATR END */
 
@@ -82,7 +82,7 @@ static const TA_OptInputParameterInfo *TA_NVI_OptInputs[] =
 DEF_FUNCTION( NVI,
               TA_GroupId_VolumeIndicators,
               "Negative Volume Index",
-              TA_FUNC_FLG_STREAM | TA_FUNC_FLG_PATH_DEP
+              TA_FUNC_FLG_STREAM | TA_FUNC_FLG_PATH_DEP | TA_FUNC_FLG_POSITIVE_INPUT
              );
 /* NVI END */
 

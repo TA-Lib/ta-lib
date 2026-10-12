@@ -1,7 +1,7 @@
 name: ROCR100
 group: Momentum Indicators
 hint: "Rate of change ratio 100 scale: (price/prevPrice)*100"
-flags: [stream]
+flags: [stream, positive_input]
 inputs:
   - name: inReal
     type: real

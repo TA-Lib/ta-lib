@@ -505,6 +505,7 @@ public partial class Core
    /// <see href="https://ta-lib.org/functions/coppock">ta-lib.org/functions/coppock</see>.
    /// </para>
    /// <list type="bullet">
+   /// <item><description><b>The input is assumed positive.</b> The price each rate of change looks back to is its divisor. Near zero the divisor is small and the output very large; no error is returned. A series that reaches or crosses zero, such as an oscillator or a spread, has no meaningful result here.</description></item>
    /// <item><description>The single fused pass is bit-identical to running <c>ROC + ROC</c> into <see href="https://ta-lib.org/functions/wma"><c>WMA</c></see>.</description></item>
    /// <item><description>First output at <c>max(optInROC1Period, optInROC2Period) + optInWMAPeriod - 1</c>. Not start-dependent: each output depends only on its finite trailing window.</description></item>
    /// </list>
@@ -588,6 +589,7 @@ public partial class Core
    /// <see href="https://ta-lib.org/functions/coppock">ta-lib.org/functions/coppock</see>.
    /// </para>
    /// <list type="bullet">
+   /// <item><description><b>The input is assumed positive.</b> The price each rate of change looks back to is its divisor. Near zero the divisor is small and the output very large; no error is returned. A series that reaches or crosses zero, such as an oscillator or a spread, has no meaningful result here.</description></item>
    /// <item><description>The single fused pass is bit-identical to running <c>ROC + ROC</c> into <see href="https://ta-lib.org/functions/wma"><c>WMA</c></see>.</description></item>
    /// <item><description>First output at <c>max(optInROC1Period, optInROC2Period) + optInWMAPeriod - 1</c>. Not start-dependent: each output depends only on its finite trailing window.</description></item>
    /// </list>

@@ -767,7 +767,7 @@ public final class Functions {
 
    private static FuncInfo f_BBW() {
       return new FuncInfo(
-         "BBW", "Volatility Indicators", "Bollinger BandWidth", 0x02000000,
+         "BBW", "Volatility Indicators", "Bollinger BandWidth", 0x02000008,
          List.of(
             new InputInfo(InputType.REAL, "inReal", 0x00000000)
          ),
@@ -1635,7 +1635,7 @@ public final class Functions {
 
    private static FuncInfo f_CG() {
       return new FuncInfo(
-         "CG", "Momentum Indicators", "Center of Gravity Oscillator", 0x02000000,
+         "CG", "Momentum Indicators", "Center of Gravity Oscillator", 0x02000008,
          List.of(
             new InputInfo(InputType.REAL, "inReal", 0x00000000)
          ),
@@ -1772,7 +1772,7 @@ public final class Functions {
 
    private static FuncInfo f_COPPOCK() {
       return new FuncInfo(
-         "COPPOCK", "Momentum Indicators", "Coppock Curve", 0x02000000,
+         "COPPOCK", "Momentum Indicators", "Coppock Curve", 0x02000008,
          List.of(
             new InputInfo(InputType.REAL, "inReal", 0x00000000)
          ),
@@ -2183,7 +2183,7 @@ public final class Functions {
 
    private static FuncInfo f_FOSC() {
       return new FuncInfo(
-         "FOSC", "Momentum Indicators", "Forecast Oscillator", 0x02000000,
+         "FOSC", "Momentum Indicators", "Forecast Oscillator", 0x02000008,
          List.of(
             new InputInfo(InputType.REAL, "inReal", 0x00000000)
          ),
@@ -2468,7 +2468,7 @@ public final class Functions {
 
    private static FuncInfo f_KST() {
       return new FuncInfo(
-         "KST", "Momentum Indicators", "Know Sure Thing (Pring)", 0x02000000,
+         "KST", "Momentum Indicators", "Know Sure Thing (Pring)", 0x02000008,
          List.of(
             new InputInfo(InputType.REAL, "inReal", 0x00000000)
          ),
@@ -2527,7 +2527,7 @@ public final class Functions {
 
    private static FuncInfo f_KSTEXT() {
       return new FuncInfo(
-         "KSTEXT", "Momentum Indicators", "Know Sure Thing with controllable MA type", 0x02000000,
+         "KSTEXT", "Momentum Indicators", "Know Sure Thing with controllable MA type", 0x02000008,
          List.of(
             new InputInfo(InputType.REAL, "inReal", 0x00000000)
          ),
@@ -2686,7 +2686,7 @@ public final class Functions {
 
    private static FuncInfo f_LN() {
       return new FuncInfo(
-         "LN", "Math Transform", "Vector Log Natural", 0x42000004,
+         "LN", "Math Transform", "Vector Log Natural", 0x4200000C,
          List.of(
             new InputInfo(InputType.REAL, "inReal", 0x00000000)
          ),
@@ -2698,7 +2698,7 @@ public final class Functions {
 
    private static FuncInfo f_LOG10() {
       return new FuncInfo(
-         "LOG10", "Math Transform", "Vector Log10", 0x42000004,
+         "LOG10", "Math Transform", "Vector Log10", 0x4200000C,
          List.of(
             new InputInfo(InputType.REAL, "inReal", 0x00000000)
          ),
@@ -2952,7 +2952,7 @@ public final class Functions {
 
    private static FuncInfo f_MCGD() {
       return new FuncInfo(
-         "MCGD", "Overlap Studies", "McGinley Dynamic", 0x0B000000,
+         "MCGD", "Overlap Studies", "McGinley Dynamic", 0x0B000008,
          List.of(
             new InputInfo(InputType.REAL, "inReal", 0x00000000)
          ),
@@ -3195,7 +3195,7 @@ public final class Functions {
 
    private static FuncInfo f_NATR() {
       return new FuncInfo(
-         "NATR", "Volatility Indicators", "Normalized Average True Range", 0x0A000000,
+         "NATR", "Volatility Indicators", "Normalized Average True Range", 0x0A000008,
          List.of(
             new InputInfo(InputType.PRICE, "inPriceHLC", 0x0000000E)
          ),
@@ -3213,7 +3213,7 @@ public final class Functions {
 
    private static FuncInfo f_NVI() {
       return new FuncInfo(
-         "NVI", "Volume Indicators", "Negative Volume Index", 0x22000000,
+         "NVI", "Volume Indicators", "Negative Volume Index", 0x22000008,
          List.of(
             new InputInfo(InputType.PRICE, "inPriceCV", 0x00000018)
          ),
@@ -3348,7 +3348,7 @@ public final class Functions {
 
    private static FuncInfo f_PPO() {
       return new FuncInfo(
-         "PPO", "Momentum Indicators", "Percentage Price Oscillator", 0x02000000,
+         "PPO", "Momentum Indicators", "Percentage Price Oscillator", 0x02000008,
          List.of(
             new InputInfo(InputType.REAL, "inReal", 0x00000000)
          ),
@@ -3399,7 +3399,7 @@ public final class Functions {
 
    private static FuncInfo f_PVI() {
       return new FuncInfo(
-         "PVI", "Volume Indicators", "Positive Volume Index", 0x22000000,
+         "PVI", "Volume Indicators", "Positive Volume Index", 0x22000008,
          List.of(
             new InputInfo(InputType.PRICE, "inPriceCV", 0x00000018)
          ),
@@ -3439,7 +3439,7 @@ public final class Functions {
 
    private static FuncInfo f_PVT() {
       return new FuncInfo(
-         "PVT", "Volume Indicators", "Price Volume Trend", 0x22000000,
+         "PVT", "Volume Indicators", "Price Volume Trend", 0x22000008,
          List.of(
             new InputInfo(InputType.PRICE, "inPriceCV", 0x00000018)
          ),
@@ -3487,7 +3487,7 @@ public final class Functions {
 
    private static FuncInfo f_ROC() {
       return new FuncInfo(
-         "ROC", "Momentum Indicators", "Rate of change : ((price/prevPrice)-1)*100", 0x02000000,
+         "ROC", "Momentum Indicators", "Rate of change : ((price/prevPrice)-1)*100", 0x02000008,
          List.of(
             new InputInfo(InputType.REAL, "inReal", 0x00000000)
          ),
@@ -3505,7 +3505,7 @@ public final class Functions {
 
    private static FuncInfo f_ROCP() {
       return new FuncInfo(
-         "ROCP", "Momentum Indicators", "Rate of change Percentage: (price-prevPrice)/prevPrice", 0x02000000,
+         "ROCP", "Momentum Indicators", "Rate of change Percentage: (price-prevPrice)/prevPrice", 0x02000008,
          List.of(
             new InputInfo(InputType.REAL, "inReal", 0x00000000)
          ),
@@ -3523,7 +3523,7 @@ public final class Functions {
 
    private static FuncInfo f_ROCR() {
       return new FuncInfo(
-         "ROCR", "Momentum Indicators", "Rate of change ratio: (price/prevPrice)", 0x02000000,
+         "ROCR", "Momentum Indicators", "Rate of change ratio: (price/prevPrice)", 0x02000008,
          List.of(
             new InputInfo(InputType.REAL, "inReal", 0x00000000)
          ),
@@ -3541,7 +3541,7 @@ public final class Functions {
 
    private static FuncInfo f_ROCR100() {
       return new FuncInfo(
-         "ROCR100", "Momentum Indicators", "Rate of change ratio 100 scale: (price/prevPrice)*100", 0x02000000,
+         "ROCR100", "Momentum Indicators", "Rate of change ratio 100 scale: (price/prevPrice)*100", 0x02000008,
          List.of(
             new InputInfo(InputType.REAL, "inReal", 0x00000000)
          ),
@@ -3559,7 +3559,7 @@ public final class Functions {
 
    private static FuncInfo f_ROGERSSATCHELL() {
       return new FuncInfo(
-         "ROGERSSATCHELL", "Volatility Indicators", "Rogers-Satchell Volatility", 0x02000004,
+         "ROGERSSATCHELL", "Volatility Indicators", "Rogers-Satchell Volatility", 0x0200000C,
          List.of(
             new InputInfo(InputType.PRICE, "inPriceOHLC", 0x0000000F)
          ),
@@ -3834,7 +3834,7 @@ public final class Functions {
 
    private static FuncInfo f_SQRT() {
       return new FuncInfo(
-         "SQRT", "Math Transform", "Vector Square Root", 0x42000000,
+         "SQRT", "Math Transform", "Vector Square Root", 0x42000008,
          List.of(
             new InputInfo(InputType.REAL, "inReal", 0x00000000)
          ),
@@ -4288,7 +4288,7 @@ public final class Functions {
 
    private static FuncInfo f_TRIX() {
       return new FuncInfo(
-         "TRIX", "Momentum Indicators", "1-day Rate-Of-Change (ROC) of a Triple Smooth EMA", 0x02000000,
+         "TRIX", "Momentum Indicators", "1-day Rate-Of-Change (ROC) of a Triple Smooth EMA", 0x02000008,
          List.of(
             new InputInfo(InputType.REAL, "inReal", 0x00000000)
          ),
@@ -4590,7 +4590,7 @@ public final class Functions {
 
    private static FuncInfo f_ZIGZAG() {
       return new FuncInfo(
-         "ZIGZAG", "Overlap Studies", "Zig Zag", 0x23000000,
+         "ZIGZAG", "Overlap Studies", "Zig Zag", 0x23000008,
          List.of(
             new InputInfo(InputType.PRICE, "inPriceHL", 0x00000006)
          ),

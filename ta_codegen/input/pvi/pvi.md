@@ -22,6 +22,7 @@ degenerate case of a zero previous close, which would otherwise divide by zero).
 
 ## Notes
 
+- **The input is assumed positive.** The previous close is the divisor. Near zero the divisor is small and the output very large; no error is returned. A series that reaches or crosses zero, such as an oscillator or a spread, has no meaningful result here.
 - The index compounds, so it has no upper bound. If a run of large rises ever pushes it past the largest representable number, the last representable value is carried forward instead of returning infinity. Real price series stay far away from that.
 
 ## Inputs

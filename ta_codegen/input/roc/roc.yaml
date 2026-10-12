@@ -1,7 +1,7 @@
 name: ROC
 group: Momentum Indicators
 hint: "Rate of change : ((price/prevPrice)-1)*100"
-flags: [stream]
+flags: [stream, positive_input]
 inputs:
   - name: inReal
     type: real

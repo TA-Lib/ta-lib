@@ -1,7 +1,7 @@
 name: CG
 group: Momentum Indicators
 hint: Center of Gravity Oscillator
-flags: [stream]
+flags: [stream, positive_input]
 inputs:
   - name: inReal
     type: real

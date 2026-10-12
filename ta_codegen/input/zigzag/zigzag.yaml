@@ -1,7 +1,7 @@
 name: ZIGZAG
 group: Overlap Studies
 hint: Zig Zag
-flags: [overlap, stream, path_dependent]
+flags: [overlap, stream, path_dependent, positive_input]
 inputs:
   - name: inPriceHL
     type: price

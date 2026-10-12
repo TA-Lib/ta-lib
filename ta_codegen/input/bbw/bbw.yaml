@@ -1,7 +1,7 @@
 name: BBW
 group: Volatility Indicators
 hint: Bollinger BandWidth
-flags: [stream]
+flags: [stream, positive_input]
 inputs:
   - name: inReal
     type: real

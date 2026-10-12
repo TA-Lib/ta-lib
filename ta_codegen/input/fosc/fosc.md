@@ -12,6 +12,7 @@ FOSC[t] = 100 * (P[t] - TSF[t-1]) / P[t], where TSF[t-1] is the Time Series Fore
 
 ## Notes
 
+- **The input is assumed positive.** The current value is the divisor. Where it is exactly 0 the output is 0. Near zero the divisor is small and the output very large; no error is returned. A series that reaches or crosses zero, such as an oscillator or a spread, has no meaningful result here.
 - Several vendors publish a "Chande Forecast Oscillator (CFO)" that compares the close to the regression value of the window *ending at the same bar*, with no lag. FOSC is the lagged form Chande and Achelis describe.
 - The default window is Chande's own suggestion, shorter than the one TA-Lib's TSF and LINEARREG default to.
 
