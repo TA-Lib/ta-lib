@@ -248,6 +248,7 @@ public final class Functions {
       put(m, f_HT_TRENDLINE());
       put(m, f_HT_TRENDMODE());
       put(m, f_IBS());
+      put(m, f_ICHIMOKU());
       put(m, f_IMI());
       put(m, f_KAMA());
       put(m, f_KC());
@@ -2358,6 +2359,37 @@ public final class Functions {
          List.of(),
          List.of(
             new OutputInfo(OutputType.REAL, "outReal", 0x00000001)
+         ));
+   }
+
+   private static FuncInfo f_ICHIMOKU() {
+      return new FuncInfo(
+         "ICHIMOKU", "Overlap Studies", "Ichimoku Kinko Hyo", 0x03000002,
+         List.of(
+            new InputInfo(InputType.PRICE, "inPriceHL", 0x00000006)
+         ),
+         List.of(
+            new OptInputInfo(
+               OptInputType.INTEGER_RANGE, "optInTenkanPeriod", 0x00000000,
+               "Tenkan Period", "Period of the conversion line", 9.0,
+               0.0, 0.0, 0, 0.0, 0.0, 0.0,
+               2, 100000, 4, 200, 1, null),
+            new OptInputInfo(
+               OptInputType.INTEGER_RANGE, "optInKijunPeriod", 0x00000000,
+               "Kijun Period", "Period of the base line, and the forward shift of the two spans", 26.0,
+               0.0, 0.0, 0, 0.0, 0.0, 0.0,
+               2, 100000, 4, 200, 1, null),
+            new OptInputInfo(
+               OptInputType.INTEGER_RANGE, "optInSenkouBPeriod", 0x00000000,
+               "Senkou B Period", "Period of the second leading span", 52.0,
+               0.0, 0.0, 0, 0.0, 0.0, 0.0,
+               2, 100000, 4, 200, 1, null)
+         ),
+         List.of(
+            new OutputInfo(OutputType.REAL, "outTenkanSen", 0x00000001),
+            new OutputInfo(OutputType.REAL, "outKijunSen", 0x00000001),
+            new OutputInfo(OutputType.REAL, "outSenkouSpanA", 0x00004001),
+            new OutputInfo(OutputType.REAL, "outSenkouSpanB", 0x00004001)
          ));
    }
 

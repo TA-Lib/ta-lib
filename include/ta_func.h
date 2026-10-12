@@ -11281,6 +11281,113 @@ TA_LIB_API TA_RetCode TA_IBS_Advance( TA_IBS_Stream *stream );
 TA_LIB_API TA_RetCode TA_IBS_Clone( const TA_IBS_Stream *stream, TA_IBS_Stream **clone );
 
 /*
+ * TA_ICHIMOKU - Ichimoku Kinko Hyo
+ * 
+ * Input  = High, Low
+ * Output = double, double, double, double
+ * 
+ * Optional Parameters
+ * -------------------
+ * optInTenkanPeriod:(From 2 to 100000)
+ *    Period of the conversion line
+ * 
+ * optInKijunPeriod:(From 2 to 100000)
+ *    Period of the base line, and the forward shift of the two spans
+ * 
+ * optInSenkouBPeriod:(From 2 to 100000)
+ *    Period of the second leading span
+ * 
+ * 
+ */
+TA_LIB_API TA_RetCode TA_ICHIMOKU( int    startIdx,
+                                   int    endIdx,
+                                              const double inHigh[],
+                                              const double inLow[],
+                                              int           optInTenkanPeriod, /* From 2 to 100000 */
+                                              int           optInKijunPeriod, /* From 2 to 100000 */
+                                              int           optInSenkouBPeriod, /* From 2 to 100000 */
+                                              int          *outBegIdx,
+                                              int          *outNBElement,
+                                              double        outTenkanSen[],
+                                              double        outKijunSen[],
+                                              double        outSenkouSpanA[],
+                                              double        outSenkouSpanB[] );
+
+TA_LIB_API TA_RetCode TA_S_ICHIMOKU( int    startIdx,
+                                     int    endIdx,
+                                                const float  inHigh[],
+                                                const float  inLow[],
+                                                int           optInTenkanPeriod, /* From 2 to 100000 */
+                                                int           optInKijunPeriod, /* From 2 to 100000 */
+                                                int           optInSenkouBPeriod, /* From 2 to 100000 */
+                                                int          *outBegIdx,
+                                                int          *outNBElement,
+                                                double        outTenkanSen[],
+                                                double        outKijunSen[],
+                                                double        outSenkouSpanA[],
+                                                double        outSenkouSpanB[] );
+
+TA_LIB_API int TA_ICHIMOKU_Lookback( int           optInTenkanPeriod, /* From 2 to 100000 */
+                                              int           optInKijunPeriod, /* From 2 to 100000 */
+                                              int           optInSenkouBPeriod );  /* From 2 to 100000 */
+TA_LIB_API int TA_ICHIMOKU_DisplayShift( int optInTenkanPeriod, int optInKijunPeriod, int optInSenkouBPeriod, int outputIdx );
+
+
+
+/*
+ * Streaming API for TA_ICHIMOKU: incremental per-bar evaluation.
+ */
+typedef struct TA_ICHIMOKU_Stream TA_ICHIMOKU_Stream;
+
+TA_LIB_API TA_RetCode TA_ICHIMOKU_Open( TA_ICHIMOKU_Stream **stream, const double inHigh[], const double inLow[], int historyLen, int optInTenkanPeriod, int optInKijunPeriod, int optInSenkouBPeriod, double *outTenkanSen, double *outKijunSen, double *outSenkouSpanA, double *outSenkouSpanB );
+
+TA_LIB_API TA_RetCode TA_ICHIMOKU_Update( TA_ICHIMOKU_Stream *stream, double inHigh, double inLow, double *outTenkanSen, double *outKijunSen, double *outSenkouSpanA, double *outSenkouSpanB );
+
+TA_LIB_API TA_RetCode TA_ICHIMOKU_Peek( const TA_ICHIMOKU_Stream *stream, double inHigh, double inLow, double *outTenkanSen, double *outKijunSen, double *outSenkouSpanA, double *outSenkouSpanB );
+
+TA_LIB_API TA_RetCode TA_ICHIMOKU_Close( TA_ICHIMOKU_Stream *stream );
+
+/*
+ * OpenAndFill: like Open, but a single pass ALSO fills the caller's arrays
+ * with the whole warm-up history. The fill is bit-identical to
+ * TA_ICHIMOKU( 0, historyLen-1, ... ).
+ */
+TA_LIB_API TA_RetCode TA_ICHIMOKU_OpenAndFill( TA_ICHIMOKU_Stream **stream, const double inHigh[], const double inLow[], int historyLen, int optInTenkanPeriod, int optInKijunPeriod, int optInSenkouBPeriod, int *outBegIdx, int *outNBElement, double outTenkanSen[], double outKijunSen[], double outSenkouSpanA[], double outSenkouSpanB[] );
+
+/*
+ * Value: the value(s) at the last bar the stream counted (the bar
+ * TA_ICHIMOKU_OutRange ends on), without recomputing. Seeded by Open, refreshed by
+ * every accepted Update, left alone by Peek.
+ */
+TA_LIB_API TA_RetCode TA_ICHIMOKU_Value( const TA_ICHIMOKU_Stream *stream, double *outTenkanSen, double *outKijunSen, double *outSenkouSpanA, double *outSenkouSpanB );
+
+/*
+ * OutRange: the bars this stream has an output for, in the input series'
+ * coordinates. That is [*outBegIdx, *outBegIdx + *outNBElement), the range
+ * TA_ICHIMOKU reports over the same bars. Open seeds it; every accepted Update and every
+ * TA_ICHIMOKU_Advance adds one; a rejected Update and a Peek change nothing. The
+ * last bar it can reach is TA_INDEX_MAX: past that Update and Advance answer
+ * TA_OUT_OF_RANGE_END_INDEX, and the handle is done.
+ */
+TA_LIB_API TA_RetCode TA_ICHIMOKU_OutRange( const TA_ICHIMOKU_Stream *stream, int *outBegIdx, int *outNBElement );
+
+/*
+ * Advance: count one bar this stream was not fed (one an Update rejected and
+ * that will not be re-fed, or a session with no print). The range moves by one
+ * and nothing else does, so TA_ICHIMOKU_Value keeps answering the previous output,
+ * which is this bar's output too. TA_OUT_OF_RANGE_END_INDEX once the range has
+ * reached TA_INDEX_MAX.
+ */
+TA_LIB_API TA_RetCode TA_ICHIMOKU_Advance( TA_ICHIMOKU_Stream *stream );
+
+/*
+ * Clone: fork the stream. The fork is an independent stream at the same bar,
+ * owning its own copy of everything the original owns. Both must be closed.
+ * The fork carries the value and the range verbatim.
+ */
+TA_LIB_API TA_RetCode TA_ICHIMOKU_Clone( const TA_ICHIMOKU_Stream *stream, TA_ICHIMOKU_Stream **clone );
+
+/*
  * TA_IMI - Intraday Momentum Index
  * 
  * Input  = Open, Close

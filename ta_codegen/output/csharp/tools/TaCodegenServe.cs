@@ -249,6 +249,7 @@ public class TaCodegenServe {
             else if (method == "TA_HT_TRENDLINE") return Handle_HT_TRENDLINE(p, startIdx, endIdx);
             else if (method == "TA_HT_TRENDMODE") return Handle_HT_TRENDMODE(p, startIdx, endIdx);
             else if (method == "TA_IBS") return Handle_IBS(p, startIdx, endIdx);
+            else if (method == "TA_ICHIMOKU") return Handle_ICHIMOKU(p, startIdx, endIdx);
             else if (method == "TA_IMI") return Handle_IMI(p, startIdx, endIdx);
             else if (method == "TA_KAMA") return Handle_KAMA(p, startIdx, endIdx);
             else if (method == "TA_KC") return Handle_KC(p, startIdx, endIdx);
@@ -614,6 +615,8 @@ public class TaCodegenServe {
                 sb.Append("\"TA_HT_TRENDMODE\"");
                 sb.Append(",");
                 sb.Append("\"TA_IBS\"");
+                sb.Append(",");
+                sb.Append("\"TA_ICHIMOKU\"");
                 sb.Append(",");
                 sb.Append("\"TA_IMI\"");
                 sb.Append(",");
@@ -29413,6 +29416,325 @@ public class TaCodegenServe {
         return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
     }
 
+    static string Sv_ICHIMOKU(JsonElement req) {
+        int svShape = GetInt(req, "gen_shape", 0);
+        int svSeed = GetInt(req, "gen_seed", 0);
+        int svN = GetInt(req, "gen_n", 0);
+        if (svN < 2) svN = 2;
+        if (svN > 256) svN = 256;
+        int svK = GetInt(req, "unstablePeriod", 0);
+        int optInTenkanPeriod = GetInt(req, "optInTenkanPeriod", 9);
+        int optInKijunPeriod = GetInt(req, "optInKijunPeriod", 26);
+        int optInSenkouBPeriod = GetInt(req, "optInSenkouBPeriod", 52);
+        double[] fz_o = new double[svN];
+        double[] fz_h = new double[svN];
+        double[] fz_l = new double[svN];
+        double[] fz_c = new double[svN];
+        double[] fz_v = new double[svN];
+        double[] fz_oi = new double[svN];
+        FuzzData.FuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
+        double[] b0 = new double[svN];
+        double[] b1 = new double[svN];
+        double[] b2 = new double[svN];
+        double[] b3 = new double[svN];
+        long legs = 0;
+        bool allOk = true;
+        bool peekAll = true;
+        long peekReps = 0;
+        long peekRejects = 0;
+        bool peekRepAll = true;
+        int fillChecked = 0;
+        bool fillOk = true;
+        int beg = 0, nb = 0;
+        string diag = "";
+        int rangeChecked = 0;
+        bool rangeOk = true;
+        long rangeLegs = 0;
+        int rangeSites = 0;
+        long zsign = 0;
+        long updAlloc = 0;
+        int rounds = 1;
+        for (int rd = 0; rd < rounds; rd++) {
+            CoreBuilder cb = Core.Builder();
+            Core c2;
+            try { c2 = cb.Build(); }
+            catch (ArgumentOutOfRangeException) {
+                return "{\"error\":\"unstablePeriod out of range\"}";
+            }
+            RetCode rc;
+            try { rc = c2.IchimokuImpl(0, svN - 1, fz_h, fz_l, optInTenkanPeriod, optInKijunPeriod, optInSenkouBPeriod, out beg, out nb, b0, b1, b2, b3); }
+            catch (Exception _sve) when (_sve is ITALibFailure) { rc = ((ITALibFailure)_sve).RetCode; beg = 0; nb = 0; }
+            int lb = c2.IchimokuLookback(optInTenkanPeriod, optInKijunPeriod, optInSenkouBPeriod);
+            if (rc != RetCode.Success || nb == 0) {
+                bool openRejects;
+                try { _ = c2.IchimokuOpen(fz_h, fz_l, optInTenkanPeriod, optInKijunPeriod, optInSenkouBPeriod); openRejects = false; }
+                catch (ArgumentException) { openRejects = true; }
+                return "{\"retCode\":" + (int)rc + ",\"legs\":0,\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (openRejects ? 1 : 0) + ",\"peek_ok\":1}";
+            }
+            fillChecked = 1;
+            try {
+                double[] f0 = new double[svN];
+                Array.Fill(f0, (double)-1.2345678901234e300);
+                double[] f1 = new double[svN];
+                Array.Fill(f1, (double)-1.2345678901234e300);
+                double[] f2 = new double[svN];
+                Array.Fill(f2, (double)-1.2345678901234e300);
+                double[] f3 = new double[svN];
+                Array.Fill(f3, (double)-1.2345678901234e300);
+                Core.IchimokuStream _fh = c2.IchimokuOpenAndFill(fz_h, fz_l, optInTenkanPeriod, optInKijunPeriod, optInSenkouBPeriod, f0, f1, f2, f3);
+                OutRange _fr = _fh.OutRange;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
+                if (_fr.BegIdx != beg || _fr.Count != nb) rangeOk = false;
+                if (_fr.BegIdx != beg || _fr.Count != nb) fillOk = false;
+                else {
+                    for (int bi = 0; bi < nb; bi++) if (SvXtierNe(f0[bi], b0[bi], ref zsign)) fillOk = false;
+                    for (int bi = 0; bi < nb; bi++) if (SvXtierNe(f1[bi], b1[bi], ref zsign)) fillOk = false;
+                    for (int bi = 0; bi < nb; bi++) if (SvXtierNe(f2[bi], b2[bi], ref zsign)) fillOk = false;
+                    for (int bi = 0; bi < nb; bi++) if (SvXtierNe(f3[bi], b3[bi], ref zsign)) fillOk = false;
+                    for (int bi = nb; bi < svN; bi++) if (f0[bi] != (double)-1.2345678901234e300) fillOk = false;
+                    for (int bi = nb; bi < svN; bi++) if (f1[bi] != (double)-1.2345678901234e300) fillOk = false;
+                    for (int bi = nb; bi < svN; bi++) if (f2[bi] != (double)-1.2345678901234e300) fillOk = false;
+                    for (int bi = nb; bi < svN; bi++) if (f3[bi] != (double)-1.2345678901234e300) fillOk = false;
+                }
+                /* R2: aliasing cross product -- every real output x every input,
+                   then every same-typed output pair. Each must throw. */
+                try { _ = c2.IchimokuOpenAndFill(fz_h, fz_l, optInTenkanPeriod, optInKijunPeriod, optInSenkouBPeriod, fz_h, f1, f2, f3); fillOk = false; }
+                catch (ArgumentException) { /* expected: output 0 aliases input inHigh */ }
+                try { _ = c2.IchimokuOpenAndFill(fz_h, fz_l, optInTenkanPeriod, optInKijunPeriod, optInSenkouBPeriod, fz_l, f1, f2, f3); fillOk = false; }
+                catch (ArgumentException) { /* expected: output 0 aliases input inLow */ }
+                try { _ = c2.IchimokuOpenAndFill(fz_h, fz_l, optInTenkanPeriod, optInKijunPeriod, optInSenkouBPeriod, f0, fz_h, f2, f3); fillOk = false; }
+                catch (ArgumentException) { /* expected: output 1 aliases input inHigh */ }
+                try { _ = c2.IchimokuOpenAndFill(fz_h, fz_l, optInTenkanPeriod, optInKijunPeriod, optInSenkouBPeriod, f0, fz_l, f2, f3); fillOk = false; }
+                catch (ArgumentException) { /* expected: output 1 aliases input inLow */ }
+                try { _ = c2.IchimokuOpenAndFill(fz_h, fz_l, optInTenkanPeriod, optInKijunPeriod, optInSenkouBPeriod, f0, f1, fz_h, f3); fillOk = false; }
+                catch (ArgumentException) { /* expected: output 2 aliases input inHigh */ }
+                try { _ = c2.IchimokuOpenAndFill(fz_h, fz_l, optInTenkanPeriod, optInKijunPeriod, optInSenkouBPeriod, f0, f1, fz_l, f3); fillOk = false; }
+                catch (ArgumentException) { /* expected: output 2 aliases input inLow */ }
+                try { _ = c2.IchimokuOpenAndFill(fz_h, fz_l, optInTenkanPeriod, optInKijunPeriod, optInSenkouBPeriod, f0, f1, f2, fz_h); fillOk = false; }
+                catch (ArgumentException) { /* expected: output 3 aliases input inHigh */ }
+                try { _ = c2.IchimokuOpenAndFill(fz_h, fz_l, optInTenkanPeriod, optInKijunPeriod, optInSenkouBPeriod, f0, f1, f2, fz_l); fillOk = false; }
+                catch (ArgumentException) { /* expected: output 3 aliases input inLow */ }
+                try { _ = c2.IchimokuOpenAndFill(fz_h, fz_l, optInTenkanPeriod, optInKijunPeriod, optInSenkouBPeriod, f0, f0, f2, f3); fillOk = false; }
+                catch (ArgumentException) { /* expected: output 1 aliases output 0 */ }
+                try { _ = c2.IchimokuOpenAndFill(fz_h, fz_l, optInTenkanPeriod, optInKijunPeriod, optInSenkouBPeriod, f0, f1, f0, f3); fillOk = false; }
+                catch (ArgumentException) { /* expected: output 2 aliases output 0 */ }
+                try { _ = c2.IchimokuOpenAndFill(fz_h, fz_l, optInTenkanPeriod, optInKijunPeriod, optInSenkouBPeriod, f0, f1, f2, f0); fillOk = false; }
+                catch (ArgumentException) { /* expected: output 3 aliases output 0 */ }
+                try { _ = c2.IchimokuOpenAndFill(fz_h, fz_l, optInTenkanPeriod, optInKijunPeriod, optInSenkouBPeriod, f0, f1, f1, f3); fillOk = false; }
+                catch (ArgumentException) { /* expected: output 2 aliases output 1 */ }
+                try { _ = c2.IchimokuOpenAndFill(fz_h, fz_l, optInTenkanPeriod, optInKijunPeriod, optInSenkouBPeriod, f0, f1, f2, f1); fillOk = false; }
+                catch (ArgumentException) { /* expected: output 3 aliases output 1 */ }
+                try { _ = c2.IchimokuOpenAndFill(fz_h, fz_l, optInTenkanPeriod, optInKijunPeriod, optInSenkouBPeriod, f0, f1, f2, f2); fillOk = false; }
+                catch (ArgumentException) { /* expected: output 3 aliases output 2 */ }
+                double[] ovD = new double[svN + 1];
+                double[] ovIn = new double[svN + 1];
+                Array.Copy(fz_h, ovIn, svN);
+                /* R2b: PARTIAL overlap -- only spans can express it, and it is
+                   the only shape that separates Overlaps from identity. */
+                try { _ = c2.IchimokuOpenAndFill(fz_h, fz_l, optInTenkanPeriod, optInKijunPeriod, optInSenkouBPeriod, ovD.AsSpan(0, svN), ovD.AsSpan(1, svN), f2, f3); fillOk = false; }
+                catch (ArgumentException) { /* expected: outputs 0/1 partially overlap (offset) */ }
+                try { _ = c2.IchimokuOpenAndFill(fz_h, fz_l, optInTenkanPeriod, optInKijunPeriod, optInSenkouBPeriod, ovD.AsSpan(0, svN), ovD.AsSpan(0, svN + 1), f2, f3); fillOk = false; }
+                catch (ArgumentException) { /* expected: outputs 0/1 partially overlap (same start, longer) */ }
+                try { _ = c2.IchimokuOpenAndFill(fz_h, fz_l, optInTenkanPeriod, optInKijunPeriod, optInSenkouBPeriod, ovD.AsSpan(0, svN), f1, ovD.AsSpan(1, svN), f3); fillOk = false; }
+                catch (ArgumentException) { /* expected: outputs 0/2 partially overlap (offset) */ }
+                try { _ = c2.IchimokuOpenAndFill(fz_h, fz_l, optInTenkanPeriod, optInKijunPeriod, optInSenkouBPeriod, ovD.AsSpan(0, svN), f1, ovD.AsSpan(0, svN + 1), f3); fillOk = false; }
+                catch (ArgumentException) { /* expected: outputs 0/2 partially overlap (same start, longer) */ }
+                try { _ = c2.IchimokuOpenAndFill(fz_h, fz_l, optInTenkanPeriod, optInKijunPeriod, optInSenkouBPeriod, ovD.AsSpan(0, svN), f1, f2, ovD.AsSpan(1, svN)); fillOk = false; }
+                catch (ArgumentException) { /* expected: outputs 0/3 partially overlap (offset) */ }
+                try { _ = c2.IchimokuOpenAndFill(fz_h, fz_l, optInTenkanPeriod, optInKijunPeriod, optInSenkouBPeriod, ovD.AsSpan(0, svN), f1, f2, ovD.AsSpan(0, svN + 1)); fillOk = false; }
+                catch (ArgumentException) { /* expected: outputs 0/3 partially overlap (same start, longer) */ }
+                try { _ = c2.IchimokuOpenAndFill(fz_h, fz_l, optInTenkanPeriod, optInKijunPeriod, optInSenkouBPeriod, f0, ovD.AsSpan(0, svN), ovD.AsSpan(1, svN), f3); fillOk = false; }
+                catch (ArgumentException) { /* expected: outputs 1/2 partially overlap (offset) */ }
+                try { _ = c2.IchimokuOpenAndFill(fz_h, fz_l, optInTenkanPeriod, optInKijunPeriod, optInSenkouBPeriod, f0, ovD.AsSpan(0, svN), ovD.AsSpan(0, svN + 1), f3); fillOk = false; }
+                catch (ArgumentException) { /* expected: outputs 1/2 partially overlap (same start, longer) */ }
+                try { _ = c2.IchimokuOpenAndFill(fz_h, fz_l, optInTenkanPeriod, optInKijunPeriod, optInSenkouBPeriod, f0, ovD.AsSpan(0, svN), f2, ovD.AsSpan(1, svN)); fillOk = false; }
+                catch (ArgumentException) { /* expected: outputs 1/3 partially overlap (offset) */ }
+                try { _ = c2.IchimokuOpenAndFill(fz_h, fz_l, optInTenkanPeriod, optInKijunPeriod, optInSenkouBPeriod, f0, ovD.AsSpan(0, svN), f2, ovD.AsSpan(0, svN + 1)); fillOk = false; }
+                catch (ArgumentException) { /* expected: outputs 1/3 partially overlap (same start, longer) */ }
+                try { _ = c2.IchimokuOpenAndFill(fz_h, fz_l, optInTenkanPeriod, optInKijunPeriod, optInSenkouBPeriod, f0, f1, ovD.AsSpan(0, svN), ovD.AsSpan(1, svN)); fillOk = false; }
+                catch (ArgumentException) { /* expected: outputs 2/3 partially overlap (offset) */ }
+                try { _ = c2.IchimokuOpenAndFill(fz_h, fz_l, optInTenkanPeriod, optInKijunPeriod, optInSenkouBPeriod, f0, f1, ovD.AsSpan(0, svN), ovD.AsSpan(0, svN + 1)); fillOk = false; }
+                catch (ArgumentException) { /* expected: outputs 2/3 partially overlap (same start, longer) */ }
+                try { _ = c2.IchimokuOpenAndFill(ovIn.AsSpan(0, svN), fz_l, optInTenkanPeriod, optInKijunPeriod, optInSenkouBPeriod, ovIn.AsSpan(1, svN), f1, f2, f3); fillOk = false; }
+                catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
+                try { _ = c2.IchimokuOpenAndFill(ovIn.AsSpan(0, svN), fz_l, optInTenkanPeriod, optInKijunPeriod, optInSenkouBPeriod, f0, ovIn.AsSpan(1, svN), f2, f3); fillOk = false; }
+                catch (ArgumentException) { /* expected: output 1 partially overlaps an input */ }
+                try { _ = c2.IchimokuOpenAndFill(ovIn.AsSpan(0, svN), fz_l, optInTenkanPeriod, optInKijunPeriod, optInSenkouBPeriod, f0, f1, ovIn.AsSpan(1, svN), f3); fillOk = false; }
+                catch (ArgumentException) { /* expected: output 2 partially overlaps an input */ }
+                try { _ = c2.IchimokuOpenAndFill(ovIn.AsSpan(0, svN), fz_l, optInTenkanPeriod, optInKijunPeriod, optInSenkouBPeriod, f0, f1, f2, ovIn.AsSpan(1, svN)); fillOk = false; }
+                catch (ArgumentException) { /* expected: output 3 partially overlaps an input */ }
+            } catch (ArgumentException) { fillOk = false; }
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
+            Array.Sort(pcs);
+            int prevP = -1;
+            for (int pi = 0; pi < pcs.Length; pi++) {
+                int p = pcs[pi];
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
+                prevP = p;
+                Core.IchimokuStream st;
+                try { st = c2.IchimokuOpen(fz_h[..p], fz_l[..p], optInTenkanPeriod, optInKijunPeriod, optInSenkouBPeriod); }
+                catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
+                legs++;
+                Core.IchimokuValue v0 = st.Value;
+                if (SvXtierNe(v0.TenkanSen, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
+                if (SvXtierNe(v0.KijunSen, b1[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":1,\"where\":\"open\""; }
+                if (SvXtierNe(v0.SenkouSpanA, b2[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":2,\"where\":\"open\""; }
+                if (SvXtierNe(v0.SenkouSpanB, b3[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":3,\"where\":\"open\""; }
+                for (int t = p; t < svN; t++) {
+                    bool pkTook = true;
+                    Core.IchimokuValue pk = default;
+                    try { pk = st.Peek(fz_h[t], fz_l[t]); } catch (ArgumentException) { pkTook = false; peekRejects++; }
+                    if (t % 7 == 0) {
+                        bool rpTook = pkTook;
+                        try { _ = st.Peek(fz_h[t - 1], fz_l[t - 1]); } catch (ArgumentException) { peekRejects++; }
+                        Core.IchimokuValue rp = default;
+                        try { rp = st.Peek(fz_h[t], fz_l[t]); } catch (ArgumentException) { rpTook = false; }
+                        if (rpTook) {
+                            peekReps++;
+                            if (SvBne(rp.TenkanSen, pk.TenkanSen)) peekRepAll = false;
+                            if (SvBne(rp.KijunSen, pk.KijunSen)) peekRepAll = false;
+                            if (SvBne(rp.SenkouSpanA, pk.SenkouSpanA)) peekRepAll = false;
+                            if (SvBne(rp.SenkouSpanB, pk.SenkouSpanB)) peekRepAll = false;
+                        } else { peekRejects++; }
+                    }
+                    Core.IchimokuValue up = st.Update(fz_h[t], fz_l[t]);
+                    if (pkTook && (SvBne(pk.TenkanSen, up.TenkanSen))) peekAll = false;
+                    if (pkTook && (SvBne(pk.KijunSen, up.KijunSen))) peekAll = false;
+                    if (pkTook && (SvBne(pk.SenkouSpanA, up.SenkouSpanA))) peekAll = false;
+                    if (pkTook && (SvBne(pk.SenkouSpanB, up.SenkouSpanB))) peekAll = false;
+                    try { _ = st.Peek(fz_h[t - 1], fz_l[t - 1]); } catch (ArgumentException) { peekRejects++; }
+                    Core.IchimokuValue vc = st.Value;
+                    if (SvBne(vc.TenkanSen, up.TenkanSen)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
+                    if (SvBne(vc.KijunSen, up.KijunSen)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
+                    if (SvBne(vc.SenkouSpanA, up.SenkouSpanA)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
+                    if (SvBne(vc.SenkouSpanB, up.SenkouSpanB)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
+                    if (SvXtierNe(up.TenkanSen, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up.TenkanSen).ToString("x16") + "\""; }
+                    if (SvXtierNe(up.KijunSen, b1[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":1,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b1[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up.KijunSen).ToString("x16") + "\""; }
+                    if (SvXtierNe(up.SenkouSpanA, b2[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":2,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b2[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up.SenkouSpanA).ToString("x16") + "\""; }
+                    if (SvXtierNe(up.SenkouSpanB, b3[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":3,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b3[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up.SenkouSpanB).ToString("x16") + "\""; }
+                }
+                if (allOk) {
+                    rangeChecked = 1; rangeLegs++; rangeSites |= 2;
+                    if (st.OutRange.BegIdx != beg || st.OutRange.Count != nb) rangeOk = false;
+                    rangeLegs++; rangeSites |= 16;
+                    st.Advance();
+                    if (st.OutRange.BegIdx != beg || st.OutRange.Count != nb + 1) rangeOk = false;
+                }
+            }
+            {
+                int p0 = lb + 1;
+                if (p0 <= svN - 1) {
+                    try {
+                        double[] f0 = new double[svN];
+                        Array.Fill(f0, (double)-1.2345678901234e300);
+                        double[] f1 = new double[svN];
+                        Array.Fill(f1, (double)-1.2345678901234e300);
+                        double[] f2 = new double[svN];
+                        Array.Fill(f2, (double)-1.2345678901234e300);
+                        double[] f3 = new double[svN];
+                        Array.Fill(f3, (double)-1.2345678901234e300);
+                        Core.IchimokuStream sA = c2.IchimokuOpenAndFill(fz_h[..p0], fz_l[..p0], optInTenkanPeriod, optInKijunPeriod, optInSenkouBPeriod, f0, f1, f2, f3);
+                        int mid = (p0 + svN) / 2;
+                        for (int t = p0; t < mid; t++) {
+                            Core.IchimokuValue uP = sA.Update(fz_h[t], fz_l[t]);
+                            if (SvXtierNe(uP.TenkanSen, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyPreDiverged\":" + t; }
+                            if (SvXtierNe(uP.KijunSen, b1[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyPreDiverged\":" + t; }
+                            if (SvXtierNe(uP.SenkouSpanA, b2[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyPreDiverged\":" + t; }
+                            if (SvXtierNe(uP.SenkouSpanB, b3[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyPreDiverged\":" + t; }
+                        }
+                        Core.IchimokuStream sB = sA.Clone();
+                        sB.Advance();
+                        sB.Advance();
+                        var fk = new Core.IchimokuValue[svN];
+                        for (int t = mid; t < svN; t++) {
+                            fk[t] = sB.Update(fz_h[t], fz_l[t]);
+                            if (SvXtierNe(fk[t].TenkanSen, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyForkDiverged\":" + t; }
+                            if (SvXtierNe(fk[t].KijunSen, b1[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyForkDiverged\":" + t; }
+                            if (SvXtierNe(fk[t].SenkouSpanA, b2[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyForkDiverged\":" + t; }
+                            if (SvXtierNe(fk[t].SenkouSpanB, b3[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyForkDiverged\":" + t; }
+                        }
+                        for (int t = mid; t < svN; t++) {
+                            Core.IchimokuValue uA = sA.Update(fz_h[t], fz_l[t]);
+                            if (SvBne(uA.TenkanSen, fk[t].TenkanSen) || SvXtierNe(uA.TenkanSen, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                            if (SvBne(uA.KijunSen, fk[t].KijunSen) || SvXtierNe(uA.KijunSen, b1[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                            if (SvBne(uA.SenkouSpanA, fk[t].SenkouSpanA) || SvXtierNe(uA.SenkouSpanA, b2[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                            if (SvBne(uA.SenkouSpanB, fk[t].SenkouSpanB) || SvXtierNe(uA.SenkouSpanB, b3[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                        }
+                        if (allOk) {
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 8;
+                            if (sA.OutRange.BegIdx != beg || sA.OutRange.Count != nb) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRangeSrc\":1"; }
+                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb + 2) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
+                        }
+                    } catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"copyOpenReject\":1"; }
+                }
+            }
+            {
+                int pa = lb + 1;
+                if (pa <= svN - 1) {
+                    try {
+                        Core.IchimokuStream sQ = c2.IchimokuOpen(fz_h[..pa], fz_l[..pa], optInTenkanPeriod, optInKijunPeriod, optInSenkouBPeriod);
+                        double sink = 0.0;
+                        long a0 = GC.GetAllocatedBytesForCurrentThread();
+                        for (int t = pa; t < svN; t++) {
+                            Core.IchimokuValue uq = sQ.Update(fz_h[t], fz_l[t]);
+                            sink += uq.TenkanSen;
+                        }
+                        long ad = GC.GetAllocatedBytesForCurrentThread() - a0;
+                        svUpdSink += sink;
+                        if (ad > updAlloc) updAlloc = ad;
+                        if (ad != 0) { allOk = false; if (diag.Length == 0) diag = ",\"updAllocBytes\":" + ad; }
+                    } catch (ArgumentException) { /* open rejects here -- nothing to measure */ }
+                }
+            }
+            if (lb >= 1 && lb < svN) {
+                try { _ = c2.IchimokuOpen(fz_h[..lb], fz_l[..lb], optInTenkanPeriod, optInKijunPeriod, optInSenkouBPeriod); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryAccepted\":1"; }
+                catch (InsufficientHistoryException) { /* expected, typed */ }
+                catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    Array.Fill(f0, (double)-1.2345678901234e300);
+                    double[] f1 = new double[svN];
+                    Array.Fill(f1, (double)-1.2345678901234e300);
+                    double[] f2 = new double[svN];
+                    Array.Fill(f2, (double)-1.2345678901234e300);
+                    double[] f3 = new double[svN];
+                    Array.Fill(f3, (double)-1.2345678901234e300);
+                    try { _ = c2.IchimokuOpenAndFill(fz_h[..lb], fz_l[..lb], optInTenkanPeriod, optInKijunPeriod, optInSenkouBPeriod, f0, f1, f2, f3); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException) { /* expected, typed */ }
+                    catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
+            }
+            try {
+                Core.IchimokuStream sD = c2.IchimokuOpen(fz_h, fz_l, int.MinValue, int.MinValue, int.MinValue);
+                Core.IchimokuStream sE = c2.IchimokuOpen(fz_h, fz_l, 9, 26, 52);
+                Core.IchimokuValue vD = sD.Value;
+                Core.IchimokuValue vE = sE.Value;
+                if (SvBne(vD.TenkanSen, vE.TenkanSen)) { allOk = false; if (diag.Length == 0) diag = ",\"minValueDefault\":1"; }
+                if (SvBne(vD.KijunSen, vE.KijunSen)) { allOk = false; if (diag.Length == 0) diag = ",\"minValueDefault\":1"; }
+                if (SvBne(vD.SenkouSpanA, vE.SenkouSpanA)) { allOk = false; if (diag.Length == 0) diag = ",\"minValueDefault\":1"; }
+                if (SvBne(vD.SenkouSpanB, vE.SenkouSpanB)) { allOk = false; if (diag.Length == 0) diag = ",\"minValueDefault\":1"; }
+            } catch (ArgumentException) { /* defaults need more history than svN -- skip */ }
+            {
+                int Sidx = lb + (svN - lb) / 3;
+                if (Sidx > lb && Sidx < svN - 1) {
+                    int begS = 0, nbS = 0;
+                    RetCode rcS;
+                    try { rcS = c2.IchimokuImpl(Sidx, svN - 1, fz_h, fz_l, optInTenkanPeriod, optInKijunPeriod, optInSenkouBPeriod, out begS, out nbS, b0, b1, b2, b3); }
+                    catch (Exception _sve) when (_sve is ITALibFailure) { rcS = ((ITALibFailure)_sve).RetCode; }
+                    if (rcS == RetCode.Success && nbS > 0) {
+                        try {
+                            Core.IchimokuStream stA = c2.IchimokuOpenInternal(fz_h[..svN], fz_l[..svN], Sidx, optInTenkanPeriod, optInKijunPeriod, optInSenkouBPeriod);
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 4;
+                            if (stA.OutRange.BegIdx != begS || stA.OutRange.Count != nbS) rangeOk = false;
+                        } catch (ArgumentException) { rangeOk = false; if (diag.Length == 0) diag = ",\"anchoredOpenRejected\":1"; }
+                    }
+                }
+            }
+        }
+        string extra = ",\"updAlloc\":" + updAlloc;
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
+    }
+
     static string Sv_IMI(JsonElement req) {
         int svShape = GetInt(req, "gen_shape", 0);
         int svSeed = GetInt(req, "gen_seed", 0);
@@ -52889,6 +53211,7 @@ public class TaCodegenServe {
         case "TA_HT_TRENDLINE": return Sv_HT_TRENDLINE(req);
         case "TA_HT_TRENDMODE": return Sv_HT_TRENDMODE(req);
         case "TA_IBS": return Sv_IBS(req);
+        case "TA_ICHIMOKU": return Sv_ICHIMOKU(req);
         case "TA_IMI": return Sv_IMI(req);
         case "TA_KAMA": return Sv_KAMA(req);
         case "TA_KC": return Sv_KC(req);
@@ -67439,6 +67762,136 @@ public class TaCodegenServe {
         }
     }
 
+    static void RideIchimoku(Core core, JsonElement p, int endIdx, double[] inHigh, double[] inLow, int optInTenkanPeriod, int optInKijunPeriod, int optInSenkouBPeriod, System.Text.StringBuilder sb)
+    {
+        if (!RideGate(p)) return;
+        RideResult r = new RideResult();
+        RideBodyIchimoku(core, p, endIdx, inHigh, inLow, optInTenkanPeriod, optInKijunPeriod, optInSenkouBPeriod, r);
+        r.Emit(sb);
+    }
+
+    static void RideBodyIchimoku(Core core, JsonElement p, int endIdx, double[] inHigh, double[] inLow, int optInTenkanPeriod, int optInKijunPeriod, int optInSenkouBPeriod, RideResult r)
+    {
+        try { r.Lb = core.IchimokuLookback(optInTenkanPeriod, optInKijunPeriod, optInSenkouBPeriod); } catch (Exception) { r.Lb = -1; }
+        int lb = r.Lb;
+        int navail = endIdx + 1;
+        if (inHigh.Length < navail) navail = inHigh.Length;
+        if (inLow.Length < navail) navail = inLow.Length;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
+        if (m > navail) m = navail;
+        r.M = m;
+        if (m > RIDE_MAX_BARS) { r.Skip = 1; return; }
+        if (m < 1) { r.Skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
+        if (!RideFinite(inHigh, m) || !RideFinite(inLow, m) || false) { r.Skip = 4; return; }
+
+        ulong hash = 0xcbf29ce484222325UL;
+        hash = RideMixStr(hash, "TA_ICHIMOKU");
+        hash = RideMix(hash, (ulong) m);
+        hash = RideMix(hash, rideGen);
+        hash = RideMix(hash, (ulong)(long) GetInt(p, "unstablePeriod", 0));
+        hash = RideMix(hash, (ulong)(long) optInTenkanPeriod);
+        hash = RideMix(hash, (ulong)(long) optInKijunPeriod);
+        hash = RideMix(hash, (ulong)(long) optInSenkouBPeriod);
+        hash = RideMixArr(hash, inHigh, m);
+        hash = RideMixArr(hash, inLow, m);
+        int slot = (int)(hash % (ulong) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash)
+        {
+            r.Dedup = 1; r.OpenBars = rideSeenOpen[slot]; r.FillBars = rideSeenFill[slot]; return;
+        }
+
+        double[] rb0 = new double[m];
+        double[] rb1 = new double[m];
+        double[] rb2 = new double[m];
+        double[] rb3 = new double[m];
+        int beg = 0;
+        int nb = 0;
+        string clsB = "";
+        bool rejected = false;
+        try { OutRange _rr = core.Ichimoku(0, m - 1, inHigh.AsSpan(0, m), inLow.AsSpan(0, m), optInTenkanPeriod, optInKijunPeriod, optInSenkouBPeriod, rb0, rb1, rb2, rb3); beg = _rr.BegIdx; nb = _rr.Count; }
+        catch (Exception _e) { r.RcBatch = RideCode(_e); clsB = _e.GetType().FullName ?? ""; rejected = true; }
+        if (rejected)
+        {
+            string clsO = "", clsF = "";
+            try { core.IchimokuOpen(inHigh.AsSpan(0, m), inLow.AsSpan(0, m), optInTenkanPeriod, optInKijunPeriod, optInSenkouBPeriod); } catch (Exception _e) { r.RcOpen = RideCode(_e); clsO = _e.GetType().FullName ?? ""; }
+            double[] fb0 = new double[m];
+            double[] fb1 = new double[m];
+            double[] fb2 = new double[m];
+            double[] fb3 = new double[m];
+            try { core.IchimokuOpenAndFill(inHigh.AsSpan(0, m), inLow.AsSpan(0, m), optInTenkanPeriod, optInKijunPeriod, optInSenkouBPeriod, fb0, fb1, fb2, fb3); } catch (Exception _e) { r.RcFill = RideCode(_e); clsF = _e.GetType().FullName ?? ""; }
+            bool cmpO = r.RcOpen == r.RcBatch && clsO == clsB;
+            if (cmpO) r.Rej++;
+            if (!cmpO) { r.Ok = false; r.Leg = r.RcOpen == r.RcBatch ? 4 : 3; }
+            bool cmpF = r.RcFill == r.RcBatch && clsF == clsB;
+            if (cmpF) r.Rej++;
+            if (!cmpF) { r.Ok = false; r.Leg = r.RcFill == r.RcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.Skip = 7; return; }
+        if (nb == 0) { r.Skip = 5; return; }
+        if (beg != lb) { r.Skip = 6; return; }
+
+        try
+        {
+            bool cmp;
+            var st = core.IchimokuOpen(inHigh.AsSpan(0, lb + 1), inLow.AsSpan(0, lb + 1), optInTenkanPeriod, optInKijunPeriod, optInSenkouBPeriod);
+            var uv = st.Value;
+            cmp = true;
+            if (cmp && SvXtierNe(rb0[lb - beg], uv.TenkanSen, ref r.Benign[0])) { cmp = false; r.Out = 0; r.Batch = BitConverter.DoubleToInt64Bits(rb0[lb - beg]); r.Stream = BitConverter.DoubleToInt64Bits(uv.TenkanSen); }
+            if (cmp && SvXtierNe(rb1[lb - beg], uv.KijunSen, ref r.Benign[0])) { cmp = false; r.Out = 1; r.Batch = BitConverter.DoubleToInt64Bits(rb1[lb - beg]); r.Stream = BitConverter.DoubleToInt64Bits(uv.KijunSen); }
+            if (cmp && SvXtierNe(rb2[lb - beg], uv.SenkouSpanA, ref r.Benign[0])) { cmp = false; r.Out = 2; r.Batch = BitConverter.DoubleToInt64Bits(rb2[lb - beg]); r.Stream = BitConverter.DoubleToInt64Bits(uv.SenkouSpanA); }
+            if (cmp && SvXtierNe(rb3[lb - beg], uv.SenkouSpanB, ref r.Benign[0])) { cmp = false; r.Out = 3; r.Batch = BitConverter.DoubleToInt64Bits(rb3[lb - beg]); r.Stream = BitConverter.DoubleToInt64Bits(uv.SenkouSpanB); }
+            if (cmp) r.OpenBars++;
+            if (!cmp) { r.Ok = false; r.Leg = 1; r.Bar = lb; }
+            for (int t = lb + 1; r.Ok && t < m; t++)
+            {
+                uv = st.Update(inHigh[t], inLow[t]);
+                cmp = true;
+                if (cmp && SvXtierNe(rb0[t - beg], uv.TenkanSen, ref r.Benign[0])) { cmp = false; r.Out = 0; r.Batch = BitConverter.DoubleToInt64Bits(rb0[t - beg]); r.Stream = BitConverter.DoubleToInt64Bits(uv.TenkanSen); }
+                if (cmp && SvXtierNe(rb1[t - beg], uv.KijunSen, ref r.Benign[0])) { cmp = false; r.Out = 1; r.Batch = BitConverter.DoubleToInt64Bits(rb1[t - beg]); r.Stream = BitConverter.DoubleToInt64Bits(uv.KijunSen); }
+                if (cmp && SvXtierNe(rb2[t - beg], uv.SenkouSpanA, ref r.Benign[0])) { cmp = false; r.Out = 2; r.Batch = BitConverter.DoubleToInt64Bits(rb2[t - beg]); r.Stream = BitConverter.DoubleToInt64Bits(uv.SenkouSpanA); }
+                if (cmp && SvXtierNe(rb3[t - beg], uv.SenkouSpanB, ref r.Benign[0])) { cmp = false; r.Out = 3; r.Batch = BitConverter.DoubleToInt64Bits(rb3[t - beg]); r.Stream = BitConverter.DoubleToInt64Bits(uv.SenkouSpanB); }
+                if (cmp) r.OpenBars++;
+                if (!cmp) { r.Ok = false; r.Leg = 1; r.Bar = t; }
+            }
+        }
+        catch (Exception) { r.Ok = false; r.Leg = 1; }
+
+        if (r.Ok)
+        {
+            double[] fb0 = new double[m];
+            double[] fb1 = new double[m];
+            double[] fb2 = new double[m];
+            double[] fb3 = new double[m];
+            try
+            {
+                var st2 = core.IchimokuOpenAndFill(inHigh.AsSpan(0, m), inLow.AsSpan(0, m), optInTenkanPeriod, optInKijunPeriod, optInSenkouBPeriod, fb0, fb1, fb2, fb3);
+                if (st2.OutRange.BegIdx != beg || st2.OutRange.Count != nb) { r.Ok = false; r.Leg = 2; }
+                if (r.Ok)
+                {
+                    for (int k = 0; k < nb; k++)
+                    {
+                        bool cmp = true;
+                        if (cmp && SvXtierNe(rb0[k], fb0[k], ref r.Benign[0])) { cmp = false; r.Out = 0; r.Batch = BitConverter.DoubleToInt64Bits(rb0[k]); r.Stream = BitConverter.DoubleToInt64Bits(fb0[k]); }
+                        if (cmp && SvXtierNe(rb1[k], fb1[k], ref r.Benign[0])) { cmp = false; r.Out = 1; r.Batch = BitConverter.DoubleToInt64Bits(rb1[k]); r.Stream = BitConverter.DoubleToInt64Bits(fb1[k]); }
+                        if (cmp && SvXtierNe(rb2[k], fb2[k], ref r.Benign[0])) { cmp = false; r.Out = 2; r.Batch = BitConverter.DoubleToInt64Bits(rb2[k]); r.Stream = BitConverter.DoubleToInt64Bits(fb2[k]); }
+                        if (cmp && SvXtierNe(rb3[k], fb3[k], ref r.Benign[0])) { cmp = false; r.Out = 3; r.Batch = BitConverter.DoubleToInt64Bits(rb3[k]); r.Stream = BitConverter.DoubleToInt64Bits(fb3[k]); }
+                        if (cmp) r.FillBars++;
+                        if (!cmp) { r.Ok = false; r.Leg = 2; r.Bar = beg + k; break; }
+                    }
+                }
+            }
+            catch (Exception) { r.Ok = false; r.Leg = 2; }
+        }
+
+        if (r.Ok)
+        {
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
+            rideSeenOpen[slot] = r.OpenBars; rideSeenFill[slot] = r.FillBars;
+        }
+    }
+
     static void RideImi(Core core, JsonElement p, int endIdx, double[] inOpen, double[] inClose, int optInTimePeriod, System.Text.StringBuilder sb)
     {
         if (!RideGate(p)) return;
@@ -79940,6 +80393,12 @@ public class TaCodegenServe {
         case "IBS": {
             return core.IbsLookback();
         }
+        case "ICHIMOKU": {
+            int optInTenkanPeriod = GetInt(p, "optInTenkanPeriod", 0);
+            int optInKijunPeriod = GetInt(p, "optInKijunPeriod", 0);
+            int optInSenkouBPeriod = GetInt(p, "optInSenkouBPeriod", 0);
+            return core.IchimokuLookback(optInTenkanPeriod, optInKijunPeriod, optInSenkouBPeriod);
+        }
         case "IMI": {
             int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
             return core.ImiLookback(optInTimePeriod);
@@ -80908,6 +81367,12 @@ public class TaCodegenServe {
         }
         case "IBS": {
             return core.IbsDisplayShift(GetInt(p, "outputIdx", 0));
+        }
+        case "ICHIMOKU": {
+            int optInTenkanPeriod = GetInt(p, "optInTenkanPeriod", 0);
+            int optInKijunPeriod = GetInt(p, "optInKijunPeriod", 0);
+            int optInSenkouBPeriod = GetInt(p, "optInSenkouBPeriod", 0);
+            return core.IchimokuDisplayShift(optInTenkanPeriod, optInKijunPeriod, optInSenkouBPeriod, GetInt(p, "outputIdx", 0));
         }
         case "IMI": {
             int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
@@ -98624,6 +99089,146 @@ public class TaCodegenServe {
         sb.Append($",\"used_float\":{usedFloat}");
         sb.Append($",\"timing_ns\":{elapsedNs}");
         RideIbs(core, p, endIdx, inHigh, inLow, inClose, sb);
+        sb.Append("}");
+        return sb.ToString();
+    }
+
+    static string Handle_ICHIMOKU(JsonElement p, int startIdx, int endIdx) {
+        int use_preloaded = GetInt(p, "use_preloaded", 0);
+        int bench_iters = GetInt(p, "iters", 1);
+        if (bench_iters < 1) bench_iters = 1;
+        int bench_mode = GetInt(p, "bench_mode", 0);
+        double[] inHigh;
+        double[] inLow;
+        if (use_preloaded != 0 && refN > 0) {
+            inHigh = new double[refN]; Array.Copy(refHigh, inHigh, refN);
+            inLow = new double[refN]; Array.Copy(refLow, inLow, refN);
+        } else {
+            inHigh = GetDoubleArray(p, "inHigh");
+            inLow = GetDoubleArray(p, "inLow");
+        }
+        ReadOnlySpan<double> _warm_inHigh = bench_mode == 0 ? default : inHigh.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inLow = bench_mode == 0 ? default : inLow.AsSpan(0, endIdx + 1);
+        int optInTenkanPeriod = GetInt(p, "optInTenkanPeriod", 0);
+        int optInKijunPeriod = GetInt(p, "optInKijunPeriod", 0);
+        int optInSenkouBPeriod = GetInt(p, "optInSenkouBPeriod", 0);
+        // The output buffers are sized to the count the call actually PRODUCES --
+        // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
+        // never below one. Not to the width of the requested range: that is the bound the
+        // managed backends check and the Rust asserts state, and at the range width it was
+        // slack by exactly the lookback, so no call could ever approach it.
+        // The pad is there because a bound is a MINIMUM, never an equality. A caller
+        // re-using a pre-allocated buffer passes a larger one, and that is not an error --
+        // the reported OutRange is what says which part was written. So the harness sends
+        // both: the startIdx axis sends no pad (the bound is reachable) while the
+        // full-range value comparison sends one (slack is legal). Sizing every call one way
+        // would silently drop the other property.
+        // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
+        // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
+        // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
+        // sizes and cannot make the check, so an exact buffer would test nothing there.
+        int _lb = core.IchimokuLookback(optInTenkanPeriod, optInKijunPeriod, optInSenkouBPeriod);
+        int _cs = startIdx > _lb ? startIdx : _lb;
+        int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + GetInt(p, "out_pad", 0);
+        double[] outArr0 = new double[_outLen];
+        double[] outArr1 = new double[_outLen];
+        double[] outArr2 = new double[_outLen];
+        double[] outArr3 = new double[_outLen];
+        int outBegIdx = 0, outNBElement = 0;
+        RetCode rc = RetCode.Success;
+        long _t0 = 0;
+        for (int _bi = 0; _bi <= bench_iters; _bi++) {
+            if (_bi == 1) _t0 = GetNanoTime();
+            if (bench_mode == 0) {
+            if (GetInt(p, "timed", 0) != 0) {
+                try {
+                    rc = core.IchimokuImpl(startIdx, endIdx, inHigh, inLow, optInTenkanPeriod, optInKijunPeriod, optInSenkouBPeriod, out outBegIdx, out outNBElement, outArr0, outArr1, outArr2, outArr3);
+                } catch (Exception _e2) when (_e2 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e2).RetCode;
+                    outBegIdx = 0;
+                    outNBElement = 0;
+                }
+            } else {
+                try {
+                    OutRange _pr = core.Ichimoku(startIdx, endIdx, inHigh, inLow, optInTenkanPeriod, optInKijunPeriod, optInSenkouBPeriod, outArr0, outArr1, outArr2, outArr3);
+                    outBegIdx = _pr.BegIdx;
+                    outNBElement = _pr.Count;
+                    rc = RetCode.Success;
+                } catch (Exception _e) when (_e is ITALibFailure) {
+                    rc = ((ITALibFailure)_e).RetCode;
+                    outBegIdx = 0;
+                    outNBElement = 0;
+                }
+            }
+            } else if (bench_mode == 1) {
+                try {
+                    core.IchimokuOpen(_warm_inHigh, _warm_inLow, optInTenkanPeriod, optInKijunPeriod, optInSenkouBPeriod);
+                    rc = RetCode.Success;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
+                }
+            } else {
+                try {
+                    Core.IchimokuStream _wh = core.IchimokuOpenAndFill(_warm_inHigh, _warm_inLow, optInTenkanPeriod, optInKijunPeriod, optInSenkouBPeriod, outArr0, outArr1, outArr2, outArr3);
+                    outBegIdx = _wh.OutRange.BegIdx;
+                    outNBElement = _wh.OutRange.Count;
+                    rc = RetCode.Success;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
+                    outBegIdx = 0;
+                    outNBElement = 0;
+                }
+            }
+        }
+        long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
+        int usedFloat = 0;
+        if (GetInt(p, "use_float", 0) != 0) {
+            var f_inHigh = new float[inHigh.Length];
+            for (int _fi = 0; _fi < inHigh.Length; _fi++) f_inHigh[_fi] = (float)inHigh[_fi];
+            var f_inLow = new float[inLow.Length];
+            for (int _fi = 0; _fi < inLow.Length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
+            try {
+                OutRange _fr = core.Ichimoku(startIdx, endIdx, f_inHigh, f_inLow, optInTenkanPeriod, optInKijunPeriod, optInSenkouBPeriod, outArr0, outArr1, outArr2, outArr3);
+                outBegIdx = _fr.BegIdx;
+                outNBElement = _fr.Count;
+                rc = RetCode.Success;
+            } catch (Exception _e) when (_e is ITALibFailure) {
+                rc = ((ITALibFailure)_e).RetCode;
+                outBegIdx = 0;
+                outNBElement = 0;
+            }
+            usedFloat = 1;
+        }
+        if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {
+            ulong _h = SvHashInit();
+            if (rc == RetCode.Success && outNBElement > 0) {
+                _h = SvHashF64(_h, outArr0, outNBElement);
+                _h = SvHashF64(_h, outArr1, outNBElement);
+                _h = SvHashF64(_h, outArr2, outNBElement);
+                _h = SvHashF64(_h, outArr3, outNBElement);
+            }
+            _h = SvHashFin(_h);
+            var hb = new System.Text.StringBuilder();
+            hb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"");
+            RideIchimoku(core, p, endIdx, inHigh, inLow, optInTenkanPeriod, optInKijunPeriod, optInSenkouBPeriod, hb);
+            hb.Append("}");
+            return hb.ToString();
+        }
+        var sb = new System.Text.StringBuilder();
+        sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
+        sb.Append($",\"out_len\":{_outLen}");
+        if (GetInt(p, "no_output", 0) == 0) {
+            sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
+            sb.Append(",\"outReal1\":"); sb.Append(FormatArray(outArr1, outNBElement));
+            sb.Append(",\"outReal2\":"); sb.Append(FormatArray(outArr2, outNBElement));
+            sb.Append(",\"outReal3\":"); sb.Append(FormatArray(outArr3, outNBElement));
+        }
+        sb.Append($",\"used_float\":{usedFloat}");
+        sb.Append($",\"timing_ns\":{elapsedNs}");
+        RideIchimoku(core, p, endIdx, inHigh, inLow, optInTenkanPeriod, optInKijunPeriod, optInSenkouBPeriod, sb);
         sb.Append("}");
         return sb.ToString();
     }

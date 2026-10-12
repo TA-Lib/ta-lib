@@ -969,6 +969,7 @@ static ErrorNumber testTAFunction_ALL( void )
    DO_TEST( test_func_marketfi, "MARKETFI" );
    DO_TEST( test_func_fisher,   "FISHER" );
    DO_TEST( test_func_kvo, "KVO" );
+   DO_TEST( test_func_ichimoku, "ICHIMOKU" );
    DO_TEST( test_func_zigzag,   "ZIGZAG" );
    DO_TEST( test_func_wavetrend, "WAVETREND" );
    DO_TEST( test_func_dosc, "DOSC" );

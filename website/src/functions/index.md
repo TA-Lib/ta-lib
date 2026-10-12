@@ -127,6 +127,7 @@ All technical-analysis functions, grouped by category. Each page documents the f
 - [FRAMA](/functions/frama.md) — Fractal Adaptive Moving Average
 - [HMA](/functions/hma.md) — Hull Moving Average
 - [HT_TRENDLINE](/functions/ht_trendline.md) — Hilbert Transform - Instantaneous Trendline
+- [ICHIMOKU](/functions/ichimoku.md) — Ichimoku Kinko Hyo
 - [KAMA](/functions/kama.md) — Kaufman Adaptive Moving Average
 - [KC](/functions/kc.md) — Keltner Channels
 - [MA](/functions/ma.md) — Moving average

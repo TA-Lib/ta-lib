@@ -56,6 +56,7 @@ ta_regtest_SOURCES = ta_regtest.c \
 	ta_test_func/test_marketfi.c \
 	ta_test_func/test_fisher.c \
 	ta_test_func/test_kvo.c \
+	ta_test_func/test_ichimoku.c \
 	ta_test_func/test_dosc.c \
 	ta_test_func/test_sqzmom.c \
 	ta_test_func/test_pso.c \

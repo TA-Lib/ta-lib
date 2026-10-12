@@ -243,6 +243,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
             MakeHtTrendline(),
             MakeHtTrendmode(),
             MakeIbs(),
+            MakeIchimoku(),
             MakeImi(),
             MakeKama(),
             MakeKc(),
@@ -3282,6 +3283,35 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
         invoke: static (core, c, startIdx, endIdx) =>
             core.Ibs(
                 startIdx, endIdx, c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.RealOut(0)));
+
+    private static FuncInfo MakeIchimoku() => new(
+        name: "ICHIMOKU",
+        group: FunctionGroup.OverlapStudies,
+        hint: "Ichimoku Kinko Hyo",
+        flags: FuncFlags.Overlap | FuncFlags.Stream | FuncFlags.DisplayShift,
+        unstableId: null,
+        inputs:
+        [
+            new InputInfo(InputKind.Price, "inPriceHL", PriceComponents.High | PriceComponents.Low, [PriceComponents.High, PriceComponents.Low]),
+        ],
+        optInputs:
+        [
+            new OptInputInfo("optInTenkanPeriod", "Tenkan Period", "Period of the conversion line", OptInputFlags.None, new OptInputDomain.IntegerRange(2, 100000, 9, 4, 200, 1)),
+            new OptInputInfo("optInKijunPeriod", "Kijun Period", "Period of the base line, and the forward shift of the two spans", OptInputFlags.None, new OptInputDomain.IntegerRange(2, 100000, 26, 4, 200, 1)),
+            new OptInputInfo("optInSenkouBPeriod", "Senkou B Period", "Period of the second leading span", OptInputFlags.None, new OptInputDomain.IntegerRange(2, 100000, 52, 4, 200, 1)),
+        ],
+        outputs:
+        [
+            new OutputInfo(OutputKind.Real, "outTenkanSen", OutputFlags.Line),
+            new OutputInfo(OutputKind.Real, "outKijunSen", OutputFlags.Line),
+            new OutputInfo(OutputKind.Real, "outSenkouSpanA", OutputFlags.Line | OutputFlags.DisplayShift),
+            new OutputInfo(OutputKind.Real, "outSenkouSpanB", OutputFlags.Line | OutputFlags.DisplayShift),
+        ],
+        lookback: static (core, c) => core.IchimokuLookback(c.IntOpt(0), c.IntOpt(1), c.IntOpt(2)),
+        displayShift: static (core, c, outputIdx) => core.IchimokuDisplayShift(c.IntOpt(0), c.IntOpt(1), c.IntOpt(2), outputIdx),
+        invoke: static (core, c, startIdx, endIdx) =>
+            core.Ichimoku(
+                startIdx, endIdx, c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.IntOpt(0), c.IntOpt(1), c.IntOpt(2), c.RealOut(0), c.RealOut(1), c.RealOut(2), c.RealOut(3)));
 
     private static FuncInfo MakeImi() => new(
         name: "IMI",

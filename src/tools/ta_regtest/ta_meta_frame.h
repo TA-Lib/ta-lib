@@ -305,6 +305,8 @@ TA_RetCode TA_HT_TRENDMODE_MetaRide( int startIdx, int endIdx, const double inRe
 TA_RetCode TA_S_HT_TRENDMODE_MetaRide( int startIdx, int endIdx, const float inReal[], int *outBegIdx, int *outNBElement, int outInteger[] );
 TA_RetCode TA_IBS_MetaRide( int startIdx, int endIdx, const double inHigh[], const double inLow[], const double inClose[], int *outBegIdx, int *outNBElement, double outReal[] );
 TA_RetCode TA_S_IBS_MetaRide( int startIdx, int endIdx, const float inHigh[], const float inLow[], const float inClose[], int *outBegIdx, int *outNBElement, double outReal[] );
+TA_RetCode TA_ICHIMOKU_MetaRide( int startIdx, int endIdx, const double inHigh[], const double inLow[], int optInTenkanPeriod, int optInKijunPeriod, int optInSenkouBPeriod, int *outBegIdx, int *outNBElement, double outTenkanSen[], double outKijunSen[], double outSenkouSpanA[], double outSenkouSpanB[] );
+TA_RetCode TA_S_ICHIMOKU_MetaRide( int startIdx, int endIdx, const float inHigh[], const float inLow[], int optInTenkanPeriod, int optInKijunPeriod, int optInSenkouBPeriod, int *outBegIdx, int *outNBElement, double outTenkanSen[], double outKijunSen[], double outSenkouSpanA[], double outSenkouSpanB[] );
 TA_RetCode TA_IMI_MetaRide( int startIdx, int endIdx, const double inOpen[], const double inClose[], int optInTimePeriod, int *outBegIdx, int *outNBElement, double outReal[] );
 TA_RetCode TA_S_IMI_MetaRide( int startIdx, int endIdx, const float inOpen[], const float inClose[], int optInTimePeriod, int *outBegIdx, int *outNBElement, double outReal[] );
 TA_RetCode TA_KAMA_MetaRide( int startIdx, int endIdx, const double inReal[], int optInTimePeriod, int *outBegIdx, int *outNBElement, double outReal[] );
@@ -653,6 +655,7 @@ const char *const TA_MetaFrameName[TA_META_FRAME_SIZE] = {
    "HT_TRENDLINE",
    "HT_TRENDMODE",
    "IBS",
+   "ICHIMOKU",
    "IMI",
    "KAMA",
    "KC",
@@ -4475,6 +4478,35 @@ TA_RetCode TA_S_IBS_MetaRide( int startIdx, int endIdx, const float inHigh[], co
    return retCode;
 }
 
+TA_RetCode TA_ICHIMOKU_MetaRide( int startIdx, int endIdx, const double inHigh[], const double inLow[], int optInTenkanPeriod, int optInKijunPeriod, int optInSenkouBPeriod, int *outBegIdx, int *outNBElement, double outTenkanSen[], double outKijunSen[], double outSenkouSpanA[], double outSenkouSpanB[] )
+{
+   TA_RetCode retCode = TA_ICHIMOKU( startIdx, endIdx, inHigh, inLow, optInTenkanPeriod, optInKijunPeriod, optInSenkouBPeriod, outBegIdx, outNBElement, outTenkanSen, outKijunSen, outSenkouSpanA, outSenkouSpanB );
+   if( retCode == TA_SUCCESS )
+   {
+      const void *in[] = { inHigh, inLow };
+      const void *out[] = { outTenkanSen, outKijunSen, outSenkouSpanA, outSenkouSpanB };
+      int shift[] = { TA_ICHIMOKU_DisplayShift( optInTenkanPeriod, optInKijunPeriod, optInSenkouBPeriod, 0 ), TA_ICHIMOKU_DisplayShift( optInTenkanPeriod, optInKijunPeriod, optInSenkouBPeriod, 1 ), TA_ICHIMOKU_DisplayShift( optInTenkanPeriod, optInKijunPeriod, optInSenkouBPeriod, 2 ), TA_ICHIMOKU_DisplayShift( optInTenkanPeriod, optInKijunPeriod, optInSenkouBPeriod, 3 ) };
+      meta_ride_check( 128, 0, startIdx, endIdx, in, 2,
+                       *outBegIdx, *outNBElement,
+                       TA_ICHIMOKU_Lookback( optInTenkanPeriod, optInKijunPeriod, optInSenkouBPeriod ), shift, out );
+   }
+   return retCode;
+}
+TA_RetCode TA_S_ICHIMOKU_MetaRide( int startIdx, int endIdx, const float inHigh[], const float inLow[], int optInTenkanPeriod, int optInKijunPeriod, int optInSenkouBPeriod, int *outBegIdx, int *outNBElement, double outTenkanSen[], double outKijunSen[], double outSenkouSpanA[], double outSenkouSpanB[] )
+{
+   TA_RetCode retCode = TA_S_ICHIMOKU( startIdx, endIdx, inHigh, inLow, optInTenkanPeriod, optInKijunPeriod, optInSenkouBPeriod, outBegIdx, outNBElement, outTenkanSen, outKijunSen, outSenkouSpanA, outSenkouSpanB );
+   if( retCode == TA_SUCCESS )
+   {
+      const void *in[] = { inHigh, inLow };
+      const void *out[] = { outTenkanSen, outKijunSen, outSenkouSpanA, outSenkouSpanB };
+      int shift[] = { TA_ICHIMOKU_DisplayShift( optInTenkanPeriod, optInKijunPeriod, optInSenkouBPeriod, 0 ), TA_ICHIMOKU_DisplayShift( optInTenkanPeriod, optInKijunPeriod, optInSenkouBPeriod, 1 ), TA_ICHIMOKU_DisplayShift( optInTenkanPeriod, optInKijunPeriod, optInSenkouBPeriod, 2 ), TA_ICHIMOKU_DisplayShift( optInTenkanPeriod, optInKijunPeriod, optInSenkouBPeriod, 3 ) };
+      meta_ride_check( 128, 1, startIdx, endIdx, in, 2,
+                       *outBegIdx, *outNBElement,
+                       TA_ICHIMOKU_Lookback( optInTenkanPeriod, optInKijunPeriod, optInSenkouBPeriod ), shift, out );
+   }
+   return retCode;
+}
+
 TA_RetCode TA_IMI_MetaRide( int startIdx, int endIdx, const double inOpen[], const double inClose[], int optInTimePeriod, int *outBegIdx, int *outNBElement, double outReal[] )
 {
    TA_RetCode retCode = TA_IMI( startIdx, endIdx, inOpen, inClose, optInTimePeriod, outBegIdx, outNBElement, outReal );
@@ -4483,7 +4515,7 @@ TA_RetCode TA_IMI_MetaRide( int startIdx, int endIdx, const double inOpen[], con
       const void *in[] = { inOpen, inClose };
       const void *out[] = { outReal };
       int shift[] = { TA_IMI_DisplayShift( optInTimePeriod, 0 ) };
-      meta_ride_check( 128, 0, startIdx, endIdx, in, 2,
+      meta_ride_check( 129, 0, startIdx, endIdx, in, 2,
                        *outBegIdx, *outNBElement,
                        TA_IMI_Lookback( optInTimePeriod ), shift, out );
    }
@@ -4497,7 +4529,7 @@ TA_RetCode TA_S_IMI_MetaRide( int startIdx, int endIdx, const float inOpen[], co
       const void *in[] = { inOpen, inClose };
       const void *out[] = { outReal };
       int shift[] = { TA_IMI_DisplayShift( optInTimePeriod, 0 ) };
-      meta_ride_check( 128, 1, startIdx, endIdx, in, 2,
+      meta_ride_check( 129, 1, startIdx, endIdx, in, 2,
                        *outBegIdx, *outNBElement,
                        TA_IMI_Lookback( optInTimePeriod ), shift, out );
    }
@@ -4512,7 +4544,7 @@ TA_RetCode TA_KAMA_MetaRide( int startIdx, int endIdx, const double inReal[], in
       const void *in[] = { inReal };
       const void *out[] = { outReal };
       int shift[] = { TA_KAMA_DisplayShift( optInTimePeriod, 0 ) };
-      meta_ride_check( 129, 0, startIdx, endIdx, in, 1,
+      meta_ride_check( 130, 0, startIdx, endIdx, in, 1,
                        *outBegIdx, *outNBElement,
                        TA_KAMA_Lookback( optInTimePeriod ), shift, out );
    }
@@ -4526,7 +4558,7 @@ TA_RetCode TA_S_KAMA_MetaRide( int startIdx, int endIdx, const float inReal[], i
       const void *in[] = { inReal };
       const void *out[] = { outReal };
       int shift[] = { TA_KAMA_DisplayShift( optInTimePeriod, 0 ) };
-      meta_ride_check( 129, 1, startIdx, endIdx, in, 1,
+      meta_ride_check( 130, 1, startIdx, endIdx, in, 1,
                        *outBegIdx, *outNBElement,
                        TA_KAMA_Lookback( optInTimePeriod ), shift, out );
    }
@@ -4541,7 +4573,7 @@ TA_RetCode TA_KC_MetaRide( int startIdx, int endIdx, const double inHigh[], cons
       const void *in[] = { inHigh, inLow, inClose };
       const void *out[] = { outRealUpperBand, outRealMiddleBand, outRealLowerBand };
       int shift[] = { TA_KC_DisplayShift( optInTimePeriod, optInATRPeriod, optInNbDev, 0 ), TA_KC_DisplayShift( optInTimePeriod, optInATRPeriod, optInNbDev, 1 ), TA_KC_DisplayShift( optInTimePeriod, optInATRPeriod, optInNbDev, 2 ) };
-      meta_ride_check( 130, 0, startIdx, endIdx, in, 3,
+      meta_ride_check( 131, 0, startIdx, endIdx, in, 3,
                        *outBegIdx, *outNBElement,
                        TA_KC_Lookback( optInTimePeriod, optInATRPeriod, optInNbDev ), shift, out );
    }
@@ -4555,7 +4587,7 @@ TA_RetCode TA_S_KC_MetaRide( int startIdx, int endIdx, const float inHigh[], con
       const void *in[] = { inHigh, inLow, inClose };
       const void *out[] = { outRealUpperBand, outRealMiddleBand, outRealLowerBand };
       int shift[] = { TA_KC_DisplayShift( optInTimePeriod, optInATRPeriod, optInNbDev, 0 ), TA_KC_DisplayShift( optInTimePeriod, optInATRPeriod, optInNbDev, 1 ), TA_KC_DisplayShift( optInTimePeriod, optInATRPeriod, optInNbDev, 2 ) };
-      meta_ride_check( 130, 1, startIdx, endIdx, in, 3,
+      meta_ride_check( 131, 1, startIdx, endIdx, in, 3,
                        *outBegIdx, *outNBElement,
                        TA_KC_Lookback( optInTimePeriod, optInATRPeriod, optInNbDev ), shift, out );
    }
@@ -4570,7 +4602,7 @@ TA_RetCode TA_KDJ_MetaRide( int startIdx, int endIdx, const double inHigh[], con
       const void *in[] = { inHigh, inLow, inClose };
       const void *out[] = { outK, outD, outJ };
       int shift[] = { TA_KDJ_DisplayShift( optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, 0 ), TA_KDJ_DisplayShift( optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, 1 ), TA_KDJ_DisplayShift( optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, 2 ) };
-      meta_ride_check( 131, 0, startIdx, endIdx, in, 3,
+      meta_ride_check( 132, 0, startIdx, endIdx, in, 3,
                        *outBegIdx, *outNBElement,
                        TA_KDJ_Lookback( optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType ), shift, out );
    }
@@ -4584,7 +4616,7 @@ TA_RetCode TA_S_KDJ_MetaRide( int startIdx, int endIdx, const float inHigh[], co
       const void *in[] = { inHigh, inLow, inClose };
       const void *out[] = { outK, outD, outJ };
       int shift[] = { TA_KDJ_DisplayShift( optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, 0 ), TA_KDJ_DisplayShift( optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, 1 ), TA_KDJ_DisplayShift( optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, 2 ) };
-      meta_ride_check( 131, 1, startIdx, endIdx, in, 3,
+      meta_ride_check( 132, 1, startIdx, endIdx, in, 3,
                        *outBegIdx, *outNBElement,
                        TA_KDJ_Lookback( optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType ), shift, out );
    }
@@ -4599,7 +4631,7 @@ TA_RetCode TA_KST_MetaRide( int startIdx, int endIdx, const double inReal[], int
       const void *in[] = { inReal };
       const void *out[] = { outKST, outKSTSignal };
       int shift[] = { TA_KST_DisplayShift( optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInSMA1Period, optInSMA2Period, optInSMA3Period, optInSMA4Period, optInSignalPeriod, 0 ), TA_KST_DisplayShift( optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInSMA1Period, optInSMA2Period, optInSMA3Period, optInSMA4Period, optInSignalPeriod, 1 ) };
-      meta_ride_check( 132, 0, startIdx, endIdx, in, 1,
+      meta_ride_check( 133, 0, startIdx, endIdx, in, 1,
                        *outBegIdx, *outNBElement,
                        TA_KST_Lookback( optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInSMA1Period, optInSMA2Period, optInSMA3Period, optInSMA4Period, optInSignalPeriod ), shift, out );
    }
@@ -4613,7 +4645,7 @@ TA_RetCode TA_S_KST_MetaRide( int startIdx, int endIdx, const float inReal[], in
       const void *in[] = { inReal };
       const void *out[] = { outKST, outKSTSignal };
       int shift[] = { TA_KST_DisplayShift( optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInSMA1Period, optInSMA2Period, optInSMA3Period, optInSMA4Period, optInSignalPeriod, 0 ), TA_KST_DisplayShift( optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInSMA1Period, optInSMA2Period, optInSMA3Period, optInSMA4Period, optInSignalPeriod, 1 ) };
-      meta_ride_check( 132, 1, startIdx, endIdx, in, 1,
+      meta_ride_check( 133, 1, startIdx, endIdx, in, 1,
                        *outBegIdx, *outNBElement,
                        TA_KST_Lookback( optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInSMA1Period, optInSMA2Period, optInSMA3Period, optInSMA4Period, optInSignalPeriod ), shift, out );
    }
@@ -4628,7 +4660,7 @@ TA_RetCode TA_KSTEXT_MetaRide( int startIdx, int endIdx, const double inReal[], 
       const void *in[] = { inReal };
       const void *out[] = { outKST, outKSTSignal };
       int shift[] = { TA_KSTEXT_DisplayShift( optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInMA1Period, optInMA2Period, optInMA3Period, optInMA4Period, optInSignalPeriod, optInROCMAType, optInSignalMAType, 0 ), TA_KSTEXT_DisplayShift( optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInMA1Period, optInMA2Period, optInMA3Period, optInMA4Period, optInSignalPeriod, optInROCMAType, optInSignalMAType, 1 ) };
-      meta_ride_check( 133, 0, startIdx, endIdx, in, 1,
+      meta_ride_check( 134, 0, startIdx, endIdx, in, 1,
                        *outBegIdx, *outNBElement,
                        TA_KSTEXT_Lookback( optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInMA1Period, optInMA2Period, optInMA3Period, optInMA4Period, optInSignalPeriod, optInROCMAType, optInSignalMAType ), shift, out );
    }
@@ -4642,7 +4674,7 @@ TA_RetCode TA_S_KSTEXT_MetaRide( int startIdx, int endIdx, const float inReal[],
       const void *in[] = { inReal };
       const void *out[] = { outKST, outKSTSignal };
       int shift[] = { TA_KSTEXT_DisplayShift( optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInMA1Period, optInMA2Period, optInMA3Period, optInMA4Period, optInSignalPeriod, optInROCMAType, optInSignalMAType, 0 ), TA_KSTEXT_DisplayShift( optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInMA1Period, optInMA2Period, optInMA3Period, optInMA4Period, optInSignalPeriod, optInROCMAType, optInSignalMAType, 1 ) };
-      meta_ride_check( 133, 1, startIdx, endIdx, in, 1,
+      meta_ride_check( 134, 1, startIdx, endIdx, in, 1,
                        *outBegIdx, *outNBElement,
                        TA_KSTEXT_Lookback( optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInMA1Period, optInMA2Period, optInMA3Period, optInMA4Period, optInSignalPeriod, optInROCMAType, optInSignalMAType ), shift, out );
    }
@@ -4657,7 +4689,7 @@ TA_RetCode TA_KURTOSIS_MetaRide( int startIdx, int endIdx, const double inReal[]
       const void *in[] = { inReal };
       const void *out[] = { outReal };
       int shift[] = { TA_KURTOSIS_DisplayShift( optInTimePeriod, 0 ) };
-      meta_ride_check( 134, 0, startIdx, endIdx, in, 1,
+      meta_ride_check( 135, 0, startIdx, endIdx, in, 1,
                        *outBegIdx, *outNBElement,
                        TA_KURTOSIS_Lookback( optInTimePeriod ), shift, out );
    }
@@ -4671,7 +4703,7 @@ TA_RetCode TA_S_KURTOSIS_MetaRide( int startIdx, int endIdx, const float inReal[
       const void *in[] = { inReal };
       const void *out[] = { outReal };
       int shift[] = { TA_KURTOSIS_DisplayShift( optInTimePeriod, 0 ) };
-      meta_ride_check( 134, 1, startIdx, endIdx, in, 1,
+      meta_ride_check( 135, 1, startIdx, endIdx, in, 1,
                        *outBegIdx, *outNBElement,
                        TA_KURTOSIS_Lookback( optInTimePeriod ), shift, out );
    }
@@ -7865,6 +7897,8 @@ TA_RetCode TA_S_ZLEMA_MetaRide( int startIdx, int endIdx, const float inReal[], 
 #define TA_S_HT_TRENDMODE TA_S_HT_TRENDMODE_MetaRide
 #define TA_IBS TA_IBS_MetaRide
 #define TA_S_IBS TA_S_IBS_MetaRide
+#define TA_ICHIMOKU TA_ICHIMOKU_MetaRide
+#define TA_S_ICHIMOKU TA_S_ICHIMOKU_MetaRide
 #define TA_IMI TA_IMI_MetaRide
 #define TA_S_IMI TA_S_IMI_MetaRide
 #define TA_KAMA TA_KAMA_MetaRide

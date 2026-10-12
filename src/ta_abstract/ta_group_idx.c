@@ -168,6 +168,7 @@ extern const TA_FuncDef TA_DEF_HT_SINE;
 extern const TA_FuncDef TA_DEF_HT_TRENDLINE;
 extern const TA_FuncDef TA_DEF_HT_TRENDMODE;
 extern const TA_FuncDef TA_DEF_IBS;
+extern const TA_FuncDef TA_DEF_ICHIMOKU;
 extern const TA_FuncDef TA_DEF_IMI;
 extern const TA_FuncDef TA_DEF_KAMA;
 extern const TA_FuncDef TA_DEF_KC;
@@ -323,6 +324,7 @@ const TA_FuncDef *TA_PerGroupFunc_2[] = {
 &TA_DEF_FRAMA,
 &TA_DEF_HMA,
 &TA_DEF_HT_TRENDLINE,
+&TA_DEF_ICHIMOKU,
 &TA_DEF_KAMA,
 &TA_DEF_KC,
 &TA_DEF_MA,

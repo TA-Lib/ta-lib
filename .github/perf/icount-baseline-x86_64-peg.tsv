@@ -6,8 +6,8 @@
 #policy	monotone
 #toolchain	x86_64/x86_64-linux-gnu/13.3.0
 #corpus	points=20000 regime_period=14 seed=42 shape=peg stream_iters=1024 trend_strength=0.500000
-#commit	e5dd69c00a0cfb37e6d13c682e6c6a03583b769c
-#generated	2026-10-11T06:15:07Z
+#commit	67b7902e0f0f06b661ee5125edc18e87c07cc8d3
+#generated	2026-10-12T12:37:16Z
 AC	batch	0	703438
 AC	open	0	704171
 AC	openfill	0	692624
@@ -648,6 +648,11 @@ IBS	open	0	150221
 IBS	openfill	0	150206
 IBS	peek	0	47225
 IBS	update	0	58706
+ICHIMOKU	batch	0	2083746
+ICHIMOKU	open	0	12195565
+ICHIMOKU	openfill	0	12192605
+ICHIMOKU	peek	0	1239057
+ICHIMOKU	update	0	1067569
 IMI	batch	0	3246036
 IMI	open	0	3226417
 IMI	openfill	0	3106519
@@ -655,7 +660,7 @@ IMI	peek	0	374096
 IMI	update	0	341496
 KAMA	batch	0	477494
 KAMA	open	0	513928
-KAMA	openfill	0	560424
+KAMA	openfill	0	560422
 KAMA	peek	0	61052
 KAMA	update	0	91473
 KC	batch	0	671773
@@ -673,9 +678,9 @@ KST	open	0	1999710
 KST	openfill	0	2177279
 KST	peek	0	151567
 KST	update	0	245237
-KSTEXT	batch	0	2189465
-KSTEXT	open	0	2655733
-KSTEXT	openfill	0	2654191
+KSTEXT	batch	0	2189064
+KSTEXT	open	0	2655337
+KSTEXT	openfill	0	2653821
 KSTEXT	peek	0	444431
 KSTEXT	update	0	799762
 KURTOSIS	batch	0	1083370
@@ -993,13 +998,18 @@ SQRT	open	0	127
 SQRT	openfill	0	60131
 SQRT	peek	0	30733
 SQRT	update	0	40973
+SQZMOM	batch	0	3583380
+SQZMOM	open	0	6241691
+SQZMOM	openfill	0	6240365
+SQZMOM	peek	0	694643
+SQZMOM	update	0	885995
 STC	batch	0	1717670
 STC	open	0	1739583
 STC	openfill	0	1813586
 STC	peek	0	95344
 STC	update	0	151152
 STDDEV	batch	0	763885
-STDDEV	open	0	786370
+STDDEV	open	0	786121
 STDDEV	openfill	0	785420
 STDDEV	peek	0	98317
 STDDEV	update	0	150489
@@ -1168,6 +1178,11 @@ WMA	open	0	366044
 WMA	openfill	0	366037
 WMA	peek	0	40974
 WMA	update	0	93929
+ZIGZAG	batch	0	488924
+ZIGZAG	open	0	368987
+ZIGZAG	openfill	0	489016
+ZIGZAG	peek	0	68603
+ZIGZAG	update	0	84614
 ZLEMA	batch	0	199835
 ZLEMA	open	0	160254
 ZLEMA	openfill	0	200194

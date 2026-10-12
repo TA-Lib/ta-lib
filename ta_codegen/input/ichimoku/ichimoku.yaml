@@ -1,0 +1,43 @@
+name: ICHIMOKU
+group: Overlap Studies
+hint: Ichimoku Kinko Hyo
+flags: [overlap, stream]
+inputs:
+  - name: inPriceHL
+    type: price
+    price_components: [high, low]
+optional_inputs:
+  - name: optInTenkanPeriod
+    type: integer
+    display_name: Tenkan Period
+    hint: Period of the conversion line
+    range: [2, 100000]
+    default: 9
+    suggested: [4, 200, 1]
+  - name: optInKijunPeriod
+    type: integer
+    display_name: Kijun Period
+    hint: Period of the base line, and the forward shift of the two spans
+    range: [2, 100000]
+    default: 26
+    suggested: [4, 200, 1]
+  - name: optInSenkouBPeriod
+    type: integer
+    display_name: Senkou B Period
+    hint: Period of the second leading span
+    range: [2, 100000]
+    default: 52
+    suggested: [4, 200, 1]
+outputs:
+  - name: outTenkanSen
+    type: real
+    flags: [line]
+  - name: outKijunSen
+    type: real
+    flags: [line]
+  - name: outSenkouSpanA
+    type: real
+    flags: [line, display_shift]
+  - name: outSenkouSpanB
+    type: real
+    flags: [line, display_shift]
