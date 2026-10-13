@@ -192892,6 +192892,7 @@ public final class Core {
  *  101126 MF,CC  Reject factors out of order (#488).
  *  101126 MF,CC  DEV in one loop instead of three calls (#488).
  *  101126 MF,CC  Both bands from one rounded deviation, as bbands (#488).
+ *  101126 MF,CC  One Keltner centre for both loops (#543).
  */
 
    /**
@@ -193046,6 +193047,9 @@ public final class Core {
       int n = 0;
       MInteger tempBegIdx = new MInteger();
       MInteger tempNbElement = new MInteger();
+      MInteger kcmNb = new MInteger();
+      MInteger sdNb = new MInteger();
+      int kcmShift = 0;
       double[] tempDev;
       double[] tempWork;
       double[] tempKCM;
@@ -193136,7 +193140,7 @@ public final class Core {
       stageLen = n + stageLookback;
       tempDev = new double[(int)(stageLen * 1)];
       tempWork = new double[(int)(stageLen * 1)];
-      tempKCM = new double[(int)(n * 1)];
+      tempKCM = new double[(int)(stageLen * 1)];
       tempMid = new double[(int)(n * 1)];
       tempSD = new double[(int)(n * 1)];
       /* The momentum anchor: the Donchian midpoint and the Keltner centre, averaged.
@@ -193146,16 +193150,16 @@ public final class Core {
       outBegIdx.value = _xr0.begIdx();
       outNBElement.value = _xr0.count();
       retCode = RetCode.SUCCESS;
-      OutRange _xr1 = sma(stageIdx, endIdx, inClose, optInKCPeriod, tempWork);
+      OutRange _xr1 = sma(stageIdx, endIdx, inClose, optInKCPeriod, tempKCM);
       tempBegIdx.value = _xr1.begIdx();
-      tempNbElement.value = _xr1.count();
+      kcmNb.value = _xr1.count();
       retCode = RetCode.SUCCESS;
       /* DEV, over the staged range. The close is read at the index midprice
        * reported for the range, which is what lets this loop stream: keep
        * outBegIdx as midprice's receiver, and reuse it for no call above here.
        */
       for( i = 0; i < stageLen; i += 1 ) {
-         tempDev[i] = inClose[outBegIdx.value + i] - (tempDev[i] + tempWork[i]) / 2.0;
+         tempDev[i] = inClose[outBegIdx.value + i] - (tempDev[i] + tempKCM[i]) / 2.0;
       }
       /* The compression band: the simple mean of the true range, not an ATR.
        * trange's own lookback is 1, and stageIdx is at least 1 because the
@@ -193175,12 +193179,12 @@ public final class Core {
       retCode = RetCode.SUCCESS;
       OutRange _xr5 = stddev(startIdx, endIdx, inClose, optInBBPeriod, 1.0, tempSD);
       tempBegIdx.value = _xr5.begIdx();
-      tempNbElement.value = _xr5.count();
+      sdNb.value = _xr5.count();
       retCode = RetCode.SUCCESS;
-      OutRange _xr6 = sma(startIdx, endIdx, inClose, optInKCPeriod, tempKCM);
-      tempBegIdx.value = _xr6.begIdx();
-      tempNbElement.value = _xr6.count();
-      retCode = RetCode.SUCCESS;
+      /* The centre is staged one regression window early; the shift puts it on
+       * the bar the bands are on.
+       */
+      kcmShift = kcmNb.value - sdNb.value;
       /* LAST of the calls, because it is the first to write a caller buffer. Every
        * read of high, low and close is above it, so an output aliased onto one of
        * them -- which the abstract layer tests on purpose -- is still intact when it
@@ -193189,9 +193193,9 @@ public final class Core {
        * The regression window closes on the first output bar, so entering it at 0 of
        * the staged range puts its first fitted value on startIdx.
        */
-      OutRange _xr7 = linearreg(0, stageLen - 1, tempDev, optInKCPeriod, outMomentum);
-      tempBegIdx.value = _xr7.begIdx();
-      tempNbElement.value = _xr7.count();
+      OutRange _xr6 = linearreg(0, stageLen - 1, tempDev, optInKCPeriod, outMomentum);
+      tempBegIdx.value = _xr6.begIdx();
+      tempNbElement.value = _xr6.count();
       retCode = RetCode.SUCCESS;
       /* The ordinal. Every comparison is strict: a band exactly on a channel
        * edge is not inside that channel and not outside it either.
@@ -193205,7 +193209,7 @@ public final class Core {
          dev = tempSD[i] * optInNbDev;
          up = tempMid[i] + dev;
          lo = tempMid[i] - dev;
-         centre = tempKCM[i];
+         centre = tempKCM[i + kcmShift];
          band = tempWork[i];
          if( lo > centre - optInFactorNarrow * band && up < centre + optInFactorNarrow * band ) {
             outSqueeze[i] = 3;
@@ -193248,6 +193252,9 @@ public final class Core {
       int n = 0;
       MInteger tempBegIdx = new MInteger();
       MInteger tempNbElement = new MInteger();
+      MInteger kcmNb = new MInteger();
+      MInteger sdNb = new MInteger();
+      int kcmShift = 0;
       double[] tempDev;
       double[] tempWork;
       double[] tempKCM;
@@ -193317,19 +193324,19 @@ public final class Core {
       stageLen = n + stageLookback;
       tempDev = new double[(int)(stageLen * 1)];
       tempWork = new double[(int)(stageLen * 1)];
-      tempKCM = new double[(int)(n * 1)];
+      tempKCM = new double[(int)(stageLen * 1)];
       tempMid = new double[(int)(n * 1)];
       tempSD = new double[(int)(n * 1)];
       OutRange _xr0 = midprice(stageIdx, endIdx, inHigh, inLow, optInKCPeriod, tempDev);
       outBegIdx.value = _xr0.begIdx();
       outNBElement.value = _xr0.count();
       retCode = RetCode.SUCCESS;
-      OutRange _xr1 = sma(stageIdx, endIdx, inClose, optInKCPeriod, tempWork);
+      OutRange _xr1 = sma(stageIdx, endIdx, inClose, optInKCPeriod, tempKCM);
       tempBegIdx.value = _xr1.begIdx();
-      tempNbElement.value = _xr1.count();
+      kcmNb.value = _xr1.count();
       retCode = RetCode.SUCCESS;
       for( i = 0; i < stageLen; i += 1 ) {
-         tempDev[i] = (double)inClose[outBegIdx.value + i] - (tempDev[i] + tempWork[i]) / 2.0;
+         tempDev[i] = (double)inClose[outBegIdx.value + i] - (tempDev[i] + tempKCM[i]) / 2.0;
       }
       OutRange _xr2 = trange(stageIdx, endIdx, inHigh, inLow, inClose, tempWork);
       tempBegIdx.value = _xr2.begIdx();
@@ -193345,21 +193352,18 @@ public final class Core {
       retCode = RetCode.SUCCESS;
       OutRange _xr5 = stddev(startIdx, endIdx, inClose, optInBBPeriod, 1.0, tempSD);
       tempBegIdx.value = _xr5.begIdx();
-      tempNbElement.value = _xr5.count();
+      sdNb.value = _xr5.count();
       retCode = RetCode.SUCCESS;
-      OutRange _xr6 = sma(startIdx, endIdx, inClose, optInKCPeriod, tempKCM);
+      kcmShift = kcmNb.value - sdNb.value;
+      OutRange _xr6 = linearreg(0, stageLen - 1, tempDev, optInKCPeriod, outMomentum);
       tempBegIdx.value = _xr6.begIdx();
       tempNbElement.value = _xr6.count();
-      retCode = RetCode.SUCCESS;
-      OutRange _xr7 = linearreg(0, stageLen - 1, tempDev, optInKCPeriod, outMomentum);
-      tempBegIdx.value = _xr7.begIdx();
-      tempNbElement.value = _xr7.count();
       retCode = RetCode.SUCCESS;
       for( i = 0; i < n; i += 1 ) {
          dev = tempSD[i] * optInNbDev;
          up = tempMid[i] + dev;
          lo = tempMid[i] - dev;
-         centre = tempKCM[i];
+         centre = tempKCM[i + kcmShift];
          band = tempWork[i];
          if( lo > centre - optInFactorNarrow * band && up < centre + optInFactorNarrow * band ) {
             outSqueeze[i] = 3;
@@ -193632,8 +193636,7 @@ public final class Core {
       private SmaStream sub3;
       private SmaStream sub4;
       private StddevStream sub5;
-      private SmaStream sub6;
-      private LinearregStream sub7;
+      private LinearregStream sub6;
       private int outRangeBegIdx;
       private int outRangeCount;
 
@@ -193689,8 +193692,7 @@ public final class Core {
          this.sub3 = new SmaStream(other.sub3);
          this.sub4 = new SmaStream(other.sub4);
          this.sub5 = new StddevStream(other.sub5);
-         this.sub6 = new SmaStream(other.sub6);
-         this.sub7 = new LinearregStream(other.sub7);
+         this.sub6 = new LinearregStream(other.sub6);
          this.outRangeBegIdx = other.outRangeBegIdx;
          this.outRangeCount = other.outRangeCount;
       }
@@ -193744,23 +193746,22 @@ public final class Core {
          double lo = 0.0;
          double up = 0.0;
          double cur_tempDev = 0.0;
+         double cur_tempKCM = 0.0;
          double cur_tempWork = 0.0;
          double cur_tempMid = 0.0;
          double cur_tempSD = 0.0;
-         double cur_tempKCM = 0.0;
          double cur_outMomentum = 0.0;
          int cur_outSqueeze = 0;
          /* Pipeline the new bar through the sub-streams (batch tail order). */
          cur_tempDev = sp.sub0.peek(inHigh, inLow);
-         cur_tempWork = sp.sub1.peek(inClose);
+         cur_tempKCM = sp.sub1.peek(inClose);
          /* Combine map (batch tail, per bar). */
-         cur_tempDev = inClose - (cur_tempDev + cur_tempWork) / 2.0;
+         cur_tempDev = inClose - (cur_tempDev + cur_tempKCM) / 2.0;
          cur_tempWork = sp.sub2.peek(inHigh, inLow, inClose);
          cur_tempWork = sp.sub3.peek(cur_tempWork);
          cur_tempMid = sp.sub4.peek(inClose);
          cur_tempSD = sp.sub5.peek(inClose);
-         cur_tempKCM = sp.sub6.peek(inClose);
-         cur_outMomentum = sp.sub7.peek(cur_tempDev);
+         cur_outMomentum = sp.sub6.peek(cur_tempDev);
          /* Combine map (batch tail, per bar). */
          dev = cur_tempSD * sp.optInNbDev;
          up = cur_tempMid + dev;
@@ -193840,23 +193841,22 @@ public final class Core {
       double lo = 0.0;
       double up = 0.0;
       double cur_tempDev = 0.0;
+      double cur_tempKCM = 0.0;
       double cur_tempWork = 0.0;
       double cur_tempMid = 0.0;
       double cur_tempSD = 0.0;
-      double cur_tempKCM = 0.0;
       double cur_outMomentum = 0.0;
       int cur_outSqueeze = 0;
       /* Pipeline the new bar through the sub-streams (batch tail order). */
       cur_tempDev = sp.sub0.update(inHigh, inLow);
-      cur_tempWork = sp.sub1.update(inClose);
+      cur_tempKCM = sp.sub1.update(inClose);
       /* Combine map (batch tail, per bar). */
-      cur_tempDev = inClose - (cur_tempDev + cur_tempWork) / 2.0;
+      cur_tempDev = inClose - (cur_tempDev + cur_tempKCM) / 2.0;
       cur_tempWork = sp.sub2.update(inHigh, inLow, inClose);
       cur_tempWork = sp.sub3.update(cur_tempWork);
       cur_tempMid = sp.sub4.update(inClose);
       cur_tempSD = sp.sub5.update(inClose);
-      cur_tempKCM = sp.sub6.update(inClose);
-      cur_outMomentum = sp.sub7.update(cur_tempDev);
+      cur_outMomentum = sp.sub6.update(cur_tempDev);
       /* Combine map (batch tail, per bar). */
       dev = cur_tempSD * sp.optInNbDev;
       up = cur_tempMid + dev;
@@ -193888,6 +193888,9 @@ public final class Core {
       int n = 0;
       MInteger tempBegIdx = new MInteger();
       MInteger tempNbElement = new MInteger();
+      MInteger kcmNb = new MInteger();
+      MInteger sdNb = new MInteger();
+      int kcmShift = 0;
       double[] tempDev;
       double[] tempWork;
       double[] tempKCM;
@@ -193993,7 +193996,7 @@ public final class Core {
       stageLen = n + stageLookback;
       tempDev = new double[(int)(stageLen * 1)];
       tempWork = new double[(int)(stageLen * 1)];
-      tempKCM = new double[(int)(n * 1)];
+      tempKCM = new double[(int)(stageLen * 1)];
       tempMid = new double[(int)(n * 1)];
       tempSD = new double[(int)(n * 1)];
       /* The momentum anchor: the Donchian midpoint and the Keltner centre, averaged.
@@ -194005,14 +194008,14 @@ public final class Core {
       retCode = RetCode.SUCCESS;
       /* Sub-stream 1: sma over `inClose`, warmed from bar 0 up to the
        * sub-call's own startIdx (the seeding point). */
-      SmaStream sub1 = smaOpenAndFillInternal(inClose, stageIdx, optInKCPeriod, tempBegIdx, tempNbElement, tempWork);
+      SmaStream sub1 = smaOpenAndFillInternal(inClose, stageIdx, optInKCPeriod, tempBegIdx, kcmNb, tempKCM);
       retCode = RetCode.SUCCESS;
       /* DEV, over the staged range. The close is read at the index midprice
        * reported for the range, which is what lets this loop stream: keep
        * outBegIdx as midprice's receiver, and reuse it for no call above here.
        */
       for( i = 0; i < stageLen; i += 1 ) {
-         tempDev[i] = inClose[outBegIdx.value + i] - (tempDev[i] + tempWork[i]) / 2.0;
+         tempDev[i] = inClose[outBegIdx.value + i] - (tempDev[i] + tempKCM[i]) / 2.0;
       }
       /* The compression band: the simple mean of the true range, not an ATR.
        * trange's own lookback is 1, and stageIdx is at least 1 because the
@@ -194035,12 +194038,12 @@ public final class Core {
       retCode = RetCode.SUCCESS;
       /* Sub-stream 5: stddev over `inClose`, warmed from bar 0 up to the
        * sub-call's own startIdx (the seeding point). */
-      StddevStream sub5 = stddevOpenAndFillInternal(inClose, startIdx, optInBBPeriod, 1.0, tempBegIdx, tempNbElement, tempSD);
+      StddevStream sub5 = stddevOpenAndFillInternal(inClose, startIdx, optInBBPeriod, 1.0, tempBegIdx, sdNb, tempSD);
       retCode = RetCode.SUCCESS;
-      /* Sub-stream 6: sma over `inClose`, warmed from bar 0 up to the
-       * sub-call's own startIdx (the seeding point). */
-      SmaStream sub6 = smaOpenAndFillInternal(inClose, startIdx, optInKCPeriod, tempBegIdx, tempNbElement, tempKCM);
-      retCode = RetCode.SUCCESS;
+      /* The centre is staged one regression window early; the shift puts it on
+       * the bar the bands are on.
+       */
+      kcmShift = kcmNb.value - sdNb.value;
       /* LAST of the calls, because it is the first to write a caller buffer. Every
        * read of high, low and close is above it, so an output aliased onto one of
        * them -- which the abstract layer tests on purpose -- is still intact when it
@@ -194049,9 +194052,9 @@ public final class Core {
        * The regression window closes on the first output bar, so entering it at 0 of
        * the staged range puts its first fitted value on startIdx.
        */
-      /* Sub-stream 7: linearreg over `tempDev`, warmed from bar 0 up to the
+      /* Sub-stream 6: linearreg over `tempDev`, warmed from bar 0 up to the
        * sub-call's own startIdx (the seeding point). */
-      LinearregStream sub7 = linearregOpenAndFillInternal(java.util.Arrays.copyOfRange(tempDev, 0, (stageLen - 1) + 1), 0, optInKCPeriod, tempBegIdx, tempNbElement, sc_outMomentum);
+      LinearregStream sub6 = linearregOpenAndFillInternal(java.util.Arrays.copyOfRange(tempDev, 0, (stageLen - 1) + 1), 0, optInKCPeriod, tempBegIdx, tempNbElement, sc_outMomentum);
       retCode = RetCode.SUCCESS;
       /* The ordinal. Every comparison is strict: a band exactly on a channel
        * edge is not inside that channel and not outside it either.
@@ -194065,7 +194068,7 @@ public final class Core {
          dev = tempSD[i] * optInNbDev;
          up = tempMid[i] + dev;
          lo = tempMid[i] - dev;
-         centre = tempKCM[i];
+         centre = tempKCM[i + kcmShift];
          band = tempWork[i];
          if( lo > centre - optInFactorNarrow * band && up < centre + optInFactorNarrow * band ) {
             sc_outSqueeze[i] = 3;
@@ -194098,7 +194101,6 @@ public final class Core {
       sp.sub4 = sub4;
       sp.sub5 = sub5;
       sp.sub6 = sub6;
-      sp.sub7 = sub7;
       sp.cur_outMomentum = sc_outMomentum[outNBElement.value - 1];
       sp.cur_outSqueeze = sc_outSqueeze[outNBElement.value - 1];
       return RetCode.SUCCESS;

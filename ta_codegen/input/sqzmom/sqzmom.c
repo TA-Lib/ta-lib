@@ -14,6 +14,7 @@
  *  101126 MF,CC  Reject factors out of order (#488).
  *  101126 MF,CC  DEV in one loop instead of three calls (#488).
  *  101126 MF,CC  Both bands from one rounded deviation, as bbands (#488).
+ *  101126 MF,CC  One Keltner centre for both loops (#543).
  */
 
 int sqzmom_lookback( int optInBBPeriod,
@@ -77,7 +78,7 @@ TA_RetCode sqzmom(int startIdx, int endIdx,
 {
    TA_RetCode retCode;
    int lookbackTotal, stageLookback, stageIdx, stageLen, i, n;
-   int tempBegIdx, tempNbElement;
+   int tempBegIdx, tempNbElement, kcmNb, sdNb, kcmShift;
    double *tempDev;
    double *tempWork;
    double *tempKCM;
@@ -151,7 +152,7 @@ TA_RetCode sqzmom(int startIdx, int endIdx,
       *outNBElement = 0;
       return TA_ALLOC_ERR;
    }
-   tempKCM = malloc( n * sizeof(double) );
+   tempKCM = malloc( stageLen * sizeof(double) );
    if( !tempKCM )
    {
       free( tempDev );
@@ -200,7 +201,7 @@ TA_RetCode sqzmom(int startIdx, int endIdx,
    }
 
    retCode = sma( stageIdx, endIdx, inClose, optInKCPeriod,
-      &tempBegIdx, &tempNbElement, tempWork );
+      &tempBegIdx, &kcmNb, tempKCM );
    if( retCode != TA_SUCCESS )
    {
       free( tempDev );
@@ -218,7 +219,7 @@ TA_RetCode sqzmom(int startIdx, int endIdx,
     * outBegIdx as midprice's receiver, and reuse it for no call above here.
     */
    for( i = 0; i < stageLen; i++ )
-      tempDev[i] = inClose[*outBegIdx+i] - (tempDev[i]+tempWork[i])/2.0;
+      tempDev[i] = inClose[*outBegIdx+i] - (tempDev[i]+tempKCM[i])/2.0;
 
    /* The compression band: the simple mean of the true range, not an ATR.
     * trange's own lookback is 1, and stageIdx is at least 1 because the
@@ -267,7 +268,7 @@ TA_RetCode sqzmom(int startIdx, int endIdx,
    }
 
    retCode = stddev( startIdx, endIdx, inClose, optInBBPeriod, 1.0,
-      &tempBegIdx, &tempNbElement, tempSD );
+      &tempBegIdx, &sdNb, tempSD );
    if( retCode != TA_SUCCESS )
    {
       free( tempDev );
@@ -280,19 +281,10 @@ TA_RetCode sqzmom(int startIdx, int endIdx,
       return retCode;
    }
 
-   retCode = sma( startIdx, endIdx, inClose, optInKCPeriod,
-      &tempBegIdx, &tempNbElement, tempKCM );
-   if( retCode != TA_SUCCESS )
-   {
-      free( tempDev );
-      free( tempWork );
-      free( tempKCM );
-      free( tempMid );
-      free( tempSD );
-      *outBegIdx = 0;
-      *outNBElement = 0;
-      return retCode;
-   }
+   /* The centre is staged one regression window early; the shift puts it on
+    * the bar the bands are on.
+    */
+   kcmShift = kcmNb - sdNb;
 
    /* LAST of the calls, because it is the first to write a caller buffer. Every
     * read of high, low and close is above it, so an output aliased onto one of
@@ -329,7 +321,7 @@ TA_RetCode sqzmom(int startIdx, int endIdx,
       dev = tempSD[i]*optInNbDev;
       up = tempMid[i] + dev;
       lo = tempMid[i] - dev;
-      centre = tempKCM[i];
+      centre = tempKCM[i+kcmShift];
       band = tempWork[i];
 
       if( lo > centre - optInFactorNarrow*band && up < centre + optInFactorNarrow*band )

@@ -3598,8 +3598,9 @@ fn check_map_step(
     }
 
     // The map's primary output = the one series it writes at the plain cursor
-    // (APO/PPO write `outReal[i]`). It anchors the same-bar proof for any offset
-    // read: `series[cursor + off]` is same-bar iff `off` is the element-count
+    // (APO/PPO write `outReal[i]`). Produced before the map, it anchors the
+    // same-bar proof for any offset read: `series[cursor + off]` is same-bar iff
+    // `off` is the element-count
     // difference `nb(series) - nb(primary_out)` AND the two series end on the
     // same bar (then that difference equals `begIdx(primary_out) - begIdx(series)`
     // in bars: the shift that aligns the two windows).
@@ -3695,10 +3696,21 @@ fn check_map_step(
                                 }
                             }
                             IndexForm::CursorPlus(off) => {
-                                // Same-bar iff `off == nb(name) - nb(primary_out)`
-                                // and the two series end on the same bar.
+                                // Same-bar iff `off == nb(name) - nb(anchor)` and
+                                // the two series end on the same bar. A primary output
+                                // nothing before the map produced has no count: a series
+                                // read at the plain cursor anchors instead, never a lag
+                                // ring, whose plain read is an earlier bar.
+                                let anchors: Vec<&String> = match primary_out {
+                                    Some(po) if defined.contains(po) => vec![po],
+                                    Some(_) => has_plain
+                                        .iter()
+                                        .filter(|s| !lag_rings.contains_key(*s))
+                                        .collect(),
+                                    None => Vec::new(),
+                                };
                                 let same_bar = defined.contains(name)
-                                    && primary_out.is_some_and(|po| {
+                                    && anchors.into_iter().any(|po| {
                                         let prov_ok = matches!(
                                             (
                                                 facts.diffs.get(&off),
