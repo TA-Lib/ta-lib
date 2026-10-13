@@ -169,7 +169,7 @@ Out of scope here: C# models the parameter domains as a record hierarchy
 | C | `libta-lib`, `TA_` prefix |
 | Rust | crate `ta-lib`, lib target `ta_lib` |
 | Java | `io.github.ta-lib:ta-lib`, package `io.github.talib` |
-| C# | namespace and assembly `TALib`, `TALib.Metadata` |
+| C# | package `TA-Lib`, namespace and assembly `TALib`, `TALib.Metadata` |
 
 ## 10. Exceptions: idiom loses
 

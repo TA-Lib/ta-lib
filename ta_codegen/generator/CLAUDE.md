@@ -28,7 +28,7 @@ ta_codegen/output/       per-language products: library/ (shipped) + tools/ (ser
                                    an intermediate that ships nowhere, re-rendered
                                    into Core.java from the IR and inlined into the
                                    server from disk
-  csharp/library/ + tools/         shipped TALib package incl. src/metadata/
+  csharp/library/ + tools/         shipped TA-Lib package incl. src/metadata/
 ```
 
 **Hand-written library templates** live under `templates/` — the generator's own
