@@ -132004,7 +132004,7 @@ public final class Core {
       }
       /* Stephen J. Klinger, "Identifying Trends With Volume Analysis", Technical
        * Analysis of Stocks & Commodities V15:12 (December 1997), with the 1997
-       * factor |2*(dm/cm) - 1| (#484, form A; LEAN's differs).
+       * factor |2*(dm/cm) - 1| (#484, form A).
        *
        *    trend = +1 if H+L+C rose, -1 if it fell, unchanged on a tie
        *    cm    = previous + current range on a trend change, else cm + range
@@ -132783,7 +132783,7 @@ public final class Core {
       }
       /* Stephen J. Klinger, "Identifying Trends With Volume Analysis", Technical
        * Analysis of Stocks & Commodities V15:12 (December 1997), with the 1997
-       * factor |2*(dm/cm) - 1| (#484, form A; LEAN's differs).
+       * factor |2*(dm/cm) - 1| (#484, form A).
        *
        *    trend = +1 if H+L+C rose, -1 if it fell, unchanged on a tie
        *    cm    = previous + current range on a trend change, else cm + range

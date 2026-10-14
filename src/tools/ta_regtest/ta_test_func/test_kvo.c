@@ -687,8 +687,7 @@ static TA_RetCode kvoRangeTestFunction( TA_Integer startIdx, TA_Integer endIdx,
 
 /* (7) Range sweep. KVO converges: the cumulative range two starts carry
  * differs only until the first trend change after both, which resets it for
- * both alike, and what remains is the EMA seed error, fading at the slow
- * average's rate (54/56 per bar at the defaults). It is a small difference of
+ * both alike, and what remains is the EMA seed error. It is a small difference of
  * two large averages -- on this corpus mean |KVO| is 7% of either -- so that
  * error starts at ~14x the output and outlives the envelope's 100-bar grace.
  * The grace this sweep needs is the one the codegen sweep reads, keyed on the

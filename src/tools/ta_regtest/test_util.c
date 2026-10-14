@@ -142,7 +142,6 @@ static unsigned int g_rangePeriodToIgnore = 0;
  * caught rather than waived. */
 static unsigned long g_rangeNbCompared = 0;
 
-/* The caller's grace when it named one, else the id's own. */
 static unsigned int rangeGrace( TA_FuncUnstId unstId )
 {
    if( g_rangePeriodToIgnore != 0 )
@@ -1392,8 +1391,7 @@ static int dataWithinReasonableRange( TA_Real val1, TA_Real val2,
 
    /* TA_STABLE_CONVERGING: inside the grace nothing is held, so it is decided
     * first and not counted; past it the value is counted as compared whatever
-    * the branches below conclude, bit-identical included. The grace is the
-    * caller's own when it named one, else the id's. */
+    * the branches below conclude, bit-identical included. */
    if( stability == TA_STABLE_CONVERGING )
    {
       if( outputPosition + TA_GetUnstablePeriod( unstId ) + 1

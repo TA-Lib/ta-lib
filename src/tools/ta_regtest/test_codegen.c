@@ -2219,12 +2219,13 @@ static unsigned int get_integer_tolerance(const TA_FuncInfo *funcInfo)
 static const struct { const char *name; unsigned int grace; } perFuncGrace[] = {
     /* KVO is a small difference of two large EMA of the volume force: on the
      * corpus mean |KVO| is 7% of either average, so one seed error is ~14x the
-     * output and fades at the slow EMA's rate, 54/56 per bar at the defaults.
+     * output.
      * MEASURED (#484): 160 fails, 175 compares bars 230-251 at worst 0.13 of
      * the tolerance, 197 and up compares nothing (252 - 55 - 1 = 196). */
     { "KVO", 175 },
-    /* At its defaults STC's lookback is 67, so its id's grace of 200 leaves
-     * nothing reachable. MEASURED: 150 fails on every seed, 175 holds on 48. */
+    /* At its defaults STC's lookback is 67, which leaves the id's own grace
+     * nothing to compare. MEASURED: 150 fails on 4 of 4 seeds, 175 holds on
+     * 48 of 48. */
     { "STC", 175 },
 };
 
