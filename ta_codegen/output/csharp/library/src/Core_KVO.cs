@@ -47,13 +47,15 @@ public partial class Core
     *  Initial  Name/description
     *  -------------------------------------------------------------------
     *  MF       Mario Fortier
+    *  KL       Kevin Lin (@kevinlincg)
     *  CC       Claude Code (AI assistant)
     *
     * Change history:
     *
     *  MMDDYY BY     Description
     *  -------------------------------------------------------------------
-    *  100726 MF,CC  Initial version (#484).
+    *  100726 KL,CC  Initial version (#484).
+    *  101426 MF,CC  The EMA step is TA_EMA's; the trend and the range are selects.
     */
    /// <summary>
    /// Number of leading input bars <c>Kvo</c> consumes before it can produce its
@@ -89,11 +91,8 @@ public partial class Core
          return -1;
       }
       int longestPeriod = 0;
-      /* The three smoothings share ONE anchor -- they are all seeded from the
-       * volume force of the same bar -- so the warm-up is one EMA lookback of the
-       * longest of them, not the sum of three. The extra 1 is the reference bar:
-       * the trend needs a previous H+L+C to compare against, and the cumulative
-       * range needs a previous bar's range to open with.
+      /* The three EMAs seed on one bar, so one EMA lookback of the longest
+       * covers all three. The 1 is the reference bar before it.
        */
       longestPeriod = optInFastPeriod;
       if( optInSlowPeriod > longestPeriod ) {
@@ -150,20 +149,23 @@ public partial class Core
       double kFast = 0;
       double kSlow = 0;
       double kSignal = 0;
+      double betaFast = 0;
+      double betaSlow = 0;
+      double betaSignal = 0;
       double hlc = 0;
       double prevHlc = 0;
       double dmToday = 0;
       double prevDm = 0;
       double cm = 0;
+      double cmBase = 0;
       double vf = 0;
-      double factor = 0;
       double emaFast = 0;
       double emaSlow = 0;
       double kvoValue = 0;
       double signalValue = 0;
+      double trend = 0;
+      double prevTrend = 0;
       int lookbackTotal = 0;
-      int trend = 0;
-      int prevTrend = 0;
       int today = 0;
       int outIdx = 0;
       if( (startIdx < 0) || (startIdx > IndexMax) ) {
@@ -194,32 +196,19 @@ public partial class Core
          return RetCode.BadParam ;
       }
       /* Stephen J. Klinger, "Identifying Trends With Volume Analysis", Technical
-       * Analysis of Stocks & Commodities V15:12 (December 1997).
+       * Analysis of Stocks & Commodities V15:12 (December 1997), with the 1997
+       * factor |2*(dm/cm) - 1| (#484, form A; LEAN's differs).
        *
-       * Each bar's volume is signed by the trend of H+L+C and weighted by where
-       * the bar's own range sits inside the cumulative range of the current trend
-       * run. KVO is the difference of two exponential averages of that volume
-       * force; the trigger is a third exponential average of KVO.
+       *    trend = +1 if H+L+C rose, -1 if it fell, unchanged on a tie
+       *    cm    = previous + current range on a trend change, else cm + range
+       *    vf    = volume * |2*(dm/cm) - 1| * 100 * trend
        *
-       *    trend  = +1 if H+L+C rose, -1 if it fell, UNCHANGED if it repeated
-       *    cm     = the previous and current ranges on a trend change,
-       *             otherwise the running sum plus this bar's range
-       *    vf     = volume * |2*(dm/cm) - 1| * 100 * trend
+       * The committed corpus holds a single tie in H+L+C, and reading it any other
+       * way moves KVO by up to 1e7 from the next bar on: the tie rule is gated by
+       * a built series in test_kvo.c, not by the corpus.
        *
-       * The tie rule is the article's own tenet -- "When equality occurs, the
-       * existing trend is maintained" -- and it is one line that a corpus with
-       * few ties barely exercises. MEASURED on the committed 252-bar corpus:
-       * exactly one tie (bar 187), and reading it as +1, or as a reversal, moves
-       * KVO by up to 1.0e7 from the next bar on. So it is cheap to get wrong and
-       * not cheap to notice.
-       *
-       * The factor is the 1997 form |2*(dm/cm) - 1| (#484, form A), which is what
-       * the December 1997 Traders' Tips all print. It is not LEAN's.
-       *
-       * The three averages are seeded RAW, from the volume force of the anchor
-       * bar, not from a simple average of their first `period` inputs the way
-       * ema.c seeds a standalone TA_EMA. That is what every 1997 transcription
-       * does, and it is why one lookback covers all three.
+       * All three EMAs seed raw on the first volume force, not on an SMA as
+       * TA_EMA does. Each k + beta pair must sum to exactly 1.0, as in ema.c.
        */
       lookbackTotal = KvoLookback(optInFastPeriod, optInSlowPeriod, optInSignalPeriod);
       /* Move up the start index if there is not
@@ -234,44 +223,39 @@ public partial class Core
          outNBElement = 0;
          return RetCode.Success ;
       }
-      kFast = 2.0 / ((double)optInFastPeriod + 1.0);
-      kSlow = 2.0 / ((double)optInSlowPeriod + 1.0);
-      kSignal = 2.0 / ((double)optInSignalPeriod + 1.0);
-      /* The anchor. Its H+L+C and its range are read, nothing else: the trend
-       * starts at +1 there by convention and the first volume force is the bar
-       * after it.
-       */
+      betaFast = (double)(optInFastPeriod - 1) / (double)(optInFastPeriod + 1);
+      kFast = 1.0 - betaFast;
+      if( betaFast < 0.5 ) {
+         betaFast = 1.0 - kFast;
+      }
+      betaSlow = (double)(optInSlowPeriod - 1) / (double)(optInSlowPeriod + 1);
+      kSlow = 1.0 - betaSlow;
+      if( betaSlow < 0.5 ) {
+         betaSlow = 1.0 - kSlow;
+      }
+      betaSignal = (double)(optInSignalPeriod - 1) / (double)(optInSignalPeriod + 1);
+      kSignal = 1.0 - betaSignal;
+      if( betaSignal < 0.5 ) {
+         betaSignal = 1.0 - kSignal;
+      }
+      /* The anchor: only its H+L+C and range are read, and the trend starts at +1. */
       today = startIdx - lookbackTotal;
       prevHlc = inHigh[today] + inLow[today] + inClose[today];
       prevDm = inHigh[today] - inLow[today];
-      prevTrend = 1;
-      cm = 0.0;
-      emaFast = 0.0;
-      emaSlow = 0.0;
-      signalValue = 0.0;
-      kvoValue = 0.0;
+      prevTrend = 1.0;
       today = today + 1;
-      /* The seed bar. Both averages start at this bar's volume force, so KVO is
-       * exactly zero here and the trigger seeds on that exact zero.
+      /* The seed bar: cm opens on both ranges whatever the trend, and both
+       * averages start at this volume force, so KVO and the trigger are exactly 0.
        */
       hlc = inHigh[today] + inLow[today] + inClose[today];
       dmToday = inHigh[today] - inLow[today];
-      if( hlc > prevHlc ) {
-         trend = 1;
-      } else if( hlc < prevHlc ) {
-         trend = -1;
-      } else {
-         trend = prevTrend;
-      }
+      trend = (hlc > prevHlc) ? 1.0 : prevTrend;
+      trend = (hlc < prevHlc) ? -1.0 : trend;
       cm = prevDm + dmToday;
       if( cm == 0.0 ) {
          vf = 0.0;
       } else {
-         factor = 2.0 * (dmToday / cm) - 1.0;
-         if( factor < 0.0 ) {
-            factor = -factor;
-         }
-         vf = inVolume[today] * factor * 100.0 * (double)trend;
+         vf = inVolume[today] * Math.Abs(2.0 * (dmToday / cm) - 1.0) * 100.0 * trend;
       }
       emaFast = vf;
       emaSlow = vf;
@@ -281,72 +265,44 @@ public partial class Core
       prevDm = dmToday;
       prevTrend = trend;
       today = today + 1;
-      /* Warm-up. Every bar from here is a pure recursion; only the cumulative
-       * range branches, and it branches on the data, not on a counter.
-       */
       while( today < startIdx ) {
          hlc = inHigh[today] + inLow[today] + inClose[today];
          dmToday = inHigh[today] - inLow[today];
-         if( hlc > prevHlc ) {
-            trend = 1;
-         } else if( hlc < prevHlc ) {
-            trend = -1;
-         } else {
-            trend = prevTrend;
-         }
-         if( trend != prevTrend ) {
-            cm = prevDm + dmToday;
-         } else {
-            cm = cm + dmToday;
-         }
+         trend = (hlc > prevHlc) ? 1.0 : prevTrend;
+         trend = (hlc < prevHlc) ? -1.0 : trend;
+         cmBase = (trend != prevTrend) ? prevDm : cm;
+         cm = cmBase + dmToday;
          if( cm == 0.0 ) {
             vf = 0.0;
          } else {
-            factor = 2.0 * (dmToday / cm) - 1.0;
-            if( factor < 0.0 ) {
-               factor = -factor;
-            }
-            vf = inVolume[today] * factor * 100.0 * (double)trend;
+            vf = inVolume[today] * Math.Abs(2.0 * (dmToday / cm) - 1.0) * 100.0 * trend;
          }
-         emaFast = Math.FusedMultiplyAdd(vf - emaFast, kFast, emaFast);
-         emaSlow = Math.FusedMultiplyAdd(vf - emaSlow, kSlow, emaSlow);
+         emaFast = Math.FusedMultiplyAdd(betaFast, emaFast, kFast * vf);
+         emaSlow = Math.FusedMultiplyAdd(betaSlow, emaSlow, kSlow * vf);
          kvoValue = emaFast - emaSlow;
-         signalValue = Math.FusedMultiplyAdd(kvoValue - signalValue, kSignal, signalValue);
+         signalValue = Math.FusedMultiplyAdd(betaSignal, signalValue, kSignal * kvoValue);
          prevHlc = hlc;
          prevDm = dmToday;
          prevTrend = trend;
          today = today + 1;
       }
-      /* The requested range. */
       outIdx = 0;
       while( today <= endIdx ) {
          hlc = inHigh[today] + inLow[today] + inClose[today];
          dmToday = inHigh[today] - inLow[today];
-         if( hlc > prevHlc ) {
-            trend = 1;
-         } else if( hlc < prevHlc ) {
-            trend = -1;
-         } else {
-            trend = prevTrend;
-         }
-         if( trend != prevTrend ) {
-            cm = prevDm + dmToday;
-         } else {
-            cm = cm + dmToday;
-         }
+         trend = (hlc > prevHlc) ? 1.0 : prevTrend;
+         trend = (hlc < prevHlc) ? -1.0 : trend;
+         cmBase = (trend != prevTrend) ? prevDm : cm;
+         cm = cmBase + dmToday;
          if( cm == 0.0 ) {
             vf = 0.0;
          } else {
-            factor = 2.0 * (dmToday / cm) - 1.0;
-            if( factor < 0.0 ) {
-               factor = -factor;
-            }
-            vf = inVolume[today] * factor * 100.0 * (double)trend;
+            vf = inVolume[today] * Math.Abs(2.0 * (dmToday / cm) - 1.0) * 100.0 * trend;
          }
-         emaFast = Math.FusedMultiplyAdd(vf - emaFast, kFast, emaFast);
-         emaSlow = Math.FusedMultiplyAdd(vf - emaSlow, kSlow, emaSlow);
+         emaFast = Math.FusedMultiplyAdd(betaFast, emaFast, kFast * vf);
+         emaSlow = Math.FusedMultiplyAdd(betaSlow, emaSlow, kSlow * vf);
          kvoValue = emaFast - emaSlow;
-         signalValue = Math.FusedMultiplyAdd(kvoValue - signalValue, kSignal, signalValue);
+         signalValue = Math.FusedMultiplyAdd(betaSignal, signalValue, kSignal * kvoValue);
          outKVO[outIdx] = kvoValue;
          outKVOSignal[outIdx] = signalValue;
          outIdx = outIdx + 1;
@@ -378,20 +334,23 @@ public partial class Core
       double kFast = 0;
       double kSlow = 0;
       double kSignal = 0;
+      double betaFast = 0;
+      double betaSlow = 0;
+      double betaSignal = 0;
       double hlc = 0;
       double prevHlc = 0;
       double dmToday = 0;
       double prevDm = 0;
       double cm = 0;
+      double cmBase = 0;
       double vf = 0;
-      double factor = 0;
       double emaFast = 0;
       double emaSlow = 0;
       double kvoValue = 0;
       double signalValue = 0;
+      double trend = 0;
+      double prevTrend = 0;
       int lookbackTotal = 0;
-      int trend = 0;
-      int prevTrend = 0;
       int today = 0;
       int outIdx = 0;
       if( (startIdx < 0) || (startIdx > IndexMax) ) {
@@ -430,37 +389,35 @@ public partial class Core
          outNBElement = 0;
          return RetCode.Success ;
       }
-      kFast = 2.0 / ((double)optInFastPeriod + 1.0);
-      kSlow = 2.0 / ((double)optInSlowPeriod + 1.0);
-      kSignal = 2.0 / ((double)optInSignalPeriod + 1.0);
+      betaFast = (double)(optInFastPeriod - 1) / (double)(optInFastPeriod + 1);
+      kFast = 1.0 - betaFast;
+      if( betaFast < 0.5 ) {
+         betaFast = 1.0 - kFast;
+      }
+      betaSlow = (double)(optInSlowPeriod - 1) / (double)(optInSlowPeriod + 1);
+      kSlow = 1.0 - betaSlow;
+      if( betaSlow < 0.5 ) {
+         betaSlow = 1.0 - kSlow;
+      }
+      betaSignal = (double)(optInSignalPeriod - 1) / (double)(optInSignalPeriod + 1);
+      kSignal = 1.0 - betaSignal;
+      if( betaSignal < 0.5 ) {
+         betaSignal = 1.0 - kSignal;
+      }
       today = startIdx - lookbackTotal;
       prevHlc = (double)inHigh[today] + (double)inLow[today] + (double)inClose[today];
       prevDm = (double)inHigh[today] - (double)inLow[today];
-      prevTrend = 1;
-      cm = 0.0;
-      emaFast = 0.0;
-      emaSlow = 0.0;
-      signalValue = 0.0;
-      kvoValue = 0.0;
+      prevTrend = 1.0;
       today = today + 1;
       hlc = (double)inHigh[today] + (double)inLow[today] + (double)inClose[today];
       dmToday = (double)inHigh[today] - (double)inLow[today];
-      if( hlc > prevHlc ) {
-         trend = 1;
-      } else if( hlc < prevHlc ) {
-         trend = -1;
-      } else {
-         trend = prevTrend;
-      }
+      trend = (hlc > prevHlc) ? 1.0 : prevTrend;
+      trend = (hlc < prevHlc) ? -1.0 : trend;
       cm = prevDm + dmToday;
       if( cm == 0.0 ) {
          vf = 0.0;
       } else {
-         factor = 2.0 * (dmToday / cm) - 1.0;
-         if( factor < 0.0 ) {
-            factor = -factor;
-         }
-         vf = (double)inVolume[today] * factor * 100.0 * (double)trend;
+         vf = (double)inVolume[today] * Math.Abs(2.0 * (dmToday / cm) - 1.0) * 100.0 * trend;
       }
       emaFast = vf;
       emaSlow = vf;
@@ -473,31 +430,19 @@ public partial class Core
       while( today < startIdx ) {
          hlc = (double)inHigh[today] + (double)inLow[today] + (double)inClose[today];
          dmToday = (double)inHigh[today] - (double)inLow[today];
-         if( hlc > prevHlc ) {
-            trend = 1;
-         } else if( hlc < prevHlc ) {
-            trend = -1;
-         } else {
-            trend = prevTrend;
-         }
-         if( trend != prevTrend ) {
-            cm = prevDm + dmToday;
-         } else {
-            cm = cm + dmToday;
-         }
+         trend = (hlc > prevHlc) ? 1.0 : prevTrend;
+         trend = (hlc < prevHlc) ? -1.0 : trend;
+         cmBase = (trend != prevTrend) ? prevDm : cm;
+         cm = cmBase + dmToday;
          if( cm == 0.0 ) {
             vf = 0.0;
          } else {
-            factor = 2.0 * (dmToday / cm) - 1.0;
-            if( factor < 0.0 ) {
-               factor = -factor;
-            }
-            vf = (double)inVolume[today] * factor * 100.0 * (double)trend;
+            vf = (double)inVolume[today] * Math.Abs(2.0 * (dmToday / cm) - 1.0) * 100.0 * trend;
          }
-         emaFast = Math.FusedMultiplyAdd(vf - emaFast, kFast, emaFast);
-         emaSlow = Math.FusedMultiplyAdd(vf - emaSlow, kSlow, emaSlow);
+         emaFast = Math.FusedMultiplyAdd(betaFast, emaFast, kFast * vf);
+         emaSlow = Math.FusedMultiplyAdd(betaSlow, emaSlow, kSlow * vf);
          kvoValue = emaFast - emaSlow;
-         signalValue = Math.FusedMultiplyAdd(kvoValue - signalValue, kSignal, signalValue);
+         signalValue = Math.FusedMultiplyAdd(betaSignal, signalValue, kSignal * kvoValue);
          prevHlc = hlc;
          prevDm = dmToday;
          prevTrend = trend;
@@ -507,31 +452,19 @@ public partial class Core
       while( today <= endIdx ) {
          hlc = (double)inHigh[today] + (double)inLow[today] + (double)inClose[today];
          dmToday = (double)inHigh[today] - (double)inLow[today];
-         if( hlc > prevHlc ) {
-            trend = 1;
-         } else if( hlc < prevHlc ) {
-            trend = -1;
-         } else {
-            trend = prevTrend;
-         }
-         if( trend != prevTrend ) {
-            cm = prevDm + dmToday;
-         } else {
-            cm = cm + dmToday;
-         }
+         trend = (hlc > prevHlc) ? 1.0 : prevTrend;
+         trend = (hlc < prevHlc) ? -1.0 : trend;
+         cmBase = (trend != prevTrend) ? prevDm : cm;
+         cm = cmBase + dmToday;
          if( cm == 0.0 ) {
             vf = 0.0;
          } else {
-            factor = 2.0 * (dmToday / cm) - 1.0;
-            if( factor < 0.0 ) {
-               factor = -factor;
-            }
-            vf = (double)inVolume[today] * factor * 100.0 * (double)trend;
+            vf = (double)inVolume[today] * Math.Abs(2.0 * (dmToday / cm) - 1.0) * 100.0 * trend;
          }
-         emaFast = Math.FusedMultiplyAdd(vf - emaFast, kFast, emaFast);
-         emaSlow = Math.FusedMultiplyAdd(vf - emaSlow, kSlow, emaSlow);
+         emaFast = Math.FusedMultiplyAdd(betaFast, emaFast, kFast * vf);
+         emaSlow = Math.FusedMultiplyAdd(betaSlow, emaSlow, kSlow * vf);
          kvoValue = emaFast - emaSlow;
-         signalValue = Math.FusedMultiplyAdd(kvoValue - signalValue, kSignal, signalValue);
+         signalValue = Math.FusedMultiplyAdd(betaSignal, signalValue, kSignal * kvoValue);
          outKVO[outIdx] = kvoValue;
          outKVOSignal[outIdx] = signalValue;
          outIdx = outIdx + 1;
@@ -561,8 +494,8 @@ public partial class Core
    /// </para>
    /// <list type="bullet">
    /// <item><description>The trend is <b>held</b> when the high-low-close sum repeats, which is the article's own tenet: the existing trend is maintained on equality. A reading that breaks the tie in either direction changes every later bar, because the cumulative range is reset by a trend change.</description></item>
-   /// <item><description>The cumulative range is reset by every trend change, so two calls starting at different bars carry different range state only until the first trend change after both; what remains between them is the seed error of the three averages, which fades at the slow average's rate. KVO converges, but as a small difference of two large averages it needs more bars than one of them would.</description></item>
-   /// <item><description>All three exponential averages are seeded from the volume force of the same anchor bar rather than from a simple average of their own first inputs, so one warm-up covers all three and the first KVO value is exactly zero. <c>TA_SetUnstablePeriod(TA_FUNC_UNST_EMA, ...)</c> discards more of that warm-up.</description></item>
+   /// <item><description>The cumulative range is reset by every trend change, so two calls starting at different bars carry different range state only until the first trend change after both; what remains between them is the seed error of the three averages, which fades at the rate of the longest period. KVO converges, but as a small difference of two large averages it needs more bars than one of them would.</description></item>
+   /// <item><description>All three exponential averages are seeded from the volume force of the same anchor bar rather than from a simple average of their own first inputs, so one warm-up covers all three. KVO is exactly zero on that seed bar, which falls inside the warm-up and is never output. <c>TA_SetUnstablePeriod(TA_FUNC_UNST_EMA, ...)</c> discards more of that warm-up.</description></item>
    /// <item><description>The weight is the 1997 form, <c>|2*(dm/cm) - 1|</c>, which is what the December 1997 Traders' Tips print. Some later implementations use <c>|2*(dm/cm - 1)|</c>, which is a different series.</description></item>
    /// <item><description>A cumulative range of exactly zero leaves the volume force at zero rather than dividing.</description></item>
    /// </list>
@@ -669,8 +602,8 @@ public partial class Core
    /// </para>
    /// <list type="bullet">
    /// <item><description>The trend is <b>held</b> when the high-low-close sum repeats, which is the article's own tenet: the existing trend is maintained on equality. A reading that breaks the tie in either direction changes every later bar, because the cumulative range is reset by a trend change.</description></item>
-   /// <item><description>The cumulative range is reset by every trend change, so two calls starting at different bars carry different range state only until the first trend change after both; what remains between them is the seed error of the three averages, which fades at the slow average's rate. KVO converges, but as a small difference of two large averages it needs more bars than one of them would.</description></item>
-   /// <item><description>All three exponential averages are seeded from the volume force of the same anchor bar rather than from a simple average of their own first inputs, so one warm-up covers all three and the first KVO value is exactly zero. <c>TA_SetUnstablePeriod(TA_FUNC_UNST_EMA, ...)</c> discards more of that warm-up.</description></item>
+   /// <item><description>The cumulative range is reset by every trend change, so two calls starting at different bars carry different range state only until the first trend change after both; what remains between them is the seed error of the three averages, which fades at the rate of the longest period. KVO converges, but as a small difference of two large averages it needs more bars than one of them would.</description></item>
+   /// <item><description>All three exponential averages are seeded from the volume force of the same anchor bar rather than from a simple average of their own first inputs, so one warm-up covers all three. KVO is exactly zero on that seed bar, which falls inside the warm-up and is never output. <c>TA_SetUnstablePeriod(TA_FUNC_UNST_EMA, ...)</c> discards more of that warm-up.</description></item>
    /// <item><description>The weight is the 1997 form, <c>|2*(dm/cm) - 1|</c>, which is what the December 1997 Traders' Tips print. Some later implementations use <c>|2*(dm/cm - 1)|</c>, which is a different series.</description></item>
    /// <item><description>A cumulative range of exactly zero leaves the volume force at zero rather than dividing.</description></item>
    /// </list>
@@ -808,13 +741,16 @@ public partial class Core
       internal double kFast;
       internal double kSlow;
       internal double kSignal;
+      internal double betaFast;
+      internal double betaSlow;
+      internal double betaSignal;
       internal double prevHlc;
       internal double prevDm;
       internal double cm;
       internal double emaFast;
       internal double emaSlow;
       internal double signalValue;
-      internal int prevTrend;
+      internal double prevTrend;
       internal double cur_outKVO;
       internal double cur_outKVOSignal;
       internal int outRangeBegIdx;
@@ -864,6 +800,9 @@ public partial class Core
          this.kFast = other.kFast;
          this.kSlow = other.kSlow;
          this.kSignal = other.kSignal;
+         this.betaFast = other.betaFast;
+         this.betaSlow = other.betaSlow;
+         this.betaSignal = other.betaSignal;
          this.prevHlc = other.prevHlc;
          this.prevDm = other.prevDm;
          this.cm = other.cm;
@@ -929,10 +868,10 @@ public partial class Core
          KvoStream sp = this;
          double hlc = 0.0;
          double dmToday = 0.0;
+         double cmBase = 0.0;
          double vf = 0.0;
-         double factor = 0.0;
          double kvoValue = 0.0;
-         int trend = 0;
+         double trend = 0.0;
          double cm = sp.cm;
          double cur_outKVO = 0.0;
          double cur_outKVOSignal = 0.0;
@@ -941,31 +880,19 @@ public partial class Core
          double signalValue = sp.signalValue;
          hlc = inHigh + inLow + inClose;
          dmToday = inHigh - inLow;
-         if( hlc > sp.prevHlc ) {
-            trend = 1;
-         } else if( hlc < sp.prevHlc ) {
-            trend = -1;
-         } else {
-            trend = sp.prevTrend;
-         }
-         if( trend != sp.prevTrend ) {
-            cm = sp.prevDm + dmToday;
-         } else {
-            cm = cm + dmToday;
-         }
+         trend = (hlc > sp.prevHlc) ? 1.0 : sp.prevTrend;
+         trend = (hlc < sp.prevHlc) ? -1.0 : trend;
+         cmBase = (trend != sp.prevTrend) ? sp.prevDm : cm;
+         cm = cmBase + dmToday;
          if( cm == 0.0 ) {
             vf = 0.0;
          } else {
-            factor = 2.0 * (dmToday / cm) - 1.0;
-            if( factor < 0.0 ) {
-               factor = -factor;
-            }
-            vf = inVolume * factor * 100.0 * (double)trend;
+            vf = inVolume * Math.Abs(2.0 * (dmToday / cm) - 1.0) * 100.0 * trend;
          }
-         emaFast = Math.FusedMultiplyAdd(vf - emaFast, sp.kFast, emaFast);
-         emaSlow = Math.FusedMultiplyAdd(vf - emaSlow, sp.kSlow, emaSlow);
+         emaFast = Math.FusedMultiplyAdd(sp.betaFast, emaFast, sp.kFast * vf);
+         emaSlow = Math.FusedMultiplyAdd(sp.betaSlow, emaSlow, sp.kSlow * vf);
          kvoValue = emaFast - emaSlow;
-         signalValue = Math.FusedMultiplyAdd(kvoValue - signalValue, sp.kSignal, signalValue);
+         signalValue = Math.FusedMultiplyAdd(sp.betaSignal, signalValue, sp.kSignal * kvoValue);
          cur_outKVO = kvoValue;
          cur_outKVOSignal = signalValue;
          return new KvoValue(cur_outKVO, cur_outKVOSignal);
@@ -992,37 +919,25 @@ public partial class Core
    {
       double hlc = 0.0;
       double dmToday = 0.0;
+      double cmBase = 0.0;
       double vf = 0.0;
-      double factor = 0.0;
       double kvoValue = 0.0;
-      int trend = 0;
+      double trend = 0.0;
       hlc = inHigh + inLow + inClose;
       dmToday = inHigh - inLow;
-      if( hlc > sp.prevHlc ) {
-         trend = 1;
-      } else if( hlc < sp.prevHlc ) {
-         trend = -1;
-      } else {
-         trend = sp.prevTrend;
-      }
-      if( trend != sp.prevTrend ) {
-         sp.cm = sp.prevDm + dmToday;
-      } else {
-         sp.cm = sp.cm + dmToday;
-      }
+      trend = (hlc > sp.prevHlc) ? 1.0 : sp.prevTrend;
+      trend = (hlc < sp.prevHlc) ? -1.0 : trend;
+      cmBase = (trend != sp.prevTrend) ? sp.prevDm : sp.cm;
+      sp.cm = cmBase + dmToday;
       if( sp.cm == 0.0 ) {
          vf = 0.0;
       } else {
-         factor = 2.0 * (dmToday / sp.cm) - 1.0;
-         if( factor < 0.0 ) {
-            factor = -factor;
-         }
-         vf = inVolume * factor * 100.0 * (double)trend;
+         vf = inVolume * Math.Abs(2.0 * (dmToday / sp.cm) - 1.0) * 100.0 * trend;
       }
-      sp.emaFast = Math.FusedMultiplyAdd(vf - sp.emaFast, sp.kFast, sp.emaFast);
-      sp.emaSlow = Math.FusedMultiplyAdd(vf - sp.emaSlow, sp.kSlow, sp.emaSlow);
+      sp.emaFast = Math.FusedMultiplyAdd(sp.betaFast, sp.emaFast, sp.kFast * vf);
+      sp.emaSlow = Math.FusedMultiplyAdd(sp.betaSlow, sp.emaSlow, sp.kSlow * vf);
       kvoValue = sp.emaFast - sp.emaSlow;
-      sp.signalValue = Math.FusedMultiplyAdd(kvoValue - sp.signalValue, sp.kSignal, sp.signalValue);
+      sp.signalValue = Math.FusedMultiplyAdd(sp.betaSignal, sp.signalValue, sp.kSignal * kvoValue);
       sp.cur_outKVO = kvoValue;
       sp.cur_outKVOSignal = sp.signalValue;
       sp.prevHlc = hlc;
@@ -1037,20 +952,23 @@ public partial class Core
       double kFast = 0;
       double kSlow = 0;
       double kSignal = 0;
+      double betaFast = 0;
+      double betaSlow = 0;
+      double betaSignal = 0;
       double hlc = 0;
       double prevHlc = 0;
       double dmToday = 0;
       double prevDm = 0;
       double cm = 0;
+      double cmBase = 0;
       double vf = 0;
-      double factor = 0;
       double emaFast = 0;
       double emaSlow = 0;
       double kvoValue = 0;
       double signalValue = 0;
+      double trend = 0;
+      double prevTrend = 0;
       int lookbackTotal = 0;
-      int trend = 0;
-      int prevTrend = 0;
       int today = 0;
       int outIdx = 0;
       int historyLen = inHigh.Length;
@@ -1085,32 +1003,19 @@ public partial class Core
          return RetCode.InsufficientHistory;
       }
       /* Stephen J. Klinger, "Identifying Trends With Volume Analysis", Technical
-       * Analysis of Stocks & Commodities V15:12 (December 1997).
+       * Analysis of Stocks & Commodities V15:12 (December 1997), with the 1997
+       * factor |2*(dm/cm) - 1| (#484, form A; LEAN's differs).
        *
-       * Each bar's volume is signed by the trend of H+L+C and weighted by where
-       * the bar's own range sits inside the cumulative range of the current trend
-       * run. KVO is the difference of two exponential averages of that volume
-       * force; the trigger is a third exponential average of KVO.
+       *    trend = +1 if H+L+C rose, -1 if it fell, unchanged on a tie
+       *    cm    = previous + current range on a trend change, else cm + range
+       *    vf    = volume * |2*(dm/cm) - 1| * 100 * trend
        *
-       *    trend  = +1 if H+L+C rose, -1 if it fell, UNCHANGED if it repeated
-       *    cm     = the previous and current ranges on a trend change,
-       *             otherwise the running sum plus this bar's range
-       *    vf     = volume * |2*(dm/cm) - 1| * 100 * trend
+       * The committed corpus holds a single tie in H+L+C, and reading it any other
+       * way moves KVO by up to 1e7 from the next bar on: the tie rule is gated by
+       * a built series in test_kvo.c, not by the corpus.
        *
-       * The tie rule is the article's own tenet -- "When equality occurs, the
-       * existing trend is maintained" -- and it is one line that a corpus with
-       * few ties barely exercises. MEASURED on the committed 252-bar corpus:
-       * exactly one tie (bar 187), and reading it as +1, or as a reversal, moves
-       * KVO by up to 1.0e7 from the next bar on. So it is cheap to get wrong and
-       * not cheap to notice.
-       *
-       * The factor is the 1997 form |2*(dm/cm) - 1| (#484, form A), which is what
-       * the December 1997 Traders' Tips all print. It is not LEAN's.
-       *
-       * The three averages are seeded RAW, from the volume force of the anchor
-       * bar, not from a simple average of their first `period` inputs the way
-       * ema.c seeds a standalone TA_EMA. That is what every 1997 transcription
-       * does, and it is why one lookback covers all three.
+       * All three EMAs seed raw on the first volume force, not on an SMA as
+       * TA_EMA does. Each k + beta pair must sum to exactly 1.0, as in ema.c.
        */
       lookbackTotal = KvoLookback(optInFastPeriod, optInSlowPeriod, optInSignalPeriod);
       /* Move up the start index if there is not
@@ -1125,44 +1030,39 @@ public partial class Core
          outNBElement = 0;
          return RetCode.InsufficientHistory ;
       }
-      kFast = 2.0 / ((double)optInFastPeriod + 1.0);
-      kSlow = 2.0 / ((double)optInSlowPeriod + 1.0);
-      kSignal = 2.0 / ((double)optInSignalPeriod + 1.0);
-      /* The anchor. Its H+L+C and its range are read, nothing else: the trend
-       * starts at +1 there by convention and the first volume force is the bar
-       * after it.
-       */
+      betaFast = (double)(optInFastPeriod - 1) / (double)(optInFastPeriod + 1);
+      kFast = 1.0 - betaFast;
+      if( betaFast < 0.5 ) {
+         betaFast = 1.0 - kFast;
+      }
+      betaSlow = (double)(optInSlowPeriod - 1) / (double)(optInSlowPeriod + 1);
+      kSlow = 1.0 - betaSlow;
+      if( betaSlow < 0.5 ) {
+         betaSlow = 1.0 - kSlow;
+      }
+      betaSignal = (double)(optInSignalPeriod - 1) / (double)(optInSignalPeriod + 1);
+      kSignal = 1.0 - betaSignal;
+      if( betaSignal < 0.5 ) {
+         betaSignal = 1.0 - kSignal;
+      }
+      /* The anchor: only its H+L+C and range are read, and the trend starts at +1. */
       today = startIdx - lookbackTotal;
       prevHlc = inHigh[today] + inLow[today] + inClose[today];
       prevDm = inHigh[today] - inLow[today];
-      prevTrend = 1;
-      cm = 0.0;
-      emaFast = 0.0;
-      emaSlow = 0.0;
-      signalValue = 0.0;
-      kvoValue = 0.0;
+      prevTrend = 1.0;
       today = today + 1;
-      /* The seed bar. Both averages start at this bar's volume force, so KVO is
-       * exactly zero here and the trigger seeds on that exact zero.
+      /* The seed bar: cm opens on both ranges whatever the trend, and both
+       * averages start at this volume force, so KVO and the trigger are exactly 0.
        */
       hlc = inHigh[today] + inLow[today] + inClose[today];
       dmToday = inHigh[today] - inLow[today];
-      if( hlc > prevHlc ) {
-         trend = 1;
-      } else if( hlc < prevHlc ) {
-         trend = -1;
-      } else {
-         trend = prevTrend;
-      }
+      trend = (hlc > prevHlc) ? 1.0 : prevTrend;
+      trend = (hlc < prevHlc) ? -1.0 : trend;
       cm = prevDm + dmToday;
       if( cm == 0.0 ) {
          vf = 0.0;
       } else {
-         factor = 2.0 * (dmToday / cm) - 1.0;
-         if( factor < 0.0 ) {
-            factor = -factor;
-         }
-         vf = inVolume[today] * factor * 100.0 * (double)trend;
+         vf = inVolume[today] * Math.Abs(2.0 * (dmToday / cm) - 1.0) * 100.0 * trend;
       }
       emaFast = vf;
       emaSlow = vf;
@@ -1172,72 +1072,44 @@ public partial class Core
       prevDm = dmToday;
       prevTrend = trend;
       today = today + 1;
-      /* Warm-up. Every bar from here is a pure recursion; only the cumulative
-       * range branches, and it branches on the data, not on a counter.
-       */
       while( today < startIdx ) {
          hlc = inHigh[today] + inLow[today] + inClose[today];
          dmToday = inHigh[today] - inLow[today];
-         if( hlc > prevHlc ) {
-            trend = 1;
-         } else if( hlc < prevHlc ) {
-            trend = -1;
-         } else {
-            trend = prevTrend;
-         }
-         if( trend != prevTrend ) {
-            cm = prevDm + dmToday;
-         } else {
-            cm = cm + dmToday;
-         }
+         trend = (hlc > prevHlc) ? 1.0 : prevTrend;
+         trend = (hlc < prevHlc) ? -1.0 : trend;
+         cmBase = (trend != prevTrend) ? prevDm : cm;
+         cm = cmBase + dmToday;
          if( cm == 0.0 ) {
             vf = 0.0;
          } else {
-            factor = 2.0 * (dmToday / cm) - 1.0;
-            if( factor < 0.0 ) {
-               factor = -factor;
-            }
-            vf = inVolume[today] * factor * 100.0 * (double)trend;
+            vf = inVolume[today] * Math.Abs(2.0 * (dmToday / cm) - 1.0) * 100.0 * trend;
          }
-         emaFast = Math.FusedMultiplyAdd(vf - emaFast, kFast, emaFast);
-         emaSlow = Math.FusedMultiplyAdd(vf - emaSlow, kSlow, emaSlow);
+         emaFast = Math.FusedMultiplyAdd(betaFast, emaFast, kFast * vf);
+         emaSlow = Math.FusedMultiplyAdd(betaSlow, emaSlow, kSlow * vf);
          kvoValue = emaFast - emaSlow;
-         signalValue = Math.FusedMultiplyAdd(kvoValue - signalValue, kSignal, signalValue);
+         signalValue = Math.FusedMultiplyAdd(betaSignal, signalValue, kSignal * kvoValue);
          prevHlc = hlc;
          prevDm = dmToday;
          prevTrend = trend;
          today = today + 1;
       }
-      /* The requested range. */
       outIdx = 0;
       while( today <= endIdx ) {
          hlc = inHigh[today] + inLow[today] + inClose[today];
          dmToday = inHigh[today] - inLow[today];
-         if( hlc > prevHlc ) {
-            trend = 1;
-         } else if( hlc < prevHlc ) {
-            trend = -1;
-         } else {
-            trend = prevTrend;
-         }
-         if( trend != prevTrend ) {
-            cm = prevDm + dmToday;
-         } else {
-            cm = cm + dmToday;
-         }
+         trend = (hlc > prevHlc) ? 1.0 : prevTrend;
+         trend = (hlc < prevHlc) ? -1.0 : trend;
+         cmBase = (trend != prevTrend) ? prevDm : cm;
+         cm = cmBase + dmToday;
          if( cm == 0.0 ) {
             vf = 0.0;
          } else {
-            factor = 2.0 * (dmToday / cm) - 1.0;
-            if( factor < 0.0 ) {
-               factor = -factor;
-            }
-            vf = inVolume[today] * factor * 100.0 * (double)trend;
+            vf = inVolume[today] * Math.Abs(2.0 * (dmToday / cm) - 1.0) * 100.0 * trend;
          }
-         emaFast = Math.FusedMultiplyAdd(vf - emaFast, kFast, emaFast);
-         emaSlow = Math.FusedMultiplyAdd(vf - emaSlow, kSlow, emaSlow);
+         emaFast = Math.FusedMultiplyAdd(betaFast, emaFast, kFast * vf);
+         emaSlow = Math.FusedMultiplyAdd(betaSlow, emaSlow, kSlow * vf);
          kvoValue = emaFast - emaSlow;
-         signalValue = Math.FusedMultiplyAdd(kvoValue - signalValue, kSignal, signalValue);
+         signalValue = Math.FusedMultiplyAdd(betaSignal, signalValue, kSignal * kvoValue);
          outKVO[outIdx * outStride] = kvoValue;
          outKVOSignal[outIdx * outStride] = signalValue;
          outIdx = outIdx + 1;
@@ -1255,6 +1127,9 @@ public partial class Core
       sp.kFast = kFast;
       sp.kSlow = kSlow;
       sp.kSignal = kSignal;
+      sp.betaFast = betaFast;
+      sp.betaSlow = betaSlow;
+      sp.betaSignal = betaSignal;
       sp.prevHlc = prevHlc;
       sp.prevDm = prevDm;
       sp.cm = cm;

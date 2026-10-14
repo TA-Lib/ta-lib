@@ -131855,13 +131855,15 @@ public final class Core {
  *  Initial  Name/description
  *  -------------------------------------------------------------------
  *  MF       Mario Fortier
+ *  KL       Kevin Lin (@kevinlincg)
  *  CC       Claude Code (AI assistant)
  *
  * Change history:
  *
  *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
- *  100726 MF,CC  Initial version (#484).
+ *  100726 KL,CC  Initial version (#484).
+ *  101426 MF,CC  The EMA step is TA_EMA's; the trend and the range are selects.
  */
 
    /**
@@ -131899,11 +131901,8 @@ public final class Core {
          return -1;
       }
       int longestPeriod;
-      /* The three smoothings share ONE anchor -- they are all seeded from the
-       * volume force of the same bar -- so the warm-up is one EMA lookback of the
-       * longest of them, not the sum of three. The extra 1 is the reference bar:
-       * the trend needs a previous H+L+C to compare against, and the cumulative
-       * range needs a previous bar's range to open with.
+      /* The three EMAs seed on one bar, so one EMA lookback of the longest
+       * covers all three. The 1 is the reference bar before it.
        */
       longestPeriod = optInFastPeriod;
       if( optInSlowPeriod > longestPeriod ) {
@@ -131960,20 +131959,23 @@ public final class Core {
       double kFast = 0;
       double kSlow = 0;
       double kSignal = 0;
+      double betaFast = 0;
+      double betaSlow = 0;
+      double betaSignal = 0;
       double hlc = 0;
       double prevHlc = 0;
       double dmToday = 0;
       double prevDm = 0;
       double cm = 0;
+      double cmBase = 0;
       double vf = 0;
-      double factor = 0;
       double emaFast = 0;
       double emaSlow = 0;
       double kvoValue = 0;
       double signalValue = 0;
+      double trend = 0;
+      double prevTrend = 0;
       int lookbackTotal = 0;
-      int trend = 0;
-      int prevTrend = 0;
       int today = 0;
       int outIdx = 0;
       if( (startIdx < 0) || (startIdx > INDEX_MAX) ) {
@@ -132001,32 +132003,19 @@ public final class Core {
          return RetCode.BAD_PARAM ;
       }
       /* Stephen J. Klinger, "Identifying Trends With Volume Analysis", Technical
-       * Analysis of Stocks & Commodities V15:12 (December 1997).
+       * Analysis of Stocks & Commodities V15:12 (December 1997), with the 1997
+       * factor |2*(dm/cm) - 1| (#484, form A; LEAN's differs).
        *
-       * Each bar's volume is signed by the trend of H+L+C and weighted by where
-       * the bar's own range sits inside the cumulative range of the current trend
-       * run. KVO is the difference of two exponential averages of that volume
-       * force; the trigger is a third exponential average of KVO.
+       *    trend = +1 if H+L+C rose, -1 if it fell, unchanged on a tie
+       *    cm    = previous + current range on a trend change, else cm + range
+       *    vf    = volume * |2*(dm/cm) - 1| * 100 * trend
        *
-       *    trend  = +1 if H+L+C rose, -1 if it fell, UNCHANGED if it repeated
-       *    cm     = the previous and current ranges on a trend change,
-       *             otherwise the running sum plus this bar's range
-       *    vf     = volume * |2*(dm/cm) - 1| * 100 * trend
+       * The committed corpus holds a single tie in H+L+C, and reading it any other
+       * way moves KVO by up to 1e7 from the next bar on: the tie rule is gated by
+       * a built series in test_kvo.c, not by the corpus.
        *
-       * The tie rule is the article's own tenet -- "When equality occurs, the
-       * existing trend is maintained" -- and it is one line that a corpus with
-       * few ties barely exercises. MEASURED on the committed 252-bar corpus:
-       * exactly one tie (bar 187), and reading it as +1, or as a reversal, moves
-       * KVO by up to 1.0e7 from the next bar on. So it is cheap to get wrong and
-       * not cheap to notice.
-       *
-       * The factor is the 1997 form |2*(dm/cm) - 1| (#484, form A), which is what
-       * the December 1997 Traders' Tips all print. It is not LEAN's.
-       *
-       * The three averages are seeded RAW, from the volume force of the anchor
-       * bar, not from a simple average of their first `period` inputs the way
-       * ema.c seeds a standalone TA_EMA. That is what every 1997 transcription
-       * does, and it is why one lookback covers all three.
+       * All three EMAs seed raw on the first volume force, not on an SMA as
+       * TA_EMA does. Each k + beta pair must sum to exactly 1.0, as in ema.c.
        */
       lookbackTotal = kvoLookback(optInFastPeriod, optInSlowPeriod, optInSignalPeriod);
       /* Move up the start index if there is not
@@ -132041,44 +132030,39 @@ public final class Core {
          outNBElement.value = 0;
          return RetCode.SUCCESS ;
       }
-      kFast = 2.0 / ((double)optInFastPeriod + 1.0);
-      kSlow = 2.0 / ((double)optInSlowPeriod + 1.0);
-      kSignal = 2.0 / ((double)optInSignalPeriod + 1.0);
-      /* The anchor. Its H+L+C and its range are read, nothing else: the trend
-       * starts at +1 there by convention and the first volume force is the bar
-       * after it.
-       */
+      betaFast = (double)(optInFastPeriod - 1) / (double)(optInFastPeriod + 1);
+      kFast = 1.0 - betaFast;
+      if( betaFast < 0.5 ) {
+         betaFast = 1.0 - kFast;
+      }
+      betaSlow = (double)(optInSlowPeriod - 1) / (double)(optInSlowPeriod + 1);
+      kSlow = 1.0 - betaSlow;
+      if( betaSlow < 0.5 ) {
+         betaSlow = 1.0 - kSlow;
+      }
+      betaSignal = (double)(optInSignalPeriod - 1) / (double)(optInSignalPeriod + 1);
+      kSignal = 1.0 - betaSignal;
+      if( betaSignal < 0.5 ) {
+         betaSignal = 1.0 - kSignal;
+      }
+      /* The anchor: only its H+L+C and range are read, and the trend starts at +1. */
       today = startIdx - lookbackTotal;
       prevHlc = inHigh[today] + inLow[today] + inClose[today];
       prevDm = inHigh[today] - inLow[today];
-      prevTrend = 1;
-      cm = 0.0;
-      emaFast = 0.0;
-      emaSlow = 0.0;
-      signalValue = 0.0;
-      kvoValue = 0.0;
+      prevTrend = 1.0;
       today = today + 1;
-      /* The seed bar. Both averages start at this bar's volume force, so KVO is
-       * exactly zero here and the trigger seeds on that exact zero.
+      /* The seed bar: cm opens on both ranges whatever the trend, and both
+       * averages start at this volume force, so KVO and the trigger are exactly 0.
        */
       hlc = inHigh[today] + inLow[today] + inClose[today];
       dmToday = inHigh[today] - inLow[today];
-      if( hlc > prevHlc ) {
-         trend = 1;
-      } else if( hlc < prevHlc ) {
-         trend = -1;
-      } else {
-         trend = prevTrend;
-      }
+      trend = (hlc > prevHlc) ? 1.0 : prevTrend;
+      trend = (hlc < prevHlc) ? -1.0 : trend;
       cm = prevDm + dmToday;
       if( cm == 0.0 ) {
          vf = 0.0;
       } else {
-         factor = 2.0 * (dmToday / cm) - 1.0;
-         if( factor < 0.0 ) {
-            factor = -factor;
-         }
-         vf = inVolume[today] * factor * 100.0 * (double)trend;
+         vf = inVolume[today] * Math.abs(2.0 * (dmToday / cm) - 1.0) * 100.0 * trend;
       }
       emaFast = vf;
       emaSlow = vf;
@@ -132088,72 +132072,44 @@ public final class Core {
       prevDm = dmToday;
       prevTrend = trend;
       today = today + 1;
-      /* Warm-up. Every bar from here is a pure recursion; only the cumulative
-       * range branches, and it branches on the data, not on a counter.
-       */
       while( today < startIdx ) {
          hlc = inHigh[today] + inLow[today] + inClose[today];
          dmToday = inHigh[today] - inLow[today];
-         if( hlc > prevHlc ) {
-            trend = 1;
-         } else if( hlc < prevHlc ) {
-            trend = -1;
-         } else {
-            trend = prevTrend;
-         }
-         if( trend != prevTrend ) {
-            cm = prevDm + dmToday;
-         } else {
-            cm = cm + dmToday;
-         }
+         trend = (hlc > prevHlc) ? 1.0 : prevTrend;
+         trend = (hlc < prevHlc) ? -1.0 : trend;
+         cmBase = (trend != prevTrend) ? prevDm : cm;
+         cm = cmBase + dmToday;
          if( cm == 0.0 ) {
             vf = 0.0;
          } else {
-            factor = 2.0 * (dmToday / cm) - 1.0;
-            if( factor < 0.0 ) {
-               factor = -factor;
-            }
-            vf = inVolume[today] * factor * 100.0 * (double)trend;
+            vf = inVolume[today] * Math.abs(2.0 * (dmToday / cm) - 1.0) * 100.0 * trend;
          }
-         emaFast = Math.fma(vf - emaFast, kFast, emaFast);
-         emaSlow = Math.fma(vf - emaSlow, kSlow, emaSlow);
+         emaFast = Math.fma(betaFast, emaFast, kFast * vf);
+         emaSlow = Math.fma(betaSlow, emaSlow, kSlow * vf);
          kvoValue = emaFast - emaSlow;
-         signalValue = Math.fma(kvoValue - signalValue, kSignal, signalValue);
+         signalValue = Math.fma(betaSignal, signalValue, kSignal * kvoValue);
          prevHlc = hlc;
          prevDm = dmToday;
          prevTrend = trend;
          today = today + 1;
       }
-      /* The requested range. */
       outIdx = 0;
       while( today <= endIdx ) {
          hlc = inHigh[today] + inLow[today] + inClose[today];
          dmToday = inHigh[today] - inLow[today];
-         if( hlc > prevHlc ) {
-            trend = 1;
-         } else if( hlc < prevHlc ) {
-            trend = -1;
-         } else {
-            trend = prevTrend;
-         }
-         if( trend != prevTrend ) {
-            cm = prevDm + dmToday;
-         } else {
-            cm = cm + dmToday;
-         }
+         trend = (hlc > prevHlc) ? 1.0 : prevTrend;
+         trend = (hlc < prevHlc) ? -1.0 : trend;
+         cmBase = (trend != prevTrend) ? prevDm : cm;
+         cm = cmBase + dmToday;
          if( cm == 0.0 ) {
             vf = 0.0;
          } else {
-            factor = 2.0 * (dmToday / cm) - 1.0;
-            if( factor < 0.0 ) {
-               factor = -factor;
-            }
-            vf = inVolume[today] * factor * 100.0 * (double)trend;
+            vf = inVolume[today] * Math.abs(2.0 * (dmToday / cm) - 1.0) * 100.0 * trend;
          }
-         emaFast = Math.fma(vf - emaFast, kFast, emaFast);
-         emaSlow = Math.fma(vf - emaSlow, kSlow, emaSlow);
+         emaFast = Math.fma(betaFast, emaFast, kFast * vf);
+         emaSlow = Math.fma(betaSlow, emaSlow, kSlow * vf);
          kvoValue = emaFast - emaSlow;
-         signalValue = Math.fma(kvoValue - signalValue, kSignal, signalValue);
+         signalValue = Math.fma(betaSignal, signalValue, kSignal * kvoValue);
          outKVO[outIdx] = kvoValue;
          outKVOSignal[outIdx] = signalValue;
          outIdx = outIdx + 1;
@@ -132183,20 +132139,23 @@ public final class Core {
       double kFast = 0;
       double kSlow = 0;
       double kSignal = 0;
+      double betaFast = 0;
+      double betaSlow = 0;
+      double betaSignal = 0;
       double hlc = 0;
       double prevHlc = 0;
       double dmToday = 0;
       double prevDm = 0;
       double cm = 0;
+      double cmBase = 0;
       double vf = 0;
-      double factor = 0;
       double emaFast = 0;
       double emaSlow = 0;
       double kvoValue = 0;
       double signalValue = 0;
+      double trend = 0;
+      double prevTrend = 0;
       int lookbackTotal = 0;
-      int trend = 0;
-      int prevTrend = 0;
       int today = 0;
       int outIdx = 0;
       if( (startIdx < 0) || (startIdx > INDEX_MAX) ) {
@@ -132232,37 +132191,35 @@ public final class Core {
          outNBElement.value = 0;
          return RetCode.SUCCESS ;
       }
-      kFast = 2.0 / ((double)optInFastPeriod + 1.0);
-      kSlow = 2.0 / ((double)optInSlowPeriod + 1.0);
-      kSignal = 2.0 / ((double)optInSignalPeriod + 1.0);
+      betaFast = (double)(optInFastPeriod - 1) / (double)(optInFastPeriod + 1);
+      kFast = 1.0 - betaFast;
+      if( betaFast < 0.5 ) {
+         betaFast = 1.0 - kFast;
+      }
+      betaSlow = (double)(optInSlowPeriod - 1) / (double)(optInSlowPeriod + 1);
+      kSlow = 1.0 - betaSlow;
+      if( betaSlow < 0.5 ) {
+         betaSlow = 1.0 - kSlow;
+      }
+      betaSignal = (double)(optInSignalPeriod - 1) / (double)(optInSignalPeriod + 1);
+      kSignal = 1.0 - betaSignal;
+      if( betaSignal < 0.5 ) {
+         betaSignal = 1.0 - kSignal;
+      }
       today = startIdx - lookbackTotal;
       prevHlc = (double)inHigh[today] + (double)inLow[today] + (double)inClose[today];
       prevDm = (double)inHigh[today] - (double)inLow[today];
-      prevTrend = 1;
-      cm = 0.0;
-      emaFast = 0.0;
-      emaSlow = 0.0;
-      signalValue = 0.0;
-      kvoValue = 0.0;
+      prevTrend = 1.0;
       today = today + 1;
       hlc = (double)inHigh[today] + (double)inLow[today] + (double)inClose[today];
       dmToday = (double)inHigh[today] - (double)inLow[today];
-      if( hlc > prevHlc ) {
-         trend = 1;
-      } else if( hlc < prevHlc ) {
-         trend = -1;
-      } else {
-         trend = prevTrend;
-      }
+      trend = (hlc > prevHlc) ? 1.0 : prevTrend;
+      trend = (hlc < prevHlc) ? -1.0 : trend;
       cm = prevDm + dmToday;
       if( cm == 0.0 ) {
          vf = 0.0;
       } else {
-         factor = 2.0 * (dmToday / cm) - 1.0;
-         if( factor < 0.0 ) {
-            factor = -factor;
-         }
-         vf = (double)inVolume[today] * factor * 100.0 * (double)trend;
+         vf = (double)inVolume[today] * Math.abs(2.0 * (dmToday / cm) - 1.0) * 100.0 * trend;
       }
       emaFast = vf;
       emaSlow = vf;
@@ -132275,31 +132232,19 @@ public final class Core {
       while( today < startIdx ) {
          hlc = (double)inHigh[today] + (double)inLow[today] + (double)inClose[today];
          dmToday = (double)inHigh[today] - (double)inLow[today];
-         if( hlc > prevHlc ) {
-            trend = 1;
-         } else if( hlc < prevHlc ) {
-            trend = -1;
-         } else {
-            trend = prevTrend;
-         }
-         if( trend != prevTrend ) {
-            cm = prevDm + dmToday;
-         } else {
-            cm = cm + dmToday;
-         }
+         trend = (hlc > prevHlc) ? 1.0 : prevTrend;
+         trend = (hlc < prevHlc) ? -1.0 : trend;
+         cmBase = (trend != prevTrend) ? prevDm : cm;
+         cm = cmBase + dmToday;
          if( cm == 0.0 ) {
             vf = 0.0;
          } else {
-            factor = 2.0 * (dmToday / cm) - 1.0;
-            if( factor < 0.0 ) {
-               factor = -factor;
-            }
-            vf = (double)inVolume[today] * factor * 100.0 * (double)trend;
+            vf = (double)inVolume[today] * Math.abs(2.0 * (dmToday / cm) - 1.0) * 100.0 * trend;
          }
-         emaFast = Math.fma(vf - emaFast, kFast, emaFast);
-         emaSlow = Math.fma(vf - emaSlow, kSlow, emaSlow);
+         emaFast = Math.fma(betaFast, emaFast, kFast * vf);
+         emaSlow = Math.fma(betaSlow, emaSlow, kSlow * vf);
          kvoValue = emaFast - emaSlow;
-         signalValue = Math.fma(kvoValue - signalValue, kSignal, signalValue);
+         signalValue = Math.fma(betaSignal, signalValue, kSignal * kvoValue);
          prevHlc = hlc;
          prevDm = dmToday;
          prevTrend = trend;
@@ -132309,31 +132254,19 @@ public final class Core {
       while( today <= endIdx ) {
          hlc = (double)inHigh[today] + (double)inLow[today] + (double)inClose[today];
          dmToday = (double)inHigh[today] - (double)inLow[today];
-         if( hlc > prevHlc ) {
-            trend = 1;
-         } else if( hlc < prevHlc ) {
-            trend = -1;
-         } else {
-            trend = prevTrend;
-         }
-         if( trend != prevTrend ) {
-            cm = prevDm + dmToday;
-         } else {
-            cm = cm + dmToday;
-         }
+         trend = (hlc > prevHlc) ? 1.0 : prevTrend;
+         trend = (hlc < prevHlc) ? -1.0 : trend;
+         cmBase = (trend != prevTrend) ? prevDm : cm;
+         cm = cmBase + dmToday;
          if( cm == 0.0 ) {
             vf = 0.0;
          } else {
-            factor = 2.0 * (dmToday / cm) - 1.0;
-            if( factor < 0.0 ) {
-               factor = -factor;
-            }
-            vf = (double)inVolume[today] * factor * 100.0 * (double)trend;
+            vf = (double)inVolume[today] * Math.abs(2.0 * (dmToday / cm) - 1.0) * 100.0 * trend;
          }
-         emaFast = Math.fma(vf - emaFast, kFast, emaFast);
-         emaSlow = Math.fma(vf - emaSlow, kSlow, emaSlow);
+         emaFast = Math.fma(betaFast, emaFast, kFast * vf);
+         emaSlow = Math.fma(betaSlow, emaSlow, kSlow * vf);
          kvoValue = emaFast - emaSlow;
-         signalValue = Math.fma(kvoValue - signalValue, kSignal, signalValue);
+         signalValue = Math.fma(betaSignal, signalValue, kSignal * kvoValue);
          outKVO[outIdx] = kvoValue;
          outKVOSignal[outIdx] = signalValue;
          outIdx = outIdx + 1;
@@ -132360,8 +132293,8 @@ public final class Core {
     * <p><b>Notes</b>
     * <ul>
     * <li>The trend is <b>held</b> when the high-low-close sum repeats, which is the article's own tenet: the existing trend is maintained on equality. A reading that breaks the tie in either direction changes every later bar, because the cumulative range is reset by a trend change.</li>
-    * <li>The cumulative range is reset by every trend change, so two calls starting at different bars carry different range state only until the first trend change after both; what remains between them is the seed error of the three averages, which fades at the slow average's rate. KVO converges, but as a small difference of two large averages it needs more bars than one of them would.</li>
-    * <li>All three exponential averages are seeded from the volume force of the same anchor bar rather than from a simple average of their own first inputs, so one warm-up covers all three and the first KVO value is exactly zero. {@code TA_SetUnstablePeriod(TA_FUNC_UNST_EMA, ...)} discards more of that warm-up.</li>
+    * <li>The cumulative range is reset by every trend change, so two calls starting at different bars carry different range state only until the first trend change after both; what remains between them is the seed error of the three averages, which fades at the rate of the longest period. KVO converges, but as a small difference of two large averages it needs more bars than one of them would.</li>
+    * <li>All three exponential averages are seeded from the volume force of the same anchor bar rather than from a simple average of their own first inputs, so one warm-up covers all three. KVO is exactly zero on that seed bar, which falls inside the warm-up and is never output. {@code TA_SetUnstablePeriod(TA_FUNC_UNST_EMA, ...)} discards more of that warm-up.</li>
     * <li>The weight is the 1997 form, {@code |2*(dm/cm) - 1|}, which is what the December 1997 Traders' Tips print. Some later implementations use {@code |2*(dm/cm - 1)|}, which is a different series.</li>
     * <li>A cumulative range of exactly zero leaves the volume force at zero rather than dividing.</li>
     * </ul>
@@ -132455,8 +132388,8 @@ public final class Core {
     * <p><b>Notes</b>
     * <ul>
     * <li>The trend is <b>held</b> when the high-low-close sum repeats, which is the article's own tenet: the existing trend is maintained on equality. A reading that breaks the tie in either direction changes every later bar, because the cumulative range is reset by a trend change.</li>
-    * <li>The cumulative range is reset by every trend change, so two calls starting at different bars carry different range state only until the first trend change after both; what remains between them is the seed error of the three averages, which fades at the slow average's rate. KVO converges, but as a small difference of two large averages it needs more bars than one of them would.</li>
-    * <li>All three exponential averages are seeded from the volume force of the same anchor bar rather than from a simple average of their own first inputs, so one warm-up covers all three and the first KVO value is exactly zero. {@code TA_SetUnstablePeriod(TA_FUNC_UNST_EMA, ...)} discards more of that warm-up.</li>
+    * <li>The cumulative range is reset by every trend change, so two calls starting at different bars carry different range state only until the first trend change after both; what remains between them is the seed error of the three averages, which fades at the rate of the longest period. KVO converges, but as a small difference of two large averages it needs more bars than one of them would.</li>
+    * <li>All three exponential averages are seeded from the volume force of the same anchor bar rather than from a simple average of their own first inputs, so one warm-up covers all three. KVO is exactly zero on that seed bar, which falls inside the warm-up and is never output. {@code TA_SetUnstablePeriod(TA_FUNC_UNST_EMA, ...)} discards more of that warm-up.</li>
     * <li>The weight is the 1997 form, {@code |2*(dm/cm) - 1|}, which is what the December 1997 Traders' Tips print. Some later implementations use {@code |2*(dm/cm - 1)|}, which is a different series.</li>
     * <li>A cumulative range of exactly zero leaves the volume force at zero rather than dividing.</li>
     * </ul>
@@ -132563,13 +132496,16 @@ public final class Core {
       private double kFast;
       private double kSlow;
       private double kSignal;
+      private double betaFast;
+      private double betaSlow;
+      private double betaSignal;
       private double prevHlc;
       private double prevDm;
       private double cm;
       private double emaFast;
       private double emaSlow;
       private double signalValue;
-      private int prevTrend;
+      private double prevTrend;
       private double cur_outKVO;
       private double cur_outKVOSignal;
       private int outRangeBegIdx;
@@ -132619,6 +132555,9 @@ public final class Core {
          this.kFast = other.kFast;
          this.kSlow = other.kSlow;
          this.kSignal = other.kSignal;
+         this.betaFast = other.betaFast;
+         this.betaSlow = other.betaSlow;
+         this.betaSignal = other.betaSignal;
          this.prevHlc = other.prevHlc;
          this.prevDm = other.prevDm;
          this.cm = other.cm;
@@ -132677,10 +132616,10 @@ public final class Core {
          KvoStream sp = this;
          double hlc = 0.0;
          double dmToday = 0.0;
+         double cmBase = 0.0;
          double vf = 0.0;
-         double factor = 0.0;
          double kvoValue = 0.0;
-         int trend = 0;
+         double trend = 0.0;
          double cm = sp.cm;
          double cur_outKVO = 0.0;
          double cur_outKVOSignal = 0.0;
@@ -132689,31 +132628,19 @@ public final class Core {
          double signalValue = sp.signalValue;
          hlc = inHigh + inLow + inClose;
          dmToday = inHigh - inLow;
-         if( hlc > sp.prevHlc ) {
-            trend = 1;
-         } else if( hlc < sp.prevHlc ) {
-            trend = -1;
-         } else {
-            trend = sp.prevTrend;
-         }
-         if( trend != sp.prevTrend ) {
-            cm = sp.prevDm + dmToday;
-         } else {
-            cm = cm + dmToday;
-         }
+         trend = (hlc > sp.prevHlc) ? 1.0 : sp.prevTrend;
+         trend = (hlc < sp.prevHlc) ? -1.0 : trend;
+         cmBase = (trend != sp.prevTrend) ? sp.prevDm : cm;
+         cm = cmBase + dmToday;
          if( cm == 0.0 ) {
             vf = 0.0;
          } else {
-            factor = 2.0 * (dmToday / cm) - 1.0;
-            if( factor < 0.0 ) {
-               factor = -factor;
-            }
-            vf = inVolume * factor * 100.0 * (double)trend;
+            vf = inVolume * Math.abs(2.0 * (dmToday / cm) - 1.0) * 100.0 * trend;
          }
-         emaFast = Math.fma(vf - emaFast, sp.kFast, emaFast);
-         emaSlow = Math.fma(vf - emaSlow, sp.kSlow, emaSlow);
+         emaFast = Math.fma(sp.betaFast, emaFast, sp.kFast * vf);
+         emaSlow = Math.fma(sp.betaSlow, emaSlow, sp.kSlow * vf);
          kvoValue = emaFast - emaSlow;
-         signalValue = Math.fma(kvoValue - signalValue, sp.kSignal, signalValue);
+         signalValue = Math.fma(sp.betaSignal, signalValue, sp.kSignal * kvoValue);
          cur_outKVO = kvoValue;
          cur_outKVOSignal = signalValue;
          out.kvo = cur_outKVO;
@@ -132774,37 +132701,25 @@ public final class Core {
    {
       double hlc = 0.0;
       double dmToday = 0.0;
+      double cmBase = 0.0;
       double vf = 0.0;
-      double factor = 0.0;
       double kvoValue = 0.0;
-      int trend = 0;
+      double trend = 0.0;
       hlc = inHigh + inLow + inClose;
       dmToday = inHigh - inLow;
-      if( hlc > sp.prevHlc ) {
-         trend = 1;
-      } else if( hlc < sp.prevHlc ) {
-         trend = -1;
-      } else {
-         trend = sp.prevTrend;
-      }
-      if( trend != sp.prevTrend ) {
-         sp.cm = sp.prevDm + dmToday;
-      } else {
-         sp.cm = sp.cm + dmToday;
-      }
+      trend = (hlc > sp.prevHlc) ? 1.0 : sp.prevTrend;
+      trend = (hlc < sp.prevHlc) ? -1.0 : trend;
+      cmBase = (trend != sp.prevTrend) ? sp.prevDm : sp.cm;
+      sp.cm = cmBase + dmToday;
       if( sp.cm == 0.0 ) {
          vf = 0.0;
       } else {
-         factor = 2.0 * (dmToday / sp.cm) - 1.0;
-         if( factor < 0.0 ) {
-            factor = -factor;
-         }
-         vf = inVolume * factor * 100.0 * (double)trend;
+         vf = inVolume * Math.abs(2.0 * (dmToday / sp.cm) - 1.0) * 100.0 * trend;
       }
-      sp.emaFast = Math.fma(vf - sp.emaFast, sp.kFast, sp.emaFast);
-      sp.emaSlow = Math.fma(vf - sp.emaSlow, sp.kSlow, sp.emaSlow);
+      sp.emaFast = Math.fma(sp.betaFast, sp.emaFast, sp.kFast * vf);
+      sp.emaSlow = Math.fma(sp.betaSlow, sp.emaSlow, sp.kSlow * vf);
       kvoValue = sp.emaFast - sp.emaSlow;
-      sp.signalValue = Math.fma(kvoValue - sp.signalValue, sp.kSignal, sp.signalValue);
+      sp.signalValue = Math.fma(sp.betaSignal, sp.signalValue, sp.kSignal * kvoValue);
       sp.cur_outKVO = kvoValue;
       sp.cur_outKVOSignal = sp.signalValue;
       sp.prevHlc = hlc;
@@ -132816,20 +132731,23 @@ public final class Core {
       double kFast = 0;
       double kSlow = 0;
       double kSignal = 0;
+      double betaFast = 0;
+      double betaSlow = 0;
+      double betaSignal = 0;
       double hlc = 0;
       double prevHlc = 0;
       double dmToday = 0;
       double prevDm = 0;
       double cm = 0;
+      double cmBase = 0;
       double vf = 0;
-      double factor = 0;
       double emaFast = 0;
       double emaSlow = 0;
       double kvoValue = 0;
       double signalValue = 0;
+      double trend = 0;
+      double prevTrend = 0;
       int lookbackTotal = 0;
-      int trend = 0;
-      int prevTrend = 0;
       int today = 0;
       int outIdx = 0;
       int historyLen = inHigh.length;
@@ -132864,32 +132782,19 @@ public final class Core {
          return RetCode.INSUFFICIENT_HISTORY;
       }
       /* Stephen J. Klinger, "Identifying Trends With Volume Analysis", Technical
-       * Analysis of Stocks & Commodities V15:12 (December 1997).
+       * Analysis of Stocks & Commodities V15:12 (December 1997), with the 1997
+       * factor |2*(dm/cm) - 1| (#484, form A; LEAN's differs).
        *
-       * Each bar's volume is signed by the trend of H+L+C and weighted by where
-       * the bar's own range sits inside the cumulative range of the current trend
-       * run. KVO is the difference of two exponential averages of that volume
-       * force; the trigger is a third exponential average of KVO.
+       *    trend = +1 if H+L+C rose, -1 if it fell, unchanged on a tie
+       *    cm    = previous + current range on a trend change, else cm + range
+       *    vf    = volume * |2*(dm/cm) - 1| * 100 * trend
        *
-       *    trend  = +1 if H+L+C rose, -1 if it fell, UNCHANGED if it repeated
-       *    cm     = the previous and current ranges on a trend change,
-       *             otherwise the running sum plus this bar's range
-       *    vf     = volume * |2*(dm/cm) - 1| * 100 * trend
+       * The committed corpus holds a single tie in H+L+C, and reading it any other
+       * way moves KVO by up to 1e7 from the next bar on: the tie rule is gated by
+       * a built series in test_kvo.c, not by the corpus.
        *
-       * The tie rule is the article's own tenet -- "When equality occurs, the
-       * existing trend is maintained" -- and it is one line that a corpus with
-       * few ties barely exercises. MEASURED on the committed 252-bar corpus:
-       * exactly one tie (bar 187), and reading it as +1, or as a reversal, moves
-       * KVO by up to 1.0e7 from the next bar on. So it is cheap to get wrong and
-       * not cheap to notice.
-       *
-       * The factor is the 1997 form |2*(dm/cm) - 1| (#484, form A), which is what
-       * the December 1997 Traders' Tips all print. It is not LEAN's.
-       *
-       * The three averages are seeded RAW, from the volume force of the anchor
-       * bar, not from a simple average of their first `period` inputs the way
-       * ema.c seeds a standalone TA_EMA. That is what every 1997 transcription
-       * does, and it is why one lookback covers all three.
+       * All three EMAs seed raw on the first volume force, not on an SMA as
+       * TA_EMA does. Each k + beta pair must sum to exactly 1.0, as in ema.c.
        */
       lookbackTotal = kvoLookback(optInFastPeriod, optInSlowPeriod, optInSignalPeriod);
       /* Move up the start index if there is not
@@ -132904,44 +132809,39 @@ public final class Core {
          outNBElement.value = 0;
          return RetCode.INSUFFICIENT_HISTORY ;
       }
-      kFast = 2.0 / ((double)optInFastPeriod + 1.0);
-      kSlow = 2.0 / ((double)optInSlowPeriod + 1.0);
-      kSignal = 2.0 / ((double)optInSignalPeriod + 1.0);
-      /* The anchor. Its H+L+C and its range are read, nothing else: the trend
-       * starts at +1 there by convention and the first volume force is the bar
-       * after it.
-       */
+      betaFast = (double)(optInFastPeriod - 1) / (double)(optInFastPeriod + 1);
+      kFast = 1.0 - betaFast;
+      if( betaFast < 0.5 ) {
+         betaFast = 1.0 - kFast;
+      }
+      betaSlow = (double)(optInSlowPeriod - 1) / (double)(optInSlowPeriod + 1);
+      kSlow = 1.0 - betaSlow;
+      if( betaSlow < 0.5 ) {
+         betaSlow = 1.0 - kSlow;
+      }
+      betaSignal = (double)(optInSignalPeriod - 1) / (double)(optInSignalPeriod + 1);
+      kSignal = 1.0 - betaSignal;
+      if( betaSignal < 0.5 ) {
+         betaSignal = 1.0 - kSignal;
+      }
+      /* The anchor: only its H+L+C and range are read, and the trend starts at +1. */
       today = startIdx - lookbackTotal;
       prevHlc = inHigh[today] + inLow[today] + inClose[today];
       prevDm = inHigh[today] - inLow[today];
-      prevTrend = 1;
-      cm = 0.0;
-      emaFast = 0.0;
-      emaSlow = 0.0;
-      signalValue = 0.0;
-      kvoValue = 0.0;
+      prevTrend = 1.0;
       today = today + 1;
-      /* The seed bar. Both averages start at this bar's volume force, so KVO is
-       * exactly zero here and the trigger seeds on that exact zero.
+      /* The seed bar: cm opens on both ranges whatever the trend, and both
+       * averages start at this volume force, so KVO and the trigger are exactly 0.
        */
       hlc = inHigh[today] + inLow[today] + inClose[today];
       dmToday = inHigh[today] - inLow[today];
-      if( hlc > prevHlc ) {
-         trend = 1;
-      } else if( hlc < prevHlc ) {
-         trend = -1;
-      } else {
-         trend = prevTrend;
-      }
+      trend = (hlc > prevHlc) ? 1.0 : prevTrend;
+      trend = (hlc < prevHlc) ? -1.0 : trend;
       cm = prevDm + dmToday;
       if( cm == 0.0 ) {
          vf = 0.0;
       } else {
-         factor = 2.0 * (dmToday / cm) - 1.0;
-         if( factor < 0.0 ) {
-            factor = -factor;
-         }
-         vf = inVolume[today] * factor * 100.0 * (double)trend;
+         vf = inVolume[today] * Math.abs(2.0 * (dmToday / cm) - 1.0) * 100.0 * trend;
       }
       emaFast = vf;
       emaSlow = vf;
@@ -132951,72 +132851,44 @@ public final class Core {
       prevDm = dmToday;
       prevTrend = trend;
       today = today + 1;
-      /* Warm-up. Every bar from here is a pure recursion; only the cumulative
-       * range branches, and it branches on the data, not on a counter.
-       */
       while( today < startIdx ) {
          hlc = inHigh[today] + inLow[today] + inClose[today];
          dmToday = inHigh[today] - inLow[today];
-         if( hlc > prevHlc ) {
-            trend = 1;
-         } else if( hlc < prevHlc ) {
-            trend = -1;
-         } else {
-            trend = prevTrend;
-         }
-         if( trend != prevTrend ) {
-            cm = prevDm + dmToday;
-         } else {
-            cm = cm + dmToday;
-         }
+         trend = (hlc > prevHlc) ? 1.0 : prevTrend;
+         trend = (hlc < prevHlc) ? -1.0 : trend;
+         cmBase = (trend != prevTrend) ? prevDm : cm;
+         cm = cmBase + dmToday;
          if( cm == 0.0 ) {
             vf = 0.0;
          } else {
-            factor = 2.0 * (dmToday / cm) - 1.0;
-            if( factor < 0.0 ) {
-               factor = -factor;
-            }
-            vf = inVolume[today] * factor * 100.0 * (double)trend;
+            vf = inVolume[today] * Math.abs(2.0 * (dmToday / cm) - 1.0) * 100.0 * trend;
          }
-         emaFast = Math.fma(vf - emaFast, kFast, emaFast);
-         emaSlow = Math.fma(vf - emaSlow, kSlow, emaSlow);
+         emaFast = Math.fma(betaFast, emaFast, kFast * vf);
+         emaSlow = Math.fma(betaSlow, emaSlow, kSlow * vf);
          kvoValue = emaFast - emaSlow;
-         signalValue = Math.fma(kvoValue - signalValue, kSignal, signalValue);
+         signalValue = Math.fma(betaSignal, signalValue, kSignal * kvoValue);
          prevHlc = hlc;
          prevDm = dmToday;
          prevTrend = trend;
          today = today + 1;
       }
-      /* The requested range. */
       outIdx = 0;
       while( today <= endIdx ) {
          hlc = inHigh[today] + inLow[today] + inClose[today];
          dmToday = inHigh[today] - inLow[today];
-         if( hlc > prevHlc ) {
-            trend = 1;
-         } else if( hlc < prevHlc ) {
-            trend = -1;
-         } else {
-            trend = prevTrend;
-         }
-         if( trend != prevTrend ) {
-            cm = prevDm + dmToday;
-         } else {
-            cm = cm + dmToday;
-         }
+         trend = (hlc > prevHlc) ? 1.0 : prevTrend;
+         trend = (hlc < prevHlc) ? -1.0 : trend;
+         cmBase = (trend != prevTrend) ? prevDm : cm;
+         cm = cmBase + dmToday;
          if( cm == 0.0 ) {
             vf = 0.0;
          } else {
-            factor = 2.0 * (dmToday / cm) - 1.0;
-            if( factor < 0.0 ) {
-               factor = -factor;
-            }
-            vf = inVolume[today] * factor * 100.0 * (double)trend;
+            vf = inVolume[today] * Math.abs(2.0 * (dmToday / cm) - 1.0) * 100.0 * trend;
          }
-         emaFast = Math.fma(vf - emaFast, kFast, emaFast);
-         emaSlow = Math.fma(vf - emaSlow, kSlow, emaSlow);
+         emaFast = Math.fma(betaFast, emaFast, kFast * vf);
+         emaSlow = Math.fma(betaSlow, emaSlow, kSlow * vf);
          kvoValue = emaFast - emaSlow;
-         signalValue = Math.fma(kvoValue - signalValue, kSignal, signalValue);
+         signalValue = Math.fma(betaSignal, signalValue, kSignal * kvoValue);
          outKVO[outIdx * outStride] = kvoValue;
          outKVOSignal[outIdx * outStride] = signalValue;
          outIdx = outIdx + 1;
@@ -133034,6 +132906,9 @@ public final class Core {
       sp.kFast = kFast;
       sp.kSlow = kSlow;
       sp.kSignal = kSignal;
+      sp.betaFast = betaFast;
+      sp.betaSlow = betaSlow;
+      sp.betaSignal = betaSignal;
       sp.prevHlc = prevHlc;
       sp.prevDm = prevDm;
       sp.cm = cm;

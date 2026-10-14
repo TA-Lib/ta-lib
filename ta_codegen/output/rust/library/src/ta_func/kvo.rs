@@ -45,13 +45,15 @@
  *  Initial  Name/description
  *  -------------------------------------------------------------------
  *  MF       Mario Fortier
+ *  KL       Kevin Lin (@kevinlincg)
  *  CC       Claude Code (AI assistant)
  *
  * Change history:
  *
  *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
- *  100726 MF,CC  Initial version (#484).
+ *  100726 KL,CC  Initial version (#484).
+ *  101426 MF,CC  The EMA step is TA_EMA's; the trend and the range are selects.
  */
 
 // Import types from parent module
@@ -99,11 +101,8 @@ impl Core {
             return Err(RetCode::BadParam);
         }
         let mut longestPeriod: usize = 0_usize;
-        // The three smoothings share ONE anchor -- they are all seeded from the
-        // volume force of the same bar -- so the warm-up is one EMA lookback of the
-        // longest of them, not the sum of three. The extra 1 is the reference bar:
-        // the trend needs a previous H+L+C to compare against, and the cumulative
-        // range needs a previous bar's range to open with.
+        // The three EMAs seed on one bar, so one EMA lookback of the longest
+        // covers all three. The 1 is the reference bar before it.
         longestPeriod = (optInFastPeriod) as usize;
         if ((optInSlowPeriod) as usize) > longestPeriod {
             longestPeriod = (optInSlowPeriod) as usize;
@@ -238,49 +237,39 @@ impl Core {
         let mut kFast: f64 = 0.0_f64;
         let mut kSlow: f64 = 0.0_f64;
         let mut kSignal: f64 = 0.0_f64;
+        let mut betaFast: f64 = 0.0_f64;
+        let mut betaSlow: f64 = 0.0_f64;
+        let mut betaSignal: f64 = 0.0_f64;
         let mut hlc: f64 = 0.0_f64;
         let mut prevHlc: f64 = 0.0_f64;
         let mut dmToday: f64 = 0.0_f64;
         let mut prevDm: f64 = 0.0_f64;
         let mut cm: f64 = 0.0_f64;
+        let mut cmBase: f64 = 0.0_f64;
         let mut vf: f64 = 0.0_f64;
-        let mut factor: f64 = 0.0_f64;
         let mut emaFast: f64 = 0.0_f64;
         let mut emaSlow: f64 = 0.0_f64;
         let mut kvoValue: f64 = 0.0_f64;
         let mut signalValue: f64 = 0.0_f64;
+        let mut trend: f64 = 0.0_f64;
+        let mut prevTrend: f64 = 0.0_f64;
         let mut lookbackTotal: usize = 0_usize;
-        let mut trend: i32 = 0_i32;
-        let mut prevTrend: usize = 0_usize;
         let mut today: usize = 0_usize;
         let mut outIdx: usize = 0_usize;
         // Stephen J. Klinger, "Identifying Trends With Volume Analysis", Technical
-        // Analysis of Stocks & Commodities V15:12 (December 1997).
+        // Analysis of Stocks & Commodities V15:12 (December 1997), with the 1997
+        // factor |2*(dm/cm) - 1| (#484, form A; LEAN's differs).
         //
-        // Each bar's volume is signed by the trend of H+L+C and weighted by where
-        // the bar's own range sits inside the cumulative range of the current trend
-        // run. KVO is the difference of two exponential averages of that volume
-        // force; the trigger is a third exponential average of KVO.
+        //    trend = +1 if H+L+C rose, -1 if it fell, unchanged on a tie
+        //    cm    = previous + current range on a trend change, else cm + range
+        //    vf    = volume * |2*(dm/cm) - 1| * 100 * trend
         //
-        //    trend  = +1 if H+L+C rose, -1 if it fell, UNCHANGED if it repeated
-        //    cm     = the previous and current ranges on a trend change,
-        //             otherwise the running sum plus this bar's range
-        //    vf     = volume * |2*(dm/cm) - 1| * 100 * trend
+        // The committed corpus holds a single tie in H+L+C, and reading it any other
+        // way moves KVO by up to 1e7 from the next bar on: the tie rule is gated by
+        // a built series in test_kvo.c, not by the corpus.
         //
-        // The tie rule is the article's own tenet -- "When equality occurs, the
-        // existing trend is maintained" -- and it is one line that a corpus with
-        // few ties barely exercises. MEASURED on the committed 252-bar corpus:
-        // exactly one tie (bar 187), and reading it as +1, or as a reversal, moves
-        // KVO by up to 1.0e7 from the next bar on. So it is cheap to get wrong and
-        // not cheap to notice.
-        //
-        // The factor is the 1997 form |2*(dm/cm) - 1| (#484, form A), which is what
-        // the December 1997 Traders' Tips all print. It is not LEAN's.
-        //
-        // The three averages are seeded RAW, from the volume force of the anchor
-        // bar, not from a simple average of their first `period` inputs the way
-        // ema.c seeds a standalone TA_EMA. That is what every 1997 transcription
-        // does, and it is why one lookback covers all three.
+        // All three EMAs seed raw on the first volume force, not on an SMA as
+        // TA_EMA does. Each k + beta pair must sum to exactly 1.0, as in ema.c.
         lookbackTotal = self.kvo_lookback(optInFastPeriod, optInSlowPeriod, optInSignalPeriod).unwrap_or(usize::MAX);
         // Move up the start index if there is not
         // enough initial data.
@@ -297,42 +286,38 @@ impl Core {
         let inLow = &inLow[..=endIdx];
         let inClose = &inClose[..=endIdx];
         let inVolume = &inVolume[..=endIdx];
-        kFast = 2.0 / ((optInFastPeriod as f64) + 1.0);
-        kSlow = 2.0 / ((optInSlowPeriod as f64) + 1.0);
-        kSignal = 2.0 / ((optInSignalPeriod as f64) + 1.0);
-        // The anchor. Its H+L+C and its range are read, nothing else: the trend
-        // starts at +1 there by convention and the first volume force is the bar
-        // after it.
+        betaFast = ((optInFastPeriod - 1) as f64) / ((optInFastPeriod + 1) as f64);
+        kFast = 1.0 - betaFast;
+        if betaFast < 0.5 {
+            betaFast = 1.0 - kFast;
+        }
+        betaSlow = ((optInSlowPeriod - 1) as f64) / ((optInSlowPeriod + 1) as f64);
+        kSlow = 1.0 - betaSlow;
+        if betaSlow < 0.5 {
+            betaSlow = 1.0 - kSlow;
+        }
+        betaSignal = ((optInSignalPeriod - 1) as f64) / ((optInSignalPeriod + 1) as f64);
+        kSignal = 1.0 - betaSignal;
+        if betaSignal < 0.5 {
+            betaSignal = 1.0 - kSignal;
+        }
+        // The anchor: only its H+L+C and range are read, and the trend starts at +1.
         today = startIdx - lookbackTotal;
         prevHlc = inHigh[today] + inLow[today] + inClose[today];
         prevDm = inHigh[today] - inLow[today];
-        prevTrend = 1;
-        cm = 0.0;
-        emaFast = 0.0;
-        emaSlow = 0.0;
-        signalValue = 0.0;
-        kvoValue = 0.0;
+        prevTrend = 1.0;
         today = today + 1;
-        // The seed bar. Both averages start at this bar's volume force, so KVO is
-        // exactly zero here and the trigger seeds on that exact zero.
+        // The seed bar: cm opens on both ranges whatever the trend, and both
+        // averages start at this volume force, so KVO and the trigger are exactly 0.
         hlc = inHigh[today] + inLow[today] + inClose[today];
         dmToday = inHigh[today] - inLow[today];
-        if hlc > prevHlc {
-            trend = 1;
-        } else if hlc < prevHlc {
-            trend = -1;
-        } else {
-            trend = (prevTrend) as i32;
-        }
+        trend = (if hlc > prevHlc { 1.0 } else { prevTrend });
+        trend = (if hlc < prevHlc { -1.0 } else { trend });
         cm = prevDm + dmToday;
         if cm == 0.0 {
             vf = 0.0;
         } else {
-            factor = 2.0 * (dmToday / cm) - 1.0;
-            if factor < 0.0 {
-                factor = -factor;
-            }
-            vf = inVolume[today] * factor * 100.0 * (trend as f64);
+            vf = inVolume[today] * (2.0 * (dmToday / cm) - 1.0).abs() * 100.0 * trend;
         }
         emaFast = vf;
         emaSlow = vf;
@@ -340,79 +325,52 @@ impl Core {
         signalValue = kvoValue;
         prevHlc = hlc;
         prevDm = dmToday;
-        prevTrend = (trend) as usize;
+        prevTrend = trend;
         today = today + 1;
-        // Warm-up. Every bar from here is a pure recursion; only the cumulative
-        // range branches, and it branches on the data, not on a counter.
         while today < startIdx {
             hlc = inHigh[today] + inLow[today] + inClose[today];
             dmToday = inHigh[today] - inLow[today];
-            if hlc > prevHlc {
-                trend = 1;
-            } else if hlc < prevHlc {
-                trend = -1;
-            } else {
-                trend = (prevTrend) as i32;
-            }
-            if trend != ((prevTrend) as i32) {
-                cm = prevDm + dmToday;
-            } else {
-                cm = cm + dmToday;
-            }
+            trend = (if hlc > prevHlc { 1.0 } else { prevTrend });
+            trend = (if hlc < prevHlc { -1.0 } else { trend });
+            cmBase = (if trend != prevTrend { prevDm } else { cm });
+            cm = cmBase + dmToday;
             if cm == 0.0 {
                 vf = 0.0;
             } else {
-                factor = 2.0 * (dmToday / cm) - 1.0;
-                if factor < 0.0 {
-                    factor = -factor;
-                }
-                vf = inVolume[today] * factor * 100.0 * (trend as f64);
+                vf = inVolume[today] * (2.0 * (dmToday / cm) - 1.0).abs() * 100.0 * trend;
             }
-            emaFast = (vf - emaFast as f64).mul_add(kFast, emaFast);
-            emaSlow = (vf - emaSlow as f64).mul_add(kSlow, emaSlow);
+            emaFast = (betaFast as f64).mul_add(emaFast, kFast * vf);
+            emaSlow = (betaSlow as f64).mul_add(emaSlow, kSlow * vf);
             kvoValue = emaFast - emaSlow;
-            signalValue = (kvoValue - signalValue as f64).mul_add(kSignal, signalValue);
+            signalValue = (betaSignal as f64).mul_add(signalValue, kSignal * kvoValue);
             prevHlc = hlc;
             prevDm = dmToday;
-            prevTrend = (trend) as usize;
+            prevTrend = trend;
             today = today + 1;
         }
-        // The requested range.
         outIdx = 0;
         while today <= endIdx {
             hlc = inHigh[today] + inLow[today] + inClose[today];
             dmToday = inHigh[today] - inLow[today];
-            if hlc > prevHlc {
-                trend = 1;
-            } else if hlc < prevHlc {
-                trend = -1;
-            } else {
-                trend = (prevTrend) as i32;
-            }
-            if trend != ((prevTrend) as i32) {
-                cm = prevDm + dmToday;
-            } else {
-                cm = cm + dmToday;
-            }
+            trend = (if hlc > prevHlc { 1.0 } else { prevTrend });
+            trend = (if hlc < prevHlc { -1.0 } else { trend });
+            cmBase = (if trend != prevTrend { prevDm } else { cm });
+            cm = cmBase + dmToday;
             if cm == 0.0 {
                 vf = 0.0;
             } else {
-                factor = 2.0 * (dmToday / cm) - 1.0;
-                if factor < 0.0 {
-                    factor = -factor;
-                }
-                vf = inVolume[today] * factor * 100.0 * (trend as f64);
+                vf = inVolume[today] * (2.0 * (dmToday / cm) - 1.0).abs() * 100.0 * trend;
             }
-            emaFast = (vf - emaFast as f64).mul_add(kFast, emaFast);
-            emaSlow = (vf - emaSlow as f64).mul_add(kSlow, emaSlow);
+            emaFast = (betaFast as f64).mul_add(emaFast, kFast * vf);
+            emaSlow = (betaSlow as f64).mul_add(emaSlow, kSlow * vf);
             kvoValue = emaFast - emaSlow;
-            signalValue = (kvoValue - signalValue as f64).mul_add(kSignal, signalValue);
+            signalValue = (betaSignal as f64).mul_add(signalValue, kSignal * kvoValue);
             outKVO[outIdx] = kvoValue;
             outKVOSignal[outIdx] = signalValue;
             outIdx = outIdx + 1;
             prevHlc = hlc;
             prevDm = dmToday;
-            prevTrend = (trend) as usize;
+            prevTrend = trend;
             today = today + 1;
         }
         (*outNBElement) = outIdx;
@@ -596,13 +554,16 @@ struct KvoStreamState {
     kFast: f64,
     kSlow: f64,
     kSignal: f64,
+    betaFast: f64,
+    betaSlow: f64,
+    betaSignal: f64,
     prevHlc: f64,
     prevDm: f64,
     cm: f64,
     emaFast: f64,
     emaSlow: f64,
     signalValue: f64,
-    prevTrend: usize,
+    prevTrend: f64,
     cur_outKVO: f64,
     cur_outKVOSignal: f64,
 }
@@ -617,42 +578,30 @@ impl Core {
     fn kvo_step_impl(sp: &mut KvoStreamState, inHigh: f64, inLow: f64, inClose: f64, inVolume: f64, outKVO: &mut f64, outKVOSignal: &mut f64) {
         let mut hlc: f64 = 0.0_f64;
         let mut dmToday: f64 = 0.0_f64;
+        let mut cmBase: f64 = 0.0_f64;
         let mut vf: f64 = 0.0_f64;
-        let mut factor: f64 = 0.0_f64;
         let mut kvoValue: f64 = 0.0_f64;
-        let mut trend: i32 = 0_i32;
+        let mut trend: f64 = 0.0_f64;
         hlc = inHigh + inLow + inClose;
         dmToday = inHigh - inLow;
-        if hlc > sp.prevHlc {
-            trend = 1;
-        } else if hlc < sp.prevHlc {
-            trend = -1;
-        } else {
-            trend = (sp.prevTrend) as i32;
-        }
-        if trend != ((sp.prevTrend) as i32) {
-            sp.cm = sp.prevDm + dmToday;
-        } else {
-            sp.cm = sp.cm + dmToday;
-        }
+        trend = (if hlc > sp.prevHlc { 1.0 } else { sp.prevTrend });
+        trend = (if hlc < sp.prevHlc { -1.0 } else { trend });
+        cmBase = (if trend != sp.prevTrend { sp.prevDm } else { sp.cm });
+        sp.cm = cmBase + dmToday;
         if sp.cm == 0.0 {
             vf = 0.0;
         } else {
-            factor = 2.0 * (dmToday / sp.cm) - 1.0;
-            if factor < 0.0 {
-                factor = -factor;
-            }
-            vf = inVolume * factor * 100.0 * (trend as f64);
+            vf = inVolume * (2.0 * (dmToday / sp.cm) - 1.0).abs() * 100.0 * trend;
         }
-        sp.emaFast = (vf - sp.emaFast as f64).mul_add(sp.kFast, sp.emaFast);
-        sp.emaSlow = (vf - sp.emaSlow as f64).mul_add(sp.kSlow, sp.emaSlow);
+        sp.emaFast = (sp.betaFast as f64).mul_add(sp.emaFast, sp.kFast * vf);
+        sp.emaSlow = (sp.betaSlow as f64).mul_add(sp.emaSlow, sp.kSlow * vf);
         kvoValue = sp.emaFast - sp.emaSlow;
-        sp.signalValue = (kvoValue - sp.signalValue as f64).mul_add(sp.kSignal, sp.signalValue);
+        sp.signalValue = (sp.betaSignal as f64).mul_add(sp.signalValue, sp.kSignal * kvoValue);
         (*outKVO) = kvoValue;
         (*outKVOSignal) = sp.signalValue;
         sp.prevHlc = hlc;
         sp.prevDm = dmToday;
-        sp.prevTrend = (trend) as usize;
+        sp.prevTrend = trend;
         sp.cur_outKVO = (*outKVO);
         sp.cur_outKVOSignal = (*outKVOSignal);
     }
@@ -717,49 +666,39 @@ impl Core {
         let mut kFast: f64 = 0.0_f64;
         let mut kSlow: f64 = 0.0_f64;
         let mut kSignal: f64 = 0.0_f64;
+        let mut betaFast: f64 = 0.0_f64;
+        let mut betaSlow: f64 = 0.0_f64;
+        let mut betaSignal: f64 = 0.0_f64;
         let mut hlc: f64 = 0.0_f64;
         let mut prevHlc: f64 = 0.0_f64;
         let mut dmToday: f64 = 0.0_f64;
         let mut prevDm: f64 = 0.0_f64;
         let mut cm: f64 = 0.0_f64;
+        let mut cmBase: f64 = 0.0_f64;
         let mut vf: f64 = 0.0_f64;
-        let mut factor: f64 = 0.0_f64;
         let mut emaFast: f64 = 0.0_f64;
         let mut emaSlow: f64 = 0.0_f64;
         let mut kvoValue: f64 = 0.0_f64;
         let mut signalValue: f64 = 0.0_f64;
+        let mut trend: f64 = 0.0_f64;
+        let mut prevTrend: f64 = 0.0_f64;
         let mut lookbackTotal: usize = 0_usize;
-        let mut trend: i32 = 0_i32;
-        let mut prevTrend: usize = 0_usize;
         let mut today: usize = 0_usize;
         let mut outIdx: usize = 0_usize;
         // Stephen J. Klinger, "Identifying Trends With Volume Analysis", Technical
-        // Analysis of Stocks & Commodities V15:12 (December 1997).
+        // Analysis of Stocks & Commodities V15:12 (December 1997), with the 1997
+        // factor |2*(dm/cm) - 1| (#484, form A; LEAN's differs).
         //
-        // Each bar's volume is signed by the trend of H+L+C and weighted by where
-        // the bar's own range sits inside the cumulative range of the current trend
-        // run. KVO is the difference of two exponential averages of that volume
-        // force; the trigger is a third exponential average of KVO.
+        //    trend = +1 if H+L+C rose, -1 if it fell, unchanged on a tie
+        //    cm    = previous + current range on a trend change, else cm + range
+        //    vf    = volume * |2*(dm/cm) - 1| * 100 * trend
         //
-        //    trend  = +1 if H+L+C rose, -1 if it fell, UNCHANGED if it repeated
-        //    cm     = the previous and current ranges on a trend change,
-        //             otherwise the running sum plus this bar's range
-        //    vf     = volume * |2*(dm/cm) - 1| * 100 * trend
+        // The committed corpus holds a single tie in H+L+C, and reading it any other
+        // way moves KVO by up to 1e7 from the next bar on: the tie rule is gated by
+        // a built series in test_kvo.c, not by the corpus.
         //
-        // The tie rule is the article's own tenet -- "When equality occurs, the
-        // existing trend is maintained" -- and it is one line that a corpus with
-        // few ties barely exercises. MEASURED on the committed 252-bar corpus:
-        // exactly one tie (bar 187), and reading it as +1, or as a reversal, moves
-        // KVO by up to 1.0e7 from the next bar on. So it is cheap to get wrong and
-        // not cheap to notice.
-        //
-        // The factor is the 1997 form |2*(dm/cm) - 1| (#484, form A), which is what
-        // the December 1997 Traders' Tips all print. It is not LEAN's.
-        //
-        // The three averages are seeded RAW, from the volume force of the anchor
-        // bar, not from a simple average of their first `period` inputs the way
-        // ema.c seeds a standalone TA_EMA. That is what every 1997 transcription
-        // does, and it is why one lookback covers all three.
+        // All three EMAs seed raw on the first volume force, not on an SMA as
+        // TA_EMA does. Each k + beta pair must sum to exactly 1.0, as in ema.c.
         lookbackTotal = self.kvo_lookback(optInFastPeriod, optInSlowPeriod, optInSignalPeriod)?;
         // Move up the start index if there is not
         // enough initial data.
@@ -772,42 +711,38 @@ impl Core {
             (*outNBElement) = 0;
             return Err(RetCode::InsufficientHistory);
         }
-        kFast = 2.0 / ((optInFastPeriod as f64) + 1.0);
-        kSlow = 2.0 / ((optInSlowPeriod as f64) + 1.0);
-        kSignal = 2.0 / ((optInSignalPeriod as f64) + 1.0);
-        // The anchor. Its H+L+C and its range are read, nothing else: the trend
-        // starts at +1 there by convention and the first volume force is the bar
-        // after it.
+        betaFast = ((optInFastPeriod - 1) as f64) / ((optInFastPeriod + 1) as f64);
+        kFast = 1.0 - betaFast;
+        if betaFast < 0.5 {
+            betaFast = 1.0 - kFast;
+        }
+        betaSlow = ((optInSlowPeriod - 1) as f64) / ((optInSlowPeriod + 1) as f64);
+        kSlow = 1.0 - betaSlow;
+        if betaSlow < 0.5 {
+            betaSlow = 1.0 - kSlow;
+        }
+        betaSignal = ((optInSignalPeriod - 1) as f64) / ((optInSignalPeriod + 1) as f64);
+        kSignal = 1.0 - betaSignal;
+        if betaSignal < 0.5 {
+            betaSignal = 1.0 - kSignal;
+        }
+        // The anchor: only its H+L+C and range are read, and the trend starts at +1.
         today = startIdx - lookbackTotal;
         prevHlc = inHigh[today] + inLow[today] + inClose[today];
         prevDm = inHigh[today] - inLow[today];
-        prevTrend = 1;
-        cm = 0.0;
-        emaFast = 0.0;
-        emaSlow = 0.0;
-        signalValue = 0.0;
-        kvoValue = 0.0;
+        prevTrend = 1.0;
         today = today + 1;
-        // The seed bar. Both averages start at this bar's volume force, so KVO is
-        // exactly zero here and the trigger seeds on that exact zero.
+        // The seed bar: cm opens on both ranges whatever the trend, and both
+        // averages start at this volume force, so KVO and the trigger are exactly 0.
         hlc = inHigh[today] + inLow[today] + inClose[today];
         dmToday = inHigh[today] - inLow[today];
-        if hlc > prevHlc {
-            trend = 1;
-        } else if hlc < prevHlc {
-            trend = -1;
-        } else {
-            trend = (prevTrend) as i32;
-        }
+        trend = (if hlc > prevHlc { 1.0 } else { prevTrend });
+        trend = (if hlc < prevHlc { -1.0 } else { trend });
         cm = prevDm + dmToday;
         if cm == 0.0 {
             vf = 0.0;
         } else {
-            factor = 2.0 * (dmToday / cm) - 1.0;
-            if factor < 0.0 {
-                factor = -factor;
-            }
-            vf = inVolume[today] * factor * 100.0 * (trend as f64);
+            vf = inVolume[today] * (2.0 * (dmToday / cm) - 1.0).abs() * 100.0 * trend;
         }
         emaFast = vf;
         emaSlow = vf;
@@ -815,79 +750,52 @@ impl Core {
         signalValue = kvoValue;
         prevHlc = hlc;
         prevDm = dmToday;
-        prevTrend = (trend) as usize;
+        prevTrend = trend;
         today = today + 1;
-        // Warm-up. Every bar from here is a pure recursion; only the cumulative
-        // range branches, and it branches on the data, not on a counter.
         while today < startIdx {
             hlc = inHigh[today] + inLow[today] + inClose[today];
             dmToday = inHigh[today] - inLow[today];
-            if hlc > prevHlc {
-                trend = 1;
-            } else if hlc < prevHlc {
-                trend = -1;
-            } else {
-                trend = (prevTrend) as i32;
-            }
-            if trend != ((prevTrend) as i32) {
-                cm = prevDm + dmToday;
-            } else {
-                cm = cm + dmToday;
-            }
+            trend = (if hlc > prevHlc { 1.0 } else { prevTrend });
+            trend = (if hlc < prevHlc { -1.0 } else { trend });
+            cmBase = (if trend != prevTrend { prevDm } else { cm });
+            cm = cmBase + dmToday;
             if cm == 0.0 {
                 vf = 0.0;
             } else {
-                factor = 2.0 * (dmToday / cm) - 1.0;
-                if factor < 0.0 {
-                    factor = -factor;
-                }
-                vf = inVolume[today] * factor * 100.0 * (trend as f64);
+                vf = inVolume[today] * (2.0 * (dmToday / cm) - 1.0).abs() * 100.0 * trend;
             }
-            emaFast = (vf - emaFast as f64).mul_add(kFast, emaFast);
-            emaSlow = (vf - emaSlow as f64).mul_add(kSlow, emaSlow);
+            emaFast = (betaFast as f64).mul_add(emaFast, kFast * vf);
+            emaSlow = (betaSlow as f64).mul_add(emaSlow, kSlow * vf);
             kvoValue = emaFast - emaSlow;
-            signalValue = (kvoValue - signalValue as f64).mul_add(kSignal, signalValue);
+            signalValue = (betaSignal as f64).mul_add(signalValue, kSignal * kvoValue);
             prevHlc = hlc;
             prevDm = dmToday;
-            prevTrend = (trend) as usize;
+            prevTrend = trend;
             today = today + 1;
         }
-        // The requested range.
         outIdx = 0;
         while today <= endIdx {
             hlc = inHigh[today] + inLow[today] + inClose[today];
             dmToday = inHigh[today] - inLow[today];
-            if hlc > prevHlc {
-                trend = 1;
-            } else if hlc < prevHlc {
-                trend = -1;
-            } else {
-                trend = (prevTrend) as i32;
-            }
-            if trend != ((prevTrend) as i32) {
-                cm = prevDm + dmToday;
-            } else {
-                cm = cm + dmToday;
-            }
+            trend = (if hlc > prevHlc { 1.0 } else { prevTrend });
+            trend = (if hlc < prevHlc { -1.0 } else { trend });
+            cmBase = (if trend != prevTrend { prevDm } else { cm });
+            cm = cmBase + dmToday;
             if cm == 0.0 {
                 vf = 0.0;
             } else {
-                factor = 2.0 * (dmToday / cm) - 1.0;
-                if factor < 0.0 {
-                    factor = -factor;
-                }
-                vf = inVolume[today] * factor * 100.0 * (trend as f64);
+                vf = inVolume[today] * (2.0 * (dmToday / cm) - 1.0).abs() * 100.0 * trend;
             }
-            emaFast = (vf - emaFast as f64).mul_add(kFast, emaFast);
-            emaSlow = (vf - emaSlow as f64).mul_add(kSlow, emaSlow);
+            emaFast = (betaFast as f64).mul_add(emaFast, kFast * vf);
+            emaSlow = (betaSlow as f64).mul_add(emaSlow, kSlow * vf);
             kvoValue = emaFast - emaSlow;
-            signalValue = (kvoValue - signalValue as f64).mul_add(kSignal, signalValue);
+            signalValue = (betaSignal as f64).mul_add(signalValue, kSignal * kvoValue);
             outKVO[(outIdx * outStride) as usize] = kvoValue;
             outKVOSignal[(outIdx * outStride) as usize] = signalValue;
             outIdx = outIdx + 1;
             prevHlc = hlc;
             prevDm = dmToday;
-            prevTrend = (trend) as usize;
+            prevTrend = trend;
             today = today + 1;
         }
         (*outNBElement) = outIdx;
@@ -901,6 +809,9 @@ impl Core {
             kFast,
             kSlow,
             kSignal,
+            betaFast,
+            betaSlow,
+            betaSignal,
             prevHlc,
             prevDm,
             cm,
@@ -1120,41 +1031,29 @@ impl KvoStream {
             let outKVOSignal = &mut outKVOSignal;
             let mut hlc: f64 = 0.0_f64;
             let mut dmToday: f64 = 0.0_f64;
+            let mut cmBase: f64 = 0.0_f64;
             let mut vf: f64 = 0.0_f64;
-            let mut factor: f64 = 0.0_f64;
             let mut kvoValue: f64 = 0.0_f64;
-            let mut trend: i32 = 0_i32;
+            let mut trend: f64 = 0.0_f64;
             let mut cm = sp.cm;
             let mut emaFast = sp.emaFast;
             let mut emaSlow = sp.emaSlow;
             let mut signalValue = sp.signalValue;
             hlc = inHigh + inLow + inClose;
             dmToday = inHigh - inLow;
-            if hlc > sp.prevHlc {
-                trend = 1;
-            } else if hlc < sp.prevHlc {
-                trend = -1;
-            } else {
-                trend = (sp.prevTrend) as i32;
-            }
-            if trend != ((sp.prevTrend) as i32) {
-                cm = sp.prevDm + dmToday;
-            } else {
-                cm = cm + dmToday;
-            }
+            trend = (if hlc > sp.prevHlc { 1.0 } else { sp.prevTrend });
+            trend = (if hlc < sp.prevHlc { -1.0 } else { trend });
+            cmBase = (if trend != sp.prevTrend { sp.prevDm } else { cm });
+            cm = cmBase + dmToday;
             if cm == 0.0 {
                 vf = 0.0;
             } else {
-                factor = 2.0 * (dmToday / cm) - 1.0;
-                if factor < 0.0 {
-                    factor = -factor;
-                }
-                vf = inVolume * factor * 100.0 * (trend as f64);
+                vf = inVolume * (2.0 * (dmToday / cm) - 1.0).abs() * 100.0 * trend;
             }
-            emaFast = (vf - emaFast as f64).mul_add(sp.kFast, emaFast);
-            emaSlow = (vf - emaSlow as f64).mul_add(sp.kSlow, emaSlow);
+            emaFast = (sp.betaFast as f64).mul_add(emaFast, sp.kFast * vf);
+            emaSlow = (sp.betaSlow as f64).mul_add(emaSlow, sp.kSlow * vf);
             kvoValue = emaFast - emaSlow;
-            signalValue = (kvoValue - signalValue as f64).mul_add(sp.kSignal, signalValue);
+            signalValue = (sp.betaSignal as f64).mul_add(signalValue, sp.kSignal * kvoValue);
             (*outKVO) = kvoValue;
             (*outKVOSignal) = signalValue;
         }
