@@ -764,14 +764,15 @@ static const UnstableLookup UNSTABLE_MAP[] = {
      * tightens around it. Measured with only UNST_EMA listed, KC moved 1.8%
      * across startIdx at unstable period 140 where 0.15% was allowed. Without
      * any entry it classified EPSILON and moved 0.25% where ~1e-13 was allowed. */
-    /* KVO is listed for the SECOND consumer of this map, as SUPERTREND is:
-     * it carries `path_dependent`, so stability_class() answers SKIP before it
-     * asks about an unstable id and the range envelope is not what this row
-     * buys. What it buys is the stream K-leg. All three of KVO's smoothings
-     * are EMA sub-calls sharing one anchor, so a non-zero EMA unstable period
-     * moves where that anchor sits; without a row here stream_verify runs
-     * every language at K == 0 only and that shift is never exercised on the
-     * streaming path. */
+    /* KVO is converging, as ADOSC is: the difference of two EMA of the volume
+     * force, both seeded on the same anchor bar, with a third EMA as trigger.
+     * The cumulative range two starts carry differs only until the first trend
+     * change after both, which resets it for both alike; what is left is the
+     * seed error, fading at the slow EMA's rate (54/56 per bar at the defaults).
+     * It owns no id -- all three smoothings are EMA sub-calls sharing one
+     * anchor -- so this row is what classes it CONVERGING for the range sweep
+     * and what makes the stream K-leg drive it at a non-zero EMA period; the
+     * grace that sweep needs is keyed on its name in perFuncGrace. */
     {"KVO",          TA_FUNC_UNST_EMA},
     {"KC",           TA_FUNC_UNST_EMA},
     {"KC",           TA_FUNC_UNST_ATR},
@@ -2207,6 +2208,39 @@ static unsigned int get_integer_tolerance(const TA_FuncInfo *funcInfo)
     return 0;
 }
 
+/* The grace of the TA_STABLE_CONVERGING envelope, per function: bars left
+ * uncompared, counted from the output's start plus the swept unstable period.
+ * 0 is the id's own (100, or 200 for T3 / STC / SWAK_BP, in test_util.c). A
+ * function listed here inherits its id and converges more slowly than the id's
+ * owner, so the grace is keyed on its name, not on a new id. On the 252-bar
+ * corpus nothing is reachable past 252 - lookback - 1, so a grace that long
+ * compares nothing: doRangeTestMulti fails a CONVERGING sweep that compared
+ * no value, and that floor is what bounds every row here from above. */
+static const struct { const char *name; unsigned int grace; } perFuncGrace[] = {
+    /* KVO is a small difference of two large EMA of the volume force: on the
+     * corpus mean |KVO| is 7% of either average, so one seed error is ~14x the
+     * output and fades at the slow EMA's rate, 54/56 per bar at the defaults.
+     * MEASURED (#484): 160 fails, 175 compares bars 230-251 at worst 0.13 of
+     * the tolerance, 197 and up compares nothing (252 - 55 - 1 = 196). */
+    { "KVO", 175 },
+};
+
+static unsigned int get_grace_period(const TA_FuncInfo *funcInfo)
+{
+    return codegen_range_grace(funcInfo->name);
+}
+
+/* Documented in test_codegen.h. */
+unsigned int codegen_range_grace(const char *funcName)
+{
+    for( unsigned int i = 0; i < sizeof(perFuncGrace)/sizeof(perFuncGrace[0]); i++ )
+    {
+        if( strcmp(funcName, perFuncGrace[i].name) == 0 )
+            return perFuncGrace[i].grace;
+    }
+    return 0;
+}
+
 /* ---- Determine range-stability class for doRangeTestEx ---- */
 
 /* Explicit per-function range-test tolerance class (see TA_RangeStability).
@@ -2733,7 +2767,8 @@ static void test_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
             sweepIds, nbSweepIds,
             (void *)&params,
             funcInfo->nbOutput,
-            get_integer_tolerance(funcInfo));
+            get_integer_tolerance(funcInfo),
+            get_grace_period(funcInfo));
         rangeChecked = 1;
     }
 

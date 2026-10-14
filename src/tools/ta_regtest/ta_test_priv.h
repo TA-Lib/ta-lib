@@ -307,14 +307,21 @@ ErrorNumber doRangeTestEx( RangeTestFunction testFunction,
 
 /* Same, for a function recursive through callees carrying DIFFERENT unstable
  * ids: every id in the set is swept together. doRangeTestEx is the one-id case.
- * The envelope reads the set's first member -- they all hold the same value. */
+ * The envelope reads the set's first member -- they all hold the same value.
+ *
+ * periodToIgnore: bars left uncompared by the TA_STABLE_CONVERGING envelope,
+ * counted from the output's start plus the swept unstable period. 0 takes the
+ * id's own grace (100, or 200 for T3 / STC / SWAK_BP). A function that inherits
+ * its id and converges more slowly than the id's owner names a longer one here,
+ * keyed on its name beside perFuncTol in test_codegen.c, not on a new id. */
 ErrorNumber doRangeTestMulti( RangeTestFunction testFunction,
                               TA_RangeStability stability,
                               const TA_FuncUnstId *unstIds,
                               int nbUnstIds,
                               void *opaqueData,
                               unsigned int nbOutput,
-                              unsigned int integerTolerance );
+                              unsigned int integerTolerance,
+                              unsigned int periodToIgnore );
 
 /* Compare one computed value against an external-oracle golden.
  *

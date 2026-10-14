@@ -129,6 +129,12 @@ static int dataWithinReasonableRange( TA_Real val1, TA_Real val2,
                                       TA_FuncUnstId unstId,
                                       unsigned int integerTolerance );
 
+/* The grace of the sweep in progress: bars the convergence envelope leaves
+ * uncompared, counted from the start of the output plus the unstable period.
+ * 0 is the default, chosen by the unstable id in dataWithinReasonableRange();
+ * doRangeTestMulti sets a caller's own, and clears it when the sweep ends. */
+static unsigned int g_rangePeriodToIgnore = 0;
+
 static ErrorNumber doRangeTestForOneOutput( RangeTestFunction testFunction,
                                             TA_RangeStability stability,
                                             const TA_FuncUnstId *unstIds,
@@ -756,7 +762,7 @@ ErrorNumber doRangeTestEx( RangeTestFunction testFunction,
    /* One id is the common case; the set form below is the general one. */
    return doRangeTestMulti( testFunction, stability,
                             &unstId, unstId == TA_TEST_UNST_NONE ? 0 : 1,
-                            opaqueData, nbOutput, integerTolerance );
+                            opaqueData, nbOutput, integerTolerance, 0 );
 }
 
 ErrorNumber doRangeTestMulti( RangeTestFunction testFunction,
@@ -765,7 +771,8 @@ ErrorNumber doRangeTestMulti( RangeTestFunction testFunction,
                               int nbUnstIds,
                               void *opaqueData,
                               unsigned int nbOutput,
-                              unsigned int integerTolerance )
+                              unsigned int integerTolerance,
+                              unsigned int periodToIgnore )
 {
    unsigned int outputNb;
    unsigned int savedUnst[TA_FUNC_UNST_COUNT];
@@ -803,6 +810,8 @@ ErrorNumber doRangeTestMulti( RangeTestFunction testFunction,
    for( id = 0; id < TA_FUNC_UNST_COUNT; id++ )
       savedUnst[id] = TA_GetUnstablePeriod( (TA_FuncUnstId)id );
 
+   g_rangePeriodToIgnore = periodToIgnore;
+
    /* Test all the outputs individually. */
    errNb = TA_TEST_PASS;
    for( outputNb=0; errNb == TA_TEST_PASS && outputNb < nbOutput; outputNb++ )
@@ -820,6 +829,7 @@ ErrorNumber doRangeTestMulti( RangeTestFunction testFunction,
 
    for( id = 0; id < TA_FUNC_UNST_COUNT; id++ )
       TA_SetUnstablePeriod( (TA_FuncUnstId)id, savedUnst[id] );
+   g_rangePeriodToIgnore = 0;
    return errNb;
 }
 
@@ -1421,9 +1431,12 @@ static int dataWithinReasonableRange( TA_Real val1, TA_Real val2,
 
 
    /* Some functions requires a longer unstable period.
-    * These are trap here.
-    */
-   switch( unstId )
+    * These are trap here. A caller that inherits its id and needs more than
+    * the id's own grace names its own through doRangeTestMulti (KVO, keyed
+    * on the function name in test_codegen.c) rather than taking a new id. */
+   if( g_rangePeriodToIgnore != 0 )
+      periodToIgnore = g_rangePeriodToIgnore;
+   else switch( unstId )
    {
    case TA_FUNC_UNST_T3:
    /* STC's two stochastic stages amplify the slow EMA's transient: at 150

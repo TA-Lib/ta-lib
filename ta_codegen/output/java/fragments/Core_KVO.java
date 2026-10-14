@@ -508,7 +508,7 @@
     * <p><b>Notes</b>
     * <ul>
     * <li>The trend is <b>held</b> when the high-low-close sum repeats, which is the article's own tenet: the existing trend is maintained on equality. A reading that breaks the tie in either direction changes every later bar, because the cumulative range is reset by a trend change.</li>
-    * <li>The cumulative range is what makes this path-dependent: it is reset only by a trend change, so a run with no trend change never resets it and two calls starting at different bars can carry different state into the same bar.</li>
+    * <li>The cumulative range is reset by every trend change, so two calls starting at different bars carry different range state only until the first trend change after both; what remains between them is the seed error of the three averages, which fades at the slow average's rate. KVO converges, but as a small difference of two large averages it needs more bars than one of them would.</li>
     * <li>All three exponential averages are seeded from the volume force of the same anchor bar rather than from a simple average of their own first inputs, so one warm-up covers all three and the first KVO value is exactly zero. {@code TA_SetUnstablePeriod(TA_FUNC_UNST_EMA, ...)} discards more of that warm-up.</li>
     * <li>The weight is the 1997 form, {@code |2*(dm/cm) - 1|}, which is what the December 1997 Traders' Tips print. Some later implementations use {@code |2*(dm/cm - 1)|}, which is a different series.</li>
     * <li>A cumulative range of exactly zero leaves the volume force at zero rather than dividing.</li>
@@ -603,7 +603,7 @@
     * <p><b>Notes</b>
     * <ul>
     * <li>The trend is <b>held</b> when the high-low-close sum repeats, which is the article's own tenet: the existing trend is maintained on equality. A reading that breaks the tie in either direction changes every later bar, because the cumulative range is reset by a trend change.</li>
-    * <li>The cumulative range is what makes this path-dependent: it is reset only by a trend change, so a run with no trend change never resets it and two calls starting at different bars can carry different state into the same bar.</li>
+    * <li>The cumulative range is reset by every trend change, so two calls starting at different bars carry different range state only until the first trend change after both; what remains between them is the seed error of the three averages, which fades at the slow average's rate. KVO converges, but as a small difference of two large averages it needs more bars than one of them would.</li>
     * <li>All three exponential averages are seeded from the volume force of the same anchor bar rather than from a simple average of their own first inputs, so one warm-up covers all three and the first KVO value is exactly zero. {@code TA_SetUnstablePeriod(TA_FUNC_UNST_EMA, ...)} discards more of that warm-up.</li>
     * <li>The weight is the 1997 form, {@code |2*(dm/cm) - 1|}, which is what the December 1997 Traders' Tips print. Some later implementations use {@code |2*(dm/cm - 1)|}, which is a different series.</li>
     * <li>A cumulative range of exactly zero leaves the volume force at zero rather than dividing.</li>

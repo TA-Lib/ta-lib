@@ -95,6 +95,7 @@
 #include "ta_test_func.h"
 #include "ta_utility.h"
 #include "server_verify.h"
+#include "test_codegen.h"
 
 /**** Local declarations.    ****/
 
@@ -683,13 +684,20 @@ static TA_RetCode kvoRangeTestFunction( TA_Integer startIdx, TA_Integer endIdx,
    return TA_SUCCESS;
 }
 
-/* (7) Range sweep. The cumulative range is reset only by a trend change, so
- * two starts can carry different state into the same bar and the value never
- * converges: TA_STABLE_SKIP is the class the `path_dependent` flag declares,
- * and the sweep checks the range bookkeeping rather than the values. */
+/* (7) Range sweep. KVO converges: the cumulative range two starts carry
+ * differs only until the first trend change after both, which resets it for
+ * both alike, and what remains is the EMA seed error, fading at the slow
+ * average's rate (54/56 per bar at the defaults). It is a small difference of
+ * two large averages -- on this corpus mean |KVO| is 7% of either -- so that
+ * error starts at ~14x the output and outlives the envelope's 100-bar grace.
+ * The grace this sweep needs is the one the codegen sweep reads, keyed on the
+ * name in test_codegen.c (MEASURED there: 160 fails, 175 holds, 197 and up
+ * compares nothing on 252 bars). */
 static ErrorNumber test_kvo_range( const TA_History *history )
 {
-   return doRangeTestEx( kvoRangeTestFunction,
-                         TA_STABLE_SKIP, TA_FUNC_UNST_EMA,
-                         (void *)history, 2, 0 );
+   static const TA_FuncUnstId id = TA_FUNC_UNST_EMA;
+   return doRangeTestMulti( kvoRangeTestFunction,
+                            TA_STABLE_CONVERGING, &id, 1,
+                            (void *)history, 2, 0,
+                            codegen_range_grace( "KVO" ) );
 }

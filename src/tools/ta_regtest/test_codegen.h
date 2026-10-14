@@ -44,6 +44,11 @@ ErrorNumber test_codegen(const TA_History *history,
  */
 int codegen_short_filter_token_matches(const char *name, const char *token);
 
+/* The grace of the TA_STABLE_CONVERGING range envelope for funcName, in bars;
+ * 0 means the unstable id's own. The table is perFuncGrace in test_codegen.c,
+ * so a function's own test and the codegen sweep read the same number. */
+unsigned int codegen_range_grace(const char *funcName);
+
 /* True if this language must drop transcendental-reaching calls to the 1e-9
  * element compare instead of a bitwise hash. Single definition shared by
  * --xlang-hash and server_verify; see the comment on the implementation. */
