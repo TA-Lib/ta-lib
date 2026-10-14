@@ -58,6 +58,7 @@ public partial class Core
     *  101126 MF,CC  Reject factors out of order (#488).
     *  101126 MF,CC  DEV in one loop instead of three calls (#488).
     *  101126 MF,CC  Both bands from one rounded deviation, as bbands (#488).
+    *  101126 MF,CC  One Keltner centre for both loops (#543).
     */
    /// <summary>
    /// Number of leading input bars <c>Sqzmom</c> consumes before it can produce
@@ -210,6 +211,9 @@ public partial class Core
       int n = 0;
       int tempBegIdx = 0;
       int tempNbElement = 0;
+      int kcmNb = 0;
+      int sdNb = 0;
+      int kcmShift = 0;
       Span<double> tempDev;
       Span<double> tempWork;
       Span<double> tempKCM;
@@ -313,8 +317,8 @@ public partial class Core
       tempDev = _rent_tempDev.AsSpan(0, (int)(stageLen * 1));
       _rent_tempWork = System.Buffers.ArrayPool<double>.Shared.Rent((int)(stageLen * 1));
       tempWork = _rent_tempWork.AsSpan(0, (int)(stageLen * 1));
-      _rent_tempKCM = System.Buffers.ArrayPool<double>.Shared.Rent((int)(n * 1));
-      tempKCM = _rent_tempKCM.AsSpan(0, (int)(n * 1));
+      _rent_tempKCM = System.Buffers.ArrayPool<double>.Shared.Rent((int)(stageLen * 1));
+      tempKCM = _rent_tempKCM.AsSpan(0, (int)(stageLen * 1));
       _rent_tempMid = System.Buffers.ArrayPool<double>.Shared.Rent((int)(n * 1));
       tempMid = _rent_tempMid.AsSpan(0, (int)(n * 1));
       _rent_tempSD = System.Buffers.ArrayPool<double>.Shared.Rent((int)(n * 1));
@@ -326,16 +330,16 @@ public partial class Core
       outBegIdx = _xr0.BegIdx;
       outNBElement = _xr0.Count;
       retCode = RetCode.Success;
-      OutRange _xr1 = Sma(stageIdx, endIdx, inClose, optInKCPeriod, tempWork);
+      OutRange _xr1 = Sma(stageIdx, endIdx, inClose, optInKCPeriod, tempKCM);
       tempBegIdx = _xr1.BegIdx;
-      tempNbElement = _xr1.Count;
+      kcmNb = _xr1.Count;
       retCode = RetCode.Success;
       /* DEV, over the staged range. The close is read at the index midprice
        * reported for the range, which is what lets this loop stream: keep
        * outBegIdx as midprice's receiver, and reuse it for no call above here.
        */
       for( i = 0; i < stageLen; i += 1 ) {
-         tempDev[i] = inClose[outBegIdx + i] - (tempDev[i] + tempWork[i]) / 2.0;
+         tempDev[i] = inClose[outBegIdx + i] - (tempDev[i] + tempKCM[i]) / 2.0;
       }
       /* The compression band: the simple mean of the true range, not an ATR.
        * trange's own lookback is 1, and stageIdx is at least 1 because the
@@ -355,12 +359,12 @@ public partial class Core
       retCode = RetCode.Success;
       OutRange _xr5 = Stddev(startIdx, endIdx, inClose, optInBBPeriod, 1.0, tempSD);
       tempBegIdx = _xr5.BegIdx;
-      tempNbElement = _xr5.Count;
+      sdNb = _xr5.Count;
       retCode = RetCode.Success;
-      OutRange _xr6 = Sma(startIdx, endIdx, inClose, optInKCPeriod, tempKCM);
-      tempBegIdx = _xr6.BegIdx;
-      tempNbElement = _xr6.Count;
-      retCode = RetCode.Success;
+      /* The centre is staged one regression window early; the shift puts it on
+       * the bar the bands are on.
+       */
+      kcmShift = kcmNb - sdNb;
       /* LAST of the calls, because it is the first to write a caller buffer. Every
        * read of high, low and close is above it, so an output aliased onto one of
        * them -- which the abstract layer tests on purpose -- is still intact when it
@@ -369,9 +373,9 @@ public partial class Core
        * The regression window closes on the first output bar, so entering it at 0 of
        * the staged range puts its first fitted value on startIdx.
        */
-      OutRange _xr7 = Linearreg(0, stageLen - 1, tempDev, optInKCPeriod, outMomentum);
-      tempBegIdx = _xr7.BegIdx;
-      tempNbElement = _xr7.Count;
+      OutRange _xr6 = Linearreg(0, stageLen - 1, tempDev, optInKCPeriod, outMomentum);
+      tempBegIdx = _xr6.BegIdx;
+      tempNbElement = _xr6.Count;
       retCode = RetCode.Success;
       /* The ordinal. Every comparison is strict: a band exactly on a channel
        * edge is not inside that channel and not outside it either.
@@ -385,7 +389,7 @@ public partial class Core
          dev = tempSD[i] * optInNbDev;
          up = tempMid[i] + dev;
          lo = tempMid[i] - dev;
-         centre = tempKCM[i];
+         centre = tempKCM[i + kcmShift];
          band = tempWork[i];
          if( lo > centre - optInFactorNarrow * band && up < centre + optInFactorNarrow * band ) {
             outSqueeze[i] = 3;
@@ -435,6 +439,9 @@ public partial class Core
       int n = 0;
       int tempBegIdx = 0;
       int tempNbElement = 0;
+      int kcmNb = 0;
+      int sdNb = 0;
+      int kcmShift = 0;
       Span<double> tempDev;
       Span<double> tempWork;
       Span<double> tempKCM;
@@ -517,8 +524,8 @@ public partial class Core
       tempDev = _rent_tempDev.AsSpan(0, (int)(stageLen * 1));
       _rent_tempWork = System.Buffers.ArrayPool<double>.Shared.Rent((int)(stageLen * 1));
       tempWork = _rent_tempWork.AsSpan(0, (int)(stageLen * 1));
-      _rent_tempKCM = System.Buffers.ArrayPool<double>.Shared.Rent((int)(n * 1));
-      tempKCM = _rent_tempKCM.AsSpan(0, (int)(n * 1));
+      _rent_tempKCM = System.Buffers.ArrayPool<double>.Shared.Rent((int)(stageLen * 1));
+      tempKCM = _rent_tempKCM.AsSpan(0, (int)(stageLen * 1));
       _rent_tempMid = System.Buffers.ArrayPool<double>.Shared.Rent((int)(n * 1));
       tempMid = _rent_tempMid.AsSpan(0, (int)(n * 1));
       _rent_tempSD = System.Buffers.ArrayPool<double>.Shared.Rent((int)(n * 1));
@@ -527,12 +534,12 @@ public partial class Core
       outBegIdx = _xr0.BegIdx;
       outNBElement = _xr0.Count;
       retCode = RetCode.Success;
-      OutRange _xr1 = Sma(stageIdx, endIdx, inClose, optInKCPeriod, tempWork);
+      OutRange _xr1 = Sma(stageIdx, endIdx, inClose, optInKCPeriod, tempKCM);
       tempBegIdx = _xr1.BegIdx;
-      tempNbElement = _xr1.Count;
+      kcmNb = _xr1.Count;
       retCode = RetCode.Success;
       for( i = 0; i < stageLen; i += 1 ) {
-         tempDev[i] = (double)inClose[outBegIdx + i] - (tempDev[i] + tempWork[i]) / 2.0;
+         tempDev[i] = (double)inClose[outBegIdx + i] - (tempDev[i] + tempKCM[i]) / 2.0;
       }
       OutRange _xr2 = Trange(stageIdx, endIdx, inHigh, inLow, inClose, tempWork);
       tempBegIdx = _xr2.BegIdx;
@@ -548,21 +555,18 @@ public partial class Core
       retCode = RetCode.Success;
       OutRange _xr5 = Stddev(startIdx, endIdx, inClose, optInBBPeriod, 1.0, tempSD);
       tempBegIdx = _xr5.BegIdx;
-      tempNbElement = _xr5.Count;
+      sdNb = _xr5.Count;
       retCode = RetCode.Success;
-      OutRange _xr6 = Sma(startIdx, endIdx, inClose, optInKCPeriod, tempKCM);
+      kcmShift = kcmNb - sdNb;
+      OutRange _xr6 = Linearreg(0, stageLen - 1, tempDev, optInKCPeriod, outMomentum);
       tempBegIdx = _xr6.BegIdx;
       tempNbElement = _xr6.Count;
-      retCode = RetCode.Success;
-      OutRange _xr7 = Linearreg(0, stageLen - 1, tempDev, optInKCPeriod, outMomentum);
-      tempBegIdx = _xr7.BegIdx;
-      tempNbElement = _xr7.Count;
       retCode = RetCode.Success;
       for( i = 0; i < n; i += 1 ) {
          dev = tempSD[i] * optInNbDev;
          up = tempMid[i] + dev;
          lo = tempMid[i] - dev;
-         centre = tempKCM[i];
+         centre = tempKCM[i + kcmShift];
          band = tempWork[i];
          if( lo > centre - optInFactorNarrow * band && up < centre + optInFactorNarrow * band ) {
             outSqueeze[i] = 3;
@@ -885,8 +889,7 @@ public partial class Core
       internal SmaStream sub3 = null!;
       internal SmaStream sub4 = null!;
       internal StddevStream sub5 = null!;
-      internal SmaStream sub6 = null!;
-      internal LinearregStream sub7 = null!;
+      internal LinearregStream sub6 = null!;
       internal int outRangeBegIdx;
       internal int outRangeCount;
 
@@ -942,8 +945,7 @@ public partial class Core
          this.sub3 = new SmaStream(other.sub3);
          this.sub4 = new SmaStream(other.sub4);
          this.sub5 = new StddevStream(other.sub5);
-         this.sub6 = new SmaStream(other.sub6);
-         this.sub7 = new LinearregStream(other.sub7);
+         this.sub6 = new LinearregStream(other.sub6);
          this.outRangeBegIdx = other.outRangeBegIdx;
          this.outRangeCount = other.outRangeCount;
       }
@@ -1002,23 +1004,22 @@ public partial class Core
          double lo = 0.0;
          double up = 0.0;
          double cur_tempDev = 0.0;
+         double cur_tempKCM = 0.0;
          double cur_tempWork = 0.0;
          double cur_tempMid = 0.0;
          double cur_tempSD = 0.0;
-         double cur_tempKCM = 0.0;
          double cur_outMomentum = 0.0;
          int cur_outSqueeze = 0;
          /* Pipeline the new bar through the sub-streams (batch tail order). */
          cur_tempDev = sp.sub0.Peek(inHigh, inLow);
-         cur_tempWork = sp.sub1.Peek(inClose);
+         cur_tempKCM = sp.sub1.Peek(inClose);
          /* Combine map (batch tail, per bar). */
-         cur_tempDev = inClose - (cur_tempDev + cur_tempWork) / 2.0;
+         cur_tempDev = inClose - (cur_tempDev + cur_tempKCM) / 2.0;
          cur_tempWork = sp.sub2.Peek(inHigh, inLow, inClose);
          cur_tempWork = sp.sub3.Peek(cur_tempWork);
          cur_tempMid = sp.sub4.Peek(inClose);
          cur_tempSD = sp.sub5.Peek(inClose);
-         cur_tempKCM = sp.sub6.Peek(inClose);
-         cur_outMomentum = sp.sub7.Peek(cur_tempDev);
+         cur_outMomentum = sp.sub6.Peek(cur_tempDev);
          /* Combine map (batch tail, per bar). */
          dev = cur_tempSD * sp.optInNbDev;
          up = cur_tempMid + dev;
@@ -1064,23 +1065,22 @@ public partial class Core
       double lo = 0.0;
       double up = 0.0;
       double cur_tempDev = 0.0;
+      double cur_tempKCM = 0.0;
       double cur_tempWork = 0.0;
       double cur_tempMid = 0.0;
       double cur_tempSD = 0.0;
-      double cur_tempKCM = 0.0;
       double cur_outMomentum = 0.0;
       int cur_outSqueeze = 0;
       /* Pipeline the new bar through the sub-streams (batch tail order). */
       cur_tempDev = sp.sub0.Update(inHigh, inLow);
-      cur_tempWork = sp.sub1.Update(inClose);
+      cur_tempKCM = sp.sub1.Update(inClose);
       /* Combine map (batch tail, per bar). */
-      cur_tempDev = inClose - (cur_tempDev + cur_tempWork) / 2.0;
+      cur_tempDev = inClose - (cur_tempDev + cur_tempKCM) / 2.0;
       cur_tempWork = sp.sub2.Update(inHigh, inLow, inClose);
       cur_tempWork = sp.sub3.Update(cur_tempWork);
       cur_tempMid = sp.sub4.Update(inClose);
       cur_tempSD = sp.sub5.Update(inClose);
-      cur_tempKCM = sp.sub6.Update(inClose);
-      cur_outMomentum = sp.sub7.Update(cur_tempDev);
+      cur_outMomentum = sp.sub6.Update(cur_tempDev);
       /* Combine map (batch tail, per bar). */
       dev = cur_tempSD * sp.optInNbDev;
       up = cur_tempMid + dev;
@@ -1115,6 +1115,9 @@ public partial class Core
       int n = 0;
       int tempBegIdx = 0;
       int tempNbElement = 0;
+      int kcmNb = 0;
+      int sdNb = 0;
+      int kcmShift = 0;
       Span<double> tempDev;
       Span<double> tempWork;
       Span<double> tempKCM;
@@ -1220,7 +1223,7 @@ public partial class Core
       stageLen = n + stageLookback;
       tempDev = new double[(int)(stageLen * 1)];
       tempWork = new double[(int)(stageLen * 1)];
-      tempKCM = new double[(int)(n * 1)];
+      tempKCM = new double[(int)(stageLen * 1)];
       tempMid = new double[(int)(n * 1)];
       tempSD = new double[(int)(n * 1)];
       /* The momentum anchor: the Donchian midpoint and the Keltner centre, averaged.
@@ -1232,14 +1235,14 @@ public partial class Core
       retCode = RetCode.Success;
       /* Sub-stream 1: sma over `inClose`, warmed from bar 0 up to the
        * sub-call's own startIdx (the seeding point). */
-      SmaStream sub1 = SmaOpenAndFillInternal(inClose, stageIdx, optInKCPeriod, out tempBegIdx, out tempNbElement, tempWork);
+      SmaStream sub1 = SmaOpenAndFillInternal(inClose, stageIdx, optInKCPeriod, out tempBegIdx, out kcmNb, tempKCM);
       retCode = RetCode.Success;
       /* DEV, over the staged range. The close is read at the index midprice
        * reported for the range, which is what lets this loop stream: keep
        * outBegIdx as midprice's receiver, and reuse it for no call above here.
        */
       for( i = 0; i < stageLen; i += 1 ) {
-         tempDev[i] = inClose[outBegIdx + i] - (tempDev[i] + tempWork[i]) / 2.0;
+         tempDev[i] = inClose[outBegIdx + i] - (tempDev[i] + tempKCM[i]) / 2.0;
       }
       /* The compression band: the simple mean of the true range, not an ATR.
        * trange's own lookback is 1, and stageIdx is at least 1 because the
@@ -1265,12 +1268,12 @@ public partial class Core
       retCode = RetCode.Success;
       /* Sub-stream 5: stddev over `inClose`, warmed from bar 0 up to the
        * sub-call's own startIdx (the seeding point). */
-      StddevStream sub5 = StddevOpenAndFillInternal(inClose, startIdx, optInBBPeriod, 1.0, out tempBegIdx, out tempNbElement, tempSD);
+      StddevStream sub5 = StddevOpenAndFillInternal(inClose, startIdx, optInBBPeriod, 1.0, out tempBegIdx, out sdNb, tempSD);
       retCode = RetCode.Success;
-      /* Sub-stream 6: sma over `inClose`, warmed from bar 0 up to the
-       * sub-call's own startIdx (the seeding point). */
-      SmaStream sub6 = SmaOpenAndFillInternal(inClose, startIdx, optInKCPeriod, out tempBegIdx, out tempNbElement, tempKCM);
-      retCode = RetCode.Success;
+      /* The centre is staged one regression window early; the shift puts it on
+       * the bar the bands are on.
+       */
+      kcmShift = kcmNb - sdNb;
       /* LAST of the calls, because it is the first to write a caller buffer. Every
        * read of high, low and close is above it, so an output aliased onto one of
        * them -- which the abstract layer tests on purpose -- is still intact when it
@@ -1279,12 +1282,12 @@ public partial class Core
        * The regression window closes on the first output bar, so entering it at 0 of
        * the staged range puts its first fitted value on startIdx.
        */
-      /* Sub-stream 7: linearreg over `tempDev`, warmed from bar 0 up to the
+      /* Sub-stream 6: linearreg over `tempDev`, warmed from bar 0 up to the
        * sub-call's own startIdx (the seeding point). */
-      int subLen7 = (stageLen - 1) + 1;
-      double[] subSrc7_0 = new double[subLen7];
-      tempDev.Slice(0, subLen7).CopyTo(subSrc7_0);
-      LinearregStream sub7 = LinearregOpenAndFillInternal(subSrc7_0, 0, optInKCPeriod, out tempBegIdx, out tempNbElement, sc_outMomentum);
+      int subLen6 = (stageLen - 1) + 1;
+      double[] subSrc6_0 = new double[subLen6];
+      tempDev.Slice(0, subLen6).CopyTo(subSrc6_0);
+      LinearregStream sub6 = LinearregOpenAndFillInternal(subSrc6_0, 0, optInKCPeriod, out tempBegIdx, out tempNbElement, sc_outMomentum);
       retCode = RetCode.Success;
       /* The ordinal. Every comparison is strict: a band exactly on a channel
        * edge is not inside that channel and not outside it either.
@@ -1298,7 +1301,7 @@ public partial class Core
          dev = tempSD[i] * optInNbDev;
          up = tempMid[i] + dev;
          lo = tempMid[i] - dev;
-         centre = tempKCM[i];
+         centre = tempKCM[i + kcmShift];
          band = tempWork[i];
          if( lo > centre - optInFactorNarrow * band && up < centre + optInFactorNarrow * band ) {
             sc_outSqueeze[i] = 3;
@@ -1331,7 +1334,6 @@ public partial class Core
       sp.sub4 = sub4;
       sp.sub5 = sub5;
       sp.sub6 = sub6;
-      sp.sub7 = sub7;
       sp.cur_outMomentum = sc_outMomentum[outNBElement - 1];
       sp.cur_outSqueeze = sc_outSqueeze[outNBElement - 1];
       return RetCode.Success;

@@ -1,9 +1,8 @@
 # EMA seeding evaluation
 
-**Question.** `TA_EMA` (CLASSIC) seeds its recursion with an SMA of the first
-`period` samples. TradingView `ta.ema`, Tulip, TradeStation `XAverage` and
-TA-Lib's own METASTOCK compatibility mode seed with the **first sample**. Which
-seed carries the smaller error?
+**Question.** `TA_EMA` seeds its recursion with an SMA of the first `period`
+samples. TradingView `ta.ema`, Tulip and TradeStation `XAverage` seed with the
+**first sample**. Which seed carries the smaller error?
 
 **Verdict.** Keep the SMA seed — but the defensible claim is *"every value the
 library publishes is one it stands behind"*, **not** *"the SMA seed is more
@@ -30,7 +29,7 @@ bit-checked rather than read off the source:
   `TA_EMA(400,400)` and `TA_EMA(0,500)[400]` differ by **0.199** on gData close.
   This matters for everything below — the "first published value" row is not a
   warm-up curiosity, it is what *any* narrow-range TA-Lib call returns.
-* The study's model of the CLASSIC rule reproduces `TA_EMA(0,60,close,25)`
+* The study's model of the SMA seed reproduces `TA_EMA(0,60,close,25)`
   **bit-for-bit, all 37 outputs** (the SMA seed must be summed sequentially, as
   the C does, or it lands 1 ULP away).
 
@@ -42,8 +41,8 @@ different seed.
 
 | | seed | first published bar | ships it |
 |---|---|---|---|
-| **rule S** | `SMA(x[t0-p+1 .. t0])` | `p-1` | TA-Lib CLASSIC, R `TTR::EMA` |
-| **rule T** | `x[t0]` | `0` | TradingView `ta.ema`, Tulip, TradeStation `XAverage`, TA-Lib `TA_COMPATIBILITY_METASTOCK` |
+| **rule S** | `SMA(x[t0-p+1 .. t0])` | `p-1` | TA-Lib, R `TTR::EMA` |
+| **rule T** | `x[t0]` | `0` | TradingView `ta.ema`, Tulip, TradeStation `XAverage` |
 
 R `TTR` is the closest independent analogue of what we ship: *"The EMA result is
 initialized with the n-period sample average at period n."* TradingView's
@@ -117,10 +116,9 @@ rule T is **1.9x** better. Both hold across periods and across both corpora.
 ## 6. Empirical: cascades — the shape DEMA/TEMA/TRIX/T3 actually ship
 
 DEMA, TEMA, TRIX, MACD, EFI and T3 do not call `TA_EMA`; they inline the same
-recursion with the **same per-stage CLASSIC seed** (an SMA of that stage's first
-`p` inputs). All of them except `T3` also carry the METASTOCK branch that seeds
-from `inReal[0]`; `T3` ships CLASSIC only. So the seed error compounds `n` times
-and the lookback grows as `n*(p-1)`. gData close, same methodology:
+recursion with the **same per-stage seed** (an SMA of that stage's first `p`
+inputs). So the seed error compounds `n` times and the lookback grows as
+`n*(p-1)`. gData close, same methodology:
 
 | stages | p | lookback | e_T first out | e_S first out | e_T @common | ratio |
 |---|---|---|---|---|---|---|
@@ -158,23 +156,22 @@ reaches any given tolerance slightly sooner — for SMI(13,25,2), 67 bars agains
 
 If accuracy at the lookback bar were the *only* criterion, the optimum is
 **neither shipped arm**: seed with the first sample **and** keep TA-Lib's
-lookback. For SMI(13,25,2) that is rms 8.06 at bar 37, against 14.0 for CLASSIC
-and 52.0 for Tulip/TradingView. That combination is
-`TA_COMPATIBILITY_METASTOCK` plus an unstable period — a library-wide change to
-`TA_EMA` and the six functions that inline it, breaking 25 years of published values for every
-function in §8. **Not proposed.** It is recorded here so it is not discovered
-later as a surprise, and so that "TA-Lib's seed is the accurate one" is not
-repeated as if it were established.
+lookback. For SMI(13,25,2) that is rms 8.06 at bar 37, against 14.0 for TA-Lib
+and 52.0 for Tulip/TradingView. That combination is a library-wide change to
+`TA_EMA` and the six functions that inline it, breaking 25 years of published
+values for every function in §8. **Not proposed.** It is recorded here so it is
+not discovered later as a surprise, and so that "TA-Lib's seed is the accurate
+one" is not repeated as if it were established.
 
 ## 8. Scope — what a change here would touch
 
 | how it uses the EMA seed | functions |
 |---|---|
-| inlines the recursion + CLASSIC seed directly | `EMA`, `DEMA`, `TEMA`, `TRIX`, `MACD`, `EFI` |
+| inlines the recursion + SMA seed directly | `EMA`, `DEMA`, `TEMA`, `TRIX`, `MACD`, `EFI` |
 | 6 chained stages, each SMA-seeded | `T3` |
 | routes through `ma()` → `ema()` | `MA` (MAType=EMA), `APO`, `PPO`, `PVO`, `MACDEXT` |
 | routes through `macd()` | `MACDFIX` |
-| inlines the recursion + CLASSIC seed directly, 3 stages plus a signal | `SMI` (#238) |
+| inlines the recursion + SMA seed directly, 3 stages plus a signal | `SMI` (#238) |
 
 Every one of them reaches `TA_FUNC_UNST_EMA` through `ema_lookback()` — `DEMA`
 and `TEMA`/`TRIX` multiply it by 2 and 3, `MACD` adds it twice (slow + signal) —
@@ -208,7 +205,7 @@ decayed below double precision, tolerance-only inside it.
 cd docs/studies/ema-seeding
 python3 seed_study.py            # ~3 s, writes results.txt (checked in)
 
-# optional: pin the CLASSIC rule against the shipped library
+# optional: pin rule S against the shipped library
 cc -I ../../../include -o /tmp/ema_probe ema_probe.c \
    ../../../src/tools/ta_regtest/ta_gDataClose.c <path-to>/libta-lib.a -lm
 /tmp/ema_probe

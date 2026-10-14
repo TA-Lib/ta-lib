@@ -1912,6 +1912,79 @@ fn end_aligned_rejects_a_pointer_copied_series() {
     assert_not_same_bar(&f, "a write through either name moves a pointer-copied series");
 }
 
+/* ---- #543: an offset read anchored on a sibling series ---- */
+
+/// The shipped SQZMOM with each `(from, to)` edit applied once. Its level map
+/// writes only `outSqueeze`, which no sub-call produced, so the staged centre's
+/// offset read can be proved only against a series the map reads at the cursor.
+fn sqzmom_with(edits: &[(&str, &str)]) -> FuncDef {
+    let mut src = std::fs::read_to_string(input_dir().join("sqzmom/sqzmom.c")).expect("sqzmom.c");
+    for (from, to) in edits {
+        assert!(src.contains(from), "fixture edit `{from}` does not apply");
+        src = src.replacen(from, to, 1);
+    }
+    load_with_source("sqzmom", &src)
+}
+
+#[test]
+fn map_written_output_anchors_an_offset_read_on_a_plain_cursor_series() {
+    let f = sqzmom_with(&[]);
+    let plan = streaming::validate_streamable(&f, lookup()).expect("SQZMOM streams");
+    let streaming::StreamPlan::Composed(cp) = plan else {
+        panic!("SQZMOM must derive a composed plan");
+    };
+    let callees: Vec<&str> = cp.subs.iter().map(|s| s.callee.as_str()).collect();
+    assert_eq!(callees, ["midprice", "sma", "trange", "sma", "sma", "stddev", "linearreg"]);
+}
+
+#[test]
+fn sibling_anchor_rejects_what_is_not_a_same_bar_shift() {
+    let rows: [(&str, &[(&str, &str)]); 6] = [
+        (
+            "a lag ring's plain read is an earlier bar and anchors nothing",
+            &[(
+                "dev = tempSD[i]*optInNbDev;",
+                "dev = (tempSD[i]+tempSD[i+(optInBBPeriod-1)])*optInNbDev;",
+            )],
+        ),
+        (
+            "a count difference plus one is a lag",
+            &[("kcmShift = kcmNb - sdNb;", "kcmShift = kcmNb - sdNb + 1;")],
+        ),
+        (
+            "the anchor ends a bar before the centre",
+            &[(
+                "stddev( startIdx, endIdx, inClose,",
+                "stddev( startIdx, endIdx-1, inClose,",
+            )],
+        ),
+        (
+            "the anchor's count is against a series the map does not read at the cursor",
+            &[("dev = tempSD[i]*optInNbDev;", "dev = optInNbDev;")],
+        ),
+        (
+            "linearreg rewrites the anchor's receiver before the map reads the shift",
+            &[
+                ("&tempBegIdx, &sdNb, tempSD", "&tempBegIdx, &tempNbElement, tempSD"),
+                ("kcmShift = kcmNb - sdNb;", "kcmShift = kcmNb - tempNbElement;"),
+            ],
+        ),
+        (
+            "a primary a sub-call produced is the only anchor, even with its count gone",
+            &[
+                ("outSqueeze[i] = 3;", "tempMid[i] = 3;"),
+                ("outSqueeze[i] = 2;", "tempMid[i] = 2;"),
+                ("outSqueeze[i] = 1;", "tempMid[i] = 1;"),
+                ("outSqueeze[i] = -1;", "tempMid[i] = -1;"),
+                ("outSqueeze[i] = 0;", "tempMid[i] = 0;"),
+            ],
+        ),
+    ];
+    for (why, edits) in rows {
+        assert_not_same_bar(&sqzmom_with(edits), why);
+    }
+}
+
 /* ---- #205: the fill-mode scratch-aliasing precondition ---- */
 
 /// Inventory of composed functions that hand one of their OWN outputs to a

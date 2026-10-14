@@ -6867,7 +6867,7 @@ ErrorNumber fuzz_ref(const char *version, const char *functionFilter)
  *     the exact seed-generated arrays losslessly (hex-of-IEEE-bits, the #115
  *     server_verify transport) and requests want_hash. Non-transcendental calls
  *     are diffed BITWISE; a call that reaches a transcendental (fdlibm != the C
- *     libm, ~1 ULP) drops to a CODEGEN_TRANSCENDENTAL_TOL (1e-9) element
+ *     libm, a few ULP) drops to a CODEGEN_TRANSCENDENTAL_TOL (1e-9) element
  *     compare, and HT_DCPHASE/HT_SINE/HT_TRENDMODE on the zero-variance constant shape are
  *     skipped outright (xlang_illcond — atan2 of a null signal amplifies
  *     the ULP unboundedly; C and Rust stay bitwise there).
@@ -7113,7 +7113,7 @@ void codegen_hash_report(const char *who, TA_RetCode goldRc, int goldBeg,
 
 /* ---- Java-transcendental tolerance path (shared with server_verify, #113/#115)
  * Which CALLS reach a transcendental C math routine (atan/sin/cos/exp/log/...) —
- * the only ones whose Java (fdlibm) output can differ from the C libm (~1 ULP),
+ * the only ones whose Java (fdlibm) output can differ from the C libm (a few ULP),
  * hence the only ones --xlang-hash's Java leg and server_verify relax from
  * bitwise to CODEGEN_TRANSCENDENTAL_TOL. Every other function — including
  * sqrt/ceil/floor users (IEEE correctly-rounded) — stays bit-identical across
@@ -7310,7 +7310,7 @@ static int xlang_selfcheck_inputs(XlangCtx *ctx)
  * (FUZZ_CONSTANT: flat O=H=L=C) those components are floating-point noise (~0),
  * so the phase is atan2(≈0,≈0) — chaotically sensitive to the last bit of every
  * transcendental step. C and Rust share the system libm and stay BIT-IDENTICAL
- * there (0 mismatches), but Java's fdlibm differs by ~1 ULP and this
+ * there (0 mismatches), but Java's fdlibm differs by a few ULP and this
  * ill-conditioning amplifies that to whole degrees. It is not a codegen
  * divergence — every non-degenerate shape agrees within the 1e-9 tolerance, and
  * atan2 of a null signal is mathematically undefined — so no fixed tolerance can

@@ -12,6 +12,14 @@ can round that result differently from the C library in the last bit, which is b
 TA-Lib's control, and the difference can grow through the rest of the calculation. No native
 binaries, no P/Invoke, no dependencies.
 
+## Install
+
+```
+dotnet add package TA-Lib
+```
+
+The package is `TA-Lib`; the namespace is `TALib`. It targets `net10.0`.
+
 ## Quick start
 
 ```csharp

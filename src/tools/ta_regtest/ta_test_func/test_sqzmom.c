@@ -48,6 +48,7 @@
  *  100826 KL,CC  Creation (#488).
  *  101126 MF,CC  Factor order, sub-ranges, short series, range test (#488).
  *  101126 MF,CC  pandas and ta4j goldens (#488).
+ *  101126 MF,CC  The reference reads one staged Keltner centre (#543).
  */
 
 /* Description:
@@ -87,7 +88,7 @@
  *        is inside every channel of positive width, so every bar reads 3; a
  *        series one bar short gives no output and the next bar gives one.
  *     8. SUB-RANGE. The composition again, entered above the lookback and
- *        ended before the last bar. Four legs keep running sums, so the
+ *        ended before the last bar. Several legs keep running sums, so the
  *        reference starts each of them where the implementation does.
  *     9. RANGE INDEPENDENCE, swept via doRangeTestEx.
  *    10. ORACLES. Legs 1 to 9 hold the implementation to a composition of
@@ -747,8 +748,9 @@ ErrorNumber test_func_sqzmom( TA_History *history )
 /**** Local functions definitions.     ****/
 
 /* The card's formula, every leg a public call, nothing of its own but the two
- * lines the card writes out. Fills refMom/refSqz, 0-based at *refBeg. The
- * output starts at startIdx or at the lookback, whichever is later. */
+ * lines the card writes out and the centre's shift. Fills refMom/refSqz,
+ * 0-based at *refBeg. The output starts at startIdx or at the lookback,
+ * whichever is later. */
 static ErrorNumber sqzReference( const TA_Real *high, const TA_Real *low,
                                  const TA_Real *close, int nbBars,
                                  const SqzCase *c, int startIdx,
@@ -773,9 +775,6 @@ static ErrorNumber sqzReference( const TA_Real *high, const TA_Real *low,
                    TA_MAType_SMA, &b1, &n1, refBBU, refBBM, refBBL );
    if( rc != TA_SUCCESS || n1 != nb ) goto refFail;
 
-   rc = TA_SMA( beg, nbBars-1, close, c->kcPeriod, &b1, &n1, refKCM );
-   if( rc != TA_SUCCESS || n1 != nb ) goto refFail;
-
    rc = TA_TRANGE( stage, nbBars-1, high, low, close, &b1, &n1, refBand );
    if( rc != TA_SUCCESS || n1 != stageLen ) goto refFail;
    rc = TA_SMA( 0, stageLen-1, refBand, c->kcPeriod, &b1, &n1, refBand );
@@ -788,6 +787,11 @@ static ErrorNumber sqzReference( const TA_Real *high, const TA_Real *low,
 
    for( i = 0; i < stageLen; i++ )
       refDev[i] = close[stage+i] - (refDev[i] + refStage[i]) * 0.5;
+
+   /* The levels read the staged mean, whose running sum started a regression
+    * window before the first output bar. */
+   for( i = 0; i < nb; i++ )
+      refKCM[i] = refStage[i + stageLen - nb];
 
    rc = TA_LINEARREG( 0, stageLen-1, refDev, c->kcPeriod, &b1, &n1, refMom );
    if( rc != TA_SUCCESS || n1 != nb ) goto refFail;

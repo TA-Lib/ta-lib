@@ -19,7 +19,7 @@ use crate::registry::Lang;
 use std::collections::HashMap;
 use std::path::Path;
 
-/// Namespace for the shipped C# library. The NuGet prefix is `TALib.*`.
+/// Namespace for the shipped C# library.
 const NAMESPACE: &str = "TALib";
 
 /// Generate the shipped C# `MAType` enum.

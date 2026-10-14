@@ -6,8 +6,8 @@
 #policy	monotone
 #toolchain	x86_64/x86_64-linux-gnu/13.3.0
 #corpus	points=20000 regime_period=14 seed=42 shape=peg stream_iters=1024 trend_strength=0.500000
-#commit	67b7902e0f0f06b661ee5125edc18e87c07cc8d3
-#generated	2026-10-12T12:37:16Z
+#commit	687063a4b649ff9151f4cfd41429b5ffe70cfb52
+#generated	2026-10-13T12:21:50Z
 AC	batch	0	703438
 AC	open	0	704171
 AC	openfill	0	692624
@@ -998,11 +998,11 @@ SQRT	open	0	127
 SQRT	openfill	0	60131
 SQRT	peek	0	30733
 SQRT	update	0	40973
-SQZMOM	batch	0	3583380
-SQZMOM	open	0	6241691
-SQZMOM	openfill	0	6240365
-SQZMOM	peek	0	694643
-SQZMOM	update	0	885995
+SQZMOM	batch	0	3471622
+SQZMOM	open	0	6149636
+SQZMOM	openfill	0	6148008
+SQZMOM	peek	0	672651
+SQZMOM	update	0	834075
 STC	batch	0	1717670
 STC	open	0	1739583
 STC	openfill	0	1813586

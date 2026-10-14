@@ -694,7 +694,7 @@ on it. Needs cmake + gcc + cargo plus the **JDK** and the **.NET SDK**.
   shared with `server_verify`. Both hash the **guarded** call, like-for-like with
   the golden.
 - **Transcendental tolerance (Java and C#).** Java's fdlibm differs from the C
-  libm by ~1 ULP on `atan/sin/cos/exp/log/...`, and **.NET does not guarantee
+  libm by a few ULP on `atan/sin/cos/exp/log/...` (3 measured on `tanh`), and **.NET does not guarantee
   `Math.*` reaches the platform libm** — an ordinary-value 1 ULP difference,
   host-dependent, so a locally clean run proves nothing here.
   `Math.FusedMultiplyAdd` is still correctly rounded, so the FMA contract is

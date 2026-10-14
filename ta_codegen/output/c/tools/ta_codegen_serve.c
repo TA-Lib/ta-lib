@@ -6423,9 +6423,7 @@ static int sv_steq_TA_SQZMOM( const struct TA_SQZMOM_Stream *a, const struct TA_
    if( (a->sub5 == NULL) != (b->sub5 == NULL) ) { *w = "sub5"; return 1; }
    if( a->sub5 && sv_steq_TA_STDDEV( a->sub5, b->sub5, w, z ) ) return 1;
    if( (a->sub6 == NULL) != (b->sub6 == NULL) ) { *w = "sub6"; return 1; }
-   if( a->sub6 && sv_steq_TA_SMA( a->sub6, b->sub6, w, z ) ) return 1;
-   if( (a->sub7 == NULL) != (b->sub7 == NULL) ) { *w = "sub7"; return 1; }
-   if( a->sub7 && sv_steq_TA_LINEARREG( a->sub7, b->sub7, w, z ) ) return 1;
+   if( a->sub6 && sv_steq_TA_LINEARREG( a->sub6, b->sub6, w, z ) ) return 1;
    return 0;
 }
 

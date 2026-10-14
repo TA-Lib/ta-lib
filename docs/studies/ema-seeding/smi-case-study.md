@@ -25,7 +25,7 @@ common bar, and the write-up says so.
 
 | | seed | first published bar | who ships it |
 |---|---|---|---|
-| **rule S** | `SMA(x[t0-p+1 .. t0])` | `p-1` | TA-Lib `TA_EMA` (CLASSIC), R `TTR::EMA` |
+| **rule S** | `SMA(x[t0-p+1 .. t0])` | `p-1` | TA-Lib `TA_EMA`, R `TTR::EMA` |
 | **rule T** | `x[t0]` — for the SMI denominator that first sample is `HH-LL`, the "H-L seed" | `0` | TradingView `ta.ema`, Tulip `ti_smi`, TradeStation `XAverage` |
 
 Neither seed is the truth. The truth is the **converged EMA** — what an
@@ -191,11 +191,10 @@ accurate, because it is not.** Stating it precisely:
 
 If accuracy at the lookback bar were the *only* criterion, the optimum is neither
 arm: seed with the first sample **and** keep TA-Lib's lookback (rms 8.06 at bar
-37, better than both). That is `TA_COMPATIBILITY_METASTOCK` plus an unstable
-period, it is a library-wide change to `TA_EMA` rather than an SMI decision, and
-it would break 25 years of published values for every EMA-derived function. Not
-proposed — but it is the honest reading of the numbers and should not be
-discovered later as a surprise.
+37, better than both). That is a library-wide change to `TA_EMA` rather than an
+SMI decision, and it would break 25 years of published values for every
+EMA-derived function. Not proposed — but it is the honest reading of the numbers
+and should not be discovered later as a surprise.
 
 Nothing here disturbs #238's other conclusions: the front end is confirmed, the
 transient is the ordinary `TA_FUNC_UNST_EMA` story, and Tulip remains a valid

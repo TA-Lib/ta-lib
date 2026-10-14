@@ -427,9 +427,7 @@ PART E -- EMA cascades, the shape DEMA/TEMA/TRIX/T3/MACD actually ship
 
 Every one of those inlines the SAME per-stage seed as TA_EMA: an SMA of the
 stage's first p inputs (verified by reading ta_codegen/input/{dema,tema,trix,
-macd,efi,t3}/*.c -- all carry the CLASSIC branch, and all but t3 also carry a
-METASTOCK branch seeding from inReal[0]; t3 ships CLASSIC only).  So the seed
-error compounds n times and the lookback grows
+macd,efi,t3}/*.c).  So the seed error compounds n times and the lookback grows
 as n*(p-1).  Error vs the converged cascade, rms over every data-start offset,
 as a percentage of the input series' standard deviation.
 

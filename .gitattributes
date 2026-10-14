@@ -5,3 +5,8 @@ ta_codegen/output/java/library/src/test/** -linguist-generated
 ta_codegen/output/csharp/library/test/** -linguist-generated
 ta_codegen/output/rust/library/tests/** -linguist-generated
 *.g.cs linguist-generated
+
+# What compiles or packs into the NuGet package must not follow the checkout's
+# line endings: a CRLF checkout builds a different TALib.dll from the same commit.
+ta_codegen/output/csharp/library/** text=auto eol=lf
+/LICENSE text eol=lf

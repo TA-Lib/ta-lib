@@ -12,7 +12,7 @@
  * the test's exact arrays, sent losslessly as hex-of-IEEE-bits strings, and the
  * server returns a full-precision out_hash we diff via the shared
  * codegen_hash_compare(). Zero tolerance for C and Rust; a narrow tolerance for
- * Java and C# on transcendental-using functions only (~1 ULP: fdlibm is not the
+ * Java and C# on transcendental-using functions only (a few ULP: fdlibm is not the
  * system libm, and .NET's Math.* is not guaranteed to reach it either).
  */
 
