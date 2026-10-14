@@ -53,6 +53,18 @@ static double O[NMAX], H[NMAX], L[NMAX], C[NMAX], V[NMAX], OI[NMAX], P[NMAX];
 static double RA[MAXOUT][NMAX], RB[MAXOUT][NMAX];
 static int    IA[MAXOUT][NMAX], IB[MAXOUT][NMAX];
 static const char *g_only;
+
+/* A function that owns no id but adjusts the count it inherits (rZ2) carries
+ * no TA_FUNC_FLG_UNST_PER, so the flag does not bring it: these are run as the
+ * owners are, and so listed for the nightly sample. */
+static const char *const g_inherit[] = { "KVO" };
+static int inherits(const char *name)
+{
+   unsigned int i;
+   for( i = 0; i < sizeof g_inherit / sizeof g_inherit[0]; i++ )
+      if( !strcmp(g_inherit[i], name) ) return 1;
+   return 0;
+}
 static int g_trials, g_list;
 static double g_drift = 0.001, g_level = 100.0, g_tick = 0.01;
 static unsigned long long g_seed, rng_s;
@@ -202,7 +214,7 @@ static void each(const TA_FuncInfo *fi, void *opaque)
    char desc[256];
    (void)opaque;
 
-   if( !(fi->flags & TA_FUNC_FLG_UNST_PER) && !g_only ) return;   /* by name, a function that only inherits a count runs too */
+   if( !(fi->flags & TA_FUNC_FLG_UNST_PER) && !g_only && !inherits(fi->name) ) return;   /* by name, a function that only inherits a count runs too */
    if( g_only && strcmp(g_only, fi->name) ) return;
    if( g_list ) { printf("%s\n", fi->name); return; }
    need[0] = malloc(sizeof(int)*g_trials); need[1] = malloc(sizeof(int)*g_trials);
