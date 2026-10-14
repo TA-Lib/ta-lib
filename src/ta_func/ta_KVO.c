@@ -127,14 +127,14 @@ TA_LIB_API TA_RetCode TA_KVO( int    startIdx,
    double prevHlc;
    double dmToday;
    double prevDm;
-   double cm;
-   double vf;
    double emaFast;
    double emaSlow;
-   double kvoValue;
-   double signalValue;
+   double cm;
+   double vf;
    double trend;
    double prevTrend;
+   double kvoValue;
+   double signalValue;
    int lookbackTotal;
    int today;
    int outIdx;
@@ -173,6 +173,12 @@ TA_LIB_API TA_RetCode TA_KVO( int    startIdx,
    if( outKVO == outKVOSignal )
       return TA_BAD_PARAM;
 
+   /* The C stream struct follows this order, and a bad one can stall every
+    * streamed update without changing a value. prevHlc/prevDm and
+    * emaFast/emaSlow are each stored as one 16-byte pair and must sit 16-byte
+    * aligned in the struct; prevTrend keeps cm and signalValue apart so no
+    * load spans two stores.
+    */
    /* Stephen J. Klinger, "Identifying Trends With Volume Analysis", Technical
     * Analysis of Stocks & Commodities V15:12 (December 1997), with the 1997
     * factor |2*(dm/cm) - 1| (#484, form A).
@@ -370,14 +376,14 @@ TA_RetCode TA_S_KVO( int    startIdx,
    double prevHlc;
    double dmToday;
    double prevDm;
-   double cm;
-   double vf;
    double emaFast;
    double emaSlow;
-   double kvoValue;
-   double signalValue;
+   double cm;
+   double vf;
    double trend;
    double prevTrend;
+   double kvoValue;
+   double signalValue;
    int lookbackTotal;
    int today;
    int outIdx;
@@ -582,11 +588,11 @@ struct TA_KVO_Stream {
    double pad_0;
    double prevHlc;
    double prevDm;
-   double cm;
    double emaFast;
    double emaSlow;
-   double signalValue;
+   double cm;
    double prevTrend;
+   double signalValue;
 };
 
 /* Private function, not in public API. */
@@ -595,8 +601,8 @@ static TA_FMA_STEP_INLINE void TA_KVO_StepImpl( struct TA_KVO_Stream *sp, double
    double hlc;
    double dmToday;
    double vf;
-   double kvoValue;
    double trend;
+   double kvoValue;
    double signalValue;
 
    signalValue = sp->signalValue;
@@ -678,18 +684,24 @@ static TA_FMA_STEP_INLINE TA_RetCode TA_KVO_OpenImpl( struct TA_KVO_Stream **str
       double betaFast = 0.0;
       double betaSlow = 0.0;
       double betaSignal = 0.0;
+      /* The C stream struct follows this order, and a bad one can stall every
+       * streamed update without changing a value. prevHlc/prevDm and
+       * emaFast/emaSlow are each stored as one 16-byte pair and must sit 16-byte
+       * aligned in the struct; prevTrend keeps cm and signalValue apart so no
+       * load spans two stores.
+       */
       double hlc;
       double prevHlc = 0.0;
       double dmToday;
       double prevDm = 0.0;
-      double cm = 0.0;
-      double vf;
       double emaFast = 0.0;
       double emaSlow = 0.0;
-      double kvoValue;
-      double signalValue = 0.0;
+      double cm = 0.0;
+      double vf;
       double trend;
       double prevTrend = 0.0;
+      double kvoValue;
+      double signalValue = 0.0;
       int lookbackTotal;
       int today;
       int outIdx;
@@ -878,11 +890,11 @@ static TA_FMA_STEP_INLINE TA_RetCode TA_KVO_OpenImpl( struct TA_KVO_Stream **str
       sp->betaSignal = betaSignal;
       sp->prevHlc = prevHlc;
       sp->prevDm = prevDm;
-      sp->cm = cm;
       sp->emaFast = emaFast;
       sp->emaSlow = emaSlow;
-      sp->signalValue = signalValue;
+      sp->cm = cm;
       sp->prevTrend = prevTrend;
+      sp->signalValue = signalValue;
       sp->outRangeBegIdx = *outBegIdx;
       sp->outRangeCount = *outNBElement;
       sp->cur_outKVO = outKVO[(*outNBElement - 1) * outStride];
@@ -982,8 +994,8 @@ TA_LIB_API TA_RetCode TA_KVO_Peek( const TA_KVO_Stream *stream, double inHigh, d
    double hlc;
    double dmToday;
    double vf;
-   double kvoValue;
    double trend;
+   double kvoValue;
    double cm;
    double emaFast;
    double emaSlow;

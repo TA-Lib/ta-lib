@@ -244,17 +244,22 @@ impl Core {
         let mut prevHlc: f64 = 0.0_f64;
         let mut dmToday: f64 = 0.0_f64;
         let mut prevDm: f64 = 0.0_f64;
-        let mut cm: f64 = 0.0_f64;
-        let mut vf: f64 = 0.0_f64;
         let mut emaFast: f64 = 0.0_f64;
         let mut emaSlow: f64 = 0.0_f64;
-        let mut kvoValue: f64 = 0.0_f64;
-        let mut signalValue: f64 = 0.0_f64;
+        let mut cm: f64 = 0.0_f64;
+        let mut vf: f64 = 0.0_f64;
         let mut trend: f64 = 0.0_f64;
         let mut prevTrend: f64 = 0.0_f64;
+        let mut kvoValue: f64 = 0.0_f64;
+        let mut signalValue: f64 = 0.0_f64;
         let mut lookbackTotal: usize = 0_usize;
         let mut today: usize = 0_usize;
         let mut outIdx: usize = 0_usize;
+        // The C stream struct follows this order, and a bad one can stall every
+        // streamed update without changing a value. prevHlc/prevDm and
+        // emaFast/emaSlow are each stored as one 16-byte pair and must sit 16-byte
+        // aligned in the struct; prevTrend keeps cm and signalValue apart so no
+        // load spans two stores.
         // Stephen J. Klinger, "Identifying Trends With Volume Analysis", Technical
         // Analysis of Stocks & Commodities V15:12 (December 1997), with the 1997
         // factor |2*(dm/cm) - 1| (#484, form A).
@@ -582,11 +587,11 @@ struct KvoStreamState {
     betaSignal: f64,
     prevHlc: f64,
     prevDm: f64,
-    cm: f64,
     emaFast: f64,
     emaSlow: f64,
-    signalValue: f64,
+    cm: f64,
     prevTrend: f64,
+    signalValue: f64,
     cur_outKVO: f64,
     cur_outKVOSignal: f64,
 }
@@ -602,8 +607,8 @@ impl Core {
         let mut hlc: f64 = 0.0_f64;
         let mut dmToday: f64 = 0.0_f64;
         let mut vf: f64 = 0.0_f64;
-        let mut kvoValue: f64 = 0.0_f64;
         let mut trend: f64 = 0.0_f64;
+        let mut kvoValue: f64 = 0.0_f64;
         hlc = inHigh + inLow + inClose;
         dmToday = inHigh - inLow;
         if hlc > sp.prevHlc {
@@ -703,17 +708,22 @@ impl Core {
         let mut prevHlc: f64 = 0.0_f64;
         let mut dmToday: f64 = 0.0_f64;
         let mut prevDm: f64 = 0.0_f64;
-        let mut cm: f64 = 0.0_f64;
-        let mut vf: f64 = 0.0_f64;
         let mut emaFast: f64 = 0.0_f64;
         let mut emaSlow: f64 = 0.0_f64;
-        let mut kvoValue: f64 = 0.0_f64;
-        let mut signalValue: f64 = 0.0_f64;
+        let mut cm: f64 = 0.0_f64;
+        let mut vf: f64 = 0.0_f64;
         let mut trend: f64 = 0.0_f64;
         let mut prevTrend: f64 = 0.0_f64;
+        let mut kvoValue: f64 = 0.0_f64;
+        let mut signalValue: f64 = 0.0_f64;
         let mut lookbackTotal: usize = 0_usize;
         let mut today: usize = 0_usize;
         let mut outIdx: usize = 0_usize;
+        // The C stream struct follows this order, and a bad one can stall every
+        // streamed update without changing a value. prevHlc/prevDm and
+        // emaFast/emaSlow are each stored as one 16-byte pair and must sit 16-byte
+        // aligned in the struct; prevTrend keeps cm and signalValue apart so no
+        // load spans two stores.
         // Stephen J. Klinger, "Identifying Trends With Volume Analysis", Technical
         // Analysis of Stocks & Commodities V15:12 (December 1997), with the 1997
         // factor |2*(dm/cm) - 1| (#484, form A).
@@ -867,11 +877,11 @@ impl Core {
             betaSignal,
             prevHlc,
             prevDm,
-            cm,
             emaFast,
             emaSlow,
-            signalValue,
+            cm,
             prevTrend,
+            signalValue,
             cur_outKVO: outKVO[(*outNBElement - 1) * outStride],
             cur_outKVOSignal: outKVOSignal[(*outNBElement - 1) * outStride],
         };
@@ -1085,8 +1095,8 @@ impl KvoStream {
             let mut hlc: f64 = 0.0_f64;
             let mut dmToday: f64 = 0.0_f64;
             let mut vf: f64 = 0.0_f64;
-            let mut kvoValue: f64 = 0.0_f64;
             let mut trend: f64 = 0.0_f64;
+            let mut kvoValue: f64 = 0.0_f64;
             let mut cm = sp.cm;
             let mut emaFast = sp.emaFast;
             let mut emaSlow = sp.emaSlow;

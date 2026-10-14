@@ -131603,14 +131603,14 @@ class Core {
           double prevHlc = 0;
           double dmToday = 0;
           double prevDm = 0;
-          double cm = 0;
-          double vf = 0;
           double emaFast = 0;
           double emaSlow = 0;
-          double kvoValue = 0;
-          double signalValue = 0;
+          double cm = 0;
+          double vf = 0;
           double trend = 0;
           double prevTrend = 0;
+          double kvoValue = 0;
+          double signalValue = 0;
           int lookbackTotal = 0;
           int today = 0;
           int outIdx = 0;
@@ -131638,6 +131638,12 @@ class Core {
           if( outKVO == outKVOSignal ) {
              return RetCode.BAD_PARAM ;
           }
+          /* The C stream struct follows this order, and a bad one can stall every
+           * streamed update without changing a value. prevHlc/prevDm and
+           * emaFast/emaSlow are each stored as one 16-byte pair and must sit 16-byte
+           * aligned in the struct; prevTrend keeps cm and signalValue apart so no
+           * load spans two stores.
+           */
           /* Stephen J. Klinger, "Identifying Trends With Volume Analysis", Technical
            * Analysis of Stocks & Commodities V15:12 (December 1997), with the 1997
            * factor |2*(dm/cm) - 1| (#484, form A).
@@ -131807,14 +131813,14 @@ class Core {
           double prevHlc = 0;
           double dmToday = 0;
           double prevDm = 0;
-          double cm = 0;
-          double vf = 0;
           double emaFast = 0;
           double emaSlow = 0;
-          double kvoValue = 0;
-          double signalValue = 0;
+          double cm = 0;
+          double vf = 0;
           double trend = 0;
           double prevTrend = 0;
+          double kvoValue = 0;
+          double signalValue = 0;
           int lookbackTotal = 0;
           int today = 0;
           int outIdx = 0;
@@ -132182,11 +132188,11 @@ class Core {
           private double betaSignal;
           private double prevHlc;
           private double prevDm;
-          private double cm;
           private double emaFast;
           private double emaSlow;
-          private double signalValue;
+          private double cm;
           private double prevTrend;
+          private double signalValue;
           private double cur_outKVO;
           private double cur_outKVOSignal;
           private int outRangeBegIdx;
@@ -132241,11 +132247,11 @@ class Core {
              this.betaSignal = other.betaSignal;
              this.prevHlc = other.prevHlc;
              this.prevDm = other.prevDm;
-             this.cm = other.cm;
              this.emaFast = other.emaFast;
              this.emaSlow = other.emaSlow;
-             this.signalValue = other.signalValue;
+             this.cm = other.cm;
              this.prevTrend = other.prevTrend;
+             this.signalValue = other.signalValue;
              this.cur_outKVO = other.cur_outKVO;
              this.cur_outKVOSignal = other.cur_outKVOSignal;
              this.outRangeBegIdx = other.outRangeBegIdx;
@@ -132298,8 +132304,8 @@ class Core {
              double hlc = 0.0;
              double dmToday = 0.0;
              double vf = 0.0;
-             double kvoValue = 0.0;
              double trend = 0.0;
+             double kvoValue = 0.0;
              double cm = sp.cm;
              double cur_outKVO = 0.0;
              double cur_outKVOSignal = 0.0;
@@ -132390,8 +132396,8 @@ class Core {
           double hlc = 0.0;
           double dmToday = 0.0;
           double vf = 0.0;
-          double kvoValue = 0.0;
           double trend = 0.0;
+          double kvoValue = 0.0;
           hlc = inHigh + inLow + inClose;
           dmToday = inHigh - inLow;
           if( hlc > sp.prevHlc ) {
@@ -132433,14 +132439,14 @@ class Core {
           double prevHlc = 0;
           double dmToday = 0;
           double prevDm = 0;
-          double cm = 0;
-          double vf = 0;
           double emaFast = 0;
           double emaSlow = 0;
-          double kvoValue = 0;
-          double signalValue = 0;
+          double cm = 0;
+          double vf = 0;
           double trend = 0;
           double prevTrend = 0;
+          double kvoValue = 0;
+          double signalValue = 0;
           int lookbackTotal = 0;
           int today = 0;
           int outIdx = 0;
@@ -132475,6 +132481,12 @@ class Core {
              outNBElement.value = 0;
              return RetCode.INSUFFICIENT_HISTORY;
           }
+          /* The C stream struct follows this order, and a bad one can stall every
+           * streamed update without changing a value. prevHlc/prevDm and
+           * emaFast/emaSlow are each stored as one 16-byte pair and must sit 16-byte
+           * aligned in the struct; prevTrend keeps cm and signalValue apart so no
+           * load spans two stores.
+           */
           /* Stephen J. Klinger, "Identifying Trends With Volume Analysis", Technical
            * Analysis of Stocks & Commodities V15:12 (December 1997), with the 1997
            * factor |2*(dm/cm) - 1| (#484, form A).
@@ -132630,11 +132642,11 @@ class Core {
           sp.betaSignal = betaSignal;
           sp.prevHlc = prevHlc;
           sp.prevDm = prevDm;
-          sp.cm = cm;
           sp.emaFast = emaFast;
           sp.emaSlow = emaSlow;
-          sp.signalValue = signalValue;
+          sp.cm = cm;
           sp.prevTrend = prevTrend;
+          sp.signalValue = signalValue;
           sp.cur_outKVO = outKVO[(outNBElement.value - 1) * outStride];
           sp.cur_outKVOSignal = outKVOSignal[(outNBElement.value - 1) * outStride];
           return RetCode.SUCCESS;
@@ -230899,7 +230911,7 @@ class Core {
 
 public class TaCodegenServe {
     static Core core = new Core();
-    static final String SPLICED_GENCODE_DIGEST = "0e0dc43f85b0fc74";
+    static final String SPLICED_GENCODE_DIGEST = "577a508f8ae240b4";
     static final int MAX_ARRAY_SIZE = 200000;
     static double[] refOpen = new double[MAX_ARRAY_SIZE];
     static double[] refHigh = new double[MAX_ARRAY_SIZE];

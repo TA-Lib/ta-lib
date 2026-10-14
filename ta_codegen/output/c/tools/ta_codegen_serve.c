@@ -5007,11 +5007,11 @@ static int sv_steq_TA_KVO( const struct TA_KVO_Stream *a, const struct TA_KVO_St
    if( sv_xtier_ne(a->betaSignal, b->betaSignal, z) ) { *w = "betaSignal"; return 1; }
    if( sv_xtier_ne(a->prevHlc, b->prevHlc, z) ) { *w = "prevHlc"; return 1; }
    if( sv_xtier_ne(a->prevDm, b->prevDm, z) ) { *w = "prevDm"; return 1; }
-   if( sv_xtier_ne(a->cm, b->cm, z) ) { *w = "cm"; return 1; }
    if( sv_xtier_ne(a->emaFast, b->emaFast, z) ) { *w = "emaFast"; return 1; }
    if( sv_xtier_ne(a->emaSlow, b->emaSlow, z) ) { *w = "emaSlow"; return 1; }
-   if( sv_xtier_ne(a->signalValue, b->signalValue, z) ) { *w = "signalValue"; return 1; }
+   if( sv_xtier_ne(a->cm, b->cm, z) ) { *w = "cm"; return 1; }
    if( sv_xtier_ne(a->prevTrend, b->prevTrend, z) ) { *w = "prevTrend"; return 1; }
+   if( sv_xtier_ne(a->signalValue, b->signalValue, z) ) { *w = "signalValue"; return 1; }
    return 0;
 }
 

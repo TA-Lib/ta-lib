@@ -47,8 +47,14 @@ TA_RetCode kvo(int startIdx, int endIdx,
    double outKVOSignal[])
 {
    double kFast, kSlow, kSignal, betaFast, betaSlow, betaSignal;
-   double hlc, prevHlc, dmToday, prevDm, cm, vf;
-   double emaFast, emaSlow, kvoValue, signalValue, trend, prevTrend;
+   /* The C stream struct follows this order, and a bad one can stall every
+    * streamed update without changing a value. prevHlc/prevDm and
+    * emaFast/emaSlow are each stored as one 16-byte pair and must sit 16-byte
+    * aligned in the struct; prevTrend keeps cm and signalValue apart so no
+    * load spans two stores. */
+   double hlc, prevHlc, dmToday, prevDm;
+   double emaFast, emaSlow;
+   double cm, vf, trend, prevTrend, kvoValue, signalValue;
    int lookbackTotal;
    int today, outIdx;
 
