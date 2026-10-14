@@ -113,8 +113,9 @@
 #define KVO_TIE_CMP       138
 /* 4 sets x 4 unstable periods, _Lookback and the call's own begIdx. */
 #define KVO_LOOKBACK_CMP   32
-/* Each output aliased onto each of the four price inputs. */
-#define KVO_ALIAS_CMP       8
+/* Each output aliased onto each of the four price inputs, two outputs
+ * checked per call. */
+#define KVO_ALIAS_CMP      16
 
 static int g_kvoGoldenCmp;
 static int g_kvoZeroCmp;
@@ -622,8 +623,8 @@ static ErrorNumber test_kvo_aliasing( const TA_History *history )
    src[3] = history->volume;
 
    for( which = 0; which < 4; which++ )
+   for( slot = 0; slot < 2; slot++ )
    {
-      slot = which % 2;
       for( i = 0; i < nb; i++ )
          work[i] = src[which][i];
 

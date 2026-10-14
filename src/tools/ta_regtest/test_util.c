@@ -142,6 +142,26 @@ static unsigned int g_rangePeriodToIgnore = 0;
  * caught rather than waived. */
 static unsigned long g_rangeNbCompared = 0;
 
+/* The caller's grace when it named one, else the id's own. */
+static unsigned int rangeGrace( TA_FuncUnstId unstId )
+{
+   if( g_rangePeriodToIgnore != 0 )
+      return g_rangePeriodToIgnore;
+   switch( unstId )
+   {
+   case TA_FUNC_UNST_T3:
+   /* STC's two stochastic stages amplify the slow EMA's transient: at 150
+    * the sweep fails on every seed. */
+   case TA_FUNC_UNST_STC:
+   /* SWAK_BP's pole radius is 0.97 at its defaults: the seed's transient is
+    * still 4% of its start at bar 100. */
+   case TA_FUNC_UNST_SWAK_BP:
+      return 200;
+   default:
+      return 100;
+   }
+}
+
 static ErrorNumber doRangeTestForOneOutput( RangeTestFunction testFunction,
                                             TA_RangeStability stability,
                                             const TA_FuncUnstId *unstIds,
@@ -1373,25 +1393,11 @@ static int dataWithinReasonableRange( TA_Real val1, TA_Real val2,
    /* TA_STABLE_CONVERGING: inside the grace nothing is held, so it is decided
     * first and not counted; past it the value is counted as compared whatever
     * the branches below conclude, bit-identical included. The grace is the
-    * caller's own when it named one, else the id's (the switch below). */
+    * caller's own when it named one, else the id's. */
    if( stability == TA_STABLE_CONVERGING )
    {
-      unsigned int grace = g_rangePeriodToIgnore;
-      if( grace == 0 )
-      {
-         switch( unstId )
-         {
-         case TA_FUNC_UNST_T3:
-         case TA_FUNC_UNST_STC:
-         case TA_FUNC_UNST_SWAK_BP:
-            grace = 200;
-            break;
-         default:
-            grace = 100;
-            break;
-         }
-      }
-      if( outputPosition + TA_GetUnstablePeriod( unstId ) + 1 <= grace )
+      if( outputPosition + TA_GetUnstablePeriod( unstId ) + 1
+          <= rangeGrace( unstId ) )
          return 1;
       g_rangeNbCompared++;
    }
@@ -1482,27 +1488,7 @@ static int dataWithinReasonableRange( TA_Real val1, TA_Real val2,
     */
 
 
-   /* Some functions requires a longer unstable period.
-    * These are trap here. A caller that inherits its id and needs more than
-    * the id's own grace names its own through doRangeTestMulti (KVO, keyed
-    * on the function name in test_codegen.c) rather than taking a new id. */
-   if( g_rangePeriodToIgnore != 0 )
-      periodToIgnore = g_rangePeriodToIgnore;
-   else switch( unstId )
-   {
-   case TA_FUNC_UNST_T3:
-   /* STC's two stochastic stages amplify the slow EMA's transient: at 150
-    * the sweep fails on every seed. */
-   case TA_FUNC_UNST_STC:
-   /* SWAK_BP's pole radius is 0.97 at its defaults: the seed's transient is
-    * still 4% of its start at bar 100. */
-   case TA_FUNC_UNST_SWAK_BP:
-      periodToIgnore = 200;
-      break;
-   default:
-      periodToIgnore = 100;
-      break;
-   }
+   periodToIgnore = rangeGrace( unstId );
 
    if( integerTolerance == 10 )
    {

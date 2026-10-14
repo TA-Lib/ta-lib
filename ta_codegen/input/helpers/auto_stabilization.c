@@ -63,20 +63,17 @@ int ta_auto_stabilization_adosc(int fastest, int slowest) {
    ) + 7) / 8;
 }
 
-/* Saturates at TA_INDEX_MAX. */
-/* KVO differences two EMAs that seed on the same bar, so two starts agree on
- * the difference later than on either average, and the signal EMA is driven by
- * that difference rather than by a price. The need rises as the two periods
- * approach each other -- the difference shrinks while the seed error does not --
- * so the count is held against the closest pair rather than against the ratio
- * ADOSC indexes on. Sized on the zigzag series, the worst of the three at every
- * setting measured.
+/* KVO is a small difference of two large EMAs seeded on the same bar, so the
+ * seed error left in either is large against the output: the count is an EMA's
+ * at more e-folds, at the longest of the three periods. A measurement, not a
+ * bound (census_table.tsv).
  */
 int ta_auto_stabilization_kvo(int K, int longest) {
    return ta_auto_stabilization_ema((4 * K + 23) / 3, longest)
    - ta_auto_stabilization_ema(K, longest);
 }
 
+/* Saturates at TA_INDEX_MAX. */
 int ta_auto_stabilization_vidya(int X, int period, int root) {
    return 2 * X * (period + 1) * root > 100000000 ? 100000000 : 2 * X * (period + 1) * root;
 }

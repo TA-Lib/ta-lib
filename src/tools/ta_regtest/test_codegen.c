@@ -2223,6 +2223,9 @@ static const struct { const char *name; unsigned int grace; } perFuncGrace[] = {
      * MEASURED (#484): 160 fails, 175 compares bars 230-251 at worst 0.13 of
      * the tolerance, 197 and up compares nothing (252 - 55 - 1 = 196). */
     { "KVO", 175 },
+    /* At its defaults STC's lookback is 67, so its id's grace of 200 leaves
+     * nothing reachable. MEASURED: 150 fails on every seed, 175 holds on 48. */
+    { "STC", 175 },
 };
 
 static unsigned int get_grace_period(const TA_FuncInfo *funcInfo)

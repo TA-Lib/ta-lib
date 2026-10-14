@@ -387,8 +387,9 @@ static int awBuildVectors( const TA_FuncInfo *funcInfo, AwVector *vec )
    if( !strcmp( funcInfo->name, "KVO" ) )
    {
       /* The offset is sized at the longest of three periods; at the defaults
-       * that is the slow one, so the trigger is made the longest too. */
+       * that is the slow one, so each of the other two is made the longest. */
       vec[n] = def; vec[n].label = "signal longest"; vec[n].val[0] = 10.0; vec[n].val[1] = 20.0; vec[n].val[2] = 40.0; n++;
+      vec[n] = def; vec[n].label = "fast longest"; vec[n].val[0] = 40.0; vec[n].val[1] = 20.0; vec[n].val[2] = 10.0; n++;
    }
    if( !strcmp( funcInfo->name, "FRAMA" ) )
    {
