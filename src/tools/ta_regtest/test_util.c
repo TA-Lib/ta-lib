@@ -135,6 +135,13 @@ static int dataWithinReasonableRange( TA_Real val1, TA_Real val2,
  * doRangeTestMulti sets a caller's own, and clears it when the sweep ends. */
 static unsigned int g_rangePeriodToIgnore = 0;
 
+/* Values the sweep in progress actually held to a tolerance, counted where
+ * the comparison is made. A TA_STABLE_CONVERGING sweep whose grace swallows
+ * every reachable bar compares nothing and would pass: doRangeTestMulti fails
+ * it instead, so a grace, a lookback or a corpus that outgrows the data is
+ * caught rather than waived. */
+static unsigned long g_rangeNbCompared = 0;
+
 static ErrorNumber doRangeTestForOneOutput( RangeTestFunction testFunction,
                                             TA_RangeStability stability,
                                             const TA_FuncUnstId *unstIds,
@@ -811,6 +818,7 @@ ErrorNumber doRangeTestMulti( RangeTestFunction testFunction,
       savedUnst[id] = TA_GetUnstablePeriod( (TA_FuncUnstId)id );
 
    g_rangePeriodToIgnore = periodToIgnore;
+   g_rangeNbCompared = 0;
 
    /* Test all the outputs individually. */
    errNb = TA_TEST_PASS;
@@ -830,6 +838,19 @@ ErrorNumber doRangeTestMulti( RangeTestFunction testFunction,
    for( id = 0; id < TA_FUNC_UNST_COUNT; id++ )
       TA_SetUnstablePeriod( (TA_FuncUnstId)id, savedUnst[id] );
    g_rangePeriodToIgnore = 0;
+
+   /* The floor: a converging function the sweep never held to its envelope
+    * has not been range-tested. Nothing is reachable past
+    * MAX_RANGE_SIZE - lookback - 1 bars, so a grace at least that long, or a
+    * lookback that leaves fewer bars than the grace, lands here. */
+   if( errNb == TA_TEST_PASS && stability == TA_STABLE_CONVERGING
+       && g_rangeNbCompared == 0 )
+   {
+      printf( "Fail: doRangeTest CONVERGING sweep compared no value: every "
+              "reachable bar fell inside the grace (periodToIgnore %u, or the "
+              "id's own when 0)\n", periodToIgnore );
+      return TA_TESTUTIL_DRT_NO_COMPARISON;
+   }
    return errNb;
 }
 
@@ -1151,6 +1172,9 @@ static ErrorNumber doRangeTestFixSize( RangeTestFunction testFunction,
                    * "skip" is uniform across output types and cannot desync from
                    * the real path in dataWithinReasonableRange() (the legacy
                    * integerTolerance == TA_DO_NOT_COMPARE gate is kept too). */
+                  if( stability != TA_STABLE_SKIP
+                      && integerTolerance != TA_DO_NOT_COMPARE )
+                     g_rangeNbCompared++;
                   if( outputBufferInt[1+i] != refBufferInt[relativeIdx+i]
                       && stability != TA_STABLE_SKIP
                       && integerTolerance != TA_DO_NOT_COMPARE )
@@ -1345,6 +1369,34 @@ static int dataWithinReasonableRange( TA_Real val1, TA_Real val2,
     * compare (formerly signalled by integerTolerance == TA_DO_NOT_COMPARE). */
    if( stability == TA_STABLE_SKIP )
       return 1;
+
+   /* TA_STABLE_CONVERGING: inside the grace nothing is held, so it is decided
+    * first and not counted; past it the value is counted as compared whatever
+    * the branches below conclude, bit-identical included. The grace is the
+    * caller's own when it named one, else the id's (the switch below). */
+   if( stability == TA_STABLE_CONVERGING )
+   {
+      unsigned int grace = g_rangePeriodToIgnore;
+      if( grace == 0 )
+      {
+         switch( unstId )
+         {
+         case TA_FUNC_UNST_T3:
+         case TA_FUNC_UNST_STC:
+         case TA_FUNC_UNST_SWAK_BP:
+            grace = 200;
+            break;
+         default:
+            grace = 100;
+            break;
+         }
+      }
+      if( outputPosition + TA_GetUnstablePeriod( unstId ) + 1 <= grace )
+         return 1;
+      g_rangeNbCompared++;
+   }
+   else if( stability != TA_STABLE_SKIP )
+      g_rangeNbCompared++;
 
    /* Bitwise-identical is always coherent, incl. NaN==NaN (ACOS/ASIN
     * on out-of-domain price data). */
