@@ -131863,7 +131863,7 @@ public final class Core {
  *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
  *  100726 KL,CC  Initial version (#484).
- *  101426 MF,CC  The EMA step is TA_EMA's; the trend and the range are selects.
+ *  101426 MF,CC  The EMA step is TA_EMA's.
  */
 
    /**
@@ -131967,7 +131967,6 @@ public final class Core {
       double dmToday = 0;
       double prevDm = 0;
       double cm = 0;
-      double cmBase = 0;
       double vf = 0;
       double emaFast = 0;
       double emaSlow = 0;
@@ -132056,8 +132055,13 @@ public final class Core {
        */
       hlc = inHigh[today] + inLow[today] + inClose[today];
       dmToday = inHigh[today] - inLow[today];
-      trend = (hlc > prevHlc) ? 1.0 : prevTrend;
-      trend = (hlc < prevHlc) ? -1.0 : trend;
+      if( hlc > prevHlc ) {
+         trend = 1.0;
+      } else if( hlc < prevHlc ) {
+         trend = -1.0;
+      } else {
+         trend = prevTrend;
+      }
       cm = prevDm + dmToday;
       if( cm == 0.0 ) {
          vf = 0.0;
@@ -132075,10 +132079,22 @@ public final class Core {
       while( today < startIdx ) {
          hlc = inHigh[today] + inLow[today] + inClose[today];
          dmToday = inHigh[today] - inLow[today];
-         trend = (hlc > prevHlc) ? 1.0 : prevTrend;
-         trend = (hlc < prevHlc) ? -1.0 : trend;
-         cmBase = (trend != prevTrend) ? prevDm : cm;
-         cm = cmBase + dmToday;
+         if( hlc > prevHlc ) {
+            trend = 1.0;
+         } else if( hlc < prevHlc ) {
+            trend = -1.0;
+         } else {
+            trend = prevTrend;
+         }
+         /* A branch, not a select: LLVM turns a select between the two stored
+          * ranges into a select of their address, which serializes each streamed
+          * update behind the previous one on ARM64.
+          */
+         if( trend != prevTrend ) {
+            cm = prevDm + dmToday;
+         } else {
+            cm = cm + dmToday;
+         }
          if( cm == 0.0 ) {
             vf = 0.0;
          } else {
@@ -132097,10 +132113,18 @@ public final class Core {
       while( today <= endIdx ) {
          hlc = inHigh[today] + inLow[today] + inClose[today];
          dmToday = inHigh[today] - inLow[today];
-         trend = (hlc > prevHlc) ? 1.0 : prevTrend;
-         trend = (hlc < prevHlc) ? -1.0 : trend;
-         cmBase = (trend != prevTrend) ? prevDm : cm;
-         cm = cmBase + dmToday;
+         if( hlc > prevHlc ) {
+            trend = 1.0;
+         } else if( hlc < prevHlc ) {
+            trend = -1.0;
+         } else {
+            trend = prevTrend;
+         }
+         if( trend != prevTrend ) {
+            cm = prevDm + dmToday;
+         } else {
+            cm = cm + dmToday;
+         }
          if( cm == 0.0 ) {
             vf = 0.0;
          } else {
@@ -132147,7 +132171,6 @@ public final class Core {
       double dmToday = 0;
       double prevDm = 0;
       double cm = 0;
-      double cmBase = 0;
       double vf = 0;
       double emaFast = 0;
       double emaSlow = 0;
@@ -132213,8 +132236,13 @@ public final class Core {
       today = today + 1;
       hlc = (double)inHigh[today] + (double)inLow[today] + (double)inClose[today];
       dmToday = (double)inHigh[today] - (double)inLow[today];
-      trend = (hlc > prevHlc) ? 1.0 : prevTrend;
-      trend = (hlc < prevHlc) ? -1.0 : trend;
+      if( hlc > prevHlc ) {
+         trend = 1.0;
+      } else if( hlc < prevHlc ) {
+         trend = -1.0;
+      } else {
+         trend = prevTrend;
+      }
       cm = prevDm + dmToday;
       if( cm == 0.0 ) {
          vf = 0.0;
@@ -132232,10 +132260,18 @@ public final class Core {
       while( today < startIdx ) {
          hlc = (double)inHigh[today] + (double)inLow[today] + (double)inClose[today];
          dmToday = (double)inHigh[today] - (double)inLow[today];
-         trend = (hlc > prevHlc) ? 1.0 : prevTrend;
-         trend = (hlc < prevHlc) ? -1.0 : trend;
-         cmBase = (trend != prevTrend) ? prevDm : cm;
-         cm = cmBase + dmToday;
+         if( hlc > prevHlc ) {
+            trend = 1.0;
+         } else if( hlc < prevHlc ) {
+            trend = -1.0;
+         } else {
+            trend = prevTrend;
+         }
+         if( trend != prevTrend ) {
+            cm = prevDm + dmToday;
+         } else {
+            cm = cm + dmToday;
+         }
          if( cm == 0.0 ) {
             vf = 0.0;
          } else {
@@ -132254,10 +132290,18 @@ public final class Core {
       while( today <= endIdx ) {
          hlc = (double)inHigh[today] + (double)inLow[today] + (double)inClose[today];
          dmToday = (double)inHigh[today] - (double)inLow[today];
-         trend = (hlc > prevHlc) ? 1.0 : prevTrend;
-         trend = (hlc < prevHlc) ? -1.0 : trend;
-         cmBase = (trend != prevTrend) ? prevDm : cm;
-         cm = cmBase + dmToday;
+         if( hlc > prevHlc ) {
+            trend = 1.0;
+         } else if( hlc < prevHlc ) {
+            trend = -1.0;
+         } else {
+            trend = prevTrend;
+         }
+         if( trend != prevTrend ) {
+            cm = prevDm + dmToday;
+         } else {
+            cm = cm + dmToday;
+         }
          if( cm == 0.0 ) {
             vf = 0.0;
          } else {
@@ -132616,7 +132660,6 @@ public final class Core {
          KvoStream sp = this;
          double hlc = 0.0;
          double dmToday = 0.0;
-         double cmBase = 0.0;
          double vf = 0.0;
          double kvoValue = 0.0;
          double trend = 0.0;
@@ -132628,10 +132671,18 @@ public final class Core {
          double signalValue = sp.signalValue;
          hlc = inHigh + inLow + inClose;
          dmToday = inHigh - inLow;
-         trend = (hlc > sp.prevHlc) ? 1.0 : sp.prevTrend;
-         trend = (hlc < sp.prevHlc) ? -1.0 : trend;
-         cmBase = (trend != sp.prevTrend) ? sp.prevDm : cm;
-         cm = cmBase + dmToday;
+         if( hlc > sp.prevHlc ) {
+            trend = 1.0;
+         } else if( hlc < sp.prevHlc ) {
+            trend = -1.0;
+         } else {
+            trend = sp.prevTrend;
+         }
+         if( trend != sp.prevTrend ) {
+            cm = sp.prevDm + dmToday;
+         } else {
+            cm = cm + dmToday;
+         }
          if( cm == 0.0 ) {
             vf = 0.0;
          } else {
@@ -132701,16 +132752,23 @@ public final class Core {
    {
       double hlc = 0.0;
       double dmToday = 0.0;
-      double cmBase = 0.0;
       double vf = 0.0;
       double kvoValue = 0.0;
       double trend = 0.0;
       hlc = inHigh + inLow + inClose;
       dmToday = inHigh - inLow;
-      trend = (hlc > sp.prevHlc) ? 1.0 : sp.prevTrend;
-      trend = (hlc < sp.prevHlc) ? -1.0 : trend;
-      cmBase = (trend != sp.prevTrend) ? sp.prevDm : sp.cm;
-      sp.cm = cmBase + dmToday;
+      if( hlc > sp.prevHlc ) {
+         trend = 1.0;
+      } else if( hlc < sp.prevHlc ) {
+         trend = -1.0;
+      } else {
+         trend = sp.prevTrend;
+      }
+      if( trend != sp.prevTrend ) {
+         sp.cm = sp.prevDm + dmToday;
+      } else {
+         sp.cm = sp.cm + dmToday;
+      }
       if( sp.cm == 0.0 ) {
          vf = 0.0;
       } else {
@@ -132739,7 +132797,6 @@ public final class Core {
       double dmToday = 0;
       double prevDm = 0;
       double cm = 0;
-      double cmBase = 0;
       double vf = 0;
       double emaFast = 0;
       double emaSlow = 0;
@@ -132835,8 +132892,13 @@ public final class Core {
        */
       hlc = inHigh[today] + inLow[today] + inClose[today];
       dmToday = inHigh[today] - inLow[today];
-      trend = (hlc > prevHlc) ? 1.0 : prevTrend;
-      trend = (hlc < prevHlc) ? -1.0 : trend;
+      if( hlc > prevHlc ) {
+         trend = 1.0;
+      } else if( hlc < prevHlc ) {
+         trend = -1.0;
+      } else {
+         trend = prevTrend;
+      }
       cm = prevDm + dmToday;
       if( cm == 0.0 ) {
          vf = 0.0;
@@ -132854,10 +132916,22 @@ public final class Core {
       while( today < startIdx ) {
          hlc = inHigh[today] + inLow[today] + inClose[today];
          dmToday = inHigh[today] - inLow[today];
-         trend = (hlc > prevHlc) ? 1.0 : prevTrend;
-         trend = (hlc < prevHlc) ? -1.0 : trend;
-         cmBase = (trend != prevTrend) ? prevDm : cm;
-         cm = cmBase + dmToday;
+         if( hlc > prevHlc ) {
+            trend = 1.0;
+         } else if( hlc < prevHlc ) {
+            trend = -1.0;
+         } else {
+            trend = prevTrend;
+         }
+         /* A branch, not a select: LLVM turns a select between the two stored
+          * ranges into a select of their address, which serializes each streamed
+          * update behind the previous one on ARM64.
+          */
+         if( trend != prevTrend ) {
+            cm = prevDm + dmToday;
+         } else {
+            cm = cm + dmToday;
+         }
          if( cm == 0.0 ) {
             vf = 0.0;
          } else {
@@ -132876,10 +132950,18 @@ public final class Core {
       while( today <= endIdx ) {
          hlc = inHigh[today] + inLow[today] + inClose[today];
          dmToday = inHigh[today] - inLow[today];
-         trend = (hlc > prevHlc) ? 1.0 : prevTrend;
-         trend = (hlc < prevHlc) ? -1.0 : trend;
-         cmBase = (trend != prevTrend) ? prevDm : cm;
-         cm = cmBase + dmToday;
+         if( hlc > prevHlc ) {
+            trend = 1.0;
+         } else if( hlc < prevHlc ) {
+            trend = -1.0;
+         } else {
+            trend = prevTrend;
+         }
+         if( trend != prevTrend ) {
+            cm = prevDm + dmToday;
+         } else {
+            cm = cm + dmToday;
+         }
          if( cm == 0.0 ) {
             vf = 0.0;
          } else {

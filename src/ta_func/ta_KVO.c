@@ -55,7 +55,7 @@
  *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
  *  100726 KL,CC  Initial version (#484).
- *  101426 MF,CC  The EMA step is TA_EMA's; the trend and the range are selects.
+ *  101426 MF,CC  The EMA step is TA_EMA's.
  */
 
 static TA_COLD int kvo_auto_offset( int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod )
@@ -128,7 +128,6 @@ TA_LIB_API TA_RetCode TA_KVO( int    startIdx,
    double dmToday;
    double prevDm;
    double cm;
-   double cmBase;
    double vf;
    double emaFast;
    double emaSlow;
@@ -233,8 +232,16 @@ TA_LIB_API TA_RetCode TA_KVO( int    startIdx,
     */
    hlc = inHigh[today] + inLow[today] + inClose[today];
    dmToday = inHigh[today] - inLow[today];
-   trend = (hlc > prevHlc) ? 1.0 : prevTrend;
-   trend = (hlc < prevHlc) ? -1.0 : trend;
+   if( hlc > prevHlc )
+   {
+      trend = 1.0;
+   } else if( hlc < prevHlc )
+   {
+      trend = -1.0;
+   } else 
+   {
+      trend = prevTrend;
+   }
    cm = prevDm + dmToday;
    if( cm == 0.0 )
    {
@@ -255,10 +262,27 @@ TA_LIB_API TA_RetCode TA_KVO( int    startIdx,
    {
       hlc = inHigh[today] + inLow[today] + inClose[today];
       dmToday = inHigh[today] - inLow[today];
-      trend = (hlc > prevHlc) ? 1.0 : prevTrend;
-      trend = (hlc < prevHlc) ? -1.0 : trend;
-      cmBase = (trend != prevTrend) ? prevDm : cm;
-      cm = cmBase + dmToday;
+      if( hlc > prevHlc )
+      {
+         trend = 1.0;
+      } else if( hlc < prevHlc )
+      {
+         trend = -1.0;
+      } else 
+      {
+         trend = prevTrend;
+      }
+      /* A branch, not a select: LLVM turns a select between the two stored
+       * ranges into a select of their address, which serializes each streamed
+       * update behind the previous one on ARM64.
+       */
+      if( trend != prevTrend )
+      {
+         cm = prevDm + dmToday;
+      } else 
+      {
+         cm = cm + dmToday;
+      }
       if( cm == 0.0 )
       {
          vf = 0.0;
@@ -280,10 +304,23 @@ TA_LIB_API TA_RetCode TA_KVO( int    startIdx,
    {
       hlc = inHigh[today] + inLow[today] + inClose[today];
       dmToday = inHigh[today] - inLow[today];
-      trend = (hlc > prevHlc) ? 1.0 : prevTrend;
-      trend = (hlc < prevHlc) ? -1.0 : trend;
-      cmBase = (trend != prevTrend) ? prevDm : cm;
-      cm = cmBase + dmToday;
+      if( hlc > prevHlc )
+      {
+         trend = 1.0;
+      } else if( hlc < prevHlc )
+      {
+         trend = -1.0;
+      } else 
+      {
+         trend = prevTrend;
+      }
+      if( trend != prevTrend )
+      {
+         cm = prevDm + dmToday;
+      } else 
+      {
+         cm = cm + dmToday;
+      }
       if( cm == 0.0 )
       {
          vf = 0.0;
@@ -334,7 +371,6 @@ TA_RetCode TA_S_KVO( int    startIdx,
    double dmToday;
    double prevDm;
    double cm;
-   double cmBase;
    double vf;
    double emaFast;
    double emaSlow;
@@ -416,8 +452,16 @@ TA_RetCode TA_S_KVO( int    startIdx,
    today = today + 1;
    hlc = (double)inHigh[today] + (double)inLow[today] + (double)inClose[today];
    dmToday = (double)inHigh[today] - (double)inLow[today];
-   trend = (hlc > prevHlc) ? 1.0 : prevTrend;
-   trend = (hlc < prevHlc) ? -1.0 : trend;
+   if( hlc > prevHlc )
+   {
+      trend = 1.0;
+   } else if( hlc < prevHlc )
+   {
+      trend = -1.0;
+   } else 
+   {
+      trend = prevTrend;
+   }
    cm = prevDm + dmToday;
    if( cm == 0.0 )
    {
@@ -438,10 +482,23 @@ TA_RetCode TA_S_KVO( int    startIdx,
    {
       hlc = (double)inHigh[today] + (double)inLow[today] + (double)inClose[today];
       dmToday = (double)inHigh[today] - (double)inLow[today];
-      trend = (hlc > prevHlc) ? 1.0 : prevTrend;
-      trend = (hlc < prevHlc) ? -1.0 : trend;
-      cmBase = (trend != prevTrend) ? prevDm : cm;
-      cm = cmBase + dmToday;
+      if( hlc > prevHlc )
+      {
+         trend = 1.0;
+      } else if( hlc < prevHlc )
+      {
+         trend = -1.0;
+      } else 
+      {
+         trend = prevTrend;
+      }
+      if( trend != prevTrend )
+      {
+         cm = prevDm + dmToday;
+      } else 
+      {
+         cm = cm + dmToday;
+      }
       if( cm == 0.0 )
       {
          vf = 0.0;
@@ -463,10 +520,23 @@ TA_RetCode TA_S_KVO( int    startIdx,
    {
       hlc = (double)inHigh[today] + (double)inLow[today] + (double)inClose[today];
       dmToday = (double)inHigh[today] - (double)inLow[today];
-      trend = (hlc > prevHlc) ? 1.0 : prevTrend;
-      trend = (hlc < prevHlc) ? -1.0 : trend;
-      cmBase = (trend != prevTrend) ? prevDm : cm;
-      cm = cmBase + dmToday;
+      if( hlc > prevHlc )
+      {
+         trend = 1.0;
+      } else if( hlc < prevHlc )
+      {
+         trend = -1.0;
+      } else 
+      {
+         trend = prevTrend;
+      }
+      if( trend != prevTrend )
+      {
+         cm = prevDm + dmToday;
+      } else 
+      {
+         cm = cm + dmToday;
+      }
       if( cm == 0.0 )
       {
          vf = 0.0;
@@ -524,7 +594,6 @@ static TA_FMA_STEP_INLINE void TA_KVO_StepImpl( struct TA_KVO_Stream *sp, double
 {
    double hlc;
    double dmToday;
-   double cmBase;
    double vf;
    double kvoValue;
    double trend;
@@ -533,10 +602,23 @@ static TA_FMA_STEP_INLINE void TA_KVO_StepImpl( struct TA_KVO_Stream *sp, double
    signalValue = sp->signalValue;
    hlc = inHigh + inLow + inClose;
    dmToday = inHigh - inLow;
-   trend = (hlc > sp->prevHlc) ? 1.0 : sp->prevTrend;
-   trend = (hlc < sp->prevHlc) ? -1.0 : trend;
-   cmBase = (trend != sp->prevTrend) ? sp->prevDm : sp->cm;
-   sp->cm = cmBase + dmToday;
+   if( hlc > sp->prevHlc )
+   {
+      trend = 1.0;
+   } else if( hlc < sp->prevHlc )
+   {
+      trend = -1.0;
+   } else 
+   {
+      trend = sp->prevTrend;
+   }
+   if( trend != sp->prevTrend )
+   {
+      sp->cm = sp->prevDm + dmToday;
+   } else 
+   {
+      sp->cm = sp->cm + dmToday;
+   }
    if( sp->cm == 0.0 )
    {
       vf = 0.0;
@@ -601,7 +683,6 @@ static TA_FMA_STEP_INLINE TA_RetCode TA_KVO_OpenImpl( struct TA_KVO_Stream **str
       double dmToday;
       double prevDm = 0.0;
       double cm = 0.0;
-      double cmBase;
       double vf;
       double emaFast = 0.0;
       double emaSlow = 0.0;
@@ -671,8 +752,16 @@ static TA_FMA_STEP_INLINE TA_RetCode TA_KVO_OpenImpl( struct TA_KVO_Stream **str
        */
       hlc = inHigh[today] + inLow[today] + inClose[today];
       dmToday = inHigh[today] - inLow[today];
-      trend = (hlc > prevHlc) ? 1.0 : prevTrend;
-      trend = (hlc < prevHlc) ? -1.0 : trend;
+      if( hlc > prevHlc )
+      {
+         trend = 1.0;
+      } else if( hlc < prevHlc )
+      {
+         trend = -1.0;
+      } else 
+      {
+         trend = prevTrend;
+      }
       cm = prevDm + dmToday;
       if( cm == 0.0 )
       {
@@ -693,10 +782,27 @@ static TA_FMA_STEP_INLINE TA_RetCode TA_KVO_OpenImpl( struct TA_KVO_Stream **str
       {
          hlc = inHigh[today] + inLow[today] + inClose[today];
          dmToday = inHigh[today] - inLow[today];
-         trend = (hlc > prevHlc) ? 1.0 : prevTrend;
-         trend = (hlc < prevHlc) ? -1.0 : trend;
-         cmBase = (trend != prevTrend) ? prevDm : cm;
-         cm = cmBase + dmToday;
+         if( hlc > prevHlc )
+         {
+            trend = 1.0;
+         } else if( hlc < prevHlc )
+         {
+            trend = -1.0;
+         } else 
+         {
+            trend = prevTrend;
+         }
+         /* A branch, not a select: LLVM turns a select between the two stored
+          * ranges into a select of their address, which serializes each streamed
+          * update behind the previous one on ARM64.
+          */
+         if( trend != prevTrend )
+         {
+            cm = prevDm + dmToday;
+         } else 
+         {
+            cm = cm + dmToday;
+         }
          if( cm == 0.0 )
          {
             vf = 0.0;
@@ -718,10 +824,23 @@ static TA_FMA_STEP_INLINE TA_RetCode TA_KVO_OpenImpl( struct TA_KVO_Stream **str
       {
          hlc = inHigh[today] + inLow[today] + inClose[today];
          dmToday = inHigh[today] - inLow[today];
-         trend = (hlc > prevHlc) ? 1.0 : prevTrend;
-         trend = (hlc < prevHlc) ? -1.0 : trend;
-         cmBase = (trend != prevTrend) ? prevDm : cm;
-         cm = cmBase + dmToday;
+         if( hlc > prevHlc )
+         {
+            trend = 1.0;
+         } else if( hlc < prevHlc )
+         {
+            trend = -1.0;
+         } else 
+         {
+            trend = prevTrend;
+         }
+         if( trend != prevTrend )
+         {
+            cm = prevDm + dmToday;
+         } else 
+         {
+            cm = cm + dmToday;
+         }
          if( cm == 0.0 )
          {
             vf = 0.0;
@@ -862,7 +981,6 @@ TA_LIB_API TA_RetCode TA_KVO_Peek( const TA_KVO_Stream *stream, double inHigh, d
    const struct TA_KVO_Stream *sp = stream;
    double hlc;
    double dmToday;
-   double cmBase;
    double vf;
    double kvoValue;
    double trend;
@@ -879,10 +997,23 @@ TA_LIB_API TA_RetCode TA_KVO_Peek( const TA_KVO_Stream *stream, double inHigh, d
    signalValue = sp->signalValue;
    hlc = inHigh + inLow + inClose;
    dmToday = inHigh - inLow;
-   trend = (hlc > sp->prevHlc) ? 1.0 : sp->prevTrend;
-   trend = (hlc < sp->prevHlc) ? -1.0 : trend;
-   cmBase = (trend != sp->prevTrend) ? sp->prevDm : cm;
-   cm = cmBase + dmToday;
+   if( hlc > sp->prevHlc )
+   {
+      trend = 1.0;
+   } else if( hlc < sp->prevHlc )
+   {
+      trend = -1.0;
+   } else 
+   {
+      trend = sp->prevTrend;
+   }
+   if( trend != sp->prevTrend )
+   {
+      cm = sp->prevDm + dmToday;
+   } else 
+   {
+      cm = cm + dmToday;
+   }
    if( cm == 0.0 )
    {
       vf = 0.0;

@@ -53,7 +53,7 @@
  *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
  *  100726 KL,CC  Initial version (#484).
- *  101426 MF,CC  The EMA step is TA_EMA's; the trend and the range are selects.
+ *  101426 MF,CC  The EMA step is TA_EMA's.
  */
 
 // Import types from parent module
@@ -245,7 +245,6 @@ impl Core {
         let mut dmToday: f64 = 0.0_f64;
         let mut prevDm: f64 = 0.0_f64;
         let mut cm: f64 = 0.0_f64;
-        let mut cmBase: f64 = 0.0_f64;
         let mut vf: f64 = 0.0_f64;
         let mut emaFast: f64 = 0.0_f64;
         let mut emaSlow: f64 = 0.0_f64;
@@ -311,8 +310,13 @@ impl Core {
         // averages start at this volume force, so KVO and the trigger are exactly 0.
         hlc = inHigh[today] + inLow[today] + inClose[today];
         dmToday = inHigh[today] - inLow[today];
-        trend = (if hlc > prevHlc { 1.0 } else { prevTrend });
-        trend = (if hlc < prevHlc { -1.0 } else { trend });
+        if hlc > prevHlc {
+            trend = 1.0;
+        } else if hlc < prevHlc {
+            trend = -1.0;
+        } else {
+            trend = prevTrend;
+        }
         cm = prevDm + dmToday;
         if cm == 0.0 {
             vf = 0.0;
@@ -330,10 +334,21 @@ impl Core {
         while today < startIdx {
             hlc = inHigh[today] + inLow[today] + inClose[today];
             dmToday = inHigh[today] - inLow[today];
-            trend = (if hlc > prevHlc { 1.0 } else { prevTrend });
-            trend = (if hlc < prevHlc { -1.0 } else { trend });
-            cmBase = (if trend != prevTrend { prevDm } else { cm });
-            cm = cmBase + dmToday;
+            if hlc > prevHlc {
+                trend = 1.0;
+            } else if hlc < prevHlc {
+                trend = -1.0;
+            } else {
+                trend = prevTrend;
+            }
+            // A branch, not a select: LLVM turns a select between the two stored
+            // ranges into a select of their address, which serializes each streamed
+            // update behind the previous one on ARM64.
+            if trend != prevTrend {
+                cm = prevDm + dmToday;
+            } else {
+                cm = cm + dmToday;
+            }
             if cm == 0.0 {
                 vf = 0.0;
             } else {
@@ -352,10 +367,18 @@ impl Core {
         while today <= endIdx {
             hlc = inHigh[today] + inLow[today] + inClose[today];
             dmToday = inHigh[today] - inLow[today];
-            trend = (if hlc > prevHlc { 1.0 } else { prevTrend });
-            trend = (if hlc < prevHlc { -1.0 } else { trend });
-            cmBase = (if trend != prevTrend { prevDm } else { cm });
-            cm = cmBase + dmToday;
+            if hlc > prevHlc {
+                trend = 1.0;
+            } else if hlc < prevHlc {
+                trend = -1.0;
+            } else {
+                trend = prevTrend;
+            }
+            if trend != prevTrend {
+                cm = prevDm + dmToday;
+            } else {
+                cm = cm + dmToday;
+            }
             if cm == 0.0 {
                 vf = 0.0;
             } else {
@@ -578,16 +601,23 @@ impl Core {
     fn kvo_step_impl(sp: &mut KvoStreamState, inHigh: f64, inLow: f64, inClose: f64, inVolume: f64, outKVO: &mut f64, outKVOSignal: &mut f64) {
         let mut hlc: f64 = 0.0_f64;
         let mut dmToday: f64 = 0.0_f64;
-        let mut cmBase: f64 = 0.0_f64;
         let mut vf: f64 = 0.0_f64;
         let mut kvoValue: f64 = 0.0_f64;
         let mut trend: f64 = 0.0_f64;
         hlc = inHigh + inLow + inClose;
         dmToday = inHigh - inLow;
-        trend = (if hlc > sp.prevHlc { 1.0 } else { sp.prevTrend });
-        trend = (if hlc < sp.prevHlc { -1.0 } else { trend });
-        cmBase = (if trend != sp.prevTrend { sp.prevDm } else { sp.cm });
-        sp.cm = cmBase + dmToday;
+        if hlc > sp.prevHlc {
+            trend = 1.0;
+        } else if hlc < sp.prevHlc {
+            trend = -1.0;
+        } else {
+            trend = sp.prevTrend;
+        }
+        if trend != sp.prevTrend {
+            sp.cm = sp.prevDm + dmToday;
+        } else {
+            sp.cm = sp.cm + dmToday;
+        }
         if sp.cm == 0.0 {
             vf = 0.0;
         } else {
@@ -674,7 +704,6 @@ impl Core {
         let mut dmToday: f64 = 0.0_f64;
         let mut prevDm: f64 = 0.0_f64;
         let mut cm: f64 = 0.0_f64;
-        let mut cmBase: f64 = 0.0_f64;
         let mut vf: f64 = 0.0_f64;
         let mut emaFast: f64 = 0.0_f64;
         let mut emaSlow: f64 = 0.0_f64;
@@ -736,8 +765,13 @@ impl Core {
         // averages start at this volume force, so KVO and the trigger are exactly 0.
         hlc = inHigh[today] + inLow[today] + inClose[today];
         dmToday = inHigh[today] - inLow[today];
-        trend = (if hlc > prevHlc { 1.0 } else { prevTrend });
-        trend = (if hlc < prevHlc { -1.0 } else { trend });
+        if hlc > prevHlc {
+            trend = 1.0;
+        } else if hlc < prevHlc {
+            trend = -1.0;
+        } else {
+            trend = prevTrend;
+        }
         cm = prevDm + dmToday;
         if cm == 0.0 {
             vf = 0.0;
@@ -755,10 +789,21 @@ impl Core {
         while today < startIdx {
             hlc = inHigh[today] + inLow[today] + inClose[today];
             dmToday = inHigh[today] - inLow[today];
-            trend = (if hlc > prevHlc { 1.0 } else { prevTrend });
-            trend = (if hlc < prevHlc { -1.0 } else { trend });
-            cmBase = (if trend != prevTrend { prevDm } else { cm });
-            cm = cmBase + dmToday;
+            if hlc > prevHlc {
+                trend = 1.0;
+            } else if hlc < prevHlc {
+                trend = -1.0;
+            } else {
+                trend = prevTrend;
+            }
+            // A branch, not a select: LLVM turns a select between the two stored
+            // ranges into a select of their address, which serializes each streamed
+            // update behind the previous one on ARM64.
+            if trend != prevTrend {
+                cm = prevDm + dmToday;
+            } else {
+                cm = cm + dmToday;
+            }
             if cm == 0.0 {
                 vf = 0.0;
             } else {
@@ -777,10 +822,18 @@ impl Core {
         while today <= endIdx {
             hlc = inHigh[today] + inLow[today] + inClose[today];
             dmToday = inHigh[today] - inLow[today];
-            trend = (if hlc > prevHlc { 1.0 } else { prevTrend });
-            trend = (if hlc < prevHlc { -1.0 } else { trend });
-            cmBase = (if trend != prevTrend { prevDm } else { cm });
-            cm = cmBase + dmToday;
+            if hlc > prevHlc {
+                trend = 1.0;
+            } else if hlc < prevHlc {
+                trend = -1.0;
+            } else {
+                trend = prevTrend;
+            }
+            if trend != prevTrend {
+                cm = prevDm + dmToday;
+            } else {
+                cm = cm + dmToday;
+            }
             if cm == 0.0 {
                 vf = 0.0;
             } else {
@@ -1031,7 +1084,6 @@ impl KvoStream {
             let outKVOSignal = &mut outKVOSignal;
             let mut hlc: f64 = 0.0_f64;
             let mut dmToday: f64 = 0.0_f64;
-            let mut cmBase: f64 = 0.0_f64;
             let mut vf: f64 = 0.0_f64;
             let mut kvoValue: f64 = 0.0_f64;
             let mut trend: f64 = 0.0_f64;
@@ -1041,10 +1093,18 @@ impl KvoStream {
             let mut signalValue = sp.signalValue;
             hlc = inHigh + inLow + inClose;
             dmToday = inHigh - inLow;
-            trend = (if hlc > sp.prevHlc { 1.0 } else { sp.prevTrend });
-            trend = (if hlc < sp.prevHlc { -1.0 } else { trend });
-            cmBase = (if trend != sp.prevTrend { sp.prevDm } else { cm });
-            cm = cmBase + dmToday;
+            if hlc > sp.prevHlc {
+                trend = 1.0;
+            } else if hlc < sp.prevHlc {
+                trend = -1.0;
+            } else {
+                trend = sp.prevTrend;
+            }
+            if trend != sp.prevTrend {
+                cm = sp.prevDm + dmToday;
+            } else {
+                cm = cm + dmToday;
+            }
             if cm == 0.0 {
                 vf = 0.0;
             } else {

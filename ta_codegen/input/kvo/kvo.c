@@ -11,7 +11,7 @@
  *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
  *  100726 KL,CC  Initial version (#484).
- *  101426 MF,CC  The EMA step is TA_EMA's; the trend and the range are selects.
+ *  101426 MF,CC  The EMA step is TA_EMA's.
  *
  */
 
@@ -47,7 +47,7 @@ TA_RetCode kvo(int startIdx, int endIdx,
    double outKVOSignal[])
 {
    double kFast, kSlow, kSignal, betaFast, betaSlow, betaSignal;
-   double hlc, prevHlc, dmToday, prevDm, cm, cmBase, vf;
+   double hlc, prevHlc, dmToday, prevDm, cm, vf;
    double emaFast, emaSlow, kvoValue, signalValue, trend, prevTrend;
    int lookbackTotal;
    int today, outIdx;
@@ -109,8 +109,12 @@ TA_RetCode kvo(int startIdx, int endIdx,
     */
    hlc = inHigh[today] + inLow[today] + inClose[today];
    dmToday = inHigh[today] - inLow[today];
-   trend = ( hlc > prevHlc ) ? 1.0 : prevTrend;
-   trend = ( hlc < prevHlc ) ? -1.0 : trend;
+   if( hlc > prevHlc )
+      trend = 1.0;
+   else if( hlc < prevHlc )
+      trend = -1.0;
+   else
+      trend = prevTrend;
    cm = prevDm + dmToday;
    if( cm == 0.0 )
       vf = 0.0;
@@ -129,10 +133,20 @@ TA_RetCode kvo(int startIdx, int endIdx,
    {
       hlc = inHigh[today] + inLow[today] + inClose[today];
       dmToday = inHigh[today] - inLow[today];
-      trend = ( hlc > prevHlc ) ? 1.0 : prevTrend;
-      trend = ( hlc < prevHlc ) ? -1.0 : trend;
-      cmBase = ( trend != prevTrend ) ? prevDm : cm;
-      cm = cmBase + dmToday;
+      if( hlc > prevHlc )
+         trend = 1.0;
+      else if( hlc < prevHlc )
+         trend = -1.0;
+      else
+         trend = prevTrend;
+
+      /* A branch, not a select: LLVM turns a select between the two stored
+       * ranges into a select of their address, which serializes each streamed
+       * update behind the previous one on ARM64. */
+      if( trend != prevTrend )
+         cm = prevDm + dmToday;
+      else
+         cm = cm + dmToday;
 
       if( cm == 0.0 )
          vf = 0.0;
@@ -155,10 +169,17 @@ TA_RetCode kvo(int startIdx, int endIdx,
    {
       hlc = inHigh[today] + inLow[today] + inClose[today];
       dmToday = inHigh[today] - inLow[today];
-      trend = ( hlc > prevHlc ) ? 1.0 : prevTrend;
-      trend = ( hlc < prevHlc ) ? -1.0 : trend;
-      cmBase = ( trend != prevTrend ) ? prevDm : cm;
-      cm = cmBase + dmToday;
+      if( hlc > prevHlc )
+         trend = 1.0;
+      else if( hlc < prevHlc )
+         trend = -1.0;
+      else
+         trend = prevTrend;
+
+      if( trend != prevTrend )
+         cm = prevDm + dmToday;
+      else
+         cm = cm + dmToday;
 
       if( cm == 0.0 )
          vf = 0.0;
