@@ -6,10 +6,6 @@ Releasing the `ta-lib` crate to crates.io.
 has to be public before the crate publishes; `README.md` in this directory holds
 the order.
 
-**Status:** `ta-lib-dispatch` 0.1.2 published 2026-08-12. `ta-lib` not yet published: 0.8.1
-shipped C and Java only, so the first crate carries whatever `VERSION` holds at the next
-release. The remaining blockers are tracked in issue #179.
-
 This is a **per-release** procedure, not a one-off: the crate version is locked to the repo
 `VERSION`, and a release in practice changes something every backend shares. It runs on its own path, though: cutting a release publishes the C assets and
 nothing else.
@@ -45,9 +41,6 @@ the change that motivated the release was a C patch. Cargo treats the minor as t
 position below 1.0, so `ta-lib = "0.8"` accepts every 0.8.x — a break shipped in a patch
 upgrades itself into consumers' builds with no signal.
 
-`cargo-semver-checks` in the dev nightly is the mechanical guard (#179 E7). It needs a
-published version to compare against, so it can only be added *after* the first release.
-
 `ta-lib-dispatch` is exempt: it carries its own version and is not bound to a release.
 
 ## Publish order, and why it is not optional
@@ -65,8 +58,7 @@ cargo package -p ta-lib-dispatch -p ta-lib
 ```
 
 A published `.crate` is immutable. Changing *anything* inside one — the LICENSE, a README
-badge, a keyword — is only expressible as a new version. That is what turned dispatch 0.1.1
-into 0.1.2. Get the contents right before publishing, not after.
+badge, a keyword — is only expressible as a new version. Get the contents right before publishing, not after.
 
 ## Credentials
 
@@ -147,17 +139,9 @@ lag — retry in a minute. It is not a manifest problem.
 **Badges lag by minutes.** The README badges are live shields.io / docs.rs renders keyed
   on crate *name*; they report the registry's newest version and know nothing about the
   tree. Nothing to update.
-(RP5) **Flip the website** (#179 B4): remove the "Not yet released" banner from
-  `website/src/api/rust/README.md` and `website/src/api/rust/stream/README.md`. The site
-  deploys from `main` on push.
-(RP6) **`cargo owner --list`** on both crates if the maintainer set changed.
-(RP7) **First publish only:** add `cargo-semver-checks` to the dev nightly against the
-  version just published (#179 E7). It had no baseline before this release.
+(RP5) **`cargo owner --list`** on both crates if the maintainer set changed.
 
-## Known, not covered here
+## Versions 0.1.x
 
-- `ta-lib` 0.1.0–0.1.2 on crates.io are an **unrelated third-party FFI wrapper**, not ours:
-  5097 downloads, zero reverse dependencies. Until the first real publish, the `ta-lib`
-  README badges advertise that crate and its failing docs build. Whether to yank is #179 B2
-  — it breaks no published crate and no existing lockfile, and only blocks new `^0.1`
-  resolutions.
+`ta-lib` 0.1.0 to 0.1.2 on crates.io are an unrelated earlier crate that used the same
+name. They stay published: do not yank them.
