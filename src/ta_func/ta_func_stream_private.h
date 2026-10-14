@@ -151,6 +151,7 @@ struct TA_KDJ_Stream;
 struct TA_KST_Stream;
 struct TA_KSTEXT_Stream;
 struct TA_KURTOSIS_Stream;
+struct TA_KVO_Stream;
 struct TA_LINEARREG_Stream;
 struct TA_LINEARREG_ANGLE_Stream;
 struct TA_LINEARREG_INTERCEPT_Stream;
@@ -387,6 +388,7 @@ TA_RetCode TA_KDJ_OpenInternal( struct TA_KDJ_Stream **stream, const double inHi
 TA_RetCode TA_KST_OpenInternal( struct TA_KST_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInROC1Period, int optInROC2Period, int optInROC3Period, int optInROC4Period, int optInSMA1Period, int optInSMA2Period, int optInSMA3Period, int optInSMA4Period, int optInSignalPeriod, double *outKST, double *outKSTSignal );
 TA_RetCode TA_KSTEXT_OpenInternal( struct TA_KSTEXT_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInROC1Period, int optInROC2Period, int optInROC3Period, int optInROC4Period, int optInMA1Period, int optInMA2Period, int optInMA3Period, int optInMA4Period, int optInSignalPeriod, TA_MAType optInROCMAType, TA_MAType optInSignalMAType, double *outKST, double *outKSTSignal );
 TA_RetCode TA_KURTOSIS_OpenInternal( struct TA_KURTOSIS_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInTimePeriod, double *outReal );
+TA_RetCode TA_KVO_OpenInternal( struct TA_KVO_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], const double inVolume[], int startIdx, int historyLen, int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod, double *outKVO, double *outKVOSignal );
 TA_RetCode TA_LINEARREG_OpenInternal( struct TA_LINEARREG_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInTimePeriod, double *outReal );
 TA_RetCode TA_LINEARREG_ANGLE_OpenInternal( struct TA_LINEARREG_ANGLE_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInTimePeriod, double *outReal );
 TA_RetCode TA_LINEARREG_INTERCEPT_OpenInternal( struct TA_LINEARREG_INTERCEPT_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInTimePeriod, double *outReal );
@@ -625,6 +627,7 @@ TA_RetCode TA_KDJ_OpenAndFillInternal( struct TA_KDJ_Stream **stream, const doub
 TA_RetCode TA_KST_OpenAndFillInternal( struct TA_KST_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInROC1Period, int optInROC2Period, int optInROC3Period, int optInROC4Period, int optInSMA1Period, int optInSMA2Period, int optInSMA3Period, int optInSMA4Period, int optInSignalPeriod, int *outBegIdx, int *outNBElement, double outKST[], double outKSTSignal[] );
 TA_RetCode TA_KSTEXT_OpenAndFillInternal( struct TA_KSTEXT_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInROC1Period, int optInROC2Period, int optInROC3Period, int optInROC4Period, int optInMA1Period, int optInMA2Period, int optInMA3Period, int optInMA4Period, int optInSignalPeriod, TA_MAType optInROCMAType, TA_MAType optInSignalMAType, int *outBegIdx, int *outNBElement, double outKST[], double outKSTSignal[] );
 TA_RetCode TA_KURTOSIS_OpenAndFillInternal( struct TA_KURTOSIS_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInTimePeriod, int *outBegIdx, int *outNBElement, double outReal[] );
+TA_RetCode TA_KVO_OpenAndFillInternal( struct TA_KVO_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], const double inVolume[], int startIdx, int historyLen, int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod, int *outBegIdx, int *outNBElement, double outKVO[], double outKVOSignal[] );
 TA_RetCode TA_LINEARREG_OpenAndFillInternal( struct TA_LINEARREG_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInTimePeriod, int *outBegIdx, int *outNBElement, double outReal[] );
 TA_RetCode TA_LINEARREG_ANGLE_OpenAndFillInternal( struct TA_LINEARREG_ANGLE_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInTimePeriod, int *outBegIdx, int *outNBElement, double outReal[] );
 TA_RetCode TA_LINEARREG_INTERCEPT_OpenAndFillInternal( struct TA_LINEARREG_INTERCEPT_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInTimePeriod, int *outBegIdx, int *outNBElement, double outReal[] );

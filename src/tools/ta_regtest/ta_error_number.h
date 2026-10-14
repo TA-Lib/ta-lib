@@ -81,6 +81,7 @@ typedef enum
   TA_TESTUTIL_DRT_OUT_OF_BOUND_OUT      = 163,
   TA_TESTUTIL_DRT_OUT_OF_BOUND_OUT_INT  = 164,
   TA_TESTUTIL_DRT_STABILITY_MISMATCH    = 165,
+  TA_TESTUTIL_DRT_NO_COMPARISON         = 166,
 
   /* Error code for test in test_period.c */
   TA_PERIOD_HISTORYALLOC_FAILED               = 200,

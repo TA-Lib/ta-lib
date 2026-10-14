@@ -1,0 +1,37 @@
+name: KVO
+group: Volume Indicators
+hint: Klinger Volume Oscillator
+flags: [stream]
+inputs:
+  - name: inPriceHLCV
+    type: price
+    price_components: [high, low, close, volume]
+optional_inputs:
+  - name: optInFastPeriod
+    type: integer
+    display_name: Fast Period
+    hint: Period of the faster smoothing of the volume force
+    range: [2, 100000]
+    default: 34
+    suggested: [4, 200, 1]
+  - name: optInSlowPeriod
+    type: integer
+    display_name: Slow Period
+    hint: Period of the slower smoothing of the volume force
+    range: [2, 100000]
+    default: 55
+    suggested: [4, 200, 1]
+  - name: optInSignalPeriod
+    type: integer
+    display_name: Signal Period
+    hint: Smoothing for the trigger line
+    range: [2, 100000]
+    default: 13
+    suggested: [2, 200, 1]
+outputs:
+  - name: outKVO
+    type: real
+    flags: [line]
+  - name: outKVOSignal
+    type: real
+    flags: [dash_line]

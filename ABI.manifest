@@ -4,7 +4,7 @@ format 9
 soname libta-lib.so.1
 version-info 3:0:2
 headers ta_abstract.h ta_common.h ta_defs.h ta_func.h ta_libc.h
-function-count 3109
+function-count 3122
 platform pointer=8 long=8 int=4 enum=4
 type TA_FuncInfo sizeof=48 name:const_char_*=0 group:const_char_*=8 hint:const_char_*=16 flags:TA_FuncFlags=24 nbInput:unsigned_int=28 nbOptInput:unsigned_int=32 nbOutput:unsigned_int=36 handle:const_TA_FuncHandle_*=40
 type TA_InputParameterInfo sizeof=24 type:TA_InputParameterType=0 paramName:const_char_*=8 flags:TA_InputFlags=16
@@ -1568,6 +1568,16 @@ function TA_RetCode TA_KURTOSIS_OutRange(const TA_KURTOSIS_Stream *, int *, int 
 function TA_RetCode TA_KURTOSIS_Peek(const TA_KURTOSIS_Stream *, double, double *)
 function TA_RetCode TA_KURTOSIS_Update(TA_KURTOSIS_Stream *, double, double *)
 function TA_RetCode TA_KURTOSIS_Value(const TA_KURTOSIS_Stream *, double *)
+function TA_RetCode TA_KVO(int, int, const double *, const double *, const double *, const double *, int, int, int, int *, int *, double *, double *)
+function TA_RetCode TA_KVO_Advance(TA_KVO_Stream *)
+function TA_RetCode TA_KVO_Clone(const TA_KVO_Stream *, TA_KVO_Stream **)
+function TA_RetCode TA_KVO_Close(TA_KVO_Stream *)
+function TA_RetCode TA_KVO_Open(TA_KVO_Stream **, const double *, const double *, const double *, const double *, int, int, int, int, double *, double *)
+function TA_RetCode TA_KVO_OpenAndFill(TA_KVO_Stream **, const double *, const double *, const double *, const double *, int, int, int, int, int *, int *, double *, double *)
+function TA_RetCode TA_KVO_OutRange(const TA_KVO_Stream *, int *, int *)
+function TA_RetCode TA_KVO_Peek(const TA_KVO_Stream *, double, double, double, double, double *, double *)
+function TA_RetCode TA_KVO_Update(TA_KVO_Stream *, double, double, double, double, double *, double *)
+function TA_RetCode TA_KVO_Value(const TA_KVO_Stream *, double *, double *)
 function TA_RetCode TA_LINEARREG(int, int, const double *, int, int *, int *, double *)
 function TA_RetCode TA_LINEARREG_ANGLE(int, int, const double *, int, int *, int *, double *)
 function TA_RetCode TA_LINEARREG_ANGLE_Advance(TA_LINEARREG_ANGLE_Stream *)
@@ -2467,6 +2477,7 @@ function TA_RetCode TA_S_KDJ(int, int, const float *, const float *, const float
 function TA_RetCode TA_S_KST(int, int, const float *, int, int, int, int, int, int, int, int, int, int *, int *, double *, double *)
 function TA_RetCode TA_S_KSTEXT(int, int, const float *, int, int, int, int, int, int, int, int, int, TA_MAType, TA_MAType, int *, int *, double *, double *)
 function TA_RetCode TA_S_KURTOSIS(int, int, const float *, int, int *, int *, double *)
+function TA_RetCode TA_S_KVO(int, int, const float *, const float *, const float *, const float *, int, int, int, int *, int *, double *, double *)
 function TA_RetCode TA_S_LINEARREG(int, int, const float *, int, int *, int *, double *)
 function TA_RetCode TA_S_LINEARREG_ANGLE(int, int, const float *, int, int *, int *, double *)
 function TA_RetCode TA_S_LINEARREG_INTERCEPT(int, int, const float *, int, int *, int *, double *)
@@ -3099,6 +3110,8 @@ function int TA_KST_DisplayShift(int, int, int, int, int, int, int, int, int, in
 function int TA_KST_Lookback(int, int, int, int, int, int, int, int, int)
 function int TA_KURTOSIS_DisplayShift(int, int)
 function int TA_KURTOSIS_Lookback(int)
+function int TA_KVO_DisplayShift(int, int, int, int)
+function int TA_KVO_Lookback(int, int, int)
 function int TA_LINEARREG_ANGLE_DisplayShift(int, int)
 function int TA_LINEARREG_ANGLE_Lookback(int)
 function int TA_LINEARREG_DisplayShift(int, int)

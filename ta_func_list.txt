@@ -134,6 +134,7 @@ KDJ                 KDJ Stochastic
 KST                 Know Sure Thing (Pring)
 KSTEXT              Know Sure Thing with controllable MA type
 KURTOSIS            Rolling Excess Kurtosis
+KVO                 Klinger Volume Oscillator
 LINEARREG           Linear Regression
 LINEARREG_ANGLE     Linear Regression Angle
 LINEARREG_INTERCEPT Linear Regression Intercept

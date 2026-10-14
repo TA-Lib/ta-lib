@@ -1543,6 +1543,17 @@ unsigned int TA_KURTOSIS_FramePPLB( const TA_ParamHolderPriv *params )
 int TA_KURTOSIS_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
 ;
 
+TA_RetCode TA_KVO_FramePP( const TA_ParamHolderPriv *params,
+                           int            startIdx,
+                           int            endIdx,
+                           int           *outBegIdx,
+                           int           *outNBElement )
+;
+unsigned int TA_KVO_FramePPLB( const TA_ParamHolderPriv *params )
+;
+int TA_KVO_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+;
+
 TA_RetCode TA_LINEARREG_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
                            int            endIdx,

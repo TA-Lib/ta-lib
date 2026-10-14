@@ -6663,6 +6663,92 @@ public static class FunctionDescription
 	</FinancialFunction>
 
 
+	<!-- KVO -->
+	<FinancialFunction>
+		<Abbreviation>KVO</Abbreviation>
+		<ShortDescription>Klinger Volume Oscillator</ShortDescription>
+		<GroupId>Volume Indicators</GroupId>
+		<Flags>
+			<Flag>Streaming</Flag>
+		</Flags>
+		<RequiredInputArguments>
+			<RequiredInputArgument>
+				<Type>High</Type>
+				<Name>High</Name>
+			</RequiredInputArgument>
+			<RequiredInputArgument>
+				<Type>Low</Type>
+				<Name>Low</Name>
+			</RequiredInputArgument>
+			<RequiredInputArgument>
+				<Type>Close</Type>
+				<Name>Close</Name>
+			</RequiredInputArgument>
+			<RequiredInputArgument>
+				<Type>Volume</Type>
+				<Name>Volume</Name>
+			</RequiredInputArgument>
+		</RequiredInputArguments>
+		<OptionalInputArguments>
+			<OptionalInputArgument>
+				<Name>Fast Period</Name>
+				<ShortDescription>Period of the faster smoothing of the volume force</ShortDescription>
+				<Type>Integer</Type>
+				<Range>
+					<Minimum>2</Minimum>
+					<Maximum>100000</Maximum>
+					<SuggestedStart>4</SuggestedStart>
+					<SuggestedEnd>200</SuggestedEnd>
+					<SuggestedIncrement>1</SuggestedIncrement>
+				</Range>
+				<DefaultValue>34</DefaultValue>
+			</OptionalInputArgument>
+			<OptionalInputArgument>
+				<Name>Slow Period</Name>
+				<ShortDescription>Period of the slower smoothing of the volume force</ShortDescription>
+				<Type>Integer</Type>
+				<Range>
+					<Minimum>2</Minimum>
+					<Maximum>100000</Maximum>
+					<SuggestedStart>4</SuggestedStart>
+					<SuggestedEnd>200</SuggestedEnd>
+					<SuggestedIncrement>1</SuggestedIncrement>
+				</Range>
+				<DefaultValue>55</DefaultValue>
+			</OptionalInputArgument>
+			<OptionalInputArgument>
+				<Name>Signal Period</Name>
+				<ShortDescription>Smoothing for the trigger line</ShortDescription>
+				<Type>Integer</Type>
+				<Range>
+					<Minimum>2</Minimum>
+					<Maximum>100000</Maximum>
+					<SuggestedStart>2</SuggestedStart>
+					<SuggestedEnd>200</SuggestedEnd>
+					<SuggestedIncrement>1</SuggestedIncrement>
+				</Range>
+				<DefaultValue>13</DefaultValue>
+			</OptionalInputArgument>
+		</OptionalInputArguments>
+		<OutputArguments>
+			<OutputArgument>
+				<Type>Double Array</Type>
+				<Name>outKVO</Name>
+				<Flags>
+					<Flag>Line</Flag>
+				</Flags>
+			</OutputArgument>
+			<OutputArgument>
+				<Type>Double Array</Type>
+				<Name>outKVOSignal</Name>
+				<Flags>
+					<Flag>Dashed Line</Flag>
+				</Flags>
+			</OutputArgument>
+		</OutputArguments>
+	</FinancialFunction>
+
+
 	<!-- LINEARREG -->
 	<FinancialFunction>
 		<Abbreviation>LINEARREG</Abbreviation>

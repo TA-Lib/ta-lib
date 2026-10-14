@@ -886,5 +886,5 @@ static ErrorNumber test_stc_range( const TA_Real *in )
 
    param.in = in;
    return doRangeTestMulti( stcRangeTestFunction, TA_STABLE_CONVERGING,
-                            ids, NB_OF(ids), (void *)&param, 1, 0 );
+                            ids, NB_OF(ids), (void *)&param, 1, 0, 0 );
 }

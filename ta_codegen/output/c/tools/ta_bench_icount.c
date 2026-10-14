@@ -7177,6 +7177,62 @@ static void icount_KURTOSIS(int iters) {
     g_sink += acc + outNBElement;
 }
 
+static void icount_KVO(int iters) {
+    const char *nm = "KVO";
+    int outBegIdx = 0, outNBElement = 0;
+    double acc = 0.0;
+    TA_RetCode rc;
+    TA_KVO_Stream *st = NULL;
+    TA_KVO_Stream *stf = NULL;
+    double v0 = 0.0;
+    double v1 = 0.0;
+
+    ICOUNT_ZERO();
+    rc = TA_KVO(0, g_nPoints - 1, g_high, g_low, g_close, g_volume, 34, 55, 13, &outBegIdx, &outNBElement, g_outBuf0, g_outBuf1);
+    ICOUNT_DUMP("KVO/batch");
+    icount_row(nm, "batch", 1, rc);
+    acc += g_outBuf0[0];
+    acc += g_outBuf1[0];
+
+    ICOUNT_ZERO();
+    rc = TA_KVO_OpenAndFill(&stf, g_high, g_low, g_close, g_volume, g_nPoints, 34, 55, 13, &outBegIdx, &outNBElement, g_outBuf0, g_outBuf1);
+    ICOUNT_DUMP("KVO/openfill");
+    icount_row(nm, "openfill", 1, rc);
+    acc += g_outBuf0[0];
+    acc += g_outBuf1[0];
+    if( stf ) TA_KVO_Close(stf);
+
+    ICOUNT_ZERO();
+    rc = TA_KVO_Open(&st, g_high, g_low, g_close, g_volume, g_nPoints, 34, 55, 13, &v0, &v1);
+    ICOUNT_DUMP("KVO/open");
+    icount_row(nm, "open", 1, rc);
+
+    if( rc == TA_SUCCESS && st ) {
+        TA_RetCode src = TA_SUCCESS;
+        ICOUNT_ZERO();
+        for( int it = 0; it < iters; it++ ) {
+            src = TA_KVO_Update(st, g_high[it & ICOUNT_MASK], g_low[it & ICOUNT_MASK], g_close[it & ICOUNT_MASK], g_volume[it & ICOUNT_MASK], &v0, &v1);
+            acc += v0;
+            acc += v1;
+        }
+        ICOUNT_DUMP("KVO/update");
+        icount_row(nm, "update", 1, src);
+        ICOUNT_ZERO();
+        for( int it = 0; it < iters; it++ ) {
+            src = TA_KVO_Peek(st, g_high[it & ICOUNT_MASK], g_low[it & ICOUNT_MASK], g_close[it & ICOUNT_MASK], g_volume[it & ICOUNT_MASK], &v0, &v1);
+            acc += v0;
+            acc += v1;
+        }
+        ICOUNT_DUMP("KVO/peek");
+        icount_row(nm, "peek", 1, src);
+    } else {
+        icount_row(nm, "update", 0, rc);
+        icount_row(nm, "peek", 0, rc);
+    }
+    if( st ) TA_KVO_Close(st);
+    g_sink += acc + outNBElement;
+}
+
 static void icount_LINEARREG(int iters) {
     const char *nm = "LINEARREG";
     int outBegIdx = 0, outNBElement = 0;
@@ -12509,6 +12565,7 @@ static void icount_all(const char *filter, int iters) {
     if( func_matches(filter, "KST") ) { icount_KST(iters); fflush(stdout); }
     if( func_matches(filter, "KSTEXT") ) { icount_KSTEXT(iters); fflush(stdout); }
     if( func_matches(filter, "KURTOSIS") ) { icount_KURTOSIS(iters); fflush(stdout); }
+    if( func_matches(filter, "KVO") ) { icount_KVO(iters); fflush(stdout); }
     if( func_matches(filter, "LINEARREG") ) { icount_LINEARREG(iters); fflush(stdout); }
     if( func_matches(filter, "LINEARREG_ANGLE") ) { icount_LINEARREG_ANGLE(iters); fflush(stdout); }
     if( func_matches(filter, "LINEARREG_INTERCEPT") ) { icount_LINEARREG_INTERCEPT(iters); fflush(stdout); }

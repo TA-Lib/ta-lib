@@ -12161,6 +12161,113 @@ TA_LIB_API TA_RetCode TA_KURTOSIS_Advance( TA_KURTOSIS_Stream *stream );
 TA_LIB_API TA_RetCode TA_KURTOSIS_Clone( const TA_KURTOSIS_Stream *stream, TA_KURTOSIS_Stream **clone );
 
 /*
+ * TA_KVO - Klinger Volume Oscillator
+ * 
+ * Input  = High, Low, Close, Volume
+ * Output = double, double
+ * 
+ * Optional Parameters
+ * -------------------
+ * optInFastPeriod:(From 2 to 100000)
+ *    Period of the faster smoothing of the volume force
+ * 
+ * optInSlowPeriod:(From 2 to 100000)
+ *    Period of the slower smoothing of the volume force
+ * 
+ * optInSignalPeriod:(From 2 to 100000)
+ *    Smoothing for the trigger line
+ * 
+ * 
+ */
+TA_LIB_API TA_RetCode TA_KVO( int    startIdx,
+                              int    endIdx,
+                                         const double inHigh[],
+                                         const double inLow[],
+                                         const double inClose[],
+                                         const double inVolume[],
+                                         int           optInFastPeriod, /* From 2 to 100000 */
+                                         int           optInSlowPeriod, /* From 2 to 100000 */
+                                         int           optInSignalPeriod, /* From 2 to 100000 */
+                                         int          *outBegIdx,
+                                         int          *outNBElement,
+                                         double        outKVO[],
+                                         double        outKVOSignal[] );
+
+TA_LIB_API TA_RetCode TA_S_KVO( int    startIdx,
+                                int    endIdx,
+                                           const float  inHigh[],
+                                           const float  inLow[],
+                                           const float  inClose[],
+                                           const float  inVolume[],
+                                           int           optInFastPeriod, /* From 2 to 100000 */
+                                           int           optInSlowPeriod, /* From 2 to 100000 */
+                                           int           optInSignalPeriod, /* From 2 to 100000 */
+                                           int          *outBegIdx,
+                                           int          *outNBElement,
+                                           double        outKVO[],
+                                           double        outKVOSignal[] );
+
+TA_LIB_API int TA_KVO_Lookback( int           optInFastPeriod, /* From 2 to 100000 */
+                                         int           optInSlowPeriod, /* From 2 to 100000 */
+                                         int           optInSignalPeriod );  /* From 2 to 100000 */
+TA_LIB_API int TA_KVO_DisplayShift( int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod, int outputIdx );
+
+
+
+/*
+ * Streaming API for TA_KVO: incremental per-bar evaluation.
+ */
+typedef struct TA_KVO_Stream TA_KVO_Stream;
+
+TA_LIB_API TA_RetCode TA_KVO_Open( TA_KVO_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], const double inVolume[], int historyLen, int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod, double *outKVO, double *outKVOSignal );
+
+TA_LIB_API TA_RetCode TA_KVO_Update( TA_KVO_Stream *stream, double inHigh, double inLow, double inClose, double inVolume, double *outKVO, double *outKVOSignal );
+
+TA_LIB_API TA_RetCode TA_KVO_Peek( const TA_KVO_Stream *stream, double inHigh, double inLow, double inClose, double inVolume, double *outKVO, double *outKVOSignal );
+
+TA_LIB_API TA_RetCode TA_KVO_Close( TA_KVO_Stream *stream );
+
+/*
+ * OpenAndFill: like Open, but a single pass ALSO fills the caller's arrays
+ * with the whole warm-up history. The fill is bit-identical to
+ * TA_KVO( 0, historyLen-1, ... ).
+ */
+TA_LIB_API TA_RetCode TA_KVO_OpenAndFill( TA_KVO_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], const double inVolume[], int historyLen, int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod, int *outBegIdx, int *outNBElement, double outKVO[], double outKVOSignal[] );
+
+/*
+ * Value: the value(s) at the last bar the stream counted (the bar
+ * TA_KVO_OutRange ends on), without recomputing. Seeded by Open, refreshed by
+ * every accepted Update, left alone by Peek.
+ */
+TA_LIB_API TA_RetCode TA_KVO_Value( const TA_KVO_Stream *stream, double *outKVO, double *outKVOSignal );
+
+/*
+ * OutRange: the bars this stream has an output for, in the input series'
+ * coordinates. That is [*outBegIdx, *outBegIdx + *outNBElement), the range
+ * TA_KVO reports over the same bars. Open seeds it; every accepted Update and every
+ * TA_KVO_Advance adds one; a rejected Update and a Peek change nothing. The
+ * last bar it can reach is TA_INDEX_MAX: past that Update and Advance answer
+ * TA_OUT_OF_RANGE_END_INDEX, and the handle is done.
+ */
+TA_LIB_API TA_RetCode TA_KVO_OutRange( const TA_KVO_Stream *stream, int *outBegIdx, int *outNBElement );
+
+/*
+ * Advance: count one bar this stream was not fed (one an Update rejected and
+ * that will not be re-fed, or a session with no print). The range moves by one
+ * and nothing else does, so TA_KVO_Value keeps answering the previous output,
+ * which is this bar's output too. TA_OUT_OF_RANGE_END_INDEX once the range has
+ * reached TA_INDEX_MAX.
+ */
+TA_LIB_API TA_RetCode TA_KVO_Advance( TA_KVO_Stream *stream );
+
+/*
+ * Clone: fork the stream. The fork is an independent stream at the same bar,
+ * owning its own copy of everything the original owns. Both must be closed.
+ * The fork carries the value and the range verbatim.
+ */
+TA_LIB_API TA_RetCode TA_KVO_Clone( const TA_KVO_Stream *stream, TA_KVO_Stream **clone );
+
+/*
  * TA_LINEARREG - Linear Regression
  * 
  * Input  = double

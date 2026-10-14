@@ -3767,6 +3767,38 @@ int TA_KURTOSIS_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
 {
    return TA_KURTOSIS_DisplayShift( params->optIn[0].data.optInInteger, outputIdx );
 }
+TA_RetCode TA_KVO_FramePP( const TA_ParamHolderPriv *params,
+                           int            startIdx,
+                           int            endIdx,
+                           int           *outBegIdx,
+                           int           *outNBElement )
+{
+   return TA_KVO(
+               startIdx,
+               endIdx,
+               params->in[0].data.inPrice.high, /* inHigh */
+               params->in[0].data.inPrice.low, /* inLow */
+               params->in[0].data.inPrice.close, /* inClose */
+               params->in[0].data.inPrice.volume, /* inVolume */
+               params->optIn[0].data.optInInteger, /* optInFastPeriod*/
+               params->optIn[1].data.optInInteger, /* optInSlowPeriod*/
+               params->optIn[2].data.optInInteger, /* optInSignalPeriod*/
+               outBegIdx, 
+               outNBElement, 
+               params->out[0].data.outReal, /*  outKVO */
+               params->out[1].data.outReal /*  outKVOSignal */
+               );
+}
+unsigned int TA_KVO_FramePPLB( const TA_ParamHolderPriv *params )
+{
+   return TA_KVO_Lookback(params->optIn[0].data.optInInteger, /* optInFastPeriod*/
+                    params->optIn[1].data.optInInteger, /* optInSlowPeriod*/
+                    params->optIn[2].data.optInInteger /* optInSignalPeriod*/ );
+}
+int TA_KVO_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+{
+   return TA_KVO_DisplayShift( params->optIn[0].data.optInInteger, params->optIn[1].data.optInInteger, params->optIn[2].data.optInInteger, outputIdx );
+}
 TA_RetCode TA_LINEARREG_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
                            int            endIdx,

@@ -206,8 +206,8 @@ What enters a lookback, in C, in a bare run:
   fails. `test_stc.c` holds the STC line to `TA_EMA(fast) - TA_EMA(slow)` bit
   for bit under each level: the fast leg is placed by its own lookback, which
   under a level is not the slow leg's.
-- rZ2: the same file's offset check asks CKSP and ADOSC for their lookback with
-  the id they inherit on a count of 30 and on each level: a count adds
+- rZ2: the same file's offset check asks CKSP, ADOSC and KVO for their lookback
+  with the id they inherit on a count of 30 and on each level: a count adds
   exactly 30 bars, a level the owner's count plus the function's own.
 - rL5, rL7 and rL9: `abstract_lookback_under_settings` (`test_abstract.c`), for
   every function at its default parameters: another range type and factor on

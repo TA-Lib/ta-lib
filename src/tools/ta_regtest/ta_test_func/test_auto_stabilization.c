@@ -384,6 +384,12 @@ static int awBuildVectors( const TA_FuncInfo *funcInfo, AwVector *vec )
    {
       vec[n] = def; vec[n].label = "fast above slow"; vec[n].val[0] = 20.0; vec[n].val[1] = 5.0; n++;
    }
+   if( !strcmp( funcInfo->name, "KVO" ) )
+   {
+      /* The offset is sized at the longest of three periods; at the defaults
+       * that is the slow one, so the trigger is made the longest too. */
+      vec[n] = def; vec[n].label = "signal longest"; vec[n].val[0] = 10.0; vec[n].val[1] = 20.0; vec[n].val[2] = 40.0; n++;
+   }
    if( !strcmp( funcInfo->name, "FRAMA" ) )
    {
       vec[n] = def; vec[n].label = "capped count"; vec[n].val[0] = 1024.0; n++;
@@ -451,7 +457,7 @@ static void awCheckOffset( const TA_FuncInfo *funcInfo, const AwVector *vec )
 {
    const TA_OptInputParameterInfo *opt;
    TA_FuncUnstId source;
-   int l, at0, got, base, offset, p0 = 0, p1 = 0, nbInt = 0;
+   int l, at0, got, base, offset, p0 = 0, p1 = 0, p2 = 0, nbInt = 0;
    unsigned int i;
 
    for( i=0; i < funcInfo->nbOptInput; i++ )
@@ -459,10 +465,11 @@ static void awCheckOffset( const TA_FuncInfo *funcInfo, const AwVector *vec )
       TA_GetOptInputParameterInfo( funcInfo->handle, i, &opt );
       if( opt->type != TA_OptInput_IntegerRange ) continue;
       if( nbInt == 0 ) p0 = (int)vec->val[i]; else if( nbInt == 1 ) p1 = (int)vec->val[i];
+      else if( nbInt == 2 ) p2 = (int)vec->val[i];
       nbInt++;
    }
    if( !strcmp( funcInfo->name, "CKSP" ) ) source = TA_FUNC_UNST_ATR;
-   else if( !strcmp( funcInfo->name, "ADOSC" ) ) source = TA_FUNC_UNST_EMA;
+   else if( !strcmp( funcInfo->name, "ADOSC" ) || !strcmp( funcInfo->name, "KVO" ) ) source = TA_FUNC_UNST_EMA;
    else return;
 
    TA_SetUnstablePeriod( TA_FUNC_UNST_ALL, 0 );
@@ -482,6 +489,17 @@ static void awCheckOffset( const TA_FuncInfo *funcInfo, const AwVector *vec )
       {
          base   = awRule( "ATR", awLevel[l].K, awLevel[l].X, p0, 0, 0.0, 0.0 );
          offset = p1 - 1;
+      }
+      else if( !strcmp( funcInfo->name, "KVO" ) )
+      {
+         /* A small difference of two EMA seeded together, with a trigger EMA on
+          * it: sized as an EMA at (4K+23)/3 e-folds (21 at PREC_4, 33 at
+          * PREC_8) at the longest of the three periods, less the EMA count it
+          * inherits there. Integer divisions, as in auto_stabilization.c. */
+         int longest = p0 > p1 ? p0 : p1, kk = (4*awLevel[l].K + 23) / 3;
+         if( p2 > longest ) longest = p2;
+         base   = awRule( "EMA", awLevel[l].K, awLevel[l].X, longest, 0, 0.0, 0.0 );
+         offset = awRule( "EMA", kk, awLevel[l].X, longest, 0, 0.0, 0.0 ) - base;
       }
       else
       {

@@ -637,5 +637,5 @@ static ErrorNumber test_dosc_range( const TA_History *history )
 
    return doRangeTestMulti( doscRangeTestFunction,
                             TA_STABLE_CONVERGING, ids, 2,
-                            (void *)history, 1, 0 );
+                            (void *)history, 1, 0, 0 );
 }

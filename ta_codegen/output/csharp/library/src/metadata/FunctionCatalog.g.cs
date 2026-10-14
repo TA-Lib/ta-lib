@@ -251,6 +251,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
             MakeKst(),
             MakeKstext(),
             MakeKurtosis(),
+            MakeKvo(),
             MakeLinearreg(),
             MakeLinearregAngle(),
             MakeLinearregIntercept(),
@@ -3509,6 +3510,33 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
         invoke: static (core, c, startIdx, endIdx) =>
             core.Kurtosis(
                 startIdx, endIdx, c.Series(0), c.IntOpt(0), c.RealOut(0)));
+
+    private static FuncInfo MakeKvo() => new(
+        name: "KVO",
+        group: FunctionGroup.VolumeIndicators,
+        hint: "Klinger Volume Oscillator",
+        flags: FuncFlags.Stream,
+        unstableId: null,
+        inputs:
+        [
+            new InputInfo(InputKind.Price, "inPriceHLCV", PriceComponents.High | PriceComponents.Low | PriceComponents.Close | PriceComponents.Volume, [PriceComponents.High, PriceComponents.Low, PriceComponents.Close, PriceComponents.Volume]),
+        ],
+        optInputs:
+        [
+            new OptInputInfo("optInFastPeriod", "Fast Period", "Period of the faster smoothing of the volume force", OptInputFlags.None, new OptInputDomain.IntegerRange(2, 100000, 34, 4, 200, 1)),
+            new OptInputInfo("optInSlowPeriod", "Slow Period", "Period of the slower smoothing of the volume force", OptInputFlags.None, new OptInputDomain.IntegerRange(2, 100000, 55, 4, 200, 1)),
+            new OptInputInfo("optInSignalPeriod", "Signal Period", "Smoothing for the trigger line", OptInputFlags.None, new OptInputDomain.IntegerRange(2, 100000, 13, 2, 200, 1)),
+        ],
+        outputs:
+        [
+            new OutputInfo(OutputKind.Real, "outKVO", OutputFlags.Line),
+            new OutputInfo(OutputKind.Real, "outKVOSignal", OutputFlags.DashLine),
+        ],
+        lookback: static (core, c) => core.KvoLookback(c.IntOpt(0), c.IntOpt(1), c.IntOpt(2)),
+        displayShift: static (core, c, outputIdx) => core.KvoDisplayShift(c.IntOpt(0), c.IntOpt(1), c.IntOpt(2), outputIdx),
+        invoke: static (core, c, startIdx, endIdx) =>
+            core.Kvo(
+                startIdx, endIdx, c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.Price(0, PriceComponents.Volume), c.IntOpt(0), c.IntOpt(1), c.IntOpt(2), c.RealOut(0), c.RealOut(1)));
 
     private static FuncInfo MakeLinearreg() => new(
         name: "LINEARREG",

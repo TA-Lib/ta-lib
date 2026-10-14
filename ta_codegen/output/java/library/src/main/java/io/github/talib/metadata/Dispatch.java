@@ -466,6 +466,9 @@ final class Dispatch {
          case "KURTOSIS":
             return core.kurtosis(
                startIdx, endIdx, h.realInput(0), h.intOpt(0), h.realOutput(0));
+         case "KVO":
+            return core.kvo(
+               startIdx, endIdx, h.price(0, 1), h.price(0, 2), h.price(0, 3), h.price(0, 4), h.intOpt(0), h.intOpt(1), h.intOpt(2), h.realOutput(0), h.realOutput(1));
          case "LINEARREG":
             return core.linearreg(
                startIdx, endIdx, h.realInput(0), h.intOpt(0), h.realOutput(0));
@@ -1049,6 +1052,8 @@ final class Dispatch {
             return core.kstextLookback(h.intOpt(0), h.intOpt(1), h.intOpt(2), h.intOpt(3), h.intOpt(4), h.intOpt(5), h.intOpt(6), h.intOpt(7), h.intOpt(8), h.maTypeOpt(9), h.maTypeOpt(10));
          case "KURTOSIS":
             return core.kurtosisLookback(h.intOpt(0));
+         case "KVO":
+            return core.kvoLookback(h.intOpt(0), h.intOpt(1), h.intOpt(2));
          case "LINEARREG":
             return core.linearregLookback(h.intOpt(0));
          case "LINEARREG_ANGLE":
@@ -1529,6 +1534,8 @@ final class Dispatch {
             return core.kstextDisplayShift(h.intOpt(0), h.intOpt(1), h.intOpt(2), h.intOpt(3), h.intOpt(4), h.intOpt(5), h.intOpt(6), h.intOpt(7), h.intOpt(8), h.maTypeOpt(9), h.maTypeOpt(10), outputIdx);
          case "KURTOSIS":
             return core.kurtosisDisplayShift(h.intOpt(0), outputIdx);
+         case "KVO":
+            return core.kvoDisplayShift(h.intOpt(0), h.intOpt(1), h.intOpt(2), outputIdx);
          case "LINEARREG":
             return core.linearregDisplayShift(h.intOpt(0), outputIdx);
          case "LINEARREG_ANGLE":

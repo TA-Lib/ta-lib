@@ -63,6 +63,7 @@ const INHERITED: &[(&str, &str)] = &[
     ("EFI", "EMA"),
     ("ERI", "EMA"),
     ("KC", "ATR"),
+    ("KVO", "EMA"),
     ("MACD", "EMA"),
     ("MACDFIX", "EMA"),
     ("MASSI", "EMA"),

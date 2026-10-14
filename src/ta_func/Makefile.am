@@ -139,6 +139,7 @@ libta_func_la_SOURCES = ta_utility.c \
 	ta_KST.c \
 	ta_KSTEXT.c \
 	ta_KURTOSIS.c \
+	ta_KVO.c \
 	ta_LINEARREG.c \
 	ta_LINEARREG_ANGLE.c \
 	ta_LINEARREG_INTERCEPT.c \

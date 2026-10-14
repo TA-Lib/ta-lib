@@ -673,6 +673,91 @@ DEF_FUNCTION( KURTOSIS,
              );
 /* KURTOSIS END */
 
+/* KVO BEGIN */
+static const TA_OptInputParameterInfo TA_DEF_UI_D_KVO_FastPeriod =
+{
+   TA_OptInput_IntegerRange,
+   "optInFastPeriod",
+   0,
+
+   "Fast Period",
+   (const void *)&TA_DEF_TimePeriod_Positive_Minimum2,
+   34,
+   "Period of the faster smoothing of the volume force",
+
+   NULL
+};
+
+static const TA_OptInputParameterInfo TA_DEF_UI_D_KVO_SlowPeriod =
+{
+   TA_OptInput_IntegerRange,
+   "optInSlowPeriod",
+   0,
+
+   "Slow Period",
+   (const void *)&TA_DEF_TimePeriod_Positive_Minimum2,
+   55,
+   "Period of the slower smoothing of the volume force",
+
+   NULL
+};
+
+static const TA_IntegerRange TA_DEF_KVO_SignalPeriod =
+{
+   2,
+   100000,
+   2,
+   200,
+   1
+};
+
+static const TA_OptInputParameterInfo TA_DEF_UI_D_KVO_SignalPeriod =
+{
+   TA_OptInput_IntegerRange,
+   "optInSignalPeriod",
+   0,
+
+   "Signal Period",
+   (const void *)&TA_DEF_KVO_SignalPeriod,
+   13,
+   "Smoothing for the trigger line",
+
+   NULL
+};
+
+const TA_OutputParameterInfo TA_DEF_UI_Output_Real_KVO_outKVO =
+                               { TA_Output_Real, "outKVO", TA_OUT_LINE };
+
+const TA_OutputParameterInfo TA_DEF_UI_Output_Real_KVO_outKVOSignal =
+                               { TA_Output_Real, "outKVOSignal", TA_OUT_DASH_LINE };
+
+static const TA_InputParameterInfo    *TA_KVO_Inputs[]    =
+{
+  &TA_DEF_UI_Input_Price_HLCV,
+  NULL
+};
+
+static const TA_OutputParameterInfo   *TA_KVO_Outputs[]   =
+{
+  &TA_DEF_UI_Output_Real_KVO_outKVO,
+  &TA_DEF_UI_Output_Real_KVO_outKVOSignal,
+  NULL
+};
+
+static const TA_OptInputParameterInfo *TA_KVO_OptInputs[] =
+{ &TA_DEF_UI_D_KVO_FastPeriod,
+  &TA_DEF_UI_D_KVO_SlowPeriod,
+  &TA_DEF_UI_D_KVO_SignalPeriod,
+  NULL
+};
+
+DEF_FUNCTION( KVO,
+              TA_GroupId_VolumeIndicators,
+              "Klinger Volume Oscillator",
+              TA_FUNC_FLG_STREAM
+             );
+/* KVO END */
+
 /****************************************************************************
  * Step 2 - Add your TA function to the table.
  *          Keep in alphabetical order. Must be NULL terminated.
@@ -685,6 +770,7 @@ const TA_FuncDef *TA_DEF_TableK[] =
    ADD_TO_TABLE(KST),
    ADD_TO_TABLE(KSTEXT),
    ADD_TO_TABLE(KURTOSIS),
+   ADD_TO_TABLE(KVO),
    NULL
 };
 

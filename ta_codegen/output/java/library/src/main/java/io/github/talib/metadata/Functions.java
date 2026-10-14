@@ -256,6 +256,7 @@ public final class Functions {
       put(m, f_KST());
       put(m, f_KSTEXT());
       put(m, f_KURTOSIS());
+      put(m, f_KVO());
       put(m, f_LINEARREG());
       put(m, f_LINEARREG_ANGLE());
       put(m, f_LINEARREG_INTERCEPT());
@@ -2641,6 +2642,35 @@ public final class Functions {
          ),
          List.of(
             new OutputInfo(OutputType.REAL, "outReal", 0x00000001)
+         ));
+   }
+
+   private static FuncInfo f_KVO() {
+      return new FuncInfo(
+         "KVO", "Volume Indicators", "Klinger Volume Oscillator", 0x02000000,
+         List.of(
+            new InputInfo(InputType.PRICE, "inPriceHLCV", 0x0000001E)
+         ),
+         List.of(
+            new OptInputInfo(
+               OptInputType.INTEGER_RANGE, "optInFastPeriod", 0x00000000,
+               "Fast Period", "Period of the faster smoothing of the volume force", 34.0,
+               0.0, 0.0, 0, 0.0, 0.0, 0.0,
+               2, 100000, 4, 200, 1, null),
+            new OptInputInfo(
+               OptInputType.INTEGER_RANGE, "optInSlowPeriod", 0x00000000,
+               "Slow Period", "Period of the slower smoothing of the volume force", 55.0,
+               0.0, 0.0, 0, 0.0, 0.0, 0.0,
+               2, 100000, 4, 200, 1, null),
+            new OptInputInfo(
+               OptInputType.INTEGER_RANGE, "optInSignalPeriod", 0x00000000,
+               "Signal Period", "Smoothing for the trigger line", 13.0,
+               0.0, 0.0, 0, 0.0, 0.0, 0.0,
+               2, 100000, 2, 200, 1, null)
+         ),
+         List.of(
+            new OutputInfo(OutputType.REAL, "outKVO", 0x00000001),
+            new OutputInfo(OutputType.REAL, "outKVOSignal", 0x00000004)
          ));
    }
 

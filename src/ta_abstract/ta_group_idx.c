@@ -176,6 +176,7 @@ extern const TA_FuncDef TA_DEF_KDJ;
 extern const TA_FuncDef TA_DEF_KST;
 extern const TA_FuncDef TA_DEF_KSTEXT;
 extern const TA_FuncDef TA_DEF_KURTOSIS;
+extern const TA_FuncDef TA_DEF_KVO;
 extern const TA_FuncDef TA_DEF_LINEARREG;
 extern const TA_FuncDef TA_DEF_LINEARREG_ANGLE;
 extern const TA_FuncDef TA_DEF_LINEARREG_INTERCEPT;
@@ -450,6 +451,7 @@ const TA_FuncDef *TA_PerGroupFunc_6[] = {
 &TA_DEF_CMF,
 &TA_DEF_EFI,
 &TA_DEF_EMV,
+&TA_DEF_KVO,
 &TA_DEF_MARKETFI,
 &TA_DEF_NVI,
 &TA_DEF_OBV,
