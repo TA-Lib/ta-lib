@@ -1951,7 +1951,7 @@ jobs:
       # would skip it.
       - name: Upload the raw callgrind output
         if: always() && steps.decide.outputs.measure == 'true'
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: callgrind-icount
           path: temp/callgrind.icount.*.out
