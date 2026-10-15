@@ -6,8 +6,8 @@
 #policy	monotone
 #toolchain	x86_64/x86_64-linux-gnu/13.3.0
 #corpus	points=20000 regime_period=14 seed=42 shape=peg stream_iters=1024 trend_strength=0.500000
-#commit	687063a4b649ff9151f4cfd41429b5ffe70cfb52
-#generated	2026-10-13T12:21:50Z
+#commit	5056811e2834604cf8940f448f219afbfbe63db5
+#generated	2026-10-15T09:32:43Z
 AC	batch	0	703438
 AC	open	0	704171
 AC	openfill	0	692624
@@ -688,6 +688,11 @@ KURTOSIS	open	0	942691
 KURTOSIS	openfill	0	1124754
 KURTOSIS	peek	0	82957
 KURTOSIS	update	0	142870
+KVO	batch	0	816461
+KVO	open	0	776664
+KVO	openfill	0	856495
+KVO	peek	0	96967
+KVO	update	0	112436
 LINEARREG	batch	0	606134
 LINEARREG	open	0	427174
 LINEARREG	openfill	0	627314
