@@ -32,6 +32,7 @@ See [github commits](https://github.com/TA-Lib/ta-lib/commits) for complete list
   - KST: Know Sure Thing (#472)
   - KSTEXT: Know Sure Thing with selectable MA types for the legs and the signal line (#491)
   - KURTOSIS: Rolling Excess Kurtosis (#433)
+  - KVO: Klinger Volume Oscillator, the difference of a fast and a slow EMA of volume force, with a signal line (#484)
   - MCGD: McGinley Dynamic, a moving average whose step adapts to the price-to-line ratio (#471)
   - MEDIAN: Rolling Median (#432)
   - PERCENTB: Bollinger Bands %B, where the input sits relative to the bands (#449)
