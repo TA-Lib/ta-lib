@@ -199,11 +199,47 @@ Nothing here argues for changing an oracle policy: Tulip/TradingView remain vali
 **tail** oracles for EMA-derived functions — bit-exact once the transient has
 decayed below double precision, tolerance-only inside it.
 
+## 10. The zero-start compensator
+
+[QuanTAlib](https://mihakralj.github.io/QuanTAlib/) starts its EMA at zero and
+divides the output by `1 - (1-alpha)^t`. Its
+[EMA page](https://github.com/mihakralj/QuanTAlib/blob/v0.8.12/lib/trends_IIR/ema/Ema.md)
+calls this "the mathematically correct value" from bar one, and TA-Lib's seed
+"an approximation". Checked on 0.8.12 through the `quantalib_serve` oracle; the
+model in `compensator_sim.py` matches its `Ema.Update` to 3e-14.
+
+The divisor sets the unseen history to the current output: it assumes bars
+before the start looked like the newest bars. For a price, the best guess is the
+oldest bar, which is rule T. On synthetic series (2000 trials, rms against the
+full-history EMA, EMA(10), basis points of price):
+
+| series | bar | compensator | rule S | rule T |
+|---|---|---|---|---|
+| GBM | 9 | 36.6 | 39.2 | 23.3 |
+| GBM | 19 | 7.14 | 5.28 | 3.13 |
+| white noise (sd units) | 19 | 0.008 | 0.022 | 0.018 |
+
+- On GBM, random walk and AR(1) the compensator beats rule S only at rule S's
+  first output, and rule T beats both throughout. On a trend, S or T is best
+  from bar `p-1`. EMA(30) has the same shape.
+- It is the best of the three only for a stationary series around a constant
+  mean.
+- Its page says the first 14 bars of EMA(10) differ from TA-Lib. Bar 14 is
+  where it reports ready. The two stay more than 1e-6 apart, relative to
+  price, until bar 62, and more than 1e-9 apart until bar 98 (worst of 20 GBM
+  series).
+- Its span `Ema.Batch` on 256 or more finite bars seeds with the first value
+  and skips the divisor, so on the same input it differs from `Ema.Update` by
+  up to 0.89 (EMA(10)) and 1.52 (EMA(50)) on a price near 100.
+
+Nothing here argues for the compensator over rule S.
+
 ## Reproduce
 
 ```bash
 cd docs/studies/ema-seeding
 python3 seed_study.py            # ~3 s, writes results.txt (checked in)
+python3 compensator_sim.py       # §10, synthetic, prints its tables
 
 # optional: pin rule S against the shipped library
 cc -I ../../../include -o /tmp/ema_probe ema_probe.c \
