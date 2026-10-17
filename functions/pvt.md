@@ -22,6 +22,7 @@ The series starts at zero on the first bar of the requested range.
 
 ## Notes
 
+* **The input is assumed positive.** The previous close is the divisor. Near zero the divisor is small and the output very large; no error is returned. A series that reaches or crosses zero, such as an oscillator or a spread, has no meaningful result here.
 * The absolute level is arbitrary and depends on where the accumulation started, so two ranges over the same data give curves of the same shape at different offsets.
 * Some libraries scale the per-bar term by 100. This implementation follows the fractional definition, which every primary reference below states.
 * A bar whose previous close is exactly zero contributes nothing and the running total is carried forward unchanged, rather than dividing by zero. A flat stretch of the output can therefore mean either genuine zero net accumulation or a run of zero previous closes.
@@ -50,6 +51,7 @@ The series starts at zero on the first bar of the requested range.
 | <span class="flag-box">☐</span> <span style="opacity:0.5">Identity at Period 1</span> |
 | <span class="flag-box">☐</span> <span style="opacity:0.5">Display Shift</span> |
 | <span class="flag-box">☐</span> <span style="opacity:0.5">Uses Transcendental</span> |
+| <span class="flag-box">✅</span> **Input Must Be Positive** <span class="flag-tip" tabindex="0" role="note" aria-label="Assumes the input is positive, as a price is. A series that reaches or crosses zero, such as an oscillator or a spread, returns success and an output that may have no meaning. See Notes for what a zero or a negative value does." data-tip="Assumes the input is positive, as a price is. A series that reaches or crosses zero, such as an oscillator or a spread, returns success and an output that may have no meaning. See Notes for what a zero or a negative value does.">i</span> |
 
 </div>
 

@@ -185,6 +185,7 @@ This documentation is built from the main branch and can be ahead of the newest 
 - [Hilbert Transform - Instantaneous Trendline (HT_TRENDLINE)](https://ta-lib.org/functions/ht_trendline.md): Ehlers' Hilbert Transform Instantaneous Trendline: a smoothed, low-lag overlay whose averaging window adapts to the dominant cycle period measured via…
 - [Hilbert Transform - Trend vs Cycle Mode (HT_TRENDMODE)](https://ta-lib.org/functions/ht_trendmode.md): Hilbert Transform classifier that labels each bar 1 (trending — favor trend-following) or 0 (cycling — favor mean-reversion).
 - [Internal Bar Strength (IBS)](https://ta-lib.org/functions/ibs.md): Internal Bar Strength: where the close sits inside its own bar's range.
+- [Ichimoku Kinko Hyo (ICHIMOKU)](https://ta-lib.org/functions/ichimoku.md): Ichimoku Kinko Hyo, "one glance equilibrium chart": four lines built from highs and lows alone.
 - [Intraday Momentum Index (IMI)](https://ta-lib.org/functions/imi.md): Intraday Momentum Index: an RSI-like 0-100 oscillator built from the open-to-close body of each bar.
 - [Kaufman Adaptive Moving Average (KAMA)](https://ta-lib.org/functions/kama.md): Kaufman Adaptive Moving Average: an EMA whose smoothing factor adapts each bar to an efficiency ratio (directional move vs. total volatility).
 - [Keltner Channels (KC)](https://ta-lib.org/functions/kc.md): Keltner Channels: three overlap lines around price.
@@ -192,6 +193,7 @@ This documentation is built from the main branch and can be ahead of the newest 
 - [Know Sure Thing (Pring) (KST)](https://ta-lib.org/functions/kst.md): Know Sure Thing: Martin J. Pring's momentum oscillator, a weighted sum of four smoothed rates of change with a moving-average signal line.
 - [Know Sure Thing with controllable MA type (KSTEXT)](https://ta-lib.org/functions/kstext.md): Know Sure Thing with selectable moving averages: Pring's weighted sum of four smoothed rates of change, with a signal line.
 - [Rolling Excess Kurtosis (KURTOSIS)](https://ta-lib.org/functions/kurtosis.md): An estimate, from the trailing window, of the excess kurtosis of the distribution its values come from: the fourth standardised moment minus 3, so a…
+- [Klinger Volume Oscillator (KVO)](https://ta-lib.org/functions/kvo.md): Klinger Volume Oscillator: each bar's volume is signed by the direction of its high-low-close sum and weighted by where the bar's own range sits inside…
 - [Linear Regression Angle (LINEARREG_ANGLE)](https://ta-lib.org/functions/linearreg_angle.md): The angle, in degrees, of the least-squares best-fit line over the last N points.
 - [Linear Regression Intercept (LINEARREG_INTERCEPT)](https://ta-lib.org/functions/linearreg_intercept.md): Returns the y-intercept (b) of the least-squares regression line fitted over the last optInTimePeriod values.
 - [Linear Regression Slope (LINEARREG_SLOPE)](https://ta-lib.org/functions/linearreg_slope.md): Slope 'm' of the least-squares best-fit line (y = b + m*x) over the last optInTimePeriod bars. Reports the per-bar rate of change of the fitted trend line.
@@ -254,6 +256,7 @@ This documentation is built from the main branch and can be ahead of the newest 
 - [Simple Moving Average (SMA)](https://ta-lib.org/functions/sma.md): Simple Moving Average: the unweighted arithmetic mean of the last N input values. Used to smooth a series.
 - [Stochastic Momentum Index (SMI)](https://ta-lib.org/functions/smi.md): Stochastic Momentum Index: where the close sits relative to the midpoint of the recent high/low range, double-smoothed.
 - [Vector Square Root (SQRT)](https://ta-lib.org/functions/sqrt.md): Element-wise square root of the input series.
+- [Squeeze Momentum and Level (SQZMOM)](https://ta-lib.org/functions/sqzmom.md): John Carter's TTM Squeeze, in the form LazyBear published on TradingView in 2014.
 - [Schaff Trend Cycle (STC)](https://ta-lib.org/functions/stc.md): Schaff Trend Cycle (Doug Schaff): a MACD line passed twice through a stochastic, each pass smoothed by half.
 - [Standard Deviation (STDDEV)](https://ta-lib.org/functions/stddev.md): Rolling standard deviation of a series over a window, scaled by a deviations multiplier. Delegates to VAR, then takes the square root.
 - [Stochastic (STOCH)](https://ta-lib.org/functions/stoch.md): Slow Stochastic oscillator: locates the close within the high-low range over a lookback period, then double-smooths it.
@@ -289,6 +292,7 @@ This documentation is built from the main branch and can be ahead of the newest 
 - [Weighted Close Price (WCLPRICE)](https://ta-lib.org/functions/wclprice.md): Weighted Close Price: a per-bar price average giving the close double weight relative to high and low.
 - [Williams' %R (WILLR)](https://ta-lib.org/functions/willr.md): Williams' %R momentum oscillator over a rolling period, bounded in [-100, 0].
 - [Weighted Moving Average (WMA)](https://ta-lib.org/functions/wma.md): Linearly weighted moving average: each of the last N prices is weighted by its position, oldest getting weight 1 and newest weight N.
+- [Zig Zag (ZIGZAG)](https://ta-lib.org/functions/zigzag.md): The percent-filter swing line.
 - [Zero-Lag Exponential Moving Average (ZLEMA)](https://ta-lib.org/functions/zlema.md): Zero-Lag Exponential Moving Average: an EMA applied not to price but to a de-lagged series that extrapolates price forward by the EMA's own lag…
 
 ### Migrating from other libraries

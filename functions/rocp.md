@@ -12,6 +12,10 @@ Rate of change expressed as a fraction of the price optInTimePeriod bars ago. No
 
 ROCP = (price - prevPrice) / prevPrice, prevPrice = inReal\[i - optInTimePeriod]
 
+## Notes
+
+* **The input is assumed positive.** The price `optInTimePeriod` bars back is the divisor. Where it is exactly 0 the output is 0. Near zero the divisor is small and the output very large; no error is returned. A series that reaches or crosses zero, such as an oscillator or a spread, has no meaningful result here.
+
 ## Inputs
 
 * `inReal` — Source price series
@@ -41,6 +45,7 @@ ROCP = (price - prevPrice) / prevPrice, prevPrice = inReal\[i - optInTimePeriod]
 | <span class="flag-box">☐</span> <span style="opacity:0.5">Identity at Period 1</span> |
 | <span class="flag-box">☐</span> <span style="opacity:0.5">Display Shift</span> |
 | <span class="flag-box">☐</span> <span style="opacity:0.5">Uses Transcendental</span> |
+| <span class="flag-box">✅</span> **Input Must Be Positive** <span class="flag-tip" tabindex="0" role="note" aria-label="Assumes the input is positive, as a price is. A series that reaches or crosses zero, such as an oscillator or a spread, returns success and an output that may have no meaning. See Notes for what a zero or a negative value does." data-tip="Assumes the input is positive, as a price is. A series that reaches or crosses zero, such as an oscillator or a spread, returns success and an output that may have no meaning. See Notes for what a zero or a negative value does.">i</span> |
 
 </div>
 

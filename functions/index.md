@@ -104,6 +104,7 @@ All technical-analysis functions, grouped by category. Each page documents the f
 * [RSI](/functions/rsi.md) — Relative Strength Index
 * [SI](/functions/si.md) — Wilder Swing Index
 * [SMI](/functions/smi.md) — Stochastic Momentum Index
+* [SQZMOM](/functions/sqzmom.md) — Squeeze Momentum and Level
 * [STC](/functions/stc.md) — Schaff Trend Cycle
 * [STOCH](/functions/stoch.md) — Stochastic
 * [STOCHF](/functions/stochf.md) — Stochastic Fast
@@ -129,6 +130,7 @@ All technical-analysis functions, grouped by category. Each page documents the f
 * [FRAMA](/functions/frama.md) — Fractal Adaptive Moving Average
 * [HMA](/functions/hma.md) — Hull Moving Average
 * [HT_TRENDLINE](/functions/ht_trendline.md) — Hilbert Transform - Instantaneous Trendline
+* [ICHIMOKU](/functions/ichimoku.md) — Ichimoku Kinko Hyo
 * [KAMA](/functions/kama.md) — Kaufman Adaptive Moving Average
 * [KC](/functions/kc.md) — Keltner Channels
 * [MA](/functions/ma.md) — Moving average
@@ -150,6 +152,7 @@ All technical-analysis functions, grouped by category. Each page documents the f
 * [VIDYA](/functions/vidya.md) — Variable Index Dynamic Average
 * [VWMA](/functions/vwma.md) — Volume Weighted Moving Average
 * [WMA](/functions/wma.md) — Weighted Moving Average
+* [ZIGZAG](/functions/zigzag.md) — Zig Zag
 * [ZLEMA](/functions/zlema.md) — Zero-Lag Exponential Moving Average
 
 ## Pattern Recognition
@@ -262,6 +265,7 @@ All technical-analysis functions, grouped by category. Each page documents the f
 * [CMF](/functions/cmf.md) — Chaikin Money Flow
 * [EFI](/functions/efi.md) — Elder's Force Index
 * [EMV](/functions/emv.md) — Arms Ease of Movement
+* [KVO](/functions/kvo.md) — Klinger Volume Oscillator
 * [MARKETFI](/functions/marketfi.md) — Market Facilitation Index
 * [NVI](/functions/nvi.md) — Negative Volume Index
 * [OBV](/functions/obv.md) — On Balance Volume

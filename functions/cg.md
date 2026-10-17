@@ -20,6 +20,7 @@ where $X$ is the input series, $n$ is `optInTimePeriod` and $i$ counts bars back
 
 ## Notes
 
+* **The input is assumed positive.** The sum of the window is the divisor. Near zero the divisor is small and the output very large; no error is returned. A series that reaches or crosses zero, such as an oscillator or a spread, has no meaningful result here.
 * Ehlers' default input is the median price (H+L)/2: pass the output of MEDPRICE to reproduce it.
 * His 2004 book presents the same oscillator shifted up by (optInTimePeriod+1)/2, so that a flat window reads 0: add (optInTimePeriod+1)/2 to the output to obtain that form.
 * Where the window sums to exactly zero the author's listing keeps its previous value; TA-Lib returns -(optInTimePeriod+1)/2, so every value depends on its own window alone.
@@ -54,6 +55,7 @@ where $X$ is the input series, $n$ is `optInTimePeriod` and $i$ counts bars back
 | <span class="flag-box">☐</span> <span style="opacity:0.5">Identity at Period 1</span> |
 | <span class="flag-box">☐</span> <span style="opacity:0.5">Display Shift</span> |
 | <span class="flag-box">☐</span> <span style="opacity:0.5">Uses Transcendental</span> |
+| <span class="flag-box">✅</span> **Input Must Be Positive** <span class="flag-tip" tabindex="0" role="note" aria-label="Assumes the input is positive, as a price is. A series that reaches or crosses zero, such as an oscillator or a spread, returns success and an output that may have no meaning. See Notes for what a zero or a negative value does." data-tip="Assumes the input is positive, as a price is. A series that reaches or crosses zero, such as an oscillator or a spread, returns success and an output that may have no meaning. See Notes for what a zero or a negative value does.">i</span> |
 
 </div>
 

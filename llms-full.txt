@@ -2625,7 +2625,7 @@ The `E`, `W`, `K*n`, `T3`, `KAMA` and `VIDYA` rows give 0 at a period of 1, wher
 
 `proof`: the count bounds what is left of the seed, for any input. `measurement`: the count is a formula sized on measured series, with margin; it is not a bound ([a longer count](/spec/auto-stabilization/#fixed-count)). `ratio` marks an output that divides by a smoothed value or by a price, `limiter` a state snapped at a limit ([no level](/spec/auto-stabilization/#no-level)).
 
-<a id="rz2"></a>**rZ2** Under a level, a function that owns no id adds these bars of its own to the count it inherits ([rL6](/spec/lookback/#rl6)); under a count it adds none. CKSP adds its stop period less one to ATR's count. ADOSC adds `ceil((15*f + 3*t)/8)` to EMA's count at the longer of its two periods, with `f` the shorter period, `s` the longer, and `t` the sum of `min(f, s/2^j)` for `j` from 1 to 16, in integer divisions.
+<a id="rz2"></a>**rZ2** Under a level, a function that owns no id adds these bars of its own to the count it inherits ([rL6](/spec/lookback/#rl6)); under a count it adds none. CKSP adds its stop period less one to ATR's count. ADOSC adds `ceil((15*f + 3*t)/8)` to EMA's count at the longer of its two periods, with `f` the shorter period, `s` the longer, and `t` the sum of `min(f, s/2^j)` for `j` from 1 to 16, in integer divisions. KVO adds `E'(n) - E(n)` to EMA's count at the longest `n` of its three periods, with `E'` the `E` of `(4*K + 23)/3` e-folds in integer division: 21 at `PREC_4`, 33 at `PREC_8`.
 
 ## What a level targets {#target}
 
@@ -2897,6 +2897,7 @@ What can be said of the values a function writes.
 | `TA_FUNC_FLG_NAN_INF_OUT` | A successful call can write NaN or ±Inf on ordinary finite input ([rW6](/spec/inputs-outputs/#rw6)). |
 | `TA_FUNC_FLG_PERIOD1_IDENTITY` | At a period of 1 every output value is a bit-for-bit copy of its input ([rL8](/spec/lookback/#rl8)). |
 | `TA_FUNC_FLG_USES_TRANSCENDENTAL` | The function calls a transcendental function, so a value may differ ([transcendental functions](/spec/versions/#transcendental)); TA-Lib targets a difference below 1e-9 ([rD2](/spec/versions/#rd2)). Not set on a function that reaches one only when an MA-type parameter selects `MAMA` or `ALMA`. |
+| `TA_FUNC_FLG_POSITIVE_INPUT` | The input must be positive, as a price is. The data is not checked: a series that reaches or crosses zero, such as an oscillator or a spread, gets a successful call and an output that may have no meaning. The function's page says what a zero or a negative value does. |
 | `TA_OUT_POSITIVE` | Positive values occur ([rW8](/spec/inputs-outputs/#rw8)). |
 | `TA_OUT_NEGATIVE` | Negative values occur ([rW8](/spec/inputs-outputs/#rw8)). |
 | `TA_OUT_ZERO` | 0 occurs; on a pattern output, no pattern on that bar ([rW8](/spec/inputs-outputs/#rw8)). |
@@ -3246,6 +3247,7 @@ All technical-analysis functions, grouped by category. Each page documents the f
 * [RSI](/functions/rsi.md) — Relative Strength Index
 * [SI](/functions/si.md) — Wilder Swing Index
 * [SMI](/functions/smi.md) — Stochastic Momentum Index
+* [SQZMOM](/functions/sqzmom.md) — Squeeze Momentum and Level
 * [STC](/functions/stc.md) — Schaff Trend Cycle
 * [STOCH](/functions/stoch.md) — Stochastic
 * [STOCHF](/functions/stochf.md) — Stochastic Fast
@@ -3271,6 +3273,7 @@ All technical-analysis functions, grouped by category. Each page documents the f
 * [FRAMA](/functions/frama.md) — Fractal Adaptive Moving Average
 * [HMA](/functions/hma.md) — Hull Moving Average
 * [HT_TRENDLINE](/functions/ht_trendline.md) — Hilbert Transform - Instantaneous Trendline
+* [ICHIMOKU](/functions/ichimoku.md) — Ichimoku Kinko Hyo
 * [KAMA](/functions/kama.md) — Kaufman Adaptive Moving Average
 * [KC](/functions/kc.md) — Keltner Channels
 * [MA](/functions/ma.md) — Moving average
@@ -3292,6 +3295,7 @@ All technical-analysis functions, grouped by category. Each page documents the f
 * [VIDYA](/functions/vidya.md) — Variable Index Dynamic Average
 * [VWMA](/functions/vwma.md) — Volume Weighted Moving Average
 * [WMA](/functions/wma.md) — Weighted Moving Average
+* [ZIGZAG](/functions/zigzag.md) — Zig Zag
 * [ZLEMA](/functions/zlema.md) — Zero-Lag Exponential Moving Average
 
 ## Pattern Recognition
@@ -3404,6 +3408,7 @@ All technical-analysis functions, grouped by category. Each page documents the f
 * [CMF](/functions/cmf.md) — Chaikin Money Flow
 * [EFI](/functions/efi.md) — Elder's Force Index
 * [EMV](/functions/emv.md) — Arms Ease of Movement
+* [KVO](/functions/kvo.md) — Klinger Volume Oscillator
 * [MARKETFI](/functions/marketfi.md) — Market Facilitation Index
 * [NVI](/functions/nvi.md) — Negative Volume Index
 * [OBV](/functions/obv.md) — On Balance Volume
@@ -3723,7 +3728,7 @@ scripts/build.py servers    # build the generator + the per-language test server
 2. **Write the three input files** in `ta_codegen/input/<name>/`. Start by copying a similar shipped function; `ta_codegen/input/cmf/` is a small, recent example. Input files carry no license header — the generator injects the BSD-3-Clause notice into every generated file — but the `.c` opens with a contributor and change-history block: add your initials there, and a one-line MMDDYY entry describing your change. The file-format references are in the repository: [`docs/ta_codegen_input_yaml.md`](https://github.com/TA-Lib/ta-lib/blob/dev/docs/ta_codegen_input_yaml.md), [`ta_codegen_input_code.md`](https://github.com/TA-Lib/ta-lib/blob/dev/docs/ta_codegen_input_code.md) and [`ta_codegen_input_doc.md`](https://github.com/TA-Lib/ta-lib/blob/dev/docs/ta_codegen_input_doc.md). When in doubt, read your checkout's copy; it tracks the generator you are running.
 3. **Generate** all backends: `scripts/build.py generate`, then `scripts/build.py servers` to rebuild the language servers from the regenerated sources.
 4. **Verify**: run `scripts/regtest.py`, the full pipeline. Its `ta_regtest --codegen` step diffs every language server against the C library, a brand-new function like any other: that proves the languages agree, and the next step proves the values. `--no-perftest` skips the benchmarks a correctness change does not need.
-5. **Prove the values.** A new function needs a regression test with golden values from an independent source: a published reference implementation or worked examples from the literature. Document the source, its version and the tolerance at the test call site; against a double-precision oracle ~1e-12 relative is typical, and anything looser needs a written justification. See `src/tools/ta_regtest/ta_test_func/test_composite1.c` for a composite and `test_marketfi.c` for a standalone file, and register the test in four places: a prototype in `ta_test_func.h`, a `DO_TEST` entry in `ta_regtest.c` whose tag names every function the group covers, and the file added to both `CMakeLists.txt` and `src/tools/ta_regtest/Makefile.am` (`scripts/build.py check-source-lists` verifies the two agree). While iterating, `cd bin && ./ta_regtest --codegen --function=<NAME>` re-runs just your group; each call it routes through `server_verify` is also cross-checked bitwise against every language server.
+5. **Prove the values.** A new function needs a regression test with golden values from an independent source: a published reference implementation or worked examples from the literature. Document the source, its version and the tolerance at the test call site; against a double-precision oracle ~1e-12 relative is typical, and anything looser needs a written justification. See `src/tools/ta_regtest/ta_test_func/test_composite1.c` for a composite and `test_marketfi.c` for a standalone file, and register the test in four places: a prototype in `ta_test_func.h`, a `DO_TEST` entry in `ta_regtest.c` whose tag names every function the group covers, and the file added to both `CMakeLists.txt` and `src/tools/ta_regtest/Makefile.am` (`scripts/build.py check-source-lists` verifies the two agree and that the group has its `DO_TEST` entry). While iterating, `cd bin && ./ta_regtest --codegen --function=<NAME>` re-runs just your group; each call it routes through `server_verify` is also cross-checked bitwise against every language server.
 6. **Check the diff.** After regenerating, `git diff` should touch only files belonging to your function. Unrelated churn in other generated files means something is wrong.
 7. **Open a pull request** against the `dev` branch, citing the spec issue and the verification source.
 

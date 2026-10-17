@@ -15,6 +15,10 @@ Average True Range expressed as a percentage of the current close, making volati
 NATR = (ATR / Close) \* 100
 ATR: first value = SMA of TRANGE over period; then Wilder smoothing ATR_t = (ATR\_{t-1}\*(period-1) + TR_t) / period
 
+## Notes
+
+* **The input is assumed positive.** The close is the divisor. Where it is exactly 0 the output is 0. Near zero the divisor is small and the output very large; no error is returned. A series that reaches or crosses zero, such as an oscillator or a spread, has no meaningful result here.
+
 ## Inputs
 
 * `inHigh` — High price of each bar
@@ -46,6 +50,7 @@ ATR: first value = SMA of TRANGE over period; then Wilder smoothing ATR_t = (ATR
 | <span class="flag-box">☐</span> <span style="opacity:0.5">Identity at Period 1</span> |
 | <span class="flag-box">☐</span> <span style="opacity:0.5">Display Shift</span> |
 | <span class="flag-box">☐</span> <span style="opacity:0.5">Uses Transcendental</span> |
+| <span class="flag-box">✅</span> **Input Must Be Positive** <span class="flag-tip" tabindex="0" role="note" aria-label="Assumes the input is positive, as a price is. A series that reaches or crosses zero, such as an oscillator or a spread, returns success and an output that may have no meaning. See Notes for what a zero or a negative value does." data-tip="Assumes the input is positive, as a price is. A series that reaches or crosses zero, such as an oscillator or a spread, returns success and an output that may have no meaning. See Notes for what a zero or a negative value does.">i</span> |
 
 </div>
 
