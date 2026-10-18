@@ -10,15 +10,14 @@ The bars an Auto level of the unstable period discards, and the known exceptions
 ## The caller must {#caller}
 
 - <a id="ask"></a>**Read the bars a level adds from the lookback call**, never from the table below ([ask](/spec/lookback/#ask)). The table says what that call computes. Validate against the release you ship ([pin](/spec/versions/#pin)).
-- <a id="tolerance"></a>**Compare two starts with a tolerance, under a level too.** A level bounds what is left of the seed: two starts agree to the level's digits, not to the last bit ([rD3](/spec/versions/#rd3)).
-  - The `E` and `W` counts of [rZ1](/spec/auto-stabilization/#rz1) have no bar to spare. At a long period the first value kept can sit above the level's threshold by the rounding of the arithmetic; the digits the level names still hold.
-  - An output that divides by a state (DX, CMO, STOCHRSI, PPO, PVO) can sit a few times above the threshold at the count.
-  - CVI divides its EMA by the same EMA some bars earlier, and can sit above the threshold for some bars past the count it inherits.
+- <a id="tolerance"></a>**Compare two starts with a tolerance, under a level too.** Allow the level's digits ([target](/spec/auto-stabilization/#target)), not the last bit ([rD3](/spec/versions/#rd3)).
 - <a id="check-exceptions"></a>**Check the [known exceptions](/spec/auto-stabilization/#exceptions) for the functions you use.**
 
 ## Bars a level adds {#bars}
 
-<a id="rz1"></a>**rZ1** Under an Auto level, the function that owns an id adds the count of its row to its lookback. Each row is integer arithmetic, except `SWAK_BP` and `MAMA`: theirs is the `double` expression as written, rounded up. `X` is the level's digit count and `K` its factor: `PREC_4` is `X = 4`, `K = 10`; `PREC_8` is `X = 8`, `K = 19`. `K` is the level's number of e-folds: a `proof` count leaves at most `e^-K` of the seed's weight in the function's state. The level's threshold is `e^-K` of the largest difference two starts show at a setting of 0. `n` is the function's period, `isqrt` the integer square root, `E(n) = ceil(K*n/2)`, `W(n) = ceil(K*(2*n-1)/2)` and `H = 80 + 50*X`.
+<a id="how"></a>**How a level works.** A level only discards leading bars: in a batch call from bar 0, the values it still reports are identical to those at a setting of 0 ([rL6](/spec/lookback/#rl6)). A function with a fixed pole starts from a seed computed from its first bars; two starts differ by that seed against the other's state, and the difference shrinks by the pole each bar: `(n-1)/(n+1)` for EMA, `1-1/n` for Wilder's smoothing. A `proof` count is the bars that take it below `e^-K` of its size: the `E` and `W` rows below are that count for the two poles, rounded up, with no bar to spare at a long period. The cost is the count: under `PREC_4`, ATR(14) starts 135 bars later.
+
+<a id="rz1"></a>**rZ1** Under an Auto level, the function that owns an id adds the count of its row to its lookback. Each row is integer arithmetic, except `SWAK_BP` and `MAMA`: theirs is the `double` expression as written, rounded up. `X` is the level's digit count and `K` its number of e-folds: `PREC_4` is `X = 4`, `K = 10`; `PREC_8` is `X = 8`, `K = 19`. `n` is the function's period, `isqrt` the integer square root, `E(n) = ceil(K*n/2)`, `W(n) = ceil(K*(2*n-1)/2)` and `H = 80 + 50*X`.
 
 | Id | Bars added | Sized by |
 |---|---|---|
@@ -55,6 +54,8 @@ The `E`, `W`, `K*n`, `T3`, `KAMA` and `VIDYA` rows give 0 at a period of 1, wher
 - An output that reaches zero has no leading digit to keep there, and is measured against the size of its swing, two starts differing by about `10^-n` of it: CMO, DX, SWAK_HP, SWAK_BP, HT_PHASOR, HT_SINE, HT_DCPHASE, and the oscillators centred on zero such as MACD, APO, PPO, TRIX and FISHER.
 
 At `PREC_8`, where the rounding of a function's own arithmetic is larger than the level, the last digits keep moving.
+
+<a id="proof-reach"></a>**What a proof covers.** `e^-K` sits 2.2 times below `10^-4` at `PREC_4` and 1.8 times below `10^-8` at `PREC_8`. EMA, RMA, ATR and the DM pair output their state, so the bound holds on the output, up to rounding. A `ratio` output, STOCHRSI and CVI, or one that subtracts two averages (APO, PPO, PVO, MACD), can magnify what is left for a few periods past the count. For these the level's digits are a measured result: each held them at every bar on random-walk and trending series, at periods 14 to 1000.
 
 ## Known exceptions {#exceptions}
 
