@@ -640,7 +640,7 @@ pub struct Output {
     pub flags: Vec<String>,
 }
 
-/// What the sign of a pattern output's value means (spec rW8).
+/// What the sign of a pattern output's value means (spec rW7).
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum PatternSign {
     /// `pattern_bool`: nothing; the values are 0 and 100.

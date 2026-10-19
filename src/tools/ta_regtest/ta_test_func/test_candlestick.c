@@ -685,7 +685,7 @@ typedef TA_RetCode (*PbCdlFn)(int,int,const double*,const double*,const double*,
 typedef TA_RetCode (*PbCdlFnP)(int,int,const double*,const double*,const double*,const double*,double,int*,int*,int*);
 
 /* Functions a pb_check tape proves to write +-200, which is what a
- * TA_OUT_PATTERN_CONFIRM output must be (rule rW8). */
+ * TA_OUT_PATTERN_CONFIRM output must be (rule rW7). */
 #define PB_MAXCONFIRM 8
 static const char *pbConfirmProven[PB_MAXCONFIRM];
 static int         pbNbConfirmProven;
@@ -917,7 +917,7 @@ static ErrorNumber pb_check_totals( void )
  * and 80 their output's flags declare. */
 static int pbFlagClassChecked;
 
-/* The values of level 100 and 80 the output of `name` declares (rule rW8); -1
+/* The values of level 100 and 80 the output of `name` declares (rule rW7); -1
  * when it cannot be looked up. A 200 confirms on a later bar, outside the one
  * decision these scenarios exercise. */
 static int pb_flag_classes( const char *name, int want[4] )
@@ -11668,7 +11668,7 @@ static ErrorNumber test_candle_settings_matrix( const TA_History *history )
 }
 
 /* Every value a candlestick function writes is one its output's flags declare
- * (rule rW8), and a color output's sign is its candle's color.
+ * (rule rW7), and a color output's sign is its candle's color.
  *
  * Each pattern writes its own literals, so nothing but a sweep holds them to the
  * metadata. The bars are quantized to half ticks, which is what makes equal
@@ -11725,7 +11725,7 @@ static void cvs_build_series( unsigned int seed )
    }
 }
 
-/* Whether the output's flags declare v (rule rW8). */
+/* Whether the output's flags declare v (rule rW7). */
 static int cvs_declared( TA_OutputFlags f, int v )
 {
    int level = v < 0 ? -v : v;

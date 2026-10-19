@@ -28,7 +28,7 @@ One candle at index i. Hit when all hold: (1) short real body: real body < the B
 
 ## Output Values
 
-How to read these values from the output's flags: [rW8](/spec/inputs-outputs/#rw8).
+How to read these values from the output's flags: [rW7](/spec/inputs-outputs/#rw7).
 
 | Value | Meaning |
 |-------|---------|

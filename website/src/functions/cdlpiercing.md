@@ -24,7 +24,7 @@ Two-candle pattern: a long black candle followed by a long white candle that ope
 
 ## Output Values
 
-How to read these values from the output's flags: [rW8](/spec/inputs-outputs/#rw8).
+How to read these values from the output's flags: [rW7](/spec/inputs-outputs/#rw7).
 
 | Value | Meaning |
 |-------|---------|

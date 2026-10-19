@@ -85,7 +85,7 @@ fn the_other_rejections_keep_their_own_codes() {
     let core = Core::new();
     let data = series(252);
 
-    // A one-bar history is inside the index domain: that is rS8's business.
+    // A one-bar history is inside the index domain: that is rS7's business.
     assert_eq!(
         core.sma_open(&data[..1], 30).err(),
         Some(RetCode::InsufficientHistory)
@@ -206,7 +206,7 @@ fn the_fill_output_bound_holds_on_every_tier() {
     );
 }
 
-/// A history too short to produce anything must still reach rS8. The capacity
+/// A history too short to produce anything must still reach rS7. The capacity
 /// bound floors at zero for exactly this reason: `historyLen - lookback` is
 /// negative there, and the caller's mistake is the history, not the buffer.
 #[test]
@@ -229,7 +229,7 @@ fn a_short_history_reaches_the_warm_up_check_not_the_capacity_one() {
     assert_eq!(
         core.sma_open_and_fill(&data[..lb], 30, &mut one).err(),
         Some(RetCode::InsufficientHistory),
-        "a history one short of lookback + 1 is rS8 for any output that is there"
+        "a history one short of lookback + 1 is rS7 for any output that is there"
     );
 
     // An empty output is an absent one, short history or not.

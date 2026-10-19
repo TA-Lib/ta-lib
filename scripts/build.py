@@ -173,7 +173,7 @@ def show_help():
     check-stream-retcodes
                         Verify every history-length arm, in all four backends,
                         answers its own code: TA_INSUFFICIENT_HISTORY for a
-                        short history (rS8), TA_OUT_OF_RANGE_START_INDEX for an
+                        short history (rS7), TA_OUT_OF_RANGE_START_INDEX for an
                         empty one (rS1). Pure text; also run as part of
                         regen-check.
     check-source-lists  Verify the CMake and autotools ta_regtest source
@@ -656,7 +656,7 @@ def regen_check(root_dir: str) -> int:
     if not check_regtest_source_lists(root_dir):
         return 1
 
-    print("\n=== History-length return codes (rules rS1 and rS8) ===")
+    print("\n=== History-length return codes (rules rS1 and rS7) ===")
     if not check_stream_retcodes(root_dir):
         return 1
 

@@ -7806,7 +7806,7 @@ static void xlang_tier_self_check(XlangCtx *ctx, const TA_FuncInfo *funcInfo,
     memset(out, 0, sizeof(*out));
     int rejected = (lookbackVerdict < 0);
     /* Streaming carries an extra rejection axis batch/lookback do NOT share:
-     * rS8 (https://ta-lib.org/spec/streaming/#rs8): Open and OpenAndFill
+     * rS7 (https://ta-lib.org/spec/streaming/#rs7): Open and OpenAndFill
      * reject outright (TA_INSUFFICIENT_HISTORY) when the fixed LB_TIER_N-bar
      * buffer holds fewer than lookback + 1 bars, where batch just returns a
      * coherent EMPTY success. A lookback the params accept but the buffer

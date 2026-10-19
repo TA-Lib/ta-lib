@@ -16,7 +16,7 @@ Nothing here is checked unless the item says so. A call that breaks an unchecked
 - <a id="finite-inputs"></a>**Pass only finite values in a series.** A NaN or infinity in a bar a call reads ([rL1](/spec/lookback/#rl1)), or inside the history a stream opens on, is not detected, and nothing is promised about the output or about a handle opened from it. Clean or split the series first. A single bar passed to `Update` or `Peek` is checked ([rU3](/spec/streaming/#ru3)).
 - <a id="input-domain"></a>**Expect no promise beyond `TA_REAL_MIN` to `TA_REAL_MAX`** (±3e37). This is the tested domain, not a limit: nothing checks it, and a value outside it is computed but nothing is promised about the result.
 - <a id="overflow"></a>**Expect no overflow detection.** A running sum, a smoothed value or a ratio against a nearly flat window can leave the range of a double on bars that are each finite. Past that point nothing is defined: not the output, not the return code, not a stream handle's state. Open a new handle rather than keep one that went through it.
-- <a id="no-overlap"></a>**Do not overlap buffers**, except an output placed whole on an input ([rW7](/spec/inputs-outputs/#rw7)). Partial overlap, such as the same memory from a different start, is not detected in C and can return `TA_SUCCESS` with wrong values. An output over an input of another element type is not detected in C either.
+- <a id="no-overlap"></a>**Do not overlap buffers**, except an output placed whole on an input ([rW6](/spec/inputs-outputs/#rw6)). Partial overlap, such as the same memory from a different start, is not detected in C and can return `TA_SUCCESS` with wrong values. An output over an input of another element type is not detected in C either.
 
 ## What a call takes
 
@@ -38,23 +38,23 @@ An MA-type parameter accepts every `MAType` member, and a release may add member
 
 <a id="rw2"></a>**rW2** A valid range that ends before the lookback (`endIdx < lookback`) succeeds with `count` 0: no error, no values. Test `count`, not `begIdx`.
 
-<a id="rw3"></a>**rW3** Nothing in an output past `count` is written, except where that output is also an input ([rW7](/spec/inputs-outputs/#rw7)). No native API pads the warm-up with NaN or any other fill value.
+<a id="rw3"></a>**rW3** Nothing in an output past `count` is written, except where that output is also an input ([rW6](/spec/inputs-outputs/#rw6)). No native API pads the warm-up with NaN or any other fill value.
 
 <a id="rw4"></a>**rW4** What an integer output holds:
 
-- **Pattern outputs** (every `CDL*` output, among others): [rW8](/spec/inputs-outputs/#rw8).
+- **Pattern outputs** (every `CDL*` output, among others): [rW7](/spec/inputs-outputs/#rw7).
 - **Index outputs** ([MININDEX](/functions/minindex), [MAXINDEX](/functions/maxindex), [MINMAXINDEX](/functions/minmaxindex)): the position of a bar in the input passed, not relative to `startIdx` or `begIdx`. Of several tied bars it names the most recent.
 - **Other integer outputs** (for example [HT_TRENDMODE](/functions/ht_trendmode)): as their function page says.
 
-<a id="rw6"></a>**rW6** A function whose [metadata flags](/spec/abstract/#flags) include `TA_FUNC_FLG_NAN_INF_OUT` ("Can Output NaN or ±Inf" on its function page) can write NaN or ±Inf in a successful call on ordinary finite input. The Notes on its function page say when.
+<a id="rw5"></a>**rW5** A function whose [metadata flags](/spec/abstract/#flags) include `TA_FUNC_FLG_NAN_INF_OUT` ("Can Output NaN or ±Inf" on its function page) can write NaN or ±Inf in a successful call on ordinary finite input. The Notes on its function page say when.
 
 ## Computing in place {#aliasing}
 
-<a id="rw7"></a>**rW7** In a batch call, an output may be the very buffer of an input of the same element type: whole buffer, the same start, and in C# the same span. The outputs are bit-identical to a call with separate buffers. Afterwards, in that buffer, the elements at `[0, count)` hold the output, the elements at `[count, endIdx]` may hold any value, because the call may use them as scratch space for intermediate results, and the elements after `endIdx` keep their input values. The same buffer is the same pointer in C, the same array in Java, and in C# an equal span, of the same start and length. Rust's safe code cannot express it.
+<a id="rw6"></a>**rW6** In a batch call, an output may be the very buffer of an input of the same element type: whole buffer, the same start, and in C# the same span. The outputs are bit-identical to a call with separate buffers. Afterwards, in that buffer, the elements at `[0, count)` hold the output, the elements at `[count, endIdx]` may hold any value, because the call may use them as scratch space for intermediate results, and the elements after `endIdx` keep their input values. The same buffer is the same pointer in C, the same array in Java, and in C# an equal span, of the same start and length. Rust's safe code cannot express it.
 
 ## Pattern outputs {#patterns}
 
-<a id="rw8"></a>**rW8** A pattern output writes 0 or a sign times a level. Its [metadata flags](/spec/abstract/#flags) say which values it writes and what they mean, and the Output Values table on its function page says what each value means for that pattern.
+<a id="rw7"></a>**rW7** A pattern output writes 0 or a sign times a level. Its [metadata flags](/spec/abstract/#flags) say which values it writes and what they mean, and the Output Values table on its function page says what each value means for that pattern.
 
 - **The values.** The sign flags `TA_OUT_POSITIVE` and `TA_OUT_NEGATIVE` give every sign times every level; `TA_OUT_ZERO` adds 0. Nothing else is written. An output with none of the three flags declares no values. The levels are 100, plus 80 with `TA_OUT_PATTERN_WEAK` and 200 with `TA_OUT_PATTERN_CONFIRM`. 0 means no pattern on that bar.
 - **The sign.**

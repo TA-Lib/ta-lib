@@ -457,7 +457,7 @@ typedef enum
   TA_STREAM_FINITE_SETUP_FAILED      = 1594,
   TA_STREAM_FINITE_VACUOUS           = 1595,
 
-  /* Streaming short-history rejection (rule rS8 / TA_INSUFFICIENT_HISTORY). */
+  /* Streaming short-history rejection (rule rS7 / TA_INSUFFICIENT_HISTORY). */
   TA_STREAM_SHORT_HISTORY_WRONG_CODE = 1596,
   TA_STREAM_SHORT_HISTORY_ACCEPTED   = 1597,
   TA_STREAM_SHORT_HISTORY_CONTROL    = 1598,
@@ -613,7 +613,7 @@ typedef enum
   TA_TRANSCENDENTAL_REF_FAIL         = 1722,
   TA_TRANSCENDENTAL_REF_VACUOUS      = 1723,
 
-  /* rB8 and rB9: a failed allocation and an internal error reach the caller. */
+  /* rB7 and rB8: a failed allocation and an internal error reach the caller. */
   TA_REGTEST_ALLOC_FAIL_NOT_REPORTED = 1724,
   TA_REGTEST_ALLOC_FAIL_UNARMED      = 1725,
   TA_REGTEST_INTERNAL_ERROR_NOT_REPORTED = 1726,

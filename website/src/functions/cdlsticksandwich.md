@@ -24,7 +24,7 @@ A three-candle bullish reversal pattern: two black candles (1st and 3rd) sandwic
 
 ## Output Values
 
-How to read these values from the output's flags: [rW8](/spec/inputs-outputs/#rw8).
+How to read these values from the output's flags: [rW7](/spec/inputs-outputs/#rw7).
 
 | Value | Meaning |
 |-------|---------|

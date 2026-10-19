@@ -53,8 +53,8 @@ retired footnote leaves a gap, so a citation of `[4]` keeps its meaning.
 | rB4 | [absent argument](https://ta-lib.org/spec/errors/#rb4) | ✅ | ✅<br>[1] | ✅ | ✅<br>[2] |
 | rB5 | [buffer length](https://ta-lib.org/spec/errors/#rb5) | ⚠️<br>[3] | ✅ | ✅ | ✅ |
 | rB6 | [one buffer, two outputs](https://ta-lib.org/spec/errors/#rb6) | ✅ | ✅ | ✅ | ✅ |
-| rB8 | [allocation failure](https://ta-lib.org/spec/errors/#rb8) | ✅<br>[24] | —<br>[24] | —<br>[24] | —<br>[24] |
-| rB9 | [internal error](https://ta-lib.org/spec/errors/#rb9) | ✅<br>[25] | —<br>[25] | ✅<br>[25] | ✅<br>[25] |
+| rB7 | [allocation failure](https://ta-lib.org/spec/errors/#rb7) | ✅<br>[24] | —<br>[24] | —<br>[24] | —<br>[24] |
+| rB8 | [internal error](https://ta-lib.org/spec/errors/#rb8) | ✅<br>[25] | —<br>[25] | ✅<br>[25] | ✅<br>[25] |
 
 [1] Rust slices cannot be null: an empty one is the absent argument. What C
 writes through a pointer (the index/count pair, a stream handle) is returned
@@ -71,7 +71,7 @@ for a stream's history.
 only. Rust, Java and C# allocate through their runtime and have no code for it.
 
 [25] C: `testInternalErrorReported` (`test_internals.c`) trips an Abstract API
-guard on a corrupted holder. No generated guard is reachable (rationale rB9),
+guard on a corrupted holder. No generated guard is reachable (rationale rB8),
 so Java's `InternalFailureTest` and C#'s `BatchApiTest` check the mappers both
 tiers throw through. Rust's `RetCode::InternalError` has no field for an id.
 
@@ -85,7 +85,7 @@ tiers throw through. Rust's `RetCode::InternalError` has no field for an id.
 | rS4 | [absent argument](https://ta-lib.org/spec/streaming/#rs4) | ✅ | ✅<br>[1] | ✅ | ✅<br>[2] |
 | rS5 | [buffer length](https://ta-lib.org/spec/streaming/#rs5) | ⚠️<br>[3] | ✅ | ✅ | ✅ |
 | rS6 | [aliasing](https://ta-lib.org/spec/streaming/#rs6) | ✅ | —<br>[22] | ✅ | ✅ |
-| rS8 | [short history](https://ta-lib.org/spec/streaming/#rs8) | ✅ | ✅ | ✅ | ✅ |
+| rS7 | [short history](https://ta-lib.org/spec/streaming/#rs7) | ✅ | ✅ | ✅ | ✅ |
 
 The openers do not scan the history for non-finite values (rationale: finite
 inputs).
@@ -259,7 +259,7 @@ for each. Java `anEmptyOutputIsAnAbsentOne` and C#
 `tests/stream_open_contract.rs`. An empty input was already refused by the
 length rule.
 
-rW7: `checkInPlaceAliasCorrect` (`test_abstract.c`),
+rW6: `checkInPlaceAliasCorrect` (`test_abstract.c`),
 `anOutputOnItsInputAnswersTheSame` (Java's `MetadataTest`) and
 `AnOutputOnItsInputAnswersTheSame` (C#'s `MetadataTest`) place each real output
 on each real input component of every function and require the answer of the
@@ -278,7 +278,7 @@ rP5: `arg_order_suite.rs` holds every committed batch declaration, C's
 (`docs_site.rs`) fail `generate` when a function page's Inputs, Parameters or
 Outputs list differs from the call signature in name or order.
 
-rW8: `check_flags` (`parser/yaml.rs`) fails `generate` on a pattern output
+rW7: `check_flags` (`parser/yaml.rs`) fails `generate` on a pattern output
 whose flags break its rules, and `validate_output_values` (`docs_site.rs`) on an
 Output Values table that differs from the values the flags declare.
 `test_candle_value_set` (`test_candlestick.c`) holds every value a candlestick
@@ -311,21 +311,21 @@ step above the lower bound. A holder answers the index codes itself, so the
 order of the public entry's own index checks stays with
 `rust_public_entry_orders_the_argument_contract`.
 
-rB9's band: `testEnumValueContract` (`test_internals.c`) requires
+rB8's band: `testEnumValueContract` (`test_internals.c`) requires
 `TA_SetRetCodeInfo` to name each value from 5000 to 5999 `TA_INTERNAL_ERROR`,
 and `TA_UNKNOWN_ERR` for every value from 0 to 0xFFFF that is not a pinned
 member and for four values outside that walk.
 
 ### Stream opening conditions
 
-rS1, rS2, rS4, rS5 and rS8 are mapped below; rS3 is driven by the parameter
+rS1, rS2, rS4, rS5 and rS7 are mapped below; rS3 is driven by the parameter
 leg of `test_open_contract.c` over the C openers; rS6 is mapped only for one buffer
 passed as two outputs: `testBatchArgumentContract` passes one buffer as
 ACCBANDS's first two `OpenAndFill` outputs on a history of lookback bars
-(`TA_BAD_PARAM`), with a separate-outputs control answering rS8.
+(`TA_BAD_PARAM`), with a separate-outputs control answering rS7.
 
-`testStreamShortHistory` drives rS1, rS2's rejecting side and rS8 in C: 9, 3 and 8
-rejections, with rS8's 16 controls. Three of rS1's cases are *also* an absent
+`testStreamShortHistory` drives rS1, rS2's rejecting side and rS7 in C: 9, 3 and 8
+rejections, with rS7's 16 controls. Three of rS1's cases are *also* an absent
 argument, which is what makes them about the order and not only the code.
 `testBatchArgumentContract` drives rS4 with rB4's own argument shapes plus the
 handle: 14 rejections and 5 controls, counted apart from rB4's. `BatchApiTest`
@@ -335,14 +335,14 @@ the condition is a zero-length span and so is rS1. In Rust
 asserts `BAD_PARAM`, not only the exception type, at each rS4 rejection and at
 an `OpenAndFill` output placed on its input (rS6).
 
-`scripts/check_stream_retcodes.py` carries rS1 and rS8 over the whole generated
+`scripts/check_stream_retcodes.py` carries rS1 and rS7 over the whole generated
 corpus in all four backends; a probe names one function, and this is what covers
 the rest. It reads the *core's* arm, which in Java and C# the public frame makes
 unreachable, so those two frames are covered corpus-wide by
 `java_public_openers_check_arguments_then_the_index_pair` and
 `csharp_public_openers_reject_an_empty_history_as_an_index_fault` instead.
-`an_opener_never_answers_the_code_its_sub_call_handed_back` pins rS8 for composed
-openers in the three ported backends; C is outside that sweep (rationale rS8).
+`an_opener_never_answers_the_code_its_sub_call_handed_back` pins rS7 for composed
+openers in the three ported backends; C is outside that sweep (rationale rS7).
 
 rS5 is probed from **both sides** in each of the three backends that can express
 it (an exactly sized output accepted and filled, one element shorter rejected),
@@ -373,7 +373,7 @@ rH9: `test_open_contract.c` requires `TA_FUNC_FLG_STREAM` on every function
 
 A bar whose output is not finite: `dz_stream` (`test_div_zero.c`) and the
 streaming halves of the Rust, Java and C# DivZero tests drive DIV, which
-carries the flag rW6 names, through `Peek` and `Update` and require success,
+carries the flag rW5 names, through `Peek` and `Update` and require success,
 the value and the bar count.
 
 ### rU3
@@ -642,7 +642,7 @@ when a call does not return `TA_SUCCESS`, so a caller reads them after
 - Every other rejection leaves both as the caller had them. The aim is one
   write of the pair, at exit, on success; a body that still writes it earlier
   does so after its last argument check.
-- Nothing holds after rB8 or rB9: some bodies zero the pair on those exits,
+- Nothing holds after rB7 or rB8: some bodies zero the pair on those exits,
   others leave it.
 
 Coverage, each call painting the pair with a sentinel first: every `TA_CallFunc`
@@ -723,7 +723,7 @@ the call faults inside the algorithm with the output already partly written.
 Behind Rust's check the same bound is asserted for LLVM: a panic, never memory
 corruption, since the crate forbids `unsafe`.
 
-### rB6, rW7: overlap
+### rB6, rW6: overlap
 
 Decided in #225: the library detects buffer identity and nothing finer. The four
 backends do not even agree on whether a partial overlap can exist, so a stronger
@@ -773,14 +773,14 @@ and stays ahead of the history check in every language. If uniformity is ever
 preferred over the extra safety, removing it is the change, not adding the check
 elsewhere.
 
-rW7 is supported, not tolerated: several bodies are written for it and elect
+rW6 is supported, not tolerated: several bodies are written for it and elect
 their scratch by testing for exactly that case. That election is why STOCH,
 STOCHF and KDJ leave intermediate values past `count` when their first output is
 in place (ruled 2026-10-03: accepted). The scratch spans the values the
 smoothing consumes and never reaches past `endIdx`, which is the limit the
 public rule states.
 
-### rB8: allocation failure
+### rB7: allocation failure
 
 `TA_ALLOC_ERR` is returned, and that is the entire promise. Nothing is tested
 past it. The library will not abort on the caller's behalf; that choice is the
@@ -790,7 +790,7 @@ continue from. Every `TA_ALLOC_ERR` the library returns is a null check on
 the handle out-parameter is still set to NULL on that path, which the public
 page does not promise.
 
-### rB9: internal errors
+### rB8: internal errors
 
 Some batch functions per backend carry a guard, and none is reachable today:
 they test a period below 1, which rB3's declared floor already refuses. A stream
@@ -799,7 +799,7 @@ rolling-extremum span it captures, each checking that span against the history i
 was handed, and a dispatching or dual-mode opener one for the arm its own `Open`
 has already refused. A composed C `Update` can return one after a sub-stream has
 advanced (`TA_APO_StepImpl` steps its first sub-stream before the second can
-fail), which is why the public rH5 excludes rB9.
+fail), which is why the public rH5 excludes rB8.
 
 `ta_codegen/input/internal_error_ids.yaml` maps a function-tier id back to the
 function and the state field it guards. The Abstract API hand-allocates
@@ -860,9 +860,9 @@ series was reported as an output-capacity fault.
 
 The output half is rB5's produced count read over the same range, which collapses
 it to `historyLen - lookback`, never the width of the history. It has no
-legitimate zero case the way rB5 does: rS8 refuses a history shorter than
+legitimate zero case the way rB5 does: rS7 refuses a history shorter than
 `lookback + 1`, so a fill that runs writes at least one value. A short history is
-floored to zero so that it reaches rS8; a lookback of `-1` is not floored but
+floored to zero so that it reaches rS7; a lookback of `-1` is not floored but
 raised, which is what keeps rS3 ahead of the buffer rules, as the batch tier's
 `clampedStart` does.
 
@@ -883,20 +883,20 @@ margin is an accident of every body's arithmetic that nothing states or asserts,
 and supporting in-place would promise it for every function in four backends,
 permanently.
 
-### rS8: short history
+### rS7: short history
 
 The warm-up check comes last because it is the one thing the batch tier has no
 analogue for. All four converge on `TA_INSUFFICIENT_HISTORY`: across every
 streaming function in every backend, each short-history arm reports this code
 and no other. What they answered before the code existed is Appendix D item 8.
 
-rS8 is also what a **composed** opener answers when a sub-call succeeds with zero
+rS7 is also what a **composed** opener answers when a sub-call succeeds with zero
 elements: the batch tier may report that as an empty range, but an opener has no
 handle to mint over a range holding nothing. C is outside the sweep that pins it:
 no fold pass runs for C, so its transcribed guard still tests both halves and
 returns the sub-call's own code. No opener answers `TA_SUCCESS` over zero
 elements today, but a composed indicator that made one would hand C's caller
-`TA_SUCCESS` and a NULL handle where the other three answer rS8.
+`TA_SUCCESS` and a NULL handle where the other three answer rS7.
 
 ### rU4, rH5, rH6: advancing
 
@@ -1037,7 +1037,7 @@ implemented but not covered by a CI probe; the rule's own footnote says which.
 | ~~5~~ | | | *Withdrawn, not fixed.* Partial output/input overlap in C. Decided in #225: detection stops at buffer identity, and partial overlap is the caller's to avoid. |
 | ~~6~~ | Java | rS4 | *Fixed.* A null history, or a null `OpenAndFill` output, yielded a raw JVM exception from inside the algorithm. The public openers now check every argument, and item 13 fixed the order they are checked in. |
 | ~~7~~ | C# | rS1 | *Fixed.* The empty-history *message* omitted the cross-language `<N> open: ` prefix. Taken with item 13. |
-| ~~8~~ | all | rS8 | *Fixed.* `TA_RetCode` had **no member** for "history shorter than the lookback", so C and Rust fell back to the catch-all and Java and C# borrowed `TA_OUT_OF_RANGE_END_INDEX`. `TA_INSUFFICIENT_HISTORY = 17` was appended and all four now report it, which leaves rS2 as the opening tier's only producer of `TA_OUT_OF_RANGE_END_INDEX`. |
+| ~~8~~ | all | rS7 | *Fixed.* `TA_RetCode` had **no member** for "history shorter than the lookback", so C and Rust fell back to the catch-all and Java and C# borrowed `TA_OUT_OF_RANGE_END_INDEX`. `TA_INSUFFICIENT_HISTORY = 17` was appended and all four now report it, which leaves rS2 as the opening tier's only producer of `TA_OUT_OF_RANGE_END_INDEX`. |
 | ~~9~~ | Rust, Java, C# | rS5 | *Fixed.* `OpenAndFill` validated no output capacity, so an undersized output faulted inside the fill with the buffer already partly written. The public frame now bounds every output by `historyLen - <N>_Lookback(...)`. (C still cannot: no sizes.) |
 | ~~10~~ | C | | *Obsolete.* `TA_SetCompatibility` accepted any value; #388 removed the behaviour it selected, and the pair is kept declared and inert. |
 | ~~11~~ | C#, Rust | rB6 | *Fixed.* Two distinct **empty** output buffers were rejected as aliased in C# and Rust and accepted in C and Java, measured on `ACCBANDS(0, 251, …, optInTimePeriod 253, …)` with three distinct zero-length outputs. Both then accepted them (#262). Superseded 2026-10-02: an empty output is absent (rB4), so the call is refused in Rust, Java and C#. |

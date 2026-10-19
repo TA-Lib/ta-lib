@@ -12,8 +12,8 @@ What a rejected call reports, in C's spelling. How each code reaches a Rust, Jav
 - <a id="branch-on-code"></a>**Branch on the code, never on a message.** Java's and C#'s exceptions carry a message for people; its text is not specified. Rust's `Err(RetCode)` carries none.
 - <a id="one-fault"></a>**Fix one fault at a time.** When a call breaks several conditions, which one it reports is not specified.
 - <a id="failed-range"></a>**In C, ignore the range after a failure.** `*outBegIdx` and `*outNBElement` are unspecified when a call does not return `TA_SUCCESS`. A handle out-parameter: [ownership](/spec/streaming/#ownership).
-- <a id="internal-band"></a>**In C, test internal errors as a range.** C returns a value from 5000 to 5999 ([rB9](/spec/errors/#rb9)), so compare against the range, never `== TA_INTERNAL_ERROR`.
-- <a id="stop-on-alloc"></a>**Stop after an allocation failure.** Nothing after [rB8](/spec/errors/#rb8) is defined: not the outputs, not the range, not a stream handle.
+- <a id="internal-band"></a>**In C, test internal errors as a range.** C returns a value from 5000 to 5999 ([rB8](/spec/errors/#rb8)), so compare against the range, never `== TA_INTERNAL_ERROR`.
+- <a id="stop-on-alloc"></a>**Stop after an allocation failure.** Nothing after [rB7](/spec/errors/#rb7) is defined: not the outputs, not the range, not a stream handle.
 
 ## Return codes {#return-codes}
 
@@ -23,11 +23,11 @@ The codes a batch, lookback or stream call can return:
 |---:|---|---|
 | 0 | `TA_SUCCESS` | Every call that succeeds, including a batch range that ends before the lookback (count 0, [rW2](/spec/inputs-outputs/#rw2)). |
 | 2 | `TA_BAD_PARAM` | A rejected parameter, an absent or too-short buffer, one buffer used twice, a non-finite bar: most [batch](/spec/errors/#batch), [opening](/spec/streaming/#opening) and [advancing](/spec/streaming/#advancing) conditions; Rust's lookback ([rL2](/spec/lookback/#rl2)); the failed settings calls in C and Rust ([rT2](/spec/settings-threads/#rt2)). |
-| 3 | `TA_ALLOC_ERR` | A C call that allocates, when the allocation fails ([rB8](/spec/errors/#rb8)). |
+| 3 | `TA_ALLOC_ERR` | A C call that allocates, when the allocation fails ([rB7](/spec/errors/#rb7)). |
 | 12 | `TA_OUT_OF_RANGE_START_INDEX` | [rB1](/spec/errors/#rb1), [rS1](/spec/streaming/#rs1). |
 | 13 | `TA_OUT_OF_RANGE_END_INDEX` | [rB2](/spec/errors/#rb2), [rS2](/spec/streaming/#rs2), [rU4](/spec/streaming/#ru4). |
-| 17 | `TA_INSUFFICIENT_HISTORY` | Stream openers only ([rS8](/spec/streaming/#rs8)). A batch call never returns it. |
-| 5000 to 5999 | `TA_INTERNAL_ERROR` + id | [rB9](/spec/errors/#rb9). |
+| 17 | `TA_INSUFFICIENT_HISTORY` | Stream openers only ([rS7](/spec/streaming/#rs7)). A batch call never returns it. |
+| 5000 to 5999 | `TA_INTERNAL_ERROR` + id | [rB8](/spec/errors/#rb8). |
 
 The Abstract API returns codes of its own: [Abstract API and Metadata](/spec/abstract/#codes). The remaining members of `TA_RetCode`, declared in `ta_defs.h`, are returned by nothing.
 
@@ -37,7 +37,7 @@ The Abstract API returns codes of its own: [Abstract API and Metadata](/spec/abs
 
 <a id="re2"></a>**rE2** One code across languages. A call that breaks one condition of the batch or stream tables gets that condition's code from every language that can express and detect it.
 
-<a id="re3"></a>**rE3** A rejected call writes no output buffer. Nothing is promised after [rB8](/spec/errors/#rb8) or [rB9](/spec/errors/#rb9).
+<a id="re3"></a>**rE3** A rejected call writes no output buffer. Nothing is promised after [rB7](/spec/errors/#rb7) or [rB8](/spec/errors/#rb8).
 
 ## Batch conditions {#batch}
 
@@ -51,11 +51,11 @@ A batch call accepts `0 <= startIdx <= endIdx <= TA_INDEX_MAX` ([`TA_INDEX_MAX`]
 | <a id="rb4"></a>**rB4** | A required argument is absent: an input, an output, or in C a range out-parameter. | `TA_BAD_PARAM` | none |
 | <a id="rb5"></a>**rB5** | A buffer is too short: an input does not reach `endIdx` ([input length](/spec/inputs-outputs/#input-length)), or an output cannot hold the count the call produces ([output size](/spec/inputs-outputs/#output-size)). | `TA_BAD_PARAM` | none; C cannot detect it |
 | <a id="rb6"></a>**rB6** | Two outputs are the same buffer. | `TA_BAD_PARAM` | Rust (safe code) |
-| <a id="rb8"></a>**rB8** | A memory allocation failed. | `TA_ALLOC_ERR` (C only) | none |
-| <a id="rb9"></a>**rB9** | The library found an inconsistency in its own state. | `TA_INTERNAL_ERROR` + id | none |
+| <a id="rb7"></a>**rB7** | A memory allocation failed. | `TA_ALLOC_ERR` (C only) | none |
+| <a id="rb8"></a>**rB8** | The library found an inconsistency in its own state. | `TA_INTERNAL_ERROR` + id | none |
 
 **rB4.** An input or output is absent when it is `NULL` in C, `null` or an empty array in Java, an empty slice in Rust, and an empty span in C# (a `null` array becomes one). An absent one fails whatever the call would produce, even a range that produces no values ([rW2](/spec/inputs-outputs/#rw2)).
 
-**rB8.** C only: Rust, Java and C# allocate through their runtime and have no code for it.
+**rB7.** C only: Rust, Java and C# allocate through their runtime and have no code for it.
 
-**rB9.** A bug in TA-Lib, not in the call: report it, with the number in C. C's `TA_SetRetCodeInfo` names every value from 5000 to 5999 `TA_INTERNAL_ERROR`, and a value that is not a `TA_RetCode` member `TA_UNKNOWN_ERR`. Rust, Java and C# report `TA_INTERNAL_ERROR` without an id.
+**rB8.** A bug in TA-Lib, not in the call: report it, with the number in C. C's `TA_SetRetCodeInfo` names every value from 5000 to 5999 `TA_INTERNAL_ERROR`, and a value that is not a `TA_RetCode` member `TA_UNKNOWN_ERR`. Rust, Java and C# report `TA_INTERNAL_ERROR` without an id.

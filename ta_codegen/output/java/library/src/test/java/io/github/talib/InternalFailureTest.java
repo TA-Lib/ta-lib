@@ -49,7 +49,7 @@
 package io.github.talib;
 
 /**
- * Rule rB9 past the guard: a body's {@code INTERNAL_ERROR} reaches the caller as
+ * Rule rB8 past the guard: a body's {@code INTERNAL_ERROR} reaches the caller as
  * a {@link TALibStateException} carrying the code, from the batch and the
  * streaming tier. No shipped guard is reachable, so this calls the mappers both
  * tiers throw through.

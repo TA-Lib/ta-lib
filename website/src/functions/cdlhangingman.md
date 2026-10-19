@@ -25,7 +25,7 @@ Single candle with a small real body, a long lower shadow, and little/no upper s
 
 ## Output Values
 
-How to read these values from the output's flags: [rW8](/spec/inputs-outputs/#rw8).
+How to read these values from the output's flags: [rW7](/spec/inputs-outputs/#rw7).
 
 | Value | Meaning |
 |-------|---------|

@@ -2555,7 +2555,7 @@ fn emit_cur_capture(o: &mut String, outputs: &[String], source: CurSource) {
 
 /// The reject-conversion tail shared by `OpenInternal` / `OpenAndFill`.
 ///
-/// Rule rS8 is answered with its counts; every other code goes through
+/// Rule rS7 is answered with its counts; every other code goes through
 /// `Core.StreamFailure`, which single-sources the `"<NAME> <verb>: "` prefix the
 /// stream gate greps. `anchor` is the seam's `startIdx`, or `None` at a public
 /// frame (anchor 0).
@@ -2710,7 +2710,7 @@ fn history_length_guards(func: &FuncDef, n: &str, verb: &str) -> String {
 /// frame would have answered, so a short input would read as an output-capacity
 /// fault.
 ///
-/// `Core.OpenFillCount` floors a short history at 0 so that it reaches rS8, and
+/// `Core.OpenFillCount` floors a short history at 0 so that it reaches rS7, and
 /// raises on the `-1` a rejected parameter returns so that rS3 stays ahead of the
 /// buffer rules.
 /// `<N>_Lookback` does its own default substitution, so the raw parameters the

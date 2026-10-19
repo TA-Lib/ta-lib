@@ -924,7 +924,7 @@ public static class BatchApiTest
         Check((int)RetCode.InsufficientHistory == 17, "InsufficientHistory is 17");
         Check((int)RetCode.InternalError == 5000, "InternalError is 5000");
 
-        // rB9 past the guard: no shipped guard is reachable, so the mappers both
+        // rB8 past the guard: no shipped guard is reachable, so the mappers both
         // tiers throw through.
         foreach (var e in new[] { Core.Failure("SMA", RetCode.InternalError),
                                   Core.StreamFailure("SMA", "Update", RetCode.InternalError) })

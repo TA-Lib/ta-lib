@@ -795,7 +795,7 @@ fn emit_open_internal_wrapper_named(
 ///
 /// Each output must hold `historyLen - lookback` values
 /// (<https://ta-lib.org/spec/streaming/#rs5>). The `saturating_sub` is for the
-/// frame's own sake: rS8 has not run yet here, and a short history must reach it
+/// frame's own sake: rS7 has not run yet here, and a short history must reach it
 /// rather than be answered as a capacity fault.
 ///
 /// **The PUBLIC frame, never `<n>_open_and_fill_internal`.** That seam takes an
@@ -2023,7 +2023,7 @@ fn map_return_code(v: &str) -> String {
         // mapping runs BEFORE the cleanup sequence, so the wrapped form is what
         // `ir_cleanup` then rewrites at a folded guard: the surviving
         // `|| count == 0` half used to answer `Err(RetCode::Success)`, and an
-        // opener that produced nothing is rule rS8 (issue #271 item 4).
+        // opener that produced nothing is rule rS7 (issue #271 item 4).
         local if local.starts_with("retCode") => format!("Err({local})"),
         other => panic!("stream open: unmapped return code `{other}`"),
     }

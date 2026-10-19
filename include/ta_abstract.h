@@ -447,7 +447,7 @@ typedef int TA_OptInputFlags;
  *
  * A pattern output writes 0 or sign x level. The sign flags give the signs
  * and the level flags the levels (100 always): the values are every sign times
- * every level, plus 0 when TA_OUT_ZERO is set. Reading them: rule rW8 of the
+ * every level, plus 0 when TA_OUT_ZERO is set. Reading them: rule rW7 of the
  * TA-Lib specification.
  */
 typedef int TA_OutputFlags;

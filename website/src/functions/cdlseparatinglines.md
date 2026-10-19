@@ -28,7 +28,7 @@ Two consecutive candles i-1, i: (1) opposite colors: color(i-1) == -color(i); (2
 
 ## Output Values
 
-How to read these values from the output's flags: [rW8](/spec/inputs-outputs/#rw8).
+How to read these values from the output's flags: [rW7](/spec/inputs-outputs/#rw7).
 
 | Value | Meaning |
 |-------|---------|

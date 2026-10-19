@@ -2099,7 +2099,7 @@ fn emit_extras_and_candle(
 /// `inserts` / `replaced` statement indices survive it.
 ///
 /// `InsufficientHistory` is what the surviving `count == 0` half of a folded
-/// guard answers — an opener that produced nothing is rule rS8, not a success.
+/// guard answers — an opener that produced nothing is rule rS7, not a success.
 /// Spelled as the RetCode member, the same name `map_open_return` hands the
 /// renderer for the body's own early-success returns.
 fn cleanup_open_body(body: &[Statement], registry: &Registry) -> Vec<Statement> {
@@ -2508,7 +2508,7 @@ fn emit_cur_capture(o: &mut String, outputs: &[String], source: CurSource) {
 // Public wrappers
 // ---------------------------------------------------------------------------
 
-/// The reject-conversion tail shared by openInternal / openAndFill: rule rS8
+/// The reject-conversion tail shared by openInternal / openAndFill: rule rS7
 /// with its counts, then `Core.streamFailure` for every other code, which
 /// single-sources the stable message prefix. `anchor` is the seam's
 /// `startIdx`, or `None` at a public frame (anchor 0).

@@ -25,7 +25,7 @@ A three-candle reversal pattern: a long body, then a gapped-away doji, then a bo
 
 ## Output Values
 
-How to read these values from the output's flags: [rW8](/spec/inputs-outputs/#rw8).
+How to read these values from the output's flags: [rW7](/spec/inputs-outputs/#rw7).
 
 | Value | Meaning |
 |-------|---------|

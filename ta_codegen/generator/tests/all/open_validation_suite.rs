@@ -428,7 +428,7 @@ fn java_public_openers_check_arguments_then_the_index_pair() {
 /// the surviving half is the count test — reached with `retCode` holding
 /// `Success`, and the arm returned it. Rust said `Err(RetCode::Success)`, a
 /// contradiction that reached the public `<N>_Open` through `?`; Java and C#
-/// minted a handle over an empty range. Rule rS8 is what that shape is: a
+/// minted a handle over an empty range. Rule rS7 is what that shape is: a
 /// history that cannot produce a value (issue #271 item 4).
 ///
 /// Corpus-wide over the three ported backends, because the sites are spread

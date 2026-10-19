@@ -201,7 +201,7 @@ ErrorNumber test_internals( void )
    return TA_TEST_PASS; /* Success. */
 }
 
-/* Rule rS8: a stream opened on fewer than `lookback + 1` bars reports
+/* Rule rS7: a stream opened on fewer than `lookback + 1` bars reports
  * TA_INSUFFICIENT_HISTORY -- the library's one RECOVERABLE condition.
  *
  * It is worth its own code, and its own probe, because it is the only failure a
@@ -229,7 +229,7 @@ ErrorNumber test_internals( void )
  * ONE MORE BAR must succeed (so the rejection is about the length), and a
  * rejection that is NOT about the length must keep its OWN code -- TA_BAD_PARAM
  * for a spoiled parameter, and for CDLDOJI, which has none to spoil, rS1's
- * TA_OUT_OF_RANGE_START_INDEX. Either way the point is that rS8's code did not
+ * TA_OUT_OF_RANGE_START_INDEX. Either way the point is that rS7's code did not
  * simply swallow every other rejection this tier owns.
  */
 static int shShort, shControl;
@@ -273,7 +273,7 @@ static int shUpper, shEmpty;
       if( rc__ != (otherCode) )                                                \
       {                                                                        \
          printf( "\nFailed: %s bad argument returned %d, expected "             \
-                 "%d -- rS8's code must not swallow the others\n",              \
+                 "%d -- rS7's code must not swallow the others\n",              \
                  name, (int)rc__, (int)(otherCode) );                          \
          return TA_STREAM_SHORT_HISTORY_CONTROL;                               \
       }                                                                        \
@@ -490,7 +490,7 @@ static ErrorNumber testStreamShortHistory( void )
       shEmpty++;
 
       /* Controls. A history of exactly one bar is inside the domain -- it is
-       * rS8's business, not rS1's -- and the handle still answers first. */
+       * rS7's business, not rS1's -- and the handle still answers first. */
       if( TA_SMA_Open( &sst, bars, 1, 30, &v ) != TA_INSUFFICIENT_HISTORY )
       {
          printf( "\nFailed: a one-bar history did not reach the warm-up check\n" );
@@ -576,7 +576,7 @@ static ErrorNumber testStreamShortHistory( void )
  * whole corpus, by `c_batch_prologue_orders_parameters_before_presence` in
  * ta_codegen's own suite.
  *
- * One case per distinct emission shape, matching the rS8 probe above: a plain
+ * One case per distinct emission shape, matching the rS7 probe above: a plain
  * transcribed body (SMA, plus its float twin, which is a separate emission), a
  * composed multi-output (BBANDS), the dispatch tier (MA), the period bank
  * (MAVP), a candlestick with four price legs and an integer output (CDLDOJI),
@@ -829,7 +829,7 @@ static ErrorNumber testBatchArgumentContract( void )
    }
 
    /* Rule rS6 on a history that fills nothing: one buffer passed as two outputs
-    * is still one buffer. The control holds the outputs apart and answers rS8,
+    * is still one buffer. The control holds the outputs apart and answers rS7,
     * so the rejection is the alias guard's and not the history's. The batch
     * half is the sub-lookback leg of test_abstract.c's alias sweep. */
    {
@@ -2137,7 +2137,7 @@ static TA_RetCode circBufferFillFrom0ToSize( int size, int *buffer )
    return TA_SUCCESS;
 }
 
-/* rB8: a real allocation, failed by an address-space limit just above what the
+/* rB7: a real allocation, failed by an address-space limit just above what the
  * process already maps. The probes hold every block the heap can still hand
  * out at the ring's size, so the ring's own request is the one that fails. */
 static ErrorNumber testAllocationFailure( void )
@@ -2212,7 +2212,7 @@ static ErrorNumber testAllocationFailure( void )
    return TA_TEST_PASS;
 }
 
-/* rB9: the library's own state made inconsistent, as only a bug could make it,
+/* rB8: the library's own state made inconsistent, as only a bug could make it,
  * and a guard that finds it. */
 static ErrorNumber testInternalErrorReported( void )
 {

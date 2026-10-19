@@ -109,7 +109,7 @@ What a function or an output supports.
 | Flag | Meaning |
 |---|---|
 | `TA_FUNC_FLG_STREAM` | The function has a streaming API. Every function carries it ([rH9](/spec/streaming/#rh9)). |
-| `TA_FUNC_FLG_CANDLESTICK` | A candlestick pattern function (`CDL*`): its lookback can depend on the candle settings ([rL7](/spec/lookback/#rl7)) and every integer output is a pattern output ([rW8](/spec/inputs-outputs/#rw8)). |
+| `TA_FUNC_FLG_CANDLESTICK` | A candlestick pattern function (`CDL*`): its lookback can depend on the candle settings ([rL7](/spec/lookback/#rl7)) and every integer output is a pattern output ([rW7](/spec/inputs-outputs/#rw7)). |
 | `TA_OUT_NULLABLE` | Deprecated: no output is optional. No function sets it. |
 
 ### Price components {#flags-price}
@@ -134,17 +134,17 @@ What can be said of the values a function writes.
 |---|---|
 | `TA_FUNC_FLG_UNST_PER` | The function owns an unstable-period id ([rL6](/spec/lookback/#rl6), [stability](/spec/lookback/#metadata)). |
 | `TA_FUNC_FLG_PATH_DEP` | Path-dependent: the value at a bar depends on where the range starts, and may never converge ([stability](/spec/lookback/#metadata)). |
-| `TA_FUNC_FLG_NAN_INF_OUT` | A successful call can write NaN or ±Inf on ordinary finite input ([rW6](/spec/inputs-outputs/#rw6)). |
+| `TA_FUNC_FLG_NAN_INF_OUT` | A successful call can write NaN or ±Inf on ordinary finite input ([rW5](/spec/inputs-outputs/#rw5)). |
 | `TA_FUNC_FLG_PERIOD1_IDENTITY` | At a period of 1 every output value is a bit-for-bit copy of `inReal` ([rL8](/spec/lookback/#rl8)). |
 | `TA_FUNC_FLG_USES_TRANSCENDENTAL` | The function calls a transcendental function, so a value may differ ([transcendental functions](/spec/versions/#transcendental)); TA-Lib targets a difference below 1e-9 ([rD2](/spec/versions/#rd2)). Not set on a function that reaches one only when an MA-type parameter selects `MAMA` or `ALMA`. |
 | `TA_FUNC_FLG_POSITIVE_INPUT` | The input must be positive, as a price is. The data is not checked: a series that reaches or crosses zero, such as an oscillator or a spread, gets a successful call and an output that may have no meaning. The function's page says what a zero or a negative value does. |
-| `TA_OUT_POSITIVE` | Positive values occur ([rW8](/spec/inputs-outputs/#rw8)). |
-| `TA_OUT_NEGATIVE` | Negative values occur ([rW8](/spec/inputs-outputs/#rw8)). |
-| `TA_OUT_ZERO` | 0 occurs; on a pattern output, no pattern on that bar ([rW8](/spec/inputs-outputs/#rw8)). |
-| `TA_OUT_PATTERN_BOOL` | A pattern output whose values are 0 and 100 ([rW8](/spec/inputs-outputs/#rw8)). |
-| `TA_OUT_PATTERN_BULL_BEAR` | A pattern output whose sign is a call: + bullish, - bearish ([rW8](/spec/inputs-outputs/#rw8)). |
-| `TA_OUT_PATTERN_WEAK` | Adds level 80: a weaker form of the pattern, on the same bar ([rW8](/spec/inputs-outputs/#rw8)). |
-| `TA_OUT_PATTERN_CONFIRM` | Adds level 200: this bar confirms the output's live pattern ([rW8](/spec/inputs-outputs/#rw8)). |
+| `TA_OUT_POSITIVE` | Positive values occur ([rW7](/spec/inputs-outputs/#rw7)). |
+| `TA_OUT_NEGATIVE` | Negative values occur ([rW7](/spec/inputs-outputs/#rw7)). |
+| `TA_OUT_ZERO` | 0 occurs; on a pattern output, no pattern on that bar ([rW7](/spec/inputs-outputs/#rw7)). |
+| `TA_OUT_PATTERN_BOOL` | A pattern output whose values are 0 and 100 ([rW7](/spec/inputs-outputs/#rw7)). |
+| `TA_OUT_PATTERN_BULL_BEAR` | A pattern output whose sign is a call: + bullish, - bearish ([rW7](/spec/inputs-outputs/#rw7)). |
+| `TA_OUT_PATTERN_WEAK` | Adds level 80: a weaker form of the pattern, on the same bar ([rW7](/spec/inputs-outputs/#rw7)). |
+| `TA_OUT_PATTERN_CONFIRM` | Adds level 200: this bar confirms the output's live pattern ([rW7](/spec/inputs-outputs/#rw7)). |
 
 ### Display hint {#flags-display}
 

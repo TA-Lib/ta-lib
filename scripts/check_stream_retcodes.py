@@ -3,7 +3,7 @@
 
 Two rules, one scan each.
 
-Rule rS8 (https://ta-lib.org/spec/streaming/#rs8): a streaming
+Rule rS7 (https://ta-lib.org/spec/streaming/#rs7): a streaming
 `Open`/`OpenAndFill` given fewer than `lookback + 1` bars reports
 `TA_INSUFFICIENT_HISTORY`. It is the library's one RECOVERABLE condition, so it
 must be distinguishable from `TA_BAD_PARAM`, which always means the call itself
@@ -149,7 +149,7 @@ def check_stream_retcodes(root_dir: str) -> bool:
                 continue
             if wrong:
                 print(f"Error: {label} {shape}: {len(wrong)} short-history arm(s) answer "
-                      f"{catch_all} instead of {expected} (rule rS8):")
+                      f"{catch_all} instead of {expected} (rule rS7):")
                 for w in wrong[:12]:
                     print(f"         {w}")
                 if len(wrong) > 12:
@@ -190,7 +190,7 @@ def check_empty_history_retcodes(root_dir: str) -> bool:
 
 def main() -> int:
     root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    print("Short-history return code (rule rS8) across all four backends:")
+    print("Short-history return code (rule rS7) across all four backends:")
     ok = check_stream_retcodes(root)
     print("Empty-history return code (rule rS1) across all four backends:")
     ok = check_empty_history_retcodes(root) and ok

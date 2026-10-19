@@ -148,8 +148,8 @@ One row per code a function call can report; the number in parentheses is C's, a
 | `TA_OUT_OF_RANGE_START_INDEX` (12) | `OutOfRangeStartIndex` | `TALibIndexException : IndexOutOfBoundsException` | `TALibArgumentOutOfRangeException : ArgumentOutOfRangeException` |
 | `TA_OUT_OF_RANGE_END_INDEX` (13) | `OutOfRangeEndIndex` | `TALibIndexException` | `TALibArgumentOutOfRangeException`; `TALibArgumentException` from `Update`, `Advance` ([rU4](/spec/streaming/#ru4)) |
 | `TA_INSUFFICIENT_HISTORY` (17) | `InsufficientHistory` | `InsufficientHistoryException : TALibArgumentException` | `InsufficientHistoryException : TALibArgumentException` |
-| `TA_INTERNAL_ERROR` (5000, [rB9](/spec/errors/#rb9)) | `InternalError` | `TALibStateException : IllegalStateException` | `TALibInvalidOperationException : InvalidOperationException` |
-| `TA_ALLOC_ERR` (3) | `AllocErr`, never returned ([rB8](/spec/errors/#rb8)) | never thrown | never thrown |
+| `TA_INTERNAL_ERROR` (5000, [rB8](/spec/errors/#rb8)) | `InternalError` | `TALibStateException : IllegalStateException` | `TALibInvalidOperationException : InvalidOperationException` |
+| `TA_ALLOC_ERR` (3) | `AllocErr`, never returned ([rB7](/spec/errors/#rb7)) | never thrown | never thrown |
 
 Failed settings:
 

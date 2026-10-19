@@ -41,7 +41,7 @@ typedef struct
 {
    const TA_FuncInfo *info;
    const TA_OutputParameterInfo *out[MAX_OUT];
-   int pattern[MAX_OUT];           /* a pattern output of rule rW8 */
+   int pattern[MAX_OUT];           /* a pattern output of rule rW7 */
    unsigned int declared[MAX_OUT]; /* 0: the output declares no value or sign */
    unsigned int required[MAX_OUT]; /* what some call of the run must show */
    unsigned int seen[MAX_OUT];

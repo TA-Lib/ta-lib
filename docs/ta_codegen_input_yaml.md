@@ -248,7 +248,7 @@ An unrecognised flag string in any of the three lists fails `generate`.
 | `dot` | Individual dots | `TA_OUT_DOT` |
 | `histogram` | Bar chart / histogram | `TA_OUT_HISTO` |
 
-**Values** (what the values mean: spec rule rW8, `website/src/spec/inputs-outputs/README.md`):
+**Values** (what the values mean: spec rule rW7, `website/src/spec/inputs-outputs/README.md`):
 
 | Flag | Description | C equivalent |
 |------|-------------|--------------|

@@ -1061,7 +1061,7 @@ public class BatchApiTest {
         check(codeOf(() -> Core.DEFAULT.smaOpen(empty, 30)) == RetCode.OUT_OF_RANGE_START_INDEX,
             "an empty history carries OutOfRangeStartIndex");
 
-        // A history of exactly one bar is inside the domain: that is rS8's
+        // A history of exactly one bar is inside the domain: that is rS7's
         // business, and this is what keeps the cases above about EMPTY.
         checkThrows(InsufficientHistoryException.class,
             () -> Core.DEFAULT.smaOpen(new double[1], 30),
@@ -1202,7 +1202,7 @@ public class BatchApiTest {
             "each output is bounded separately", "BBANDS openAndFill", "outRealLowerBand");
         s5Reject++;
 
-        // A history too short to produce anything is still rS8 for any output
+        // A history too short to produce anything is still rS7 for any output
         // that is there: the bound floors at zero rather than going negative.
         checkThrows(InsufficientHistoryException.class,
             () -> Core.DEFAULT.smaOpenAndFill(Arrays.copyOf(in, 29), 30, new double[1]),

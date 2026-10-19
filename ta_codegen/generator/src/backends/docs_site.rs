@@ -139,7 +139,7 @@ fn link_output_values(body: &str) -> String {
     let mut out: Vec<String> = lines.iter().map(|l| (*l).to_string()).collect();
     out.insert(
         start + 1,
-        "\nHow to read these values from the output's flags: [rW8](/spec/inputs-outputs/#rw8).".to_string(),
+        "\nHow to read these values from the output's flags: [rW7](/spec/inputs-outputs/#rw7).".to_string(),
     );
     let mut s = out.join("\n");
     if body.ends_with('\n') {

@@ -14,7 +14,7 @@ The lookback is how many input bars a function consumes before its first output.
 
 ## Definition {#definition}
 
-<a id="rl1"></a>**rL1** The lookback is the number of input bars a function consumes before its first output: over a long enough series read from bar 0, the first output is at bar `lookback` (SMA at period 10 has lookback 9). A batch call reads no bar before `max(startIdx, lookback) - lookback`: changing an earlier bar changes nothing the call writes. Where a batch call's output starts, and how many values it writes: [rW1](/spec/inputs-outputs/#rw1), [rW2](/spec/inputs-outputs/#rw2). How much history a stream needs: [rS8](/spec/streaming/#rs8).
+<a id="rl1"></a>**rL1** The lookback is the number of input bars a function consumes before its first output: over a long enough series read from bar 0, the first output is at bar `lookback` (SMA at period 10 has lookback 9). A batch call reads no bar before `max(startIdx, lookback) - lookback`: changing an earlier bar changes nothing the call writes. Where a batch call's output starts, and how many values it writes: [rW1](/spec/inputs-outputs/#rw1), [rW2](/spec/inputs-outputs/#rw2). How much history a stream needs: [rS7](/spec/streaming/#rs7).
 
 ## Lookback calls {#calls}
 

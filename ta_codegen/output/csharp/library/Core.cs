@@ -319,11 +319,11 @@ public sealed partial class Core
      * An opener is a batch call over [0, historyLen - 1], so ClampedStart's
      * produced count -- endIdx - max(startIdx, lookback) + 1 -- collapses to
      * historyLen - lookback. Unlike the batch tier's it has no legitimate zero
-     * case: rule rS8 refuses a history shorter than lookback + 1, so a fill that
+     * case: rule rS7 refuses a history shorter than lookback + 1, so a fill that
      * runs writes at least one value.
      *
-     * A short history is still floored to 0 rather than answered here: rS8 has not
-     * run yet, and that rejection is rS8's to make. A lookback of -1 is NOT
+     * A short history is still floored to 0 rather than answered here: rS7 has not
+     * run yet, and that rejection is rS7's to make. A lookback of -1 is NOT
      * floored -- it is the parameter contract's rejection signal, and swallowing
      * it reported an absent output (rS4) for a call whose fault was its parameter
      * (rS3). Raising it here is what puts rS3 ahead of the buffer rules, exactly as
@@ -377,7 +377,7 @@ public sealed partial class Core
         }
     }
 
-    /* Rule rS8, naming the history and carrying the counts the batch tier's
+    /* Rule rS7, naming the history and carrying the counts the batch tier's
      * length faults carry: max(startIdx, lookback) + 1 is the bound the core
      * tested. */
     internal static InsufficientHistoryException InsufficientHistory(string funcName, string verb,

@@ -315,12 +315,12 @@ public final class Core {
     * <p>An opener is a batch call over {@code [0, historyLen - 1]}, so
     * {@link Core#clampedStart}'s produced count — {@code endIdx -
     * max(startIdx, lookback) + 1} — collapses to {@code historyLen - lookback}.
-    * Unlike the batch tier's it has no legitimate zero case: rule rS8 refuses a
+    * Unlike the batch tier's it has no legitimate zero case: rule rS7 refuses a
     * history shorter than {@code lookback + 1}, so a fill that runs writes at
     * least one value.
     *
-    * <p>A short history is still floored to 0 rather than answered here: rS8 has
-    * not run yet where this is used, and that rejection is rS8's to make. A
+    * <p>A short history is still floored to 0 rather than answered here: rS7 has
+    * not run yet where this is used, and that rejection is rS7's to make. A
     * lookback of {@code -1} is not floored — it is the parameter contract's
     * rejection signal, and swallowing it reported an absent output (rS4) for a
     * call whose fault was its parameter (rS3). Raising it here is what puts rS3
@@ -373,7 +373,7 @@ public final class Core {
    }
 
    /**
-    * Rule rS8, with the counts the batch tier's length faults carry:
+    * Rule rS7, with the counts the batch tier's length faults carry:
     * {@code max(startIdx, lookback) + 1} is the bound the core tested.
     */
    static InsufficientHistoryException insufficientHistory(String funcName, int historyLen, int startIdx, int lookback) {
@@ -383,7 +383,7 @@ public final class Core {
 
    /**
     * The RetCode -> exception mapping for a stream opener's tail, after rule
-    * rS8's counted form. {@code funcName} carries the verb ({@code "SMA open"}).
+    * rS7's counted form. {@code funcName} carries the verb ({@code "SMA open"}).
     */
    static RuntimeException streamFailure(String funcName, RetCode retCode) {
       String where = funcName + ": ";

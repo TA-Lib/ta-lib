@@ -794,7 +794,7 @@ public static class StreamApiTest
             "each output is bounded separately");
         _s5++;
 
-        // A history too short to produce anything is still rS8 for any output
+        // A history too short to produce anything is still rS7 for any output
         // that is there: the bound floors at zero rather than going negative.
         CheckThrows<InsufficientHistoryException>(
             () => core.SmaOpenAndFill(closes.AsSpan(0, 29), 30, new double[1]),
