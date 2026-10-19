@@ -1,6 +1,6 @@
 ---
 title: Install C/C++
-description: "Install the TA-Lib C/C++ libraries and headers: Windows installer, macOS Homebrew, Linux packages, or build from source with CMake or autotools."
+description: "Install the TA-Lib C/C++ libraries and headers: Linux packages, macOS Homebrew, Windows installer, or build from source with CMake or autotools."
 toc: false
 ---
 
@@ -12,18 +12,18 @@ Latest release is [0.8.1 on Github](https://github.com/ta-lib/ta-lib/releases/la
 
 Both CMake and autotools build systems are included, enabling an optimized build from source on most platforms.
 
-- [Windows](#windows)
-    - [Executable Installer (recommended)](#executable-installer-recommended)
-    - [Binaries](#windows-binaries)
-    - [Build from source](#windows-build-from-source)
+- [Linux](#linux)
+    - [Debian packages](#linux-debian-packages)
+    - [Build from source](#linux-build-from-source)
 
 - [macOS](#macos)
     - [Homebrew (recommended)](#macos-homebrew-recommended) [![Homebrew](https://img.shields.io/homebrew/v/ta-lib)](https://formulae.brew.sh/formula/ta-lib)
     - [Build from source](#macos-build-from-source)
 
-- [Linux](#linux)
-    - [Debian packages](#linux-debian-packages)
-    - [Build from source](#linux-build-from-source)
+- [Windows](#windows)
+    - [Executable Installer (recommended)](#executable-installer-recommended)
+    - [Binaries](#windows-binaries)
+    - [Build from source](#windows-build-from-source)
 
 - [vcpkg](#vcpkg) [![vcpkg](https://img.shields.io/vcpkg/v/talib)](https://vcpkg.io/en/package/talib)
 
@@ -31,84 +31,6 @@ Both CMake and autotools build systems are included, enabling an optimized build
 
 - [GitHub Actions](#github-actions)
 
-
-## Windows
-
-### Executable Installer (recommended)
-
-1. **Download** latest [ta-lib-0.8.1-windows-x86_64.msi](https://github.com/ta-lib/ta-lib/releases/download/v0.8.1/ta-lib-0.8.1-windows-x86_64.msi)
-
-2. **Run the Installer**:
-    - Double-click the downloaded `.msi` file.
-    - Follow the on-screen instructions.
-
-
-    To update, just repeat the installation (older version is automatically uninstalled).
-
-    If you choose to uninstall, use the [Add/Remove Apps](https://support.microsoft.com/en-us/windows/uninstall-or-remove-apps-and-programs-in-windows-4b55f974-2cc6-2d2b-d092-5905080eaf98) in windows settings.
-
- If you prefer a non-interactive installation, you can use msiexec [from the command line](https://learn.microsoft.com/en-us/windows/win32/msi/standard-installer-command-line-options).
-
-
-### Windows Binaries
-
-Use the .zip packages when you prefer to get the libraries without installing (e.g. to embed the TA-Lib binaries in your own installer).
-
-| Platform | Download |
-|------------------------|--|
-| Intel/AMD 64-bits| [ta-lib-0.8.1-windows-x86_64.zip](https://github.com/ta-lib/ta-lib/releases/download/v0.8.1/ta-lib-0.8.1-windows-x86_64.zip) |
-| Intel/AMD 32-bits| [ta-lib-0.8.1-windows-x86_32.zip](https://github.com/ta-lib/ta-lib/releases/download/v0.8.1/ta-lib-0.8.1-windows-x86_32.zip) |
-| ARM64 | Not yet available. |
-
-### Windows Build from Source
-
-Install Visual Studio 2022 Community and do:
-```cmd
-C:\ta-lib> "C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Auxiliary\Build\vcvarsall.bat" x64
-C:\ta-lib> mkdir build
-C:\ta-lib> cd build
-C:\ta-lib\build> cmake ..
-C:\ta-lib\build> cmake --build .
-```
-You might need to adjust the `vcvarsall.bat` command depending on your Visual Studio installation and platform.
-
-
-## macOS
-
-### macOS Homebrew (recommended)
-
-```bash
-brew install ta-lib
-```
-
-See the [homebrew formula](https://formulae.brew.sh/formula/ta-lib) for the latest supported release and platforms.
-
-### macOS Build from Source
-
-Ensure you have the required dependencies: `brew install automake && brew install libtool`
-
-1. **Download** latest [ta-lib-0.8.1-src.tar.gz](https://github.com/ta-lib/ta-lib/releases/download/v0.8.1/ta-lib-0.8.1-src.tar.gz) (or, alternatively, clone down [https://github.com/ta-lib/ta-lib/](https://github.com/ta-lib/ta-lib/) and checkout the main branch)
-
-2. **Extract the Tarball** if you downloaded the source manually:
-   ```bash
-   tar -xzf ta-lib-0.8.1-src.tar.gz
-   cd ta-lib-0.8.1
-   ```
-
-3. **Build and Install**:
-   ```bash
-   autoreconf -fi       # regenerate the configure file for macOS
-   ./configure
-   make
-   sudo make install
-   ```
-
-    Follow the same procedure for an update (the older version is overwritten, no need to uninstall).
-
-    If you choose to uninstall do:
-    ```bash
-    sudo make uninstall
-    ```
 
 ## Linux
 
@@ -164,6 +86,83 @@ Recommended for all debian-based distributions (e.g. Ubuntu, Mint...)
     ```bash
     sudo make uninstall
     ```
+
+## macOS
+
+### macOS Homebrew (recommended)
+
+```bash
+brew install ta-lib
+```
+
+See the [homebrew formula](https://formulae.brew.sh/formula/ta-lib) for the latest supported release and platforms.
+
+### macOS Build from Source
+
+Ensure you have the required dependencies: `brew install automake && brew install libtool`
+
+1. **Download** latest [ta-lib-0.8.1-src.tar.gz](https://github.com/ta-lib/ta-lib/releases/download/v0.8.1/ta-lib-0.8.1-src.tar.gz) (or, alternatively, clone down [https://github.com/ta-lib/ta-lib/](https://github.com/ta-lib/ta-lib/) and checkout the main branch)
+
+2. **Extract the Tarball** if you downloaded the source manually:
+   ```bash
+   tar -xzf ta-lib-0.8.1-src.tar.gz
+   cd ta-lib-0.8.1
+   ```
+
+3. **Build and Install**:
+   ```bash
+   autoreconf -fi       # regenerate the configure file for macOS
+   ./configure
+   make
+   sudo make install
+   ```
+
+    Follow the same procedure for an update (the older version is overwritten, no need to uninstall).
+
+    If you choose to uninstall do:
+    ```bash
+    sudo make uninstall
+    ```
+
+## Windows
+
+### Executable Installer (recommended)
+
+1. **Download** latest [ta-lib-0.8.1-windows-x86_64.msi](https://github.com/ta-lib/ta-lib/releases/download/v0.8.1/ta-lib-0.8.1-windows-x86_64.msi)
+
+2. **Run the Installer**:
+    - Double-click the downloaded `.msi` file.
+    - Follow the on-screen instructions.
+
+
+    To update, just repeat the installation (older version is automatically uninstalled).
+
+    If you choose to uninstall, use the [Add/Remove Apps](https://support.microsoft.com/en-us/windows/uninstall-or-remove-apps-and-programs-in-windows-4b55f974-2cc6-2d2b-d092-5905080eaf98) in windows settings.
+
+ If you prefer a non-interactive installation, you can use msiexec [from the command line](https://learn.microsoft.com/en-us/windows/win32/msi/standard-installer-command-line-options).
+
+
+### Windows Binaries
+
+Use the .zip packages when you prefer to get the libraries without installing (e.g. to embed the TA-Lib binaries in your own installer).
+
+| Platform | Download |
+|------------------------|--|
+| Intel/AMD 64-bits| [ta-lib-0.8.1-windows-x86_64.zip](https://github.com/ta-lib/ta-lib/releases/download/v0.8.1/ta-lib-0.8.1-windows-x86_64.zip) |
+| Intel/AMD 32-bits| [ta-lib-0.8.1-windows-x86_32.zip](https://github.com/ta-lib/ta-lib/releases/download/v0.8.1/ta-lib-0.8.1-windows-x86_32.zip) |
+| ARM64 | Not yet available. |
+
+### Windows Build from Source
+
+Install Visual Studio 2022 Community and do:
+```cmd
+C:\ta-lib> "C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Auxiliary\Build\vcvarsall.bat" x64
+C:\ta-lib> mkdir build
+C:\ta-lib> cd build
+C:\ta-lib\build> cmake ..
+C:\ta-lib\build> cmake --build .
+```
+You might need to adjust the `vcvarsall.bat` command depending on your Visual Studio installation and platform.
 
 
 ## vcpkg
