@@ -36,7 +36,7 @@ In the order a caller meets them:
 Each page has two kinds of statement:
 
 - **The caller must**: what the calling code has to ensure. Most of it is not checked by the library, so it comes first on every page, and the next section lists what the library never reports.
-- **A rule**: what TA-Lib does. The test suite checks each one, except three that no test can provoke or that hold by construction: [rB8](/spec/errors/#rb8) and [rB9](/spec/errors/#rb9) (an allocation failure, an internal error) and [rP5](/spec/inputs-outputs/#rp5) (one generator writes the four languages' signatures). Its id is `r`, the letter of its family and a number, such as `rB5`, and its anchor is the id in lower case: [/spec/errors/#rb5](/spec/errors/#rb5). An id's meaning can change from one release to the next.
+- **A rule**: what TA-Lib does. The test suite checks each one, except that no test can provoke the conditions of [rB8](/spec/errors/#rb8) and [rB9](/spec/errors/#rb9) (an allocation failure, an internal error), and that [rP5](/spec/inputs-outputs/#rp5) holds by construction (one generator writes the four languages' signatures). Its id is `r`, the letter of its family and a number, such as `rB5`, and its anchor is the id in lower case: [/spec/errors/#rb5](/spec/errors/#rb5). An id's meaning can change from one release to the next.
 
 `<N>` stands for a function's canonical name: `TA_<N>_Open` is `TA_SMA_Open`.
 
@@ -122,7 +122,7 @@ One type holds the flags of each word. What each flag means: [flags](/spec/abstr
 | an optional parameter | `TA_OPTIN_` | `OptInputFlags` | `OptInputFlags` |
 | an output | `TA_OUT_` | `OutputFlags` | `OutputFlags` |
 
-Members are upper case in Rust and Java and UpperCamel in C#, and can use other words than C's (Java `FuncFlags.STREAMING` is `TA_FUNC_FLG_STREAM`): match a member to its C name by its bit value, which is the same in every language ([rA7](/spec/abstract/#ra7)). Each C# flag enum also has `None`, the empty word. Each C# flag enum also has `None`, the empty word.
+Members are upper case in Rust and Java and UpperCamel in C#, and can use other words than C's (Java `FuncFlags.STREAMING` is `TA_FUNC_FLG_STREAM`): match a member to its C name by its bit value, which is the same in every language ([rA7](/spec/abstract/#ra7)). Each C# flag enum also has `None`, the empty word.
 
 ## How a failure reaches the caller {#failures}
 
