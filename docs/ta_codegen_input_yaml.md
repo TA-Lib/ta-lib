@@ -154,7 +154,7 @@ Each backend renders enums appropriately:
 | `volume` | Output is based on volume data | `TA_FUNC_FLG_VOLUME` |
 | `candlestick` | A candlestick pattern function: every integer output is a pattern output (below) | `TA_FUNC_FLG_CANDLESTICK` |
 | `stream` | Generate the streaming API (Open/Update/Peek/…) | `TA_FUNC_FLG_STREAM` |
-| `path_dependent` | Absolute output depends on `startIdx` and never converges across ranges (a running accumulation seeded at the first bar, or a path-dependent state machine); the same bar computed from a different `startIdx` can differ | `TA_FUNC_FLG_PATH_DEP` |
+| `path_dependent` | Absolute output depends on `startIdx` and may never converge across ranges (a running accumulation seeded at the first bar, or a path-dependent state machine); the same bar computed from a different `startIdx` can differ | `TA_FUNC_FLG_PATH_DEP` |
 | `nan_inf_output` | Some inputs of ordinary magnitude have no finite result, so a successful call can write NaN or ±Inf | `TA_FUNC_FLG_NAN_INF_OUT` |
 | `period1_identity` | A period of 1 performs no smoothing: every output value is a bit-exact copy of its input value | `TA_FUNC_FLG_PERIOD1_IDENTITY` |
 | `uses_transcendental` | The function's source calls a transcendental math function (`exp`, `log`, `log10`, trigonometric, inverse trigonometric, hyperbolic). Not set on a function that reaches one only through `ma()` | `TA_FUNC_FLG_USES_TRANSCENDENTAL` |

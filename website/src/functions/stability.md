@@ -40,11 +40,11 @@ Some functions take an MA-type parameter selecting how their moving average is c
 
 ## If Path-Dependent, then... {#path-dependent}
 
-The value is built up from the first bar by a running accumulation or a state machine that tracks the path prices took, so it depends on where your data begins and never converges. Unlike an unstable period, there is no warm-up you can discard: the difference persists for the whole series.
+The value is built up from the first bar by a running accumulation or a state machine that tracks the path prices took, so it depends on where your data begins and may never converge. Unlike an unstable period, there is no warm-up you can discard: the difference can persist for the whole series.
 
 Two Examples:
 
 - [AD](/functions/ad.md) adds each bar's money-flow volume to a running total that begins at zero on your first bar. Only the differences between bars carry meaning; the absolute level is an artifact of the start date.
-- [SAR](/functions/sar.md) is a state machine: it reads the first two bars to decide whether the trend starts long or short, then carries that direction, the extreme price, and an acceleration factor forward. Start a day earlier and it can pick the opposite direction, putting the stop on the other side of price for the rest of the run.
+- [SAR](/functions/sar.md) is a state machine: it reads the first two bars to decide whether the trend starts long or short, then carries that direction, the extreme price, and an acceleration factor forward. Start a day earlier and it can pick the opposite direction, putting the stop on the other side of price, possibly for the rest of the run.
 
 Do not compare these values across differently-sized windows, and expect a backtest starting at a different date to produce different numbers.

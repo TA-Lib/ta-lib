@@ -346,7 +346,7 @@ const FUNC_FLAGS: &[(&str, &str, &str)] = &[
     (
         "path_dependent",
         "PathDependent",
-        "Output depends on where the caller started, so it never converges across ranges.",
+        "Output depends on where the caller started, so it may never converge across ranges.",
     ),
     (
         "nan_inf_output",

@@ -172,7 +172,7 @@ It is important that the output array is large enough. Here are three ways to de
 |------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | Input Matching   | allocationSize = endIdx + 1; <br> **Pros**: Easy to understand and implement. <br> **Cons**: Memory allocation unnecessarily large when requesting a small range.                                              |
 | Range Matching   | allocationSize = endIdx - startIdx + 1; <br> **Pros**: Easy to implement. <br> **Cons**: Allocation slightly larger than needed. Example: with startIdx = 0, a 30-period SMA wastes 29 elements because of the lookback. |
-| Exact Allocation | lookback = TA_XXXX_Lookback( ... ) ; <br> temp = max( lookback, startIdx ); <br> if( temp > endIdx ) <br> &nbsp;&nbsp; allocationSize = 1; // No output, but never allocate 0 <br> else <br> &nbsp;&nbsp; allocationSize = endIdx - temp + 1; <br> **Pros**: Allocates exactly what is needed. <br> **Cons**: Slightly more complex. |
+| Exact Allocation | lookback = TA_XXXX_Lookback( ... ) ; <br> temp = max( lookback, startIdx ); <br> if( temp > endIdx ) <br> &nbsp;&nbsp; allocationSize = 0; // No output <br> else <br> &nbsp;&nbsp; allocationSize = endIdx - temp + 1; <br> **Pros**: Allocates exactly what is needed. <br> **Cons**: Slightly more complex. |
 
 <p>Each TA function has a matching TA_XXXX_Lookback function. Example: for TA_SMA,
 it is TA_SMA_Lookback.</p>

@@ -70,6 +70,23 @@
 #include "ta_abstract.h"
 #include "codegen_pipe.h"
 #include "../../ta_common/ta_global.h"   /* the #144 canary pokes TA_Globals */
+#include "ta_frame_priv.h"
+
+#if defined(__has_feature)
+   #if __has_feature(address_sanitizer) || __has_feature(thread_sanitizer)
+      #define TA_REGTEST_SANITIZED
+   #endif
+#endif
+#if defined(__SANITIZE_ADDRESS__) || defined(__SANITIZE_THREAD__)
+   #define TA_REGTEST_SANITIZED
+#endif
+/* A sanitizer reserves address space of its own, so a limit on it breaks the
+ * runtime before it reaches the library. */
+#if defined(__linux__) && !defined(TA_REGTEST_SANITIZED)
+   #define TA_REGTEST_CAN_LIMIT_AS
+   #include <sys/resource.h>
+   #include <unistd.h>
+#endif
 
 
 /**** External functions declarations. ****/
@@ -93,6 +110,8 @@ static ErrorNumber testCandleSettingsBounds( void );
 static ErrorNumber testEnumValueContract( void );
 static ErrorNumber testStreamShortHistory( void );
 static ErrorNumber testBatchArgumentContract( void );
+static ErrorNumber testAllocationFailure( void );
+static ErrorNumber testInternalErrorReported( void );
 
 static TA_RetCode circBufferFillFrom0ToSize( int size, int *buffer );
 
@@ -162,6 +181,20 @@ ErrorNumber test_internals( void )
    if( retValue != TA_TEST_PASS )
    {
       printf( "\nFailed: Batch argument contract (%d)\n", retValue );
+      return retValue;
+   }
+
+   retValue = testAllocationFailure();
+   if( retValue != TA_TEST_PASS )
+   {
+      printf( "\nFailed: Allocation failure contract (%d)\n", retValue );
+      return retValue;
+   }
+
+   retValue = testInternalErrorReported();
+   if( retValue != TA_TEST_PASS )
+   {
+      printf( "\nFailed: Internal error contract (%d)\n", retValue );
       return retValue;
    }
 
@@ -2417,4 +2450,114 @@ static TA_RetCode circBufferFillFrom0ToSize( int size, int *buffer )
    CIRCBUF_DESTROY(MyBuf);
 
    return TA_SUCCESS;
+}
+
+/* rB8: a real allocation, failed by an address-space limit just above what the
+ * process already maps. The probes hold every block the heap can still hand
+ * out at the ring's size, so the ring's own request is the one that fails. */
+static ErrorNumber testAllocationFailure( void )
+{
+#ifdef TA_REGTEST_CAN_LIMIT_AS
+   enum { PERIOD = 100000 };
+   static double bars[PERIOD];
+   void *probes = NULL;
+   struct rlimit saved, low;
+   TA_SMA_Stream *st = NULL;
+   double v = 0.0;
+   long pages = 0;
+   int i;
+   size_t ringBytes = sizeof(double) * (size_t)(PERIOD - 1);
+   TA_RetCode rc;
+   FILE *f;
+
+   for( i = 0; i < PERIOD; i++ )
+      bars[i] = 100.0 + (double)i * 0.25;
+
+   f = fopen( "/proc/self/statm", "r" );
+   if( !f || fscanf( f, "%ld", &pages ) != 1 || getrlimit( RLIMIT_AS, &saved ) != 0 )
+   {
+      if( f ) fclose( f );
+      printf( "\nFailed: cannot read the address space\n" );
+      return TA_REGTEST_ALLOC_FAIL_UNARMED;
+   }
+   fclose( f );
+   low = saved;
+   low.rlim_cur = (rlim_t)pages * (rlim_t)sysconf( _SC_PAGESIZE ) + 256 * 1024;
+   if( (saved.rlim_cur != RLIM_INFINITY && low.rlim_cur > saved.rlim_cur) ||
+       setrlimit( RLIMIT_AS, &low ) != 0 )
+   {
+      printf( "\nFailed: cannot lower the address-space limit\n" );
+      return TA_REGTEST_ALLOC_FAIL_UNARMED;
+   }
+   for( ;; )
+   {
+      void *p = malloc( ringBytes );
+      if( !p ) break;
+      *(void **)p = probes;
+      probes = p;
+   }
+   rc = TA_SMA_Open( &st, bars, PERIOD, PERIOD, &v );
+   setrlimit( RLIMIT_AS, &saved );
+   while( probes )
+   {
+      void *next = *(void **)probes;
+      free( probes );
+      probes = next;
+   }
+
+   if( rc != TA_ALLOC_ERR )
+   {
+      if( rc == TA_SUCCESS )
+         TA_SMA_Close( st );
+      printf( "\nFailed: TA_SMA_Open returned %d, not TA_ALLOC_ERR, on a failed allocation\n", rc );
+      return TA_REGTEST_ALLOC_FAIL_NOT_REPORTED;
+   }
+
+   st = NULL;
+   rc = TA_SMA_Open( &st, bars, PERIOD, PERIOD, &v );
+   if( rc != TA_SUCCESS )
+   {
+      printf( "\nFailed: TA_SMA_Open returned %d with the limit restored\n", rc );
+      return TA_REGTEST_ALLOC_FAIL_NOT_REPORTED;
+   }
+   TA_SMA_Close( st );
+#else
+   printf( "\n  (allocation failure: not tested here, needs Linux without a sanitizer)" );
+#endif
+   return TA_TEST_PASS;
+}
+
+/* rB9: the library's own state made inconsistent, as only a bug could make it,
+ * and a guard that finds it. */
+static ErrorNumber testInternalErrorReported( void )
+{
+   static double bars[16];
+   const TA_FuncHandle *handle;
+   TA_ParamHolder *holder;
+   TA_ParamHolderPriv *priv;
+   const TA_InputParameterInfo *kept;
+   TA_RetCodeInfo info;
+   TA_RetCode rc;
+
+   if( TA_GetFuncHandle( "SMA", &handle ) != TA_SUCCESS ||
+       TA_ParamHolderAlloc( handle, &holder ) != TA_SUCCESS )
+   {
+      printf( "\nFailed: cannot make an SMA parameter holder\n" );
+      return TA_REGTEST_INTERNAL_ERROR_NOT_REPORTED;
+   }
+   priv = (TA_ParamHolderPriv *)holder->hiddenData;
+   kept = priv->in[0].inputInfo;
+   priv->in[0].inputInfo = NULL;
+   rc = TA_SetInputParamRealPtr( holder, 0, bars );
+   priv->in[0].inputInfo = kept;
+   TA_ParamHolderFree( holder );
+
+   TA_SetRetCodeInfo( rc, &info );
+   if( rc != TA_INTERNAL_ERROR(2) || strcmp( info.enumStr, "TA_INTERNAL_ERROR" ) != 0 )
+   {
+      printf( "\nFailed: an inconsistent holder returned %d (%s), not TA_INTERNAL_ERROR(2)\n",
+              rc, info.enumStr );
+      return TA_REGTEST_INTERNAL_ERROR_NOT_REPORTED;
+   }
+   return TA_TEST_PASS;
 }

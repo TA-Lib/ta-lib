@@ -55,8 +55,8 @@ retired footnote leaves a gap, so a citation of `[4]` keeps its meaning.
 | rB5 | [buffer length](https://ta-lib.org/spec/errors/#rb5) | ⚠️<br>[3] | ✅ | ✅ | ✅ |
 | rB6 | [one buffer, two outputs](https://ta-lib.org/spec/errors/#rb6) | ✅ | ✅ | ✅ | ✅ |
 | rB7 | [omitted output](https://ta-lib.org/spec/errors/#rb7) | ✅ | —<br>[20] | ✅ | ✅<br>[2] |
-| rB8 | [allocation failure](https://ta-lib.org/spec/errors/#rb8) | ⚠️<br>[23] | ⚠️<br>[23] | ⚠️<br>[23] | ⚠️<br>[23] |
-| rB9 | [internal error](https://ta-lib.org/spec/errors/#rb9) | ⚠️<br>[21] | ⚠️<br>[21] | ⚠️<br>[21] | ⚠️<br>[21] |
+| rB8 | [allocation failure](https://ta-lib.org/spec/errors/#rb8) | ✅<br>[24] | —<br>[24] | —<br>[24] | —<br>[24] |
+| rB9 | [internal error](https://ta-lib.org/spec/errors/#rb9) | ✅<br>[25] | —<br>[25] | ✅<br>[25] | ✅<br>[25] |
 
 [1] Rust slices cannot be null: an empty one is the absent argument. What C
 writes through a pointer (the index/count pair, a stream handle) is returned
@@ -71,11 +71,14 @@ cannot be declined, rS1 for a stream's history.
 [20] Rust takes a non-declinable output as `&mut [T]`, which cannot be omitted;
 an empty one is rB4.
 
-[21] Implemented, but the individual sites are not tested: no reachable input
-fires one (rationale rB9).
+[24] C: `testAllocationFailure` (`test_internals.c`) fails a real allocation,
+`TA_SMA_Open`'s ring, under an address-space limit; Linux without a sanitizer
+only. Rust, Java and C# allocate through their runtime and have no code for it.
 
-[23] Deliberately untested: only C returns it, and nothing past it is defined
-(rationale rB8).
+[25] C: `testInternalErrorReported` (`test_internals.c`) trips an Abstract API
+guard on a corrupted holder. No generated guard is reachable (rationale rB9),
+so Java's `InternalFailureTest` and C#'s `BatchApiTest` check the mappers both
+tiers throw through. Rust's `RetCode::InternalError` has no field for an id.
 
 ### Stream opening
 
@@ -281,7 +284,9 @@ the parameter sweep, Java and C# for every function at its default parameters
 and at the default sentinels. It runs with all three on x86-64 only. C is also
 held by `test_variants.c` in a bare run.
 
-rP5: `validate_inputs`, `try_inject_parameters` and `validate_outputs`
+rP5: `arg_order_suite.rs` holds every committed batch declaration, C's
+`TA_S_` form and the Java and C# float overloads included, to the YAML's order.
+`validate_inputs`, `try_inject_parameters` and `validate_outputs`
 (`docs_site.rs`) fail `generate` when a function page's Inputs, Parameters or
 Outputs list differs from the call signature in name or order.
 

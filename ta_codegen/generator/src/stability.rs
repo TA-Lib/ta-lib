@@ -40,7 +40,7 @@ pub struct Stability {
     /// Takes an MAType parameter, or reaches `ma()`: some MA types carry an unstable
     /// period, so stability is the caller's choice.
     pub matype_dependent: bool,
-    /// Declares `path_dependent`: never converges (a running accumulation).
+    /// Declares `path_dependent`: may never converge (a running accumulation).
     pub path_dependent: bool,
 }
 

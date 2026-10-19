@@ -924,6 +924,14 @@ public static class BatchApiTest
         Check((int)RetCode.InsufficientHistory == 17, "InsufficientHistory is 17");
         Check((int)RetCode.InternalError == 5000, "InternalError is 5000");
 
+        // rB9 past the guard: no shipped guard is reachable, so the mappers both
+        // tiers throw through.
+        foreach (var e in new[] { Core.Failure("SMA", RetCode.InternalError),
+                                  Core.StreamFailure("SMA", "Update", RetCode.InternalError) })
+            Check(e is TALibInvalidOperationException f && f.RetCode == RetCode.InternalError,
+                "an internal error is a TALibInvalidOperationException carrying InternalError, not "
+                    + e.GetType().Name);
+
         // Non-vacuity: the cases above have to REACH every code the batch and
         // streaming tiers can produce, or a member could stop being emitted
         // anywhere and nothing here would move. AllocErr and InternalError are
@@ -973,7 +981,7 @@ public static class BatchApiTest
     }
 
     /// <summary>
-    /// Rule rB7: an output the .yaml marks <c>nullable</c> may be declined, and
+    /// Rule rW5: an output the .yaml marks <c>nullable</c> may be declined, and
     /// declining it changes nothing about the output that was asked for. MAMA's
     /// <c>outFAMA</c> is the only one in the corpus.
     /// </summary>

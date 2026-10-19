@@ -1645,7 +1645,7 @@ flag_newtype!(
     /// A candlestick pattern function: every integer output is a pattern output.
     CANDLESTICK = 0x1000_0000,
     /// Output is path-dependent: built up from the first bar, so it depends on
-    /// the requested `startIdx` and never converges across ranges — the same bar
+    /// the requested `startIdx` and may never converge across ranges — the same bar
     /// computed from a different `startIdx` can differ. E.g. AD, OBV, NVI,
     /// PVI, SAR, SAREXT.
     PATH_DEPENDENT = 0x2000_0000,

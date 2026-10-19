@@ -197,7 +197,7 @@ typedef int TA_FuncFlags;
                                           * accumulation seeded there, or a
                                           * path-dependent state machine), so it
                                           * depends on the requested startIdx and
-                                          * never converges across ranges -- the
+                                          * may never converge across ranges -- the
                                           * same bar computed from a different
                                           * startIdx can differ.
                                           * e.g. AD, OBV, NVI, PVI, SAR, SAREXT.

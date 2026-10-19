@@ -57,6 +57,6 @@ A batch call accepts `0 <= startIdx <= endIdx <= TA_INDEX_MAX` ([`TA_INDEX_MAX`]
 
 **rB4.** An input or output is absent when it is `NULL` in C, `null` or an empty array in Java, an empty slice in Rust, and an empty span in C# (a `null` array becomes one). An absent one fails whatever the call would produce, even a range that produces no values ([rW2](/spec/inputs-outputs/#rw2)). The exception is declining a declinable output with its own spelling ([rW5](/spec/inputs-outputs/#rw5)).
 
-**rB8.** Rust aborts the process, and Java and C# raise their runtime's out-of-memory error.
+**rB8.** C only: Rust, Java and C# allocate through their runtime and have no code for it.
 
 **rB9.** A bug in TA-Lib, not in the call: report it, with the number in C. C's `TA_SetRetCodeInfo` names every value from 5000 to 5999 `TA_INTERNAL_ERROR`, and a value that is not a `TA_RetCode` member `TA_UNKNOWN_ERR`. Rust, Java and C# report `TA_INTERNAL_ERROR` without an id.

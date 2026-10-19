@@ -122,7 +122,7 @@ public enum FuncFlags : uint
     /// <summary>A candlestick pattern function: every integer output is a pattern output.</summary>
     Candlestick = 0x10000000,
 
-    /// <summary>Output depends on where the caller started, so it never converges across ranges.</summary>
+    /// <summary>Output depends on where the caller started, so it may never converge across ranges.</summary>
     PathDependent = 0x20000000,
 
     /// <summary>Some inputs have no finite result, so a successful call can return NaN or +/-Infinity.</summary>

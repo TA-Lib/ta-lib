@@ -615,6 +615,11 @@ typedef enum
   TA_TRANSCENDENTAL_REF_FAIL         = 1722,
   TA_TRANSCENDENTAL_REF_VACUOUS      = 1723,
 
+  /* rB8 and rB9: a failed allocation and an internal error reach the caller. */
+  TA_REGTEST_ALLOC_FAIL_NOT_REPORTED = 1724,
+  TA_REGTEST_ALLOC_FAIL_UNARMED      = 1725,
+  TA_REGTEST_INTERNAL_ERROR_NOT_REPORTED = 1726,
+
   /* Error code related to bug fix documentented on SourceForge. */
   TA_TEST_FAIL_BUG1359452_1  = 2000,
   TA_TEST_FAIL_BUG1359452_2  = 2001,

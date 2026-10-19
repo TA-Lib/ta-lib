@@ -3,7 +3,7 @@ title: Specification
 description: "The calling contract of TA-Lib's C, Rust, Java and C# APIs, stated rule by rule as a reference for AI-agent-driven integration: how a failure reaches the caller, how names fold, and one page per topic."
 ---
 
-**TA-Lib's calling contract, stated rule by rule for a robust integration. The test suite checks the rules, so your code can rely on them.**
+**TA-Lib's calling contract, stated rule by rule for a robust integration. The test suite checks every rule, so your code can rely on them.**
 
 Written as a reference for AI agents integrating TA-Lib. For a lighter introduction written for people, start with the API pages for [C/C++](/api/), [Rust](/api/rust/), [Java](/api/java/) or [C#](/api/csharp/).
 
@@ -36,7 +36,7 @@ In the order a caller meets them:
 Each page has two kinds of statement:
 
 - **The caller must**: what the calling code has to ensure. Most of it is not checked by the library, so it comes first on every page, and the next section lists what the library never reports.
-- **A rule**: what TA-Lib does. The test suite checks each one, except that no test can provoke the conditions of [rB8](/spec/errors/#rb8) and [rB9](/spec/errors/#rb9) (an allocation failure, an internal error), and that [rP5](/spec/inputs-outputs/#rp5) holds by construction (one generator writes the four languages' signatures). Its id is `r`, the letter of its family and a number, such as `rB5`, and its anchor is the id in lower case: [/spec/errors/#rb5](/spec/errors/#rb5). An id's meaning can change from one release to the next.
+- **A rule**: what TA-Lib does. Its id is `r`, the letter of its family and a number, such as `rB5`, and its anchor is the id in lower case: [/spec/errors/#rb5](/spec/errors/#rb5). An id's meaning can change from one release to the next.
 
 `<N>` stands for a function's canonical name: `TA_<N>_Open` is `TA_SMA_Open`.
 

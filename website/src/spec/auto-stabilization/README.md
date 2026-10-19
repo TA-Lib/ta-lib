@@ -5,6 +5,8 @@ description: "The bars an Auto level of the unstable period adds for each functi
 
 *Part of TA-Lib's [specification](/spec/), a reference for AI-agent-driven integration.*
 
+Auto-Stabilization is optional and off by default: every unstable period starts at 0, so a caller that never sets an Auto level can skip this page.
+
 The bars an Auto level of the unstable period discards, and the known exceptions. What a level is and how to set one: [Unstable Period](/api/unstable-period/#auto). Accepted values: [rT3](/spec/settings-threads/#rt3). How the bars enter a lookback: [rL6](/spec/lookback/#rl6).
 
 ## The caller must {#caller}

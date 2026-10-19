@@ -398,7 +398,7 @@ fn flag_cell(label: &str, on: bool, tip: &str) -> String {
 ///   (exactly one applies): `Start-Independent` (neither flag; compare across any
 ///   window), `Initial Unstable Period` (`unstable_period`; converges after a
 ///   warm-up), `Path-Dependent` (`path_dependent`; a running accumulation or
-///   path-dependent state machine that never converges — the behavior behind
+///   path-dependent state machine that may never converge — the behavior behind
 ///   ta-lib-python issues like #513).
 /// * The **checkbox list** — `Overlap Input` (output shares the input price
 ///   scale, drawn over price) and its complement `Independent Y-Axis` (own pane) —
@@ -1344,9 +1344,9 @@ fn build_stability_page(
     s.push_str("## If Path-Dependent, then... {#path-dependent}\n\n");
     s.push_str(
         "The value is built up from the first bar by a running accumulation or a state machine \
-         that tracks the path prices took, so it depends on where your data begins and never \
-         converges. Unlike an unstable period, there is no warm-up you can discard: the \
-         difference persists for the whole series.\n\n\
+         that tracks the path prices took, so it depends on where your data begins and may never \
+         converge. Unlike an unstable period, there is no warm-up you can discard: the \
+         difference can persist for the whole series.\n\n\
          Two Examples:\n\n\
          - [AD](/functions/ad.md) adds each bar's money-flow volume to a running total that begins \
          at zero on your first bar. Only the differences between bars carry meaning; the \
@@ -1354,8 +1354,8 @@ fn build_stability_page(
          - [SAR](/functions/sar.md) is a state machine: it reads the first two bars to decide \
          whether the trend starts long or short, then carries that direction, the extreme \
          price, and an acceleration factor forward. Start a day earlier and it can pick the \
-         opposite direction, putting the stop on the other side of price for the rest of the \
-         run.\n\n\
+         opposite direction, putting the stop on the other side of price, possibly for the \
+         rest of the run.\n\n\
          Do not compare these values across differently-sized windows, and expect a backtest \
          starting at a different date to produce different numbers.\n",
     );
@@ -1877,7 +1877,7 @@ mod tests {
         assert!(line.contains("Inherited from RSI"), "{line}");
         assert!(line.contains("may add one of its own"), "{line}");
 
-        // Path-dependent wins over everything: it never converges.
+        // Path-dependent wins over everything: it may never converge.
         let f = stability_of("OBV", &["path_dependent"], vec![]);
         let mut all = HashMap::new();
         all.insert(

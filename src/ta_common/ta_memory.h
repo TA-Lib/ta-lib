@@ -10,8 +10,8 @@
 /* Interface macros */
 
 /* A failed allocation is TA_ALLOC_ERR: fatal, and nothing about the call is
- * defined past it. Deliberate, and untested by design -- read B7's rationale
- * in docs/spec-conformance.md before adding recovery here. */
+ * defined past it. Read rB8's rationale in docs/spec-conformance.md before
+ * adding recovery here. */
 #define TA_Malloc(a)       malloc(a)
 #define TA_Realloc(a,b)    realloc((a),(b))
 #define TA_Free(a)         free(a)

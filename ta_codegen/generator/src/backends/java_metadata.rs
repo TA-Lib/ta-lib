@@ -411,7 +411,7 @@ fn func_flags_class() -> String {
             (
                 "PATH_DEPENDENT",
                 0x2000_0000,
-                "Output depends on where the caller started, so it never converges across ranges.",
+                "Output depends on where the caller started, so it may never converge across ranges.",
             ),
             (
                 "NAN_INF_OUTPUT",

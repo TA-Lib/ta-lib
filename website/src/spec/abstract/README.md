@@ -133,7 +133,7 @@ What can be said of the values a function writes.
 | Flag | Meaning |
 |---|---|
 | `TA_FUNC_FLG_UNST_PER` | The function owns an unstable-period id ([rL6](/spec/lookback/#rl6), [stability](/spec/lookback/#metadata)). |
-| `TA_FUNC_FLG_PATH_DEP` | Path-dependent: the value at a bar depends on where the range starts, and no warm-up removes that: a running total keeps its seed for good, and a state machine such as SAR realigns only when the market forces both starts into the same state, with no bound on when ([stability](/spec/lookback/#metadata)). |
+| `TA_FUNC_FLG_PATH_DEP` | Path-dependent: the value at a bar depends on where the range starts, and may never converge ([stability](/spec/lookback/#metadata)). |
 | `TA_FUNC_FLG_NAN_INF_OUT` | A successful call can write NaN or ±Inf on ordinary finite input ([rW6](/spec/inputs-outputs/#rw6)). |
 | `TA_FUNC_FLG_PERIOD1_IDENTITY` | At a period of 1 every output value is a bit-for-bit copy of `inReal` ([rL8](/spec/lookback/#rl8)). |
 | `TA_FUNC_FLG_USES_TRANSCENDENTAL` | The function calls a transcendental function, so a value may differ ([transcendental functions](/spec/versions/#transcendental)); TA-Lib targets a difference below 1e-9 ([rD2](/spec/versions/#rd2)). Not set on a function that reaches one only when an MA-type parameter selects `MAMA` or `ALMA`. |

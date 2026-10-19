@@ -60,7 +60,7 @@ public final class FuncFlags {
    /** A candlestick pattern function: every integer output is a pattern output. */
    public static final int CANDLESTICK = 0x10000000;
 
-   /** Output depends on where the caller started, so it never converges across ranges. */
+   /** Output depends on where the caller started, so it may never converge across ranges. */
    public static final int PATH_DEPENDENT = 0x20000000;
 
    /** Some inputs have no finite result, so a successful call can return NaN or +/-Infinity. */
