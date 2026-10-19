@@ -21,6 +21,7 @@
  *  090426 MF,CC Add RMA (issue #348).
  *  092926 MF,CC Add VIDYA (issue #474).
  *  092926 MF,CC Add ALMA (issue #475).
+ *  101926 MF,CC MAMA: FAMA goes to a scratch buffer (issue #552).
  */
 
 int ma_lookback(int optInTimePeriod, TA_MAType optInMAType)
@@ -102,6 +103,7 @@ TA_RetCode ma(int startIdx, int endIdx,
    int *outBegIdx, int *outNBElement,
    double outReal[])
 {
+   double *famaScratch;
    TA_RetCode retCode;
 
    int nbElement;
@@ -189,12 +191,20 @@ TA_RetCode ma(int startIdx, int endIdx,
          break;
 
       case TA_MAType_MAMA:
-         /* The optInTimePeriod is ignored. FAMA is a nullable output
-          * (issue #125): pass NULL to compute only the MAMA line into outReal.
-          */
+         /* The optInTimePeriod is ignored. */
+         famaScratch = malloc((endIdx-startIdx+1) * sizeof(double));
+         if( !famaScratch )
+         {
+            *outBegIdx = 0;
+            *outNBElement = 0;
+            return TA_ALLOC_ERR;
+         }
+
          retCode = mama( startIdx, endIdx, inReal, 0.5, 0.05,
             outBegIdx, outNBElement,
-            outReal, NULL );
+            outReal, famaScratch );
+
+         free( famaScratch );
          break;
 
       case TA_MAType_T3:

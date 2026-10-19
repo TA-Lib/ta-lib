@@ -738,9 +738,8 @@ flag_newtype!(
     UPPER_LIMIT = 0x0000_0800,
     /// The values represent a lower limit.
     LOWER_LIMIT = 0x0000_1000,
-    /// The caller may discard this output — it is computed but need not be
-    /// kept. E.g. MAMA's FAMA line when only the MAMA line is wanted. A
-    /// [`ParamHolder`] still needs it bound.
+    /// Never set: every output is required.
+    #[deprecated]
     NULLABLE = 0x0000_2000,
     /// A chart draws this output ahead of or behind the bar that computed it,
     /// by the bars [`ParamHolder::display_shift`] reports. The values are never
@@ -2495,7 +2494,7 @@ static FUNC_TABLE: [FuncInfo; 237] = [
         flags: FuncFlags(0x0b000004),
         inputs: &[InputInfo { param_name: "inReal", kind: InputType::Real, flags: InputFlags(0x00000000) }, ],
         opt_inputs: &[OptInputInfo { param_name: "optInFastLimit", display_name: "Fast Limit", hint: "Upper limit use in the adaptive algorithm", flags: OptInputFlags(0x00000000), kind: OptInputType::RealRange { min: 0.01, max: 0.99, precision: 2, default: 0.5, suggested: (0.21, 0.8, 0.01) } }, OptInputInfo { param_name: "optInSlowLimit", display_name: "Slow Limit", hint: "Lower limit use in the adaptive algorithm", flags: OptInputFlags(0x00000000), kind: OptInputType::RealRange { min: 0.01, max: 0.99, precision: 2, default: 0.05, suggested: (0.01, 0.6, 0.01) } }, ],
-        outputs: &[OutputInfo { param_name: "outMAMA", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, OutputInfo { param_name: "outFAMA", kind: OutputType::Real, flags: OutputFlags(0x00002004) }, ],
+        outputs: &[OutputInfo { param_name: "outMAMA", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, OutputInfo { param_name: "outFAMA", kind: OutputType::Real, flags: OutputFlags(0x00000004) }, ],
         unst_id: Some(FuncUnstId::MAMA),
     },
     FuncInfo {
@@ -6616,7 +6615,7 @@ impl<'a> ParamHolder<'a> {
                 Self::check_range(start_idx, end_idx)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let mut o1 = self.real_out[1].take().ok_or(RetCode::OutputNotAllInitialize)?;
-                let res = self.core.mama(start_idx, end_idx, i0, self.real_opt[0], self.real_opt[1], &mut *o0, Some(&mut *o1));
+                let res = self.core.mama(start_idx, end_idx, i0, self.real_opt[0], self.real_opt[1], &mut *o0, &mut *o1);
                 self.real_out[0] = Some(o0);
                 self.real_out[1] = Some(o1);
                 match res {
@@ -8189,9 +8188,9 @@ mod binder_tests {
         assert!(h.call(0, N - 1).is_ok(), "the holder still computes");
     }
 
-    /// MAMA's second output is one the typed call takes `None` for.
+    /// An unbound output and an empty one are both refused, on every range.
     #[test]
-    fn no_output_is_declined_through_a_holder() {
+    fn an_empty_output_bound_to_a_holder_is_absent() {
         let core = Core::new();
         let close = series(0.0);
         let mut mama = vec![0.0; N];

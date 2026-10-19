@@ -65,6 +65,7 @@ public partial class Core
     *  090426 MF,CC Add RMA (issue #348).
     *  092926 MF,CC Add VIDYA (issue #474).
     *  092926 MF,CC Add ALMA (issue #475).
+    *  101926 MF,CC MAMA: FAMA goes to a scratch buffer (issue #552).
     */
    /// <summary>
    /// Number of leading input bars <c>Ma</c> consumes before it can produce its
@@ -188,6 +189,7 @@ public partial class Core
    {
       outBegIdx = 0;
       outNBElement = 0;
+      Span<double> famaScratch;
       RetCode retCode;
       int nbElement = 0;
       int outIdx = 0;
@@ -211,6 +213,7 @@ public partial class Core
       if( (outReal.Overlaps(inReal) && outReal != inReal) ) {
          return RetCode.BadParam ;
       }
+      double[]? _rent_famaScratch = null;
       /* Nothing to produce: the range ends before the lookback. Answer here
        * rather than forwarding.
        *
@@ -299,13 +302,14 @@ public partial class Core
          retCode = RetCode.Success;
          break;
       case MAType.MAMA:
-         /* The optInTimePeriod is ignored. FAMA is a nullable output
-          * (issue #125): pass NULL to compute only the MAMA line into outReal.
-          */
-         OutRange _xr7 = Mama(startIdx, endIdx, inReal, 0.5, 0.05, outReal, default);
+         /* The optInTimePeriod is ignored. */
+         _rent_famaScratch = System.Buffers.ArrayPool<double>.Shared.Rent((int)((endIdx - startIdx + 1) * 1));
+         famaScratch = _rent_famaScratch.AsSpan(0, (int)((endIdx - startIdx + 1) * 1));
+         OutRange _xr7 = Mama(startIdx, endIdx, inReal, 0.5, 0.05, outReal, famaScratch);
          outBegIdx = _xr7.BegIdx;
          outNBElement = _xr7.Count;
          retCode = RetCode.Success;
+         ReturnScratch(ref _rent_famaScratch);
          break;
       case MAType.T3:
          OutRange _xr8 = T3(startIdx, endIdx, inReal, optInTimePeriod, 0.7, outReal);
@@ -363,6 +367,7 @@ public partial class Core
    {
       outBegIdx = 0;
       outNBElement = 0;
+      Span<double> famaScratch;
       RetCode retCode;
       int nbElement = 0;
       int outIdx = 0;
@@ -386,6 +391,7 @@ public partial class Core
       if( System.Runtime.InteropServices.MemoryMarshal.AsBytes(outReal).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inReal)) ) {
          return RetCode.BadParam ;
       }
+      double[]? _rent_famaScratch = null;
       if( MaLookback(optInTimePeriod, optInMAType) > endIdx ) {
          outBegIdx = 0;
          outNBElement = 0;
@@ -445,10 +451,13 @@ public partial class Core
          retCode = RetCode.Success;
          break;
       case MAType.MAMA:
-         OutRange _xr7 = Mama(startIdx, endIdx, inReal, 0.5, 0.05, outReal, default);
+         _rent_famaScratch = System.Buffers.ArrayPool<double>.Shared.Rent((int)((endIdx - startIdx + 1) * 1));
+         famaScratch = _rent_famaScratch.AsSpan(0, (int)((endIdx - startIdx + 1) * 1));
+         OutRange _xr7 = Mama(startIdx, endIdx, inReal, 0.5, 0.05, outReal, famaScratch);
          outBegIdx = _xr7.BegIdx;
          outNBElement = _xr7.Count;
          retCode = RetCode.Success;
+         ReturnScratch(ref _rent_famaScratch);
          break;
       case MAType.T3:
          OutRange _xr8 = T3(startIdx, endIdx, inReal, optInTimePeriod, 0.7, outReal);
@@ -547,8 +556,8 @@ public partial class Core
    /// cannot hold the values produced. Declared, not read: a few candlestick
    /// patterns take an OHLC series they never index, and it is required all the
    /// same. A null array arrives as an empty span, and an empty span is an
-   /// absent argument: for an input, or an output that cannot be declined, it is
-   /// rejected even when the call would produce nothing.</description></item>
+   /// absent argument: for an input or an output, it is rejected even when the
+   /// call would produce nothing.</description></item>
    /// <item><description>Two outputs overlap or are one array
    /// (<see href="https://ta-lib.org/spec/errors/#rb6">rule rB6</see>), or an
    /// output partially overlaps an input. Computing wholly in place (an output
@@ -649,8 +658,8 @@ public partial class Core
    /// cannot hold the values produced. Declared, not read: a few candlestick
    /// patterns take an OHLC series they never index, and it is required all the
    /// same. A null array arrives as an empty span, and an empty span is an
-   /// absent argument: for an input, or an output that cannot be declined, it is
-   /// rejected even when the call would produce nothing.</description></item>
+   /// absent argument: for an input or an output, it is rejected even when the
+   /// call would produce nothing.</description></item>
    /// <item><description>Two outputs overlap or are one array
    /// (<see href="https://ta-lib.org/spec/errors/#rb6">rule rB6</see>), or an
    /// output overlaps an input. An output and a real input never share an
@@ -1284,7 +1293,7 @@ public partial class Core
          break;
       }
       case MAType.MAMA: {
-         MamaStream sub = MamaOpenAndFill(inReal, 0.5, 0.05, outReal, default);
+         MamaStream sub = MamaOpenAndFill(inReal, 0.5, 0.05, outReal, new double[historyLen]);
          outBegIdx = sub.outRangeBegIdx;
          outNBElement = sub.outRangeCount;
          sp.sub = sub;
@@ -1436,7 +1445,7 @@ public partial class Core
          break;
       }
       case MAType.MAMA: {
-         MamaStream sub = MamaOpenAndFillInternal(inReal, startIdx, 0.5, 0.05, out outBegIdx, out outNBElement, outReal, default);
+         MamaStream sub = MamaOpenAndFillInternal(inReal, startIdx, 0.5, 0.05, out outBegIdx, out outNBElement, outReal, new double[historyLen]);
          sp.sub = sub;
          sp.cur_outReal = sub.cur_outMAMA;
          break;

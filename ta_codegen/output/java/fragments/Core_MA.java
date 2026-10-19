@@ -21,6 +21,7 @@
  *  090426 MF,CC Add RMA (issue #348).
  *  092926 MF,CC Add VIDYA (issue #474).
  *  092926 MF,CC Add ALMA (issue #475).
+ *  101926 MF,CC MAMA: FAMA goes to a scratch buffer (issue #552).
  */
 
    /**
@@ -141,6 +142,7 @@
                    MInteger outNBElement,
                    double outReal[] )
    {
+      double[] famaScratch;
       RetCode retCode;
       int nbElement = 0;
       int outIdx = 0;
@@ -247,10 +249,9 @@
          retCode = RetCode.SUCCESS;
          break;
       case MAMA:
-         /* The optInTimePeriod is ignored. FAMA is a nullable output
-          * (issue #125): pass NULL to compute only the MAMA line into outReal.
-          */
-         OutRange _xr7 = mama(startIdx, endIdx, inReal, 0.5, 0.05, outReal, null);
+         /* The optInTimePeriod is ignored. */
+         famaScratch = new double[(int)((endIdx - startIdx + 1) * 1)];
+         OutRange _xr7 = mama(startIdx, endIdx, inReal, 0.5, 0.05, outReal, famaScratch);
          outBegIdx.value = _xr7.begIdx();
          outNBElement.value = _xr7.count();
          retCode = RetCode.SUCCESS;
@@ -309,6 +310,7 @@
                    MInteger outNBElement,
                    double outReal[] )
    {
+      double[] famaScratch;
       RetCode retCode;
       int nbElement = 0;
       int outIdx = 0;
@@ -386,7 +388,8 @@
          retCode = RetCode.SUCCESS;
          break;
       case MAMA:
-         OutRange _xr7 = mama(startIdx, endIdx, inReal, 0.5, 0.05, outReal, null);
+         famaScratch = new double[(int)((endIdx - startIdx + 1) * 1)];
+         OutRange _xr7 = mama(startIdx, endIdx, inReal, 0.5, 0.05, outReal, famaScratch);
          outBegIdx.value = _xr7.begIdx();
          outNBElement.value = _xr7.count();
          retCode = RetCode.SUCCESS;
@@ -473,9 +476,8 @@
     *        <i>declares</i> that does not reach {@code endIdx}, or an output that
     *        cannot hold the values produced. Declared, not read: a few candlestick
     *        patterns take an OHLC series they never index, and it is required all the
-    *        same. An output this function documents as declinable is the one
-    *        exception: {@code null} is how you decline it. Checked before anything is
-    *        written, so a rejected call leaves every buffer untouched.
+    *        same. Checked before anything is written, so a rejected call leaves every
+    *        buffer untouched.
     *
     * @see Core#sma
     * @see Core#ema
@@ -557,9 +559,8 @@
     *        <i>declares</i> that does not reach {@code endIdx}, or an output that
     *        cannot hold the values produced. Declared, not read: a few candlestick
     *        patterns take an OHLC series they never index, and it is required all the
-    *        same. An output this function documents as declinable is the one
-    *        exception: {@code null} is how you decline it. Checked before anything is
-    *        written, so a rejected call leaves every buffer untouched.
+    *        same. Checked before anything is written, so a rejected call leaves every
+    *        buffer untouched.
     *
     * @see Core#sma
     * @see Core#ema
@@ -1202,7 +1203,7 @@
          break;
       }
       case MAMA: {
-         MamaStream sub = mamaOpenAndFill(inReal, 0.5, 0.05, outReal, null);
+         MamaStream sub = mamaOpenAndFill(inReal, 0.5, 0.05, outReal, new double[historyLen]);
          outBegIdx.value = sub.outRangeBegIdx;
          outNBElement.value = sub.outRangeCount;
          sp.sub = sub;
@@ -1364,7 +1365,7 @@
          break;
       }
       case MAMA: {
-         MamaStream sub = mamaOpenAndFillInternal(inReal, startIdx, 0.5, 0.05, outBegIdx, outNBElement, outReal, null);
+         MamaStream sub = mamaOpenAndFillInternal(inReal, startIdx, 0.5, 0.05, outBegIdx, outNBElement, outReal, new double[historyLen]);
          sp.sub = sub;
          sp.arm = 7;
          sp.cur_outReal = sub.cur_outMAMA;

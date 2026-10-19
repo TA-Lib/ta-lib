@@ -324,7 +324,6 @@ pub(crate) const OUTPUT_FLAGS: &[(&str, &str)] = &[
     ("zero", "Zero"),
     ("upper_limit", "Upper Limit"),
     ("lower_limit", "Lower Limit"),
-    ("nullable", "Nullable"),
     ("display_shift", "Display Shift"),
     ("pattern_weak", "Pattern Weak"),
 ];

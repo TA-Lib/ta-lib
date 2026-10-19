@@ -663,9 +663,8 @@ fn every_matype_is_streamable_except_tracked_blockers() {
     // gate — covered by the same strip_cursor_output_gate + carry_cursor_parity
     // normalizations, no circbuf/window, no `startIdx` read in its steady loop).
     // Every MAType function now streams. MA's *dispatch* also streams every arm,
-    // including MAType_MAMA: FAMA is a nullable output (issue #125), so MA's arm
-    // forwards the MAMA line and passes NULL for FAMA — a supported trailing-NULL
-    // delegation (pinned by ma_derives_dispatch_plan). No blockers remain.
+    // including MAType_MAMA, whose arm forwards the MAMA line and writes FAMA
+    // into a scratch (pinned by ma_derives_dispatch_plan). No blockers remain.
     let blocked: [&str; 0] = [];
     for (ty, func) in matypes {
         let streams = lk.callee(func).is_some_and(|s| s.streaming);
@@ -692,10 +691,9 @@ fn ma_derives_dispatch_plan() {
     use ta_codegen_lib::streaming::OutSlot;
     // MA is the MAType-tagged dispatch over the per-MA streams. The
     // supported-arm set is DERIVED from the callees' YAML stream flags: TRIMA
-    // joined when its stream landed (M6c); MAMA joined when `outFAMA` became a
-    // nullable output (issue #125) — MA's arm forwards the MAMA line to outReal
-    // and passes NULL for FAMA, a clean trailing-NULL delegation. Every arm now
-    // streams.
+    // joined when its stream landed (M6c); MA's MAMA arm forwards the MAMA line
+    // to outReal and writes FAMA into a scratch it allocates and frees. Every arm
+    // now streams.
     let f = load("ma");
     // The YAML flag itself is load-bearing: losing it would silently drop
     // TA_MA_Stream from every generated surface while all gates stay green
@@ -723,17 +721,15 @@ fn ma_derives_dispatch_plan() {
         supported,
         ["sma", "ema", "wma", "dema", "tema", "trima", "kama", "mama", "t3", "hma", "zlema",
          "rma", "vidya", "alma"],
-        "every arm streams: single-output MAs plus MAMA via its nullable FAMA \
-         (TRIMA joined in M6c, MAMA via nullable outputs in #125, HMA via the \
-         dual-mode buffer union in #141)"
+        "every arm streams: single-output MAs plus MAMA with FAMA in a scratch \
+         (TRIMA joined in M6c, HMA via the dual-mode buffer union in #141)"
     );
     // No reject arms remain: HMA (#139) was the last, flipped to supported by
     // its YAML `stream` flag + the dual-mode per-arm buffer union (#141).
     let rejected: Vec<&str> = dp.unsupported_labels();
     assert!(rejected.is_empty(), "no reject arms remain, got {rejected:?}");
     // The MAMA arm forwards mama's output 0 (the MAMA line) into MA's single
-    // output and discards output 1 (FAMA, nullable) as NULL. This map is what
-    // the C emitter renders as `TA_MAMA_*( ..., outReal, NULL )`.
+    // output and discards output 1 (FAMA) into the arm's scratch.
     let mama = dp.arms.iter().find(|a| a.callee == "mama").unwrap();
     assert_eq!(mama.out_map, vec![OutSlot::Forward(0), OutSlot::Discard]);
     assert_eq!(mama.opt_args.len(), 2, "fixed 0.5 / 0.05 fast/slow limits");
@@ -745,37 +741,58 @@ fn ma_derives_dispatch_plan() {
     assert_eq!(t3.opt_args.len(), 2, "period + literal 0.7 vfactor");
 }
 
-/// The trailing-NULL delegation is sound ONLY when the discarded callee output
-/// is genuinely nullable. If MAMA's FAMA were not nullable, MA's
-/// `mama(..., outReal, NULL)` arm must FAIL the delegation shape — discarding a
-/// non-nullable output would silently drop a real result — and, since `mama` is
-/// stream-flagged, the whole dispatch becomes a HARD gate error, never a silent
-/// reject the verify precheck would then bless. This proves the `out_nullable`
-/// guard in `delegation_opt_args` is load-bearing (neuter it → MA streams here).
+/// A NULL output argument in a dispatch arm is never a delegation: every callee
+/// output is required. MA's MAMA arm rewritten to the bare
+/// `mama(..., outReal, NULL)` call must be a HARD gate error (`mama` is
+/// stream-flagged), never a silent reject arm the verify precheck would bless;
+/// so must a scratch arm that never frees its scratch.
 #[test]
-fn dispatch_rejects_null_discard_of_non_nullable_output() {
-    use ta_codegen_lib::streaming::{CalleeLookup, CalleeSig};
-    struct FamaNotNullable(&'static ta_codegen_lib::registry::Registry);
-    impl CalleeLookup for FamaNotNullable {
-        fn callee(&self, name: &str) -> Option<CalleeSig> {
-            let mut sig = self.0.callee(name)?;
-            if name == "mama" {
-                // Pretend FAMA (and MAMA) are non-nullable.
-                sig.out_nullable = vec![false; sig.n_outputs];
+fn dispatch_rejects_a_null_output_argument() {
+    use ta_codegen_lib::ir::{Expr, Statement};
+    fn mama_arm(f: &mut FuncDef, edit: &dyn Fn(&mut Vec<Statement>)) {
+        let mut hits = 0;
+        for st in &mut f.body {
+            if let Statement::Switch { cases, .. } = st {
+                for (_, body) in cases.iter_mut() {
+                    let calls_mama = body
+                        .iter()
+                        .any(|s| matches!(s, Statement::Assign { value: Expr::FuncCall(n, _), .. } if n == "mama"));
+                    if calls_mama {
+                        edit(body);
+                        hits += 1;
+                    }
+                }
             }
-            Some(sig)
         }
+        assert_eq!(hits, 1, "exactly one MAMA arm rewritten");
     }
-    let f = load("ma");
-    assert!(
-        streaming::validate_streamable(&f, &FamaNotNullable(lookup())).is_err(),
-        "NULL-discarding a non-nullable output must not be a supported delegation"
-    );
-    // Sanity: with the real (nullable) FAMA the same dispatch DOES stream.
-    assert!(
-        streaming::validate_streamable(&f, lookup()).is_ok(),
-        "MA streams with mama's real nullable FAMA"
-    );
+    let shipped = load("ma");
+    assert!(streaming::validate_streamable(&shipped, lookup()).is_ok(), "MA streams with its scratch arm");
+
+    let mut null_arg = shipped.clone();
+    mama_arm(&mut null_arg, &|body| {
+        let call = body
+            .iter()
+            .find(|s| matches!(s, Statement::Assign { value: Expr::FuncCall(n, _), .. } if n == "mama"))
+            .cloned()
+            .unwrap();
+        let Statement::Assign { target, value: Expr::FuncCall(n, mut args), compound } = call else {
+            unreachable!()
+        };
+        *args.last_mut().unwrap() = Expr::Var("NULL".into());
+        *body = vec![Statement::Assign { target, value: Expr::FuncCall(n, args), compound }];
+    });
+    let mut leaked = shipped.clone();
+    mama_arm(&mut leaked, &|body| {
+        body.retain(|s| !matches!(s, Statement::Expr(Expr::FuncCall(n, _)) if n == "free"));
+    });
+    for (what, f) in [("NULL argument", &null_arg), ("unfreed scratch", &leaked)] {
+        let err = streaming::analyze_dispatch(f, lookup()).unwrap_err();
+        assert!(
+            matches!(err, StreamError::Unsupported(ref m) if m.contains("whole-range")),
+            "{what}: expected hard shape error, got: {err}"
+        );
+    }
 }
 
 #[test]
@@ -792,7 +809,6 @@ fn dispatch_hard_errors_when_flagged_callee_arm_loses_shape() {
                 n_inputs: 1,
                 n_opts: 1,
                 n_outputs: 1,
-                out_nullable: vec![false],
             })
         }
     }
@@ -1180,7 +1196,6 @@ fn composed_hard_errors_when_subcall_callee_lacks_stream() {
                 n_inputs: 1,
                 n_opts: 2,
                 n_outputs: 1,
-                out_nullable: vec![false],
             })
         }
     }

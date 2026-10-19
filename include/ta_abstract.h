@@ -468,10 +468,7 @@ typedef int TA_OutputFlags;
                                              * declares all its signs; one setting none, nothing. */
 #define TA_OUT_UPPER_LIMIT       0x00000800 /* Indicates that the values represent an upper limit. */
 #define TA_OUT_LOWER_LIMIT       0x00001000 /* Indicates that the values represent a lower limit. */
-#define TA_OUT_NULLABLE          0x00002000 /* The output pointer may be NULL: the caller can discard
-                                             * this output (it is computed but not written). E.g. MAMA's
-                                             * FAMA line when only the MAMA line is wanted. TA_CallFunc
-                                             * still needs it bound. */
+#define TA_OUT_NULLABLE          0x00002000 /* Deprecated: never set; every output is required. */
 #define TA_OUT_DISPLAY_SHIFT     0x00004000 /* A chart draws this output ahead of or behind the bar
                                              * that computed it, by the number of bars
                                              * TA_GetDisplayShift reports. The values themselves are

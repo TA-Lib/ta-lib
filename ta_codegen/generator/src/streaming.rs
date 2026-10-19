@@ -261,11 +261,6 @@ pub struct CalleeSig {
     pub n_opts: usize,
     /// Number of outputs.
     pub n_outputs: usize,
-    /// Nullability of each output, index-aligned (`out_nullable[k]` ==
-    /// `outputs[k].is_nullable()`). A trailing-NULL dispatch delegation may
-    /// pass NULL only for a nullable callee output (MAMA's FAMA when MA routes
-    /// only the MAMA line — issue #125).
-    pub out_nullable: Vec<bool>,
 }
 
 /// Cross-function lookup for composed/dispatch analysis: maps an input-level
@@ -320,7 +315,6 @@ pub fn callee_sig_of(f: &FuncDef) -> CalleeSig {
         n_inputs: input_array_names(f).len(),
         n_opts: f.optional_inputs.len(),
         n_outputs: f.outputs.len(),
-        out_nullable: f.outputs.iter().map(crate::ir::Output::is_nullable).collect(),
     }
 }
 
@@ -342,11 +336,9 @@ impl CalleeLookup for FuncsLookup<'_> {
     }
 }
 
-/// How one callee output slot maps onto the dispatch func's outputs in a
-/// (possibly trailing-NULL) delegation. `Forward(k)` routes the callee output
-/// into the dispatch func's output `k`; `Discard` passes NULL for a nullable
-/// callee output the dispatch func doesn't want (MAMA's FAMA when MA routes
-/// only the MAMA line — issue #125).
+/// How one callee output slot maps onto the dispatch func's outputs.
+/// `Forward(k)` routes the callee output into the dispatch func's output `k`;
+/// `Discard` is a callee output written to scratch the dispatch does not keep.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum OutSlot {
     Forward(usize),
@@ -366,8 +358,8 @@ pub struct DispatchArm {
     pub opt_args: Vec<Expr>,
     /// Per callee-output-slot mapping, length == callee's output count. The
     /// emitter forwards each `Forward(k)` slot to the dispatch output `k` and
-    /// passes NULL for each `Discard`. Empty for reject arms. Meaningful only
-    /// when `supported`.
+    /// hands each `Discard` a scratch sink. Empty for reject arms. Meaningful
+    /// only when `supported`.
     pub out_map: Vec<OutSlot>,
     /// The arm delegates whole-range to a stream-flagged callee: the stream
     /// opens the callee's public stream. Unsupported arms reject at Open
@@ -4037,22 +4029,30 @@ fn parse_dispatch_arm(
     };
     let sig = lookup.callee(&callee).expect("looked up above");
 
-    // Strict whole-range delegation shape: exactly one statement,
+    // Strict whole-range delegation shape:
     // `<retvar> = callee(startIdx, endIdx, <own inputs>, <pure opt args>,
-    //                    outBegIdx, outNBElement, <outputs / NULL for discards>)`.
-    // The callee may have MORE outputs than the dispatch func when the extras are
-    // nullable and passed NULL (MA→MAMA routes the MAMA line, drops FAMA — #125).
+    //                    outBegIdx, outNBElement, <outputs / scratch>)`,
+    // alone or between `s = malloc(..); if( !s ) {..return..}` and `free(s)`.
+    // The callee may have MORE outputs than the dispatch func when the extras
+    // go to that scratch.
     let meaningful: Vec<&Statement> = stmts
         .iter()
         .filter(|s| !matches!(s, Statement::Comment(_)))
         .collect();
-    let strict: Option<(Vec<Expr>, Vec<OutSlot>)> = match meaningful.as_slice() {
-        [Statement::Assign {
+    let delegation = |st: &Statement, scratch: Option<&str>| match st {
+        Statement::Assign {
             target: Expr::Var(t),
             value: Expr::FuncCall(name, args),
             compound: false,
-        }] if t == ret_var && *name == callee => {
-            delegation_opt_args(args, func, &sig, bar_inputs, outputs)
+        } if t == ret_var && *name == callee => {
+            delegation_opt_args(args, func, &sig, bar_inputs, outputs, scratch)
+        }
+        _ => None,
+    };
+    let strict: Option<(Vec<Expr>, Vec<OutSlot>)> = match meaningful.as_slice() {
+        [call] => delegation(call, None),
+        [alloc, guard, call, release] => {
+            scratch_local(alloc, guard, release).and_then(|s| delegation(call, Some(s)))
         }
         _ => None,
     };
@@ -4071,17 +4071,11 @@ fn parse_dispatch_arm(
         .filter(|c| lookup.callee(c).is_some_and(|s| s.streaming))
         .map(String::as_str)
         .collect();
-    // A flagged callee reached here means `delegation_opt_args` rejected the
-    // shape above — a stream-flagged callee that is NOT a clean whole-range
-    // (or trailing-NULL) delegation. That is a hard gate error, never a silent
-    // reject the verify precheck would then bless: an arm like `trima(...);
-    // dema(...)`, or a multi-output callee whose extra outputs are discarded to
-    // a scratch buffer rather than passed NULL (the pre-#125 MAMA shape). The
-    // supported multi-output-with-NULL form is handled by `delegation_opt_args`.
     // If ANY indicator called in the arm is stream-flagged — not just the first
-    // one seen — this is a hard gate error: an arm like `trima(...); dema(...)`
-    // must never silently become a reject arm the verify precheck then blesses
-    // (the strictness contract above).
+    // one seen — a shape the match above rejected is a hard gate error: an arm
+    // like `trima(...); dema(...)`, or one handing a callee output NULL, must
+    // never silently become a reject arm the verify precheck then blesses (the
+    // strictness contract above).
     if let Some(f) = flagged.first() {
         return Err(StreamError::Unsupported(format!(
             "dispatch arm `{label}` calls stream-flagged `{f}` but is not a \
@@ -4092,6 +4086,47 @@ fn parse_dispatch_arm(
     Ok(reject(&callee))
 }
 
+/// The scratch local of an arm's `s = malloc(..); if( !s ) {..return..}; ..;
+/// free(s)` bracket. The guard may only write the out-meta and return.
+fn scratch_local<'s>(alloc: &'s Statement, guard: &Statement, release: &Statement) -> Option<&'s str> {
+    let Statement::Assign {
+        target: Expr::Var(s),
+        value,
+        compound: false,
+    } = alloc
+    else {
+        return None;
+    };
+    if !expr_allocates(value) {
+        return None;
+    }
+    let Statement::If {
+        condition: Expr::Not(tested),
+        then_body,
+        else_body,
+        ..
+    } = guard
+    else {
+        return None;
+    };
+    let guard_ok = matches!(tested.as_ref(), Expr::Var(v) if v == s)
+        && else_body.is_empty()
+        && matches!(then_body.last(), Some(Statement::Return { .. }))
+        && then_body.iter().all(|st| match st {
+            Statement::Assign {
+                target: Expr::PointerDeref(v),
+                compound: false,
+                ..
+            } => v == "outBegIdx" || v == "outNBElement",
+            Statement::Return { .. } | Statement::Comment(_) => true,
+            _ => false,
+        });
+    let freed = matches!(release,
+        Statement::Expr(Expr::FuncCall(name, a))
+            if (name == "free" || name == "TA_Free") && matches!(a.as_slice(), [Expr::Var(v)] if v == s));
+    (guard_ok && freed).then_some(s.as_str())
+}
+
 /// Validate a whole-range delegation call's argument list and return the
 /// callee's optional-input argument expressions (positional).
 fn delegation_opt_args(
@@ -4100,11 +4135,11 @@ fn delegation_opt_args(
     sig: &CalleeSig,
     bar_inputs: &[String],
     outputs: &[String],
+    scratch: Option<&str>,
 ) -> Option<(Vec<Expr>, Vec<OutSlot>)> {
     let n = args.len();
     // The callee must have AT LEAST as many outputs as the dispatch func; the
-    // surplus are discarded (each must be nullable and passed NULL). Arity is
-    // the callee's full TA signature.
+    // surplus go to the arm's scratch. Arity is the callee's full TA signature.
     if sig.n_inputs != bar_inputs.len()
         || sig.n_outputs < outputs.len()
         || n != 2 + sig.n_inputs + sig.n_opts + 2 + sig.n_outputs
@@ -4125,16 +4160,18 @@ fn delegation_opt_args(
     if !is_var(&args[out_meta], "outBegIdx") || !is_var(&args[out_meta + 1], "outNBElement") {
         return None;
     }
-    // Map each callee output slot: a dispatch output var forwards to that output;
-    // NULL discards (only where the callee output is nullable).
+    // Map each callee output slot: a dispatch output var forwards to that
+    // output; the arm's scratch discards.
     let mut out_map: Vec<OutSlot> = Vec::with_capacity(sig.n_outputs);
     let mut written = vec![false; outputs.len()];
+    let mut scratch_used = false;
     for k in 0..sig.n_outputs {
         match &args[out_meta + 2 + k] {
-            Expr::Var(v) if v == "NULL" => {
-                if !sig.out_nullable.get(k).copied().unwrap_or(false) {
-                    return None; // discarding a non-nullable output is unsound
+            Expr::Var(v) if Some(v.as_str()) == scratch => {
+                if scratch_used {
+                    return None; // two callee slots into one scratch
                 }
+                scratch_used = true;
                 out_map.push(OutSlot::Discard);
             }
             Expr::Var(v) => {
@@ -4148,8 +4185,9 @@ fn delegation_opt_args(
             _ => return None,
         }
     }
-    // Every dispatch output must be produced by exactly one forwarded slot.
-    if written.iter().any(|w| !w) {
+    // Every dispatch output must be produced by exactly one forwarded slot,
+    // and an allocated scratch must be the one discarded slot.
+    if written.iter().any(|w| !w) || scratch.is_some() != scratch_used {
         return None;
     }
     // Opt args must be pure over the caller's own params (or literals): they
@@ -7239,43 +7277,9 @@ pub fn build_transition(model: &StreamModel, names: &dyn NameMap) -> Result<Vec<
         if target == sink {
             continue;
         }
-        // Normally read the sink back — it is a local the body just wrote, so
-        // the copy is free. A DECLINABLE output (MAMA's FAMA, the corpus's
-        // only one) cannot be: its sink may be NULL, and the retained value has
-        // to be right whether or not the caller wanted it. Those take the value
-        // the body assigned instead, which `assert_nullable_stores_are_guardable`
-        // guarantees is a single un-cursored store, so there is exactly one
-        // expression to take.
-        let declinable = model
-            .func
-            .outputs
-            .iter()
-            .any(|o| &o.name == name && o.is_nullable());
-        let value = if declinable {
-            let mut assigned: Option<Expr> = None;
-            for st in &out {
-                if let Statement::Assign { target: t, value: v, compound: false } = st {
-                    if *t == sink {
-                        assigned = Some(v.clone());
-                    }
-                }
-            }
-            // Name a carried variable the way the rest of the transition names
-            // it. A bare `Var` here would be a fresh reference to a state field
-            // and the localizer would promote it, rewriting the body's own
-            // store for no reason.
-            let state_names = transition_state_names(model);
-            match assigned {
-                Some(Expr::Var(v)) if state_names.contains(&v) => Expr::Var(names.state(&v)),
-                Some(other) => other,
-                None => sink,
-            }
-        } else {
-            sink
-        };
         out.push(Statement::Assign {
             target,
-            value,
+            value: sink,
             compound: false,
         });
     }

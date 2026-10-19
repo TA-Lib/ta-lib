@@ -23,7 +23,7 @@
 //! kept Rust's argument contract stated as an `assert!` in the numerics instead
 //! of a code from the public tier. The probe's subject is what the *body*
 //! touches, so it names the body; the public tier's own contract is
-//! `tests/nullable_outputs.rs`'s and `BatchApiTest`'s business.
+//! `tests/batch_contract.rs`'s and `BatchApiTest`'s business.
 //!
 //! **Generated rather than hand-written**, unlike the Java suite. Java discovers
 //! its corpus by reflection, so a new indicator is probed the day it lands.
@@ -287,14 +287,7 @@ fn call_args(func: &FuncDef, call_opts: &str) -> String {
     parts.push("&mut _b".to_string());
     parts.push("&mut _n".to_string());
     for o in &func.outputs {
-        // A nullable output takes `Option<&mut [T]>` (rule rB7). The sweep hands
-        // it `Some(..)`: declining it would hide exactly the writes it is here
-        // to catch.
-        if o.is_nullable() {
-            parts.push(format!("Some(&mut {})", o.name));
-        } else {
-            parts.push(format!("&mut {}", o.name));
-        }
+        parts.push(format!("&mut {}", o.name));
     }
     parts.join(", ")
 }

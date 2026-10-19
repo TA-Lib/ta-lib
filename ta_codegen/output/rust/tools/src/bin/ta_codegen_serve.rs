@@ -60324,7 +60324,7 @@ pub(super) fn rpc_mama(core: &mut Core, ref_data: &mut RefData, params: &Value) 
                 &inReal,
                 optInFastLimit,
                 optInSlowLimit,
-                &mut outBuf0, Some(&mut outBuf1),
+                &mut outBuf0, &mut outBuf1,
             );
             rc = match _out {
                 Ok(r) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success }
@@ -60334,7 +60334,7 @@ pub(super) fn rpc_mama(core: &mut Core, ref_data: &mut RefData, params: &Value) 
             if bench_mode == 1 {
                 rc = match core.mama_open(&inReal[..=endIdx], optInFastLimit, optInSlowLimit, ) { Ok(_h) => RetCode::Success, Err(e) => e };
             } else {
-                rc = match core.mama_open_and_fill(&inReal[..=endIdx], optInFastLimit, optInSlowLimit, &mut outBuf0, Some(&mut outBuf1)) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
+                rc = match core.mama_open_and_fill(&inReal[..=endIdx], optInFastLimit, optInSlowLimit, &mut outBuf0, &mut outBuf1) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
             }
             }
             }
@@ -60409,7 +60409,7 @@ pub(super) fn sv_mama(core: &Core, params: &Value) -> String {
             Ok(c) => c,
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
-        let rc = match c2.mama(0, svN - 1, &fz_c, optInFastLimit, optInSlowLimit, &mut b0, Some(&mut b1)) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
+        let rc = match c2.mama(0, svN - 1, &fz_c, optInFastLimit, optInSlowLimit, &mut b0, &mut b1) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.mama_lookback(optInFastLimit, optInSlowLimit).unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.mama_open(&fz_c, optInFastLimit, optInSlowLimit).is_err();
@@ -60419,7 +60419,7 @@ pub(super) fn sv_mama(core: &Core, params: &Value) -> String {
         {
         let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
         let mut f1: Vec<f64> = vec![-1.2345678901234e300f64; svN];
-        match c2.mama_open_and_fill(&fz_c, optInFastLimit, optInSlowLimit, &mut f0, Some(&mut f1)) {
+        match c2.mama_open_and_fill(&fz_c, optInFastLimit, optInSlowLimit, &mut f0, &mut f1) {
             Err(_) => { fill_ok = false; }
             Ok((_h, fr)) => {
                 range_checked = 1; range_legs += 1; range_sites |= 1;
@@ -60484,7 +60484,7 @@ pub(super) fn sv_mama(core: &Core, params: &Value) -> String {
         if let Some(&p) = pcs.first() {
             let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
             let mut f1: Vec<f64> = vec![-1.2345678901234e300f64; svN];
-            match c2.mama_open_and_fill(&fz_c[..p], optInFastLimit, optInSlowLimit, &mut f0, Some(&mut f1)) {
+            match c2.mama_open_and_fill(&fz_c[..p], optInFastLimit, optInSlowLimit, &mut f0, &mut f1) {
                 Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"copyOpenReject\":1".to_string(); } }
                 Ok((mut sa, _fr)) => {
                     { let va = sa.value(); value_checked = 1; value_legs += 1;
@@ -60541,7 +60541,7 @@ pub(super) fn sv_mama(core: &Core, params: &Value) -> String {
             {
             let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
             let mut f1: Vec<f64> = vec![-1.2345678901234e300f64; svN];
-            match c2.mama_open_and_fill(&fz_c[..lb], optInFastLimit, optInSlowLimit, &mut f0, Some(&mut f1)) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillWrongType\":1".to_string(); } } }
+            match c2.mama_open_and_fill(&fz_c[..lb], optInFastLimit, optInSlowLimit, &mut f0, &mut f1) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillWrongType\":1".to_string(); } } }
             }
         }
     }
@@ -60580,14 +60580,14 @@ pub(super) fn ride_mama(core: &Core, params: &Value, endIdx: usize, inReal: &[f6
 
     let mut rb0 = vec![0.0f64; m];
     let mut rb1 = vec![0.0f64; m];
-    let (beg, nb) = match core.mama(0, m - 1, &inReal[..m], optInFastLimit, optInSlowLimit, &mut rb0, Some(&mut rb1)) {
+    let (beg, nb) = match core.mama(0, m - 1, &inReal[..m], optInFastLimit, optInSlowLimit, &mut rb0, &mut rb1) {
         Ok(rr) => (rr.beg_idx, rr.count),
         Err(rc) => {
             r.rc_batch = retcode_to_int(rc);
             r.rc_open = match core.mama_open(&inReal[..m], optInFastLimit, optInSlowLimit) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
             let mut fb0 = vec![0.0f64; m];
             let mut fb1 = vec![0.0f64; m];
-            r.rc_fill = match core.mama_open_and_fill(&inReal[..m], optInFastLimit, optInSlowLimit, &mut fb0, Some(&mut fb1)) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            r.rc_fill = match core.mama_open_and_fill(&inReal[..m], optInFastLimit, optInSlowLimit, &mut fb0, &mut fb1) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
             let mut cmp = r.rc_open == r.rc_batch;
             if cmp { r.rej += 1; }
             if !cmp { r.ok = false; r.leg = 3; }
@@ -60629,7 +60629,7 @@ pub(super) fn ride_mama(core: &Core, params: &Value, endIdx: usize, inReal: &[f6
     if r.ok {
         let mut fb0 = vec![0.0f64; m];
         let mut fb1 = vec![0.0f64; m];
-        match core.mama_open_and_fill(&inReal[..m], optInFastLimit, optInSlowLimit, &mut fb0, Some(&mut fb1)) {
+        match core.mama_open_and_fill(&inReal[..m], optInFastLimit, optInSlowLimit, &mut fb0, &mut fb1) {
             Err(_) => { r.ok = false; r.leg = 2; }
             Ok((_st, rng)) => {
                 if rng.beg_idx != beg || rng.count != nb { r.ok = false; r.leg = 2; }

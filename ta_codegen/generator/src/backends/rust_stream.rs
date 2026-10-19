@@ -329,8 +329,6 @@ fn build_typing_from(func: &FuncDef, body: &[Statement], models: &[&StreamModel]
             enum_vars: super::rust_lang::enum_local_types(func),
             circbuf_hybrid_static: HashMap::new(),
             circbuf_len_of: HashMap::new(),
-            nullable_outputs: HashSet::new(),
-            nullable_shadow: false,
         },
         extrema_i32,
     }
@@ -775,19 +773,7 @@ fn emit_open_internal_wrapper_named(
     }
     let ins: Vec<String> = streaming::input_array_names(func);
     let opts: Vec<String> = func.optional_inputs.iter().map(|p| p.name.clone()).collect();
-    let nullable_sinks = super::common::nullable_output_names(func);
-    let sinks: Vec<String> = outputs
-        .iter()
-        .map(|o2| {
-            if nullable_sinks.contains(o2) {
-                // The plain open reports every output's first value, so this
-                // path never declines one — `Some`, not `None`.
-                format!("Some(&mut sink_{o2})")
-            } else {
-                format!("&mut sink_{o2}")
-            }
-        })
-        .collect();
+    let sinks: Vec<String> = outputs.iter().map(|o2| format!("&mut sink_{o2}")).collect();
     let mut args = ins.join(", ");
     let _ = write!(args, ", startIdx");
     for opt in &opts {
@@ -852,22 +838,13 @@ fn open_fill_capacity_guards(func: &FuncDef, with_pair: bool) -> String {
         );
     }
     let _ = writeln!(s, "        let _guardOutLen = {first}.len().saturating_sub(_guardLb);");
-    let nullable = super::common::nullable_output_names(func);
     for out in &func.outputs {
-        // A declined output has no capacity to check (rule rB7 on this tier).
-        // An empty one is absent, which is what keeps it ahead of the history
+        // An empty output is absent, which is what keeps it ahead of the history
         // check on a history too short to open.
-        let cond = if nullable.contains(&out.name) {
-            format!(
-                "{}.as_deref().is_some_and(|o| o.is_empty() || o.len() < _guardOutLen)",
-                out.name
-            )
-        } else {
-            format!("{0}.is_empty() || {0}.len() < _guardOutLen", out.name)
-        };
         let _ = writeln!(
             s,
-            "        if {cond} {{\n            return Err(RetCode::BadParam);\n        }}"
+            "        if {0}.is_empty() || {0}.len() < _guardOutLen {{\n            return Err(RetCode::BadParam);\n        }}",
+            out.name
         );
     }
     s
@@ -1088,19 +1065,11 @@ fn cur_ctor_defaults(func: &FuncDef) -> Vec<String> {
 /// The `cur_<output>` initializer lines for a capture literal: the value(s) the
 /// opener just produced, so `value()` is right the instant the handle exists.
 fn cur_capture_fields(func: &FuncDef, typing: &Typing) -> Vec<String> {
-    let nullable = super::common::nullable_output_names(func);
     func.outputs
         .iter()
         .map(|out| {
             let name = &out.name;
-            if nullable.contains(name) {
-                // No slot to read: a declinable output's array may be absent.
-                // `lastCur_<name>` is the transcribed open loop's own shadow of
-                // the guarded store (`nullable_shadow`), computed every
-                // iteration regardless of decline — matching what an Update
-                // recomputes, so `Open(P)+updates` and `Open(n)` agree.
-                format!("cur_{name}: lastCur_{name}")
-            } else if typing.ctx.vec_vars.contains(&format!("sc_{name}")) {
+            if typing.ctx.vec_vars.contains(&format!("sc_{name}")) {
                 // A composed producer holds the caller's slice through the stride
                 // alias, so the output name itself is mutably borrowed here.
                 format!("cur_{name}: sc_{name}[*outNBElement - 1]")
@@ -2201,7 +2170,7 @@ fn emit_open_sig(o: &mut String, func: &FuncDef, mode: OutMode, enums: &HashMap<
         // is a parameter (OpenInternal needs it for sub-stream composition) and
         // `outStride` selects where the per-bar writes land.
         OutMode::Core => {
-            let outs = open_out_params(func, mode);
+            let outs = open_out_params(func);
             let _ = writeln!(
                 o,
                 "    /// The single whole-history transcription behind [`Core::{sn}_open_internal`]\n    /// (stride 0, scalar sink) and [`Core::{sn}_open_and_fill`] (stride 1, caller slices)."
@@ -2218,7 +2187,7 @@ fn emit_open_sig(o: &mut String, func: &FuncDef, mode: OutMode, enums: &HashMap<
         // no out-parameters (#179 C15). Only `OpenAndFillInternal`, an internal
         // composition seam, still takes the pair.
         OutMode::Fill => {
-            let outs = open_out_params(func, mode);
+            let outs = open_out_params(func);
             let _ = writeln!(
                 o,
                 "    /// [`Core::{sn}_open`] that also fills the output array(s) bit-identically to\n    /// [`Core::{sn}`] over `0..len` in the same single pass, and reports the range it\n    /// wrote as the [`OutRange`] beside the handle.\n    ///\n    /// # Errors\n    ///\n    /// [`RetCode::BadParam`] when an output slice holds fewer than `len - lookback`\n    /// values — the batch tier's sizing rule, checked here as it is there (rule rS5).\n    /// Everything [`Core::{sn}_open`] rejects is rejected here too."
@@ -2251,7 +2220,7 @@ fn emit_open_sig(o: &mut String, func: &FuncDef, mode: OutMode, enums: &HashMap<
         // for a sub-call whose destinations alias neither its sources nor each
         // other — see `SubCallStep::is_fusable`.
         OutMode::FillInternal => {
-            let outs = open_out_params(func, mode);
+            let outs = open_out_params(func);
             let _ = writeln!(
                 o,
                 "    /// [`Core::{sn}_open_and_fill`] anchored at `startIdx` — the composed-open\n    /// fusion seam (issue #192), not a public entry point."
@@ -2265,22 +2234,11 @@ fn emit_open_sig(o: &mut String, func: &FuncDef, mode: OutMode, enums: &HashMap<
 }
 
 /// One output parameter per declared output, in declaration order.
-///
-/// A `nullable` output is `Option<&mut [T]>`, the spelling the batch tier took
-/// in #262 and the one rule rW5 pins: Rust can say "declined" distinctly from
-/// "empty", so it does. The `mut` binding rides the Core tier alone — the one
-/// that renders a body and re-borrows with `as_deref_mut()`.
-fn open_out_params(func: &FuncDef, mode: OutMode) -> String {
-    let nullable = super::common::nullable_output_names(func);
+fn open_out_params(func: &FuncDef) -> String {
     let mut outs = String::new();
     for out in &func.outputs {
         let elem = out_rust_type(func, &out.name);
-        if nullable.contains(&out.name) {
-            let bind = if matches!(mode, OutMode::Core) { "mut " } else { "" };
-            let _ = write!(outs, ", {bind}{}: Option<&mut [{elem}]>", out.name);
-        } else {
-            let _ = write!(outs, ", {}: &mut [{elem}]", out.name);
-        }
+        let _ = write!(outs, ", {}: &mut [{elem}]", out.name);
     }
     outs
 }
@@ -2455,24 +2413,7 @@ fn emit_open_region(
     let folded = respell(func, &super::ir_cleanup::drop_inert_guards(&folded), &typing.ctx, helpers);
     let body: &[Statement] = &folded;
 
-    // Scoped to the open body: a declined output's store is wrapped in
-    // `if let Some(..) = ..as_deref_mut()`, rule rB7 read on this tier. The step
-    // body keeps the empty set — a `<n>_step_impl` writes `&mut f64` scalars, and
-    // nothing there is declinable.
-    let mut open_ctx = typing.ctx.clone();
-    let nullable = super::common::nullable_output_names(func);
-    open_ctx.nullable_outputs.clone_from(&nullable);
-    // The handle's `cur_<out>` has to hold what the store *would* have
-    // written even when the caller declined it — an Update always recomputes
-    // it (mama.c), so a capture that instead reads the array (absent) or
-    // defaults to zero diverges from `Open(P)+updates` the moment the store's
-    // RHS isn't already a bare local. Every guarded store also lands here,
-    // unconditionally (Java/C# `lastCur_*`); `cur_capture_fields` reads it.
-    open_ctx.nullable_shadow = true;
-    let ctx = &open_ctx;
-    for name in &nullable {
-        let _ = writeln!(o, "        let mut lastCur_{name}: f64 = 0.0_f64;");
-    }
+    let ctx = &typing.ctx;
     let for_loop_vars = collect_for_loop_vars(body);
     let output_names: Vec<String> = func.outputs.iter().map(|out| out.name.clone()).collect();
     let opt_real_params: Vec<String> = func
@@ -2866,9 +2807,7 @@ fn emit_capture(
         f.push(format!("lastOut_{name}: {name}[(*outNBElement - 1) * outStride]"));
     }
     // Seed the value accessor from the same slot: an Open that succeeded
-    // produced at least one value, so `value()` is total on a live handle. A
-    // DECLINABLE output has no slot to read, so it takes the body's own
-    // variable — the same one the step retains from.
+    // produced at least one value, so `value()` is total on a live handle.
     f.extend(cur_capture_fields(func, typing));
     for lag in &model.lags {
         for k in 1..=lag.depth {
@@ -3115,49 +3054,30 @@ fn open_and_fill_doctest(
         .map(|o| super::rust_doc::example_opt_literal(o, enums))
         .collect();
 
-    // (example variable, integer output?, declinable?) per output, in order.
-    let nullable = common::nullable_output_names(func);
-    let out_vars: Vec<(String, bool, bool)> = func
+    // (example variable, integer output?) per output, in order.
+    let out_vars: Vec<(String, bool)> = func
         .outputs
         .iter()
         .zip(super::rust_doc::output_var_names(func))
-        .map(|(out, var)| {
-            (
-                var,
-                out_is_int(func, &out.name),
-                nullable.contains(&out.name),
-            )
-        })
+        .map(|(out, var)| (var, out_is_int(func, &out.name)))
         .collect();
 
     let buffer = |var: &str, is_int: bool| {
         let zero = if is_int { "0_i32" } else { "0.0" };
         format!("let mut {var} = vec![{zero}; {len}];")
     };
-    // A declinable output is `Option<&mut [_]>` on BOTH tiers, so the example
-    // supplies it on both and compares the pair like any other.
-    let pass = |var: &str, declinable: bool| {
-        if declinable {
-            format!("Some(&mut {var}[..])")
-        } else {
-            format!("&mut {var}")
-        }
-    };
 
     lines.push(String::new());
     lines.push("let core = Core::new();".to_string());
 
     // The batch tier over the whole history.
-    for (var, is_int, _) in &out_vars {
+    for (var, is_int) in &out_vars {
         lines.push(buffer(&format!("batch_{var}"), *is_int));
     }
     let mut batch_args: Vec<String> = vec!["0".to_string(), format!("{first}.len() - 1")];
     batch_args.extend(series.iter().map(|v| format!("&{v}")));
     batch_args.extend(opts.iter().cloned());
-    batch_args.extend(
-        out_vars.iter()
-            .map(|(var, _, decl)| pass(&format!("batch_{var}"), *decl)),
-    );
+    batch_args.extend(out_vars.iter().map(|(var, _)| format!("&mut batch_{var}")));
     lines.push(format!(
         "let batch = core.{batch}({})?;",
         batch_args.join(", ")
@@ -3165,12 +3085,12 @@ fn open_and_fill_doctest(
 
     // The same history through the opener, filling as it goes.
     lines.push(String::new());
-    for (var, is_int, _) in &out_vars {
+    for (var, is_int) in &out_vars {
         lines.push(buffer(var, *is_int));
     }
     let mut fill_args: Vec<String> = series.iter().map(|v| format!("&{v}")).collect();
     fill_args.extend(opts);
-    fill_args.extend(out_vars.iter().map(|(var, _, decl)| pass(var, *decl)));
+    fill_args.extend(out_vars.iter().map(|(var, _)| format!("&mut {var}")));
     lines.push(format!(
         "let (_stream, filled) = core.{sn}_open_and_fill({})?;",
         fill_args.join(", ")
@@ -3179,7 +3099,7 @@ fn open_and_fill_doctest(
     lines.push(String::new());
     lines.push("assert_eq!(filled.beg_idx, batch.beg_idx);".to_string());
     lines.push("assert_eq!(filled.count, batch.count);".to_string());
-    for (var, is_int, _) in &out_vars {
+    for (var, is_int) in &out_vars {
         if *is_int {
             // An integer output has one representation per value, so `==` on the
             // produced extent already is the bitwise comparison.
@@ -3939,8 +3859,6 @@ fn plan_ctx(func: &FuncDef, enums: &HashMap<String, EnumDef>) -> RustRenderCtx {
         enum_vars: super::rust_lang::enum_local_types(func),
         circbuf_hybrid_static: HashMap::new(),
         circbuf_len_of: HashMap::new(),
-        nullable_outputs: HashSet::new(),
-        nullable_shadow: false,
     }
 }
 
@@ -4052,8 +3970,7 @@ fn emit_dispatch(
     for arm in dp.arms.iter().filter(|a| a.supported) {
         let _ = writeln!(o, "            {sub_enum}::{}(sub) => {{", callee_variant(&arm.callee));
         // Route callee output slots through the arm's OutSlot map: Forward(k)
-        // lands in the dispatch func's output k, Discard drops the slot (the
-        // nullable FAMA when MA routes only the MAMA line, #125).
+        // lands in the dispatch func's output k, Discard drops the slot.
         if arm.out_map.len() == 1 {
             let streaming::OutSlot::Forward(k) = arm.out_map[0] else {
                 panic!("single-output arm cannot discard its only slot");
@@ -4112,8 +4029,7 @@ fn emit_dispatch(
             );
         } else {
             // The callee answers a tuple; the arm's OutSlot map says which
-            // component lands where, and which the dispatch drops (MAMA's FAMA
-            // when MA routes only the MAMA line, #125).
+            // component lands where, and which the dispatch drops.
             let _ = writeln!(frame, "                {sub_enum}::{variant}(sub) => {{");
             let _ = writeln!(frame, "                    let subValue = sub.peek({bar_args})?;");
             for (i, slot) in arm.out_map.iter().enumerate() {
@@ -4255,7 +4171,7 @@ fn emit_dispatch(
                         );
                         // Select the forwarded callee slot(s) in dispatch output order
                         // (a multi-output callee's open value is a tuple; Discard slots
-                        // — MAMA's FAMA — are dropped, #125).
+                        // are dropped).
                         let value_expr = if arm.out_map.len() == 1 {
                             "subValue".to_string()
                         } else {
@@ -4296,16 +4212,20 @@ fn emit_dispatch(
                         } else {
                             let _ = writeln!(o, "            {case} => {sub_enum}::{}(", callee_variant(&arm.callee));
                         }
-                        // OutSlot-mapped fill tail: Forward(k) passes the dispatch func's
-                        // own array, Discard materializes a throwaway buffer (the Rust
-                        // rendering of C's NULL for a nullable output — same inline-Vec
-                        // idiom the batch dispatch uses, #125).
+                        let callee = registry.def(&arm.callee);
                         let fill_outs: String = arm
                             .out_map
                             .iter()
-                            .map(|slot| match slot {
+                            .enumerate()
+                            .map(|(i, slot)| match slot {
                                 streaming::OutSlot::Forward(k) => outputs[*k].clone(),
-                                streaming::OutSlot::Discard => "None".to_string(),
+                                streaming::OutSlot::Discard => {
+                                    let zero = match callee.and_then(|d| d.outputs.get(i)).map(|x| &x.param_type) {
+                                        Some(ParamType::Real) | None => "0.0_f64",
+                                        Some(_) => "0_i32",
+                                    };
+                                    format!("&mut vec![{zero}; historyLen]")
+                                }
                             })
                             .collect::<Vec<_>>()
                             .join(", ");

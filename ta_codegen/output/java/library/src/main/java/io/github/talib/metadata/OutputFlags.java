@@ -39,7 +39,7 @@
 package io.github.talib.metadata;
 
 /**
- * How an output is meant to be drawn, whether it may be omitted, and what its values can be. Values match C's {@code TA_OUT_*}. A pattern output writes 0 or a sign times a level: the sign flags give its signs, the level flags its levels (100 always).
+ * How an output is meant to be drawn and what its values can be. Values match C's {@code TA_OUT_*}. A pattern output writes 0 or a sign times a level: the sign flags give its signs, the level flags its levels (100 always).
  */
 public final class OutputFlags {
 
@@ -84,14 +84,15 @@ public final class OutputFlags {
    /** A lower band/limit line. */
    public static final int LOWER_LIMIT = 0x00001000;
 
-   /** The typed call lets the caller decline it. A {@code ParamHolder} still needs it bound. */
-   public static final int NULLABLE = 0x00002000;
-
    /** A chart draws it ahead of or behind the bar that computed it, by the bars {@code ParamHolder.displayShift} reports. The values are never shifted. */
    public static final int DISPLAY_SHIFT = 0x00004000;
 
    /** Adds level 80: a weaker form of the pattern, on the same bar. */
    public static final int PATTERN_WEAK = 0x00008000;
+
+   /** @deprecated Never set: every output is required. */
+   @Deprecated(forRemoval = true)
+   public static final int NULLABLE = 0x00002000;
 
    /** @deprecated Use {@link #PATTERN_CONFIRM}. */
    @Deprecated(forRemoval = true)

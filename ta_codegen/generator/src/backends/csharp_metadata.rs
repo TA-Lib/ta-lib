@@ -409,17 +409,15 @@ const OUTPUT_FLAGS: &[(&str, &str, &str)] = &[
     ("upper_limit", "UpperLimit", "An upper band or limit line."),
     ("lower_limit", "LowerLimit", "A lower band or limit line."),
     (
-        "nullable",
-        "Nullable",
-        "The typed call lets the caller decline it. A <c>ParamHolder</c> still needs it bound.",
-    ),
-    (
         "display_shift",
         "DisplayShift",
         "A chart draws it ahead of or behind the bar that computed it, by the bars the display-shift query reports. The values are never shifted.",
     ),
     ("pattern_weak", "PatternWeak", "Adds level 80: a weaker form of the pattern, on the same bar."),
 ];
+
+/// Output members kept for compatibility: the C value stays defined, no output sets it.
+const OUTPUT_RETIRED: &[(&str, u32)] = &[("Nullable", 0x0000_2000)];
 
 /// The six OHLCV components, with the bit `price_bundle` assigns each.
 const PRICE_COMPONENTS: &[(PriceComponent, &str, &str)] = &[
@@ -474,6 +472,7 @@ fn flags_enum(
     members: &[(&str, &str, &str)],
     bits: fn(&[String]) -> u32,
     seen: u32,
+    retired: &[(&str, u32)],
 ) {
     let _ = write!(s, "/// <summary>{doc}</summary>\n[Flags]\npublic enum {name} : uint\n{{\n");
     s.push_str("    /// <summary>No flags.</summary>\n    None = 0,\n");
@@ -485,6 +484,9 @@ fn flags_enum(
             "\n    /// <summary>{mdoc}{}</summary>\n    {member} = 0x{bit:08X},\n",
             dead_remark(bit, seen)
         );
+    }
+    for (member, bit) in retired {
+        let _ = write!(s, "\n    /// <summary>Never set: every output is required.</summary>\n    [Obsolete(\"Never set: every output is required.\")]\n    {member} = 0x{bit:08X},\n");
     }
     s.push_str("}\n\n");
 }
@@ -538,6 +540,7 @@ fn vocabulary(rows: &[FuncRow]) -> String {
         FUNC_FLAGS,
         func_flag_bits,
         c.func,
+        &[],
     );
 
     // Price components are their own vocabulary: the bits come from
@@ -562,14 +565,16 @@ fn vocabulary(rows: &[FuncRow]) -> String {
         OPT_FLAGS,
         opt_flag_bits,
         c.opt,
+        &[],
     );
     flags_enum(
         &mut s,
         "OutputFlags",
-        "How an output is meant to be drawn, whether it may be discarded, and what its values can be. Values match C's <c>TA_OUT_*</c>. A pattern output writes 0 or a sign times a level: the sign flags give its signs, the level flags its levels (100 always).",
+        "How an output is meant to be drawn and what its values can be. Values match C's <c>TA_OUT_*</c>. A pattern output writes 0 or a sign times a level: the sign flags give its signs, the level flags its levels (100 always).",
         OUTPUT_FLAGS,
         output_flag_bits,
         c.output,
+        OUTPUT_RETIRED,
     );
 
     // --- parameter kinds ---
@@ -1072,6 +1077,9 @@ fn catalog_facts(rows: &[FuncRow]) -> String {
         if output_flag_bits(&[(*token).to_string()]) & c.output == 0 {
             dead.push(format!("OutputFlags.{member}"));
         }
+    }
+    for (member, _) in OUTPUT_RETIRED {
+        dead.push(format!("OutputFlags.{member}"));
     }
     s.push_str(
         "\n    /* Flag members no shipped function sets. Pinned rather than deleted:\n\
@@ -2074,28 +2082,6 @@ public sealed class ParamHolder
         return true;
     }
 
-    /* The typed method reads an empty span on a nullable output as declined,
-       and no output can be declined through a holder. Refuse it only where
-       that method refuses an empty span on any other output: an invalid range
-       or parameter must keep its own diagnosis. */
-    private void RequireNoDeclinedOutput(int startIdx, int endIdx)
-    {
-        if (Core.ClampedStart(startIdx, endIdx, Lookback()) < 0)
-        {
-            return;
-        }
-
-        for (int i = 0; i < _info.Outputs.Length; i++)
-        {
-            OutputInfo probe = _info.Outputs[i];
-            if ((probe.Flags & OutputFlags.Nullable) != 0
-                && (probe.Kind == OutputKind.Real ? _realOuts[i]!.Length : _intOuts[i]!.Length) == 0)
-            {
-                Core.RequirePresent(_info.Name, probe.ParamName, 0);
-            }
-        }
-    }
-
     /// <summary>Runs the function over <c>[startIdx, endIdx]</c>.</summary>
     /// <param name="startIdx">First input bar to compute.</param>
     /// <param name="endIdx">Last input bar to compute.</param>
@@ -2103,9 +2089,7 @@ public sealed class ParamHolder
     /// <exception cref="TALibArgumentException">Carrying
     /// <see cref="RetCode.InputNotAllInitialize"/> or
     /// <see cref="RetCode.OutputNotAllInitialize"/>: a required input or output was
-    /// never bound, and the function did not run. Carrying
-    /// <see cref="RetCode.BadParam"/>: an output the typed method lets a caller
-    /// decline was bound to an empty array. Any other failure is the typed
+    /// never bound, and the function did not run. Any other failure is the typed
     /// method's own.</exception>
     public OutRange Call(int startIdx, int endIdx)
     {
@@ -2114,8 +2098,6 @@ public sealed class ParamHolder
         {
             throw new TALibArgumentException($"{_info.Name}: {which} was not set", bound);
         }
-
-        RequireNoDeclinedOutput(startIdx, endIdx);
 
         // The function's OWN exception, not a relabelled code. Since #265 the
         // thunk calls the public overload, whose message names the buffer and
@@ -2134,9 +2116,7 @@ public sealed class ParamHolder
     /// <returns>The function's return code. An unbound input or output is reported
     /// as <see cref="RetCode.InputNotAllInitialize"/> /
     /// <see cref="RetCode.OutputNotAllInitialize"/>, the codes C returns for the
-    /// same condition, and an empty array bound to an output the typed method lets
-    /// a caller decline as <see cref="RetCode.BadParam"/>. This method does not
-    /// throw.</returns>
+    /// same condition. This method does not throw.</returns>
     public RetCode TryCall(int startIdx, int endIdx, out OutRange range)
     {
         RetCode bound = BoundState();
@@ -2148,7 +2128,6 @@ public sealed class ParamHolder
 
         try
         {
-            RequireNoDeclinedOutput(startIdx, endIdx);
             range = _info.Invoke(_core, this, startIdx, endIdx);
             return RetCode.Success;
         }

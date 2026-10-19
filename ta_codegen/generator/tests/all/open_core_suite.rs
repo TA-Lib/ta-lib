@@ -419,22 +419,6 @@ fn composed_copy_out_is_stride_guarded() {
 }
 
 // ---------------------------------------------------------------------------
-// Nullable outputs
-// ---------------------------------------------------------------------------
-
-#[test]
-fn nullable_output_stays_null_through_the_scalar_wrapper() {
-    // MAMA's outFAMA may be NULL (discarded). The core's writes are NULL-guarded,
-    // so the sink must stay NULL rather than becoming &lastValue.
-    let src = stream_c("mama");
-    let scalar = body_of(&src, "TA_RetCode TA_MAMA_OpenInternal(");
-    assert!(
-        scalar.contains("outFAMA ?"),
-        "a nullable output's sink passes NULL through:\n{scalar}"
-    );
-}
-
-// ---------------------------------------------------------------------------
 // The invariant that catches the whole bug class
 // ---------------------------------------------------------------------------
 
@@ -479,9 +463,6 @@ fn no_output_array_escapes_the_core_unscaled() {
                 }
                 if line.contains("return TA_BAD_PARAM") {
                     continue; // a validation predicate, not a write
-                }
-                if line.contains("!= NULL") || line.contains("== NULL") {
-                    continue; // a nullable output's discard guard, not a write
                 }
                 offenders.push(format!("{name}: {line}"));
             }

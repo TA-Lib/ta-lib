@@ -753,14 +753,11 @@ fn emit_rust_warmup_arms(
     let mut fill_outs = String::new();
     let (mut real_idx, mut int_idx) = (0usize, 0usize);
     for out in outputs {
-        // A nullable output takes `Option<&mut [T]>` (rule rB7); this arm
-        // compares values, so it always supplies one.
-        let (op, cl) = if out.is_nullable() { ("Some(", ")") } else { ("", "") };
         if out.param_type == ParamType::Integer {
-            let _ = write!(fill_outs, ", {op}&mut outIntBuf{int_idx}{cl}");
+            let _ = write!(fill_outs, ", &mut outIntBuf{int_idx}");
             int_idx += 1;
         } else {
-            let _ = write!(fill_outs, ", {op}&mut outBuf{real_idx}{cl}");
+            let _ = write!(fill_outs, ", &mut outBuf{real_idx}");
             real_idx += 1;
         }
     }
@@ -4053,11 +4050,7 @@ pub fn generate_rust_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
                 real_idx += 1;
                 format!("&mut outBuf{}", real_idx - 1)
             };
-            // A nullable output takes `Option<&mut [T]>` (rule rB7). The server
-            // always supplies it: a correctness request goes through the public
-            // API with every declared output bound, which is what the C
-            // reference is compared against.
-            out_args.push(if out.is_nullable() { format!("Some({buf})") } else { buf });
+            out_args.push(buf);
         }
         s.push_str(&format!("                {},\n", out_args.join(", ")));
         s.push_str("            );\n");

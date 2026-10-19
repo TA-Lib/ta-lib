@@ -184,7 +184,7 @@
       } else if( !(optInSlowLimit >= 1e-2 && optInSlowLimit <= 9.9e-1) ) {
          return RetCode.BAD_PARAM;
       }
-      if( outFAMA != null && outMAMA == outFAMA ) {
+      if( outMAMA == outFAMA ) {
          return RetCode.BAD_PARAM ;
       }
       a = 0.0962;
@@ -457,11 +457,7 @@
          tempReal *= 0.5;
          fama = Math.fma(1 - tempReal, fama, tempReal * mama);
          if( today >= startIdx ) {
-            /* FAMA is nullable (issue #125): its write carries no outIdx advance so
-             * the codegen can NULL-guard it; outMAMA (never NULL) owns the ++.
-             */
-            if( outFAMA != null )
-               outFAMA[outIdx] = fama;
+            outFAMA[outIdx] = fama;
             outMAMA[outIdx++] = mama;
          }
          /* Adjust the period for next price bar */
@@ -580,7 +576,7 @@
       } else if( !(optInSlowLimit >= 1e-2 && optInSlowLimit <= 9.9e-1) ) {
          return RetCode.BAD_PARAM;
       }
-      if( outFAMA != null && outMAMA == outFAMA ) {
+      if( outMAMA == outFAMA ) {
          return RetCode.BAD_PARAM ;
       }
       a = 0.0962;
@@ -798,8 +794,7 @@
          tempReal *= 0.5;
          fama = Math.fma(1 - tempReal, fama, tempReal * mama);
          if( today >= startIdx ) {
-            if( outFAMA != null )
-               outFAMA[outIdx] = fama;
+            outFAMA[outIdx] = fama;
             outMAMA[outIdx++] = mama;
          }
          Re = Math.fma(0.8, Re, 0.2 * (Math.fma(I2, prevI2, Q2 * prevQ2)));
@@ -855,10 +850,9 @@
     *        {@code endIdx - max(startIdx, mamaLookback(...)) + 1} values, and never be
     *        empty: an empty array is an absent output.
     * @param outFAMA Following adaptive moving average, using half the alpha
-    *        (slow line) Pass {@code null} to decline it: it is still computed where
-    *        the algorithm needs it, but nothing is written out. Supplied, it must hold
-    *        at least {@code endIdx - max(startIdx, mamaLookback(...)) + 1} values, and
-    *        never be empty.
+    *        (slow line) Must hold at least
+    *        {@code endIdx - max(startIdx, mamaLookback(...)) + 1} values, and never be
+    *        empty: an empty array is an absent output.
     * @return The range written: {@code begIdx} is the first bar with a value,
     *        {@code count} how many were written.
     * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -869,9 +863,8 @@
     *        <i>declares</i> that does not reach {@code endIdx}, or an output that
     *        cannot hold the values produced. Declared, not read: a few candlestick
     *        patterns take an OHLC series they never index, and it is required all the
-    *        same. An output this function documents as declinable is the one
-    *        exception: {@code null} is how you decline it. Checked before anything is
-    *        written, so a rejected call leaves every buffer untouched.
+    *        same. Checked before anything is written, so a rejected call leaves every
+    *        buffer untouched.
     *
     * @see Core#ma
     * @see Core#wma
@@ -891,7 +884,7 @@
       int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("MAMA", "inReal", inReal, guardInLen);
       requireLength("MAMA", "outMAMA", outMAMA, guardOutLen);
-      if( outFAMA != null ) requireLength("MAMA", "outFAMA", outFAMA, guardOutLen);
+      requireLength("MAMA", "outFAMA", outFAMA, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       RetCode retCode = mamaImpl(startIdx, endIdx, inReal, optInFastLimit, optInSlowLimit, outBegIdx, outNBElement, outMAMA, outFAMA);
@@ -929,10 +922,9 @@
     *        {@code endIdx - max(startIdx, mamaLookback(...)) + 1} values, and never be
     *        empty: an empty array is an absent output.
     * @param outFAMA Following adaptive moving average, using half the alpha
-    *        (slow line) Pass {@code null} to decline it: it is still computed where
-    *        the algorithm needs it, but nothing is written out. Supplied, it must hold
-    *        at least {@code endIdx - max(startIdx, mamaLookback(...)) + 1} values, and
-    *        never be empty.
+    *        (slow line) Must hold at least
+    *        {@code endIdx - max(startIdx, mamaLookback(...)) + 1} values, and never be
+    *        empty: an empty array is an absent output.
     * @return The range written: {@code begIdx} is the first bar with a value,
     *        {@code count} how many were written.
     * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -943,9 +935,8 @@
     *        <i>declares</i> that does not reach {@code endIdx}, or an output that
     *        cannot hold the values produced. Declared, not read: a few candlestick
     *        patterns take an OHLC series they never index, and it is required all the
-    *        same. An output this function documents as declinable is the one
-    *        exception: {@code null} is how you decline it. Checked before anything is
-    *        written, so a rejected call leaves every buffer untouched.
+    *        same. Checked before anything is written, so a rejected call leaves every
+    *        buffer untouched.
     *
     * @see Core#ma
     * @see Core#wma
@@ -965,7 +956,7 @@
       int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("MAMA", "inReal", inReal, guardInLen);
       requireLength("MAMA", "outMAMA", outMAMA, guardOutLen);
-      if( outFAMA != null ) requireLength("MAMA", "outFAMA", outFAMA, guardOutLen);
+      requireLength("MAMA", "outFAMA", outFAMA, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       RetCode retCode = mamaImpl(startIdx, endIdx, inReal, optInFastLimit, optInSlowLimit, outBegIdx, outNBElement, outMAMA, outFAMA);
@@ -1326,9 +1317,6 @@
          mama = Math.fma(1 - tempReal, mama, tempReal * todayValue);
          tempReal *= 0.5;
          fama = Math.fma(1 - tempReal, fama, tempReal * mama);
-         /* FAMA is nullable (issue #125): its write carries no outIdx advance so
-          * the codegen can NULL-guard it; outMAMA (never NULL) owns the ++.
-          */
          cur_outFAMA = fama;
          cur_outMAMA = mama;
          out.mama = cur_outMAMA;
@@ -1539,9 +1527,6 @@
       sp.mama = Math.fma(1 - tempReal, sp.mama, tempReal * todayValue);
       tempReal *= 0.5;
       sp.fama = Math.fma(1 - tempReal, sp.fama, tempReal * sp.mama);
-      /* FAMA is nullable (issue #125): its write carries no outIdx advance so
-       * the codegen can NULL-guard it; outMAMA (never NULL) owns the ++.
-       */
       sp.cur_outFAMA = sp.fama;
       sp.cur_outMAMA = sp.mama;
       /* Adjust the period for next price bar */
@@ -1578,7 +1563,6 @@
    }
    private RetCode mamaOpenImpl( MamaStream sp, double inReal[], int startIdx, double optInFastLimit, double optInSlowLimit, MInteger outBegIdx, MInteger outNBElement, double outMAMA[], double outFAMA[], int outStride )
    {
-      double lastCur_outFAMA = 0;
       int outIdx = 0;
       int i = 0;
       int lookbackTotal = 0;
@@ -1932,12 +1916,7 @@
          tempReal *= 0.5;
          fama = Math.fma(1 - tempReal, fama, tempReal * mama);
          if( today >= startIdx ) {
-            /* FAMA is nullable (issue #125): its write carries no outIdx advance so
-             * the codegen can NULL-guard it; outMAMA (never NULL) owns the ++.
-             */
-            lastCur_outFAMA = fama;
-            if( outFAMA != null )
-               outFAMA[outIdx * outStride] = fama;
+            outFAMA[outIdx * outStride] = fama;
             outMAMA[outIdx++ * outStride] = mama;
          }
          /* Adjust the period for next price bar */
@@ -2026,7 +2005,7 @@
       sp.ringCap_trailingWMAIdx = cap_trailingWMAIdx;
       sp.ring_trailingWMAIdx_inReal = capRing_trailingWMAIdx_inReal;
       sp.cur_outMAMA = outMAMA[(outNBElement.value - 1) * outStride];
-      sp.cur_outFAMA = lastCur_outFAMA;
+      sp.cur_outFAMA = outFAMA[(outNBElement.value - 1) * outStride];
       return RetCode.SUCCESS;
    }
    /* mamaOpenAndFill anchored at startIdx — the composed-open fusion seam. */
@@ -2090,8 +2069,6 @@
     * {@code historyLen - lookback} values — both checked before anything is
     * written, so an undersized array is an {@link IllegalArgumentException}
     * naming it rather than a fault from inside the fill.
-    * <p>{@code outFAMA} may be declined with {@code null}: the value is still
-    * computed — {@link MamaStream#value(MamaOut)} reports it — and nothing is written out.
     * <p>The range written is on the returned handle:
     * {@link MamaStream#outRange()}.
     */
@@ -2101,8 +2078,8 @@
       requireHistory("MAMA openAndFill", inReal.length);
       int guardOutLen = openFillCount("MAMA openAndFill", inReal.length, mamaLookback(optInFastLimit, optInSlowLimit));
       requireLength("MAMA openAndFill", "outMAMA", outMAMA, guardOutLen);
-      if( outFAMA != null ) requireLength("MAMA openAndFill", "outFAMA", outFAMA, guardOutLen);
-      if( (Object)outMAMA == (Object)inReal || (outFAMA != null && (Object)outFAMA == (Object)inReal) || (outFAMA != null && (Object)outMAMA == (Object)outFAMA) ) {
+      requireLength("MAMA openAndFill", "outFAMA", outFAMA, guardOutLen);
+      if( (Object)outMAMA == (Object)inReal || (Object)outFAMA == (Object)inReal || (Object)outMAMA == (Object)outFAMA ) {
          throw streamFailure("MAMA openAndFill", RetCode.BAD_PARAM);
       }
       MInteger outBegIdx = new MInteger();
@@ -2262,9 +2239,6 @@
       sp.mama = Math.fma(1 - tempReal, sp.mama, tempReal * todayValue);
       tempReal *= 0.5;
       sp.fama = Math.fma(1 - tempReal, sp.fama, tempReal * sp.mama);
-      /* FAMA is nullable (issue #125): its write carries no outIdx advance so
-       * the codegen can NULL-guard it; outMAMA (never NULL) owns the ++.
-       */
       sp.cur_outFAMA = sp.fama;
       sp.cur_outMAMA = sp.mama;
       /* Adjust the period for next price bar */
@@ -2440,9 +2414,6 @@
       mama = Math.fma(1 - tempReal, mama, tempReal * todayValue);
       tempReal *= 0.5;
       fama = Math.fma(1 - tempReal, fama, tempReal * mama);
-      /* FAMA is nullable (issue #125): its write carries no outIdx advance so
-       * the codegen can NULL-guard it; outMAMA (never NULL) owns the ++.
-       */
       cur_outFAMA = fama;
       cur_outMAMA = mama;
       out.mama = cur_outMAMA;

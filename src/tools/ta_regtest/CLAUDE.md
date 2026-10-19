@@ -264,7 +264,7 @@ there is no list of function names and none may be added.
 | display shift | an output's shift for the call's parameters is non-zero without `TA_OUT_DISPLAY_SHIFT` |
 | pattern values | a pattern output of rule rW8 writes a value its flags do not declare |
 | signs | any other output declaring a sign flag writes a value of an undeclared sign. No shipped output is one, so this arm has no counter |
-| declined output | a successful call was given NULL for an output without `TA_OUT_NULLABLE` |
+| absent output | a successful call was given NULL for an output |
 | range | `outBegIdx` / `outNBElement` are not `max(startIdx, lookback)` to `endIdx`, or not `0, 0` when nothing fits |
 
 A mismatch prints a `META RIDE [TA_<N>]` line where it happens and fails the
@@ -275,9 +275,9 @@ An unfiltered suite is also held to the whole, per function and per flag, over
 the union of its calls: every function called; every declared value and sign
 written by some call; a non-finite value from ordinary inputs for each
 `TA_FUNC_FLG_NAN_INF_OUT` function; a non-zero shift for each
-`TA_OUT_DISPLAY_SHIFT` output; a NULL for each `TA_OUT_NULLABLE` output. So a
-flag declaring what no test provokes fails too, and the fix is a test on fixed
-data, never on a seeded sweep, whose reach changes from run to run.
+`TA_OUT_DISPLAY_SHIFT` output. So a flag declaring what no test provokes fails
+too, and the fix is a test on fixed data, never on a seeded sweep, whose reach
+changes from run to run.
 
 **Nothing has to be routed.** `ta_meta_frame.h` (generated) renames every
 `TA_<N>` and `TA_S_<N>` to a wrapper, and `ta_test_priv.h` includes it, so a

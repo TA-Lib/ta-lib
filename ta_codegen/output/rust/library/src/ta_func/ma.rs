@@ -63,6 +63,7 @@
  *  090426 MF,CC Add RMA (issue #348).
  *  092926 MF,CC Add VIDYA (issue #474).
  *  092926 MF,CC Add ALMA (issue #475).
+ *  101926 MF,CC MAMA: FAMA goes to a scratch buffer (issue #552).
  */
 
 // Import types from parent module
@@ -212,6 +213,7 @@ impl Core {
         assert!(_assertStart > endIdx || endIdx < inReal.len());
         assert!(_assertStart > endIdx || endIdx - _assertStart < outReal.len());
         let mut startIdx = startIdx;
+        let mut famaScratch: Vec<f64> = Vec::new();
         let mut retCode: RetCode = RetCode::Success;
         let mut nbElement: usize = 0_usize;
         let mut outIdx: usize = 0_usize;
@@ -310,9 +312,9 @@ impl Core {
                 retCode = RetCode::Success;
             }
             MAType::MAMA => {
-                // The optInTimePeriod is ignored. FAMA is a nullable output
-                // (issue #125): pass NULL to compute only the MAMA line into outReal.
-                let _xr7 = match self.mama(startIdx, endIdx, inReal, 0.5, 0.05, outReal, None) { Ok(_r) => _r, Err(_e) => return _e };
+                // The optInTimePeriod is ignored.
+                famaScratch = vec![0.0_f64; ((endIdx - startIdx + 1) * 1) as usize];
+                let _xr7 = match self.mama(startIdx, endIdx, inReal, 0.5, 0.05, outReal, &mut famaScratch[..]) { Ok(_r) => _r, Err(_e) => return _e };
                 (*outBegIdx) = _xr7.beg_idx;
                 (*outNBElement) = _xr7.count;
                 retCode = RetCode::Success;
@@ -861,7 +863,7 @@ impl Core {
                 (MaSub::Kama(sub), fillRange)
             }
             MAType::MAMA => {
-                let (sub, fillRange) = self.mama_open_and_fill(inReal, 0.5, 0.05, outReal, None)?;
+                let (sub, fillRange) = self.mama_open_and_fill(inReal, 0.5, 0.05, outReal, &mut vec![0.0_f64; historyLen])?;
                 (MaSub::Mama(sub), fillRange)
             }
             MAType::T3 => {
@@ -956,7 +958,7 @@ impl Core {
                 self.kama_open_and_fill_internal(inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal)?,
             ),
             MAType::MAMA => MaSub::Mama(
-                self.mama_open_and_fill_internal(inReal, startIdx, 0.5, 0.05, outBegIdx, outNBElement, outReal, None)?,
+                self.mama_open_and_fill_internal(inReal, startIdx, 0.5, 0.05, outBegIdx, outNBElement, outReal, &mut vec![0.0_f64; historyLen])?,
             ),
             MAType::T3 => MaSub::T3(
                 self.t3_open_and_fill_internal(inReal, startIdx, optInTimePeriod, 0.7, outBegIdx, outNBElement, outReal)?,

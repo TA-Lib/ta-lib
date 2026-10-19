@@ -1,12 +1,11 @@
-//! Rule rB7, rule rB4's empty output, and rB5's two bounds, for the Rust
-//! batch API (`https://ta-lib.org/spec/errors/#rb7`, rule rW5), issues #262 and
-//! #265.
+//! Rule rB4's empty output and rB5's two bounds, for the Rust batch API
+//! (`https://ta-lib.org/spec/errors/#rb4`), issues #262 and #265.
 //!
 //! None of it is reachable from the cross-language gates. The JSON-RPC servers
 //! supply every declared output and floor its length at one, and hand every
-//! input the full series, so a backend that went back to requiring `outFAMA`, to
-//! accepting an empty output, or to accepting a slice that does not reach
-//! `endIdx`, stays green in `--codegen`, `--xlang-hash` and `--ref` alike.
+//! input the full series, so a backend that went back to accepting an empty
+//! output, or a slice that does not reach `endIdx`, stays green in `--codegen`,
+//! `--xlang-hash` and `--ref` alike.
 //! That is what this file is for.
 //!
 //! It is an **integration** test on purpose, where the phantom-I/O sweep is
@@ -32,82 +31,40 @@ fn panics(f: impl FnOnce()) -> bool {
     outcome.is_err()
 }
 
-/// A nullable output is `Option<&mut [f64]>`, and declining it changes nothing
-/// about the output that was asked for.
-///
-/// Acceptance alone would not test that: a body that stopped computing FAMA, or
-/// took a different path without it, would be accepted here just the same. So
-/// the declining call has to reproduce the supplied one bit for bit.
+/// An undersized output is refused by the public tier as a code (#265). The
+/// body's assert states the same bound and is unreachable through here.
 #[test]
-fn declining_an_output_changes_nothing_else() {
+fn a_short_output_is_refused_rather_than_panicked() {
     let data = series(252);
     let core = Core::new();
+    let exact = 252 - core.mama_lookback(0.5, 0.05).expect("a valid lookback");
 
-    let mut mama_ref = vec![0.0; 252];
-    let mut fama_ref = vec![0.0; 252];
-    let r_ref = core
-        .mama(0, 251, &data, 0.5, 0.05, &mut mama_ref, Some(&mut fama_ref))
-        .expect("the reference call");
-    assert!(r_ref.count > 0, "the reference call must produce values");
+    let (mut mama, mut fama) = (vec![0.0; exact], vec![0.0; exact]);
+    core.mama(0, 251, &data, 0.5, 0.05, &mut mama, &mut fama)
+        .expect("outputs sized to the produced count exactly");
 
-    const CANARY: f64 = -1.2345678901234e300;
-    let mut mama = vec![CANARY; 252];
-    let r = core
-        .mama(0, 251, &data, 0.5, 0.05, &mut mama, None)
-        .expect("declining outFAMA is legal — rule rB7");
-
-    assert_eq!((r.beg_idx, r.count), (r_ref.beg_idx, r_ref.count));
-    for i in 0..r.count {
+    for (m, f) in [(exact - 1, exact), (exact, exact - 1)] {
+        let (mut mama, mut fama) = (vec![0.0; m], vec![0.0; f]);
         assert_eq!(
-            mama[i].to_bits(),
-            mama_ref[i].to_bits(),
-            "declining outFAMA changed outMAMA[{i}]"
+            core.mama(0, 251, &data, 0.5, 0.05, &mut mama, &mut fama),
+            Err(RetCode::BadParam),
+            "an output one short ({m}, {f})"
+        );
+        assert!(
+            !panics(|| {
+                let core = Core::new();
+                let (mut mama, mut fama) = (vec![0.0; m], vec![0.0; f]);
+                let _ = core.mama(0, 251, &data, 0.5, 0.05, &mut mama, &mut fama);
+            }),
+            "rejected rather than panicked ({m}, {f})"
         );
     }
-    // Rule rW3: only the reported range is written, declined output or not.
-    assert!(
-        mama[r.count..].iter().all(|v| v.to_bits() == CANARY.to_bits()),
-        "the declining call wrote past its own count"
-    );
 }
 
-/// The capacity assert (rB5) is skipped for a declined output and kept for the
-/// one that was supplied — the half a caller actually sees.
-#[test]
-fn a_declined_output_needs_no_capacity() {
-    let data = series(252);
-    let core = Core::new();
-
-    // Nothing at all for FAMA, and MAMA sized to the produced count exactly.
-    let lookback = core.mama_lookback(0.5, 0.05).expect("a valid lookback");
-    let mut mama = vec![0.0; 252 - lookback];
-    core.mama(0, 251, &data, 0.5, 0.05, &mut mama, None)
-        .expect("a declined output imposes no size");
-
-    // Control: the supplied output is still bounded. One short must be rejected
-    // — rB5, from the public tier, as a code (#265). The body's assert states the
-    // same bound and is unreachable through here.
-    let mut short = vec![0.0; 252 - lookback - 1];
-    assert_eq!(
-        core.mama(0, 251, &data, 0.5, 0.05, &mut short, None),
-        Err(RetCode::BadParam),
-        "an undersized supplied output must still be rejected"
-    );
-    assert!(
-        !panics(|| {
-            let core = Core::new();
-            let mut short = vec![0.0; 252 - lookback - 1];
-            let _ = core.mama(0, 251, &data, 0.5, 0.05, &mut short, None);
-        }),
-        "and rejected rather than panicked: the public tier answers before the assert"
-    );
-}
-
-/// An output that cannot be declined is absent when it is empty, and the call
-/// is refused before any length is looked at, on a range that produces nothing
-/// as on one that produces values. One element is enough for the control, which
-/// is what tells this from the length rule. A declinable output is declined with
-/// `None`, never with an empty slice.
+/// An empty output is absent, and the call is refused before any length is
+/// looked at, on a range that produces nothing as on one that produces values.
+/// One element is enough for the control, which is what tells this from the
+/// length rule.
 #[test]
 fn an_empty_output_is_an_absent_one() {
     let data = series(252);
@@ -148,29 +105,30 @@ fn an_empty_output_is_an_absent_one() {
 
     let mama_end = core.mama_lookback(0.5, 0.05).expect("a valid lookback") - 1;
     let mut one = [0.0_f64; 1];
+    let mut two = [0.0_f64; 1];
     let mut none: [f64; 0] = [];
     assert_eq!(
-        core.mama(0, mama_end, &data, 0.5, 0.05, &mut none, None),
+        core.mama(0, mama_end, &data, 0.5, 0.05, &mut none, &mut one),
         Err(RetCode::BadParam),
-        "an empty outMAMA beside a declined outFAMA"
+        "an empty outMAMA"
     );
     assert_eq!(
-        core.mama(0, mama_end, &data, 0.5, 0.05, &mut one, Some(&mut none)),
+        core.mama(0, mama_end, &data, 0.5, 0.05, &mut one, &mut none),
         Err(RetCode::BadParam),
-        "an empty outFAMA is not a declined one"
+        "an empty outFAMA"
     );
     let r = core
-        .mama(0, mama_end, &data, 0.5, 0.05, &mut one, None)
-        .expect("None is what declines outFAMA");
+        .mama(0, mama_end, &data, 0.5, 0.05, &mut one, &mut two)
+        .expect("one element each is enough when nothing is produced");
     assert_eq!(r.count, 0);
 
     assert_eq!(
-        core.mama_open_and_fill(&data[..=mama_end], 0.5, 0.05, &mut one, Some(&mut none)).err(),
+        core.mama_open_and_fill(&data[..=mama_end], 0.5, 0.05, &mut one, &mut none).err(),
         Some(RetCode::BadParam),
         "the opener refuses an empty outFAMA ahead of the history check"
     );
     assert_eq!(
-        core.mama_open_and_fill(&data[..=mama_end], 0.5, 0.05, &mut one, None).err(),
+        core.mama_open_and_fill(&data[..=mama_end], 0.5, 0.05, &mut one, &mut two).err(),
         Some(RetCode::InsufficientHistory)
     );
 }
@@ -218,16 +176,17 @@ fn a_short_input_is_refused_on_every_range() {
     );
 }
 
-/// The cross-call inside `MA`'s MAMA arm declines FAMA rather than allocating a
-/// buffer to throw away, and still answers what a direct `MAMA` does.
+/// `MA`'s MAMA arm writes FAMA into a scratch it drops, and answers what a direct
+/// `MAMA` does.
 #[test]
 fn ma_routes_only_the_mama_line() {
     let data = series(252);
     let core = Core::new();
 
     let mut direct = vec![0.0; 252];
+    let mut fama = vec![0.0; 252];
     let r_direct = core
-        .mama(0, 251, &data, 0.5, 0.05, &mut direct, None)
+        .mama(0, 251, &data, 0.5, 0.05, &mut direct, &mut fama)
         .expect("MAMA");
 
     let mut viaMa = vec![0.0; 252];

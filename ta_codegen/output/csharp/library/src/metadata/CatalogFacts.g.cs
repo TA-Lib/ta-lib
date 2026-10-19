@@ -55,13 +55,13 @@ internal static class CatalogFacts
     internal const uint AllFunctionFlags = 0x7B00000FU;
     internal const uint AllPriceComponents = 0x0000001FU;
     internal const uint AllOptInputFlags = 0x00100000U;
-    internal const uint AllOutputFlags = 0x0000FFF5U;
+    internal const uint AllOutputFlags = 0x0000DFF5U;
 
     /* Flag members no shipped function sets. Pinned rather than deleted:
       these are the C vocabulary, and the day a definition starts using
       one this list is what tells you, instead of the fact changing
       quietly under consumers. */
-    internal const int DeadFlagCount = 7;
+    internal const int DeadFlagCount = 8;
     internal static readonly string[] DeadFlags =
     [
         "FuncFlags.VolumeUsed",
@@ -71,5 +71,6 @@ internal static class CatalogFacts
         "OptInputFlags.Advanced",
         "OutputFlags.DotLine",
         "OutputFlags.Dot",
+        "OutputFlags.Nullable",
     ];
 }

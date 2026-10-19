@@ -371,21 +371,6 @@ struct CRenderCtx<'a> {
     /// fusion for that render pass). Populated by [`build_fma_var_sets`] so C's
     /// `binop` emits `fma(a,b,c)` at exactly the sites Rust/Java fuse.
     fma: Option<&'a FmaVarSets>,
-    /// Names of this function's nullable outputs (see IR `Output::nullable`).
-    /// A statement writing into one of these is wrapped in `if( out != NULL )`
-    /// so callers may pass NULL to discard it. Empty for every non-body render
-    /// pass (helpers, lookback) and every function without a nullable output.
-    nullable_outputs: &'a [String],
-    /// When true, a guarded nullable store also assigns `lastCur_<out>`
-    /// unconditionally, beside the guard rather than inside it. Only the
-    /// stream Open region sets this: the handle's `cur_<out>` has to hold
-    /// what the store *would* have written even when the caller declined the
-    /// output, because `TA_<N>_StepImpl` always recomputes it (mama.c) — a
-    /// captured value that instead reads the (possibly absent) array
-    /// diverges from `Open(P)+updates` the moment the store's RHS is not
-    /// already a bare local. False everywhere else, including the plain
-    /// batch function, which has no `cur_*` state to feed.
-    nullable_shadow: bool,
 }
 
 #[allow(clippy::implicit_hasher)]
@@ -1016,14 +1001,11 @@ fn gen_func_inner(
     // fusion decision (never float operands), so one seed set is used uniformly
     // across variants.
     let fma_sets = fma::build_fma_var_sets(body, &func.outputs, &fma::INDEX_PARAM_SEEDS);
-    let nullable_outputs: Vec<String> = super::common::nullable_output_list(func);
     let ctx = &CRenderCtx {
         single_precision,
         inline_counter: &inline_counter,
         stream_scalar_candles: false,
         fma: Some(&fma_sets),
-        nullable_outputs: &nullable_outputs,
-        nullable_shadow: false,
     };
 
     // For S_ variants with explicit _private: the extra params (e.g. EMA's k
@@ -1080,21 +1062,13 @@ fn gen_func_inner(
         out.push_str("   if( !outBegIdx || !outNBElement )\n");
         out.push_str("      return TA_BAD_PARAM;\n");
 
-        // Output array NULL checks. A nullable output may legitimately be NULL
-        // ("compute but don't write it" — see `Output::is_nullable`), so it is
-        // not required; its writes are NULL-guarded in the body instead.
         for output in &func.outputs {
-            if output.is_nullable() {
-                continue;
-            }
             out.push_str(&format!("   if( !{} )\n", output.name));
             out.push_str("      return TA_BAD_PARAM;\n");
         }
         // Output-distinctness check: aliasing two different output buffers has no
         // correct result (each would clobber the other), so reject it. Input ==
         // output in-place aliasing is deliberately left allowed. See issue #108.
-        // A nullable operand is guarded non-NULL first (a dropped output aliases
-        // nothing; two NULLs would otherwise compare equal and spuriously reject).
         //
         // A CROSS-TYPED pair is compared too, through `const void *`: `double * ==
         // int *` is the constraint violation, not the question, and the cast is
@@ -1108,31 +1082,10 @@ fn gen_func_inner(
                     let b = &func.outputs[j];
                     let cross = (a.param_type == ParamType::Integer)
                         != (b.param_type == ParamType::Integer);
-                    let mut guard = String::new();
-                    if a.is_nullable() {
-                        guard.push_str(&format!("{} != NULL && ", a.name));
-                    }
-                    if b.is_nullable() {
-                        guard.push_str(&format!("{} != NULL && ", b.name));
-                    }
                     if cross {
-                        pairs.push(format!(
-                            "{guard}(const void *){} == (const void *){}",
-                            a.name, b.name
-                        ));
+                        pairs.push(format!("(const void *){} == (const void *){}", a.name, b.name));
                     } else {
-                        pairs.push(format!("{guard}{} == {}", a.name, b.name));
-                    }
-                }
-            }
-            // More than one pair, and a guarded term carries `&&`: parenthesise
-            // it so the `&&` cannot read as binding across the `||` that joins
-            // the pairs, and `-Wparentheses` stays quiet. Single-pair functions
-            // (MAMA) keep the bare form.
-            if pairs.len() > 1 {
-                for p in &mut pairs {
-                    if p.contains(" && ") {
-                        *p = format!("({p})");
+                        pairs.push(format!("{} == {}", a.name, b.name));
                     }
                 }
             }
@@ -1316,7 +1269,6 @@ fn vmath_map<'a>(
     condition: &'a Expr,
     update: &'a Statement,
     body: &'a [Statement],
-    nullable: &[String],
 ) -> Option<VmathMap<'a>> {
     let is_var = |e: &Expr, name: &str| matches!(e, Expr::Var(v) if v == name);
     let steps_by_one = |s: &Statement, name: &str| {
@@ -1349,7 +1301,7 @@ fn vmath_map<'a>(
     else {
         return None;
     };
-    let Expr::ArrayAccess(out, out_idx) = target else {
+    let Expr::ArrayAccess(_, out_idx) = target else {
         return None;
     };
     let [source @ Expr::ArrayAccess(_, in_idx)] = args.as_slice() else {
@@ -1369,8 +1321,7 @@ fn vmath_map<'a>(
         && steps_by_one(step, cursor)
         && steps_by_one(out_step, out_cursor)
         && out_idx_ok
-        && is_var(in_idx, cursor)
-        && !nullable.contains(out);
+        && is_var(in_idx, cursor);
     ok.then_some(VmathMap { kernel, cursor, first, last, out_cursor, target, source })
 }
 
@@ -1380,16 +1331,15 @@ fn vmath_map<'a>(
 /// of names: a function named here whose loop is spelled out would have its
 /// stream compares loosened on the kernel platform with nothing to absorb.
 pub(crate) fn batch_renders_vmath_map(func: &FuncDef) -> bool {
-    fn any(stmts: &[Statement], nullable: &[String]) -> bool {
+    fn any(stmts: &[Statement]) -> bool {
         stmts.iter().any(|s| {
             matches!(s, Statement::ForC { init, condition, update, body }
-                if vmath_map(init, condition, update, body, nullable).is_some())
-                || crate::streaming::nested_bodies(s).0.into_iter().any(|b| any(b, nullable))
+                if vmath_map(init, condition, update, body).is_some())
+                || crate::streaming::nested_bodies(s).0.into_iter().any(any)
         })
     }
     let func = func.resolved_for(crate::ir::Lang::C);
-    let nullable = super::common::nullable_output_list(&func);
-    any(&func.body, &nullable) || (func.has_explicit_private && any(&func.private_body, &nullable))
+    any(&func.body) || (func.has_explicit_private && any(&func.private_body))
 }
 
 /// Render a ForC init or update clause. If it's a Block with multiple
@@ -1456,8 +1406,6 @@ pub fn render_statement(
     registry: &Registry,
     helpers: &HelperRegistry,
     inline_counter: &Cell<usize>,
-    nullable: &[String],
-    nullable_shadow: bool,
 ) -> String {
     STREAM_FMA.with(|f| {
         let fma_sets = f.borrow();
@@ -1466,8 +1414,6 @@ pub fn render_statement(
             inline_counter,
             stream_scalar_candles: false,
             fma: fma_sets.as_ref(),
-            nullable_outputs: nullable,
-            nullable_shadow,
         };
         render_stmt(stmt, indent, &ctx, enums, registry, helpers)
     })
@@ -1483,7 +1429,6 @@ pub fn render_statement_stream(
     registry: &Registry,
     helpers: &HelperRegistry,
     inline_counter: &Cell<usize>,
-    nullable: &[String],
 ) -> String {
     STREAM_FMA.with(|f| {
         let fma_sets = f.borrow();
@@ -1492,8 +1437,6 @@ pub fn render_statement_stream(
             inline_counter,
             stream_scalar_candles: true,
             fma: fma_sets.as_ref(),
-            nullable_outputs: nullable,
-            nullable_shadow: false,
         };
         render_stmt(stmt, indent, &ctx, enums, registry, helpers)
     })
@@ -1751,19 +1694,7 @@ impl StatementEmitter for CStmt<'_> {
             ),
             None => render_expr(&new_value, self.ctx, self.registry, self.helpers),
         };
-        if let Some(base) = nullable_target_base(target, self.ctx.nullable_outputs) {
-            // Writing into a nullable output — guard it so a NULL (discarded)
-            // output is skipped. The `outIdx` advance rides the non-nullable
-            // partner's write (see mama.c), so guarding this store is complete.
-            if self.ctx.nullable_shadow {
-                out.push_str(&format!("{pad}lastCur_{base} = {value_str};\n"));
-            }
-            out.push_str(&format!(
-                "{pad}if( {base} != NULL )\n{pad}   {target_str}= {value_str};\n"
-            ));
-        } else {
-            out.push_str(&format!("{pad}{target_str}= {value_str};\n"));
-        }
+        out.push_str(&format!("{pad}{target_str}= {value_str};\n"));
         out
     }
 
@@ -1969,7 +1900,7 @@ impl StatementEmitter for CStmt<'_> {
 
     fn for_c(&self, init: &Statement, condition: &Expr, update: &Statement, body: &[Statement], indent: usize) -> String {
         let pad = " ".repeat(indent);
-        if let Some(m) = vmath_map(init, condition, update, body, self.ctx.nullable_outputs) {
+        if let Some(m) = vmath_map(init, condition, update, body) {
             // Each argument is the plain loop's own rendering of that piece, which
             // is what makes the macro's plain expansion that loop token for token.
             let expr = |e: &Expr| render_expr(e, self.ctx, self.registry, self.helpers);
@@ -2060,19 +1991,6 @@ fn render_stmt(
     helpers: &HelperRegistry,
 ) -> String {
     CStmt { ctx, enums, registry, helpers }.walk_stmt(stmt, indent)
-}
-
-/// If `target` stores into one of the `nullable` outputs (a `double outX[]` the
-/// caller may pass NULL to discard — see IR `Output::nullable`), return its base
-/// name so the store can be wrapped in `if( outX != NULL )`. Matches the array
-/// store `outX[i] = …` and the scalar store `*outX = …` / `outX = …`; the value
-/// side is never involved.
-fn nullable_target_base<'a>(target: &Expr, nullable: &'a [String]) -> Option<&'a str> {
-    let name = match target {
-        Expr::ArrayAccess(n, _) | Expr::PointerDeref(n) | Expr::Var(n) => n.as_str(),
-        _ => return None,
-    };
-    nullable.iter().find(|o| o.as_str() == name).map(String::as_str)
 }
 
 /// Try to render a switch as a ternary chain.
@@ -2508,8 +2426,6 @@ pub(crate) fn render_expression_stream_candles(
             inline_counter,
             stream_scalar_candles: true,
             fma: fma_sets.as_ref(),
-            nullable_outputs: &[],
-            nullable_shadow: false,
         };
         render_expr(expr, &ctx, registry, helpers)
     })
@@ -2530,8 +2446,6 @@ pub(crate) fn render_expression(
             inline_counter,
             stream_scalar_candles: false,
             fma: fma_sets.as_ref(),
-            nullable_outputs: &[],
-            nullable_shadow: false,
         };
         render_expr(expr, &ctx, registry, helpers)
     })
@@ -2857,7 +2771,7 @@ fn render_lookback_code(
     let inline_counter = Cell::new(0);
     // Lookback bodies are pure integer index arithmetic (the first-valid-output
     // count) — no float multiply-add, so fusion never applies here.
-    let ctx = &CRenderCtx { single_precision: false, inline_counter: &inline_counter, stream_scalar_candles: false, fma: None, nullable_outputs: &[], nullable_shadow: false };
+    let ctx = &CRenderCtx { single_precision: false, inline_counter: &inline_counter, stream_scalar_candles: false, fma: None };
 
     // Declare local variables (deduplicated)
     let mut declared_vars: Vec<String> = Vec::new();
@@ -3090,7 +3004,7 @@ mod tests {
         else {
             panic!("no C-style for loop parsed from:\n{loop_src}");
         };
-        vmath_map(init, condition, update, body, &[]).map(|m| m.kernel)
+        vmath_map(init, condition, update, body).map(|m| m.kernel)
     }
 
     #[test]

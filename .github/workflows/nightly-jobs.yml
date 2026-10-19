@@ -850,7 +850,7 @@ jobs:
       # so narrowing this step silently retires them.
       #
       # `--tests`, not `--lib`: the latter excludes tests/, which is where
-      # nullable_outputs.rs (#262) lives. The generated phantom-I/O sweep was
+      # batch_contract.rs (#262) lives. The generated phantom-I/O sweep was
       # there too until #265 moved it in-crate to probe `<N>_Impl`; `--tests`
       # still covers it, because it selects the lib's own unittest binary as
       # well.

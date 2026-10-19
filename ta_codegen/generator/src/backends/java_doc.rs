@@ -83,17 +83,8 @@ pub fn guarded_docs(
     }
     let count = format!("{{@code endIdx - max(startIdx, {java_name}Lookback(...)) + 1}} values");
     for out in &func.outputs {
-        // A nullable output may be declined; the signature alone does not say
-        // what `null` means there, so the parameter line does.
-        let sizing = if out.is_nullable() {
-            format!(
-                "Pass {{@code null}} to decline it: it is still computed where the \
-                 algorithm needs it, but nothing is written out. Supplied, it must \
-                 hold at least {count}, and never be empty."
-            )
-        } else {
-            format!("Must hold at least {count}, and never be empty: an empty array is an absent output.")
-        };
+        let sizing =
+            format!("Must hold at least {count}, and never be empty: an empty array is an absent output.");
         b.tag(
             &format!("param {}", out.name),
             &format!("{} {sizing}", output_desc(out, doc)),
@@ -117,9 +108,8 @@ pub fn guarded_docs(
          input this function <i>declares</i> that does not reach {@code endIdx}, or an \
          output that cannot hold the values produced. Declared, not read: a few \
          candlestick patterns take an OHLC series they never index, and it is required \
-         all the same. An output this function documents as declinable is the one \
-         exception: {@code null} is how you decline it. Checked before anything is \
-         written, so a rejected call leaves every buffer untouched.",
+         all the same. Checked before anything is written, so a rejected call leaves \
+         every buffer untouched.",
     );
 
     if !doc.see_also.is_empty() {

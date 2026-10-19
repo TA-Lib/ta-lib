@@ -162,24 +162,6 @@ pub struct RustRenderCtx {
     /// length is the ring's: the wrap tests against it, which lets LLVM drop
     /// the ring's own check. A batch CIRCBUF absent here has no cursor.
     pub circbuf_len_of: std::collections::HashMap<String, String>,
-    /// Output parameters typed `Option<&mut [T]>` because their .yaml marks them
-    /// `nullable` (rule rB7). Every store into one is wrapped in an `if let
-    /// Some(..) = ..as_deref_mut()`, so a caller that passed `None` is skipped.
-    /// Populated for the batch bodies and the stream tier's transcribed open
-    /// region; the step/peek frames keep their outputs required and leave
-    /// this empty.
-    pub nullable_outputs: std::collections::HashSet<String>,
-    /// When true, a guarded nullable store also assigns `lastCur_<out>`
-    /// unconditionally, beside the guard rather than inside it — the same
-    /// scheme Java/C# already used (`emit_cur_capture`'s `CurSource`) and C
-    /// mirrors too. The stream Open region is the only caller that needs the
-    /// handle's `cur_<out>` to hold what the store *would* have written even
-    /// when the caller declined the output: an Update always recomputes it,
-    /// so a captured value that instead reads the (possibly absent) output
-    /// array diverges from `Open(P)+updates` the instant the store isn't a
-    /// bare identity copy. Off everywhere else, including the batch function,
-    /// which has no `cur_*` state to feed.
-    pub nullable_shadow: bool,
 }
 
 /// Locals that carry an enum value, mapped to their Rust type.
@@ -301,8 +283,6 @@ impl RustRenderCtx {
             enum_vars: std::collections::HashMap::new(),
             circbuf_hybrid_static: std::collections::HashMap::new(),
             circbuf_len_of: std::collections::HashMap::new(),
-            nullable_outputs: std::collections::HashSet::new(),
-            nullable_shadow: false,
         }
     }
 
@@ -699,8 +679,6 @@ fn gen_impl_block(func: &FuncDef, enums: &HashMap<String, EnumDef>, registry: &R
         enum_vars,
         circbuf_hybrid_static: collect_circbuf_static(&func.body),
         circbuf_len_of: collect_circbuf_len_of(&func.body),
-        nullable_outputs: super::common::nullable_output_names(func),
-        nullable_shadow: false,
     };
 
     // `_private` holds the algorithm for the functions that declare one (Rust has
@@ -909,7 +887,7 @@ fn gen_public_entry(
     for opt in &func.optional_inputs {
         out.push_str(&format!("        {}: {},\n", opt.name, opt_param_type(&opt.param_type)));
     }
-    out.push_str(&gen_generic_output_params(func, false));
+    out.push_str(&gen_generic_output_params(func));
     out.push_str("    ) -> Result<OutRange, RetCode> {\n");
 
     let mut args: Vec<String> = vec!["startIdx".to_string(), "endIdx".to_string()];
@@ -946,8 +924,7 @@ fn gen_public_entry(
 /// range, and the only reason C answers it with `TA_SUCCESS` is that it has no
 /// size to check against. `guardOutLen` is the count actually produced, which on
 /// a range that ends before the lookback is `0`: no output space is owed beyond
-/// not being empty, which an output that cannot be declined is checked for on
-/// every range.
+/// not being empty, which every output is checked for on every range.
 ///
 /// rB3 rides on `<N>_Lookback`'s `?`. Rule rL3 makes the lookback's parameter
 /// decision the batch tier's own rB3 decision on the same parameters, so one call
@@ -990,20 +967,10 @@ fn gen_argument_checks(func: &FuncDef, snake: &str) -> String {
         );
     }
     for output in &func.outputs {
-        // A nullable output may be declined with `None` (rule rB7): nothing is
-        // written to it, so there is no capacity to owe. Supplied, it is bounded
-        // like any other -- "declined" is `None` and nothing else. An empty
-        // output is absent, whatever the call produces.
-        let cond = if output.is_nullable() {
-            format!(
-                "{}.as_deref().is_some_and(|o| o.is_empty() || o.len() < _guardOutLen)",
-                output.name
-            )
-        } else {
-            format!("{0}.is_empty() || {0}.len() < _guardOutLen", output.name)
-        };
+        // An empty output is absent, whatever the call produces.
         out.push_str(&format!(
-            "        if {cond} {{\n            return Err(RetCode::BadParam);\n        }}\n"
+            "        if {0}.is_empty() || {0}.len() < _guardOutLen {{\n            return Err(RetCode::BadParam);\n        }}\n",
+            output.name
         ));
     }
     out
@@ -1040,7 +1007,7 @@ fn gen_guarded_func(
     out.push_str(&gen_generic_params(func));
     out.push_str("        outBegIdx: &mut usize,\n");
     out.push_str("        outNBElement: &mut usize,\n");
-    out.push_str(&gen_generic_output_params(func, true));
+    out.push_str(&gen_generic_output_params(func));
     out.push_str("    ) -> RetCode {\n");
 
     // Range check. `usize` makes C's two negative-index conditions
@@ -1145,8 +1112,6 @@ fn gen_guarded_func(
             enum_vars,
             circbuf_hybrid_static: collect_circbuf_static(&func.body),
             circbuf_len_of: collect_circbuf_len_of(&func.body),
-            nullable_outputs: super::common::nullable_output_names(func),
-            nullable_shadow: false,
         };
         let g_for_loop_vars = collect_for_loop_vars(&func.body);
         let g_var_inits: std::collections::HashMap<String, &Expr> = func
@@ -1252,8 +1217,6 @@ fn gen_guarded_func(
             enum_vars,
             circbuf_hybrid_static: collect_circbuf_static(&func.body),
             circbuf_len_of: collect_circbuf_len_of(&func.body),
-            nullable_outputs: super::common::nullable_output_names(func),
-            nullable_shadow: false,
         };
 
         // Use the same full rendering as the `_private` body
@@ -1572,19 +1535,10 @@ fn emit_bounds_asserts(func: &FuncDef, snake: &str, guard_empty_range: bool) -> 
         ));
     }
     for output in &func.outputs {
-        // A declined output (`None`, rule rB7) has no capacity to bound: nothing
-        // is written to it, so rB5 has nothing to say about it.
-        if output.is_nullable() {
-            out.push_str(&format!(
-                "        assert!(_assertStart > endIdx || {}.as_deref().is_none_or(|o| endIdx - _assertStart < o.len()));\n",
-                output.name
-            ));
-        } else {
-            out.push_str(&format!(
-                "        assert!(_assertStart > endIdx || endIdx - _assertStart < {}.len());\n",
-                output.name
-            ));
-        }
+        out.push_str(&format!(
+            "        assert!(_assertStart > endIdx || endIdx - _assertStart < {}.len());\n",
+            output.name
+        ));
     }
     out
 }
@@ -1628,7 +1582,7 @@ fn gen_private_func_inner(
     }
     out.push_str("        outBegIdx: &mut usize,\n");
     out.push_str("        outNBElement: &mut usize,\n");
-    out.push_str(&gen_generic_output_params(func, true));
+    out.push_str(&gen_generic_output_params(func));
     out.push_str("    ) -> RetCode {\n");
 
     // Declare local variables (excluding loop iterators consumed by for-loops)
@@ -1828,37 +1782,12 @@ fn gen_generic_params(func: &FuncDef) -> String {
 }
 
 /// The Rust type of one output parameter.
-///
-/// A `nullable` output (rule rB7) is `Option<&mut [T]>`. Rust can spell
-/// "declined" distinctly from "empty" and so it does, which leaves C# the only
-/// backend where the two collapse (rationale rW5 in `docs/spec-conformance.md`).
-/// `None` means *compute it but do not write it out*: every store to that output
-/// is guarded and its capacity assert is skipped.
 fn output_param_type(output: &Output) -> String {
     let elem = match output.param_type {
         ParamType::Real => "f64",
         ParamType::Integer | ParamType::Enum(_) | ParamType::Price(_) => "i32",
     };
-    if output.is_nullable() {
-        format!("Option<&mut [{elem}]>")
-    } else {
-        format!("&mut [{elem}]")
-    }
-}
-
-/// If `target` stores into one of the `nullable` outputs (an `Option<&mut [T]>`
-/// the caller may pass `None` to decline — rule rB7), return its base name so
-/// the store can be wrapped in `if let Some(..) = ..as_deref_mut()`. Matches the
-/// array store `outX[i] = …` and the scalar store `outX = …`; the value side is
-/// never involved.
-fn nullable_target_base<'a>(
-    target: &Expr,
-    nullable: &'a std::collections::HashSet<String>,
-) -> Option<&'a String> {
-    let (Expr::ArrayAccess(name, _) | Expr::PointerDeref(name) | Expr::Var(name)) = target else {
-        return None;
-    };
-    nullable.get(name)
+    format!("&mut [{elem}]")
 }
 
 /// One term of the output-distinctness guard (#108): do these two outputs name
@@ -1867,41 +1796,16 @@ fn nullable_target_base<'a>(
 /// Bare addresses: the public entry refuses an empty slice with the same code
 /// before this is reached, so the dangling pointer every unallocated `Vec`
 /// shares cannot turn a legal call into a rejection.
-///
-/// A nullable output contributes a term only when the caller supplied it: `None`
-/// is a declaration that nothing is written there, not a buffer that could alias.
 fn alias_pair_expr(a: &Output, b: &Output) -> String {
-    match (a.is_nullable(), b.is_nullable()) {
-        (false, false) => format!(
-            "({0}.as_ptr() == {1}.as_ptr())",
-            a.name, b.name
-        ),
-        (true, false) => format!(
-            "{0}.as_deref().is_some_and(|a| a.as_ptr() == {1}.as_ptr())",
-            a.name, b.name
-        ),
-        (false, true) => format!(
-            "{1}.as_deref().is_some_and(|b| {0}.as_ptr() == b.as_ptr())",
-            a.name, b.name
-        ),
-        (true, true) => format!(
-            "{0}.as_deref().zip({1}.as_deref()).is_some_and(|(a, b)| a.as_ptr() == b.as_ptr())",
-            a.name, b.name
-        ),
-    }
+    format!("({0}.as_ptr() == {1}.as_ptr())", a.name, b.name)
 }
 
 /// Generate generic output parameter declarations for a function signature.
-///
-/// `mut_binding` is for the entry points that render a body: a nullable output
-/// is re-borrowed with `as_deref_mut()` at every store, which needs a mutable
-/// binding. The forwarding wrappers, which only pass it on, leave it off.
-fn gen_generic_output_params(func: &FuncDef, mut_binding: bool) -> String {
+fn gen_generic_output_params(func: &FuncDef) -> String {
     let mut out = String::new();
     for output in &func.outputs {
-        let binding = if mut_binding && output.is_nullable() { "mut " } else { "" };
         out.push_str(&format!(
-            "        {binding}{}: {},\n",
+            "        {}: {},\n",
             output.name,
             output_param_type(output)
         ));
@@ -3051,7 +2955,7 @@ impl RustStmt<'_, '_> {
         // over one run a constant few passes that a window's entry checks
         // would outweigh.
         let fixed = |a: &str| ctx.real_array_vars.contains(a) || (ctx.int_vec_vars.contains(a) && !ctx.vec_vars.contains(a));
-        let sliceable = |a: &str| !ctx.nullable_outputs.contains(a) && !fixed(a);
+        let sliceable = |a: &str| !fixed(a);
         let same_len = |a: &str| ctx.same_len_inputs.contains(a);
         let ring_storage = |id: &str| ctx.circbuf_len_of.get(id).cloned();
         let names = Names {
@@ -3713,24 +3617,6 @@ impl StatementEmitter for RustStmt<'_, '_> {
         } else {
             false
         };
-        // A store into a nullable output is wrapped: the parameter is
-        // `Option<&mut [T]>`, and `None` means the caller declined it (rule
-        // rB7). The `if let` shadows the parameter name with the slice, so
-        // `target_str` and the whole cast chain below render unchanged. The
-        // `outIdx` advance rides the non-nullable partner's write (see mama.c),
-        // so guarding this store is complete.
-        let (pad, close) = match nullable_target_base(target, &self.ctx.nullable_outputs) {
-            Some(base) => {
-                if self.ctx.nullable_shadow {
-                    out.push_str(&format!("{pad}lastCur_{base} = {value_str};\n"));
-                }
-                out.push_str(&format!(
-                    "{pad}if let Some({base}) = {base}.as_deref_mut() {{\n"
-                ));
-                (format!("{pad}    "), format!("{pad}}}\n"))
-            }
-            None => (pad, String::new()),
-        };
         if needs_to_vec {
             out.push_str(&format!("{pad}{target_str} = {value_str}.to_vec();\n"));
         } else if needs_sentinel_i32_cast {
@@ -3753,7 +3639,6 @@ impl StatementEmitter for RustStmt<'_, '_> {
         } else {
             out.push_str(&format!("{pad}{target_str} = {value_str};\n"));
         }
-        out.push_str(&close);
         out
     }
 
@@ -5710,13 +5595,11 @@ fn render_func_call(
         // Cross-indicator call: use registry to resolve the function name.
         // Bare names (ema) → ema. Private names (ema_private) → ema_private.
         let resolved = registry.resolve_call(fname, crate::registry::Lang::Rust);
-        let nullable = registry.callee_out_nullable(fname.trim_end_matches("_private"));
-        let (rendered_args, aliased) = render_cross_indicator_args(args, None, nullable, ctx, opt_real_params, registry, helpers);
+        let (rendered_args, aliased) = render_cross_indicator_args(args, None, ctx, opt_real_params, registry, helpers);
         wrap_cross_indicator_call(format!("self.{}({})", internal_callee(&resolved), rendered_args.join(", ")), &aliased)
     } else if is_ta_function(fname) {
         let rust_name = fname.to_uppercase();
-        let nullable = registry.callee_out_nullable(&fname.to_lowercase());
-        let (rendered_args, aliased) = render_cross_indicator_args(args, None, nullable, ctx, opt_real_params, registry, helpers);
+        let (rendered_args, aliased) = render_cross_indicator_args(args, None, ctx, opt_real_params, registry, helpers);
         wrap_cross_indicator_call(format!("self.{}({})", internal_callee(&rust_name), rendered_args.join(", ")), &aliased)
     } else {
         let rendered_args: Vec<String> = args
@@ -5805,9 +5688,8 @@ fn render_cross_indicator_call(
 
     let pad = " ".repeat(indent);
     let public = registry.resolve_call(fname, crate::registry::Lang::Rust);
-    let nullable = registry.callee_out_nullable(fname);
     let (rendered_args, aliased) = render_cross_indicator_args(
-        args, Some(split), nullable, ctx, opt_real_params, registry, helpers,
+        args, Some(split), ctx, opt_real_params, registry, helpers,
     );
     let call = wrap_cross_indicator_call(
         format!("self.{public}({})", rendered_args.join(", ")),
@@ -5867,7 +5749,6 @@ fn out_meta_target(
 fn render_cross_indicator_args(
     args: &[Expr],
     out_meta: Option<usize>,
-    callee_out_nullable: &[bool],
     ctx: &RustRenderCtx,
     opt_real_params: &[String],
     registry: &Registry,
@@ -5876,7 +5757,7 @@ fn render_cross_indicator_args(
     // `out_meta` is the index of the callee's `outBegIdx` argument when the call
     // goes to the PUBLIC entry point (#267): the two out-meta arguments are
     // DROPPED -- the public tier returns the range -- and the outputs start two
-    // slots later, which keeps every `callee_out_nullable` ordinal correct.
+    // slots later.
     //
     // `None` is the legacy expression-position rendering, which still targets
     // `<N>_Impl` and still passes them. Nothing in the corpus reaches it (the
@@ -5929,43 +5810,26 @@ fn render_cross_indicator_args(
         .filter(|(i, _)| out_meta.is_none_or(|m| *i != m && *i != m + 1))
         .map(|(i, arg)| {
             let is_output = i >= output_start;
-            let rendered = {
-                // In-place aliasing: borrow the input immutably and redirect the output to the
-                // scratch buffer that `render_func_call` swaps back after the call.
-                if let Expr::Var(name) = arg {
-                    if aliased_vars.contains(name) {
-                        if is_output {
-                            format!("&mut _{name}_alias[..]")
-                        } else {
-                            format!("&{name}")
-                        }
-                    } else if dup_vars.iter().any(|(idx, _)| *idx == i) {
-                        // Duplicate &mut borrow: the pre-declared dummy variable.
-                        "&mut _dup_out".to_string()
+            // In-place aliasing: borrow the input immutably and redirect the output to the
+            // scratch buffer that `render_func_call` swaps back after the call.
+            if let Expr::Var(name) = arg {
+                if aliased_vars.contains(name) {
+                    if is_output {
+                        format!("&mut _{name}_alias[..]")
                     } else {
-                        render_cross_indicator_arg(arg, i, is_output, ctx, opt_real_params, registry, helpers)
+                        format!("&{name}")
                     }
                 } else if dup_vars.iter().any(|(idx, _)| *idx == i) {
+                    // Duplicate &mut borrow: the pre-declared dummy variable.
                     "&mut _dup_out".to_string()
                 } else {
                     render_cross_indicator_arg(arg, i, is_output, ctx, opt_real_params, registry, helpers)
                 }
-            };
-            // A `nullable` callee output takes an `Option<&mut [T]>` (rule rB7):
-            // `NULL` already rendered as `None`, and anything else is a buffer
-            // the caller does supply. This wraps EVERY way an output argument can
-            // be rendered, the scratch-buffer and dummy redirections included --
-            // it sat on the fall-through path alone at first, so a nullable slot
-            // reached by either of those would have emitted a bare `&mut [T]`
-            // where an `Option` is wanted (unreachable today: MAMA is the only
-            // nullable callee and MA hands it `NULL`).
-            if is_output
-                && callee_out_nullable.get(i - output_start).copied().unwrap_or(false)
-                && rendered != "None"
-            {
-                return format!("Some({rendered})");
+            } else if dup_vars.iter().any(|(idx, _)| *idx == i) {
+                "&mut _dup_out".to_string()
+            } else {
+                render_cross_indicator_arg(arg, i, is_output, ctx, opt_real_params, registry, helpers)
             }
-            rendered
         })
         .collect();
     (rendered, aliased_vars)
@@ -6016,12 +5880,6 @@ pub(crate) fn render_cross_indicator_arg(
             let rendered = render_expr(inner, ctx, opt_real_params, registry, helpers);
             format!("&mut {rendered}")
         }
-        // NULL in an output position: a nullable output the caller declines (MA
-        // passes NULL for MAMA's FAMA — issue #125). The callee's parameter is
-        // `Option<&mut [T]>`, so this is `None` and nothing is allocated --
-        // never a throwaway buffer spanning the output range, the "unchecked
-        // malloc-dummy-discard" #125 removed from C and #262 from the rest.
-        Expr::Var(name) if is_output_position && name == "NULL" => "None".to_string(),
         // Vec<T> local variables: &name for input position, &mut name[..] for output position
         Expr::Var(name) if ctx.vec_vars.contains(name) || is_vec_local_var(name) => {
             if is_output_position {

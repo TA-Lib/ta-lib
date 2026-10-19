@@ -332,10 +332,12 @@ fn test_java_ma_dispatch() {
         !s.contains("MamaStream.Value"),
         "the record is gone, not renamed"
     );
-    // …and the Discard slot DECLINES the callee's nullable output rather than
-    // materializing a throwaway buffer for it (rule rB7 at the opener).
-    assert!(s.contains("mamaOpenAndFill(inReal, 0.5, 0.05, outReal, null)"));
-    assert!(!s.contains("new double[historyLen]"));
+    // …and the fill hands the Discard slot a scratch array: every output is required.
+    assert!(s.contains("mamaOpenAndFill(inReal, 0.5, 0.05, outReal, new double[historyLen])"));
+    assert!(s.contains(
+        "mamaOpenAndFillInternal(inReal, startIdx, 0.5, 0.05, outBegIdx, outNBElement, outReal, new double[historyLen])"
+    ));
+    assert!(!s.contains(", null)"));
     // The identity test runs once, at open, and also covers the
     // period-independent TA_MAType_DISABLED identity (issue #93); the per-bar
     // frames route on the tag it stores.

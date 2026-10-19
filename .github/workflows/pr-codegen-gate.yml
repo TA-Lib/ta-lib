@@ -350,7 +350,7 @@ jobs:
       # `generate`) plus the generated registry's own sweeps: 85 tests today,
       # over types.rs's Core/CoreBuilder API (#144), scratch_election (#146),
       # stream_finite, stream_out_range (#241), div_zero (#249),
-      # no_phantom_io (#265), tests/nullable_outputs.rs (#262),
+      # no_phantom_io (#265), tests/batch_contract.rs (#262),
       # tests/stream_open_contract.rs, and abstract_api's registry/binder
       # sweeps — the by-name ASCII fold from #278 among them.
       #

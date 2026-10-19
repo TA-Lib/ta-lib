@@ -97,7 +97,6 @@ fn transform_page(
     // Summary is extracted from the untransformed body: it precedes every rewrite.
     let desc = extract_summary(body);
     let injected = inject_parameters(body, func, enums);
-    let injected = mark_declinable_outputs(&injected, func);
     let injected = link_output_values(&injected);
     let with_impl = inject_implementation(&injected, func, root);
     let with_flags = inject_flags(&with_impl, func, enums, stability);
@@ -129,40 +128,6 @@ const AFTER_IMPLEMENTATION: [&str; 3] = ["## Aliases", "## See Also", "## Refere
 /// follows it in the canonical order, or at the end.
 fn inject_implementation(body: &str, func: &FuncDef, root: &Path) -> String {
     insert_before_later_sections(body, &implementation_section(func, root))
-}
-
-fn mark_declinable_outputs(body: &str, func: &FuncDef) -> String {
-    let names: Vec<String> = func
-        .outputs
-        .iter()
-        .filter(|o| o.is_nullable())
-        .map(|o| format!("- `{}`", o.name))
-        .collect();
-    let lines: Vec<&str> = body.lines().collect();
-    let Some((start, end)) = section_span(&lines, "## Outputs") else {
-        return body.to_string();
-    };
-    let mut out: Vec<String> = lines.iter().map(|l| (*l).to_string()).collect();
-    for i in start + 1..end {
-        if !names.iter().any(|n| lines[i].trim_start().starts_with(n.as_str())) {
-            continue;
-        }
-        let mut last = i;
-        while last + 1 < end
-            && !lines[last + 1].trim().is_empty()
-            && !lines[last + 1].trim_start().starts_with("- ")
-        {
-            last += 1;
-        }
-        let base = out[last].trim_end().to_string();
-        let sep = if base.ends_with('.') { " " } else { ". " };
-        out[last] = format!("{base}{sep}May be declined ([rW5](/spec/inputs-outputs/#rw5)).");
-    }
-    let mut s = out.join("\n");
-    if body.ends_with('\n') {
-        s.push('\n');
-    }
-    s
 }
 
 /// Point a pattern output's value table at the rule that reads it.

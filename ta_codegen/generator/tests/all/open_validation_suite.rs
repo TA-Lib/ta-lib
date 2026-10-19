@@ -181,16 +181,7 @@ fn rust_public_fill_bounds_every_output_against_its_own_lookback() {
             );
         }
         for out in &func.outputs {
-            // A `nullable` output is `Option<&mut [T]>` and is bounded only when
-            // it was supplied (rule rB7); every other output is bounded flat.
-            let needle = if out.is_nullable() {
-                format!(
-                    "if {}.as_deref().is_some_and(|o| o.is_empty() || o.len() < _guardOutLen) {{",
-                    out.name
-                )
-            } else {
-                format!("if {0}.is_empty() || {0}.len() < _guardOutLen {{", out.name)
-            };
+            let needle = format!("if {0}.is_empty() || {0}.len() < _guardOutLen {{", out.name);
             let at_out = body.find(&needle).unwrap_or_else(|| {
                 panic!("{}: OpenAndFill does not bound `{}`", func.name, out.name)
             });
@@ -296,30 +287,13 @@ fn csharp_public_openers_reject_an_empty_history_as_an_index_fault() {
             }
             if verb == "openAndFill" {
                 for out in &func.outputs {
-                    // A `nullable` output is bounded only when it was supplied
-                    // (rule rB7); the guard is part of the needle, so a
-                    // regression to an unconditional bound — or to none — is a
-                    // failure rather than a substring that still matches.
                     let bound = format!(
                         "RequireFillLength(\"{base}\", \"openAndFill\", \"{0}\", {0}.Length, guardOutLen);",
                         out.name
                     );
-                    let needle = if out.is_nullable() {
-                        format!("if( !{}.IsEmpty ) {bound}", out.name)
-                    } else {
-                        bound.clone()
-                    };
-                    let at_out = body.find(&needle).unwrap_or_else(|| {
+                    let at_out = body.find(&bound).unwrap_or_else(|| {
                         panic!("{}: openAndFill does not bound `{}`", func.name, out.name)
                     });
-                    if !out.is_nullable() {
-                        assert!(
-                            !body.contains(&format!("if( !{}.IsEmpty ) {bound}", out.name)),
-                            "{}: `{}` is not nullable and must be bounded unconditionally",
-                            func.name,
-                            out.name
-                        );
-                    }
                     assert!(at_out > at_s1, "{}: `{}` is bounded before the history is checked", func.name, out.name);
                 }
             }
@@ -429,34 +403,16 @@ fn java_public_openers_check_arguments_then_the_index_pair() {
             }
             if with_outputs {
                 for out in &func.outputs {
-                    // A `nullable` output is bounded only when it was supplied
-                    // (rule rB7). The guard is part of the needle: without it
-                    // the bare call is a SUBSTRING of the guarded line, so the
-                    // gate would keep passing while going blind on exactly the
-                    // output the rule is about.
                     let bound = format!(
                         "requireLength(\"{base} {verb}\", \"{0}\", {0}, guardOutLen);",
                         out.name
                     );
-                    let needle = if out.is_nullable() {
-                        format!("if( {} != null ) {bound}", out.name)
-                    } else {
-                        bound.clone()
-                    };
                     assert!(
-                        body.contains(&needle),
+                        body.contains(&bound),
                         "{}: openAndFill does not bound `{}`",
                         func.name,
                         out.name
                     );
-                    if !out.is_nullable() {
-                        assert!(
-                            !body.contains(&format!("if( {} != null ) {bound}", out.name)),
-                            "{}: `{}` is not nullable and must be bounded unconditionally",
-                            func.name,
-                            out.name
-                        );
-                    }
                 }
             }
             checked += 1;
@@ -821,7 +777,7 @@ fn csharp_openers_test_a_partial_overlap_after_the_history() {
     assert!(openers >= 200, "only {openers} openers checked");
 }
 
-/// C#'s batch entries refuse an empty output that cannot be declined, and only
+/// C#'s batch entries refuse an empty output, and only
 /// once the index and parameter rules have had their say: the run-time rows that
 /// prove both are in `BatchApiTest`, which the PR gate compiles and does not run.
 #[test]
@@ -829,7 +785,6 @@ fn csharp_batch_entries_refuse_an_empty_output_behind_the_core_s_own_verdict() {
     let registry = make_registry();
     let helpers = common::make_helpers();
     let mut outputs_pinned = 0usize;
-    let mut declinable_seen = 0usize;
     for name in discover_indicators() {
         let Some((func, enums)) = try_load_indicator(&name) else {
             continue;
@@ -839,11 +794,6 @@ fn csharp_batch_entries_refuse_an_empty_output_behind_the_core_s_own_verdict() {
         for out in &func.outputs {
             let n = &out.name;
             let present = format!("if( guardStart >= 0 ) RequirePresent(\"{f}\", \"{n}\", {n}.Length);");
-            if out.is_nullable() {
-                declinable_seen += 1;
-                assert!(!csharp.contains(&present), "{f}: `{n}` may be declined and must not be required");
-                continue;
-            }
             let pair = format!(
                 "{present}\n      RequireLength(\"{f}\", \"{n}\", {n}.Length, guardOutLen);"
             );
@@ -856,7 +806,6 @@ fn csharp_batch_entries_refuse_an_empty_output_behind_the_core_s_own_verdict() {
         }
     }
     assert!(outputs_pinned >= 200, "only {outputs_pinned} outputs pinned");
-    assert!(declinable_seen > 0, "no declinable output was seen");
 }
 
 /// Every DECLARED input is checked in every backend (#260).

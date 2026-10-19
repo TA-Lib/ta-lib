@@ -177,18 +177,14 @@ pub(crate) fn emit_rust_sv_func(func: &FuncDef, funcs: &[FuncDef], enums: &HashM
     let mut fargs = String::new();
     for (i, is_int) in out_is_int.iter().enumerate() {
         let (ty, z) = if *is_int { ("i32", "0i32") } else { ("f64", "0.0f64") };
-        // A nullable output takes `Option<&mut [T]>` (rule rB7); this harness
-        // compares values, so it always supplies one.
-        let some = func.outputs.get(i).is_some_and(crate::ir::Output::is_nullable);
-        let (op, cl) = if some { ("Some(", ")") } else { ("", "") };
         let _ = writeln!(bdecls, "    let mut b{i}: Vec<{ty}> = vec![{z}; svN];");
-        let _ = write!(bargs, ", {op}&mut b{i}{cl}");
+        let _ = write!(bargs, ", &mut b{i}");
         // Canary-filled, not zero-filled: the slack above the produced range is
         // asserted untouched after the call (#205's write bound), so a write
         // past `nb` fails instead of landing in unread space.
         let canary = if *is_int { "-987654321i32" } else { "-1.2345678901234e300f64" };
         let _ = writeln!(fdecls, "        let mut f{i}: Vec<{ty}> = vec![{canary}; svN];");
-        let _ = write!(fargs, ", {op}&mut f{i}{cl}");
+        let _ = write!(fargs, ", &mut f{i}");
     }
     s.push_str(&bdecls);
 

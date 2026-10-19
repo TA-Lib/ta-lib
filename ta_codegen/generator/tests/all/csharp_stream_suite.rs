@@ -156,6 +156,18 @@ fn csharp_exempt_tiers_keep_a_body_per_entry() {
 }
 
 #[test]
+fn csharp_ma_fill_hands_fama_a_history_scratch() {
+    let s = section("ma");
+    for call in [
+        "MamaOpenAndFill(inReal, 0.5, 0.05, outReal, new double[historyLen]);",
+        "MamaOpenAndFillInternal(inReal, startIdx, 0.5, 0.05, out outBegIdx, out outNBElement, outReal, new double[historyLen]);",
+    ] {
+        assert!(s.contains(call), "MA's MAMA fill arm must pass `{call}`");
+    }
+    assert!(!s.contains(", default)"), "no output is passed as an empty span");
+}
+
+#[test]
 fn csharp_composed_scratch_aliases_the_caller_at_stride_one() {
     // Paired with the absent copy-back, so the pin fails whichever way the
     // shape drifts: a re-rendered copy passes the negative alone.

@@ -305,7 +305,7 @@ fn c_for_loop_multi_init_comma_separated() {
     let registry = make_registry();
     let helpers = HelperRegistry::empty();
     let inline_counter = std::cell::Cell::new(0);
-    let rendered = backends::c::render_statement(&stmt, 0, false, &enums, registry, &helpers, &inline_counter, &[], false);
+    let rendered = backends::c::render_statement(&stmt, 0, false, &enums, registry, &helpers, &inline_counter);
 
     // Should produce: for( j = 0, i = startIdx; ... ; i = i + 1, j = j + 1 )
     // NOT: for( j = 0;\ni = startIdx; ... )
@@ -1204,55 +1204,6 @@ TA_RetCode max( int    startIdx,
     ] {
         assert!(flat.contains(needle), "C# output missing `{needle}`:\n{cs}");
     }
-}
-
-/// A store into a nullable output is skipped when the caller declines it, so
-/// its `sqrt` operand must not be loaded ahead of that guard.
-#[test]
-fn csharp_keeps_a_declined_outputs_load_under_its_guard() {
-    let source = r#"
-int mama_lookback( double optInFastLimit, double optInSlowLimit )
-{
-   return 0;
-}
-
-TA_RetCode mama( int    startIdx,
-                 int    endIdx,
-                 const double inReal[],
-                 double optInFastLimit,
-                 double optInSlowLimit,
-                 int   *outBegIdx,
-                 int   *outNBElement,
-                 double outMAMA[],
-                 double outFAMA[] )
-{
-   int i, outIdx;
-
-   outIdx = 0;
-   for( i=startIdx; i <= endIdx; i++ )
-   {
-      outMAMA[outIdx] = sqrt(outMAMA[outIdx]);
-      outFAMA[outIdx] = sqrt(outFAMA[outIdx]);
-      outIdx++;
-   }
-   for( i=0; i < outIdx; i++ )
-      outFAMA[i] = sqrt(outFAMA[i]);
-
-   *outBegIdx = startIdx;
-   *outNBElement = outIdx;
-   return TA_SUCCESS;
-}
-"#;
-    let (func, enums) = load_indicator_with_source("mama", source);
-    let cs = backends::csharp::generate(&func, &enums, make_registry(), make_helpers());
-    let flat: String = cs.split_whitespace().collect::<Vec<_>>().join(" ");
-    for needle in [
-        "double _ld0 = outMAMA[outIdx]; outMAMA[outIdx] = Math.Sqrt(_ld0);",
-        "if( !outFAMA.IsEmpty ) outFAMA[outIdx] = Math.Sqrt(outFAMA[outIdx]);",
-    ] {
-        assert!(flat.contains(needle), "C# output missing `{needle}`:\n{cs}");
-    }
-    assert!(!flat.contains("SqrtRun(outFAMA"), "{cs}");
 }
 
 /// C# hands a square-root map loop to `SqrtRun` in the batch body, and keeps

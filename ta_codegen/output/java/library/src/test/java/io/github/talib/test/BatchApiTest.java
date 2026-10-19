@@ -90,8 +90,6 @@ public class BatchApiTest {
     private static int s4Reject = 0;
     private static int s4Accept = 0;
     private static int s5Reject = 0;
-    /** Rule rB7 at the opener — a declined output, counted apart from rS5's. */
-    private static int b6aOpen = 0;
 
     private static void check(boolean condition, String what) {
         checks++;
@@ -721,7 +719,7 @@ public class BatchApiTest {
             "an OpenAndFill output placed on its input carries BAD_PARAM");
         checkCode(RetCode.BAD_PARAM,
             () -> Core.DEFAULT.mamaOpenAndFill(in, 0.5, 0.05, null, new double[in.length]),
-            "an OpenAndFill without its non-declinable output carries BAD_PARAM");
+            "an OpenAndFill without its first output carries BAD_PARAM");
 
         // ...and it is still an InsufficientHistoryException, so an existing
         // catch keeps working. Its message carries the counts, like a short array's.
@@ -877,71 +875,10 @@ public class BatchApiTest {
     }
 
     /**
-     * Rule rB7: an output the .yaml marks {@code nullable} may be declined with
-     * {@code null}, and declining it changes nothing about the output that was
-     * asked for. MAMA's {@code outFAMA} is the only one in the corpus.
-     *
-     * <p>Acceptance alone would not test this. A body that stopped computing
-     * FAMA, or took a different path without it, would be accepted here just the
-     * same — so the declining call has to reproduce the supplied one bit for
-     * bit, and leave everything above its own count untouched (rule rW3).
-     *
-     * <p>No cross-language gate can see any of it: the JSON-RPC servers bind
-     * every declared output, so a wrapper that went back to requiring
-     * {@code outFAMA} stays green in {@code --codegen} and {@code --xlang-hash}
-     * alike.
-     */
-    static void aNullableOutputMayBeDeclined() {
-        final double[] in = closes(252);
-        final double[] mamaRef = new double[252];
-        final double[] famaRef = new double[252];
-        OutRange ref = Core.DEFAULT.mama(0, 251, in, 0.5, 0.05, mamaRef, famaRef);
-        check(ref.count() > 0, "the reference call produces values");
-
-        final double CANARY = -1.2345678901234e300;
-        double[] mama = new double[252];
-        Arrays.fill(mama, CANARY);
-        OutRange r = Core.DEFAULT.mama(0, 251, in, 0.5, 0.05, mama, null);
-
-        check(r.begIdx() == ref.begIdx() && r.count() == ref.count(),
-            "declining outFAMA leaves the reported range alone");
-        boolean same = true;
-        for (int i = 0; i < ref.count(); i++) {
-            same &= Double.doubleToRawLongBits(mama[i]) == Double.doubleToRawLongBits(mamaRef[i]);
-        }
-        check(same, "declining outFAMA leaves outMAMA bit-identical");
-        boolean untouched = true;
-        for (int i = r.count(); i < mama.length; i++) {
-            untouched &= Double.doubleToRawLongBits(mama[i]) == Double.doubleToRawLongBits(CANARY);
-        }
-        check(untouched, "the declining call writes nothing past its own count");
-
-        // The supplied output only has to hold the produced count; the declined
-        // one has no size to hold at all.
-        Core.DEFAULT.mama(0, 251, in, 0.5, 0.05, new double[ref.count()], null);
-
-        // Controls, so the acceptance above is about the FLAG and not about
-        // MAMA having stopped checking its outputs.
-        checkThrows(IllegalArgumentException.class,
-            () -> Core.DEFAULT.mama(0, 251, in, 0.5, 0.05, null, famaRef),
-            "the non-nullable output is still required", "MAMA", "outMAMA");
-        checkThrows(IllegalArgumentException.class,
-            () -> Core.DEFAULT.mama(0, 251, in, 0.5, 0.05, mamaRef, new double[1]),
-            "a SUPPLIED nullable output is still length-checked", "MAMA", "outFAMA");
-        checkCode(RetCode.BAD_PARAM,
-            () -> Core.DEFAULT.mama(0, 251, in, 0.5, 0.05, null, famaRef),
-            "the missing non-nullable output carries BAD_PARAM");
-        checkCode(RetCode.BAD_PARAM,
-            () -> Core.DEFAULT.mama(0, 251, in, 0.5, 0.05, mamaRef, new double[1]),
-            "the short supplied output carries BAD_PARAM");
-    }
-
-    /**
-     * An output that cannot be declined is absent when it is null or empty,
+     * An output is absent when it is null or empty,
      * and the call is refused before any length is looked at: on a range that
      * produces nothing, and on a history too short to open. One element is
      * enough for both controls, which is what tells this from the length rule.
-     * A declinable output is declined with null, never with an empty array.
      */
     static void anEmptyOutputIsAnAbsentOne() {
         final double[] in = closes(252);
@@ -972,13 +909,13 @@ public class BatchApiTest {
 
         final int mamaEnd = Core.DEFAULT.mamaLookback(0.5, 0.05) - 1;
         checkCode(RetCode.BAD_PARAM,
-            () -> Core.DEFAULT.mama(0, mamaEnd, in, 0.5, 0.05, new double[0], null),
-            "an empty outMAMA beside a declined outFAMA");
-        checkCode(RetCode.BAD_PARAM,
             () -> Core.DEFAULT.mama(0, mamaEnd, in, 0.5, 0.05, new double[1], new double[0]),
-            "an empty outFAMA is not a declined one");
-        check(Core.DEFAULT.mama(0, mamaEnd, in, 0.5, 0.05, new double[1], null).count() == 0,
-            "null is what declines outFAMA");
+            "an empty outFAMA");
+        checkCode(RetCode.BAD_PARAM,
+            () -> Core.DEFAULT.mama(0, mamaEnd, in, 0.5, 0.05, new double[1], null),
+            "a null outFAMA");
+        check(Core.DEFAULT.mama(0, mamaEnd, in, 0.5, 0.05, new double[1], new double[1]).count() == 0,
+            "one element each is enough for MAMA too");
 
         final double[] history = Arrays.copyOf(in, Core.DEFAULT.accbandsLookback(20));
         checkCode(RetCode.BAD_PARAM,
@@ -992,10 +929,13 @@ public class BatchApiTest {
         final double[] mamaHistory = Arrays.copyOf(in, mamaEnd + 1);
         checkCode(RetCode.BAD_PARAM,
             () -> Core.DEFAULT.mamaOpenAndFill(mamaHistory, 0.5, 0.05, new double[1], new double[0]),
-            "openAndFill: an empty outFAMA is not a declined one");
-        checkCode(RetCode.INSUFFICIENT_HISTORY,
+            "openAndFill: an empty outFAMA");
+        checkCode(RetCode.BAD_PARAM,
             () -> Core.DEFAULT.mamaOpenAndFill(mamaHistory, 0.5, 0.05, new double[1], null),
-            "openAndFill: a declined outFAMA reaches the history check");
+            "openAndFill: a null outFAMA");
+        checkCode(RetCode.INSUFFICIENT_HISTORY,
+            () -> Core.DEFAULT.mamaOpenAndFill(mamaHistory, 0.5, 0.05, new double[1], new double[1]),
+            "openAndFill: one element each reaches MAMA's history check");
 
         // A REAL alias of two outputs is still rejected.
         double[] shared = new double[252];
@@ -1052,13 +992,8 @@ public class BatchApiTest {
             "mavpOpen(inPeriods=null)", "MAVP open", "inPeriods");
         streamRejects(() -> Core.DEFAULT.mavpOpenAndFill(in, periods, 2, 30, MAType.SMA, null),
             "mavpOpenAndFill(outReal=null)", "MAVP openAndFill", "outReal");
-        // A nullable output may be DECLINED at the opener, exactly as in the
-        // batch tier (rule rB7) and as C has always allowed: `null` is not an
-        // absent argument here, it is an answer. Proved below, in
-        // `aDeclinedFillOutputIsStillComputed`, that declining changes nothing
-        // but the write.
-
-        aDeclinedFillOutputIsStillComputed(in);
+        streamRejects(() -> Core.DEFAULT.mamaOpenAndFill(in, 0.5, 0.05, out, null),
+            "mamaOpenAndFill(outFAMA=null)", "MAMA openAndFill", "outFAMA");
 
         // Rule rS3 ahead of the buffer rules, and the one shape that can tell
         // `openFillCount`'s raise from the flooring it replaced: with a rejected
@@ -1154,65 +1089,6 @@ public class BatchApiTest {
         s4Reject++;
         checkThrows(IllegalArgumentException.class, body, what, needles);
         check(codeOf(body) == RetCode.BAD_PARAM, what + ": the rejection carries BAD_PARAM");
-    }
-
-    /**
-     * Rule rB7 at the opener: {@code outFAMA} may be declined with {@code null},
-     * and declining changes nothing but the write.
-     *
-     * <p>Non-vacuous in three directions. The supplied run is the oracle, so a
-     * fill that stopped computing FAMA when it is declined — the easy way to
-     * "support" this — fails on {@code value()}, which the handle caches from
-     * the same expression the guarded store writes. The declined run must still
-     * reject an undersized {@code outMAMA}, so the conditional bound cannot have
-     * been dropped wholesale. And the supplied-but-undersized {@code outFAMA} is
-     * still rejected, so "declinable" did not become "unchecked".
-     */
-    private static void aDeclinedFillOutputIsStillComputed(double[] in) {
-        int lb = Core.DEFAULT.mamaLookback(0.5, 0.05);
-        int produced = in.length - lb;
-
-        double[] refMama = new double[produced];
-        double[] refFama = new double[produced];
-        Core.MamaStream both =
-            Core.DEFAULT.mamaOpenAndFill(in, 0.5, 0.05, refMama, refFama);
-
-        double[] soloMama = new double[produced];
-        Core.MamaStream declined =
-            Core.DEFAULT.mamaOpenAndFill(in, 0.5, 0.05, soloMama, null);
-
-        b6aOpen++;
-        check(java.util.Arrays.equals(refMama, soloMama),
-            "declining outFAMA leaves outMAMA bit-identical");
-        check(both.outRange().begIdx() == declined.outRange().begIdx()
-                && both.outRange().count() == declined.outRange().count(),
-            "declining outFAMA leaves the reported range unchanged");
-        b6aOpen++;
-        Core.MamaOut bothV = new Core.MamaOut();
-        Core.MamaOut declinedV = new Core.MamaOut();
-        both.value(bothV);
-        declined.value(declinedV);
-        check(Double.doubleToRawLongBits(bothV.fama)
-                == Double.doubleToRawLongBits(declinedV.fama),
-            "a declined outFAMA is still computed: the handle reports it");
-        b6aOpen++;
-        check(Double.doubleToRawLongBits(refFama[produced - 1])
-                == Double.doubleToRawLongBits(declinedV.fama),
-            "and it is the value the supplied run wrote last");
-        b6aOpen++;
-
-        // Declining one output does not disarm the other's bound, nor its own
-        // when it IS supplied.
-        checkThrows(IllegalArgumentException.class,
-            () -> Core.DEFAULT.mamaOpenAndFill(in, 0.5, 0.05, new double[produced - 1], null),
-            "an undersized outMAMA is still rejected when outFAMA is declined",
-            "outMAMA");
-        b6aOpen++;
-        checkThrows(IllegalArgumentException.class,
-            () -> Core.DEFAULT.mamaOpenAndFill(in, 0.5, 0.05, new double[produced],
-                    new double[produced - 1]),
-            "a supplied outFAMA is still bounded", "outFAMA");
-        b6aOpen++;
     }
 
     private static void streamAccepts(Runnable body, String what) {
@@ -1374,7 +1250,6 @@ public class BatchApiTest {
         aBadParameterOutranksAnAbsentBuffer();
         aNullEnumIsNamed();
         aNullEnumLookbackIsMinusOne();
-        aNullableOutputMayBeDeclined();
         anEmptyOutputIsAnAbsentOne();
         streamingOpenersCheckTheirArguments();
         anEmptyHistoryOutranksAnAbsentArgument();
@@ -1383,10 +1258,7 @@ public class BatchApiTest {
 
         // Literal floors, not derived from the calls above: a count computed
         // from the cases would move with a deleted one and still "pass".
-        // s4Reject is 11, not 12: the twelfth was `mamaOpenAndFill(outFAMA=null)`,
-        // which is no longer an absent argument but a declined output — rule rB7,
-        // and it has its own counter and its own probe.
-        if (s4Reject < 11 || s4Accept < 5 || s1Reject < 6 || s5Reject < 5 || b6aOpen < 6) {
+        if (s4Reject < 13 || s4Accept < 5 || s1Reject < 6 || s5Reject < 5) {
             failures++;
             System.out.println("  FAIL: the streaming-opener gate ran fewer checks"
                 + " than it was written with");

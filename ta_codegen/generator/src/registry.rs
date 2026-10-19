@@ -118,13 +118,6 @@ impl Registry {
         self.callee_out_names.get(key).map_or(&[][..], Vec::as_slice)
     }
 
-    /// Which of an indicator's outputs are `nullable` — index-aligned with
-    /// [`Self::callee_outputs`], empty if unknown. A cross-call may hand `NULL`
-    /// to a slot only where this is true (rule rB7).
-    pub(crate) fn callee_out_nullable(&self, key: &str) -> &[bool] {
-        self.callee_sigs.get(key).map_or(&[][..], |s| s.out_nullable.as_slice())
-    }
-
     /// The declared name of an indicator dir-name — the canonical identity each
     /// backend folds its own spelling from, and what C prefixes with `TA_`.
     pub(crate) fn name_of(&self, key: &str) -> String {

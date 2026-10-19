@@ -1288,9 +1288,6 @@ fn stream_ctx<'a>(
 ) -> CsRenderCtx<'a> {
     CsRenderCtx {
         single_precision: false,
-        // The streaming tier keeps every output required, so no store is guarded.
-        nullable_outputs: empty,
-        nullable_shadow: false,
         double_address_of_vars: empty,
         float_input_params: empty,
         inline_counter: counter,
@@ -1912,7 +1909,7 @@ fn emit_open_body(
     emit_open_prologue(o, func, &open_body, model, enums, registry, helpers, counter, stream_fma);
     emit_identity_fast_path(o, func, model, fields, registry, helpers, stream_fma, counter);
     emit_open_region(
-        o, func, &open_body, enums, registry, helpers, counter, stream_fma, &[], &HashSet::new(),
+        o, &open_body, enums, registry, helpers, counter, stream_fma, &[], &HashSet::new(),
     );
     let cur_source = CurSource::StridedArray;
     emit_capture(
@@ -2021,11 +2018,6 @@ fn emit_anchor_guard(o: &mut String) {
 /// `collect_double_address_of_vars` needs to tell a real out-param from an int
 /// one.
 fn emit_body_decls(o: &mut String, func: &FuncDef, open_body: &[Statement]) {
-    // The handle caches every output's last value, and a declined output leaves
-    // no span to read it back from — so the guarded store writes it here too.
-    for name in super::common::nullable_output_list(func) {
-        let _ = writeln!(o, "      {} lastCur_{name} = 0;", out_cs_type(func, &name));
-    }
     let address_of_vars = collect_address_of_vars(open_body);
     let matype_params: HashSet<String> = func
         .optional_inputs
@@ -2168,7 +2160,6 @@ fn cleanup_open_body(body: &[Statement], registry: &Registry) -> Vec<Statement> 
 #[allow(clippy::too_many_arguments)]
 fn emit_open_region(
     o: &mut String,
-    func: &FuncDef,
     open_body: &[Statement],
     enums: &HashMap<String, EnumDef>,
     registry: &Registry,
@@ -2181,11 +2172,8 @@ fn emit_open_region(
     let address_of_vars = collect_address_of_vars(open_body);
     let double_address_of_vars = collect_double_address_of_vars(open_body, &address_of_vars);
     let empty = HashSet::new();
-    let nullable = super::common::nullable_output_names(func);
     let ctx = CsRenderCtx {
         single_precision: false,
-        nullable_outputs: &nullable,
-        nullable_shadow: true,
         double_address_of_vars: &double_address_of_vars,
         float_input_params: &empty,
         inline_counter: counter,
@@ -2536,7 +2524,7 @@ fn emit_capture(
     // The composed tier seeds `cur_*` from the FUNCTION outputs itself (the
     // producer model's "output" is the intermediate series, not a real one).
     if let Some(cs) = cur_source {
-        emit_cur_capture(o, func, &model.outputs, cs);
+        emit_cur_capture(o, &model.outputs, cs);
     }
 }
 
@@ -2551,22 +2539,11 @@ enum CurSource {
 }
 
 /// Seed `sp.cur_*` at the end of an open body.
-fn emit_cur_capture(o: &mut String, func: &FuncDef, outputs: &[String], source: CurSource) {
-    let nullable = super::common::nullable_output_names(func);
-    assert!(
-        !(matches!(source, CurSource::Scratch) && outputs.iter().any(|o| nullable.contains(o))),
-        "{}: a composed open would cache 0 for a declined output — the shadow is written \
-         beside a transcribed store, and this path has none",
-        func.name
-    );
+fn emit_cur_capture(o: &mut String, outputs: &[String], source: CurSource) {
     for out in outputs {
-        let expr = if nullable.contains(out) {
-            format!("lastCur_{out}")
-        } else {
-            match source {
-                CurSource::StridedArray => format!("{out}[(outNBElement - 1) * outStride]"),
-                CurSource::Scratch => format!("sc_{out}[outNBElement - 1]"),
-            }
+        let expr = match source {
+            CurSource::StridedArray => format!("{out}[(outNBElement - 1) * outStride]"),
+            CurSource::Scratch => format!("sc_{out}[outNBElement - 1]"),
         };
         let _ = writeln!(o, "      sp.cur_{out} = {expr};");
     }
@@ -2744,9 +2721,6 @@ fn history_length_guards(func: &FuncDef, n: &str, verb: &str) -> String {
 /// same bound there would reject the composed sub-calls that pass a non-zero
 /// anchor, and would be redundant: those destinations are proved disjoint and
 /// sized by construction.
-///
-/// An output marked `nullable` is bounded only where it was supplied: declining
-/// it is legal here, exactly as in the batch tier (rule rB7).
 fn public_open_fill_capacity(func: &FuncDef, n: &str, history: &str) -> String {
     let lb_args: Vec<String> = func.optional_inputs.iter().map(|p| p.name.clone()).collect();
     let mut s = String::new();
@@ -2762,18 +2736,10 @@ fn public_open_fill_capacity(func: &FuncDef, n: &str, history: &str) -> String {
     );
     // Then rS5's input half, ahead of its output half — the order rB5 states.
     s.push_str(&history_length_guards(func, n, "openAndFill"));
-    // A `nullable` output may be declined with an empty span (rule rB7 read on
-    // this tier), so its bound is conditional — the shape the batch wrapper uses.
-    let nullable = super::common::nullable_output_names(func);
     for out in &func.outputs {
-        let guard = if nullable.contains(&out.name) {
-            format!("if( !{0}.IsEmpty ) ", out.name)
-        } else {
-            String::new()
-        };
         let _ = writeln!(
             s,
-            "      {guard}RequireFillLength(\"{n}\", \"openAndFill\", \"{0}\", {0}.Length, guardOutLen);",
+            "      RequireFillLength(\"{n}\", \"openAndFill\", \"{0}\", {0}.Length, guardOutLen);",
             out.name
         );
     }
@@ -2997,15 +2963,8 @@ fn emit_open_wrappers(
         d.param(
             &out.name,
             &format!(
-                "{}{} Must hold at least <c>historyLen - {base}Lookback(...)</c> values.",
+                "{} Must hold at least <c>historyLen - {base}Lookback(...)</c> values.",
                 super::csharp_doc::output_desc(out, doc),
-                if out.is_nullable() {
-                    " Pass an empty span, such as <c>default</c>, to decline it: the value \
-                     is still computed (the handle's <c>Value</c> reports it) and nothing \
-                     is written out."
-                } else {
-                    ""
-                }
             ),
         );
     }
@@ -3285,7 +3244,7 @@ fn emit_dual_mode(
             emit_body_decls(&mut s, func, &open_body);
             emit_extras_and_candle(&mut s, func, &open_body, registry, helpers, counter, stream_fma);
             emit_open_region(
-                &mut s, func, &open_body, enums, registry, helpers, counter, stream_fma, &[],
+                &mut s, &open_body, enums, registry, helpers, counter, stream_fma, &[],
                 &HashSet::new(),
             );
             let (own, other) = if k == 0 { (&fields_a, &fields_b) } else { (&fields_b, &fields_a) };
@@ -3373,8 +3332,7 @@ fn emit_dispatch_step_switch(
         let cls = callee_stream_class(registry, &arm.callee);
         let _ = writeln!(o, "      case {label}: {{");
         // Route callee output slots through the arm's OutSlot map: Forward(k)
-        // lands in the dispatch func's output k, Discard drops the slot (the
-        // nullable FAMA when MA routes only the MAMA line, #125).
+        // lands in the dispatch func's output k, Discard drops the slot.
         if arm.out_map.len() == 1 {
             let streaming::OutSlot::Forward(k) = arm.out_map[0] else {
                 panic!("single-output arm cannot discard its only slot");
@@ -3597,17 +3555,12 @@ fn emit_dispatch(
                         let _ = writeln!(o, "         sp.outRangeCount = sub.outRangeCount;");
                     }
                     OutMode::Fill | OutMode::FillInternal => {
-                        // OutSlot-mapped fill tail: Forward(k) passes the
-                        // dispatch func's own array, Discard materializes a
-                        // throwaway buffer (the managed rendering of C's NULL
-                        // for a nullable output — the batch discard-buffer
-                        // idiom, #125).
                         let fill_outs: String = arm
                             .out_map
                             .iter()
                             .map(|slot| match slot {
                                 streaming::OutSlot::Forward(k) => outputs[*k].clone(),
-                                streaming::OutSlot::Discard => "default".to_string(),
+                                streaming::OutSlot::Discard => "new double[historyLen]".to_string(),
                             })
                             .collect::<Vec<_>>()
                             .join(", ");
@@ -4825,8 +4778,6 @@ fn emit_composed_open(
     let ins_double_address_of = collect_double_address_of_vars(&combined, &ins_address_of);
     let ins_ctx = CsRenderCtx {
         single_precision: false,
-        nullable_outputs: &empty,
-        nullable_shadow: false,
         double_address_of_vars: &ins_double_address_of,
         float_input_params: &empty,
         inline_counter: counter,
@@ -4988,7 +4939,7 @@ fn emit_composed_open(
     }
 
     emit_open_region(
-        o, func, &combined, enums, registry, helpers, counter, stream_fma, &inserts, &replaced,
+        o, &combined, enums, registry, helpers, counter, stream_fma, &inserts, &replaced,
     );
 
     // --- capture ------------------------------------------------------------
@@ -5039,7 +4990,7 @@ fn emit_composed_open(
     }
     // The composed `cur_*` seed from the FUNCTION outputs, never the producer
     // series/model — the producer's "output" is the intermediate.
-    emit_cur_capture(o, func, outputs, CurSource::Scratch);
+    emit_cur_capture(o, outputs, CurSource::Scratch);
     // Both modes compute into `sc_*` and seed `sp.cur_*` from it above; only the
     // hand-back differs, and it is the ONE place a stride multiply cannot
     // express the difference — a bulk copy takes a base array, not a subscript.

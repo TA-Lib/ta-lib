@@ -144,25 +144,51 @@ fn uname(func: &FuncDef) -> String {
     func.name.to_uppercase()
 }
 
-/// Names of `func`'s nullable outputs (see IR `Output::nullable`). Threaded into
-/// the statement renderers so a stream's per-bar write to a discarded output
-/// (`*outFAMA = …`) is NULL-guarded exactly as the batch body's write is — this
-/// is what lets a dispatch pass NULL for a sub-stream output it doesn't want.
-fn nullable_out_names(func: &FuncDef) -> Vec<String> {
-    super::common::nullable_output_list(func)
+/// The scratch a dispatch arm's `Discard` slot (the analyzer admits at most one)
+/// writes into: its C element type and a name built from the callee output
+/// (`outFAMA` -> `famaScratch`).
+fn arm_scratch(arm: &streaming::DispatchArm, registry: &Registry) -> Option<(&'static str, String)> {
+    let def = registry.def(&arm.callee);
+    arm.out_map
+        .iter()
+        .position(|slot| *slot == streaming::OutSlot::Discard)
+        .map(|k| {
+            let out = def.and_then(|d| d.outputs.get(k));
+            let ty = match out.map(|o| &o.param_type) {
+                Some(ParamType::Integer) => "int",
+                _ => "double",
+            };
+            let base = out.map_or("discard", |o| o.name.strip_prefix("out").unwrap_or(&o.name));
+            let stem = if base.chars().all(|c| !c.is_ascii_lowercase()) {
+                base.to_ascii_lowercase()
+            } else {
+                let mut c = base.chars();
+                c.next().map_or_else(String::new, |f| std::iter::once(f.to_ascii_lowercase()).chain(c).collect())
+            };
+            (ty, format!("{stem}Scratch"))
+        })
 }
 
 /// The callee output-argument list for one supported dispatch arm, built from
 /// its [`streaming::OutSlot`] map: `Forward(k)` passes the dispatch func's own
-/// output `k`, `Discard` passes NULL (a nullable callee output this dispatch
-/// drops — MAMA's FAMA when MA routes only the MAMA line, issue #125). For a
-/// same-arity arm (every single-output MA) this is exactly `outputs.join(", ")`.
-fn dispatch_arm_out_args(arm: &streaming::DispatchArm, outputs: &[String]) -> String {
+/// output `k`, `Discard` its [`arm_scratch`] — by address where the sink is a
+/// scalar. For a same-arity arm (every single-output MA) this is exactly
+/// `outputs.join(", ")`.
+fn dispatch_arm_out_args(
+    arm: &streaming::DispatchArm,
+    outputs: &[String],
+    registry: &Registry,
+    scalar: bool,
+) -> String {
+    let scratch = arm_scratch(arm, registry);
     arm.out_map
         .iter()
-        .map(|slot| match slot {
-            streaming::OutSlot::Forward(k) => outputs[*k].clone(),
-            streaming::OutSlot::Discard => "NULL".to_string(),
+        .map(|slot| match (slot, &scratch) {
+            (streaming::OutSlot::Forward(k), _) => outputs[*k].clone(),
+            (streaming::OutSlot::Discard, Some((_, name))) => {
+                if scalar { format!("&{name}") } else { name.clone() }
+            }
+            (streaming::OutSlot::Discard, None) => unreachable!("a Discard slot has a scratch"),
         })
         .collect::<Vec<_>>()
         .join(", ")
@@ -458,42 +484,23 @@ enum Frame {
     Open,
     /// `OpenAndFill`: the same, plus the range out-parameters it writes through.
     OpenAndFill,
-    /// `Update` / `Peek` over a transcribed `<N>_StepImpl`: bars arrive by value,
-    /// so there are no input arrays, and a declined output is not required
-    /// because the transcription guards its write (`if( outFAMA != NULL )`).
+    /// `Update` / `Peek`: bars arrive by value, so there are no input arrays.
     Step,
-    /// `Update` / `Peek` on a hand-rolled tier. Same shape, one clause less: the
-    /// dispatch identity arm copies the bar with a bare `*out = in`, so there is
-    /// no guard for a declined output to hide behind and EVERY output is
-    /// required — declared `nullable` or not.
-    StepEveryOutput,
 }
 
 /// Rule rS4 / rU2 — everything a C frame must find present, in one order: the
-/// declared inputs, the range out-parameters, then the outputs a caller is
-/// required to supply. It is the batch prologue's order too, so both tiers state
-/// the same contract the same way.
+/// declared inputs, the range out-parameters, then the outputs. It is the batch
+/// prologue's order too, so both tiers state the same contract the same way.
 ///
 /// The handle is NOT in the list. Every frame checks it first and on its own,
 /// because reading the index domain (rS1/rS2 at an opener, rU4 at a step) is a
 /// dereference and so has to follow it.
 ///
 /// One producer, because it is one decision and every frame makes it. Hand-rolled
-/// it had already split three ways — the merged tier put the out-meta first, the
-/// two exempt tiers put them last, and the dispatch tier dropped the clause
-/// below. Nothing could see any of it: they all answer `TA_BAD_PARAM`.
-///
-/// **A `nullable` output is in the list only where nothing guards its write.**
-/// Declining one is legal (rule rW5), and the transcribed bodies honour that
-/// with an `if( out != NULL )` — so the opener and the transcribed step leave it
-/// out, and only [`Frame::StepEveryOutput`] keeps it. Hand-rolling had both
-/// halves wrong in the same tier: the dispatch OPENER dropped the clause it
-/// needs (it would have required what its own batch call accepts), while the
-/// dispatch STEP relied on it without the guard that earns it. Latent either
-/// way, because `MA`'s single output is not declinable — which is exactly why
-/// one producer is worth having.
+/// it had already split three ways: the merged tier put the out-meta first and
+/// the two exempt tiers put them last. Nothing could see any of it: they all
+/// answer `TA_BAD_PARAM`.
 fn required_args(func: &FuncDef, frame: Frame) -> Vec<String> {
-    let nullable = nullable_out_names(func);
     let mut names: Vec<String> = Vec::new();
     if matches!(frame, Frame::Open | Frame::OpenAndFill) {
         names.extend(streaming::input_array_names(func));
@@ -502,39 +509,13 @@ fn required_args(func: &FuncDef, frame: Frame) -> Vec<String> {
         names.push("outBegIdx".to_string());
         names.push("outNBElement".to_string());
     }
-    names.extend(
-        func.outputs
-            .iter()
-            .map(|o| o.name.clone())
-            .filter(|o| frame == Frame::StepEveryOutput || !nullable.contains(o)),
-    );
+    names.extend(func.outputs.iter().map(|o| o.name.clone()));
     names
 }
 
-/// [`required_args`] as the single rejection every C frame emits for it.
-///
-/// `<N>_OpenImpl` makes the same test, so the public frames read like duplicates.
-/// They are not: `Open` delegates through `OpenInternal`, which hands the core a
-/// private `sink_outReal` and copies it out afterwards, so the core's `!outReal`
-/// never sees the CALLER's pointer — without the check here,
-/// `TA_<N>_Open( &s, data, n, p, NULL )` runs to completion and then dereferences
-/// NULL on the copy-out. `OpenAndFill` does pass the caller's arrays straight
-/// down, so there the repeat is real, and cheaper than teaching the frame which
-/// of its arguments the callee will see.
-/// One alias comparison, with the NULL guard a declinable operand needs.
-///
-/// A declined output aliases nothing, and two of them would otherwise compare
-/// equal — `NULL == NULL` — rejecting a legal call. The batch emitter guards the
-/// nullable operand for exactly this reason (rule rB7).
-fn alias_term(func: &FuncDef, a: &str, b: &str) -> String {
-    let nullable = super::common::nullable_output_names(func);
-    let term = format!("(const void *){a} == (const void *){b}");
-    match (nullable.contains(a), nullable.contains(b)) {
-        (false, false) => term,
-        (true, false) => format!("({a} != NULL && {term})"),
-        (false, true) => format!("({b} != NULL && {term})"),
-        (true, true) => format!("({a} != NULL && {b} != NULL && {term})"),
-    }
+/// One alias comparison.
+fn alias_term(a: &str, b: &str) -> String {
+    format!("(const void *){a} == (const void *){b}")
 }
 
 /// [`presence_guard`] with the handle fused into the same clause. The two are
@@ -548,6 +529,16 @@ fn presence_guard_handled(func: &FuncDef, frame: Frame) -> String {
     format!("   if( {} ) return TA_BAD_PARAM;\n", nulls.join(" || "))
 }
 
+/// [`required_args`] as the single rejection every C frame emits for it.
+///
+/// `<N>_OpenImpl` makes the same test, so the public frames read like duplicates.
+/// They are not: `Open` delegates through `OpenInternal`, which hands the core a
+/// private `sink_outReal` and copies it out afterwards, so the core's `!outReal`
+/// never sees the CALLER's pointer — without the check here,
+/// `TA_<N>_Open( &s, data, n, p, NULL )` runs to completion and then dereferences
+/// NULL on the copy-out. `OpenAndFill` does pass the caller's arrays straight
+/// down, so there the repeat is real, and cheaper than teaching the frame which
+/// of its arguments the callee will see.
 fn presence_guard(func: &FuncDef, frame: Frame) -> String {
     let nulls: Vec<String> = required_args(func, frame)
         .into_iter()
@@ -593,11 +584,8 @@ fn emit_open_wrapper(o: &mut String, func: &FuncDef) {
 /// the caller's array; at stride 0 every per-bar write lands on slot 0, so after
 /// the replay it holds the last history value. Copied out only on success, which
 /// is what the two separate bodies did (an error path left `*out` untouched).
-/// A nullable output passes NULL through — the core's writes are NULL-guarded
-/// and a caller that discarded the output must not get it written.
 fn emit_open_internal_wrapper(o: &mut String, func: &FuncDef) {
     let n = uname(func);
-    let nullable = nullable_out_names(func);
     let _ = writeln!(o, "/* Private function, not in public API. */\n{}\n{{", open_internal_signature(func));
     let _ = writeln!(o, "   TA_RetCode retCode;");
     let _ = writeln!(o, "   int dummyBegIdx = 0;");
@@ -607,17 +595,7 @@ fn emit_open_internal_wrapper(o: &mut String, func: &FuncDef) {
         let init = if ty == "int" { "0" } else { "0.0" };
         let _ = writeln!(o, "   {ty} sink_{} = {init};", out.name);
     }
-    let sinks: Vec<String> = func
-        .outputs
-        .iter()
-        .map(|out| {
-            if nullable.contains(&out.name) {
-                format!("{0} ? &sink_{0} : NULL", out.name)
-            } else {
-                format!("&sink_{}", out.name)
-            }
-        })
-        .collect();
+    let sinks: Vec<String> = func.outputs.iter().map(|out| format!("&sink_{}", out.name)).collect();
     let _ = writeln!(
         o,
         "   retCode = TA_{n}_OpenImpl( {}&dummyBegIdx, &dummyNBElement, {}, 0 );",
@@ -626,12 +604,7 @@ fn emit_open_internal_wrapper(o: &mut String, func: &FuncDef) {
     );
     let _ = writeln!(o, "   if( retCode == TA_SUCCESS )\n   {{");
     for out in &func.outputs {
-        let name = &out.name;
-        if nullable.contains(name) {
-            let _ = writeln!(o, "      if( {name} != NULL ) *{name} = sink_{name};");
-        } else {
-            let _ = writeln!(o, "      *{name} = sink_{name};");
-        }
+        let _ = writeln!(o, "      *{0} = sink_{0};", out.name);
     }
     let _ = writeln!(o, "   }}");
     let _ = writeln!(o, "   return retCode;\n}}\n");
@@ -660,12 +633,12 @@ fn emit_open_and_fill_wrapper(o: &mut String, func: &FuncDef) {
     let mut alias: Vec<String> = Vec::new();
     for out in &outs {
         for inp in &inputs {
-            alias.push(alias_term(func, out, inp));
+            alias.push(alias_term(out, inp));
         }
     }
     for (i, a) in outs.iter().enumerate() {
         for b in &outs[i + 1..] {
-            alias.push(alias_term(func, a, b));
+            alias.push(alias_term(a, b));
         }
     }
     if !alias.is_empty() {
@@ -964,31 +937,17 @@ fn period_bank_clone_lines(
 ///
 /// Total on a live handle: an Open that returned `TA_SUCCESS` produced at least
 /// one value and seeded these fields, so there is no "before the first update"
-/// answer to invent. A DECLINABLE output may be passed NULL here exactly as it
-/// may at `Update`.
+/// answer to invent.
 fn emit_value(o: &mut String, func: &FuncDef) {
-    let nullable = nullable_out_names(func);
-    let required: Vec<String> = func
-        .outputs
-        .iter()
-        .map(|out| out.name.clone())
-        .filter(|name| !nullable.contains(name))
-        .collect();
     let _ = writeln!(o, "{}\n{{", value_signature(func));
     let mut guard = String::from("   if( !stream");
-    for name in &required {
-        let _ = write!(guard, " || !{name}");
+    for out in &func.outputs {
+        let _ = write!(guard, " || !{}", out.name);
     }
     guard.push_str(" ) return TA_BAD_PARAM;");
     let _ = writeln!(o, "{guard}");
     for out in &func.outputs {
-        let name = &out.name;
-        if nullable.contains(name) {
-            let _ = writeln!(o, "   if( {name} != NULL )");
-            let _ = writeln!(o, "      *{name} = stream->cur_{name};");
-        } else {
-            let _ = writeln!(o, "   *{name} = stream->cur_{name};");
-        }
+        let _ = writeln!(o, "   *{0} = stream->cur_{0};", out.name);
     }
     let _ = writeln!(o, "   return TA_SUCCESS;\n}}\n");
 }
@@ -1691,7 +1650,7 @@ fn emit_composed_frame_body(
         }
         let mut body_c = String::new();
         for s in &transition {
-            body_c.push_str(&render_statement_stream(s, 3, enums, registry, helpers, counter, &nullable_out_names(func)));
+            body_c.push_str(&render_statement_stream(s, 3, enums, registry, helpers, counter));
         }
         let step_settings = crate::candle_settings::detect_candle_settings(&model.steady_stmts);
         if !step_settings.is_empty() {
@@ -1765,7 +1724,7 @@ fn emit_composed_frame_body(
                 }
                 let _ = writeln!(o, "   /* Combine map (batch tail, per bar). */");
                 for st in &transform_map_step(&cp.tail[*tail_idx], &cur, &params, &cp.sub_lag_rings) {
-                    o.push_str(&render_statement_stream(st, 3, enums, registry, helpers, counter, &nullable_out_names(func)));
+                    o.push_str(&render_statement_stream(st, 3, enums, registry, helpers, counter));
                 }
             }
         }
@@ -2015,7 +1974,7 @@ fn emit_composed_sub_open(
     let _ = writeln!(o, "         {{");
     for sf in &cp.series_frees {
         if sf.tail_idx > sub.tail_idx {
-            o.push_str(&render_statement(&sf.stmt, 12, false, enums, registry, helpers, counter, &[], false));
+            o.push_str(&render_statement(&sf.stmt, 12, false, enums, registry, helpers, counter));
         }
     }
     let _ = writeln!(o, "            {cleanup};");
@@ -2189,7 +2148,7 @@ fn emit_composed_open_body(
     let (region_stmts, tail_stmts) = build_composed_open_bodies(cp, outputs, cleanup);
     let mut region_c = String::new();
     for s in &region_stmts {
-        region_c.push_str(&render_statement(s, 6, false, enums, registry, helpers, counter, &nullable_out_names(func), false));
+        region_c.push_str(&render_statement(s, 6, false, enums, registry, helpers, counter));
     }
     let open_settings = crate::candle_settings::detect_candle_settings(&cp.region);
     if !open_settings.is_empty() {
@@ -2231,7 +2190,7 @@ fn emit_composed_open_body(
             }
             continue;
         }
-        o.push_str(&render_statement(stmt, 6, false, enums, registry, helpers, counter, &nullable_out_names(func), false));
+        o.push_str(&render_statement(stmt, 6, false, enums, registry, helpers, counter));
     }
 
     // --- capture ----------------------------------------------------------------
@@ -2710,12 +2669,12 @@ fn emit_dispatch_open(
         let mut alias: Vec<String> = Vec::new();
         for outp in &outputs {
             for inp in &inputs {
-                alias.push(alias_term(func, outp, inp));
+                alias.push(alias_term(outp, inp));
             }
         }
         for (i, a) in outputs.iter().enumerate() {
             for b in &outputs[i + 1..] {
-                alias.push(alias_term(func, a, b));
+                alias.push(alias_term(a, b));
             }
         }
         if !alias.is_empty() {
@@ -2806,7 +2765,8 @@ fn emit_dispatch_open(
             let _ = write!(s, "{}, ", render_expression(e, registry, helpers, counter));
             s
         });
-        let arm_out_args = dispatch_arm_out_args(arm, &outputs);
+        let arm_out_args = dispatch_arm_out_args(arm, &outputs, registry, !mode.fills());
+        let scratch = arm_scratch(arm, registry);
         // Each mode delegates to the callee's matching entry point: the fills
         // hand the caller's arrays and out-meta straight down, and only the
         // startIdx-anchored modes forward a startIdx.
@@ -2824,7 +2784,11 @@ fn emit_dispatch_open(
         let _ = writeln!(o, "   case {}:", case_of(&arm.label));
         let _ = writeln!(o, "      {{");
         let _ = writeln!(o, "         {cp}_Stream *sub = NULL;");
+        emit_open_arm_scratch(o, scratch.as_ref(), mode.fills());
         let _ = writeln!(o, "         retCode = {call};");
+        if let (Some((_, name)), true) = (&scratch, mode.fills()) {
+            let _ = writeln!(o, "         TA_Free( {name} );");
+        }
         let _ = writeln!(o, "         sp->sub = sub;");
         if !mode.fills() {
             // Read the resolved range here, where `sub` still has its own type:
@@ -2907,21 +2871,6 @@ fn emit_dispatch(
     let outputs: Vec<String> = func.outputs.iter().map(|x| x.name.clone()).collect();
     let bar_args: String = inputs.join(", ");
     let case_of = |label: &str| render_c_switch_label(label, enums);
-    // This tier hand-rolls every entry point, and all of them write the caller's
-    // outputs unconditionally -- `Update` requires each one non-NULL, and the
-    // fill opener's identity arm writes `out[i]` with no guard. The shared
-    // emitters instead exempt a NULLABLE output from the check and write it
-    // through `out ? &out[i] : NULL`, because `&out[i]` on a NULL `out` is
-    // undefined even unread. Nothing in the corpus makes a dispatch output
-    // nullable, so rather than emit a guard no call can reach, refuse the
-    // combination here: a silently wrong body is what this tier would otherwise
-    // ship.
-    assert!(
-        nullable_out_names(func).is_empty(),
-        "{}: the dispatch tier hand-rolls its bodies and indexes every output unguarded; \
-         a nullable output needs the `out ? &out[i] : NULL` form the shared emitters use",
-        uname(func)
-    );
 
     // --- state struct -------------------------------------------------------
     emit_dispatch_struct(o, func, dp);
@@ -2957,7 +2906,7 @@ fn emit_dispatch(
         // The bar is checked here rather than left to the sub-stream's own
         // Update/Peek: the identity arm below never reaches a sub-stream at all,
         // it copies the bar straight to the output.
-        o.push_str(&step_prologue(func, Frame::StepEveryOutput, verb == "Update"));
+        o.push_str(&step_prologue(func, Frame::Step, verb == "Update"));
         if let (Some(cond), Some(idp)) = (&identity_handle_cond, &dp.identity) {
             let _ = writeln!(o, "   if( {cond} )\n   {{");
             for (out, inp) in &idp.pairs {
@@ -2974,13 +2923,11 @@ fn emit_dispatch(
         let _ = writeln!(o, "   {{");
         for arm in dp.arms.iter().filter(|a| a.supported) {
             let cp = callee_prefix(&arm.callee);
-            let arm_out_args = dispatch_arm_out_args(arm, &outputs);
+            let arm_out_args = dispatch_arm_out_args(arm, &outputs, registry, true);
             let _ = writeln!(o, "   case {}:", case_of(&arm.label));
             let keep = if verb == "Update" { "retCode =" } else { "return" };
-            let _ = writeln!(
-                o,
-                "      {keep} {cp}_{verb}( ({const_qual}{cp}_Stream *)stream->sub, {bar_args}, {arm_out_args} );"
-            );
+            let call = format!("{keep} {cp}_{verb}( ({const_qual}{cp}_Stream *)stream->sub, {bar_args}, {arm_out_args} );");
+            emit_scratch_arm(o, arm_scratch(arm, registry).as_ref(), &call);
             if verb == "Update" {
                 let _ = writeln!(o, "      break;");
             }
@@ -3003,7 +2950,7 @@ fn emit_dispatch(
     }
 
     if registry.in_tape_set(&func.name.to_lowercase()) {
-        emit_dispatch_tape(o, func, dp, identity_handle_cond.as_deref(), &outputs, enums);
+        emit_dispatch_tape(o, func, dp, identity_handle_cond.as_deref(), &outputs, enums, registry);
     }
 
     // --- Close -----------------------------------------------------------------
@@ -3027,6 +2974,33 @@ fn emit_dispatch(
     let _ = writeln!(o, "   return TA_SUCCESS;\n}}\n");
 }
 
+/// Declare an opener arm's scratch; where the arm fills, allocate `historyLen`
+/// elements for it, releasing the handle if that fails.
+fn emit_open_arm_scratch(o: &mut String, scratch: Option<&(&str, String)>, fills: bool) {
+    let Some((ty, name)) = scratch else { return };
+    if fills {
+        let _ = writeln!(o, "         {ty} *{name};\n");
+        let _ = writeln!(o, "         {name} = ({ty} *)TA_Malloc( historyLen * sizeof({ty}) );");
+        let _ = writeln!(o, "         if( !{name} )\n         {{");
+        let _ = writeln!(o, "            TA_Free( sp );\n            return TA_ALLOC_ERR;\n         }}");
+    } else {
+        let _ = writeln!(o, "         {ty} {name};\n");
+    }
+}
+
+/// One scalar-sink dispatch arm's statement, braced around the block-local its
+/// scratch needs.
+fn emit_scratch_arm(o: &mut String, scratch: Option<&(&str, String)>, call: &str) {
+    match scratch {
+        Some((ty, name)) => {
+            let _ = writeln!(o, "      {{\n         {ty} {name};\n\n         {call}\n      }}");
+        }
+        None => {
+            let _ = writeln!(o, "      {call}");
+        }
+    }
+}
+
 /// A dispatcher's tape entries (#445): route each to the arm's own, and answer
 /// the identity path here, which is why the arms' tape frames drop theirs.
 fn emit_dispatch_tape(
@@ -3036,6 +3010,7 @@ fn emit_dispatch_tape(
     identity_cond: Option<&str>,
     outputs: &[String],
     enums: &HashMap<String, EnumDef>,
+    registry: &Registry,
 ) {
     let n = uname(func);
     let bars = bar_params_sig(func);
@@ -3043,6 +3018,9 @@ fn emit_dispatch_tape(
     let bar_args = streaming::input_array_names(func).join(", ");
     let case_of = |label: &str| render_c_switch_label(label, enums);
     let arms: Vec<_> = dp.arms.iter().filter(|a| a.supported && !a.callee.is_empty()).collect();
+    let arm_call = |o: &mut String, arm: &streaming::DispatchArm, call: &str| {
+        emit_scratch_arm(o, arm_scratch(arm, registry).as_ref(), call);
+    };
     let identity = |o: &mut String, tail: &str| {
         if let (Some(cond), Some(idp)) = (identity_cond, &dp.identity) {
             let _ = writeln!(o, "   if( {cond} )\n   {{");
@@ -3073,11 +3051,12 @@ fn emit_dispatch_tape(
     for arm in &arms {
         let cp = callee_prefix(&arm.callee);
         let _ = writeln!(o, "   case {}:", case_of(&arm.label));
-        let _ = writeln!(
-            o,
-            "      {cp}_StepTape( (struct {cp}_Stream *)stream->sub, tape, tapeBase, tapeMask, {bar_args}, {} );\n      break;",
-            dispatch_arm_out_args(arm, outputs)
+        let call = format!(
+            "{cp}_StepTape( (struct {cp}_Stream *)stream->sub, tape, tapeBase, tapeMask, {bar_args}, {} );",
+            dispatch_arm_out_args(arm, outputs, registry, true)
         );
+        arm_call(o, arm, &call);
+        let _ = writeln!(o, "      break;");
     }
     let _ = writeln!(o, "   default:\n      /* Unreachable: Open rejects arms without a sub-stream. */\n      break;\n   }}");
     o.push_str(&retain);
@@ -3093,11 +3072,12 @@ fn emit_dispatch_tape(
     for arm in &arms {
         let cp = callee_prefix(&arm.callee);
         let _ = writeln!(o, "   case {}:", case_of(&arm.label));
-        let _ = writeln!(
-            o,
-            "      {cp}_PeekTape( (const struct {cp}_Stream *)stream->sub, tape, tapeBase, tapeMask, {bar_args}, {} );\n      break;",
-            dispatch_arm_out_args(arm, outputs)
+        let call = format!(
+            "{cp}_PeekTape( (const struct {cp}_Stream *)stream->sub, tape, tapeBase, tapeMask, {bar_args}, {} );",
+            dispatch_arm_out_args(arm, outputs, registry, true)
         );
+        arm_call(o, arm, &call);
+        let _ = writeln!(o, "      break;");
     }
     let _ = writeln!(o, "   default:\n      break;\n   }}\n}}\n");
 
@@ -3686,16 +3666,9 @@ fn emit_range_head_capture(o: &mut String, indent: &str) {
 /// are written and `*outNBElement` is final. Sits with the range capture for
 /// the same reason the retain sits with the range advance: the two describe the
 /// same bar, and `Open(P)+updates` has to leave the handle where `Open(n)` does.
-///
-/// Declinable outputs are seeded earlier, from the body variable, because their
-/// array may be NULL — `nullable_out_names` is the exemption list.
 fn emit_cur_capture(o: &mut String, indent: &str, func: &FuncDef, strided: bool) {
-    let nullable = nullable_out_names(func);
     for out in &func.outputs {
         let name = &out.name;
-        if nullable.contains(name) {
-            continue;
-        }
         // The period-bank opener fills at stride 1 and takes no `outStride`
         // parameter, so its index is the bare count.
         let idx = if strided {
@@ -4529,7 +4502,7 @@ fn emit_step_inner(
     }
     let mut body_c = String::new();
     for s in &transition {
-        body_c.push_str(&render_statement_stream(s, indent, enums, registry, helpers, counter, &nullable_out_names(model.func)));
+        body_c.push_str(&render_statement_stream(s, indent, enums, registry, helpers, counter));
     }
     for name in &elected {
         let _ = writeln!(body_c, "{pad}{} = {name};", streaming::NameMap::state(&CNames, name));
@@ -4587,7 +4560,6 @@ fn emit_identity_step_branch(
             registry,
             helpers,
             counter,
-            &nullable_out_names(model.func),
         ));
     }
 }
@@ -4881,15 +4853,6 @@ fn emit_period_bank(
     let period = &plan.period_input;
     let out = &plan.output;
     let inputs = streaming::input_array_names(func);
-    // Same as the dispatch tier: hand-rolled bodies that index the output
-    // unguarded, so a nullable output would be undefined behaviour rather than
-    // the documented "pass NULL to skip".
-    assert!(
-        nullable_out_names(func).is_empty(),
-        "{}: the period-bank tier hand-rolls its bodies and indexes its output unguarded; \
-         a nullable output needs the `out ? &out[i] : NULL` form the shared emitters use",
-        uname(func)
-    );
 
     // Sub-open opt args in the callee's signature order.
     let open_opts: String = plan
@@ -5169,7 +5132,7 @@ fn emit_period_bank(
     o.push_str(&presence_guard(func, Frame::OpenAndFill));
     let mut alias: Vec<String> = Vec::new();
     for inp in &inputs {
-        alias.push(alias_term(func, out, inp));
+        alias.push(alias_term(out, inp));
     }
     if !alias.is_empty() {
         let _ = writeln!(o, "   if( {} ) return TA_BAD_PARAM;", alias.join(" || "));
@@ -5303,19 +5266,10 @@ fn emit_open_arm(
     let n = uname(func);
     // --- transcribed batch body ----------------------------------------------
     let _ = writeln!(o, "\n   {{");
-    let nullable = nullable_out_names(func);
-    // The handle's `cur_<out>` has to hold what the guarded store *would* have
-    // written even when the caller declined it — `TA_<N>_StepImpl` always
-    // recomputes it (mama.c), so a capture that instead reads the (possibly
-    // absent) array diverges from `Open(P)+updates`. Every guarded store below
-    // also lands here, unconditionally; `alloc_and_capture` reads it.
-    for name in &nullable {
-        let _ = writeln!(o, "      double lastCur_{name} = 0.0;");
-    }
     let open_body = build_open_body_from(model, body);
     let mut open_body_c = String::new();
     for s in &open_body {
-        open_body_c.push_str(&render_statement(s, 6, false, enums, registry, helpers, counter, &nullable, true));
+        open_body_c.push_str(&render_statement(s, 6, false, enums, registry, helpers, counter));
     }
     let open_settings = crate::candle_settings::detect_candle_settings(body);
     if !open_settings.is_empty() {
@@ -5533,15 +5487,6 @@ fn alloc_and_capture(
             // one expression for both callers.
             let idx = stride_index("*outNBElement - 1");
             let _ = writeln!(s, "{pad}sp->lastOut_{name} = {name}[{idx}];");
-        }
-        // A DECLINABLE output has no output slot to read at the publish point
-        // (its array may be NULL), so it is seeded here, from `lastCur_<out>`
-        // — the transcribed open loop's own shadow of the guarded store
-        // (`nullable_shadow`), computed every iteration regardless of decline
-        // so it matches what `TA_<N>_StepImpl` always recomputes. Every other
-        // output is seeded at the publish point, where all five tiers meet.
-        for name in nullable_out_names(func) {
-            let _ = writeln!(s, "{pad}sp->cur_{name} = lastCur_{name};");
         }
         for (name, ty) in &model.state {
             if model.parity.as_ref().is_some_and(|p| &p.field == name) {
@@ -6033,7 +5978,6 @@ fn emit_peek(
     fallible: bool,
 ) {
     let n = uname(func);
-    let guard_frame = if fallible { Frame::StepEveryOutput } else { Frame::Step };
     let _ = writeln!(o, "{}\n{{", peek_signature(func));
     // Bind what the frame reads: a stateless one reads nothing out of the
     // handle, and an unused local is what binding it anyway would leave.
@@ -6045,7 +5989,7 @@ fn emit_peek(
     if bind_sp || !frame_decls.is_empty() {
         let _ = writeln!(o);
     }
-    o.push_str(&step_prologue(func, guard_frame, false));
+    o.push_str(&step_prologue(func, Frame::Step, false));
     o.push_str(frame_body);
     if !fallible {
         let _ = writeln!(o, "   return TA_SUCCESS;");

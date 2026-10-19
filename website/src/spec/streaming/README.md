@@ -35,7 +35,6 @@ For `Open` and `OpenAndFill`, the history is the first declared input and `histo
 | <a id="rs4"></a>**rS4** | A required argument is absent ([rB4](/spec/errors/#rb4)): an input, an output, or in C the handle out-parameter, `outBegIdx` or `outNBElement`. An empty history is rS1 | `TA_BAD_PARAM` | |
 | <a id="rs5"></a>**rS5** | An input's length differs from `historyLen`, or an `OpenAndFill` output holds fewer than `historyLen - lookback` values | `TA_BAD_PARAM` | C: cannot check ([input length](/spec/inputs-outputs/#input-length)) |
 | <a id="rs6"></a>**rS6** | `OpenAndFill`: an output is the buffer of an input or of another output; in C#, a span that starts where the other does | `TA_BAD_PARAM` | Rust: cannot alias |
-| <a id="rs7"></a>**rS7** | `OpenAndFill`: an output that is not declinable is declined ([rW5](/spec/inputs-outputs/#rw5)) | `TA_BAD_PARAM` | Rust: cannot decline |
 | <a id="rs8"></a>**rS8** | The history holds at least one bar, but fewer than [lookback](/spec/lookback/#rl1) `+ 1` | `TA_INSUFFICIENT_HISTORY` | |
 
 A loop that waits for enough history may open on one bar: a short history is rS8, an empty one rS1.
@@ -52,10 +51,8 @@ A loop that waits for enough history may open on one bar: a short history is rS8
 | <a id="ru2"></a>**rU2** | A required output is absent: a C out-pointer, a Java multi-output sink | `TA_BAD_PARAM` | Update, Peek; in C also Value, OutRange, Clone; in Java also value | Rust, C#: value returned |
 | <a id="ru3"></a>**rU3** | A bar value is NaN, `+Inf` or `-Inf` | `TA_BAD_PARAM` | Update, Peek | |
 | <a id="ru4"></a>**rU4** | The bar this call would count leaves the index domain: `begIdx + count > TA_INDEX_MAX` | `TA_OUT_OF_RANGE_END_INDEX` | Update, Advance | |
-| <a id="ru5"></a>**rU5** | An output that is not declinable is declined ([rW5](/spec/inputs-outputs/#rw5)) | `TA_BAD_PARAM` | Update, Peek | Rust, Java, C#: nothing to decline |
 
 - rU4 never clears: open a new handle on a shorter history. `Peek` counts no bar, so it still succeeds at the ceiling.
-- In C, a decline applies to that call alone: the outputs an `Update` or `Peek` declines may differ from the opener's and from the previous call's.
 - An accepted bar whose output is not finite ([rW6](/spec/inputs-outputs/#rw6)) is a success: the call returns that value and the bar is counted.
 
 <a id="rh4"></a>**rH4** `Peek` never advances the stream and never changes the handle, however often it is called. Its value is bit-identical to what the next `Update` with the same bar returns.

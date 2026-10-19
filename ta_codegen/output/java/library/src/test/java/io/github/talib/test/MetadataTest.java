@@ -323,8 +323,8 @@ public class MetadataTest {
     static void flagVocabularyIsComplete() {
         FuncInfo mama = Functions.byName("MAMA");
         OutputInfo fama = mama.outputs().get(1);
-        check((fama.flags() & OutputFlags.NULLABLE) != 0,
-              "MAMA outFAMA carries the named NULLABLE bit (was the bare literal 8196)");
+        check((fama.flags() & OutputFlags.DASH_LINE) != 0,
+              "MAMA outFAMA carries the named DASH_LINE bit");
 
         FuncInfo bb = Functions.byName("BBANDS");
         check((bb.outputs().get(0).flags() & OutputFlags.UPPER_LIMIT) != 0,
@@ -620,17 +620,15 @@ public class MetadataTest {
                      .call(0, N - 1),
             "one array bound as two outputs -> BAD_PARAM");
 
-        // No output is declined through a holder. MAMA's second output is one the
-        // typed call takes null for.
+        // A second output left unbound, or bound empty, is refused like the first.
         FuncInfo mama = Functions.byName("MAMA");
-        check((mama.outputs().get(1).flags() & OutputFlags.NULLABLE) != 0, "MAMA's second output is declinable");
         checkRetCode(RetCode.OUTPUT_NOT_ALL_INITIALIZE,
             () -> mama.newCall().setInput(0, CLOSE).setOutput(0, new double[N]).call(0, N - 1),
-            "a declinable output left unbound -> OUTPUT_NOT_ALL_INITIALIZE");
+            "a second output left unbound -> OUTPUT_NOT_ALL_INITIALIZE");
         checkRetCode(RetCode.BAD_PARAM,
             () -> mama.newCall().setInput(0, CLOSE).setOutput(0, new double[N])
                      .setOutput(1, new double[0]).call(0, N - 1),
-            "an empty array on a declinable output -> BAD_PARAM");
+            "an empty array on a second output -> BAD_PARAM");
         checkRetCode(RetCode.OUT_OF_RANGE_END_INDEX,
             () -> mama.newCall().setInput(0, CLOSE).setOutput(0, new double[N])
                      .setOutput(1, new double[0]).call(1, 0),

@@ -66,8 +66,9 @@ the code cannot state for itself:
    reaches it.** Establish the second half by grepping `ta_codegen/input/`, not
    by trusting a neighbouring fixture's prose.
 2. **What would SILENTLY reduce this fixture's own coverage** — a trap about the
-   FIXTURE, not about a backend. SYNTH10 is the model: reorder its `.yaml`
-   outputs and coverage drops to what MAMA already gives, gate still green.
+   FIXTURE, not about a backend. SYNTH12 is the model: move its integer output
+   last and only one of its three slots still tells the two indexings apart,
+   gate still green.
 3. **The issue number.** The post-mortem lives there and in the commit message,
    which are timestamped and do not pretend to be current.
 

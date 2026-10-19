@@ -506,34 +506,21 @@ pub fn generate(
 /// caller-owned arrays. The batch tier's in-place allowance is revoked here not
 /// because the fill would compute the wrong answer — measured, it does not — but
 /// because the margin between its writes and the capture's seed reads is an
-/// accident nothing asserts (rule rS6). Reference equality is complete for two
-/// SUPPLIED arrays: they are identical or disjoint. A declined output is null,
-/// which aliases nothing, so the pairs guard it.
+/// accident nothing asserts (rule rS6). Reference equality is complete: two
+/// arrays are identical or disjoint.
 fn alias_condition(func: &FuncDef) -> Option<String> {
     let inputs = streaming::input_array_names(func);
     let outs: Vec<&str> = func.outputs.iter().map(|out| out.name.as_str()).collect();
-    let nullable = super::common::nullable_output_names(func);
-    // A declined output aliases nothing — and two of them would otherwise
-    // compare equal, `null == null`, rejecting a legal call. The batch emitter
-    // guards the nullable operand for exactly this reason (rule rB7).
-    let guarded = |a: &str, b: &str| {
-        let term = format!("(Object){a} == (Object){b}");
-        match (nullable.contains(a), nullable.contains(b)) {
-            (false, false) => term,
-            (true, false) => format!("({a} != null && {term})"),
-            (false, true) => format!("({b} != null && {term})"),
-            (true, true) => format!("({a} != null && {b} != null && {term})"),
-        }
-    };
+    let term = |a: &str, b: &str| format!("(Object){a} == (Object){b}");
     let mut pairs: Vec<String> = Vec::new();
     for out in &outs {
         for input in &inputs {
-            pairs.push(guarded(out, input));
+            pairs.push(term(out, input));
         }
     }
     for i in 0..outs.len() {
         for b in &outs[i + 1..] {
-            pairs.push(guarded(outs[i], b));
+            pairs.push(term(outs[i], b));
         }
     }
     if pairs.is_empty() { None } else { Some(pairs.join(" || ")) }
@@ -1178,9 +1165,6 @@ fn stream_ctx<'a>(
         float_input_params: empty,
         inline_counter: counter,
         fma: Some(fma_sets),
-        // The streaming tier keeps every output required, so no store is guarded.
-        nullable_outputs: empty,
-        nullable_shadow: false,
         key_slots: None,
         // A transition dispatches MA-type structurally. The Open region sets
         // this, since the batch region it transcribes may compare `== TA_MAType_*`.
@@ -1976,11 +1960,6 @@ fn emit_anchor_guard(o: &mut String) {
 /// The transcribed body's VarDecls (address-of / MAType aware, mirroring the
 /// batch renderer's decl pass), including CIRCBUF prologs.
 fn emit_body_decls(o: &mut String, func: &FuncDef, open_body: &[Statement]) {
-    // The handle caches every output's last value, and a declined output leaves
-    // no array to read it back from — so the guarded store writes it here too.
-    for name in super::common::nullable_output_list(func) {
-        let _ = writeln!(o, "      {} lastCur_{name} = 0;", out_java_type(func, &name));
-    }
     let mut address_of_vars = collect_address_of_vars(open_body);
     let matype_params: HashSet<String> = func
         .optional_inputs
@@ -2159,11 +2138,8 @@ fn emit_open_region(
         address_of_vars.remove(name);
     }
     let empty = HashSet::new();
-    let nullable = super::common::nullable_output_names(func);
     let ctx = JavaRenderCtx {
         single_precision: false,
-        nullable_outputs: &nullable,
-        nullable_shadow: true,
         key_slots: None,
         address_of_vars: &address_of_vars,
         double_address_of_vars: &double_address_of_vars,
@@ -2503,7 +2479,7 @@ fn emit_capture(
     // The composed tier seeds `cur_*` from the FUNCTION outputs itself (the
     // producer model's "output" is the intermediate series, not a real one).
     if let Some(cs) = cur_source {
-        emit_cur_capture(o, func, &model.outputs, cs);
+        emit_cur_capture(o, &model.outputs, cs);
     }
 }
 
@@ -2518,22 +2494,11 @@ enum CurSource {
 }
 
 /// Seed `sp.cur_*` at the end of an open body.
-fn emit_cur_capture(o: &mut String, func: &FuncDef, outputs: &[String], source: CurSource) {
-    let nullable = super::common::nullable_output_names(func);
-    assert!(
-        !(matches!(source, CurSource::Scratch) && outputs.iter().any(|o| nullable.contains(o))),
-        "{}: a composed open would cache 0 for a declined output — the shadow is written \
-         beside a transcribed store, and this path has none",
-        func.name
-    );
+fn emit_cur_capture(o: &mut String, outputs: &[String], source: CurSource) {
     for out in outputs {
-        let expr = if nullable.contains(out) {
-            format!("lastCur_{out}")
-        } else {
-            match source {
-                CurSource::StridedArray => format!("{out}[(outNBElement.value - 1) * outStride]"),
-                CurSource::Scratch => format!("sc_{out}[outNBElement.value - 1]"),
-            }
+        let expr = match source {
+            CurSource::StridedArray => format!("{out}[(outNBElement.value - 1) * outStride]"),
+            CurSource::Scratch => format!("sc_{out}[outNBElement.value - 1]"),
         };
         let _ = writeln!(o, "      sp.cur_{out} = {expr};");
     }
@@ -2690,18 +2655,11 @@ fn emit_public_open_guards(o: &mut String, func: &FuncDef, verb: &str, with_outp
         // output-capacity fault.
         o.push_str(&history_length_guards(func, &n, verb));
         // …then the outputs. `requireLength` carries rS4 and rS5 in one call,
-        // exactly as the batch wrapper's does, and an output marked `nullable`
-        // is bounded only where it was supplied (rule rB7).
-        let nullable = super::common::nullable_output_names(func);
+        // exactly as the batch wrapper's does.
         for out in &func.outputs {
-            let guard = if nullable.contains(&out.name) {
-                format!("if( {0} != null ) ", out.name)
-            } else {
-                String::new()
-            };
             let _ = writeln!(
                 o,
-                "      {guard}requireLength(\"{n} {verb}\", \"{0}\", {0}, guardOutLen);",
+                "      requireLength(\"{n} {verb}\", \"{0}\", {0}, guardOutLen);",
                 out.name
             );
         }
@@ -2729,22 +2687,6 @@ fn history_length_guards(func: &FuncDef, n: &str, verb: &str) -> String {
         );
     }
     s
-}
-
-/// The javadoc sentence naming the outputs a caller may decline, or nothing when
-/// the function has none. Rule rB7 reads the same at both tiers, and a caller of
-/// the opener needs telling in the same place a caller of the batch call is told.
-fn declinable_note(func: &FuncDef, class: &str) -> String {
-    let names = super::common::nullable_output_list(func);
-    if names.is_empty() {
-        return String::new();
-    }
-    let list = names.iter().map(|n| format!("{{@code {n}}}")).collect::<Vec<_>>().join(", ");
-    let vlink = value_link(func).replacen("#value", &format!("{class}#value"), 1);
-    format!(
-        "\n\x20   * <p>{list} may be declined with {{@code null}}: the value is still\n\
-         \x20   * computed — {vlink} reports it — and nothing is written out."
-    )
 }
 
 /// The public opener's javadoc block.
@@ -2893,7 +2835,6 @@ fn emit_open_wrappers(
         fill_sig.push(format!("{} {}[]", out_java_type(func, &out.name), out.name));
         fill_fwd.push(out.name.clone());
     }
-    let declinable = declinable_note(func, &class);
     let _ = writeln!(
         o,
         "   /**\n\
@@ -2903,7 +2844,7 @@ fn emit_open_wrappers(
          \x20   * not alias the inputs or each other, and must hold\n\
          \x20   * {{@code historyLen - lookback}} values — both checked before anything is\n\
          \x20   * written, so an undersized array is an {{@link IllegalArgumentException}}\n\
-         \x20   * naming it rather than a fault from inside the fill.{declinable}\n\
+         \x20   * naming it rather than a fault from inside the fill.\n\
          \x20   * <p>The range written is on the returned handle:\n\
          \x20   * {{@link {class}#outRange()}}.\n\
          \x20   */"
@@ -3309,8 +3250,7 @@ fn emit_dispatch(
         let cls = callee_stream_class(registry, &arm.callee);
         let _ = writeln!(o, "      case {label}: {{");
         // Route callee output slots through the arm's OutSlot map: Forward(k)
-        // lands in the dispatch func's output k, Discard drops the slot (the
-        // nullable FAMA when MA routes only the MAMA line, #125).
+        // lands in the dispatch func's output k, Discard drops the slot.
         if arm.out_map.len() == 1 {
             let streaming::OutSlot::Forward(k) = arm.out_map[0] else {
                 panic!("single-output arm cannot discard its only slot");
@@ -3486,18 +3426,20 @@ fn emit_dispatch(
                         let _ = writeln!(o, "         sp.outRangeCount = sub.outRangeCount;");
                     }
                     OutMode::Fill | OutMode::FillInternal => {
-                        // OutSlot-mapped fill tail: Forward(k) passes the
-                        // dispatch func's own array, Discard declines the
-                        // callee's nullable output outright — which is what C
-                        // has always passed there, and what a `historyLen`-sized
-                        // throwaway buffer per open was standing in for until
-                        // the openers learned rule rB7.
+                        let callee_outs = registry.def(&arm.callee).map(|d| &d.outputs);
                         let fill_outs: String = arm
                             .out_map
                             .iter()
-                            .map(|slot| match slot {
+                            .enumerate()
+                            .map(|(slot_idx, slot)| match slot {
                                 streaming::OutSlot::Forward(k) => outputs[*k].clone(),
-                                streaming::OutSlot::Discard => "null".to_string(),
+                                streaming::OutSlot::Discard => {
+                                    let ty = match callee_outs.and_then(|o| o.get(slot_idx)).map(|o| &o.param_type) {
+                                        Some(ParamType::Integer) => "int",
+                                        _ => "double",
+                                    };
+                                    format!("new {ty}[historyLen]")
+                                }
                             })
                             .collect::<Vec<_>>()
                             .join(", ");
@@ -4583,8 +4525,6 @@ fn emit_composed_open(
     }
     let ins_ctx = JavaRenderCtx {
         single_precision: false,
-        nullable_outputs: &empty,
-        nullable_shadow: false,
         key_slots: None,
         address_of_vars: &ins_address_of,
         double_address_of_vars: &ins_double_address_of,
@@ -4741,7 +4681,7 @@ fn emit_composed_open(
         }
         o.push_str(&extra);
     }
-    emit_cur_capture(o, func, outputs, CurSource::Scratch);
+    emit_cur_capture(o, outputs, CurSource::Scratch);
     // Both modes compute into `sc_*` and seed `sp.cur_*` from it above; only the
     // hand-back differs, and it is the ONE place a stride multiply cannot express
     // the difference — a bulk copy takes a base array, not a subscript. At stride

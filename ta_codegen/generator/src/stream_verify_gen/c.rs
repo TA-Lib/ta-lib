@@ -1200,8 +1200,7 @@ fn emit_sv_state_report(s: &mut String, steq: bool) {
 }
 
 // `cognitive_complexity`: the same allow the other whole-server emitters carry.
-// This one crossed the threshold when #262's declined-output arm landed, and the
-// shape it is complaining about is the sequence of `emit_sv_*` calls this
+// The shape it complains about is the sequence of `emit_sv_*` calls this
 // function exists to order.
 #[allow(clippy::too_many_lines, clippy::cognitive_complexity)]
 pub(crate) fn generate_c_stream_verify(

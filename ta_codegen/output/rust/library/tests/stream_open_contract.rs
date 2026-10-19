@@ -240,63 +240,28 @@ fn a_short_history_reaches_the_warm_up_check_not_the_capacity_one() {
     );
 }
 
-/// Rule rB7 at the opener: `outFAMA` is `Option<&mut [f64]>`, and `None`
-/// declines it exactly as it does in the batch tier.
-///
-/// Non-vacuous in three directions. The supplied run is the oracle, so a fill
-/// that stopped computing FAMA when it is declined — the easy way to "support"
-/// this — diverges on the FIRST `update` after the open, which reads the
-/// handle's state rather than anything that was written out. The declined run
-/// must still reject an undersized `outMAMA`, so the conditional bound cannot
-/// have been dropped wholesale. And a SUPPLIED but undersized `outFAMA` is
-/// still rejected, so "declinable" did not become "unchecked".
+/// Rule rS5 on each output of a two-output opener: either one short is
+/// rejected, and both exactly sized are accepted.
 #[test]
-fn a_declined_fill_output_is_still_computed() {
+fn every_fill_output_is_bounded() {
     let core = Core::new();
     let data = series(252);
-    let lb = core.mama_lookback(0.5, 0.05).expect("valid");
-    let produced = data.len() - lb;
+    let produced = data.len() - core.mama_lookback(0.5, 0.05).expect("valid");
 
-    let mut ref_mama = vec![0.0_f64; produced];
-    let mut ref_fama = vec![0.0_f64; produced];
-    let (mut both, both_range) = core
-        .mama_open_and_fill(&data, 0.5, 0.05, &mut ref_mama, Some(&mut ref_fama))
-        .expect("a fully supplied open");
+    let (mut mama, mut fama) = (vec![0.0_f64; produced], vec![0.0_f64; produced]);
+    let (_h, range) = core
+        .mama_open_and_fill(&data, 0.5, 0.05, &mut mama, &mut fama)
+        .expect("both outputs exactly sized");
+    assert_eq!(range.count, produced);
 
-    let mut solo_mama = vec![0.0_f64; produced];
-    let (mut declined, declined_range) = core
-        .mama_open_and_fill(&data, 0.5, 0.05, &mut solo_mama, None)
-        .expect("declining outFAMA is not a rejection");
-
-    assert_eq!(ref_mama, solo_mama, "declining outFAMA leaves outMAMA bit-identical");
-    assert_eq!(both_range.beg_idx, declined_range.beg_idx);
-    assert_eq!(both_range.count, declined_range.count);
-
-    // The state, not just the write: FAMA feeds the next bar, so a handle that
-    // skipped computing it answers differently here.
-    let bar = data[data.len() - 1] + 1.0;
-    let (m_both, f_both) = both.update(bar).expect("a finite bar");
-    let (m_solo, f_solo) = declined.update(bar).expect("a finite bar");
-    assert_eq!(m_both.to_bits(), m_solo.to_bits());
-    assert_eq!(
-        f_both.to_bits(),
-        f_solo.to_bits(),
-        "a declined outFAMA is still computed: the handle carries it"
-    );
-
-    let mut short_mama = vec![0.0_f64; produced - 1];
-    assert_eq!(
-        core.mama_open_and_fill(&data, 0.5, 0.05, &mut short_mama, None).err(),
-        Some(RetCode::BadParam),
-        "an undersized outMAMA is still rejected when outFAMA is declined"
-    );
-    let mut full_mama = vec![0.0_f64; produced];
-    let mut short_fama = vec![0.0_f64; produced - 1];
-    assert_eq!(
-        core.mama_open_and_fill(&data, 0.5, 0.05, &mut full_mama, Some(&mut short_fama)).err(),
-        Some(RetCode::BadParam),
-        "a supplied outFAMA is still bounded"
-    );
+    for (m, f) in [(produced - 1, produced), (produced, produced - 1)] {
+        let (mut mama, mut fama) = (vec![0.0_f64; m], vec![0.0_f64; f]);
+        assert_eq!(
+            core.mama_open_and_fill(&data, 0.5, 0.05, &mut mama, &mut fama).err(),
+            Some(RetCode::BadParam),
+            "an output one short ({m}, {f})"
+        );
+    }
 }
 
 /// Run `f` with the panic message suppressed, and say whether it panicked.

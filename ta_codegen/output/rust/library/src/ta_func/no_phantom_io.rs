@@ -13433,7 +13433,7 @@ fn sub_MAMA(r: &mut Report) {
             let mut outFAMA: Vec<f64> = Vec::with_capacity(1);
             let mut _b: usize = 0;
             let mut _n: usize = 0;
-            let rc = core.mama_impl(0, lb, &inReal, optInFastLimit, optInSlowLimit, &mut _b, &mut _n, &mut outMAMA, Some(&mut outFAMA));
+            let rc = core.mama_impl(0, lb, &inReal, optInFastLimit, optInSlowLimit, &mut _b, &mut _n, &mut outMAMA, &mut outFAMA);
             (rc, _n)
         }));
         if lb < 1 { r.no_quiet_range("MAMA", label); continue; }
@@ -13443,7 +13443,7 @@ fn sub_MAMA(r: &mut Report) {
             let mut outFAMA: Vec<f64> = Vec::with_capacity(1);
             let mut _b: usize = 0;
             let mut _n: usize = 0;
-            let rc = core.mama_impl(0, lb - 1, &inReal, optInFastLimit, optInSlowLimit, &mut _b, &mut _n, &mut outMAMA, Some(&mut outFAMA));
+            let rc = core.mama_impl(0, lb - 1, &inReal, optInFastLimit, optInSlowLimit, &mut _b, &mut _n, &mut outMAMA, &mut outFAMA);
             (rc, _n)
         }));
     }
@@ -13462,7 +13462,7 @@ fn legs_MAMA(r: &mut Report) {
         r.legs_control("MAMA", run(|| {
             let mut _b: usize = 0;
             let mut _n: usize = 0;
-            let rc = core.mama_impl(startIdx, endIdx, &inReal, optInFastLimit, optInSlowLimit, &mut _b, &mut _n, &mut outMAMA, Some(&mut outFAMA));
+            let rc = core.mama_impl(startIdx, endIdx, &inReal, optInFastLimit, optInSlowLimit, &mut _b, &mut _n, &mut outMAMA, &mut outFAMA);
             (rc, _n)
         }));
     }
@@ -13473,7 +13473,7 @@ fn legs_MAMA(r: &mut Report) {
         r.leg("MAMA", "inReal", 0, run(|| {
             let mut _b: usize = 0;
             let mut _n: usize = 0;
-            let rc = core.mama_impl(startIdx, endIdx, &inReal, optInFastLimit, optInSlowLimit, &mut _b, &mut _n, &mut outMAMA, Some(&mut outFAMA));
+            let rc = core.mama_impl(startIdx, endIdx, &inReal, optInFastLimit, optInSlowLimit, &mut _b, &mut _n, &mut outMAMA, &mut outFAMA);
             (rc, _n)
         }));
     }

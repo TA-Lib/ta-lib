@@ -673,9 +673,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#ao
         * @see Core#macd
@@ -763,9 +762,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#ao
         * @see Core#macd
@@ -1711,9 +1709,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#sma
         * @see Core#bbands
@@ -1787,9 +1784,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#sma
         * @see Core#bbands
@@ -2463,9 +2459,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#cos
         * @see Core#asin
@@ -2523,9 +2518,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#cos
         * @see Core#asin
@@ -2973,9 +2967,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#adosc
         * @see Core#obv
@@ -3040,9 +3033,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#adosc
         * @see Core#obv
@@ -3504,9 +3496,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#sub
         * @see Core#mult
@@ -3563,9 +3554,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#sub
         * @see Core#mult
@@ -4199,9 +4189,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#ad
         * @see Core#ema
@@ -4272,9 +4261,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#ad
         * @see Core#ema
@@ -4994,9 +4982,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#atr
         * @see Core#donchian
@@ -5078,9 +5065,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#atr
         * @see Core#donchian
@@ -6191,9 +6177,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#adxr
         * @see Core#dx
@@ -6269,9 +6254,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#adxr
         * @see Core#dx
@@ -7288,9 +7272,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#adx
         * @see Core#dx
@@ -7362,9 +7345,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#adx
         * @see Core#dx
@@ -8124,9 +8106,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#wma
         * @see Core#sma
@@ -8207,9 +8188,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#wma
         * @see Core#sma
@@ -9024,9 +9004,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#apo
         * @see Core#macd
@@ -9104,9 +9083,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#apo
         * @see Core#macd
@@ -10160,9 +10138,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#ppo
         * @see Core#macd
@@ -10238,9 +10215,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#ppo
         * @see Core#macd
@@ -10914,9 +10890,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#aroonosc
         * @see Core#minmaxindex
@@ -10988,9 +10963,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#aroonosc
         * @see Core#minmaxindex
@@ -11847,9 +11821,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#aroon
         * @see Core#minmax
@@ -11912,9 +11885,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#aroon
         * @see Core#minmax
@@ -12711,9 +12683,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#si
         * @see Core#wad
@@ -12791,9 +12762,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#si
         * @see Core#wad
@@ -13334,9 +13304,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#acos
         * @see Core#atan
@@ -13395,9 +13364,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#acos
         * @see Core#atan
@@ -13778,9 +13746,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#tan
         * @see Core#acos
@@ -13834,9 +13801,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#tan
         * @see Core#acos
@@ -14480,9 +14446,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#trange
         * @see Core#natr
@@ -14548,9 +14513,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#trange
         * @see Core#natr
@@ -15228,9 +15192,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#stddev
         * @see Core#var
@@ -15290,9 +15253,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#stddev
         * @see Core#var
@@ -15773,9 +15735,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#medprice
         * @see Core#typprice
@@ -15840,9 +15801,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#medprice
         * @see Core#typprice
@@ -16839,9 +16799,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#ma
         * @see Core#stddev
@@ -16922,9 +16881,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#ma
         * @see Core#stddev
@@ -18027,9 +17985,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#bbands
         * @see Core#percentb
@@ -18111,9 +18068,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#bbands
         * @see Core#percentb
@@ -19211,9 +19167,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#correl
         * @see Core#linearregSlope
@@ -19280,9 +19235,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#correl
         * @see Core#linearregSlope
@@ -20496,9 +20450,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         */
        public OutRange bop( int startIdx,
                             int endIdx,
@@ -20560,9 +20513,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         */
        public OutRange bop( int startIdx,
                             int endIdx,
@@ -21228,9 +21180,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#typprice
         * @see Core#sma
@@ -21296,9 +21247,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#typprice
         * @see Core#sma
@@ -22065,9 +22015,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#cdlupsidegap2crows
         * @see Core#cdlidentical3crows
@@ -22139,9 +22088,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#cdlupsidegap2crows
         * @see Core#cdlidentical3crows
@@ -22842,9 +22790,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#cdl3whitesoldiers
         * @see Core#cdlidentical3crows
@@ -22915,9 +22862,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#cdl3whitesoldiers
         * @see Core#cdlidentical3crows
@@ -23672,9 +23618,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#cdlharami
         * @see Core#cdl3outside
@@ -23748,9 +23693,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#cdlharami
         * @see Core#cdl3outside
@@ -24516,9 +24460,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#cdl3whitesoldiers
         * @see Core#cdl3blackcrows
@@ -24592,9 +24535,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#cdl3whitesoldiers
         * @see Core#cdl3blackcrows
@@ -25292,9 +25234,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#cdl3inside
         * @see Core#cdlengulfing
@@ -25367,9 +25308,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#cdl3inside
         * @see Core#cdlengulfing
@@ -26085,9 +26025,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#cdl3blackcrows
         * @see Core#cdlidentical3crows
@@ -26161,9 +26100,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#cdl3blackcrows
         * @see Core#cdlidentical3crows
@@ -27187,9 +27125,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#cdl3blackcrows
         * @see Core#cdladvanceblock
@@ -27261,9 +27198,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#cdl3blackcrows
         * @see Core#cdladvanceblock
@@ -28266,9 +28202,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#cdleveningdojistar
         * @see Core#cdlmorningdojistar
@@ -28345,9 +28280,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#cdleveningdojistar
         * @see Core#cdlmorningdojistar
@@ -29352,9 +29286,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#cdl3whitesoldiers
         * @see Core#cdlstalledpattern
@@ -29426,9 +29359,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#cdl3whitesoldiers
         * @see Core#cdlstalledpattern
@@ -30436,9 +30368,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#cdlclosingmarubozu
         * @see Core#cdlmarubozu
@@ -30511,9 +30442,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#cdlclosingmarubozu
         * @see Core#cdlmarubozu
@@ -31222,9 +31152,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#cdlgapsidesidewhite
         * @see Core#cdlrisefall3methods
@@ -31297,9 +31226,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#cdlgapsidesidewhite
         * @see Core#cdlrisefall3methods
@@ -32072,9 +32000,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#cdlmarubozu
         * @see Core#cdllongline
@@ -32145,9 +32072,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#cdlmarubozu
         * @see Core#cdllongline
@@ -32860,9 +32786,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#cdlmarubozu
         * @see Core#cdlengulfing
@@ -32932,9 +32857,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#cdlmarubozu
         * @see Core#cdlengulfing
@@ -33691,9 +33615,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#cdlpiercing
         * @see Core#cdldarkcloudcover
@@ -33765,9 +33688,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#cdlpiercing
         * @see Core#cdldarkcloudcover
@@ -34518,9 +34440,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#cdlpiercing
         * @see Core#cdlengulfing
@@ -34596,9 +34517,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#cdlpiercing
         * @see Core#cdlengulfing
@@ -35249,9 +35169,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#cdldojistar
         * @see Core#cdldragonflydoji
@@ -35317,9 +35236,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#cdldojistar
         * @see Core#cdldragonflydoji
@@ -35969,9 +35887,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#cdlmorningdojistar
         * @see Core#cdleveningdojistar
@@ -36048,9 +35965,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#cdlmorningdojistar
         * @see Core#cdleveningdojistar
@@ -36790,9 +36706,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#cdldoji
         * @see Core#cdlgravestonedoji
@@ -36868,9 +36783,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#cdldoji
         * @see Core#cdlgravestonedoji
@@ -37532,9 +37446,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#cdlharami
         * @see Core#cdlcounterattack
@@ -37608,9 +37521,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#cdlharami
         * @see Core#cdlcounterattack
@@ -38313,9 +38225,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#cdleveningstar
         * @see Core#cdlmorningdojistar
@@ -38391,9 +38302,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#cdleveningstar
         * @see Core#cdlmorningdojistar
@@ -39274,9 +39184,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#cdleveningdojistar
         * @see Core#cdlmorningstar
@@ -39353,9 +39262,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#cdleveningdojistar
         * @see Core#cdlmorningstar
@@ -40149,9 +40057,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#cdltasukigap
         * @see Core#cdlxsidegap3methods
@@ -40224,9 +40131,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#cdltasukigap
         * @see Core#cdlxsidegap3methods
@@ -40989,9 +40895,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#cdldoji
         * @see Core#cdldragonflydoji
@@ -41067,9 +40972,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#cdldoji
         * @see Core#cdldragonflydoji
@@ -41840,9 +41744,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#cdlinvertedhammer
         * @see Core#cdlhangingman
@@ -41913,9 +41816,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#cdlinvertedhammer
         * @see Core#cdlhangingman
@@ -42833,9 +42735,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#cdlhammer
         * @see Core#cdlinvertedhammer
@@ -42908,9 +42809,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#cdlhammer
         * @see Core#cdlinvertedhammer
@@ -43791,9 +43691,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#cdlharamicross
         * @see Core#cdlengulfing
@@ -43865,9 +43764,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#cdlharamicross
         * @see Core#cdlengulfing
@@ -44665,9 +44563,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#cdlharami
         * @see Core#cdldoji
@@ -44740,9 +44637,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#cdlharami
         * @see Core#cdldoji
@@ -45506,9 +45402,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#cdllongleggeddoji
         * @see Core#cdlspinningtop
@@ -45582,9 +45477,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#cdllongleggeddoji
         * @see Core#cdlspinningtop
@@ -46319,9 +46213,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#cdlhikkakemod
         * @see Core#cdlharami
@@ -46393,9 +46286,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#cdlhikkakemod
         * @see Core#cdlharami
@@ -47182,9 +47074,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#cdlhikkake
         */
@@ -47255,9 +47146,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#cdlhikkake
         */
@@ -48074,9 +47964,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#cdlharami
         * @see Core#cdlmatchinglow
@@ -48146,9 +48035,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#cdlharami
         * @see Core#cdlmatchinglow
@@ -48922,9 +48810,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#cdl3blackcrows
         * @see Core#cdl2crows
@@ -48995,9 +48882,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#cdl3blackcrows
         * @see Core#cdl2crows
@@ -49794,9 +49680,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#cdlonneck
         * @see Core#cdlthrusting
@@ -49869,9 +49754,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#cdlonneck
         * @see Core#cdlthrusting
@@ -50643,9 +50527,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#cdlhammer
         * @see Core#cdlshootingstar
@@ -50716,9 +50599,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#cdlhammer
         * @see Core#cdlshootingstar
@@ -51524,9 +51406,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#cdlkickingbylength
         * @see Core#cdlmarubozu
@@ -51596,9 +51477,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#cdlkickingbylength
         * @see Core#cdlmarubozu
@@ -52384,9 +52264,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#cdlkicking
         * @see Core#cdlmarubozu
@@ -52454,9 +52333,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#cdlkicking
         * @see Core#cdlmarubozu
@@ -53203,9 +53081,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#cdl3blackcrows
         * @see Core#cdlmatchinglow
@@ -53278,9 +53155,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#cdl3blackcrows
         * @see Core#cdlmatchinglow
@@ -54000,9 +53876,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#cdldoji
         * @see Core#cdlgravestonedoji
@@ -54075,9 +53950,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#cdldoji
         * @see Core#cdlgravestonedoji
@@ -54773,9 +54647,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#cdlshortline
         * @see Core#cdlclosingmarubozu
@@ -54843,9 +54716,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#cdlshortline
         * @see Core#cdlclosingmarubozu
@@ -55543,9 +55415,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#cdlclosingmarubozu
         * @see Core#cdllongline
@@ -55615,9 +55486,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#cdlclosingmarubozu
         * @see Core#cdllongline
@@ -56291,9 +56161,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#cdlhomingpigeon
         */
@@ -56363,9 +56232,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#cdlhomingpigeon
         */
@@ -57104,9 +56972,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#cdlrisefall3methods
         * @see Core#cdlxsidegap3methods
@@ -57183,9 +57050,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#cdlrisefall3methods
         * @see Core#cdlxsidegap3methods
@@ -58101,9 +57967,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#cdlmorningstar
         * @see Core#cdleveningdojistar
@@ -58182,9 +58047,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#cdlmorningstar
         * @see Core#cdleveningdojistar
@@ -59064,9 +58928,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#cdlmorningdojistar
         * @see Core#cdleveningstar
@@ -59145,9 +59008,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#cdlmorningdojistar
         * @see Core#cdleveningstar
@@ -59933,9 +59795,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#cdlinneck
         * @see Core#cdlthrusting
@@ -60006,9 +59867,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#cdlinneck
         * @see Core#cdlthrusting
@@ -60731,9 +60591,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#cdldarkcloudcover
         * @see Core#cdlengulfing
@@ -60804,9 +60663,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#cdldarkcloudcover
         * @see Core#cdlengulfing
@@ -61532,9 +61390,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#cdllongleggeddoji
         * @see Core#cdldoji
@@ -61606,9 +61463,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#cdllongleggeddoji
         * @see Core#cdldoji
@@ -62429,9 +62285,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#cdlxsidegap3methods
         * @see Core#cdl3inside
@@ -62506,9 +62361,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#cdlxsidegap3methods
         * @see Core#cdl3inside
@@ -63385,9 +63239,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#cdlbelthold
         */
@@ -63456,9 +63309,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#cdlbelthold
         */
@@ -64293,9 +64145,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#cdlinvertedhammer
         * @see Core#cdlhangingman
@@ -64368,9 +64219,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#cdlinvertedhammer
         * @see Core#cdlhangingman
@@ -65146,9 +64996,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#cdllongline
         * @see Core#cdlspinningtop
@@ -65215,9 +65064,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#cdllongline
         * @see Core#cdlspinningtop
@@ -65880,9 +65728,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#cdldoji
         * @see Core#cdlhighwave
@@ -65949,9 +65796,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#cdldoji
         * @see Core#cdlhighwave
@@ -66689,9 +66535,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#cdladvanceblock
         * @see Core#cdl3whitesoldiers
@@ -66763,9 +66608,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#cdladvanceblock
         * @see Core#cdl3whitesoldiers
@@ -67647,9 +67491,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#cdlmatchinglow
         * @see Core#cdlhomingpigeon
@@ -67719,9 +67562,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#cdlmatchinglow
         * @see Core#cdlhomingpigeon
@@ -68446,9 +68288,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#cdldragonflydoji
         * @see Core#cdldoji
@@ -68521,9 +68362,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#cdldragonflydoji
         * @see Core#cdldoji
@@ -69275,9 +69115,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#cdlgapsidesidewhite
         * @see Core#cdlxsidegap3methods
@@ -69349,9 +69188,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#cdlgapsidesidewhite
         * @see Core#cdlxsidegap3methods
@@ -70078,9 +69916,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#cdlinneck
         * @see Core#cdlonneck
@@ -70154,9 +69991,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#cdlinneck
         * @see Core#cdlonneck
@@ -70885,9 +70721,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#cdldoji
         * @see Core#cdldojistar
@@ -70959,9 +70794,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#cdldoji
         * @see Core#cdldojistar
@@ -71688,9 +71522,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#cdlharami
         * @see Core#cdlhomingpigeon
@@ -71762,9 +71595,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#cdlharami
         * @see Core#cdlhomingpigeon
@@ -72540,9 +72372,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#cdl2crows
         * @see Core#cdlgapsidesidewhite
@@ -72614,9 +72445,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#cdl2crows
         * @see Core#cdlgapsidesidewhite
@@ -73330,9 +73160,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#cdlgapsidesidewhite
         * @see Core#cdltasukigap
@@ -73406,9 +73235,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#cdlgapsidesidewhite
         * @see Core#cdltasukigap
@@ -73903,9 +73731,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#floor
         */
@@ -73958,9 +73785,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#floor
         */
@@ -75132,9 +74958,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#wma
         * @see Core#medprice
@@ -75206,9 +75031,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#wma
         * @see Core#medprice
@@ -76913,9 +76737,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#choptr
         * @see Core#vhf
@@ -76991,9 +76814,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#choptr
         * @see Core#vhf
@@ -77779,9 +77601,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#chop
         * @see Core#vhf
@@ -77857,9 +77678,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#chop
         * @see Core#vhf
@@ -79346,9 +79166,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#atr
         * @see Core#max
@@ -79444,9 +79263,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#atr
         * @see Core#max
@@ -80897,9 +80715,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#ad
         * @see Core#adosc
@@ -80991,9 +80808,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#ad
         * @see Core#adosc
@@ -81843,9 +81659,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#rsi
         */
@@ -81907,9 +81722,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#rsi
         */
@@ -82702,9 +82516,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#cmo
         * @see Core#rsi
@@ -82767,9 +82580,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#cmo
         * @see Core#rsi
@@ -83787,9 +83599,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         */
        public OutRange coppock( int startIdx,
                                 int endIdx,
@@ -83858,9 +83669,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         */
        public OutRange coppock( int startIdx,
                                 int endIdx,
@@ -85089,9 +84899,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#beta
         * @see Core#stddev
@@ -85158,9 +84967,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#beta
         * @see Core#stddev
@@ -86240,9 +86048,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#acos
         * @see Core#sin
@@ -86297,9 +86104,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#acos
         * @see Core#sin
@@ -86683,9 +86489,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#sinh
         * @see Core#tanh
@@ -86743,9 +86548,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#sinh
         * @see Core#tanh
@@ -87349,9 +87153,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#rsi
         * @see Core#percentrank
@@ -87429,9 +87232,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#rsi
         * @see Core#percentrank
@@ -88303,9 +88105,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#correl
         * @see Core#linearregSlope
@@ -88378,9 +88179,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#correl
         * @see Core#linearregSlope
@@ -89264,9 +89064,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         */
        public OutRange cumsum( int startIdx,
                                int endIdx,
@@ -89330,9 +89129,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         */
        public OutRange cumsum( int startIdx,
                                int endIdx,
@@ -89946,9 +89744,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#atr
         * @see Core#natr
@@ -90032,9 +89829,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#atr
         * @see Core#natr
@@ -90802,9 +90598,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#ema
         * @see Core#tema
@@ -90866,9 +90661,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#ema
         * @see Core#tema
@@ -91435,9 +91229,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#mult
         * @see Core#add
@@ -91498,9 +91291,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#mult
         * @see Core#add
@@ -92105,9 +91897,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         */
        public OutRange donchian( int startIdx,
                                  int endIdx,
@@ -92186,9 +91977,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         */
        public OutRange donchian( int startIdx,
                                  int endIdx,
@@ -93370,9 +93160,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#rsi
         * @see Core#stochrsi
@@ -93456,9 +93245,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#rsi
         * @see Core#stochrsi
@@ -94331,9 +94119,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#sma
         * @see Core#mom
@@ -94403,9 +94190,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#sma
         * @see Core#mom
@@ -95416,9 +95202,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#adx
         * @see Core#adxr
@@ -95493,9 +95278,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#adx
         * @see Core#adxr
@@ -96544,9 +96328,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#ad
         * @see Core#ema
@@ -96620,9 +96403,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#ad
         * @see Core#ema
@@ -97389,9 +97171,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#sma
         * @see Core#dema
@@ -97459,9 +97240,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#sma
         * @see Core#dema
@@ -98182,9 +97962,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#medprice
         * @see Core#marketfi
@@ -98270,9 +98049,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#medprice
         * @see Core#marketfi
@@ -99083,9 +98861,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#kama
         * @see Core#mama
@@ -99156,9 +98933,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#kama
         * @see Core#mama
@@ -99990,9 +99766,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#ema
         * @see Core#efi
@@ -100069,9 +99844,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#ema
         * @see Core#efi
@@ -100694,9 +100468,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#ln
         * @see Core#sqrt
@@ -100753,9 +100526,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#ln
         * @see Core#sqrt
@@ -101437,9 +101209,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#stochf
         * @see Core#willr
@@ -101516,9 +101287,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#stochf
         * @see Core#willr
@@ -102330,9 +102100,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#ceil
         */
@@ -102385,9 +102154,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#ceil
         */
@@ -102989,9 +102757,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#tsf
         * @see Core#linearreg
@@ -103060,9 +102827,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#tsf
         * @see Core#linearreg
@@ -103906,9 +103672,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#aroon
         * @see Core#maxindex
@@ -104000,9 +103765,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#aroon
         * @see Core#maxindex
@@ -105031,9 +104795,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#kama
         * @see Core#mama
@@ -105103,9 +104866,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#kama
         * @see Core#mama
@@ -106094,9 +105856,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#avgprice
         * @see Core#medprice
@@ -106194,9 +105955,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#avgprice
         * @see Core#medprice
@@ -107462,9 +107222,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#wma
         * @see Core#ma
@@ -107543,9 +107302,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#wma
         * @see Core#ma
@@ -109765,9 +109523,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#htDcphase
         * @see Core#htPhasor
@@ -109826,9 +109583,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#htDcphase
         * @see Core#htPhasor
@@ -111720,9 +111476,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#htDcperiod
         * @see Core#htPhasor
@@ -111783,9 +111538,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#htDcperiod
         * @see Core#htPhasor
@@ -113769,9 +113523,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#htDcperiod
         * @see Core#htDcphase
@@ -113838,9 +113591,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#htDcperiod
         * @see Core#htDcphase
@@ -115730,9 +115482,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#htDcphase
         * @see Core#htDcperiod
@@ -115796,9 +115547,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#htDcphase
         * @see Core#htDcperiod
@@ -117902,9 +117652,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#htDcperiod
         * @see Core#htPhasor
@@ -117961,9 +117710,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#htDcperiod
         * @see Core#htPhasor
@@ -120168,9 +119916,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#htTrendline
         * @see Core#htSine
@@ -120229,9 +119976,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#htTrendline
         * @see Core#htSine
@@ -121909,9 +121655,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         */
        public OutRange ibs( int startIdx,
                             int endIdx,
@@ -121974,9 +121719,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         */
        public OutRange ibs( int startIdx,
                             int endIdx,
@@ -122633,9 +122377,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#midprice
         * @see Core#medprice
@@ -122735,9 +122478,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#midprice
         * @see Core#medprice
@@ -123402,9 +123144,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#rsi
         */
@@ -123465,9 +123206,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#rsi
         */
@@ -124378,9 +124118,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#mama
         * @see Core#ema
@@ -124446,9 +124185,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#mama
         * @see Core#ema
@@ -125552,9 +125290,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#ema
         * @see Core#atr
@@ -125647,9 +125384,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#ema
         * @see Core#atr
@@ -126430,9 +126166,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#stoch
         * @see Core#stochf
@@ -126541,9 +126276,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#stoch
         * @see Core#stochf
@@ -127785,9 +127519,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#kstext
         * @see Core#roc
@@ -127896,9 +127629,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#kstext
         * @see Core#roc
@@ -129487,9 +129219,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#kst
         * @see Core#roc
@@ -129606,9 +129337,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#kst
         * @see Core#roc
@@ -130670,9 +130400,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#var
         * @see Core#stddev
@@ -130743,9 +130472,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#var
         * @see Core#stddev
@@ -132022,9 +131750,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#adosc
         * @see Core#obv
@@ -132120,9 +131847,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#adosc
         * @see Core#obv
@@ -133129,9 +132855,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#linearregSlope
         * @see Core#linearregAngle
@@ -133191,9 +132916,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#linearregSlope
         * @see Core#linearregAngle
@@ -134262,9 +133986,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#linearreg
         * @see Core#linearregSlope
@@ -134326,9 +134049,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#linearreg
         * @see Core#linearregSlope
@@ -135385,9 +135107,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#linearreg
         * @see Core#linearregSlope
@@ -135447,9 +135168,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#linearreg
         * @see Core#linearregSlope
@@ -136501,9 +136221,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#linearreg
         * @see Core#linearregIntercept
@@ -136564,9 +136283,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#linearreg
         * @see Core#linearregIntercept
@@ -137352,9 +137070,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#log10
         * @see Core#exp
@@ -137412,9 +137129,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#log10
         * @see Core#exp
@@ -137797,9 +137513,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#ln
         * @see Core#exp
@@ -137856,9 +137571,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#ln
         * @see Core#exp
@@ -138145,6 +137859,7 @@ class Core {
      *  090426 MF,CC Add RMA (issue #348).
      *  092926 MF,CC Add VIDYA (issue #474).
      *  092926 MF,CC Add ALMA (issue #475).
+     *  101926 MF,CC MAMA: FAMA goes to a scratch buffer (issue #552).
      */
 
        /**
@@ -138265,6 +137980,7 @@ class Core {
                        MInteger outNBElement,
                        double outReal[] )
        {
+          double[] famaScratch;
           RetCode retCode;
           int nbElement = 0;
           int outIdx = 0;
@@ -138371,10 +138087,9 @@ class Core {
              retCode = RetCode.SUCCESS;
              break;
           case MAMA:
-             /* The optInTimePeriod is ignored. FAMA is a nullable output
-              * (issue #125): pass NULL to compute only the MAMA line into outReal.
-              */
-             OutRange _xr7 = mama(startIdx, endIdx, inReal, 0.5, 0.05, outReal, null);
+             /* The optInTimePeriod is ignored. */
+             famaScratch = new double[(int)((endIdx - startIdx + 1) * 1)];
+             OutRange _xr7 = mama(startIdx, endIdx, inReal, 0.5, 0.05, outReal, famaScratch);
              outBegIdx.value = _xr7.begIdx();
              outNBElement.value = _xr7.count();
              retCode = RetCode.SUCCESS;
@@ -138433,6 +138148,7 @@ class Core {
                        MInteger outNBElement,
                        double outReal[] )
        {
+          double[] famaScratch;
           RetCode retCode;
           int nbElement = 0;
           int outIdx = 0;
@@ -138510,7 +138226,8 @@ class Core {
              retCode = RetCode.SUCCESS;
              break;
           case MAMA:
-             OutRange _xr7 = mama(startIdx, endIdx, inReal, 0.5, 0.05, outReal, null);
+             famaScratch = new double[(int)((endIdx - startIdx + 1) * 1)];
+             OutRange _xr7 = mama(startIdx, endIdx, inReal, 0.5, 0.05, outReal, famaScratch);
              outBegIdx.value = _xr7.begIdx();
              outNBElement.value = _xr7.count();
              retCode = RetCode.SUCCESS;
@@ -138597,9 +138314,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#sma
         * @see Core#ema
@@ -138681,9 +138397,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#sma
         * @see Core#ema
@@ -139326,7 +139041,7 @@ class Core {
              break;
           }
           case MAMA: {
-             MamaStream sub = mamaOpenAndFill(inReal, 0.5, 0.05, outReal, null);
+             MamaStream sub = mamaOpenAndFill(inReal, 0.5, 0.05, outReal, new double[historyLen]);
              outBegIdx.value = sub.outRangeBegIdx;
              outNBElement.value = sub.outRangeCount;
              sp.sub = sub;
@@ -139488,7 +139203,7 @@ class Core {
              break;
           }
           case MAMA: {
-             MamaStream sub = mamaOpenAndFillInternal(inReal, startIdx, 0.5, 0.05, outBegIdx, outNBElement, outReal, null);
+             MamaStream sub = mamaOpenAndFillInternal(inReal, startIdx, 0.5, 0.05, outBegIdx, outNBElement, outReal, new double[historyLen]);
              sp.sub = sub;
              sp.arm = 7;
              sp.cur_outReal = sub.cur_outMAMA;
@@ -140300,9 +140015,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#macdext
         * @see Core#macdfix
@@ -140384,9 +140098,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#macdext
         * @see Core#macdfix
@@ -141435,9 +141148,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#macd
         * @see Core#macdfix
@@ -141540,9 +141252,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#macd
         * @see Core#macdfix
@@ -142468,9 +142179,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#macd
         * @see Core#macdext
@@ -142544,9 +142254,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#macd
         * @see Core#macdext
@@ -143266,7 +142975,7 @@ class Core {
           } else if( !(optInSlowLimit >= 1e-2 && optInSlowLimit <= 9.9e-1) ) {
              return RetCode.BAD_PARAM;
           }
-          if( outFAMA != null && outMAMA == outFAMA ) {
+          if( outMAMA == outFAMA ) {
              return RetCode.BAD_PARAM ;
           }
           a = 0.0962;
@@ -143539,11 +143248,7 @@ class Core {
              tempReal *= 0.5;
              fama = Math.fma(1 - tempReal, fama, tempReal * mama);
              if( today >= startIdx ) {
-                /* FAMA is nullable (issue #125): its write carries no outIdx advance so
-                 * the codegen can NULL-guard it; outMAMA (never NULL) owns the ++.
-                 */
-                if( outFAMA != null )
-                   outFAMA[outIdx] = fama;
+                outFAMA[outIdx] = fama;
                 outMAMA[outIdx++] = mama;
              }
              /* Adjust the period for next price bar */
@@ -143662,7 +143367,7 @@ class Core {
           } else if( !(optInSlowLimit >= 1e-2 && optInSlowLimit <= 9.9e-1) ) {
              return RetCode.BAD_PARAM;
           }
-          if( outFAMA != null && outMAMA == outFAMA ) {
+          if( outMAMA == outFAMA ) {
              return RetCode.BAD_PARAM ;
           }
           a = 0.0962;
@@ -143880,8 +143585,7 @@ class Core {
              tempReal *= 0.5;
              fama = Math.fma(1 - tempReal, fama, tempReal * mama);
              if( today >= startIdx ) {
-                if( outFAMA != null )
-                   outFAMA[outIdx] = fama;
+                outFAMA[outIdx] = fama;
                 outMAMA[outIdx++] = mama;
              }
              Re = Math.fma(0.8, Re, 0.2 * (Math.fma(I2, prevI2, Q2 * prevQ2)));
@@ -143937,10 +143641,9 @@ class Core {
         *        {@code endIdx - max(startIdx, mamaLookback(...)) + 1} values, and never be
         *        empty: an empty array is an absent output.
         * @param outFAMA Following adaptive moving average, using half the alpha
-        *        (slow line) Pass {@code null} to decline it: it is still computed where
-        *        the algorithm needs it, but nothing is written out. Supplied, it must hold
-        *        at least {@code endIdx - max(startIdx, mamaLookback(...)) + 1} values, and
-        *        never be empty.
+        *        (slow line) Must hold at least
+        *        {@code endIdx - max(startIdx, mamaLookback(...)) + 1} values, and never be
+        *        empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -143951,9 +143654,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#ma
         * @see Core#wma
@@ -143973,7 +143675,7 @@ class Core {
           int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
           requireLength("MAMA", "inReal", inReal, guardInLen);
           requireLength("MAMA", "outMAMA", outMAMA, guardOutLen);
-          if( outFAMA != null ) requireLength("MAMA", "outFAMA", outFAMA, guardOutLen);
+          requireLength("MAMA", "outFAMA", outFAMA, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = mamaImpl(startIdx, endIdx, inReal, optInFastLimit, optInSlowLimit, outBegIdx, outNBElement, outMAMA, outFAMA);
@@ -144011,10 +143713,9 @@ class Core {
         *        {@code endIdx - max(startIdx, mamaLookback(...)) + 1} values, and never be
         *        empty: an empty array is an absent output.
         * @param outFAMA Following adaptive moving average, using half the alpha
-        *        (slow line) Pass {@code null} to decline it: it is still computed where
-        *        the algorithm needs it, but nothing is written out. Supplied, it must hold
-        *        at least {@code endIdx - max(startIdx, mamaLookback(...)) + 1} values, and
-        *        never be empty.
+        *        (slow line) Must hold at least
+        *        {@code endIdx - max(startIdx, mamaLookback(...)) + 1} values, and never be
+        *        empty: an empty array is an absent output.
         * @return The range written: {@code begIdx} is the first bar with a value,
         *        {@code count} how many were written.
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -144025,9 +143726,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#ma
         * @see Core#wma
@@ -144047,7 +143747,7 @@ class Core {
           int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
           requireLength("MAMA", "inReal", inReal, guardInLen);
           requireLength("MAMA", "outMAMA", outMAMA, guardOutLen);
-          if( outFAMA != null ) requireLength("MAMA", "outFAMA", outFAMA, guardOutLen);
+          requireLength("MAMA", "outFAMA", outFAMA, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = mamaImpl(startIdx, endIdx, inReal, optInFastLimit, optInSlowLimit, outBegIdx, outNBElement, outMAMA, outFAMA);
@@ -144408,9 +144108,6 @@ class Core {
              mama = Math.fma(1 - tempReal, mama, tempReal * todayValue);
              tempReal *= 0.5;
              fama = Math.fma(1 - tempReal, fama, tempReal * mama);
-             /* FAMA is nullable (issue #125): its write carries no outIdx advance so
-              * the codegen can NULL-guard it; outMAMA (never NULL) owns the ++.
-              */
              cur_outFAMA = fama;
              cur_outMAMA = mama;
              out.mama = cur_outMAMA;
@@ -144621,9 +144318,6 @@ class Core {
           sp.mama = Math.fma(1 - tempReal, sp.mama, tempReal * todayValue);
           tempReal *= 0.5;
           sp.fama = Math.fma(1 - tempReal, sp.fama, tempReal * sp.mama);
-          /* FAMA is nullable (issue #125): its write carries no outIdx advance so
-           * the codegen can NULL-guard it; outMAMA (never NULL) owns the ++.
-           */
           sp.cur_outFAMA = sp.fama;
           sp.cur_outMAMA = sp.mama;
           /* Adjust the period for next price bar */
@@ -144660,7 +144354,6 @@ class Core {
        }
        private RetCode mamaOpenImpl( MamaStream sp, double inReal[], int startIdx, double optInFastLimit, double optInSlowLimit, MInteger outBegIdx, MInteger outNBElement, double outMAMA[], double outFAMA[], int outStride )
        {
-          double lastCur_outFAMA = 0;
           int outIdx = 0;
           int i = 0;
           int lookbackTotal = 0;
@@ -145014,12 +144707,7 @@ class Core {
              tempReal *= 0.5;
              fama = Math.fma(1 - tempReal, fama, tempReal * mama);
              if( today >= startIdx ) {
-                /* FAMA is nullable (issue #125): its write carries no outIdx advance so
-                 * the codegen can NULL-guard it; outMAMA (never NULL) owns the ++.
-                 */
-                lastCur_outFAMA = fama;
-                if( outFAMA != null )
-                   outFAMA[outIdx * outStride] = fama;
+                outFAMA[outIdx * outStride] = fama;
                 outMAMA[outIdx++ * outStride] = mama;
              }
              /* Adjust the period for next price bar */
@@ -145108,7 +144796,7 @@ class Core {
           sp.ringCap_trailingWMAIdx = cap_trailingWMAIdx;
           sp.ring_trailingWMAIdx_inReal = capRing_trailingWMAIdx_inReal;
           sp.cur_outMAMA = outMAMA[(outNBElement.value - 1) * outStride];
-          sp.cur_outFAMA = lastCur_outFAMA;
+          sp.cur_outFAMA = outFAMA[(outNBElement.value - 1) * outStride];
           return RetCode.SUCCESS;
        }
        /* mamaOpenAndFill anchored at startIdx — the composed-open fusion seam. */
@@ -145172,8 +144860,6 @@ class Core {
         * {@code historyLen - lookback} values — both checked before anything is
         * written, so an undersized array is an {@link IllegalArgumentException}
         * naming it rather than a fault from inside the fill.
-        * <p>{@code outFAMA} may be declined with {@code null}: the value is still
-        * computed — {@link MamaStream#value(MamaOut)} reports it — and nothing is written out.
         * <p>The range written is on the returned handle:
         * {@link MamaStream#outRange()}.
         */
@@ -145183,8 +144869,8 @@ class Core {
           requireHistory("MAMA openAndFill", inReal.length);
           int guardOutLen = openFillCount("MAMA openAndFill", inReal.length, mamaLookback(optInFastLimit, optInSlowLimit));
           requireLength("MAMA openAndFill", "outMAMA", outMAMA, guardOutLen);
-          if( outFAMA != null ) requireLength("MAMA openAndFill", "outFAMA", outFAMA, guardOutLen);
-          if( (Object)outMAMA == (Object)inReal || (outFAMA != null && (Object)outFAMA == (Object)inReal) || (outFAMA != null && (Object)outMAMA == (Object)outFAMA) ) {
+          requireLength("MAMA openAndFill", "outFAMA", outFAMA, guardOutLen);
+          if( (Object)outMAMA == (Object)inReal || (Object)outFAMA == (Object)inReal || (Object)outMAMA == (Object)outFAMA ) {
              throw streamFailure("MAMA openAndFill", RetCode.BAD_PARAM);
           }
           MInteger outBegIdx = new MInteger();
@@ -145344,9 +145030,6 @@ class Core {
           sp.mama = Math.fma(1 - tempReal, sp.mama, tempReal * todayValue);
           tempReal *= 0.5;
           sp.fama = Math.fma(1 - tempReal, sp.fama, tempReal * sp.mama);
-          /* FAMA is nullable (issue #125): its write carries no outIdx advance so
-           * the codegen can NULL-guard it; outMAMA (never NULL) owns the ++.
-           */
           sp.cur_outFAMA = sp.fama;
           sp.cur_outMAMA = sp.mama;
           /* Adjust the period for next price bar */
@@ -145522,9 +145205,6 @@ class Core {
           mama = Math.fma(1 - tempReal, mama, tempReal * todayValue);
           tempReal *= 0.5;
           fama = Math.fma(1 - tempReal, fama, tempReal * mama);
-          /* FAMA is nullable (issue #125): its write carries no outIdx advance so
-           * the codegen can NULL-guard it; outMAMA (never NULL) owns the ++.
-           */
           cur_outFAMA = fama;
           cur_outMAMA = mama;
           out.mama = cur_outMAMA;
@@ -145706,9 +145386,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#ad
         * @see Core#adosc
@@ -145780,9 +145459,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#ad
         * @see Core#adosc
@@ -146551,9 +146229,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#cvi
         * @see Core#atr
@@ -146637,9 +146314,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#cvi
         * @see Core#atr
@@ -147711,9 +147387,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#ma
         * @see Core#sma
@@ -147791,9 +147466,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#ma
         * @see Core#sma
@@ -148868,9 +148542,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#min
         * @see Core#maxindex
@@ -148928,9 +148601,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#min
         * @see Core#maxindex
@@ -149592,9 +149264,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#max
         * @see Core#minindex
@@ -149660,9 +149331,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#max
         * @see Core#minindex
@@ -150318,9 +149988,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#rma
         * @see Core#ema
@@ -150392,9 +150061,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#rma
         * @see Core#ema
@@ -151233,9 +150901,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#percentile
         * @see Core#sma
@@ -151307,9 +150974,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#percentile
         * @see Core#sma
@@ -152088,9 +151754,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#midprice
         * @see Core#avgprice
@@ -152149,9 +151814,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#midprice
         * @see Core#avgprice
@@ -152855,9 +152519,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#rsi
         * @see Core#ad
@@ -152930,9 +152593,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#rsi
         * @see Core#ad
@@ -154153,9 +153815,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#midprice
         * @see Core#max
@@ -154214,9 +153875,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#midprice
         * @see Core#max
@@ -155393,9 +155053,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#midpoint
         * @see Core#medprice
@@ -155457,9 +155116,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#midpoint
         * @see Core#medprice
@@ -156503,9 +156161,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#max
         * @see Core#minindex
@@ -156562,9 +156219,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#max
         * @see Core#minindex
@@ -157224,9 +156880,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#min
         * @see Core#maxindex
@@ -157292,9 +156947,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#min
         * @see Core#maxindex
@@ -158379,9 +158033,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#min
         * @see Core#max
@@ -158447,9 +158100,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#min
         * @see Core#max
@@ -159275,9 +158927,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#minmax
         * @see Core#min
@@ -159346,9 +158997,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#minmax
         * @see Core#min
@@ -160500,9 +160150,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#plusDi
         * @see Core#minusDm
@@ -160575,9 +160224,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#plusDi
         * @see Core#minusDm
@@ -161902,9 +161550,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#plusDm
         * @see Core#minusDi
@@ -161969,9 +161616,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#plusDm
         * @see Core#minusDi
@@ -162831,9 +162477,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#roc
         * @see Core#rocp
@@ -162893,9 +162538,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#roc
         * @see Core#rocp
@@ -163372,9 +163016,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#add
         * @see Core#sub
@@ -163431,9 +163074,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#add
         * @see Core#sub
@@ -164165,9 +163807,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#atr
         * @see Core#trange
@@ -164238,9 +163879,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#atr
         * @see Core#trange
@@ -164975,9 +164615,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         */
        public OutRange nvi( int startIdx,
                             int endIdx,
@@ -165039,9 +164678,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         */
        public OutRange nvi( int startIdx,
                             int endIdx,
@@ -165566,9 +165204,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         */
        public OutRange obv( int startIdx,
                             int endIdx,
@@ -165623,9 +165260,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         */
        public OutRange obv( int startIdx,
                             int endIdx,
@@ -166583,9 +166219,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#bbands
         * @see Core#bbw
@@ -166665,9 +166300,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#bbands
         * @see Core#bbw
@@ -167595,9 +167229,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#min
         * @see Core#max
@@ -167671,9 +167304,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#min
         * @see Core#max
@@ -168492,9 +168124,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#rsi
         * @see Core#willr
@@ -168570,9 +168201,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#rsi
         * @see Core#willr
@@ -169567,9 +169197,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#minusDi
         * @see Core#dx
@@ -169642,9 +169271,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#minusDi
         * @see Core#dx
@@ -170971,9 +170599,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#minusDm
         * @see Core#plusDi
@@ -171038,9 +170665,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#minusDm
         * @see Core#plusDi
@@ -172384,9 +172010,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#apo
         * @see Core#macd
@@ -172462,9 +172087,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#apo
         * @see Core#macd
@@ -173876,9 +173500,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#stochf
         * @see Core#stoch
@@ -173960,9 +173583,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#stochf
         * @see Core#stoch
@@ -174835,9 +174457,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         */
        public OutRange pvi( int startIdx,
                             int endIdx,
@@ -174899,9 +174520,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         */
        public OutRange pvi( int startIdx,
                             int endIdx,
@@ -175963,9 +175583,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#ppo
         * @see Core#obv
@@ -176042,9 +175661,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#ppo
         * @see Core#obv
@@ -176664,9 +176282,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#obv
         * @see Core#nvi
@@ -176740,9 +176357,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#obv
         * @see Core#nvi
@@ -177302,9 +176918,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#cmo
         * @see Core#imi
@@ -177371,9 +176986,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#cmo
         * @see Core#imi
@@ -178034,9 +177648,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#ema
         * @see Core#sma
@@ -178122,9 +177735,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#ema
         * @see Core#sma
@@ -178712,9 +178324,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#mom
         * @see Core#rocp
@@ -178779,9 +178390,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#mom
         * @see Core#rocp
@@ -179373,9 +178983,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#roc
         * @see Core#rocr
@@ -179440,9 +179049,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#roc
         * @see Core#rocr
@@ -180036,9 +179644,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#roc
         * @see Core#rocp
@@ -180103,9 +179710,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#roc
         * @see Core#rocp
@@ -180700,9 +180306,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#rocr
         * @see Core#roc
@@ -180768,9 +180373,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#rocr
         * @see Core#roc
@@ -181563,9 +181167,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#atr
         * @see Core#natr
@@ -181648,9 +181251,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#atr
         * @see Core#natr
@@ -182635,9 +182237,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#cmo
         * @see Core#stochrsi
@@ -182700,9 +182301,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#cmo
         * @see Core#stochrsi
@@ -183875,9 +183475,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#rsi
         * @see Core#rma
@@ -183954,9 +183553,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#rsi
         * @see Core#rma
@@ -185013,9 +184611,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#rvi
         * @see Core#stddev
@@ -185091,9 +184688,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#rvi
         * @see Core#stddev
@@ -185720,9 +185316,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#obv
         * @see Core#pvo
@@ -185795,9 +185390,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#obv
         * @see Core#pvo
@@ -186723,9 +186317,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#sarext
         * @see Core#minusDm
@@ -186792,9 +186385,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#sarext
         * @see Core#minusDm
@@ -188314,9 +187906,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#sar
         * @see Core#minusDm
@@ -188402,9 +187993,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#sar
         * @see Core#minusDm
@@ -189565,9 +189155,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#asi
         * @see Core#wad
@@ -189647,9 +189236,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#asi
         * @see Core#wad
@@ -190198,9 +189786,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#cos
         * @see Core#tan
@@ -190254,9 +189841,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#cos
         * @see Core#tan
@@ -190639,9 +190225,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#cosh
         * @see Core#tanh
@@ -190698,9 +190283,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#cosh
         * @see Core#tanh
@@ -191183,9 +190767,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#ema
         * @see Core#wma
@@ -191249,9 +190832,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#ema
         * @see Core#wma
@@ -192377,9 +191959,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#stoch
         * @see Core#stochrsi
@@ -192474,9 +192055,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#stoch
         * @see Core#stochrsi
@@ -193448,9 +193028,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         */
        public OutRange sqrt( int startIdx,
                              int endIdx,
@@ -193504,9 +193083,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         */
        public OutRange sqrt( int startIdx,
                              int endIdx,
@@ -194341,9 +193919,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#bbands
         * @see Core#kc
@@ -194454,9 +194031,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#bbands
         * @see Core#kc
@@ -196047,9 +195623,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#macd
         * @see Core#stochf
@@ -196122,9 +195697,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#macd
         * @see Core#stochf
@@ -197410,9 +196984,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#var
         * @see Core#bbands
@@ -197477,9 +197050,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#var
         * @see Core#bbands
@@ -198399,9 +197971,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#stochf
         * @see Core#stochrsi
@@ -198497,9 +198068,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#stochf
         * @see Core#stochrsi
@@ -199750,9 +199320,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#stoch
         * @see Core#stochrsi
@@ -199837,9 +199406,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#stoch
         * @see Core#stochrsi
@@ -200887,9 +200455,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#rsi
         * @see Core#stochf
@@ -200973,9 +200540,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#rsi
         * @see Core#stochf
@@ -201528,9 +201094,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#add
         * @see Core#mult
@@ -201587,9 +201152,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#add
         * @see Core#mult
@@ -202070,9 +201634,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#sma
         */
@@ -202128,9 +201691,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#sma
         */
@@ -202955,9 +202517,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#atr
         * @see Core#medprice
@@ -203046,9 +202607,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#atr
         * @see Core#medprice
@@ -204003,9 +203563,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#swakHp
         * @see Core#swakBp
@@ -204072,9 +203631,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#swakHp
         * @see Core#swakBp
@@ -204818,9 +204376,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#swakHp
         * @see Core#swak2php
@@ -204893,9 +204450,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#swakHp
         * @see Core#swak2php
@@ -205618,9 +205174,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#swakGauss
         * @see Core#ema
@@ -205691,9 +205246,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#swakGauss
         * @see Core#ema
@@ -206379,9 +205933,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#swakButter
         * @see Core#ema
@@ -206454,9 +206007,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#swakButter
         * @see Core#ema
@@ -207117,9 +206669,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#swak2php
         * @see Core#swakBp
@@ -207187,9 +206738,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#swak2php
         * @see Core#swakBp
@@ -208013,9 +207563,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#ema
         * @see Core#dema
@@ -208083,9 +207632,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#ema
         * @see Core#dema
@@ -208717,9 +208265,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#atan
         * @see Core#sin
@@ -208774,9 +208321,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#atan
         * @see Core#sin
@@ -209156,9 +208702,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#sinh
         * @see Core#cosh
@@ -209212,9 +208757,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#sinh
         * @see Core#cosh
@@ -209856,9 +209400,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#ema
         * @see Core#dema
@@ -209921,9 +209464,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#ema
         * @see Core#dema
@@ -210606,9 +210148,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#atr
         * @see Core#natr
@@ -210674,9 +210215,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#atr
         * @see Core#natr
@@ -211550,9 +211090,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#sma
         * @see Core#wma
@@ -211617,9 +211156,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#sma
         * @see Core#wma
@@ -212883,9 +212421,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#ema
         * @see Core#roc
@@ -212952,9 +212489,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#ema
         * @see Core#roc
@@ -213761,9 +213297,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#linearreg
         * @see Core#linearregSlope
@@ -213824,9 +213359,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#linearreg
         * @see Core#linearregSlope
@@ -214954,9 +214488,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#smi
         * @see Core#macd
@@ -215038,9 +214571,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#smi
         * @see Core#macd
@@ -215664,9 +215196,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#medprice
         * @see Core#wclprice
@@ -215727,9 +215258,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#medprice
         * @see Core#wclprice
@@ -216654,9 +216184,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#atr
         * @see Core#trange
@@ -216733,9 +216262,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#atr
         * @see Core#trange
@@ -217951,9 +217479,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#stddev
         */
@@ -218019,9 +217546,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#stddev
         */
@@ -218914,9 +218440,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#adx
         * @see Core#cmo
@@ -218986,9 +218511,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#adx
         * @see Core#cmo
@@ -219902,9 +219426,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#cmou
         * @see Core#ema
@@ -219977,9 +219500,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#cmou
         * @see Core#ema
@@ -221106,9 +220628,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#trange
         * @see Core#plusDi
@@ -221188,9 +220709,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#trange
         * @see Core#plusDi
@@ -222221,9 +221741,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#ad
         * @see Core#obv
@@ -222305,9 +221824,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#ad
         * @see Core#obv
@@ -223221,9 +222739,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#sma
         * @see Core#wma
@@ -223298,9 +222815,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#sma
         * @see Core#wma
@@ -224051,9 +223567,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#ad
         * @see Core#adosc
@@ -224129,9 +223644,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#ad
         * @see Core#adosc
@@ -225112,9 +224626,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#cci
         * @see Core#smi
@@ -225207,9 +224720,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#cci
         * @see Core#smi
@@ -226003,9 +225515,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#typprice
         * @see Core#medprice
@@ -226066,9 +225577,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#typprice
         * @see Core#medprice
@@ -227134,9 +226644,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#stoch
         * @see Core#stochf
@@ -227202,9 +226711,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#stoch
         * @see Core#stochf
@@ -228151,9 +227659,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#sma
         * @see Core#ema
@@ -228218,9 +227725,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#sma
         * @see Core#ema
@@ -229448,9 +228954,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#sar
         * @see Core#supertrend
@@ -229557,9 +229062,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#sar
         * @see Core#supertrend
@@ -230380,9 +229884,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#ema
         * @see Core#dema
@@ -230465,9 +229968,8 @@ class Core {
         *        <i>declares</i> that does not reach {@code endIdx}, or an output that
         *        cannot hold the values produced. Declared, not read: a few candlestick
         *        patterns take an OHLC series they never index, and it is required all the
-        *        same. An output this function documents as declinable is the one
-        *        exception: {@code null} is how you decline it. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
         *
         * @see Core#ema
         * @see Core#dema
@@ -230911,7 +230413,7 @@ class Core {
 
 public class TaCodegenServe {
     static Core core = new Core();
-    static final String SPLICED_GENCODE_DIGEST = "577a508f8ae240b4";
+    static final String SPLICED_GENCODE_DIGEST = "37606277635c34b9";
     static final int MAX_ARRAY_SIZE = 200000;
     static double[] refOpen = new double[MAX_ARRAY_SIZE];
     static double[] refHigh = new double[MAX_ARRAY_SIZE];
@@ -231666,7 +231168,7 @@ public class TaCodegenServe {
         ABSTRACT.put("MAMA", new AbsFunc("MAMA", "Overlap Studies", "MESA Adaptive Moving Average", 184549380,
             new AbsIn[]{ new AbsIn(1,"inReal",0) },
             new AbsOpt[]{ new AbsOpt(0,"optInFastLimit",0,"Fast Limit","Upper limit use in the adaptive algorithm",0.5, 0.01,0.99,2,0.21,0.8,0.01, 0,0,0,0,0, null), new AbsOpt(0,"optInSlowLimit",0,"Slow Limit","Lower limit use in the adaptive algorithm",0.05, 0.01,0.99,2,0.01,0.6,0.01, 0,0,0,0,0, null) },
-            new AbsOut[]{ new AbsOut(0,"outMAMA",1), new AbsOut(0,"outFAMA",8196) }));
+            new AbsOut[]{ new AbsOut(0,"outMAMA",1), new AbsOut(0,"outFAMA",4) }));
         ABSTRACT.put("MARKETFI", new AbsFunc("MARKETFI", "Volume Indicators", "Market Facilitation Index", 33554432,
             new AbsIn[]{ new AbsIn(0,"inPriceHLV",22) },
             new AbsOpt[]{  },

@@ -105,20 +105,14 @@ pub fn guarded_docs(
         b.param(&opt.name, &param_doc(opt, doc, enums));
     }
     let count = format!("<c>endIdx - max(startIdx, {cs_name}Lookback(...)) + 1</c> values");
-    let produced = format!("{count}, the count the call produces (none when that is not positive)");
     for out in &func.outputs {
-        // A nullable output may be declined; C# spells "declined" as an empty
-        // span, which the signature cannot say on its own.
-        let sizing = if out.is_nullable() {
-            format!(
-                "Pass an empty span, such as <c>default</c>, to decline it: it is still \
-                 computed where the algorithm needs it, but nothing is written out. \
-                 Supplied, it must hold at least {produced}."
-            )
-        } else {
-            format!("Must hold at least {count}, and never be empty: an empty span is an absent output.")
-        };
-        b.param(&out.name, &format!("{} {sizing}", output_desc(out, doc)));
+        b.param(
+            &out.name,
+            &format!(
+                "{} Must hold at least {count}, and never be empty: an empty span is an absent output.",
+                output_desc(out, doc)
+            ),
+        );
     }
 
     b.tag(
@@ -143,9 +137,8 @@ pub fn guarded_docs(
          <i>declares</i> that does not reach <c>endIdx</c>, or an output that cannot hold \
          the values produced. Declared, not read: a few candlestick patterns take an OHLC \
          series they never index, and it is required all the same. A null array \
-         arrives as an empty span, and an empty span is an absent argument: for an input, \
-         or an output that cannot be declined, it is rejected even when the call would \
-         produce nothing.",
+         arrives as an empty span, and an empty span is an absent argument: for an input \
+         or an output, it is rejected even when the call would produce nothing.",
     );
     b.item(aliasing_exception_text(single_precision));
     b.raw("</list>");

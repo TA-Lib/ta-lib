@@ -13185,9 +13185,6 @@ TA_LIB_API TA_RetCode TA_MACDFIX_Clone( const TA_MACDFIX_Stream *stream, TA_MACD
  * Input  = double
  * Output = double, double
  * 
- * outFAMA may be NULL: still computed where the algorithm needs it, but
- * not written out.
- * 
  * Optional Parameters
  * -------------------
  * optInFastLimit:(From 0.01 to 0.99)

@@ -61,9 +61,10 @@ pub fn reindent_source(text: &str) -> String {
     // brace and no `;` grants its single following statement one extra level.
     let mut unbraced_pending = false;
 
-    // `switch` body: while a `case`/`default` label is active at brace depth
-    // `d`, statements at depth `d` are indented one level under the label.
-    let mut case_active_depth: Option<i32> = None;
+    // `switch` bodies: while a `case`/`default` label is active at brace depth
+    // `d`, every line at depth `d` or deeper (a braced block under the label
+    // included) is indented one level under it. One entry per nested switch.
+    let mut case_depths: Vec<i32> = Vec::new();
 
     for raw in lines {
         let content = raw.trim_start();
@@ -110,6 +111,7 @@ pub fn reindent_source(text: &str) -> String {
         if first == '}' {
             // Closing brace de-indents to the enclosing level.
             level -= 1;
+            level += under_cases(&case_depths, level);
         } else if first == ')' {
             // A line that opens by closing a continuation paren aligns with the
             // header that opened it — i.e. no continuation bump.
@@ -120,11 +122,12 @@ pub fn reindent_source(text: &str) -> String {
             }
             if scan.is_label {
                 // `case`/`default` labels sit at the switch-body level.
-                case_active_depth = Some(brace_depth);
-            } else {
-                if case_active_depth == Some(brace_depth) {
-                    level += 1; // statement under an active case label
+                if case_depths.last() != Some(&brace_depth) {
+                    case_depths.push(brace_depth);
                 }
+                level += under_cases(&case_depths, brace_depth - 1);
+            } else {
+                level += under_cases(&case_depths, brace_depth);
                 // A `{` here is the header's braced body — it belongs at the
                 // header's level, so only bump a genuinely braceless statement.
                 if unbraced_pending && first != '{' {
@@ -152,11 +155,7 @@ pub fn reindent_source(text: &str) -> String {
         in_block_comment = scan.ends_in_block_comment;
 
         // A `case` label stays active until the switch's `}` drops us below it.
-        if let Some(d) = case_active_depth {
-            if brace_depth < d {
-                case_active_depth = None;
-            }
-        }
+        case_depths.retain(|d| brace_depth >= *d);
     }
 
     // Strip trailing blank lines so the file ends with content + a single
@@ -187,6 +186,11 @@ fn reindent_line(indent_spaces: usize, content: &str) -> String {
 
 fn leading_ws_len(line: &str) -> usize {
     line.len() - line.trim_start().len()
+}
+
+/// How many active case labels a line at brace depth `depth` sits under.
+fn under_cases(case_depths: &[i32], depth: i32) -> i32 {
+    to_i32(case_depths.iter().filter(|d| **d <= depth).count())
 }
 
 /// Widen an indentation length to a signed unit for shift arithmetic. Lossless
@@ -476,6 +480,19 @@ mod tests {
         assert_eq!(lines[5], "   default:");
         assert_eq!(lines[6], "      y = 0;");
         assert_eq!(lines[7], "}");
+    }
+
+    #[test]
+    fn indents_a_braced_block_under_a_case() {
+        let src = "switch( x )\n{\ncase 1:\nif( !p )\n{\ny = 0;\n}\nbreak;\n}\n";
+        let out = reindent_source(src);
+        let lines: Vec<&str> = out.lines().collect();
+        assert_eq!(lines[3], "      if( !p )");
+        assert_eq!(lines[4], "      {");
+        assert_eq!(lines[5], "         y = 0;");
+        assert_eq!(lines[6], "      }");
+        assert_eq!(lines[7], "      break;");
+        assert_eq!(lines[8], "}");
     }
 
     #[test]

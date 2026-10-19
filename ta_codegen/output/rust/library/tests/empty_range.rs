@@ -20,7 +20,7 @@
 //! and the two backends agree. Nothing pinned that, which is how the sentence
 //! outlived it.
 //!
-//! An integration test on purpose, like `nullable_outputs.rs`: the subject is the
+//! An integration test on purpose, like `batch_contract.rs`: the subject is the
 //! public tier, and the in-crate sweeps cannot see it. None of this is reachable
 //! from the cross-language gates either — the servers hand every input the full
 //! series, so they never present a slice that stops short of `endIdx`.

@@ -489,8 +489,6 @@ typedef enum
   TA_BATCH_ARG_WRONG_CODE            = 1630,
   TA_BATCH_ARG_CONTROL               = 1631,
   TA_BATCH_ARG_VACUOUS               = 1632,
-  /* Rule rB7: declining a nullable output changed what the call produced. */
-  TA_BATCH_ARG_NULLABLE_DIVERGED     = 1633,
 
   /* Rule rU3, stated absolutely: what ONE rejected Update costs. Driving two
    * handles off one feed and comparing them is symmetric, so it is blind to any

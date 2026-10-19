@@ -393,8 +393,8 @@ public partial class Core
    /// cannot hold the values produced. Declared, not read: a few candlestick
    /// patterns take an OHLC series they never index, and it is required all the
    /// same. A null array arrives as an empty span, and an empty span is an
-   /// absent argument: for an input, or an output that cannot be declined, it is
-   /// rejected even when the call would produce nothing.</description></item>
+   /// absent argument: for an input or an output, it is rejected even when the
+   /// call would produce nothing.</description></item>
    /// <item><description>Two outputs overlap or are one array
    /// (<see href="https://ta-lib.org/spec/errors/#rb6">rule rB6</see>), or an
    /// output partially overlaps an input. Computing wholly in place (an output
@@ -497,8 +497,8 @@ public partial class Core
    /// cannot hold the values produced. Declared, not read: a few candlestick
    /// patterns take an OHLC series they never index, and it is required all the
    /// same. A null array arrives as an empty span, and an empty span is an
-   /// absent argument: for an input, or an output that cannot be declined, it is
-   /// rejected even when the call would produce nothing.</description></item>
+   /// absent argument: for an input or an output, it is rejected even when the
+   /// call would produce nothing.</description></item>
    /// <item><description>Two outputs overlap or are one array
    /// (<see href="https://ta-lib.org/spec/errors/#rb6">rule rB6</see>), or an
    /// output overlaps an input. An output and a real input never share an

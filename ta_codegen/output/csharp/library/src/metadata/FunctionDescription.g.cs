@@ -7318,7 +7318,6 @@ public static class FunctionDescription
 				<Name>outFAMA</Name>
 				<Flags>
 					<Flag>Dashed Line</Flag>
-					<Flag>Nullable</Flag>
 				</Flags>
 			</OutputArgument>
 		</OutputArguments>

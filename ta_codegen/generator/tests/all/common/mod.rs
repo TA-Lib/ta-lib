@@ -393,6 +393,6 @@ pub fn render_c_stmt(stmt: &ir::Statement) -> String {
     let helpers = HelperRegistry::empty();
     let inline_counter = std::cell::Cell::new(0);
     backends::c::render_statement(
-        stmt, 3, false, &enums, registry, &helpers, &inline_counter, &[], false,
+        stmt, 3, false, &enums, registry, &helpers, &inline_counter,
     )
 }

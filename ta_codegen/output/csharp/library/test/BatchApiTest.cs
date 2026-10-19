@@ -980,66 +980,6 @@ public static class BatchApiTest
         }
     }
 
-    /// <summary>
-    /// Rule rW5: an output the .yaml marks <c>nullable</c> may be declined, and
-    /// declining it changes nothing about the output that was asked for. MAMA's
-    /// <c>outFAMA</c> is the only one in the corpus.
-    /// </summary>
-    /// <remarks>C# cannot spell "absent" apart from "empty" — a <c>Span&lt;T&gt;</c>
-    /// is a ref struct and a null array converts to an empty span — so an empty
-    /// span IS the declination (rule rW5).
-    /// <para>Acceptance alone would not test this: a body that stopped computing
-    /// FAMA, or took a different path without it, would be accepted here just the
-    /// same. So the declining call has to reproduce the supplied one bit for bit
-    /// and leave everything above its own count untouched (rule rW3). No
-    /// cross-language gate can see any of it — the JSON-RPC servers bind every
-    /// declared output.</para></remarks>
-    private static void ANullableOutputMayBeDeclined()
-    {
-        var core = new Core();
-        double[] input = Closes(252);
-        var mamaRef = new double[252];
-        var famaRef = new double[252];
-        OutRange reference = core.Mama(0, 251, input, 0.5, 0.05, mamaRef, famaRef);
-        Check(reference.Count > 0, "the reference call produces values");
-
-        const double canary = -1.2345678901234e300;
-        var mama = new double[252];
-        Array.Fill(mama, canary);
-        OutRange r = core.Mama(0, 251, input, 0.5, 0.05, mama, default);
-
-        Check(r.BegIdx == reference.BegIdx && r.Count == reference.Count,
-            "declining outFAMA leaves the reported range alone");
-        bool same = true;
-        for (int i = 0; i < reference.Count; i++)
-        {
-            same &= BitConverter.DoubleToInt64Bits(mama[i])
-                 == BitConverter.DoubleToInt64Bits(mamaRef[i]);
-        }
-        Check(same, "declining outFAMA leaves outMAMA bit-identical");
-        bool untouched = true;
-        for (int i = r.Count; i < mama.Length; i++)
-        {
-            untouched &= BitConverter.DoubleToInt64Bits(mama[i])
-                      == BitConverter.DoubleToInt64Bits(canary);
-        }
-        Check(untouched, "the declining call writes nothing past its own count");
-
-        // A null array converts to an empty span, so this is the same call —
-        // which is exactly why C# cannot tell "declined" from "empty".
-        double[]? absent = null;
-        core.Mama(0, 251, input, 0.5, 0.05, new double[252], absent);
-
-        // Controls, so the acceptance above is about the FLAG and not about MAMA
-        // having stopped checking its outputs.
-        CheckThrows<ArgumentException>(
-            () => core.Mama(0, 251, input, 0.5, 0.05, default, famaRef),
-            "the non-nullable output is still required", "MAMA", "outMAMA");
-        CheckThrows<ArgumentException>(
-            () => core.Mama(0, 251, input, 0.5, 0.05, mamaRef, new double[1]),
-            "a SUPPLIED nullable output is still length-checked", "MAMA", "outFAMA");
-    }
-
     /// <summary>A partial overlap is C#'s own check and the last one made: an index
     /// fault on the same call answers its own code.</summary>
     private static void APartialOverlapIsCheckedLast()
@@ -1058,11 +998,10 @@ public static class BatchApiTest
     }
 
     /// <summary>
-    /// An output that cannot be declined is absent when its span is empty, a
-    /// null array included, and the call is refused before any length is looked
-    /// at: on a range that produces nothing, and on a history too short to open.
-    /// One element is enough for both controls, which is what tells this from
-    /// the length rule. An empty span still declines a declinable output.
+    /// An output is absent when its span is empty, a null array included, and
+    /// the call is refused before any length is looked at: on a range that
+    /// produces nothing, and on a history too short to open. One element is
+    /// enough for both controls, which is what tells this from the length rule.
     /// </summary>
     private static void AnEmptyOutputIsAnAbsentOne()
     {
@@ -1094,10 +1033,10 @@ public static class BatchApiTest
 
         int mamaEnd = core.MamaLookback(0.5, 0.05) - 1;
         CheckCode(RetCode.BadParam,
-            () => core.Mama(0, mamaEnd, input, 0.5, 0.05, new double[0], default),
-            "an empty outMAMA beside a declined outFAMA");
-        Check(core.Mama(0, mamaEnd, input, 0.5, 0.05, new double[1], default).Count == 0,
-            "an empty span still declines outFAMA");
+            () => core.Mama(0, mamaEnd, input, 0.5, 0.05, new double[1], default),
+            "an empty outFAMA");
+        Check(core.Mama(0, mamaEnd, input, 0.5, 0.05, new double[1], new double[1]).Count == 0,
+            "one element each is enough for MAMA too");
 
         double[] history = Closes(core.AccbandsLookback(20));
         CheckCode(RetCode.BadParam,
@@ -1272,7 +1211,6 @@ public static class BatchApiTest
         OutRangeValueSemantics();
         IntegerSentinelSelectsTheDocumentedDefault();
         EveryFailureCarriesItsCode();
-        ANullableOutputMayBeDeclined();
         AnEmptyOutputIsAnAbsentOne();
         APartialOverlapIsCheckedLast();
 

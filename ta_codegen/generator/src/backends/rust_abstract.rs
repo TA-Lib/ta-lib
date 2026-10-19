@@ -923,9 +923,9 @@ mod binder_tests {
         assert!(h.call(0, N - 1).is_ok(), "the holder still computes");
     }
 
-    /// MAMA's second output is one the typed call takes `None` for.
+    /// An unbound output and an empty one are both refused, on every range.
     #[test]
-    fn no_output_is_declined_through_a_holder() {
+    fn an_empty_output_bound_to_a_holder_is_absent() {
         let core = Core::new();
         let close = series(0.0);
         let mut mama = vec![0.0; N];
@@ -1288,15 +1288,7 @@ fn emit_call_arm(
             o,
             "                let mut o{k} = self.{arr}[{k}].take().ok_or(RetCode::OutputNotAllInitialize)?;"
         );
-        // The abstract tier always supplies every declared output, so a
-        // `nullable` one (rule rB7, `TA_OUT_NULLABLE`) is handed `Some(..)`
-        // rather than declined: the catalogue's job is to reproduce the direct
-        // call, not to choose for the caller.
-        args.push(if out.flags & super::abstract_rows::OUT_NULLABLE == 0 {
-            format!("&mut *o{k}")
-        } else {
-            format!("Some(&mut *o{k})")
-        });
+        args.push(format!("&mut *o{k}"));
     }
 
     let _ = writeln!(o, "                let res = self.core.{snake}({});", args.join(", "));
@@ -1736,9 +1728,8 @@ flag_newtype!(
     UPPER_LIMIT = 0x0000_0800,
     /// The values represent a lower limit.
     LOWER_LIMIT = 0x0000_1000,
-    /// The caller may discard this output — it is computed but need not be
-    /// kept. E.g. MAMA's FAMA line when only the MAMA line is wanted. A
-    /// [`ParamHolder`] still needs it bound.
+    /// Never set: every output is required.
+    #[deprecated]
     NULLABLE = 0x0000_2000,
     /// A chart draws this output ahead of or behind the bar that computed it,
     /// by the bars [`ParamHolder::display_shift`] reports. The values are never

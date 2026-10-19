@@ -5,16 +5,14 @@
 use crate::common;
 
 use common::{
-    discover_indicators, generate_all, load_indicator, load_indicator_with_source, load_synth,
+    discover_indicators, generate_all, load_indicator, load_indicator_with_source,
     make_helpers, make_registry,
 };
-use std::collections::HashMap;
 use std::path::Path;
 use ta_codegen_lib::backends;
 use ta_codegen_lib::helper_registry::HelperRegistry;
 use ta_codegen_lib::ir;
 use ta_codegen_lib::parser;
-use ta_codegen_lib::registry::Registry;
 use ta_codegen_lib::streaming;
 
 // Streaming dispatch emission (TC composed tier: MA)
@@ -22,8 +20,7 @@ use ta_codegen_lib::streaming;
 
 /// Pin the generated MA dispatch stream section: tagged handle over the
 /// callees' PUBLIC streams, batch-order case arms, identity fast path, and
-/// the MAMA arm forwarding the MAMA line while discarding FAMA as NULL (the
-/// nullable-output delegation from issue #125 — no reject arm remains).
+/// the MAMA arm forwarding the MAMA line while FAMA goes to a scratch sink.
 #[test]
 fn test_c_ma_dispatch_stream_section() {
     let (mut func, enums) = load_indicator("ma");
@@ -76,7 +73,7 @@ fn test_c_ma_dispatch_stream_section() {
         ("Kama", "TA_KAMA"),
         ("T3", "TA_T3"),
         ("Trima", "TA_TRIMA"), // dual-mode stream (M6c): auto-promoted from reject
-        ("Mama", "TA_MAMA"),   // nullable FAMA (#125): auto-promoted from reject
+        ("Mama", "TA_MAMA"),
     ] {
         assert!(
             c.contains(&format!("case TA_MAType_{}:", label.to_uppercase())),
@@ -93,25 +90,33 @@ fn test_c_ma_dispatch_stream_section() {
         c.contains("TA_T3_OpenInternal( &sub, inReal, startIdx, historyLen, optInTimePeriod, 0.7"),
         "T3 arm forwards the 0.7 vfactor literal + startIdx"
     );
-    // MAMA is now a supported arm: FAMA is a nullable output (issue #125), so
-    // MA's arm forwards the MAMA line to outReal and passes NULL for FAMA in
-    // every verb (Open / OpenAndFill / Update / Peek). No reject arm remains.
+    // MA's MAMA arm forwards the MAMA line to outReal and hands FAMA a scratch
+    // in every verb: a block-local where the sink is scalar, a historyLen
+    // buffer where it fills.
     assert!(
         c.contains(
-            "TA_MAMA_OpenInternal( &sub, inReal, startIdx, historyLen, 0.5, 0.05, outReal, NULL )"
+            "TA_MAMA_OpenInternal( &sub, inReal, startIdx, historyLen, 0.5, 0.05, outReal, &famaScratch )"
         ),
-        "MAMA arm forwards outReal + discards FAMA as NULL at Open"
+        "MAMA arm forwards outReal + a scalar scratch at Open"
     );
     assert!(
-        c.contains("TA_MAMA_Update( (TA_MAMA_Stream *)stream->sub, inReal, outReal, NULL )"),
-        "MAMA Update forwards outReal + NULL"
+        c.contains("TA_MAMA_Update( (TA_MAMA_Stream *)stream->sub, inReal, outReal, &famaScratch )"),
+        "MAMA Update forwards outReal + a scalar scratch"
     );
     assert!(
-        c.contains(
-            "TA_MAMA_OpenAndFill( &sub, inReal, historyLen, 0.5, 0.05, outBegIdx, outNBElement, outReal, NULL )"
-        ),
-        "MAMA OpenAndFill forwards outReal + NULL"
+        c.contains(concat!(
+            "         famaScratch = (double *)TA_Malloc( historyLen * sizeof(double) );\n",
+            "         if( !famaScratch )\n",
+            "         {\n",
+            "            TA_Free( sp );\n",
+            "            return TA_ALLOC_ERR;\n",
+            "         }\n",
+            "         retCode = TA_MAMA_OpenAndFill( &sub, inReal, historyLen, 0.5, 0.05, outBegIdx, outNBElement, outReal, famaScratch );\n",
+            "         TA_Free( famaScratch );\n",
+        )),
+        "MAMA OpenAndFill fills a historyLen scratch and frees it"
     );
+    assert!(!c.contains(", NULL )"), "no callee output is handed NULL");
     assert!(!c.contains("/* no mama stream */"), "no MAMA reject arm remains");
     // Update/Peek identity short-circuit reads the handle's params; the guard
     // also covers the period-independent TA_MAType_DISABLED identity (issue #93).
@@ -223,89 +228,6 @@ fn test_a_stored_bool_ternary_keeps_its_int_form() {
             "{lang}: a ternary in boolean position must still collapse"
         );
     }
-}
-
-/// Guarding a nullable store is complete only while the `outIdx` advance rides a
-/// store that is always made. `mama.c` says so in a comment; this is what makes
-/// it true.
-///
-/// The failure it forbids is silent: with the advance on the declined store, a
-/// caller who declines gets `outNBElement = 0`, every other output written
-/// repeatedly to index 0, and `Success`. The JSON-RPC servers bind every declared
-/// output, so no cross-language gate ever makes that call — which is why the
-/// generator refuses to emit the shape rather than a gate catching it.
-///
-/// Driven through `generate` rather than the helper, because the point is that a
-/// contributor cannot reach the emitters without the check: every backend now
-/// asks one producer for the declinable set, and asking is what runs it.
-#[test]
-fn test_a_nullable_output_may_not_carry_the_cursor() {
-    let (func, enums) = load_indicator("mama");
-    let registry = make_registry();
-    let helpers = HelperRegistry::empty();
-
-    // Control: the shipped shape renders. Without this the refusals below would
-    // pass against a generator that refused MAMA outright.
-    let _ = backends::c::generate(&func, &enums, registry, &helpers);
-    let _ = backends::rust_lang::generate(&func, &enums, registry, &helpers);
-
-    // The forbidden store, built directly: `outFAMA[outIdx++] = fama;` where
-    // outFAMA is the declinable output.
-    let cursor_on_nullable = ir::Statement::Assign {
-        target: ir::Expr::ArrayAccess(
-            "outFAMA".to_string(),
-            Box::new(ir::Expr::PostIncrement(Box::new(ir::Expr::Var(
-                "outIdx".to_string(),
-            )))),
-        ),
-        value: ir::Expr::Var("fama".to_string()),
-        compound: false,
-    };
-    let mut moved = func.clone();
-    moved.body.push(cursor_on_nullable);
-    type Emit = fn(&ir::FuncDef, &HashMap<String, ir::EnumDef>, &Registry, &HelperRegistry) -> String;
-    for (lang, emit) in [
-        ("C", backends::c::generate as Emit),
-        ("Rust", backends::rust_lang::generate as Emit),
-        ("Java", backends::java::generate as Emit),
-        ("C#", backends::csharp::generate as Emit),
-    ] {
-        let moved = moved.clone();
-        let enums = enums.clone();
-        let err = std::panic::catch_unwind(move || {
-            emit(&moved, &enums, make_registry(), &HelperRegistry::empty())
-        })
-        .expect_err("a nullable output carrying the cursor must be refused");
-        let msg = panic_message(&err);
-        assert!(
-            msg.contains("outFAMA") && msg.contains("PostIncrement"),
-            "{lang}: the refusal must name the output and the step, got: {msg}"
-        );
-    }
-
-    // And a function whose outputs are ALL declinable has nowhere to put it.
-    let mut all_nullable = func.clone();
-    for out in &mut all_nullable.outputs {
-        if !out.is_nullable() {
-            out.flags.push("nullable".to_string());
-        }
-    }
-    let e2 = enums.clone();
-    let err = std::panic::catch_unwind(move || {
-        backends::c::generate(&all_nullable, &e2, make_registry(), &HelperRegistry::empty())
-    })
-    .expect_err("every output declinable leaves the cursor no store to ride");
-    assert!(
-        panic_message(&err).contains("every output"),
-        "the refusal must say why"
-    );
-}
-
-fn panic_message(err: &Box<dyn std::any::Any + Send>) -> String {
-    err.downcast_ref::<String>()
-        .cloned()
-        .or_else(|| err.downcast_ref::<&str>().map(|s| (*s).to_string()))
-        .unwrap_or_default()
 }
 
 /// The two frame emitters subscript `outReal[]` / `outInteger[]` by the output's
@@ -484,98 +406,6 @@ fn cross_typed_output_pairs_are_compared_where_the_language_can_express_it() {
     );
 }
 
-/// Rule rB7 (`https://ta-lib.org/spec/errors/#rb7`, issue #262): an omitted output
-/// is accepted iff the .yaml marks it `nullable`. C has honoured it since #125;
-/// this pins the other three, each of which spells "declined" in its own way.
-///
-/// The pins are per-backend on purpose. The cross-language gates cannot see any
-/// of this: the servers always supply every output, so a backend that quietly
-/// went back to requiring `outFAMA` would stay green everywhere.
-#[test]
-fn test_mama_nullable_fama_is_declinable_in_every_backend() {
-    let (func, enums) = load_indicator("mama");
-    let registry = make_registry();
-    let helpers = HelperRegistry::empty();
-
-    // Rust: `Option<&mut [f64]>` — the one backend that can spell "declined"
-    // apart from "empty" and does, which leaves C# alone in overloading it.
-    let rust = backends::rust_lang::generate(&func, &enums, registry, &helpers);
-    assert!(
-        rust.contains("outFAMA: Option<&mut [f64]>"),
-        "Rust declines a nullable output with None, not an empty slice"
-    );
-    assert!(
-        rust.contains("if let Some(outFAMA) = outFAMA.as_deref_mut() {"),
-        "every store into the declined output is guarded"
-    );
-    assert!(
-        rust.contains(
-            "assert!(_assertStart > endIdx || outFAMA.as_deref().is_none_or(|o| endIdx - _assertStart < o.len()));"
-        ),
-        "rB5 asks for capacity only where an output was supplied"
-    );
-
-    // Java: `null`, and the length check has to be skipped for it and kept for
-    // outMAMA — the half a caller actually sees.
-    let java = backends::java::generate(&func, &enums, registry, &helpers);
-    assert!(
-        java.contains(
-            "if( outFAMA != null ) requireLength(\"MAMA\", \"outFAMA\", outFAMA, guardOutLen);"
-        ),
-        "Java requires a length only for a supplied output"
-    );
-    assert!(
-        java.contains("requireLength(\"MAMA\", \"outMAMA\", outMAMA, guardOutLen);")
-            && !java.contains("if( outMAMA != null ) requireLength"),
-        "the non-nullable output stays unconditionally required"
-    );
-    assert!(
-        java.contains("if( outFAMA != null )\n               outFAMA[outIdx] = fama;"),
-        "every store into the declined output is guarded"
-    );
-    assert!(
-        java.contains("if( outFAMA != null && outMAMA == outFAMA )"),
-        "two nulls compare equal, so the pair guard checks the nullable operand first"
-    );
-
-    // C#: any empty span declines; only the pair guard tells a null one apart.
-    let csharp = backends::csharp::generate(&func, &enums, registry, &helpers);
-    assert!(
-        csharp.contains(
-            "if( !outFAMA.IsEmpty ) RequireLength(\"MAMA\", \"outFAMA\", outFAMA.Length, guardOutLen);"
-        ),
-        "C# requires a length only for a supplied output"
-    );
-    assert!(
-        csharp.contains("if( !outFAMA.IsEmpty )\n               outFAMA[outIdx] = fama;"),
-        "every store into the declined output is guarded"
-    );
-    assert!(
-        csharp.contains("if( OutputsAlias(outMAMA, outFAMA) ) {")
-            && !csharp.contains("outMAMA.IsEmpty && outFAMA.IsEmpty"),
-        "the pair guard is the helper that tells a declined (null) output from one \
-         buffer passed twice; a bare empty-pair arm would reject the decline (item 11)"
-    );
-
-    // And MA's cross-call declines rather than allocating a buffer to throw away.
-    let (ma, ma_enums) = load_indicator("ma");
-    for (lang, out, want) in [
-        ("Rust", backends::rust_lang::generate(&ma, &ma_enums, registry, &helpers),
-         "mama(startIdx, endIdx, inReal, 0.5, 0.05, outReal, None)"),
-        ("Java", backends::java::generate(&ma, &ma_enums, registry, &helpers),
-         "mama(startIdx, endIdx, inReal, 0.5, 0.05, outReal, null)"),
-        ("C#", backends::csharp::generate(&ma, &ma_enums, registry, &helpers),
-         "Mama(startIdx, endIdx, inReal, 0.5, 0.05, outReal, default)"),
-    ] {
-        assert!(out.contains(want), "{lang}: MA's MAMA arm must decline FAMA ({want})");
-        assert!(
-            !out.contains("new double[(int)(endIdx - startIdx + 1)]")
-                && !out.contains("&mut vec![0.0_f64; (endIdx - startIdx + 1) as usize][..]"),
-            "{lang}: the throwaway FAMA buffer must be gone, not merely unread"
-        );
-    }
-}
-
 /// The Java argument helpers exist TWICE — hand-written in the shipped
 /// `Core.java`, and as string literals in `server_gen.rs` that the JSON-RPC
 /// server's inlined `Core` gets — and nothing compared them until this.
@@ -663,309 +493,34 @@ fn the_java_argument_helpers_agree_between_the_library_and_the_server() {
     }
 }
 
-/// Rule rB7 at the STREAMING opener, in all four backends: a nullable output
-/// may be declined there exactly as it may in the batch tier.
-///
-/// C has always allowed it; the other three rejected the declined output as a
-/// capacity fault the moment rule rS5 arrived, which is the divergence this pins.
-/// Four clauses per backend, because three of them can pass while the feature is
-/// broken: the bound must be conditional, the fill's store must be guarded, the
-/// handle's cached value must NOT be read back from an array the caller declined
-/// — that is the one that faults at run time — and `MA`'s dispatch arm must
-/// decline rather than allocate a `historyLen` buffer to throw away.
+/// Every output is required in the batch C, and MA's MAMA arm hands FAMA a
+/// scratch it allocates, checks and frees around the call.
 #[test]
-fn test_mama_nullable_fama_is_declinable_at_the_opener_in_every_backend() {
+fn test_c_mama_batch_requires_fama() {
     let (func, enums) = load_indicator("mama");
-    let (ma, ma_enums) = load_indicator("ma");
-    let registry = make_registry();
-    let helpers = HelperRegistry::empty();
-
-    let rust = backends::rust_lang::generate(&func, &enums, registry, &helpers);
-    assert!(
-        rust.contains("outMAMA: &mut [f64], outFAMA: Option<&mut [f64]>,")
-            && rust.contains("outMAMA: &mut [f64], mut outFAMA: Option<&mut [f64]>, outStride: usize,"),
-        "Rust: the opener family takes Option, `mut` on the transcription alone"
-    );
-    assert!(
-        rust.contains("if outFAMA.as_deref().is_some_and(|o| o.is_empty() || o.len() < _guardOutLen) {"),
-        "Rust: rS5 bounds a nullable output only where it was supplied"
-    );
-    assert!(
-        rust.contains("Some(&mut sink_outFAMA)"),
-        "Rust: the scalar open reports every output, so it never declines one"
-    );
-
-    let java = backends::java::generate(&func, &enums, registry, &helpers);
-    assert!(
-        java.contains("if( outFAMA != null ) requireLength(\"MAMA openAndFill\", \"outFAMA\", outFAMA, guardOutLen);"),
-        "Java: rS5 bounds a nullable output only where it was supplied"
-    );
-    assert!(
-        java.contains("lastCur_outFAMA = fama;") && java.contains("sp.cur_outFAMA = lastCur_outFAMA;"),
-        "Java: the handle's cached value comes from the store, not from the caller's array"
-    );
-    assert!(
-        !java.contains("sp.cur_outFAMA = outFAMA["),
-        "Java: reading a declined output back is the fault this rule creates"
-    );
-
-    let csharp = backends::csharp::generate(&func, &enums, registry, &helpers);
-    assert!(
-        csharp.contains("if( !outFAMA.IsEmpty ) RequireFillLength(\"MAMA\", \"openAndFill\", \"outFAMA\", outFAMA.Length, guardOutLen);"),
-        "C#: rS5 bounds a nullable output only where it was supplied"
-    );
-    assert!(
-        csharp.contains("lastCur_outFAMA = fama;") && csharp.contains("sp.cur_outFAMA = lastCur_outFAMA;"),
-        "C#: the handle's cached value comes from the store, not from the caller's span"
-    );
-    assert!(
-        !csharp.contains("sp.cur_outFAMA = outFAMA["),
-        "C#: reading a declined output back is the fault this rule creates"
-    );
-
-    let c = backends::c::generate(&func, &enums, registry, &helpers);
-    let at_open = c
-        .find("TA_RetCode TA_MAMA_OpenImpl(")
-        .expect("C: the streaming transcription");
-    let c_open = &c[at_open..];
-    assert!(
-        c_open.contains("if( outFAMA != NULL )"),
-        "C: the FILL's store into the nullable output stays guarded — the batch \
-         body's guard is not evidence about this one"
-    );
-    assert!(
-        c_open.contains("(outFAMA != NULL && (const void *)outMAMA == (const void *)outFAMA)"),
-        "C: the opener's distinctness guard treats a declined output as aliasing nothing"
-    );
-
-    // Java and C#: the shadow must be the SOURCE of the cached value, not merely
-    // present — a break that keeps `lastCur_` around and still reads the array
-    // back passes a bare substring test.
-    for (lang, src, decl, shadow_store, capture) in [
-        ("Java", &java, "double lastCur_outFAMA = 0;", "lastCur_outFAMA = fama;",
-         "sp.cur_outFAMA = lastCur_outFAMA;"),
-        ("C#", &csharp, "double lastCur_outFAMA = 0;", "lastCur_outFAMA = fama;",
-         "sp.cur_outFAMA = lastCur_outFAMA;"),
-    ] {
-        let at_decl = src.find(decl).unwrap_or_else(|| panic!("{lang}: the shadow is not declared"));
-        let at_store = src.find(shadow_store).unwrap_or_else(|| panic!("{lang}: the shadow is never written"));
-        let at_capture = src.find(capture).unwrap_or_else(|| panic!("{lang}: the capture does not read the shadow"));
-        assert!(
-            at_decl < at_store && at_store < at_capture,
-            "{lang}: the shadow must be declared, then written by the fill, then captured"
-        );
-    }
-
-    // MA's streaming arm declines instead of allocating a throwaway.
-    for (lang, out, want, gone) in [
-        ("Rust", backends::rust_lang::generate(&ma, &ma_enums, registry, &helpers),
-         "outReal, None)", "vec![0.0_f64; inReal.len()][..]"),
-        ("Java", backends::java::generate(&ma, &ma_enums, registry, &helpers),
-         "mamaOpenAndFill(inReal, 0.5, 0.05, outReal, null)", "new double[historyLen])"),
-        ("C#", backends::csharp::generate(&ma, &ma_enums, registry, &helpers),
-         "MamaOpenAndFill(inReal, 0.5, 0.05, outReal, default)", "new double[historyLen])"),
-    ] {
-        assert!(out.contains(want), "{lang}: MA's streaming MAMA arm must decline FAMA ({want})");
-        assert!(
-            !out.contains(gone),
-            "{lang}: the throwaway FAMA buffer must be gone from the opener, not merely unread"
-        );
-    }
-}
-
-/// One emitted method, from its signature to the brace that closes it.
-fn method<'a>(src: &'a str, sig: &str, what: &str) -> &'a str {
-    let at = src.find(sig).unwrap_or_else(|| panic!("{what}: `{sig}` not found"));
-    let rest = &src[at..];
-    let open = rest.find('{').unwrap_or_else(|| panic!("{what}: `{sig}` has no body"));
-    let mut depth = 0usize;
-    for (i, ch) in rest[open..].char_indices() {
-        match ch {
-            '{' => depth += 1,
-            '}' => {
-                depth -= 1;
-                if depth == 0 {
-                    return &rest[..open + i + 1];
-                }
-            }
-            _ => {}
-        }
-    }
-    panic!("{what}: `{sig}` has no body")
-}
-
-/// Rule rU5 — a declined output at the ADVANCING tier. C is the only backend
-/// that can spell it there: its `Update` takes one out-pointer per output, where
-/// Rust returns a tuple and Java and C# write a caller-owned value class, none of
-/// which has a way to say "not this one". The ported backends are pinned at the
-/// opener instead, by the test above.
-///
-/// Two clauses, because either can pass while the feature is broken: the
-/// presence guard must name the required outputs and only those, and the
-/// declinable pointer must reach the step unchanged — the step's own
-/// `if( out != NULL )` is what turns a declination into a suppressed write
-/// rather than a suppressed computation.
-///
-/// The handle is not in the guard: it is checked on its own line ahead of rule
-/// rU4, which has to read the range head (`https://ta-lib.org/spec/streaming/#ru4`).
-#[test]
-fn test_a_nullable_output_is_declinable_at_update_in_c() {
-    let registry = make_registry();
-    let helpers = HelperRegistry::empty();
-    for (name, load, guard, step) in [
-        (
-            "MAMA",
-            load_indicator("mama"),
-            "if( !outMAMA ) return TA_BAD_PARAM;",
-            "TA_MAMA_StepImpl( stream, inReal, outMAMA, outFAMA );",
-        ),
-        (
-            "SYNTH10",
-            load_synth("synth10"),
-            "if( !outRequired ) return TA_BAD_PARAM;",
-            "TA_SYNTH10_StepImpl( stream, inReal, outFirstOptional, outRequired, outSecondOptional );",
-        ),
-    ] {
-        let (func, enums) = load;
-        let c = backends::c::generate(&func, &enums, registry, &helpers);
-        let upd = method(
-            &c,
-            &format!("TA_RetCode TA_{name}_Update( TA_{name}_Stream *stream,"),
-            &format!("C {name} Update"),
-        );
-        assert!(
-            upd.contains(guard),
-            "{name}: the presence guard names the required outputs and not the declinable ones:\n{upd}"
-        );
-        assert!(
-            upd.contains(step),
-            "{name}: a declined output reaches the step as NULL — the value is computed and \
-             the write is what the step suppresses:\n{upd}"
-        );
-    }
-}
-
-/// Rule rS7 over the arrangement `MAMA` cannot reach: `SYNTH10` declares three
-/// outputs with the FIRST and THIRD `nullable` (issue #262's fixture). Two
-/// things only it can show — that the guards are per output rather than one
-/// blanket branch, and that a nullable output at index 0 does not displace the
-/// cursor or the required output's own bound.
-///
-/// `scripts/synth_gate.py` drives the same fixture end to end, but only
-/// nightly; this is the PR gate's view of it.
-#[test]
-fn test_synth10_two_nullable_outputs_are_declinable_at_the_opener() {
-    let (func, enums) = load_synth("synth10");
-    let registry = make_registry();
-    let helpers = HelperRegistry::empty();
-
-    let rust = backends::rust_lang::generate(&func, &enums, registry, &helpers);
-    assert!(
-        rust.contains("&self, inReal: &[f64], outFirstOptional: Option<&mut [f64]>, outRequired: &mut [f64], outSecondOptional: Option<&mut [f64]>,"),
-        "Rust: each nullable output takes its own Option, the required one stays a slice"
-    );
-    for name in ["outFirstOptional", "outSecondOptional"] {
-        assert!(
-            rust.contains(&format!("let mut sink_{name} = [0.0_f64; 1];")),
-            "Rust: {name} gets its own sink, so the plain opener still computes it"
-        );
-    }
-
-    let java = backends::java::generate(&func, &enums, registry, &helpers);
-    let csharp = backends::csharp::generate(&func, &enums, registry, &helpers);
-    let c = backends::c::generate(&func, &enums, registry, &helpers);
-
-    // The capacity bound is per output and conditional only on the declinable
-    // ones — one blanket branch over "any output declined" would pass every
-    // value comparison and drop the required output's bound with it.
-    for (lang, src, conditional, unconditional) in [
-        (
-            "Java",
-            &java,
-            vec![
-                "if( outFirstOptional != null ) requireLength(\"SYNTH10 openAndFill\", \"outFirstOptional\", outFirstOptional, guardOutLen);",
-                "if( outSecondOptional != null ) requireLength(\"SYNTH10 openAndFill\", \"outSecondOptional\", outSecondOptional, guardOutLen);",
-            ],
-            "requireLength(\"SYNTH10 openAndFill\", \"outRequired\", outRequired, guardOutLen);",
-        ),
-        (
-            "C#",
-            &csharp,
-            vec![
-                "if( !outFirstOptional.IsEmpty ) RequireFillLength(\"SYNTH10\", \"openAndFill\", \"outFirstOptional\", outFirstOptional.Length, guardOutLen);",
-                "if( !outSecondOptional.IsEmpty ) RequireFillLength(\"SYNTH10\", \"openAndFill\", \"outSecondOptional\", outSecondOptional.Length, guardOutLen);",
-            ],
-            "RequireFillLength(\"SYNTH10\", \"openAndFill\", \"outRequired\", outRequired.Length, guardOutLen);",
-        ),
-    ] {
-        for w in &conditional {
-            assert!(src.contains(w), "{lang}: `{w}` — each declinable output is bounded on its own");
-        }
-        assert!(
-            src.contains(unconditional),
-            "{lang}: the required output keeps an unconditional bound"
-        );
-    }
-
-    // rS7 meets rS6: a declined output aliases nothing, so every alias term whose
-    // operand can be absent guards it first — two declined outputs would
-    // otherwise compare equal and reject a legal call.
-    assert!(
-        java.contains("(outFirstOptional != null && outSecondOptional != null && (Object)outFirstOptional == (Object)outSecondOptional)"),
-        "Java: an alias term over two declinable operands guards both"
-    );
-    assert!(
-        c.contains("(outFirstOptional != NULL && outSecondOptional != NULL && (const void *)outFirstOptional == (const void *)outSecondOptional)"),
-        "C: an alias term over two declinable operands guards both"
-    );
-    assert!(
-        c.contains("if( !inReal || !outBegIdx || !outNBElement || !outRequired ) return TA_BAD_PARAM;"),
-        "C: the required output is the only one an absent-argument guard names"
-    );
-}
-
-/// FAMA is a nullable output (issue #125). In the BATCH C: `Output::is_nullable`
-/// is set from the `nullable` flag, the guarded function skips its NULL-check but
-/// keeps outMAMA's, the distinctness check guards the nullable operand, and every
-/// body write is NULL-guarded while the `outIdx` advance rides the non-nullable
-/// outMAMA. MA's batch arm collapses to a clean NULL delegation (no malloc).
-#[test]
-fn test_c_mama_nullable_fama_batch() {
-    let (func, enums) = load_indicator("mama");
-    let fama = func.outputs.iter().find(|o| o.name == "outFAMA").unwrap();
-    let mama_out = func.outputs.iter().find(|o| o.name == "outMAMA").unwrap();
-    assert!(fama.is_nullable(), "outFAMA carries the nullable flag");
-    assert!(!mama_out.is_nullable(), "outMAMA is not nullable");
-
     let registry = make_registry();
     let helpers = HelperRegistry::empty();
     let c = backends::c::generate(&func, &enums, registry, &helpers);
-    // Guarded validation: outMAMA required, outFAMA optional.
-    assert!(c.contains("if( !outMAMA )"), "outMAMA still NULL-checked");
-    assert!(!c.contains("if( !outFAMA )"), "outFAMA NULL-check skipped (nullable)");
-    assert!(
-        c.contains("if( outFAMA != NULL && outMAMA == outFAMA )"),
-        "distinctness guards the nullable operand (a NULL FAMA aliases nothing)"
-    );
-    // Body: FAMA store NULL-guarded; outIdx advance on the non-nullable outMAMA.
-    assert!(
-        c.contains("if( outFAMA != NULL )") && c.contains("outFAMA[outIdx] = fama;"),
-        "FAMA store NULL-guarded (no side effect inside the guard)"
-    );
-    assert!(c.contains("outMAMA[outIdx++] = mama;"), "outIdx advance rides outMAMA");
+    assert!(c.contains("if( !outMAMA )") && c.contains("if( !outFAMA )"), "both outputs NULL-checked");
+    assert!(c.contains("if( outMAMA == outFAMA )"), "bare distinctness check");
+    assert!(c.contains("outFAMA[outIdx] = fama;"), "FAMA store unguarded");
+    assert!(!c.contains("outFAMA != NULL"), "no store or check is conditional on FAMA");
 
-    // MA's batch arm: clean NULL delegation, no unchecked discard buffer.
     let (ma, ma_enums) = load_indicator("ma");
     let mac = backends::c::generate(&ma, &ma_enums, registry, &helpers);
     assert!(
-        mac.contains(
-            "TA_MAMA(startIdx,endIdx,inReal,0.5,0.05,outBegIdx,outNBElement,outReal,NULL)"
-        ),
-        "MA batch MAMA arm passes NULL for FAMA"
-    );
-    assert!(
-        !mac.contains("dummyBuffer") && !mac.contains("malloc"),
-        "the pre-#125 discard malloc is gone"
+        mac.contains(concat!(
+            "      famaScratch = malloc((endIdx - startIdx + 1) * sizeof(double));\n",
+            "      if( !famaScratch )\n",
+            "      {\n",
+            "         *outBegIdx= 0;\n",
+            "         *outNBElement= 0;\n",
+            "         return TA_ALLOC_ERR;\n",
+            "      }\n",
+            "      retCode = TA_MAMA(startIdx,endIdx,inReal,0.5,0.05,outBegIdx,outNBElement,outReal,famaScratch);\n",
+            "      free(famaScratch);\n",
+        )),
+        "MA batch MAMA arm allocates, checks and frees the FAMA scratch"
     );
 }
 
@@ -1847,9 +1402,7 @@ fn test_c_ht_trendmode_full_union() {
 }
 
 /// Pin MAMA — an ordinary HT function (WMA ring + parity) with two real optional
-/// params and two coupled outputs (mama/fama) written in a top-level gate. FAMA
-/// is a nullable output (issue #125): its per-bar write is NULL-guarded so a
-/// caller (MA's dispatch) can discard it — see `test_c_ma_dispatch_stream_section`.
+/// params and two coupled outputs (mama/fama) written in a top-level gate.
 #[test]
 fn test_c_mama_two_outputs_and_params() {
     let s = ht_stream_section("mama");
@@ -1858,23 +1411,13 @@ fn test_c_mama_two_outputs_and_params() {
     let step = s.split("TA_MAMA_StepImpl").nth(1).unwrap();
     let step = &step[..step.find("TA_MAMA_OpenImpl").unwrap_or(step.len())];
     assert!(step.contains("if( sp->streamParity == 0 )"), "parity branch");
-    // MAMA line always written; FAMA (nullable) write is NULL-guarded so the
-    // step never dereferences a NULL FAMA pointer (the gate itself is stripped).
     assert!(step.contains("*outMAMA= mama;"), "MAMA line written unconditionally");
-    // The GUARD is the invariant, not the right-hand side's spelling: FAMA is
-    // carried as a local since the value accessor reads it back (#287), and a
-    // future carry could move it again without weakening anything here.
     assert!(
-        step.contains("if( outFAMA != NULL )")
-            && (step.contains("*outFAMA= fama;") || step.contains("*outFAMA= sp->fama;")),
-        "FAMA is nullable (#125): its write is NULL-guarded"
+        step.contains("*outFAMA= fama;") || step.contains("*outFAMA= sp->fama;"),
+        "FAMA line written unconditionally"
     );
-    // The retained copy must NOT be guarded — a declined FAMA is still computed,
-    // and `TA_MAMA_Value` has to report it (that is what the accessor is for).
-    assert!(
-        step.contains("sp->cur_outFAMA = fama;") || step.contains("sp->cur_outFAMA = sp->fama;"),
-        "the value retain reads the body's own variable, never the declinable sink"
-    );
+    assert!(!step.contains("outFAMA != NULL"), "no FAMA store is guarded");
+    assert!(step.contains("sp->cur_outFAMA = *outFAMA;"), "the value retain reads the sink back");
     assert!(step.contains("sp->optInFastLimit") && step.contains("sp->optInSlowLimit"), "params drive the adaptive alpha");
     assert!(!step.contains("startIdx") && !step.contains("% 2"), "no cursor leak in the step");
 }

@@ -627,17 +627,16 @@ public static class MetadataTest
                       .Call(0, N - 1),
             "one array bound as two outputs -> BadParam");
 
-        /* No output is declined through a holder. MAMA's second output is one
-           the typed method takes an empty span for. */
+        /* An empty buffer bound to an output is an absent one, as in the typed
+           method. */
         FuncInfo mama = FunctionCatalog.Default["MAMA"];
-        Check((mama.Outputs[1].Flags & OutputFlags.Nullable) != 0, "MAMA's second output is declinable");
         CheckCode(RetCode.OutputNotAllInitialize,
             () => mama.CreateCall().SetInput(0, Close).SetOutput(0, new double[N]).Call(0, N - 1),
-            "a declinable output left unbound -> OutputNotAllInitialize");
+            "a second output left unbound -> OutputNotAllInitialize");
         CheckCode(RetCode.BadParam,
             () => mama.CreateCall().SetInput(0, Close).SetOutput(0, new double[N])
                       .SetOutput(1, Array.Empty<double>()).Call(0, N - 1),
-            "an empty buffer on a declinable output -> BadParam");
+            "an empty buffer on an output -> BadParam");
         CheckCode(RetCode.OutOfRangeEndIndex,
             () => mama.CreateCall().SetInput(0, Close).SetOutput(0, new double[N])
                       .SetOutput(1, Array.Empty<double>()).Call(1, 0),
@@ -659,10 +658,10 @@ public static class MetadataTest
         Check(diagnosis.Contains("bad parameter", StringComparison.Ordinal),
             $"a bad parameter outranks the empty buffer, as in the typed method ({diagnosis})");
         double[] untouched = new double[N];
-        RetCode declined = mama.CreateCall().SetInput(0, Close).SetOutput(0, untouched)
-            .SetOutput(1, Array.Empty<double>()).TryCall(0, N - 1, out OutRange rDeclined);
-        Check(declined == RetCode.BadParam && rDeclined.Count == 0 && Array.TrueForAll(untouched, v => v == 0.0),
-            $"TryCall reports it as a code and writes nothing ({declined})");
+        RetCode absent = mama.CreateCall().SetInput(0, Close).SetOutput(0, untouched)
+            .SetOutput(1, Array.Empty<double>()).TryCall(0, N - 1, out OutRange rAbsent);
+        Check(absent == RetCode.BadParam && rAbsent.Count == 0 && Array.TrueForAll(untouched, v => v == 0.0),
+            $"TryCall reports it as a code and writes nothing ({absent})");
         Check(mama.CreateCall().SetInput(0, Close).SetOutput(0, new double[N])
                   .SetOutput(1, new double[N]).TryCall(0, N - 1, out OutRange rBoth) == RetCode.Success
               && rBoth.Count > 0,

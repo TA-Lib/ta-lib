@@ -27,9 +27,8 @@
 #define C_N200      0x200u
 #define C_OTHER     0x400u
 #define C_NONE      0x800u /* declared by a pattern output with no value flag */
-/* What a flag permits and a call did: TA_OUT_DISPLAY_SHIFT, TA_OUT_NULLABLE. */
+/* What a flag permits and a call did: TA_OUT_DISPLAY_SHIFT. */
 #define C_SHIFTED   0x1000u
-#define C_DECLINED  0x2000u
 
 #define PATTERN_FLAGS (TA_OUT_PATTERN_BOOL | TA_OUT_PATTERN_BULL_BEAR)
 #define SIGN_FLAGS    (TA_OUT_POSITIVE | TA_OUT_NEGATIVE | TA_OUT_ZERO)
@@ -122,7 +121,6 @@ static void resolve( void )
          s->declared[o] = declared_classes( s->out[o], s->pattern[o] );
          s->required[o] = s->declared[o] & (C_OTHER - 1);
          if( s->out[o]->flags & TA_OUT_DISPLAY_SHIFT ) s->required[o] |= C_SHIFTED;
-         if( s->out[o]->flags & TA_OUT_NULLABLE )      s->required[o] |= C_DECLINED;
       }
    }
    resolved = 1;
@@ -254,11 +252,8 @@ void meta_ride_check( int site, int single, int startIdx, int endIdx,
       pointerJudged++;
       if( !out[o] )
       {
-         if( info->flags & TA_OUT_NULLABLE )
-            s->seen[o] |= C_DECLINED;
-         else if( report( s ) )
-            printf( "%s was NULL in a successful call without TA_OUT_NULLABLE\n",
-                    info->paramName );
+         if( report( s ) )
+            printf( "%s was NULL in a successful call\n", info->paramName );
          continue;
       }
       if( nb <= 0 || (isInt && !declared) )
@@ -408,8 +403,7 @@ static const char *unreached( unsigned int c )
    case C_N80:  return "-80 and no call wrote it";
    case C_P200: return "+200 and no call wrote it";
    case C_N200: return "-200 and no call wrote it";
-   case C_SHIFTED: return "TA_OUT_DISPLAY_SHIFT and no call had a non-zero shift";
-   default:     return "TA_OUT_NULLABLE and no call passed NULL";
+   default:     return "TA_OUT_DISPLAY_SHIFT and no call had a non-zero shift";
    }
 }
 
@@ -461,7 +455,7 @@ ErrorNumber meta_ride_whole_run( void )
          }
       }
       for( o = 0; o < s->info->nbOutput; o++ )
-         for( bit = 1; bit <= C_DECLINED; bit <<= 1 )
+         for( bit = 1; bit <= C_SHIFTED; bit <<= 1 )
             if( (s->required[o] & bit) && !(s->seen[o] & bit) )
             {
                printf( "\nMETA RIDE [TA_%s]: %s declares %s\n",

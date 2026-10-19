@@ -1018,7 +1018,6 @@ static ErrorNumber sf_advance( void )
 static int sfNullCloses;    /* TA_<N>_Close(NULL) */
 static int sfNullRejects;   /* a NULL handle or required out-pointer: TA_BAD_PARAM */
 static int sfNullHolds;     /* and nothing written through the other pointers */
-static int sfNullDeclines;  /* a declinable out-pointer left NULL: accepted */
 static int sfNullOriginals; /* the handle those calls named, unmoved */
 
 #define SF_NULL_CLOSE_ALL                                                     \
@@ -1047,9 +1046,8 @@ static int sfNullOriginals; /* the handle those calls named, unmoved */
       sfNullHolds++;                                                          \
    } while(0)
 
-/* One single-output handle, one multi-output and the one with a declinable
- * output: the three shapes Value is emitted in. Close has more bodies than
- * that, hence the wider list below. A rejected call on the SMA handle that did
+/* One single-output handle and two multi-output ones. Close has more bodies
+ * than that, hence the wider list below. A rejected call on the SMA handle that did
  * act would show on its twin at the end, so the order of the probes does not
  * matter. */
 static ErrorNumber sf_null_arguments( void )
@@ -1059,7 +1057,7 @@ static ErrorNumber sf_null_arguments( void )
    TA_MAMA_Stream *mm = NULL;
    double seed = 0.0, v, v0 = 0.0, v1 = 0.0, va = 0.0, vb = 0.0;
    double u0, u1, u2, m, f;
-   int b, n, b0 = 0, n0 = 0, b1 = 0, n1 = 0;
+   int b, n, b0 = 0, n0 = 0, b1 = 0, n1 = 0, mb0 = 0, mn0 = 0, mb1 = 0, mn1 = 0;
    const int warm = 60;
 
    /* First, because every failure path below closes handles that may be NULL. */
@@ -1076,6 +1074,7 @@ static ErrorNumber sf_null_arguments( void )
        (sfOpenRc = TA_SMA_Open( &twin, sfClose, warm, 10, &seed )) != TA_SUCCESS ||
        (sfOpenRc = TA_BBANDS_Open( &bb, sfClose, warm, 20, 2.0, 2.0, TA_MAType_SMA, &u0, &u1, &u2 )) != TA_SUCCESS ||
        (sfOpenRc = TA_MAMA_Open( &mm, sfClose, warm, 0.5, 0.05, &m, &f )) != TA_SUCCESS ||
+       (sfOpenRc = TA_MAMA_OutRange( mm, &mb0, &mn0 )) != TA_SUCCESS ||
        (sfOpenRc = TA_SMA_Value( s, &v0 )) != TA_SUCCESS ||
        (sfOpenRc = TA_SMA_OutRange( s, &b0, &n0 )) != TA_SUCCESS )
    {
@@ -1111,15 +1110,14 @@ static ErrorNumber sf_null_arguments( void )
    SF_NULL_HELD( "BBANDS", u0 == SF_ADV_CANARY && u1 == SF_ADV_CANARY && u2 == SF_ADV_CANARY );
 
    m = f = SF_ADV_CANARY;
-   SF_NULL_REJECT( "TA_MAMA_Value(outMAMA NULL)", TA_MAMA_Value( mm, NULL, &f ) );
-   SF_NULL_HELD( "MAMA", f == SF_ADV_CANARY );
-   if( TA_MAMA_Value( mm, &m, NULL ) != TA_SUCCESS || m == SF_ADV_CANARY )
-   {
-      printf( "  TA_MAMA_Value did not accept its declinable output as NULL\n" );
-      SF_NULL_CLOSE_ALL;
-      return TA_STREAM_NULL_NOT_REJECTED;
-   }
-   sfNullDeclines++;
+   SF_NULL_REJECT( "TA_MAMA_Value(outMAMA NULL)",  TA_MAMA_Value( mm, NULL, &f ) );
+   SF_NULL_REJECT( "TA_MAMA_Value(outFAMA NULL)",  TA_MAMA_Value( mm, &m, NULL ) );
+   SF_NULL_REJECT( "TA_MAMA_Update(outMAMA NULL)", TA_MAMA_Update( mm, sfClose[warm], NULL, &f ) );
+   SF_NULL_REJECT( "TA_MAMA_Update(outFAMA NULL)", TA_MAMA_Update( mm, sfClose[warm], &m, NULL ) );
+   SF_NULL_REJECT( "TA_MAMA_Peek(outFAMA NULL)",   TA_MAMA_Peek( mm, sfClose[warm], &m, NULL ) );
+   SF_NULL_HELD( "MAMA", m == SF_ADV_CANARY && f == SF_ADV_CANARY );
+   SF_NULL_HELD( "MAMA OutRange (a rejected Update counts no bar)",
+                 TA_MAMA_OutRange( mm, &mb1, &mn1 ) == TA_SUCCESS && mb1 == mb0 && mn1 == mn0 );
 
    if( TA_SMA_Value( s, &v1 ) != TA_SUCCESS || TA_SMA_OutRange( s, &b1, &n1 ) != TA_SUCCESS ||
        memcmp( &v0, &v1, sizeof(v0) ) != 0 || b0 != b1 || n0 != n1 ||
@@ -1155,7 +1153,7 @@ ErrorNumber test_func_stream_finite( TA_History *history )
    sfAdvSkips = sfAdvSkipHolds = 0;
    sfAdvNullRejects = 0;
    sfAdvCeilings = sfAdvCeilingRejects = sfAdvCeilingHolds = 0;
-   sfNullCloses = sfNullRejects = sfNullHolds = sfNullDeclines = sfNullOriginals = 0;
+   sfNullCloses = sfNullRejects = sfNullHolds = sfNullOriginals = 0;
 
    if( ( errNb = sf_sma()       ) != TA_TEST_PASS ) return errNb;
    if( ( errNb = sf_minus_di()  ) != TA_TEST_PASS ) return errNb;
@@ -1188,8 +1186,8 @@ ErrorNumber test_func_stream_finite( TA_History *history )
       return TA_STREAM_ADVANCE_VACUOUS;
    }
 
-   if( sfNullCloses < 6 || sfNullRejects < 16 || sfNullHolds < 5 ||
-       sfNullDeclines < 1 || sfNullOriginals < 1 )
+   if( sfNullCloses < 6 || sfNullRejects < 20 || sfNullHolds < 6 ||
+       sfNullOriginals < 1 )
    {
       printf( "  Failed: the absent-argument gate ran fewer checks than it "
               "was written with\n" );

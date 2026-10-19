@@ -1407,7 +1407,6 @@ pub(crate) fn output_flag_to_c(flag: &str) -> Option<&'static str> {
         "zero" => Some("TA_OUT_ZERO"),
         "upper_limit" => Some("TA_OUT_UPPER_LIMIT"),
         "lower_limit" => Some("TA_OUT_LOWER_LIMIT"),
-        "nullable" => Some("TA_OUT_NULLABLE"),
         "display_shift" => Some("TA_OUT_DISPLAY_SHIFT"),
         "pattern_weak" => Some("TA_OUT_PATTERN_WEAK"),
         _ => None,
@@ -3190,22 +3189,6 @@ fn emit_func_h_block(o: &mut String, func: &FuncDef, lookup: &dyn crate::streami
         .collect();
     let _ = writeln!(o, " * Output = {}", output_desc.join(", "));
     o.push_str(" * \n");
-
-    let declinable: Vec<&str> = func
-        .outputs
-        .iter()
-        .filter(|out| out.is_nullable())
-        .map(|out| out.name.as_str())
-        .collect();
-    if !declinable.is_empty() {
-        let _ = writeln!(
-            o,
-            " * {} may be NULL: still computed where the algorithm needs it, but\n \
-             * not written out.",
-            declinable.join(" and ")
-        );
-        o.push_str(" * \n");
-    }
 
     // Optional parameters section
     if !func.optional_inputs.is_empty() {

@@ -65,6 +65,7 @@
  *  090426 MF,CC Add RMA (issue #348).
  *  092926 MF,CC Add VIDYA (issue #474).
  *  092926 MF,CC Add ALMA (issue #475).
+ *  101926 MF,CC MAMA: FAMA goes to a scratch buffer (issue #552).
  */
 
 TA_LIB_API int TA_MA_Lookback( int optInTimePeriod, TA_MAType optInMAType )
@@ -151,6 +152,7 @@ TA_LIB_API TA_RetCode TA_MA( int    startIdx,
                              int          *outNBElement,
                              double        outReal[] )
 {
+   double *famaScratch;
    TA_RetCode retCode;
    int nbElement;
    int outIdx;
@@ -246,10 +248,16 @@ TA_LIB_API TA_RetCode TA_MA( int    startIdx,
       retCode = TA_KAMA(startIdx,endIdx,inReal,optInTimePeriod,outBegIdx,outNBElement,outReal);
       break;
    case TA_MAType_MAMA:
-      /* The optInTimePeriod is ignored. FAMA is a nullable output
-       * (issue #125): pass NULL to compute only the MAMA line into outReal.
-       */
-      retCode = TA_MAMA(startIdx,endIdx,inReal,0.5,0.05,outBegIdx,outNBElement,outReal,NULL);
+      /* The optInTimePeriod is ignored. */
+      famaScratch = malloc((endIdx - startIdx + 1) * sizeof(double));
+      if( !famaScratch )
+      {
+         *outBegIdx= 0;
+         *outNBElement= 0;
+         return TA_ALLOC_ERR;
+      }
+      retCode = TA_MAMA(startIdx,endIdx,inReal,0.5,0.05,outBegIdx,outNBElement,outReal,famaScratch);
+      free(famaScratch);
       break;
    case TA_MAType_T3:
       retCode = TA_T3(startIdx,endIdx,inReal,optInTimePeriod,0.7,outBegIdx,outNBElement,outReal);
@@ -288,6 +296,7 @@ TA_RetCode TA_S_MA( int    startIdx,
                     int          *outNBElement,
                     double        outReal[] )
 {
+   double *famaScratch;
    TA_RetCode retCode;
    int nbElement;
    int outIdx;
@@ -354,7 +363,15 @@ TA_RetCode TA_S_MA( int    startIdx,
       retCode = TA_S_KAMA(startIdx,endIdx,inReal,optInTimePeriod,outBegIdx,outNBElement,outReal);
       break;
    case TA_MAType_MAMA:
-      retCode = TA_S_MAMA(startIdx,endIdx,inReal,0.5,0.05,outBegIdx,outNBElement,outReal,NULL);
+      famaScratch = malloc((endIdx - startIdx + 1) * sizeof(double));
+      if( !famaScratch )
+      {
+         *outBegIdx= 0;
+         *outNBElement= 0;
+         return TA_ALLOC_ERR;
+      }
+      retCode = TA_S_MAMA(startIdx,endIdx,inReal,0.5,0.05,outBegIdx,outNBElement,outReal,famaScratch);
+      free(famaScratch);
       break;
    case TA_MAType_T3:
       retCode = TA_S_T3(startIdx,endIdx,inReal,optInTimePeriod,0.7,outBegIdx,outNBElement,outReal);
@@ -503,7 +520,9 @@ TA_RetCode TA_MA_OpenInternal( struct TA_MA_Stream **stream, const double inReal
    case TA_MAType_MAMA:
       {
          TA_MAMA_Stream *sub = NULL;
-         retCode = TA_MAMA_OpenInternal( &sub, inReal, startIdx, historyLen, 0.5, 0.05, outReal, NULL );
+         double famaScratch;
+
+         retCode = TA_MAMA_OpenInternal( &sub, inReal, startIdx, historyLen, 0.5, 0.05, outReal, &famaScratch );
          sp->sub = sub;
          if( retCode == TA_SUCCESS )
             TA_MAMA_OutRange( sub, &sp->outRangeBegIdx, &sp->outRangeCount );
@@ -689,7 +708,16 @@ TA_LIB_API TA_RetCode TA_MA_OpenAndFill( TA_MA_Stream **stream, const double inR
    case TA_MAType_MAMA:
       {
          TA_MAMA_Stream *sub = NULL;
-         retCode = TA_MAMA_OpenAndFill( &sub, inReal, historyLen, 0.5, 0.05, outBegIdx, outNBElement, outReal, NULL );
+         double *famaScratch;
+
+         famaScratch = (double *)TA_Malloc( historyLen * sizeof(double) );
+         if( !famaScratch )
+         {
+            TA_Free( sp );
+            return TA_ALLOC_ERR;
+         }
+         retCode = TA_MAMA_OpenAndFill( &sub, inReal, historyLen, 0.5, 0.05, outBegIdx, outNBElement, outReal, famaScratch );
+         TA_Free( famaScratch );
          sp->sub = sub;
       }
       break;
@@ -854,7 +882,16 @@ TA_RetCode TA_MA_OpenAndFillInternal( struct TA_MA_Stream **stream, const double
    case TA_MAType_MAMA:
       {
          TA_MAMA_Stream *sub = NULL;
-         retCode = TA_MAMA_OpenAndFillInternal( &sub, inReal, startIdx, historyLen, 0.5, 0.05, outBegIdx, outNBElement, outReal, NULL );
+         double *famaScratch;
+
+         famaScratch = (double *)TA_Malloc( historyLen * sizeof(double) );
+         if( !famaScratch )
+         {
+            TA_Free( sp );
+            return TA_ALLOC_ERR;
+         }
+         retCode = TA_MAMA_OpenAndFillInternal( &sub, inReal, startIdx, historyLen, 0.5, 0.05, outBegIdx, outNBElement, outReal, famaScratch );
+         TA_Free( famaScratch );
          sp->sub = sub;
       }
       break;
@@ -957,7 +994,11 @@ TA_LIB_API TA_RetCode TA_MA_Update( TA_MA_Stream *stream, double inReal, double 
       retCode = TA_KAMA_Update( (TA_KAMA_Stream *)stream->sub, inReal, outReal );
       break;
    case TA_MAType_MAMA:
-      retCode = TA_MAMA_Update( (TA_MAMA_Stream *)stream->sub, inReal, outReal, NULL );
+      {
+         double famaScratch;
+
+         retCode = TA_MAMA_Update( (TA_MAMA_Stream *)stream->sub, inReal, outReal, &famaScratch );
+      }
       break;
    case TA_MAType_T3:
       retCode = TA_T3_Update( (TA_T3_Stream *)stream->sub, inReal, outReal );
@@ -1013,7 +1054,11 @@ TA_LIB_API TA_RetCode TA_MA_Peek( const TA_MA_Stream *stream, double inReal, dou
    case TA_MAType_KAMA:
       return TA_KAMA_Peek( (const TA_KAMA_Stream *)stream->sub, inReal, outReal );
    case TA_MAType_MAMA:
-      return TA_MAMA_Peek( (const TA_MAMA_Stream *)stream->sub, inReal, outReal, NULL );
+      {
+         double famaScratch;
+
+         return TA_MAMA_Peek( (const TA_MAMA_Stream *)stream->sub, inReal, outReal, &famaScratch );
+      }
    case TA_MAType_T3:
       return TA_T3_Peek( (const TA_T3_Stream *)stream->sub, inReal, outReal );
    case TA_MAType_HMA:
@@ -1066,7 +1111,11 @@ void TA_MA_StepTape( struct TA_MA_Stream *stream, const double tape[], int tapeB
       TA_KAMA_StepTape( (struct TA_KAMA_Stream *)stream->sub, tape, tapeBase, tapeMask, inReal, outReal );
       break;
    case TA_MAType_MAMA:
-      TA_MAMA_StepTape( (struct TA_MAMA_Stream *)stream->sub, tape, tapeBase, tapeMask, inReal, outReal, NULL );
+      {
+         double famaScratch;
+
+         TA_MAMA_StepTape( (struct TA_MAMA_Stream *)stream->sub, tape, tapeBase, tapeMask, inReal, outReal, &famaScratch );
+      }
       break;
    case TA_MAType_T3:
       TA_T3_StepTape( (struct TA_T3_Stream *)stream->sub, tape, tapeBase, tapeMask, inReal, outReal );
@@ -1126,7 +1175,11 @@ void TA_MA_PeekTape( const struct TA_MA_Stream *stream, const double tape[], int
       TA_KAMA_PeekTape( (const struct TA_KAMA_Stream *)stream->sub, tape, tapeBase, tapeMask, inReal, outReal );
       break;
    case TA_MAType_MAMA:
-      TA_MAMA_PeekTape( (const struct TA_MAMA_Stream *)stream->sub, tape, tapeBase, tapeMask, inReal, outReal, NULL );
+      {
+         double famaScratch;
+
+         TA_MAMA_PeekTape( (const struct TA_MAMA_Stream *)stream->sub, tape, tapeBase, tapeMask, inReal, outReal, &famaScratch );
+      }
       break;
    case TA_MAType_T3:
       TA_T3_PeekTape( (const struct TA_T3_Stream *)stream->sub, tape, tapeBase, tapeMask, inReal, outReal );

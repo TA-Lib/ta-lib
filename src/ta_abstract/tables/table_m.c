@@ -316,7 +316,7 @@ const TA_OutputParameterInfo TA_DEF_UI_Output_Real_MAMA_outMAMA =
                                { TA_Output_Real, "outMAMA", TA_OUT_LINE };
 
 const TA_OutputParameterInfo TA_DEF_UI_Output_Real_MAMA_outFAMA =
-                               { TA_Output_Real, "outFAMA", TA_OUT_DASH_LINE | TA_OUT_NULLABLE };
+                               { TA_Output_Real, "outFAMA", TA_OUT_DASH_LINE };
 
 static const TA_InputParameterInfo    *TA_MAMA_Inputs[]    =
 {

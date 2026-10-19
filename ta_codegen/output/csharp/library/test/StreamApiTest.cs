@@ -688,56 +688,6 @@ public static class StreamApiTest
         }
     }
 
-
-    /// <summary>Rule rB7 at the opener: an empty span declines
-    /// <c>outFAMA</c>, and declining changes nothing but the write.</summary>
-    /// <remarks>Non-vacuous in three directions. The supplied run is the oracle,
-    /// so a fill that stopped computing FAMA when it is declined — the easy way
-    /// to "support" this — fails on <c>Value</c>, which the handle caches from
-    /// the same expression the guarded store writes. The declined run must still
-    /// reject an undersized <c>outMAMA</c>, so the conditional bound cannot have
-    /// been dropped wholesale. And a SUPPLIED but undersized <c>outFAMA</c> is
-    /// still rejected, so "declinable" did not become "unchecked".</remarks>
-    private static void ADeclinedFillOutputIsStillComputed()
-    {
-        var core = new Core();
-        double[] closes = Closes(252);
-        int produced = closes.Length - core.MamaLookback(0.5, 0.05);
-
-        var refMama = new double[produced];
-        var refFama = new double[produced];
-        Core.MamaStream both = core.MamaOpenAndFill(closes, 0.5, 0.05, refMama, refFama);
-
-        var soloMama = new double[produced];
-        Core.MamaStream declined = core.MamaOpenAndFill(closes, 0.5, 0.05, soloMama, default);
-
-        _b6a++;
-        Check(refMama.AsSpan().SequenceEqual(soloMama),
-            "declining outFAMA leaves outMAMA bit-identical");
-        Check(both.OutRange.BegIdx == declined.OutRange.BegIdx
-              && both.OutRange.Count == declined.OutRange.Count,
-            "declining outFAMA leaves the reported range unchanged");
-        _b6a++;
-        Check(BitConverter.DoubleToInt64Bits(both.Value.FAMA)
-              == BitConverter.DoubleToInt64Bits(declined.Value.FAMA),
-            "a declined outFAMA is still computed: the handle reports it");
-        _b6a++;
-        Check(BitConverter.DoubleToInt64Bits(refFama[produced - 1])
-              == BitConverter.DoubleToInt64Bits(declined.Value.FAMA),
-            "and it is the value the supplied run wrote last");
-        _b6a++;
-
-        CheckThrows<ArgumentException>(
-            () => core.MamaOpenAndFill(closes, 0.5, 0.05, new double[produced - 1], default),
-            "an undersized outMAMA is still rejected when outFAMA is declined");
-        _b6a++;
-        CheckThrows<ArgumentException>(
-            () => core.MamaOpenAndFill(closes, 0.5, 0.05, new double[produced],
-                      new double[produced - 1]),
-            "a supplied outFAMA is still bounded");
-        _b6a++;
-    }
-
     /// <summary>Rule rS5, from both sides. The bound is
     /// <c>historyLen - lookback</c> — the count the fill actually writes, not
     /// the width of the history — so an exactly-sized output has to be ACCEPTED
@@ -852,7 +802,7 @@ public static class StreamApiTest
         CheckRetCode(() => core.SmaOpenAndFill(closes.AsSpan(0, 29), 30, Span<double>.Empty),
             RetCode.BadParam, "an empty output is absent, short history or not");
 
-        // The floors for this method and the declined-output one live in Run(),
+        // This method's floor lives in Run(),
         // where a deleted CALL cannot take its own floor with it.
     }
 
@@ -1104,8 +1054,6 @@ public static class StreamApiTest
     /* Rule rS5's own counter and floor: sharing the non-finite ones would let a
        deleted capacity case hide behind a bar-rejection one. */
     private static int _s5;
-    /* Rule rB7 at the opener — a declined output, counted apart from rS5's. */
-    private static int _b6a;
 
     private static int _nfOpen;
     private static int _nfBar;
@@ -2163,12 +2111,10 @@ public static class StreamApiTest
         OpenersCheckTheirArguments();
         AnEmptyHistoryOutranksAnEmptyArgument();
         TheFillOutputBoundFromBothSides();
-        ADeclinedFillOutputIsStillComputed();
         TheFillOutputBoundHoldsOnEveryTier();
         // Literal floors, HERE and not inside the methods above: a floor that
         // rides its own method is deleted along with the call it guards.
         Check(_s5 >= 5, $"the fill-capacity gate ran fewer checks than it was written with ({_s5})");
-        Check(_b6a >= 6, $"the declined-output gate ran fewer checks than it was written with ({_b6a})");
         Check(_mavpConfigs >= 39, $"the MAVP bank sweep ran fewer configurations than it was written with ({_mavpConfigs})");
         IntegerSentinelSelectsTheDocumentedDefault();
         SettingsAreCapturedFromTheOpeningCore();

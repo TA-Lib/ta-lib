@@ -157,7 +157,7 @@ impl Core {
         outBegIdx: &mut usize,
         outNBElement: &mut usize,
         outMAMA: &mut [f64],
-        outFAMA: Option<&mut [f64]>,
+        outFAMA: &mut [f64],
     ) -> RetCode {
         #[cfg(target_arch = "x86_64")]
         return ta_lib_dispatch::dispatch_fma!(self, mama_impl_fma, mama_impl_scalar, (startIdx, endIdx, inReal, optInFastLimit, optInSlowLimit, outBegIdx, outNBElement, outMAMA, outFAMA));
@@ -176,7 +176,7 @@ impl Core {
         outBegIdx: &mut usize,
         outNBElement: &mut usize,
         outMAMA: &mut [f64],
-        outFAMA: Option<&mut [f64]>,
+        outFAMA: &mut [f64],
     ) -> RetCode {
         self.mama_impl_scalar(startIdx, endIdx, inReal, optInFastLimit, optInSlowLimit, outBegIdx, outNBElement, outMAMA, outFAMA)
     }
@@ -191,7 +191,7 @@ impl Core {
         outBegIdx: &mut usize,
         outNBElement: &mut usize,
         outMAMA: &mut [f64],
-        mut outFAMA: Option<&mut [f64]>,
+        outFAMA: &mut [f64],
     ) -> RetCode {
         if startIdx > Self::INDEX_MAX {
             return RetCode::OutOfRangeStartIndex;
@@ -213,8 +213,8 @@ impl Core {
         let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
         assert!(_assertStart > endIdx || endIdx < inReal.len());
         assert!(_assertStart > endIdx || endIdx - _assertStart < outMAMA.len());
-        assert!(_assertStart > endIdx || outFAMA.as_deref().is_none_or(|o| endIdx - _assertStart < o.len()));
-        if outFAMA.as_deref().is_some_and(|b| outMAMA.as_ptr() == b.as_ptr()) {
+        assert!(_assertStart > endIdx || endIdx - _assertStart < outFAMA.len());
+        if (outMAMA.as_ptr() == outFAMA.as_ptr()) {
             return RetCode::BadParam;
         }
         let mut startIdx = startIdx;
@@ -539,11 +539,7 @@ impl Core {
             tempReal *= 0.5;
             fama = (1_f64 - tempReal as f64).mul_add(fama, tempReal * mama);
             if today >= startIdx {
-                // FAMA is nullable (issue #125): its write carries no outIdx advance so
-                // the codegen can NULL-guard it; outMAMA (never NULL) owns the ++.
-                if let Some(outFAMA) = outFAMA.as_deref_mut() {
-                    outFAMA[outIdx] = fama;
-                }
+                outFAMA[outIdx] = fama;
                 outMAMA[outIdx] = mama;
                 outIdx += 1;
             }
@@ -593,9 +589,7 @@ impl Core {
     /// * `optInSlowLimit` — Lower bound on the adaptive smoothing factor (default 0.05, range
     ///   0.01..=0.99)
     /// * `outMAMA` — Adaptive moving average (fast line)
-    /// * `outFAMA` — Following adaptive moving average, using half the alpha (slow line) Pass
-    ///   `None` to decline it: it is still computed where the algorithm needs it, but nothing is
-    ///   written out.
+    /// * `outFAMA` — Following adaptive moving average, using half the alpha (slow line)
     ///
     /// Real parameters accept [`Core::REAL_DEFAULT`] to select their default value.
     ///
@@ -629,7 +623,7 @@ impl Core {
     /// let mut mama = vec![0.0; 252];
     /// let mut fama = vec![0.0; 252];
     ///
-    /// let out_range = core.mama(0, data.len() - 1, &data, 0.5, 0.05, &mut mama, Some(&mut fama))?;
+    /// let out_range = core.mama(0, data.len() - 1, &data, 0.5, 0.05, &mut mama, &mut fama)?;
     /// assert!(out_range.count > 0);
     /// assert!(mama[..out_range.count].iter().all(|v| v.is_finite()));
     /// # Ok::<(), ta_lib::RetCode>(())
@@ -654,7 +648,7 @@ impl Core {
         optInFastLimit: f64,
         optInSlowLimit: f64,
         outMAMA: &mut [f64],
-        outFAMA: Option<&mut [f64]>,
+        outFAMA: &mut [f64],
     ) -> Result<OutRange, RetCode> {
         if startIdx > Self::INDEX_MAX {
             return Err(RetCode::OutOfRangeStartIndex);
@@ -671,7 +665,7 @@ impl Core {
         if outMAMA.is_empty() || outMAMA.len() < _guardOutLen {
             return Err(RetCode::BadParam);
         }
-        if outFAMA.as_deref().is_some_and(|o| o.is_empty() || o.len() < _guardOutLen) {
+        if outFAMA.is_empty() || outFAMA.len() < _guardOutLen {
             return Err(RetCode::BadParam);
         }
         let mut outBegIdx: usize = 0;
@@ -922,8 +916,6 @@ impl Core {
         sp.mama = (1_f64 - tempReal as f64).mul_add(sp.mama, tempReal * todayValue);
         tempReal *= 0.5;
         sp.fama = (1_f64 - tempReal as f64).mul_add(sp.fama, tempReal * sp.mama);
-        // FAMA is nullable (issue #125): its write carries no outIdx advance so
-        // the codegen can NULL-guard it; outMAMA (never NULL) owns the ++.
         (*outFAMA) = sp.fama;
         (*outMAMA) = sp.mama;
         // Adjust the period for next price bar
@@ -951,7 +943,7 @@ impl Core {
         sp.period = (0.2 as f64).mul_add(sp.period, 0.8 * tempReal);
         // Ooof... let's do the next price bar now!
         sp.cur_outMAMA = (*outMAMA);
-        sp.cur_outFAMA = sp.fama;
+        sp.cur_outFAMA = (*outFAMA);
         ringCapL_trailingWMAIdx = sp.ringCap_trailingWMAIdx;
         sp.ring_trailingWMAIdx_inReal[sp.ringPos_trailingWMAIdx] = inReal;
         sp.ringPos_trailingWMAIdx = sp.ringPos_trailingWMAIdx + 1;
@@ -1109,8 +1101,6 @@ impl Core {
         sp.mama = (1_f64 - tempReal as f64).mul_add(sp.mama, tempReal * todayValue);
         tempReal *= 0.5;
         sp.fama = (1_f64 - tempReal as f64).mul_add(sp.fama, tempReal * sp.mama);
-        // FAMA is nullable (issue #125): its write carries no outIdx advance so
-        // the codegen can NULL-guard it; outMAMA (never NULL) owns the ++.
         (*outFAMA) = sp.fama;
         (*outMAMA) = sp.mama;
         // Adjust the period for next price bar
@@ -1138,14 +1128,14 @@ impl Core {
         sp.period = (0.2 as f64).mul_add(sp.period, 0.8 * tempReal);
         // Ooof... let's do the next price bar now!
         sp.cur_outMAMA = (*outMAMA);
-        sp.cur_outFAMA = sp.fama;
+        sp.cur_outFAMA = (*outFAMA);
         sp.streamParity = 1 - sp.streamParity;
     }
 
     /// The single whole-history transcription behind [`Core::mama_open_internal`]
     /// (stride 0, scalar sink) and [`Core::mama_open_and_fill`] (stride 1, caller slices).
     pub(crate) fn mama_open_impl(
-        &self, inReal: &[f64], startIdx: usize, optInFastLimit: f64, optInSlowLimit: f64, outBegIdx: &mut usize, outNBElement: &mut usize, outMAMA: &mut [f64], outFAMA: Option<&mut [f64]>, outStride: usize,
+        &self, inReal: &[f64], startIdx: usize, optInFastLimit: f64, optInSlowLimit: f64, outBegIdx: &mut usize, outNBElement: &mut usize, outMAMA: &mut [f64], outFAMA: &mut [f64], outStride: usize,
     ) -> Result<MamaStream, RetCode> {
         #[cfg(target_arch = "x86_64")]
         return ta_lib_dispatch::dispatch_fma!(self, mama_open_impl_fma, mama_open_impl_scalar, (inReal, startIdx, optInFastLimit, optInSlowLimit, outBegIdx, outNBElement, outMAMA, outFAMA, outStride));
@@ -1156,14 +1146,14 @@ impl Core {
     #[cfg(target_arch = "x86_64")]
     #[target_feature(enable = "fma")]
     fn mama_open_impl_fma(
-        &self, inReal: &[f64], startIdx: usize, optInFastLimit: f64, optInSlowLimit: f64, outBegIdx: &mut usize, outNBElement: &mut usize, outMAMA: &mut [f64], outFAMA: Option<&mut [f64]>, outStride: usize,
+        &self, inReal: &[f64], startIdx: usize, optInFastLimit: f64, optInSlowLimit: f64, outBegIdx: &mut usize, outNBElement: &mut usize, outMAMA: &mut [f64], outFAMA: &mut [f64], outStride: usize,
     ) -> Result<MamaStream, RetCode> {
         self.mama_open_impl_scalar(inReal, startIdx, optInFastLimit, optInSlowLimit, outBegIdx, outNBElement, outMAMA, outFAMA, outStride)
     }
 
     #[inline(always)]
     fn mama_open_impl_scalar(
-        &self, inReal: &[f64], startIdx: usize, mut optInFastLimit: f64, mut optInSlowLimit: f64, outBegIdx: &mut usize, outNBElement: &mut usize, outMAMA: &mut [f64], mut outFAMA: Option<&mut [f64]>, outStride: usize,
+        &self, inReal: &[f64], startIdx: usize, mut optInFastLimit: f64, mut optInSlowLimit: f64, outBegIdx: &mut usize, outNBElement: &mut usize, outMAMA: &mut [f64], outFAMA: &mut [f64], outStride: usize,
     ) -> Result<MamaStream, RetCode> {
         if inReal.is_empty() {
             return Err(RetCode::OutOfRangeStartIndex);
@@ -1191,7 +1181,6 @@ impl Core {
         }
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
-        let mut lastCur_outFAMA: f64 = 0.0_f64;
         let mut outIdx: usize = 0_usize;
         let mut i: usize = 0_usize;
         let mut lookbackTotal: usize = 0_usize;
@@ -1512,12 +1501,7 @@ impl Core {
             tempReal *= 0.5;
             fama = (1_f64 - tempReal as f64).mul_add(fama, tempReal * mama);
             if today >= startIdx {
-                // FAMA is nullable (issue #125): its write carries no outIdx advance so
-                // the codegen can NULL-guard it; outMAMA (never NULL) owns the ++.
-                lastCur_outFAMA = fama;
-                if let Some(outFAMA) = outFAMA.as_deref_mut() {
-                    outFAMA[(outIdx * outStride) as usize] = fama;
-                }
+                outFAMA[(outIdx * outStride) as usize] = fama;
                 outMAMA[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = mama;
             }
             // Adjust the period for next price bar
@@ -1606,7 +1590,7 @@ impl Core {
             prevPhase,
             streamParity: historyLen % 2,
             cur_outMAMA: outMAMA[(*outNBElement - 1) * outStride],
-            cur_outFAMA: lastCur_outFAMA,
+            cur_outFAMA: outFAMA[(*outNBElement - 1) * outStride],
             ringPos_trailingWMAIdx: 0_usize,
             ringCap_trailingWMAIdx: cap_trailingWMAIdx as usize,
             ring_trailingWMAIdx_inReal,
@@ -1622,7 +1606,7 @@ impl Core {
         let mut dummyNBElement: usize = 0;
         let mut sink_outMAMA = [0.0_f64; 1];
         let mut sink_outFAMA = [0.0_f64; 1];
-        let handle = self.mama_open_impl(inReal, startIdx, optInFastLimit, optInSlowLimit, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outMAMA, Some(&mut sink_outFAMA), 0)?;
+        let handle = self.mama_open_impl(inReal, startIdx, optInFastLimit, optInSlowLimit, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outMAMA, &mut sink_outFAMA, 0)?;
         Ok((handle, (sink_outMAMA[0], sink_outFAMA[0])))
     }
 
@@ -1676,11 +1660,11 @@ impl Core {
     /// let core = Core::new();
     /// let mut batch_mama = vec![0.0; 252];
     /// let mut batch_fama = vec![0.0; 252];
-    /// let batch = core.mama(0, data.len() - 1, &data, 0.5, 0.05, &mut batch_mama, Some(&mut batch_fama[..]))?;
+    /// let batch = core.mama(0, data.len() - 1, &data, 0.5, 0.05, &mut batch_mama, &mut batch_fama)?;
     ///
     /// let mut mama = vec![0.0; 252];
     /// let mut fama = vec![0.0; 252];
-    /// let (_stream, filled) = core.mama_open_and_fill(&data, 0.5, 0.05, &mut mama, Some(&mut fama[..]))?;
+    /// let (_stream, filled) = core.mama_open_and_fill(&data, 0.5, 0.05, &mut mama, &mut fama)?;
     ///
     /// assert_eq!(filled.beg_idx, batch.beg_idx);
     /// assert_eq!(filled.count, batch.count);
@@ -1692,7 +1676,7 @@ impl Core {
     /// ```
     #[doc(alias = "TA_MAMA_OpenAndFill")]
     pub fn mama_open_and_fill(
-        &self, inReal: &[f64], mut optInFastLimit: f64, mut optInSlowLimit: f64, outMAMA: &mut [f64], outFAMA: Option<&mut [f64]>,
+        &self, inReal: &[f64], mut optInFastLimit: f64, mut optInSlowLimit: f64, outMAMA: &mut [f64], outFAMA: &mut [f64],
     ) -> Result<(MamaStream, OutRange), RetCode> {
         if inReal.is_empty() {
             return Err(RetCode::OutOfRangeStartIndex);
@@ -1705,7 +1689,7 @@ impl Core {
         if outMAMA.is_empty() || outMAMA.len() < _guardOutLen {
             return Err(RetCode::BadParam);
         }
-        if outFAMA.as_deref().is_some_and(|o| o.is_empty() || o.len() < _guardOutLen) {
+        if outFAMA.is_empty() || outFAMA.len() < _guardOutLen {
             return Err(RetCode::BadParam);
         }
         let mut outBegIdx: usize = 0;
@@ -1717,7 +1701,7 @@ impl Core {
     /// [`Core::mama_open_and_fill`] anchored at `startIdx` — the composed-open
     /// fusion seam (issue #192), not a public entry point.
     pub(crate) fn mama_open_and_fill_internal(
-        &self, inReal: &[f64], startIdx: usize, mut optInFastLimit: f64, mut optInSlowLimit: f64, outBegIdx: &mut usize, outNBElement: &mut usize, outMAMA: &mut [f64], outFAMA: Option<&mut [f64]>,
+        &self, inReal: &[f64], startIdx: usize, mut optInFastLimit: f64, mut optInSlowLimit: f64, outBegIdx: &mut usize, outNBElement: &mut usize, outMAMA: &mut [f64], outFAMA: &mut [f64],
     ) -> Result<MamaStream, RetCode> {
         self.mama_open_impl(inReal, startIdx, optInFastLimit, optInSlowLimit, outBegIdx, outNBElement, outMAMA, outFAMA, 1)
     }
@@ -1939,8 +1923,6 @@ impl MamaStream {
             mama = (1_f64 - tempReal as f64).mul_add(mama, tempReal * todayValue);
             tempReal *= 0.5;
             fama = (1_f64 - tempReal as f64).mul_add(fama, tempReal * mama);
-            // FAMA is nullable (issue #125): its write carries no outIdx advance so
-            // the codegen can NULL-guard it; outMAMA (never NULL) owns the ++.
             (*outFAMA) = fama;
             (*outMAMA) = mama;
         }
@@ -2159,8 +2141,6 @@ impl MamaStream {
             mama = (1_f64 - tempReal as f64).mul_add(mama, tempReal * todayValue);
             tempReal *= 0.5;
             fama = (1_f64 - tempReal as f64).mul_add(fama, tempReal * mama);
-            // FAMA is nullable (issue #125): its write carries no outIdx advance so
-            // the codegen can NULL-guard it; outMAMA (never NULL) owns the ++.
             (*outFAMA) = fama;
             (*outMAMA) = mama;
         }

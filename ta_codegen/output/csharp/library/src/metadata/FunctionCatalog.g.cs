@@ -3804,7 +3804,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
         outputs:
         [
             new OutputInfo(OutputKind.Real, "outMAMA", OutputFlags.Line),
-            new OutputInfo(OutputKind.Real, "outFAMA", OutputFlags.DashLine | OutputFlags.Nullable),
+            new OutputInfo(OutputKind.Real, "outFAMA", OutputFlags.DashLine),
         ],
         lookback: static (core, c) => core.MamaLookback(c.RealOpt(0), c.RealOpt(1)),
         displayShift: static (core, c, outputIdx) => core.MamaDisplayShift(c.RealOpt(0), c.RealOpt(1), outputIdx),

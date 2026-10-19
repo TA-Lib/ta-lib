@@ -328,9 +328,6 @@ fn c_batch_prologue_orders_parameters_before_presence() {
             }
             let mut outputs = Vec::new();
             for output in &func.outputs {
-                if output.is_nullable() {
-                    continue;
-                }
                 let at = prologue
                     .find(&format!("if( !{} )", output.name))
                     .unwrap_or_else(|| panic!("{where_}\n{} is unchecked", output.name));
@@ -388,8 +385,6 @@ fn same_typed_outputs(a: &ir::Output, b: &ir::Output) -> bool {
 }
 
 fn rust_alias_guard(func: &ir::FuncDef) -> Option<String> {
-    // A nullable output is an `Option` and
-    // contributes a term only when it was supplied (rule rB7).
     let mut pairs: Vec<String> = Vec::new();
     for i in 0..func.outputs.len() {
         for j in (i + 1)..func.outputs.len() {
@@ -397,24 +392,7 @@ fn rust_alias_guard(func: &ir::FuncDef) -> Option<String> {
             if !same_typed_outputs(a, b) {
                 continue;
             }
-            pairs.push(match (a.is_nullable(), b.is_nullable()) {
-                (false, false) => format!(
-                    "({0}.as_ptr() == {1}.as_ptr())",
-                    a.name, b.name
-                ),
-                (true, false) => format!(
-                    "{0}.as_deref().is_some_and(|a| a.as_ptr() == {1}.as_ptr())",
-                    a.name, b.name
-                ),
-                (false, true) => format!(
-                    "{1}.as_deref().is_some_and(|b| {0}.as_ptr() == b.as_ptr())",
-                    a.name, b.name
-                ),
-                (true, true) => format!(
-                    "{0}.as_deref().zip({1}.as_deref()).is_some_and(|(a, b)| a.as_ptr() == b.as_ptr())",
-                    a.name, b.name
-                ),
-            });
+            pairs.push(format!("({0}.as_ptr() == {1}.as_ptr())", a.name, b.name));
         }
     }
     if pairs.is_empty() {
@@ -545,19 +523,10 @@ fn rust_batch_impl_orders_capacity_before_aliasing() {
         // Every output's capacity is rB5, so the guard has to follow ALL of the
         // asserts, not merely the first.
         for output in &func.outputs {
-            // A declined output has no capacity to bound, so its assert asks the
-            // question only when one was supplied (rule rB7).
-            let cap = if output.is_nullable() {
-                format!(
-                    "assert!(_assertStart > endIdx || {}.as_deref().is_none_or(|o| endIdx - _assertStart < o.len()));",
-                    output.name
-                )
-            } else {
-                format!(
-                    "assert!(_assertStart > endIdx || endIdx - _assertStart < {}.len());",
-                    output.name
-                )
-            };
+            let cap = format!(
+                "assert!(_assertStart > endIdx || endIdx - _assertStart < {}.len());",
+                output.name
+            );
             let cap_at = section
                 .find(&cap)
                 .unwrap_or_else(|| panic!("{where_}\n{} has no capacity assert", output.name));
@@ -645,14 +614,7 @@ fn rust_public_entry_orders_the_argument_contract() {
             last_input = last_input.max(at);
         }
         for output in &func.outputs {
-            let needle = if output.is_nullable() {
-                format!(
-                    "if {}.as_deref().is_some_and(|o| o.is_empty() || o.len() < _guardOutLen) {{",
-                    output.name
-                )
-            } else {
-                format!("if {0}.is_empty() || {0}.len() < _guardOutLen {{", output.name)
-            };
+            let needle = format!("if {0}.is_empty() || {0}.len() < _guardOutLen {{", output.name);
             let at = section
                 .find(&needle)
                 .unwrap_or_else(|| panic!("{where_}\n{} has no output bound", output.name));

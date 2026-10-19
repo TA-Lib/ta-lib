@@ -148,19 +148,18 @@ pub(crate) fn emit_rust_ridealong_fn(func: &FuncDef) -> String {
     {
         let (mut r, mut i) = (0usize, 0usize);
         for out in outs {
-            let (op, cl) = if out.is_nullable() { ("Some(", ")") } else { ("", "") };
             if out.param_type == ParamType::Integer {
                 let _ = writeln!(ref_decl, "    let mut rib{i} = vec![0i32; m];");
                 let _ = writeln!(fill_decl, "        let mut fib{i} = vec![0i32; m];");
-                let _ = write!(ref_args, ", {op}&mut rib{i}{cl}");
-                let _ = write!(fill_args, ", {op}&mut fib{i}{cl}");
+                let _ = write!(ref_args, ", &mut rib{i}");
+                let _ = write!(fill_args, ", &mut fib{i}");
                 slot_of.push((true, i));
                 i += 1;
             } else {
                 let _ = writeln!(ref_decl, "    let mut rb{r} = vec![0.0f64; m];");
                 let _ = writeln!(fill_decl, "        let mut fb{r} = vec![0.0f64; m];");
-                let _ = write!(ref_args, ", {op}&mut rb{r}{cl}");
-                let _ = write!(fill_args, ", {op}&mut fb{r}{cl}");
+                let _ = write!(ref_args, ", &mut rb{r}");
+                let _ = write!(fill_args, ", &mut fb{r}");
                 slot_of.push((false, r));
                 r += 1;
             }

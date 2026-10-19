@@ -277,8 +277,8 @@ public sealed partial class Core
         }
     }
 
-    /* An output that cannot be declined is absent when its span is empty, a
-     * null array included, whatever the call would have written. */
+    /* An output is absent when its span is empty, a null array included,
+     * whatever the call would have written. */
     internal static void RequirePresent(string funcName, string argName, int actual)
     {
         if (actual == 0)
@@ -304,18 +304,15 @@ public sealed partial class Core
     }
 
     /* Rule rS6 at an opener: the same buffer, as C compares it, is one start
-     * address. A null reference is no buffer, and an empty span beside a
-     * non-empty one is a declined output, not that buffer. */
+     * address. A null reference is no buffer. */
     internal static bool SameBuffer<T>(Span<T> a, ReadOnlySpan<T> b)
-        => SameStart(ref MemoryMarshal.GetReference(a), a.IsEmpty,
-                     ref MemoryMarshal.GetReference(b), b.IsEmpty);
+        => SameStart(ref MemoryMarshal.GetReference(a), ref MemoryMarshal.GetReference(b));
 
     internal static bool SameBuffer<T>(Span<T> a, Span<T> b)
-        => SameStart(ref MemoryMarshal.GetReference(a), a.IsEmpty,
-                     ref MemoryMarshal.GetReference(b), b.IsEmpty);
+        => SameStart(ref MemoryMarshal.GetReference(a), ref MemoryMarshal.GetReference(b));
 
-    private static bool SameStart<T>(ref T a, bool aEmpty, ref T b, bool bEmpty)
-        => aEmpty == bEmpty && !Unsafe.IsNullRef(ref a) && Unsafe.AreSame(ref a, ref b);
+    private static bool SameStart<T>(ref T a, ref T b)
+        => !Unsafe.IsNullRef(ref a) && Unsafe.AreSame(ref a, ref b);
 
     /* Rule rS5's bound: how many values an OpenAndFill writes.
      *
@@ -372,8 +369,7 @@ public sealed partial class Core
                 argName, RetCode.BadParam);
         }
         /* Reached with required == 0 only, on a history too short to open: an
-         * empty output is absent, and that outranks the history check. A
-         * declinable one is not passed here when empty. */
+         * empty output is absent, and that outranks the history check. */
         if (actual == 0)
         {
             throw new TALibArgumentException(

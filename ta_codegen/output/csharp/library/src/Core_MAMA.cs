@@ -499,11 +499,7 @@ public partial class Core
          tempReal *= 0.5;
          fama = Math.FusedMultiplyAdd(1 - tempReal, fama, tempReal * mama);
          if( today >= startIdx ) {
-            /* FAMA is nullable (issue #125): its write carries no outIdx advance so
-             * the codegen can NULL-guard it; outMAMA (never NULL) owns the ++.
-             */
-            if( !outFAMA.IsEmpty )
-               outFAMA[outIdx] = fama;
+            outFAMA[outIdx] = fama;
             outMAMA[outIdx++] = mama;
          }
          /* Adjust the period for next price bar */
@@ -841,8 +837,7 @@ public partial class Core
          tempReal *= 0.5;
          fama = Math.FusedMultiplyAdd(1 - tempReal, fama, tempReal * mama);
          if( today >= startIdx ) {
-            if( !outFAMA.IsEmpty )
-               outFAMA[outIdx] = fama;
+            outFAMA[outIdx] = fama;
             outMAMA[outIdx++] = mama;
          }
          Re = Math.FusedMultiplyAdd(0.8, Re, 0.2 * (Math.FusedMultiplyAdd(I2, prevI2, Q2 * prevQ2)));
@@ -906,11 +901,9 @@ public partial class Core
    /// <param name="outMAMA">Adaptive moving average (fast line) Must hold at least <c>endIdx -
    /// max(startIdx, MamaLookback(...)) + 1</c> values, and never be empty: an
    /// empty span is an absent output.</param>
-   /// <param name="outFAMA">Following adaptive moving average, using half the alpha (slow line) Pass
-   /// an empty span, such as <c>default</c>, to decline it: it is still computed
-   /// where the algorithm needs it, but nothing is written out. Supplied, it
-   /// must hold at least <c>endIdx - max(startIdx, MamaLookback(...)) + 1</c>
-   /// values, the count the call produces (none when that is not positive).</param>
+   /// <param name="outFAMA">Following adaptive moving average, using half the alpha (slow line) Must
+   /// hold at least <c>endIdx - max(startIdx, MamaLookback(...)) + 1</c> values,
+   /// and never be empty: an empty span is an absent output.</param>
    /// <returns>The range written: <c>BegIdx</c> is the first bar with a value,
    /// <c>Count</c> how many were written.</returns>
    /// <exception cref="System.ArgumentOutOfRangeException"><c>startIdx</c> or <c>endIdx</c> is negative or above
@@ -925,8 +918,8 @@ public partial class Core
    /// cannot hold the values produced. Declared, not read: a few candlestick
    /// patterns take an OHLC series they never index, and it is required all the
    /// same. A null array arrives as an empty span, and an empty span is an
-   /// absent argument: for an input, or an output that cannot be declined, it is
-   /// rejected even when the call would produce nothing.</description></item>
+   /// absent argument: for an input or an output, it is rejected even when the
+   /// call would produce nothing.</description></item>
    /// <item><description>Two outputs overlap or are one array
    /// (<see href="https://ta-lib.org/spec/errors/#rb6">rule rB6</see>), or an
    /// output partially overlaps an input. Computing wholly in place (an output
@@ -950,7 +943,8 @@ public partial class Core
       RequireLength("MAMA", "inReal", inReal.Length, guardInLen);
       if( guardStart >= 0 ) RequirePresent("MAMA", "outMAMA", outMAMA.Length);
       RequireLength("MAMA", "outMAMA", outMAMA.Length, guardOutLen);
-      if( !outFAMA.IsEmpty ) RequireLength("MAMA", "outFAMA", outFAMA.Length, guardOutLen);
+      if( guardStart >= 0 ) RequirePresent("MAMA", "outFAMA", outFAMA.Length);
+      RequireLength("MAMA", "outFAMA", outFAMA.Length, guardOutLen);
       RetCode retCode = MamaImpl(startIdx, endIdx, inReal, optInFastLimit, optInSlowLimit, out int outBegIdx, out int outNBElement, outMAMA, outFAMA);
       if( retCode != RetCode.Success ) {
          throw Failure("MAMA", retCode);
@@ -997,11 +991,9 @@ public partial class Core
    /// <param name="outMAMA">Adaptive moving average (fast line) Must hold at least <c>endIdx -
    /// max(startIdx, MamaLookback(...)) + 1</c> values, and never be empty: an
    /// empty span is an absent output.</param>
-   /// <param name="outFAMA">Following adaptive moving average, using half the alpha (slow line) Pass
-   /// an empty span, such as <c>default</c>, to decline it: it is still computed
-   /// where the algorithm needs it, but nothing is written out. Supplied, it
-   /// must hold at least <c>endIdx - max(startIdx, MamaLookback(...)) + 1</c>
-   /// values, the count the call produces (none when that is not positive).</param>
+   /// <param name="outFAMA">Following adaptive moving average, using half the alpha (slow line) Must
+   /// hold at least <c>endIdx - max(startIdx, MamaLookback(...)) + 1</c> values,
+   /// and never be empty: an empty span is an absent output.</param>
    /// <returns>The range written: <c>BegIdx</c> is the first bar with a value,
    /// <c>Count</c> how many were written.</returns>
    /// <exception cref="System.ArgumentOutOfRangeException"><c>startIdx</c> or <c>endIdx</c> is negative or above
@@ -1016,8 +1008,8 @@ public partial class Core
    /// cannot hold the values produced. Declared, not read: a few candlestick
    /// patterns take an OHLC series they never index, and it is required all the
    /// same. A null array arrives as an empty span, and an empty span is an
-   /// absent argument: for an input, or an output that cannot be declined, it is
-   /// rejected even when the call would produce nothing.</description></item>
+   /// absent argument: for an input or an output, it is rejected even when the
+   /// call would produce nothing.</description></item>
    /// <item><description>Two outputs overlap or are one array
    /// (<see href="https://ta-lib.org/spec/errors/#rb6">rule rB6</see>), or an
    /// output overlaps an input. An output and a real input never share an
@@ -1043,7 +1035,8 @@ public partial class Core
       RequireLength("MAMA", "inReal", inReal.Length, guardInLen);
       if( guardStart >= 0 ) RequirePresent("MAMA", "outMAMA", outMAMA.Length);
       RequireLength("MAMA", "outMAMA", outMAMA.Length, guardOutLen);
-      if( !outFAMA.IsEmpty ) RequireLength("MAMA", "outFAMA", outFAMA.Length, guardOutLen);
+      if( guardStart >= 0 ) RequirePresent("MAMA", "outFAMA", outFAMA.Length);
+      RequireLength("MAMA", "outFAMA", outFAMA.Length, guardOutLen);
       RetCode retCode = MamaImpl(startIdx, endIdx, inReal, optInFastLimit, optInSlowLimit, out int outBegIdx, out int outNBElement, outMAMA, outFAMA);
       if( retCode != RetCode.Success ) {
          throw Failure("MAMA", retCode);
@@ -1424,9 +1417,6 @@ public partial class Core
          mama = Math.FusedMultiplyAdd(1 - tempReal, mama, tempReal * todayValue);
          tempReal *= 0.5;
          fama = Math.FusedMultiplyAdd(1 - tempReal, fama, tempReal * mama);
-         /* FAMA is nullable (issue #125): its write carries no outIdx advance so
-          * the codegen can NULL-guard it; outMAMA (never NULL) owns the ++.
-          */
          cur_outFAMA = fama;
          cur_outMAMA = mama;
          return new MamaValue(cur_outMAMA, cur_outFAMA);
@@ -1599,9 +1589,6 @@ public partial class Core
       sp.mama = Math.FusedMultiplyAdd(1 - tempReal, sp.mama, tempReal * todayValue);
       tempReal *= 0.5;
       sp.fama = Math.FusedMultiplyAdd(1 - tempReal, sp.fama, tempReal * sp.mama);
-      /* FAMA is nullable (issue #125): its write carries no outIdx advance so
-       * the codegen can NULL-guard it; outMAMA (never NULL) owns the ++.
-       */
       sp.cur_outFAMA = sp.fama;
       sp.cur_outMAMA = sp.mama;
       /* Adjust the period for next price bar */
@@ -1641,7 +1628,6 @@ public partial class Core
    {
       outBegIdx = 0;
       outNBElement = 0;
-      double lastCur_outFAMA = 0;
       int outIdx = 0;
       int i = 0;
       int lookbackTotal = 0;
@@ -1991,12 +1977,7 @@ public partial class Core
          tempReal *= 0.5;
          fama = Math.FusedMultiplyAdd(1 - tempReal, fama, tempReal * mama);
          if( today >= startIdx ) {
-            /* FAMA is nullable (issue #125): its write carries no outIdx advance so
-             * the codegen can NULL-guard it; outMAMA (never NULL) owns the ++.
-             */
-            lastCur_outFAMA = fama;
-            if( !outFAMA.IsEmpty )
-               outFAMA[outIdx * outStride] = fama;
+            outFAMA[outIdx * outStride] = fama;
             outMAMA[outIdx++ * outStride] = mama;
          }
          /* Adjust the period for next price bar */
@@ -2085,7 +2066,7 @@ public partial class Core
       sp.ringCap_trailingWMAIdx = cap_trailingWMAIdx;
       sp.ring_trailingWMAIdx_inReal = capRing_trailingWMAIdx_inReal;
       sp.cur_outMAMA = outMAMA[(outNBElement - 1) * outStride];
-      sp.cur_outFAMA = lastCur_outFAMA;
+      sp.cur_outFAMA = outFAMA[(outNBElement - 1) * outStride];
       return RetCode.Success;
    }
 
@@ -2170,10 +2151,8 @@ public partial class Core
    /// range (<see cref="Core.RealDefault"/> selects the default).</param>
    /// <param name="outMAMA">Adaptive moving average (fast line) Must hold at least <c>historyLen -
    /// MamaLookback(...)</c> values.</param>
-   /// <param name="outFAMA">Following adaptive moving average, using half the alpha (slow line) Pass
-   /// an empty span, such as <c>default</c>, to decline it: the value is still
-   /// computed (the handle's <c>Value</c> reports it) and nothing is written
-   /// out. Must hold at least <c>historyLen - MamaLookback(...)</c> values.</param>
+   /// <param name="outFAMA">Following adaptive moving average, using half the alpha (slow line) Must
+   /// hold at least <c>historyLen - MamaLookback(...)</c> values.</param>
    /// <returns>The open stream handle, with its fill range set.</returns>
    /// <exception cref="InsufficientHistoryException">The history holds fewer than <c>MamaLookback(...) + 1</c> bars.</exception>
    /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, the input series
@@ -2188,7 +2167,7 @@ public partial class Core
       if( inReal.Length > IndexMax + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inReal), "MAMA openAndFill: history is longer than IndexMax + 1", RetCode.OutOfRangeEndIndex);
       int guardOutLen = OpenFillCount("MAMA", "openAndFill", inReal.Length, MamaLookback(optInFastLimit, optInSlowLimit));
       RequireFillLength("MAMA", "openAndFill", "outMAMA", outMAMA.Length, guardOutLen);
-      if( !outFAMA.IsEmpty ) RequireFillLength("MAMA", "openAndFill", "outFAMA", outFAMA.Length, guardOutLen);
+      RequireFillLength("MAMA", "openAndFill", "outFAMA", outFAMA.Length, guardOutLen);
       if( SameBuffer(outMAMA, inReal) || SameBuffer(outFAMA, inReal) || SameBuffer(outMAMA, outFAMA) ) {
          throw StreamFailure("MAMA", "openAndFill", RetCode.BadParam);
       }
@@ -2347,9 +2326,6 @@ public partial class Core
       sp.mama = Math.FusedMultiplyAdd(1 - tempReal, sp.mama, tempReal * todayValue);
       tempReal *= 0.5;
       sp.fama = Math.FusedMultiplyAdd(1 - tempReal, sp.fama, tempReal * sp.mama);
-      /* FAMA is nullable (issue #125): its write carries no outIdx advance so
-       * the codegen can NULL-guard it; outMAMA (never NULL) owns the ++.
-       */
       sp.cur_outFAMA = sp.fama;
       sp.cur_outMAMA = sp.mama;
       /* Adjust the period for next price bar */
@@ -2523,9 +2499,6 @@ public partial class Core
       mama = Math.FusedMultiplyAdd(1 - tempReal, mama, tempReal * todayValue);
       tempReal *= 0.5;
       fama = Math.FusedMultiplyAdd(1 - tempReal, fama, tempReal * mama);
-      /* FAMA is nullable (issue #125): its write carries no outIdx advance so
-       * the codegen can NULL-guard it; outMAMA (never NULL) owns the ++.
-       */
       cur_outFAMA = fama;
       cur_outMAMA = mama;
       return new MamaValue(cur_outMAMA, cur_outFAMA);

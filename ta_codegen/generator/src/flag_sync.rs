@@ -1,7 +1,7 @@
 //! Flag-map synchronization gate.
 //!
 //! The YAML flag vocabulary (function flags like `stream`, opt-input flags
-//! like `percent`, output flags like `nullable`) surfaces in FOUR places that
+//! like `percent`, output flags like `dash_line`) surfaces in FOUR places that
 //! historically drift apart when a flag is added:
 //!
 //! 1. `backends/ta_abstract_c.rs` — C constant names (`TA_FUNC_FLG_STREAM`)
@@ -57,12 +57,21 @@ mod tests {
         }
     }
 
+    enum Key {
+        Live(&'static str),
+        /// Defined for compatibility; no surface may produce the bit.
+        Retired,
+    }
+
     /// Header C-name → YAML flag key, including the historical irregular
     /// spellings. A NEW header constant with no entry here fails loudly with
     /// instructions (this map is test-only bookkeeping, not a sixth surface —
     /// it carries no bit values).
-    fn yaml_key(c_name: &str) -> Option<&'static str> {
-        Some(match c_name {
+    fn yaml_key(c_name: &str) -> Option<Key> {
+        if c_name == "TA_OUT_NULLABLE" {
+            return Some(Key::Retired);
+        }
+        Some(Key::Live(match c_name {
             "TA_FUNC_FLG_OVERLAP" => "overlap",
             "TA_FUNC_FLG_STREAM" => "stream",
             "TA_FUNC_FLG_VOLUME" => "volume",
@@ -90,11 +99,10 @@ mod tests {
             "TA_OUT_ZERO" => "zero",
             "TA_OUT_UPPER_LIMIT" => "upper_limit",
             "TA_OUT_LOWER_LIMIT" => "lower_limit",
-            "TA_OUT_NULLABLE" => "nullable",
             "TA_FUNC_FLG_DISPLAY_SHIFT" | "TA_OUT_DISPLAY_SHIFT" => "display_shift",
             "TA_OUT_PATTERN_WEAK" => "pattern_weak",
             _ => return None,
-        })
+        }))
     }
 
     /// Parse `#define TA_<prefix>… 0x…` constants out of include/ta_abstract.h.
@@ -162,6 +170,7 @@ mod tests {
                      func_api_xml::FUNC_FLAGS)"
                 )
             });
+            let Key::Live(key) = key else { panic!("`{c_name}`: a retired function flag is not handled") };
             assert_eq!(
                 crate::backends::ta_abstract_c::func_flag_to_c(key),
                 Some(c_name.as_str()),
@@ -190,6 +199,7 @@ mod tests {
                      func_api_xml::OPT_INPUT_FLAGS)"
                 )
             });
+            let Key::Live(key) = key else { panic!("`{c_name}`: a retired opt-input flag is not handled") };
             assert_eq!(
                 crate::backends::ta_abstract_c::opt_flag_to_c(key),
                 Some(c_name.as_str()),
@@ -218,6 +228,21 @@ mod tests {
                      func_api_xml::OUTPUT_FLAGS)"
                 )
             });
+            let Key::Live(key) = key else {
+                for (k, _) in crate::backends::func_api_xml::OUTPUT_FLAGS {
+                    assert_ne!(
+                        crate::backends::ta_abstract_c::output_flag_to_c(k),
+                        Some(c_name.as_str()),
+                        "retired `{c_name}` is still produced by YAML key `{k}`"
+                    );
+                    assert_eq!(
+                        crate::backends::abstract_rows::output_flag_bits(&one(k)) & bits,
+                        0,
+                        "YAML key `{k}` sets the bit of retired `{c_name}`"
+                    );
+                }
+                continue;
+            };
             assert_eq!(
                 crate::backends::ta_abstract_c::output_flag_to_c(key),
                 Some(c_name.as_str()),

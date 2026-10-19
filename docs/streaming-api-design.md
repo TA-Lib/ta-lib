@@ -422,6 +422,5 @@ language's own server.
 - **The batch tier is unchanged.** The stream tier is purely additive.
 - **A handle is valid only within the exact library version that created it.**
 - **Every `MAType` streams, MAMA included.** When a dispatcher selects it only
-  the MAMA line is wanted, and FAMA is a nullable output the dispatcher passes
-  NULL for — a supported trailing-NULL delegation, verified bit-exact against
-  batch.
+  the MAMA line is wanted: the dispatcher computes FAMA into scratch it
+  discards, verified bit-exact against batch.

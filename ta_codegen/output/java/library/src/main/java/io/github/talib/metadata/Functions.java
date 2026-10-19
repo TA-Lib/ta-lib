@@ -2908,7 +2908,7 @@ public final class Functions {
          ),
          List.of(
             new OutputInfo(OutputType.REAL, "outMAMA", 0x00000001),
-            new OutputInfo(OutputType.REAL, "outFAMA", 0x00002004)
+            new OutputInfo(OutputType.REAL, "outFAMA", 0x00000004)
          ));
    }
 

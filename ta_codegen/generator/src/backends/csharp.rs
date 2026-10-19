@@ -22,7 +22,7 @@
 //!      overlapping pair whose buffers do collide.
 //!   3. **Null converts to a length-0 span**, so `ThrowIfNull` does not even
 //!      compile. The public wrappers test emptiness instead: an empty input
-//!      or non-declinable output is the absent argument.
+//!      or output is the absent argument.
 //!
 //!   A pointer local becomes `Span<T>`: it aliases either an output parameter
 //!   or an allocated buffer, and only a span holds both. A fixed-size array
@@ -104,16 +104,6 @@ pub(crate) struct CsRenderCtx<'a> {
     /// `TA_MAType_SMA` → `MAType.SMA`, derived from enums.yaml (same map Java
     /// builds — the rendering is identical in both languages).
     pub(crate) matype_map: HashMap<String, String>,
-    /// Output parameters the caller may decline with an empty span because their
-    /// .yaml marks them `nullable` (rule rB7). Every store into one is wrapped
-    /// in an `if( !outX.IsEmpty )`. Populated for the batch bodies AND for the
-    /// stream open body, since rule rB7 reads the same at both tiers.
-    pub(crate) nullable_outputs: &'a HashSet<String>,
-    /// Emit `lastCur_<out> = <value>;` beside every guarded store into a
-    /// nullable output — the streaming open body only, whose handle caches each
-    /// output's last value and has no array to read it back from when the
-    /// caller declines one.
-    pub(crate) nullable_shadow: bool,
     /// Set while rendering a store into a
     /// [`FmaVarSets::recurrent_select_targets`] name, whose selects stay
     /// branches.
@@ -728,25 +718,16 @@ fn gen_public_wrapper(
         }
         for output in &func.outputs {
             let name = &output.name;
-            // A nullable output may be declined (rule rW5): any empty span
-            // declines it.
-            if output.is_nullable() {
-                let _ = writeln!(
-                    out,
-                    "      if( !{name}.IsEmpty ) RequireLength(\"{canonical}\", \"{name}\", {name}.Length, guardOutLen);"
-                );
-            } else {
-                // Not while the core is about to reject the call: its diagnosis
-                // outranks an absent buffer.
-                let _ = writeln!(
-                    out,
-                    "      if( guardStart >= 0 ) RequirePresent(\"{canonical}\", \"{name}\", {name}.Length);"
-                );
-                let _ = writeln!(
-                    out,
-                    "      RequireLength(\"{canonical}\", \"{name}\", {name}.Length, guardOutLen);"
-                );
-            }
+            // Not while the core is about to reject the call: its diagnosis
+            // outranks an absent buffer.
+            let _ = writeln!(
+                out,
+                "      if( guardStart >= 0 ) RequirePresent(\"{canonical}\", \"{name}\", {name}.Length);"
+            );
+            let _ = writeln!(
+                out,
+                "      RequireLength(\"{canonical}\", \"{name}\", {name}.Length, guardOutLen);"
+            );
         }
     }
     {
@@ -1067,11 +1048,8 @@ fn gen_func_inner(
     // FMA fusion sites for this body — same detector C/Rust/Java use, so the
     // four backends fuse identical sites.
     let fma_sets = fma::build_fma_var_sets(body, &func.outputs, &fma::INDEX_PARAM_SEEDS);
-    let nullable_outputs = super::common::nullable_output_names(func);
     let ctx = CsRenderCtx {
         single_precision,
-        nullable_outputs: &nullable_outputs,
-        nullable_shadow: false,
         double_address_of_vars: &double_address_of_vars,
         float_input_params: &float_input_params,
         inline_counter: &inline_counter,
@@ -1314,7 +1292,6 @@ impl CsStmt<'_> {
                 Statement::Assign { target: target @ Expr::Var(name), value, compound: false }
                     if matches!(value, Expr::Var(_) | Expr::Literal(_) | Expr::IntLiteral(_))
                         && !is_recurrent_select_target(name, self.ctx)
-                        && nullable_target_base(target, self.ctx.nullable_outputs).is_none()
                         && !stores.iter().any(|(seen, _)| *seen == target) =>
                 {
                     stores.push((target, value));
@@ -1413,8 +1390,7 @@ impl CsStmt<'_> {
             new_value
         };
         let mut loads = Vec::new();
-        let guarded = nullable_target_base(target, self.ctx.nullable_outputs).is_some();
-        let new_value = if !guarded && is_pure_operand(target) && is_pure_operand(&new_value) {
+        let new_value = if is_pure_operand(target) && is_pure_operand(&new_value) {
             hoist_merging_op_loads(&new_value, &mut loads, &mut cnt)
         } else {
             new_value
@@ -1459,19 +1435,7 @@ impl CsStmt<'_> {
 
         let target_str = render_assign_target(target, self.ctx, self.registry, self.helpers);
         let value_str = render_assign_value(&new_value, self.ctx, self.registry, self.helpers);
-        // Writing into a nullable output — guard it so a declined (empty) output
-        // is skipped (rule rB7). The `outIdx` advance rides the non-nullable
-        // partner's write (see mama.c), so guarding this store is complete.
-        if let Some(base) = nullable_target_base(target, self.ctx.nullable_outputs) {
-            if self.ctx.nullable_shadow {
-                out.push_str(&format!("{pad}lastCur_{base} = {value_str};\n"));
-            }
-            out.push_str(&format!(
-                "{pad}if( !{base}.IsEmpty )\n{pad}   {target_str} = {value_str};\n"
-            ));
-        } else {
-            out.push_str(&format!("{pad}{target_str} = {value_str};\n"));
-        }
+        out.push_str(&format!("{pad}{target_str} = {value_str};\n"));
         out
     }
 
@@ -1495,7 +1459,6 @@ impl CsStmt<'_> {
         if !real(run.src)
             || !real(run.dst)
             || self.ctx.float_input_params.contains(run.src)
-            || self.ctx.nullable_outputs.contains(run.dst)
             || run.scale.is_some_and(|k| !fma::expr_is_float_typed(k, Some(&fs)))
         {
             return None;
@@ -2076,14 +2039,7 @@ fn render_cross_indicator_call(
 
     let mut call_args: Vec<String> = Vec::new();
     for a in args[..split].iter().chain(args[split + 2..].iter()) {
-        call_args.push(match a {
-            // NULL for a nullable output the caller declines (#125): an empty
-            // span is how C# spells that, the callee skips its stores and its
-            // public tier skips the length check, so nothing is allocated —
-            // never a throwaway materialized on every call (rB7, #262).
-            Expr::Var(n) if n == "NULL" => "default".to_string(),
-            _ => render_expr(a, ctx, registry, helpers),
-        });
+        call_args.push(render_expr(a, ctx, registry, helpers));
     }
 
     let n = ctx.inline_counter.get();
@@ -2113,18 +2069,6 @@ fn out_meta_target(
         Expr::Var(n) => n.clone(),
         other => render_expr(other, ctx, registry, helpers),
     }
-}
-
-/// If `target` stores into one of the `nullable` outputs (a `Span<double>` the
-/// caller may leave empty to decline — rule rB7), return its base name so the
-/// store can be wrapped in `if( !outX.IsEmpty )`. Matches the array store
-/// `outX[i] = …` and the scalar store `outX = …`; the value side is never
-/// involved.
-fn nullable_target_base<'a>(target: &Expr, nullable: &'a HashSet<String>) -> Option<&'a String> {
-    let (Expr::ArrayAccess(name, _) | Expr::PointerDeref(name) | Expr::Var(name)) = target else {
-        return None;
-    };
-    nullable.get(name)
 }
 
 fn render_assign_target(
@@ -2342,8 +2286,6 @@ impl ExprEmitter for CsExpr<'_> {
                 let empty = HashSet::new();
                 let inner_ctx = CsRenderCtx {
                     single_precision: self.ctx.single_precision,
-                    nullable_outputs: self.ctx.nullable_outputs,
-                    nullable_shadow: false,
                     double_address_of_vars: &empty,
                     float_input_params: self.ctx.float_input_params,
                     inline_counter: self.ctx.inline_counter,
@@ -3007,11 +2949,6 @@ fn render_func_call(
         let rendered: Vec<String> = args
             .iter()
             .map(|a| match a {
-                // NULL for a nullable output the caller declines (MA passing
-                // NULL for MAMA's FAMA — issue #125). An empty span is how C#
-                // spells that and the callee's stores are guarded, so nothing
-                // is allocated (rB7, #262). NULL appears only here.
-                Expr::Var(n) if n == "NULL" => "default".to_string(),
                 // The caller's own out-params pass through to the callee's
                 // `out int` pair. In C both are `int*` passed bare; C# needs
                 // the `out` keyword at the argument site. These two names are
@@ -3063,11 +3000,8 @@ fn render_lookback_code(
     let inline_counter = Cell::new(0);
     let double_address_of_vars = HashSet::new();
     let float_input_params: HashSet<String> = HashSet::new();
-    let no_nullable = HashSet::new();
     let ctx = CsRenderCtx {
         single_precision: false,
-        nullable_outputs: &no_nullable,
-        nullable_shadow: false,
         double_address_of_vars: &double_address_of_vars,
         float_input_params: &float_input_params,
         inline_counter: &inline_counter,
@@ -3279,8 +3213,8 @@ mod tests {
         );
     }
 
-    /// MA exercises qualified enum switch labels and the declined-output arm
-    /// for MAMA's FAMA.
+    /// MA exercises qualified enum switch labels and the MAMA arm's FAMA
+    /// scratch.
     #[test]
     fn csharp_ma_switch_is_qualified() {
         let func = load("ma");
@@ -3291,12 +3225,13 @@ mod tests {
         assert!(output.contains("case MAType.SMA:"), "switch labels must be qualified");
         assert!(!output.contains("case SMA:"), "unqualified labels are Java-only");
         assert!(
-            output.contains("Mama(startIdx, endIdx, inReal, 0.5, 0.05, outReal, default)"),
-            "MAMA's declined FAMA output must be an empty span (rule rB7), not a buffer"
+            output.contains("Mama(startIdx, endIdx, inReal, 0.5, 0.05, outReal, famaScratch)"),
+            "MAMA's FAMA must go to the arm's scratch buffer"
         );
         assert!(
-            !output.contains("new double[(int)(endIdx - startIdx + 1)]"),
-            "the throwaway FAMA buffer must be gone, not merely unread (#262)"
+            output.contains("ReturnScratch(ref _rent_famaScratch);"),
+            "the FAMA scratch must go back to the pool"
         );
+        assert!(!output.contains(", default)"), "no output may be passed as an empty span");
     }
 }
