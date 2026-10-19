@@ -19,8 +19,7 @@ An AI agent is expected to read the code for exact signatures and names. The spe
 
 * The native APIs (C, Rust, Java, C#): batch, lookback, display shift, streams, settings, and the [Abstract API](/spec/abstract/).
 * A wrapper keeps its own conventions. ta-lib-python aligns outputs to the input and fills the warm-up with NaN; the native APIs do not ([rW3](/spec/inputs-outputs/#rw3)).
-* Published packages and their versions: [Install](/install/).
-* Owned by other pages: [Unstable Period](/api/unstable-period/), [Candlestick Settings](/api/candle-settings/) (model and defaults), streaming in [C](/api/stream/), [Rust](/api/rust/stream/), [Java](/api/java/stream/) and [C#](/api/csharp/stream/), [Numerical Stability](/functions/stability), and the [function pages](/functions/): inputs, outputs in order, parameters (type, default, accepted values), stability category, flags.
+* Owned by other pages: [Install](/install/) (packages and versions), [Unstable Period](/api/unstable-period/), [Candlestick Settings](/api/candle-settings/) (model and defaults), streaming in [C](/api/stream/), [Rust](/api/rust/stream/), [Java](/api/java/stream/) and [C#](/api/csharp/stream/), [Numerical Stability](/functions/stability), and the [function pages](/functions/): inputs, outputs in order, parameters (type, default, accepted values), stability category, flags.
 * The pages other than the per-function pages are in [/llms-full.txt](/llms-full.txt); its [function index](/functions/) links each function page. [/llms.txt](/llms.txt) indexes every page. Each page has a Markdown twin; this page's is `/spec/index.md`.
 
 ## Rule pages {#reading}
@@ -154,7 +153,7 @@ Members are upper case in Rust and Java and UpperCamel in C#, and can use other 
 | lookback ([rL2](/spec/lookback/#rl2)) | `-1` | `Err(RetCode::BadParam)` | `-1` | `-1` |
 | display shift ([rL11](/spec/lookback/#rl11)) | `INT_MIN` | `Err(RetCode::BadParam)` | `Integer.MIN_VALUE` | `int.MinValue` |
 
-One row per code a function call can report; `A : B` means `A` extends the platform type `B`, so a `catch` of `B` works.
+One row per code a function call can report; the number in parentheses is C's, and it never changes ([rV2](/spec/versions/#rv2)). `A : B` means `A` extends the platform type `B`, so a `catch` of `B` works.
 
 | Code | Rust | Java | C# |
 |---|---|---|---|
@@ -164,8 +163,6 @@ One row per code a function call can report; `A : B` means `A` extends the platf
 | `TA_INSUFFICIENT_HISTORY` (17) | `InsufficientHistory` | `InsufficientHistoryException : TALibArgumentException` | `InsufficientHistoryException : TALibArgumentException` |
 | `TA_INTERNAL_ERROR` (5000, [rB9](/spec/errors/#rb9)) | `InternalError` | `TALibStateException : IllegalStateException` | `TALibInvalidOperationException : InvalidOperationException` |
 | `TA_ALLOC_ERR` (3) | `AllocErr`, never returned ([rB8](/spec/errors/#rb8)) | never thrown | never thrown |
-
-Numbering: [rV2](/spec/versions/#rv2).
 
 Failed settings:
 
