@@ -24,8 +24,8 @@ The codes a batch, lookback or stream call can return:
 | 0 | `TA_SUCCESS` | Every call that succeeds, including a batch range that ends before the lookback (count 0, [rW2](/spec/inputs-outputs/#rw2)). |
 | 2 | `TA_BAD_PARAM` | A rejected parameter, an absent or too-short buffer, one buffer used twice, a non-finite bar: most [batch](/spec/errors/#batch), [opening](/spec/streaming/#opening) and [advancing](/spec/streaming/#advancing) conditions; Rust's lookback ([rL2](/spec/lookback/#rl2)); the failed settings calls in C and Rust ([rT2](/spec/settings-threads/#rt2)). |
 | 3 | `TA_ALLOC_ERR` | A C call that allocates, when the allocation fails ([rB8](/spec/errors/#rb8)). |
-| 12 | `TA_OUT_OF_RANGE_START_INDEX` | rB1, rS1. |
-| 13 | `TA_OUT_OF_RANGE_END_INDEX` | rB2, rS2, rU4. |
+| 12 | `TA_OUT_OF_RANGE_START_INDEX` | [rB1](/spec/errors/#rb1), [rS1](/spec/streaming/#rs1). |
+| 13 | `TA_OUT_OF_RANGE_END_INDEX` | [rB2](/spec/errors/#rb2), [rS2](/spec/streaming/#rs2), [rU4](/spec/streaming/#ru4). |
 | 17 | `TA_INSUFFICIENT_HISTORY` | Stream openers only ([rS8](/spec/streaming/#rs8)). A batch call never returns it. |
 | 5000 to 5999 | `TA_INTERNAL_ERROR` + id | [rB9](/spec/errors/#rb9). |
 
@@ -60,13 +60,3 @@ A batch call accepts `0 <= startIdx <= endIdx <= TA_INDEX_MAX` ([`TA_INDEX_MAX`]
 **rB8.** Rust aborts the process, and Java and C# raise their runtime's out-of-memory error.
 
 **rB9.** A bug in TA-Lib, not in the call: report it, with the number in C. C's `TA_SetRetCodeInfo` names every value from 5000 to 5999 `TA_INTERNAL_ERROR`, and a value that is not a `TA_RetCode` member `TA_UNKNOWN_ERR`. Rust, Java and C# report `TA_INTERNAL_ERROR` without an id.
-
-## Conditions on other pages
-
-| Call | Rules |
-|---|---|
-| Lookback, display shift | [rL2](/spec/lookback/#rl2) fails, [rL3](/spec/lookback/#rl3) agrees with batch, [rL11](/spec/lookback/#rl11) fails |
-| Stream opening | [rS1](/spec/streaming/#rs1) empty history, [rS2](/spec/streaming/#rs2) too long, [rS3](/spec/streaming/#rs3) parameter, [rS4](/spec/streaming/#rs4) absent, [rS5](/spec/streaming/#rs5) length, [rS6](/spec/streaming/#rs6) one buffer twice, [rS7](/spec/streaming/#rs7) declined output, [rS8](/spec/streaming/#rs8) short history |
-| Stream advancing | [rU1](/spec/streaming/#ru1) absent handle, [rU2](/spec/streaming/#ru2) absent output, [rU3](/spec/streaming/#ru3) non-finite bar, [rU4](/spec/streaming/#ru4) index ceiling, [rU5](/spec/streaming/#ru5) declined output |
-| Abstract API | [rA1](/spec/abstract/#ra1) batch conditions through a holder, [rA2](/spec/abstract/#ra2) failed bind call, [rA3](/spec/abstract/#ra3) misuse of a holder, [rA4](/spec/abstract/#ra4) unknown name |
-| Settings | [rT2](/spec/settings-threads/#rt2) target, [rT3](/spec/settings-threads/#rt3) unstable period, [rT4](/spec/settings-threads/#rt4) reading, [rT5](/spec/settings-threads/#rt5) range type, [rT6](/spec/settings-threads/#rt6) average, [rT7](/spec/settings-threads/#rt7) factor, [rT8](/spec/settings-threads/#rt8) no change on failure |

@@ -3,7 +3,7 @@ title: Specification
 description: "The calling contract of TA-Lib's C, Rust, Java and C# APIs, stated rule by rule as a reference for AI-agent-driven integration: how a failure reaches the caller, how names fold, and one page per topic."
 ---
 
-**TA-Lib's calling contract, stated rule by rule for a robust integration. Every rule is enforced by the test suite, so your code can rely on it.**
+**TA-Lib's calling contract, stated rule by rule for a robust integration. The test suite checks the rules, so your code can rely on them.**
 
 Written as a reference for AI agents integrating TA-Lib. For a lighter introduction written for people, start with the API pages for [C/C++](/api/), [Rust](/api/rust/), [Java](/api/java/) or [C#](/api/csharp/).
 
@@ -36,7 +36,7 @@ In the order a caller meets them:
 Each page has two kinds of statement:
 
 - **The caller must**: what the calling code has to ensure. Most of it is not checked by the library, so it comes first on every page, and the next section lists what the library never reports.
-- **A rule**: what TA-Lib does. Every rule is enforced by the test suite. Its id is `r`, the letter of its family and a number, such as `rB5`, and its anchor is the id in lower case: [/spec/errors/#rb5](/spec/errors/#rb5). An id's meaning can change from one release to the next.
+- **A rule**: what TA-Lib does. The test suite checks each one, except three that no test can provoke or that hold by construction: [rB8](/spec/errors/#rb8) and [rB9](/spec/errors/#rb9) (an allocation failure, an internal error) and [rP5](/spec/inputs-outputs/#rp5) (one generator writes the four languages' signatures). Its id is `r`, the letter of its family and a number, such as `rB5`, and its anchor is the id in lower case: [/spec/errors/#rb5](/spec/errors/#rb5). An id's meaning can change from one release to the next.
 
 `<N>` stands for a function's canonical name: `TA_<N>_Open` is `TA_SMA_Open`.
 
@@ -82,15 +82,6 @@ Every function has this surface; in Rust, Java and C# the calls are methods of a
 | handle calls | `TA_SMA_Update`, `_Peek`, `_Value`, `_OutRange`, `_Advance`, `_Clone`, `_Close` | `update`, `peek`, `value`, `out_range`, `advance`, `clone`; drop to release | `update`, `peek`, `value`, `outRange`, `advance`, `clone` | `Update`, `Peek`, `Advance`, `Clone`; properties `Value`, `OutRange` |
 | one bar of MACD | three out-pointers | `(f64, f64, f64)` | caller-owned `Core.MacdOut` sink | returned `Core.MacdValue` |
 
-| Argument | C | Rust | Java | C# |
-|---|---|---|---|---|
-| index | `int` | `usize` | `int` | `int` |
-| real input, output | `const double[]`, `double[]` | `&[f64]`, `&mut [f64]` | `double[]` | `ReadOnlySpan<double>`, `Span<double>` |
-| integer output | `int[]` | `&mut [i32]` | `int[]` | `Span<int>` |
-| integer, real parameter | `int`, `double` | `i32`, `f64` | `int`, `double` | `int`, `double` |
-| MA-type parameter | `TA_MAType` | `MAType` | `MAType` | `MAType` |
-| absent ([rB4](/spec/errors/#rb4)) | `NULL` | an empty slice | `null` or an empty array | an empty span, which a `null` array becomes |
-
 | Type | C | Rust | Java | C# |
 |---|---|---|---|---|
 | import | `ta_libc.h` | crate `ta_lib` | `io.github.talib` | `TALib` |
@@ -131,7 +122,7 @@ One type holds the flags of each word. What each flag means: [flags](/spec/abstr
 | an optional parameter | `TA_OPTIN_` | `OptInputFlags` | `OptInputFlags` |
 | an output | `TA_OUT_` | `OutputFlags` | `OutputFlags` |
 
-Members are upper case in Rust and Java and UpperCamel in C#, and can use other words than C's: read them from the type. Each C# flag enum also has `None`, the empty word.
+Members are upper case in Rust and Java and UpperCamel in C#, and can use other words than C's (Java `FuncFlags.STREAMING` is `TA_FUNC_FLG_STREAM`): match a member to its C name by its bit value, which is the same in every language ([rA7](/spec/abstract/#ra7)). Each C# flag enum also has `None`, the empty word. Each C# flag enum also has `None`, the empty word.
 
 ## How a failure reaches the caller {#failures}
 

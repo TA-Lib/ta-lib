@@ -11,7 +11,8 @@ Every function streams ([rH9](/spec/streaming/#rh9)): `Open` or `OpenAndFill` on
 
 ## The caller must {#caller}
 
-- <a id="history"></a>**Open on at least `lookback + 1` finite bars.** A shorter, non-empty history returns `TA_INSUFFICIENT_HISTORY` ([rS8](/spec/streaming/#rs8)), the one recoverable code: send more bars rather than fix the call.- <a id="rejected-bar"></a>**Account for every rejected bar.** A rejected `Update` changed nothing ([rH5](/spec/streaming/#rh5)), so the handle is now one bar behind the feed. Re-feed the bar with a corrected value, or count it with `Advance` ([rH6](/spec/streaming/#rh6)).
+- <a id="history"></a>**Open on at least `lookback + 1` finite bars.** A shorter, non-empty history returns `TA_INSUFFICIENT_HISTORY` ([rS8](/spec/streaming/#rs8)), the one recoverable code: send more bars rather than fix the call.
+- <a id="rejected-bar"></a>**Account for every rejected bar.** A rejected `Update` changed nothing ([rH5](/spec/streaming/#rh5)), so the handle is now one bar behind the feed. Re-feed the bar with a corrected value, or count it with `Advance` ([rH6](/spec/streaming/#rh6)).
 - <a id="ownership"></a>**In C, close every handle exactly once.** `Open`, `OpenAndFill` and `Clone` each return a handle that `Close` frees. Never open or clone into a variable that holds a live handle: a failed call sets it to NULL. Rust drops a handle; Java and C# collect it.
 - <a id="checkpoint"></a>**Keep the bars to resume.** A handle is not serializable and is valid only within the library version that opened it. To restart, reopen on the bars, then call `Advance` once for each bar the old handle counted without being fed ([rH6](/spec/streaming/#rh6)).
 - **Give each handle one writer**: [threads](/spec/settings-threads/#one-writer). **In C, change no setting while a stream is open**: [settings](/spec/settings-threads/#idle-settings).
@@ -31,9 +32,9 @@ For `Open` and `OpenAndFill`, the history is the first declared input and `histo
 | <a id="rs1"></a>**rS1** | The history is empty (`historyLen < 1`) | `TA_OUT_OF_RANGE_START_INDEX` | |
 | <a id="rs2"></a>**rS2** | The history holds more than `TA_INDEX_MAX + 1` bars | `TA_OUT_OF_RANGE_END_INDEX` | |
 | <a id="rs3"></a>**rS3** | As [rB3](/spec/errors/#rb3) | `TA_BAD_PARAM` | |
-| <a id="rs4"></a>**rS4** | A required argument is absent ([rB4](/spec/errors/#rb4)): an input, an output, or in C the handle out-parameter, `outBegIdx` or `outNBElement` | `TA_BAD_PARAM` | |
+| <a id="rs4"></a>**rS4** | A required argument is absent ([rB4](/spec/errors/#rb4)): an input, an output, or in C the handle out-parameter, `outBegIdx` or `outNBElement`. An empty history is rS1 | `TA_BAD_PARAM` | |
 | <a id="rs5"></a>**rS5** | An input's length differs from `historyLen`, or an `OpenAndFill` output holds fewer than `historyLen - lookback` values | `TA_BAD_PARAM` | C: cannot check ([input length](/spec/inputs-outputs/#input-length)) |
-| <a id="rs6"></a>**rS6** | `OpenAndFill`: an output is the buffer of an input or of another output | `TA_BAD_PARAM` | Rust: cannot alias |
+| <a id="rs6"></a>**rS6** | `OpenAndFill`: an output is the buffer of an input or of another output; in C#, a span that starts where the other does | `TA_BAD_PARAM` | Rust: cannot alias |
 | <a id="rs7"></a>**rS7** | `OpenAndFill`: an output that is not declinable is declined ([rW5](/spec/inputs-outputs/#rw5)) | `TA_BAD_PARAM` | Rust: cannot decline |
 | <a id="rs8"></a>**rS8** | The history holds at least one bar, but fewer than [lookback](/spec/lookback/#rl1) `+ 1` | `TA_INSUFFICIENT_HISTORY` | |
 
@@ -48,7 +49,7 @@ A loop that waits for enough history may open on one bar: a short history is rS8
 | Rule | Condition | Code | Calls | Not checked in |
 |---|---|---|---|---|
 | <a id="ru1"></a>**rU1** | The handle is absent | `TA_BAD_PARAM` | every handle call except Close | Rust, Java, C#: cannot be absent |
-| <a id="ru2"></a>**rU2** | A required output is absent: a C out-pointer, a Java multi-output sink | `TA_BAD_PARAM` | Update, Peek; in C also Value, OutRange, Clone | Rust, C#: value returned |
+| <a id="ru2"></a>**rU2** | A required output is absent: a C out-pointer, a Java multi-output sink | `TA_BAD_PARAM` | Update, Peek; in C also Value, OutRange, Clone; in Java also value | Rust, C#: value returned |
 | <a id="ru3"></a>**rU3** | A bar value is NaN, `+Inf` or `-Inf` | `TA_BAD_PARAM` | Update, Peek | |
 | <a id="ru4"></a>**rU4** | The bar this call would count leaves the index domain: `begIdx + count > TA_INDEX_MAX` | `TA_OUT_OF_RANGE_END_INDEX` | Update, Advance | |
 | <a id="ru5"></a>**rU5** | An output that is not declinable is declined ([rW5](/spec/inputs-outputs/#rw5)) | `TA_BAD_PARAM` | Update, Peek | Rust, Java, C#: nothing to decline |
@@ -71,7 +72,7 @@ A loop that waits for enough history may open on one bar: a short history is rS8
 
 ## Discovery
 
-<a id="rh9"></a>**rH9** Every function streams, in every language. The [metadata flag](/spec/abstract/#flags) is `TA_FUNC_FLG_STREAM`: Rust `FuncFlags::STREAM`, Java `FuncFlags.STREAMING`, C# `FuncFlags.Stream`. A stream is opened by its typed `Open`; the Abstract API binds batch calls only.
+<a id="rh9"></a>**rH9** Every function streams, in every language. Every function carries the [metadata flag](/spec/abstract/#flags) `TA_FUNC_FLG_STREAM`. A stream is opened by its typed `Open`; the Abstract API binds batch calls only.
 
 ## Release
 

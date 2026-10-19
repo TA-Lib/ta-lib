@@ -39,9 +39,9 @@ Every function has a lookback call. It takes exactly the batch call's optional p
 
 Accepted values: [rT3](/spec/settings-threads/#rt3). The functions that own an id, and how to set one: [Unstable Period](/api/unstable-period/). An inheriting function names its source in the Numerical Stability line of its [function page](/functions/).
 
-<a id="rl7"></a>**rL7** A candle setting's `avgPeriod` enters the lookback of the CDL functions that read that setting. CDL functions carry the [metadata flag](/spec/abstract/#flags) `TA_FUNC_FLG_CANDLESTICK` (Rust `FuncFlags::CANDLESTICK`, Java `FuncFlags.CANDLESTICK`, C# `FuncFlags.Candlestick`). Only `avgPeriod` enters: a range type or a factor changes no lookback, and a candle setting changes the lookback of no function without the flag. Its bound is [rT6](/spec/settings-threads/#rt6). The model and the defaults: [Candlestick Settings](/api/candle-settings/).
+<a id="rl7"></a>**rL7** A candle setting's `avgPeriod` enters the lookback of the CDL functions that read that setting. CDL functions carry the [metadata flag](/spec/abstract/#flags) `TA_FUNC_FLG_CANDLESTICK`. Only `avgPeriod` enters: a range type or a factor changes no lookback, and a candle setting changes the lookback of no function without the flag. Its bound is [rT6](/spec/settings-threads/#rt6). The model and the defaults: [Candlestick Settings](/api/candle-settings/).
 
-<a id="rl8"></a>**rL8** A function whose [metadata flags](/spec/abstract/#flags) include `TA_FUNC_FLG_PERIOD1_IDENTITY` (Rust `FuncFlags::PERIOD1_IDENTITY`, Java `FuncFlags.PERIOD1_IDENTITY`, C# `FuncFlags.Period1Identity`), called with `optInTimePeriod` at 1, writes every output value as a bit-for-bit copy of its input at the same bar (VWMA copies the close). Its lookback at period 1 is 0 when every unstable period that reaches it is 0 or an Auto level. Which functions carry the flag: the "Identity at Period 1" row of each [function page](/functions/).
+<a id="rl8"></a>**rL8** A function whose [metadata flags](/spec/abstract/#flags) include `TA_FUNC_FLG_PERIOD1_IDENTITY`, called with `optInTimePeriod` at 1, writes every output value as a bit-for-bit copy of `inReal` at the same bar (VWMA ignores its volume there). Its lookback at period 1 is 0 when every unstable period that reaches it is 0 or an Auto level. Which functions carry the flag: the "Identity at Period 1" row of each [function page](/functions/).
 
 ## Display shift {#display-shift}
 
@@ -50,7 +50,7 @@ Every function has a display-shift call. It takes the lookback call's parameters
 | Rule | Statement |
 |---|---|
 | <a id="rl9"></a>**rL9** | A display shift of `s` means a chart draws the value computed at bar `i` at bar `i + s`. It describes drawing only: every output value is written at the bar that computed it, and no value, lookback, `outBegIdx` or `outNBElement` depends on it. It depends only on the optional parameters and the output index. |
-| <a id="rl10"></a>**rL10** | A function carries `TA_FUNC_FLG_DISPLAY_SHIFT` (Rust `FuncFlags::DISPLAY_SHIFT`, Java `FuncFlags.DISPLAY_SHIFT`, C# `FuncFlags.DisplayShift`) exactly when at least one of its outputs carries the [metadata flag](/spec/abstract/#flags) `TA_OUT_DISPLAY_SHIFT`. Without it, you can assume that every shift is 0. |
+| <a id="rl10"></a>**rL10** | A function carries `TA_FUNC_FLG_DISPLAY_SHIFT` exactly when at least one of its outputs carries the [metadata flag](/spec/abstract/#flags) `TA_OUT_DISPLAY_SHIFT`. Without it, you can assume that every shift is 0. |
 | <a id="rl11"></a>**rL11** | The call fails ([per language](/spec/#failures)) exactly when the lookback call rejects the same parameters ([rL2](/spec/lookback/#rl2)) or the index names no output. |
 | <a id="rl12"></a>**rL12** | No unstable period or candle setting ([rL5](/spec/lookback/#rl5)) changes a display shift. |
 
@@ -58,10 +58,7 @@ Every function has a display-shift call. It takes the lookback call's parameters
 
 What the [metadata](/spec/abstract/) says about a function's numerical stability:
 
-| Property | C | Rust | Java | C# |
-|---|---|---|---|---|
-| Owns an unstable-period id | `TA_FUNC_FLG_UNST_PER` | `FuncFlags::UNSTABLE_PERIOD` | `FuncFlags.UNSTABLE_PERIOD` | `FuncFlags.UnstablePeriod` |
-| Path-dependent | `TA_FUNC_FLG_PATH_DEP` | `FuncFlags::PATH_DEPENDENT` | `FuncFlags.PATH_DEPENDENT` | `FuncFlags.PathDependent` |
-
+- **Owns an unstable-period id**: `TA_FUNC_FLG_UNST_PER`.
+- **Path-dependent**: `TA_FUNC_FLG_PATH_DEP`.
 - **Depends on the MA type**: an optional parameter whose name ends in `MAType`. The Abstract API describes it as an [integer list](/spec/abstract/#provides) of the MA types.
-- **Inherits an unstable period**: no flag marks it (DEMA through EMA). The function page is the complete classification. To test one call: read its lookback with every unstable period at 0; then set them all (the `ALL` wildcard) to a count above that lookback and read it again. If the two are equal, no unstable period reaches the call. An Auto level cannot serve here: it can add no bar to a call it reaches.
+- **Inherits an unstable period**: no flag marks it (DEMA through EMA). The function page is the complete classification. To test one call: read its lookback with every unstable period at 0; then set them all (the `ALL` wildcard) to a count above that lookback and read it again. If the two are equal, no unstable period reaches the call. An Auto level cannot serve here: its count can be 0 on a call it reaches.

@@ -51,11 +51,11 @@ The `E`, `W`, `K*n`, `T3`, `KAMA` and `VIDYA` rows give 0 at a period of 1, wher
 `PREC_n` targets `n` significant digits: past the count, the first `n` significant digits of a value no longer depend on where the series starts. Like [rD2](/spec/versions/#rd2), it is a target, not a promise.
 
 - An output that stays away from zero is measured against its value: the moving averages and every output on the price scale, ATR, NATR, RSI, the DI and DM pairs, ADX, RVI, STC, the Hilbert period and trendline.
-- An output that reaches zero has no leading digit to keep there, and is measured against the size of its swing, two starts differing by about `10^-n` of it: CMO, DX, SWAK_HP, SWAK_BP, HT_PHASOR, HT_SINE, HT_DCPHASE, and the oscillators centred on zero such as MACD, APO, PPO, TRIX and FISHER.
+- An output that reaches zero has no leading digit to keep there, and is measured against the size of its swing, two starts differing by about `10^-n` of it: CMO, DX, SWAK_HP, SWAK_2PHP, SWAK_BP, HT_PHASOR, HT_SINE, HT_DCPHASE, and the oscillators centred on zero such as MACD, APO, PPO, TRIX and FISHER.
 
 At `PREC_8`, where the rounding of a function's own arithmetic is larger than the level, the last digits keep moving.
 
-<a id="proof-reach"></a>**What a proof covers.** `e^-K` sits 2.2 times below `10^-4` at `PREC_4` and 1.8 times below `10^-8` at `PREC_8`. EMA, RMA, ATR and the DM pair output their state, so the bound holds on the output, up to rounding. A `ratio` output, STOCHRSI and CVI, or one that subtracts two averages (APO, PPO, PVO, MACD), can magnify what is left for a few periods past the count. For these the level's digits are a measured result: each held them at every bar on random-walk and trending series, at periods 14 to 1000.
+<a id="proof-reach"></a>**What a proof covers.** `e^-K` sits 2.2 times below `10^-4` at `PREC_4` and 1.8 times below `10^-8` at `PREC_8`. EMA, RMA, ATR and the DM pair output their state, so the bound holds on the output, up to rounding, as a fraction of the two starts' difference where the later one begins. That difference is about the input's move over a period, far below a price, so the digits follow; they do not for an output near zero, such as the DM pair in a one-way market. A `ratio` output, STOCHRSI and CVI, or one that subtracts two averages (APO, PPO, PVO, MACD), can magnify what is left for a few periods past the count. For these the level's digits are a measured result: each held them at every bar on random-walk and trending series, at periods 14 to 1000.
 
 ## Known exceptions {#exceptions}
 
