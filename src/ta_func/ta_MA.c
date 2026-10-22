@@ -954,6 +954,13 @@ TA_RetCode TA_MA_OpenAndFillInternal( struct TA_MA_Stream **stream, const double
    return TA_SUCCESS;
 }
 
+static TA_NOINLINE TA_RetCode TA_MA_Update_MAMA( TA_MAMA_Stream *sub, double inReal, double *outReal )
+{
+   double famaScratch;
+
+   return TA_MAMA_Update( sub, inReal, outReal, &famaScratch );
+}
+
 TA_LIB_API TA_RetCode TA_MA_Update( TA_MA_Stream *stream, double inReal, double *outReal )
 {
    TA_RetCode retCode;
@@ -994,11 +1001,7 @@ TA_LIB_API TA_RetCode TA_MA_Update( TA_MA_Stream *stream, double inReal, double 
       retCode = TA_KAMA_Update( (TA_KAMA_Stream *)stream->sub, inReal, outReal );
       break;
    case TA_MAType_MAMA:
-      {
-         double famaScratch;
-
-         retCode = TA_MAMA_Update( (TA_MAMA_Stream *)stream->sub, inReal, outReal, &famaScratch );
-      }
+      retCode = TA_MA_Update_MAMA( (TA_MAMA_Stream *)stream->sub, inReal, outReal );
       break;
    case TA_MAType_T3:
       retCode = TA_T3_Update( (TA_T3_Stream *)stream->sub, inReal, outReal );
@@ -1028,6 +1031,13 @@ TA_LIB_API TA_RetCode TA_MA_Update( TA_MA_Stream *stream, double inReal, double 
    return TA_SUCCESS;
 }
 
+static TA_NOINLINE TA_RetCode TA_MA_Peek_MAMA( const TA_MAMA_Stream *sub, double inReal, double *outReal )
+{
+   double famaScratch;
+
+   return TA_MAMA_Peek( sub, inReal, outReal, &famaScratch );
+}
+
 TA_LIB_API TA_RetCode TA_MA_Peek( const TA_MA_Stream *stream, double inReal, double *outReal )
 {
    if( !stream || !outReal ) return TA_BAD_PARAM;
@@ -1054,11 +1064,7 @@ TA_LIB_API TA_RetCode TA_MA_Peek( const TA_MA_Stream *stream, double inReal, dou
    case TA_MAType_KAMA:
       return TA_KAMA_Peek( (const TA_KAMA_Stream *)stream->sub, inReal, outReal );
    case TA_MAType_MAMA:
-      {
-         double famaScratch;
-
-         return TA_MAMA_Peek( (const TA_MAMA_Stream *)stream->sub, inReal, outReal, &famaScratch );
-      }
+      return TA_MA_Peek_MAMA( (const TA_MAMA_Stream *)stream->sub, inReal, outReal );
    case TA_MAType_T3:
       return TA_T3_Peek( (const TA_T3_Stream *)stream->sub, inReal, outReal );
    case TA_MAType_HMA:
@@ -1075,6 +1081,13 @@ TA_LIB_API TA_RetCode TA_MA_Peek( const TA_MA_Stream *stream, double inReal, dou
       /* Unreachable: Open rejects arms without a sub-stream. */
       return TA_INTERNAL_ERROR(344);
    }
+}
+
+static TA_NOINLINE void TA_MA_StepTape_MAMA( struct TA_MAMA_Stream *sub, const double tape[], int tapeBase, int tapeMask, double inReal, double *outReal )
+{
+   double famaScratch;
+
+   TA_MAMA_StepTape( sub, tape, tapeBase, tapeMask, inReal, outReal, &famaScratch );
 }
 
 /* Private function, not in public API. */
@@ -1111,11 +1124,7 @@ void TA_MA_StepTape( struct TA_MA_Stream *stream, const double tape[], int tapeB
       TA_KAMA_StepTape( (struct TA_KAMA_Stream *)stream->sub, tape, tapeBase, tapeMask, inReal, outReal );
       break;
    case TA_MAType_MAMA:
-      {
-         double famaScratch;
-
-         TA_MAMA_StepTape( (struct TA_MAMA_Stream *)stream->sub, tape, tapeBase, tapeMask, inReal, outReal, &famaScratch );
-      }
+      TA_MA_StepTape_MAMA( (struct TA_MAMA_Stream *)stream->sub, tape, tapeBase, tapeMask, inReal, outReal );
       break;
    case TA_MAType_T3:
       TA_T3_StepTape( (struct TA_T3_Stream *)stream->sub, tape, tapeBase, tapeMask, inReal, outReal );
@@ -1141,6 +1150,13 @@ void TA_MA_StepTape( struct TA_MA_Stream *stream, const double tape[], int tapeB
    }
    stream->cur_outReal = *outReal;
    stream->outRangeCount++;
+}
+
+static TA_NOINLINE void TA_MA_PeekTape_MAMA( const struct TA_MAMA_Stream *sub, const double tape[], int tapeBase, int tapeMask, double inReal, double *outReal )
+{
+   double famaScratch;
+
+   TA_MAMA_PeekTape( sub, tape, tapeBase, tapeMask, inReal, outReal, &famaScratch );
 }
 
 /* Private function, not in public API. */
@@ -1175,11 +1191,7 @@ void TA_MA_PeekTape( const struct TA_MA_Stream *stream, const double tape[], int
       TA_KAMA_PeekTape( (const struct TA_KAMA_Stream *)stream->sub, tape, tapeBase, tapeMask, inReal, outReal );
       break;
    case TA_MAType_MAMA:
-      {
-         double famaScratch;
-
-         TA_MAMA_PeekTape( (const struct TA_MAMA_Stream *)stream->sub, tape, tapeBase, tapeMask, inReal, outReal, &famaScratch );
-      }
+      TA_MA_PeekTape_MAMA( (const struct TA_MAMA_Stream *)stream->sub, tape, tapeBase, tapeMask, inReal, outReal );
       break;
    case TA_MAType_T3:
       TA_T3_PeekTape( (const struct TA_T3_Stream *)stream->sub, tape, tapeBase, tapeMask, inReal, outReal );

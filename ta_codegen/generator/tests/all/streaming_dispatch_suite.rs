@@ -91,18 +91,32 @@ fn test_c_ma_dispatch_stream_section() {
         "T3 arm forwards the 0.7 vfactor literal + startIdx"
     );
     // MA's MAMA arm forwards the MAMA line to outReal and hands FAMA a scratch
-    // in every verb: a block-local where the sink is scalar, a historyLen
-    // buffer where it fills.
+    // in every verb: a local where the sink is scalar, a historyLen buffer
+    // where it fills. A per-bar verb's local lives in an out-of-line frame: an
+    // escaping local in the dispatcher costs every arm a stack-protector canary.
     assert!(
         c.contains(
             "TA_MAMA_OpenInternal( &sub, inReal, startIdx, historyLen, 0.5, 0.05, outReal, &famaScratch )"
         ),
         "MAMA arm forwards outReal + a scalar scratch at Open"
     );
-    assert!(
-        c.contains("TA_MAMA_Update( (TA_MAMA_Stream *)stream->sub, inReal, outReal, &famaScratch )"),
-        "MAMA Update forwards outReal + a scalar scratch"
-    );
+    for (verb, handle) in [
+        ("Update", "TA_MAMA_Stream *sub, "),
+        ("Peek", "const TA_MAMA_Stream *sub, "),
+        ("StepTape", "struct TA_MAMA_Stream *sub, const double tape[], int tapeBase, int tapeMask, "),
+        ("PeekTape", "const struct TA_MAMA_Stream *sub, const double tape[], int tapeBase, int tapeMask, "),
+    ] {
+        let ret = if verb.ends_with("Tape") { "void" } else { "TA_RetCode" };
+        let kw = if verb.ends_with("Tape") { "" } else { "return " };
+        let ta = if verb.ends_with("Tape") { "tape, tapeBase, tapeMask, " } else { "" };
+        assert!(
+            c.contains(&format!(
+                "static TA_NOINLINE {ret} TA_MA_{verb}_MAMA( {handle}double inReal, double *outReal )\n{{\n   double famaScratch;\n\n   {kw}TA_MAMA_{verb}( sub, {ta}inReal, outReal, &famaScratch );\n}}\n"
+            )),
+            "MAMA {verb} scratch lives in its own frame"
+        );
+        assert!(c.contains(&format!(" TA_MA_{verb}_MAMA( (")), "MA {verb} calls the MAMA frame");
+    }
     assert!(
         c.contains(concat!(
             "         famaScratch = (double *)TA_Malloc( historyLen * sizeof(double) );\n",

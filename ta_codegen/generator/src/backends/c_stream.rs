@@ -2896,6 +2896,7 @@ fn emit_dispatch(
             peek_signature(func)
         };
         let const_qual = if verb == "Peek" { "const " } else { "" };
+        emit_scratch_helpers(o, func, dp, registry, verb);
         let _ = writeln!(o, "{sig}\n{{");
         // Update returns through one exit so the produced-bar count advances
         // once, for the identity path and every arm alike; Peek commits
@@ -2923,11 +2924,10 @@ fn emit_dispatch(
         let _ = writeln!(o, "   {{");
         for arm in dp.arms.iter().filter(|a| a.supported) {
             let cp = callee_prefix(&arm.callee);
-            let arm_out_args = dispatch_arm_out_args(arm, &outputs, registry, true);
+            let (target, arm_out_args) = scratch_arm_target(func, arm, verb, &outputs, registry);
             let _ = writeln!(o, "   case {}:", case_of(&arm.label));
             let keep = if verb == "Update" { "retCode =" } else { "return" };
-            let call = format!("{keep} {cp}_{verb}( ({const_qual}{cp}_Stream *)stream->sub, {bar_args}, {arm_out_args} );");
-            emit_scratch_arm(o, arm_scratch(arm, registry).as_ref(), &call);
+            let _ = writeln!(o, "      {keep} {target}( ({const_qual}{cp}_Stream *)stream->sub, {bar_args}, {arm_out_args} );");
             if verb == "Update" {
                 let _ = writeln!(o, "      break;");
             }
@@ -2988,16 +2988,49 @@ fn emit_open_arm_scratch(o: &mut String, scratch: Option<&(&str, String)>, fills
     }
 }
 
-/// One scalar-sink dispatch arm's statement, braced around the block-local its
-/// scratch needs.
-fn emit_scratch_arm(o: &mut String, scratch: Option<&(&str, String)>, call: &str) {
-    match scratch {
-        Some((ty, name)) => {
-            let _ = writeln!(o, "      {{\n         {ty} {name};\n\n         {call}\n      }}");
-        }
-        None => {
-            let _ = writeln!(o, "      {call}");
-        }
+/// The callee and output arguments of one scalar-sink dispatch arm: the callee
+/// itself, or, where the arm discards an output, its [`emit_scratch_helpers`]
+/// frame, which takes the dispatcher's own outputs.
+fn scratch_arm_target(
+    func: &FuncDef,
+    arm: &streaming::DispatchArm,
+    verb: &str,
+    outputs: &[String],
+    registry: &Registry,
+) -> (String, String) {
+    let cp = callee_prefix(&arm.callee);
+    if arm_scratch(arm, registry).is_some() {
+        (format!("TA_{}_{verb}_{}", uname(func), arm.callee.to_uppercase()), outputs.join(", "))
+    } else {
+        (format!("{cp}_{verb}"), dispatch_arm_out_args(arm, outputs, registry, true))
+    }
+}
+
+/// One frame per arm that discards an output, holding the scratch local the
+/// callee writes it to. That local's address escapes, so in the dispatcher's own
+/// frame it would put a stack-protector canary on every call, whichever arm runs;
+/// keep the helper out of line.
+fn emit_scratch_helpers(o: &mut String, func: &FuncDef, dp: &DispatchPlan, registry: &Registry, verb: &str) {
+    let outputs: Vec<String> = func.outputs.iter().map(|x| x.name.clone()).collect();
+    let bars = bar_params_sig(func);
+    let outs = out_params_sig(func);
+    let bar_args = streaming::input_array_names(func).join(", ");
+    let tape = verb.ends_with("Tape");
+    let cq = if verb.starts_with("Peek") { "const " } else { "" };
+    for arm in dp.arms.iter().filter(|a| a.supported && !a.callee.is_empty()) {
+        let Some((ty, name)) = arm_scratch(arm, registry) else { continue };
+        let cp = callee_prefix(&arm.callee);
+        let (helper, _) = scratch_arm_target(func, arm, verb, &outputs, registry);
+        let args = dispatch_arm_out_args(arm, &outputs, registry, true);
+        let (ret, handle, tp, ta, kw) = if tape {
+            ("void", format!("{cq}struct {cp}_Stream *sub"), format!("{TAPE_PARAMS}, "), "tape, tapeBase, tapeMask, ", "")
+        } else {
+            ("TA_RetCode", format!("{cq}{cp}_Stream *sub"), String::new(), "", "return ")
+        };
+        let _ = writeln!(
+            o,
+            "static TA_NOINLINE {ret} {helper}( {handle}, {tp}{bars}{outs} )\n{{\n   {ty} {name};\n\n   {kw}{cp}_{verb}( sub, {ta}{bar_args}, {args} );\n}}\n"
+        );
     }
 }
 
@@ -3018,9 +3051,6 @@ fn emit_dispatch_tape(
     let bar_args = streaming::input_array_names(func).join(", ");
     let case_of = |label: &str| render_c_switch_label(label, enums);
     let arms: Vec<_> = dp.arms.iter().filter(|a| a.supported && !a.callee.is_empty()).collect();
-    let arm_call = |o: &mut String, arm: &streaming::DispatchArm, call: &str| {
-        emit_scratch_arm(o, arm_scratch(arm, registry).as_ref(), call);
-    };
     let identity = |o: &mut String, tail: &str| {
         if let (Some(cond), Some(idp)) = (identity_cond, &dp.identity) {
             let _ = writeln!(o, "   if( {cond} )\n   {{");
@@ -3035,6 +3065,7 @@ fn emit_dispatch_tape(
     };
 
     // --- StepTape -------------------------------------------------------------
+    emit_scratch_helpers(o, func, dp, registry, "StepTape");
     let _ = writeln!(
         o,
         "/* Private function, not in public API. */\nvoid TA_{n}_StepTape( struct TA_{n}_Stream *stream, {TAPE_PARAMS}, {bars}{outs} )\n{{"
@@ -3051,11 +3082,11 @@ fn emit_dispatch_tape(
     for arm in &arms {
         let cp = callee_prefix(&arm.callee);
         let _ = writeln!(o, "   case {}:", case_of(&arm.label));
-        let call = format!(
-            "{cp}_StepTape( (struct {cp}_Stream *)stream->sub, tape, tapeBase, tapeMask, {bar_args}, {} );",
-            dispatch_arm_out_args(arm, outputs, registry, true)
+        let (target, arm_out_args) = scratch_arm_target(func, arm, "StepTape", outputs, registry);
+        let _ = writeln!(
+            o,
+            "      {target}( (struct {cp}_Stream *)stream->sub, tape, tapeBase, tapeMask, {bar_args}, {arm_out_args} );"
         );
-        arm_call(o, arm, &call);
         let _ = writeln!(o, "      break;");
     }
     let _ = writeln!(o, "   default:\n      /* Unreachable: Open rejects arms without a sub-stream. */\n      break;\n   }}");
@@ -3063,6 +3094,7 @@ fn emit_dispatch_tape(
     let _ = writeln!(o, "}}\n");
 
     // --- PeekTape -------------------------------------------------------------
+    emit_scratch_helpers(o, func, dp, registry, "PeekTape");
     let _ = writeln!(
         o,
         "/* Private function, not in public API. */\nvoid TA_{n}_PeekTape( const struct TA_{n}_Stream *stream, {TAPE_PARAMS}, {bars}{outs} )\n{{"
@@ -3072,11 +3104,11 @@ fn emit_dispatch_tape(
     for arm in &arms {
         let cp = callee_prefix(&arm.callee);
         let _ = writeln!(o, "   case {}:", case_of(&arm.label));
-        let call = format!(
-            "{cp}_PeekTape( (const struct {cp}_Stream *)stream->sub, tape, tapeBase, tapeMask, {bar_args}, {} );",
-            dispatch_arm_out_args(arm, outputs, registry, true)
+        let (target, arm_out_args) = scratch_arm_target(func, arm, "PeekTape", outputs, registry);
+        let _ = writeln!(
+            o,
+            "      {target}( (const struct {cp}_Stream *)stream->sub, tape, tapeBase, tapeMask, {bar_args}, {arm_out_args} );"
         );
-        arm_call(o, arm, &call);
         let _ = writeln!(o, "      break;");
     }
     let _ = writeln!(o, "   default:\n      break;\n   }}\n}}\n");
