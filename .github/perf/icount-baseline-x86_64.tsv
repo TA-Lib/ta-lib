@@ -6,8 +6,8 @@
 #policy	monotone
 #toolchain	x86_64/x86_64-linux-gnu/13.3.0
 #corpus	points=20000 regime_period=14 seed=42 shape=randwalk stream_iters=1024 trend_strength=0.500000
-#commit	5056811e2834604cf8940f448f219afbfbe63db5
-#generated	2026-10-15T09:32:24Z
+#commit	cf8f46bf92fd66a13eb773b3d4839a1fb98f9cc6
+#generated	2026-10-22T09:45:16Z
 AC	batch	0	703438
 AC	open	0	704171
 AC	openfill	0	692624
@@ -64,8 +64,8 @@ AO	openfill	0	440427
 AO	peek	0	48141
 AO	update	0	93199
 APO	batch	0	220203
-APO	open	0	352835
-APO	openfill	0	352092
+APO	open	0	352827
+APO	openfill	0	352084
 APO	peek	0	148493
 APO	update	0	223248
 AROON	batch	0	1220680
@@ -109,13 +109,13 @@ AVGPRICE	openfill	0	120160
 AVGPRICE	peek	0	52237
 AVGPRICE	update	0	63501
 BBANDS	batch	0	830248
-BBANDS	open	0	1137570
-BBANDS	openfill	0	1136067
+BBANDS	open	0	1137566
+BBANDS	openfill	0	1136063
 BBANDS	peek	0	210957
 BBANDS	update	0	327169
 BBW	batch	0	696993
-BBW	open	0	940537
-BBW	openfill	0	940227
+BBW	open	0	940533
+BBW	openfill	0	940223
 BBW	peek	0	162832
 BBW	update	0	265744
 BETA	batch	0	1975635
@@ -669,8 +669,8 @@ KC	openfill	0	731899
 KC	peek	0	184333
 KC	update	0	232463
 KDJ	batch	0	1904462
-KDJ	open	0	2021776
-KDJ	openfill	0	2019529
+KDJ	open	0	2021772
+KDJ	openfill	0	2019525
 KDJ	peek	0	265533
 KDJ	update	0	417400
 KST	batch	0	2117866
@@ -679,8 +679,8 @@ KST	openfill	0	2177279
 KST	peek	0	151567
 KST	update	0	245237
 KSTEXT	batch	0	2189064
-KSTEXT	open	0	2655337
-KSTEXT	openfill	0	2653821
+KSTEXT	open	0	2655333
+KSTEXT	openfill	0	2653817
 KSTEXT	peek	0	444431
 KSTEXT	update	0	799762
 KURTOSIS	batch	0	1147575
@@ -744,8 +744,8 @@ MACDFIX	openfill	0	339889
 MACDFIX	peek	0	57357
 MACDFIX	update	0	75791
 MAMA	batch	0	6463588
-MAMA	open	0	6424258
-MAMA	openfill	0	6624223
+MAMA	open	0	6394273
+MAMA	openfill	0	6624189
 MAMA	peek	0	188695
 MAMA	update	0	406694
 MARKETFI	batch	0	220080
@@ -859,8 +859,8 @@ OBV	openfill	0	210217
 OBV	peek	0	42745
 OBV	update	0	54767
 PERCENTB	batch	0	766147
-PERCENTB	open	0	1106211
-PERCENTB	openfill	0	1110544
+PERCENTB	open	0	1106207
+PERCENTB	openfill	0	1110540
 PERCENTB	peek	0	165904
 PERCENTB	update	0	267792
 PERCENTILE	batch	0	6447412
@@ -884,8 +884,8 @@ PLUS_DM	openfill	0	480079
 PLUS_DM	peek	0	52237
 PLUS_DM	update	0	68621
 PPO	batch	0	360017
-PPO	open	0	602620
-PPO	openfill	0	601780
+PPO	open	0	602612
+PPO	openfill	0	601772
 PPO	peek	0	157709
 PPO	update	0	239632
 PSO	batch	0	3802524
@@ -899,7 +899,7 @@ PVI	openfill	0	431012
 PVI	peek	0	55023
 PVI	update	0	62525
 PVO	batch	0	360017
-PVO	open	0	602620
+PVO	open	0	602612
 PVO	openfill	0	602073
 PVO	peek	0	157709
 PVO	update	0	239632
