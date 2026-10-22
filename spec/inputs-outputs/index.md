@@ -3,7 +3,7 @@ url: 'https://ta-lib.org/spec/inputs-outputs/index.md'
 description: >-
   What a TA-Lib call takes and what a successful call writes: what the caller
   must pass, index range, optional parameters, output range and size, argument
-  order, integer, declinable and pattern outputs, and computing in place.
+  order, integer and pattern outputs, and computing in place.
 ---
 # Batch Inputs and Outputs
 
@@ -16,11 +16,11 @@ What a batch call takes, and what a successful call writes. Rules use C's spelli
 Nothing here is checked unless the item says so. A call that breaks an unchecked item can succeed with wrong values.
 
 * <a id="input-length"></a>**Pass full-length inputs.** Every input series a function declares holds at least `endIdx + 1` elements, including an input the function never reads ([CDLENGULFING](/functions/cdlengulfing) declares `inHigh` and `inLow` and reads neither). This holds even when the range produces no output ([rW2](/spec/inputs-outputs/#rw2)). A stream opener's inputs all have the history's length (in C, each holds `historyLen` elements). Rust, Java and C# reject a wrong length ([rB5](/spec/errors/#rb5), [rS5](/spec/streaming/#rs5)); C takes bare pointers, so it cannot check the length.
-* <a id="output-size"></a>**Size every output.** Each output holds at least `max(1, count)` elements, where `count` is the one the call produces ([rW1](/spec/inputs-outputs/#rw1)). A zero-length output that is not declined is absent ([rB4](/spec/errors/#rb4)). `endIdx - startIdx + 1` always suffices. Sizing methods: [Output Size and Lookback](/api/#output_size). Rust, Java and C# reject a shorter output ([rB5](/spec/errors/#rb5)); C takes bare pointers, so it cannot check the size.
+* <a id="output-size"></a>**Size every output.** Each output holds at least `max(1, count)` elements, where `count` is the one the call produces ([rW1](/spec/inputs-outputs/#rw1)). A zero-length output is absent ([rB4](/spec/errors/#rb4)). `endIdx - startIdx + 1` always suffices. Sizing methods: [Output Size and Lookback](/api/#output_size). Rust, Java and C# reject a shorter output ([rB5](/spec/errors/#rb5)); C takes bare pointers, so it cannot check the size.
 * <a id="finite-inputs"></a>**Pass only finite values in a series.** A NaN or infinity in a bar a call reads ([rL1](/spec/lookback/#rl1)), or inside the history a stream opens on, is not detected, and nothing is promised about the output or about a handle opened from it. Clean or split the series first. A single bar passed to `Update` or `Peek` is checked ([rU3](/spec/streaming/#ru3)).
 * <a id="input-domain"></a>**Expect no promise beyond `TA_REAL_MIN` to `TA_REAL_MAX`** (±3e37). This is the tested domain, not a limit: nothing checks it, and a value outside it is computed but nothing is promised about the result.
 * <a id="overflow"></a>**Expect no overflow detection.** A running sum, a smoothed value or a ratio against a nearly flat window can leave the range of a double on bars that are each finite. Past that point nothing is defined: not the output, not the return code, not a stream handle's state. Open a new handle rather than keep one that went through it.
-* <a id="no-overlap"></a>**Do not overlap buffers**, except an output placed whole on an input ([rW7](/spec/inputs-outputs/#rw7)). Partial overlap, such as the same memory from a different start, is not detected in C and can return `TA_SUCCESS` with wrong values. An output over an input of another element type is not detected in C either.
+* <a id="no-overlap"></a>**Do not overlap buffers**, except an output placed whole on an input ([rW6](/spec/inputs-outputs/#rw6)). Partial overlap, such as the same memory from a different start, is not detected in C and can return `TA_SUCCESS` with wrong values. An output over an input of another element type is not detected in C either.
 
 ## What a call takes
 
@@ -42,29 +42,23 @@ An MA-type parameter accepts every `MAType` member, and a release may add member
 
 <a id="rw2"></a>**rW2** A valid range that ends before the lookback (`endIdx < lookback`) succeeds with `count` 0: no error, no values. Test `count`, not `begIdx`.
 
-<a id="rw3"></a>**rW3** Nothing in an output past `count` is written, except where that output is also an input ([rW7](/spec/inputs-outputs/#rw7)). No native API pads the warm-up with NaN or any other fill value.
+<a id="rw3"></a>**rW3** Nothing in an output past `count` is written, except where that output is also an input ([rW6](/spec/inputs-outputs/#rw6)). No native API pads the warm-up with NaN or any other fill value.
 
 <a id="rw4"></a>**rW4** What an integer output holds:
 
-* **Pattern outputs** (every `CDL*` output, among others): [rW8](/spec/inputs-outputs/#rw8).
+* **Pattern outputs** (every `CDL*` output, among others): [rW7](/spec/inputs-outputs/#rw7).
 * **Index outputs** ([MININDEX](/functions/minindex), [MAXINDEX](/functions/maxindex), [MINMAXINDEX](/functions/minmaxindex)): the position of a bar in the input passed, not relative to `startIdx` or `begIdx`. Of several tied bars it names the most recent.
 * **Other integer outputs** (for example [HT_TRENDMODE](/functions/ht_trendmode)): as their function page says.
 
-<a id="rw5"></a>**rW5** An output whose [metadata flags](/spec/abstract/#flags) include `TA_OUT_NULLABLE` (Rust `OutputFlags::NULLABLE`, Java `OutputFlags.NULLABLE`, C# `OutputFlags.Nullable`) may be declined, for example MAMA's `outFAMA`; read the flag rather than a list of names. Decline it with `NULL` in C, `None` in Rust (the parameter is an `Option`), `null` in Java, an empty span such as `default` in C#. It is still computed: every other output is bit-identical to the same call with it supplied, and a stream opened that way still reports its value. No other output can be declined: [rB7](/spec/errors/#rb7), [rS7](/spec/streaming/#rs7), [rU5](/spec/streaming/#ru5).
-
-<a id="rw6"></a>**rW6** A function whose [metadata flags](/spec/abstract/#flags) include `TA_FUNC_FLG_NAN_INF_OUT` (Rust `FuncFlags::NAN_INF_OUTPUT`, Java `FuncFlags.NAN_INF_OUTPUT`, C# `FuncFlags.NanInfOutput`; "Can Output NaN or ±Inf" on its function page) can write NaN or ±Inf in a successful call on ordinary finite input. The Notes on its function page say when.
+<a id="rw5"></a>**rW5** A function whose [metadata flags](/spec/abstract/#flags) include `TA_FUNC_FLG_NAN_INF_OUT` ("Can Output NaN or ±Inf" on its function page) can write NaN or ±Inf in a successful call on ordinary finite input. The Notes on its function page say when.
 
 ## Computing in place {#aliasing}
 
-<a id="rw7"></a>**rW7** In a batch call, an output may be the very buffer of an input of the same element type: whole buffer, the same start, and in C# the same span. The outputs are bit-identical to a call with separate buffers. Afterwards, in that buffer, the elements at `[0, count)` hold the output, the elements at `[count, endIdx]` may hold any value, because the call may use them as scratch space for intermediate results, and the elements after `endIdx` keep their input values.
-| | C | Rust | Java | C# |
-|---|---|---|---|---|
-| "The same buffer" means | the same pointer | not expressible in safe code | the same array | equal spans: same start and length; at `OpenAndFill`, the same start; a null array is no buffer |
-| Output on an input | allowed | not expressible | allowed | allowed |
+<a id="rw6"></a>**rW6** In a batch call, an output may be the very buffer of an input of the same element type: whole buffer, the same start, and in C# the same span. The outputs are bit-identical to a call with separate buffers. Afterwards, in that buffer, the elements at `[0, count)` hold the output, the elements at `[count, endIdx]` may hold any value, because the call may use them as scratch space for intermediate results, and the elements after `endIdx` keep their input values. The same buffer is the same pointer in C, the same array in Java, and in C# an equal span, of the same start and length. Rust's safe code cannot express it.
 
 ## Pattern outputs {#patterns}
 
-<a id="rw8"></a>**rW8** A pattern output writes 0 or a sign times a level. Its [metadata flags](/spec/abstract/#flags) say which values it writes and what they mean, and the Output Values table on its function page says what each value means for that pattern.
+<a id="rw7"></a>**rW7** A pattern output writes 0 or a sign times a level. Its [metadata flags](/spec/abstract/#flags) say which values it writes and what they mean, and the Output Values table on its function page says what each value means for that pattern.
 
 * **The values.** The sign flags `TA_OUT_POSITIVE` and `TA_OUT_NEGATIVE` give every sign times every level; `TA_OUT_ZERO` adds 0. Nothing else is written. An output with none of the three flags declares no values. The levels are 100, plus 80 with `TA_OUT_PATTERN_WEAK` and 200 with `TA_OUT_PATTERN_CONFIRM`. 0 means no pattern on that bar.
 * **The sign.**

@@ -28,7 +28,7 @@ A 3-bar pattern: an inside bar followed by a false breakout, optionally later co
 
 ## Output Values
 
-How to read these values from the output's flags: [rW8](/spec/inputs-outputs/#rw8).
+How to read these values from the output's flags: [rW7](/spec/inputs-outputs/#rw7).
 
 | Value | Meaning |
 |-------|---------|

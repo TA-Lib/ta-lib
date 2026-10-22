@@ -55,8 +55,7 @@ Each release is checked on every supported platform against the regression suite
 | `Peek` and the next `Update` with the same bar | bit-identical | [rH4](/spec/streaming/#rh4) |
 | a `Clone` and its original | the same value and range | [rH8](/spec/streaming/#rh8) |
 | a default sentinel and the explicit default | bit-identical | [rP3](/spec/inputs-outputs/#rp3) |
-| an output in place on its input, and in a separate buffer | bit-identical | [rW7](/spec/inputs-outputs/#rw7) |
-| a declinable output declined, and supplied | the other outputs bit-identical | [rW5](/spec/inputs-outputs/#rw5) |
+| an output in place on its input, and in a separate buffer | bit-identical | [rW6](/spec/inputs-outputs/#rw6) |
 | a `float` input, and the `double` call on its widened values | bit-identical | [rP4](/spec/inputs-outputs/#rp4) |
 | the same call on two machines | not bit-identical in general; target below 1e-9 | [across machines](/spec/versions/#machines) |
 | the same bar from batch calls with different `startIdx` | not bit-identical in general; outside the 1e-9 target | [different starts](/spec/lookback/#start), [rD3](/spec/versions/#rd3), [what a level targets](/spec/auto-stabilization/#target) |

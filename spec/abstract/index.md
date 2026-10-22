@@ -14,7 +14,7 @@ The Abstract API describes every function at run time and calls it by name. The 
 
 ## The caller must {#caller}
 
-* <a id="bind-all"></a>**Bind every input and every output before the call.** That includes an output the typed call lets a caller decline ([rW5](/spec/inputs-outputs/#rw5)). An optional parameter may stay unbound ([rA5](/spec/abstract/#ra5)).
+* <a id="bind-all"></a>**Bind every input and every output before the call.** An optional parameter may stay unbound ([rA5](/spec/abstract/#ra5)).
 * <a id="range-at-call"></a>**Do not assume a value a bind call accepts is valid for the call.** A bind call checks the slot it names and the kind of the value. It may accept a value outside the parameter's accepted values: the call then rejects it ([rA1](/spec/abstract/#ra1)), and the holder's lookback and display shift fail ([rL2](/spec/lookback/#rl2), [rL11](/spec/lookback/#rl11)). In C, `TA_GetLookback` and `TA_GetDisplayShift` return `TA_SUCCESS` and carry the failure in the value.
 * <a id="by-name"></a>**Identify a function by its name, never by its position.** A release that adds a function moves the ones after it, and the order of the groups differs between languages. In Rust, the number of a `FuncId` is such a position.
 * <a id="unknown-flag"></a>**Ignore a flag you do not know.** A release may add a flag ([rV3](/spec/versions/#rv3)).
@@ -58,17 +58,11 @@ What a descriptor holds:
 
 In Rust, Java and C# the function descriptor also holds the descriptors of its inputs, optional parameters and outputs. In C it holds their counts and the function's handle, and each parameter descriptor comes from its getter, by index from 0. Rust's also holds `id`, the `FuncId` that `get_func_handle` returns.
 
-A slot is one input, one optional parameter or one output. A bind call names it by its position among the function's inputs, optional parameters or outputs, from 0. A price input is one input, whatever number of series it consumes. An MA-type parameter is an integer list of the MA types.
-
-| Kind | C | Rust | Java | C# |
-|---|---|---|---|---|
-| input | `TA_Input_Price`, `TA_Input_Real`, `TA_Input_Integer` | `InputType::Price`, `Real`, `Integer` | `InputType.PRICE`, `REAL`, `INTEGER` | `InputKind.Price`, `Real`, `Integer` |
-| optional parameter | `TA_OptInput_RealRange`, `TA_OptInput_RealList`, `TA_OptInput_IntegerRange`, `TA_OptInput_IntegerList` | `OptInputType::RealRange`, `RealList`, `IntegerRange`, `IntegerList` | `OptInputType.REAL_RANGE`, `REAL_LIST`, `INTEGER_RANGE`, `INTEGER_LIST` | `OptInputDomain.RealRange`, `RealList`, `IntegerRange`, `IntegerList` |
-| output | `TA_Output_Real`, `TA_Output_Integer` | `OutputType::Real`, `Integer` | `OutputType.REAL`, `INTEGER` | `OutputKind.Real`, `Integer` |
+A slot is one input, one optional parameter or one output. A bind call names it by its position among the function's inputs, optional parameters or outputs, from 0. A price input is one input, whatever number of series it consumes. An MA-type parameter is an integer list of the MA types. C# names the kind enums `InputKind`, `OptInputDomain` and `OutputKind`; the other languages, `InputType`, `OptInputType` and `OutputType`.
 
 ## Rules {#rules}
 
-<a id="ra1"></a>**rA1** A call through a parameter holder whose arguments are all bound and accepted by their bind calls is held to the [batch conditions](/spec/errors/#batch), with the same codes. A holder cannot decline an output, so an empty buffer bound to any output is absent and fails ([rB4](/spec/errors/#rb4)), including one the typed call lets a caller decline ([rW5](/spec/inputs-outputs/#rw5)). The exceptions are in C. Its bind calls take bare pointers and no length, so a bound series shorter than the range goes undetected ([rB5](/spec/errors/#rb5)), and an absent range out-parameter returns `TA_INVALID_PARAM_HOLDER`, not [rB4](/spec/errors/#rb4)'s code.
+<a id="ra1"></a>**rA1** A call through a parameter holder whose arguments are all bound and accepted by their bind calls is held to the [batch conditions](/spec/errors/#batch), with the same codes. The exceptions are in C. Its bind calls take bare pointers and no length, so a bound series shorter than the range goes undetected ([rB5](/spec/errors/#rb5)), and an absent range out-parameter returns `TA_INVALID_PARAM_HOLDER`, not [rB4](/spec/errors/#rb4)'s code.
 
 <a id="ra2"></a>**rA2** A failed bind call leaves the parameter holder as it found it, so a re-bind that fails cannot let the next call succeed silently over a mix of old and new arguments.
 
@@ -120,8 +114,8 @@ What a function or an output supports.
 | Flag | Meaning |
 |---|---|
 | `TA_FUNC_FLG_STREAM` | The function has a streaming API. Every function carries it ([rH9](/spec/streaming/#rh9)). |
-| `TA_FUNC_FLG_CANDLESTICK` | A candlestick pattern function (`CDL*`): its lookback can depend on the candle settings ([rL7](/spec/lookback/#rl7)) and every integer output is a pattern output ([rW8](/spec/inputs-outputs/#rw8)). |
-| `TA_OUT_NULLABLE` | The typed call lets the caller decline this output ([rW5](/spec/inputs-outputs/#rw5)). A holder still needs it bound ([bind all](/spec/abstract/#bind-all)). |
+| `TA_FUNC_FLG_CANDLESTICK` | A candlestick pattern function (`CDL*`): its lookback can depend on the candle settings ([rL7](/spec/lookback/#rl7)) and every integer output is a pattern output ([rW7](/spec/inputs-outputs/#rw7)). |
+| `TA_OUT_NULLABLE` | Deprecated: no output is optional. No function sets it. |
 
 ### Price components {#flags-price}
 
@@ -144,18 +138,18 @@ What can be said of the values a function writes.
 | Flag | Meaning |
 |---|---|
 | `TA_FUNC_FLG_UNST_PER` | The function owns an unstable-period id ([rL6](/spec/lookback/#rl6), [stability](/spec/lookback/#metadata)). |
-| `TA_FUNC_FLG_PATH_DEP` | Path-dependent: the value at a bar depends on where the range starts, and never converges ([stability](/spec/lookback/#metadata)). |
-| `TA_FUNC_FLG_NAN_INF_OUT` | A successful call can write NaN or ±Inf on ordinary finite input ([rW6](/spec/inputs-outputs/#rw6)). |
-| `TA_FUNC_FLG_PERIOD1_IDENTITY` | At a period of 1 every output value is a bit-for-bit copy of its input ([rL8](/spec/lookback/#rl8)). |
+| `TA_FUNC_FLG_PATH_DEP` | Path-dependent: the value at a bar depends on where the range starts, and may never converge ([stability](/spec/lookback/#metadata)). |
+| `TA_FUNC_FLG_NAN_INF_OUT` | A successful call can write NaN or ±Inf on ordinary finite input ([rW5](/spec/inputs-outputs/#rw5)). |
+| `TA_FUNC_FLG_PERIOD1_IDENTITY` | At a period of 1 every output value is a bit-for-bit copy of `inReal` ([rL8](/spec/lookback/#rl8)). |
 | `TA_FUNC_FLG_USES_TRANSCENDENTAL` | The function calls a transcendental function, so a value may differ ([transcendental functions](/spec/versions/#transcendental)); TA-Lib targets a difference below 1e-9 ([rD2](/spec/versions/#rd2)). Not set on a function that reaches one only when an MA-type parameter selects `MAMA` or `ALMA`. |
 | `TA_FUNC_FLG_POSITIVE_INPUT` | The input must be positive, as a price is. The data is not checked: a series that reaches or crosses zero, such as an oscillator or a spread, gets a successful call and an output that may have no meaning. The function's page says what a zero or a negative value does. |
-| `TA_OUT_POSITIVE` | Positive values occur ([rW8](/spec/inputs-outputs/#rw8)). |
-| `TA_OUT_NEGATIVE` | Negative values occur ([rW8](/spec/inputs-outputs/#rw8)). |
-| `TA_OUT_ZERO` | 0 occurs; on a pattern output, no pattern on that bar ([rW8](/spec/inputs-outputs/#rw8)). |
-| `TA_OUT_PATTERN_BOOL` | A pattern output whose values are 0 and 100 ([rW8](/spec/inputs-outputs/#rw8)). |
-| `TA_OUT_PATTERN_BULL_BEAR` | A pattern output whose sign is a call: + bullish, - bearish ([rW8](/spec/inputs-outputs/#rw8)). |
-| `TA_OUT_PATTERN_WEAK` | Adds level 80: a weaker form of the pattern, on the same bar ([rW8](/spec/inputs-outputs/#rw8)). |
-| `TA_OUT_PATTERN_CONFIRM` | Adds level 200: this bar confirms the output's live pattern ([rW8](/spec/inputs-outputs/#rw8)). |
+| `TA_OUT_POSITIVE` | Positive values occur ([rW7](/spec/inputs-outputs/#rw7)). |
+| `TA_OUT_NEGATIVE` | Negative values occur ([rW7](/spec/inputs-outputs/#rw7)). |
+| `TA_OUT_ZERO` | 0 occurs; on a pattern output, no pattern on that bar ([rW7](/spec/inputs-outputs/#rw7)). |
+| `TA_OUT_PATTERN_BOOL` | A pattern output whose values are 0 and 100 ([rW7](/spec/inputs-outputs/#rw7)). |
+| `TA_OUT_PATTERN_BULL_BEAR` | A pattern output whose sign is a call: + bullish, - bearish ([rW7](/spec/inputs-outputs/#rw7)). |
+| `TA_OUT_PATTERN_WEAK` | Adds level 80: a weaker form of the pattern, on the same bar ([rW7](/spec/inputs-outputs/#rw7)). |
+| `TA_OUT_PATTERN_CONFIRM` | Adds level 200: this bar confirms the output's live pattern ([rW7](/spec/inputs-outputs/#rw7)). |
 
 ### Display hint {#flags-display}
 

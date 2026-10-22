@@ -45,7 +45,7 @@ This documentation is built from the main branch and can be ahead of the newest 
 ### Specification
 
 - [Specification](https://ta-lib.org/spec/index.md): The calling contract of TA-Lib's C, Rust, Java and C# APIs, stated rule by rule as a reference for AI-agent-driven integration: how a failure reaches the caller, how names fold, and one page per topic.
-- [Batch Inputs and Outputs](https://ta-lib.org/spec/inputs-outputs/index.md): What a TA-Lib call takes and what a successful call writes: what the caller must pass, index range, optional parameters, output range and size, argument order, integer, declinable and pattern outputs, and computing in place.
+- [Batch Inputs and Outputs](https://ta-lib.org/spec/inputs-outputs/index.md): What a TA-Lib call takes and what a successful call writes: what the caller must pass, index range, optional parameters, output range and size, argument order, integer and pattern outputs, and computing in place.
 - [Lookback and Shift](https://ta-lib.org/spec/lookback/index.md): How the lookback is defined and queried, what enters it (unstable period, candle averaging, a period of 1), the display shift a chart applies to an output, and how to tell from metadata whether the start of the series matters.
 - [Auto-Stabilization](https://ta-lib.org/spec/auto-stabilization/index.md): The bars an Auto level of the unstable period adds for each function, what a level targets, and the known exceptions.
 - [Streaming](https://ta-lib.org/spec/streaming/index.md): The streaming contract in C, Rust, Java and C#: what the caller must do, bit-identity with batch, opening and its conditions, Update, Peek and Advance, the accessors, and handle lifetime.
@@ -308,5 +308,5 @@ This documentation is built from the main branch and can be ahead of the newest 
 - [Contribute a TA Function](https://ta-lib.org/contribute/index.md): Contribute a new TA function to TA-Lib: agree the spec in the open, hand the implementation to an AI agent, prove it against golden values from an oracle.
 - [FAQ](https://ta-lib.org/faq/index.md): Whether TA-Lib is still maintained (yes, actively again since 2025), whether it works on a live feed, whether the Rust, Java and C# libraries need the C library, and where to get support.
 - [Install](https://ta-lib.org/install/index.md): Install TA-Lib: a dozen languages, natively or through a wrapper. Native C/C++, Java, C# and Rust, plus community wrappers for Python, R, Go, Ruby, PHP, Zig and more.
-- [Install C/C++](https://ta-lib.org/install/c/index.md): Install the TA-Lib C/C++ libraries and headers: Windows installer, macOS Homebrew, Linux packages, or build from source with CMake or autotools.
+- [Install C/C++](https://ta-lib.org/install/c/index.md): Install the TA-Lib C/C++ libraries and headers: Linux packages, macOS Homebrew, Windows installer, or build from source with CMake or autotools.
 - [Wrappers](https://ta-lib.org/wrappers/index.md): Community-maintained TA-Lib wrappers for Python, R, Go, Ruby, PHP, Zig, pandas and PostgreSQL, with a link to each project's GitHub repository.

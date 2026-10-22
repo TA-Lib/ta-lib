@@ -32,7 +32,7 @@ Two candles at i-1 and i. Both black: close\[i-1] < open\[i-1] and close\[i] < o
 
 ## Output Values
 
-How to read these values from the output's flags: [rW8](/spec/inputs-outputs/#rw8).
+How to read these values from the output's flags: [rW7](/spec/inputs-outputs/#rw7).
 
 | Value | Meaning |
 |-------|---------|
