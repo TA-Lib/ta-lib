@@ -14,6 +14,7 @@
  *  080926 MF,CC  Allow period of 1. Just copy input into output.
  *  092526 MF,CC  #446 exact zero sums on a dead volume window.
  *  092626 MF,CC  #446 branch-free zero count.
+ *  102326 MF,CC  #554 rare reset.
  *
  */
 
@@ -127,9 +128,9 @@ TA_RetCode vwma(int startIdx, int endIdx,
       tempReal = inReal[trailingIdx] * trailingVolume;
 
       /* Each branch writes its own output: a branch that only zeroes the sums
-       * is if-converted into a mask on their dependency chain.
+       * is if-converted into a mask on their dependency chain, hint or not.
        */
-      if( zeroCount >= optInTimePeriod )
+      if( TA_UNLIKELY(zeroCount >= optInTimePeriod) )
       {
          /* Zero, then subtract the departing bar: a non-finite price times its
           * zero volume is NaN, not zero.

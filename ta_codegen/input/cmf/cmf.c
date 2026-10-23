@@ -12,6 +12,7 @@
  *  072126 MF,CC  First version (issue #134).
  *  092526 MF,CC  #446 exact zero sums on a dead volume window.
  *  092626 MF,CC  #446 branch-free zero run.
+ *  102326 MF,CC  #554 rare reset, zero run as a mask.
  */
 
 int cmf_lookback(int optInTimePeriod)
@@ -29,7 +30,7 @@ TA_RetCode cmf(int startIdx, int endIdx,
    double outReal[])
 {
    double sumMFV, sumVol, high, low, close, tmp, mfv;
-   int lookbackTotal, outIdx, i, today, nullRun, zeroVol;
+   int lookbackTotal, outIdx, i, today, nullRun, liveVol;
 
    /* Both the per-bar money flow volume and the volume that produced it are
     * carried in the circular buffer. Keeping the volume here rather than
@@ -72,9 +73,10 @@ TA_RetCode cmf(int startIdx, int endIdx,
    sumVol = 0.0;
    /* Consecutive zero-volume bars. Once they fill a window both sums are
     * exactly zero, where add-then-subtract would leave the rounding residue of
-    * the bars that departed, of either sign. It advances as a product rather
-    * than as v == 0.0 ? nullRun+1 : 0, which gcc and RyuJIT compile to a branch
-    * that mispredicts on scattered zero volumes.
+    * the bars that departed, of either sign. The run advances through a mask:
+    * as a select or a product gcc compiles it to a branch that mispredicts on
+    * scattered zero volumes. The test is fabs(v) <= 0.0 rather than == 0.0:
+    * the same result, NaN included, from one flag instead of two.
     */
    nullRun = 0;
    for( i=optInTimePeriod; i > 0; i-- )
@@ -93,8 +95,8 @@ TA_RetCode cmf(int startIdx, int endIdx,
       mfv_volume[mfv_Idx] = inVolume[today];
       sumMFV += mfv;
       sumVol += inVolume[today];
-      zeroVol = inVolume[today] == 0.0 ? 1 : 0;
-      nullRun = (nullRun+zeroVol)*zeroVol;
+      liveVol = fabs(inVolume[today]) <= 0.0 ? 0 : 1;
+      nullRun = (nullRun + 1) & (liveVol - 1);
       today++;
 
       CIRCBUF_NEXT(mfv);
@@ -131,14 +133,11 @@ TA_RetCode cmf(int startIdx, int endIdx,
       mfv_volume[mfv_Idx] = inVolume[today];
       sumMFV += mfv;
       sumVol += inVolume[today];
-      zeroVol = inVolume[today] == 0.0 ? 1 : 0;
-      nullRun = (nullRun+zeroVol)*zeroVol;
+      liveVol = fabs(inVolume[today]) <= 0.0 ? 0 : 1;
+      nullRun = (nullRun + 1) & (liveVol - 1);
       today++;
 
-      /* The reset writes its own output: a branch that only zeroes the sums is
-       * if-converted into a mask on their dependency chain.
-       */
-      if( nullRun >= optInTimePeriod )
+      if( TA_UNLIKELY(nullRun >= optInTimePeriod) )
       {
          nullRun = optInTimePeriod;
          sumMFV = 0.0;

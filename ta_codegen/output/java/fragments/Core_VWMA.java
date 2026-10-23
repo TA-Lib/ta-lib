@@ -14,6 +14,7 @@
  *  080926 MF,CC  Allow period of 1. Just copy input into output.
  *  092526 MF,CC  #446 exact zero sums on a dead volume window.
  *  092626 MF,CC  #446 branch-free zero count.
+ *  102326 MF,CC  #554 rare reset.
  */
 
    /**
@@ -164,7 +165,7 @@
          trailingVolume = inVolume[trailingIdx];
          tempReal = inReal[trailingIdx] * trailingVolume;
          /* Each branch writes its own output: a branch that only zeroes the sums
-          * is if-converted into a mask on their dependency chain.
+          * is if-converted into a mask on their dependency chain, hint or not.
           */
          if( zeroCount >= optInTimePeriod ) {
             /* Zero, then subtract the departing bar: a non-finite price times its
@@ -582,7 +583,7 @@
          trailingVolume = sp.ring_trailingIdx_inVolume[sp.ringPos_trailingIdx];
          tempReal = sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx] * trailingVolume;
          /* Each branch writes its own output: a branch that only zeroes the sums
-          * is if-converted into a mask on their dependency chain.
+          * is if-converted into a mask on their dependency chain, hint or not.
           */
          if( zeroCount >= sp.optInTimePeriod ) {
             /* Zero, then subtract the departing bar: a non-finite price times its
@@ -655,7 +656,7 @@
       trailingVolume = sp.ring_trailingIdx_inVolume[sp.ringPos_trailingIdx];
       tempReal = sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx] * trailingVolume;
       /* Each branch writes its own output: a branch that only zeroes the sums
-       * is if-converted into a mask on their dependency chain.
+       * is if-converted into a mask on their dependency chain, hint or not.
        */
       if( sp.zeroCount >= sp.optInTimePeriod ) {
          /* Zero, then subtract the departing bar: a non-finite price times its
@@ -806,7 +807,7 @@
          trailingVolume = inVolume[trailingIdx];
          tempReal = inReal[trailingIdx] * trailingVolume;
          /* Each branch writes its own output: a branch that only zeroes the sums
-          * is if-converted into a mask on their dependency chain.
+          * is if-converted into a mask on their dependency chain, hint or not.
           */
          if( zeroCount >= optInTimePeriod ) {
             /* Zero, then subtract the departing bar: a non-finite price times its

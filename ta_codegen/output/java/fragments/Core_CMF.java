@@ -12,6 +12,7 @@
  *  072126 MF,CC  First version (issue #134).
  *  092526 MF,CC  #446 exact zero sums on a dead volume window.
  *  092626 MF,CC  #446 branch-free zero run.
+ *  102326 MF,CC  #554 rare reset, zero run as a mask.
  */
 
    /**
@@ -80,7 +81,7 @@
       int i = 0;
       int today = 0;
       int nullRun = 0;
-      int zeroVol = 0;
+      int liveVol = 0;
       double[] mfv_flow;
       double[] mfv_volume;
       int mfv_Idx = 0;
@@ -135,9 +136,10 @@
       sumVol = 0.0;
       /* Consecutive zero-volume bars. Once they fill a window both sums are
        * exactly zero, where add-then-subtract would leave the rounding residue of
-       * the bars that departed, of either sign. It advances as a product rather
-       * than as v == 0.0 ? nullRun+1 : 0, which gcc and RyuJIT compile to a branch
-       * that mispredicts on scattered zero volumes.
+       * the bars that departed, of either sign. The run advances through a mask:
+       * as a select or a product gcc compiles it to a branch that mispredicts on
+       * scattered zero volumes. The test is fabs(v) <= 0.0 rather than == 0.0:
+       * the same result, NaN included, from one flag instead of two.
        */
       nullRun = 0;
       for( i = optInTimePeriod; i > 0; i -= 1 ) {
@@ -154,8 +156,8 @@
          mfv_volume[mfv_Idx] = inVolume[today];
          sumMFV += mfv;
          sumVol += inVolume[today];
-         zeroVol = (inVolume[today] == 0.0) ? 1 : 0;
-         nullRun = (nullRun + zeroVol) * zeroVol;
+         liveVol = (Math.abs(inVolume[today]) <= 0.0) ? 0 : 1;
+         nullRun = (nullRun + 1) & (liveVol - 1);
          today += 1;
          mfv_Idx++;
          if( mfv_Idx > maxIdx_mfv ) { mfv_Idx = 0; }
@@ -188,12 +190,9 @@
          mfv_volume[mfv_Idx] = inVolume[today];
          sumMFV += mfv;
          sumVol += inVolume[today];
-         zeroVol = (inVolume[today] == 0.0) ? 1 : 0;
-         nullRun = (nullRun + zeroVol) * zeroVol;
+         liveVol = (Math.abs(inVolume[today]) <= 0.0) ? 0 : 1;
+         nullRun = (nullRun + 1) & (liveVol - 1);
          today += 1;
-         /* The reset writes its own output: a branch that only zeroes the sums is
-          * if-converted into a mask on their dependency chain.
-          */
          if( nullRun >= optInTimePeriod ) {
             nullRun = optInTimePeriod;
             sumMFV = 0.0;
@@ -234,7 +233,7 @@
       int i = 0;
       int today = 0;
       int nullRun = 0;
-      int zeroVol = 0;
+      int liveVol = 0;
       double[] mfv_flow;
       double[] mfv_volume;
       int mfv_Idx = 0;
@@ -283,8 +282,8 @@
          mfv_volume[mfv_Idx] = (double)inVolume[today];
          sumMFV += mfv;
          sumVol += (double)inVolume[today];
-         zeroVol = ((double)inVolume[today] == 0.0) ? 1 : 0;
-         nullRun = (nullRun + zeroVol) * zeroVol;
+         liveVol = (Math.abs((double)inVolume[today]) <= 0.0) ? 0 : 1;
+         nullRun = (nullRun + 1) & (liveVol - 1);
          today += 1;
          mfv_Idx++;
          if( mfv_Idx > maxIdx_mfv ) { mfv_Idx = 0; }
@@ -310,8 +309,8 @@
          mfv_volume[mfv_Idx] = (double)inVolume[today];
          sumMFV += mfv;
          sumVol += (double)inVolume[today];
-         zeroVol = ((double)inVolume[today] == 0.0) ? 1 : 0;
-         nullRun = (nullRun + zeroVol) * zeroVol;
+         liveVol = (Math.abs((double)inVolume[today]) <= 0.0) ? 0 : 1;
+         nullRun = (nullRun + 1) & (liveVol - 1);
          today += 1;
          if( nullRun >= optInTimePeriod ) {
             nullRun = optInTimePeriod;
@@ -641,7 +640,7 @@
          double close = 0.0;
          double tmp = 0.0;
          double mfv = 0.0;
-         int zeroVol = 0;
+         int liveVol = 0;
          double cur_outReal = 0.0;
          int nullRun = sp.nullRun;
          double sumMFV = sp.sumMFV;
@@ -659,11 +658,8 @@
          }
          sumMFV += mfv;
          sumVol += inVolume;
-         zeroVol = (inVolume == 0.0) ? 1 : 0;
-         nullRun = (nullRun + zeroVol) * zeroVol;
-         /* The reset writes its own output: a branch that only zeroes the sums is
-          * if-converted into a mask on their dependency chain.
-          */
+         liveVol = (Math.abs(inVolume) <= 0.0) ? 0 : 1;
+         nullRun = (nullRun + 1) & (liveVol - 1);
          if( nullRun >= sp.optInTimePeriod ) {
             nullRun = sp.optInTimePeriod;
             sumMFV = 0.0;
@@ -710,7 +706,7 @@
       double close = 0.0;
       double tmp = 0.0;
       double mfv = 0.0;
-      int zeroVol = 0;
+      int liveVol = 0;
       sp.sumMFV -= sp.cb_mfv_flow[sp.mfv_Idx];
       sp.sumVol -= sp.cb_mfv_volume[sp.mfv_Idx];
       high = inHigh;
@@ -726,11 +722,8 @@
       sp.cb_mfv_volume[sp.mfv_Idx] = inVolume;
       sp.sumMFV += mfv;
       sp.sumVol += inVolume;
-      zeroVol = (inVolume == 0.0) ? 1 : 0;
-      sp.nullRun = (sp.nullRun + zeroVol) * zeroVol;
-      /* The reset writes its own output: a branch that only zeroes the sums is
-       * if-converted into a mask on their dependency chain.
-       */
+      liveVol = (Math.abs(inVolume) <= 0.0) ? 0 : 1;
+      sp.nullRun = (sp.nullRun + 1) & (liveVol - 1);
       if( sp.nullRun >= sp.optInTimePeriod ) {
          sp.nullRun = sp.optInTimePeriod;
          sp.sumMFV = 0.0;
@@ -760,7 +753,7 @@
       int i = 0;
       int today = 0;
       int nullRun = 0;
-      int zeroVol = 0;
+      int liveVol = 0;
       double[] mfv_flow;
       double[] mfv_volume;
       int mfv_Idx = 0;
@@ -825,9 +818,10 @@
       sumVol = 0.0;
       /* Consecutive zero-volume bars. Once they fill a window both sums are
        * exactly zero, where add-then-subtract would leave the rounding residue of
-       * the bars that departed, of either sign. It advances as a product rather
-       * than as v == 0.0 ? nullRun+1 : 0, which gcc and RyuJIT compile to a branch
-       * that mispredicts on scattered zero volumes.
+       * the bars that departed, of either sign. The run advances through a mask:
+       * as a select or a product gcc compiles it to a branch that mispredicts on
+       * scattered zero volumes. The test is fabs(v) <= 0.0 rather than == 0.0:
+       * the same result, NaN included, from one flag instead of two.
        */
       nullRun = 0;
       for( i = optInTimePeriod; i > 0; i -= 1 ) {
@@ -844,8 +838,8 @@
          mfv_volume[mfv_Idx] = inVolume[today];
          sumMFV += mfv;
          sumVol += inVolume[today];
-         zeroVol = (inVolume[today] == 0.0) ? 1 : 0;
-         nullRun = (nullRun + zeroVol) * zeroVol;
+         liveVol = (Math.abs(inVolume[today]) <= 0.0) ? 0 : 1;
+         nullRun = (nullRun + 1) & (liveVol - 1);
          today += 1;
          mfv_Idx++;
          if( mfv_Idx > maxIdx_mfv ) { mfv_Idx = 0; }
@@ -878,12 +872,9 @@
          mfv_volume[mfv_Idx] = inVolume[today];
          sumMFV += mfv;
          sumVol += inVolume[today];
-         zeroVol = (inVolume[today] == 0.0) ? 1 : 0;
-         nullRun = (nullRun + zeroVol) * zeroVol;
+         liveVol = (Math.abs(inVolume[today]) <= 0.0) ? 0 : 1;
+         nullRun = (nullRun + 1) & (liveVol - 1);
          today += 1;
-         /* The reset writes its own output: a branch that only zeroes the sums is
-          * if-converted into a mask on their dependency chain.
-          */
          if( nullRun >= optInTimePeriod ) {
             nullRun = optInTimePeriod;
             sumMFV = 0.0;

@@ -58,6 +58,7 @@
  *  080926 MF,CC  Allow period of 1. Just copy input into output.
  *  092526 MF,CC  #446 exact zero sums on a dead volume window.
  *  092626 MF,CC  #446 branch-free zero count.
+ *  102326 MF,CC  #554 rare reset.
  */
 
 TA_LIB_API int TA_VWMA_Lookback( int optInTimePeriod )
@@ -198,9 +199,9 @@ TA_LIB_API TA_RetCode TA_VWMA( int    startIdx,
       trailingVolume = inVolume[trailingIdx];
       tempReal = inReal[trailingIdx] * trailingVolume;
       /* Each branch writes its own output: a branch that only zeroes the sums
-       * is if-converted into a mask on their dependency chain.
+       * is if-converted into a mask on their dependency chain, hint or not.
        */
-      if( zeroCount >= optInTimePeriod )
+      if( TA_UNLIKELY(zeroCount >= optInTimePeriod) )
       {
          /* Zero, then subtract the departing bar: a non-finite price times its
           * zero volume is NaN, not zero.
@@ -321,7 +322,7 @@ TA_RetCode TA_S_VWMA( int    startIdx,
       i = i + 1;
       trailingVolume = (double)inVolume[trailingIdx];
       tempReal = (double)inReal[trailingIdx] * trailingVolume;
-      if( zeroCount >= optInTimePeriod )
+      if( TA_UNLIKELY(zeroCount >= optInTimePeriod) )
       {
          tempPV = 0.0;
          tempV = 0.0;
@@ -397,9 +398,9 @@ static void TA_VWMA_StepImpl( struct TA_VWMA_Stream *sp, double inReal, double i
    trailingVolume = sp->ring_trailingIdx_inVolume[sp->ringPos_trailingIdx];
    tempReal = sp->ring_trailingIdx_inReal[sp->ringPos_trailingIdx] * trailingVolume;
    /* Each branch writes its own output: a branch that only zeroes the sums
-    * is if-converted into a mask on their dependency chain.
+    * is if-converted into a mask on their dependency chain, hint or not.
     */
-   if( sp->zeroCount >= sp->optInTimePeriod )
+   if( TA_UNLIKELY(sp->zeroCount >= sp->optInTimePeriod) )
    {
       /* Zero, then subtract the departing bar: a non-finite price times its
        * zero volume is NaN, not zero.
@@ -580,9 +581,9 @@ static TA_RetCode TA_VWMA_OpenImpl( struct TA_VWMA_Stream **stream, const double
          trailingVolume = inVolume[trailingIdx];
          tempReal = inReal[trailingIdx] * trailingVolume;
          /* Each branch writes its own output: a branch that only zeroes the sums
-          * is if-converted into a mask on their dependency chain.
+          * is if-converted into a mask on their dependency chain, hint or not.
           */
-         if( zeroCount >= optInTimePeriod )
+         if( TA_UNLIKELY(zeroCount >= optInTimePeriod) )
          {
             /* Zero, then subtract the departing bar: a non-finite price times its
              * zero volume is NaN, not zero.
@@ -729,9 +730,9 @@ TA_LIB_API TA_RetCode TA_VWMA_Peek( const TA_VWMA_Stream *stream, double inReal,
    trailingVolume = ring_trailingIdx_inVolume[sp->ringPos_trailingIdx];
    tempReal = ring_trailingIdx_inReal[sp->ringPos_trailingIdx] * trailingVolume;
    /* Each branch writes its own output: a branch that only zeroes the sums
-    * is if-converted into a mask on their dependency chain.
+    * is if-converted into a mask on their dependency chain, hint or not.
     */
-   if( zeroCount >= sp->optInTimePeriod )
+   if( TA_UNLIKELY(zeroCount >= sp->optInTimePeriod) )
    {
       /* Zero, then subtract the departing bar: a non-finite price times its
        * zero volume is NaN, not zero.

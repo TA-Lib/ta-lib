@@ -54,6 +54,7 @@
  *  072126 MF,CC  First version (issue #134).
  *  092526 MF,CC  #446 exact zero sums on a dead volume window.
  *  092626 MF,CC  #446 branch-free zero run.
+ *  102326 MF,CC  #554 rare reset, zero run as a mask.
  */
 
 // Import types from parent module
@@ -157,7 +158,7 @@ impl Core {
         let mut i: usize = 0_usize;
         let mut today: usize = 0_usize;
         let mut nullRun: usize = 0_usize;
-        let mut zeroVol: usize = 0_usize;
+        let mut liveVol: usize = 0_usize;
         let mut local_mfv_flow: [f64; 50] = [0.0_f64; 50];
         let mut heap_mfv_flow: Vec<f64> = Vec::new();
         let mut mfv_flow: &mut [f64] = &mut [];
@@ -210,9 +211,10 @@ impl Core {
         sumVol = 0.0;
         // Consecutive zero-volume bars. Once they fill a window both sums are
         // exactly zero, where add-then-subtract would leave the rounding residue of
-        // the bars that departed, of either sign. It advances as a product rather
-        // than as v == 0.0 ? nullRun+1 : 0, which gcc and RyuJIT compile to a branch
-        // that mispredicts on scattered zero volumes.
+        // the bars that departed, of either sign. The run advances through a mask:
+        // as a select or a product gcc compiles it to a branch that mispredicts on
+        // scattered zero volumes. The test is fabs(v) <= 0.0 rather than == 0.0:
+        // the same result, NaN included, from one flag instead of two.
         nullRun = 0;
         // for( i = (optInTimePeriod) as usize; i > 0; i -= 1 )
         i = (optInTimePeriod) as usize;
@@ -230,8 +232,8 @@ impl Core {
             mfv_volume[mfv_Idx] = inVolume[today];
             sumMFV += mfv;
             sumVol += inVolume[today];
-            zeroVol = (if inVolume[today] == 0.0 { 1 } else { 0 });
-            nullRun = (nullRun + zeroVol) * zeroVol;
+            liveVol = (if (inVolume[today]).abs() <= 0.0 { 0 } else { 1 });
+            nullRun = nullRun + 1 & liveVol.wrapping_sub(1);
             today += 1;
             mfv_Idx += 1;
             if mfv_Idx >= mfv_flow.len() { mfv_Idx = 0; }
@@ -266,12 +268,11 @@ impl Core {
             mfv_volume[mfv_Idx] = inVolume[today];
             sumMFV += mfv;
             sumVol += inVolume[today];
-            zeroVol = (if inVolume[today] == 0.0 { 1 } else { 0 });
-            nullRun = (nullRun + zeroVol) * zeroVol;
+            liveVol = (if (inVolume[today]).abs() <= 0.0 { 0 } else { 1 });
+            nullRun = nullRun + 1 & liveVol.wrapping_sub(1);
             today += 1;
-            // The reset writes its own output: a branch that only zeroes the sums is
-            // if-converted into a mask on their dependency chain.
             if nullRun >= ((optInTimePeriod) as usize) {
+                cold_arm();
                 nullRun = (optInTimePeriod) as usize;
                 sumMFV = 0.0;
                 sumVol = 0.0;
@@ -475,7 +476,7 @@ impl Core {
         let mut close: f64 = 0.0_f64;
         let mut tmp: f64 = 0.0_f64;
         let mut mfv: f64 = 0.0_f64;
-        let mut zeroVol: usize = 0_usize;
+        let mut liveVol: usize = 0_usize;
         sp.sumMFV -= sp.cb_mfv_flow[sp.mfv_Idx];
         sp.sumVol -= sp.cb_mfv_volume[sp.mfv_Idx];
         high = inHigh;
@@ -491,11 +492,10 @@ impl Core {
         sp.cb_mfv_volume[sp.mfv_Idx] = inVolume;
         sp.sumMFV += mfv;
         sp.sumVol += inVolume;
-        zeroVol = (if inVolume == 0.0 { 1 } else { 0 });
-        sp.nullRun = (sp.nullRun + zeroVol) * zeroVol;
-        // The reset writes its own output: a branch that only zeroes the sums is
-        // if-converted into a mask on their dependency chain.
+        liveVol = (if (inVolume).abs() <= 0.0 { 0 } else { 1 });
+        sp.nullRun = sp.nullRun + 1 & liveVol.wrapping_sub(1);
         if sp.nullRun >= ((sp.optInTimePeriod) as usize) {
+            cold_arm();
             sp.nullRun = (sp.optInTimePeriod) as usize;
             sp.sumMFV = 0.0;
             sp.sumVol = 0.0;
@@ -553,7 +553,7 @@ impl Core {
         let mut i: usize = 0_usize;
         let mut today: usize = 0_usize;
         let mut nullRun: usize = 0_usize;
-        let mut zeroVol: usize = 0_usize;
+        let mut liveVol: usize = 0_usize;
         let mut mfv_flow: Vec<f64> = Vec::new();
         let mut mfv_volume: Vec<f64> = Vec::new();
         let mut mfv_Idx: usize = 0;
@@ -593,9 +593,10 @@ impl Core {
         sumVol = 0.0;
         // Consecutive zero-volume bars. Once they fill a window both sums are
         // exactly zero, where add-then-subtract would leave the rounding residue of
-        // the bars that departed, of either sign. It advances as a product rather
-        // than as v == 0.0 ? nullRun+1 : 0, which gcc and RyuJIT compile to a branch
-        // that mispredicts on scattered zero volumes.
+        // the bars that departed, of either sign. The run advances through a mask:
+        // as a select or a product gcc compiles it to a branch that mispredicts on
+        // scattered zero volumes. The test is fabs(v) <= 0.0 rather than == 0.0:
+        // the same result, NaN included, from one flag instead of two.
         nullRun = 0;
         // for( i = (optInTimePeriod) as usize; i > 0; i -= 1 )
         i = (optInTimePeriod) as usize;
@@ -613,8 +614,8 @@ impl Core {
             mfv_volume[mfv_Idx] = inVolume[today];
             sumMFV += mfv;
             sumVol += inVolume[today];
-            zeroVol = (if inVolume[today] == 0.0 { 1 } else { 0 });
-            nullRun = (nullRun + zeroVol) * zeroVol;
+            liveVol = (if (inVolume[today]).abs() <= 0.0 { 0 } else { 1 });
+            nullRun = nullRun + 1 & liveVol.wrapping_sub(1);
             today += 1;
             mfv_Idx += 1;
             if mfv_Idx > maxIdx_mfv { mfv_Idx = 0; }
@@ -647,12 +648,11 @@ impl Core {
             mfv_volume[mfv_Idx] = inVolume[today];
             sumMFV += mfv;
             sumVol += inVolume[today];
-            zeroVol = (if inVolume[today] == 0.0 { 1 } else { 0 });
-            nullRun = (nullRun + zeroVol) * zeroVol;
+            liveVol = (if (inVolume[today]).abs() <= 0.0 { 0 } else { 1 });
+            nullRun = nullRun + 1 & liveVol.wrapping_sub(1);
             today += 1;
-            // The reset writes its own output: a branch that only zeroes the sums is
-            // if-converted into a mask on their dependency chain.
             if nullRun >= ((optInTimePeriod) as usize) {
+                cold_arm();
                 nullRun = (optInTimePeriod) as usize;
                 sumMFV = 0.0;
                 sumVol = 0.0;
@@ -871,7 +871,7 @@ impl CmfStream {
             let mut close: f64 = 0.0_f64;
             let mut tmp: f64 = 0.0_f64;
             let mut mfv: f64 = 0.0_f64;
-            let mut zeroVol: usize = 0_usize;
+            let mut liveVol: usize = 0_usize;
             let mut nullRun = sp.nullRun;
             let mut sumMFV = sp.sumMFV;
             let mut sumVol = sp.sumVol;
@@ -888,11 +888,10 @@ impl CmfStream {
             }
             sumMFV += mfv;
             sumVol += inVolume;
-            zeroVol = (if inVolume == 0.0 { 1 } else { 0 });
-            nullRun = (nullRun + zeroVol) * zeroVol;
-            // The reset writes its own output: a branch that only zeroes the sums is
-            // if-converted into a mask on their dependency chain.
+            liveVol = (if (inVolume).abs() <= 0.0 { 0 } else { 1 });
+            nullRun = nullRun + 1 & liveVol.wrapping_sub(1);
             if nullRun >= ((sp.optInTimePeriod) as usize) {
+                cold_arm();
                 nullRun = (sp.optInTimePeriod) as usize;
                 sumMFV = 0.0;
                 sumVol = 0.0;
