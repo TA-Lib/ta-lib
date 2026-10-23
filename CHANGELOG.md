@@ -54,12 +54,12 @@ See [github commits](https://github.com/TA-Lib/ta-lib/commits) for complete list
   - TA_MAType_ALMA (#475)
 
 ### Faster
-- ~1.3x to 2.7x: CMO, PLUS_DM, MINUS_DM, PLUS_DI, MINUS_DI, DX, ADX and ADXR (#411)
-- ~1.2x to 17x: PERCENTILE, more on a trending series and on the first output of a long window (#435)
+- Up to 2.7x: CMO, PLUS_DM, MINUS_DM, PLUS_DI, MINUS_DI, DX, ADX and ADXR (#411)
+- Up to 17x: PERCENTILE, about 2x at the default period, more on long windows and on a trending series (#435)
 - ~1.4x to 6.4x: IMI, more when up and down bars alternate unpredictably (#440)
-- ~1.8x to 45x: MAVP stream updates over SMA, WMA, TRIMA, KAMA, HMA and ZLEMA, more the wider
+- ~1.3x to 10x: MAVP stream updates over SMA, WMA, TRIMA, KAMA, HMA and ZLEMA, more the wider
   the period band. Their memory no longer grows with the square of `optInMaxPeriod`: at 2 to
-  20000, SMA holds 2.7 MB instead of 1.5 GB. (#445)
+  10000, SMA holds 1.4 MB instead of 400 MB. (#445)
 
 ### Changed
 - (#411) CMO, PLUS_DM, MINUS_DM, PLUS_DI, MINUS_DI, DX, ADX and ADXR optimization with some
