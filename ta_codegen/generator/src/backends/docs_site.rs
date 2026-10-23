@@ -97,7 +97,7 @@ fn transform_page(
     // Summary is extracted from the untransformed body: it precedes every rewrite.
     let desc = extract_summary(body);
     let injected = inject_parameters(body, func, enums);
-    let injected = link_output_values(&injected);
+    let injected = link_output_values(&injected, func.is_candlestick());
     let with_impl = inject_implementation(&injected, func, root);
     let with_flags = inject_flags(&with_impl, func, enums, stability);
     let linked = linkify_see_also(&with_flags, known);
@@ -131,16 +131,19 @@ fn inject_implementation(body: &str, func: &FuncDef, root: &Path) -> String {
 }
 
 /// Point a pattern output's value table at the rule that reads it.
-fn link_output_values(body: &str) -> String {
+fn link_output_values(body: &str, candlestick: bool) -> String {
+    const RULE: &str = "The output's flags declare which values it can return: [rW7](/spec/inputs-outputs/#rw7).";
     let lines: Vec<&str> = body.lines().collect();
     let Some((start, _)) = section_span(&lines, "## Output Values") else {
         return body.to_string();
     };
     let mut out: Vec<String> = lines.iter().map(|l| (*l).to_string()).collect();
-    out.insert(
-        start + 1,
-        "\nHow to read these values from the output's flags: [rW7](/spec/inputs-outputs/#rw7).".to_string(),
-    );
+    let line = if candlestick {
+        format!("\nWhat candlestick values mean: [Candlestick Outputs](/api/candlestick-outputs/). {RULE}")
+    } else {
+        format!("\n{RULE}")
+    };
+    out.insert(start + 1, line);
     let mut s = out.join("\n");
     if body.ends_with('\n') {
         s.push('\n');

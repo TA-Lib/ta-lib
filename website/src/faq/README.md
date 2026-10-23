@@ -18,7 +18,7 @@ Yes. A stream fed bar by bar returns the values the batch function returns over 
 
 ## What do the candlestick values mean?
 
-0 means no pattern, 100 a bullish pattern and -100 a bearish one. A few patterns also return 80 or 200. See [Candlestick Outputs](/api/candlestick-outputs/).
+0 means no pattern, a positive value a bullish pattern and a negative value a bearish one. The usual values are +/-100. See [Candlestick Outputs](/api/candlestick-outputs/).
 
 ## Do the Rust, Java and C# libraries need the C library?
 

@@ -25,7 +25,7 @@ Single-candle pattern: a small real body with a long upper shadow and little-to-
 
 ## Output Values
 
-How to read these values from the output's flags: [rW7](/spec/inputs-outputs/#rw7).
+What candlestick values mean: [Candlestick Outputs](/api/candlestick-outputs/). The output's flags declare which values it can return: [rW7](/spec/inputs-outputs/#rw7).
 
 | Value | Meaning |
 |-------|---------|
