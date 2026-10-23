@@ -2,28 +2,24 @@
 url: 'https://ta-lib.org/api/candlestick-outputs/index.md'
 description: >-
   What the numbers returned by the CDL* candlestick pattern functions mean: 0
-  for no pattern, 100 or -100 for a pattern, and the rarer 80 and 200.
+  for no pattern, positive for bullish, negative for bearish.
 ---
 # Candlestick Outputs
 
-**TL;DR:** 0 means no pattern. 100 means the pattern is on this bar. A minus sign means bearish.
+**TL;DR:** 0 means no pattern. A positive value means a bullish pattern, a negative value a bearish one.
 
 ## What the values mean
 
-Every candlestick function (`CDL*`) returns one whole number per bar:
+Every candlestick function (`CDL*`) returns one whole number per bar. Read the sign first: zero, positive or negative. The size adds detail:
 
 | Value | Meaning |
 |-------|---------|
 | 0 | No pattern on this bar |
-| 100 | Pattern found, bullish |
-| -100 | Pattern found, bearish |
+| 100 or -100 | The usual case: the pattern is on this bar |
+| 80 or -80 | A weaker form of the pattern, for example [CDLENGULFING](/functions/cdlengulfing) |
+| 200 or -200 | This bar confirms a pattern found a few bars earlier, for example [CDLHIKKAKE](/functions/cdlhikkake) |
 
-That is all most patterns return. A few add one more level:
-
-| Value | Meaning | For example |
-|-------|---------|-------------|
-| 80 or -80 | A weaker form of the pattern | [CDLENGULFING](/functions/cdlengulfing), [CDLHARAMI](/functions/cdlharami) |
-| 200 or -200 | This bar confirms a pattern found a few bars earlier | [CDLHIKKAKE](/functions/cdlhikkake) |
+Most patterns only ever return 0, 100 and -100.
 
 Some patterns point only one way, so they return only one sign: a hammer is always 100, a shooting star always -100. A few have no direction: a doji is just 100 when found, and a spinning top's sign is only the candle's color. Each function's page lists its values under **Output Values**.
 
