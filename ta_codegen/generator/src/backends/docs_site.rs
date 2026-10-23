@@ -132,7 +132,7 @@ fn inject_implementation(body: &str, func: &FuncDef, root: &Path) -> String {
 
 /// Point a pattern output's value table at the rule that reads it.
 fn link_output_values(body: &str, candlestick: bool) -> String {
-    const RULE: &str = "The output's flags declare which values it can return: [rW7](/spec/inputs-outputs/#rw7).";
+    const RULE: &str = "The function's flags declare which values it can return: [rW7](/spec/inputs-outputs/#rw7).";
     let lines: Vec<&str> = body.lines().collect();
     let Some((start, _)) = section_span(&lines, "## Output Values") else {
         return body.to_string();

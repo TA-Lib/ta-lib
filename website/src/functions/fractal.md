@@ -36,7 +36,7 @@ swingLow(i) = 100 if Low[c] < Low[j] for every j in [c-L, c+R] other than c, els
 
 ## Output Values
 
-The output's flags declare which values it can return: [rW7](/spec/inputs-outputs/#rw7).
+The function's flags declare which values it can return: [rW7](/spec/inputs-outputs/#rw7).
 
 ### `outSwingHigh`
 

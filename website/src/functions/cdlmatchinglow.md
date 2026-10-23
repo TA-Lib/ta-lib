@@ -29,7 +29,7 @@ Two candles i-1, i. Candle i-1: black (close<open). Candle i: black (close<open)
 
 ## Output Values
 
-What candlestick values mean: [Candlestick Outputs](/api/candlestick-outputs/). The output's flags declare which values it can return: [rW7](/spec/inputs-outputs/#rw7).
+What candlestick values mean: [Candlestick Outputs](/api/candlestick-outputs/). The function's flags declare which values it can return: [rW7](/spec/inputs-outputs/#rw7).
 
 | Value | Meaning |
 |-------|---------|

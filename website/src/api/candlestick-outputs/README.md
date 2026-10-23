@@ -25,11 +25,11 @@ A value describes the candles, not a trade. A pattern does not check the trend b
 
 ## Reading them from code
 
-You do not have to hard-code any of this. Through the [Abstract API](/api/abstract/), each candlestick output carries flags that say which of these values it can return and what its sign means, so a charting app or a strategy builder can find out at run time.
+You do not have to hard-code any of this. Through the [Abstract API](/api/abstract/), each candlestick function carries flags that say which of these values it can return and what its sign means, so a charting app or a strategy builder can find out at run time.
 
 ## Related pages
 
-- [Abstract API](/api/abstract/): look up any function and its output flags
+- [Abstract API](/api/abstract/): look up any function and its flags
 - [Output flags](/spec/abstract/#flags): every flag, one line each
-- [Pattern outputs](/spec/inputs-outputs/#rw7): the exact rules
+- [Specification](/spec/inputs-outputs/#rw7): the exact rules
 - [Candlestick Settings](/api/candle-settings/): tune what counts as a long body or a short shadow
