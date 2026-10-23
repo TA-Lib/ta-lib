@@ -8,48 +8,47 @@ See [github commits](https://github.com/TA-Lib/ta-lib/commits) for complete list
 
 ## [0.8.3] Not Released Yet
 ### Added
-- Rust: the `ta-lib` crate is on crates.io (`cargo add ta-lib`). Its versions 0.1.x are an
-  unrelated earlier crate that used the same name. (#179)
+- Rust: the `ta-lib` crate is on crates.io (`cargo add ta-lib`) (#179)
 - `find_package(ta-lib CONFIG)` now works against a CMake install and provides the `ta-lib::ta-lib`
   target. An autotools install still provides `ta-lib.pc` only. (#422)
 - Display shift: `TA_<NAME>_DisplayShift` and `TA_GetDisplayShift` tell a charting app how many bars
   ahead of or behind its own bar to draw an output (e.g. DPO). Output values are not shifted. (#489)
 - New TA Functions:
-  - ALMA: Arnaud Legoux Moving Average, a Gaussian-weighted window with an adjustable peak (#475)
+  - ALMA: Arnaud Legoux Moving Average, a Gaussian-weighted window with adjustable peak (#475)
   - ASI: Wilder Accumulative Swing Index, the running total of SI (#451)
-  - BBW: Bollinger BandWidth, the band spread as a percentage of the middle band (#447)
+  - BBW: Bollinger BandWidth, band spread as a percentage of the middle band (#447)
   - CG: Center of Gravity Oscillator, Ehlers' balance point of the window (#450)
   - CHOP: Choppiness Index (#469)
   - CHOPTR: Choppiness Index - True-Range Variant (#469)
   - CKSP: Chande Kroll Stop, ATR-offset extremes taken over a second window (#477)
   - CRSI: Connors RSI (#431)
   - CTI: Correlation Trend Indicator (#430)
-  - DOSC: Derivative Oscillator, Constance Brown's double-smoothed RSI minus its own simple average (#479)
-  - EMV: Arms Ease of Movement, the midpoint move per unit of volume-to-range, SMA-smoothed (#465)
+  - DOSC: Derivative Oscillator, Constance Brown's smoothed RSI minus its SMA (#479)
+  - EMV: Arms Ease of Movement, midpoint move per unit of volume-to-range (#465)
   - FISHER: Ehlers' Fisher Transform (#485)
-  - FRAMA: Fractal Adaptive Moving Average, Ehlers' adaptive EMA driven by the window's fractal dimension (#464)
+  - FRAMA: Fractal Adaptive Moving Average, Ehlers' adaptive EMA (#464)
   - IBS: Internal Bar Strength, where the close sits inside its own bar range (#468)
   - KST: Know Sure Thing (#472)
-  - KSTEXT: Know Sure Thing with selectable MA types for the legs and the signal line (#491)
+  - KSTEXT: Know Sure Thing with selectable MA types (#491)
   - KURTOSIS: Rolling Excess Kurtosis (#433)
-  - KVO: Klinger Volume Oscillator, the difference of a fast and a slow EMA of volume force, with a signal line (#484)
-  - MCGD: McGinley Dynamic, a moving average whose step adapts to the price-to-line ratio (#471)
+  - KVO: Klinger Volume Oscillator (#484)
+  - MCGD: McGinley Dynamic, a moving average adapting to price-to-line ratio (#471)
   - MEDIAN: Rolling Median (#432)
   - PERCENTB: Bollinger Bands %B, where the input sits relative to the bands (#449)
-  - PSO: Premier Stochastic Oscillator, Leibfarth's double-smoothed Fast %K squashed into -1 to +1 (#473)
-  - ROGERSSATCHELL: Rogers-Satchell Volatility, a drift-independent estimator from each bar's open, high, low and close (#483)
+  - PSO: Premier Stochastic Oscillator, Leibfarth's Fast %K squashed into -1 to +1 (#473)
+  - ROGERSSATCHELL: Rogers-Satchell Volatility (#483)
   - RVIR: Relative Volatility Index, 1995 refined form (#416)
   - SI: Wilder Swing Index, each bar rated against the one before (#451)
-  - SQZMOM: Squeeze Momentum and Level, a regression-smoothed momentum plus how tightly the Bollinger Bands sit inside three Keltner Channels (#488)
-  - STC: Schaff Trend Cycle, a MACD line run twice through a stochastic, each pass smoothed by half (#478)
-  - SWAK_2PHP: Swiss Army Knife - Two-Pole High-Pass Filter, Ehlers' high-pass rolling off twice as steeply as SWAK_HP (#486)
-  - SWAK_BP: Swiss Army Knife - Band-Pass Filter, Ehlers' resonator passing one period at unity gain and zero phase (#486)
-  - SWAK_BUTTER: Swiss Army Knife - Butterworth Filter, Ehlers' two-pole low-pass with both zeros at Nyquist (#486)
-  - SWAK_GAUSS: Swiss Army Knife - Gaussian Filter, Ehlers' two-pole low-pass with no zeros, hence no overshoot (#486)
-  - SWAK_HP: Swiss Army Knife - High-Pass Filter, Ehlers' one-pole detrender centred on zero (#486)
-  - VIDYA: Variable Index Dynamic Average, Chande's EMA scaled bar by bar by the CMO (#474)
-  - WAVETREND: WaveTrend Oscillator, the typical price's distance from its EMA scaled by that distance's own EMA, with a signal line (#476)
-  - ZIGZAG: Zig Zag, the percent-reversal swing line with each bar's pivot price, leg direction and pivot bar (#487)
+  - SQZMOM: Squeeze Momentum and Level, how the Bollinger Bands sit inside three Keltner Channels (#488)
+  - STC: Schaff Trend Cycle, a MACD line run twice through a stochastic (#478)
+  - SWAK_2PHP: Swiss Army Knife -  Ehlers' Two-Pole High-Pass Filter (#486)
+  - SWAK_BP: Swiss Army Knife - Ehlers' Band-Pass Filter (#486)
+  - SWAK_BUTTER: Swiss Army Knife - Ehlers' Butterworth Filter (#486)
+  - SWAK_GAUSS: Swiss Army Knife - Ehlers' Gaussian Filter (#486)
+  - SWAK_HP: Swiss Army Knife - Ehlers' High-Pass Filter (#486)
+  - VIDYA: Variable Index Dynamic Average, Chande's EMA scaled by the CMO (#474)
+  - WAVETREND: WaveTrend Oscillator (#476)
+  - ZIGZAG: Zig Zag, swing line with pivot price, leg direction and pivot bar (#487)
 - New MAType (for MA, BBANDS, STOCH etc...):
   - TA_MAType_VIDYA (#474)
   - TA_MAType_ALMA (#475)
@@ -65,21 +64,12 @@ See [github commits](https://github.com/TA-Lib/ta-lib/commits) for complete list
 ### Changed
 - (#411) CMO, PLUS_DM, MINUS_DM, PLUS_DI, MINUS_DI, DX, ADX and ADXR optimization with some
   floating-point re-ordering. At the default period, values move by at most about 1e-13 on
-  the 0-100 scale (a few 1e-15 relative for the DMs). CMO, ADX and ADXR move more at longer
-  periods. After thousands of identical prices the smoothed sums reach rounding residue, and
-  old and new values can then differ by tens of points (CMO by up to 100).
-- (#480) RSI answers the neutral 50, up from 0, while the input has not changed since the first
-  bar the call reads: no gain against no loss is not oversold. The same holds at period 2 once
-  about a thousand unchanged bars follow a move. STOCHRSI follows on the first bars after such
-  a flat start.
+  the 0-100 scale (a few 1e-15 relative for the DMs).
+- (#480) RSI answers the neutral 50, instead of 0, in the rare case where the input has not changed since the first bar.
 - PERCENTILE's default period is now 100, up from 30: at 30 bars the 95th percentile is the
   second-largest value. Pass the period explicitly to keep the old output.
-- PERCENTILE and PERCENTRANK accept periods up to 10000, down from 100000. Both do work
-  proportional to the period on every bar, so a 100000-bar window costs ten times as much
-  per bar as a 10000-bar one. A longer period is now rejected.
-- MAVP accepts periods up to 10000, down from 100000. Its stream advances one moving
-  average per period in the band on every bar, so a band of 100000 periods costs at least
-  ten times as much per bar as a band of 10000. A longer period is now rejected.
+- PERCENTILE and PERCENTRANK accept periods up to 10000, down from 100000. A longer period is now rejected (and would be useless and a performance drag).
+- MAVP accepts periods up to 10000, down from 100000. Also for practical purposes.
 - The i386 `.deb` now uses SSE2 instead of x87, so its values match the other packages. It
   needs an SSE2 CPU. (#443)
 - Java: `FuncUnstId.COUNT` is no longer public. javac copied its value into every caller, so
@@ -90,24 +80,9 @@ See [github commits](https://github.com/TA-Lib/ta-lib/commits) for complete list
 - Java: `Core.MAX_INDEX` is renamed `Core.INDEX_MAX`. (#448)
 
 ### Fixed
-- (#434) VAR, STDDEV, BBANDS, CORREL, RVI and RVIR no longer return stale values, or rebuild
-  the window on every bar, once a series settles onto the level their rolling sums were last
-  anchored on. Values move at periods 2 to 5 by at most 1e-9 relative.
-- (#446) RVOL, VWMA and CMF return their documented value on a window where nothing traded
-  (RVOL ±Inf or NaN, VWMA NaN, CMF 0) after fractional volume, or for VWMA after fractional
-  prices. They returned a value built on rounding residue, e.g. RVOL 4.4e16 where +Inf was
-  due. Bars after a dead window move too, VWMA's and CMF's even on whole-number volume, by at
-  most 1e-10 relative (CMF 3e-11 on its -1 to +1 scale) on a test corpus, more when volume
-  resumes far below its earlier level.
 - (#454) PPO and PVO with `optInMAType` SMA, WMA, TRIMA or HMA return their documented 0 once
-  the slow window holds only zero bars after fractional values. They divided rounding residue
-  by rounding residue there, e.g. PVO -113.9 with TRIMA, up to 3.2e6 at large volume scales.
-  Every other value is unchanged.
-- `ta_func.h` is plain ASCII again. In 0.8.1 its comments had non-ASCII characters, so MSVC could warn (C4819) when reading it under a Chinese, Japanese or Korean code page.
+  the slow window holds only zero bars after fractional values (not a common case).
 - CMake on Windows no longer stops at configure when the `Platform` environment variable (set by vcvarsall) is missing or holds another value.
-- MAVP stream `OpenAndFill` matches the batch when the history holds a NaN or infinite price.
-  In 0.8.1 C skipped that bar in every period's average, so the values after it were wrong,
-  and Java threw. (#445)
 
 ## [0.8.1] 2026-09-12
 ### Added
