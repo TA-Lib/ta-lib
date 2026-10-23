@@ -241,6 +241,7 @@ Error 2(TA_BAD_PARAM): A parameter is out of range
 
 <p>The candlestick pattern functions (<b>TA_CDL*</b>) judge each candle against tunable thresholds: is its body "long", its shadow "short", are two candles "near". These thresholds are process-wide settings: change them only while no TA function is running and no stream is open (see <a href="#multithreading">multi-threading</a>).</p>
 <p>See the <a href="/api/candle-settings/">Candlestick Settings</a> page for the API, the setting types and their defaults.</p>
+<p>What the returned values mean (0, 100, -100 and the rarer 80 and 200): <a href="/api/candlestick-outputs/">Candlestick Outputs</a>.</p>
 
 ### 4.4 Input Type: float vs. double {#input_type}
 
