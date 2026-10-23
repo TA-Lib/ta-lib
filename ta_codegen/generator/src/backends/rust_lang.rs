@@ -3065,9 +3065,12 @@ impl RustStmt<'_, '_> {
 
     /// Shared `if` tail (then-body + else branch with `} else if` collapse) used
     /// by both the flat and multi-line-condition rendering paths.
-    fn render_if_tail(&self, then_body: &[Statement], else_body: &[Statement], cold_else: bool, indent: usize) -> String {
+    fn render_if_tail(&self, then_body: &[Statement], else_body: &[Statement], cold_then: bool, cold_else: bool, indent: usize) -> String {
         let pad = " ".repeat(indent);
         let mut out = String::new();
+        if cold_then {
+            out.push_str(&format!("{pad}    cold_arm();\n"));
+        }
         for s in then_body {
             out.push_str(&self.walk_stmt(s, indent + 4));
         }
@@ -3732,6 +3735,7 @@ impl StatementEmitter for RustStmt<'_, '_> {
 
     #[allow(clippy::too_many_lines, clippy::cognitive_complexity)]
     fn if_stmt(&self, condition: &Expr, then_body: &[Statement], else_body: &[Statement], cond_comments: &[Option<Vec<String>>], indent: usize) -> String {
+        let (condition, cold_then) = super::builtins::strip_unlikely(condition);
         let pad = " ".repeat(indent);
         // Skip post-allocation null-check blocks (dead code in Rust — Vec::new() never fails)
         if contains_alloc_err_return(then_body) {
@@ -3749,7 +3753,11 @@ impl StatementEmitter for RustStmt<'_, '_> {
             {
                 // Render as: if left { if right { then } else { els } } else { els }
                 let inner_if = Statement::If {
-                    condition: *right.clone(),
+                    condition: if cold_then {
+                        Expr::FuncCall(super::builtins::UNLIKELY.to_string(), vec![*right.clone()])
+                    } else {
+                        *right.clone()
+                    },
                     then_body: then_body.to_vec(),
                     else_body: else_body.to_vec(),
                     cond_comments: Vec::new(),
@@ -3790,7 +3798,7 @@ impl StatementEmitter for RustStmt<'_, '_> {
                 let mut out = format!("{pad}if ");
                 out.push_str(&cond_text);
                 out.push_str(&format!("{pad}{{\n"));
-                out.push_str(&self.render_if_tail(then_body, else_body, cold_else, indent));
+                out.push_str(&self.render_if_tail(then_body, else_body, cold_then, cold_else, indent));
                 return out;
             }
         }
@@ -3799,7 +3807,7 @@ impl StatementEmitter for RustStmt<'_, '_> {
             pad,
             render_condition(condition, self.ctx, self.opt_real_params, self.registry, self.helpers)
         );
-        out.push_str(&self.render_if_tail(then_body, else_body, cold_else, indent));
+        out.push_str(&self.render_if_tail(then_body, else_body, cold_then, cold_else, indent));
         out
     }
 
@@ -4206,6 +4214,17 @@ fn render_binop_operand(
             let rendered = render_expr(inner, ctx, opt_real_params, registry, helpers);
             format!("({rendered}) == 0")
         }
+        // A difference that is masked, as in `(n + 1) & (live - 1)`, may go below
+        // zero by design: C wraps it, and so must a debug build.
+        Expr::BinOp(l, BinOp::Sub, r)
+            if matches!(parent_op, BinOp::BitwiseAnd | BinOp::BitwiseOr | BinOp::BitwiseXor)
+                && is_usize_local(l, ctx)
+                && matches!(r.as_ref(), Expr::IntLiteral(v) if *v >= 0) =>
+        {
+            let l = render_expr(l, ctx, opt_real_params, registry, helpers);
+            let r = render_expr(r, ctx, opt_real_params, registry, helpers);
+            format!("{l}.wrapping_sub({r})")
+        }
         Expr::BinOp(_, child_op, _) => {
             let parent_prec = op_precedence(parent_op);
             let child_prec = op_precedence(child_op);
@@ -4253,6 +4272,11 @@ fn render_binop_operand(
         | Expr::PreDecrement(_)
         | Expr::Ternary(_, _, _) => render_expr(expr, ctx, opt_real_params, registry, helpers),
     }
+}
+
+fn is_usize_local(expr: &Expr, ctx: &RustRenderCtx) -> bool {
+    matches!(expr, Expr::Var(n) if ctx.index_vars.contains(n)
+        && !ctx.sentinel_vars.contains(n) && !ctx.real_vars.contains(n))
 }
 
 fn render_return_expr(
@@ -5314,6 +5338,10 @@ fn render_func_call(
     }
     if let Some(b) = SpecialBuiltin::from_name(fname) {
         match b {
+            SpecialBuiltin::Unlikely => {
+                let [c] = args else { panic!("UNLIKELY takes one condition") };
+                format!("({})", render_expr(c, ctx, opt_real_params, registry, helpers))
+            }
             SpecialBuiltin::UnstablePeriod | SpecialBuiltin::UnstableAuto => {
                 if let Some(Expr::Var(func_name)) = args.first() {
                     let base = func_name

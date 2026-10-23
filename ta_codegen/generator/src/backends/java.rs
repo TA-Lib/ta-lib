@@ -1805,6 +1805,7 @@ impl StatementEmitter for JavaStmt<'_> {
 
     #[allow(clippy::too_many_lines, clippy::cognitive_complexity)]
     fn if_stmt(&self, condition: &Expr, then_body: &[Statement], else_body: &[Statement], cond_comments: &[Option<Vec<String>>], indent: usize) -> String {
+        let (condition, _) = super::builtins::strip_unlikely(condition);
         let pad = " ".repeat(indent);
         // Skip post-allocation null-check blocks (dead code in Java — `new` never returns null)
         if contains_alloc_err_return(then_body) {
@@ -2525,6 +2526,10 @@ fn render_func_call(
 
     if let Some(b) = SpecialBuiltin::from_name(fname) {
         match b {
+            SpecialBuiltin::Unlikely => {
+                let [c] = args else { panic!("UNLIKELY takes one condition") };
+                format!("({})", render_expr(c, ctx, registry, helpers))
+            }
             SpecialBuiltin::UnstablePeriod | SpecialBuiltin::UnstableAuto => {
                 // UNSTABLE_PERIOD(FUNC_UNST_ATR, count) -> strip FUNC_UNST_ prefix first
                 if let Some(Expr::Var(func_name)) = args.first() {

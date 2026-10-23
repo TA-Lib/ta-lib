@@ -73,6 +73,32 @@ const PRAGMA_DIRECTIVES: &[&str] = &["TA_ALT"];
 /// content lines, and whether it shares a source line with the token before it.
 type CommentAnchor = (usize, Vec<String>, bool);
 
+/// Panics unless each `TA_UNLIKELY(c)` is the whole condition of an `if`
+/// inside a loop, the one place the passes that match a statement's shape
+/// strip it.
+fn check_unlikely_placement(func: &str, body: &[Statement], in_loop: bool) {
+    use crate::backends::builtins::UNLIKELY;
+    for s in body {
+        let hinted_if = matches!(s, Statement::If { condition: Expr::FuncCall(n, a), .. } if n == UNLIKELY && a.len() == 1);
+        let mut count = 0usize;
+        crate::streaming::walk_stmt_own_exprs(s, &mut |e| {
+            crate::streaming::walk_expr(e, &mut |x| {
+                if matches!(x, Expr::FuncCall(n, _) if n == UNLIKELY) {
+                    count += 1;
+                }
+            });
+        });
+        assert!(
+            count <= usize::from(hinted_if && in_loop),
+            "{func}: TA_UNLIKELY(c) must be the whole condition of an `if` inside a loop"
+        );
+        let (bodies, enters_loop) = crate::streaming::nested_bodies(s);
+        for b in bodies {
+            check_unlikely_placement(func, b, in_loop || enters_loop);
+        }
+    }
+}
+
 /// Wire parsed C source (guarded + optional private) into a FuncDef: body,
 /// lookback, header comments, and the private-variant fields
 /// (`private_body`, `private_extra_params`, `private_param_init`).
@@ -81,6 +107,10 @@ type CommentAnchor = (usize, Vec<String>, bool);
 /// the integration-test fixtures both call it, so tests see exactly the
 /// FuncDef production sees.
 pub fn wire_parsed_source(func_def: &mut crate::ir::FuncDef, parsed: &ParsedCSource) {
+    for f in &parsed.functions {
+        check_unlikely_placement(&f.name, &f.body, false);
+    }
+    check_unlikely_placement(&func_def.name, &parsed.lookback_body, false);
     let alternates = classify_functions(func_def, parsed);
     let guarded = parsed
         .functions

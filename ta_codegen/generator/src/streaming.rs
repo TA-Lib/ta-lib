@@ -9139,7 +9139,7 @@ pub(crate) fn expr_effect(e: &Expr, pure: &dyn Fn(&str) -> bool) -> bool {
             | Expr::PreIncrement(_)
             | Expr::PostDecrement(_)
             | Expr::PreDecrement(_) => true,
-            Expr::FuncCall(n, _) => !pure(n),
+            Expr::FuncCall(n, _) => n != crate::backends::builtins::UNLIKELY && !pure(n),
             _ => false,
         };
     });

@@ -2331,3 +2331,104 @@ fn java_renders_the_block_scan_with_a_keyed_twin() {
         }
     }
 }
+
+/// `TA_UNLIKELY(c)` changes no value, so only the emitted text shows it reached each backend.
+#[test]
+fn unlikely_condition_renders_per_backend() {
+    let src = r#"
+int sma_lookback( int optInTimePeriod )
+{
+   return optInTimePeriod - 1;
+}
+
+TA_RetCode sma( int startIdx, int endIdx,
+   const double inReal[],
+   int optInTimePeriod,
+   int *outBegIdx, int *outNBElement,
+   double outReal[] )
+{
+   double total;
+   int run;
+   int i;
+   total = 0.0;
+   run = 0;
+   for( i = startIdx; i <= endIdx; i++ )
+   {
+      total += inReal[i];
+      run += fabs(inReal[i]) <= 0.0 ? 1 : 0;
+      if( TA_UNLIKELY(run >= optInTimePeriod) )
+         total = 0.0;
+      if( TA_UNLIKELY(total > 1.0e9) )
+         outReal[i - startIdx] = 0.0;
+      else
+         outReal[i - startIdx] = total;
+   }
+   *outBegIdx = startIdx;
+   *outNBElement = endIdx - startIdx + 1;
+   return TA_SUCCESS;
+}
+"#;
+    let (func, enums) = load_indicator_with_source("sma", src);
+    let out = generate_all(&func, &enums);
+
+    assert!(
+        out.c.contains("if( TA_UNLIKELY(run >= optInTimePeriod) )"),
+        "C must keep the hint:\n{}",
+        out.c
+    );
+    for cond in ["if run >= ", "if total > "] {
+        let rust_if = out.rust.find(cond).unwrap_or_else(|| panic!("Rust renders `{cond}` as an if:\n{}", out.rust));
+        assert!(
+            out.rust[rust_if..].lines().nth(1).is_some_and(|l| l.trim() == "cold_arm();"),
+            "Rust must open the rare arm of `{cond}` with cold_arm():\n{}",
+            out.rust
+        );
+    }
+}
+
+/// A hint keeps its own `if` a branch and must leave every other select on the
+/// same name alone: a lost `c_max` or `MaxGt` changes no value.
+#[test]
+fn unlikely_extreme_leaves_other_sites_selected() {
+    let src = r#"
+int sma_lookback( int optInTimePeriod )
+{
+   return optInTimePeriod - 1;
+}
+
+TA_RetCode sma( int startIdx, int endIdx,
+   const double inReal[],
+   int optInTimePeriod,
+   int *outBegIdx, int *outNBElement,
+   double outReal[] )
+{
+   double highest;
+   double tmp;
+   int i;
+   highest = inReal[startIdx];
+   for( i = startIdx; i <= endIdx; i++ )
+   {
+      tmp = inReal[i];
+      if( TA_UNLIKELY(tmp > highest) )
+         highest = tmp;
+      outReal[i - startIdx] = highest;
+   }
+   for( i = startIdx; i <= endIdx; i++ )
+   {
+      tmp = inReal[i];
+      if( tmp > highest )
+         highest = tmp;
+      outReal[i - startIdx] = highest;
+   }
+   *outBegIdx = startIdx;
+   *outNBElement = endIdx - startIdx + 1;
+   return TA_SUCCESS;
+}
+"#;
+    let (func, enums) = load_indicator_with_source("sma", src);
+    let rust = generate_all(&func, &enums).rust;
+    let csharp =
+        backends::csharp::generate(&func, &enums, make_registry(), &HelperRegistry::empty());
+    assert!(rust.contains("c_max("), "Rust must keep the unhinted max:\n{rust}");
+    assert!(csharp.contains("MaxGt("), "C# must keep the unhinted max:\n{csharp}");
+}

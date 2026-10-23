@@ -188,9 +188,10 @@ impl DefUse {
                 self.add(a, under);
                 self.add(b, under);
             }
-            Expr::FuncCall(_, args) => {
+            Expr::FuncCall(n, args) => {
+                let under = under || n != super::builtins::UNLIKELY;
                 for a in args {
-                    self.add(a, true);
+                    self.add(a, under);
                 }
             }
             Expr::Ternary(c, t, f) => {

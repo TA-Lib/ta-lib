@@ -2633,6 +2633,10 @@ fn render_func_call(
 
     if let Some(b) = SpecialBuiltin::from_name(fname) {
         match b {
+            SpecialBuiltin::Unlikely => {
+                let [c] = args else { panic!("UNLIKELY takes one condition") };
+                format!("TA_UNLIKELY({})", render_expr(c, ctx, registry, helpers))
+            }
             SpecialBuiltin::UnstablePeriod | SpecialBuiltin::UnstableAuto => {
                 // UNSTABLE_PERIOD(FUNC_UNST_ATR, count) -> strip FUNC_UNST_ prefix first
                 if let Some(Expr::Var(func_name)) = args.first() {

@@ -110,6 +110,8 @@ pub enum SpecialBuiltin {
     IsFinite,
     ArrayCopy,
     PerToK,
+    /// `UNLIKELY(c)`: `c`, asserted rarely true.
+    Unlikely,
 }
 
 impl SpecialBuiltin {
@@ -124,8 +126,21 @@ impl SpecialBuiltin {
             "IS_FINITE" => Self::IsFinite,
             "ARRAY_COPY" => Self::ArrayCopy,
             "PER_TO_K" => Self::PerToK,
+            UNLIKELY => Self::Unlikely,
             _ => return None,
         })
+    }
+}
+
+/// The input spelling of [`SpecialBuiltin::Unlikely`].
+pub const UNLIKELY: &str = "UNLIKELY";
+
+/// The condition under any `UNLIKELY`, and whether it was there.
+#[must_use]
+pub fn strip_unlikely(cond: &Expr) -> (&Expr, bool) {
+    match cond {
+        Expr::FuncCall(name, args) if name == UNLIKELY && args.len() == 1 => (&args[0], true),
+        _ => (cond, false),
     }
 }
 

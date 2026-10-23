@@ -96,6 +96,13 @@
    #define TA_UNROLL(n)
 #endif
 
+/* TA_UNLIKELY(c) - c, asserted rarely true: the guarded block is laid out of line. */
+#if defined(__GNUC__) || defined(__clang__)
+   #define TA_UNLIKELY(c) __builtin_expect(!!(c), 0)
+#else
+   #define TA_UNLIKELY(c) (c)
+#endif
+
 /* TA_VMATH_MAP - the loop of a function that is one math-library call per element:
  *
  *    for( i = first, outIdx = 0; i <= last; i += 1, outIdx += 1 ) { OUT = fn(IN); }

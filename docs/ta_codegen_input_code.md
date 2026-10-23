@@ -178,6 +178,7 @@ generator recognizes and maps per language:
 | Construct | Meaning |
 |---|---|
 | `TA_IS_ZERO(x)` / `TA_IS_ZERO_OR_NEG(x)` | epsilon comparison against zero |
+| `if( TA_UNLIKELY(c) )` | `c`, marked rarely true, as the whole condition of an `if` in a loop: C lays the guarded block out of line and usually keeps it a branch, Rust opens it with a call to a cold function, Java and C# render `c`. For a rare reset of a value carried from bar to bar, which a compiler otherwise turns into a select on every bar (`rvol.c`); a short block can still become a select (`vwma.c`), and on other branches in the same loop the hint can cost more than it saves, so time each use |
 | `TA_UNSTABLE( TA_FUNC_UNST_<NAME>, <count> )` | this function's unstable period: the stored count, or under an Auto level `<count>`, written with the free names `K` and `X` that each level supplies. Only in the owner's lookback, once per path |
 | `TA_UNSTABLE_AUTO( TA_FUNC_UNST_<ID>, <offset> )` | `<offset>`, written from the function's parameters, `K`, `X` and constants only, while `<ID>` is on an Auto level, and 0 while it holds a count. For an id the function inherits: only in a lookback that calls that owner's lookback. The body must take its lookback from its own lookback function, or its first output and the lookback disagree |
 | candle-settings access (CDL* patterns) | resolved via the generated candle helpers |

@@ -347,7 +347,13 @@ fn eager_call(name: &str) -> bool {
         || name == SELECT_OTHER
         || matches!(
             SpecialBuiltin::from_name(name),
-            Some(SpecialBuiltin::IsZero | SpecialBuiltin::IsZeroScaled | SpecialBuiltin::IsZeroOrNeg | SpecialBuiltin::IsFinite)
+            Some(
+                SpecialBuiltin::IsZero
+                    | SpecialBuiltin::IsZeroScaled
+                    | SpecialBuiltin::IsZeroOrNeg
+                    | SpecialBuiltin::IsFinite
+                    | SpecialBuiltin::Unlikely
+            )
         )
 }
 

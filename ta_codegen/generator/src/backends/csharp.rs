@@ -1734,6 +1734,7 @@ impl StatementEmitter for CsStmt<'_> {
         cond_comments: &[Option<Vec<String>>],
         indent: usize,
     ) -> String {
+        let (condition, _) = super::builtins::strip_unlikely(condition);
         let pad = " ".repeat(indent);
         // Skip post-allocation null-check blocks (dead code — `new` never returns null)
         if contains_alloc_err_return(then_body) {
@@ -2798,6 +2799,10 @@ fn render_func_call(
 
     if let Some(b) = SpecialBuiltin::from_name(fname) {
         match b {
+            SpecialBuiltin::Unlikely => {
+                let [c] = args else { panic!("UNLIKELY takes one condition") };
+                format!("({})", render_expr(c, ctx, registry, helpers))
+            }
             SpecialBuiltin::UnstablePeriod | SpecialBuiltin::UnstableAuto => {
                 // C# enums cast to int; there is no ordinal().
                 if let Some(Expr::Var(func_name)) = args.first() {

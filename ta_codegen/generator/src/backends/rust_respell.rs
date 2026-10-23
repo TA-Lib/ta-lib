@@ -52,6 +52,9 @@ fn rewrite_lists(
         .iter()
         .map(|s| {
             let s = recurse(s, &pass);
+            if hinted(&s) {
+                return s;
+            }
             extreme(&s, fma, recurrent).or_else(|| merged_store(&s, &pure)).unwrap_or(s)
         })
         .collect();
@@ -61,6 +64,11 @@ fn rewrite_lists(
         }
     }
     out
+}
+
+/// An `if` its author asked to keep a branch: no select respell may take it.
+fn hinted(s: &Statement) -> bool {
+    matches!(s, Statement::If { condition, .. } if super::builtins::strip_unlikely(condition).1)
 }
 
 /// `ta_candlerange(rt, a..) - ta_candlerange(rt, b..)`, a running candle
