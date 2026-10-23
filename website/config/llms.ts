@@ -60,6 +60,7 @@ const PAGE_ORDER = [
   "/api/unstable-period/",
   "/functions/stability.html",
   "/api/candle-settings/",
+  "/api/candlestick-outputs/",
 ];
 
 const SECTIONS: [string, (page: Page) => boolean][] = [

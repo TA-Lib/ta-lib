@@ -16,6 +16,10 @@ Yes. Every function has a streaming form: open it on the history, then update it
 
 Yes. A stream fed bar by bar returns the values the batch function returns over the same bars, except that a value depending on a [transcendental function](/spec/versions/#transcendental) may differ in the last bits.
 
+## What do the candlestick values mean?
+
+0 means no pattern, 100 a bullish pattern and -100 a bearish one. A few patterns also return 80 or 200. See [Candlestick Outputs](/api/candlestick-outputs/).
+
 ## Do the Rust, Java and C# libraries need the C library?
 
 No. Each is a native implementation in its own language, with no binding to C.
