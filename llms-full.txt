@@ -2261,11 +2261,11 @@ Every candlestick function (`CDL*`) returns one whole number per bar. Read the s
 | Value | Meaning |
 |-------|---------|
 | 0 | No pattern on this bar |
-| 100 or -100 | The usual case: the pattern is on this bar |
-| 80 or -80 | A weaker form of the pattern, for example [CDLENGULFING](/functions/cdlengulfing) |
-| 200 or -200 | This bar confirms a pattern found a few bars earlier, for example [CDLHIKKAKE](/functions/cdlhikkake) |
+| +/-100 | The usual case: the pattern is on this bar |
+| +/-80 | A weaker form of the pattern, for example [CDLENGULFING](/functions/cdlengulfing) |
+| +/-200 | This bar confirms a pattern found a few bars earlier, for example [CDLHIKKAKE](/functions/cdlhikkake) |
 
-Most patterns only ever return 0, 100 and -100.
+Most patterns only ever return 0 and +/-100.
 
 Some patterns point only one way, so they return only one sign: a hammer is always 100, a shooting star always -100. A few have no direction: a doji is just 100 when found, and a spinning top's sign is only the candle's color. Each function's page lists its values under **Output Values**.
 
@@ -2273,7 +2273,7 @@ A value describes the candles, not a trade. A pattern does not check the trend b
 
 ## Reading them from code
 
-You do not have to hard-code any of this. Through the [Abstract API](/api/abstract/), each candlestick function carries flags that say which of these values it can return and what its sign means, so a charting app or a strategy builder can find out at run time.
+You do not have to hard-code any of this. Through the [Abstract API](/api/abstract/), each candlestick function carries flags that say which of these values it can return, so a charting app or a strategy builder can find out at run time.
 
 ## Related pages
 
