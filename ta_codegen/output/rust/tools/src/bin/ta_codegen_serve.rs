@@ -25,7 +25,8 @@ const FUZZ_EXTREME: i32 = 5; // alternating huge (1e9) / tiny (1e-7) magnitudes
 const FUZZ_WITH_ZEROS: i32 = 6; // sprinkled 0.0 / -0.0 and small signed values
 const FUZZ_CANDLE: i32 = 7; // inside-bar cascades + breakouts + confirmations
 const FUZZ_ZEROSUM: i32 = 8; // symmetric high=-low bars: high+low == 0 EXACTLY
-const FUZZ_NSHAPES: i32 = 9;
+const FUZZ_DOMAIN_MAX: i32 = 9; // bars at the edges of the input domain, +/-3e37
+const FUZZ_NSHAPES: i32 = 10;
 
 // ---- splitmix64 PRNG (deterministic, self-contained) ----
 fn fuzz_sm_next(s: &mut u64) -> u64 {
@@ -567,6 +568,60 @@ fn fuzz_zerosum_gen(
     }
 }
 
+// ---- FUZZ_DOMAIN_MAX: bars at the edges of the input domain ----
+// Same bound and same seven draws per bar as fuzz_domain_max_gen in fuzz_data.h.
+const FUZZ_DOMAIN_BOUND: f64 = 3e37;
+fn fuzz_domain_max_gen(
+    seed: i32, n: i32,
+    o: &mut [f64], h: &mut [f64], l: &mut [f64], c: &mut [f64], v: &mut [f64], oi: &mut [f64],
+) {
+    let mut s: u64 =
+        0x243F6A8885A308D3
+            ^ (seed as u32 as u64).wrapping_mul(0xD1B54A32D192ED03)
+            ^ ((FUZZ_DOMAIN_MAX as u64) << 32);
+    let mut i = 0i32;
+    while i < n {
+        let r = fuzz_sm_unit(&mut s);
+        let scale = if r < 0.90 { FUZZ_DOMAIN_BOUND } else { 100.0 };
+        let mut t = fuzz_sm_unit(&mut s) * 0.07;
+        let mut a = 0.93 + t;
+        let mut hi = a * scale;
+        t = fuzz_sm_unit(&mut s) * 0.02;
+        let w = hi * t;
+        let mut lo = hi - w;
+        let span = hi - lo;
+        t = fuzz_sm_unit(&mut s) * span;
+        let mut close = lo + t;
+        if close > hi {
+            close = hi;
+        }
+        t = fuzz_sm_unit(&mut s) * span;
+        let mut open = lo + t;
+        if open > hi {
+            open = hi;
+        }
+        if r >= 0.45 && r < 0.90 {
+            // the mirror image near -3e37
+            t = hi;
+            hi = -lo;
+            lo = -t;
+            open = -open;
+            close = -close;
+        }
+        o[i as usize] = open;
+        h[i as usize] = hi;
+        l[i as usize] = lo;
+        c[i as usize] = close;
+        t = fuzz_sm_unit(&mut s) * 0.99;
+        a = 0.01 + t;
+        v[i as usize] = a * FUZZ_DOMAIN_BOUND;
+        t = fuzz_sm_unit(&mut s) * 0.99;
+        a = 0.01 + t;
+        oi[i as usize] = a * FUZZ_DOMAIN_BOUND;
+        i += 1;
+    }
+}
+
 // Fill OHLCV+OI arrays (length n) from (shape,seed). high>=max(o,c), low<=min(o,c).
 // Mul/add split into statements so nothing contracts.
 fn fuzz_gen(
@@ -579,6 +634,10 @@ fn fuzz_gen(
     }
     if shape == FUZZ_ZEROSUM {
         fuzz_zerosum_gen(seed, n, o, h, l, c, v, oi);
+        return;
+    }
+    if shape == FUZZ_DOMAIN_MAX {
+        fuzz_domain_max_gen(seed, n, o, h, l, c, v, oi);
         return;
     }
     let mut s: u64 =
