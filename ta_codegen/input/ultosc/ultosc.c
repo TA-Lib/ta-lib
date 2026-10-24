@@ -19,6 +19,7 @@
  *               TA_IS_ZERO band -- which zeroed the oscillator for any
  *               instrument quoted small enough to fall under it.
  *  102326 MF,CC #554 branch-free zero run, rare reset.
+ *  102426 MF,CC #554 zero-run test on the true range itself.
  */
 
 int ultosc_lookback(int optInTimePeriod1, int optInTimePeriod2, int optInTimePeriod3)
@@ -155,7 +156,7 @@ TA_RetCode ultosc(int startIdx, int endIdx,
       term_trueRange[term_Idx] = trueRange;
       CIRCBUF_NEXT(term);
 
-      live = fabs(trueRange) + fabs(closeMinusTrueLow) <= 0.0 ? 0 : 1;
+      live = trueRange + fabs(closeMinusTrueLow) <= 0.0 ? 0 : 1;
       nullRun = (nullRun + 1) & (live - 1);
 
       if( i >= startIdx-optInTimePeriod1+1 )
@@ -217,7 +218,7 @@ TA_RetCode ultosc(int startIdx, int endIdx,
        * run long enough for a longer window is long enough for every shorter
        * one.
        */
-      live = fabs(trueRange) + fabs(closeMinusTrueLow) <= 0.0 ? 0 : 1;
+      live = trueRange + fabs(closeMinusTrueLow) <= 0.0 ? 0 : 1;
       nullRun = (nullRun + 1) & (live - 1);
       if( TA_UNLIKELY(nullRun >= optInTimePeriod1) )
       {

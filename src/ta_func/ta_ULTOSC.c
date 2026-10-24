@@ -63,6 +63,7 @@
  *               TA_IS_ZERO band -- which zeroed the oscillator for any
  *               instrument quoted small enough to fall under it.
  *  102326 MF,CC #554 branch-free zero run, rare reset.
+ *  102426 MF,CC #554 zero-run test on the true range itself.
  */
 
 TA_LIB_API int TA_ULTOSC_Lookback( int optInTimePeriod1, int optInTimePeriod2, int optInTimePeriod3 )
@@ -291,7 +292,7 @@ TA_LIB_API TA_RetCode TA_ULTOSC( int    startIdx,
       term_trueRange[term_Idx] = trueRange;
       term_Idx++;
       if( term_Idx > maxIdx_term ) term_Idx = 0;
-      live = (fabs(trueRange) + fabs(closeMinusTrueLow) <= 0.0) ? 0 : 1;
+      live = (trueRange + fabs(closeMinusTrueLow) <= 0.0) ? 0 : 1;
       nullRun = (nullRun + 1) & (live - 1);
       if( i >= startIdx - optInTimePeriod1 + 1 )
       {
@@ -356,7 +357,7 @@ TA_LIB_API TA_RetCode TA_ULTOSC( int    startIdx,
        * run long enough for a longer window is long enough for every shorter
        * one.
        */
-      live = (fabs(trueRange) + fabs(closeMinusTrueLow) <= 0.0) ? 0 : 1;
+      live = (trueRange + fabs(closeMinusTrueLow) <= 0.0) ? 0 : 1;
       nullRun = (nullRun + 1) & (live - 1);
       if( TA_UNLIKELY(nullRun >= optInTimePeriod1) )
       {
@@ -592,7 +593,7 @@ TA_RetCode TA_S_ULTOSC( int    startIdx,
       term_trueRange[term_Idx] = trueRange;
       term_Idx++;
       if( term_Idx > maxIdx_term ) term_Idx = 0;
-      live = (fabs(trueRange) + fabs(closeMinusTrueLow) <= 0.0) ? 0 : 1;
+      live = (trueRange + fabs(closeMinusTrueLow) <= 0.0) ? 0 : 1;
       nullRun = (nullRun + 1) & (live - 1);
       if( i >= startIdx - optInTimePeriod1 + 1 )
       {
@@ -645,7 +646,7 @@ TA_RetCode TA_S_ULTOSC( int    startIdx,
       b1Total += trueRange;
       b2Total += trueRange;
       b3Total += trueRange;
-      live = (fabs(trueRange) + fabs(closeMinusTrueLow) <= 0.0) ? 0 : 1;
+      live = (trueRange + fabs(closeMinusTrueLow) <= 0.0) ? 0 : 1;
       nullRun = (nullRun + 1) & (live - 1);
       if( TA_UNLIKELY(nullRun >= optInTimePeriod1) )
       {
@@ -786,7 +787,7 @@ static void TA_ULTOSC_StepImpl( struct TA_ULTOSC_Stream *sp, double inHigh, doub
     * run long enough for a longer window is long enough for every shorter
     * one.
     */
-   live = (fabs(trueRange) + fabs(closeMinusTrueLow) <= 0.0) ? 0 : 1;
+   live = (trueRange + fabs(closeMinusTrueLow) <= 0.0) ? 0 : 1;
    sp->nullRun = (sp->nullRun + 1) & (live - 1);
    if( TA_UNLIKELY(sp->nullRun >= sp->optInTimePeriod1) )
    {
@@ -1043,7 +1044,7 @@ static TA_RetCode TA_ULTOSC_OpenImpl( struct TA_ULTOSC_Stream **stream, const do
          term_trueRange[term_Idx] = trueRange;
          term_Idx++;
          if( term_Idx > maxIdx_term ) term_Idx = 0;
-         live = (fabs(trueRange) + fabs(closeMinusTrueLow) <= 0.0) ? 0 : 1;
+         live = (trueRange + fabs(closeMinusTrueLow) <= 0.0) ? 0 : 1;
          nullRun = (nullRun + 1) & (live - 1);
          if( i >= startIdx - optInTimePeriod1 + 1 )
          {
@@ -1108,7 +1109,7 @@ static TA_RetCode TA_ULTOSC_OpenImpl( struct TA_ULTOSC_Stream **stream, const do
           * run long enough for a longer window is long enough for every shorter
           * one.
           */
-         live = (fabs(trueRange) + fabs(closeMinusTrueLow) <= 0.0) ? 0 : 1;
+         live = (trueRange + fabs(closeMinusTrueLow) <= 0.0) ? 0 : 1;
          nullRun = (nullRun + 1) & (live - 1);
          if( TA_UNLIKELY(nullRun >= optInTimePeriod1) )
          {
@@ -1345,7 +1346,7 @@ TA_LIB_API TA_RetCode TA_ULTOSC_Peek( const TA_ULTOSC_Stream *stream, double inH
     * run long enough for a longer window is long enough for every shorter
     * one.
     */
-   live = (fabs(trueRange) + fabs(closeMinusTrueLow) <= 0.0) ? 0 : 1;
+   live = (trueRange + fabs(closeMinusTrueLow) <= 0.0) ? 0 : 1;
    nullRun = (nullRun + 1) & (live - 1);
    if( nullRun >= sp->optInTimePeriod1 )
    {

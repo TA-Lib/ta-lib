@@ -61,6 +61,7 @@
  *               TA_IS_ZERO band -- which zeroed the oscillator for any
  *               instrument quoted small enough to fall under it.
  *  102326 MF,CC #554 branch-free zero run, rare reset.
+ *  102426 MF,CC #554 zero-run test on the true range itself.
  */
 
 // Import types from parent module
@@ -318,7 +319,7 @@ impl Core {
             term_trueRange[term_Idx] = trueRange;
             term_Idx += 1;
             if term_Idx >= term_closeMinusTrueLow.len() { term_Idx = 0; }
-            live = (if (trueRange).abs() + (closeMinusTrueLow).abs() <= 0.0 { 0 } else { 1 });
+            live = (if trueRange + (closeMinusTrueLow).abs() <= 0.0 { 0 } else { 1 });
             nullRun = nullRun + 1 & live.wrapping_sub(1);
             if i >= startIdx - ((optInTimePeriod1) as usize) + 1 {
                 a1Total += closeMinusTrueLow;
@@ -371,7 +372,7 @@ impl Core {
             // residue can be dropped. The periods are sorted shortest-first, so a
             // run long enough for a longer window is long enough for every shorter
             // one.
-            live = (if (trueRange).abs() + (closeMinusTrueLow).abs() <= 0.0 { 0 } else { 1 });
+            live = (if trueRange + (closeMinusTrueLow).abs() <= 0.0 { 0 } else { 1 });
             nullRun = nullRun + 1 & live.wrapping_sub(1);
             if nullRun >= ((optInTimePeriod1) as usize) {
                 cold_arm();
@@ -645,7 +646,7 @@ impl Core {
         // residue can be dropped. The periods are sorted shortest-first, so a
         // run long enough for a longer window is long enough for every shorter
         // one.
-        live = (if (trueRange).abs() + (closeMinusTrueLow).abs() <= 0.0 { 0 } else { 1 });
+        live = (if trueRange + (closeMinusTrueLow).abs() <= 0.0 { 0 } else { 1 });
         sp.nullRun = sp.nullRun + 1 & live.wrapping_sub(1);
         if sp.nullRun >= ((sp.optInTimePeriod1) as usize) {
             cold_arm();
@@ -876,7 +877,7 @@ impl Core {
             term_trueRange[term_Idx] = trueRange;
             term_Idx += 1;
             if term_Idx > maxIdx_term { term_Idx = 0; }
-            live = (if (trueRange).abs() + (closeMinusTrueLow).abs() <= 0.0 { 0 } else { 1 });
+            live = (if trueRange + (closeMinusTrueLow).abs() <= 0.0 { 0 } else { 1 });
             nullRun = nullRun + 1 & live.wrapping_sub(1);
             if i >= startIdx - ((optInTimePeriod1) as usize) + 1 {
                 a1Total += closeMinusTrueLow;
@@ -929,7 +930,7 @@ impl Core {
             // residue can be dropped. The periods are sorted shortest-first, so a
             // run long enough for a longer window is long enough for every shorter
             // one.
-            live = (if (trueRange).abs() + (closeMinusTrueLow).abs() <= 0.0 { 0 } else { 1 });
+            live = (if trueRange + (closeMinusTrueLow).abs() <= 0.0 { 0 } else { 1 });
             nullRun = nullRun + 1 & live.wrapping_sub(1);
             if nullRun >= ((optInTimePeriod1) as usize) {
                 cold_arm();
@@ -1246,7 +1247,7 @@ impl UltoscStream {
             // residue can be dropped. The periods are sorted shortest-first, so a
             // run long enough for a longer window is long enough for every shorter
             // one.
-            live = (if (trueRange).abs() + (closeMinusTrueLow).abs() <= 0.0 { 0 } else { 1 });
+            live = (if trueRange + (closeMinusTrueLow).abs() <= 0.0 { 0 } else { 1 });
             nullRun = nullRun + 1 & live.wrapping_sub(1);
             if nullRun >= ((sp.optInTimePeriod1) as usize) {
                 a1Total = 0.0;

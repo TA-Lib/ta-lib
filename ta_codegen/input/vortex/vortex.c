@@ -12,6 +12,7 @@
  *  -------------------------------------------------------------------
  *  090626 KL     First version (issue #349).
  *  102326 MF,CC  #554 branch-free zero run, rare reset.
+ *  102426 MF,CC  #554 zero-run test on the true range itself.
  */
 
 int vortex_lookback(int optInTimePeriod)
@@ -95,7 +96,7 @@ TA_RetCode vortex(int startIdx, int endIdx,
       sTR  += trueRange;
       sVMP += fabs( inHigh[i] - inLow[i-1] );
       sVMM += fabs( inLow[i] - inHigh[i-1] );
-      live = fabs(trueRange) <= 0.0 ? 0 : 1;
+      live = trueRange <= 0.0 ? 0 : 1;
       nullRun = (nullRun + 1) & (live - 1);
    }
 
@@ -119,7 +120,7 @@ TA_RetCode vortex(int startIdx, int endIdx,
       sTR  += trueRange;
       sVMP += fabs( inHigh[today] - inLow[today-1] );
       sVMM += fabs( inLow[today] - inHigh[today-1] );
-      live = fabs(trueRange) <= 0.0 ? 0 : 1;
+      live = trueRange <= 0.0 ? 0 : 1;
       nullRun = (nullRun + 1) & (live - 1);
       /* Once the whole window is flat, every TRUE-RANGE term in it is
        * provably zero (nullRun counts exactly that), so sTR's only content

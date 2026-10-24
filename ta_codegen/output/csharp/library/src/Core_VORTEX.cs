@@ -56,6 +56,7 @@ public partial class Core
     *  -------------------------------------------------------------------
     *  090626 KL     First version (issue #349).
     *  102326 MF,CC  #554 branch-free zero run, rare reset.
+    *  102426 MF,CC  #554 zero-run test on the true range itself.
     */
    /// <summary>
    /// Number of leading input bars <c>Vortex</c> consumes before it can produce
@@ -203,7 +204,7 @@ public partial class Core
          sTR += trueRange;
          sVMP += Math.Abs(inHigh[i] - inLow[i - 1]);
          sVMM += Math.Abs(inLow[i] - inHigh[i - 1]);
-         live = (Math.Abs(trueRange) <= 0.0) ? 0 : 1;
+         live = (trueRange <= 0.0) ? 0 : 1;
          nullRun = (nullRun + 1) & (live - 1);
       }
       outIdx = 0;
@@ -222,7 +223,7 @@ public partial class Core
          sTR += trueRange;
          sVMP += Math.Abs(inHigh[today] - inLow[today - 1]);
          sVMM += Math.Abs(inLow[today] - inHigh[today - 1]);
-         live = (Math.Abs(trueRange) <= 0.0) ? 0 : 1;
+         live = (trueRange <= 0.0) ? 0 : 1;
          nullRun = (nullRun + 1) & (live - 1);
          /* Once the whole window is flat, every TRUE-RANGE term in it is
           * provably zero (nullRun counts exactly that), so sTR's only content
@@ -365,7 +366,7 @@ public partial class Core
          sTR += trueRange;
          sVMP += Math.Abs((double)inHigh[i] - (double)inLow[i - 1]);
          sVMM += Math.Abs((double)inLow[i] - (double)inHigh[i - 1]);
-         live = (Math.Abs(trueRange) <= 0.0) ? 0 : 1;
+         live = (trueRange <= 0.0) ? 0 : 1;
          nullRun = (nullRun + 1) & (live - 1);
       }
       outIdx = 0;
@@ -383,7 +384,7 @@ public partial class Core
          sTR += trueRange;
          sVMP += Math.Abs((double)inHigh[today] - (double)inLow[today - 1]);
          sVMM += Math.Abs((double)inLow[today] - (double)inHigh[today - 1]);
-         live = (Math.Abs(trueRange) <= 0.0) ? 0 : 1;
+         live = (trueRange <= 0.0) ? 0 : 1;
          nullRun = (nullRun + 1) & (live - 1);
          if( nullRun >= optInTimePeriod ) {
             nullRun = optInTimePeriod;
@@ -817,7 +818,7 @@ public partial class Core
          sTR += trueRange;
          sVMP += Math.Abs(inHigh - sp.lag1_inLow);
          sVMM += Math.Abs(inLow - sp.lag1_inHigh);
-         live = (Math.Abs(trueRange) <= 0.0) ? 0 : 1;
+         live = (trueRange <= 0.0) ? 0 : 1;
          nullRun = (nullRun + 1) & (live - 1);
          /* Once the whole window is flat, every TRUE-RANGE term in it is
           * provably zero (nullRun counts exactly that), so sTR's only content
@@ -925,7 +926,7 @@ public partial class Core
       sp.sTR += trueRange;
       sp.sVMP += Math.Abs(inHigh - sp.lag1_inLow);
       sp.sVMM += Math.Abs(inLow - sp.lag1_inHigh);
-      live = (Math.Abs(trueRange) <= 0.0) ? 0 : 1;
+      live = (trueRange <= 0.0) ? 0 : 1;
       sp.nullRun = (sp.nullRun + 1) & (live - 1);
       /* Once the whole window is flat, every TRUE-RANGE term in it is
        * provably zero (nullRun counts exactly that), so sTR's only content
@@ -1088,7 +1089,7 @@ public partial class Core
          sTR += trueRange;
          sVMP += Math.Abs(inHigh[i] - inLow[i - 1]);
          sVMM += Math.Abs(inLow[i] - inHigh[i - 1]);
-         live = (Math.Abs(trueRange) <= 0.0) ? 0 : 1;
+         live = (trueRange <= 0.0) ? 0 : 1;
          nullRun = (nullRun + 1) & (live - 1);
       }
       outIdx = 0;
@@ -1107,7 +1108,7 @@ public partial class Core
          sTR += trueRange;
          sVMP += Math.Abs(inHigh[today] - inLow[today - 1]);
          sVMM += Math.Abs(inLow[today] - inHigh[today - 1]);
-         live = (Math.Abs(trueRange) <= 0.0) ? 0 : 1;
+         live = (trueRange <= 0.0) ? 0 : 1;
          nullRun = (nullRun + 1) & (live - 1);
          /* Once the whole window is flat, every TRUE-RANGE term in it is
           * provably zero (nullRun counts exactly that), so sTR's only content

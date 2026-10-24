@@ -56,6 +56,7 @@
  *  -------------------------------------------------------------------
  *  090626 KL     First version (issue #349).
  *  102326 MF,CC  #554 branch-free zero run, rare reset.
+ *  102426 MF,CC  #554 zero-run test on the true range itself.
  */
 
 TA_LIB_API int TA_VORTEX_Lookback( int optInTimePeriod )
@@ -193,7 +194,7 @@ TA_LIB_API TA_RetCode TA_VORTEX( int    startIdx,
       sTR += trueRange;
       sVMP += fabs(inHigh[i] - inLow[i - 1]);
       sVMM += fabs(inLow[i] - inHigh[i - 1]);
-      live = (fabs(trueRange) <= 0.0) ? 0 : 1;
+      live = (trueRange <= 0.0) ? 0 : 1;
       nullRun = (nullRun + 1) & (live - 1);
    }
    outIdx = 0;
@@ -219,7 +220,7 @@ TA_LIB_API TA_RetCode TA_VORTEX( int    startIdx,
       sTR += trueRange;
       sVMP += fabs(inHigh[today] - inLow[today - 1]);
       sVMM += fabs(inLow[today] - inHigh[today - 1]);
-      live = (fabs(trueRange) <= 0.0) ? 0 : 1;
+      live = (trueRange <= 0.0) ? 0 : 1;
       nullRun = (nullRun + 1) & (live - 1);
       /* Once the whole window is flat, every TRUE-RANGE term in it is
        * provably zero (nullRun counts exactly that), so sTR's only content
@@ -387,7 +388,7 @@ TA_RetCode TA_S_VORTEX( int    startIdx,
       sTR += trueRange;
       sVMP += fabs((double)inHigh[i] - (double)inLow[i - 1]);
       sVMM += fabs((double)inLow[i] - (double)inHigh[i - 1]);
-      live = (fabs(trueRange) <= 0.0) ? 0 : 1;
+      live = (trueRange <= 0.0) ? 0 : 1;
       nullRun = (nullRun + 1) & (live - 1);
    }
    outIdx = 0;
@@ -412,7 +413,7 @@ TA_RetCode TA_S_VORTEX( int    startIdx,
       sTR += trueRange;
       sVMP += fabs((double)inHigh[today] - (double)inLow[today - 1]);
       sVMM += fabs((double)inLow[today] - (double)inHigh[today - 1]);
-      live = (fabs(trueRange) <= 0.0) ? 0 : 1;
+      live = (trueRange <= 0.0) ? 0 : 1;
       nullRun = (nullRun + 1) & (live - 1);
       if( TA_UNLIKELY(nullRun >= optInTimePeriod) )
       {
@@ -526,7 +527,7 @@ static void TA_VORTEX_StepImpl( struct TA_VORTEX_Stream *sp, double inHigh, doub
    sp->sTR += trueRange;
    sp->sVMP += fabs(inHigh - sp->lag1_inLow);
    sp->sVMM += fabs(inLow - sp->lag1_inHigh);
-   live = (fabs(trueRange) <= 0.0) ? 0 : 1;
+   live = (trueRange <= 0.0) ? 0 : 1;
    sp->nullRun = (sp->nullRun + 1) & (live - 1);
    /* Once the whole window is flat, every TRUE-RANGE term in it is
     * provably zero (nullRun counts exactly that), so sTR's only content
@@ -709,7 +710,7 @@ static TA_RetCode TA_VORTEX_OpenImpl( struct TA_VORTEX_Stream **stream, const do
          sTR += trueRange;
          sVMP += fabs(inHigh[i] - inLow[i - 1]);
          sVMM += fabs(inLow[i] - inHigh[i - 1]);
-         live = (fabs(trueRange) <= 0.0) ? 0 : 1;
+         live = (trueRange <= 0.0) ? 0 : 1;
          nullRun = (nullRun + 1) & (live - 1);
       }
       outIdx = 0;
@@ -735,7 +736,7 @@ static TA_RetCode TA_VORTEX_OpenImpl( struct TA_VORTEX_Stream **stream, const do
          sTR += trueRange;
          sVMP += fabs(inHigh[today] - inLow[today - 1]);
          sVMM += fabs(inLow[today] - inHigh[today - 1]);
-         live = (fabs(trueRange) <= 0.0) ? 0 : 1;
+         live = (trueRange <= 0.0) ? 0 : 1;
          nullRun = (nullRun + 1) & (live - 1);
          /* Once the whole window is flat, every TRUE-RANGE term in it is
           * provably zero (nullRun counts exactly that), so sTR's only content
@@ -973,7 +974,7 @@ TA_LIB_API TA_RetCode TA_VORTEX_Peek( const TA_VORTEX_Stream *stream, double inH
    sTR += trueRange;
    sVMP += fabs(inHigh - sp->lag1_inLow);
    sVMM += fabs(inLow - sp->lag1_inHigh);
-   live = (fabs(trueRange) <= 0.0) ? 0 : 1;
+   live = (trueRange <= 0.0) ? 0 : 1;
    nullRun = (nullRun + 1) & (live - 1);
    /* Once the whole window is flat, every TRUE-RANGE term in it is
     * provably zero (nullRun counts exactly that), so sTR's only content

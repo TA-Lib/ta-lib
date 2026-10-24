@@ -63,6 +63,7 @@ public partial class Core
     *               TA_IS_ZERO band -- which zeroed the oscillator for any
     *               instrument quoted small enough to fall under it.
     *  102326 MF,CC #554 branch-free zero run, rare reset.
+    *  102426 MF,CC #554 zero-run test on the true range itself.
     */
    /// <summary>
    /// Number of leading input bars <c>Ultosc</c> consumes before it can produce
@@ -292,7 +293,7 @@ public partial class Core
          term_trueRange[term_Idx] = trueRange;
          term_Idx++;
          if( term_Idx > maxIdx_term ) { term_Idx = 0; }
-         live = (Math.Abs(trueRange) + Math.Abs(closeMinusTrueLow) <= 0.0) ? 0 : 1;
+         live = (trueRange + Math.Abs(closeMinusTrueLow) <= 0.0) ? 0 : 1;
          nullRun = (nullRun + 1) & (live - 1);
          if( i >= startIdx - optInTimePeriod1 + 1 ) {
             a1Total += closeMinusTrueLow;
@@ -346,7 +347,7 @@ public partial class Core
           * run long enough for a longer window is long enough for every shorter
           * one.
           */
-         live = (Math.Abs(trueRange) + Math.Abs(closeMinusTrueLow) <= 0.0) ? 0 : 1;
+         live = (trueRange + Math.Abs(closeMinusTrueLow) <= 0.0) ? 0 : 1;
          nullRun = (nullRun + 1) & (live - 1);
          if( nullRun >= optInTimePeriod1 ) {
             a1Total = 0.0;
@@ -537,7 +538,7 @@ public partial class Core
          term_trueRange[term_Idx] = trueRange;
          term_Idx++;
          if( term_Idx > maxIdx_term ) { term_Idx = 0; }
-         live = (Math.Abs(trueRange) + Math.Abs(closeMinusTrueLow) <= 0.0) ? 0 : 1;
+         live = (trueRange + Math.Abs(closeMinusTrueLow) <= 0.0) ? 0 : 1;
          nullRun = (nullRun + 1) & (live - 1);
          if( i >= startIdx - optInTimePeriod1 + 1 ) {
             a1Total += closeMinusTrueLow;
@@ -579,7 +580,7 @@ public partial class Core
          b1Total += trueRange;
          b2Total += trueRange;
          b3Total += trueRange;
-         live = (Math.Abs(trueRange) + Math.Abs(closeMinusTrueLow) <= 0.0) ? 0 : 1;
+         live = (trueRange + Math.Abs(closeMinusTrueLow) <= 0.0) ? 0 : 1;
          nullRun = (nullRun + 1) & (live - 1);
          if( nullRun >= optInTimePeriod1 ) {
             a1Total = 0.0;
@@ -1023,7 +1024,7 @@ public partial class Core
           * run long enough for a longer window is long enough for every shorter
           * one.
           */
-         live = (Math.Abs(trueRange) + Math.Abs(closeMinusTrueLow) <= 0.0) ? 0 : 1;
+         live = (trueRange + Math.Abs(closeMinusTrueLow) <= 0.0) ? 0 : 1;
          nullRun = (nullRun + 1) & (live - 1);
          if( nullRun >= sp.optInTimePeriod1 ) {
             a1Total = 0.0;
@@ -1136,7 +1137,7 @@ public partial class Core
        * run long enough for a longer window is long enough for every shorter
        * one.
        */
-      live = (Math.Abs(trueRange) + Math.Abs(closeMinusTrueLow) <= 0.0) ? 0 : 1;
+      live = (trueRange + Math.Abs(closeMinusTrueLow) <= 0.0) ? 0 : 1;
       sp.nullRun = (sp.nullRun + 1) & (live - 1);
       if( sp.nullRun >= sp.optInTimePeriod1 ) {
          sp.a1Total = 0.0;
@@ -1355,7 +1356,7 @@ public partial class Core
          term_trueRange[term_Idx] = trueRange;
          term_Idx++;
          if( term_Idx > maxIdx_term ) { term_Idx = 0; }
-         live = (Math.Abs(trueRange) + Math.Abs(closeMinusTrueLow) <= 0.0) ? 0 : 1;
+         live = (trueRange + Math.Abs(closeMinusTrueLow) <= 0.0) ? 0 : 1;
          nullRun = (nullRun + 1) & (live - 1);
          if( i >= startIdx - optInTimePeriod1 + 1 ) {
             a1Total += closeMinusTrueLow;
@@ -1409,7 +1410,7 @@ public partial class Core
           * run long enough for a longer window is long enough for every shorter
           * one.
           */
-         live = (Math.Abs(trueRange) + Math.Abs(closeMinusTrueLow) <= 0.0) ? 0 : 1;
+         live = (trueRange + Math.Abs(closeMinusTrueLow) <= 0.0) ? 0 : 1;
          nullRun = (nullRun + 1) & (live - 1);
          if( nullRun >= optInTimePeriod1 ) {
             a1Total = 0.0;

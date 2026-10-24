@@ -12,6 +12,7 @@
  *  -------------------------------------------------------------------
  *  090626 KL     First version (issue #349).
  *  102326 MF,CC  #554 branch-free zero run, rare reset.
+ *  102426 MF,CC  #554 zero-run test on the true range itself.
  */
 
    /**
@@ -158,7 +159,7 @@
          sTR += trueRange;
          sVMP += Math.abs(inHigh[i] - inLow[i - 1]);
          sVMM += Math.abs(inLow[i] - inHigh[i - 1]);
-         live = (Math.abs(trueRange) <= 0.0) ? 0 : 1;
+         live = (trueRange <= 0.0) ? 0 : 1;
          nullRun = (nullRun + 1) & (live - 1);
       }
       outIdx = 0;
@@ -181,7 +182,7 @@
          sTR += trueRange;
          sVMP += Math.abs(inHigh[today] - inLow[today - 1]);
          sVMM += Math.abs(inLow[today] - inHigh[today - 1]);
-         live = (Math.abs(trueRange) <= 0.0) ? 0 : 1;
+         live = (trueRange <= 0.0) ? 0 : 1;
          nullRun = (nullRun + 1) & (live - 1);
          /* Once the whole window is flat, every TRUE-RANGE term in it is
           * provably zero (nullRun counts exactly that), so sTR's only content
@@ -327,7 +328,7 @@
          sTR += trueRange;
          sVMP += Math.abs((double)inHigh[i] - (double)inLow[i - 1]);
          sVMM += Math.abs((double)inLow[i] - (double)inHigh[i - 1]);
-         live = (Math.abs(trueRange) <= 0.0) ? 0 : 1;
+         live = (trueRange <= 0.0) ? 0 : 1;
          nullRun = (nullRun + 1) & (live - 1);
       }
       outIdx = 0;
@@ -349,7 +350,7 @@
          sTR += trueRange;
          sVMP += Math.abs((double)inHigh[today] - (double)inLow[today - 1]);
          sVMM += Math.abs((double)inLow[today] - (double)inHigh[today - 1]);
-         live = (Math.abs(trueRange) <= 0.0) ? 0 : 1;
+         live = (trueRange <= 0.0) ? 0 : 1;
          nullRun = (nullRun + 1) & (live - 1);
          if( nullRun >= optInTimePeriod ) {
             nullRun = optInTimePeriod;
@@ -728,7 +729,7 @@
          sTR += trueRange;
          sVMP += Math.abs(inHigh - sp.lag1_inLow);
          sVMM += Math.abs(inLow - sp.lag1_inHigh);
-         live = (Math.abs(trueRange) <= 0.0) ? 0 : 1;
+         live = (trueRange <= 0.0) ? 0 : 1;
          nullRun = (nullRun + 1) & (live - 1);
          /* Once the whole window is flat, every TRUE-RANGE term in it is
           * provably zero (nullRun counts exactly that), so sTR's only content
@@ -878,7 +879,7 @@
       sp.sTR += trueRange;
       sp.sVMP += Math.abs(inHigh - sp.lag1_inLow);
       sp.sVMM += Math.abs(inLow - sp.lag1_inHigh);
-      live = (Math.abs(trueRange) <= 0.0) ? 0 : 1;
+      live = (trueRange <= 0.0) ? 0 : 1;
       sp.nullRun = (sp.nullRun + 1) & (live - 1);
       /* Once the whole window is flat, every TRUE-RANGE term in it is
        * provably zero (nullRun counts exactly that), so sTR's only content
@@ -1046,7 +1047,7 @@
          sTR += trueRange;
          sVMP += Math.abs(inHigh[i] - inLow[i - 1]);
          sVMM += Math.abs(inLow[i] - inHigh[i - 1]);
-         live = (Math.abs(trueRange) <= 0.0) ? 0 : 1;
+         live = (trueRange <= 0.0) ? 0 : 1;
          nullRun = (nullRun + 1) & (live - 1);
       }
       outIdx = 0;
@@ -1069,7 +1070,7 @@
          sTR += trueRange;
          sVMP += Math.abs(inHigh[today] - inLow[today - 1]);
          sVMM += Math.abs(inLow[today] - inHigh[today - 1]);
-         live = (Math.abs(trueRange) <= 0.0) ? 0 : 1;
+         live = (trueRange <= 0.0) ? 0 : 1;
          nullRun = (nullRun + 1) & (live - 1);
          /* Once the whole window is flat, every TRUE-RANGE term in it is
           * provably zero (nullRun counts exactly that), so sTR's only content

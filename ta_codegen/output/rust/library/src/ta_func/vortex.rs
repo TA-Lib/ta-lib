@@ -54,6 +54,7 @@
  *  -------------------------------------------------------------------
  *  090626 KL     First version (issue #349).
  *  102326 MF,CC  #554 branch-free zero run, rare reset.
+ *  102426 MF,CC  #554 zero-run test on the true range itself.
  */
 
 // Import types from parent module
@@ -226,7 +227,7 @@ impl Core {
                 sTR += trueRange;
                 sVMP += (_w1[_wk + 1] - _w2[_wk]).abs();
                 sVMM += (_w2[_wk + 1] - _w1[_wk]).abs();
-                live = (if (trueRange).abs() <= 0.0 { 0 } else { 1 });
+                live = (if trueRange <= 0.0 { 0 } else { 1 });
                 nullRun = nullRun + 1 & live.wrapping_sub(1);
                 i += 1;
             }
@@ -247,7 +248,7 @@ impl Core {
             sTR += trueRange;
             sVMP += (inHigh[today] - inLow[today - 1]).abs();
             sVMM += (inLow[today] - inHigh[today - 1]).abs();
-            live = (if (trueRange).abs() <= 0.0 { 0 } else { 1 });
+            live = (if trueRange <= 0.0 { 0 } else { 1 });
             nullRun = nullRun + 1 & live.wrapping_sub(1);
             // Once the whole window is flat, every TRUE-RANGE term in it is
             // provably zero (nullRun counts exactly that), so sTR's only content
@@ -515,7 +516,7 @@ impl Core {
         sp.sTR += trueRange;
         sp.sVMP += (inHigh - sp.lag1_inLow).abs();
         sp.sVMM += (inLow - sp.lag1_inHigh).abs();
-        live = (if (trueRange).abs() <= 0.0 { 0 } else { 1 });
+        live = (if trueRange <= 0.0 { 0 } else { 1 });
         sp.nullRun = sp.nullRun + 1 & live.wrapping_sub(1);
         // Once the whole window is flat, every TRUE-RANGE term in it is
         // provably zero (nullRun counts exactly that), so sTR's only content
@@ -682,7 +683,7 @@ impl Core {
             sTR += trueRange;
             sVMP += (inHigh[i] - inLow[i - 1]).abs();
             sVMM += (inLow[i] - inHigh[i - 1]).abs();
-            live = (if (trueRange).abs() <= 0.0 { 0 } else { 1 });
+            live = (if trueRange <= 0.0 { 0 } else { 1 });
             nullRun = nullRun + 1 & live.wrapping_sub(1);
             i += 1;
         }
@@ -702,7 +703,7 @@ impl Core {
             sTR += trueRange;
             sVMP += (inHigh[today] - inLow[today - 1]).abs();
             sVMM += (inLow[today] - inHigh[today - 1]).abs();
-            live = (if (trueRange).abs() <= 0.0 { 0 } else { 1 });
+            live = (if trueRange <= 0.0 { 0 } else { 1 });
             nullRun = nullRun + 1 & live.wrapping_sub(1);
             // Once the whole window is flat, every TRUE-RANGE term in it is
             // provably zero (nullRun counts exactly that), so sTR's only content
@@ -1042,7 +1043,7 @@ impl VortexStream {
             sTR += trueRange;
             sVMP += (inHigh - sp.lag1_inLow).abs();
             sVMM += (inLow - sp.lag1_inHigh).abs();
-            live = (if (trueRange).abs() <= 0.0 { 0 } else { 1 });
+            live = (if trueRange <= 0.0 { 0 } else { 1 });
             nullRun = nullRun + 1 & live.wrapping_sub(1);
             // Once the whole window is flat, every TRUE-RANGE term in it is
             // provably zero (nullRun counts exactly that), so sTR's only content

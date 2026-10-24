@@ -215454,6 +215454,7 @@ class Core {
      *               TA_IS_ZERO band -- which zeroed the oscillator for any
      *               instrument quoted small enough to fall under it.
      *  102326 MF,CC #554 branch-free zero run, rare reset.
+     *  102426 MF,CC #554 zero-run test on the true range itself.
      */
 
        /**
@@ -215682,7 +215683,7 @@ class Core {
              term_trueRange[term_Idx] = trueRange;
              term_Idx++;
              if( term_Idx > maxIdx_term ) { term_Idx = 0; }
-             live = (Math.abs(trueRange) + Math.abs(closeMinusTrueLow) <= 0.0) ? 0 : 1;
+             live = (trueRange + Math.abs(closeMinusTrueLow) <= 0.0) ? 0 : 1;
              nullRun = (nullRun + 1) & (live - 1);
              if( i >= startIdx - optInTimePeriod1 + 1 ) {
                 a1Total += closeMinusTrueLow;
@@ -215740,7 +215741,7 @@ class Core {
               * run long enough for a longer window is long enough for every shorter
               * one.
               */
-             live = (Math.abs(trueRange) + Math.abs(closeMinusTrueLow) <= 0.0) ? 0 : 1;
+             live = (trueRange + Math.abs(closeMinusTrueLow) <= 0.0) ? 0 : 1;
              nullRun = (nullRun + 1) & (live - 1);
              if( nullRun >= optInTimePeriod1 ) {
                 a1Total = 0.0;
@@ -215930,7 +215931,7 @@ class Core {
              term_trueRange[term_Idx] = trueRange;
              term_Idx++;
              if( term_Idx > maxIdx_term ) { term_Idx = 0; }
-             live = (Math.abs(trueRange) + Math.abs(closeMinusTrueLow) <= 0.0) ? 0 : 1;
+             live = (trueRange + Math.abs(closeMinusTrueLow) <= 0.0) ? 0 : 1;
              nullRun = (nullRun + 1) & (live - 1);
              if( i >= startIdx - optInTimePeriod1 + 1 ) {
                 a1Total += closeMinusTrueLow;
@@ -215976,7 +215977,7 @@ class Core {
              b1Total += trueRange;
              b2Total += trueRange;
              b3Total += trueRange;
-             live = (Math.abs(trueRange) + Math.abs(closeMinusTrueLow) <= 0.0) ? 0 : 1;
+             live = (trueRange + Math.abs(closeMinusTrueLow) <= 0.0) ? 0 : 1;
              nullRun = (nullRun + 1) & (live - 1);
              if( nullRun >= optInTimePeriod1 ) {
                 a1Total = 0.0;
@@ -216374,7 +216375,7 @@ class Core {
               * run long enough for a longer window is long enough for every shorter
               * one.
               */
-             live = (Math.abs(trueRange) + Math.abs(closeMinusTrueLow) <= 0.0) ? 0 : 1;
+             live = (trueRange + Math.abs(closeMinusTrueLow) <= 0.0) ? 0 : 1;
              nullRun = (nullRun + 1) & (live - 1);
              if( nullRun >= sp.optInTimePeriod1 ) {
                 a1Total = 0.0;
@@ -216500,7 +216501,7 @@ class Core {
            * run long enough for a longer window is long enough for every shorter
            * one.
            */
-          live = (Math.abs(trueRange) + Math.abs(closeMinusTrueLow) <= 0.0) ? 0 : 1;
+          live = (trueRange + Math.abs(closeMinusTrueLow) <= 0.0) ? 0 : 1;
           sp.nullRun = (sp.nullRun + 1) & (live - 1);
           if( sp.nullRun >= sp.optInTimePeriod1 ) {
              sp.a1Total = 0.0;
@@ -216720,7 +216721,7 @@ class Core {
              term_trueRange[term_Idx] = trueRange;
              term_Idx++;
              if( term_Idx > maxIdx_term ) { term_Idx = 0; }
-             live = (Math.abs(trueRange) + Math.abs(closeMinusTrueLow) <= 0.0) ? 0 : 1;
+             live = (trueRange + Math.abs(closeMinusTrueLow) <= 0.0) ? 0 : 1;
              nullRun = (nullRun + 1) & (live - 1);
              if( i >= startIdx - optInTimePeriod1 + 1 ) {
                 a1Total += closeMinusTrueLow;
@@ -216778,7 +216779,7 @@ class Core {
               * run long enough for a longer window is long enough for every shorter
               * one.
               */
-             live = (Math.abs(trueRange) + Math.abs(closeMinusTrueLow) <= 0.0) ? 0 : 1;
+             live = (trueRange + Math.abs(closeMinusTrueLow) <= 0.0) ? 0 : 1;
              nullRun = (nullRun + 1) & (live - 1);
              if( nullRun >= optInTimePeriod1 ) {
                 a1Total = 0.0;
@@ -220038,6 +220039,7 @@ class Core {
      *  -------------------------------------------------------------------
      *  090626 KL     First version (issue #349).
      *  102326 MF,CC  #554 branch-free zero run, rare reset.
+     *  102426 MF,CC  #554 zero-run test on the true range itself.
      */
 
        /**
@@ -220184,7 +220186,7 @@ class Core {
              sTR += trueRange;
              sVMP += Math.abs(inHigh[i] - inLow[i - 1]);
              sVMM += Math.abs(inLow[i] - inHigh[i - 1]);
-             live = (Math.abs(trueRange) <= 0.0) ? 0 : 1;
+             live = (trueRange <= 0.0) ? 0 : 1;
              nullRun = (nullRun + 1) & (live - 1);
           }
           outIdx = 0;
@@ -220207,7 +220209,7 @@ class Core {
              sTR += trueRange;
              sVMP += Math.abs(inHigh[today] - inLow[today - 1]);
              sVMM += Math.abs(inLow[today] - inHigh[today - 1]);
-             live = (Math.abs(trueRange) <= 0.0) ? 0 : 1;
+             live = (trueRange <= 0.0) ? 0 : 1;
              nullRun = (nullRun + 1) & (live - 1);
              /* Once the whole window is flat, every TRUE-RANGE term in it is
               * provably zero (nullRun counts exactly that), so sTR's only content
@@ -220353,7 +220355,7 @@ class Core {
              sTR += trueRange;
              sVMP += Math.abs((double)inHigh[i] - (double)inLow[i - 1]);
              sVMM += Math.abs((double)inLow[i] - (double)inHigh[i - 1]);
-             live = (Math.abs(trueRange) <= 0.0) ? 0 : 1;
+             live = (trueRange <= 0.0) ? 0 : 1;
              nullRun = (nullRun + 1) & (live - 1);
           }
           outIdx = 0;
@@ -220375,7 +220377,7 @@ class Core {
              sTR += trueRange;
              sVMP += Math.abs((double)inHigh[today] - (double)inLow[today - 1]);
              sVMM += Math.abs((double)inLow[today] - (double)inHigh[today - 1]);
-             live = (Math.abs(trueRange) <= 0.0) ? 0 : 1;
+             live = (trueRange <= 0.0) ? 0 : 1;
              nullRun = (nullRun + 1) & (live - 1);
              if( nullRun >= optInTimePeriod ) {
                 nullRun = optInTimePeriod;
@@ -220754,7 +220756,7 @@ class Core {
              sTR += trueRange;
              sVMP += Math.abs(inHigh - sp.lag1_inLow);
              sVMM += Math.abs(inLow - sp.lag1_inHigh);
-             live = (Math.abs(trueRange) <= 0.0) ? 0 : 1;
+             live = (trueRange <= 0.0) ? 0 : 1;
              nullRun = (nullRun + 1) & (live - 1);
              /* Once the whole window is flat, every TRUE-RANGE term in it is
               * provably zero (nullRun counts exactly that), so sTR's only content
@@ -220904,7 +220906,7 @@ class Core {
           sp.sTR += trueRange;
           sp.sVMP += Math.abs(inHigh - sp.lag1_inLow);
           sp.sVMM += Math.abs(inLow - sp.lag1_inHigh);
-          live = (Math.abs(trueRange) <= 0.0) ? 0 : 1;
+          live = (trueRange <= 0.0) ? 0 : 1;
           sp.nullRun = (sp.nullRun + 1) & (live - 1);
           /* Once the whole window is flat, every TRUE-RANGE term in it is
            * provably zero (nullRun counts exactly that), so sTR's only content
@@ -221072,7 +221074,7 @@ class Core {
              sTR += trueRange;
              sVMP += Math.abs(inHigh[i] - inLow[i - 1]);
              sVMM += Math.abs(inLow[i] - inHigh[i - 1]);
-             live = (Math.abs(trueRange) <= 0.0) ? 0 : 1;
+             live = (trueRange <= 0.0) ? 0 : 1;
              nullRun = (nullRun + 1) & (live - 1);
           }
           outIdx = 0;
@@ -221095,7 +221097,7 @@ class Core {
              sTR += trueRange;
              sVMP += Math.abs(inHigh[today] - inLow[today - 1]);
              sVMM += Math.abs(inLow[today] - inHigh[today - 1]);
-             live = (Math.abs(trueRange) <= 0.0) ? 0 : 1;
+             live = (trueRange <= 0.0) ? 0 : 1;
              nullRun = (nullRun + 1) & (live - 1);
              /* Once the whole window is flat, every TRUE-RANGE term in it is
               * provably zero (nullRun counts exactly that), so sTR's only content
@@ -230235,7 +230237,7 @@ class Core {
 
 public class TaCodegenServe {
     static Core core = new Core();
-    static final String SPLICED_GENCODE_DIGEST = "822c5386ecd8ff5a";
+    static final String SPLICED_GENCODE_DIGEST = "1b7ca50fd2b2939c";
     static final int MAX_ARRAY_SIZE = 200000;
     static double[] refOpen = new double[MAX_ARRAY_SIZE];
     static double[] refHigh = new double[MAX_ARRAY_SIZE];
