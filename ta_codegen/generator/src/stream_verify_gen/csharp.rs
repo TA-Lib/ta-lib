@@ -1217,7 +1217,7 @@ pub(crate) fn generate_csharp_stream_verify(
     // seed (gen_seed = 7, n = 240) while the vector loop uses others, and it
     // fails OPEN -- an absent `in_hash` just breaks the loop. Neither is fixable
     // from this side (both live in test_codegen.c), which is why rS2's gate is on
-    // the literal printed line "Fuzz-port self-check: 9/9 shapes bit-identical"
+    // the literal printed line "Fuzz-port self-check: N/N shapes bit-identical"
     // and not on the absence of a failure message.
     s.push_str("    static string HandleFuzzInHash(JsonElement req) {\n");
     s.push_str("        int shape = GetInt(req, \"gen_shape\", 0);\n");

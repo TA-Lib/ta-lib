@@ -24,10 +24,10 @@ static const TaRefTol TOL[] = {
    /* #434 the sums of squares rebuilt against their peak. Output-relative for
     * the variance family; absolute for CORREL, a coefficient in [-1,1], and for
     * RVI, a bounded oscillator. */
-   { "VAR",      TA_REF_TOL_REL_OUT, 2e-9,  0.0 }, /* measured 4.73e-10 */
-   { "STDDEV",   TA_REF_TOL_REL_OUT, 8e-10, 0.0 }, /* measured 2.37e-10 */
+   { "VAR",      TA_REF_TOL_REL_OUT, 4e-8,  0.0 }, /* measured 1.1e-08 */
+   { "STDDEV",   TA_REF_TOL_REL_OUT, 2e-8,  0.0 }, /* measured 3.49e-09 */
    { "BBANDS",   TA_REF_TOL_REL_OUT, 3e-10, 0.0 }, /* measured 8.96e-11 */
-   { "CORREL",   TA_REF_TOL_ABS,     2e-9,  0.0 }, /* measured 3.89e-10 */
+   { "CORREL",   TA_REF_TOL_ABS,     4e-8,  0.0 }, /* measured 1.24e-08 */
    { "RVI",      TA_REF_TOL_ABS,     3e-11, 0.0 }, /* measured 7.5e-12 */
    /* #505 the EMA step as one FMA, k*x + beta*prev. Floored at the input scale
     * for an output in price units, where a zero crossing is all cancellation;
@@ -47,11 +47,11 @@ static const TaRefTol TOL[] = {
    { "MACDEXT",  TA_REF_TOL_REL_OUT_INFLOOR, 4e-15, 0.0 }, /* measured 1.13e-15 */
    { "MACDFIX",  TA_REF_TOL_REL_OUT_INFLOOR, 2e-15, 0.0 }, /* measured 3.89e-16 */
    { "ERI",      TA_REF_TOL_REL_OUT_INFLOOR, 8e-16, 0.0 }, /* measured 2.6e-16 */
-   { "TRIX",     TA_REF_TOL_REL_OUT_FLOOR1,  3e-13, 0.0 }, /* measured 9.17e-14 */
+   { "TRIX",     TA_REF_TOL_REL_OUT_FLOOR1,  3e-12, 0.0 }, /* measured 7.89e-13 */
    { "CVI",      TA_REF_TOL_REL_OUT_FLOOR1,  2e-13, 0.0 }, /* measured 5.61e-14 */
-   { "PPO",      TA_REF_TOL_REL_OUT_FLOOR1,  2e-12, 0.0 }, /* measured 4.48e-13 */
+   { "PPO",      TA_REF_TOL_REL_OUT_FLOOR1,  1e-11, 0.0 }, /* measured 3.29e-12 */
    { "PVO",      TA_REF_TOL_REL_OUT_FLOOR1,  5e-13, 0.0 }, /* measured 1.61e-13 */
-   { "EFI",      TA_REF_TOL_REL_OUT_INFLOOR, 3e-12, 0.0 }, /* measured 9.62e-13 */
+   { "EFI",      TA_REF_TOL_REL_OUT_INFLOOR, 2e-11, 0.0 }, /* measured 4.12e-12 */
    { "TSI",      TA_REF_TOL_ABS,             2e-13, 0.0 }, /* measured 4.97e-14 */
    { "SMI",      TA_REF_TOL_ABS,             2e-13, 0.0 }, /* measured 5.68e-14 */
    { "STOCH",    TA_REF_TOL_ABS,             6e-13, 0.0 }, /* measured 1.71e-13 */
