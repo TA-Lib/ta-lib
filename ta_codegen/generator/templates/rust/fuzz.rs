@@ -580,14 +580,8 @@ fn fuzz_domain_max_gen(
         let span = hi - lo;
         t = fuzz_sm_unit(&mut s) * span;
         let mut close = lo + t;
-        if close > hi {
-            close = hi;
-        }
         t = fuzz_sm_unit(&mut s) * span;
         let mut open = lo + t;
-        if open > hi {
-            open = hi;
-        }
         if r >= 0.45 && r < 0.90 {
             // the mirror image near -3e37
             t = hi;

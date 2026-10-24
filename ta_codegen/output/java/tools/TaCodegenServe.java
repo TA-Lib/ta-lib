@@ -334569,10 +334569,8 @@ class FuzzData {
          span = hi - lo;
          t = fuzzSmUnit(s) * span;
          close = lo + t;
-         if (close > hi) close = hi;
          t = fuzzSmUnit(s) * span;
          open = lo + t;
-         if (open > hi) open = hi;
          if (r >= 0.45 && r < 0.90) {
             // the mirror image near -3e37
             t = hi; hi = -lo; lo = -t;

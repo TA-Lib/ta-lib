@@ -9694,7 +9694,7 @@ ErrorNumber xlang_hash(const char *functionFilter, const char *languageFilter)
 /* Shapes the candlestick stream/fuzz sweeps actually run for a pattern. */
 static const int CDL_STREAM_SHAPES[] =
     { FUZZ_RANDWALK, FUZZ_CONSTANT, FUZZ_TIE_HEAVY, FUZZ_EXTREME,
-      FUZZ_WITH_ZEROS, FUZZ_CANDLE, FUZZ_ZEROSUM };
+      FUZZ_WITH_ZEROS, FUZZ_CANDLE, FUZZ_ZEROSUM, FUZZ_DOMAIN_MAX };
 #define CDL_NSTREAM_SHAPES ((int)(sizeof(CDL_STREAM_SHAPES)/sizeof(int)))
 
 /* Patterns not yet covered by a deterministic FUZZ_CANDLE window (issue #109).
@@ -9948,14 +9948,9 @@ static ErrorNumber verify_fuzz_zerosum_nonvacuous(void)
     return TA_TEST_PASS;
 }
 
-/* Non-vacuity guard for FUZZ_DOMAIN_MAX, the shape that carries the gates to
- * the edges of the input domain. fuzz_data.h spells the bound as a literal (the
- * frozen-release serves include it ahead of any TA-Lib header), so it is held
- * to TA_REAL_MAX here. Then every generated value must be finite and inside
- * TA_REAL_MIN..TA_REAL_MAX with high/low bracketing open/close, and the series
- * must actually reach both edges, hold ordinary bars, and flip sign between
- * adjacent bars: a generator that drifted to an all-positive or all-ordinary
- * series would leave every gate green while testing nothing at the bound. */
+/* Non-vacuity guard for FUZZ_DOMAIN_MAX: a generator that drifted to an
+ * all-positive or all-ordinary series would leave every gate green while
+ * testing nothing at the bound. */
 static ErrorNumber verify_fuzz_domain_max_nonvacuous(void)
 {
     enum { DN = 512 };

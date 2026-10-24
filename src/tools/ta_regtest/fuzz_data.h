@@ -568,12 +568,10 @@ static void fuzz_zerosum_gen(int seed, int n,
  *
  * The bound is spelled here rather than taken from ta_defs.h because the
  * frozen-release serves include this file ahead of any TA-Lib header.
- * test_codegen.c checks it against TA_REAL_MAX.
  *
  * Each bar is built from its high down, so no value leaves the domain: high is
  * at most the bound, low is at most 2% below high, and open and close are
- * drawn between them (rounding can carry a drawn value one ulp past high, so
- * it is clamped). A negative bar is the mirror image of a positive one. Every
+ * drawn between them. A negative bar is the mirror image of a positive one. Every
  * bar takes the same seven draws whichever branch it lands in. */
 #define FUZZ_DOMAIN_BOUND 3e37
 static void fuzz_domain_max_gen(int seed, int n,
@@ -599,10 +597,8 @@ static void fuzz_domain_max_gen(int seed, int n,
         span = hi - lo;
         t = fuzz_sm_unit(&s) * span;
         close = lo + t;
-        if( close > hi ) close = hi;
         t = fuzz_sm_unit(&s) * span;
         open = lo + t;
-        if( open > hi ) open = hi;
         if( r >= 0.45 && r < 0.90 )
         {
             /* the mirror image near -3e37 */

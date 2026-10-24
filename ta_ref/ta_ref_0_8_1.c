@@ -2,9 +2,10 @@
  *
  * Compared from period 1 and over every MAType. The rows cover the value
  * changes made since, each sized at 3x its measured maximum; the waivers cover
- * the flat-start 0/0 (#480), TRIX at a period of 1 (#505) and the index named
- * on a tie (#503). */
+ * the flat-start 0/0 (#480), TRIX at a period of 1 (#505), the index named
+ * on a tie (#503) and inputs near the domain bound for six of the rows. */
 
+#include <math.h>
 #include <stddef.h>
 #include <string.h>
 
@@ -24,10 +25,10 @@ static const TaRefTol TOL[] = {
    /* #434 the sums of squares rebuilt against their peak. Output-relative for
     * the variance family; absolute for CORREL, a coefficient in [-1,1], and for
     * RVI, a bounded oscillator. */
-   { "VAR",      TA_REF_TOL_REL_OUT, 4e-8,  0.0 }, /* measured 1.1e-08 */
-   { "STDDEV",   TA_REF_TOL_REL_OUT, 2e-8,  0.0 }, /* measured 3.49e-09 */
+   { "VAR",      TA_REF_TOL_REL_OUT, 2e-9,  0.0 }, /* measured 4.73e-10 */
+   { "STDDEV",   TA_REF_TOL_REL_OUT, 8e-10, 0.0 }, /* measured 2.37e-10 */
    { "BBANDS",   TA_REF_TOL_REL_OUT, 3e-10, 0.0 }, /* measured 8.96e-11 */
-   { "CORREL",   TA_REF_TOL_ABS,     4e-8,  0.0 }, /* measured 1.24e-08 */
+   { "CORREL",   TA_REF_TOL_ABS,     2e-9,  0.0 }, /* measured 3.89e-10 */
    { "RVI",      TA_REF_TOL_ABS,     3e-11, 0.0 }, /* measured 7.5e-12 */
    /* #505 the EMA step as one FMA, k*x + beta*prev. Floored at the input scale
     * for an output in price units, where a zero crossing is all cancellation;
@@ -47,11 +48,11 @@ static const TaRefTol TOL[] = {
    { "MACDEXT",  TA_REF_TOL_REL_OUT_INFLOOR, 4e-15, 0.0 }, /* measured 1.13e-15 */
    { "MACDFIX",  TA_REF_TOL_REL_OUT_INFLOOR, 2e-15, 0.0 }, /* measured 3.89e-16 */
    { "ERI",      TA_REF_TOL_REL_OUT_INFLOOR, 8e-16, 0.0 }, /* measured 2.6e-16 */
-   { "TRIX",     TA_REF_TOL_REL_OUT_FLOOR1,  3e-12, 0.0 }, /* measured 7.89e-13 */
+   { "TRIX",     TA_REF_TOL_REL_OUT_FLOOR1,  3e-13, 0.0 }, /* measured 9.17e-14 */
    { "CVI",      TA_REF_TOL_REL_OUT_FLOOR1,  2e-13, 0.0 }, /* measured 5.61e-14 */
-   { "PPO",      TA_REF_TOL_REL_OUT_FLOOR1,  1e-11, 0.0 }, /* measured 3.29e-12 */
+   { "PPO",      TA_REF_TOL_REL_OUT_FLOOR1,  2e-12, 0.0 }, /* measured 4.48e-13 */
    { "PVO",      TA_REF_TOL_REL_OUT_FLOOR1,  5e-13, 0.0 }, /* measured 1.61e-13 */
-   { "EFI",      TA_REF_TOL_REL_OUT_INFLOOR, 2e-11, 0.0 }, /* measured 4.12e-12 */
+   { "EFI",      TA_REF_TOL_REL_OUT_INFLOOR, 3e-12, 0.0 }, /* measured 9.62e-13 */
    { "TSI",      TA_REF_TOL_ABS,             2e-13, 0.0 }, /* measured 4.97e-14 */
    { "SMI",      TA_REF_TOL_ABS,             2e-13, 0.0 }, /* measured 5.68e-14 */
    { "STOCH",    TA_REF_TOL_ABS,             6e-13, 0.0 }, /* measured 1.71e-13 */
@@ -67,7 +68,7 @@ static const TaRefTol TOL[] = {
 
 /* Each ceiling sits halfway between the largest share measured on one function
  * and 1. */
-enum { W_RSI, W_TRIX1, W_INDEX_TIE };
+enum { W_RSI, W_TRIX1, W_INDEX_TIE, W_DOMAIN_EDGE };
 static const TaRefWaiver WAIVERS[] = {
    [W_RSI] = { "rsi_flat_480",
                "RSI with no change from the first bar read to the first output, where 0.8.1 answers 0 for 0/0, and STOCHRSI once a move follows (#480)", 0.56 },
@@ -75,7 +76,28 @@ static const TaRefWaiver WAIVERS[] = {
                  "TRIX at a period of 1 over a bar where (x-prev)+prev is not x: 0.8.1 takes three such steps and loses the input, the one-FMA step copies it (#505)", 0.51 },
    [W_INDEX_TIE] = { "index_tie_503",
                "MAXINDEX/MININDEX/MINMAXINDEX over a window that holds its extreme on several bars, where 0.8.1 names the oldest or the newest of them by where the call started (#503)", 0.71 },
+   [W_DOMAIN_EDGE] = { "domain_edge",
+               "VAR/STDDEV/CORREL/TRIX/PPO/EFI reading an input near the domain bound, where 0.8.1's rounding sits further from the current values than the rows sized on ordinary data", 0.55 },
 };
+
+/* Keeps those rows at their ordinary-data size: a case whose inputs pass
+ * DOMAIN_EDGE in the span it reads is not compared at all. */
+#define DOMAIN_EDGE 1e30
+static int domain_edge( const TaRefCase *c )
+{
+   static const char *const FUNCS[] = { "VAR", "STDDEV", "CORREL", "TRIX", "PPO", "EFI", NULL };
+   int i, first, j, readsVolume;
+
+   for( i = 0; FUNCS[i] && strcmp( c->func, FUNCS[i] ) != 0; i++ ) ;
+   if( !FUNCS[i] || c->lookback < 0 ) return 0;
+   first = (c->startIdx > c->lookback) ? c->startIdx : c->lookback;
+   if( first > c->endIdx || c->endIdx >= c->n ) return 0;
+   readsVolume = strcmp( c->func, "CORREL" ) == 0 || strcmp( c->func, "EFI" ) == 0;
+   for( j = first - c->lookback; j <= c->endIdx; j++ )
+      if( fabs( c->close[j] ) > DOMAIN_EDGE || (readsVolume && fabs( c->volume[j] ) > DOMAIN_EDGE) )
+         return 1;
+   return 0;
+}
 
 /* RSI's gain and loss sums are both zero while nothing has moved since the
  * first bar read, so the bars from that one to the first output tell whether
@@ -100,6 +122,7 @@ static int waive( const TaRefCase *c )
    int isRsi = strcmp( c->func, "RSI" ) == 0;
    int first, from, seed;
 
+   if( domain_edge( c ) ) return W_DOMAIN_EDGE;
    if( strcmp( c->func, "TRIX" ) == 0 )
    {
       if( (int)ta_ref_opt( c, "optInTimePeriod", 0 ) != 1 || c->lookback < 0 ) return -1;

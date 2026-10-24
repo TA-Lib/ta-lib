@@ -824,12 +824,14 @@ domain. Sizing a change against a value outside the domain is
 over-engineering, and this is the citation for saying so.
 
 The bound is not enforced: checking it would cost a pass over every input array
-on every call, to reject values no caller sends. It is the range the gates
-exercise: `FUZZ_DOMAIN_MAX` carries every input, volume and open interest
-included, to within 9% of ±3e37, with adjacent bars of opposite sign and
+on every call, to reject values no caller sends. The gates exercise its edges:
+`FUZZ_DOMAIN_MAX` puts most bars within 9% of +3e37 or -3e37 (volume and open
+interest within reach of +3e37), with adjacent bars of opposite sign and
 ordinary bars near 100 in the same windows. Every gate that walks the fuzz
-shapes runs it: the metadata ride's finite check on every `TA_` and `TA_S_`
-call, the cross-language and stream comparisons, and the frozen-release fuzz.
+shapes runs it, among them the VARIANT gate, whose calls the metadata ride
+holds to finite outputs, the cross-language and stream comparisons, and the
+frozen-release fuzz. Between 1e9 and the edges the domain rests on the
+arithmetic rather than on measurement.
 The constant is reused rather than invented: it already bounds a real optional
 parameter, and it sits inside `FLT_MAX`, so a value in the domain is
 representable in the `TA_S_*` variants. `DBL_MIN` would mislead, being the
