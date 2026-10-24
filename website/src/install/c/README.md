@@ -1,6 +1,6 @@
 ---
 title: Install C/C++
-description: "Install the TA-Lib C/C++ libraries and headers: Linux packages, macOS Homebrew, Windows installer, or build from source with CMake or autotools."
+description: "Install the TA-Lib C/C++ libraries and headers: Linux packages, macOS Homebrew, Windows installer, vcpkg, a GitHub Actions step, or a build from source with CMake or autotools; then link it through CMake's find_package or pkg-config."
 toc: false
 ---
 

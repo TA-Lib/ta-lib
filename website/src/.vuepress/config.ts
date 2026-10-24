@@ -29,7 +29,7 @@ export default defineUserConfig({
       lang: "en-US",
       title: "TA-Lib.org",
       description:
-        "Open-Source library for technical analysis of time series and trading data",
+        "Open-source technical analysis library: indicators and candlestick patterns, batch and streaming, native in C/C++, Rust, Java and C#, with Python and other wrappers",
     },
   },
 

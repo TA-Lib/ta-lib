@@ -1,6 +1,6 @@
 ---
 title: Rust Streaming API
-description: "Rust streaming API for live feeds: a stream carries indicator state from bar to bar, so an update never recomputes the history; its values are bit-identical to the batch calls."
+description: "Rust streaming API for live feeds: a stream carries indicator state from bar to bar, so an update never recomputes the history; its values are bit-identical to the batch calls outside a few stated exceptions."
 toc: false
 ---
 

@@ -1,6 +1,6 @@
 ---
 title: Rust Core API
-description: "The ta-lib Rust crate: a native port with no C bindings, indicators as methods on Core over f64 slices, bit-identical to the reference C library."
+description: "The ta-lib Rust crate: a native port with no C bindings, indicators as methods on Core over f64 slices, bit-identical to the reference C library apart from last-bit rounding in the math library."
 toc: false
 ---
 

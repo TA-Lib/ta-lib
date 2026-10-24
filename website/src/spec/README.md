@@ -1,21 +1,21 @@
 ---
 title: Specification
-description: "The calling contract of TA-Lib's C, Rust, Java and C# APIs, stated rule by rule as a reference for AI-agent-driven integration: how a failure reaches the caller, how names fold, and one page per topic."
+description: "TA-Lib's calling contract in C, Rust, Java and C#, for AI-agent-driven integration: what your code can rely on, in rules the test suite checks; what it must ensure; and how names and failures map across the four languages."
 ---
 
 **TA-Lib's calling contract, stated rule by rule for a robust integration. The test suite checks every rule, so your code can rely on them.**
 
 Written as a reference for AI agents integrating TA-Lib. For a lighter introduction written for people, start with the API pages for [C/C++](/api/), [Rust](/api/rust/), [Java](/api/java/) or [C#](/api/csharp/).
 
-The rules use C's spelling. This page maps that shared vocabulary onto the other languages.
+An AI agent is expected to read the code for exact signatures and names. The specification states the invariants: behaviour an integrator can rely on across languages and, as the [release rules](/spec/versions/#releases) define, across releases.
 
-An AI agent is expected to read the code for exact signatures and names. The specification states the invariants: behaviour an integrator can rely on across languages and releases.
+The rules use C's spelling, and this page maps it onto the other languages. Every function's C, Rust, Java and C# code is generated from one definition, so its name converts by a fixed rule ([names](/spec/#names)) and its batch call takes its arguments in the same order in each language ([rP5](/spec/inputs-outputs/#rp5)).
 
 ## Scope {#scope}
 
-- The native APIs (C, Rust, Java, C#): batch, lookback, display shift, streams, settings, and the [Abstract API](/spec/abstract/).
+- The native APIs (C, Rust, Java, C#).
 - A wrapper keeps its own conventions. ta-lib-python aligns outputs to the input and fills the warm-up with NaN; the native APIs do not ([rW3](/spec/inputs-outputs/#rw3)).
-- Owned by other pages: [Install](/install/) (packages and versions), [Unstable Period](/api/unstable-period/), [Candlestick Settings](/api/candle-settings/) (model and defaults), streaming in [C](/api/stream/), [Rust](/api/rust/stream/), [Java](/api/java/stream/) and [C#](/api/csharp/stream/), [Numerical Stability](/functions/stability), and the [function pages](/functions/): inputs, outputs in order, parameters (type, default, accepted values), stability category, flags.
+- Owned by other pages: [Install](/install/) (packages and versions), [Unstable Period](/api/unstable-period/), [Candlestick Settings](/api/candle-settings/) (model and defaults), streaming in [C](/api/stream/), [Rust](/api/rust/stream/), [Java](/api/java/stream/) and [C#](/api/csharp/stream/), [Numerical Stability](/functions/stability), and the [function pages](/functions/): inputs, outputs, parameters, stability category, flags.
 - The pages other than the per-function pages are in [/llms-full.txt](/llms-full.txt); its [function index](/functions/) links each function page. [/llms.txt](/llms.txt) indexes every page. Each page has a Markdown twin; this page's is `/spec/index.md`.
 
 ## Rule pages {#reading}
@@ -35,42 +35,25 @@ In the order a caller meets them:
 
 Each page has two kinds of statement:
 
-- **The caller must**: what the calling code has to ensure. Most of it is not checked by the library, so it comes first on every page, and the next section lists what the library never reports.
+- **The caller must**: what the calling code has to ensure. Most of it is not checked; nothing is promised after a violation that goes unreported.
 - **A rule**: what TA-Lib does. Its id is `r`, the letter of its family and a number, such as `rB5`, and its anchor is the id in lower case: [/spec/errors/#rb5](/spec/errors/#rb5). An id's meaning can change from one release to the next.
 
-`<N>` stands for a function's canonical name: `TA_<N>_Open` is `TA_SMA_Open`.
-
-## What is not detected {#not-detected}
-
-None of these is reported. The caller avoids them, or treats what follows as undefined.
-
-- [A buffer too short, in C](/spec/inputs-outputs/#input-length): read or written past its end. Rust, Java and C# reject it.
-- [A buffer bound to a C parameter holder](/spec/abstract/#c-buffers) that is no longer valid when the holder is called.
-- [A C parameter holder or table](/spec/abstract/#c-release) never released, or released twice.
-- [NaN or infinity inside an input series](/spec/inputs-outputs/#finite-inputs), or inside the history a stream opens on.
-- [A real input outside ±3e37](/spec/inputs-outputs/#input-domain).
-- [Intermediate overflow](/spec/inputs-outputs/#overflow) on finite input.
-- [Buffers that partially overlap](/spec/inputs-outputs/#no-overlap), in C.
-- [C used before `TA_Initialize`](/spec/settings-threads/#initialize) or after `TA_Shutdown`, or `TA_Initialize` called twice.
-- [A C setting changed](/spec/settings-threads/#idle-settings) while a TA function is running or a stream is open.
-- [A writer and any other call at once on one stream handle](/spec/settings-threads/#one-writer), or two threads on one parameter holder or builder (in Rust, the compiler rejects it).
-- [C's unstable-period getter](/spec/settings-threads/#rt4) given the set-all wildcard or an out-of-range id: it returns 0.
-- [The state after an allocation failure](/spec/errors/#stop-on-alloc).
+`<N>` stands for a function's [canonical name](/spec/#names): `TA_<N>_Open` is `TA_SMA_Open`.
 
 ## Names in each language {#names}
 
-A function's canonical name is its name on [/functions/](/functions/). A fold changes only case and `_`; it adds no word boundary inside a segment:
+A function's canonical name is its name on [/functions/](/functions/). Every spelling derives from it:
 
-| Fold | Rule | SMA | HT_TRENDLINE | CDL3BLACKCROWS |
+| Style | Rule | SMA | HT_TRENDLINE | CDL3BLACKCROWS |
 |---|---|---|---|---|
 | C | `TA_` + canonical | `TA_SMA` | `TA_HT_TRENDLINE` | `TA_CDL3BLACKCROWS` |
 | snake | lower case | `sma` | `ht_trendline` | `cdl3blackcrows` |
-| UpperCamel | lower case, upper-case each `_` segment's first letter, drop `_` | `Sma` | `HtTrendline` | `Cdl3blackcrows` |
+| UpperCamel | lower case, upper-case the first letter of each `_`-separated part, drop `_` | `Sma` | `HtTrendline` | `Cdl3blackcrows` |
 | lowerCamel | UpperCamel, first letter lower case | `sma` | `htTrendline` | `cdl3blackcrows` |
 
-Rust uses snake for functions, UpperCamel for types; Java lowerCamel for methods, UpperCamel for types; C# UpperCamel. Messages and the Abstract API use the canonical name. Indicator parameters keep C's names everywhere (`startIdx`, `inReal`, `optInTimePeriod`, `outReal`).
+Rust uses snake for functions, UpperCamel for types; Java lowerCamel for methods, UpperCamel for types; C# UpperCamel. The Abstract API uses the canonical name. Indicator parameters keep C's names everywhere (`startIdx`, `inReal`, `optInTimePeriod`, `outReal`).
 
-Every function has this surface; in Rust, Java and C# the calls are methods of a `Core`:
+In Rust, Java and C#, a function's calls are methods of a `Core`:
 
 | Surface | C | Rust | Java | C# |
 |---|---|---|---|---|
@@ -105,15 +88,13 @@ Constants: C prefixes `TA_` (`TA_INDEX_MAX`); Rust, Java and C# hold them on `Co
 | Constant | Value |
 |---|---|
 | `INDEX_MAX` | 100000000, the largest index |
-| `UNSTABLE_AUTO_PREC_4` | `INDEX_MAX + 4`, an Auto level of the unstable period ([rT3](/spec/settings-threads/#rt3), [rZ1](/spec/auto-stabilization/#rz1)) |
-| `UNSTABLE_AUTO_PREC_8` | `INDEX_MAX + 8`, an Auto level of the unstable period |
-| `REAL_DEFAULT` | -4e37, selects a real parameter's default ([rP3](/spec/inputs-outputs/#rp3)) |
-| `INTEGER_DEFAULT` | `INT_MIN`, selects an integer parameter's default |
+| `UNSTABLE_AUTO_PREC_4`, `UNSTABLE_AUTO_PREC_8` | `INDEX_MAX + 4`, `INDEX_MAX + 8`: the Auto levels ([rT3](/spec/settings-threads/#rt3), [rZ1](/spec/auto-stabilization/#rz1)) |
+| `REAL_DEFAULT`, `INTEGER_DEFAULT` | -4e37, `INT_MIN`: the default sentinels ([rP3](/spec/inputs-outputs/#rp3)) |
 | `REAL_MIN`, `REAL_MAX` | -3e37, 3e37 ([input domain](/spec/inputs-outputs/#input-domain)) |
 
 ### Metadata flags {#flag-names}
 
-One type holds the flags of each word. What each flag means: [flags](/spec/abstract/#flags).
+What each flag means: [flags](/spec/abstract/#flags).
 
 | Flags of | C prefix | Rust, Java | C# |
 |---|---|---|---|
@@ -122,34 +103,34 @@ One type holds the flags of each word. What each flag means: [flags](/spec/abstr
 | an optional parameter | `TA_OPTIN_` | `OptInputFlags` | `OptInputFlags` |
 | an output | `TA_OUT_` | `OutputFlags` | `OutputFlags` |
 
-Members are upper case in Rust and Java and UpperCamel in C#, and can use other words than C's (Java `FuncFlags.STREAMING` is `TA_FUNC_FLG_STREAM`): match a member to its C name by its bit value, which is the same in every language ([rA7](/spec/abstract/#ra7)). Each C# flag enum also has `None`, the empty word.
+Members are upper case in Rust and Java and UpperCamel in C#, and can use other words than C's (Java `FuncFlags.STREAMING` is `TA_FUNC_FLG_STREAM`): match a member to its C name by its bit value ([rA7](/spec/abstract/#ra7)). Each C# flag enum also has `None`: no flag set.
 
 ## How a failure reaches the caller {#failures}
 
 | Success | C, returning `TA_SUCCESS` | Rust | Java | C# |
 |---|---|---|---|---|
-| batch | range in `*outBegIdx`, `*outNBElement` | `Ok(OutRange)` | `OutRange` | `OutRange` |
+| batch | range in the out-pointers | `Ok(OutRange)` | `OutRange` | `OutRange` |
 | open | handle in `*stream`, last value in the out-pointers | `Ok((handle, value))` | handle | handle |
 | open and fill | handle and range in out-pointers | `Ok((handle, OutRange))` | handle; range from `outRange()` | handle; range from `OutRange` |
 | update, peek | value in the out-pointers | `Ok(value)` | value, or written into the sink | value |
 
 | Failure | C | Rust | Java | C# |
 |---|---|---|---|---|
-| carrier, code | returned `TA_RetCode` | `Err(RetCode)` | an exception implementing `TALibFailure`; `retCode()` | an exception implementing `ITALibFailure`; `RetCode` |
-| C's number | the value | `as_c_int()` | `asCInt()` | `(int)` cast |
+| reported as; its code | returned `TA_RetCode` | `Err(RetCode)` | an exception implementing `TALibFailure`; `retCode()` | an exception implementing `ITALibFailure`; `RetCode` |
+| C's number ([rV2](/spec/versions/#rv2)) | the value | `as_c_int()` | `asCInt()` | `(int)` cast |
 | lookback ([rL2](/spec/lookback/#rl2)) | `-1` | `Err(RetCode::BadParam)` | `-1` | `-1` |
 | display shift ([rL11](/spec/lookback/#rl11)) | `INT_MIN` | `Err(RetCode::BadParam)` | `Integer.MIN_VALUE` | `int.MinValue` |
 
-One row per code a function call can report; the number in parentheses is C's, and it never changes ([rV2](/spec/versions/#rv2)). `A : B` means `A` extends the platform type `B`, so a `catch` of `B` works.
+One row per [code a function call can report](/spec/errors/#return-codes). `A : B` means `A` extends the platform type `B`, so a `catch` of `B` works.
 
 | Code | Rust | Java | C# |
 |---|---|---|---|
-| `TA_BAD_PARAM` (2) | `BadParam` | `TALibArgumentException : IllegalArgumentException` | `TALibArgumentException : ArgumentException` |
-| `TA_OUT_OF_RANGE_START_INDEX` (12) | `OutOfRangeStartIndex` | `TALibIndexException : IndexOutOfBoundsException` | `TALibArgumentOutOfRangeException : ArgumentOutOfRangeException` |
-| `TA_OUT_OF_RANGE_END_INDEX` (13) | `OutOfRangeEndIndex` | `TALibIndexException` | `TALibArgumentOutOfRangeException`; `TALibArgumentException` from `Update`, `Advance` ([rU4](/spec/streaming/#ru4)) |
-| `TA_INSUFFICIENT_HISTORY` (17) | `InsufficientHistory` | `InsufficientHistoryException : TALibArgumentException` | `InsufficientHistoryException : TALibArgumentException` |
-| `TA_INTERNAL_ERROR` (5000, [rB8](/spec/errors/#rb8)) | `InternalError` | `TALibStateException : IllegalStateException` | `TALibInvalidOperationException : InvalidOperationException` |
-| `TA_ALLOC_ERR` (3) | `AllocErr`, never returned ([rB7](/spec/errors/#rb7)) | never thrown | never thrown |
+| `TA_BAD_PARAM` | `BadParam` | `TALibArgumentException : IllegalArgumentException` | `TALibArgumentException : ArgumentException` |
+| `TA_OUT_OF_RANGE_START_INDEX` | `OutOfRangeStartIndex` | `TALibIndexException : IndexOutOfBoundsException` | `TALibArgumentOutOfRangeException : ArgumentOutOfRangeException` |
+| `TA_OUT_OF_RANGE_END_INDEX` | `OutOfRangeEndIndex` | `TALibIndexException` | `TALibArgumentOutOfRangeException`; `TALibArgumentException` from `Update`, `Advance` ([rU4](/spec/streaming/#ru4)) |
+| `TA_INSUFFICIENT_HISTORY` | `InsufficientHistory` | `InsufficientHistoryException : TALibArgumentException` | `InsufficientHistoryException : TALibArgumentException` |
+| `TA_INTERNAL_ERROR` ([rB8](/spec/errors/#rb8)) | `InternalError` | `TALibStateException : IllegalStateException` | `TALibInvalidOperationException : InvalidOperationException` |
+| `TA_ALLOC_ERR` | `AllocErr`, never returned ([rB7](/spec/errors/#rb7)) | never thrown | never thrown |
 
 Failed settings:
 

@@ -1,6 +1,6 @@
 ---
 title: C# Streaming API
-description: "C# streaming API for live feeds: a stream carries indicator state from bar to bar, so an update never recomputes the history; its values are bit-identical to the batch calls."
+description: "C# streaming API for live feeds: a stream carries indicator state from bar to bar, so an update never recomputes the history; its values are bit-identical to the batch calls outside a few stated exceptions."
 toc: false
 ---
 

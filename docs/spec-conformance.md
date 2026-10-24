@@ -202,7 +202,7 @@ What enters a lookback, in C, in a bare run:
 - rZ2: the same file's offset check asks CKSP, ADOSC and KVO for their lookback
   with the id they inherit on a count of 30 and on each level: a count adds
   exactly 30 bars, a level the owner's count plus the function's own.
-- rL5, rL7 and rL9: `abstract_lookback_under_settings` (`test_abstract.c`), for
+- rL5, rL7 and rL12: `abstract_lookback_under_settings` and, for rL12, `ds_under_settings` (`test_abstract.c`), for
   every function at its default parameters: another range type and factor on
   every candle setting moves no lookback; seven more bars on every averaging
   period move a candlestick lookback by seven or not at all, and no other;
@@ -558,6 +558,12 @@ The [known exceptions](https://ta-lib.org/spec/auto-stabilization/#exceptions)
 are rows like any other: their ceiling is the share measured, not zero.
 
 ### Versions and determinism
+
+rV1: `scripts/abi.py check`, the PR gate's "Public C ABI matches ABI.manifest"
+step (`pr-codegen-gate.yml`), measures the installed headers' declarations
+against `ABI.released` and refuses a removed or changed one without a new N;
+`nightly-jobs.yml` checks the soname and the macOS install name against the N
+in `ABI.manifest`.
 
 rV2: `testEnumValueContract` pins C's numbers. `MAType` reaches every language
 from `enums.yaml`, and `FuncUnstId` reaches C, Java and C# from it; Rust's
