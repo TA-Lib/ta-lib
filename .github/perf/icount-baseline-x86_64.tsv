@@ -6,8 +6,8 @@
 #policy	accepted
 #toolchain	x86_64/x86_64-linux-gnu/13.3.0
 #corpus	points=20000 regime_period=14 seed=42 shape=randwalk stream_iters=1024 trend_strength=0.500000
-#commit	7460d970e7719e52de6f95f5f227123658ad327b
-#generated	2026-10-24T18:28:31Z
+#commit	280decf8a6ca40fec1707cfa0afb0be992b833b9
+#generated	2026-10-24T18:53:39Z
 AC	batch	0	703438
 AC	open	0	704171
 AC	openfill	0	692624
@@ -43,15 +43,15 @@ ADR	open	0	200454
 ADR	openfill	0	240407
 ADR	peek	0	40973
 ADR	update	0	70669
-ADX	batch	0	1519577
-ADX	open	0	1519701
+ADX	batch	0	1499666
+ADX	open	0	1499779
 ADX	openfill	0	1519700
-ADX	peek	0	118797
+ADX	peek	0	115726
 ADX	update	0	133133
-ADXR	batch	0	1609902
+ADXR	batch	0	1589994
 ADXR	open	0	1600841
 ADXR	openfill	0	1600336
-ADXR	peek	0	165901
+ADXR	peek	0	162830
 ADXR	update	0	198669
 ALMA	batch	0	595663
 ALMA	open	0	1340832
@@ -544,10 +544,10 @@ DPO	openfill	0	220378
 DPO	peek	0	37904
 DPO	update	0	74766
 DX	batch	0	1399706
-DX	open	0	1439780
-DX	openfill	0	1439776
-DX	peek	0	112653
-DX	update	0	130061
+DX	open	0	1419827
+DX	openfill	0	1419823
+DX	peek	0	109582
+DX	update	0	129039
 EFI	batch	0	200092
 EFI	open	0	180210
 EFI	openfill	0	220218
@@ -788,11 +788,11 @@ MEDPRICE	open	0	113
 MEDPRICE	openfill	0	80142
 MEDPRICE	peek	0	37900
 MEDPRICE	update	0	47117
-MFI	batch	0	1279928
-MFI	open	0	1260392
-MFI	openfill	0	1280375
+MFI	batch	0	1159921
+MFI	open	0	1160370
+MFI	openfill	0	1180353
 MFI	peek	0	103429
-MFI	update	0	131158
+MFI	update	0	130136
 MIDPOINT	batch	0	542733
 MIDPOINT	open	0	953041
 MIDPOINT	openfill	0	1033010
@@ -831,7 +831,7 @@ MINUS_DI	update	0	99341
 MINUS_DM	batch	0	480006
 MINUS_DM	open	0	460070
 MINUS_DM	openfill	0	480079
-MINUS_DM	peek	0	53261
+MINUS_DM	peek	0	52239
 MINUS_DM	update	0	68621
 MOM	batch	0	70077
 MOM	open	0	348
@@ -876,8 +876,8 @@ PERCENTRANK	update	0	1264424
 PLUS_DI	batch	0	879908
 PLUS_DI	open	0	880022
 PLUS_DI	openfill	0	880022
-PLUS_DI	peek	0	83981
-PLUS_DI	update	0	101389
+PLUS_DI	peek	0	82958
+PLUS_DI	update	0	99343
 PLUS_DM	batch	0	480007
 PLUS_DM	open	0	460070
 PLUS_DM	openfill	0	480079
