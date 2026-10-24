@@ -58,6 +58,7 @@
  *                0/0 is guarded exactly instead of against the fixed
  *                TA_IS_ZERO band -- which zeroed the oscillator for any
  *                instrument quoted small enough to fall under it.
+ *  102326 MF,CC  #554 branch-free up/down split and zero run, rare reset.
  */
 
 TA_LIB_API int TA_CMOU_Lookback( int optInTimePeriod )
@@ -98,10 +99,12 @@ TA_LIB_API TA_RetCode TA_CMOU( int    startIdx,
    int lookbackTotal;
    int i;
    int nullRun;
+   int live;
    double upSum;
    double downSum;
    double sum;
    double diff;
+   double up;
    double tempReal;
    double prevValue;
    double trailingValue;
@@ -130,7 +133,7 @@ TA_LIB_API TA_RetCode TA_CMOU( int    startIdx,
     * smoothing -- hence no unstable period.
     *
     * In-place safe (outReal == inReal): the trailing read inReal[trailingIdx]
-    * precedes this iteration's write (trailingIdx >= outIdx), and the oldest
+    * is of a slot not yet written (trailingIdx >= outIdx), and the oldest
     * change's older endpoint comes from the `trailingValue` cache, not a re-read.
     */
    *outBegIdx= 0;
@@ -162,6 +165,11 @@ TA_LIB_API TA_RetCode TA_CMOU( int    startIdx,
     * answer that question themselves once the window starts sliding: they are
     * maintained by add-then-subtract, so an emptied window leaves them holding
     * rounding residue of arbitrary sign rather than zero.
+    *
+    * Both the split and the run are branch-free, as an if/else on the sign or
+    * on a zero mispredicts on random or flat-heavy prices. `up` is max(diff, 0)
+    * spelled with fabs, which no backend turns back into a branch; adding its
+    * +0.0 is exact because neither sum is ever -0.0.
     */
    nullRun = 0;
    for( i = 0; i < optInTimePeriod; i += 1 )
@@ -170,20 +178,11 @@ TA_LIB_API TA_RetCode TA_CMOU( int    startIdx,
       tempReal = inReal[today];
       diff = tempReal - prevValue;
       prevValue = tempReal;
-      if( diff > 0.0 )
-      {
-         upSum += diff;
-      } else if( diff < 0.0 )
-      {
-         downSum -= diff;
-      }
-      if( diff == 0.0 )
-      {
-         nullRun += 1;
-      } else 
-      {
-         nullRun = 0;
-      }
+      up = (diff + fabs(diff)) * 0.5;
+      upSum += up;
+      downSum += up - diff;
+      live = (fabs(diff) <= 0.0) ? 0 : 1;
+      nullRun = (nullRun + 1) & (live - 1);
    }
    /* Emit the first output (bar startIdx). Su+Sd is a sum of non-negative
     * magnitudes, so it is zero only for an exactly flat window; guard the 0/0
@@ -205,62 +204,59 @@ TA_LIB_API TA_RetCode TA_CMOU( int    startIdx,
    {
       outReal[outIdx++] = 0.0;
    }
-   /* Slide the window forward one bar at a time. */
+   /* Slide the window forward one bar at a time. Each bar drops the change
+    * that leaves the window AFTER its output, ready for the next bar: the
+    * sums see the same operations in the same order, and a peek, which keeps
+    * nothing past its output, skips that half of the work. The oldest
+    * change's older price comes from the cache.
+    */
+   tempReal = inReal[trailingIdx];
+   diff = tempReal - trailingValue;
+   trailingValue = tempReal;
+   trailingIdx += 1;
+   up = (diff + fabs(diff)) * 0.5;
+   upSum -= up;
+   downSum -= up - diff;
    today += 1;
    while( today <= endIdx )
    {
-      /* Drop the oldest change: inReal[trailingIdx] - inReal[trailingIdx-1].
-       * inReal[trailingIdx-1] comes from the cache (already overwritten when
-       * outReal == inReal); inReal[trailingIdx] is read here, before this
-       * iteration writes outReal[outIdx], so it is still the original price.
-       */
-      tempReal = inReal[trailingIdx];
-      diff = tempReal - trailingValue;
-      trailingValue = tempReal;
-      trailingIdx += 1;
-      if( diff > 0.0 )
-      {
-         upSum -= diff;
-      } else if( diff < 0.0 )
-      {
-         downSum += diff;
-      }
       /* Add the newest change: inReal[today] - inReal[today-1]. */
       tempReal = inReal[today];
       diff = tempReal - prevValue;
       prevValue = tempReal;
-      if( diff > 0.0 )
-      {
-         upSum += diff;
-      } else if( diff < 0.0 )
-      {
-         downSum -= diff;
-      }
+      up = (diff + fabs(diff)) * 0.5;
+      upSum += up;
+      downSum += up - diff;
       /* Once a whole period of flat bars has gone by, every change in the
        * window is exactly zero, so both sums are known to be exactly zero and
        * the residue can be dropped.
        */
-      if( diff == 0.0 )
-      {
-         nullRun += 1;
-      } else 
-      {
-         nullRun = 0;
-      }
-      if( nullRun >= optInTimePeriod )
+      live = (fabs(diff) <= 0.0) ? 0 : 1;
+      nullRun = (nullRun + 1) & (live - 1);
+      if( TA_UNLIKELY(nullRun >= optInTimePeriod) )
       {
          nullRun = optInTimePeriod;
          upSum = 0.0;
          downSum = 0.0;
-      }
-      sum = upSum + downSum;
-      if( sum > 0.0 )
-      {
-         outReal[outIdx++] = 100.0 * (upSum - downSum) / sum;
+         outReal[outIdx++] = 0.0;
       } else 
       {
-         outReal[outIdx++] = 0.0;
+         sum = upSum + downSum;
+         if( sum > 0.0 )
+         {
+            outReal[outIdx++] = 100.0 * (upSum - downSum) / sum;
+         } else 
+         {
+            outReal[outIdx++] = 0.0;
+         }
       }
+      tempReal = inReal[trailingIdx];
+      diff = tempReal - trailingValue;
+      trailingValue = tempReal;
+      trailingIdx += 1;
+      up = (diff + fabs(diff)) * 0.5;
+      upSum -= up;
+      downSum -= up - diff;
       today += 1;
    }
    *outBegIdx= startIdx;
@@ -282,10 +278,12 @@ TA_RetCode TA_S_CMOU( int    startIdx,
    int lookbackTotal;
    int i;
    int nullRun;
+   int live;
    double upSum;
    double downSum;
    double sum;
    double diff;
+   double up;
    double tempReal;
    double prevValue;
    double trailingValue;
@@ -330,20 +328,11 @@ TA_RetCode TA_S_CMOU( int    startIdx,
       tempReal = (double)inReal[today];
       diff = tempReal - prevValue;
       prevValue = tempReal;
-      if( diff > 0.0 )
-      {
-         upSum += diff;
-      } else if( diff < 0.0 )
-      {
-         downSum -= diff;
-      }
-      if( diff == 0.0 )
-      {
-         nullRun += 1;
-      } else 
-      {
-         nullRun = 0;
-      }
+      up = (diff + fabs(diff)) * 0.5;
+      upSum += up;
+      downSum += up - diff;
+      live = (fabs(diff) <= 0.0) ? 0 : 1;
+      nullRun = (nullRun + 1) & (live - 1);
    }
    outIdx = 0;
    sum = upSum + downSum;
@@ -354,51 +343,48 @@ TA_RetCode TA_S_CMOU( int    startIdx,
    {
       outReal[outIdx++] = 0.0;
    }
+   tempReal = (double)inReal[trailingIdx];
+   diff = tempReal - trailingValue;
+   trailingValue = tempReal;
+   trailingIdx += 1;
+   up = (diff + fabs(diff)) * 0.5;
+   upSum -= up;
+   downSum -= up - diff;
    today += 1;
    while( today <= endIdx )
    {
-      tempReal = (double)inReal[trailingIdx];
-      diff = tempReal - trailingValue;
-      trailingValue = tempReal;
-      trailingIdx += 1;
-      if( diff > 0.0 )
-      {
-         upSum -= diff;
-      } else if( diff < 0.0 )
-      {
-         downSum += diff;
-      }
       tempReal = (double)inReal[today];
       diff = tempReal - prevValue;
       prevValue = tempReal;
-      if( diff > 0.0 )
-      {
-         upSum += diff;
-      } else if( diff < 0.0 )
-      {
-         downSum -= diff;
-      }
-      if( diff == 0.0 )
-      {
-         nullRun += 1;
-      } else 
-      {
-         nullRun = 0;
-      }
-      if( nullRun >= optInTimePeriod )
+      up = (diff + fabs(diff)) * 0.5;
+      upSum += up;
+      downSum += up - diff;
+      live = (fabs(diff) <= 0.0) ? 0 : 1;
+      nullRun = (nullRun + 1) & (live - 1);
+      if( TA_UNLIKELY(nullRun >= optInTimePeriod) )
       {
          nullRun = optInTimePeriod;
          upSum = 0.0;
          downSum = 0.0;
-      }
-      sum = upSum + downSum;
-      if( sum > 0.0 )
-      {
-         outReal[outIdx++] = 100.0 * (upSum - downSum) / sum;
+         outReal[outIdx++] = 0.0;
       } else 
       {
-         outReal[outIdx++] = 0.0;
+         sum = upSum + downSum;
+         if( sum > 0.0 )
+         {
+            outReal[outIdx++] = 100.0 * (upSum - downSum) / sum;
+         } else 
+         {
+            outReal[outIdx++] = 0.0;
+         }
       }
+      tempReal = (double)inReal[trailingIdx];
+      diff = tempReal - trailingValue;
+      trailingValue = tempReal;
+      trailingIdx += 1;
+      up = (diff + fabs(diff)) * 0.5;
+      upSum -= up;
+      downSum -= up - diff;
       today += 1;
    }
    *outBegIdx= startIdx;
@@ -436,62 +422,53 @@ static void TA_CMOU_ReleaseImpl( struct TA_CMOU_Stream *sp )
 /* Private function, not in public API. */
 static void TA_CMOU_StepImpl( struct TA_CMOU_Stream *sp, double inReal, double *outReal )
 {
+   int live;
    double sum;
    double diff;
+   double up;
    double tempReal;
    int ringCapL_trailingIdx;
+   double upSum;
+   double downSum;
 
-   /* Drop the oldest change: inReal[trailingIdx] - inReal[trailingIdx-1].
-    * inReal[trailingIdx-1] comes from the cache (already overwritten when
-    * outReal == inReal); inReal[trailingIdx] is read here, before this
-    * iteration writes outReal[outIdx], so it is still the original price.
-    */
-   tempReal = sp->ring_trailingIdx_inReal[sp->ringPos_trailingIdx];
-   diff = tempReal - sp->trailingValue;
-   sp->trailingValue = tempReal;
-   if( diff > 0.0 )
-   {
-      sp->upSum -= diff;
-   } else if( diff < 0.0 )
-   {
-      sp->downSum += diff;
-   }
+   upSum = sp->upSum;
+   downSum = sp->downSum;
    /* Add the newest change: inReal[today] - inReal[today-1]. */
    tempReal = inReal;
    diff = tempReal - sp->prevValue;
    sp->prevValue = tempReal;
-   if( diff > 0.0 )
-   {
-      sp->upSum += diff;
-   } else if( diff < 0.0 )
-   {
-      sp->downSum -= diff;
-   }
+   up = (diff + fabs(diff)) * 0.5;
+   upSum += up;
+   downSum += up - diff;
    /* Once a whole period of flat bars has gone by, every change in the
     * window is exactly zero, so both sums are known to be exactly zero and
     * the residue can be dropped.
     */
-   if( diff == 0.0 )
-   {
-      sp->nullRun += 1;
-   } else 
-   {
-      sp->nullRun = 0;
-   }
-   if( sp->nullRun >= sp->optInTimePeriod )
+   live = (fabs(diff) <= 0.0) ? 0 : 1;
+   sp->nullRun = (sp->nullRun + 1) & (live - 1);
+   if( TA_UNLIKELY(sp->nullRun >= sp->optInTimePeriod) )
    {
       sp->nullRun = sp->optInTimePeriod;
-      sp->upSum = 0.0;
-      sp->downSum = 0.0;
-   }
-   sum = sp->upSum + sp->downSum;
-   if( sum > 0.0 )
-   {
-      *outReal= 100.0 * (sp->upSum - sp->downSum) / sum;
+      upSum = 0.0;
+      downSum = 0.0;
+      *outReal= 0.0;
    } else 
    {
-      *outReal= 0.0;
+      sum = upSum + downSum;
+      if( sum > 0.0 )
+      {
+         *outReal= 100.0 * (upSum - downSum) / sum;
+      } else 
+      {
+         *outReal= 0.0;
+      }
    }
+   tempReal = sp->ring_trailingIdx_inReal[sp->ringPos_trailingIdx];
+   diff = tempReal - sp->trailingValue;
+   sp->trailingValue = tempReal;
+   up = (diff + fabs(diff)) * 0.5;
+   upSum -= up;
+   downSum -= up - diff;
    sp->cur_outReal = *outReal;
    ringCapL_trailingIdx = sp->ringCap_trailingIdx;
    sp->ring_trailingIdx_inReal[sp->ringPos_trailingIdx] = inReal;
@@ -500,6 +477,8 @@ static void TA_CMOU_StepImpl( struct TA_CMOU_Stream *sp, double inReal, double *
    {
       sp->ringPos_trailingIdx = 0;
    }
+   sp->upSum = upSum;
+   sp->downSum = downSum;
 }
 
 static TA_RetCode TA_CMOU_OpenImpl( struct TA_CMOU_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInTimePeriod, int *outBegIdx, int *outNBElement, double outReal[], int outStride )
@@ -532,10 +511,12 @@ static TA_RetCode TA_CMOU_OpenImpl( struct TA_CMOU_Stream **stream, const double
       int lookbackTotal;
       int i;
       int nullRun = 0;
+      int live;
       double upSum = 0.0;
       double downSum = 0.0;
       double sum;
       double diff;
+      double up;
       double tempReal;
       double prevValue = 0.0;
       double trailingValue = 0.0;
@@ -547,7 +528,7 @@ static TA_RetCode TA_CMOU_OpenImpl( struct TA_CMOU_Stream **stream, const double
        * smoothing -- hence no unstable period.
        *
        * In-place safe (outReal == inReal): the trailing read inReal[trailingIdx]
-       * precedes this iteration's write (trailingIdx >= outIdx), and the oldest
+       * is of a slot not yet written (trailingIdx >= outIdx), and the oldest
        * change's older endpoint comes from the `trailingValue` cache, not a re-read.
        */
       *outBegIdx= 0;
@@ -579,6 +560,11 @@ static TA_RetCode TA_CMOU_OpenImpl( struct TA_CMOU_Stream **stream, const double
        * answer that question themselves once the window starts sliding: they are
        * maintained by add-then-subtract, so an emptied window leaves them holding
        * rounding residue of arbitrary sign rather than zero.
+       *
+       * Both the split and the run are branch-free, as an if/else on the sign or
+       * on a zero mispredicts on random or flat-heavy prices. `up` is max(diff, 0)
+       * spelled with fabs, which no backend turns back into a branch; adding its
+       * +0.0 is exact because neither sum is ever -0.0.
        */
       nullRun = 0;
       for( i = 0; i < optInTimePeriod; i += 1 )
@@ -587,20 +573,11 @@ static TA_RetCode TA_CMOU_OpenImpl( struct TA_CMOU_Stream **stream, const double
          tempReal = inReal[today];
          diff = tempReal - prevValue;
          prevValue = tempReal;
-         if( diff > 0.0 )
-         {
-            upSum += diff;
-         } else if( diff < 0.0 )
-         {
-            downSum -= diff;
-         }
-         if( diff == 0.0 )
-         {
-            nullRun += 1;
-         } else 
-         {
-            nullRun = 0;
-         }
+         up = (diff + fabs(diff)) * 0.5;
+         upSum += up;
+         downSum += up - diff;
+         live = (fabs(diff) <= 0.0) ? 0 : 1;
+         nullRun = (nullRun + 1) & (live - 1);
       }
       /* Emit the first output (bar startIdx). Su+Sd is a sum of non-negative
        * magnitudes, so it is zero only for an exactly flat window; guard the 0/0
@@ -622,62 +599,59 @@ static TA_RetCode TA_CMOU_OpenImpl( struct TA_CMOU_Stream **stream, const double
       {
          outReal[outIdx++ * outStride] = 0.0;
       }
-      /* Slide the window forward one bar at a time. */
+      /* Slide the window forward one bar at a time. Each bar drops the change
+       * that leaves the window AFTER its output, ready for the next bar: the
+       * sums see the same operations in the same order, and a peek, which keeps
+       * nothing past its output, skips that half of the work. The oldest
+       * change's older price comes from the cache.
+       */
+      tempReal = inReal[trailingIdx];
+      diff = tempReal - trailingValue;
+      trailingValue = tempReal;
+      trailingIdx += 1;
+      up = (diff + fabs(diff)) * 0.5;
+      upSum -= up;
+      downSum -= up - diff;
       today += 1;
       while( today <= endIdx )
       {
-         /* Drop the oldest change: inReal[trailingIdx] - inReal[trailingIdx-1].
-          * inReal[trailingIdx-1] comes from the cache (already overwritten when
-          * outReal == inReal); inReal[trailingIdx] is read here, before this
-          * iteration writes outReal[outIdx], so it is still the original price.
-          */
-         tempReal = inReal[trailingIdx];
-         diff = tempReal - trailingValue;
-         trailingValue = tempReal;
-         trailingIdx += 1;
-         if( diff > 0.0 )
-         {
-            upSum -= diff;
-         } else if( diff < 0.0 )
-         {
-            downSum += diff;
-         }
          /* Add the newest change: inReal[today] - inReal[today-1]. */
          tempReal = inReal[today];
          diff = tempReal - prevValue;
          prevValue = tempReal;
-         if( diff > 0.0 )
-         {
-            upSum += diff;
-         } else if( diff < 0.0 )
-         {
-            downSum -= diff;
-         }
+         up = (diff + fabs(diff)) * 0.5;
+         upSum += up;
+         downSum += up - diff;
          /* Once a whole period of flat bars has gone by, every change in the
           * window is exactly zero, so both sums are known to be exactly zero and
           * the residue can be dropped.
           */
-         if( diff == 0.0 )
-         {
-            nullRun += 1;
-         } else 
-         {
-            nullRun = 0;
-         }
-         if( nullRun >= optInTimePeriod )
+         live = (fabs(diff) <= 0.0) ? 0 : 1;
+         nullRun = (nullRun + 1) & (live - 1);
+         if( TA_UNLIKELY(nullRun >= optInTimePeriod) )
          {
             nullRun = optInTimePeriod;
             upSum = 0.0;
             downSum = 0.0;
-         }
-         sum = upSum + downSum;
-         if( sum > 0.0 )
-         {
-            outReal[outIdx++ * outStride] = 100.0 * (upSum - downSum) / sum;
+            outReal[outIdx++ * outStride] = 0.0;
          } else 
          {
-            outReal[outIdx++ * outStride] = 0.0;
+            sum = upSum + downSum;
+            if( sum > 0.0 )
+            {
+               outReal[outIdx++ * outStride] = 100.0 * (upSum - downSum) / sum;
+            } else 
+            {
+               outReal[outIdx++ * outStride] = 0.0;
+            }
          }
+         tempReal = inReal[trailingIdx];
+         diff = tempReal - trailingValue;
+         trailingValue = tempReal;
+         trailingIdx += 1;
+         up = (diff + fabs(diff)) * 0.5;
+         upSum -= up;
+         downSum -= up - diff;
          today += 1;
       }
       *outBegIdx= startIdx;
@@ -766,74 +740,51 @@ TA_LIB_API TA_RetCode TA_CMOU_Update( TA_CMOU_Stream *stream, double inReal, dou
 TA_LIB_API TA_RetCode TA_CMOU_Peek( const TA_CMOU_Stream *stream, double inReal, double *outReal )
 {
    const struct TA_CMOU_Stream *sp = stream;
+   int live;
    double sum;
    double diff;
+   double up;
    double tempReal;
    double downSum;
    int nullRun;
    double prevValue;
-   double trailingValue;
    double upSum;
-   double *ring_trailingIdx_inReal;
 
    if( !stream || !outReal ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inReal ) ) return TA_BAD_PARAM;
    downSum = sp->downSum;
    nullRun = sp->nullRun;
    prevValue = sp->prevValue;
-   trailingValue = sp->trailingValue;
    upSum = sp->upSum;
-   ring_trailingIdx_inReal = sp->ring_trailingIdx_inReal;
-   /* Drop the oldest change: inReal[trailingIdx] - inReal[trailingIdx-1].
-    * inReal[trailingIdx-1] comes from the cache (already overwritten when
-    * outReal == inReal); inReal[trailingIdx] is read here, before this
-    * iteration writes outReal[outIdx], so it is still the original price.
-    */
-   tempReal = ring_trailingIdx_inReal[sp->ringPos_trailingIdx];
-   diff = tempReal - trailingValue;
-   trailingValue = tempReal;
-   if( diff > 0.0 )
-   {
-      upSum -= diff;
-   } else if( diff < 0.0 )
-   {
-      downSum += diff;
-   }
    /* Add the newest change: inReal[today] - inReal[today-1]. */
    tempReal = inReal;
    diff = tempReal - prevValue;
    prevValue = tempReal;
-   if( diff > 0.0 )
-   {
-      upSum += diff;
-   } else if( diff < 0.0 )
-   {
-      downSum -= diff;
-   }
+   up = (diff + fabs(diff)) * 0.5;
+   upSum += up;
+   downSum += up - diff;
    /* Once a whole period of flat bars has gone by, every change in the
     * window is exactly zero, so both sums are known to be exactly zero and
     * the residue can be dropped.
     */
-   if( diff == 0.0 )
-   {
-      nullRun += 1;
-   } else 
-   {
-      nullRun = 0;
-   }
-   if( nullRun >= sp->optInTimePeriod )
+   live = (fabs(diff) <= 0.0) ? 0 : 1;
+   nullRun = (nullRun + 1) & (live - 1);
+   if( TA_UNLIKELY(nullRun >= sp->optInTimePeriod) )
    {
       nullRun = sp->optInTimePeriod;
       upSum = 0.0;
       downSum = 0.0;
-   }
-   sum = upSum + downSum;
-   if( sum > 0.0 )
-   {
-      *outReal= 100.0 * (upSum - downSum) / sum;
+      *outReal= 0.0;
    } else 
    {
-      *outReal= 0.0;
+      sum = upSum + downSum;
+      if( sum > 0.0 )
+      {
+         *outReal= 100.0 * (upSum - downSum) / sum;
+      } else 
+      {
+         *outReal= 0.0;
+      }
    }
    return TA_SUCCESS;
 }

@@ -52,6 +52,7 @@
  *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
  *  092926 MF,CC  First version (issue #474).
+ *  102326 MF,CC  #554 TA_CMOU's branch-free split and zero run, rare reset.
  */
 
 // Import types from parent module
@@ -197,10 +198,12 @@ impl Core {
         let mut lookbackTotal: usize = 0_usize;
         let mut i: usize = 0_usize;
         let mut nullRun: usize = 0_usize;
+        let mut live: usize = 0_usize;
         let mut upSum: f64 = 0.0_f64;
         let mut downSum: f64 = 0.0_f64;
         let mut sum: f64 = 0.0_f64;
         let mut diff: f64 = 0.0_f64;
+        let mut up: f64 = 0.0_f64;
         let mut tempReal: f64 = 0.0_f64;
         let mut prevValue: f64 = 0.0_f64;
         let mut trailingValue: f64 = 0.0_f64;
@@ -258,16 +261,11 @@ impl Core {
             tempReal = inReal[today];
             diff = tempReal - prevValue;
             prevValue = tempReal;
-            if diff > 0.0 {
-                upSum += diff;
-            } else if diff < 0.0 {
-                downSum -= diff;
-            }
-            if diff == 0.0 {
-                nullRun += 1;
-            } else {
-                nullRun = 0;
-            }
+            up = (diff + (diff).abs()) * 0.5;
+            upSum += up;
+            downSum += up - diff;
+            live = (if (diff).abs() <= 0.0 { 0 } else { 1 });
+            nullRun = nullRun + 1 & live.wrapping_sub(1);
             sum = upSum + downSum;
             if sum > 0.0 {
                 k = alpha * ((100.0 * (upSum - downSum) / sum).abs() / 100.0);
@@ -277,84 +275,85 @@ impl Core {
             prevVIDYA = (prevValue - prevVIDYA as f64).mul_add(k, prevVIDYA);
             i += 1;
         }
+        // Each bar below drops the change that leaves the window after its own
+        // update, ready for the next bar, as in TA_CMOU.
+        tempReal = inReal[trailingIdx];
+        diff = tempReal - trailingValue;
+        trailingValue = tempReal;
+        trailingIdx += 1;
+        up = (diff + (diff).abs()) * 0.5;
+        upSum -= up;
+        downSum -= up - diff;
         today += 1;
         // Skip the unstable period: the whole computation, nothing written.
         while today <= startIdx {
+            tempReal = inReal[today];
+            diff = tempReal - prevValue;
+            prevValue = tempReal;
+            up = (diff + (diff).abs()) * 0.5;
+            upSum += up;
+            downSum += up - diff;
+            live = (if (diff).abs() <= 0.0 { 0 } else { 1 });
+            nullRun = nullRun + 1 & live.wrapping_sub(1);
+            if nullRun >= ((optInCMOPeriod) as usize) {
+                cold_arm();
+                nullRun = (optInCMOPeriod) as usize;
+                upSum = 0.0;
+                downSum = 0.0;
+                k = 0.0;
+            } else {
+                sum = upSum + downSum;
+                if sum > 0.0 {
+                    k = alpha * ((100.0 * (upSum - downSum) / sum).abs() / 100.0);
+                } else {
+                    k = 0.0;
+                }
+            }
+            prevVIDYA = (prevValue - prevVIDYA as f64).mul_add(k, prevVIDYA);
             tempReal = inReal[trailingIdx];
             diff = tempReal - trailingValue;
             trailingValue = tempReal;
             trailingIdx += 1;
-            if diff > 0.0 {
-                upSum -= diff;
-            } else if diff < 0.0 {
-                downSum += diff;
-            }
-            tempReal = inReal[today];
-            diff = tempReal - prevValue;
-            prevValue = tempReal;
-            if diff > 0.0 {
-                upSum += diff;
-            } else if diff < 0.0 {
-                downSum -= diff;
-            }
-            if diff == 0.0 {
-                nullRun += 1;
-            } else {
-                nullRun = 0;
-            }
-            if nullRun >= ((optInCMOPeriod) as usize) {
-                nullRun = (optInCMOPeriod) as usize;
-                upSum = 0.0;
-                downSum = 0.0;
-            }
-            sum = upSum + downSum;
-            if sum > 0.0 {
-                k = alpha * ((100.0 * (upSum - downSum) / sum).abs() / 100.0);
-            } else {
-                k = 0.0;
-            }
-            prevVIDYA = (prevValue - prevVIDYA as f64).mul_add(k, prevVIDYA);
+            up = (diff + (diff).abs()) * 0.5;
+            upSum -= up;
+            downSum -= up - diff;
             today += 1;
         }
         outReal[0] = prevVIDYA;
         outIdx = 1;
         while today <= endIdx {
-            tempReal = inReal[trailingIdx];
-            diff = tempReal - trailingValue;
-            trailingValue = tempReal;
-            trailingIdx += 1;
-            if diff > 0.0 {
-                upSum -= diff;
-            } else if diff < 0.0 {
-                downSum += diff;
-            }
             tempReal = inReal[today];
             diff = tempReal - prevValue;
             prevValue = tempReal;
-            if diff > 0.0 {
-                upSum += diff;
-            } else if diff < 0.0 {
-                downSum -= diff;
-            }
-            if diff == 0.0 {
-                nullRun += 1;
-            } else {
-                nullRun = 0;
-            }
+            up = (diff + (diff).abs()) * 0.5;
+            upSum += up;
+            downSum += up - diff;
+            live = (if (diff).abs() <= 0.0 { 0 } else { 1 });
+            nullRun = nullRun + 1 & live.wrapping_sub(1);
             if nullRun >= ((optInCMOPeriod) as usize) {
+                cold_arm();
                 nullRun = (optInCMOPeriod) as usize;
                 upSum = 0.0;
                 downSum = 0.0;
-            }
-            sum = upSum + downSum;
-            if sum > 0.0 {
-                k = alpha * ((100.0 * (upSum - downSum) / sum).abs() / 100.0);
-            } else {
                 k = 0.0;
+            } else {
+                sum = upSum + downSum;
+                if sum > 0.0 {
+                    k = alpha * ((100.0 * (upSum - downSum) / sum).abs() / 100.0);
+                } else {
+                    k = 0.0;
+                }
             }
             prevVIDYA = (prevValue - prevVIDYA as f64).mul_add(k, prevVIDYA);
             outReal[outIdx] = prevVIDYA;
             outIdx += 1;
+            tempReal = inReal[trailingIdx];
+            diff = tempReal - trailingValue;
+            trailingValue = tempReal;
+            trailingIdx += 1;
+            up = (diff + (diff).abs()) * 0.5;
+            upSum -= up;
+            downSum -= up - diff;
             today += 1;
         }
         (*outBegIdx) = startIdx;
@@ -514,8 +513,10 @@ struct VidyaStreamState {
 #[allow(unused_parens)]
 impl Core {
     fn vidya_step_impl(sp: &mut VidyaStreamState, inReal: f64, outReal: &mut f64) {
+        let mut live: usize = 0_usize;
         let mut sum: f64 = 0.0_f64;
         let mut diff: f64 = 0.0_f64;
+        let mut up: f64 = 0.0_f64;
         let mut tempReal: f64 = 0.0_f64;
         let mut k: f64 = 0.0_f64;
         let mut ringCapL_trailingIdx: usize = 0_usize;
@@ -524,40 +525,36 @@ impl Core {
             sp.cur_outReal = (*outReal);
             return;
         }
-        tempReal = sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx];
-        diff = tempReal - sp.trailingValue;
-        sp.trailingValue = tempReal;
-        if diff > 0.0 {
-            sp.upSum -= diff;
-        } else if diff < 0.0 {
-            sp.downSum += diff;
-        }
         tempReal = inReal;
         diff = tempReal - sp.prevValue;
         sp.prevValue = tempReal;
-        if diff > 0.0 {
-            sp.upSum += diff;
-        } else if diff < 0.0 {
-            sp.downSum -= diff;
-        }
-        if diff == 0.0 {
-            sp.nullRun += 1;
-        } else {
-            sp.nullRun = 0;
-        }
+        up = (diff + (diff).abs()) * 0.5;
+        sp.upSum += up;
+        sp.downSum += up - diff;
+        live = (if (diff).abs() <= 0.0 { 0 } else { 1 });
+        sp.nullRun = sp.nullRun + 1 & live.wrapping_sub(1);
         if sp.nullRun >= ((sp.optInCMOPeriod) as usize) {
+            cold_arm();
             sp.nullRun = (sp.optInCMOPeriod) as usize;
             sp.upSum = 0.0;
             sp.downSum = 0.0;
-        }
-        sum = sp.upSum + sp.downSum;
-        if sum > 0.0 {
-            k = sp.alpha * ((100.0 * (sp.upSum - sp.downSum) / sum).abs() / 100.0);
-        } else {
             k = 0.0;
+        } else {
+            sum = sp.upSum + sp.downSum;
+            if sum > 0.0 {
+                k = sp.alpha * ((100.0 * (sp.upSum - sp.downSum) / sum).abs() / 100.0);
+            } else {
+                k = 0.0;
+            }
         }
         sp.prevVIDYA = (sp.prevValue - sp.prevVIDYA as f64).mul_add(k, sp.prevVIDYA);
         (*outReal) = sp.prevVIDYA;
+        tempReal = sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx];
+        diff = tempReal - sp.trailingValue;
+        sp.trailingValue = tempReal;
+        up = (diff + (diff).abs()) * 0.5;
+        sp.upSum -= up;
+        sp.downSum -= up - diff;
         sp.cur_outReal = (*outReal);
         ringCapL_trailingIdx = sp.ringCap_trailingIdx;
         sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx] = inReal;
@@ -568,44 +565,42 @@ impl Core {
     }
 
     fn vidya_step_tape_impl(sp: &mut VidyaStreamState, tape: &[f64], tapeBase: usize, tapeMask: usize, inReal: f64, outReal: &mut f64) {
+        let mut live: usize = 0_usize;
         let mut sum: f64 = 0.0_f64;
         let mut diff: f64 = 0.0_f64;
+        let mut up: f64 = 0.0_f64;
         let mut tempReal: f64 = 0.0_f64;
         let mut k: f64 = 0.0_f64;
-        tempReal = tape[(tapeBase - sp.ringCap_trailingIdx & tapeMask) as usize];
-        diff = tempReal - sp.trailingValue;
-        sp.trailingValue = tempReal;
-        if diff > 0.0 {
-            sp.upSum -= diff;
-        } else if diff < 0.0 {
-            sp.downSum += diff;
-        }
         tempReal = inReal;
         diff = tempReal - sp.prevValue;
         sp.prevValue = tempReal;
-        if diff > 0.0 {
-            sp.upSum += diff;
-        } else if diff < 0.0 {
-            sp.downSum -= diff;
-        }
-        if diff == 0.0 {
-            sp.nullRun += 1;
-        } else {
-            sp.nullRun = 0;
-        }
+        up = (diff + (diff).abs()) * 0.5;
+        sp.upSum += up;
+        sp.downSum += up - diff;
+        live = (if (diff).abs() <= 0.0 { 0 } else { 1 });
+        sp.nullRun = sp.nullRun + 1 & live.wrapping_sub(1);
         if sp.nullRun >= ((sp.optInCMOPeriod) as usize) {
+            cold_arm();
             sp.nullRun = (sp.optInCMOPeriod) as usize;
             sp.upSum = 0.0;
             sp.downSum = 0.0;
-        }
-        sum = sp.upSum + sp.downSum;
-        if sum > 0.0 {
-            k = sp.alpha * ((100.0 * (sp.upSum - sp.downSum) / sum).abs() / 100.0);
-        } else {
             k = 0.0;
+        } else {
+            sum = sp.upSum + sp.downSum;
+            if sum > 0.0 {
+                k = sp.alpha * ((100.0 * (sp.upSum - sp.downSum) / sum).abs() / 100.0);
+            } else {
+                k = 0.0;
+            }
         }
         sp.prevVIDYA = (sp.prevValue - sp.prevVIDYA as f64).mul_add(k, sp.prevVIDYA);
         (*outReal) = sp.prevVIDYA;
+        tempReal = tape[(tapeBase - sp.ringCap_trailingIdx & tapeMask) as usize];
+        diff = tempReal - sp.trailingValue;
+        sp.trailingValue = tempReal;
+        up = (diff + (diff).abs()) * 0.5;
+        sp.upSum -= up;
+        sp.downSum -= up - diff;
         sp.cur_outReal = (*outReal);
     }
 
@@ -698,10 +693,12 @@ impl Core {
         let mut lookbackTotal: usize = 0_usize;
         let mut i: usize = 0_usize;
         let mut nullRun: usize = 0_usize;
+        let mut live: usize = 0_usize;
         let mut upSum: f64 = 0.0_f64;
         let mut downSum: f64 = 0.0_f64;
         let mut sum: f64 = 0.0_f64;
         let mut diff: f64 = 0.0_f64;
+        let mut up: f64 = 0.0_f64;
         let mut tempReal: f64 = 0.0_f64;
         let mut prevValue: f64 = 0.0_f64;
         let mut trailingValue: f64 = 0.0_f64;
@@ -738,16 +735,11 @@ impl Core {
             tempReal = inReal[today];
             diff = tempReal - prevValue;
             prevValue = tempReal;
-            if diff > 0.0 {
-                upSum += diff;
-            } else if diff < 0.0 {
-                downSum -= diff;
-            }
-            if diff == 0.0 {
-                nullRun += 1;
-            } else {
-                nullRun = 0;
-            }
+            up = (diff + (diff).abs()) * 0.5;
+            upSum += up;
+            downSum += up - diff;
+            live = (if (diff).abs() <= 0.0 { 0 } else { 1 });
+            nullRun = nullRun + 1 & live.wrapping_sub(1);
             sum = upSum + downSum;
             if sum > 0.0 {
                 k = alpha * ((100.0 * (upSum - downSum) / sum).abs() / 100.0);
@@ -757,83 +749,84 @@ impl Core {
             prevVIDYA = (prevValue - prevVIDYA as f64).mul_add(k, prevVIDYA);
             i += 1;
         }
+        // Each bar below drops the change that leaves the window after its own
+        // update, ready for the next bar, as in TA_CMOU.
+        tempReal = inReal[trailingIdx];
+        diff = tempReal - trailingValue;
+        trailingValue = tempReal;
+        trailingIdx += 1;
+        up = (diff + (diff).abs()) * 0.5;
+        upSum -= up;
+        downSum -= up - diff;
         today += 1;
         // Skip the unstable period: the whole computation, nothing written.
         while today <= startIdx {
+            tempReal = inReal[today];
+            diff = tempReal - prevValue;
+            prevValue = tempReal;
+            up = (diff + (diff).abs()) * 0.5;
+            upSum += up;
+            downSum += up - diff;
+            live = (if (diff).abs() <= 0.0 { 0 } else { 1 });
+            nullRun = nullRun + 1 & live.wrapping_sub(1);
+            if nullRun >= ((optInCMOPeriod) as usize) {
+                cold_arm();
+                nullRun = (optInCMOPeriod) as usize;
+                upSum = 0.0;
+                downSum = 0.0;
+                k = 0.0;
+            } else {
+                sum = upSum + downSum;
+                if sum > 0.0 {
+                    k = alpha * ((100.0 * (upSum - downSum) / sum).abs() / 100.0);
+                } else {
+                    k = 0.0;
+                }
+            }
+            prevVIDYA = (prevValue - prevVIDYA as f64).mul_add(k, prevVIDYA);
             tempReal = inReal[trailingIdx];
             diff = tempReal - trailingValue;
             trailingValue = tempReal;
             trailingIdx += 1;
-            if diff > 0.0 {
-                upSum -= diff;
-            } else if diff < 0.0 {
-                downSum += diff;
-            }
-            tempReal = inReal[today];
-            diff = tempReal - prevValue;
-            prevValue = tempReal;
-            if diff > 0.0 {
-                upSum += diff;
-            } else if diff < 0.0 {
-                downSum -= diff;
-            }
-            if diff == 0.0 {
-                nullRun += 1;
-            } else {
-                nullRun = 0;
-            }
-            if nullRun >= ((optInCMOPeriod) as usize) {
-                nullRun = (optInCMOPeriod) as usize;
-                upSum = 0.0;
-                downSum = 0.0;
-            }
-            sum = upSum + downSum;
-            if sum > 0.0 {
-                k = alpha * ((100.0 * (upSum - downSum) / sum).abs() / 100.0);
-            } else {
-                k = 0.0;
-            }
-            prevVIDYA = (prevValue - prevVIDYA as f64).mul_add(k, prevVIDYA);
+            up = (diff + (diff).abs()) * 0.5;
+            upSum -= up;
+            downSum -= up - diff;
             today += 1;
         }
         outReal[(0 * outStride) as usize] = prevVIDYA;
         outIdx = 1;
         while today <= endIdx {
+            tempReal = inReal[today];
+            diff = tempReal - prevValue;
+            prevValue = tempReal;
+            up = (diff + (diff).abs()) * 0.5;
+            upSum += up;
+            downSum += up - diff;
+            live = (if (diff).abs() <= 0.0 { 0 } else { 1 });
+            nullRun = nullRun + 1 & live.wrapping_sub(1);
+            if nullRun >= ((optInCMOPeriod) as usize) {
+                cold_arm();
+                nullRun = (optInCMOPeriod) as usize;
+                upSum = 0.0;
+                downSum = 0.0;
+                k = 0.0;
+            } else {
+                sum = upSum + downSum;
+                if sum > 0.0 {
+                    k = alpha * ((100.0 * (upSum - downSum) / sum).abs() / 100.0);
+                } else {
+                    k = 0.0;
+                }
+            }
+            prevVIDYA = (prevValue - prevVIDYA as f64).mul_add(k, prevVIDYA);
+            outReal[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = prevVIDYA;
             tempReal = inReal[trailingIdx];
             diff = tempReal - trailingValue;
             trailingValue = tempReal;
             trailingIdx += 1;
-            if diff > 0.0 {
-                upSum -= diff;
-            } else if diff < 0.0 {
-                downSum += diff;
-            }
-            tempReal = inReal[today];
-            diff = tempReal - prevValue;
-            prevValue = tempReal;
-            if diff > 0.0 {
-                upSum += diff;
-            } else if diff < 0.0 {
-                downSum -= diff;
-            }
-            if diff == 0.0 {
-                nullRun += 1;
-            } else {
-                nullRun = 0;
-            }
-            if nullRun >= ((optInCMOPeriod) as usize) {
-                nullRun = (optInCMOPeriod) as usize;
-                upSum = 0.0;
-                downSum = 0.0;
-            }
-            sum = upSum + downSum;
-            if sum > 0.0 {
-                k = alpha * ((100.0 * (upSum - downSum) / sum).abs() / 100.0);
-            } else {
-                k = 0.0;
-            }
-            prevVIDYA = (prevValue - prevVIDYA as f64).mul_add(k, prevVIDYA);
-            outReal[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = prevVIDYA;
+            up = (diff + (diff).abs()) * 0.5;
+            upSum -= up;
+            downSum -= up - diff;
             today += 1;
         }
         (*outBegIdx) = startIdx;
@@ -1027,51 +1020,42 @@ impl VidyaStream {
         {
             let sp = &self.state;
             let outReal = &mut outReal;
+            let mut live: usize = 0_usize;
             let mut sum: f64 = 0.0_f64;
             let mut diff: f64 = 0.0_f64;
+            let mut up: f64 = 0.0_f64;
             let mut tempReal: f64 = 0.0_f64;
             let mut k: f64 = 0.0_f64;
             let mut downSum = sp.downSum;
             let mut nullRun = sp.nullRun;
             let mut prevVIDYA = sp.prevVIDYA;
             let mut prevValue = sp.prevValue;
-            let mut trailingValue = sp.trailingValue;
             let mut upSum = sp.upSum;
             if sp.optInTimePeriod == 1 {
                 (*outReal) = inReal;
                 return Ok((*outReal));
             }
-            tempReal = sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx];
-            diff = tempReal - trailingValue;
-            trailingValue = tempReal;
-            if diff > 0.0 {
-                upSum -= diff;
-            } else if diff < 0.0 {
-                downSum += diff;
-            }
             tempReal = inReal;
             diff = tempReal - prevValue;
             prevValue = tempReal;
-            if diff > 0.0 {
-                upSum += diff;
-            } else if diff < 0.0 {
-                downSum -= diff;
-            }
-            if diff == 0.0 {
-                nullRun += 1;
-            } else {
-                nullRun = 0;
-            }
+            up = (diff + (diff).abs()) * 0.5;
+            upSum += up;
+            downSum += up - diff;
+            live = (if (diff).abs() <= 0.0 { 0 } else { 1 });
+            nullRun = nullRun + 1 & live.wrapping_sub(1);
             if nullRun >= ((sp.optInCMOPeriod) as usize) {
+                cold_arm();
                 nullRun = (sp.optInCMOPeriod) as usize;
                 upSum = 0.0;
                 downSum = 0.0;
-            }
-            sum = upSum + downSum;
-            if sum > 0.0 {
-                k = sp.alpha * ((100.0 * (upSum - downSum) / sum).abs() / 100.0);
-            } else {
                 k = 0.0;
+            } else {
+                sum = upSum + downSum;
+                if sum > 0.0 {
+                    k = sp.alpha * ((100.0 * (upSum - downSum) / sum).abs() / 100.0);
+                } else {
+                    k = 0.0;
+                }
             }
             prevVIDYA = (prevValue - prevVIDYA as f64).mul_add(k, prevVIDYA);
             (*outReal) = prevVIDYA;
@@ -1150,47 +1134,38 @@ impl VidyaStream {
         {
             let sp = &self.state;
             let outReal = &mut outReal;
+            let mut live: usize = 0_usize;
             let mut sum: f64 = 0.0_f64;
             let mut diff: f64 = 0.0_f64;
+            let mut up: f64 = 0.0_f64;
             let mut tempReal: f64 = 0.0_f64;
             let mut k: f64 = 0.0_f64;
             let mut downSum = sp.downSum;
             let mut nullRun = sp.nullRun;
             let mut prevVIDYA = sp.prevVIDYA;
             let mut prevValue = sp.prevValue;
-            let mut trailingValue = sp.trailingValue;
             let mut upSum = sp.upSum;
-            tempReal = tape[(tapeBase - sp.ringCap_trailingIdx & tapeMask) as usize];
-            diff = tempReal - trailingValue;
-            trailingValue = tempReal;
-            if diff > 0.0 {
-                upSum -= diff;
-            } else if diff < 0.0 {
-                downSum += diff;
-            }
             tempReal = inReal;
             diff = tempReal - prevValue;
             prevValue = tempReal;
-            if diff > 0.0 {
-                upSum += diff;
-            } else if diff < 0.0 {
-                downSum -= diff;
-            }
-            if diff == 0.0 {
-                nullRun += 1;
-            } else {
-                nullRun = 0;
-            }
+            up = (diff + (diff).abs()) * 0.5;
+            upSum += up;
+            downSum += up - diff;
+            live = (if (diff).abs() <= 0.0 { 0 } else { 1 });
+            nullRun = nullRun + 1 & live.wrapping_sub(1);
             if nullRun >= ((sp.optInCMOPeriod) as usize) {
+                cold_arm();
                 nullRun = (sp.optInCMOPeriod) as usize;
                 upSum = 0.0;
                 downSum = 0.0;
-            }
-            sum = upSum + downSum;
-            if sum > 0.0 {
-                k = sp.alpha * ((100.0 * (upSum - downSum) / sum).abs() / 100.0);
-            } else {
                 k = 0.0;
+            } else {
+                sum = upSum + downSum;
+                if sum > 0.0 {
+                    k = sp.alpha * ((100.0 * (upSum - downSum) / sum).abs() / 100.0);
+                } else {
+                    k = 0.0;
+                }
             }
             prevVIDYA = (prevValue - prevVIDYA as f64).mul_add(k, prevVIDYA);
             (*outReal) = prevVIDYA;

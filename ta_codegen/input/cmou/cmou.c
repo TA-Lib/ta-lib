@@ -14,6 +14,7 @@
  *                0/0 is guarded exactly instead of against the fixed
  *                TA_IS_ZERO band -- which zeroed the oscillator for any
  *                instrument quoted small enough to fall under it.
+ *  102326 MF,CC  #554 branch-free up/down split and zero run, rare reset.
  */
 
 int cmou_lookback(int optInTimePeriod)
@@ -35,8 +36,8 @@ TA_RetCode cmou(int startIdx, int endIdx,
 {
    int outIdx;
    int today, trailingIdx, lookbackTotal, i;
-   int nullRun;
-   double upSum, downSum, sum, diff, tempReal, prevValue, trailingValue;
+   int nullRun, live;
+   double upSum, downSum, sum, diff, up, tempReal, prevValue, trailingValue;
 
    /* CMOU -- unsmoothed Chande Momentum Oscillator (as in TradingView ta.cmo,
     * pandas-ta default). Over the trailing optInTimePeriod changes
@@ -46,7 +47,7 @@ TA_RetCode cmou(int startIdx, int endIdx,
     * smoothing -- hence no unstable period.
     *
     * In-place safe (outReal == inReal): the trailing read inReal[trailingIdx]
-    * precedes this iteration's write (trailingIdx >= outIdx), and the oldest
+    * is of a slot not yet written (trailingIdx >= outIdx), and the oldest
     * change's older endpoint comes from the `trailingValue` cache, not a re-read.
     */
 
@@ -80,6 +81,11 @@ TA_RetCode cmou(int startIdx, int endIdx,
     * answer that question themselves once the window starts sliding: they are
     * maintained by add-then-subtract, so an emptied window leaves them holding
     * rounding residue of arbitrary sign rather than zero.
+    *
+    * Both the split and the run are branch-free, as an if/else on the sign or
+    * on a zero mispredicts on random or flat-heavy prices. `up` is max(diff, 0)
+    * spelled with fabs, which no backend turns back into a branch; adding its
+    * +0.0 is exact because neither sum is ever -0.0.
     */
    nullRun = 0;
    for( i = 0; i < optInTimePeriod; i++ )
@@ -88,14 +94,11 @@ TA_RetCode cmou(int startIdx, int endIdx,
       tempReal = inReal[today];
       diff = tempReal - prevValue;
       prevValue = tempReal;
-      if( diff > 0.0 )
-         upSum += diff;
-      else if( diff < 0.0 )
-         downSum -= diff;
-      if( diff == 0.0 )
-         nullRun++;
-      else
-         nullRun = 0;
+      up = (diff + fabs(diff)) * 0.5;
+      upSum += up;
+      downSum += up - diff;
+      live = fabs(diff) <= 0.0 ? 0 : 1;
+      nullRun = (nullRun + 1) & (live - 1);
    }
 
    /* Emit the first output (bar startIdx). Su+Sd is a sum of non-negative
@@ -115,52 +118,60 @@ TA_RetCode cmou(int startIdx, int endIdx,
    else
       outReal[outIdx++] = 0.0;
 
-   /* Slide the window forward one bar at a time. */
+   /* Slide the window forward one bar at a time. Each bar drops the change
+    * that leaves the window AFTER its output, ready for the next bar: the
+    * sums see the same operations in the same order, and a peek, which keeps
+    * nothing past its output, skips that half of the work. The oldest
+    * change's older price comes from the cache.
+    */
+   tempReal = inReal[trailingIdx];
+   diff = tempReal - trailingValue;
+   trailingValue = tempReal;
+   trailingIdx++;
+   up = (diff + fabs(diff)) * 0.5;
+   upSum -= up;
+   downSum -= up - diff;
+
    today++;
    while( today <= endIdx )
    {
-      /* Drop the oldest change: inReal[trailingIdx] - inReal[trailingIdx-1].
-       * inReal[trailingIdx-1] comes from the cache (already overwritten when
-       * outReal == inReal); inReal[trailingIdx] is read here, before this
-       * iteration writes outReal[outIdx], so it is still the original price. */
-      tempReal = inReal[trailingIdx];
-      diff = tempReal - trailingValue;
-      trailingValue = tempReal;
-      trailingIdx++;
-      if( diff > 0.0 )
-         upSum -= diff;
-      else if( diff < 0.0 )
-         downSum += diff;
-
       /* Add the newest change: inReal[today] - inReal[today-1]. */
       tempReal = inReal[today];
       diff = tempReal - prevValue;
       prevValue = tempReal;
-      if( diff > 0.0 )
-         upSum += diff;
-      else if( diff < 0.0 )
-         downSum -= diff;
+      up = (diff + fabs(diff)) * 0.5;
+      upSum += up;
+      downSum += up - diff;
 
       /* Once a whole period of flat bars has gone by, every change in the
        * window is exactly zero, so both sums are known to be exactly zero and
        * the residue can be dropped.
        */
-      if( diff == 0.0 )
-         nullRun++;
-      else
-         nullRun = 0;
-      if( nullRun >= optInTimePeriod )
+      live = fabs(diff) <= 0.0 ? 0 : 1;
+      nullRun = (nullRun + 1) & (live - 1);
+      if( TA_UNLIKELY(nullRun >= optInTimePeriod) )
       {
          nullRun = optInTimePeriod;
          upSum = 0.0;
          downSum = 0.0;
+         outReal[outIdx++] = 0.0;
+      }
+      else
+      {
+         sum = upSum + downSum;
+         if( sum > 0.0 )
+            outReal[outIdx++] = (100.0 * (upSum - downSum)) / sum;
+         else
+            outReal[outIdx++] = 0.0;
       }
 
-      sum = upSum + downSum;
-      if( sum > 0.0 )
-         outReal[outIdx++] = (100.0 * (upSum - downSum)) / sum;
-      else
-         outReal[outIdx++] = 0.0;
+      tempReal = inReal[trailingIdx];
+      diff = tempReal - trailingValue;
+      trailingValue = tempReal;
+      trailingIdx++;
+      up = (diff + fabs(diff)) * 0.5;
+      upSum -= up;
+      downSum -= up - diff;
 
       today++;
    }

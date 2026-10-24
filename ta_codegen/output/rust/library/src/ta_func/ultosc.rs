@@ -60,6 +60,7 @@
  *               divides are guarded exactly instead of against the fixed
  *               TA_IS_ZERO band -- which zeroed the oscillator for any
  *               instrument quoted small enough to fall under it.
+ *  102326 MF,CC #554 branch-free zero run, rare reset.
  */
 
 // Import types from parent module
@@ -203,6 +204,7 @@ impl Core {
         let mut trailingPos1: usize = 0_usize;
         let mut trailingPos2: usize = 0_usize;
         let mut nullRun: usize = 0_usize;
+        let mut live: usize = 0_usize;
         let mut usedFlag: [i32; 3 as usize] = [0i32; 3 as usize];
         let mut periods: [i32; 3 as usize] = [0i32; 3 as usize];
         let mut sortedPeriods: [i32; 3 as usize] = [0i32; 3 as usize];
@@ -316,11 +318,8 @@ impl Core {
             term_trueRange[term_Idx] = trueRange;
             term_Idx += 1;
             if term_Idx >= term_closeMinusTrueLow.len() { term_Idx = 0; }
-            if trueRange == 0.0 && closeMinusTrueLow == 0.0 {
-                nullRun += 1;
-            } else {
-                nullRun = 0;
-            }
+            live = (if (trueRange).abs() + (closeMinusTrueLow).abs() <= 0.0 { 0 } else { 1 });
+            nullRun = nullRun + 1 & live.wrapping_sub(1);
             if i >= startIdx - ((optInTimePeriod1) as usize) + 1 {
                 a1Total += closeMinusTrueLow;
                 b1Total += trueRange;
@@ -372,12 +371,10 @@ impl Core {
             // residue can be dropped. The periods are sorted shortest-first, so a
             // run long enough for a longer window is long enough for every shorter
             // one.
-            if trueRange == 0.0 && closeMinusTrueLow == 0.0 {
-                nullRun += 1;
-            } else {
-                nullRun = 0;
-            }
+            live = (if (trueRange).abs() + (closeMinusTrueLow).abs() <= 0.0 { 0 } else { 1 });
+            nullRun = nullRun + 1 & live.wrapping_sub(1);
             if nullRun >= ((optInTimePeriod1) as usize) {
+                cold_arm();
                 a1Total = 0.0;
                 b1Total = 0.0;
                 if nullRun >= ((optInTimePeriod2) as usize) {
@@ -623,6 +620,7 @@ impl Core {
         let mut tempHT: f64 = 0.0_f64;
         let mut tempLT: f64 = 0.0_f64;
         let mut tempCY: f64 = 0.0_f64;
+        let mut live: usize = 0_usize;
         // Add on today's terms
         tempLT = inLow;
         tempHT = inHigh;
@@ -647,12 +645,10 @@ impl Core {
         // residue can be dropped. The periods are sorted shortest-first, so a
         // run long enough for a longer window is long enough for every shorter
         // one.
-        if trueRange == 0.0 && closeMinusTrueLow == 0.0 {
-            sp.nullRun += 1;
-        } else {
-            sp.nullRun = 0;
-        }
+        live = (if (trueRange).abs() + (closeMinusTrueLow).abs() <= 0.0 { 0 } else { 1 });
+        sp.nullRun = sp.nullRun + 1 & live.wrapping_sub(1);
         if sp.nullRun >= ((sp.optInTimePeriod1) as usize) {
+            cold_arm();
             sp.a1Total = 0.0;
             sp.b1Total = 0.0;
             if sp.nullRun >= ((sp.optInTimePeriod2) as usize) {
@@ -778,6 +774,7 @@ impl Core {
         let mut trailingPos1: usize = 0_usize;
         let mut trailingPos2: usize = 0_usize;
         let mut nullRun: usize = 0_usize;
+        let mut live: usize = 0_usize;
         let mut usedFlag: [i32; 3 as usize] = [0_i32; 3 as usize];
         let mut periods: [i32; 3 as usize] = [0_i32; 3 as usize];
         let mut sortedPeriods: [i32; 3 as usize] = [0_i32; 3 as usize];
@@ -879,11 +876,8 @@ impl Core {
             term_trueRange[term_Idx] = trueRange;
             term_Idx += 1;
             if term_Idx > maxIdx_term { term_Idx = 0; }
-            if trueRange == 0.0 && closeMinusTrueLow == 0.0 {
-                nullRun += 1;
-            } else {
-                nullRun = 0;
-            }
+            live = (if (trueRange).abs() + (closeMinusTrueLow).abs() <= 0.0 { 0 } else { 1 });
+            nullRun = nullRun + 1 & live.wrapping_sub(1);
             if i >= startIdx - ((optInTimePeriod1) as usize) + 1 {
                 a1Total += closeMinusTrueLow;
                 b1Total += trueRange;
@@ -935,12 +929,10 @@ impl Core {
             // residue can be dropped. The periods are sorted shortest-first, so a
             // run long enough for a longer window is long enough for every shorter
             // one.
-            if trueRange == 0.0 && closeMinusTrueLow == 0.0 {
-                nullRun += 1;
-            } else {
-                nullRun = 0;
-            }
+            live = (if (trueRange).abs() + (closeMinusTrueLow).abs() <= 0.0 { 0 } else { 1 });
+            nullRun = nullRun + 1 & live.wrapping_sub(1);
             if nullRun >= ((optInTimePeriod1) as usize) {
+                cold_arm();
                 a1Total = 0.0;
                 b1Total = 0.0;
                 if nullRun >= ((optInTimePeriod2) as usize) {
@@ -1213,6 +1205,7 @@ impl UltoscStream {
             let mut tempHT: f64 = 0.0_f64;
             let mut tempLT: f64 = 0.0_f64;
             let mut tempCY: f64 = 0.0_f64;
+            let mut live: usize = 0_usize;
             let mut a1Total = sp.a1Total;
             let mut a2Total = sp.a2Total;
             let mut a3Total = sp.a3Total;
@@ -1253,12 +1246,10 @@ impl UltoscStream {
             // residue can be dropped. The periods are sorted shortest-first, so a
             // run long enough for a longer window is long enough for every shorter
             // one.
-            if trueRange == 0.0 && closeMinusTrueLow == 0.0 {
-                nullRun += 1;
-            } else {
-                nullRun = 0;
-            }
+            live = (if (trueRange).abs() + (closeMinusTrueLow).abs() <= 0.0 { 0 } else { 1 });
+            nullRun = nullRun + 1 & live.wrapping_sub(1);
             if nullRun >= ((sp.optInTimePeriod1) as usize) {
+                cold_arm();
                 a1Total = 0.0;
                 b1Total = 0.0;
                 if nullRun >= ((sp.optInTimePeriod2) as usize) {

@@ -18,6 +18,7 @@
  *               divides are guarded exactly instead of against the fixed
  *               TA_IS_ZERO band -- which zeroed the oscillator for any
  *               instrument quoted small enough to fall under it.
+ *  102326 MF,CC #554 branch-free zero run, rare reset.
  */
 
    /**
@@ -122,6 +123,7 @@
       int trailingPos1 = 0;
       int trailingPos2 = 0;
       int nullRun = 0;
+      int live = 0;
       int[] usedFlag = new int[3];
       int[] periods = new int[3];
       int[] sortedPeriods = new int[3];
@@ -245,11 +247,8 @@
          term_trueRange[term_Idx] = trueRange;
          term_Idx++;
          if( term_Idx > maxIdx_term ) { term_Idx = 0; }
-         if( trueRange == 0.0 && closeMinusTrueLow == 0.0 ) {
-            nullRun += 1;
-         } else {
-            nullRun = 0;
-         }
+         live = (Math.abs(trueRange) + Math.abs(closeMinusTrueLow) <= 0.0) ? 0 : 1;
+         nullRun = (nullRun + 1) & (live - 1);
          if( i >= startIdx - optInTimePeriod1 + 1 ) {
             a1Total += closeMinusTrueLow;
             b1Total += trueRange;
@@ -306,11 +305,8 @@
           * run long enough for a longer window is long enough for every shorter
           * one.
           */
-         if( trueRange == 0.0 && closeMinusTrueLow == 0.0 ) {
-            nullRun += 1;
-         } else {
-            nullRun = 0;
-         }
+         live = (Math.abs(trueRange) + Math.abs(closeMinusTrueLow) <= 0.0) ? 0 : 1;
+         nullRun = (nullRun + 1) & (live - 1);
          if( nullRun >= optInTimePeriod1 ) {
             a1Total = 0.0;
             b1Total = 0.0;
@@ -409,6 +405,7 @@
       int trailingPos1 = 0;
       int trailingPos2 = 0;
       int nullRun = 0;
+      int live = 0;
       int[] usedFlag = new int[3];
       int[] periods = new int[3];
       int[] sortedPeriods = new int[3];
@@ -498,11 +495,8 @@
          term_trueRange[term_Idx] = trueRange;
          term_Idx++;
          if( term_Idx > maxIdx_term ) { term_Idx = 0; }
-         if( trueRange == 0.0 && closeMinusTrueLow == 0.0 ) {
-            nullRun += 1;
-         } else {
-            nullRun = 0;
-         }
+         live = (Math.abs(trueRange) + Math.abs(closeMinusTrueLow) <= 0.0) ? 0 : 1;
+         nullRun = (nullRun + 1) & (live - 1);
          if( i >= startIdx - optInTimePeriod1 + 1 ) {
             a1Total += closeMinusTrueLow;
             b1Total += trueRange;
@@ -547,11 +541,8 @@
          b1Total += trueRange;
          b2Total += trueRange;
          b3Total += trueRange;
-         if( trueRange == 0.0 && closeMinusTrueLow == 0.0 ) {
-            nullRun += 1;
-         } else {
-            nullRun = 0;
-         }
+         live = (Math.abs(trueRange) + Math.abs(closeMinusTrueLow) <= 0.0) ? 0 : 1;
+         nullRun = (nullRun + 1) & (live - 1);
          if( nullRun >= optInTimePeriod1 ) {
             a1Total = 0.0;
             b1Total = 0.0;
@@ -901,6 +892,7 @@
          double tempHT = 0.0;
          double tempLT = 0.0;
          double tempCY = 0.0;
+         int live = 0;
          double a1Total = sp.a1Total;
          double a2Total = sp.a2Total;
          double a3Total = sp.a3Total;
@@ -947,11 +939,8 @@
           * run long enough for a longer window is long enough for every shorter
           * one.
           */
-         if( trueRange == 0.0 && closeMinusTrueLow == 0.0 ) {
-            nullRun += 1;
-         } else {
-            nullRun = 0;
-         }
+         live = (Math.abs(trueRange) + Math.abs(closeMinusTrueLow) <= 0.0) ? 0 : 1;
+         nullRun = (nullRun + 1) & (live - 1);
          if( nullRun >= sp.optInTimePeriod1 ) {
             a1Total = 0.0;
             b1Total = 0.0;
@@ -1046,6 +1035,7 @@
       double tempHT = 0.0;
       double tempLT = 0.0;
       double tempCY = 0.0;
+      int live = 0;
       /* Add on today's terms */
       tempLT = inLow;
       tempHT = inHigh;
@@ -1075,11 +1065,8 @@
        * run long enough for a longer window is long enough for every shorter
        * one.
        */
-      if( trueRange == 0.0 && closeMinusTrueLow == 0.0 ) {
-         sp.nullRun += 1;
-      } else {
-         sp.nullRun = 0;
-      }
+      live = (Math.abs(trueRange) + Math.abs(closeMinusTrueLow) <= 0.0) ? 0 : 1;
+      sp.nullRun = (sp.nullRun + 1) & (live - 1);
       if( sp.nullRun >= sp.optInTimePeriod1 ) {
          sp.a1Total = 0.0;
          sp.b1Total = 0.0;
@@ -1164,6 +1151,7 @@
       int trailingPos1 = 0;
       int trailingPos2 = 0;
       int nullRun = 0;
+      int live = 0;
       int[] usedFlag = new int[3];
       int[] periods = new int[3];
       int[] sortedPeriods = new int[3];
@@ -1297,11 +1285,8 @@
          term_trueRange[term_Idx] = trueRange;
          term_Idx++;
          if( term_Idx > maxIdx_term ) { term_Idx = 0; }
-         if( trueRange == 0.0 && closeMinusTrueLow == 0.0 ) {
-            nullRun += 1;
-         } else {
-            nullRun = 0;
-         }
+         live = (Math.abs(trueRange) + Math.abs(closeMinusTrueLow) <= 0.0) ? 0 : 1;
+         nullRun = (nullRun + 1) & (live - 1);
          if( i >= startIdx - optInTimePeriod1 + 1 ) {
             a1Total += closeMinusTrueLow;
             b1Total += trueRange;
@@ -1358,11 +1343,8 @@
           * run long enough for a longer window is long enough for every shorter
           * one.
           */
-         if( trueRange == 0.0 && closeMinusTrueLow == 0.0 ) {
-            nullRun += 1;
-         } else {
-            nullRun = 0;
-         }
+         live = (Math.abs(trueRange) + Math.abs(closeMinusTrueLow) <= 0.0) ? 0 : 1;
+         nullRun = (nullRun + 1) & (live - 1);
          if( nullRun >= optInTimePeriod1 ) {
             a1Total = 0.0;
             b1Total = 0.0;

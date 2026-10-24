@@ -47,12 +47,15 @@
  *  Initial  Name/description
  *  -------------------------------------------------------------------
  *  KL       Kevin Lin
+ *  MF       Mario Fortier
+ *  CC       Claude Code (AI assistant)
  *
  * Change history:
  *
  *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
  *  090626 KL     First version (issue #350).
+ *  102326 MF,CC  #554 branch-free zero run, rare reset.
  */
 
 TA_LIB_API int TA_ER_Lookback( int optInTimePeriod )
@@ -88,6 +91,7 @@ TA_LIB_API TA_RetCode TA_ER( int    startIdx,
    int lookbackTotal;
    int i;
    int nullRun;
+   int live;
    double sumROC1;
    double periodROC;
    double tempReal;
@@ -131,8 +135,8 @@ TA_LIB_API TA_RetCode TA_ER( int    startIdx,
     *     bounds nothing on its own, which is what the clamp is for.
     *   - a genuinely flat window is recognized by COUNTING exactly-zero
     *     one-bar changes (nullRun >= P forces sumROC1 to 0.0, purging the
-    *     running sum's rounding residue), after which `0 <= 0` pins the
-    *     0/0 to 1.0 -- never NaN (#112). This is kama.c's #253 form; the
+    *     running sum's rounding residue, and the ratio to 1.0) -- never
+    *     NaN (#112). This is kama.c's #253 form; the
     *     absolute TA_IS_ZERO band it replaced fails the QUOTE-UNIT/SCALE
     *     gate (ER is homogeneous of degree 0, and a fixed 1e-14 met a
     *     price-carrying sum).
@@ -172,13 +176,8 @@ TA_LIB_API TA_RetCode TA_ER( int    startIdx,
       tempReal = inReal[today++];
       tempReal -= inReal[today];
       sumROC1 += fabs(tempReal);
-      if( tempReal == 0.0 )
-      {
-         nullRun += 1;
-      } else 
-      {
-         nullRun = 0;
-      }
+      live = (fabs(tempReal) <= 0.0) ? 0 : 1;
+      nullRun = (nullRun + 1) & (live - 1);
    }
    /* First output: today == startIdx. */
    tempReal = inReal[today];
@@ -217,24 +216,14 @@ TA_LIB_API TA_RetCode TA_ER( int    startIdx,
        * only content is rounding residue from the subtract/add carry --
        * purge it so the flat window is recognized exactly (kama.c #253).
        */
-      if( tempReal - inReal[today - 1] == 0.0 )
-      {
-         nullRun += 1;
-      } else 
-      {
-         nullRun = 0;
-      }
-      if( nullRun >= optInTimePeriod )
+      live = (fabs(tempReal - inReal[today - 1]) <= 0.0) ? 0 : 1;
+      nullRun = (nullRun + 1) & (live - 1);
+      if( TA_UNLIKELY(nullRun >= optInTimePeriod) )
       {
          nullRun = optInTimePeriod;
          sumROC1 = 0.0;
-      }
-      /* Save the trailing value: outReal may alias inReal, and the next
-       * iteration's subtraction needs the ORIGINAL bar, not the slot the
-       * write below may have clobbered.
-       */
-      trailingValue = tempReal2;
-      if( sumROC1 <= 0.0 || sumROC1 <= periodROC )
+         outReal[outIdx++] = 1.0;
+      } else if( sumROC1 <= 0.0 || sumROC1 <= periodROC )
       {
          outReal[outIdx++] = 1.0;
       } else 
@@ -246,6 +235,11 @@ TA_LIB_API TA_RetCode TA_ER( int    startIdx,
          }
          outReal[outIdx++] = tempReal;
       }
+      /* Save the trailing value: outReal may alias inReal, and the next
+       * iteration's subtraction needs the ORIGINAL bar, not the slot the
+       * write above may have clobbered.
+       */
+      trailingValue = tempReal2;
       today += 1;
    }
    *outBegIdx= startIdx;
@@ -267,6 +261,7 @@ TA_RetCode TA_S_ER( int    startIdx,
    int lookbackTotal;
    int i;
    int nullRun;
+   int live;
    double sumROC1;
    double periodROC;
    double tempReal;
@@ -310,13 +305,8 @@ TA_RetCode TA_S_ER( int    startIdx,
       tempReal = (double)inReal[today++];
       tempReal -= (double)inReal[today];
       sumROC1 += fabs(tempReal);
-      if( tempReal == 0.0 )
-      {
-         nullRun += 1;
-      } else 
-      {
-         nullRun = 0;
-      }
+      live = (fabs(tempReal) <= 0.0) ? 0 : 1;
+      nullRun = (nullRun + 1) & (live - 1);
    }
    tempReal = (double)inReal[today];
    tempReal2 = (double)inReal[trailingIdx++];
@@ -343,20 +333,14 @@ TA_RetCode TA_S_ER( int    startIdx,
       periodROC = tempReal - tempReal2;
       sumROC1 -= fabs(trailingValue - tempReal2);
       sumROC1 += fabs(tempReal - (double)inReal[today - 1]);
-      if( tempReal - (double)inReal[today - 1] == 0.0 )
-      {
-         nullRun += 1;
-      } else 
-      {
-         nullRun = 0;
-      }
-      if( nullRun >= optInTimePeriod )
+      live = (fabs(tempReal - (double)inReal[today - 1]) <= 0.0) ? 0 : 1;
+      nullRun = (nullRun + 1) & (live - 1);
+      if( TA_UNLIKELY(nullRun >= optInTimePeriod) )
       {
          nullRun = optInTimePeriod;
          sumROC1 = 0.0;
-      }
-      trailingValue = tempReal2;
-      if( sumROC1 <= 0.0 || sumROC1 <= periodROC )
+         outReal[outIdx++] = 1.0;
+      } else if( sumROC1 <= 0.0 || sumROC1 <= periodROC )
       {
          outReal[outIdx++] = 1.0;
       } else 
@@ -368,6 +352,7 @@ TA_RetCode TA_S_ER( int    startIdx,
          }
          outReal[outIdx++] = tempReal;
       }
+      trailingValue = tempReal2;
       today += 1;
    }
    *outBegIdx= startIdx;
@@ -404,6 +389,7 @@ static void TA_ER_ReleaseImpl( struct TA_ER_Stream *sp )
 /* Private function, not in public API. */
 static void TA_ER_StepImpl( struct TA_ER_Stream *sp, double inReal, double *outReal )
 {
+   int live;
    double periodROC;
    double tempReal;
    double tempReal2;
@@ -419,24 +405,14 @@ static void TA_ER_StepImpl( struct TA_ER_Stream *sp, double inReal, double *outR
     * only content is rounding residue from the subtract/add carry --
     * purge it so the flat window is recognized exactly (kama.c #253).
     */
-   if( tempReal - sp->lag1_inReal == 0.0 )
-   {
-      sp->nullRun += 1;
-   } else 
-   {
-      sp->nullRun = 0;
-   }
-   if( sp->nullRun >= sp->optInTimePeriod )
+   live = (fabs(tempReal - sp->lag1_inReal) <= 0.0) ? 0 : 1;
+   sp->nullRun = (sp->nullRun + 1) & (live - 1);
+   if( TA_UNLIKELY(sp->nullRun >= sp->optInTimePeriod) )
    {
       sp->nullRun = sp->optInTimePeriod;
       sp->sumROC1 = 0.0;
-   }
-   /* Save the trailing value: outReal may alias inReal, and the next
-    * iteration's subtraction needs the ORIGINAL bar, not the slot the
-    * write below may have clobbered.
-    */
-   sp->trailingValue = tempReal2;
-   if( sp->sumROC1 <= 0.0 || sp->sumROC1 <= periodROC )
+      *outReal= 1.0;
+   } else if( sp->sumROC1 <= 0.0 || sp->sumROC1 <= periodROC )
    {
       *outReal= 1.0;
    } else 
@@ -448,6 +424,11 @@ static void TA_ER_StepImpl( struct TA_ER_Stream *sp, double inReal, double *outR
       }
       *outReal= tempReal;
    }
+   /* Save the trailing value: outReal may alias inReal, and the next
+    * iteration's subtraction needs the ORIGINAL bar, not the slot the
+    * write above may have clobbered.
+    */
+   sp->trailingValue = tempReal2;
    sp->cur_outReal = *outReal;
    sp->lag1_inReal = inReal;
    ringCapL_trailingIdx = sp->ringCap_trailingIdx;
@@ -489,6 +470,7 @@ static TA_RetCode TA_ER_OpenImpl( struct TA_ER_Stream **stream, const double inR
       int lookbackTotal;
       int i;
       int nullRun = 0;
+      int live;
       double sumROC1 = 0.0;
       double periodROC;
       double tempReal;
@@ -515,8 +497,8 @@ static TA_RetCode TA_ER_OpenImpl( struct TA_ER_Stream **stream, const double inR
        *     bounds nothing on its own, which is what the clamp is for.
        *   - a genuinely flat window is recognized by COUNTING exactly-zero
        *     one-bar changes (nullRun >= P forces sumROC1 to 0.0, purging the
-       *     running sum's rounding residue), after which `0 <= 0` pins the
-       *     0/0 to 1.0 -- never NaN (#112). This is kama.c's #253 form; the
+       *     running sum's rounding residue, and the ratio to 1.0) -- never
+       *     NaN (#112). This is kama.c's #253 form; the
        *     absolute TA_IS_ZERO band it replaced fails the QUOTE-UNIT/SCALE
        *     gate (ER is homogeneous of degree 0, and a fixed 1e-14 met a
        *     price-carrying sum).
@@ -556,13 +538,8 @@ static TA_RetCode TA_ER_OpenImpl( struct TA_ER_Stream **stream, const double inR
          tempReal = inReal[today++];
          tempReal -= inReal[today];
          sumROC1 += fabs(tempReal);
-         if( tempReal == 0.0 )
-         {
-            nullRun += 1;
-         } else 
-         {
-            nullRun = 0;
-         }
+         live = (fabs(tempReal) <= 0.0) ? 0 : 1;
+         nullRun = (nullRun + 1) & (live - 1);
       }
       /* First output: today == startIdx. */
       tempReal = inReal[today];
@@ -601,24 +578,14 @@ static TA_RetCode TA_ER_OpenImpl( struct TA_ER_Stream **stream, const double inR
           * only content is rounding residue from the subtract/add carry --
           * purge it so the flat window is recognized exactly (kama.c #253).
           */
-         if( tempReal - inReal[today - 1] == 0.0 )
-         {
-            nullRun += 1;
-         } else 
-         {
-            nullRun = 0;
-         }
-         if( nullRun >= optInTimePeriod )
+         live = (fabs(tempReal - inReal[today - 1]) <= 0.0) ? 0 : 1;
+         nullRun = (nullRun + 1) & (live - 1);
+         if( TA_UNLIKELY(nullRun >= optInTimePeriod) )
          {
             nullRun = optInTimePeriod;
             sumROC1 = 0.0;
-         }
-         /* Save the trailing value: outReal may alias inReal, and the next
-          * iteration's subtraction needs the ORIGINAL bar, not the slot the
-          * write below may have clobbered.
-          */
-         trailingValue = tempReal2;
-         if( sumROC1 <= 0.0 || sumROC1 <= periodROC )
+            outReal[outIdx++ * outStride] = 1.0;
+         } else if( sumROC1 <= 0.0 || sumROC1 <= periodROC )
          {
             outReal[outIdx++ * outStride] = 1.0;
          } else 
@@ -630,6 +597,11 @@ static TA_RetCode TA_ER_OpenImpl( struct TA_ER_Stream **stream, const double inR
             }
             outReal[outIdx++ * outStride] = tempReal;
          }
+         /* Save the trailing value: outReal may alias inReal, and the next
+          * iteration's subtraction needs the ORIGINAL bar, not the slot the
+          * write above may have clobbered.
+          */
+         trailingValue = tempReal2;
          today += 1;
       }
       *outBegIdx= startIdx;
@@ -717,48 +689,37 @@ TA_LIB_API TA_RetCode TA_ER_Update( TA_ER_Stream *stream, double inReal, double 
 TA_LIB_API TA_RetCode TA_ER_Peek( const TA_ER_Stream *stream, double inReal, double *outReal )
 {
    const struct TA_ER_Stream *sp = stream;
+   int live;
    double periodROC;
    double tempReal;
    double tempReal2;
    int nullRun;
    double sumROC1;
-   double trailingValue;
    double *ring_trailingIdx_inReal;
 
    if( !stream || !outReal ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inReal ) ) return TA_BAD_PARAM;
    nullRun = sp->nullRun;
    sumROC1 = sp->sumROC1;
-   trailingValue = sp->trailingValue;
    ring_trailingIdx_inReal = sp->ring_trailingIdx_inReal;
    tempReal = inReal;
    tempReal2 = ring_trailingIdx_inReal[sp->ringPos_trailingIdx];
    periodROC = tempReal - tempReal2;
    /* Subtract-then-add, TA_SUM's own order. */
-   sumROC1 -= fabs(trailingValue - tempReal2);
+   sumROC1 -= fabs(sp->trailingValue - tempReal2);
    sumROC1 += fabs(tempReal - sp->lag1_inReal);
    /* Once a whole window of one-bar changes is exactly zero, the sum's
     * only content is rounding residue from the subtract/add carry --
     * purge it so the flat window is recognized exactly (kama.c #253).
     */
-   if( tempReal - sp->lag1_inReal == 0.0 )
-   {
-      nullRun += 1;
-   } else 
-   {
-      nullRun = 0;
-   }
-   if( nullRun >= sp->optInTimePeriod )
+   live = (fabs(tempReal - sp->lag1_inReal) <= 0.0) ? 0 : 1;
+   nullRun = (nullRun + 1) & (live - 1);
+   if( TA_UNLIKELY(nullRun >= sp->optInTimePeriod) )
    {
       nullRun = sp->optInTimePeriod;
       sumROC1 = 0.0;
-   }
-   /* Save the trailing value: outReal may alias inReal, and the next
-    * iteration's subtraction needs the ORIGINAL bar, not the slot the
-    * write below may have clobbered.
-    */
-   trailingValue = tempReal2;
-   if( sumROC1 <= 0.0 || sumROC1 <= periodROC )
+      *outReal= 1.0;
+   } else if( sumROC1 <= 0.0 || sumROC1 <= periodROC )
    {
       *outReal= 1.0;
    } else 

@@ -3,12 +3,15 @@
  *  Initial  Name/description
  *  -------------------------------------------------------------------
  *  KL       Kevin Lin
+ *  MF       Mario Fortier
+ *  CC       Claude Code (AI assistant)
  *
  * Change history:
  *
  *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
  *  090626 KL     First version (issue #350).
+ *  102326 MF,CC  #554 branch-free zero run, rare reset.
  */
 
    /**
@@ -73,6 +76,7 @@
       int lookbackTotal = 0;
       int i = 0;
       int nullRun = 0;
+      int live = 0;
       double sumROC1 = 0;
       double periodROC = 0;
       double tempReal = 0;
@@ -110,8 +114,8 @@
        *     bounds nothing on its own, which is what the clamp is for.
        *   - a genuinely flat window is recognized by COUNTING exactly-zero
        *     one-bar changes (nullRun >= P forces sumROC1 to 0.0, purging the
-       *     running sum's rounding residue), after which `0 <= 0` pins the
-       *     0/0 to 1.0 -- never NaN (#112). This is kama.c's #253 form; the
+       *     running sum's rounding residue, and the ratio to 1.0) -- never
+       *     NaN (#112). This is kama.c's #253 form; the
        *     absolute TA_IS_ZERO band it replaced fails the QUOTE-UNIT/SCALE
        *     gate (ER is homogeneous of degree 0, and a fixed 1e-14 met a
        *     price-carrying sum).
@@ -148,11 +152,8 @@
          tempReal = inReal[today++];
          tempReal -= inReal[today];
          sumROC1 += Math.abs(tempReal);
-         if( tempReal == 0.0 ) {
-            nullRun += 1;
-         } else {
-            nullRun = 0;
-         }
+         live = (Math.abs(tempReal) <= 0.0) ? 0 : 1;
+         nullRun = (nullRun + 1) & (live - 1);
       }
       /* First output: today == startIdx. */
       tempReal = inReal[today];
@@ -187,21 +188,13 @@
           * only content is rounding residue from the subtract/add carry --
           * purge it so the flat window is recognized exactly (kama.c #253).
           */
-         if( tempReal - inReal[today - 1] == 0.0 ) {
-            nullRun += 1;
-         } else {
-            nullRun = 0;
-         }
+         live = (Math.abs(tempReal - inReal[today - 1]) <= 0.0) ? 0 : 1;
+         nullRun = (nullRun + 1) & (live - 1);
          if( nullRun >= optInTimePeriod ) {
             nullRun = optInTimePeriod;
             sumROC1 = 0.0;
-         }
-         /* Save the trailing value: outReal may alias inReal, and the next
-          * iteration's subtraction needs the ORIGINAL bar, not the slot the
-          * write below may have clobbered.
-          */
-         trailingValue = tempReal2;
-         if( sumROC1 <= 0.0 || sumROC1 <= periodROC ) {
+            outReal[outIdx++] = 1.0;
+         } else if( sumROC1 <= 0.0 || sumROC1 <= periodROC ) {
             outReal[outIdx++] = 1.0;
          } else {
             tempReal = Math.abs(periodROC / sumROC1);
@@ -210,6 +203,11 @@
             }
             outReal[outIdx++] = tempReal;
          }
+         /* Save the trailing value: outReal may alias inReal, and the next
+          * iteration's subtraction needs the ORIGINAL bar, not the slot the
+          * write above may have clobbered.
+          */
+         trailingValue = tempReal2;
          today += 1;
       }
       outBegIdx.value = startIdx;
@@ -230,6 +228,7 @@
       int lookbackTotal = 0;
       int i = 0;
       int nullRun = 0;
+      int live = 0;
       double sumROC1 = 0;
       double periodROC = 0;
       double tempReal = 0;
@@ -264,11 +263,8 @@
          tempReal = (double)inReal[today++];
          tempReal -= (double)inReal[today];
          sumROC1 += Math.abs(tempReal);
-         if( tempReal == 0.0 ) {
-            nullRun += 1;
-         } else {
-            nullRun = 0;
-         }
+         live = (Math.abs(tempReal) <= 0.0) ? 0 : 1;
+         nullRun = (nullRun + 1) & (live - 1);
       }
       tempReal = (double)inReal[today];
       tempReal2 = (double)inReal[trailingIdx++];
@@ -291,17 +287,13 @@
          periodROC = tempReal - tempReal2;
          sumROC1 -= Math.abs(trailingValue - tempReal2);
          sumROC1 += Math.abs(tempReal - (double)inReal[today - 1]);
-         if( tempReal - (double)inReal[today - 1] == 0.0 ) {
-            nullRun += 1;
-         } else {
-            nullRun = 0;
-         }
+         live = (Math.abs(tempReal - (double)inReal[today - 1]) <= 0.0) ? 0 : 1;
+         nullRun = (nullRun + 1) & (live - 1);
          if( nullRun >= optInTimePeriod ) {
             nullRun = optInTimePeriod;
             sumROC1 = 0.0;
-         }
-         trailingValue = tempReal2;
-         if( sumROC1 <= 0.0 || sumROC1 <= periodROC ) {
+            outReal[outIdx++] = 1.0;
+         } else if( sumROC1 <= 0.0 || sumROC1 <= periodROC ) {
             outReal[outIdx++] = 1.0;
          } else {
             tempReal = Math.abs(periodROC / sumROC1);
@@ -310,6 +302,7 @@
             }
             outReal[outIdx++] = tempReal;
          }
+         trailingValue = tempReal2;
          today += 1;
       }
       outBegIdx.value = startIdx;
@@ -578,38 +571,30 @@
          if( !Double.isFinite(inReal) )
             throw nonFiniteBar("ER peek", "inReal");
          ErStream sp = this;
+         int live = 0;
          double periodROC = 0.0;
          double tempReal = 0.0;
          double tempReal2 = 0.0;
          double cur_outReal = 0.0;
          int nullRun = sp.nullRun;
          double sumROC1 = sp.sumROC1;
-         double trailingValue = sp.trailingValue;
          tempReal = inReal;
          tempReal2 = sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx];
          periodROC = tempReal - tempReal2;
          /* Subtract-then-add, TA_SUM's own order. */
-         sumROC1 -= Math.abs(trailingValue - tempReal2);
+         sumROC1 -= Math.abs(sp.trailingValue - tempReal2);
          sumROC1 += Math.abs(tempReal - sp.lag1_inReal);
          /* Once a whole window of one-bar changes is exactly zero, the sum's
           * only content is rounding residue from the subtract/add carry --
           * purge it so the flat window is recognized exactly (kama.c #253).
           */
-         if( tempReal - sp.lag1_inReal == 0.0 ) {
-            nullRun += 1;
-         } else {
-            nullRun = 0;
-         }
+         live = (Math.abs(tempReal - sp.lag1_inReal) <= 0.0) ? 0 : 1;
+         nullRun = (nullRun + 1) & (live - 1);
          if( nullRun >= sp.optInTimePeriod ) {
             nullRun = sp.optInTimePeriod;
             sumROC1 = 0.0;
-         }
-         /* Save the trailing value: outReal may alias inReal, and the next
-          * iteration's subtraction needs the ORIGINAL bar, not the slot the
-          * write below may have clobbered.
-          */
-         trailingValue = tempReal2;
-         if( sumROC1 <= 0.0 || sumROC1 <= periodROC ) {
+            cur_outReal = 1.0;
+         } else if( sumROC1 <= 0.0 || sumROC1 <= periodROC ) {
             cur_outReal = 1.0;
          } else {
             tempReal = Math.abs(periodROC / sumROC1);
@@ -649,6 +634,7 @@
    }
    private void erStepImpl( ErStream sp, double inReal )
    {
+      int live = 0;
       double periodROC = 0.0;
       double tempReal = 0.0;
       double tempReal2 = 0.0;
@@ -663,21 +649,13 @@
        * only content is rounding residue from the subtract/add carry --
        * purge it so the flat window is recognized exactly (kama.c #253).
        */
-      if( tempReal - sp.lag1_inReal == 0.0 ) {
-         sp.nullRun += 1;
-      } else {
-         sp.nullRun = 0;
-      }
+      live = (Math.abs(tempReal - sp.lag1_inReal) <= 0.0) ? 0 : 1;
+      sp.nullRun = (sp.nullRun + 1) & (live - 1);
       if( sp.nullRun >= sp.optInTimePeriod ) {
          sp.nullRun = sp.optInTimePeriod;
          sp.sumROC1 = 0.0;
-      }
-      /* Save the trailing value: outReal may alias inReal, and the next
-       * iteration's subtraction needs the ORIGINAL bar, not the slot the
-       * write below may have clobbered.
-       */
-      sp.trailingValue = tempReal2;
-      if( sp.sumROC1 <= 0.0 || sp.sumROC1 <= periodROC ) {
+         sp.cur_outReal = 1.0;
+      } else if( sp.sumROC1 <= 0.0 || sp.sumROC1 <= periodROC ) {
          sp.cur_outReal = 1.0;
       } else {
          tempReal = Math.abs(periodROC / sp.sumROC1);
@@ -686,6 +664,11 @@
          }
          sp.cur_outReal = tempReal;
       }
+      /* Save the trailing value: outReal may alias inReal, and the next
+       * iteration's subtraction needs the ORIGINAL bar, not the slot the
+       * write above may have clobbered.
+       */
+      sp.trailingValue = tempReal2;
       sp.lag1_inReal = inReal;
       ringCapL_trailingIdx = sp.ringCap_trailingIdx;
       sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx] = inReal;
@@ -702,6 +685,7 @@
       int lookbackTotal = 0;
       int i = 0;
       int nullRun = 0;
+      int live = 0;
       double sumROC1 = 0;
       double periodROC = 0;
       double tempReal = 0;
@@ -746,8 +730,8 @@
        *     bounds nothing on its own, which is what the clamp is for.
        *   - a genuinely flat window is recognized by COUNTING exactly-zero
        *     one-bar changes (nullRun >= P forces sumROC1 to 0.0, purging the
-       *     running sum's rounding residue), after which `0 <= 0` pins the
-       *     0/0 to 1.0 -- never NaN (#112). This is kama.c's #253 form; the
+       *     running sum's rounding residue, and the ratio to 1.0) -- never
+       *     NaN (#112). This is kama.c's #253 form; the
        *     absolute TA_IS_ZERO band it replaced fails the QUOTE-UNIT/SCALE
        *     gate (ER is homogeneous of degree 0, and a fixed 1e-14 met a
        *     price-carrying sum).
@@ -784,11 +768,8 @@
          tempReal = inReal[today++];
          tempReal -= inReal[today];
          sumROC1 += Math.abs(tempReal);
-         if( tempReal == 0.0 ) {
-            nullRun += 1;
-         } else {
-            nullRun = 0;
-         }
+         live = (Math.abs(tempReal) <= 0.0) ? 0 : 1;
+         nullRun = (nullRun + 1) & (live - 1);
       }
       /* First output: today == startIdx. */
       tempReal = inReal[today];
@@ -823,21 +804,13 @@
           * only content is rounding residue from the subtract/add carry --
           * purge it so the flat window is recognized exactly (kama.c #253).
           */
-         if( tempReal - inReal[today - 1] == 0.0 ) {
-            nullRun += 1;
-         } else {
-            nullRun = 0;
-         }
+         live = (Math.abs(tempReal - inReal[today - 1]) <= 0.0) ? 0 : 1;
+         nullRun = (nullRun + 1) & (live - 1);
          if( nullRun >= optInTimePeriod ) {
             nullRun = optInTimePeriod;
             sumROC1 = 0.0;
-         }
-         /* Save the trailing value: outReal may alias inReal, and the next
-          * iteration's subtraction needs the ORIGINAL bar, not the slot the
-          * write below may have clobbered.
-          */
-         trailingValue = tempReal2;
-         if( sumROC1 <= 0.0 || sumROC1 <= periodROC ) {
+            outReal[outIdx++ * outStride] = 1.0;
+         } else if( sumROC1 <= 0.0 || sumROC1 <= periodROC ) {
             outReal[outIdx++ * outStride] = 1.0;
          } else {
             tempReal = Math.abs(periodROC / sumROC1);
@@ -846,6 +819,11 @@
             }
             outReal[outIdx++ * outStride] = tempReal;
          }
+         /* Save the trailing value: outReal may alias inReal, and the next
+          * iteration's subtraction needs the ORIGINAL bar, not the slot the
+          * write above may have clobbered.
+          */
+         trailingValue = tempReal2;
          today += 1;
       }
       outBegIdx.value = startIdx;

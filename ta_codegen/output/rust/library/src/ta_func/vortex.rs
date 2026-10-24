@@ -45,12 +45,15 @@
  *  Initial  Name/description
  *  -------------------------------------------------------------------
  *  KL       Kevin Lin
+ *  MF       Mario Fortier
+ *  CC       Claude Code (AI assistant)
  *
  * Change history:
  *
  *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
  *  090626 KL     First version (issue #349).
+ *  102326 MF,CC  #554 branch-free zero run, rare reset.
  */
 
 // Import types from parent module
@@ -155,6 +158,7 @@ impl Core {
         let mut lookbackTotal: usize = 0_usize;
         let mut i: usize = 0_usize;
         let mut nullRun: usize = 0_usize;
+        let mut live: usize = 0_usize;
         let mut sTR: f64 = 0.0_f64;
         let mut sVMP: f64 = 0.0_f64;
         let mut sVMM: f64 = 0.0_f64;
@@ -204,26 +208,28 @@ impl Core {
         sVMP = 0.0;
         sVMM = 0.0;
         nullRun = 0;
-        // for( i = startIdx - ((optInTimePeriod) as usize) + 1; i < startIdx; i += 1 )
         i = startIdx - ((optInTimePeriod) as usize) + 1;
-        while i < startIdx {
-            tempLT = inLow[i];
-            tempHT = inHigh[i];
-            tempCY = inClose[i - 1];
-            trueRange = tempHT - tempLT;
-            tempDouble = (tempCY - tempHT).abs();
-            trueRange = c_max(tempDouble, trueRange);
-            tempDouble = (tempCY - tempLT).abs();
-            trueRange = c_max(tempDouble, trueRange);
-            sTR += trueRange;
-            sVMP += (inHigh[i] - inLow[i - 1]).abs();
-            sVMM += (inLow[i] - inHigh[i - 1]).abs();
-            if trueRange == 0.0 {
-                nullRun += 1;
-            } else {
-                nullRun = 0;
+        if i < startIdx {
+            let _wn: usize = startIdx - i;
+            let _w0 = &inClose[i - 1..][.._wn];
+            let _w1 = &inHigh[i - 1..][.._wn + 1];
+            let _w2 = &inLow[i - 1..][.._wn + 1];
+            for _wk in 0.._wn {
+                tempLT = _w2[_wk + 1];
+                tempHT = _w1[_wk + 1];
+                tempCY = _w0[_wk];
+                trueRange = tempHT - tempLT;
+                tempDouble = (tempCY - tempHT).abs();
+                trueRange = c_max(tempDouble, trueRange);
+                tempDouble = (tempCY - tempLT).abs();
+                trueRange = c_max(tempDouble, trueRange);
+                sTR += trueRange;
+                sVMP += (_w1[_wk + 1] - _w2[_wk]).abs();
+                sVMM += (_w2[_wk + 1] - _w1[_wk]).abs();
+                live = (if (trueRange).abs() <= 0.0 { 0 } else { 1 });
+                nullRun = nullRun + 1 & live.wrapping_sub(1);
+                i += 1;
             }
-            i += 1;
         }
         outIdx = 0;
         today = startIdx;
@@ -241,11 +247,8 @@ impl Core {
             sTR += trueRange;
             sVMP += (inHigh[today] - inLow[today - 1]).abs();
             sVMM += (inLow[today] - inHigh[today - 1]).abs();
-            if trueRange == 0.0 {
-                nullRun += 1;
-            } else {
-                nullRun = 0;
-            }
+            live = (if (trueRange).abs() <= 0.0 { 0 } else { 1 });
+            nullRun = nullRun + 1 & live.wrapping_sub(1);
             // Once the whole window is flat, every TRUE-RANGE term in it is
             // provably zero (nullRun counts exactly that), so sTR's only content
             // is the running add/subtract's rounding residue -- purge it, and the
@@ -258,6 +261,7 @@ impl Core {
             // ULTOSC can reseed all its totals because its predicate covers both
             // of its per-bar terms; VORTEX's covers only the denominator's.
             if nullRun >= ((optInTimePeriod) as usize) {
+                cold_arm();
                 nullRun = (optInTimePeriod) as usize;
                 sTR = 0.0;
             }
@@ -487,6 +491,7 @@ struct VortexStreamState {
 #[allow(unused_parens)]
 impl Core {
     fn vortex_step_impl(sp: &mut VortexStreamState, inHigh: f64, inLow: f64, inClose: f64, outPlusVI: &mut f64, outMinusVI: &mut f64) {
+        let mut live: usize = 0_usize;
         let mut curTR: f64 = 0.0_f64;
         let mut curVMP: f64 = 0.0_f64;
         let mut curVMM: f64 = 0.0_f64;
@@ -510,11 +515,8 @@ impl Core {
         sp.sTR += trueRange;
         sp.sVMP += (inHigh - sp.lag1_inLow).abs();
         sp.sVMM += (inLow - sp.lag1_inHigh).abs();
-        if trueRange == 0.0 {
-            sp.nullRun += 1;
-        } else {
-            sp.nullRun = 0;
-        }
+        live = (if (trueRange).abs() <= 0.0 { 0 } else { 1 });
+        sp.nullRun = sp.nullRun + 1 & live.wrapping_sub(1);
         // Once the whole window is flat, every TRUE-RANGE term in it is
         // provably zero (nullRun counts exactly that), so sTR's only content
         // is the running add/subtract's rounding residue -- purge it, and the
@@ -527,6 +529,7 @@ impl Core {
         // ULTOSC can reseed all its totals because its predicate covers both
         // of its per-bar terms; VORTEX's covers only the denominator's.
         if sp.nullRun >= ((sp.optInTimePeriod) as usize) {
+            cold_arm();
             sp.nullRun = (sp.optInTimePeriod) as usize;
             sp.sTR = 0.0;
         }
@@ -618,6 +621,7 @@ impl Core {
         let mut lookbackTotal: usize = 0_usize;
         let mut i: usize = 0_usize;
         let mut nullRun: usize = 0_usize;
+        let mut live: usize = 0_usize;
         let mut sTR: f64 = 0.0_f64;
         let mut sVMP: f64 = 0.0_f64;
         let mut sVMM: f64 = 0.0_f64;
@@ -678,11 +682,8 @@ impl Core {
             sTR += trueRange;
             sVMP += (inHigh[i] - inLow[i - 1]).abs();
             sVMM += (inLow[i] - inHigh[i - 1]).abs();
-            if trueRange == 0.0 {
-                nullRun += 1;
-            } else {
-                nullRun = 0;
-            }
+            live = (if (trueRange).abs() <= 0.0 { 0 } else { 1 });
+            nullRun = nullRun + 1 & live.wrapping_sub(1);
             i += 1;
         }
         outIdx = 0;
@@ -701,11 +702,8 @@ impl Core {
             sTR += trueRange;
             sVMP += (inHigh[today] - inLow[today - 1]).abs();
             sVMM += (inLow[today] - inHigh[today - 1]).abs();
-            if trueRange == 0.0 {
-                nullRun += 1;
-            } else {
-                nullRun = 0;
-            }
+            live = (if (trueRange).abs() <= 0.0 { 0 } else { 1 });
+            nullRun = nullRun + 1 & live.wrapping_sub(1);
             // Once the whole window is flat, every TRUE-RANGE term in it is
             // provably zero (nullRun counts exactly that), so sTR's only content
             // is the running add/subtract's rounding residue -- purge it, and the
@@ -718,6 +716,7 @@ impl Core {
             // ULTOSC can reseed all its totals because its predicate covers both
             // of its per-bar terms; VORTEX's covers only the denominator's.
             if nullRun >= ((optInTimePeriod) as usize) {
+                cold_arm();
                 nullRun = (optInTimePeriod) as usize;
                 sTR = 0.0;
             }
@@ -1006,6 +1005,7 @@ impl VortexStream {
             let sp = &self.state;
             let outPlusVI = &mut outPlusVI;
             let outMinusVI = &mut outMinusVI;
+            let mut live: usize = 0_usize;
             let mut curTR: f64 = 0.0_f64;
             let mut curVMP: f64 = 0.0_f64;
             let mut curVMM: f64 = 0.0_f64;
@@ -1042,11 +1042,8 @@ impl VortexStream {
             sTR += trueRange;
             sVMP += (inHigh - sp.lag1_inLow).abs();
             sVMM += (inLow - sp.lag1_inHigh).abs();
-            if trueRange == 0.0 {
-                nullRun += 1;
-            } else {
-                nullRun = 0;
-            }
+            live = (if (trueRange).abs() <= 0.0 { 0 } else { 1 });
+            nullRun = nullRun + 1 & live.wrapping_sub(1);
             // Once the whole window is flat, every TRUE-RANGE term in it is
             // provably zero (nullRun counts exactly that), so sTR's only content
             // is the running add/subtract's rounding residue -- purge it, and the
@@ -1059,6 +1056,7 @@ impl VortexStream {
             // ULTOSC can reseed all its totals because its predicate covers both
             // of its per-bar terms; VORTEX's covers only the denominator's.
             if nullRun >= ((sp.optInTimePeriod) as usize) {
+                cold_arm();
                 nullRun = (sp.optInTimePeriod) as usize;
                 sTR = 0.0;
             }

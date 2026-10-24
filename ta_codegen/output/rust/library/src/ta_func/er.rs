@@ -45,12 +45,15 @@
  *  Initial  Name/description
  *  -------------------------------------------------------------------
  *  KL       Kevin Lin
+ *  MF       Mario Fortier
+ *  CC       Claude Code (AI assistant)
  *
  * Change history:
  *
  *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
  *  090626 KL     First version (issue #350).
+ *  102326 MF,CC  #554 branch-free zero run, rare reset.
  */
 
 // Import types from parent module
@@ -147,6 +150,7 @@ impl Core {
         let mut lookbackTotal: usize = 0_usize;
         let mut i: usize = 0_usize;
         let mut nullRun: usize = 0_usize;
+        let mut live: usize = 0_usize;
         let mut sumROC1: f64 = 0.0_f64;
         let mut periodROC: f64 = 0.0_f64;
         let mut tempReal: f64 = 0.0_f64;
@@ -173,8 +177,8 @@ impl Core {
         //     bounds nothing on its own, which is what the clamp is for.
         //   - a genuinely flat window is recognized by COUNTING exactly-zero
         //     one-bar changes (nullRun >= P forces sumROC1 to 0.0, purging the
-        //     running sum's rounding residue), after which `0 <= 0` pins the
-        //     0/0 to 1.0 -- never NaN (#112). This is kama.c's #253 form; the
+        //     running sum's rounding residue, and the ratio to 1.0) -- never
+        //     NaN (#112). This is kama.c's #253 form; the
         //     absolute TA_IS_ZERO band it replaced fails the QUOTE-UNIT/SCALE
         //     gate (ER is homogeneous of degree 0, and a fixed 1e-14 met a
         //     price-carrying sum).
@@ -206,15 +210,21 @@ impl Core {
         today = startIdx - lookbackTotal;
         trailingIdx = today;
         i = (optInTimePeriod) as usize;
-        while { let _v = i; i = i.wrapping_sub(1); _v } > 0 {
-            tempReal = inReal[{ let _v = today; today += 1; _v }];
-            tempReal -= inReal[today];
-            sumROC1 += (tempReal).abs();
-            if tempReal == 0.0 {
-                nullRun += 1;
-            } else {
-                nullRun = 0;
+        if i > 0 {
+            let _wn: usize = i;
+            let _w0 = &inReal[today..][.._wn + 1];
+            for _wk in 0.._wn {
+                i -= 1;
+                tempReal = _w0[_wk];
+                today += 1;
+                tempReal -= _w0[_wk + 1];
+                sumROC1 += (tempReal).abs();
+                live = (if (tempReal).abs() <= 0.0 { 0 } else { 1 });
+                nullRun = nullRun + 1 & live.wrapping_sub(1);
             }
+            i = i.wrapping_sub(1);
+        } else {
+            i = i.wrapping_sub(1);
         }
         // First output: today == startIdx.
         tempReal = inReal[today];
@@ -247,20 +257,15 @@ impl Core {
             // Once a whole window of one-bar changes is exactly zero, the sum's
             // only content is rounding residue from the subtract/add carry --
             // purge it so the flat window is recognized exactly (kama.c #253).
-            if tempReal - inReal[today - 1] == 0.0 {
-                nullRun += 1;
-            } else {
-                nullRun = 0;
-            }
+            live = (if (tempReal - inReal[today - 1]).abs() <= 0.0 { 0 } else { 1 });
+            nullRun = nullRun + 1 & live.wrapping_sub(1);
             if nullRun >= ((optInTimePeriod) as usize) {
+                cold_arm();
                 nullRun = (optInTimePeriod) as usize;
                 sumROC1 = 0.0;
-            }
-            // Save the trailing value: outReal may alias inReal, and the next
-            // iteration's subtraction needs the ORIGINAL bar, not the slot the
-            // write below may have clobbered.
-            trailingValue = tempReal2;
-            if sumROC1 <= 0.0 || sumROC1 <= periodROC {
+                outReal[outIdx] = 1.0;
+                outIdx += 1;
+            } else if sumROC1 <= 0.0 || sumROC1 <= periodROC {
                 outReal[outIdx] = 1.0;
                 outIdx += 1;
             } else {
@@ -271,6 +276,10 @@ impl Core {
                 outReal[outIdx] = tempReal;
                 outIdx += 1;
             }
+            // Save the trailing value: outReal may alias inReal, and the next
+            // iteration's subtraction needs the ORIGINAL bar, not the slot the
+            // write above may have clobbered.
+            trailingValue = tempReal2;
             today += 1;
         }
         (*outBegIdx) = startIdx;
@@ -424,6 +433,7 @@ struct ErStreamState {
 #[allow(unused_parens)]
 impl Core {
     fn er_step_impl(sp: &mut ErStreamState, inReal: f64, outReal: &mut f64) {
+        let mut live: usize = 0_usize;
         let mut periodROC: f64 = 0.0_f64;
         let mut tempReal: f64 = 0.0_f64;
         let mut tempReal2: f64 = 0.0_f64;
@@ -437,20 +447,14 @@ impl Core {
         // Once a whole window of one-bar changes is exactly zero, the sum's
         // only content is rounding residue from the subtract/add carry --
         // purge it so the flat window is recognized exactly (kama.c #253).
-        if tempReal - sp.lag1_inReal == 0.0 {
-            sp.nullRun += 1;
-        } else {
-            sp.nullRun = 0;
-        }
+        live = (if (tempReal - sp.lag1_inReal).abs() <= 0.0 { 0 } else { 1 });
+        sp.nullRun = sp.nullRun + 1 & live.wrapping_sub(1);
         if sp.nullRun >= ((sp.optInTimePeriod) as usize) {
+            cold_arm();
             sp.nullRun = (sp.optInTimePeriod) as usize;
             sp.sumROC1 = 0.0;
-        }
-        // Save the trailing value: outReal may alias inReal, and the next
-        // iteration's subtraction needs the ORIGINAL bar, not the slot the
-        // write below may have clobbered.
-        sp.trailingValue = tempReal2;
-        if sp.sumROC1 <= 0.0 || sp.sumROC1 <= periodROC {
+            (*outReal) = 1.0;
+        } else if sp.sumROC1 <= 0.0 || sp.sumROC1 <= periodROC {
             (*outReal) = 1.0;
         } else {
             tempReal = (periodROC / sp.sumROC1).abs();
@@ -459,6 +463,10 @@ impl Core {
             }
             (*outReal) = tempReal;
         }
+        // Save the trailing value: outReal may alias inReal, and the next
+        // iteration's subtraction needs the ORIGINAL bar, not the slot the
+        // write above may have clobbered.
+        sp.trailingValue = tempReal2;
         sp.cur_outReal = (*outReal);
         sp.lag1_inReal = inReal;
         ringCapL_trailingIdx = sp.ringCap_trailingIdx;
@@ -501,6 +509,7 @@ impl Core {
         let mut lookbackTotal: usize = 0_usize;
         let mut i: usize = 0_usize;
         let mut nullRun: usize = 0_usize;
+        let mut live: usize = 0_usize;
         let mut sumROC1: f64 = 0.0_f64;
         let mut periodROC: f64 = 0.0_f64;
         let mut tempReal: f64 = 0.0_f64;
@@ -527,8 +536,8 @@ impl Core {
         //     bounds nothing on its own, which is what the clamp is for.
         //   - a genuinely flat window is recognized by COUNTING exactly-zero
         //     one-bar changes (nullRun >= P forces sumROC1 to 0.0, purging the
-        //     running sum's rounding residue), after which `0 <= 0` pins the
-        //     0/0 to 1.0 -- never NaN (#112). This is kama.c's #253 form; the
+        //     running sum's rounding residue, and the ratio to 1.0) -- never
+        //     NaN (#112). This is kama.c's #253 form; the
         //     absolute TA_IS_ZERO band it replaced fails the QUOTE-UNIT/SCALE
         //     gate (ER is homogeneous of degree 0, and a fixed 1e-14 met a
         //     price-carrying sum).
@@ -563,11 +572,8 @@ impl Core {
             tempReal = inReal[{ let _v = today; today += 1; _v }];
             tempReal -= inReal[today];
             sumROC1 += (tempReal).abs();
-            if tempReal == 0.0 {
-                nullRun += 1;
-            } else {
-                nullRun = 0;
-            }
+            live = (if (tempReal).abs() <= 0.0 { 0 } else { 1 });
+            nullRun = nullRun + 1 & live.wrapping_sub(1);
         }
         // First output: today == startIdx.
         tempReal = inReal[today];
@@ -600,20 +606,14 @@ impl Core {
             // Once a whole window of one-bar changes is exactly zero, the sum's
             // only content is rounding residue from the subtract/add carry --
             // purge it so the flat window is recognized exactly (kama.c #253).
-            if tempReal - inReal[today - 1] == 0.0 {
-                nullRun += 1;
-            } else {
-                nullRun = 0;
-            }
+            live = (if (tempReal - inReal[today - 1]).abs() <= 0.0 { 0 } else { 1 });
+            nullRun = nullRun + 1 & live.wrapping_sub(1);
             if nullRun >= ((optInTimePeriod) as usize) {
+                cold_arm();
                 nullRun = (optInTimePeriod) as usize;
                 sumROC1 = 0.0;
-            }
-            // Save the trailing value: outReal may alias inReal, and the next
-            // iteration's subtraction needs the ORIGINAL bar, not the slot the
-            // write below may have clobbered.
-            trailingValue = tempReal2;
-            if sumROC1 <= 0.0 || sumROC1 <= periodROC {
+                outReal[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = 1.0;
+            } else if sumROC1 <= 0.0 || sumROC1 <= periodROC {
                 outReal[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = 1.0;
             } else {
                 tempReal = (periodROC / sumROC1).abs();
@@ -622,6 +622,10 @@ impl Core {
                 }
                 outReal[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = tempReal;
             }
+            // Save the trailing value: outReal may alias inReal, and the next
+            // iteration's subtraction needs the ORIGINAL bar, not the slot the
+            // write above may have clobbered.
+            trailingValue = tempReal2;
             today += 1;
         }
         (*outBegIdx) = startIdx;
@@ -811,35 +815,29 @@ impl ErStream {
         {
             let sp = &self.state;
             let outReal = &mut outReal;
+            let mut live: usize = 0_usize;
             let mut periodROC: f64 = 0.0_f64;
             let mut tempReal: f64 = 0.0_f64;
             let mut tempReal2: f64 = 0.0_f64;
             let mut nullRun = sp.nullRun;
             let mut sumROC1 = sp.sumROC1;
-            let mut trailingValue = sp.trailingValue;
             tempReal = inReal;
             tempReal2 = sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx];
             periodROC = tempReal - tempReal2;
             // Subtract-then-add, TA_SUM's own order.
-            sumROC1 -= (trailingValue - tempReal2).abs();
+            sumROC1 -= (sp.trailingValue - tempReal2).abs();
             sumROC1 += (tempReal - sp.lag1_inReal).abs();
             // Once a whole window of one-bar changes is exactly zero, the sum's
             // only content is rounding residue from the subtract/add carry --
             // purge it so the flat window is recognized exactly (kama.c #253).
-            if tempReal - sp.lag1_inReal == 0.0 {
-                nullRun += 1;
-            } else {
-                nullRun = 0;
-            }
+            live = (if (tempReal - sp.lag1_inReal).abs() <= 0.0 { 0 } else { 1 });
+            nullRun = nullRun + 1 & live.wrapping_sub(1);
             if nullRun >= ((sp.optInTimePeriod) as usize) {
+                cold_arm();
                 nullRun = (sp.optInTimePeriod) as usize;
                 sumROC1 = 0.0;
-            }
-            // Save the trailing value: outReal may alias inReal, and the next
-            // iteration's subtraction needs the ORIGINAL bar, not the slot the
-            // write below may have clobbered.
-            trailingValue = tempReal2;
-            if sumROC1 <= 0.0 || sumROC1 <= periodROC {
+                (*outReal) = 1.0;
+            } else if sumROC1 <= 0.0 || sumROC1 <= periodROC {
                 (*outReal) = 1.0;
             } else {
                 tempReal = (periodROC / sumROC1).abs();

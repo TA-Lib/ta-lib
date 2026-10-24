@@ -10,6 +10,7 @@
  *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
  *  092926 MF,CC  First version (issue #474).
+ *  102326 MF,CC  #554 TA_CMOU's branch-free split and zero run, rare reset.
  */
 
 int vidya_lookback(int optInTimePeriod, int optInCMOPeriod)
@@ -34,8 +35,8 @@ TA_RetCode vidya(int startIdx, int endIdx,
 {
    int outIdx;
    int today, trailingIdx, lookbackTotal, i;
-   int nullRun;
-   double upSum, downSum, sum, diff, tempReal, prevValue, trailingValue;
+   int nullRun, live;
+   double upSum, downSum, sum, diff, up, tempReal, prevValue, trailingValue;
    double alpha, k, prevVIDYA;
 
    *outBegIdx = 0;
@@ -92,14 +93,11 @@ TA_RetCode vidya(int startIdx, int endIdx,
       tempReal = inReal[today];
       diff = tempReal - prevValue;
       prevValue = tempReal;
-      if( diff > 0.0 )
-         upSum += diff;
-      else if( diff < 0.0 )
-         downSum -= diff;
-      if( diff == 0.0 )
-         nullRun++;
-      else
-         nullRun = 0;
+      up = (diff + fabs(diff)) * 0.5;
+      upSum += up;
+      downSum += up - diff;
+      live = fabs(diff) <= 0.0 ? 0 : 1;
+      nullRun = (nullRun + 1) & (live - 1);
 
       sum = upSum + downSum;
       if( sum > 0.0 )
@@ -108,45 +106,53 @@ TA_RetCode vidya(int startIdx, int endIdx,
          k = 0.0;
       prevVIDYA = ((prevValue - prevVIDYA) * k) + prevVIDYA;
    }
+   /* Each bar below drops the change that leaves the window after its own
+    * update, ready for the next bar, as in TA_CMOU.
+    */
+   tempReal = inReal[trailingIdx];
+   diff = tempReal - trailingValue;
+   trailingValue = tempReal;
+   trailingIdx++;
+   up = (diff + fabs(diff)) * 0.5;
+   upSum -= up;
+   downSum -= up - diff;
    today++;
 
    /* Skip the unstable period: the whole computation, nothing written. */
    while( today <= startIdx )
    {
-      tempReal = inReal[trailingIdx];
-      diff = tempReal - trailingValue;
-      trailingValue = tempReal;
-      trailingIdx++;
-      if( diff > 0.0 )
-         upSum -= diff;
-      else if( diff < 0.0 )
-         downSum += diff;
-
       tempReal = inReal[today];
       diff = tempReal - prevValue;
       prevValue = tempReal;
-      if( diff > 0.0 )
-         upSum += diff;
-      else if( diff < 0.0 )
-         downSum -= diff;
+      up = (diff + fabs(diff)) * 0.5;
+      upSum += up;
+      downSum += up - diff;
 
-      if( diff == 0.0 )
-         nullRun++;
-      else
-         nullRun = 0;
-      if( nullRun >= optInCMOPeriod )
+      live = fabs(diff) <= 0.0 ? 0 : 1;
+      nullRun = (nullRun + 1) & (live - 1);
+      if( TA_UNLIKELY(nullRun >= optInCMOPeriod) )
       {
          nullRun = optInCMOPeriod;
          upSum = 0.0;
          downSum = 0.0;
-      }
-
-      sum = upSum + downSum;
-      if( sum > 0.0 )
-         k = alpha * (fabs((100.0 * (upSum - downSum)) / sum) / 100.0);
-      else
          k = 0.0;
+      }
+      else
+      {
+         sum = upSum + downSum;
+         if( sum > 0.0 )
+            k = alpha * (fabs((100.0 * (upSum - downSum)) / sum) / 100.0);
+         else
+            k = 0.0;
+      }
       prevVIDYA = ((prevValue - prevVIDYA) * k) + prevVIDYA;
+      tempReal = inReal[trailingIdx];
+      diff = tempReal - trailingValue;
+      trailingValue = tempReal;
+      trailingIdx++;
+      up = (diff + fabs(diff)) * 0.5;
+      upSum -= up;
+      downSum -= up - diff;
       today++;
    }
 
@@ -155,41 +161,39 @@ TA_RetCode vidya(int startIdx, int endIdx,
 
    while( today <= endIdx )
    {
-      tempReal = inReal[trailingIdx];
-      diff = tempReal - trailingValue;
-      trailingValue = tempReal;
-      trailingIdx++;
-      if( diff > 0.0 )
-         upSum -= diff;
-      else if( diff < 0.0 )
-         downSum += diff;
-
       tempReal = inReal[today];
       diff = tempReal - prevValue;
       prevValue = tempReal;
-      if( diff > 0.0 )
-         upSum += diff;
-      else if( diff < 0.0 )
-         downSum -= diff;
+      up = (diff + fabs(diff)) * 0.5;
+      upSum += up;
+      downSum += up - diff;
 
-      if( diff == 0.0 )
-         nullRun++;
-      else
-         nullRun = 0;
-      if( nullRun >= optInCMOPeriod )
+      live = fabs(diff) <= 0.0 ? 0 : 1;
+      nullRun = (nullRun + 1) & (live - 1);
+      if( TA_UNLIKELY(nullRun >= optInCMOPeriod) )
       {
          nullRun = optInCMOPeriod;
          upSum = 0.0;
          downSum = 0.0;
-      }
-
-      sum = upSum + downSum;
-      if( sum > 0.0 )
-         k = alpha * (fabs((100.0 * (upSum - downSum)) / sum) / 100.0);
-      else
          k = 0.0;
+      }
+      else
+      {
+         sum = upSum + downSum;
+         if( sum > 0.0 )
+            k = alpha * (fabs((100.0 * (upSum - downSum)) / sum) / 100.0);
+         else
+            k = 0.0;
+      }
       prevVIDYA = ((prevValue - prevVIDYA) * k) + prevVIDYA;
       outReal[outIdx++] = prevVIDYA;
+      tempReal = inReal[trailingIdx];
+      diff = tempReal - trailingValue;
+      trailingValue = tempReal;
+      trailingIdx++;
+      up = (diff + fabs(diff)) * 0.5;
+      upSum -= up;
+      downSum -= up - diff;
       today++;
    }
 

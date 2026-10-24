@@ -10,6 +10,7 @@
  *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
  *  092926 MF,CC  First version (issue #474).
+ *  102326 MF,CC  #554 TA_CMOU's branch-free split and zero run, rare reset.
  */
 
    /**
@@ -87,10 +88,12 @@
       int lookbackTotal = 0;
       int i = 0;
       int nullRun = 0;
+      int live = 0;
       double upSum = 0;
       double downSum = 0;
       double sum = 0;
       double diff = 0;
+      double up = 0;
       double tempReal = 0;
       double prevValue = 0;
       double trailingValue = 0;
@@ -162,16 +165,11 @@
          tempReal = inReal[today];
          diff = tempReal - prevValue;
          prevValue = tempReal;
-         if( diff > 0.0 ) {
-            upSum += diff;
-         } else if( diff < 0.0 ) {
-            downSum -= diff;
-         }
-         if( diff == 0.0 ) {
-            nullRun += 1;
-         } else {
-            nullRun = 0;
-         }
+         up = (diff + Math.abs(diff)) * 0.5;
+         upSum += up;
+         downSum += up - diff;
+         live = (Math.abs(diff) <= 0.0) ? 0 : 1;
+         nullRun = (nullRun + 1) & (live - 1);
          sum = upSum + downSum;
          if( sum > 0.0 ) {
             k = alpha * (Math.abs(100.0 * (upSum - downSum) / sum) / 100.0);
@@ -180,83 +178,83 @@
          }
          prevVIDYA = Math.fma(prevValue - prevVIDYA, k, prevVIDYA);
       }
+      /* Each bar below drops the change that leaves the window after its own
+       * update, ready for the next bar, as in TA_CMOU.
+       */
+      tempReal = inReal[trailingIdx];
+      diff = tempReal - trailingValue;
+      trailingValue = tempReal;
+      trailingIdx += 1;
+      up = (diff + Math.abs(diff)) * 0.5;
+      upSum -= up;
+      downSum -= up - diff;
       today += 1;
       /* Skip the unstable period: the whole computation, nothing written. */
       while( today <= startIdx ) {
-         tempReal = inReal[trailingIdx];
-         diff = tempReal - trailingValue;
-         trailingValue = tempReal;
-         trailingIdx += 1;
-         if( diff > 0.0 ) {
-            upSum -= diff;
-         } else if( diff < 0.0 ) {
-            downSum += diff;
-         }
          tempReal = inReal[today];
          diff = tempReal - prevValue;
          prevValue = tempReal;
-         if( diff > 0.0 ) {
-            upSum += diff;
-         } else if( diff < 0.0 ) {
-            downSum -= diff;
-         }
-         if( diff == 0.0 ) {
-            nullRun += 1;
-         } else {
-            nullRun = 0;
-         }
+         up = (diff + Math.abs(diff)) * 0.5;
+         upSum += up;
+         downSum += up - diff;
+         live = (Math.abs(diff) <= 0.0) ? 0 : 1;
+         nullRun = (nullRun + 1) & (live - 1);
          if( nullRun >= optInCMOPeriod ) {
             nullRun = optInCMOPeriod;
             upSum = 0.0;
             downSum = 0.0;
-         }
-         sum = upSum + downSum;
-         if( sum > 0.0 ) {
-            k = alpha * (Math.abs(100.0 * (upSum - downSum) / sum) / 100.0);
-         } else {
             k = 0.0;
+         } else {
+            sum = upSum + downSum;
+            if( sum > 0.0 ) {
+               k = alpha * (Math.abs(100.0 * (upSum - downSum) / sum) / 100.0);
+            } else {
+               k = 0.0;
+            }
          }
          prevVIDYA = Math.fma(prevValue - prevVIDYA, k, prevVIDYA);
+         tempReal = inReal[trailingIdx];
+         diff = tempReal - trailingValue;
+         trailingValue = tempReal;
+         trailingIdx += 1;
+         up = (diff + Math.abs(diff)) * 0.5;
+         upSum -= up;
+         downSum -= up - diff;
          today += 1;
       }
       outReal[0] = prevVIDYA;
       outIdx = 1;
       while( today <= endIdx ) {
-         tempReal = inReal[trailingIdx];
-         diff = tempReal - trailingValue;
-         trailingValue = tempReal;
-         trailingIdx += 1;
-         if( diff > 0.0 ) {
-            upSum -= diff;
-         } else if( diff < 0.0 ) {
-            downSum += diff;
-         }
          tempReal = inReal[today];
          diff = tempReal - prevValue;
          prevValue = tempReal;
-         if( diff > 0.0 ) {
-            upSum += diff;
-         } else if( diff < 0.0 ) {
-            downSum -= diff;
-         }
-         if( diff == 0.0 ) {
-            nullRun += 1;
-         } else {
-            nullRun = 0;
-         }
+         up = (diff + Math.abs(diff)) * 0.5;
+         upSum += up;
+         downSum += up - diff;
+         live = (Math.abs(diff) <= 0.0) ? 0 : 1;
+         nullRun = (nullRun + 1) & (live - 1);
          if( nullRun >= optInCMOPeriod ) {
             nullRun = optInCMOPeriod;
             upSum = 0.0;
             downSum = 0.0;
-         }
-         sum = upSum + downSum;
-         if( sum > 0.0 ) {
-            k = alpha * (Math.abs(100.0 * (upSum - downSum) / sum) / 100.0);
-         } else {
             k = 0.0;
+         } else {
+            sum = upSum + downSum;
+            if( sum > 0.0 ) {
+               k = alpha * (Math.abs(100.0 * (upSum - downSum) / sum) / 100.0);
+            } else {
+               k = 0.0;
+            }
          }
          prevVIDYA = Math.fma(prevValue - prevVIDYA, k, prevVIDYA);
          outReal[outIdx++] = prevVIDYA;
+         tempReal = inReal[trailingIdx];
+         diff = tempReal - trailingValue;
+         trailingValue = tempReal;
+         trailingIdx += 1;
+         up = (diff + Math.abs(diff)) * 0.5;
+         upSum -= up;
+         downSum -= up - diff;
          today += 1;
       }
       outBegIdx.value = startIdx;
@@ -278,10 +276,12 @@
       int lookbackTotal = 0;
       int i = 0;
       int nullRun = 0;
+      int live = 0;
       double upSum = 0;
       double downSum = 0;
       double sum = 0;
       double diff = 0;
+      double up = 0;
       double tempReal = 0;
       double prevValue = 0;
       double trailingValue = 0;
@@ -344,16 +344,11 @@
          tempReal = (double)inReal[today];
          diff = tempReal - prevValue;
          prevValue = tempReal;
-         if( diff > 0.0 ) {
-            upSum += diff;
-         } else if( diff < 0.0 ) {
-            downSum -= diff;
-         }
-         if( diff == 0.0 ) {
-            nullRun += 1;
-         } else {
-            nullRun = 0;
-         }
+         up = (diff + Math.abs(diff)) * 0.5;
+         upSum += up;
+         downSum += up - diff;
+         live = (Math.abs(diff) <= 0.0) ? 0 : 1;
+         nullRun = (nullRun + 1) & (live - 1);
          sum = upSum + downSum;
          if( sum > 0.0 ) {
             k = alpha * (Math.abs(100.0 * (upSum - downSum) / sum) / 100.0);
@@ -362,82 +357,79 @@
          }
          prevVIDYA = Math.fma(prevValue - prevVIDYA, k, prevVIDYA);
       }
+      tempReal = (double)inReal[trailingIdx];
+      diff = tempReal - trailingValue;
+      trailingValue = tempReal;
+      trailingIdx += 1;
+      up = (diff + Math.abs(diff)) * 0.5;
+      upSum -= up;
+      downSum -= up - diff;
       today += 1;
       while( today <= startIdx ) {
-         tempReal = (double)inReal[trailingIdx];
-         diff = tempReal - trailingValue;
-         trailingValue = tempReal;
-         trailingIdx += 1;
-         if( diff > 0.0 ) {
-            upSum -= diff;
-         } else if( diff < 0.0 ) {
-            downSum += diff;
-         }
          tempReal = (double)inReal[today];
          diff = tempReal - prevValue;
          prevValue = tempReal;
-         if( diff > 0.0 ) {
-            upSum += diff;
-         } else if( diff < 0.0 ) {
-            downSum -= diff;
-         }
-         if( diff == 0.0 ) {
-            nullRun += 1;
-         } else {
-            nullRun = 0;
-         }
+         up = (diff + Math.abs(diff)) * 0.5;
+         upSum += up;
+         downSum += up - diff;
+         live = (Math.abs(diff) <= 0.0) ? 0 : 1;
+         nullRun = (nullRun + 1) & (live - 1);
          if( nullRun >= optInCMOPeriod ) {
             nullRun = optInCMOPeriod;
             upSum = 0.0;
             downSum = 0.0;
-         }
-         sum = upSum + downSum;
-         if( sum > 0.0 ) {
-            k = alpha * (Math.abs(100.0 * (upSum - downSum) / sum) / 100.0);
-         } else {
             k = 0.0;
+         } else {
+            sum = upSum + downSum;
+            if( sum > 0.0 ) {
+               k = alpha * (Math.abs(100.0 * (upSum - downSum) / sum) / 100.0);
+            } else {
+               k = 0.0;
+            }
          }
          prevVIDYA = Math.fma(prevValue - prevVIDYA, k, prevVIDYA);
+         tempReal = (double)inReal[trailingIdx];
+         diff = tempReal - trailingValue;
+         trailingValue = tempReal;
+         trailingIdx += 1;
+         up = (diff + Math.abs(diff)) * 0.5;
+         upSum -= up;
+         downSum -= up - diff;
          today += 1;
       }
       outReal[0] = prevVIDYA;
       outIdx = 1;
       while( today <= endIdx ) {
-         tempReal = (double)inReal[trailingIdx];
-         diff = tempReal - trailingValue;
-         trailingValue = tempReal;
-         trailingIdx += 1;
-         if( diff > 0.0 ) {
-            upSum -= diff;
-         } else if( diff < 0.0 ) {
-            downSum += diff;
-         }
          tempReal = (double)inReal[today];
          diff = tempReal - prevValue;
          prevValue = tempReal;
-         if( diff > 0.0 ) {
-            upSum += diff;
-         } else if( diff < 0.0 ) {
-            downSum -= diff;
-         }
-         if( diff == 0.0 ) {
-            nullRun += 1;
-         } else {
-            nullRun = 0;
-         }
+         up = (diff + Math.abs(diff)) * 0.5;
+         upSum += up;
+         downSum += up - diff;
+         live = (Math.abs(diff) <= 0.0) ? 0 : 1;
+         nullRun = (nullRun + 1) & (live - 1);
          if( nullRun >= optInCMOPeriod ) {
             nullRun = optInCMOPeriod;
             upSum = 0.0;
             downSum = 0.0;
-         }
-         sum = upSum + downSum;
-         if( sum > 0.0 ) {
-            k = alpha * (Math.abs(100.0 * (upSum - downSum) / sum) / 100.0);
-         } else {
             k = 0.0;
+         } else {
+            sum = upSum + downSum;
+            if( sum > 0.0 ) {
+               k = alpha * (Math.abs(100.0 * (upSum - downSum) / sum) / 100.0);
+            } else {
+               k = 0.0;
+            }
          }
          prevVIDYA = Math.fma(prevValue - prevVIDYA, k, prevVIDYA);
          outReal[outIdx++] = prevVIDYA;
+         tempReal = (double)inReal[trailingIdx];
+         diff = tempReal - trailingValue;
+         trailingValue = tempReal;
+         trailingIdx += 1;
+         up = (diff + Math.abs(diff)) * 0.5;
+         upSum -= up;
+         downSum -= up - diff;
          today += 1;
       }
       outBegIdx.value = startIdx;
@@ -718,8 +710,10 @@
          if( !Double.isFinite(inReal) )
             throw nonFiniteBar("VIDYA peek", "inReal");
          VidyaStream sp = this;
+         int live = 0;
          double sum = 0.0;
          double diff = 0.0;
+         double up = 0.0;
          double tempReal = 0.0;
          double k = 0.0;
          double cur_outReal = 0.0;
@@ -727,43 +721,31 @@
          int nullRun = sp.nullRun;
          double prevVIDYA = sp.prevVIDYA;
          double prevValue = sp.prevValue;
-         double trailingValue = sp.trailingValue;
          double upSum = sp.upSum;
          if( sp.optInTimePeriod == 1 ) {
             cur_outReal = inReal;
             return cur_outReal ;
          }
-         tempReal = sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx];
-         diff = tempReal - trailingValue;
-         trailingValue = tempReal;
-         if( diff > 0.0 ) {
-            upSum -= diff;
-         } else if( diff < 0.0 ) {
-            downSum += diff;
-         }
          tempReal = inReal;
          diff = tempReal - prevValue;
          prevValue = tempReal;
-         if( diff > 0.0 ) {
-            upSum += diff;
-         } else if( diff < 0.0 ) {
-            downSum -= diff;
-         }
-         if( diff == 0.0 ) {
-            nullRun += 1;
-         } else {
-            nullRun = 0;
-         }
+         up = (diff + Math.abs(diff)) * 0.5;
+         upSum += up;
+         downSum += up - diff;
+         live = (Math.abs(diff) <= 0.0) ? 0 : 1;
+         nullRun = (nullRun + 1) & (live - 1);
          if( nullRun >= sp.optInCMOPeriod ) {
             nullRun = sp.optInCMOPeriod;
             upSum = 0.0;
             downSum = 0.0;
-         }
-         sum = upSum + downSum;
-         if( sum > 0.0 ) {
-            k = sp.alpha * (Math.abs(100.0 * (upSum - downSum) / sum) / 100.0);
-         } else {
             k = 0.0;
+         } else {
+            sum = upSum + downSum;
+            if( sum > 0.0 ) {
+               k = sp.alpha * (Math.abs(100.0 * (upSum - downSum) / sum) / 100.0);
+            } else {
+               k = 0.0;
+            }
          }
          prevVIDYA = Math.fma(prevValue - prevVIDYA, k, prevVIDYA);
          cur_outReal = prevVIDYA;
@@ -798,8 +780,10 @@
    }
    private void vidyaStepImpl( VidyaStream sp, double inReal )
    {
+      int live = 0;
       double sum = 0.0;
       double diff = 0.0;
+      double up = 0.0;
       double tempReal = 0.0;
       double k = 0.0;
       int ringCapL_trailingIdx = 0;
@@ -807,40 +791,35 @@
          sp.cur_outReal = inReal;
          return ;
       }
-      tempReal = sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx];
-      diff = tempReal - sp.trailingValue;
-      sp.trailingValue = tempReal;
-      if( diff > 0.0 ) {
-         sp.upSum -= diff;
-      } else if( diff < 0.0 ) {
-         sp.downSum += diff;
-      }
       tempReal = inReal;
       diff = tempReal - sp.prevValue;
       sp.prevValue = tempReal;
-      if( diff > 0.0 ) {
-         sp.upSum += diff;
-      } else if( diff < 0.0 ) {
-         sp.downSum -= diff;
-      }
-      if( diff == 0.0 ) {
-         sp.nullRun += 1;
-      } else {
-         sp.nullRun = 0;
-      }
+      up = (diff + Math.abs(diff)) * 0.5;
+      sp.upSum += up;
+      sp.downSum += up - diff;
+      live = (Math.abs(diff) <= 0.0) ? 0 : 1;
+      sp.nullRun = (sp.nullRun + 1) & (live - 1);
       if( sp.nullRun >= sp.optInCMOPeriod ) {
          sp.nullRun = sp.optInCMOPeriod;
          sp.upSum = 0.0;
          sp.downSum = 0.0;
-      }
-      sum = sp.upSum + sp.downSum;
-      if( sum > 0.0 ) {
-         k = sp.alpha * (Math.abs(100.0 * (sp.upSum - sp.downSum) / sum) / 100.0);
-      } else {
          k = 0.0;
+      } else {
+         sum = sp.upSum + sp.downSum;
+         if( sum > 0.0 ) {
+            k = sp.alpha * (Math.abs(100.0 * (sp.upSum - sp.downSum) / sum) / 100.0);
+         } else {
+            k = 0.0;
+         }
       }
       sp.prevVIDYA = Math.fma(sp.prevValue - sp.prevVIDYA, k, sp.prevVIDYA);
       sp.cur_outReal = sp.prevVIDYA;
+      tempReal = sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx];
+      diff = tempReal - sp.trailingValue;
+      sp.trailingValue = tempReal;
+      up = (diff + Math.abs(diff)) * 0.5;
+      sp.upSum -= up;
+      sp.downSum -= up - diff;
       ringCapL_trailingIdx = sp.ringCap_trailingIdx;
       sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx] = inReal;
       sp.ringPos_trailingIdx = sp.ringPos_trailingIdx + 1;
@@ -856,10 +835,12 @@
       int lookbackTotal = 0;
       int i = 0;
       int nullRun = 0;
+      int live = 0;
       double upSum = 0;
       double downSum = 0;
       double sum = 0;
       double diff = 0;
+      double up = 0;
       double tempReal = 0;
       double prevValue = 0;
       double trailingValue = 0;
@@ -948,16 +929,11 @@
          tempReal = inReal[today];
          diff = tempReal - prevValue;
          prevValue = tempReal;
-         if( diff > 0.0 ) {
-            upSum += diff;
-         } else if( diff < 0.0 ) {
-            downSum -= diff;
-         }
-         if( diff == 0.0 ) {
-            nullRun += 1;
-         } else {
-            nullRun = 0;
-         }
+         up = (diff + Math.abs(diff)) * 0.5;
+         upSum += up;
+         downSum += up - diff;
+         live = (Math.abs(diff) <= 0.0) ? 0 : 1;
+         nullRun = (nullRun + 1) & (live - 1);
          sum = upSum + downSum;
          if( sum > 0.0 ) {
             k = alpha * (Math.abs(100.0 * (upSum - downSum) / sum) / 100.0);
@@ -966,83 +942,83 @@
          }
          prevVIDYA = Math.fma(prevValue - prevVIDYA, k, prevVIDYA);
       }
+      /* Each bar below drops the change that leaves the window after its own
+       * update, ready for the next bar, as in TA_CMOU.
+       */
+      tempReal = inReal[trailingIdx];
+      diff = tempReal - trailingValue;
+      trailingValue = tempReal;
+      trailingIdx += 1;
+      up = (diff + Math.abs(diff)) * 0.5;
+      upSum -= up;
+      downSum -= up - diff;
       today += 1;
       /* Skip the unstable period: the whole computation, nothing written. */
       while( today <= startIdx ) {
-         tempReal = inReal[trailingIdx];
-         diff = tempReal - trailingValue;
-         trailingValue = tempReal;
-         trailingIdx += 1;
-         if( diff > 0.0 ) {
-            upSum -= diff;
-         } else if( diff < 0.0 ) {
-            downSum += diff;
-         }
          tempReal = inReal[today];
          diff = tempReal - prevValue;
          prevValue = tempReal;
-         if( diff > 0.0 ) {
-            upSum += diff;
-         } else if( diff < 0.0 ) {
-            downSum -= diff;
-         }
-         if( diff == 0.0 ) {
-            nullRun += 1;
-         } else {
-            nullRun = 0;
-         }
+         up = (diff + Math.abs(diff)) * 0.5;
+         upSum += up;
+         downSum += up - diff;
+         live = (Math.abs(diff) <= 0.0) ? 0 : 1;
+         nullRun = (nullRun + 1) & (live - 1);
          if( nullRun >= optInCMOPeriod ) {
             nullRun = optInCMOPeriod;
             upSum = 0.0;
             downSum = 0.0;
-         }
-         sum = upSum + downSum;
-         if( sum > 0.0 ) {
-            k = alpha * (Math.abs(100.0 * (upSum - downSum) / sum) / 100.0);
-         } else {
             k = 0.0;
+         } else {
+            sum = upSum + downSum;
+            if( sum > 0.0 ) {
+               k = alpha * (Math.abs(100.0 * (upSum - downSum) / sum) / 100.0);
+            } else {
+               k = 0.0;
+            }
          }
          prevVIDYA = Math.fma(prevValue - prevVIDYA, k, prevVIDYA);
+         tempReal = inReal[trailingIdx];
+         diff = tempReal - trailingValue;
+         trailingValue = tempReal;
+         trailingIdx += 1;
+         up = (diff + Math.abs(diff)) * 0.5;
+         upSum -= up;
+         downSum -= up - diff;
          today += 1;
       }
       outReal[0 * outStride] = prevVIDYA;
       outIdx = 1;
       while( today <= endIdx ) {
-         tempReal = inReal[trailingIdx];
-         diff = tempReal - trailingValue;
-         trailingValue = tempReal;
-         trailingIdx += 1;
-         if( diff > 0.0 ) {
-            upSum -= diff;
-         } else if( diff < 0.0 ) {
-            downSum += diff;
-         }
          tempReal = inReal[today];
          diff = tempReal - prevValue;
          prevValue = tempReal;
-         if( diff > 0.0 ) {
-            upSum += diff;
-         } else if( diff < 0.0 ) {
-            downSum -= diff;
-         }
-         if( diff == 0.0 ) {
-            nullRun += 1;
-         } else {
-            nullRun = 0;
-         }
+         up = (diff + Math.abs(diff)) * 0.5;
+         upSum += up;
+         downSum += up - diff;
+         live = (Math.abs(diff) <= 0.0) ? 0 : 1;
+         nullRun = (nullRun + 1) & (live - 1);
          if( nullRun >= optInCMOPeriod ) {
             nullRun = optInCMOPeriod;
             upSum = 0.0;
             downSum = 0.0;
-         }
-         sum = upSum + downSum;
-         if( sum > 0.0 ) {
-            k = alpha * (Math.abs(100.0 * (upSum - downSum) / sum) / 100.0);
-         } else {
             k = 0.0;
+         } else {
+            sum = upSum + downSum;
+            if( sum > 0.0 ) {
+               k = alpha * (Math.abs(100.0 * (upSum - downSum) / sum) / 100.0);
+            } else {
+               k = 0.0;
+            }
          }
          prevVIDYA = Math.fma(prevValue - prevVIDYA, k, prevVIDYA);
          outReal[outIdx++ * outStride] = prevVIDYA;
+         tempReal = inReal[trailingIdx];
+         diff = tempReal - trailingValue;
+         trailingValue = tempReal;
+         trailingIdx += 1;
+         up = (diff + Math.abs(diff)) * 0.5;
+         upSum -= up;
+         downSum -= up - diff;
          today += 1;
       }
       outBegIdx.value = startIdx;
@@ -1148,51 +1124,50 @@
    }
    private double vidyaStepTape( VidyaStream sp, double[] tape, int tapeBase, int tapeMask, double inReal )
    {
+      int live = 0;
       double sum = 0.0;
       double diff = 0.0;
+      double up = 0.0;
       double tempReal = 0.0;
       double k = 0.0;
-      tempReal = tape[(tapeBase - sp.ringCap_trailingIdx) & tapeMask];
-      diff = tempReal - sp.trailingValue;
-      sp.trailingValue = tempReal;
-      if( diff > 0.0 ) {
-         sp.upSum -= diff;
-      } else if( diff < 0.0 ) {
-         sp.downSum += diff;
-      }
       tempReal = inReal;
       diff = tempReal - sp.prevValue;
       sp.prevValue = tempReal;
-      if( diff > 0.0 ) {
-         sp.upSum += diff;
-      } else if( diff < 0.0 ) {
-         sp.downSum -= diff;
-      }
-      if( diff == 0.0 ) {
-         sp.nullRun += 1;
-      } else {
-         sp.nullRun = 0;
-      }
+      up = (diff + Math.abs(diff)) * 0.5;
+      sp.upSum += up;
+      sp.downSum += up - diff;
+      live = (Math.abs(diff) <= 0.0) ? 0 : 1;
+      sp.nullRun = (sp.nullRun + 1) & (live - 1);
       if( sp.nullRun >= sp.optInCMOPeriod ) {
          sp.nullRun = sp.optInCMOPeriod;
          sp.upSum = 0.0;
          sp.downSum = 0.0;
-      }
-      sum = sp.upSum + sp.downSum;
-      if( sum > 0.0 ) {
-         k = sp.alpha * (Math.abs(100.0 * (sp.upSum - sp.downSum) / sum) / 100.0);
-      } else {
          k = 0.0;
+      } else {
+         sum = sp.upSum + sp.downSum;
+         if( sum > 0.0 ) {
+            k = sp.alpha * (Math.abs(100.0 * (sp.upSum - sp.downSum) / sum) / 100.0);
+         } else {
+            k = 0.0;
+         }
       }
       sp.prevVIDYA = Math.fma(sp.prevValue - sp.prevVIDYA, k, sp.prevVIDYA);
       sp.cur_outReal = sp.prevVIDYA;
+      tempReal = tape[(tapeBase - sp.ringCap_trailingIdx) & tapeMask];
+      diff = tempReal - sp.trailingValue;
+      sp.trailingValue = tempReal;
+      up = (diff + Math.abs(diff)) * 0.5;
+      sp.upSum -= up;
+      sp.downSum -= up - diff;
       sp.outRangeCount++;
       return sp.cur_outReal;
    }
    private double vidyaPeekTape( VidyaStream sp, double[] tape, int tapeBase, int tapeMask, double inReal )
    {
+      int live = 0;
       double sum = 0.0;
       double diff = 0.0;
+      double up = 0.0;
       double tempReal = 0.0;
       double k = 0.0;
       double cur_outReal = 0.0;
@@ -1200,39 +1175,27 @@
       int nullRun = sp.nullRun;
       double prevVIDYA = sp.prevVIDYA;
       double prevValue = sp.prevValue;
-      double trailingValue = sp.trailingValue;
       double upSum = sp.upSum;
-      tempReal = tape[(tapeBase - sp.ringCap_trailingIdx) & tapeMask];
-      diff = tempReal - trailingValue;
-      trailingValue = tempReal;
-      if( diff > 0.0 ) {
-         upSum -= diff;
-      } else if( diff < 0.0 ) {
-         downSum += diff;
-      }
       tempReal = inReal;
       diff = tempReal - prevValue;
       prevValue = tempReal;
-      if( diff > 0.0 ) {
-         upSum += diff;
-      } else if( diff < 0.0 ) {
-         downSum -= diff;
-      }
-      if( diff == 0.0 ) {
-         nullRun += 1;
-      } else {
-         nullRun = 0;
-      }
+      up = (diff + Math.abs(diff)) * 0.5;
+      upSum += up;
+      downSum += up - diff;
+      live = (Math.abs(diff) <= 0.0) ? 0 : 1;
+      nullRun = (nullRun + 1) & (live - 1);
       if( nullRun >= sp.optInCMOPeriod ) {
          nullRun = sp.optInCMOPeriod;
          upSum = 0.0;
          downSum = 0.0;
-      }
-      sum = upSum + downSum;
-      if( sum > 0.0 ) {
-         k = sp.alpha * (Math.abs(100.0 * (upSum - downSum) / sum) / 100.0);
-      } else {
          k = 0.0;
+      } else {
+         sum = upSum + downSum;
+         if( sum > 0.0 ) {
+            k = sp.alpha * (Math.abs(100.0 * (upSum - downSum) / sum) / 100.0);
+         } else {
+            k = 0.0;
+         }
       }
       prevVIDYA = Math.fma(prevValue - prevVIDYA, k, prevVIDYA);
       cur_outReal = prevVIDYA;

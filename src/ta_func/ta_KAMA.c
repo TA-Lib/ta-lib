@@ -70,6 +70,7 @@
  *  090626 MF,CC  Fix #390. Clamp the efficiency ratio to 1. A drifted sumROC1
  *                let it exceed its own mathematical maximum, and the squared
  *                smoothing constant then amplified instead of averaging.
+ *  102326 MF,CC  #554 branch-free zero run, rare reset.
  */
 
 TA_NOINLINE TA_LIB_API int TA_KAMA_Lookback( int optInTimePeriod )
@@ -118,6 +119,7 @@ TA_LIB_API TA_RetCode TA_KAMA( int    startIdx,
    int lookbackTotal;
    int trailingIdx;
    int nullRun;
+   int live;
    double trailingValue;
 
    if( (startIdx < 0) || (startIdx > TA_INDEX_MAX) )
@@ -204,13 +206,8 @@ TA_LIB_API TA_RetCode TA_KAMA( int    startIdx,
       tempReal = inReal[today++];
       tempReal -= inReal[today];
       sumROC1 += fabs(tempReal);
-      if( tempReal == 0.0 )
-      {
-         nullRun += 1;
-      } else 
-      {
-         nullRun = 0;
-      }
+      live = (fabs(tempReal) <= 0.0) ? 0 : 1;
+      nullRun = (nullRun + 1) & (live - 1);
    }
    /* At this point sumROC1 represent the
     * summation of the 1-day price difference
@@ -273,29 +270,18 @@ TA_LIB_API TA_RetCode TA_KAMA( int    startIdx,
       sumROC1 -= fabs(trailingValue - tempReal2);
       sumROC1 += fabs(tempReal - inReal[today - 1]);
       /* Once a whole window of flat bars has gone by, every 1-day change it
-       * spans is exactly zero, so the sum is known to be exactly zero and the
-       * residue can be dropped. That is what lets the efficiency ratio be
-       * decided by `sumROC1 <= periodROC` alone: a window that flat has
-       * periodROC == 0 too, so the test is 0 <= 0 and the ratio is 1.
+       * spans is exactly zero, so the sum is known to be exactly zero, the
+       * residue can be dropped, and the efficiency ratio is 1.
        */
-      if( tempReal - inReal[today - 1] == 0.0 )
-      {
-         nullRun += 1;
-      } else 
-      {
-         nullRun = 0;
-      }
-      if( nullRun >= optInTimePeriod )
+      live = (fabs(tempReal - inReal[today - 1]) <= 0.0) ? 0 : 1;
+      nullRun = (nullRun + 1) & (live - 1);
+      if( TA_UNLIKELY(nullRun >= optInTimePeriod) )
       {
          nullRun = optInTimePeriod;
          sumROC1 = 0.0;
-      }
-      /* Save the trailing value. Do this because inReal
-       * and outReal can be pointers to the same buffer.
-       */
-      trailingValue = tempReal2;
-      /* Calculate the efficiency ratio */
-      if( sumROC1 <= 0.0 || sumROC1 <= periodROC )
+         tempReal = 1.0;
+      } else if( sumROC1 <= 0.0 ||
+          sumROC1 <= periodROC ) /* Calculate the efficiency ratio */
       {
          tempReal = 1.0;
       } else 
@@ -306,6 +292,10 @@ TA_LIB_API TA_RetCode TA_KAMA( int    startIdx,
             tempReal = 1.0;
          }
       }
+      /* Save the trailing value. Do this because inReal
+       * and outReal can be pointers to the same buffer.
+       */
+      trailingValue = tempReal2;
       /* Calculate the smoothing constant */
       tempReal = fma(tempReal, constDiff, constMax);
       tempReal *= tempReal;
@@ -331,29 +321,18 @@ TA_LIB_API TA_RetCode TA_KAMA( int    startIdx,
       sumROC1 -= fabs(trailingValue - tempReal2);
       sumROC1 += fabs(tempReal - inReal[today - 1]);
       /* Once a whole window of flat bars has gone by, every 1-day change it
-       * spans is exactly zero, so the sum is known to be exactly zero and the
-       * residue can be dropped. That is what lets the efficiency ratio be
-       * decided by `sumROC1 <= periodROC` alone: a window that flat has
-       * periodROC == 0 too, so the test is 0 <= 0 and the ratio is 1.
+       * spans is exactly zero, so the sum is known to be exactly zero, the
+       * residue can be dropped, and the efficiency ratio is 1.
        */
-      if( tempReal - inReal[today - 1] == 0.0 )
-      {
-         nullRun += 1;
-      } else 
-      {
-         nullRun = 0;
-      }
-      if( nullRun >= optInTimePeriod )
+      live = (fabs(tempReal - inReal[today - 1]) <= 0.0) ? 0 : 1;
+      nullRun = (nullRun + 1) & (live - 1);
+      if( TA_UNLIKELY(nullRun >= optInTimePeriod) )
       {
          nullRun = optInTimePeriod;
          sumROC1 = 0.0;
-      }
-      /* Save the trailing value. Do this because inReal
-       * and outReal can be pointers to the same buffer.
-       */
-      trailingValue = tempReal2;
-      /* Calculate the efficiency ratio */
-      if( sumROC1 <= 0.0 || sumROC1 <= periodROC )
+         tempReal = 1.0;
+      } else if( sumROC1 <= 0.0 ||
+          sumROC1 <= periodROC ) /* Calculate the efficiency ratio */
       {
          tempReal = 1.0;
       } else 
@@ -364,6 +343,10 @@ TA_LIB_API TA_RetCode TA_KAMA( int    startIdx,
             tempReal = 1.0;
          }
       }
+      /* Save the trailing value. Do this because inReal
+       * and outReal can be pointers to the same buffer.
+       */
+      trailingValue = tempReal2;
       /* Calculate the smoothing constant */
       tempReal = fma(tempReal, constDiff, constMax);
       tempReal *= tempReal;
@@ -399,6 +382,7 @@ TA_RetCode TA_S_KAMA( int    startIdx,
    int lookbackTotal;
    int trailingIdx;
    int nullRun;
+   int live;
    double trailingValue;
 
    if( (startIdx < 0) || (startIdx > TA_INDEX_MAX) )
@@ -463,13 +447,8 @@ TA_RetCode TA_S_KAMA( int    startIdx,
       tempReal = (double)inReal[today++];
       tempReal -= (double)inReal[today];
       sumROC1 += fabs(tempReal);
-      if( tempReal == 0.0 )
-      {
-         nullRun += 1;
-      } else 
-      {
-         nullRun = 0;
-      }
+      live = (fabs(tempReal) <= 0.0) ? 0 : 1;
+      nullRun = (nullRun + 1) & (live - 1);
    }
    prevKAMA = (double)inReal[today - 1];
    tempReal = (double)inReal[today];
@@ -497,20 +476,14 @@ TA_RetCode TA_S_KAMA( int    startIdx,
       periodROC = tempReal - tempReal2;
       sumROC1 -= fabs(trailingValue - tempReal2);
       sumROC1 += fabs(tempReal - (double)inReal[today - 1]);
-      if( tempReal - (double)inReal[today - 1] == 0.0 )
-      {
-         nullRun += 1;
-      } else 
-      {
-         nullRun = 0;
-      }
-      if( nullRun >= optInTimePeriod )
+      live = (fabs(tempReal - (double)inReal[today - 1]) <= 0.0) ? 0 : 1;
+      nullRun = (nullRun + 1) & (live - 1);
+      if( TA_UNLIKELY(nullRun >= optInTimePeriod) )
       {
          nullRun = optInTimePeriod;
          sumROC1 = 0.0;
-      }
-      trailingValue = tempReal2;
-      if( sumROC1 <= 0.0 || sumROC1 <= periodROC )
+         tempReal = 1.0;
+      } else if( sumROC1 <= 0.0 || sumROC1 <= periodROC )
       {
          tempReal = 1.0;
       } else 
@@ -521,6 +494,7 @@ TA_RetCode TA_S_KAMA( int    startIdx,
             tempReal = 1.0;
          }
       }
+      trailingValue = tempReal2;
       tempReal = fma(tempReal, constDiff, constMax);
       tempReal *= tempReal;
       prevKAMA = fma((double)inReal[today++] - prevKAMA, tempReal, prevKAMA);
@@ -535,20 +509,14 @@ TA_RetCode TA_S_KAMA( int    startIdx,
       periodROC = tempReal - tempReal2;
       sumROC1 -= fabs(trailingValue - tempReal2);
       sumROC1 += fabs(tempReal - (double)inReal[today - 1]);
-      if( tempReal - (double)inReal[today - 1] == 0.0 )
-      {
-         nullRun += 1;
-      } else 
-      {
-         nullRun = 0;
-      }
-      if( nullRun >= optInTimePeriod )
+      live = (fabs(tempReal - (double)inReal[today - 1]) <= 0.0) ? 0 : 1;
+      nullRun = (nullRun + 1) & (live - 1);
+      if( TA_UNLIKELY(nullRun >= optInTimePeriod) )
       {
          nullRun = optInTimePeriod;
          sumROC1 = 0.0;
-      }
-      trailingValue = tempReal2;
-      if( sumROC1 <= 0.0 || sumROC1 <= periodROC )
+         tempReal = 1.0;
+      } else if( sumROC1 <= 0.0 || sumROC1 <= periodROC )
       {
          tempReal = 1.0;
       } else 
@@ -559,6 +527,7 @@ TA_RetCode TA_S_KAMA( int    startIdx,
             tempReal = 1.0;
          }
       }
+      trailingValue = tempReal2;
       tempReal = fma(tempReal, constDiff, constMax);
       tempReal *= tempReal;
       prevKAMA = fma((double)inReal[today++] - prevKAMA, tempReal, prevKAMA);
@@ -604,6 +573,7 @@ static TA_FMA_STEP_INLINE void TA_KAMA_StepImpl( struct TA_KAMA_Stream *sp, doub
    double tempReal;
    double tempReal2;
    double periodROC;
+   int live;
    int ringCapL_trailingIdx;
 
    if( sp->optInTimePeriod == 1 )
@@ -622,29 +592,18 @@ static TA_FMA_STEP_INLINE void TA_KAMA_StepImpl( struct TA_KAMA_Stream *sp, doub
    sp->sumROC1 -= fabs(sp->trailingValue - tempReal2);
    sp->sumROC1 += fabs(tempReal - sp->lag1_inReal);
    /* Once a whole window of flat bars has gone by, every 1-day change it
-    * spans is exactly zero, so the sum is known to be exactly zero and the
-    * residue can be dropped. That is what lets the efficiency ratio be
-    * decided by `sumROC1 <= periodROC` alone: a window that flat has
-    * periodROC == 0 too, so the test is 0 <= 0 and the ratio is 1.
+    * spans is exactly zero, so the sum is known to be exactly zero, the
+    * residue can be dropped, and the efficiency ratio is 1.
     */
-   if( tempReal - sp->lag1_inReal == 0.0 )
-   {
-      sp->nullRun += 1;
-   } else 
-   {
-      sp->nullRun = 0;
-   }
-   if( sp->nullRun >= sp->optInTimePeriod )
+   live = (fabs(tempReal - sp->lag1_inReal) <= 0.0) ? 0 : 1;
+   sp->nullRun = (sp->nullRun + 1) & (live - 1);
+   if( TA_UNLIKELY(sp->nullRun >= sp->optInTimePeriod) )
    {
       sp->nullRun = sp->optInTimePeriod;
       sp->sumROC1 = 0.0;
-   }
-   /* Save the trailing value. Do this because inReal
-    * and outReal can be pointers to the same buffer.
-    */
-   sp->trailingValue = tempReal2;
-   /* Calculate the efficiency ratio */
-   if( sp->sumROC1 <= 0.0 || sp->sumROC1 <= periodROC )
+      tempReal = 1.0;
+   } else if( sp->sumROC1 <= 0.0 ||
+       sp->sumROC1 <= periodROC ) /* Calculate the efficiency ratio */
    {
       tempReal = 1.0;
    } else 
@@ -655,6 +614,10 @@ static TA_FMA_STEP_INLINE void TA_KAMA_StepImpl( struct TA_KAMA_Stream *sp, doub
          tempReal = 1.0;
       }
    }
+   /* Save the trailing value. Do this because inReal
+    * and outReal can be pointers to the same buffer.
+    */
+   sp->trailingValue = tempReal2;
    /* Calculate the smoothing constant */
    tempReal = fma(tempReal, sp->constDiff, sp->constMax);
    tempReal *= tempReal;
@@ -755,6 +718,7 @@ static TA_FMA_STEP_INLINE TA_RetCode TA_KAMA_OpenImpl( struct TA_KAMA_Stream **s
       int lookbackTotal;
       int trailingIdx;
       int nullRun = 0;
+      int live;
       double trailingValue = 0.0;
       /* Default return values */
       *outBegIdx= 0;
@@ -797,13 +761,8 @@ static TA_FMA_STEP_INLINE TA_RetCode TA_KAMA_OpenImpl( struct TA_KAMA_Stream **s
          tempReal = inReal[today++];
          tempReal -= inReal[today];
          sumROC1 += fabs(tempReal);
-         if( tempReal == 0.0 )
-         {
-            nullRun += 1;
-         } else 
-         {
-            nullRun = 0;
-         }
+         live = (fabs(tempReal) <= 0.0) ? 0 : 1;
+         nullRun = (nullRun + 1) & (live - 1);
       }
       /* At this point sumROC1 represent the
        * summation of the 1-day price difference
@@ -866,29 +825,18 @@ static TA_FMA_STEP_INLINE TA_RetCode TA_KAMA_OpenImpl( struct TA_KAMA_Stream **s
          sumROC1 -= fabs(trailingValue - tempReal2);
          sumROC1 += fabs(tempReal - inReal[today - 1]);
          /* Once a whole window of flat bars has gone by, every 1-day change it
-          * spans is exactly zero, so the sum is known to be exactly zero and the
-          * residue can be dropped. That is what lets the efficiency ratio be
-          * decided by `sumROC1 <= periodROC` alone: a window that flat has
-          * periodROC == 0 too, so the test is 0 <= 0 and the ratio is 1.
+          * spans is exactly zero, so the sum is known to be exactly zero, the
+          * residue can be dropped, and the efficiency ratio is 1.
           */
-         if( tempReal - inReal[today - 1] == 0.0 )
-         {
-            nullRun += 1;
-         } else 
-         {
-            nullRun = 0;
-         }
-         if( nullRun >= optInTimePeriod )
+         live = (fabs(tempReal - inReal[today - 1]) <= 0.0) ? 0 : 1;
+         nullRun = (nullRun + 1) & (live - 1);
+         if( TA_UNLIKELY(nullRun >= optInTimePeriod) )
          {
             nullRun = optInTimePeriod;
             sumROC1 = 0.0;
-         }
-         /* Save the trailing value. Do this because inReal
-          * and outReal can be pointers to the same buffer.
-          */
-         trailingValue = tempReal2;
-         /* Calculate the efficiency ratio */
-         if( sumROC1 <= 0.0 || sumROC1 <= periodROC )
+            tempReal = 1.0;
+         } else if( sumROC1 <= 0.0 ||
+             sumROC1 <= periodROC ) /* Calculate the efficiency ratio */
          {
             tempReal = 1.0;
          } else 
@@ -899,6 +847,10 @@ static TA_FMA_STEP_INLINE TA_RetCode TA_KAMA_OpenImpl( struct TA_KAMA_Stream **s
                tempReal = 1.0;
             }
          }
+         /* Save the trailing value. Do this because inReal
+          * and outReal can be pointers to the same buffer.
+          */
+         trailingValue = tempReal2;
          /* Calculate the smoothing constant */
          tempReal = fma(tempReal, constDiff, constMax);
          tempReal *= tempReal;
@@ -924,29 +876,18 @@ static TA_FMA_STEP_INLINE TA_RetCode TA_KAMA_OpenImpl( struct TA_KAMA_Stream **s
          sumROC1 -= fabs(trailingValue - tempReal2);
          sumROC1 += fabs(tempReal - inReal[today - 1]);
          /* Once a whole window of flat bars has gone by, every 1-day change it
-          * spans is exactly zero, so the sum is known to be exactly zero and the
-          * residue can be dropped. That is what lets the efficiency ratio be
-          * decided by `sumROC1 <= periodROC` alone: a window that flat has
-          * periodROC == 0 too, so the test is 0 <= 0 and the ratio is 1.
+          * spans is exactly zero, so the sum is known to be exactly zero, the
+          * residue can be dropped, and the efficiency ratio is 1.
           */
-         if( tempReal - inReal[today - 1] == 0.0 )
-         {
-            nullRun += 1;
-         } else 
-         {
-            nullRun = 0;
-         }
-         if( nullRun >= optInTimePeriod )
+         live = (fabs(tempReal - inReal[today - 1]) <= 0.0) ? 0 : 1;
+         nullRun = (nullRun + 1) & (live - 1);
+         if( TA_UNLIKELY(nullRun >= optInTimePeriod) )
          {
             nullRun = optInTimePeriod;
             sumROC1 = 0.0;
-         }
-         /* Save the trailing value. Do this because inReal
-          * and outReal can be pointers to the same buffer.
-          */
-         trailingValue = tempReal2;
-         /* Calculate the efficiency ratio */
-         if( sumROC1 <= 0.0 || sumROC1 <= periodROC )
+            tempReal = 1.0;
+         } else if( sumROC1 <= 0.0 ||
+             sumROC1 <= periodROC ) /* Calculate the efficiency ratio */
          {
             tempReal = 1.0;
          } else 
@@ -957,6 +898,10 @@ static TA_FMA_STEP_INLINE TA_RetCode TA_KAMA_OpenImpl( struct TA_KAMA_Stream **s
                tempReal = 1.0;
             }
          }
+         /* Save the trailing value. Do this because inReal
+          * and outReal can be pointers to the same buffer.
+          */
+         trailingValue = tempReal2;
          /* Calculate the smoothing constant */
          tempReal = fma(tempReal, constDiff, constMax);
          tempReal *= tempReal;
@@ -1082,6 +1027,7 @@ TA_LIB_API TA_RetCode TA_KAMA_Peek( const TA_KAMA_Stream *stream, double inReal,
    double tempReal;
    double tempReal2;
    double periodROC;
+   int live;
    int nullRun;
    double prevKAMA;
    double sumROC1;
@@ -1110,29 +1056,18 @@ TA_LIB_API TA_RetCode TA_KAMA_Peek( const TA_KAMA_Stream *stream, double inReal,
    sumROC1 -= fabs(trailingValue - tempReal2);
    sumROC1 += fabs(tempReal - sp->lag1_inReal);
    /* Once a whole window of flat bars has gone by, every 1-day change it
-    * spans is exactly zero, so the sum is known to be exactly zero and the
-    * residue can be dropped. That is what lets the efficiency ratio be
-    * decided by `sumROC1 <= periodROC` alone: a window that flat has
-    * periodROC == 0 too, so the test is 0 <= 0 and the ratio is 1.
+    * spans is exactly zero, so the sum is known to be exactly zero, the
+    * residue can be dropped, and the efficiency ratio is 1.
     */
-   if( tempReal - sp->lag1_inReal == 0.0 )
-   {
-      nullRun += 1;
-   } else 
-   {
-      nullRun = 0;
-   }
-   if( nullRun >= sp->optInTimePeriod )
+   live = (fabs(tempReal - sp->lag1_inReal) <= 0.0) ? 0 : 1;
+   nullRun = (nullRun + 1) & (live - 1);
+   if( TA_UNLIKELY(nullRun >= sp->optInTimePeriod) )
    {
       nullRun = sp->optInTimePeriod;
       sumROC1 = 0.0;
-   }
-   /* Save the trailing value. Do this because inReal
-    * and outReal can be pointers to the same buffer.
-    */
-   trailingValue = tempReal2;
-   /* Calculate the efficiency ratio */
-   if( sumROC1 <= 0.0 || sumROC1 <= periodROC )
+      tempReal = 1.0;
+   } else if( sumROC1 <= 0.0 ||
+       sumROC1 <= periodROC ) /* Calculate the efficiency ratio */
    {
       tempReal = 1.0;
    } else 
@@ -1143,6 +1078,10 @@ TA_LIB_API TA_RetCode TA_KAMA_Peek( const TA_KAMA_Stream *stream, double inReal,
          tempReal = 1.0;
       }
    }
+   /* Save the trailing value. Do this because inReal
+    * and outReal can be pointers to the same buffer.
+    */
+   trailingValue = tempReal2;
    /* Calculate the smoothing constant */
    tempReal = fma(tempReal, sp->constDiff, sp->constMax);
    tempReal *= tempReal;
@@ -1166,6 +1105,7 @@ void TA_KAMA_StepTape( struct TA_KAMA_Stream *sp, const double tape[], int tapeB
    double tempReal;
    double tempReal2;
    double periodROC;
+   int live;
 
    tempReal = inReal;
    tempReal2 = tape[(tapeBase - sp->ringCap_trailingIdx) & tapeMask];
@@ -1177,29 +1117,18 @@ void TA_KAMA_StepTape( struct TA_KAMA_Stream *sp, const double tape[], int tapeB
    sp->sumROC1 -= fabs(sp->trailingValue - tempReal2);
    sp->sumROC1 += fabs(tempReal - sp->lag1_inReal);
    /* Once a whole window of flat bars has gone by, every 1-day change it
-    * spans is exactly zero, so the sum is known to be exactly zero and the
-    * residue can be dropped. That is what lets the efficiency ratio be
-    * decided by `sumROC1 <= periodROC` alone: a window that flat has
-    * periodROC == 0 too, so the test is 0 <= 0 and the ratio is 1.
+    * spans is exactly zero, so the sum is known to be exactly zero, the
+    * residue can be dropped, and the efficiency ratio is 1.
     */
-   if( tempReal - sp->lag1_inReal == 0.0 )
-   {
-      sp->nullRun += 1;
-   } else 
-   {
-      sp->nullRun = 0;
-   }
-   if( sp->nullRun >= sp->optInTimePeriod )
+   live = (fabs(tempReal - sp->lag1_inReal) <= 0.0) ? 0 : 1;
+   sp->nullRun = (sp->nullRun + 1) & (live - 1);
+   if( TA_UNLIKELY(sp->nullRun >= sp->optInTimePeriod) )
    {
       sp->nullRun = sp->optInTimePeriod;
       sp->sumROC1 = 0.0;
-   }
-   /* Save the trailing value. Do this because inReal
-    * and outReal can be pointers to the same buffer.
-    */
-   sp->trailingValue = tempReal2;
-   /* Calculate the efficiency ratio */
-   if( sp->sumROC1 <= 0.0 || sp->sumROC1 <= periodROC )
+      tempReal = 1.0;
+   } else if( sp->sumROC1 <= 0.0 ||
+       sp->sumROC1 <= periodROC ) /* Calculate the efficiency ratio */
    {
       tempReal = 1.0;
    } else 
@@ -1210,6 +1139,10 @@ void TA_KAMA_StepTape( struct TA_KAMA_Stream *sp, const double tape[], int tapeB
          tempReal = 1.0;
       }
    }
+   /* Save the trailing value. Do this because inReal
+    * and outReal can be pointers to the same buffer.
+    */
+   sp->trailingValue = tempReal2;
    /* Calculate the smoothing constant */
    tempReal = fma(tempReal, sp->constDiff, sp->constMax);
    tempReal *= tempReal;
@@ -1229,6 +1162,7 @@ void TA_KAMA_PeekTape( const struct TA_KAMA_Stream *sp, const double tape[], int
    double tempReal;
    double tempReal2;
    double periodROC;
+   int live;
    int nullRun;
    double prevKAMA;
    double sumROC1;
@@ -1248,29 +1182,18 @@ void TA_KAMA_PeekTape( const struct TA_KAMA_Stream *sp, const double tape[], int
    sumROC1 -= fabs(trailingValue - tempReal2);
    sumROC1 += fabs(tempReal - sp->lag1_inReal);
    /* Once a whole window of flat bars has gone by, every 1-day change it
-    * spans is exactly zero, so the sum is known to be exactly zero and the
-    * residue can be dropped. That is what lets the efficiency ratio be
-    * decided by `sumROC1 <= periodROC` alone: a window that flat has
-    * periodROC == 0 too, so the test is 0 <= 0 and the ratio is 1.
+    * spans is exactly zero, so the sum is known to be exactly zero, the
+    * residue can be dropped, and the efficiency ratio is 1.
     */
-   if( tempReal - sp->lag1_inReal == 0.0 )
-   {
-      nullRun += 1;
-   } else 
-   {
-      nullRun = 0;
-   }
-   if( nullRun >= sp->optInTimePeriod )
+   live = (fabs(tempReal - sp->lag1_inReal) <= 0.0) ? 0 : 1;
+   nullRun = (nullRun + 1) & (live - 1);
+   if( TA_UNLIKELY(nullRun >= sp->optInTimePeriod) )
    {
       nullRun = sp->optInTimePeriod;
       sumROC1 = 0.0;
-   }
-   /* Save the trailing value. Do this because inReal
-    * and outReal can be pointers to the same buffer.
-    */
-   trailingValue = tempReal2;
-   /* Calculate the efficiency ratio */
-   if( sumROC1 <= 0.0 || sumROC1 <= periodROC )
+      tempReal = 1.0;
+   } else if( sumROC1 <= 0.0 ||
+       sumROC1 <= periodROC ) /* Calculate the efficiency ratio */
    {
       tempReal = 1.0;
    } else 
@@ -1281,6 +1204,10 @@ void TA_KAMA_PeekTape( const struct TA_KAMA_Stream *sp, const double tape[], int
          tempReal = 1.0;
       }
    }
+   /* Save the trailing value. Do this because inReal
+    * and outReal can be pointers to the same buffer.
+    */
+   trailingValue = tempReal2;
    /* Calculate the smoothing constant */
    tempReal = fma(tempReal, sp->constDiff, sp->constMax);
    tempReal *= tempReal;

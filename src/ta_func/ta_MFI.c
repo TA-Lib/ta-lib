@@ -70,6 +70,7 @@
  *               testing the money-flow sum against a literal 1.0; classify
  *               branchlessly; clamp the emitted ratio into [0,100].
  *  092526 MF,CC #442. Allocate the money-flow ring only when there is output.
+ *  102326 MF,CC #554 rare reset.
  */
 
 TA_LIB_API int TA_MFI_Lookback( int optInTimePeriod )
@@ -213,15 +214,11 @@ TA_LIB_API TA_RetCode TA_MFI( int    startIdx,
        * price move is a coin flip, so that branch mispredicted on roughly
        * every other bar and dominated the cost of the function.  Adding the
        * unused side's 0.0 to a sum is an exact no-op, so this reproduces the
-       * branching form bit for bit.
-       *
-       * The three quantities are named rather than folded back into
-       * tempValue1/2 deliberately, at a known cost: every local in a step body
-       * becomes a field of the stream handle, so each name is another store
-       * per bar (~10% of MFI's streaming Update, +32 handle bytes).  That is
-       * the generator's to fix -- issue #252, which counts 436 such fields
-       * across 125 streaming functions -- not something to obfuscate an
-       * indicator body over.
+       * branching form bit for bit.  C# lowers them to branch-free masks, which
+       * an arithmetic split would lose; gcc 14 and Java's x86 JIT still compile
+       * them as a branch, and gcc 13 does too once the code after them
+       * changes, with no other symptom: time any edit of this loop with gcc 13
+       * and 14.
        */
       moneyFlow = TA_IS_ZERO_SCALED(tempValue2, tempValue3) ? 0.0 : tempValue1;
       posFlow = (tempValue2 < 0.0) ? 0.0 : moneyFlow;
@@ -236,7 +233,7 @@ TA_LIB_API TA_RetCode TA_MFI( int    startIdx,
        * be exactly zero and the residue can be dropped.
        */
       nullRun = (moneyFlow == 0.0) ? nullRun + 1 : 0;
-      if( nullRun >= optInTimePeriod )
+      if( TA_UNLIKELY(nullRun >= optInTimePeriod) )
       {
          nullRun = optInTimePeriod;
          posSumMF = 0.0;
@@ -294,7 +291,7 @@ TA_LIB_API TA_RetCode TA_MFI( int    startIdx,
       posSumMF += posFlow;
       negSumMF += negFlow;
       nullRun = (moneyFlow == 0.0) ? nullRun + 1 : 0;
-      if( nullRun >= optInTimePeriod )
+      if( TA_UNLIKELY(nullRun >= optInTimePeriod) )
       {
          nullRun = optInTimePeriod;
          posSumMF = 0.0;
@@ -429,7 +426,7 @@ TA_RetCode TA_S_MFI( int    startIdx,
       posSumMF += posFlow;
       negSumMF += negFlow;
       nullRun = (moneyFlow == 0.0) ? nullRun + 1 : 0;
-      if( nullRun >= optInTimePeriod )
+      if( TA_UNLIKELY(nullRun >= optInTimePeriod) )
       {
          nullRun = optInTimePeriod;
          posSumMF = 0.0;
@@ -464,7 +461,7 @@ TA_RetCode TA_S_MFI( int    startIdx,
       posSumMF += posFlow;
       negSumMF += negFlow;
       nullRun = (moneyFlow == 0.0) ? nullRun + 1 : 0;
-      if( nullRun >= optInTimePeriod )
+      if( TA_UNLIKELY(nullRun >= optInTimePeriod) )
       {
          nullRun = optInTimePeriod;
          posSumMF = 0.0;
@@ -551,7 +548,7 @@ static void TA_MFI_StepImpl( struct TA_MFI_Stream *sp, double inHigh, double inL
    posSumMF += posFlow;
    negSumMF += negFlow;
    sp->nullRun = (moneyFlow == 0.0) ? sp->nullRun + 1 : 0;
-   if( sp->nullRun >= sp->optInTimePeriod )
+   if( TA_UNLIKELY(sp->nullRun >= sp->optInTimePeriod) )
    {
       sp->nullRun = sp->optInTimePeriod;
       posSumMF = 0.0;
@@ -689,15 +686,11 @@ static TA_RetCode TA_MFI_OpenImpl( struct TA_MFI_Stream **stream, const double i
           * price move is a coin flip, so that branch mispredicted on roughly
           * every other bar and dominated the cost of the function.  Adding the
           * unused side's 0.0 to a sum is an exact no-op, so this reproduces the
-          * branching form bit for bit.
-          *
-          * The three quantities are named rather than folded back into
-          * tempValue1/2 deliberately, at a known cost: every local in a step body
-          * becomes a field of the stream handle, so each name is another store
-          * per bar (~10% of MFI's streaming Update, +32 handle bytes).  That is
-          * the generator's to fix -- issue #252, which counts 436 such fields
-          * across 125 streaming functions -- not something to obfuscate an
-          * indicator body over.
+          * branching form bit for bit.  C# lowers them to branch-free masks, which
+          * an arithmetic split would lose; gcc 14 and Java's x86 JIT still compile
+          * them as a branch, and gcc 13 does too once the code after them
+          * changes, with no other symptom: time any edit of this loop with gcc 13
+          * and 14.
           */
          moneyFlow = TA_IS_ZERO_SCALED(tempValue2, tempValue3) ? 0.0 : tempValue1;
          posFlow = (tempValue2 < 0.0) ? 0.0 : moneyFlow;
@@ -712,7 +705,7 @@ static TA_RetCode TA_MFI_OpenImpl( struct TA_MFI_Stream **stream, const double i
           * be exactly zero and the residue can be dropped.
           */
          nullRun = (moneyFlow == 0.0) ? nullRun + 1 : 0;
-         if( nullRun >= optInTimePeriod )
+         if( TA_UNLIKELY(nullRun >= optInTimePeriod) )
          {
             nullRun = optInTimePeriod;
             posSumMF = 0.0;
@@ -770,7 +763,7 @@ static TA_RetCode TA_MFI_OpenImpl( struct TA_MFI_Stream **stream, const double i
          posSumMF += posFlow;
          negSumMF += negFlow;
          nullRun = (moneyFlow == 0.0) ? nullRun + 1 : 0;
-         if( nullRun >= optInTimePeriod )
+         if( TA_UNLIKELY(nullRun >= optInTimePeriod) )
          {
             nullRun = optInTimePeriod;
             posSumMF = 0.0;
@@ -914,7 +907,7 @@ TA_LIB_API TA_RetCode TA_MFI_Peek( const TA_MFI_Stream *stream, double inHigh, d
    posSumMF += posFlow;
    negSumMF += negFlow;
    nullRun = (moneyFlow == 0.0) ? nullRun + 1 : 0;
-   if( nullRun >= sp->optInTimePeriod )
+   if( TA_UNLIKELY(nullRun >= sp->optInTimePeriod) )
    {
       nullRun = sp->optInTimePeriod;
       posSumMF = 0.0;

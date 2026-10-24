@@ -26,6 +26,7 @@
  *  090626 MF,CC  Fix #390. Clamp the efficiency ratio to 1. A drifted sumROC1
  *                let it exceed its own mathematical maximum, and the squared
  *                smoothing constant then amplified instead of averaging.
+ *  102326 MF,CC  #554 branch-free zero run, rare reset.
  */
 
    /**
@@ -100,6 +101,7 @@
       int lookbackTotal = 0;
       int trailingIdx = 0;
       int nullRun = 0;
+      int live = 0;
       double trailingValue = 0;
       if( (startIdx < 0) || (startIdx > INDEX_MAX) ) {
          return RetCode.OUT_OF_RANGE_START_INDEX ;
@@ -173,11 +175,8 @@
          tempReal = inReal[today++];
          tempReal -= inReal[today];
          sumROC1 += Math.abs(tempReal);
-         if( tempReal == 0.0 ) {
-            nullRun += 1;
-         } else {
-            nullRun = 0;
-         }
+         live = (Math.abs(tempReal) <= 0.0) ? 0 : 1;
+         nullRun = (nullRun + 1) & (live - 1);
       }
       /* At this point sumROC1 represent the
        * summation of the 1-day price difference
@@ -236,26 +235,18 @@
          sumROC1 -= Math.abs(trailingValue - tempReal2);
          sumROC1 += Math.abs(tempReal - inReal[today - 1]);
          /* Once a whole window of flat bars has gone by, every 1-day change it
-          * spans is exactly zero, so the sum is known to be exactly zero and the
-          * residue can be dropped. That is what lets the efficiency ratio be
-          * decided by `sumROC1 <= periodROC` alone: a window that flat has
-          * periodROC == 0 too, so the test is 0 <= 0 and the ratio is 1.
+          * spans is exactly zero, so the sum is known to be exactly zero, the
+          * residue can be dropped, and the efficiency ratio is 1.
           */
-         if( tempReal - inReal[today - 1] == 0.0 ) {
-            nullRun += 1;
-         } else {
-            nullRun = 0;
-         }
+         live = (Math.abs(tempReal - inReal[today - 1]) <= 0.0) ? 0 : 1;
+         nullRun = (nullRun + 1) & (live - 1);
          if( nullRun >= optInTimePeriod ) {
             nullRun = optInTimePeriod;
             sumROC1 = 0.0;
-         }
-         /* Save the trailing value. Do this because inReal
-          * and outReal can be pointers to the same buffer.
-          */
-         trailingValue = tempReal2;
-         /* Calculate the efficiency ratio */
-         if( sumROC1 <= 0.0 || sumROC1 <= periodROC ) {
+            tempReal = 1.0;
+         } else if( sumROC1 <= 0.0 ||
+             sumROC1 <= periodROC ) /* Calculate the efficiency ratio */
+         {
             tempReal = 1.0;
          } else {
             tempReal = Math.abs(periodROC / sumROC1);
@@ -263,6 +254,10 @@
                tempReal = 1.0;
             }
          }
+         /* Save the trailing value. Do this because inReal
+          * and outReal can be pointers to the same buffer.
+          */
+         trailingValue = tempReal2;
          /* Calculate the smoothing constant */
          tempReal = Math.fma(tempReal, constDiff, constMax);
          tempReal *= tempReal;
@@ -287,26 +282,18 @@
          sumROC1 -= Math.abs(trailingValue - tempReal2);
          sumROC1 += Math.abs(tempReal - inReal[today - 1]);
          /* Once a whole window of flat bars has gone by, every 1-day change it
-          * spans is exactly zero, so the sum is known to be exactly zero and the
-          * residue can be dropped. That is what lets the efficiency ratio be
-          * decided by `sumROC1 <= periodROC` alone: a window that flat has
-          * periodROC == 0 too, so the test is 0 <= 0 and the ratio is 1.
+          * spans is exactly zero, so the sum is known to be exactly zero, the
+          * residue can be dropped, and the efficiency ratio is 1.
           */
-         if( tempReal - inReal[today - 1] == 0.0 ) {
-            nullRun += 1;
-         } else {
-            nullRun = 0;
-         }
+         live = (Math.abs(tempReal - inReal[today - 1]) <= 0.0) ? 0 : 1;
+         nullRun = (nullRun + 1) & (live - 1);
          if( nullRun >= optInTimePeriod ) {
             nullRun = optInTimePeriod;
             sumROC1 = 0.0;
-         }
-         /* Save the trailing value. Do this because inReal
-          * and outReal can be pointers to the same buffer.
-          */
-         trailingValue = tempReal2;
-         /* Calculate the efficiency ratio */
-         if( sumROC1 <= 0.0 || sumROC1 <= periodROC ) {
+            tempReal = 1.0;
+         } else if( sumROC1 <= 0.0 ||
+             sumROC1 <= periodROC ) /* Calculate the efficiency ratio */
+         {
             tempReal = 1.0;
          } else {
             tempReal = Math.abs(periodROC / sumROC1);
@@ -314,6 +301,10 @@
                tempReal = 1.0;
             }
          }
+         /* Save the trailing value. Do this because inReal
+          * and outReal can be pointers to the same buffer.
+          */
+         trailingValue = tempReal2;
          /* Calculate the smoothing constant */
          tempReal = Math.fma(tempReal, constDiff, constMax);
          tempReal *= tempReal;
@@ -347,6 +338,7 @@
       int lookbackTotal = 0;
       int trailingIdx = 0;
       int nullRun = 0;
+      int live = 0;
       double trailingValue = 0;
       if( (startIdx < 0) || (startIdx > INDEX_MAX) ) {
          return RetCode.OUT_OF_RANGE_START_INDEX ;
@@ -398,11 +390,8 @@
          tempReal = (double)inReal[today++];
          tempReal -= (double)inReal[today];
          sumROC1 += Math.abs(tempReal);
-         if( tempReal == 0.0 ) {
-            nullRun += 1;
-         } else {
-            nullRun = 0;
-         }
+         live = (Math.abs(tempReal) <= 0.0) ? 0 : 1;
+         nullRun = (nullRun + 1) & (live - 1);
       }
       prevKAMA = (double)inReal[today - 1];
       tempReal = (double)inReal[today];
@@ -426,17 +415,13 @@
          periodROC = tempReal - tempReal2;
          sumROC1 -= Math.abs(trailingValue - tempReal2);
          sumROC1 += Math.abs(tempReal - (double)inReal[today - 1]);
-         if( tempReal - (double)inReal[today - 1] == 0.0 ) {
-            nullRun += 1;
-         } else {
-            nullRun = 0;
-         }
+         live = (Math.abs(tempReal - (double)inReal[today - 1]) <= 0.0) ? 0 : 1;
+         nullRun = (nullRun + 1) & (live - 1);
          if( nullRun >= optInTimePeriod ) {
             nullRun = optInTimePeriod;
             sumROC1 = 0.0;
-         }
-         trailingValue = tempReal2;
-         if( sumROC1 <= 0.0 || sumROC1 <= periodROC ) {
+            tempReal = 1.0;
+         } else if( sumROC1 <= 0.0 || sumROC1 <= periodROC ) {
             tempReal = 1.0;
          } else {
             tempReal = Math.abs(periodROC / sumROC1);
@@ -444,6 +429,7 @@
                tempReal = 1.0;
             }
          }
+         trailingValue = tempReal2;
          tempReal = Math.fma(tempReal, constDiff, constMax);
          tempReal *= tempReal;
          prevKAMA = Math.fma((double)inReal[today++] - prevKAMA, tempReal, prevKAMA);
@@ -457,17 +443,13 @@
          periodROC = tempReal - tempReal2;
          sumROC1 -= Math.abs(trailingValue - tempReal2);
          sumROC1 += Math.abs(tempReal - (double)inReal[today - 1]);
-         if( tempReal - (double)inReal[today - 1] == 0.0 ) {
-            nullRun += 1;
-         } else {
-            nullRun = 0;
-         }
+         live = (Math.abs(tempReal - (double)inReal[today - 1]) <= 0.0) ? 0 : 1;
+         nullRun = (nullRun + 1) & (live - 1);
          if( nullRun >= optInTimePeriod ) {
             nullRun = optInTimePeriod;
             sumROC1 = 0.0;
-         }
-         trailingValue = tempReal2;
-         if( sumROC1 <= 0.0 || sumROC1 <= periodROC ) {
+            tempReal = 1.0;
+         } else if( sumROC1 <= 0.0 || sumROC1 <= periodROC ) {
             tempReal = 1.0;
          } else {
             tempReal = Math.abs(periodROC / sumROC1);
@@ -475,6 +457,7 @@
                tempReal = 1.0;
             }
          }
+         trailingValue = tempReal2;
          tempReal = Math.fma(tempReal, constDiff, constMax);
          tempReal *= tempReal;
          prevKAMA = Math.fma((double)inReal[today++] - prevKAMA, tempReal, prevKAMA);
@@ -744,6 +727,7 @@
          double tempReal = 0.0;
          double tempReal2 = 0.0;
          double periodROC = 0.0;
+         int live = 0;
          double cur_outReal = 0.0;
          int nullRun = sp.nullRun;
          double prevKAMA = sp.prevKAMA;
@@ -763,26 +747,18 @@
          sumROC1 -= Math.abs(trailingValue - tempReal2);
          sumROC1 += Math.abs(tempReal - sp.lag1_inReal);
          /* Once a whole window of flat bars has gone by, every 1-day change it
-          * spans is exactly zero, so the sum is known to be exactly zero and the
-          * residue can be dropped. That is what lets the efficiency ratio be
-          * decided by `sumROC1 <= periodROC` alone: a window that flat has
-          * periodROC == 0 too, so the test is 0 <= 0 and the ratio is 1.
+          * spans is exactly zero, so the sum is known to be exactly zero, the
+          * residue can be dropped, and the efficiency ratio is 1.
           */
-         if( tempReal - sp.lag1_inReal == 0.0 ) {
-            nullRun += 1;
-         } else {
-            nullRun = 0;
-         }
+         live = (Math.abs(tempReal - sp.lag1_inReal) <= 0.0) ? 0 : 1;
+         nullRun = (nullRun + 1) & (live - 1);
          if( nullRun >= sp.optInTimePeriod ) {
             nullRun = sp.optInTimePeriod;
             sumROC1 = 0.0;
-         }
-         /* Save the trailing value. Do this because inReal
-          * and outReal can be pointers to the same buffer.
-          */
-         trailingValue = tempReal2;
-         /* Calculate the efficiency ratio */
-         if( sumROC1 <= 0.0 || sumROC1 <= periodROC ) {
+            tempReal = 1.0;
+         } else if( sumROC1 <= 0.0 ||
+             sumROC1 <= periodROC ) /* Calculate the efficiency ratio */
+         {
             tempReal = 1.0;
          } else {
             tempReal = Math.abs(periodROC / sumROC1);
@@ -790,6 +766,10 @@
                tempReal = 1.0;
             }
          }
+         /* Save the trailing value. Do this because inReal
+          * and outReal can be pointers to the same buffer.
+          */
+         trailingValue = tempReal2;
          /* Calculate the smoothing constant */
          tempReal = Math.fma(tempReal, sp.constDiff, sp.constMax);
          tempReal *= tempReal;
@@ -832,6 +812,7 @@
       double tempReal = 0.0;
       double tempReal2 = 0.0;
       double periodROC = 0.0;
+      int live = 0;
       int ringCapL_trailingIdx = 0;
       if( sp.optInTimePeriod == 1 ) {
          sp.cur_outReal = inReal;
@@ -847,26 +828,18 @@
       sp.sumROC1 -= Math.abs(sp.trailingValue - tempReal2);
       sp.sumROC1 += Math.abs(tempReal - sp.lag1_inReal);
       /* Once a whole window of flat bars has gone by, every 1-day change it
-       * spans is exactly zero, so the sum is known to be exactly zero and the
-       * residue can be dropped. That is what lets the efficiency ratio be
-       * decided by `sumROC1 <= periodROC` alone: a window that flat has
-       * periodROC == 0 too, so the test is 0 <= 0 and the ratio is 1.
+       * spans is exactly zero, so the sum is known to be exactly zero, the
+       * residue can be dropped, and the efficiency ratio is 1.
        */
-      if( tempReal - sp.lag1_inReal == 0.0 ) {
-         sp.nullRun += 1;
-      } else {
-         sp.nullRun = 0;
-      }
+      live = (Math.abs(tempReal - sp.lag1_inReal) <= 0.0) ? 0 : 1;
+      sp.nullRun = (sp.nullRun + 1) & (live - 1);
       if( sp.nullRun >= sp.optInTimePeriod ) {
          sp.nullRun = sp.optInTimePeriod;
          sp.sumROC1 = 0.0;
-      }
-      /* Save the trailing value. Do this because inReal
-       * and outReal can be pointers to the same buffer.
-       */
-      sp.trailingValue = tempReal2;
-      /* Calculate the efficiency ratio */
-      if( sp.sumROC1 <= 0.0 || sp.sumROC1 <= periodROC ) {
+         tempReal = 1.0;
+      } else if( sp.sumROC1 <= 0.0 ||
+          sp.sumROC1 <= periodROC ) /* Calculate the efficiency ratio */
+      {
          tempReal = 1.0;
       } else {
          tempReal = Math.abs(periodROC / sp.sumROC1);
@@ -874,6 +847,10 @@
             tempReal = 1.0;
          }
       }
+      /* Save the trailing value. Do this because inReal
+       * and outReal can be pointers to the same buffer.
+       */
+      sp.trailingValue = tempReal2;
       /* Calculate the smoothing constant */
       tempReal = Math.fma(tempReal, sp.constDiff, sp.constMax);
       tempReal *= tempReal;
@@ -905,6 +882,7 @@
       int lookbackTotal = 0;
       int trailingIdx = 0;
       int nullRun = 0;
+      int live = 0;
       double trailingValue = 0;
       int historyLen = inReal.length;
       int endIdx = historyLen - 1;
@@ -993,11 +971,8 @@
          tempReal = inReal[today++];
          tempReal -= inReal[today];
          sumROC1 += Math.abs(tempReal);
-         if( tempReal == 0.0 ) {
-            nullRun += 1;
-         } else {
-            nullRun = 0;
-         }
+         live = (Math.abs(tempReal) <= 0.0) ? 0 : 1;
+         nullRun = (nullRun + 1) & (live - 1);
       }
       /* At this point sumROC1 represent the
        * summation of the 1-day price difference
@@ -1056,26 +1031,18 @@
          sumROC1 -= Math.abs(trailingValue - tempReal2);
          sumROC1 += Math.abs(tempReal - inReal[today - 1]);
          /* Once a whole window of flat bars has gone by, every 1-day change it
-          * spans is exactly zero, so the sum is known to be exactly zero and the
-          * residue can be dropped. That is what lets the efficiency ratio be
-          * decided by `sumROC1 <= periodROC` alone: a window that flat has
-          * periodROC == 0 too, so the test is 0 <= 0 and the ratio is 1.
+          * spans is exactly zero, so the sum is known to be exactly zero, the
+          * residue can be dropped, and the efficiency ratio is 1.
           */
-         if( tempReal - inReal[today - 1] == 0.0 ) {
-            nullRun += 1;
-         } else {
-            nullRun = 0;
-         }
+         live = (Math.abs(tempReal - inReal[today - 1]) <= 0.0) ? 0 : 1;
+         nullRun = (nullRun + 1) & (live - 1);
          if( nullRun >= optInTimePeriod ) {
             nullRun = optInTimePeriod;
             sumROC1 = 0.0;
-         }
-         /* Save the trailing value. Do this because inReal
-          * and outReal can be pointers to the same buffer.
-          */
-         trailingValue = tempReal2;
-         /* Calculate the efficiency ratio */
-         if( sumROC1 <= 0.0 || sumROC1 <= periodROC ) {
+            tempReal = 1.0;
+         } else if( sumROC1 <= 0.0 ||
+             sumROC1 <= periodROC ) /* Calculate the efficiency ratio */
+         {
             tempReal = 1.0;
          } else {
             tempReal = Math.abs(periodROC / sumROC1);
@@ -1083,6 +1050,10 @@
                tempReal = 1.0;
             }
          }
+         /* Save the trailing value. Do this because inReal
+          * and outReal can be pointers to the same buffer.
+          */
+         trailingValue = tempReal2;
          /* Calculate the smoothing constant */
          tempReal = Math.fma(tempReal, constDiff, constMax);
          tempReal *= tempReal;
@@ -1107,26 +1078,18 @@
          sumROC1 -= Math.abs(trailingValue - tempReal2);
          sumROC1 += Math.abs(tempReal - inReal[today - 1]);
          /* Once a whole window of flat bars has gone by, every 1-day change it
-          * spans is exactly zero, so the sum is known to be exactly zero and the
-          * residue can be dropped. That is what lets the efficiency ratio be
-          * decided by `sumROC1 <= periodROC` alone: a window that flat has
-          * periodROC == 0 too, so the test is 0 <= 0 and the ratio is 1.
+          * spans is exactly zero, so the sum is known to be exactly zero, the
+          * residue can be dropped, and the efficiency ratio is 1.
           */
-         if( tempReal - inReal[today - 1] == 0.0 ) {
-            nullRun += 1;
-         } else {
-            nullRun = 0;
-         }
+         live = (Math.abs(tempReal - inReal[today - 1]) <= 0.0) ? 0 : 1;
+         nullRun = (nullRun + 1) & (live - 1);
          if( nullRun >= optInTimePeriod ) {
             nullRun = optInTimePeriod;
             sumROC1 = 0.0;
-         }
-         /* Save the trailing value. Do this because inReal
-          * and outReal can be pointers to the same buffer.
-          */
-         trailingValue = tempReal2;
-         /* Calculate the efficiency ratio */
-         if( sumROC1 <= 0.0 || sumROC1 <= periodROC ) {
+            tempReal = 1.0;
+         } else if( sumROC1 <= 0.0 ||
+             sumROC1 <= periodROC ) /* Calculate the efficiency ratio */
+         {
             tempReal = 1.0;
          } else {
             tempReal = Math.abs(periodROC / sumROC1);
@@ -1134,6 +1097,10 @@
                tempReal = 1.0;
             }
          }
+         /* Save the trailing value. Do this because inReal
+          * and outReal can be pointers to the same buffer.
+          */
+         trailingValue = tempReal2;
          /* Calculate the smoothing constant */
          tempReal = Math.fma(tempReal, constDiff, constMax);
          tempReal *= tempReal;
@@ -1247,6 +1214,7 @@
       double tempReal = 0.0;
       double tempReal2 = 0.0;
       double periodROC = 0.0;
+      int live = 0;
       tempReal = inReal;
       tempReal2 = tape[(tapeBase - sp.ringCap_trailingIdx) & tapeMask];
       periodROC = tempReal - tempReal2;
@@ -1257,26 +1225,18 @@
       sp.sumROC1 -= Math.abs(sp.trailingValue - tempReal2);
       sp.sumROC1 += Math.abs(tempReal - sp.lag1_inReal);
       /* Once a whole window of flat bars has gone by, every 1-day change it
-       * spans is exactly zero, so the sum is known to be exactly zero and the
-       * residue can be dropped. That is what lets the efficiency ratio be
-       * decided by `sumROC1 <= periodROC` alone: a window that flat has
-       * periodROC == 0 too, so the test is 0 <= 0 and the ratio is 1.
+       * spans is exactly zero, so the sum is known to be exactly zero, the
+       * residue can be dropped, and the efficiency ratio is 1.
        */
-      if( tempReal - sp.lag1_inReal == 0.0 ) {
-         sp.nullRun += 1;
-      } else {
-         sp.nullRun = 0;
-      }
+      live = (Math.abs(tempReal - sp.lag1_inReal) <= 0.0) ? 0 : 1;
+      sp.nullRun = (sp.nullRun + 1) & (live - 1);
       if( sp.nullRun >= sp.optInTimePeriod ) {
          sp.nullRun = sp.optInTimePeriod;
          sp.sumROC1 = 0.0;
-      }
-      /* Save the trailing value. Do this because inReal
-       * and outReal can be pointers to the same buffer.
-       */
-      sp.trailingValue = tempReal2;
-      /* Calculate the efficiency ratio */
-      if( sp.sumROC1 <= 0.0 || sp.sumROC1 <= periodROC ) {
+         tempReal = 1.0;
+      } else if( sp.sumROC1 <= 0.0 ||
+          sp.sumROC1 <= periodROC ) /* Calculate the efficiency ratio */
+      {
          tempReal = 1.0;
       } else {
          tempReal = Math.abs(periodROC / sp.sumROC1);
@@ -1284,6 +1244,10 @@
             tempReal = 1.0;
          }
       }
+      /* Save the trailing value. Do this because inReal
+       * and outReal can be pointers to the same buffer.
+       */
+      sp.trailingValue = tempReal2;
       /* Calculate the smoothing constant */
       tempReal = Math.fma(tempReal, sp.constDiff, sp.constMax);
       tempReal *= tempReal;
@@ -1301,6 +1265,7 @@
       double tempReal = 0.0;
       double tempReal2 = 0.0;
       double periodROC = 0.0;
+      int live = 0;
       double cur_outReal = 0.0;
       int nullRun = sp.nullRun;
       double prevKAMA = sp.prevKAMA;
@@ -1316,26 +1281,18 @@
       sumROC1 -= Math.abs(trailingValue - tempReal2);
       sumROC1 += Math.abs(tempReal - sp.lag1_inReal);
       /* Once a whole window of flat bars has gone by, every 1-day change it
-       * spans is exactly zero, so the sum is known to be exactly zero and the
-       * residue can be dropped. That is what lets the efficiency ratio be
-       * decided by `sumROC1 <= periodROC` alone: a window that flat has
-       * periodROC == 0 too, so the test is 0 <= 0 and the ratio is 1.
+       * spans is exactly zero, so the sum is known to be exactly zero, the
+       * residue can be dropped, and the efficiency ratio is 1.
        */
-      if( tempReal - sp.lag1_inReal == 0.0 ) {
-         nullRun += 1;
-      } else {
-         nullRun = 0;
-      }
+      live = (Math.abs(tempReal - sp.lag1_inReal) <= 0.0) ? 0 : 1;
+      nullRun = (nullRun + 1) & (live - 1);
       if( nullRun >= sp.optInTimePeriod ) {
          nullRun = sp.optInTimePeriod;
          sumROC1 = 0.0;
-      }
-      /* Save the trailing value. Do this because inReal
-       * and outReal can be pointers to the same buffer.
-       */
-      trailingValue = tempReal2;
-      /* Calculate the efficiency ratio */
-      if( sumROC1 <= 0.0 || sumROC1 <= periodROC ) {
+         tempReal = 1.0;
+      } else if( sumROC1 <= 0.0 ||
+          sumROC1 <= periodROC ) /* Calculate the efficiency ratio */
+      {
          tempReal = 1.0;
       } else {
          tempReal = Math.abs(periodROC / sumROC1);
@@ -1343,6 +1300,10 @@
             tempReal = 1.0;
          }
       }
+      /* Save the trailing value. Do this because inReal
+       * and outReal can be pointers to the same buffer.
+       */
+      trailingValue = tempReal2;
       /* Calculate the smoothing constant */
       tempReal = Math.fma(tempReal, sp.constDiff, sp.constMax);
       tempReal *= tempReal;

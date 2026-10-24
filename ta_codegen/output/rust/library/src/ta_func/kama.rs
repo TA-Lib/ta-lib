@@ -68,6 +68,7 @@
  *  090626 MF,CC  Fix #390. Clamp the efficiency ratio to 1. A drifted sumROC1
  *                let it exceed its own mathematical maximum, and the squared
  *                smoothing constant then amplified instead of averaging.
+ *  102326 MF,CC  #554 branch-free zero run, rare reset.
  */
 
 // Import types from parent module
@@ -203,6 +204,7 @@ impl Core {
         let mut lookbackTotal: usize = 0_usize;
         let mut trailingIdx: usize = 0_usize;
         let mut nullRun: usize = 0_usize;
+        let mut live: usize = 0_usize;
         let mut trailingValue: f64 = 0.0_f64;
         constMax = 2.0 / (30.0 + 1.0);
         constDiff = 2.0 / (2.0 + 1.0) - constMax;
@@ -258,15 +260,21 @@ impl Core {
         today = startIdx - lookbackTotal;
         trailingIdx = today;
         i = (optInTimePeriod) as usize;
-        while { let _v = i; i = i.wrapping_sub(1); _v } > 0 {
-            tempReal = inReal[{ let _v = today; today += 1; _v }];
-            tempReal -= inReal[today];
-            sumROC1 += (tempReal).abs();
-            if tempReal == 0.0 {
-                nullRun += 1;
-            } else {
-                nullRun = 0;
+        if i > 0 {
+            let _wn: usize = i;
+            let _w0 = &inReal[today..][.._wn + 1];
+            for _wk in 0.._wn {
+                i -= 1;
+                tempReal = _w0[_wk];
+                today += 1;
+                tempReal -= _w0[_wk + 1];
+                sumROC1 += (tempReal).abs();
+                live = (if (tempReal).abs() <= 0.0 { 0 } else { 1 });
+                nullRun = nullRun + 1 & live.wrapping_sub(1);
             }
+            i = i.wrapping_sub(1);
+        } else {
+            i = i.wrapping_sub(1);
         }
         // At this point sumROC1 represent the
         // summation of the 1-day price difference
@@ -318,24 +326,18 @@ impl Core {
             sumROC1 -= (trailingValue - tempReal2).abs();
             sumROC1 += (tempReal - inReal[today - 1]).abs();
             // Once a whole window of flat bars has gone by, every 1-day change it
-            // spans is exactly zero, so the sum is known to be exactly zero and the
-            // residue can be dropped. That is what lets the efficiency ratio be
-            // decided by `sumROC1 <= periodROC` alone: a window that flat has
-            // periodROC == 0 too, so the test is 0 <= 0 and the ratio is 1.
-            if tempReal - inReal[today - 1] == 0.0 {
-                nullRun += 1;
-            } else {
-                nullRun = 0;
-            }
+            // spans is exactly zero, so the sum is known to be exactly zero, the
+            // residue can be dropped, and the efficiency ratio is 1.
+            live = (if (tempReal - inReal[today - 1]).abs() <= 0.0 { 0 } else { 1 });
+            nullRun = nullRun + 1 & live.wrapping_sub(1);
             if nullRun >= ((optInTimePeriod) as usize) {
+                cold_arm();
                 nullRun = (optInTimePeriod) as usize;
                 sumROC1 = 0.0;
-            }
-            // Save the trailing value. Do this because inReal
-            // and outReal can be pointers to the same buffer.
-            trailingValue = tempReal2;
-            // Calculate the efficiency ratio
-            if sumROC1 <= 0.0 || sumROC1 <= periodROC {
+                tempReal = 1.0;
+            } else if sumROC1 <= 0.0 ||
+               sumROC1 <= periodROC // Calculate the efficiency ratio
+            {
                 tempReal = 1.0;
             } else {
                 tempReal = (periodROC / sumROC1).abs();
@@ -343,6 +345,9 @@ impl Core {
                     tempReal = 1.0;
                 }
             }
+            // Save the trailing value. Do this because inReal
+            // and outReal can be pointers to the same buffer.
+            trailingValue = tempReal2;
             // Calculate the smoothing constant
             tempReal = (tempReal as f64).mul_add(constDiff, constMax);
             tempReal *= tempReal;
@@ -365,24 +370,18 @@ impl Core {
             sumROC1 -= (trailingValue - tempReal2).abs();
             sumROC1 += (tempReal - inReal[today - 1]).abs();
             // Once a whole window of flat bars has gone by, every 1-day change it
-            // spans is exactly zero, so the sum is known to be exactly zero and the
-            // residue can be dropped. That is what lets the efficiency ratio be
-            // decided by `sumROC1 <= periodROC` alone: a window that flat has
-            // periodROC == 0 too, so the test is 0 <= 0 and the ratio is 1.
-            if tempReal - inReal[today - 1] == 0.0 {
-                nullRun += 1;
-            } else {
-                nullRun = 0;
-            }
+            // spans is exactly zero, so the sum is known to be exactly zero, the
+            // residue can be dropped, and the efficiency ratio is 1.
+            live = (if (tempReal - inReal[today - 1]).abs() <= 0.0 { 0 } else { 1 });
+            nullRun = nullRun + 1 & live.wrapping_sub(1);
             if nullRun >= ((optInTimePeriod) as usize) {
+                cold_arm();
                 nullRun = (optInTimePeriod) as usize;
                 sumROC1 = 0.0;
-            }
-            // Save the trailing value. Do this because inReal
-            // and outReal can be pointers to the same buffer.
-            trailingValue = tempReal2;
-            // Calculate the efficiency ratio
-            if sumROC1 <= 0.0 || sumROC1 <= periodROC {
+                tempReal = 1.0;
+            } else if sumROC1 <= 0.0 ||
+               sumROC1 <= periodROC // Calculate the efficiency ratio
+            {
                 tempReal = 1.0;
             } else {
                 tempReal = (periodROC / sumROC1).abs();
@@ -390,6 +389,9 @@ impl Core {
                     tempReal = 1.0;
                 }
             }
+            // Save the trailing value. Do this because inReal
+            // and outReal can be pointers to the same buffer.
+            trailingValue = tempReal2;
             // Calculate the smoothing constant
             tempReal = (tempReal as f64).mul_add(constDiff, constMax);
             tempReal *= tempReal;
@@ -550,6 +552,7 @@ impl Core {
         let mut tempReal: f64 = 0.0_f64;
         let mut tempReal2: f64 = 0.0_f64;
         let mut periodROC: f64 = 0.0_f64;
+        let mut live: usize = 0_usize;
         let mut ringCapL_trailingIdx: usize = 0_usize;
         if sp.optInTimePeriod == 1 {
             (*outReal) = inReal;
@@ -565,24 +568,18 @@ impl Core {
         sp.sumROC1 -= (sp.trailingValue - tempReal2).abs();
         sp.sumROC1 += (tempReal - sp.lag1_inReal).abs();
         // Once a whole window of flat bars has gone by, every 1-day change it
-        // spans is exactly zero, so the sum is known to be exactly zero and the
-        // residue can be dropped. That is what lets the efficiency ratio be
-        // decided by `sumROC1 <= periodROC` alone: a window that flat has
-        // periodROC == 0 too, so the test is 0 <= 0 and the ratio is 1.
-        if tempReal - sp.lag1_inReal == 0.0 {
-            sp.nullRun += 1;
-        } else {
-            sp.nullRun = 0;
-        }
+        // spans is exactly zero, so the sum is known to be exactly zero, the
+        // residue can be dropped, and the efficiency ratio is 1.
+        live = (if (tempReal - sp.lag1_inReal).abs() <= 0.0 { 0 } else { 1 });
+        sp.nullRun = sp.nullRun + 1 & live.wrapping_sub(1);
         if sp.nullRun >= ((sp.optInTimePeriod) as usize) {
+            cold_arm();
             sp.nullRun = (sp.optInTimePeriod) as usize;
             sp.sumROC1 = 0.0;
-        }
-        // Save the trailing value. Do this because inReal
-        // and outReal can be pointers to the same buffer.
-        sp.trailingValue = tempReal2;
-        // Calculate the efficiency ratio
-        if sp.sumROC1 <= 0.0 || sp.sumROC1 <= periodROC {
+            tempReal = 1.0;
+        } else if sp.sumROC1 <= 0.0 ||
+           sp.sumROC1 <= periodROC // Calculate the efficiency ratio
+        {
             tempReal = 1.0;
         } else {
             tempReal = (periodROC / sp.sumROC1).abs();
@@ -590,6 +587,9 @@ impl Core {
                 tempReal = 1.0;
             }
         }
+        // Save the trailing value. Do this because inReal
+        // and outReal can be pointers to the same buffer.
+        sp.trailingValue = tempReal2;
         // Calculate the smoothing constant
         tempReal = (tempReal as f64).mul_add(sp.constDiff, sp.constMax);
         tempReal *= tempReal;
@@ -611,6 +611,7 @@ impl Core {
         let mut tempReal: f64 = 0.0_f64;
         let mut tempReal2: f64 = 0.0_f64;
         let mut periodROC: f64 = 0.0_f64;
+        let mut live: usize = 0_usize;
         tempReal = inReal;
         tempReal2 = tape[(tapeBase - sp.ringCap_trailingIdx & tapeMask) as usize];
         periodROC = tempReal - tempReal2;
@@ -620,24 +621,18 @@ impl Core {
         sp.sumROC1 -= (sp.trailingValue - tempReal2).abs();
         sp.sumROC1 += (tempReal - sp.lag1_inReal).abs();
         // Once a whole window of flat bars has gone by, every 1-day change it
-        // spans is exactly zero, so the sum is known to be exactly zero and the
-        // residue can be dropped. That is what lets the efficiency ratio be
-        // decided by `sumROC1 <= periodROC` alone: a window that flat has
-        // periodROC == 0 too, so the test is 0 <= 0 and the ratio is 1.
-        if tempReal - sp.lag1_inReal == 0.0 {
-            sp.nullRun += 1;
-        } else {
-            sp.nullRun = 0;
-        }
+        // spans is exactly zero, so the sum is known to be exactly zero, the
+        // residue can be dropped, and the efficiency ratio is 1.
+        live = (if (tempReal - sp.lag1_inReal).abs() <= 0.0 { 0 } else { 1 });
+        sp.nullRun = sp.nullRun + 1 & live.wrapping_sub(1);
         if sp.nullRun >= ((sp.optInTimePeriod) as usize) {
+            cold_arm();
             sp.nullRun = (sp.optInTimePeriod) as usize;
             sp.sumROC1 = 0.0;
-        }
-        // Save the trailing value. Do this because inReal
-        // and outReal can be pointers to the same buffer.
-        sp.trailingValue = tempReal2;
-        // Calculate the efficiency ratio
-        if sp.sumROC1 <= 0.0 || sp.sumROC1 <= periodROC {
+            tempReal = 1.0;
+        } else if sp.sumROC1 <= 0.0 ||
+           sp.sumROC1 <= periodROC // Calculate the efficiency ratio
+        {
             tempReal = 1.0;
         } else {
             tempReal = (periodROC / sp.sumROC1).abs();
@@ -645,6 +640,9 @@ impl Core {
                 tempReal = 1.0;
             }
         }
+        // Save the trailing value. Do this because inReal
+        // and outReal can be pointers to the same buffer.
+        sp.trailingValue = tempReal2;
         // Calculate the smoothing constant
         tempReal = (tempReal as f64).mul_add(sp.constDiff, sp.constMax);
         tempReal *= tempReal;
@@ -746,6 +744,7 @@ impl Core {
         let mut lookbackTotal: usize = 0_usize;
         let mut trailingIdx: usize = 0_usize;
         let mut nullRun: usize = 0_usize;
+        let mut live: usize = 0_usize;
         let mut trailingValue: f64 = 0.0_f64;
         constMax = 2.0 / (30.0 + 1.0);
         constDiff = 2.0 / (2.0 + 1.0) - constMax;
@@ -783,11 +782,8 @@ impl Core {
             tempReal = inReal[{ let _v = today; today += 1; _v }];
             tempReal -= inReal[today];
             sumROC1 += (tempReal).abs();
-            if tempReal == 0.0 {
-                nullRun += 1;
-            } else {
-                nullRun = 0;
-            }
+            live = (if (tempReal).abs() <= 0.0 { 0 } else { 1 });
+            nullRun = nullRun + 1 & live.wrapping_sub(1);
         }
         // At this point sumROC1 represent the
         // summation of the 1-day price difference
@@ -839,24 +835,18 @@ impl Core {
             sumROC1 -= (trailingValue - tempReal2).abs();
             sumROC1 += (tempReal - inReal[today - 1]).abs();
             // Once a whole window of flat bars has gone by, every 1-day change it
-            // spans is exactly zero, so the sum is known to be exactly zero and the
-            // residue can be dropped. That is what lets the efficiency ratio be
-            // decided by `sumROC1 <= periodROC` alone: a window that flat has
-            // periodROC == 0 too, so the test is 0 <= 0 and the ratio is 1.
-            if tempReal - inReal[today - 1] == 0.0 {
-                nullRun += 1;
-            } else {
-                nullRun = 0;
-            }
+            // spans is exactly zero, so the sum is known to be exactly zero, the
+            // residue can be dropped, and the efficiency ratio is 1.
+            live = (if (tempReal - inReal[today - 1]).abs() <= 0.0 { 0 } else { 1 });
+            nullRun = nullRun + 1 & live.wrapping_sub(1);
             if nullRun >= ((optInTimePeriod) as usize) {
+                cold_arm();
                 nullRun = (optInTimePeriod) as usize;
                 sumROC1 = 0.0;
-            }
-            // Save the trailing value. Do this because inReal
-            // and outReal can be pointers to the same buffer.
-            trailingValue = tempReal2;
-            // Calculate the efficiency ratio
-            if sumROC1 <= 0.0 || sumROC1 <= periodROC {
+                tempReal = 1.0;
+            } else if sumROC1 <= 0.0 ||
+               sumROC1 <= periodROC // Calculate the efficiency ratio
+            {
                 tempReal = 1.0;
             } else {
                 tempReal = (periodROC / sumROC1).abs();
@@ -864,6 +854,9 @@ impl Core {
                     tempReal = 1.0;
                 }
             }
+            // Save the trailing value. Do this because inReal
+            // and outReal can be pointers to the same buffer.
+            trailingValue = tempReal2;
             // Calculate the smoothing constant
             tempReal = (tempReal as f64).mul_add(constDiff, constMax);
             tempReal *= tempReal;
@@ -886,24 +879,18 @@ impl Core {
             sumROC1 -= (trailingValue - tempReal2).abs();
             sumROC1 += (tempReal - inReal[today - 1]).abs();
             // Once a whole window of flat bars has gone by, every 1-day change it
-            // spans is exactly zero, so the sum is known to be exactly zero and the
-            // residue can be dropped. That is what lets the efficiency ratio be
-            // decided by `sumROC1 <= periodROC` alone: a window that flat has
-            // periodROC == 0 too, so the test is 0 <= 0 and the ratio is 1.
-            if tempReal - inReal[today - 1] == 0.0 {
-                nullRun += 1;
-            } else {
-                nullRun = 0;
-            }
+            // spans is exactly zero, so the sum is known to be exactly zero, the
+            // residue can be dropped, and the efficiency ratio is 1.
+            live = (if (tempReal - inReal[today - 1]).abs() <= 0.0 { 0 } else { 1 });
+            nullRun = nullRun + 1 & live.wrapping_sub(1);
             if nullRun >= ((optInTimePeriod) as usize) {
+                cold_arm();
                 nullRun = (optInTimePeriod) as usize;
                 sumROC1 = 0.0;
-            }
-            // Save the trailing value. Do this because inReal
-            // and outReal can be pointers to the same buffer.
-            trailingValue = tempReal2;
-            // Calculate the efficiency ratio
-            if sumROC1 <= 0.0 || sumROC1 <= periodROC {
+                tempReal = 1.0;
+            } else if sumROC1 <= 0.0 ||
+               sumROC1 <= periodROC // Calculate the efficiency ratio
+            {
                 tempReal = 1.0;
             } else {
                 tempReal = (periodROC / sumROC1).abs();
@@ -911,6 +898,9 @@ impl Core {
                     tempReal = 1.0;
                 }
             }
+            // Save the trailing value. Do this because inReal
+            // and outReal can be pointers to the same buffer.
+            trailingValue = tempReal2;
             // Calculate the smoothing constant
             tempReal = (tempReal as f64).mul_add(constDiff, constMax);
             tempReal *= tempReal;
@@ -1111,6 +1101,7 @@ impl KamaStream {
             let mut tempReal: f64 = 0.0_f64;
             let mut tempReal2: f64 = 0.0_f64;
             let mut periodROC: f64 = 0.0_f64;
+            let mut live: usize = 0_usize;
             let mut nullRun = sp.nullRun;
             let mut prevKAMA = sp.prevKAMA;
             let mut sumROC1 = sp.sumROC1;
@@ -1128,24 +1119,18 @@ impl KamaStream {
             sumROC1 -= (trailingValue - tempReal2).abs();
             sumROC1 += (tempReal - sp.lag1_inReal).abs();
             // Once a whole window of flat bars has gone by, every 1-day change it
-            // spans is exactly zero, so the sum is known to be exactly zero and the
-            // residue can be dropped. That is what lets the efficiency ratio be
-            // decided by `sumROC1 <= periodROC` alone: a window that flat has
-            // periodROC == 0 too, so the test is 0 <= 0 and the ratio is 1.
-            if tempReal - sp.lag1_inReal == 0.0 {
-                nullRun += 1;
-            } else {
-                nullRun = 0;
-            }
+            // spans is exactly zero, so the sum is known to be exactly zero, the
+            // residue can be dropped, and the efficiency ratio is 1.
+            live = (if (tempReal - sp.lag1_inReal).abs() <= 0.0 { 0 } else { 1 });
+            nullRun = nullRun + 1 & live.wrapping_sub(1);
             if nullRun >= ((sp.optInTimePeriod) as usize) {
+                cold_arm();
                 nullRun = (sp.optInTimePeriod) as usize;
                 sumROC1 = 0.0;
-            }
-            // Save the trailing value. Do this because inReal
-            // and outReal can be pointers to the same buffer.
-            trailingValue = tempReal2;
-            // Calculate the efficiency ratio
-            if sumROC1 <= 0.0 || sumROC1 <= periodROC {
+                tempReal = 1.0;
+            } else if sumROC1 <= 0.0 ||
+               sumROC1 <= periodROC // Calculate the efficiency ratio
+            {
                 tempReal = 1.0;
             } else {
                 tempReal = (periodROC / sumROC1).abs();
@@ -1153,6 +1138,9 @@ impl KamaStream {
                     tempReal = 1.0;
                 }
             }
+            // Save the trailing value. Do this because inReal
+            // and outReal can be pointers to the same buffer.
+            trailingValue = tempReal2;
             // Calculate the smoothing constant
             tempReal = (tempReal as f64).mul_add(sp.constDiff, sp.constMax);
             tempReal *= tempReal;
@@ -1238,6 +1226,7 @@ impl KamaStream {
             let mut tempReal: f64 = 0.0_f64;
             let mut tempReal2: f64 = 0.0_f64;
             let mut periodROC: f64 = 0.0_f64;
+            let mut live: usize = 0_usize;
             let mut nullRun = sp.nullRun;
             let mut prevKAMA = sp.prevKAMA;
             let mut sumROC1 = sp.sumROC1;
@@ -1251,24 +1240,18 @@ impl KamaStream {
             sumROC1 -= (trailingValue - tempReal2).abs();
             sumROC1 += (tempReal - sp.lag1_inReal).abs();
             // Once a whole window of flat bars has gone by, every 1-day change it
-            // spans is exactly zero, so the sum is known to be exactly zero and the
-            // residue can be dropped. That is what lets the efficiency ratio be
-            // decided by `sumROC1 <= periodROC` alone: a window that flat has
-            // periodROC == 0 too, so the test is 0 <= 0 and the ratio is 1.
-            if tempReal - sp.lag1_inReal == 0.0 {
-                nullRun += 1;
-            } else {
-                nullRun = 0;
-            }
+            // spans is exactly zero, so the sum is known to be exactly zero, the
+            // residue can be dropped, and the efficiency ratio is 1.
+            live = (if (tempReal - sp.lag1_inReal).abs() <= 0.0 { 0 } else { 1 });
+            nullRun = nullRun + 1 & live.wrapping_sub(1);
             if nullRun >= ((sp.optInTimePeriod) as usize) {
+                cold_arm();
                 nullRun = (sp.optInTimePeriod) as usize;
                 sumROC1 = 0.0;
-            }
-            // Save the trailing value. Do this because inReal
-            // and outReal can be pointers to the same buffer.
-            trailingValue = tempReal2;
-            // Calculate the efficiency ratio
-            if sumROC1 <= 0.0 || sumROC1 <= periodROC {
+                tempReal = 1.0;
+            } else if sumROC1 <= 0.0 ||
+               sumROC1 <= periodROC // Calculate the efficiency ratio
+            {
                 tempReal = 1.0;
             } else {
                 tempReal = (periodROC / sumROC1).abs();
@@ -1276,6 +1259,9 @@ impl KamaStream {
                     tempReal = 1.0;
                 }
             }
+            // Save the trailing value. Do this because inReal
+            // and outReal can be pointers to the same buffer.
+            trailingValue = tempReal2;
             // Calculate the smoothing constant
             tempReal = (tempReal as f64).mul_add(sp.constDiff, sp.constMax);
             tempReal *= tempReal;

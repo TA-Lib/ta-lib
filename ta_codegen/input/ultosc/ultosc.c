@@ -18,6 +18,7 @@
  *               divides are guarded exactly instead of against the fixed
  *               TA_IS_ZERO band -- which zeroed the oscillator for any
  *               instrument quoted small enough to fall under it.
+ *  102326 MF,CC #554 branch-free zero run, rare reset.
  */
 
 int ultosc_lookback(int optInTimePeriod1, int optInTimePeriod2, int optInTimePeriod3)
@@ -55,7 +56,7 @@ TA_RetCode ultosc(int startIdx, int endIdx,
    int longestPeriod, longestIndex;
    int i,j,today,outIdx;
    int trailingPos1, trailingPos2;
-   int nullRun;
+   int nullRun, live;
 
    int usedFlag[3];
    int periods[3];
@@ -154,10 +155,8 @@ TA_RetCode ultosc(int startIdx, int endIdx,
       term_trueRange[term_Idx] = trueRange;
       CIRCBUF_NEXT(term);
 
-      if( trueRange == 0.0 && closeMinusTrueLow == 0.0 )
-         nullRun++;
-      else
-         nullRun = 0;
+      live = fabs(trueRange) + fabs(closeMinusTrueLow) <= 0.0 ? 0 : 1;
+      nullRun = (nullRun + 1) & (live - 1);
 
       if( i >= startIdx-optInTimePeriod1+1 )
       {
@@ -218,11 +217,9 @@ TA_RetCode ultosc(int startIdx, int endIdx,
        * run long enough for a longer window is long enough for every shorter
        * one.
        */
-      if( trueRange == 0.0 && closeMinusTrueLow == 0.0 )
-         nullRun++;
-      else
-         nullRun = 0;
-      if( nullRun >= optInTimePeriod1 )
+      live = fabs(trueRange) + fabs(closeMinusTrueLow) <= 0.0 ? 0 : 1;
+      nullRun = (nullRun + 1) & (live - 1);
+      if( TA_UNLIKELY(nullRun >= optInTimePeriod1) )
       {
          a1Total = 0.0;
          b1Total = 0.0;

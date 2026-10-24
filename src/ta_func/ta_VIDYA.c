@@ -54,6 +54,7 @@
  *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
  *  092926 MF,CC  First version (issue #474).
+ *  102326 MF,CC  #554 TA_CMOU's branch-free split and zero run, rare reset.
  */
 
 TA_NOINLINE TA_LIB_API int TA_VIDYA_Lookback( int optInTimePeriod, int optInCMOPeriod )
@@ -100,10 +101,12 @@ TA_LIB_API TA_RetCode TA_VIDYA( int    startIdx,
    int lookbackTotal;
    int i;
    int nullRun;
+   int live;
    double upSum;
    double downSum;
    double sum;
    double diff;
+   double up;
    double tempReal;
    double prevValue;
    double trailingValue;
@@ -187,20 +190,11 @@ TA_LIB_API TA_RetCode TA_VIDYA( int    startIdx,
       tempReal = inReal[today];
       diff = tempReal - prevValue;
       prevValue = tempReal;
-      if( diff > 0.0 )
-      {
-         upSum += diff;
-      } else if( diff < 0.0 )
-      {
-         downSum -= diff;
-      }
-      if( diff == 0.0 )
-      {
-         nullRun += 1;
-      } else 
-      {
-         nullRun = 0;
-      }
+      up = (diff + fabs(diff)) * 0.5;
+      upSum += up;
+      downSum += up - diff;
+      live = (fabs(diff) <= 0.0) ? 0 : 1;
+      nullRun = (nullRun + 1) & (live - 1);
       sum = upSum + downSum;
       if( sum > 0.0 )
       {
@@ -211,103 +205,93 @@ TA_LIB_API TA_RetCode TA_VIDYA( int    startIdx,
       }
       prevVIDYA = fma(prevValue - prevVIDYA, k, prevVIDYA);
    }
+   /* Each bar below drops the change that leaves the window after its own
+    * update, ready for the next bar, as in TA_CMOU.
+    */
+   tempReal = inReal[trailingIdx];
+   diff = tempReal - trailingValue;
+   trailingValue = tempReal;
+   trailingIdx += 1;
+   up = (diff + fabs(diff)) * 0.5;
+   upSum -= up;
+   downSum -= up - diff;
    today += 1;
    /* Skip the unstable period: the whole computation, nothing written. */
    while( today <= startIdx )
    {
-      tempReal = inReal[trailingIdx];
-      diff = tempReal - trailingValue;
-      trailingValue = tempReal;
-      trailingIdx += 1;
-      if( diff > 0.0 )
-      {
-         upSum -= diff;
-      } else if( diff < 0.0 )
-      {
-         downSum += diff;
-      }
       tempReal = inReal[today];
       diff = tempReal - prevValue;
       prevValue = tempReal;
-      if( diff > 0.0 )
-      {
-         upSum += diff;
-      } else if( diff < 0.0 )
-      {
-         downSum -= diff;
-      }
-      if( diff == 0.0 )
-      {
-         nullRun += 1;
-      } else 
-      {
-         nullRun = 0;
-      }
-      if( nullRun >= optInCMOPeriod )
+      up = (diff + fabs(diff)) * 0.5;
+      upSum += up;
+      downSum += up - diff;
+      live = (fabs(diff) <= 0.0) ? 0 : 1;
+      nullRun = (nullRun + 1) & (live - 1);
+      if( TA_UNLIKELY(nullRun >= optInCMOPeriod) )
       {
          nullRun = optInCMOPeriod;
          upSum = 0.0;
          downSum = 0.0;
-      }
-      sum = upSum + downSum;
-      if( sum > 0.0 )
-      {
-         k = alpha * (fabs(100.0 * (upSum - downSum) / sum) / 100.0);
+         k = 0.0;
       } else 
       {
-         k = 0.0;
+         sum = upSum + downSum;
+         if( sum > 0.0 )
+         {
+            k = alpha * (fabs(100.0 * (upSum - downSum) / sum) / 100.0);
+         } else 
+         {
+            k = 0.0;
+         }
       }
       prevVIDYA = fma(prevValue - prevVIDYA, k, prevVIDYA);
+      tempReal = inReal[trailingIdx];
+      diff = tempReal - trailingValue;
+      trailingValue = tempReal;
+      trailingIdx += 1;
+      up = (diff + fabs(diff)) * 0.5;
+      upSum -= up;
+      downSum -= up - diff;
       today += 1;
    }
    outReal[0] = prevVIDYA;
    outIdx = 1;
    while( today <= endIdx )
    {
-      tempReal = inReal[trailingIdx];
-      diff = tempReal - trailingValue;
-      trailingValue = tempReal;
-      trailingIdx += 1;
-      if( diff > 0.0 )
-      {
-         upSum -= diff;
-      } else if( diff < 0.0 )
-      {
-         downSum += diff;
-      }
       tempReal = inReal[today];
       diff = tempReal - prevValue;
       prevValue = tempReal;
-      if( diff > 0.0 )
-      {
-         upSum += diff;
-      } else if( diff < 0.0 )
-      {
-         downSum -= diff;
-      }
-      if( diff == 0.0 )
-      {
-         nullRun += 1;
-      } else 
-      {
-         nullRun = 0;
-      }
-      if( nullRun >= optInCMOPeriod )
+      up = (diff + fabs(diff)) * 0.5;
+      upSum += up;
+      downSum += up - diff;
+      live = (fabs(diff) <= 0.0) ? 0 : 1;
+      nullRun = (nullRun + 1) & (live - 1);
+      if( TA_UNLIKELY(nullRun >= optInCMOPeriod) )
       {
          nullRun = optInCMOPeriod;
          upSum = 0.0;
          downSum = 0.0;
-      }
-      sum = upSum + downSum;
-      if( sum > 0.0 )
-      {
-         k = alpha * (fabs(100.0 * (upSum - downSum) / sum) / 100.0);
+         k = 0.0;
       } else 
       {
-         k = 0.0;
+         sum = upSum + downSum;
+         if( sum > 0.0 )
+         {
+            k = alpha * (fabs(100.0 * (upSum - downSum) / sum) / 100.0);
+         } else 
+         {
+            k = 0.0;
+         }
       }
       prevVIDYA = fma(prevValue - prevVIDYA, k, prevVIDYA);
       outReal[outIdx++] = prevVIDYA;
+      tempReal = inReal[trailingIdx];
+      diff = tempReal - trailingValue;
+      trailingValue = tempReal;
+      trailingIdx += 1;
+      up = (diff + fabs(diff)) * 0.5;
+      upSum -= up;
+      downSum -= up - diff;
       today += 1;
    }
    *outBegIdx= startIdx;
@@ -331,10 +315,12 @@ TA_RetCode TA_S_VIDYA( int    startIdx,
    int lookbackTotal;
    int i;
    int nullRun;
+   int live;
    double upSum;
    double downSum;
    double sum;
    double diff;
+   double up;
    double tempReal;
    double prevValue;
    double trailingValue;
@@ -409,20 +395,11 @@ TA_RetCode TA_S_VIDYA( int    startIdx,
       tempReal = (double)inReal[today];
       diff = tempReal - prevValue;
       prevValue = tempReal;
-      if( diff > 0.0 )
-      {
-         upSum += diff;
-      } else if( diff < 0.0 )
-      {
-         downSum -= diff;
-      }
-      if( diff == 0.0 )
-      {
-         nullRun += 1;
-      } else 
-      {
-         nullRun = 0;
-      }
+      up = (diff + fabs(diff)) * 0.5;
+      upSum += up;
+      downSum += up - diff;
+      live = (fabs(diff) <= 0.0) ? 0 : 1;
+      nullRun = (nullRun + 1) & (live - 1);
       sum = upSum + downSum;
       if( sum > 0.0 )
       {
@@ -433,102 +410,89 @@ TA_RetCode TA_S_VIDYA( int    startIdx,
       }
       prevVIDYA = fma(prevValue - prevVIDYA, k, prevVIDYA);
    }
+   tempReal = (double)inReal[trailingIdx];
+   diff = tempReal - trailingValue;
+   trailingValue = tempReal;
+   trailingIdx += 1;
+   up = (diff + fabs(diff)) * 0.5;
+   upSum -= up;
+   downSum -= up - diff;
    today += 1;
    while( today <= startIdx )
    {
-      tempReal = (double)inReal[trailingIdx];
-      diff = tempReal - trailingValue;
-      trailingValue = tempReal;
-      trailingIdx += 1;
-      if( diff > 0.0 )
-      {
-         upSum -= diff;
-      } else if( diff < 0.0 )
-      {
-         downSum += diff;
-      }
       tempReal = (double)inReal[today];
       diff = tempReal - prevValue;
       prevValue = tempReal;
-      if( diff > 0.0 )
-      {
-         upSum += diff;
-      } else if( diff < 0.0 )
-      {
-         downSum -= diff;
-      }
-      if( diff == 0.0 )
-      {
-         nullRun += 1;
-      } else 
-      {
-         nullRun = 0;
-      }
-      if( nullRun >= optInCMOPeriod )
+      up = (diff + fabs(diff)) * 0.5;
+      upSum += up;
+      downSum += up - diff;
+      live = (fabs(diff) <= 0.0) ? 0 : 1;
+      nullRun = (nullRun + 1) & (live - 1);
+      if( TA_UNLIKELY(nullRun >= optInCMOPeriod) )
       {
          nullRun = optInCMOPeriod;
          upSum = 0.0;
          downSum = 0.0;
-      }
-      sum = upSum + downSum;
-      if( sum > 0.0 )
-      {
-         k = alpha * (fabs(100.0 * (upSum - downSum) / sum) / 100.0);
+         k = 0.0;
       } else 
       {
-         k = 0.0;
+         sum = upSum + downSum;
+         if( sum > 0.0 )
+         {
+            k = alpha * (fabs(100.0 * (upSum - downSum) / sum) / 100.0);
+         } else 
+         {
+            k = 0.0;
+         }
       }
       prevVIDYA = fma(prevValue - prevVIDYA, k, prevVIDYA);
+      tempReal = (double)inReal[trailingIdx];
+      diff = tempReal - trailingValue;
+      trailingValue = tempReal;
+      trailingIdx += 1;
+      up = (diff + fabs(diff)) * 0.5;
+      upSum -= up;
+      downSum -= up - diff;
       today += 1;
    }
    outReal[0] = prevVIDYA;
    outIdx = 1;
    while( today <= endIdx )
    {
-      tempReal = (double)inReal[trailingIdx];
-      diff = tempReal - trailingValue;
-      trailingValue = tempReal;
-      trailingIdx += 1;
-      if( diff > 0.0 )
-      {
-         upSum -= diff;
-      } else if( diff < 0.0 )
-      {
-         downSum += diff;
-      }
       tempReal = (double)inReal[today];
       diff = tempReal - prevValue;
       prevValue = tempReal;
-      if( diff > 0.0 )
-      {
-         upSum += diff;
-      } else if( diff < 0.0 )
-      {
-         downSum -= diff;
-      }
-      if( diff == 0.0 )
-      {
-         nullRun += 1;
-      } else 
-      {
-         nullRun = 0;
-      }
-      if( nullRun >= optInCMOPeriod )
+      up = (diff + fabs(diff)) * 0.5;
+      upSum += up;
+      downSum += up - diff;
+      live = (fabs(diff) <= 0.0) ? 0 : 1;
+      nullRun = (nullRun + 1) & (live - 1);
+      if( TA_UNLIKELY(nullRun >= optInCMOPeriod) )
       {
          nullRun = optInCMOPeriod;
          upSum = 0.0;
          downSum = 0.0;
-      }
-      sum = upSum + downSum;
-      if( sum > 0.0 )
-      {
-         k = alpha * (fabs(100.0 * (upSum - downSum) / sum) / 100.0);
+         k = 0.0;
       } else 
       {
-         k = 0.0;
+         sum = upSum + downSum;
+         if( sum > 0.0 )
+         {
+            k = alpha * (fabs(100.0 * (upSum - downSum) / sum) / 100.0);
+         } else 
+         {
+            k = 0.0;
+         }
       }
       prevVIDYA = fma(prevValue - prevVIDYA, k, prevVIDYA);
       outReal[outIdx++] = prevVIDYA;
+      tempReal = (double)inReal[trailingIdx];
+      diff = tempReal - trailingValue;
+      trailingValue = tempReal;
+      trailingIdx += 1;
+      up = (diff + fabs(diff)) * 0.5;
+      upSum -= up;
+      downSum -= up - diff;
       today += 1;
    }
    *outBegIdx= startIdx;
@@ -571,61 +535,59 @@ static void TA_VIDYA_ReleaseImpl( struct TA_VIDYA_Stream *sp )
 /* Private function, not in public API. */
 static TA_FMA_STEP_INLINE void TA_VIDYA_StepImpl( struct TA_VIDYA_Stream *sp, double inReal, double *outReal )
 {
+   int live;
    double sum;
    double diff;
+   double up;
    double tempReal;
    double k;
    int ringCapL_trailingIdx;
+   double upSum;
+   double downSum;
 
+   upSum = sp->upSum;
+   downSum = sp->downSum;
    if( sp->optInTimePeriod == 1 )
    {
       *outReal= inReal;
       sp->cur_outReal = *outReal;
+      sp->upSum = upSum;
+      sp->downSum = downSum;
       return;
-   }
-   tempReal = sp->ring_trailingIdx_inReal[sp->ringPos_trailingIdx];
-   diff = tempReal - sp->trailingValue;
-   sp->trailingValue = tempReal;
-   if( diff > 0.0 )
-   {
-      sp->upSum -= diff;
-   } else if( diff < 0.0 )
-   {
-      sp->downSum += diff;
    }
    tempReal = inReal;
    diff = tempReal - sp->prevValue;
    sp->prevValue = tempReal;
-   if( diff > 0.0 )
-   {
-      sp->upSum += diff;
-   } else if( diff < 0.0 )
-   {
-      sp->downSum -= diff;
-   }
-   if( diff == 0.0 )
-   {
-      sp->nullRun += 1;
-   } else 
-   {
-      sp->nullRun = 0;
-   }
-   if( sp->nullRun >= sp->optInCMOPeriod )
+   up = (diff + fabs(diff)) * 0.5;
+   upSum += up;
+   downSum += up - diff;
+   live = (fabs(diff) <= 0.0) ? 0 : 1;
+   sp->nullRun = (sp->nullRun + 1) & (live - 1);
+   if( TA_UNLIKELY(sp->nullRun >= sp->optInCMOPeriod) )
    {
       sp->nullRun = sp->optInCMOPeriod;
-      sp->upSum = 0.0;
-      sp->downSum = 0.0;
-   }
-   sum = sp->upSum + sp->downSum;
-   if( sum > 0.0 )
-   {
-      k = sp->alpha * (fabs(100.0 * (sp->upSum - sp->downSum) / sum) / 100.0);
+      upSum = 0.0;
+      downSum = 0.0;
+      k = 0.0;
    } else 
    {
-      k = 0.0;
+      sum = upSum + downSum;
+      if( sum > 0.0 )
+      {
+         k = sp->alpha * (fabs(100.0 * (upSum - downSum) / sum) / 100.0);
+      } else 
+      {
+         k = 0.0;
+      }
    }
    sp->prevVIDYA = fma(sp->prevValue - sp->prevVIDYA, k, sp->prevVIDYA);
    *outReal= sp->prevVIDYA;
+   tempReal = sp->ring_trailingIdx_inReal[sp->ringPos_trailingIdx];
+   diff = tempReal - sp->trailingValue;
+   sp->trailingValue = tempReal;
+   up = (diff + fabs(diff)) * 0.5;
+   upSum -= up;
+   downSum -= up - diff;
    sp->cur_outReal = *outReal;
    ringCapL_trailingIdx = sp->ringCap_trailingIdx;
    sp->ring_trailingIdx_inReal[sp->ringPos_trailingIdx] = inReal;
@@ -634,6 +596,8 @@ static TA_FMA_STEP_INLINE void TA_VIDYA_StepImpl( struct TA_VIDYA_Stream *sp, do
    {
       sp->ringPos_trailingIdx = 0;
    }
+   sp->upSum = upSum;
+   sp->downSum = downSum;
 }
 
 static TA_FMA_STEP_INLINE TA_RetCode TA_VIDYA_OpenImpl( struct TA_VIDYA_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInTimePeriod, int optInCMOPeriod, int *outBegIdx, int *outNBElement, double outReal[], int outStride )
@@ -715,10 +679,12 @@ static TA_FMA_STEP_INLINE TA_RetCode TA_VIDYA_OpenImpl( struct TA_VIDYA_Stream *
       int lookbackTotal;
       int i;
       int nullRun = 0;
+      int live;
       double upSum = 0.0;
       double downSum = 0.0;
       double sum;
       double diff;
+      double up;
       double tempReal;
       double prevValue = 0.0;
       double trailingValue = 0.0;
@@ -757,20 +723,11 @@ static TA_FMA_STEP_INLINE TA_RetCode TA_VIDYA_OpenImpl( struct TA_VIDYA_Stream *
          tempReal = inReal[today];
          diff = tempReal - prevValue;
          prevValue = tempReal;
-         if( diff > 0.0 )
-         {
-            upSum += diff;
-         } else if( diff < 0.0 )
-         {
-            downSum -= diff;
-         }
-         if( diff == 0.0 )
-         {
-            nullRun += 1;
-         } else 
-         {
-            nullRun = 0;
-         }
+         up = (diff + fabs(diff)) * 0.5;
+         upSum += up;
+         downSum += up - diff;
+         live = (fabs(diff) <= 0.0) ? 0 : 1;
+         nullRun = (nullRun + 1) & (live - 1);
          sum = upSum + downSum;
          if( sum > 0.0 )
          {
@@ -781,103 +738,93 @@ static TA_FMA_STEP_INLINE TA_RetCode TA_VIDYA_OpenImpl( struct TA_VIDYA_Stream *
          }
          prevVIDYA = fma(prevValue - prevVIDYA, k, prevVIDYA);
       }
+      /* Each bar below drops the change that leaves the window after its own
+       * update, ready for the next bar, as in TA_CMOU.
+       */
+      tempReal = inReal[trailingIdx];
+      diff = tempReal - trailingValue;
+      trailingValue = tempReal;
+      trailingIdx += 1;
+      up = (diff + fabs(diff)) * 0.5;
+      upSum -= up;
+      downSum -= up - diff;
       today += 1;
       /* Skip the unstable period: the whole computation, nothing written. */
       while( today <= startIdx )
       {
-         tempReal = inReal[trailingIdx];
-         diff = tempReal - trailingValue;
-         trailingValue = tempReal;
-         trailingIdx += 1;
-         if( diff > 0.0 )
-         {
-            upSum -= diff;
-         } else if( diff < 0.0 )
-         {
-            downSum += diff;
-         }
          tempReal = inReal[today];
          diff = tempReal - prevValue;
          prevValue = tempReal;
-         if( diff > 0.0 )
-         {
-            upSum += diff;
-         } else if( diff < 0.0 )
-         {
-            downSum -= diff;
-         }
-         if( diff == 0.0 )
-         {
-            nullRun += 1;
-         } else 
-         {
-            nullRun = 0;
-         }
-         if( nullRun >= optInCMOPeriod )
+         up = (diff + fabs(diff)) * 0.5;
+         upSum += up;
+         downSum += up - diff;
+         live = (fabs(diff) <= 0.0) ? 0 : 1;
+         nullRun = (nullRun + 1) & (live - 1);
+         if( TA_UNLIKELY(nullRun >= optInCMOPeriod) )
          {
             nullRun = optInCMOPeriod;
             upSum = 0.0;
             downSum = 0.0;
-         }
-         sum = upSum + downSum;
-         if( sum > 0.0 )
-         {
-            k = alpha * (fabs(100.0 * (upSum - downSum) / sum) / 100.0);
+            k = 0.0;
          } else 
          {
-            k = 0.0;
+            sum = upSum + downSum;
+            if( sum > 0.0 )
+            {
+               k = alpha * (fabs(100.0 * (upSum - downSum) / sum) / 100.0);
+            } else 
+            {
+               k = 0.0;
+            }
          }
          prevVIDYA = fma(prevValue - prevVIDYA, k, prevVIDYA);
+         tempReal = inReal[trailingIdx];
+         diff = tempReal - trailingValue;
+         trailingValue = tempReal;
+         trailingIdx += 1;
+         up = (diff + fabs(diff)) * 0.5;
+         upSum -= up;
+         downSum -= up - diff;
          today += 1;
       }
       outReal[0 * outStride] = prevVIDYA;
       outIdx = 1;
       while( today <= endIdx )
       {
-         tempReal = inReal[trailingIdx];
-         diff = tempReal - trailingValue;
-         trailingValue = tempReal;
-         trailingIdx += 1;
-         if( diff > 0.0 )
-         {
-            upSum -= diff;
-         } else if( diff < 0.0 )
-         {
-            downSum += diff;
-         }
          tempReal = inReal[today];
          diff = tempReal - prevValue;
          prevValue = tempReal;
-         if( diff > 0.0 )
-         {
-            upSum += diff;
-         } else if( diff < 0.0 )
-         {
-            downSum -= diff;
-         }
-         if( diff == 0.0 )
-         {
-            nullRun += 1;
-         } else 
-         {
-            nullRun = 0;
-         }
-         if( nullRun >= optInCMOPeriod )
+         up = (diff + fabs(diff)) * 0.5;
+         upSum += up;
+         downSum += up - diff;
+         live = (fabs(diff) <= 0.0) ? 0 : 1;
+         nullRun = (nullRun + 1) & (live - 1);
+         if( TA_UNLIKELY(nullRun >= optInCMOPeriod) )
          {
             nullRun = optInCMOPeriod;
             upSum = 0.0;
             downSum = 0.0;
-         }
-         sum = upSum + downSum;
-         if( sum > 0.0 )
-         {
-            k = alpha * (fabs(100.0 * (upSum - downSum) / sum) / 100.0);
+            k = 0.0;
          } else 
          {
-            k = 0.0;
+            sum = upSum + downSum;
+            if( sum > 0.0 )
+            {
+               k = alpha * (fabs(100.0 * (upSum - downSum) / sum) / 100.0);
+            } else 
+            {
+               k = 0.0;
+            }
          }
          prevVIDYA = fma(prevValue - prevVIDYA, k, prevVIDYA);
          outReal[outIdx++ * outStride] = prevVIDYA;
+         tempReal = inReal[trailingIdx];
+         diff = tempReal - trailingValue;
+         trailingValue = tempReal;
+         trailingIdx += 1;
+         up = (diff + fabs(diff)) * 0.5;
+         upSum -= up;
+         downSum -= up - diff;
          today += 1;
       }
       *outBegIdx= startIdx;
@@ -995,17 +942,17 @@ TA_FMA_MULTIVERSION
 TA_LIB_API TA_RetCode TA_VIDYA_Peek( const TA_VIDYA_Stream *stream, double inReal, double *outReal )
 {
    const struct TA_VIDYA_Stream *sp = stream;
+   int live;
    double sum;
    double diff;
+   double up;
    double tempReal;
    double k;
    double downSum;
    int nullRun;
    double prevVIDYA;
    double prevValue;
-   double trailingValue;
    double upSum;
-   double *ring_trailingIdx_inReal;
 
    if( !stream || !outReal ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inReal ) ) return TA_BAD_PARAM;
@@ -1013,54 +960,36 @@ TA_LIB_API TA_RetCode TA_VIDYA_Peek( const TA_VIDYA_Stream *stream, double inRea
    nullRun = sp->nullRun;
    prevVIDYA = sp->prevVIDYA;
    prevValue = sp->prevValue;
-   trailingValue = sp->trailingValue;
    upSum = sp->upSum;
-   ring_trailingIdx_inReal = sp->ring_trailingIdx_inReal;
    if( sp->optInTimePeriod == 1 )
    {
       *outReal= inReal;
       return TA_SUCCESS;
    }
-   tempReal = ring_trailingIdx_inReal[sp->ringPos_trailingIdx];
-   diff = tempReal - trailingValue;
-   trailingValue = tempReal;
-   if( diff > 0.0 )
-   {
-      upSum -= diff;
-   } else if( diff < 0.0 )
-   {
-      downSum += diff;
-   }
    tempReal = inReal;
    diff = tempReal - prevValue;
    prevValue = tempReal;
-   if( diff > 0.0 )
-   {
-      upSum += diff;
-   } else if( diff < 0.0 )
-   {
-      downSum -= diff;
-   }
-   if( diff == 0.0 )
-   {
-      nullRun += 1;
-   } else 
-   {
-      nullRun = 0;
-   }
-   if( nullRun >= sp->optInCMOPeriod )
+   up = (diff + fabs(diff)) * 0.5;
+   upSum += up;
+   downSum += up - diff;
+   live = (fabs(diff) <= 0.0) ? 0 : 1;
+   nullRun = (nullRun + 1) & (live - 1);
+   if( TA_UNLIKELY(nullRun >= sp->optInCMOPeriod) )
    {
       nullRun = sp->optInCMOPeriod;
       upSum = 0.0;
       downSum = 0.0;
-   }
-   sum = upSum + downSum;
-   if( sum > 0.0 )
-   {
-      k = sp->alpha * (fabs(100.0 * (upSum - downSum) / sum) / 100.0);
+      k = 0.0;
    } else 
    {
-      k = 0.0;
+      sum = upSum + downSum;
+      if( sum > 0.0 )
+      {
+         k = sp->alpha * (fabs(100.0 * (upSum - downSum) / sum) / 100.0);
+      } else 
+      {
+         k = 0.0;
+      }
    }
    prevVIDYA = fma(prevValue - prevVIDYA, k, prevVIDYA);
    *outReal= prevVIDYA;
@@ -1076,118 +1005,100 @@ TA_LIB_API TA_RetCode TA_VIDYA_Close( TA_VIDYA_Stream *stream )
 /* Private function, not in public API. */
 void TA_VIDYA_StepTape( struct TA_VIDYA_Stream *sp, const double tape[], int tapeBase, int tapeMask, double inReal, double *outReal )
 {
+   int live;
    double sum;
    double diff;
+   double up;
    double tempReal;
    double k;
+   double upSum;
+   double downSum;
 
-   tempReal = tape[(tapeBase - sp->ringCap_trailingIdx) & tapeMask];
-   diff = tempReal - sp->trailingValue;
-   sp->trailingValue = tempReal;
-   if( diff > 0.0 )
-   {
-      sp->upSum -= diff;
-   } else if( diff < 0.0 )
-   {
-      sp->downSum += diff;
-   }
+   upSum = sp->upSum;
+   downSum = sp->downSum;
    tempReal = inReal;
    diff = tempReal - sp->prevValue;
    sp->prevValue = tempReal;
-   if( diff > 0.0 )
-   {
-      sp->upSum += diff;
-   } else if( diff < 0.0 )
-   {
-      sp->downSum -= diff;
-   }
-   if( diff == 0.0 )
-   {
-      sp->nullRun += 1;
-   } else 
-   {
-      sp->nullRun = 0;
-   }
-   if( sp->nullRun >= sp->optInCMOPeriod )
+   up = (diff + fabs(diff)) * 0.5;
+   upSum += up;
+   downSum += up - diff;
+   live = (fabs(diff) <= 0.0) ? 0 : 1;
+   sp->nullRun = (sp->nullRun + 1) & (live - 1);
+   if( TA_UNLIKELY(sp->nullRun >= sp->optInCMOPeriod) )
    {
       sp->nullRun = sp->optInCMOPeriod;
-      sp->upSum = 0.0;
-      sp->downSum = 0.0;
-   }
-   sum = sp->upSum + sp->downSum;
-   if( sum > 0.0 )
-   {
-      k = sp->alpha * (fabs(100.0 * (sp->upSum - sp->downSum) / sum) / 100.0);
+      upSum = 0.0;
+      downSum = 0.0;
+      k = 0.0;
    } else 
    {
-      k = 0.0;
+      sum = upSum + downSum;
+      if( sum > 0.0 )
+      {
+         k = sp->alpha * (fabs(100.0 * (upSum - downSum) / sum) / 100.0);
+      } else 
+      {
+         k = 0.0;
+      }
    }
    sp->prevVIDYA = fma(sp->prevValue - sp->prevVIDYA, k, sp->prevVIDYA);
    *outReal= sp->prevVIDYA;
+   tempReal = tape[(tapeBase - sp->ringCap_trailingIdx) & tapeMask];
+   diff = tempReal - sp->trailingValue;
+   sp->trailingValue = tempReal;
+   up = (diff + fabs(diff)) * 0.5;
+   upSum -= up;
+   downSum -= up - diff;
    sp->cur_outReal = *outReal;
+   sp->upSum = upSum;
+   sp->downSum = downSum;
    sp->outRangeCount++;
 }
 
 /* Private function, not in public API. */
 void TA_VIDYA_PeekTape( const struct TA_VIDYA_Stream *sp, const double tape[], int tapeBase, int tapeMask, double inReal, double *outReal )
 {
+   int live;
    double sum;
    double diff;
+   double up;
    double tempReal;
    double k;
    double downSum;
    int nullRun;
    double prevVIDYA;
    double prevValue;
-   double trailingValue;
    double upSum;
 
    downSum = sp->downSum;
    nullRun = sp->nullRun;
    prevVIDYA = sp->prevVIDYA;
    prevValue = sp->prevValue;
-   trailingValue = sp->trailingValue;
    upSum = sp->upSum;
-   tempReal = tape[(tapeBase - sp->ringCap_trailingIdx) & tapeMask];
-   diff = tempReal - trailingValue;
-   trailingValue = tempReal;
-   if( diff > 0.0 )
-   {
-      upSum -= diff;
-   } else if( diff < 0.0 )
-   {
-      downSum += diff;
-   }
    tempReal = inReal;
    diff = tempReal - prevValue;
    prevValue = tempReal;
-   if( diff > 0.0 )
-   {
-      upSum += diff;
-   } else if( diff < 0.0 )
-   {
-      downSum -= diff;
-   }
-   if( diff == 0.0 )
-   {
-      nullRun += 1;
-   } else 
-   {
-      nullRun = 0;
-   }
-   if( nullRun >= sp->optInCMOPeriod )
+   up = (diff + fabs(diff)) * 0.5;
+   upSum += up;
+   downSum += up - diff;
+   live = (fabs(diff) <= 0.0) ? 0 : 1;
+   nullRun = (nullRun + 1) & (live - 1);
+   if( TA_UNLIKELY(nullRun >= sp->optInCMOPeriod) )
    {
       nullRun = sp->optInCMOPeriod;
       upSum = 0.0;
       downSum = 0.0;
-   }
-   sum = upSum + downSum;
-   if( sum > 0.0 )
-   {
-      k = sp->alpha * (fabs(100.0 * (upSum - downSum) / sum) / 100.0);
+      k = 0.0;
    } else 
    {
-      k = 0.0;
+      sum = upSum + downSum;
+      if( sum > 0.0 )
+      {
+         k = sp->alpha * (fabs(100.0 * (upSum - downSum) / sum) / 100.0);
+      } else 
+      {
+         k = 0.0;
+      }
    }
    prevVIDYA = fma(prevValue - prevVIDYA, k, prevVIDYA);
    *outReal= prevVIDYA;

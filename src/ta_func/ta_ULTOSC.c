@@ -62,6 +62,7 @@
  *               divides are guarded exactly instead of against the fixed
  *               TA_IS_ZERO band -- which zeroed the oscillator for any
  *               instrument quoted small enough to fall under it.
+ *  102326 MF,CC #554 branch-free zero run, rare reset.
  */
 
 TA_LIB_API int TA_ULTOSC_Lookback( int optInTimePeriod1, int optInTimePeriod2, int optInTimePeriod3 )
@@ -131,6 +132,7 @@ TA_LIB_API TA_RetCode TA_ULTOSC( int    startIdx,
    int trailingPos1;
    int trailingPos2;
    int nullRun;
+   int live;
    int usedFlag[3];
    int periods[3];
    int sortedPeriods[3];
@@ -289,13 +291,8 @@ TA_LIB_API TA_RetCode TA_ULTOSC( int    startIdx,
       term_trueRange[term_Idx] = trueRange;
       term_Idx++;
       if( term_Idx > maxIdx_term ) term_Idx = 0;
-      if( trueRange == 0.0 && closeMinusTrueLow == 0.0 )
-      {
-         nullRun += 1;
-      } else 
-      {
-         nullRun = 0;
-      }
+      live = (fabs(trueRange) + fabs(closeMinusTrueLow) <= 0.0) ? 0 : 1;
+      nullRun = (nullRun + 1) & (live - 1);
       if( i >= startIdx - optInTimePeriod1 + 1 )
       {
          a1Total += closeMinusTrueLow;
@@ -359,14 +356,9 @@ TA_LIB_API TA_RetCode TA_ULTOSC( int    startIdx,
        * run long enough for a longer window is long enough for every shorter
        * one.
        */
-      if( trueRange == 0.0 && closeMinusTrueLow == 0.0 )
-      {
-         nullRun += 1;
-      } else 
-      {
-         nullRun = 0;
-      }
-      if( nullRun >= optInTimePeriod1 )
+      live = (fabs(trueRange) + fabs(closeMinusTrueLow) <= 0.0) ? 0 : 1;
+      nullRun = (nullRun + 1) & (live - 1);
+      if( TA_UNLIKELY(nullRun >= optInTimePeriod1) )
       {
          a1Total = 0.0;
          b1Total = 0.0;
@@ -475,6 +467,7 @@ TA_RetCode TA_S_ULTOSC( int    startIdx,
    int trailingPos1;
    int trailingPos2;
    int nullRun;
+   int live;
    int usedFlag[3];
    int periods[3];
    int sortedPeriods[3];
@@ -599,13 +592,8 @@ TA_RetCode TA_S_ULTOSC( int    startIdx,
       term_trueRange[term_Idx] = trueRange;
       term_Idx++;
       if( term_Idx > maxIdx_term ) term_Idx = 0;
-      if( trueRange == 0.0 && closeMinusTrueLow == 0.0 )
-      {
-         nullRun += 1;
-      } else 
-      {
-         nullRun = 0;
-      }
+      live = (fabs(trueRange) + fabs(closeMinusTrueLow) <= 0.0) ? 0 : 1;
+      nullRun = (nullRun + 1) & (live - 1);
       if( i >= startIdx - optInTimePeriod1 + 1 )
       {
          a1Total += closeMinusTrueLow;
@@ -657,14 +645,9 @@ TA_RetCode TA_S_ULTOSC( int    startIdx,
       b1Total += trueRange;
       b2Total += trueRange;
       b3Total += trueRange;
-      if( trueRange == 0.0 && closeMinusTrueLow == 0.0 )
-      {
-         nullRun += 1;
-      } else 
-      {
-         nullRun = 0;
-      }
-      if( nullRun >= optInTimePeriod1 )
+      live = (fabs(trueRange) + fabs(closeMinusTrueLow) <= 0.0) ? 0 : 1;
+      nullRun = (nullRun + 1) & (live - 1);
+      if( TA_UNLIKELY(nullRun >= optInTimePeriod1) )
       {
          a1Total = 0.0;
          b1Total = 0.0;
@@ -770,6 +753,7 @@ static void TA_ULTOSC_StepImpl( struct TA_ULTOSC_Stream *sp, double inHigh, doub
    double tempHT;
    double tempLT;
    double tempCY;
+   int live;
 
    /* Add on today's terms */
    tempLT = inLow;
@@ -802,14 +786,9 @@ static void TA_ULTOSC_StepImpl( struct TA_ULTOSC_Stream *sp, double inHigh, doub
     * run long enough for a longer window is long enough for every shorter
     * one.
     */
-   if( trueRange == 0.0 && closeMinusTrueLow == 0.0 )
-   {
-      sp->nullRun += 1;
-   } else 
-   {
-      sp->nullRun = 0;
-   }
-   if( sp->nullRun >= sp->optInTimePeriod1 )
+   live = (fabs(trueRange) + fabs(closeMinusTrueLow) <= 0.0) ? 0 : 1;
+   sp->nullRun = (sp->nullRun + 1) & (live - 1);
+   if( TA_UNLIKELY(sp->nullRun >= sp->optInTimePeriod1) )
    {
       sp->a1Total = 0.0;
       sp->b1Total = 0.0;
@@ -944,6 +923,7 @@ static TA_RetCode TA_ULTOSC_OpenImpl( struct TA_ULTOSC_Stream **stream, const do
       int trailingPos1 = 0;
       int trailingPos2 = 0;
       int nullRun = 0;
+      int live;
       int usedFlag[3];
       int periods[3];
       int sortedPeriods[3];
@@ -1063,13 +1043,8 @@ static TA_RetCode TA_ULTOSC_OpenImpl( struct TA_ULTOSC_Stream **stream, const do
          term_trueRange[term_Idx] = trueRange;
          term_Idx++;
          if( term_Idx > maxIdx_term ) term_Idx = 0;
-         if( trueRange == 0.0 && closeMinusTrueLow == 0.0 )
-         {
-            nullRun += 1;
-         } else 
-         {
-            nullRun = 0;
-         }
+         live = (fabs(trueRange) + fabs(closeMinusTrueLow) <= 0.0) ? 0 : 1;
+         nullRun = (nullRun + 1) & (live - 1);
          if( i >= startIdx - optInTimePeriod1 + 1 )
          {
             a1Total += closeMinusTrueLow;
@@ -1133,14 +1108,9 @@ static TA_RetCode TA_ULTOSC_OpenImpl( struct TA_ULTOSC_Stream **stream, const do
           * run long enough for a longer window is long enough for every shorter
           * one.
           */
-         if( trueRange == 0.0 && closeMinusTrueLow == 0.0 )
-         {
-            nullRun += 1;
-         } else 
-         {
-            nullRun = 0;
-         }
-         if( nullRun >= optInTimePeriod1 )
+         live = (fabs(trueRange) + fabs(closeMinusTrueLow) <= 0.0) ? 0 : 1;
+         nullRun = (nullRun + 1) & (live - 1);
+         if( TA_UNLIKELY(nullRun >= optInTimePeriod1) )
          {
             a1Total = 0.0;
             b1Total = 0.0;
@@ -1310,6 +1280,7 @@ TA_LIB_API TA_RetCode TA_ULTOSC_Peek( const TA_ULTOSC_Stream *stream, double inH
    double tempHT;
    double tempLT;
    double tempCY;
+   int live;
    double a1Total;
    double a2Total;
    double a3Total;
@@ -1374,14 +1345,9 @@ TA_LIB_API TA_RetCode TA_ULTOSC_Peek( const TA_ULTOSC_Stream *stream, double inH
     * run long enough for a longer window is long enough for every shorter
     * one.
     */
-   if( trueRange == 0.0 && closeMinusTrueLow == 0.0 )
-   {
-      nullRun += 1;
-   } else 
-   {
-      nullRun = 0;
-   }
-   if( nullRun >= sp->optInTimePeriod1 )
+   live = (fabs(trueRange) + fabs(closeMinusTrueLow) <= 0.0) ? 0 : 1;
+   nullRun = (nullRun + 1) & (live - 1);
+   if( TA_UNLIKELY(nullRun >= sp->optInTimePeriod1) )
    {
       a1Total = 0.0;
       b1Total = 0.0;

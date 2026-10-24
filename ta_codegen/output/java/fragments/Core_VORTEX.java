@@ -3,12 +3,15 @@
  *  Initial  Name/description
  *  -------------------------------------------------------------------
  *  KL       Kevin Lin
+ *  MF       Mario Fortier
+ *  CC       Claude Code (AI assistant)
  *
  * Change history:
  *
  *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
  *  090626 KL     First version (issue #349).
+ *  102326 MF,CC  #554 branch-free zero run, rare reset.
  */
 
    /**
@@ -76,6 +79,7 @@
       int lookbackTotal = 0;
       int i = 0;
       int nullRun = 0;
+      int live = 0;
       double sTR = 0;
       double sVMP = 0;
       double sVMM = 0;
@@ -154,11 +158,8 @@
          sTR += trueRange;
          sVMP += Math.abs(inHigh[i] - inLow[i - 1]);
          sVMM += Math.abs(inLow[i] - inHigh[i - 1]);
-         if( trueRange == 0.0 ) {
-            nullRun += 1;
-         } else {
-            nullRun = 0;
-         }
+         live = (Math.abs(trueRange) <= 0.0) ? 0 : 1;
+         nullRun = (nullRun + 1) & (live - 1);
       }
       outIdx = 0;
       today = startIdx;
@@ -180,11 +181,8 @@
          sTR += trueRange;
          sVMP += Math.abs(inHigh[today] - inLow[today - 1]);
          sVMM += Math.abs(inLow[today] - inHigh[today - 1]);
-         if( trueRange == 0.0 ) {
-            nullRun += 1;
-         } else {
-            nullRun = 0;
-         }
+         live = (Math.abs(trueRange) <= 0.0) ? 0 : 1;
+         nullRun = (nullRun + 1) & (live - 1);
          /* Once the whole window is flat, every TRUE-RANGE term in it is
           * provably zero (nullRun counts exactly that), so sTR's only content
           * is the running add/subtract's rounding residue -- purge it, and the
@@ -274,6 +272,7 @@
       int lookbackTotal = 0;
       int i = 0;
       int nullRun = 0;
+      int live = 0;
       double sTR = 0;
       double sVMP = 0;
       double sVMM = 0;
@@ -328,11 +327,8 @@
          sTR += trueRange;
          sVMP += Math.abs((double)inHigh[i] - (double)inLow[i - 1]);
          sVMM += Math.abs((double)inLow[i] - (double)inHigh[i - 1]);
-         if( trueRange == 0.0 ) {
-            nullRun += 1;
-         } else {
-            nullRun = 0;
-         }
+         live = (Math.abs(trueRange) <= 0.0) ? 0 : 1;
+         nullRun = (nullRun + 1) & (live - 1);
       }
       outIdx = 0;
       today = startIdx;
@@ -353,11 +349,8 @@
          sTR += trueRange;
          sVMP += Math.abs((double)inHigh[today] - (double)inLow[today - 1]);
          sVMM += Math.abs((double)inLow[today] - (double)inHigh[today - 1]);
-         if( trueRange == 0.0 ) {
-            nullRun += 1;
-         } else {
-            nullRun = 0;
-         }
+         live = (Math.abs(trueRange) <= 0.0) ? 0 : 1;
+         nullRun = (nullRun + 1) & (live - 1);
          if( nullRun >= optInTimePeriod ) {
             nullRun = optInTimePeriod;
             sTR = 0.0;
@@ -692,6 +685,7 @@
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw nonFiniteBar("VORTEX peek", !Double.isFinite(inHigh) ? "inHigh" : !Double.isFinite(inLow) ? "inLow" : "inClose");
          VortexStream sp = this;
+         int live = 0;
          double curTR = 0.0;
          double curVMP = 0.0;
          double curVMM = 0.0;
@@ -734,11 +728,8 @@
          sTR += trueRange;
          sVMP += Math.abs(inHigh - sp.lag1_inLow);
          sVMM += Math.abs(inLow - sp.lag1_inHigh);
-         if( trueRange == 0.0 ) {
-            nullRun += 1;
-         } else {
-            nullRun = 0;
-         }
+         live = (Math.abs(trueRange) <= 0.0) ? 0 : 1;
+         nullRun = (nullRun + 1) & (live - 1);
          /* Once the whole window is flat, every TRUE-RANGE term in it is
           * provably zero (nullRun counts exactly that), so sTR's only content
           * is the running add/subtract's rounding residue -- purge it, and the
@@ -859,6 +850,7 @@
    }
    private void vortexStepImpl( VortexStream sp, double inHigh, double inLow, double inClose )
    {
+      int live = 0;
       double curTR = 0.0;
       double curVMP = 0.0;
       double curVMM = 0.0;
@@ -886,11 +878,8 @@
       sp.sTR += trueRange;
       sp.sVMP += Math.abs(inHigh - sp.lag1_inLow);
       sp.sVMM += Math.abs(inLow - sp.lag1_inHigh);
-      if( trueRange == 0.0 ) {
-         sp.nullRun += 1;
-      } else {
-         sp.nullRun = 0;
-      }
+      live = (Math.abs(trueRange) <= 0.0) ? 0 : 1;
+      sp.nullRun = (sp.nullRun + 1) & (live - 1);
       /* Once the whole window is flat, every TRUE-RANGE term in it is
        * provably zero (nullRun counts exactly that), so sTR's only content
        * is the running add/subtract's rounding residue -- purge it, and the
@@ -971,6 +960,7 @@
       int lookbackTotal = 0;
       int i = 0;
       int nullRun = 0;
+      int live = 0;
       double sTR = 0;
       double sVMP = 0;
       double sVMM = 0;
@@ -1056,11 +1046,8 @@
          sTR += trueRange;
          sVMP += Math.abs(inHigh[i] - inLow[i - 1]);
          sVMM += Math.abs(inLow[i] - inHigh[i - 1]);
-         if( trueRange == 0.0 ) {
-            nullRun += 1;
-         } else {
-            nullRun = 0;
-         }
+         live = (Math.abs(trueRange) <= 0.0) ? 0 : 1;
+         nullRun = (nullRun + 1) & (live - 1);
       }
       outIdx = 0;
       today = startIdx;
@@ -1082,11 +1069,8 @@
          sTR += trueRange;
          sVMP += Math.abs(inHigh[today] - inLow[today - 1]);
          sVMM += Math.abs(inLow[today] - inHigh[today - 1]);
-         if( trueRange == 0.0 ) {
-            nullRun += 1;
-         } else {
-            nullRun = 0;
-         }
+         live = (Math.abs(trueRange) <= 0.0) ? 0 : 1;
+         nullRun = (nullRun + 1) & (live - 1);
          /* Once the whole window is flat, every TRUE-RANGE term in it is
           * provably zero (nullRun counts exactly that), so sTR's only content
           * is the running add/subtract's rounding residue -- purge it, and the

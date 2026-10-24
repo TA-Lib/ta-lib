@@ -58,6 +58,7 @@ public partial class Core
     *                0/0 is guarded exactly instead of against the fixed
     *                TA_IS_ZERO band -- which zeroed the oscillator for any
     *                instrument quoted small enough to fall under it.
+    *  102326 MF,CC  #554 branch-free up/down split and zero run, rare reset.
     */
    /// <summary>
    /// Number of leading input bars <c>Cmou</c> consumes before it can produce
@@ -125,10 +126,12 @@ public partial class Core
       int lookbackTotal = 0;
       int i = 0;
       int nullRun = 0;
+      int live = 0;
       double upSum = 0;
       double downSum = 0;
       double sum = 0;
       double diff = 0;
+      double up = 0;
       double tempReal = 0;
       double prevValue = 0;
       double trailingValue = 0;
@@ -154,7 +157,7 @@ public partial class Core
        * smoothing -- hence no unstable period.
        *
        * In-place safe (outReal == inReal): the trailing read inReal[trailingIdx]
-       * precedes this iteration's write (trailingIdx >= outIdx), and the oldest
+       * is of a slot not yet written (trailingIdx >= outIdx), and the oldest
        * change's older endpoint comes from the `trailingValue` cache, not a re-read.
        */
       outBegIdx = 0;
@@ -184,6 +187,11 @@ public partial class Core
        * answer that question themselves once the window starts sliding: they are
        * maintained by add-then-subtract, so an emptied window leaves them holding
        * rounding residue of arbitrary sign rather than zero.
+       *
+       * Both the split and the run are branch-free, as an if/else on the sign or
+       * on a zero mispredicts on random or flat-heavy prices. `up` is max(diff, 0)
+       * spelled with fabs, which no backend turns back into a branch; adding its
+       * +0.0 is exact because neither sum is ever -0.0.
        */
       nullRun = 0;
       for( i = 0; i < optInTimePeriod; i += 1 ) {
@@ -191,16 +199,11 @@ public partial class Core
          tempReal = inReal[today];
          diff = tempReal - prevValue;
          prevValue = tempReal;
-         if( diff > 0.0 ) {
-            upSum += diff;
-         } else if( diff < 0.0 ) {
-            downSum -= diff;
-         }
-         if( diff == 0.0 ) {
-            nullRun += 1;
-         } else {
-            nullRun = 0;
-         }
+         up = (diff + Math.Abs(diff)) * 0.5;
+         upSum += up;
+         downSum += up - diff;
+         live = (Math.Abs(diff) <= 0.0) ? 0 : 1;
+         nullRun = (nullRun + 1) & (live - 1);
       }
       /* Emit the first output (bar startIdx). Su+Sd is a sum of non-negative
        * magnitudes, so it is zero only for an exactly flat window; guard the 0/0
@@ -220,52 +223,54 @@ public partial class Core
       } else {
          outReal[outIdx++] = 0.0;
       }
-      /* Slide the window forward one bar at a time. */
+      /* Slide the window forward one bar at a time. Each bar drops the change
+       * that leaves the window AFTER its output, ready for the next bar: the
+       * sums see the same operations in the same order, and a peek, which keeps
+       * nothing past its output, skips that half of the work. The oldest
+       * change's older price comes from the cache.
+       */
+      tempReal = inReal[trailingIdx];
+      diff = tempReal - trailingValue;
+      trailingValue = tempReal;
+      trailingIdx += 1;
+      up = (diff + Math.Abs(diff)) * 0.5;
+      upSum -= up;
+      downSum -= up - diff;
       today += 1;
       while( today <= endIdx ) {
-         /* Drop the oldest change: inReal[trailingIdx] - inReal[trailingIdx-1].
-          * inReal[trailingIdx-1] comes from the cache (already overwritten when
-          * outReal == inReal); inReal[trailingIdx] is read here, before this
-          * iteration writes outReal[outIdx], so it is still the original price.
-          */
-         tempReal = inReal[trailingIdx];
-         diff = tempReal - trailingValue;
-         trailingValue = tempReal;
-         trailingIdx += 1;
-         if( diff > 0.0 ) {
-            upSum -= diff;
-         } else if( diff < 0.0 ) {
-            downSum += diff;
-         }
          /* Add the newest change: inReal[today] - inReal[today-1]. */
          tempReal = inReal[today];
          diff = tempReal - prevValue;
          prevValue = tempReal;
-         if( diff > 0.0 ) {
-            upSum += diff;
-         } else if( diff < 0.0 ) {
-            downSum -= diff;
-         }
+         up = (diff + Math.Abs(diff)) * 0.5;
+         upSum += up;
+         downSum += up - diff;
          /* Once a whole period of flat bars has gone by, every change in the
           * window is exactly zero, so both sums are known to be exactly zero and
           * the residue can be dropped.
           */
-         if( diff == 0.0 ) {
-            nullRun += 1;
-         } else {
-            nullRun = 0;
-         }
+         live = (Math.Abs(diff) <= 0.0) ? 0 : 1;
+         nullRun = (nullRun + 1) & (live - 1);
          if( nullRun >= optInTimePeriod ) {
             nullRun = optInTimePeriod;
             upSum = 0.0;
             downSum = 0.0;
-         }
-         sum = upSum + downSum;
-         if( sum > 0.0 ) {
-            outReal[outIdx++] = 100.0 * (upSum - downSum) / sum;
-         } else {
             outReal[outIdx++] = 0.0;
+         } else {
+            sum = upSum + downSum;
+            if( sum > 0.0 ) {
+               outReal[outIdx++] = 100.0 * (upSum - downSum) / sum;
+            } else {
+               outReal[outIdx++] = 0.0;
+            }
          }
+         tempReal = inReal[trailingIdx];
+         diff = tempReal - trailingValue;
+         trailingValue = tempReal;
+         trailingIdx += 1;
+         up = (diff + Math.Abs(diff)) * 0.5;
+         upSum -= up;
+         downSum -= up - diff;
          today += 1;
       }
       outBegIdx = startIdx;
@@ -288,10 +293,12 @@ public partial class Core
       int lookbackTotal = 0;
       int i = 0;
       int nullRun = 0;
+      int live = 0;
       double upSum = 0;
       double downSum = 0;
       double sum = 0;
       double diff = 0;
+      double up = 0;
       double tempReal = 0;
       double prevValue = 0;
       double trailingValue = 0;
@@ -330,16 +337,11 @@ public partial class Core
          tempReal = (double)inReal[today];
          diff = tempReal - prevValue;
          prevValue = tempReal;
-         if( diff > 0.0 ) {
-            upSum += diff;
-         } else if( diff < 0.0 ) {
-            downSum -= diff;
-         }
-         if( diff == 0.0 ) {
-            nullRun += 1;
-         } else {
-            nullRun = 0;
-         }
+         up = (diff + Math.Abs(diff)) * 0.5;
+         upSum += up;
+         downSum += up - diff;
+         live = (Math.Abs(diff) <= 0.0) ? 0 : 1;
+         nullRun = (nullRun + 1) & (live - 1);
       }
       outIdx = 0;
       sum = upSum + downSum;
@@ -348,41 +350,43 @@ public partial class Core
       } else {
          outReal[outIdx++] = 0.0;
       }
+      tempReal = (double)inReal[trailingIdx];
+      diff = tempReal - trailingValue;
+      trailingValue = tempReal;
+      trailingIdx += 1;
+      up = (diff + Math.Abs(diff)) * 0.5;
+      upSum -= up;
+      downSum -= up - diff;
       today += 1;
       while( today <= endIdx ) {
-         tempReal = (double)inReal[trailingIdx];
-         diff = tempReal - trailingValue;
-         trailingValue = tempReal;
-         trailingIdx += 1;
-         if( diff > 0.0 ) {
-            upSum -= diff;
-         } else if( diff < 0.0 ) {
-            downSum += diff;
-         }
          tempReal = (double)inReal[today];
          diff = tempReal - prevValue;
          prevValue = tempReal;
-         if( diff > 0.0 ) {
-            upSum += diff;
-         } else if( diff < 0.0 ) {
-            downSum -= diff;
-         }
-         if( diff == 0.0 ) {
-            nullRun += 1;
-         } else {
-            nullRun = 0;
-         }
+         up = (diff + Math.Abs(diff)) * 0.5;
+         upSum += up;
+         downSum += up - diff;
+         live = (Math.Abs(diff) <= 0.0) ? 0 : 1;
+         nullRun = (nullRun + 1) & (live - 1);
          if( nullRun >= optInTimePeriod ) {
             nullRun = optInTimePeriod;
             upSum = 0.0;
             downSum = 0.0;
-         }
-         sum = upSum + downSum;
-         if( sum > 0.0 ) {
-            outReal[outIdx++] = 100.0 * (upSum - downSum) / sum;
-         } else {
             outReal[outIdx++] = 0.0;
+         } else {
+            sum = upSum + downSum;
+            if( sum > 0.0 ) {
+               outReal[outIdx++] = 100.0 * (upSum - downSum) / sum;
+            } else {
+               outReal[outIdx++] = 0.0;
+            }
          }
+         tempReal = (double)inReal[trailingIdx];
+         diff = tempReal - trailingValue;
+         trailingValue = tempReal;
+         trailingIdx += 1;
+         up = (diff + Math.Abs(diff)) * 0.5;
+         upSum -= up;
+         downSum -= up - diff;
          today += 1;
       }
       outBegIdx = startIdx;
@@ -684,56 +688,41 @@ public partial class Core
       {
          if( !double.IsFinite(inReal) ) throw Core.NonFiniteBar("CMOU", "peek", nameof(inReal));
          CmouStream sp = this;
+         int live = 0;
          double sum = 0.0;
          double diff = 0.0;
+         double up = 0.0;
          double tempReal = 0.0;
          double cur_outReal = 0.0;
          double downSum = sp.downSum;
          int nullRun = sp.nullRun;
          double prevValue = sp.prevValue;
-         double trailingValue = sp.trailingValue;
          double upSum = sp.upSum;
-         /* Drop the oldest change: inReal[trailingIdx] - inReal[trailingIdx-1].
-          * inReal[trailingIdx-1] comes from the cache (already overwritten when
-          * outReal == inReal); inReal[trailingIdx] is read here, before this
-          * iteration writes outReal[outIdx], so it is still the original price.
-          */
-         tempReal = sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx];
-         diff = tempReal - trailingValue;
-         trailingValue = tempReal;
-         if( diff > 0.0 ) {
-            upSum -= diff;
-         } else if( diff < 0.0 ) {
-            downSum += diff;
-         }
          /* Add the newest change: inReal[today] - inReal[today-1]. */
          tempReal = inReal;
          diff = tempReal - prevValue;
          prevValue = tempReal;
-         if( diff > 0.0 ) {
-            upSum += diff;
-         } else if( diff < 0.0 ) {
-            downSum -= diff;
-         }
+         up = (diff + Math.Abs(diff)) * 0.5;
+         upSum += up;
+         downSum += up - diff;
          /* Once a whole period of flat bars has gone by, every change in the
           * window is exactly zero, so both sums are known to be exactly zero and
           * the residue can be dropped.
           */
-         if( diff == 0.0 ) {
-            nullRun += 1;
-         } else {
-            nullRun = 0;
-         }
+         live = (Math.Abs(diff) <= 0.0) ? 0 : 1;
+         nullRun = (nullRun + 1) & (live - 1);
          if( nullRun >= sp.optInTimePeriod ) {
             nullRun = sp.optInTimePeriod;
             upSum = 0.0;
             downSum = 0.0;
-         }
-         sum = upSum + downSum;
-         if( sum > 0.0 ) {
-            cur_outReal = 100.0 * (upSum - downSum) / sum;
-         } else {
             cur_outReal = 0.0;
+         } else {
+            sum = upSum + downSum;
+            if( sum > 0.0 ) {
+               cur_outReal = 100.0 * (upSum - downSum) / sum;
+            } else {
+               cur_outReal = 0.0;
+            }
          }
          return cur_outReal;
       }
@@ -757,52 +746,44 @@ public partial class Core
 
    private void CmouStepImpl( CmouStream sp, double inReal )
    {
+      int live = 0;
       double sum = 0.0;
       double diff = 0.0;
+      double up = 0.0;
       double tempReal = 0.0;
       int ringCapL_trailingIdx = 0;
-      /* Drop the oldest change: inReal[trailingIdx] - inReal[trailingIdx-1].
-       * inReal[trailingIdx-1] comes from the cache (already overwritten when
-       * outReal == inReal); inReal[trailingIdx] is read here, before this
-       * iteration writes outReal[outIdx], so it is still the original price.
-       */
-      tempReal = sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx];
-      diff = tempReal - sp.trailingValue;
-      sp.trailingValue = tempReal;
-      if( diff > 0.0 ) {
-         sp.upSum -= diff;
-      } else if( diff < 0.0 ) {
-         sp.downSum += diff;
-      }
       /* Add the newest change: inReal[today] - inReal[today-1]. */
       tempReal = inReal;
       diff = tempReal - sp.prevValue;
       sp.prevValue = tempReal;
-      if( diff > 0.0 ) {
-         sp.upSum += diff;
-      } else if( diff < 0.0 ) {
-         sp.downSum -= diff;
-      }
+      up = (diff + Math.Abs(diff)) * 0.5;
+      sp.upSum += up;
+      sp.downSum += up - diff;
       /* Once a whole period of flat bars has gone by, every change in the
        * window is exactly zero, so both sums are known to be exactly zero and
        * the residue can be dropped.
        */
-      if( diff == 0.0 ) {
-         sp.nullRun += 1;
-      } else {
-         sp.nullRun = 0;
-      }
+      live = (Math.Abs(diff) <= 0.0) ? 0 : 1;
+      sp.nullRun = (sp.nullRun + 1) & (live - 1);
       if( sp.nullRun >= sp.optInTimePeriod ) {
          sp.nullRun = sp.optInTimePeriod;
          sp.upSum = 0.0;
          sp.downSum = 0.0;
-      }
-      sum = sp.upSum + sp.downSum;
-      if( sum > 0.0 ) {
-         sp.cur_outReal = 100.0 * (sp.upSum - sp.downSum) / sum;
-      } else {
          sp.cur_outReal = 0.0;
+      } else {
+         sum = sp.upSum + sp.downSum;
+         if( sum > 0.0 ) {
+            sp.cur_outReal = 100.0 * (sp.upSum - sp.downSum) / sum;
+         } else {
+            sp.cur_outReal = 0.0;
+         }
       }
+      tempReal = sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx];
+      diff = tempReal - sp.trailingValue;
+      sp.trailingValue = tempReal;
+      up = (diff + Math.Abs(diff)) * 0.5;
+      sp.upSum -= up;
+      sp.downSum -= up - diff;
       ringCapL_trailingIdx = sp.ringCap_trailingIdx;
       sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx] = inReal;
       sp.ringPos_trailingIdx = sp.ringPos_trailingIdx + 1;
@@ -821,10 +802,12 @@ public partial class Core
       int lookbackTotal = 0;
       int i = 0;
       int nullRun = 0;
+      int live = 0;
       double upSum = 0;
       double downSum = 0;
       double sum = 0;
       double diff = 0;
+      double up = 0;
       double tempReal = 0;
       double prevValue = 0;
       double trailingValue = 0;
@@ -854,7 +837,7 @@ public partial class Core
        * smoothing -- hence no unstable period.
        *
        * In-place safe (outReal == inReal): the trailing read inReal[trailingIdx]
-       * precedes this iteration's write (trailingIdx >= outIdx), and the oldest
+       * is of a slot not yet written (trailingIdx >= outIdx), and the oldest
        * change's older endpoint comes from the `trailingValue` cache, not a re-read.
        */
       outBegIdx = 0;
@@ -884,6 +867,11 @@ public partial class Core
        * answer that question themselves once the window starts sliding: they are
        * maintained by add-then-subtract, so an emptied window leaves them holding
        * rounding residue of arbitrary sign rather than zero.
+       *
+       * Both the split and the run are branch-free, as an if/else on the sign or
+       * on a zero mispredicts on random or flat-heavy prices. `up` is max(diff, 0)
+       * spelled with fabs, which no backend turns back into a branch; adding its
+       * +0.0 is exact because neither sum is ever -0.0.
        */
       nullRun = 0;
       for( i = 0; i < optInTimePeriod; i += 1 ) {
@@ -891,16 +879,11 @@ public partial class Core
          tempReal = inReal[today];
          diff = tempReal - prevValue;
          prevValue = tempReal;
-         if( diff > 0.0 ) {
-            upSum += diff;
-         } else if( diff < 0.0 ) {
-            downSum -= diff;
-         }
-         if( diff == 0.0 ) {
-            nullRun += 1;
-         } else {
-            nullRun = 0;
-         }
+         up = (diff + Math.Abs(diff)) * 0.5;
+         upSum += up;
+         downSum += up - diff;
+         live = (Math.Abs(diff) <= 0.0) ? 0 : 1;
+         nullRun = (nullRun + 1) & (live - 1);
       }
       /* Emit the first output (bar startIdx). Su+Sd is a sum of non-negative
        * magnitudes, so it is zero only for an exactly flat window; guard the 0/0
@@ -920,52 +903,54 @@ public partial class Core
       } else {
          outReal[outIdx++ * outStride] = 0.0;
       }
-      /* Slide the window forward one bar at a time. */
+      /* Slide the window forward one bar at a time. Each bar drops the change
+       * that leaves the window AFTER its output, ready for the next bar: the
+       * sums see the same operations in the same order, and a peek, which keeps
+       * nothing past its output, skips that half of the work. The oldest
+       * change's older price comes from the cache.
+       */
+      tempReal = inReal[trailingIdx];
+      diff = tempReal - trailingValue;
+      trailingValue = tempReal;
+      trailingIdx += 1;
+      up = (diff + Math.Abs(diff)) * 0.5;
+      upSum -= up;
+      downSum -= up - diff;
       today += 1;
       while( today <= endIdx ) {
-         /* Drop the oldest change: inReal[trailingIdx] - inReal[trailingIdx-1].
-          * inReal[trailingIdx-1] comes from the cache (already overwritten when
-          * outReal == inReal); inReal[trailingIdx] is read here, before this
-          * iteration writes outReal[outIdx], so it is still the original price.
-          */
-         tempReal = inReal[trailingIdx];
-         diff = tempReal - trailingValue;
-         trailingValue = tempReal;
-         trailingIdx += 1;
-         if( diff > 0.0 ) {
-            upSum -= diff;
-         } else if( diff < 0.0 ) {
-            downSum += diff;
-         }
          /* Add the newest change: inReal[today] - inReal[today-1]. */
          tempReal = inReal[today];
          diff = tempReal - prevValue;
          prevValue = tempReal;
-         if( diff > 0.0 ) {
-            upSum += diff;
-         } else if( diff < 0.0 ) {
-            downSum -= diff;
-         }
+         up = (diff + Math.Abs(diff)) * 0.5;
+         upSum += up;
+         downSum += up - diff;
          /* Once a whole period of flat bars has gone by, every change in the
           * window is exactly zero, so both sums are known to be exactly zero and
           * the residue can be dropped.
           */
-         if( diff == 0.0 ) {
-            nullRun += 1;
-         } else {
-            nullRun = 0;
-         }
+         live = (Math.Abs(diff) <= 0.0) ? 0 : 1;
+         nullRun = (nullRun + 1) & (live - 1);
          if( nullRun >= optInTimePeriod ) {
             nullRun = optInTimePeriod;
             upSum = 0.0;
             downSum = 0.0;
-         }
-         sum = upSum + downSum;
-         if( sum > 0.0 ) {
-            outReal[outIdx++ * outStride] = 100.0 * (upSum - downSum) / sum;
-         } else {
             outReal[outIdx++ * outStride] = 0.0;
+         } else {
+            sum = upSum + downSum;
+            if( sum > 0.0 ) {
+               outReal[outIdx++ * outStride] = 100.0 * (upSum - downSum) / sum;
+            } else {
+               outReal[outIdx++ * outStride] = 0.0;
+            }
          }
+         tempReal = inReal[trailingIdx];
+         diff = tempReal - trailingValue;
+         trailingValue = tempReal;
+         trailingIdx += 1;
+         up = (diff + Math.Abs(diff)) * 0.5;
+         upSum -= up;
+         downSum -= up - diff;
          today += 1;
       }
       outBegIdx = startIdx;

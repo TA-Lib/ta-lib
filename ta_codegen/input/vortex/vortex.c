@@ -3,12 +3,15 @@
  *  Initial  Name/description
  *  -------------------------------------------------------------------
  *  KL       Kevin Lin
+ *  MF       Mario Fortier
+ *  CC       Claude Code (AI assistant)
  *
  * Change history:
  *
  *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
  *  090626 KL     First version (issue #349).
+ *  102326 MF,CC  #554 branch-free zero run, rare reset.
  */
 
 int vortex_lookback(int optInTimePeriod)
@@ -32,7 +35,7 @@ TA_RetCode vortex(int startIdx, int endIdx,
    double outMinusVI[])
 {
    int outIdx, today, trailingIdx, lookbackTotal, i;
-   int nullRun;
+   int nullRun, live;
    double sTR, sVMP, sVMM, curTR, curVMP, curVMM;
    double trueRange, tempDouble, tempLT, tempHT, tempCY;
 
@@ -92,10 +95,8 @@ TA_RetCode vortex(int startIdx, int endIdx,
       sTR  += trueRange;
       sVMP += fabs( inHigh[i] - inLow[i-1] );
       sVMM += fabs( inLow[i] - inHigh[i-1] );
-      if( trueRange == 0.0 )
-         nullRun++;
-      else
-         nullRun = 0;
+      live = fabs(trueRange) <= 0.0 ? 0 : 1;
+      nullRun = (nullRun + 1) & (live - 1);
    }
 
    outIdx      = 0;
@@ -118,10 +119,8 @@ TA_RetCode vortex(int startIdx, int endIdx,
       sTR  += trueRange;
       sVMP += fabs( inHigh[today] - inLow[today-1] );
       sVMM += fabs( inLow[today] - inHigh[today-1] );
-      if( trueRange == 0.0 )
-         nullRun++;
-      else
-         nullRun = 0;
+      live = fabs(trueRange) <= 0.0 ? 0 : 1;
+      nullRun = (nullRun + 1) & (live - 1);
       /* Once the whole window is flat, every TRUE-RANGE term in it is
        * provably zero (nullRun counts exactly that), so sTR's only content
        * is the running add/subtract's rounding residue -- purge it, and the
@@ -133,7 +132,7 @@ TA_RetCode vortex(int startIdx, int endIdx,
        * would poison both lines permanently (an unreachable negative -VI).
        * ULTOSC can reseed all its totals because its predicate covers both
        * of its per-bar terms; VORTEX's covers only the denominator's. */
-      if( nullRun >= optInTimePeriod )
+      if( TA_UNLIKELY(nullRun >= optInTimePeriod) )
       {
          nullRun = optInTimePeriod;
          sTR = 0.0;

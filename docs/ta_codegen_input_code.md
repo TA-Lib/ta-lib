@@ -131,6 +131,36 @@ arithmetic (`+ - * /`), comparison (`< <= > >= == !=`), and boolean (`&& || !`)
 operators; C-style casts (`(double)x`, `(size_t)(n - 1)`); and array indexing. Follow
 the bracing/spacing style of the existing input files.
 
+## Branches in a bar loop
+
+A branch on the data, such as the sign of a change or an exact zero, mispredicts
+on real prices whichever way it is laid out, and whether a ternary stays a select
+is each compiler's call: gcc 13, gcc 14 and Java's x86 JIT each turn some back
+into branches, a select of two constants included. Write such a choice as
+arithmetic, which none of them can:
+
+- `max(d, 0)` as `(d + fabs(d)) * 0.5`, and the other side as the remainder
+  (`cmou.c`). Not `fmax`, which gcc calls in libm.
+- a run of exact zeros as a masked counter:
+  `live = fabs(v) <= 0.0 ? 0 : 1; run = (run + 1) & (live - 1);` (`cmf.c`).
+
+The `fabs` form adds `+0.0` where the branch added nothing, which is exact only
+into a sum that is never `-0.0`: check that before relying on it.
+
+The exception is a pick of a value against `0.0` on a strict comparison
+(`x = a < b ? 0.0 : v`): the C# backend lowers it to a branch-free mask, which
+arithmetic would lose (`mfi.c`).
+
+A case that is rare by construction, such as a window flat for a whole period, is
+one `TA_UNLIKELY` branch. When the bar's output is written right after it, write
+the dead bar's output inside the branch and the normal one in its `else`
+(`cmou.c`, `er.c`): a branch that only zeroes locals can still become a select on
+every bar's running sums.
+
+Work that only prepares the next bar, such as dropping the change that leaves the
+window, goes after the bar's output: a peek keeps nothing past its last output
+store, so it skips that work (`cmou.c`).
+
 ## Rescan loops: write the window start INLINE
 
 A body that rebuilds a window sum -- the periodic re-anchor `TA_VAR`,
@@ -178,7 +208,7 @@ generator recognizes and maps per language:
 | Construct | Meaning |
 |---|---|
 | `TA_IS_ZERO(x)` / `TA_IS_ZERO_OR_NEG(x)` | epsilon comparison against zero |
-| `if( TA_UNLIKELY(c) )` | `c`, marked rarely true, as the whole condition of an `if` in a loop: C lays the guarded block out of line and usually keeps it a branch, Rust opens it with a call to a cold function, Java and C# render `c`. For a rare reset of a value carried from bar to bar, which a compiler otherwise turns into a select on every bar (`rvol.c`); a short block can still become a select (`vwma.c`), and on other branches in the same loop the hint can cost more than it saves, so time each use |
+| `if( TA_UNLIKELY(c) )` | `c`, marked rarely true, as the whole condition of an `if` in a loop: C lays the guarded block out of line, Rust opens it with a call to a cold function, and Java and C# render `c`. See [Branches in a bar loop](#branches-in-a-bar-loop) |
 | `TA_UNSTABLE( TA_FUNC_UNST_<NAME>, <count> )` | this function's unstable period: the stored count, or under an Auto level `<count>`, written with the free names `K` and `X` that each level supplies. Only in the owner's lookback, once per path |
 | `TA_UNSTABLE_AUTO( TA_FUNC_UNST_<ID>, <offset> )` | `<offset>`, written from the function's parameters, `K`, `X` and constants only, while `<ID>` is on an Auto level, and 0 while it holds a count. For an id the function inherits: only in a lookback that calls that owner's lookback. The body must take its lookback from its own lookback function, or its first output and the lookback disagree |
 | candle-settings access (CDL* patterns) | resolved via the generated candle helpers |

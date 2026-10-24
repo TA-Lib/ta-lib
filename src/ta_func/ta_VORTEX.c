@@ -47,12 +47,15 @@
  *  Initial  Name/description
  *  -------------------------------------------------------------------
  *  KL       Kevin Lin
+ *  MF       Mario Fortier
+ *  CC       Claude Code (AI assistant)
  *
  * Change history:
  *
  *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
  *  090626 KL     First version (issue #349).
+ *  102326 MF,CC  #554 branch-free zero run, rare reset.
  */
 
 TA_LIB_API int TA_VORTEX_Lookback( int optInTimePeriod )
@@ -95,6 +98,7 @@ TA_LIB_API TA_RetCode TA_VORTEX( int    startIdx,
    int lookbackTotal;
    int i;
    int nullRun;
+   int live;
    double sTR;
    double sVMP;
    double sVMM;
@@ -189,13 +193,8 @@ TA_LIB_API TA_RetCode TA_VORTEX( int    startIdx,
       sTR += trueRange;
       sVMP += fabs(inHigh[i] - inLow[i - 1]);
       sVMM += fabs(inLow[i] - inHigh[i - 1]);
-      if( trueRange == 0.0 )
-      {
-         nullRun += 1;
-      } else 
-      {
-         nullRun = 0;
-      }
+      live = (fabs(trueRange) <= 0.0) ? 0 : 1;
+      nullRun = (nullRun + 1) & (live - 1);
    }
    outIdx = 0;
    today = startIdx;
@@ -220,13 +219,8 @@ TA_LIB_API TA_RetCode TA_VORTEX( int    startIdx,
       sTR += trueRange;
       sVMP += fabs(inHigh[today] - inLow[today - 1]);
       sVMM += fabs(inLow[today] - inHigh[today - 1]);
-      if( trueRange == 0.0 )
-      {
-         nullRun += 1;
-      } else 
-      {
-         nullRun = 0;
-      }
+      live = (fabs(trueRange) <= 0.0) ? 0 : 1;
+      nullRun = (nullRun + 1) & (live - 1);
       /* Once the whole window is flat, every TRUE-RANGE term in it is
        * provably zero (nullRun counts exactly that), so sTR's only content
        * is the running add/subtract's rounding residue -- purge it, and the
@@ -239,7 +233,7 @@ TA_LIB_API TA_RetCode TA_VORTEX( int    startIdx,
        * ULTOSC can reseed all its totals because its predicate covers both
        * of its per-bar terms; VORTEX's covers only the denominator's.
        */
-      if( nullRun >= optInTimePeriod )
+      if( TA_UNLIKELY(nullRun >= optInTimePeriod) )
       {
          nullRun = optInTimePeriod;
          sTR = 0.0;
@@ -322,6 +316,7 @@ TA_RetCode TA_S_VORTEX( int    startIdx,
    int lookbackTotal;
    int i;
    int nullRun;
+   int live;
    double sTR;
    double sVMP;
    double sVMM;
@@ -392,13 +387,8 @@ TA_RetCode TA_S_VORTEX( int    startIdx,
       sTR += trueRange;
       sVMP += fabs((double)inHigh[i] - (double)inLow[i - 1]);
       sVMM += fabs((double)inLow[i] - (double)inHigh[i - 1]);
-      if( trueRange == 0.0 )
-      {
-         nullRun += 1;
-      } else 
-      {
-         nullRun = 0;
-      }
+      live = (fabs(trueRange) <= 0.0) ? 0 : 1;
+      nullRun = (nullRun + 1) & (live - 1);
    }
    outIdx = 0;
    today = startIdx;
@@ -422,14 +412,9 @@ TA_RetCode TA_S_VORTEX( int    startIdx,
       sTR += trueRange;
       sVMP += fabs((double)inHigh[today] - (double)inLow[today - 1]);
       sVMM += fabs((double)inLow[today] - (double)inHigh[today - 1]);
-      if( trueRange == 0.0 )
-      {
-         nullRun += 1;
-      } else 
-      {
-         nullRun = 0;
-      }
-      if( nullRun >= optInTimePeriod )
+      live = (fabs(trueRange) <= 0.0) ? 0 : 1;
+      nullRun = (nullRun + 1) & (live - 1);
+      if( TA_UNLIKELY(nullRun >= optInTimePeriod) )
       {
          nullRun = optInTimePeriod;
          sTR = 0.0;
@@ -510,6 +495,7 @@ static void TA_VORTEX_ReleaseImpl( struct TA_VORTEX_Stream *sp )
 /* Private function, not in public API. */
 static void TA_VORTEX_StepImpl( struct TA_VORTEX_Stream *sp, double inHigh, double inLow, double inClose, double *outPlusVI, double *outMinusVI )
 {
+   int live;
    double curTR;
    double curVMP;
    double curVMM;
@@ -540,13 +526,8 @@ static void TA_VORTEX_StepImpl( struct TA_VORTEX_Stream *sp, double inHigh, doub
    sp->sTR += trueRange;
    sp->sVMP += fabs(inHigh - sp->lag1_inLow);
    sp->sVMM += fabs(inLow - sp->lag1_inHigh);
-   if( trueRange == 0.0 )
-   {
-      sp->nullRun += 1;
-   } else 
-   {
-      sp->nullRun = 0;
-   }
+   live = (fabs(trueRange) <= 0.0) ? 0 : 1;
+   sp->nullRun = (sp->nullRun + 1) & (live - 1);
    /* Once the whole window is flat, every TRUE-RANGE term in it is
     * provably zero (nullRun counts exactly that), so sTR's only content
     * is the running add/subtract's rounding residue -- purge it, and the
@@ -559,7 +540,7 @@ static void TA_VORTEX_StepImpl( struct TA_VORTEX_Stream *sp, double inHigh, doub
     * ULTOSC can reseed all its totals because its predicate covers both
     * of its per-bar terms; VORTEX's covers only the denominator's.
     */
-   if( sp->nullRun >= sp->optInTimePeriod )
+   if( TA_UNLIKELY(sp->nullRun >= sp->optInTimePeriod) )
    {
       sp->nullRun = sp->optInTimePeriod;
       sp->sTR = 0.0;
@@ -658,6 +639,7 @@ static TA_RetCode TA_VORTEX_OpenImpl( struct TA_VORTEX_Stream **stream, const do
       int lookbackTotal;
       int i;
       int nullRun = 0;
+      int live;
       double sTR = 0.0;
       double sVMP = 0.0;
       double sVMM = 0.0;
@@ -727,13 +709,8 @@ static TA_RetCode TA_VORTEX_OpenImpl( struct TA_VORTEX_Stream **stream, const do
          sTR += trueRange;
          sVMP += fabs(inHigh[i] - inLow[i - 1]);
          sVMM += fabs(inLow[i] - inHigh[i - 1]);
-         if( trueRange == 0.0 )
-         {
-            nullRun += 1;
-         } else 
-         {
-            nullRun = 0;
-         }
+         live = (fabs(trueRange) <= 0.0) ? 0 : 1;
+         nullRun = (nullRun + 1) & (live - 1);
       }
       outIdx = 0;
       today = startIdx;
@@ -758,13 +735,8 @@ static TA_RetCode TA_VORTEX_OpenImpl( struct TA_VORTEX_Stream **stream, const do
          sTR += trueRange;
          sVMP += fabs(inHigh[today] - inLow[today - 1]);
          sVMM += fabs(inLow[today] - inHigh[today - 1]);
-         if( trueRange == 0.0 )
-         {
-            nullRun += 1;
-         } else 
-         {
-            nullRun = 0;
-         }
+         live = (fabs(trueRange) <= 0.0) ? 0 : 1;
+         nullRun = (nullRun + 1) & (live - 1);
          /* Once the whole window is flat, every TRUE-RANGE term in it is
           * provably zero (nullRun counts exactly that), so sTR's only content
           * is the running add/subtract's rounding residue -- purge it, and the
@@ -777,7 +749,7 @@ static TA_RetCode TA_VORTEX_OpenImpl( struct TA_VORTEX_Stream **stream, const do
           * ULTOSC can reseed all its totals because its predicate covers both
           * of its per-bar terms; VORTEX's covers only the denominator's.
           */
-         if( nullRun >= optInTimePeriod )
+         if( TA_UNLIKELY(nullRun >= optInTimePeriod) )
          {
             nullRun = optInTimePeriod;
             sTR = 0.0;
@@ -945,6 +917,7 @@ TA_LIB_API TA_RetCode TA_VORTEX_Update( TA_VORTEX_Stream *stream, double inHigh,
 TA_LIB_API TA_RetCode TA_VORTEX_Peek( const TA_VORTEX_Stream *stream, double inHigh, double inLow, double inClose, double *outPlusVI, double *outMinusVI )
 {
    const struct TA_VORTEX_Stream *sp = stream;
+   int live;
    double curTR;
    double curVMP;
    double curVMM;
@@ -1000,13 +973,8 @@ TA_LIB_API TA_RetCode TA_VORTEX_Peek( const TA_VORTEX_Stream *stream, double inH
    sTR += trueRange;
    sVMP += fabs(inHigh - sp->lag1_inLow);
    sVMM += fabs(inLow - sp->lag1_inHigh);
-   if( trueRange == 0.0 )
-   {
-      nullRun += 1;
-   } else 
-   {
-      nullRun = 0;
-   }
+   live = (fabs(trueRange) <= 0.0) ? 0 : 1;
+   nullRun = (nullRun + 1) & (live - 1);
    /* Once the whole window is flat, every TRUE-RANGE term in it is
     * provably zero (nullRun counts exactly that), so sTR's only content
     * is the running add/subtract's rounding residue -- purge it, and the
@@ -1019,7 +987,7 @@ TA_LIB_API TA_RetCode TA_VORTEX_Peek( const TA_VORTEX_Stream *stream, double inH
     * ULTOSC can reseed all its totals because its predicate covers both
     * of its per-bar terms; VORTEX's covers only the denominator's.
     */
-   if( nullRun >= sp->optInTimePeriod )
+   if( TA_UNLIKELY(nullRun >= sp->optInTimePeriod) )
    {
       nullRun = sp->optInTimePeriod;
       sTR = 0.0;

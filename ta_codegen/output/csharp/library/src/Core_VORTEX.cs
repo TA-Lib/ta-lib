@@ -47,12 +47,15 @@ public partial class Core
     *  Initial  Name/description
     *  -------------------------------------------------------------------
     *  KL       Kevin Lin
+    *  MF       Mario Fortier
+    *  CC       Claude Code (AI assistant)
     *
     * Change history:
     *
     *  MMDDYY BY     Description
     *  -------------------------------------------------------------------
     *  090626 KL     First version (issue #349).
+    *  102326 MF,CC  #554 branch-free zero run, rare reset.
     */
    /// <summary>
    /// Number of leading input bars <c>Vortex</c> consumes before it can produce
@@ -122,6 +125,7 @@ public partial class Core
       int lookbackTotal = 0;
       int i = 0;
       int nullRun = 0;
+      int live = 0;
       double sTR = 0;
       double sVMP = 0;
       double sVMM = 0;
@@ -199,11 +203,8 @@ public partial class Core
          sTR += trueRange;
          sVMP += Math.Abs(inHigh[i] - inLow[i - 1]);
          sVMM += Math.Abs(inLow[i] - inHigh[i - 1]);
-         if( trueRange == 0.0 ) {
-            nullRun += 1;
-         } else {
-            nullRun = 0;
-         }
+         live = (Math.Abs(trueRange) <= 0.0) ? 0 : 1;
+         nullRun = (nullRun + 1) & (live - 1);
       }
       outIdx = 0;
       today = startIdx;
@@ -221,11 +222,8 @@ public partial class Core
          sTR += trueRange;
          sVMP += Math.Abs(inHigh[today] - inLow[today - 1]);
          sVMM += Math.Abs(inLow[today] - inHigh[today - 1]);
-         if( trueRange == 0.0 ) {
-            nullRun += 1;
-         } else {
-            nullRun = 0;
-         }
+         live = (Math.Abs(trueRange) <= 0.0) ? 0 : 1;
+         nullRun = (nullRun + 1) & (live - 1);
          /* Once the whole window is flat, every TRUE-RANGE term in it is
           * provably zero (nullRun counts exactly that), so sTR's only content
           * is the running add/subtract's rounding residue -- purge it, and the
@@ -313,6 +311,7 @@ public partial class Core
       int lookbackTotal = 0;
       int i = 0;
       int nullRun = 0;
+      int live = 0;
       double sTR = 0;
       double sVMP = 0;
       double sVMM = 0;
@@ -366,11 +365,8 @@ public partial class Core
          sTR += trueRange;
          sVMP += Math.Abs((double)inHigh[i] - (double)inLow[i - 1]);
          sVMM += Math.Abs((double)inLow[i] - (double)inHigh[i - 1]);
-         if( trueRange == 0.0 ) {
-            nullRun += 1;
-         } else {
-            nullRun = 0;
-         }
+         live = (Math.Abs(trueRange) <= 0.0) ? 0 : 1;
+         nullRun = (nullRun + 1) & (live - 1);
       }
       outIdx = 0;
       today = startIdx;
@@ -387,11 +383,8 @@ public partial class Core
          sTR += trueRange;
          sVMP += Math.Abs((double)inHigh[today] - (double)inLow[today - 1]);
          sVMM += Math.Abs((double)inLow[today] - (double)inHigh[today - 1]);
-         if( trueRange == 0.0 ) {
-            nullRun += 1;
-         } else {
-            nullRun = 0;
-         }
+         live = (Math.Abs(trueRange) <= 0.0) ? 0 : 1;
+         nullRun = (nullRun + 1) & (live - 1);
          if( nullRun >= optInTimePeriod ) {
             nullRun = optInTimePeriod;
             sTR = 0.0;
@@ -785,6 +778,7 @@ public partial class Core
       {
          if( !double.IsFinite(inHigh) || !double.IsFinite(inLow) || !double.IsFinite(inClose) ) throw Core.NonFiniteBar("VORTEX", "peek", !double.IsFinite(inHigh) ? nameof(inHigh) : !double.IsFinite(inLow) ? nameof(inLow) : nameof(inClose));
          VortexStream sp = this;
+         int live = 0;
          double curTR = 0.0;
          double curVMP = 0.0;
          double curVMM = 0.0;
@@ -823,11 +817,8 @@ public partial class Core
          sTR += trueRange;
          sVMP += Math.Abs(inHigh - sp.lag1_inLow);
          sVMM += Math.Abs(inLow - sp.lag1_inHigh);
-         if( trueRange == 0.0 ) {
-            nullRun += 1;
-         } else {
-            nullRun = 0;
-         }
+         live = (Math.Abs(trueRange) <= 0.0) ? 0 : 1;
+         nullRun = (nullRun + 1) & (live - 1);
          /* Once the whole window is flat, every TRUE-RANGE term in it is
           * provably zero (nullRun counts exactly that), so sTR's only content
           * is the running add/subtract's rounding residue -- purge it, and the
@@ -910,6 +901,7 @@ public partial class Core
 
    private void VortexStepImpl( VortexStream sp, double inHigh, double inLow, double inClose )
    {
+      int live = 0;
       double curTR = 0.0;
       double curVMP = 0.0;
       double curVMM = 0.0;
@@ -933,11 +925,8 @@ public partial class Core
       sp.sTR += trueRange;
       sp.sVMP += Math.Abs(inHigh - sp.lag1_inLow);
       sp.sVMM += Math.Abs(inLow - sp.lag1_inHigh);
-      if( trueRange == 0.0 ) {
-         sp.nullRun += 1;
-      } else {
-         sp.nullRun = 0;
-      }
+      live = (Math.Abs(trueRange) <= 0.0) ? 0 : 1;
+      sp.nullRun = (sp.nullRun + 1) & (live - 1);
       /* Once the whole window is flat, every TRUE-RANGE term in it is
        * provably zero (nullRun counts exactly that), so sTR's only content
        * is the running add/subtract's rounding residue -- purge it, and the
@@ -1017,6 +1006,7 @@ public partial class Core
       int lookbackTotal = 0;
       int i = 0;
       int nullRun = 0;
+      int live = 0;
       double sTR = 0;
       double sVMP = 0;
       double sVMM = 0;
@@ -1098,11 +1088,8 @@ public partial class Core
          sTR += trueRange;
          sVMP += Math.Abs(inHigh[i] - inLow[i - 1]);
          sVMM += Math.Abs(inLow[i] - inHigh[i - 1]);
-         if( trueRange == 0.0 ) {
-            nullRun += 1;
-         } else {
-            nullRun = 0;
-         }
+         live = (Math.Abs(trueRange) <= 0.0) ? 0 : 1;
+         nullRun = (nullRun + 1) & (live - 1);
       }
       outIdx = 0;
       today = startIdx;
@@ -1120,11 +1107,8 @@ public partial class Core
          sTR += trueRange;
          sVMP += Math.Abs(inHigh[today] - inLow[today - 1]);
          sVMM += Math.Abs(inLow[today] - inHigh[today - 1]);
-         if( trueRange == 0.0 ) {
-            nullRun += 1;
-         } else {
-            nullRun = 0;
-         }
+         live = (Math.Abs(trueRange) <= 0.0) ? 0 : 1;
+         nullRun = (nullRun + 1) & (live - 1);
          /* Once the whole window is flat, every TRUE-RANGE term in it is
           * provably zero (nullRun counts exactly that), so sTR's only content
           * is the running add/subtract's rounding residue -- purge it, and the

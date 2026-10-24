@@ -3,12 +3,15 @@
  *  Initial  Name/description
  *  -------------------------------------------------------------------
  *  KL       Kevin Lin
+ *  MF       Mario Fortier
+ *  CC       Claude Code (AI assistant)
  *
  * Change history:
  *
  *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
  *  090626 KL     First version (issue #350).
+ *  102326 MF,CC  #554 branch-free zero run, rare reset.
  */
 
 int er_lookback(int optInTimePeriod)
@@ -25,7 +28,7 @@ TA_RetCode er(int startIdx, int endIdx,
    double outReal[])
 {
    int outIdx, today, trailingIdx, lookbackTotal, i;
-   int nullRun;
+   int nullRun, live;
    double sumROC1, periodROC, tempReal, tempReal2, trailingValue;
 
    /* Kaufman Efficiency Ratio (Perry J. Kaufman, Smarter Trading, 1995):
@@ -49,8 +52,8 @@ TA_RetCode er(int startIdx, int endIdx,
     *     bounds nothing on its own, which is what the clamp is for.
     *   - a genuinely flat window is recognized by COUNTING exactly-zero
     *     one-bar changes (nullRun >= P forces sumROC1 to 0.0, purging the
-    *     running sum's rounding residue), after which `0 <= 0` pins the
-    *     0/0 to 1.0 -- never NaN (#112). This is kama.c's #253 form; the
+    *     running sum's rounding residue, and the ratio to 1.0) -- never
+    *     NaN (#112). This is kama.c's #253 form; the
     *     absolute TA_IS_ZERO band it replaced fails the QUOTE-UNIT/SCALE
     *     gate (ER is homogeneous of degree 0, and a fixed 1e-14 met a
     *     price-carrying sum).
@@ -92,10 +95,8 @@ TA_RetCode er(int startIdx, int endIdx,
       tempReal = inReal[today++];
       tempReal -= inReal[today];
       sumROC1 += fabs( tempReal );
-      if( tempReal == 0.0 )
-         nullRun++;
-      else
-         nullRun = 0;
+      live = fabs(tempReal) <= 0.0 ? 0 : 1;
+      nullRun = (nullRun + 1) & (live - 1);
    }
 
    /* First output: today == startIdx. */
@@ -133,23 +134,15 @@ TA_RetCode er(int startIdx, int endIdx,
       /* Once a whole window of one-bar changes is exactly zero, the sum's
        * only content is rounding residue from the subtract/add carry --
        * purge it so the flat window is recognized exactly (kama.c #253). */
-      if( tempReal - inReal[today-1] == 0.0 )
-         nullRun++;
-      else
-         nullRun = 0;
-      if( nullRun >= optInTimePeriod )
+      live = fabs(tempReal - inReal[today-1]) <= 0.0 ? 0 : 1;
+      nullRun = (nullRun + 1) & (live - 1);
+      if( TA_UNLIKELY(nullRun >= optInTimePeriod) )
       {
          nullRun = optInTimePeriod;
          sumROC1 = 0.0;
+         outReal[outIdx++] = 1.0;
       }
-
-      /* Save the trailing value: outReal may alias inReal, and the next
-       * iteration's subtraction needs the ORIGINAL bar, not the slot the
-       * write below may have clobbered.
-       */
-      trailingValue = tempReal2;
-
-      if( sumROC1 <= 0.0 || sumROC1 <= periodROC )
+      else if( sumROC1 <= 0.0 || sumROC1 <= periodROC )
          outReal[outIdx++] = 1.0;
       else
       {
@@ -158,6 +151,12 @@ TA_RetCode er(int startIdx, int endIdx,
             tempReal = 1.0;
          outReal[outIdx++] = tempReal;
       }
+
+      /* Save the trailing value: outReal may alias inReal, and the next
+       * iteration's subtraction needs the ORIGINAL bar, not the slot the
+       * write above may have clobbered.
+       */
+      trailingValue = tempReal2;
       today++;
    }
 
