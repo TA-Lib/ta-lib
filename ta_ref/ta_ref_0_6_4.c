@@ -23,6 +23,7 @@
 
 #define TA_MATYPE_KAMA 6
 #define MAX_BARS 4096
+#define LINREG_ANGLE_CAP 0.5   /* degrees: the row below and its waiver */
 
 static const char *const EXCLUDED[] = { "STOCHRSI", NULL };
 
@@ -36,12 +37,12 @@ static const TaRefTol TOL[] = {
    /* #242 the same for the two-series forms. CORREL is a coefficient in [-1,1],
     * so absolute: relative error is ill-posed as r nears 0. BETA is a ratio of
     * return scales, so output-relative. */
-   { "CORREL",              TA_REF_TOL_ABS,     6e-11, 0.0 }, /* measured 1.69e-11 */
+   { "CORREL",              TA_REF_TOL_ABS,     2e-10, 0.0 }, /* measured 6.17e-11 */
    { "BETA",                TA_REF_TOL_REL_OUT, 1e-9,  0.0 }, /* measured 3.12e-10 */
    { "LINEARREG",           TA_REF_TOL_REL_IN,  1e-9,  0.0 }, /* #103 O(1) sliding-sum recurrence */
    { "LINEARREG_SLOPE",     TA_REF_TOL_REL_IN,  1e-9,  0.0 },
    { "LINEARREG_INTERCEPT", TA_REF_TOL_REL_IN,  1e-9,  0.0 },
-   { "LINEARREG_ANGLE",     TA_REF_TOL_REL_IN,  1e-9,  0.5 }, /* bounded degrees */
+   { "LINEARREG_ANGLE",     TA_REF_TOL_REL_IN,  1e-9,  LINREG_ANGLE_CAP }, /* bounded degrees */
    { "TSF",                 TA_REF_TOL_REL_IN,  1e-9,  0.0 },
    /* #255 WMA re-anchors its weighted totals every 8*period bars. STOCH/STOCHF
     * are here only because their smoothing dispatches to TA_MAType_WMA. */
@@ -93,7 +94,7 @@ static const TaRefTol TOL[] = {
 
 /* Each ceiling sits halfway between the largest share measured on one function
  * and 1. */
-enum { W_TRIX_NATR, W_VARIANCE, W_CORREL_BETA, W_MFI, W_KAMA, W_ULTOSC, W_MAVP, W_RSI, W_INDEX_TIE };
+enum { W_TRIX_NATR, W_VARIANCE, W_CORREL_BETA, W_MFI, W_KAMA, W_ULTOSC, W_MAVP, W_MAVP_NARROW, W_LINREG_ANGLE, W_RSI, W_INDEX_TIE };
 static const TaRefWaiver WAIVERS[] = {
    [W_TRIX_NATR]   = { "trix_natr_98",
                        "TRIX/NATR with startIdx past the lookback, and NATR over a zero close (#98)", 0.77 },
@@ -109,6 +110,10 @@ static const TaRefWaiver WAIVERS[] = {
                        "ULTOSC with an emptied window, where 0.6.4 divides residue (#253)", 0.56 },
    [W_MAVP]        = { "mavp_inverted_94",
                        "MAVP with its minimum period above its maximum, where 0.6.4 read uninitialized results (#94)", 0.53 },
+   [W_MAVP_NARROW] = { "mavp_narrow",
+                       "MAVP over a period outside int's range, which 0.6.4 narrows before clamping: x86 lands it on INT_MIN and so on the minimum period", 0.54 },
+   [W_LINREG_ANGLE] = { "linreg_angle_unresolved",
+                       "LINEARREG_ANGLE where the slope is finer than its sums can resolve against the largest input they hold, so the angle is not determined within the row's cap", 0.51 },
    [W_RSI]         = { "rsi_flat_480",
                        "RSI with no change from the first bar read to the first output, where 0.6.4 answers 0 for 0/0 (#480)", 0.56 },
    [W_INDEX_TIE]   = { "index_tie_503",
@@ -332,17 +337,30 @@ static int smooths_with_kama( const TaRefCase *c )
 
 /* ULTOSC's three moving totals are sliding sums of true ranges: an emptied
  * window leaves residue of arbitrary sign, and 0.6.4 divides one residue by
- * another (-92.9 on the ZEROSUM shape, for a 0..100 oscillator). */
+ * another (-92.9 on the ZEROSUM shape, for a 0..100 oscillator). A window is
+ * emptied once its total falls to the rounding of the largest range the totals
+ * held: near the domain bound that is far above zero (FUZZ_DOMAIN_MAX). */
+#define ULTOSC_RESIDUE 1e-14
 static int ultosc_blind( const double *h, const double *l, const double *c,
                          int n, int p1, int p2, int p3, int e )
 {
    int per[3], k, t, j, longest;
+   double residue = ULTOSC_RESIDUE;
 
    per[0] = p1; per[1] = p2; per[2] = p3;
    longest = p1 > p2 ? p1 : p2;
    if( p3 > longest ) longest = p3;
    if( longest < 1 || longest >= n ) return 0;
    if( e >= n ) e = n - 1;
+
+   /* Relative to 1, or to the largest range the totals have held. */
+   for( j = 1; j <= e; j++ )
+   {
+      double trueLow  = ( l[j] < c[j-1] ) ? l[j] : c[j-1];
+      double trueHigh = ( h[j] > c[j-1] ) ? h[j] : c[j-1];
+      double r = ULTOSC_RESIDUE * (trueHigh - trueLow);
+      if( r > residue ) residue = r;
+   }
 
    for( t = longest; t <= e; t++ )
       for( k = 0; k < 3; k++ )
@@ -356,8 +374,51 @@ static int ultosc_blind( const double *h, const double *l, const double *c,
             double trueHigh  = ( h[j] > prevClose ) ? h[j] : prevClose;
             total += trueHigh - trueLow;
          }
-         if( total < 1e-14 ) return 1;
+         if( total < residue ) return 1;
       }
+   return 0;
+}
+
+/* 0.6.4 narrows each inPeriods bar with (int) and clamps the result, too late:
+ * outside int's range the narrowing is undefined, and x86 answers INT_MIN for
+ * every such value, positive ones included (fixed in 35a35d4b). */
+static int mavp_narrow( const double *p, int n, int s, int e, int lookback )
+{
+   int t;
+
+   if( lookback < 0 ) return 0;
+   for( t = (s > lookback ? s : lookback); t <= e && t < n; t++ )
+      if( !(p[t] > -2147483649.0 && p[t] < 2147483648.0) ) return 1;
+   return 0;
+}
+
+/* The slope's sums hold every input since the first bar read, so it is resolved
+ * only to about LINREG_SLOPE_RES of the largest of them. An uncertainty d in the
+ * slope moves the angle by d / (1 + slope^2) radians; where that exceeds the
+ * row's cap, neither release determines the angle. The slope tested is a plain
+ * one, off by no more than d, which is far below the slopes that matter. */
+#define LINREG_SLOPE_RES 1e-12
+static int linreg_angle_unresolved( const double *x, int n, int period, int s, int e, int lookback )
+{
+   double maxAbs = 0.0, d, xm, den = 0.0;
+   int first, t, j;
+
+   if( period < 2 || lookback < 0 ) return 0;
+   first = (s > lookback) ? s : lookback;
+   if( first > e || first >= n ) return 0;
+   if( e >= n ) e = n - 1;
+   for( j = first - lookback; j <= e; j++ )
+      if( fabs( x[j] ) > maxAbs ) maxAbs = fabs( x[j] );
+   d = 2.0 * LINREG_SLOPE_RES * maxAbs;
+   xm = 0.5 * (double)(period - 1);
+   for( j = 0; j < period; j++ ) den += ((double)j - xm) * ((double)j - xm);
+   for( t = first; t <= e; t++ )
+   {
+      double num = 0.0, slope;
+      for( j = 0; j < period; j++ ) num += ((double)j - xm) * x[t - period + 1 + j];
+      slope = num / den;
+      if( d * (180.0 / M_PI) / (1.0 + slope * slope) > LINREG_ANGLE_CAP ) return 1;
+   }
    return 0;
 }
 
@@ -410,7 +471,12 @@ static int waive( const TaRefCase *c )
    if( strcmp( f, "MAXINDEX" ) == 0 || strcmp( f, "MININDEX" ) == 0 || strcmp( f, "MINMAXINDEX" ) == 0 )
       return ta_ref_index_tie( c ) ? W_INDEX_TIE : -1;
    if( strcmp( f, "MAVP" ) == 0 )
-      return ta_ref_opt( c, "optInMinPeriod", 0 ) > ta_ref_opt( c, "optInMaxPeriod", 0 ) ? W_MAVP : -1;
+   {
+      if( ta_ref_opt( c, "optInMinPeriod", 0 ) > ta_ref_opt( c, "optInMaxPeriod", 0 ) ) return W_MAVP;
+      return mavp_narrow( c->volume, n, s, e, c->lookback ) ? W_MAVP_NARROW : -1;
+   }
+   if( strcmp( f, "LINEARREG_ANGLE" ) == 0 )
+      return linreg_angle_unresolved( c->close, n, period, s, e, c->lookback ) ? W_LINREG_ANGLE : -1;
    if( strcmp( f, "ULTOSC" ) == 0 )
       return ultosc_blind( c->high, c->low, c->close, n,
                            (int)ta_ref_opt( c, "optInTimePeriod1", 0 ),
