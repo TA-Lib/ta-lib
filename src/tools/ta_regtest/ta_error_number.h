@@ -618,6 +618,10 @@ typedef enum
   TA_REGTEST_ALLOC_FAIL_UNARMED      = 1725,
   TA_REGTEST_INTERNAL_ERROR_NOT_REPORTED = 1726,
 
+  /* The zero-pick macros against the ternary they stand for. */
+  TA_REGTEST_ZERO_PICK_BITS    = 1727,
+  TA_REGTEST_ZERO_PICK_VACUOUS = 1728,
+
   /* Error code related to bug fix documentented on SourceForge. */
   TA_TEST_FAIL_BUG1359452_1  = 2000,
   TA_TEST_FAIL_BUG1359452_2  = 2001,

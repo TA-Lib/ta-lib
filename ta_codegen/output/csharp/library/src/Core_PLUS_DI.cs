@@ -339,8 +339,7 @@ public partial class Core
          prevLow = tempReal;
          /* +DM1 = diffP when diffP > diffM and diffP > 0: the select takes the
           * first test and the max the second, as a non-positive delta cannot raise
-          * the sum. gcc keeps a branch if the select compares diffP itself or if a
-          * select, not the max, ends the step.
+          * the sum. gcc keeps a branch if a select, not the max, ends the step.
           */
          tempReal = diffP - diffM;
          plusDM1 = KeepIfGt(tempReal, 0.0, diffP);
@@ -1450,8 +1449,7 @@ public partial class Core
             prevLow = tempReal;
             /* +DM1 = diffP when diffP > diffM and diffP > 0: the select takes the
              * first test and the max the second, as a non-positive delta cannot raise
-             * the sum. gcc keeps a branch if the select compares diffP itself or if a
-             * select, not the max, ends the step.
+             * the sum. gcc keeps a branch if a select, not the max, ends the step.
              */
             tempReal = diffP - diffM;
             plusDM1 = KeepIfGt(tempReal, 0.0, diffP);

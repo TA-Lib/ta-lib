@@ -100,11 +100,7 @@ TA_RetCode mfi(int startIdx, int endIdx,
        * price move is a coin flip, so that branch mispredicted on roughly
        * every other bar and dominated the cost of the function.  Adding the
        * unused side's 0.0 to a sum is an exact no-op, so this reproduces the
-       * branching form bit for bit.  C# lowers them to branch-free masks, which
-       * an arithmetic split would lose; gcc 14 and Java's x86 JIT still compile
-       * them as a branch, and gcc 13 does too once the code after them
-       * changes, with no other symptom: time any edit of this loop with gcc 13
-       * and 14.
+       * branching form bit for bit.
        */
       moneyFlow = TA_IS_ZERO_SCALED(tempValue2,tempValue3) ? 0.0 : tempValue1;
       posFlow   = tempValue2 < 0.0 ? 0.0 : moneyFlow;

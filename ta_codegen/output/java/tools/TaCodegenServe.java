@@ -152175,11 +152175,7 @@ class Core {
               * price move is a coin flip, so that branch mispredicted on roughly
               * every other bar and dominated the cost of the function.  Adding the
               * unused side's 0.0 to a sum is an exact no-op, so this reproduces the
-              * branching form bit for bit.  C# lowers them to branch-free masks, which
-              * an arithmetic split would lose; gcc 14 and Java's x86 JIT still compile
-              * them as a branch, and gcc 13 does too once the code after them
-              * changes, with no other symptom: time any edit of this loop with gcc 13
-              * and 14.
+              * branching form bit for bit.
               */
              moneyFlow = (Math.abs(tempValue2) <= 0.00000000000001 * (tempValue3)) ? 0.0 : tempValue1;
              posFlow = (tempValue2 < 0.0) ? 0.0 : moneyFlow;
@@ -152866,11 +152862,7 @@ class Core {
               * price move is a coin flip, so that branch mispredicted on roughly
               * every other bar and dominated the cost of the function.  Adding the
               * unused side's 0.0 to a sum is an exact no-op, so this reproduces the
-              * branching form bit for bit.  C# lowers them to branch-free masks, which
-              * an arithmetic split would lose; gcc 14 and Java's x86 JIT still compile
-              * them as a branch, and gcc 13 does too once the code after them
-              * changes, with no other symptom: time any edit of this loop with gcc 13
-              * and 14.
+              * branching form bit for bit.
               */
              moneyFlow = (Math.abs(tempValue2) <= 0.00000000000001 * (tempValue3)) ? 0.0 : tempValue1;
              posFlow = (tempValue2 < 0.0) ? 0.0 : moneyFlow;
@@ -159712,8 +159704,7 @@ class Core {
              prevLow = tempReal;
              /* -DM1 = diffM when diffP < diffM and diffM > 0: the select takes the
               * first test and the max the second, as a non-positive delta cannot raise
-              * the sum. gcc keeps a branch if the select compares diffM itself or if a
-              * select, not the max, ends the step.
+              * the sum. gcc keeps a branch if a select, not the max, ends the step.
               */
              tempReal = diffM - diffP;
              minusDM1 = (tempReal > 0.0) ? diffM : 0.0;
@@ -160824,8 +160815,7 @@ class Core {
                 prevLow = tempReal;
                 /* -DM1 = diffM when diffP < diffM and diffM > 0: the select takes the
                  * first test and the max the second, as a non-positive delta cannot raise
-                 * the sum. gcc keeps a branch if the select compares diffM itself or if a
-                 * select, not the max, ends the step.
+                 * the sum. gcc keeps a branch if a select, not the max, ends the step.
                  */
                 tempReal = diffM - diffP;
                 minusDM1 = (tempReal > 0.0) ? diffM : 0.0;
@@ -161258,8 +161248,7 @@ class Core {
              prevLow = tempReal;
              /* -DM1 = diffM when diffP < diffM and diffM > 0: the select takes the
               * first test and the max the second, as a non-positive delta cannot raise
-              * the sum. gcc keeps a branch if the select compares diffM itself or if a
-              * select, not the max, ends the step.
+              * the sum. gcc keeps a branch if a select, not the max, ends the step.
               */
              tempReal = diffM - diffP;
              minusDM1 = (tempReal > 0.0) ? diffM : 0.0;
@@ -162037,8 +162026,7 @@ class Core {
                 prevLow = tempReal;
                 /* -DM1 = diffM when diffP < diffM and diffM > 0: the select takes the
                  * first test and the max the second, as a non-positive delta cannot raise
-                 * the sum. gcc keeps a branch if the select compares diffM itself or if a
-                 * select, not the max, ends the step.
+                 * the sum. gcc keeps a branch if a select, not the max, ends the step.
                  */
                 tempReal = diffM - diffP;
                 minusDM1 = (tempReal > 0.0) ? diffM : 0.0;
@@ -168759,8 +168747,7 @@ class Core {
              prevLow = tempReal;
              /* +DM1 = diffP when diffP > diffM and diffP > 0: the select takes the
               * first test and the max the second, as a non-positive delta cannot raise
-              * the sum. gcc keeps a branch if the select compares diffP itself or if a
-              * select, not the max, ends the step.
+              * the sum. gcc keeps a branch if a select, not the max, ends the step.
               */
              tempReal = diffP - diffM;
              plusDM1 = (tempReal > 0.0) ? diffP : 0.0;
@@ -169871,8 +169858,7 @@ class Core {
                 prevLow = tempReal;
                 /* +DM1 = diffP when diffP > diffM and diffP > 0: the select takes the
                  * first test and the max the second, as a non-positive delta cannot raise
-                 * the sum. gcc keeps a branch if the select compares diffP itself or if a
-                 * select, not the max, ends the step.
+                 * the sum. gcc keeps a branch if a select, not the max, ends the step.
                  */
                 tempReal = diffP - diffM;
                 plusDM1 = (tempReal > 0.0) ? diffP : 0.0;
@@ -170307,8 +170293,7 @@ class Core {
              prevLow = tempReal;
              /* +DM1 = diffP when diffP > diffM and diffP > 0: the select takes the
               * first test and the max the second, as a non-positive delta cannot raise
-              * the sum. gcc keeps a branch if the select compares diffP itself or if a
-              * select, not the max, ends the step.
+              * the sum. gcc keeps a branch if a select, not the max, ends the step.
               */
              tempReal = diffP - diffM;
              plusDM1 = (tempReal > 0.0) ? diffP : 0.0;
@@ -171086,8 +171071,7 @@ class Core {
                 prevLow = tempReal;
                 /* +DM1 = diffP when diffP > diffM and diffP > 0: the select takes the
                  * first test and the max the second, as a non-positive delta cannot raise
-                 * the sum. gcc keeps a branch if the select compares diffP itself or if a
-                 * select, not the max, ends the step.
+                 * the sum. gcc keeps a branch if a select, not the max, ends the step.
                  */
                 tempReal = diffP - diffM;
                 plusDM1 = (tempReal > 0.0) ? diffP : 0.0;
@@ -230251,7 +230235,7 @@ class Core {
 
 public class TaCodegenServe {
     static Core core = new Core();
-    static final String SPLICED_GENCODE_DIGEST = "bb1e87bb949319b4";
+    static final String SPLICED_GENCODE_DIGEST = "822c5386ecd8ff5a";
     static final int MAX_ARRAY_SIZE = 200000;
     static double[] refOpen = new double[MAX_ARRAY_SIZE];
     static double[] refHigh = new double[MAX_ARRAY_SIZE];

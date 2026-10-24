@@ -301,10 +301,10 @@ TA_LIB_API TA_RetCode TA_ADX( int    startIdx,
        * directly, or testing the sign first, lets gcc thread the selects back into
        * branches. a-b > 0.0 is exactly a > b for any in-domain difference.
        */
-      minusSel = (diffM - diffP > 0.0) ? diffM : 0.0;
-      plusSel = (diffP - diffM > 0.0) ? diffP : 0.0;
-      minusDM1 = (diffM > 0.0) ? minusSel : 0.0;
-      plusDM1 = (diffP > 0.0) ? plusSel : 0.0;
+      minusSel = TA_KEEP_IF_GT(diffM - diffP, 0.0, diffM);
+      plusSel = TA_KEEP_IF_GT(diffP - diffM, 0.0, diffP);
+      minusDM1 = TA_KEEP_IF_GT(diffM, 0.0, minusSel);
+      plusDM1 = TA_KEEP_IF_GT(diffP, 0.0, plusSel);
       prevMinusDM += minusDM1;
       prevPlusDM += plusDM1;
       double _true_range_0;
@@ -341,10 +341,10 @@ TA_LIB_API TA_RetCode TA_ADX( int    startIdx,
       prevLow = tempReal;
       prevMinusDM -= prevMinusDM * invPeriod;
       prevPlusDM -= prevPlusDM * invPeriod;
-      minusSel = (diffM - diffP > 0.0) ? diffM : 0.0;
-      plusSel = (diffP - diffM > 0.0) ? diffP : 0.0;
-      minusDM1 = (diffM > 0.0) ? minusSel : 0.0;
-      plusDM1 = (diffP > 0.0) ? plusSel : 0.0;
+      minusSel = TA_KEEP_IF_GT(diffM - diffP, 0.0, diffM);
+      plusSel = TA_KEEP_IF_GT(diffP - diffM, 0.0, diffP);
+      minusDM1 = TA_KEEP_IF_GT(diffM, 0.0, minusSel);
+      plusDM1 = TA_KEEP_IF_GT(diffP, 0.0, plusSel);
       prevMinusDM += minusDM1;
       prevPlusDM += plusDM1;
       /* Calculate the prevTR */
@@ -405,10 +405,10 @@ TA_LIB_API TA_RetCode TA_ADX( int    startIdx,
       prevLow = tempReal;
       prevMinusDM -= prevMinusDM * invPeriod;
       prevPlusDM -= prevPlusDM * invPeriod;
-      minusSel = (diffM - diffP > 0.0) ? diffM : 0.0;
-      plusSel = (diffP - diffM > 0.0) ? diffP : 0.0;
-      minusDM1 = (diffM > 0.0) ? minusSel : 0.0;
-      plusDM1 = (diffP > 0.0) ? plusSel : 0.0;
+      minusSel = TA_KEEP_IF_GT(diffM - diffP, 0.0, diffM);
+      plusSel = TA_KEEP_IF_GT(diffP - diffM, 0.0, diffP);
+      minusDM1 = TA_KEEP_IF_GT(diffM, 0.0, minusSel);
+      plusDM1 = TA_KEEP_IF_GT(diffP, 0.0, plusSel);
       prevMinusDM += minusDM1;
       prevPlusDM += plusDM1;
       /* Calculate the prevTR */
@@ -460,10 +460,10 @@ TA_LIB_API TA_RetCode TA_ADX( int    startIdx,
       prevLow = tempReal;
       prevMinusDM -= prevMinusDM * invPeriod;
       prevPlusDM -= prevPlusDM * invPeriod;
-      minusSel = (diffM - diffP > 0.0) ? diffM : 0.0;
-      plusSel = (diffP - diffM > 0.0) ? diffP : 0.0;
-      minusDM1 = (diffM > 0.0) ? minusSel : 0.0;
-      plusDM1 = (diffP > 0.0) ? plusSel : 0.0;
+      minusSel = TA_KEEP_IF_GT(diffM - diffP, 0.0, diffM);
+      plusSel = TA_KEEP_IF_GT(diffP - diffM, 0.0, diffP);
+      minusDM1 = TA_KEEP_IF_GT(diffM, 0.0, minusSel);
+      plusDM1 = TA_KEEP_IF_GT(diffP, 0.0, plusSel);
       prevMinusDM += minusDM1;
       prevPlusDM += plusDM1;
       /* Calculate the prevTR */
@@ -588,10 +588,10 @@ TA_RetCode TA_S_ADX( int    startIdx,
       tempReal = (double)inLow[today];
       diffM = prevLow - tempReal;
       prevLow = tempReal;
-      minusSel = (diffM - diffP > 0.0) ? diffM : 0.0;
-      plusSel = (diffP - diffM > 0.0) ? diffP : 0.0;
-      minusDM1 = (diffM > 0.0) ? minusSel : 0.0;
-      plusDM1 = (diffP > 0.0) ? plusSel : 0.0;
+      minusSel = TA_KEEP_IF_GT(diffM - diffP, 0.0, diffM);
+      plusSel = TA_KEEP_IF_GT(diffP - diffM, 0.0, diffP);
+      minusDM1 = TA_KEEP_IF_GT(diffM, 0.0, minusSel);
+      plusDM1 = TA_KEEP_IF_GT(diffP, 0.0, plusSel);
       prevMinusDM += minusDM1;
       prevPlusDM += plusDM1;
       double _true_range_0;
@@ -624,10 +624,10 @@ TA_RetCode TA_S_ADX( int    startIdx,
       prevLow = tempReal;
       prevMinusDM -= prevMinusDM * invPeriod;
       prevPlusDM -= prevPlusDM * invPeriod;
-      minusSel = (diffM - diffP > 0.0) ? diffM : 0.0;
-      plusSel = (diffP - diffM > 0.0) ? diffP : 0.0;
-      minusDM1 = (diffM > 0.0) ? minusSel : 0.0;
-      plusDM1 = (diffP > 0.0) ? plusSel : 0.0;
+      minusSel = TA_KEEP_IF_GT(diffM - diffP, 0.0, diffM);
+      plusSel = TA_KEEP_IF_GT(diffP - diffM, 0.0, diffP);
+      minusDM1 = TA_KEEP_IF_GT(diffM, 0.0, minusSel);
+      plusDM1 = TA_KEEP_IF_GT(diffP, 0.0, plusSel);
       prevMinusDM += minusDM1;
       prevPlusDM += plusDM1;
       double _true_range_1;
@@ -670,10 +670,10 @@ TA_RetCode TA_S_ADX( int    startIdx,
       prevLow = tempReal;
       prevMinusDM -= prevMinusDM * invPeriod;
       prevPlusDM -= prevPlusDM * invPeriod;
-      minusSel = (diffM - diffP > 0.0) ? diffM : 0.0;
-      plusSel = (diffP - diffM > 0.0) ? diffP : 0.0;
-      minusDM1 = (diffM > 0.0) ? minusSel : 0.0;
-      plusDM1 = (diffP > 0.0) ? plusSel : 0.0;
+      minusSel = TA_KEEP_IF_GT(diffM - diffP, 0.0, diffM);
+      plusSel = TA_KEEP_IF_GT(diffP - diffM, 0.0, diffP);
+      minusDM1 = TA_KEEP_IF_GT(diffM, 0.0, minusSel);
+      plusDM1 = TA_KEEP_IF_GT(diffP, 0.0, plusSel);
       prevMinusDM += minusDM1;
       prevPlusDM += plusDM1;
       double _true_range_2;
@@ -717,10 +717,10 @@ TA_RetCode TA_S_ADX( int    startIdx,
       prevLow = tempReal;
       prevMinusDM -= prevMinusDM * invPeriod;
       prevPlusDM -= prevPlusDM * invPeriod;
-      minusSel = (diffM - diffP > 0.0) ? diffM : 0.0;
-      plusSel = (diffP - diffM > 0.0) ? diffP : 0.0;
-      minusDM1 = (diffM > 0.0) ? minusSel : 0.0;
-      plusDM1 = (diffP > 0.0) ? plusSel : 0.0;
+      minusSel = TA_KEEP_IF_GT(diffM - diffP, 0.0, diffM);
+      plusSel = TA_KEEP_IF_GT(diffP - diffM, 0.0, diffP);
+      minusDM1 = TA_KEEP_IF_GT(diffM, 0.0, minusSel);
+      plusDM1 = TA_KEEP_IF_GT(diffP, 0.0, plusSel);
       prevMinusDM += minusDM1;
       prevPlusDM += plusDM1;
       double _true_range_3;
@@ -801,10 +801,10 @@ static void TA_ADX_StepImpl( struct TA_ADX_Stream *sp, double inHigh, double inL
    sp->prevLow = tempReal;
    sp->prevMinusDM -= sp->prevMinusDM * sp->invPeriod;
    sp->prevPlusDM -= sp->prevPlusDM * sp->invPeriod;
-   minusSel = (diffM - diffP > 0.0) ? diffM : 0.0;
-   plusSel = (diffP - diffM > 0.0) ? diffP : 0.0;
-   minusDM1 = (diffM > 0.0) ? minusSel : 0.0;
-   plusDM1 = (diffP > 0.0) ? plusSel : 0.0;
+   minusSel = TA_KEEP_IF_GT(diffM - diffP, 0.0, diffM);
+   plusSel = TA_KEEP_IF_GT(diffP - diffM, 0.0, diffP);
+   minusDM1 = TA_KEEP_IF_GT(diffM, 0.0, minusSel);
+   plusDM1 = TA_KEEP_IF_GT(diffP, 0.0, plusSel);
    sp->prevMinusDM += minusDM1;
    sp->prevPlusDM += plusDM1;
    /* Calculate the prevTR */
@@ -1051,10 +1051,10 @@ static TA_RetCode TA_ADX_OpenImpl( struct TA_ADX_Stream **stream, const double i
           * directly, or testing the sign first, lets gcc thread the selects back into
           * branches. a-b > 0.0 is exactly a > b for any in-domain difference.
           */
-         minusSel = (diffM - diffP > 0.0) ? diffM : 0.0;
-         plusSel = (diffP - diffM > 0.0) ? diffP : 0.0;
-         minusDM1 = (diffM > 0.0) ? minusSel : 0.0;
-         plusDM1 = (diffP > 0.0) ? plusSel : 0.0;
+         minusSel = TA_KEEP_IF_GT(diffM - diffP, 0.0, diffM);
+         plusSel = TA_KEEP_IF_GT(diffP - diffM, 0.0, diffP);
+         minusDM1 = TA_KEEP_IF_GT(diffM, 0.0, minusSel);
+         plusDM1 = TA_KEEP_IF_GT(diffP, 0.0, plusSel);
          prevMinusDM += minusDM1;
          prevPlusDM += plusDM1;
          double _true_range_1;
@@ -1091,10 +1091,10 @@ static TA_RetCode TA_ADX_OpenImpl( struct TA_ADX_Stream **stream, const double i
          prevLow = tempReal;
          prevMinusDM -= prevMinusDM * invPeriod;
          prevPlusDM -= prevPlusDM * invPeriod;
-         minusSel = (diffM - diffP > 0.0) ? diffM : 0.0;
-         plusSel = (diffP - diffM > 0.0) ? diffP : 0.0;
-         minusDM1 = (diffM > 0.0) ? minusSel : 0.0;
-         plusDM1 = (diffP > 0.0) ? plusSel : 0.0;
+         minusSel = TA_KEEP_IF_GT(diffM - diffP, 0.0, diffM);
+         plusSel = TA_KEEP_IF_GT(diffP - diffM, 0.0, diffP);
+         minusDM1 = TA_KEEP_IF_GT(diffM, 0.0, minusSel);
+         plusDM1 = TA_KEEP_IF_GT(diffP, 0.0, plusSel);
          prevMinusDM += minusDM1;
          prevPlusDM += plusDM1;
          /* Calculate the prevTR */
@@ -1155,10 +1155,10 @@ static TA_RetCode TA_ADX_OpenImpl( struct TA_ADX_Stream **stream, const double i
          prevLow = tempReal;
          prevMinusDM -= prevMinusDM * invPeriod;
          prevPlusDM -= prevPlusDM * invPeriod;
-         minusSel = (diffM - diffP > 0.0) ? diffM : 0.0;
-         plusSel = (diffP - diffM > 0.0) ? diffP : 0.0;
-         minusDM1 = (diffM > 0.0) ? minusSel : 0.0;
-         plusDM1 = (diffP > 0.0) ? plusSel : 0.0;
+         minusSel = TA_KEEP_IF_GT(diffM - diffP, 0.0, diffM);
+         plusSel = TA_KEEP_IF_GT(diffP - diffM, 0.0, diffP);
+         minusDM1 = TA_KEEP_IF_GT(diffM, 0.0, minusSel);
+         plusDM1 = TA_KEEP_IF_GT(diffP, 0.0, plusSel);
          prevMinusDM += minusDM1;
          prevPlusDM += plusDM1;
          /* Calculate the prevTR */
@@ -1210,10 +1210,10 @@ static TA_RetCode TA_ADX_OpenImpl( struct TA_ADX_Stream **stream, const double i
          prevLow = tempReal;
          prevMinusDM -= prevMinusDM * invPeriod;
          prevPlusDM -= prevPlusDM * invPeriod;
-         minusSel = (diffM - diffP > 0.0) ? diffM : 0.0;
-         plusSel = (diffP - diffM > 0.0) ? diffP : 0.0;
-         minusDM1 = (diffM > 0.0) ? minusSel : 0.0;
-         plusDM1 = (diffP > 0.0) ? plusSel : 0.0;
+         minusSel = TA_KEEP_IF_GT(diffM - diffP, 0.0, diffM);
+         plusSel = TA_KEEP_IF_GT(diffP - diffM, 0.0, diffP);
+         minusDM1 = TA_KEEP_IF_GT(diffM, 0.0, minusSel);
+         plusDM1 = TA_KEEP_IF_GT(diffP, 0.0, plusSel);
          prevMinusDM += minusDM1;
          prevPlusDM += plusDM1;
          /* Calculate the prevTR */
@@ -1366,10 +1366,10 @@ TA_LIB_API TA_RetCode TA_ADX_Peek( const TA_ADX_Stream *stream, double inHigh, d
    prevLow = tempReal;
    prevMinusDM -= prevMinusDM * sp->invPeriod;
    prevPlusDM -= prevPlusDM * sp->invPeriod;
-   minusSel = (diffM - diffP > 0.0) ? diffM : 0.0;
-   plusSel = (diffP - diffM > 0.0) ? diffP : 0.0;
-   minusDM1 = (diffM > 0.0) ? minusSel : 0.0;
-   plusDM1 = (diffP > 0.0) ? plusSel : 0.0;
+   minusSel = TA_KEEP_IF_GT(diffM - diffP, 0.0, diffM);
+   plusSel = TA_KEEP_IF_GT(diffP - diffM, 0.0, diffP);
+   minusDM1 = TA_KEEP_IF_GT(diffM, 0.0, minusSel);
+   plusDM1 = TA_KEEP_IF_GT(diffP, 0.0, plusSel);
    prevMinusDM += minusDM1;
    prevPlusDM += plusDM1;
    /* Calculate the prevTR */

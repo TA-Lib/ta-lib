@@ -71,6 +71,7 @@
 #include "codegen_pipe.h"
 #include "../../ta_common/ta_global.h"   /* the #144 canary pokes TA_Globals */
 #include "ta_frame_priv.h"
+#include "ta_utility.h"
 
 #if defined(__has_feature)
    #if __has_feature(address_sanitizer) || __has_feature(thread_sanitizer)
@@ -112,6 +113,7 @@ static ErrorNumber testStreamShortHistory( void );
 static ErrorNumber testBatchArgumentContract( void );
 static ErrorNumber testAllocationFailure( void );
 static ErrorNumber testInternalErrorReported( void );
+static ErrorNumber testZeroPickMasks( void );
 
 static TA_RetCode circBufferFillFrom0ToSize( int size, int *buffer );
 
@@ -195,6 +197,13 @@ ErrorNumber test_internals( void )
    if( retValue != TA_TEST_PASS )
    {
       printf( "\nFailed: Internal error contract (%d)\n", retValue );
+      return retValue;
+   }
+
+   retValue = testZeroPickMasks();
+   if( retValue != TA_TEST_PASS )
+   {
+      printf( "\nFailed: Zero-pick masks against the ternary (%d)\n", retValue );
       return retValue;
    }
 
@@ -2245,4 +2254,96 @@ static ErrorNumber testInternalErrorReported( void )
       return TA_REGTEST_INTERNAL_ERROR_NOT_REPORTED;
    }
    return TA_TEST_PASS;
+}
+
+/* Nothing else checks the zero picks on a NaN or a signed-zero tie, since no
+ * input series carries them. Their encoding follows the function they are
+ * inlined into, so the grid runs again inside an AVX one.
+ */
+static uint64_t pickBits( double d )
+{
+   uint64_t u;
+   memcpy( &u, &d, sizeof u );
+   return u;
+}
+
+#if defined(TA_ZERO_PICK_ASM)
+static __inline__ __attribute__((always_inline)) ErrorNumber zeroPickGrid( const char *form )
+#else
+static ErrorNumber zeroPickGrid( const char *form )
+#endif
+{
+   static const uint64_t specials[] = {
+      0x0000000000000000ULL, 0x8000000000000000ULL, /* +0, -0 */
+      0x3FF0000000000000ULL, 0xBFF0000000000000ULL, /* +1, -1 */
+      0x0000000000000001ULL, 0x8000000000000001ULL, /* smallest subnormals */
+      0x0010000000000000ULL, 0x8010000000000000ULL, /* +-DBL_MIN */
+      0x7FEFFFFFFFFFFFFFULL, 0xFFEFFFFFFFFFFFFFULL, /* +-DBL_MAX */
+      0x7FF0000000000000ULL, 0xFFF0000000000000ULL, /* +-inf */
+      0x7FF8000000000000ULL, 0xFFF8000000000123ULL, /* quiet NaNs, one with a payload */
+      0x4004000000000000ULL, 0xC004000000000000ULL  /* +-2.5 */
+   };
+   enum { N = sizeof(specials) / sizeof(specials[0]) };
+   volatile double v[N];
+   int ia, ib, ix, keptNegZero = 0, unordered = 0;
+
+   for( ia = 0; ia < N; ia++ )
+   {
+      double d;
+      memcpy( &d, &specials[ia], sizeof d );
+      v[ia] = d;
+   }
+
+   for( ia = 0; ia < N; ia++ )
+      for( ib = 0; ib < N; ib++ )
+         for( ix = 0; ix < N; ix++ )
+         {
+            const double a = v[ia], b = v[ib], x = v[ix];
+            const double got[4] = { TA_KEEP_IF_GT( a, b, x ), TA_KEEP_IF_LT( a, b, x ),
+                                    TA_ZERO_IF_GT( a, b, x ), TA_ZERO_IF_LT( a, b, x ) };
+            const double want[4] = { a > b ? x : 0.0, a < b ? x : 0.0,
+                                     a > b ? 0.0 : x, a < b ? 0.0 : x };
+            int k;
+            for( k = 0; k < 4; k++ )
+            {
+               if( pickBits( got[k] ) != pickBits( want[k] ) )
+               {
+                  printf( "\nFailed: %s zero pick %d of (%016llx, %016llx, %016llx) gave %016llx, the ternary %016llx\n",
+                          form, k, (unsigned long long)specials[ia], (unsigned long long)specials[ib],
+                          (unsigned long long)specials[ix], (unsigned long long)pickBits( got[k] ),
+                          (unsigned long long)pickBits( want[k] ) );
+                  return TA_REGTEST_ZERO_PICK_BITS;
+               }
+            }
+            if( a > b && pickBits( x ) == 0x8000000000000000ULL )
+               keptNegZero++;
+            if( !(a < b) && !(a > b) && !(a == b) )
+               unordered++;
+         }
+
+   if( keptNegZero == 0 || unordered == 0 )
+   {
+      printf( "\nFailed: the %s zero-pick grid kept no -0.0 (%d) or compared no NaN (%d)\n",
+              form, keptNegZero, unordered );
+      return TA_REGTEST_ZERO_PICK_VACUOUS;
+   }
+   return TA_TEST_PASS;
+}
+
+#if defined(TA_ZERO_PICK_ASM) && !defined(_WIN32)
+   #define TA_ZERO_PICK_VEX_LEG 1
+__attribute__((target("avx"))) static ErrorNumber zeroPickGridVex( void )
+{
+   return zeroPickGrid( "VEX" );
+}
+#endif
+
+static ErrorNumber testZeroPickMasks( void )
+{
+   ErrorNumber retValue = zeroPickGrid( "default" );
+#if defined(TA_ZERO_PICK_VEX_LEG)
+   if( retValue == TA_TEST_PASS && __builtin_cpu_supports( "avx" ) )
+      retValue = zeroPickGridVex();
+#endif
+   return retValue;
 }

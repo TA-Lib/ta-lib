@@ -222,8 +222,7 @@
          prevLow = tempReal;
          /* -DM1 = diffM when diffP < diffM and diffM > 0: the select takes the
           * first test and the max the second, as a non-positive delta cannot raise
-          * the sum. gcc keeps a branch if the select compares diffM itself or if a
-          * select, not the max, ends the step.
+          * the sum. gcc keeps a branch if a select, not the max, ends the step.
           */
          tempReal = diffM - diffP;
          minusDM1 = (tempReal > 0.0) ? diffM : 0.0;
@@ -1001,8 +1000,7 @@
             prevLow = tempReal;
             /* -DM1 = diffM when diffP < diffM and diffM > 0: the select takes the
              * first test and the max the second, as a non-positive delta cannot raise
-             * the sum. gcc keeps a branch if the select compares diffM itself or if a
-             * select, not the max, ends the step.
+             * the sum. gcc keeps a branch if a select, not the max, ends the step.
              */
             tempReal = diffM - diffP;
             minusDM1 = (tempReal > 0.0) ? diffM : 0.0;

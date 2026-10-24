@@ -1692,7 +1692,14 @@ impl StatementEmitter for CStmt<'_> {
                 target_str.trim_end(),
                 render_expr(r, self.ctx, self.registry, self.helpers)
             ),
-            None => render_expr(&new_value, self.ctx, self.registry, self.helpers),
+            None => match zero_pick(target, &new_value, self.ctx) {
+                Some((name, args)) => {
+                    let args: Vec<String> =
+                        args.iter().map(|e| render_expr(e, self.ctx, self.registry, self.helpers)).collect();
+                    format!("{name}({})", args.join(", "))
+                }
+                None => render_expr(&new_value, self.ctx, self.registry, self.helpers),
+            },
         };
         out.push_str(&format!("{pad}{target_str}= {value_str};\n"));
         out
@@ -2373,6 +2380,50 @@ fn running_min_max<'e>(
     }
     let (is_max, r) = super::select_chain::running_extreme_of(name, value)?;
     Some((if is_max { "TA_MAX_GT" } else { "TA_MIN_LT" }, r))
+}
+
+/// `t = a > b ? x : 0.0`, or with `<`, or with the arms swapped: the compare-mask
+/// macro that keeps it a select, for a local `t` that no loop-carried chain runs
+/// through. Only a strict compare of reals, pure operands and a plain kept arm,
+/// which the mask evaluates unconditionally: the macro's bits are the ternary's
+/// then, NaN and signed zero included.
+fn zero_pick<'e>(target: &Expr, value: &'e Expr, ctx: &CRenderCtx) -> Option<(&'static str, [&'e Expr; 3])> {
+    let Expr::Var(name) = target else { return None };
+    let sets = ctx.fma?;
+    if fma::stream_base(name) != name || sets.recurrent_select_targets.contains(name) {
+        return None;
+    }
+    let Expr::Ternary(cond, then_e, else_e) = value else { return None };
+    let Expr::BinOp(l, op, r) = cond.as_ref() else { return None };
+    let gt = match op {
+        BinOp::Greater => true,
+        BinOp::Less => false,
+        _ => return None,
+    };
+    let fs = sets.view();
+    let int = |e: &Expr| matches!(e, Expr::IntLiteral(_)) || fma::is_definitely_integer(e, &fs);
+    let real = |e: &Expr| fma::expr_is_float_typed(e, Some(&fs));
+    if int(l) || int(r) || !(real(l) || real(r)) {
+        return None;
+    }
+    let pure = |e: &Expr| !crate::streaming::expr_effect(e, &|f| MathFn::from_name(f).is_some());
+    if !pure(l) || !pure(r) {
+        return None;
+    }
+    // `x > 0.0 ? x : 0.0` is a max, one MAXSD that compilers already emit.
+    let same = crate::streaming::exprs_equal;
+    if (same(then_e, l) && same(else_e, r)) || (same(then_e, r) && same(else_e, l)) {
+        return None;
+    }
+    let is_zero = |e: &Expr| matches!(e, Expr::Literal(v) if v.to_bits() == 0);
+    let is_plain = |e: &Expr| matches!(e, Expr::Var(_) | Expr::Literal(_));
+    if is_zero(else_e) && is_plain(then_e) {
+        return Some((if gt { "TA_KEEP_IF_GT" } else { "TA_KEEP_IF_LT" }, [l, r, then_e]));
+    }
+    if is_zero(then_e) && is_plain(else_e) {
+        return Some((if gt { "TA_ZERO_IF_GT" } else { "TA_ZERO_IF_LT" }, [l, r, else_e]));
+    }
+    None
 }
 
 fn render_expr(

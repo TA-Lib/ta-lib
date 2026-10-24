@@ -1094,6 +1094,152 @@ TA_RetCode max( int    startIdx,
     assert!(at("/* lead */") < at("hi = MaxGt(x, hi);") && at("hi = MaxGt(x, hi);") < at("/* trail */"), "{cs}");
 }
 
+/// C renders a pick against `0.0` as the compare-mask macro, and leaves a max, a
+/// recurrent target and every near miss of the shape a ternary.
+#[test]
+fn c_renders_zero_picks_as_compare_masks() {
+    let source = r#"
+int max_lookback( int optInTimePeriod )
+{
+   return (optInTimePeriod-1);
+}
+
+TA_RetCode max( int    startIdx,
+                int    endIdx,
+                const double inReal[],
+                int    optInTimePeriod,
+                int   *outBegIdx,
+                int   *outNBElement,
+                double outReal[] )
+{
+   int outIdx, today;
+   double x, y, k1, k2, z1, z2, m, m2, n1, n2, n3, n4, n5, n6, n7, n8, n9, n10, n11, n12, r;
+
+   outIdx = 0;
+   r = 0.0;
+   n6 = 0.0;
+   today = startIdx;
+   while( today <= endIdx )
+   {
+      x = inReal[today];
+      y = inReal[today-1];
+      k1 = x - y > 0.0 ? x : 0.0;
+      k2 = x < y ? y : 0.0;
+      z1 = x > y ? 0.0 : y;
+      z2 = x < 0.0 ? 0.0 : y;
+      m = x > 0.0 ? x : 0.0;
+      n1 = x >= y ? x : 0.0;
+      n2 = x > y ? x : -0.0;
+      n3 = x > y ? x : 0;
+      n4 = x > 0.0 ? inReal[today-2] : 0.0;
+      n5 = today > x ? x : 0.0;
+      n7 = x > today ? x : 0.0;
+      n8 = x > 0 ? y : 0.0;
+      n9 = today > outIdx ? x : 0.0;
+      n10 = x <= y ? x : 0.0;
+      n11 = x > y ? 0.0 : inReal[today-2];
+      m2 = x < 0.0 ? 0.0 : x;
+      n12 = inReal[today++] > x ? y : 0.0;
+      today--;
+      r = x > y ? r : 0.0;
+      r = r + x;
+      outReal[outIdx++] = k1 + k2 + z1 + z2 + m + m2 + n1 + n2 + n3 + n4 + n5 + n6 + n7 + n8 + n9 + n10 + n11 + n12 + r;
+      n6 = x > inReal[today++] ? y : 0.0;
+   }
+
+   *outBegIdx = startIdx;
+   *outNBElement = outIdx;
+   return TA_SUCCESS;
+}
+"#;
+    let (func, enums) = load_indicator_with_source("max", source);
+    let c = backends::c::generate(&func, &enums, make_registry(), make_helpers());
+    for needle in [
+        "k1 = TA_KEEP_IF_GT(x - y, 0.0, x);",
+        "k2 = TA_KEEP_IF_LT(x, y, y);",
+        "z1 = TA_ZERO_IF_GT(x, y, y);",
+        "z2 = TA_ZERO_IF_LT(x, 0.0, y);",
+        "m = (x > 0.0) ? x : 0.0;",
+        "n1 = (x >= y) ? x : 0.0;",
+        "n2 = (x > y) ? x : -0.0;",
+        "n3 = (x > y) ? x : 0;",
+        "n4 = (x > 0.0) ? inReal[today - 2] : 0.0;",
+        "n5 = (today > x) ? x : 0.0;",
+        "n7 = (x > today) ? x : 0.0;",
+        "n8 = (x > 0) ? y : 0.0;",
+        "n9 = (today > outIdx) ? x : 0.0;",
+        "n10 = (x <= y) ? x : 0.0;",
+        "n11 = (x > y) ? 0.0 : inReal[today - 2];",
+        "m2 = (x < 0.0) ? 0.0 : x;",
+        "n12 = (inReal[today++] > x) ? y : 0.0;",
+        "n6 = (x > inReal[today++]) ? y : 0.0;",
+        "r = (x > y) ? r : 0.0;",
+    ] {
+        assert!(c.contains(needle), "C output missing `{needle}`:\n{c}");
+    }
+}
+
+/// A stream handle's step keeps a pick into its own state a ternary, and lowers
+/// one into a local.
+#[test]
+fn c_stream_keeps_a_zero_pick_into_stream_state_a_ternary() {
+    let source = r#"
+int max_lookback( int optInTimePeriod )
+{
+   return (optInTimePeriod-1);
+}
+
+TA_RetCode max( int    startIdx,
+                int    endIdx,
+                const double inReal[],
+                int    optInTimePeriod,
+                int   *outBegIdx,
+                int   *outNBElement,
+                double outReal[] )
+{
+   int outIdx, today, lookbackTotal;
+   double x, y, k, c;
+
+   lookbackTotal = max_lookback( optInTimePeriod );
+   if( startIdx < lookbackTotal )
+      startIdx = lookbackTotal;
+   if( startIdx > endIdx )
+   {
+      *outBegIdx = 0;
+      *outNBElement = 0;
+      return TA_SUCCESS;
+   }
+   outIdx = 0;
+   c = 0.0;
+   today = startIdx;
+   while( today <= endIdx )
+   {
+      x = inReal[today];
+      y = inReal[today-1];
+      k = x > y ? x : 0.0;
+      outReal[outIdx++] = k + c;
+      c = x > y ? y : 0.0;
+      today++;
+   }
+
+   *outBegIdx = startIdx;
+   *outNBElement = outIdx;
+   return TA_SUCCESS;
+}
+"#;
+    let (mut func, enums) = load_indicator_with_source("max", source);
+    func.streaming = true;
+    let stream = backends::c_stream::generate(&func, &enums, make_registry(), make_helpers());
+    let step = stream
+        .split("TA_MAX_StepImpl(")
+        .nth(1)
+        .and_then(|b| b.split("\n}\n").next())
+        .unwrap_or_else(|| panic!("no step frame:\n{stream}"));
+    for needle in ["k = TA_KEEP_IF_GT(x, y, x);", "sp->c = (x > y) ? y : 0.0;"] {
+        assert!(step.contains(needle), "step frame missing `{needle}`:\n{step}");
+    }
+}
+
 /// C# shapes three constructs for RyuJIT and leaves each near miss as the C
 /// wrote it: an element operand of `sqrt`, `floor` or `ceil` is loaded first;
 /// a one-slot shift loop copies a long run; one compare steering several

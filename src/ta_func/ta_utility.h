@@ -318,6 +318,39 @@
    #define TA_MAX_GT(a, b) (((a) > (b)) ? (a) : (b))
 #endif
 
+/* `a > b ? x : 0.0` (KEEP) and `a > b ? 0.0 : x` (ZERO), and the same with `<`.
+ * With gcc on x86 a compare mask in asm, which gcc cannot turn back into the
+ * branch it often makes of the ternary. Same bits as the ternary: the mask is
+ * false on a NaN and the zero is +0.0. `%v` and `%d0` give the VEX form in a
+ * function compiled for AVX, a target_clones or target("fma") one included, as
+ * long as the mask is inlined into it: an SSE instruction after 256-bit code
+ * stalls until the upper halves are saved. clang rejects both, and keeps the
+ * ternary.
+ */
+#if defined(__GNUC__) && !defined(__clang__) && !defined(__INTEL_COMPILER) && \
+    !defined(__NVCOMPILER) && defined(__SSE2_MATH__) && (defined(__x86_64__) || defined(__i386__))
+   #define TA_ZERO_PICK_ASM 1
+   static __inline__ __attribute__((always_inline)) double ta_zero_pick( double lo, double hi, double x, int keep )
+   {
+      double m = lo;
+      __asm__( "%vcmpltsd {%1, %d0|%d0, %1}" : "+x"(m) : "x"(hi) );
+      if( keep )
+         __asm__( "%vandpd {%1, %d0|%d0, %1}" : "+x"(m) : "x"(x) );
+      else
+         __asm__( "%vandnpd {%1, %d0|%d0, %1}" : "+x"(m) : "x"(x) );
+      return m;
+   }
+   #define TA_KEEP_IF_GT(a, b, x) ta_zero_pick( (b), (a), (x), 1 )
+   #define TA_KEEP_IF_LT(a, b, x) ta_zero_pick( (a), (b), (x), 1 )
+   #define TA_ZERO_IF_GT(a, b, x) ta_zero_pick( (b), (a), (x), 0 )
+   #define TA_ZERO_IF_LT(a, b, x) ta_zero_pick( (a), (b), (x), 0 )
+#else
+   #define TA_KEEP_IF_GT(a, b, x) (((a) > (b)) ? (x) : 0.0)
+   #define TA_KEEP_IF_LT(a, b, x) (((a) < (b)) ? (x) : 0.0)
+   #define TA_ZERO_IF_GT(a, b, x) (((a) > (b)) ? 0.0 : (x))
+   #define TA_ZERO_IF_LT(a, b, x) (((a) < (b)) ? 0.0 : (x))
+#endif
+
 /* Candlestick macros (used by candlestick functions, where the parameters are always called inClose, inOpen, etc.
  * Don't use i++ or func(i) with these macros !
  */

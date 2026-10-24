@@ -228,7 +228,7 @@ TA_LIB_API TA_RetCode TA_PLUS_DM( int    startIdx,
          /* Minus Delta */
          prevLow = tempReal;
          plusDM1 = (diffP > 0.0) ? diffP : 0.0;
-         plusDM1 = (diffP > diffM) ? plusDM1 : 0.0;
+         plusDM1 = TA_KEEP_IF_GT(diffP, diffM, plusDM1);
          outReal[outIdx++] = plusDM1;
       }
       *outNBElement= outIdx;
@@ -255,11 +255,10 @@ TA_LIB_API TA_RetCode TA_PLUS_DM( int    startIdx,
       prevLow = tempReal;
       /* +DM1 = diffP when diffP > diffM and diffP > 0: the select takes the
        * first test and the max the second, as a non-positive delta cannot raise
-       * the sum. gcc keeps a branch if the select compares diffP itself or if a
-       * select, not the max, ends the step.
+       * the sum. gcc keeps a branch if a select, not the max, ends the step.
        */
       tempReal = diffP - diffM;
-      plusDM1 = (tempReal > 0.0) ? diffP : 0.0;
+      plusDM1 = TA_KEEP_IF_GT(tempReal, 0.0, diffP);
       tempReal = prevPlusDM + plusDM1;
       prevPlusDM = TA_MAX_GT(prevPlusDM, tempReal);
    }
@@ -278,7 +277,7 @@ TA_LIB_API TA_RetCode TA_PLUS_DM( int    startIdx,
       /* Minus Delta */
       prevLow = tempReal;
       tempReal = diffP - diffM;
-      plusDM1 = (tempReal > 0.0) ? diffP : 0.0;
+      plusDM1 = TA_KEEP_IF_GT(tempReal, 0.0, diffP);
       tempReal = prevPlusDM - prevPlusDM * invPeriod;
       prevPlusDM = tempReal + plusDM1;
       prevPlusDM = (tempReal > prevPlusDM) ? tempReal : prevPlusDM;
@@ -300,7 +299,7 @@ TA_LIB_API TA_RetCode TA_PLUS_DM( int    startIdx,
       /* Minus Delta */
       prevLow = tempReal;
       tempReal = diffP - diffM;
-      plusDM1 = (tempReal > 0.0) ? diffP : 0.0;
+      plusDM1 = TA_KEEP_IF_GT(tempReal, 0.0, diffP);
       tempReal = prevPlusDM - prevPlusDM * invPeriod;
       prevPlusDM = tempReal + plusDM1;
       prevPlusDM = (tempReal > prevPlusDM) ? tempReal : prevPlusDM;
@@ -378,7 +377,7 @@ TA_RetCode TA_S_PLUS_DM( int    startIdx,
          diffM = prevLow - tempReal;
          prevLow = tempReal;
          plusDM1 = (diffP > 0.0) ? diffP : 0.0;
-         plusDM1 = (diffP > diffM) ? plusDM1 : 0.0;
+         plusDM1 = TA_KEEP_IF_GT(diffP, diffM, plusDM1);
          outReal[outIdx++] = plusDM1;
       }
       *outNBElement= outIdx;
@@ -401,7 +400,7 @@ TA_RetCode TA_S_PLUS_DM( int    startIdx,
       diffM = prevLow - tempReal;
       prevLow = tempReal;
       tempReal = diffP - diffM;
-      plusDM1 = (tempReal > 0.0) ? diffP : 0.0;
+      plusDM1 = TA_KEEP_IF_GT(tempReal, 0.0, diffP);
       tempReal = prevPlusDM + plusDM1;
       prevPlusDM = TA_MAX_GT(prevPlusDM, tempReal);
    }
@@ -416,7 +415,7 @@ TA_RetCode TA_S_PLUS_DM( int    startIdx,
       diffM = prevLow - tempReal;
       prevLow = tempReal;
       tempReal = diffP - diffM;
-      plusDM1 = (tempReal > 0.0) ? diffP : 0.0;
+      plusDM1 = TA_KEEP_IF_GT(tempReal, 0.0, diffP);
       tempReal = prevPlusDM - prevPlusDM * invPeriod;
       prevPlusDM = tempReal + plusDM1;
       prevPlusDM = (tempReal > prevPlusDM) ? tempReal : prevPlusDM;
@@ -433,7 +432,7 @@ TA_RetCode TA_S_PLUS_DM( int    startIdx,
       diffM = prevLow - tempReal;
       prevLow = tempReal;
       tempReal = diffP - diffM;
-      plusDM1 = (tempReal > 0.0) ? diffP : 0.0;
+      plusDM1 = TA_KEEP_IF_GT(tempReal, 0.0, diffP);
       tempReal = prevPlusDM - prevPlusDM * invPeriod;
       prevPlusDM = tempReal + plusDM1;
       prevPlusDM = (tempReal > prevPlusDM) ? tempReal : prevPlusDM;
@@ -479,7 +478,7 @@ static void TA_PLUS_DM_StepImpl( struct TA_PLUS_DM_Stream *sp, double inHigh, do
       /* Minus Delta */
       sp->prevLow = tempReal;
       plusDM1 = (diffP > 0.0) ? diffP : 0.0;
-      plusDM1 = (diffP > diffM) ? plusDM1 : 0.0;
+      plusDM1 = TA_KEEP_IF_GT(diffP, diffM, plusDM1);
       *outReal= plusDM1;
       sp->cur_outReal = *outReal;
    }
@@ -499,7 +498,7 @@ static void TA_PLUS_DM_StepImpl( struct TA_PLUS_DM_Stream *sp, double inHigh, do
       /* Minus Delta */
       sp->prevLow = tempReal;
       tempReal = diffP - diffM;
-      plusDM1 = (tempReal > 0.0) ? diffP : 0.0;
+      plusDM1 = TA_KEEP_IF_GT(tempReal, 0.0, diffP);
       tempReal = sp->prevPlusDM - sp->prevPlusDM * sp->invPeriod;
       sp->prevPlusDM = tempReal + plusDM1;
       sp->prevPlusDM = (tempReal > sp->prevPlusDM) ? tempReal : sp->prevPlusDM;
@@ -646,7 +645,7 @@ static TA_RetCode TA_PLUS_DM_OpenImpl( struct TA_PLUS_DM_Stream **stream, const 
          /* Minus Delta */
          prevLow = tempReal;
          plusDM1 = (diffP > 0.0) ? diffP : 0.0;
-         plusDM1 = (diffP > diffM) ? plusDM1 : 0.0;
+         plusDM1 = TA_KEEP_IF_GT(diffP, diffM, plusDM1);
          outReal[outIdx++ * outStride] = plusDM1;
       }
       *outNBElement= outIdx;
@@ -785,11 +784,10 @@ static TA_RetCode TA_PLUS_DM_OpenImpl( struct TA_PLUS_DM_Stream **stream, const 
          prevLow = tempReal;
          /* +DM1 = diffP when diffP > diffM and diffP > 0: the select takes the
           * first test and the max the second, as a non-positive delta cannot raise
-          * the sum. gcc keeps a branch if the select compares diffP itself or if a
-          * select, not the max, ends the step.
+          * the sum. gcc keeps a branch if a select, not the max, ends the step.
           */
          tempReal = diffP - diffM;
-         plusDM1 = (tempReal > 0.0) ? diffP : 0.0;
+         plusDM1 = TA_KEEP_IF_GT(tempReal, 0.0, diffP);
          tempReal = prevPlusDM + plusDM1;
          prevPlusDM = TA_MAX_GT(prevPlusDM, tempReal);
       }
@@ -808,7 +806,7 @@ static TA_RetCode TA_PLUS_DM_OpenImpl( struct TA_PLUS_DM_Stream **stream, const 
          /* Minus Delta */
          prevLow = tempReal;
          tempReal = diffP - diffM;
-         plusDM1 = (tempReal > 0.0) ? diffP : 0.0;
+         plusDM1 = TA_KEEP_IF_GT(tempReal, 0.0, diffP);
          tempReal = prevPlusDM - prevPlusDM * invPeriod;
          prevPlusDM = tempReal + plusDM1;
          prevPlusDM = (tempReal > prevPlusDM) ? tempReal : prevPlusDM;
@@ -830,7 +828,7 @@ static TA_RetCode TA_PLUS_DM_OpenImpl( struct TA_PLUS_DM_Stream **stream, const 
          /* Minus Delta */
          prevLow = tempReal;
          tempReal = diffP - diffM;
-         plusDM1 = (tempReal > 0.0) ? diffP : 0.0;
+         plusDM1 = TA_KEEP_IF_GT(tempReal, 0.0, diffP);
          tempReal = prevPlusDM - prevPlusDM * invPeriod;
          prevPlusDM = tempReal + plusDM1;
          prevPlusDM = (tempReal > prevPlusDM) ? tempReal : prevPlusDM;
@@ -938,7 +936,7 @@ TA_LIB_API TA_RetCode TA_PLUS_DM_Peek( const TA_PLUS_DM_Stream *stream, double i
       /* Minus Delta */
       prevLow = tempReal;
       plusDM1 = (diffP > 0.0) ? diffP : 0.0;
-      plusDM1 = (diffP > diffM) ? plusDM1 : 0.0;
+      plusDM1 = TA_KEEP_IF_GT(diffP, diffM, plusDM1);
       *outReal= plusDM1;
    }
    else
@@ -963,7 +961,7 @@ TA_LIB_API TA_RetCode TA_PLUS_DM_Peek( const TA_PLUS_DM_Stream *stream, double i
       /* Minus Delta */
       prevLow = tempReal;
       tempReal = diffP - diffM;
-      plusDM1 = (tempReal > 0.0) ? diffP : 0.0;
+      plusDM1 = TA_KEEP_IF_GT(tempReal, 0.0, diffP);
       tempReal = prevPlusDM - prevPlusDM * sp->invPeriod;
       prevPlusDM = tempReal + plusDM1;
       prevPlusDM = (tempReal > prevPlusDM) ? tempReal : prevPlusDM;

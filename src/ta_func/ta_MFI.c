@@ -214,15 +214,11 @@ TA_LIB_API TA_RetCode TA_MFI( int    startIdx,
        * price move is a coin flip, so that branch mispredicted on roughly
        * every other bar and dominated the cost of the function.  Adding the
        * unused side's 0.0 to a sum is an exact no-op, so this reproduces the
-       * branching form bit for bit.  C# lowers them to branch-free masks, which
-       * an arithmetic split would lose; gcc 14 and Java's x86 JIT still compile
-       * them as a branch, and gcc 13 does too once the code after them
-       * changes, with no other symptom: time any edit of this loop with gcc 13
-       * and 14.
+       * branching form bit for bit.
        */
       moneyFlow = TA_IS_ZERO_SCALED(tempValue2, tempValue3) ? 0.0 : tempValue1;
-      posFlow = (tempValue2 < 0.0) ? 0.0 : moneyFlow;
-      negFlow = (tempValue2 < 0.0) ? moneyFlow : 0.0;
+      posFlow = TA_ZERO_IF_LT(tempValue2, 0.0, moneyFlow);
+      negFlow = TA_KEEP_IF_LT(tempValue2, 0.0, moneyFlow);
       mflow_positive[mflow_Idx] = posFlow;
       mflow_negative[mflow_Idx] = negFlow;
       posSumMF += posFlow;
@@ -284,8 +280,8 @@ TA_LIB_API TA_RetCode TA_MFI( int    startIdx,
       prevValue = tempValue1;
       tempValue1 *= inVolume[today++];
       moneyFlow = TA_IS_ZERO_SCALED(tempValue2, tempValue3) ? 0.0 : tempValue1;
-      posFlow = (tempValue2 < 0.0) ? 0.0 : moneyFlow;
-      negFlow = (tempValue2 < 0.0) ? moneyFlow : 0.0;
+      posFlow = TA_ZERO_IF_LT(tempValue2, 0.0, moneyFlow);
+      negFlow = TA_KEEP_IF_LT(tempValue2, 0.0, moneyFlow);
       mflow_positive[mflow_Idx] = posFlow;
       mflow_negative[mflow_Idx] = negFlow;
       posSumMF += posFlow;
@@ -419,8 +415,8 @@ TA_RetCode TA_S_MFI( int    startIdx,
       prevValue = tempValue1;
       tempValue1 *= (double)inVolume[today++];
       moneyFlow = TA_IS_ZERO_SCALED(tempValue2, tempValue3) ? 0.0 : tempValue1;
-      posFlow = (tempValue2 < 0.0) ? 0.0 : moneyFlow;
-      negFlow = (tempValue2 < 0.0) ? moneyFlow : 0.0;
+      posFlow = TA_ZERO_IF_LT(tempValue2, 0.0, moneyFlow);
+      negFlow = TA_KEEP_IF_LT(tempValue2, 0.0, moneyFlow);
       mflow_positive[mflow_Idx] = posFlow;
       mflow_negative[mflow_Idx] = negFlow;
       posSumMF += posFlow;
@@ -454,8 +450,8 @@ TA_RetCode TA_S_MFI( int    startIdx,
       prevValue = tempValue1;
       tempValue1 *= (double)inVolume[today++];
       moneyFlow = TA_IS_ZERO_SCALED(tempValue2, tempValue3) ? 0.0 : tempValue1;
-      posFlow = (tempValue2 < 0.0) ? 0.0 : moneyFlow;
-      negFlow = (tempValue2 < 0.0) ? moneyFlow : 0.0;
+      posFlow = TA_ZERO_IF_LT(tempValue2, 0.0, moneyFlow);
+      negFlow = TA_KEEP_IF_LT(tempValue2, 0.0, moneyFlow);
       mflow_positive[mflow_Idx] = posFlow;
       mflow_negative[mflow_Idx] = negFlow;
       posSumMF += posFlow;
@@ -541,8 +537,8 @@ static void TA_MFI_StepImpl( struct TA_MFI_Stream *sp, double inHigh, double inL
    sp->prevValue = tempValue1;
    tempValue1 *= inVolume;
    moneyFlow = TA_IS_ZERO_SCALED(tempValue2, tempValue3) ? 0.0 : tempValue1;
-   posFlow = (tempValue2 < 0.0) ? 0.0 : moneyFlow;
-   negFlow = (tempValue2 < 0.0) ? moneyFlow : 0.0;
+   posFlow = TA_ZERO_IF_LT(tempValue2, 0.0, moneyFlow);
+   negFlow = TA_KEEP_IF_LT(tempValue2, 0.0, moneyFlow);
    sp->cb_mflow_positive[sp->mflow_Idx] = posFlow;
    sp->cb_mflow_negative[sp->mflow_Idx] = negFlow;
    posSumMF += posFlow;
@@ -686,15 +682,11 @@ static TA_RetCode TA_MFI_OpenImpl( struct TA_MFI_Stream **stream, const double i
           * price move is a coin flip, so that branch mispredicted on roughly
           * every other bar and dominated the cost of the function.  Adding the
           * unused side's 0.0 to a sum is an exact no-op, so this reproduces the
-          * branching form bit for bit.  C# lowers them to branch-free masks, which
-          * an arithmetic split would lose; gcc 14 and Java's x86 JIT still compile
-          * them as a branch, and gcc 13 does too once the code after them
-          * changes, with no other symptom: time any edit of this loop with gcc 13
-          * and 14.
+          * branching form bit for bit.
           */
          moneyFlow = TA_IS_ZERO_SCALED(tempValue2, tempValue3) ? 0.0 : tempValue1;
-         posFlow = (tempValue2 < 0.0) ? 0.0 : moneyFlow;
-         negFlow = (tempValue2 < 0.0) ? moneyFlow : 0.0;
+         posFlow = TA_ZERO_IF_LT(tempValue2, 0.0, moneyFlow);
+         negFlow = TA_KEEP_IF_LT(tempValue2, 0.0, moneyFlow);
          mflow_positive[mflow_Idx] = posFlow;
          mflow_negative[mflow_Idx] = negFlow;
          posSumMF += posFlow;
@@ -756,8 +748,8 @@ static TA_RetCode TA_MFI_OpenImpl( struct TA_MFI_Stream **stream, const double i
          prevValue = tempValue1;
          tempValue1 *= inVolume[today++];
          moneyFlow = TA_IS_ZERO_SCALED(tempValue2, tempValue3) ? 0.0 : tempValue1;
-         posFlow = (tempValue2 < 0.0) ? 0.0 : moneyFlow;
-         negFlow = (tempValue2 < 0.0) ? moneyFlow : 0.0;
+         posFlow = TA_ZERO_IF_LT(tempValue2, 0.0, moneyFlow);
+         negFlow = TA_KEEP_IF_LT(tempValue2, 0.0, moneyFlow);
          mflow_positive[mflow_Idx] = posFlow;
          mflow_negative[mflow_Idx] = negFlow;
          posSumMF += posFlow;
@@ -902,8 +894,8 @@ TA_LIB_API TA_RetCode TA_MFI_Peek( const TA_MFI_Stream *stream, double inHigh, d
    prevValue = tempValue1;
    tempValue1 *= inVolume;
    moneyFlow = TA_IS_ZERO_SCALED(tempValue2, tempValue3) ? 0.0 : tempValue1;
-   posFlow = (tempValue2 < 0.0) ? 0.0 : moneyFlow;
-   negFlow = (tempValue2 < 0.0) ? moneyFlow : 0.0;
+   posFlow = TA_ZERO_IF_LT(tempValue2, 0.0, moneyFlow);
+   negFlow = TA_KEEP_IF_LT(tempValue2, 0.0, moneyFlow);
    posSumMF += posFlow;
    negSumMF += negFlow;
    nullRun = (moneyFlow == 0.0) ? nullRun + 1 : 0;

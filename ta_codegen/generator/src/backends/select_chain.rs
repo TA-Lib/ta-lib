@@ -1,7 +1,6 @@
 //! Which selects sit on a loop-carried arithmetic recurrence.
 //!
-//! A backend that makes a select branch-free (C#'s compare masks, Rust's
-//! `select_unpredictable`) leaves these ones branches.
+//! A backend that makes a select branch-free leaves these ones branches.
 
 use std::collections::{BTreeSet, HashMap, HashSet};
 

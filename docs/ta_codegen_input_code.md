@@ -148,8 +148,10 @@ The `fabs` form adds `+0.0` where the branch added nothing, which is exact only
 into a sum that is never `-0.0`: check that before relying on it.
 
 The exception is a pick of a value against `0.0` on a strict comparison
-(`x = a < b ? 0.0 : v`): the C# backend lowers it to a branch-free mask, which
-arithmetic would lose (`mfi.c`).
+(`x = a < b ? 0.0 : v`): C with gcc on x86 and C# lower it to a branch-free
+mask, which arithmetic would lose (`mfi.c`). It needs side-effect-free operands,
+a plain variable or literal `v`, and an `x` not carried to the next bar; anything
+else may silently stay a ternary.
 
 A case that is rare by construction, such as a window flat for a whole period, is
 one `TA_UNLIKELY` branch. When the bar's output is written right after it, write
