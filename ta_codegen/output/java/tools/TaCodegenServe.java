@@ -334096,7 +334096,8 @@ class FuzzData {
    static final int FUZZ_WITH_ZEROS = 6;// sprinkled 0.0 / -0.0 and small signed values
    static final int FUZZ_CANDLE = 7;    // inside-bar cascades + breakouts + confirmations
    static final int FUZZ_ZEROSUM = 8;   // symmetric high=-low bars: high+low == 0 EXACTLY
-   static final int FUZZ_NSHAPES = 9;
+   static final int FUZZ_DOMAIN_MAX = 9;// bars at the edges of the input domain, +/-3e37
+   static final int FUZZ_NSHAPES = 10;
 
    // ---- splitmix64 PRNG (deterministic, self-contained) ----
    static long fuzzSmNext(long[] s) {
@@ -334544,6 +334545,49 @@ class FuzzData {
       }
    }
 
+   // ---- FUZZ_DOMAIN_MAX: bars at the edges of the input domain ----
+   // Same bound and same seven draws per bar as fuzz_domain_max_gen in fuzz_data.h.
+   static final double FUZZ_DOMAIN_BOUND = 3e37;
+   static void fuzzDomainMaxGen(int seed, int n,
+                                double[] o, double[] h, double[] l, double[] c,
+                                double[] v, double[] oi) {
+      long[] s = new long[1];
+      s[0] = 0x243F6A8885A308D3L
+             ^ (((long) seed & 0xFFFFFFFFL) * 0xD1B54A32D192ED03L)
+             ^ ((long) FUZZ_DOMAIN_MAX << 32);
+      int i;
+      for (i = 0; i < n; i++) {
+         double r = fuzzSmUnit(s);
+         double scale, a, t, w, span, hi, lo, open, close;
+         scale = (r < 0.90) ? FUZZ_DOMAIN_BOUND : 100.0;
+         t = fuzzSmUnit(s) * 0.07;
+         a = 0.93 + t;
+         hi = a * scale;
+         t = fuzzSmUnit(s) * 0.02;
+         w = hi * t;
+         lo = hi - w;
+         span = hi - lo;
+         t = fuzzSmUnit(s) * span;
+         close = lo + t;
+         if (close > hi) close = hi;
+         t = fuzzSmUnit(s) * span;
+         open = lo + t;
+         if (open > hi) open = hi;
+         if (r >= 0.45 && r < 0.90) {
+            // the mirror image near -3e37
+            t = hi; hi = -lo; lo = -t;
+            open = -open; close = -close;
+         }
+         o[i] = open; h[i] = hi; l[i] = lo; c[i] = close;
+         t = fuzzSmUnit(s) * 0.99;
+         a = 0.01 + t;
+         v[i] = a * FUZZ_DOMAIN_BOUND;
+         t = fuzzSmUnit(s) * 0.99;
+         a = 0.01 + t;
+         oi[i] = a * FUZZ_DOMAIN_BOUND;
+      }
+   }
+
    // Fill OHLCV+OI arrays (length n) from (shape,seed). high>=max(o,c),
    // low<=min(o,c). Mul/add split into statements so nothing contracts.
    static void fuzzGen(int shape, int seed, int n,
@@ -334551,6 +334595,7 @@ class FuzzData {
                        double[] v, double[] oi) {
       if (shape == FUZZ_CANDLE) { fuzzCandleGen(seed, n, o, h, l, c, v, oi); return; }
       if (shape == FUZZ_ZEROSUM) { fuzzZerosumGen(seed, n, o, h, l, c, v, oi); return; }
+      if (shape == FUZZ_DOMAIN_MAX) { fuzzDomainMaxGen(seed, n, o, h, l, c, v, oi); return; }
       long[] s = new long[1];
       s[0] = 0x243F6A8885A308D3L
              ^ (((long) seed & 0xFFFFFFFFL) * 0xD1B54A32D192ED03L)

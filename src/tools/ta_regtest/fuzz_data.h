@@ -45,6 +45,8 @@ enum {
                         /* only shape landing high+low in the 1e-14 TA_IS_ZERO  */
                         /* band -> exercises the ACCBANDS degenerate else branch */
                         /* (no divide by high+low) in both --ref and stream      */
+    FUZZ_DOMAIN_MAX,    /* bars at the edges of the input domain, +/-3e37, with */
+                        /* sign flips and ordinary bars between them            */
     FUZZ_NSHAPES
 };
 
@@ -555,6 +557,68 @@ static void fuzz_zerosum_gen(int seed, int n,
     }
 }
 
+/* ---- FUZZ_DOMAIN_MAX: bars at the edges of the input domain ------------ */
+/* The spec's tested input domain is TA_REAL_MIN..TA_REAL_MAX (+/-3e37). The
+ * other shapes stop near 1e9, so this one carries every series to the bound:
+ * most bars sit between 91% and 100% of +3e37 or of -3e37, in random order,
+ * so adjacent bars flip sign across the whole domain, and the rest are
+ * ordinary bars near 100, so a window also mixes values 35 orders of magnitude
+ * apart. Volume and open interest reach the bound too (and stay >= 1000, as
+ * every shape's do).
+ *
+ * The bound is spelled here rather than taken from ta_defs.h because the
+ * frozen-release serves include this file ahead of any TA-Lib header.
+ * test_codegen.c checks it against TA_REAL_MAX.
+ *
+ * Each bar is built from its high down, so no value leaves the domain: high is
+ * at most the bound, low is at most 2% below high, and open and close are
+ * drawn between them (rounding can carry a drawn value one ulp past high, so
+ * it is clamped). A negative bar is the mirror image of a positive one. Every
+ * bar takes the same seven draws whichever branch it lands in. */
+#define FUZZ_DOMAIN_BOUND 3e37
+static void fuzz_domain_max_gen(int seed, int n,
+                                double *o, double *h, double *l, double *c,
+                                double *v, double *oi)
+{
+    unsigned long long s =
+        0x243F6A8885A308D3ULL
+        ^ ((unsigned long long)(unsigned int)seed * 0xD1B54A32D192ED03ULL)
+        ^ ((unsigned long long)FUZZ_DOMAIN_MAX << 32);
+    int i;
+    for( i = 0; i < n; i++ )
+    {
+        double r = fuzz_sm_unit(&s);
+        double scale, a, t, w, span, hi, lo, open, close;
+        scale = (r < 0.90) ? FUZZ_DOMAIN_BOUND : 100.0;
+        t = fuzz_sm_unit(&s) * 0.07;
+        a = 0.93 + t;
+        hi = a * scale;
+        t = fuzz_sm_unit(&s) * 0.02;
+        w = hi * t;
+        lo = hi - w;
+        span = hi - lo;
+        t = fuzz_sm_unit(&s) * span;
+        close = lo + t;
+        if( close > hi ) close = hi;
+        t = fuzz_sm_unit(&s) * span;
+        open = lo + t;
+        if( open > hi ) open = hi;
+        if( r >= 0.45 && r < 0.90 )
+        {
+            /* the mirror image near -3e37 */
+            t = hi; hi = -lo; lo = -t;
+            open = -open; close = -close;
+        }
+        o[i] = open; h[i] = hi; l[i] = lo; c[i] = close;
+        t = fuzz_sm_unit(&s) * 0.99;
+        a = 0.01 + t;
+        v[i] = a * FUZZ_DOMAIN_BOUND;
+        t = fuzz_sm_unit(&s) * 0.99;
+        a = 0.01 + t;
+        oi[i] = a * FUZZ_DOMAIN_BOUND;
+    }
+}
+
 /* Fill OHLCV+OI arrays (length n) from (shape,seed). high>=max(o,c),
  * low<=min(o,c). Mul/add split into statements: that stops clang's
  * statement-local contraction, but not GCC's — see the header note (#150). */
@@ -564,6 +628,7 @@ static void fuzz_gen(int shape, int seed, int n,
 {
     if( shape == FUZZ_CANDLE ) { fuzz_candle_gen(seed, n, o, h, l, c, v, oi); return; }
     if( shape == FUZZ_ZEROSUM ) { fuzz_zerosum_gen(seed, n, o, h, l, c, v, oi); return; }
+    if( shape == FUZZ_DOMAIN_MAX ) { fuzz_domain_max_gen(seed, n, o, h, l, c, v, oi); return; }
     unsigned long long s =
         0x243F6A8885A308D3ULL
         ^ ((unsigned long long)(unsigned int)seed  * 0xD1B54A32D192ED03ULL)
