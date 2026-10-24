@@ -956,7 +956,6 @@ impl MfiStream {
             negSumMF += negFlow;
             nullRun = (if moneyFlow == 0.0 { nullRun + 1 } else { 0 });
             if nullRun >= ((sp.optInTimePeriod) as usize) {
-                cold_arm();
                 nullRun = (sp.optInTimePeriod) as usize;
                 posSumMF = 0.0;
                 negSumMF = 0.0;

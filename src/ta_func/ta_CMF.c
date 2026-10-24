@@ -831,7 +831,7 @@ TA_LIB_API TA_RetCode TA_CMF_Peek( const TA_CMF_Stream *stream, double inHigh, d
    sumVol += inVolume;
    liveVol = (fabs(inVolume) <= 0.0) ? 0 : 1;
    nullRun = (nullRun + 1) & (liveVol - 1);
-   if( TA_UNLIKELY(nullRun >= sp->optInTimePeriod) )
+   if( nullRun >= sp->optInTimePeriod )
    {
       nullRun = sp->optInTimePeriod;
       sumMFV = 0.0;

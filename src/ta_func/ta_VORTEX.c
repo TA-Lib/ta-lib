@@ -987,7 +987,7 @@ TA_LIB_API TA_RetCode TA_VORTEX_Peek( const TA_VORTEX_Stream *stream, double inH
     * ULTOSC can reseed all its totals because its predicate covers both
     * of its per-bar terms; VORTEX's covers only the denominator's.
     */
-   if( TA_UNLIKELY(nullRun >= sp->optInTimePeriod) )
+   if( nullRun >= sp->optInTimePeriod )
    {
       nullRun = sp->optInTimePeriod;
       sTR = 0.0;

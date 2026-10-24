@@ -714,7 +714,7 @@ TA_LIB_API TA_RetCode TA_ER_Peek( const TA_ER_Stream *stream, double inReal, dou
     */
    live = (fabs(tempReal - sp->lag1_inReal) <= 0.0) ? 0 : 1;
    nullRun = (nullRun + 1) & (live - 1);
-   if( TA_UNLIKELY(nullRun >= sp->optInTimePeriod) )
+   if( nullRun >= sp->optInTimePeriod )
    {
       nullRun = sp->optInTimePeriod;
       sumROC1 = 0.0;

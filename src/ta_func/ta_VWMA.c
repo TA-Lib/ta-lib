@@ -732,7 +732,7 @@ TA_LIB_API TA_RetCode TA_VWMA_Peek( const TA_VWMA_Stream *stream, double inReal,
    /* Each branch writes its own output: a branch that only zeroes the sums
     * is if-converted into a mask on their dependency chain, hint or not.
     */
-   if( TA_UNLIKELY(zeroCount >= sp->optInTimePeriod) )
+   if( zeroCount >= sp->optInTimePeriod )
    {
       /* Zero, then subtract the departing bar: a non-finite price times its
        * zero volume is NaN, not zero.

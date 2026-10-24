@@ -974,7 +974,7 @@ TA_LIB_API TA_RetCode TA_VIDYA_Peek( const TA_VIDYA_Stream *stream, double inRea
    downSum += up - diff;
    live = (fabs(diff) <= 0.0) ? 0 : 1;
    nullRun = (nullRun + 1) & (live - 1);
-   if( TA_UNLIKELY(nullRun >= sp->optInCMOPeriod) )
+   if( nullRun >= sp->optInCMOPeriod )
    {
       nullRun = sp->optInCMOPeriod;
       upSum = 0.0;
@@ -1083,7 +1083,7 @@ void TA_VIDYA_PeekTape( const struct TA_VIDYA_Stream *sp, const double tape[], i
    downSum += up - diff;
    live = (fabs(diff) <= 0.0) ? 0 : 1;
    nullRun = (nullRun + 1) & (live - 1);
-   if( TA_UNLIKELY(nullRun >= sp->optInCMOPeriod) )
+   if( nullRun >= sp->optInCMOPeriod )
    {
       nullRun = sp->optInCMOPeriod;
       upSum = 0.0;

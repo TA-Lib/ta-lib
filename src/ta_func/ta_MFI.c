@@ -907,7 +907,7 @@ TA_LIB_API TA_RetCode TA_MFI_Peek( const TA_MFI_Stream *stream, double inHigh, d
    posSumMF += posFlow;
    negSumMF += negFlow;
    nullRun = (moneyFlow == 0.0) ? nullRun + 1 : 0;
-   if( TA_UNLIKELY(nullRun >= sp->optInTimePeriod) )
+   if( nullRun >= sp->optInTimePeriod )
    {
       nullRun = sp->optInTimePeriod;
       posSumMF = 0.0;

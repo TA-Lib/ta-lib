@@ -1056,7 +1056,6 @@ impl VortexStream {
             // ULTOSC can reseed all its totals because its predicate covers both
             // of its per-bar terms; VORTEX's covers only the denominator's.
             if nullRun >= ((sp.optInTimePeriod) as usize) {
-                cold_arm();
                 nullRun = (sp.optInTimePeriod) as usize;
                 sTR = 0.0;
             }

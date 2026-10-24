@@ -9268,6 +9268,20 @@ fn peek_with(
     slot_cast: Option<VarType>,
     unshadowed: &[(Expr, Expr)],
 ) -> Result<PeekTransition, String> {
+    // A peek carries nothing to the next bar, which is all `UNLIKELY` is for. Kept,
+    // it can cost a call per peek: clang's hot/cold splitting marks the hinted
+    // branch's unlikely target cold, and when that target is the join every path
+    // reaches, the whole body is outlined.
+    let transition = &rewrite_stmts(
+        transition,
+        &|e| match e {
+            Expr::FuncCall(name, mut args) if name == crate::backends::builtins::UNLIKELY && args.len() == 1 => {
+                args.remove(0)
+            }
+            other => other,
+        },
+        &Some,
+    )[..];
     let bufs: BTreeMap<String, bool> = buffers.iter().map(|(n, i)| (n.clone(), *i)).collect();
     let transition = &drop_stores_no_load_reaches(transition, &bufs)[..];
     validate_peekable(transition, &bufs, 0)?;

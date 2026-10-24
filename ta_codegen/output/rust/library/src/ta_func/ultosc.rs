@@ -1249,7 +1249,6 @@ impl UltoscStream {
             live = (if (trueRange).abs() + (closeMinusTrueLow).abs() <= 0.0 { 0 } else { 1 });
             nullRun = nullRun + 1 & live.wrapping_sub(1);
             if nullRun >= ((sp.optInTimePeriod1) as usize) {
-                cold_arm();
                 a1Total = 0.0;
                 b1Total = 0.0;
                 if nullRun >= ((sp.optInTimePeriod2) as usize) {

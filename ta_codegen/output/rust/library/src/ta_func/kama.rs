@@ -1124,7 +1124,6 @@ impl KamaStream {
             live = (if (tempReal - sp.lag1_inReal).abs() <= 0.0 { 0 } else { 1 });
             nullRun = nullRun + 1 & live.wrapping_sub(1);
             if nullRun >= ((sp.optInTimePeriod) as usize) {
-                cold_arm();
                 nullRun = (sp.optInTimePeriod) as usize;
                 sumROC1 = 0.0;
                 tempReal = 1.0;
@@ -1245,7 +1244,6 @@ impl KamaStream {
             live = (if (tempReal - sp.lag1_inReal).abs() <= 0.0 { 0 } else { 1 });
             nullRun = nullRun + 1 & live.wrapping_sub(1);
             if nullRun >= ((sp.optInTimePeriod) as usize) {
-                cold_arm();
                 nullRun = (sp.optInTimePeriod) as usize;
                 sumROC1 = 0.0;
                 tempReal = 1.0;

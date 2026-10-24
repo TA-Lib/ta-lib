@@ -1044,7 +1044,6 @@ impl VidyaStream {
             live = (if (diff).abs() <= 0.0 { 0 } else { 1 });
             nullRun = nullRun + 1 & live.wrapping_sub(1);
             if nullRun >= ((sp.optInCMOPeriod) as usize) {
-                cold_arm();
                 nullRun = (sp.optInCMOPeriod) as usize;
                 upSum = 0.0;
                 downSum = 0.0;
@@ -1154,7 +1153,6 @@ impl VidyaStream {
             live = (if (diff).abs() <= 0.0 { 0 } else { 1 });
             nullRun = nullRun + 1 & live.wrapping_sub(1);
             if nullRun >= ((sp.optInCMOPeriod) as usize) {
-                cold_arm();
                 nullRun = (sp.optInCMOPeriod) as usize;
                 upSum = 0.0;
                 downSum = 0.0;

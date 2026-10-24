@@ -836,7 +836,6 @@ impl VwmaStream {
             // Each branch writes its own output: a branch that only zeroes the sums
             // is if-converted into a mask on their dependency chain, hint or not.
             if zeroCount >= ((sp.optInTimePeriod) as usize) {
-                cold_arm();
                 // Zero, then subtract the departing bar: a non-finite price times its
                 // zero volume is NaN, not zero.
                 tempPV = 0.0;

@@ -363,6 +363,33 @@ fn every_return_in_a_peek_answers_a_code() {
     );
 }
 
+/// A peek frame carries no `TA_UNLIKELY`: what it would cost is a call per
+/// peek, which no value gate sees.
+#[test]
+fn a_peek_frame_drops_the_rare_branch_hint() {
+    let mut hinted_steps = 0usize;
+    let mut offenders: Vec<String> = Vec::new();
+    for name in indicators() {
+        let Some((func, enums)) = load(&name) else { continue };
+        let src = stream_c(&func, &enums);
+        let upper = func.name.to_uppercase();
+        if body_of(&src, &format!("TA_{upper}_StepImpl(")).is_some_and(|b| b.contains("TA_UNLIKELY(")) {
+            hinted_steps += 1;
+        }
+        for needle in [format!("TA_RetCode TA_{upper}_Peek("), format!("void TA_{upper}_PeekTape(")] {
+            if body_of(&src, &needle).is_some_and(|b| b.contains("TA_UNLIKELY(")) {
+                offenders.push(format!("{upper}: {needle}"));
+            }
+        }
+    }
+    assert!(
+        hinted_steps >= 5,
+        "only {hinted_steps} update step(s) keep a hint, so this gate is not watching \
+         the frames it exists for"
+    );
+    assert!(offenders.is_empty(), "a peek frame keeps TA_UNLIKELY:\n{}", offenders.join("\n"));
+}
+
 
 /// Replace every subscript of a handle buffer with one token, so two bodies
 /// that differ only in which slot they name compare equal.

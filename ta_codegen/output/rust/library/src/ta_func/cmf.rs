@@ -891,7 +891,6 @@ impl CmfStream {
             liveVol = (if (inVolume).abs() <= 0.0 { 0 } else { 1 });
             nullRun = nullRun + 1 & liveVol.wrapping_sub(1);
             if nullRun >= ((sp.optInTimePeriod) as usize) {
-                cold_arm();
                 nullRun = (sp.optInTimePeriod) as usize;
                 sumMFV = 0.0;
                 sumVol = 0.0;

@@ -1347,7 +1347,7 @@ TA_LIB_API TA_RetCode TA_ULTOSC_Peek( const TA_ULTOSC_Stream *stream, double inH
     */
    live = (fabs(trueRange) + fabs(closeMinusTrueLow) <= 0.0) ? 0 : 1;
    nullRun = (nullRun + 1) & (live - 1);
-   if( TA_UNLIKELY(nullRun >= sp->optInTimePeriod1) )
+   if( nullRun >= sp->optInTimePeriod1 )
    {
       a1Total = 0.0;
       b1Total = 0.0;
