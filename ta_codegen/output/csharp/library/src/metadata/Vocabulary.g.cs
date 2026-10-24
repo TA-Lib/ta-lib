@@ -209,13 +209,13 @@ public enum OutputFlags : uint
     /// <summary>Draw as a histogram.</summary>
     Histogram = 0x00000010,
 
-    /// <summary>0 is no pattern, 100 a pattern; no other value.</summary>
+    /// <summary>Two states: 0 is no pattern, non-zero a pattern.</summary>
     PatternBool = 0x00000020,
 
     /// <summary>The sign is a call: positive bullish, negative bearish.</summary>
     PatternBullBear = 0x00000040,
 
-    /// <summary>Adds level 200: this bar confirms the output's most recent earlier pattern.</summary>
+    /// <summary>Level 200 occurs too: this bar confirms the output's most recent earlier pattern.</summary>
     PatternConfirm = 0x00000080,
 
     /// <summary>Positive values occur.</summary>
@@ -236,7 +236,7 @@ public enum OutputFlags : uint
     /// <summary>A chart draws it ahead of or behind the bar that computed it, by the bars the display-shift query reports. The values are never shifted.</summary>
     DisplayShift = 0x00004000,
 
-    /// <summary>Adds level 80: a weaker form of the pattern, on the same bar.</summary>
+    /// <summary>Level 80 occurs too: a weaker form of the pattern, on the same bar.</summary>
     PatternWeak = 0x00008000,
 
     /// <summary>Never set: every output is required.</summary>

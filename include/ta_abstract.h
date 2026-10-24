@@ -445,10 +445,9 @@ typedef int TA_OptInputFlags;
 /* The following are flags giving hint on what
  * could be done with the output.
  *
- * A pattern output writes 0 or sign x level. The sign flags give the signs
- * and the level flags the levels (100 always): the values are every sign times
- * every level, plus 0 when TA_OUT_ZERO is set. Reading them: rule rW7 of the
- * TA-Lib specification.
+ * A pattern output writes 0 or sign x level: the sign flags say which signs
+ * occur and whether 0 does, and the level flags which levels occur besides 100.
+ * Reading them: rule rW7 of the TA-Lib specification.
  */
 typedef int TA_OutputFlags;
 #define TA_OUT_LINE              0x00000001 /* Suggest to display as a connected line. */
@@ -456,10 +455,10 @@ typedef int TA_OutputFlags;
 #define TA_OUT_DASH_LINE         0x00000004 /* Suggest to display as a 'dashed' line. */
 #define TA_OUT_DOT               0x00000008 /* Suggest to display with dots only. */
 #define TA_OUT_HISTO             0x00000010 /* Suggest to display as an histogram. */
-#define TA_OUT_PATTERN_BOOL      0x00000020 /* 0 = no pattern, 100 = pattern; no other value. */
+#define TA_OUT_PATTERN_BOOL      0x00000020 /* Two states: 0 = no pattern, non-zero = pattern. */
 #define TA_OUT_PATTERN_BULL_BEAR 0x00000040 /* The sign is a call: + bullish, - bearish. */
-#define TA_OUT_PATTERN_CONFIRM   0x00000080 /* Adds level 200: this bar confirms the output's
-                                             * most recent earlier pattern. */
+#define TA_OUT_PATTERN_CONFIRM   0x00000080 /* Level 200 occurs too: this bar confirms the
+                                             * output's most recent earlier pattern. */
 #define TA_OUT_PATTERN_STRENGTH  TA_OUT_PATTERN_CONFIRM /* Deprecated name. */
 #define TA_OUT_POSITIVE          0x00000100 /* Positive values occur. */
 #define TA_OUT_NEGATIVE          0x00000200 /* Negative values occur. */
@@ -473,8 +472,8 @@ typedef int TA_OutputFlags;
                                              * that computed it, by the number of bars
                                              * TA_GetDisplayShift reports. The values themselves are
                                              * never shifted. */
-#define TA_OUT_PATTERN_WEAK      0x00008000 /* Adds level 80: a weaker form of the pattern, on the
-                                             * same bar. */
+#define TA_OUT_PATTERN_WEAK      0x00008000 /* Level 80 occurs too: a weaker form of the pattern,
+                                             * on the same bar. */
 
 
 /* The following 3 structures will exist for each input, optional

@@ -392,12 +392,12 @@ const OUTPUT_FLAGS: &[(&str, &str, &str)] = &[
     ("dash_line", "DashLine", "Draw as a dashed line."),
     ("dot", "Dot", "Draw as unconnected dots."),
     ("histogram", "Histogram", "Draw as a histogram."),
-    ("pattern_bool", "PatternBool", "0 is no pattern, 100 a pattern; no other value."),
+    ("pattern_bool", "PatternBool", "Two states: 0 is no pattern, non-zero a pattern."),
     ("pattern_bull_bear", "PatternBullBear", "The sign is a call: positive bullish, negative bearish."),
     (
         "pattern_confirm",
         "PatternConfirm",
-        "Adds level 200: this bar confirms the output's most recent earlier pattern.",
+        "Level 200 occurs too: this bar confirms the output's most recent earlier pattern.",
     ),
     ("positive", "Positive", "Positive values occur."),
     ("negative", "Negative", "Negative values occur."),
@@ -413,7 +413,7 @@ const OUTPUT_FLAGS: &[(&str, &str, &str)] = &[
         "DisplayShift",
         "A chart draws it ahead of or behind the bar that computed it, by the bars the display-shift query reports. The values are never shifted.",
     ),
-    ("pattern_weak", "PatternWeak", "Adds level 80: a weaker form of the pattern, on the same bar."),
+    ("pattern_weak", "PatternWeak", "Level 80 occurs too: a weaker form of the pattern, on the same bar."),
 ];
 
 /// Output members kept for compatibility: the C value stays defined, no output sets it.

@@ -60,13 +60,13 @@ public final class OutputFlags {
    /** Draw as a histogram. */
    public static final int HISTOGRAM = 0x00000010;
 
-   /** 0 is no pattern, 100 a pattern; no other value. */
+   /** Two states: 0 is no pattern, non-zero a pattern. */
    public static final int PATTERN_BOOL = 0x00000020;
 
    /** The sign is a call: positive bullish, negative bearish. */
    public static final int PATTERN_BULL_BEAR = 0x00000040;
 
-   /** Adds level 200: this bar confirms the output's most recent earlier pattern. */
+   /** Level 200 occurs too: this bar confirms the output's most recent earlier pattern. */
    public static final int PATTERN_CONFIRM = 0x00000080;
 
    /** Positive values occur. */
@@ -87,7 +87,7 @@ public final class OutputFlags {
    /** A chart draws it ahead of or behind the bar that computed it, by the bars {@code ParamHolder.displayShift} reports. The values are never shifted. */
    public static final int DISPLAY_SHIFT = 0x00004000;
 
-   /** Adds level 80: a weaker form of the pattern, on the same bar. */
+   /** Level 80 occurs too: a weaker form of the pattern, on the same bar. */
    public static final int PATTERN_WEAK = 0x00008000;
 
    /** @deprecated Never set: every output is required. */

@@ -509,12 +509,12 @@ fn output_flags_class() -> String {
             ("DASH_LINE", 0x0000_0004, "Draw as a dashed line."),
             ("DOT", 0x0000_0008, "Draw as unconnected dots."),
             ("HISTOGRAM", 0x0000_0010, "Draw as a histogram."),
-            ("PATTERN_BOOL", 0x0000_0020, "0 is no pattern, 100 a pattern; no other value."),
+            ("PATTERN_BOOL", 0x0000_0020, "Two states: 0 is no pattern, non-zero a pattern."),
             ("PATTERN_BULL_BEAR", 0x0000_0040, "The sign is a call: positive bullish, negative bearish."),
             (
                 "PATTERN_CONFIRM",
                 0x0000_0080,
-                "Adds level 200: this bar confirms the output's most recent earlier pattern.",
+                "Level 200 occurs too: this bar confirms the output's most recent earlier pattern.",
             ),
             ("POSITIVE", 0x0000_0100, "Positive values occur."),
             ("NEGATIVE", 0x0000_0200, "Negative values occur."),
@@ -532,7 +532,7 @@ fn output_flags_class() -> String {
                 "A chart draws it ahead of or behind the bar that computed it, by the bars \
                  {@code ParamHolder.displayShift} reports. The values are never shifted.",
             ),
-            ("PATTERN_WEAK", 0x0000_8000, "Adds level 80: a weaker form of the pattern, on the same bar."),
+            ("PATTERN_WEAK", 0x0000_8000, "Level 80 occurs too: a weaker form of the pattern, on the same bar."),
         ],
         &[("NULLABLE", 0x0000_2000)],
         &[("PATTERN_STRENGTH", "PATTERN_CONFIRM")],

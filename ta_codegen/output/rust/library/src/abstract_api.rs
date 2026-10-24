@@ -719,12 +719,12 @@ flag_newtype!(
     DOT = 0x0000_0008,
     /// Suggest displaying as a histogram.
     HISTO = 0x0000_0010,
-    /// 0 is no pattern, 100 a pattern; no other value.
+    /// Two states: 0 is no pattern, non-zero a pattern.
     PATTERN_BOOL = 0x0000_0020,
     /// The sign is a call: positive bullish, negative bearish.
     PATTERN_BULL_BEAR = 0x0000_0040,
-    /// Adds level 200: this bar confirms the output's most recent earlier
-    /// pattern.
+    /// Level 200 occurs too: this bar confirms the output's most recent
+    /// earlier pattern.
     PATTERN_CONFIRM = 0x0000_0080,
     /// Positive values occur.
     POSITIVE = 0x0000_0100,
@@ -745,7 +745,7 @@ flag_newtype!(
     /// by the bars [`ParamHolder::display_shift`] reports. The values are never
     /// shifted.
     DISPLAY_SHIFT = 0x0000_4000,
-    /// Adds level 80: a weaker form of the pattern, on the same bar.
+    /// Level 80 occurs too: a weaker form of the pattern, on the same bar.
     PATTERN_WEAK = 0x0000_8000,
 });
 

@@ -255,10 +255,10 @@ An unrecognised flag string in any of the three lists fails `generate`.
 | `positive` | Positive values occur | `TA_OUT_POSITIVE` |
 | `negative` | Negative values occur | `TA_OUT_NEGATIVE` |
 | `zero` | 0 occurs | `TA_OUT_ZERO` |
-| `pattern_bool` | Pattern output, values 0 and 100 | `TA_OUT_PATTERN_BOOL` |
+| `pattern_bool` | Pattern output with two states, 0 or non-zero | `TA_OUT_PATTERN_BOOL` |
 | `pattern_bull_bear` | Pattern output whose sign is a call | `TA_OUT_PATTERN_BULL_BEAR` |
-| `pattern_weak` | Adds level 80 | `TA_OUT_PATTERN_WEAK` |
-| `pattern_confirm` | Adds level 200 | `TA_OUT_PATTERN_CONFIRM` |
+| `pattern_weak` | Level 80 occurs too | `TA_OUT_PATTERN_WEAK` |
+| `pattern_confirm` | Level 200 occurs too | `TA_OUT_PATTERN_CONFIRM` |
 
 An output that sets any of `positive`, `negative`, `zero` lists every sign it
 writes. A pattern output takes one of three shapes, and `generate` rejects
