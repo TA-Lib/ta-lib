@@ -38,8 +38,10 @@ internal static class FuzzData
     internal const int FuzzCandle = 7;
     /// <summary>Symmetric high=-low bars: high+low == 0 EXACTLY.</summary>
     internal const int FuzzZerosum = 8;
+    /// <summary>Bars at the edges of the input domain, +/-3e37.</summary>
+    internal const int FuzzDomainMax = 9;
     /// <summary>Number of shapes.</summary>
-    internal const int FuzzNShapes = 9;
+    internal const int FuzzNShapes = 10;
 
     // ---- splitmix64 PRNG (deterministic, self-contained) ----
 
@@ -575,6 +577,60 @@ internal static class FuzzData
         }
     }
 
+    // ---- FuzzDomainMax: bars at the edges of the input domain ----
+
+    /// <summary>Upper edge of the tested input domain (TA_REAL_MAX).</summary>
+    internal const double FuzzDomainBound = 3e37;
+
+    /// <summary>Fill the arrays with the FuzzDomainMax shape: the same bound
+    /// and the same seven draws per bar as <c>fuzz_domain_max_gen</c> in
+    /// <c>fuzz_data.h</c>.</summary>
+    internal static void FuzzDomainMaxGen(int seed, int n,
+                                          double[] o, double[] h, double[] l, double[] c,
+                                          double[] v, double[] oi)
+    {
+        ulong s;
+        unchecked
+        {
+            s = 0x243F6A8885A308D3UL
+                ^ ((ulong)(uint)seed * 0xD1B54A32D192ED03UL)
+                ^ ((ulong)FuzzDomainMax << 32);
+        }
+        int i;
+        for (i = 0; i < n; i++)
+        {
+            double r = FuzzSmUnit(ref s);
+            double scale, a, t, w, span, hi, lo, open, close;
+            scale = (r < 0.90) ? FuzzDomainBound : 100.0;
+            t = FuzzSmUnit(ref s) * 0.07;
+            a = 0.93 + t;
+            hi = a * scale;
+            t = FuzzSmUnit(ref s) * 0.02;
+            w = hi * t;
+            lo = hi - w;
+            span = hi - lo;
+            t = FuzzSmUnit(ref s) * span;
+            close = lo + t;
+            if (close > hi) close = hi;
+            t = FuzzSmUnit(ref s) * span;
+            open = lo + t;
+            if (open > hi) open = hi;
+            if (r >= 0.45 && r < 0.90)
+            {
+                // the mirror image near -3e37
+                t = hi; hi = -lo; lo = -t;
+                open = -open; close = -close;
+            }
+            o[i] = open; h[i] = hi; l[i] = lo; c[i] = close;
+            t = FuzzSmUnit(ref s) * 0.99;
+            a = 0.01 + t;
+            v[i] = a * FuzzDomainBound;
+            t = FuzzSmUnit(ref s) * 0.99;
+            a = 0.01 + t;
+            oi[i] = a * FuzzDomainBound;
+        }
+    }
+
     /// <summary>Fill OHLCV+OI arrays (length n) from (shape, seed).
     /// high &gt;= max(o,c), low &lt;= min(o,c). Mul/add is split into separate
     /// statements to match the C, which does that to keep a compiler from
@@ -585,6 +641,7 @@ internal static class FuzzData
     {
         if (shape == FuzzCandle) { FuzzCandleGen(seed, n, o, h, l, c, v, oi); return; }
         if (shape == FuzzZerosum) { FuzzZerosumGen(seed, n, o, h, l, c, v, oi); return; }
+        if (shape == FuzzDomainMax) { FuzzDomainMaxGen(seed, n, o, h, l, c, v, oi); return; }
         ulong s;
         unchecked
         {

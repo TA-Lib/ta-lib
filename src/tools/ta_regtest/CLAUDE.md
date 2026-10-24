@@ -568,7 +568,7 @@ and stay in: both are smooth in it, and MAMA carries the 8-ULP libm floor.
 **Tolerances are measured, not contractual.** Most in-scope functions reproduce
 v0.6.4 bit for bit and carry no row. Each bound that exists is that function's
 largest measured deviation on this series × ~3, absolute — there is only one
-magnitude here, unlike the frozen-release fuzz's 1e-7…1e9 shapes, which need
+magnitude here, unlike the frozen-release fuzz's 1e-7…3e37 shapes, which need
 scaled bounds and conditioning waivers — so the result is orders tighter than the
 1e-9 relative FMA contract. `LEGACY_TOL` refuses a row for a function outside
 the freeze and refuses a zero or negative bound, so it cannot accumulate dead
@@ -652,7 +652,7 @@ member (`--versions=` narrows); the nightly runs them all, and
   to the function's row, else the member's `*` row (modes in `ta_ref.h`). A diff
   whose differing elements are all numerically equal (±0) is benign: reported,
   not failed.
-- **Coverage:** every function the release has × 9 shapes × 3 seeds × 3 sizes ×
+- **Coverage:** every function the release has × every fuzz shape × 3 seeds × 3 sizes ×
   parameter vectors (integer boundaries from the member's floor, the default's
   neighbourhood, default+50/+51, every MAType value the release has, real-param
   bounds) × subranges (full, two random, and `startIdx` at lookback-1, lookback
@@ -724,7 +724,7 @@ on it. Needs cmake + gcc + cargo plus the **JDK** and the **.NET SDK**.
     move between unstable 0 and 3. A flat lookback means the flag is lying and
     fails the run rather than banking a leg that compares nothing. An `unstCases`
     floor catches the axis going quiet wholesale.
-- **Coverage:** every function × 9 shapes × 3 seeds × 3 sizes × parameter vectors
+- **Coverage:** every function × every fuzz shape × 3 seeds × 3 sizes × parameter vectors
   × 3 subranges, per server, about a third at a non-zero unstable period. A
   non-vacuity guard fails the run if nothing produced output, since an empty
   output hashes the same on both sides.

@@ -121,13 +121,14 @@
  * a property of the data, not of any one indicator — so they belong here, once,
  * for all 167 functions, rather than being re-hand-written per function.
  *
- * The nine FUZZ_* shapes are reused verbatim from fuzz_data.h (the same
- * generator `ta_regtest --ref` and --xlang-hash drive), which already covers
- * flat bars (FUZZ_CONSTANT), ties, extreme magnitudes, signed zeros and exact
- * zero-sum bars. Only the zero-volume regime is added here: every fuzz shape
- * emits `v[i] = 1000.0 + t`, so NO existing generator in the tree ever produces
- * a zero or all-zero volume window — which is exactly what the sumVol guards in
- * CMF/VWMA/MFI/AD/ADOSC/OBV/NVI/PVI branch on.
+ * The FUZZ_* shapes are reused verbatim from fuzz_data.h (the same generator
+ * `ta_regtest --ref` and --xlang-hash drive), which already covers flat bars
+ * (FUZZ_CONSTANT), ties, extreme magnitudes, signed zeros, exact zero-sum bars
+ * and bars at the edges of the input domain. Only the zero-volume regime is
+ * added here: every fuzz shape keeps volume at 1000 or more, so NO existing
+ * generator in the tree ever produces a zero or all-zero volume window — which
+ * is exactly what the sumVol guards in CMF/VWMA/MFI/AD/ADOSC/OBV/NVI/PVI branch
+ * on.
  *
  * Zero volume stays out of the FUZZ_* shapes: that list is what
  * `ta_regtest --ref` compares against every frozen release, so a new shape
@@ -145,7 +146,7 @@ static const char *regime_name( int regime )
 {
    static const char * const fuzzNames[FUZZ_NSHAPES] = {
       "randwalk", "mono-up", "mono-down", "constant", "tie-heavy",
-      "extreme", "with-zeros", "candle", "zerosum" };
+      "extreme", "with-zeros", "candle", "zerosum", "domain-max" };
    if( regime == V_REG_HISTORY )          return "history";
    if( regime == V_REG_ZERO_VOLUME )      return "zero-volume";
    if( regime == V_REG_FLAT_ZERO_VOLUME ) return "flat+zero-volume";
