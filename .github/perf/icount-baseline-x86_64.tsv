@@ -3,11 +3,11 @@
 # policy=monotone: a passing run lowers a row it beat and holds every
 # other, so a row may predate the commit below. Raising one is a human
 # decision that NAMES it: `scripts/bench_icount.py --accept=SMA[/batch]`.
-#policy	monotone
+#policy	accepted
 #toolchain	x86_64/x86_64-linux-gnu/13.3.0
 #corpus	points=20000 regime_period=14 seed=42 shape=randwalk stream_iters=1024 trend_strength=0.500000
-#commit	cf8f46bf92fd66a13eb773b3d4839a1fb98f9cc6
-#generated	2026-10-22T09:45:16Z
+#commit	7460d970e7719e52de6f95f5f227123658ad327b
+#generated	2026-10-24T18:28:31Z
 AC	batch	0	703438
 AC	open	0	704171
 AC	openfill	0	692624
@@ -463,21 +463,21 @@ CKSP	open	0	1533280
 CKSP	openfill	0	1648994
 CKSP	peek	0	97293
 CKSP	update	0	168050
-CMF	batch	0	999865
-CMF	open	0	1060246
-CMF	openfill	0	1080227
-CMF	peek	0	90125
-CMF	update	0	117826
+CMF	batch	0	959883
+CMF	open	0	1020270
+CMF	openfill	0	1020270
+CMF	peek	0	87053
+CMF	update	0	111682
 CMO	batch	0	619848
 CMO	open	0	599950
 CMO	openfill	0	599969
 CMO	peek	0	56336
 CMO	update	0	74765
-CMOU	batch	0	620006
-CMOU	open	0	580337
-CMOU	openfill	0	620342
-CMOU	peek	0	61046
-CMOU	update	0	88922
+CMOU	batch	0	879774
+CMOU	open	0	900073
+CMOU	openfill	0	880109
+CMOU	peek	0	57360
+CMOU	update	0	105486
 COPPOCK	batch	0	890892
 COPPOCK	open	0	911386
 COPPOCK	openfill	0	911318
@@ -563,11 +563,11 @@ EMV	open	0	721819
 EMV	openfill	0	721820
 EMV	peek	0	66574
 EMV	update	0	93275
-ER	batch	0	599699
-ER	open	0	360381
-ER	openfill	0	580087
-ER	peek	0	62480
-ER	update	0	91132
+ER	batch	0	659676
+ER	open	0	410370
+ER	openfill	0	660004
+ER	peek	0	66576
+ER	update	0	92162
 ERI	batch	0	220084
 ERI	open	0	100225
 ERI	openfill	0	300149
@@ -658,11 +658,11 @@ IMI	open	0	3278353
 IMI	openfill	0	3158455
 IMI	peek	0	376847
 IMI	update	0	344082
-KAMA	batch	0	639536
-KAMA	open	0	609921
-KAMA	openfill	0	639904
-KAMA	peek	0	80911
-KAMA	update	0	96270
+KAMA	batch	0	699526
+KAMA	open	0	639938
+KAMA	openfill	0	699870
+KAMA	peek	0	80912
+KAMA	update	0	100366
 KC	batch	0	671773
 KC	open	0	733930
 KC	openfill	0	731899
@@ -959,10 +959,10 @@ RVIR	openfill	0	1999650
 RVIR	peek	0	223287
 RVIR	update	0	305453
 RVOL	batch	0	439828
-RVOL	open	0	400167
+RVOL	open	0	360287
 RVOL	openfill	0	420185
 RVOL	peek	0	34832
-RVOL	update	0	78862
+RVOL	update	0	76814
 SAR	batch	0	456194
 SAR	open	0	437981
 SAR	openfill	0	497176
@@ -1123,11 +1123,11 @@ TYPPRICE	open	0	148
 TYPPRICE	openfill	0	100149
 TYPPRICE	peek	0	45069
 TYPPRICE	update	0	54285
-ULTOSC	batch	0	1560614
-ULTOSC	open	0	1579766
-ULTOSC	openfill	0	1540453
-ULTOSC	peek	0	107533
-ULTOSC	update	0	169961
+ULTOSC	batch	0	1680631
+ULTOSC	open	0	1741186
+ULTOSC	openfill	0	1701233
+ULTOSC	peek	0	110286
+ULTOSC	update	0	182177
 VAR	batch	0	692193
 VAR	open	0	713442
 VAR	openfill	0	713437
@@ -1138,11 +1138,11 @@ VHF	open	0	9906488
 VHF	openfill	0	9926487
 VHF	peek	0	787468
 VHF	update	0	721049
-VIDYA	batch	0	645342
-VIDYA	open	0	615819
-VIDYA	openfill	0	655825
-VIDYA	peek	0	77431
-VIDYA	update	0	98137
+VIDYA	batch	0	860022
+VIDYA	open	0	820354
+VIDYA	openfill	0	860364
+VIDYA	peek	0	68624
+VIDYA	update	0	107533
 VORTEX	batch	0	1219748
 VORTEX	open	0	1240592
 VORTEX	openfill	0	1200592
@@ -1153,11 +1153,11 @@ VWAP	open	0	500191
 VWAP	openfill	0	480191
 VWAP	peek	0	67597
 VWAP	update	0	78861
-VWMA	batch	0	599574
-VWMA	open	0	600024
-VWMA	openfill	0	619992
+VWMA	batch	0	579602
+VWMA	open	0	580054
+VWMA	openfill	0	580052
 VWMA	peek	0	55311
-VWMA	update	0	99346
+VWMA	update	0	98322
 WAD	batch	0	260130
 WAD	open	0	250196
 WAD	openfill	0	270217
