@@ -2,7 +2,9 @@
 url: 'https://ta-lib.org/install/c/index.md'
 description: >-
   Install the TA-Lib C/C++ libraries and headers: Linux packages, macOS
-  Homebrew, Windows installer, or build from source with CMake or autotools.
+  Homebrew, Windows installer, vcpkg, a GitHub Actions step, or a build from
+  source with CMake or autotools; then link it through CMake's find_package or
+  pkg-config.
 ---
 # Install C/C++
 

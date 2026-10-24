@@ -3,7 +3,7 @@ url: 'https://ta-lib.org/api/csharp/stream/index.md'
 description: >-
   C# streaming API for live feeds: a stream carries indicator state from bar to
   bar, so an update never recomputes the history; its values are bit-identical
-  to the batch calls.
+  to the batch calls outside a few stated exceptions.
 ---
 # C# Streaming API
 

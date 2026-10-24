@@ -1,9 +1,10 @@
 ---
 url: 'https://ta-lib.org/api/abstract/index.md'
 description: >-
-  Look up any TA-Lib function by name at run time, read its inputs, parameters,
-  outputs and flags, and call it without naming it at compile time, in C, Rust,
-  Java and C#.
+  Every TA-Lib function describes itself at run time in C, Rust, Java and C#:
+  list them, read each one's inputs, parameters, outputs and flags, and call it
+  by name, so settings dialogs, parameter searches and generated bindings need
+  no code per function.
 ---
 # Abstract API
 

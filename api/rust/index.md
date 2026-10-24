@@ -2,7 +2,8 @@
 url: 'https://ta-lib.org/api/rust/index.md'
 description: >-
   The ta-lib Rust crate: a native port with no C bindings, indicators as methods
-  on Core over f64 slices, bit-identical to the reference C library.
+  on Core over f64 slices, bit-identical to the reference C library apart from
+  last-bit rounding in the math library.
 ---
 # Rust Core API
 

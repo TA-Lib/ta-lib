@@ -3,7 +3,7 @@ url: 'https://ta-lib.org/api/stream/index.md'
 description: >-
   The TA-Lib C/C++ streaming API for live feeds: open a stream once, feed one
   bar at a time without recomputing the history, with values bit-identical to
-  the batch functions.
+  the batch functions outside a few stated exceptions.
 ---
 # C/C++ Streaming API
 

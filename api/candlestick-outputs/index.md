@@ -1,8 +1,10 @@
 ---
 url: 'https://ta-lib.org/api/candlestick-outputs/index.md'
 description: >-
-  What the numbers returned by the CDL* candlestick pattern functions mean: 0
-  for no pattern, positive for bullish, negative for bearish.
+  What the CDL* candlestick pattern functions return: 0 for no pattern,
+  otherwise +/-100, +/-80 for a weaker form or +/-200 for a confirmation, the
+  sign giving the direction where the pattern has one, and the flags that tell a
+  program which values each function returns.
 ---
 # Candlestick Outputs
 
