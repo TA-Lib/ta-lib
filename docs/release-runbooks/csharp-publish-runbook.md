@@ -5,8 +5,6 @@ Releasing the `TA-Lib` package to nuget.org.
 **`c-publish-runbook.md` must be completed first.** `README.md` in this directory holds the
 order.
 
-**Status:** not yet published. Every step before the push runs today.
-
 This is a **per-release** procedure. The package version is locked to the repo `VERSION`.
 
 ---
@@ -29,9 +27,8 @@ A pack produces two files:
 
 The `.snupkg` is the symbol package and is pushed separately, after the `.nupkg`.
 
-**The package id is `TA-Lib`; the assembly and the namespace are `TALib`.** The id already
-holds versions 0.5.0 to 0.5.0.3, so the first publish from this repository is a new
-version of an existing package, not a new id.
+**The package id is `TA-Lib`; the assembly and the namespace are `TALib`.** The id also holds
+0.5.0 to 0.5.0.3, from before this repository published it.
 
 ## Version policy
 
@@ -49,12 +46,11 @@ question.
 
 The nuget.org account `mario4tier` owns the id.
 
-**The first publish is a web upload**, signed in as an owner, with no API key. nuget.org has
-no dry run, so the first run of a publish workflow would itself be the publish.
+**Publish by web upload** (NP3) until a publish workflow exists, signed in as an owner, with
+no API key. nuget.org has no dry run, so a workflow's first run is itself a publish.
 
-**From the second publish: Trusted Publishing** (GitHub OIDC, a one-hour key). Its policy names
-the publish workflow by **file name**, so that workflow is written first and this runbook then
-names it.
+**Then: Trusted Publishing** (GitHub OIDC, a one-hour key). Its policy names the publish
+workflow by **file name**, so that workflow is written first and this runbook then names it.
 
 No signing key is owed: nuget.org repository-signs, and an author certificate is a one-way
 switch.
@@ -128,19 +124,16 @@ python3 scripts/csharp_package_check.py --from-source https://api.nuget.org/v3/i
 python3 scripts/csharp_public_api.py
 ```
 
-It **rewrites** `ta_codegen/output/csharp/library/PublicAPI.Shipped.txt` and prints what it
-did (`N member(s) added, M listed`). Copy that file to dev and commit it there: run on dev,
-it would also mark members added since the release as shipped. Without this, members added
-since the last publish ship unguarded. The file is only refreshed here, so the count it prints
-is every member added since the previous publish.
+It **rewrites** `ta_codegen/output/csharp/library/PublicAPI.Shipped.txt`, moves
+`PublicAPI.Unshipped.txt`'s entries into it, and prints how many it added and moved: together,
+every member added since the previous publish. Without this, those members ship unguarded.
+
+Bring the change to dev as a patch, not a copy, so whatever dev changed in the two files since
+the release survives: `git diff -- 'ta_codegen/output/csharp/library/PublicAPI.*.txt'` in the
+worktree, then `git apply --3way` on dev, and commit there. Run on dev instead, the script
+would also mark members added since the release as shipped.
 
 (NP7) Tag the published commit `csharp-v<version>` and push the tag.
-
-(NP8) **Flip the website** (#444 D1) and update `README.md` in this directory: C# is listed
-there as "not published yet".
-
-(NP9) **First publish only:** apply for the id-prefix reservation (#444 B4). It needs the
-license element and the icon, both of which already ship.
 
 ## Known, not covered here
 

@@ -2,8 +2,9 @@
 
 # Point every website page that advertises a version at the latest *published*
 # release of that backend: the C install page at the GitHub release, the Java
-# API page at Maven Central. scripts/sync.py already does this as part of its
-# metadata refresh; this is the same step on its own, plus a check.
+# API page at Maven Central, the C# API page at nuget.org. scripts/sync.py
+# already does this as part of its metadata refresh; this is the same step on
+# its own, plus a check.
 #
 #   scripts/sync-website.py                     Rewrite the pages. No-op when in sync.
 #   scripts/sync-website.py --check             Exit 1 if a page is behind.

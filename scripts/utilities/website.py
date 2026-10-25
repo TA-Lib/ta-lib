@@ -1,3 +1,4 @@
+import gzip
 import json
 import os
 import re
@@ -10,6 +11,9 @@ from .files import path_join
 LATEST_RELEASE_URL = "https://api.github.com/repos/ta-lib/ta-lib/releases/latest"
 MAVEN_METADATA_URL = ("https://repo1.maven.org/maven2/io/github/ta-lib/ta-lib/"
                       "maven-metadata.xml")
+# The SemVer 2 hive: the SemVer 1 one omits any version nuget.org classes as SemVer 2.0.0.
+# It is always served gzip-compressed, which urllib does not undo.
+NUGET_REGISTRATION_URL = "https://api.nuget.org/v3/registration5-gz-semver2/ta-lib/index.json"
 
 # Each pattern names the version it owns `ver`, and only that group is rewritten,
 # so a pattern may match as much surrounding text as it needs to be unambiguous.
@@ -25,6 +29,8 @@ VERSION_PATTERN = r'(?<=[v/\["\'\-_\s])(?P<ver>\d+\.\d+\.\d+)(?=[/\]"\'\-_\s])'
 MAVEN_VERSION_PATTERN = (r'<artifactId>ta-lib</artifactId>\s*'
                          r'<version>(?P<ver>\d+\.\d+\.\d+)</version>')
 
+NUGET_VERSION_PATTERN = r'<PackageReference Include="TA-Lib" Version="(?P<ver>\d+\.\d+\.\d+)"'
+
 # A registry that has never published this artifact. Distinct from None, which
 # means the lookup failed: nothing published is a steady state the page is
 # already correct for, while a failed lookup is worth reporting and retrying.
@@ -38,6 +44,7 @@ NOT_PUBLISHED = "not-published"
 PAGES = (
     ("C", ('website', 'src', 'install', 'c', 'README.md'), VERSION_PATTERN),
     ("Java", ('website', 'src', 'api', 'java', 'README.md'), MAVEN_VERSION_PATTERN),
+    ("C#", ('website', 'src', 'api', 'csharp', 'README.md'), NUGET_VERSION_PATTERN),
 )
 
 
@@ -104,7 +111,52 @@ def latest_maven_version() -> str:
     return released
 
 
-LOOKUPS = {"C": latest_release_version, "Java": latest_maven_version}
+def latest_nuget_version() -> str:
+    """The newest listed X.Y.Z of TA-Lib on nuget.org, NOT_PUBLISHED, or None.
+
+    The id also holds four-part 0.5.0.x versions from before this repository
+    published it; only X.Y.Z counts. An unlisted version is skipped: nuget.org
+    hides it from search, so the page must not point at it.
+    """
+    headers = {"User-Agent": "ta-lib-sync"}
+
+    def parse(raw):
+        return json.loads(gzip.decompress(raw) if raw[:2] == b"\x1f\x8b" else raw)
+
+    body, status, error = _get(NUGET_REGISTRATION_URL, headers)
+    if body is None:
+        if status == 404:
+            return NOT_PUBLISHED
+        print(f"Warning: could not query nuget.org ({error}).")
+        return None
+    try:
+        versions, unlisted = [], []
+        for page in parse(body).get("items", []):
+            items = page.get("items")
+            if items is None:
+                page_body, _status, error = _get(page["@id"], headers)
+                if page_body is None:
+                    print(f"Warning: could not query nuget.org ({error}).")
+                    return None
+                items = parse(page_body).get("items", [])
+            for item in items:
+                entry = item.get("catalogEntry", {})
+                version = entry.get("version", "")
+                if re.fullmatch(r'\d+\.\d+\.\d+', version):
+                    (versions if entry.get("listed", True) else unlisted).append(version)
+    except Exception as e:
+        print(f"Warning: the nuget.org registration is not readable JSON ({e}).")
+        return None
+    if not versions:
+        if unlisted:
+            # Leaving the page alone would leave it on an unlisted version unreported.
+            print(f"Warning: every TA-Lib X.Y.Z on nuget.org is unlisted ({', '.join(unlisted)}).")
+            return None
+        return NOT_PUBLISHED
+    return max(versions, key=lambda v: tuple(int(x) for x in v.split('.')))
+
+
+LOOKUPS = {"C": latest_release_version, "Java": latest_maven_version, "C#": latest_nuget_version}
 
 
 def page_path(root_dir: str, relpath) -> str:

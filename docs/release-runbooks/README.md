@@ -7,7 +7,7 @@ run it.
 2. The language generated backends, each to its own registry:
    - `java-publish-runbook.md`
    - `rust-publish-runbook.md`
-   - `csharp-publish-runbook.md`, not published yet
+   - `csharp-publish-runbook.md`
 3. `post-publish-runbook.md`
 
 About backends at rank 2: each waits for the C publish of the same version,
