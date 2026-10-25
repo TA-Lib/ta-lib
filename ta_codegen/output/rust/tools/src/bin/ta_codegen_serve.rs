@@ -5,7 +5,7 @@ use serde_json::{self, Value};
 use std::io::{self, BufRead, Write};
 use std::time::Instant;
 use ta_lib::{Core, CoreBuilder, RetCode, FuncUnstId};
-use ta_lib::{CandleSetting, CandleSettings, CandleSettingType, RangeType};
+use ta_lib::{CandleSetting, CandleSettingType, RangeType};
 use ta_lib::abstract_api::{self, InputType, OutputType, OptInputType};
 use ta_lib::MAType;
 
@@ -1930,36 +1930,23 @@ fn sv_xtier_ne(a: f64, b: f64, zsign: &mut i64) -> bool {
     true
 }
 
-fn sv_candle_settings(rd: i32) -> CandleSettings {
-    let mut s = CandleSettings::default_settings();
-    let all = |s: &mut CandleSettings, f: &dyn Fn(&mut CandleSetting)| {
-        for cs in [&mut s.body_long, &mut s.body_very_long, &mut s.body_short, &mut s.body_doji,
-                   &mut s.shadow_long, &mut s.shadow_very_long, &mut s.shadow_short,
-                   &mut s.shadow_very_short, &mut s.near, &mut s.far, &mut s.equal] {
-            f(cs);
+fn sv_apply_candle_round(mut b: CoreBuilder, rd: i32) -> CoreBuilder {
+    let defaults = Core::new();
+    for t in [CandleSettingType::BodyLong, CandleSettingType::BodyVeryLong,
+              CandleSettingType::BodyShort, CandleSettingType::BodyDoji,
+              CandleSettingType::ShadowLong, CandleSettingType::ShadowVeryLong,
+              CandleSettingType::ShadowShort, CandleSettingType::ShadowVeryShort,
+              CandleSettingType::Near, CandleSettingType::Far, CandleSettingType::Equal] {
+        let mut c = defaults.get_candle_setting(t).expect("a single candle setting");
+        match rd {
+            1 => c.avg_period += 3,
+            2 => c.avg_period = 0,
+            3 => c.range_type = RangeType::Shadows,
+            _ => {}
         }
-    };
-    match rd {
-        1 => all(&mut s, &|c| c.avg_period += 3),
-        2 => all(&mut s, &|c| c.avg_period = 0),
-        3 => all(&mut s, &|c| c.range_type = RangeType::Shadows),
-        _ => {}
+        b = b.candle_setting(t, c);
     }
-    s
-}
-
-fn sv_apply_candles(b: CoreBuilder, s: &CandleSettings) -> CoreBuilder {
-    b.candle_setting(CandleSettingType::BodyLong, s.body_long)
-     .candle_setting(CandleSettingType::BodyVeryLong, s.body_very_long)
-     .candle_setting(CandleSettingType::BodyShort, s.body_short)
-     .candle_setting(CandleSettingType::BodyDoji, s.body_doji)
-     .candle_setting(CandleSettingType::ShadowLong, s.shadow_long)
-     .candle_setting(CandleSettingType::ShadowVeryLong, s.shadow_very_long)
-     .candle_setting(CandleSettingType::ShadowShort, s.shadow_short)
-     .candle_setting(CandleSettingType::ShadowVeryShort, s.shadow_very_short)
-     .candle_setting(CandleSettingType::Near, s.near)
-     .candle_setting(CandleSettingType::Far, s.far)
-     .candle_setting(CandleSettingType::Equal, s.equal)
+    b
 }
 
 fn handle_stream_verify(core: &Core, params: &Value) -> String {
@@ -12221,7 +12208,7 @@ pub(super) fn sv_cdl2crows(core: &Core, params: &Value) -> String {
     for rd in 0..rounds {
         let _ = rd;
         let mut cb = core.to_builder();
-        cb = sv_apply_candles(cb, &sv_candle_settings(rd));
+        cb = sv_apply_candle_round(cb, rd);
         let c2 = match cb.build() {
             Ok(c) => c,
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
@@ -12620,7 +12607,7 @@ pub(super) fn sv_cdl3blackcrows(core: &Core, params: &Value) -> String {
     for rd in 0..rounds {
         let _ = rd;
         let mut cb = core.to_builder();
-        cb = sv_apply_candles(cb, &sv_candle_settings(rd));
+        cb = sv_apply_candle_round(cb, rd);
         let c2 = match cb.build() {
             Ok(c) => c,
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
@@ -13019,7 +13006,7 @@ pub(super) fn sv_cdl3inside(core: &Core, params: &Value) -> String {
     for rd in 0..rounds {
         let _ = rd;
         let mut cb = core.to_builder();
-        cb = sv_apply_candles(cb, &sv_candle_settings(rd));
+        cb = sv_apply_candle_round(cb, rd);
         let c2 = match cb.build() {
             Ok(c) => c,
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
@@ -13418,7 +13405,7 @@ pub(super) fn sv_cdl3linestrike(core: &Core, params: &Value) -> String {
     for rd in 0..rounds {
         let _ = rd;
         let mut cb = core.to_builder();
-        cb = sv_apply_candles(cb, &sv_candle_settings(rd));
+        cb = sv_apply_candle_round(cb, rd);
         let c2 = match cb.build() {
             Ok(c) => c,
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
@@ -13817,7 +13804,7 @@ pub(super) fn sv_cdl3outside(core: &Core, params: &Value) -> String {
     for rd in 0..rounds {
         let _ = rd;
         let mut cb = core.to_builder();
-        cb = sv_apply_candles(cb, &sv_candle_settings(rd));
+        cb = sv_apply_candle_round(cb, rd);
         let c2 = match cb.build() {
             Ok(c) => c,
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
@@ -14216,7 +14203,7 @@ pub(super) fn sv_cdl3starsinsouth(core: &Core, params: &Value) -> String {
     for rd in 0..rounds {
         let _ = rd;
         let mut cb = core.to_builder();
-        cb = sv_apply_candles(cb, &sv_candle_settings(rd));
+        cb = sv_apply_candle_round(cb, rd);
         let c2 = match cb.build() {
             Ok(c) => c,
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
@@ -14615,7 +14602,7 @@ pub(super) fn sv_cdl3whitesoldiers(core: &Core, params: &Value) -> String {
     for rd in 0..rounds {
         let _ = rd;
         let mut cb = core.to_builder();
-        cb = sv_apply_candles(cb, &sv_candle_settings(rd));
+        cb = sv_apply_candle_round(cb, rd);
         let c2 = match cb.build() {
             Ok(c) => c,
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
@@ -15017,7 +15004,7 @@ pub(super) fn sv_cdlabandonedbaby(core: &Core, params: &Value) -> String {
     for rd in 0..rounds {
         let _ = rd;
         let mut cb = core.to_builder();
-        cb = sv_apply_candles(cb, &sv_candle_settings(rd));
+        cb = sv_apply_candle_round(cb, rd);
         let c2 = match cb.build() {
             Ok(c) => c,
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
@@ -15417,7 +15404,7 @@ pub(super) fn sv_cdladvanceblock(core: &Core, params: &Value) -> String {
     for rd in 0..rounds {
         let _ = rd;
         let mut cb = core.to_builder();
-        cb = sv_apply_candles(cb, &sv_candle_settings(rd));
+        cb = sv_apply_candle_round(cb, rd);
         let c2 = match cb.build() {
             Ok(c) => c,
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
@@ -15816,7 +15803,7 @@ pub(super) fn sv_cdlbelthold(core: &Core, params: &Value) -> String {
     for rd in 0..rounds {
         let _ = rd;
         let mut cb = core.to_builder();
-        cb = sv_apply_candles(cb, &sv_candle_settings(rd));
+        cb = sv_apply_candle_round(cb, rd);
         let c2 = match cb.build() {
             Ok(c) => c,
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
@@ -16215,7 +16202,7 @@ pub(super) fn sv_cdlbreakaway(core: &Core, params: &Value) -> String {
     for rd in 0..rounds {
         let _ = rd;
         let mut cb = core.to_builder();
-        cb = sv_apply_candles(cb, &sv_candle_settings(rd));
+        cb = sv_apply_candle_round(cb, rd);
         let c2 = match cb.build() {
             Ok(c) => c,
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
@@ -16614,7 +16601,7 @@ pub(super) fn sv_cdlclosingmarubozu(core: &Core, params: &Value) -> String {
     for rd in 0..rounds {
         let _ = rd;
         let mut cb = core.to_builder();
-        cb = sv_apply_candles(cb, &sv_candle_settings(rd));
+        cb = sv_apply_candle_round(cb, rd);
         let c2 = match cb.build() {
             Ok(c) => c,
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
@@ -17013,7 +17000,7 @@ pub(super) fn sv_cdlconcealbabyswall(core: &Core, params: &Value) -> String {
     for rd in 0..rounds {
         let _ = rd;
         let mut cb = core.to_builder();
-        cb = sv_apply_candles(cb, &sv_candle_settings(rd));
+        cb = sv_apply_candle_round(cb, rd);
         let c2 = match cb.build() {
             Ok(c) => c,
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
@@ -17412,7 +17399,7 @@ pub(super) fn sv_cdlcounterattack(core: &Core, params: &Value) -> String {
     for rd in 0..rounds {
         let _ = rd;
         let mut cb = core.to_builder();
-        cb = sv_apply_candles(cb, &sv_candle_settings(rd));
+        cb = sv_apply_candle_round(cb, rd);
         let c2 = match cb.build() {
             Ok(c) => c,
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
@@ -17814,7 +17801,7 @@ pub(super) fn sv_cdldarkcloudcover(core: &Core, params: &Value) -> String {
     for rd in 0..rounds {
         let _ = rd;
         let mut cb = core.to_builder();
-        cb = sv_apply_candles(cb, &sv_candle_settings(rd));
+        cb = sv_apply_candle_round(cb, rd);
         let c2 = match cb.build() {
             Ok(c) => c,
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
@@ -18214,7 +18201,7 @@ pub(super) fn sv_cdldoji(core: &Core, params: &Value) -> String {
     for rd in 0..rounds {
         let _ = rd;
         let mut cb = core.to_builder();
-        cb = sv_apply_candles(cb, &sv_candle_settings(rd));
+        cb = sv_apply_candle_round(cb, rd);
         let c2 = match cb.build() {
             Ok(c) => c,
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
@@ -18613,7 +18600,7 @@ pub(super) fn sv_cdldojistar(core: &Core, params: &Value) -> String {
     for rd in 0..rounds {
         let _ = rd;
         let mut cb = core.to_builder();
-        cb = sv_apply_candles(cb, &sv_candle_settings(rd));
+        cb = sv_apply_candle_round(cb, rd);
         let c2 = match cb.build() {
             Ok(c) => c,
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
@@ -19012,7 +18999,7 @@ pub(super) fn sv_cdldragonflydoji(core: &Core, params: &Value) -> String {
     for rd in 0..rounds {
         let _ = rd;
         let mut cb = core.to_builder();
-        cb = sv_apply_candles(cb, &sv_candle_settings(rd));
+        cb = sv_apply_candle_round(cb, rd);
         let c2 = match cb.build() {
             Ok(c) => c,
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
@@ -19411,7 +19398,7 @@ pub(super) fn sv_cdlengulfing(core: &Core, params: &Value) -> String {
     for rd in 0..rounds {
         let _ = rd;
         let mut cb = core.to_builder();
-        cb = sv_apply_candles(cb, &sv_candle_settings(rd));
+        cb = sv_apply_candle_round(cb, rd);
         let c2 = match cb.build() {
             Ok(c) => c,
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
@@ -19813,7 +19800,7 @@ pub(super) fn sv_cdleveningdojistar(core: &Core, params: &Value) -> String {
     for rd in 0..rounds {
         let _ = rd;
         let mut cb = core.to_builder();
-        cb = sv_apply_candles(cb, &sv_candle_settings(rd));
+        cb = sv_apply_candle_round(cb, rd);
         let c2 = match cb.build() {
             Ok(c) => c,
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
@@ -20216,7 +20203,7 @@ pub(super) fn sv_cdleveningstar(core: &Core, params: &Value) -> String {
     for rd in 0..rounds {
         let _ = rd;
         let mut cb = core.to_builder();
-        cb = sv_apply_candles(cb, &sv_candle_settings(rd));
+        cb = sv_apply_candle_round(cb, rd);
         let c2 = match cb.build() {
             Ok(c) => c,
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
@@ -20616,7 +20603,7 @@ pub(super) fn sv_cdlgapsidesidewhite(core: &Core, params: &Value) -> String {
     for rd in 0..rounds {
         let _ = rd;
         let mut cb = core.to_builder();
-        cb = sv_apply_candles(cb, &sv_candle_settings(rd));
+        cb = sv_apply_candle_round(cb, rd);
         let c2 = match cb.build() {
             Ok(c) => c,
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
@@ -21015,7 +21002,7 @@ pub(super) fn sv_cdlgravestonedoji(core: &Core, params: &Value) -> String {
     for rd in 0..rounds {
         let _ = rd;
         let mut cb = core.to_builder();
-        cb = sv_apply_candles(cb, &sv_candle_settings(rd));
+        cb = sv_apply_candle_round(cb, rd);
         let c2 = match cb.build() {
             Ok(c) => c,
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
@@ -21414,7 +21401,7 @@ pub(super) fn sv_cdlhammer(core: &Core, params: &Value) -> String {
     for rd in 0..rounds {
         let _ = rd;
         let mut cb = core.to_builder();
-        cb = sv_apply_candles(cb, &sv_candle_settings(rd));
+        cb = sv_apply_candle_round(cb, rd);
         let c2 = match cb.build() {
             Ok(c) => c,
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
@@ -21813,7 +21800,7 @@ pub(super) fn sv_cdlhangingman(core: &Core, params: &Value) -> String {
     for rd in 0..rounds {
         let _ = rd;
         let mut cb = core.to_builder();
-        cb = sv_apply_candles(cb, &sv_candle_settings(rd));
+        cb = sv_apply_candle_round(cb, rd);
         let c2 = match cb.build() {
             Ok(c) => c,
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
@@ -22212,7 +22199,7 @@ pub(super) fn sv_cdlharami(core: &Core, params: &Value) -> String {
     for rd in 0..rounds {
         let _ = rd;
         let mut cb = core.to_builder();
-        cb = sv_apply_candles(cb, &sv_candle_settings(rd));
+        cb = sv_apply_candle_round(cb, rd);
         let c2 = match cb.build() {
             Ok(c) => c,
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
@@ -22611,7 +22598,7 @@ pub(super) fn sv_cdlharamicross(core: &Core, params: &Value) -> String {
     for rd in 0..rounds {
         let _ = rd;
         let mut cb = core.to_builder();
-        cb = sv_apply_candles(cb, &sv_candle_settings(rd));
+        cb = sv_apply_candle_round(cb, rd);
         let c2 = match cb.build() {
             Ok(c) => c,
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
@@ -23010,7 +22997,7 @@ pub(super) fn sv_cdlhighwave(core: &Core, params: &Value) -> String {
     for rd in 0..rounds {
         let _ = rd;
         let mut cb = core.to_builder();
-        cb = sv_apply_candles(cb, &sv_candle_settings(rd));
+        cb = sv_apply_candle_round(cb, rd);
         let c2 = match cb.build() {
             Ok(c) => c,
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
@@ -23409,7 +23396,7 @@ pub(super) fn sv_cdlhikkake(core: &Core, params: &Value) -> String {
     for rd in 0..rounds {
         let _ = rd;
         let mut cb = core.to_builder();
-        cb = sv_apply_candles(cb, &sv_candle_settings(rd));
+        cb = sv_apply_candle_round(cb, rd);
         let c2 = match cb.build() {
             Ok(c) => c,
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
@@ -23808,7 +23795,7 @@ pub(super) fn sv_cdlhikkakemod(core: &Core, params: &Value) -> String {
     for rd in 0..rounds {
         let _ = rd;
         let mut cb = core.to_builder();
-        cb = sv_apply_candles(cb, &sv_candle_settings(rd));
+        cb = sv_apply_candle_round(cb, rd);
         let c2 = match cb.build() {
             Ok(c) => c,
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
@@ -24207,7 +24194,7 @@ pub(super) fn sv_cdlhomingpigeon(core: &Core, params: &Value) -> String {
     for rd in 0..rounds {
         let _ = rd;
         let mut cb = core.to_builder();
-        cb = sv_apply_candles(cb, &sv_candle_settings(rd));
+        cb = sv_apply_candle_round(cb, rd);
         let c2 = match cb.build() {
             Ok(c) => c,
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
@@ -24606,7 +24593,7 @@ pub(super) fn sv_cdlidentical3crows(core: &Core, params: &Value) -> String {
     for rd in 0..rounds {
         let _ = rd;
         let mut cb = core.to_builder();
-        cb = sv_apply_candles(cb, &sv_candle_settings(rd));
+        cb = sv_apply_candle_round(cb, rd);
         let c2 = match cb.build() {
             Ok(c) => c,
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
@@ -25005,7 +24992,7 @@ pub(super) fn sv_cdlinneck(core: &Core, params: &Value) -> String {
     for rd in 0..rounds {
         let _ = rd;
         let mut cb = core.to_builder();
-        cb = sv_apply_candles(cb, &sv_candle_settings(rd));
+        cb = sv_apply_candle_round(cb, rd);
         let c2 = match cb.build() {
             Ok(c) => c,
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
@@ -25404,7 +25391,7 @@ pub(super) fn sv_cdlinvertedhammer(core: &Core, params: &Value) -> String {
     for rd in 0..rounds {
         let _ = rd;
         let mut cb = core.to_builder();
-        cb = sv_apply_candles(cb, &sv_candle_settings(rd));
+        cb = sv_apply_candle_round(cb, rd);
         let c2 = match cb.build() {
             Ok(c) => c,
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
@@ -25803,7 +25790,7 @@ pub(super) fn sv_cdlkicking(core: &Core, params: &Value) -> String {
     for rd in 0..rounds {
         let _ = rd;
         let mut cb = core.to_builder();
-        cb = sv_apply_candles(cb, &sv_candle_settings(rd));
+        cb = sv_apply_candle_round(cb, rd);
         let c2 = match cb.build() {
             Ok(c) => c,
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
@@ -26202,7 +26189,7 @@ pub(super) fn sv_cdlkickingbylength(core: &Core, params: &Value) -> String {
     for rd in 0..rounds {
         let _ = rd;
         let mut cb = core.to_builder();
-        cb = sv_apply_candles(cb, &sv_candle_settings(rd));
+        cb = sv_apply_candle_round(cb, rd);
         let c2 = match cb.build() {
             Ok(c) => c,
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
@@ -26601,7 +26588,7 @@ pub(super) fn sv_cdlladderbottom(core: &Core, params: &Value) -> String {
     for rd in 0..rounds {
         let _ = rd;
         let mut cb = core.to_builder();
-        cb = sv_apply_candles(cb, &sv_candle_settings(rd));
+        cb = sv_apply_candle_round(cb, rd);
         let c2 = match cb.build() {
             Ok(c) => c,
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
@@ -27000,7 +26987,7 @@ pub(super) fn sv_cdllongleggeddoji(core: &Core, params: &Value) -> String {
     for rd in 0..rounds {
         let _ = rd;
         let mut cb = core.to_builder();
-        cb = sv_apply_candles(cb, &sv_candle_settings(rd));
+        cb = sv_apply_candle_round(cb, rd);
         let c2 = match cb.build() {
             Ok(c) => c,
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
@@ -27399,7 +27386,7 @@ pub(super) fn sv_cdllongline(core: &Core, params: &Value) -> String {
     for rd in 0..rounds {
         let _ = rd;
         let mut cb = core.to_builder();
-        cb = sv_apply_candles(cb, &sv_candle_settings(rd));
+        cb = sv_apply_candle_round(cb, rd);
         let c2 = match cb.build() {
             Ok(c) => c,
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
@@ -27798,7 +27785,7 @@ pub(super) fn sv_cdlmarubozu(core: &Core, params: &Value) -> String {
     for rd in 0..rounds {
         let _ = rd;
         let mut cb = core.to_builder();
-        cb = sv_apply_candles(cb, &sv_candle_settings(rd));
+        cb = sv_apply_candle_round(cb, rd);
         let c2 = match cb.build() {
             Ok(c) => c,
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
@@ -28197,7 +28184,7 @@ pub(super) fn sv_cdlmatchinglow(core: &Core, params: &Value) -> String {
     for rd in 0..rounds {
         let _ = rd;
         let mut cb = core.to_builder();
-        cb = sv_apply_candles(cb, &sv_candle_settings(rd));
+        cb = sv_apply_candle_round(cb, rd);
         let c2 = match cb.build() {
             Ok(c) => c,
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
@@ -28599,7 +28586,7 @@ pub(super) fn sv_cdlmathold(core: &Core, params: &Value) -> String {
     for rd in 0..rounds {
         let _ = rd;
         let mut cb = core.to_builder();
-        cb = sv_apply_candles(cb, &sv_candle_settings(rd));
+        cb = sv_apply_candle_round(cb, rd);
         let c2 = match cb.build() {
             Ok(c) => c,
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
@@ -29002,7 +28989,7 @@ pub(super) fn sv_cdlmorningdojistar(core: &Core, params: &Value) -> String {
     for rd in 0..rounds {
         let _ = rd;
         let mut cb = core.to_builder();
-        cb = sv_apply_candles(cb, &sv_candle_settings(rd));
+        cb = sv_apply_candle_round(cb, rd);
         let c2 = match cb.build() {
             Ok(c) => c,
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
@@ -29405,7 +29392,7 @@ pub(super) fn sv_cdlmorningstar(core: &Core, params: &Value) -> String {
     for rd in 0..rounds {
         let _ = rd;
         let mut cb = core.to_builder();
-        cb = sv_apply_candles(cb, &sv_candle_settings(rd));
+        cb = sv_apply_candle_round(cb, rd);
         let c2 = match cb.build() {
             Ok(c) => c,
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
@@ -29805,7 +29792,7 @@ pub(super) fn sv_cdlonneck(core: &Core, params: &Value) -> String {
     for rd in 0..rounds {
         let _ = rd;
         let mut cb = core.to_builder();
-        cb = sv_apply_candles(cb, &sv_candle_settings(rd));
+        cb = sv_apply_candle_round(cb, rd);
         let c2 = match cb.build() {
             Ok(c) => c,
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
@@ -30204,7 +30191,7 @@ pub(super) fn sv_cdlpiercing(core: &Core, params: &Value) -> String {
     for rd in 0..rounds {
         let _ = rd;
         let mut cb = core.to_builder();
-        cb = sv_apply_candles(cb, &sv_candle_settings(rd));
+        cb = sv_apply_candle_round(cb, rd);
         let c2 = match cb.build() {
             Ok(c) => c,
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
@@ -30603,7 +30590,7 @@ pub(super) fn sv_cdlrickshawman(core: &Core, params: &Value) -> String {
     for rd in 0..rounds {
         let _ = rd;
         let mut cb = core.to_builder();
-        cb = sv_apply_candles(cb, &sv_candle_settings(rd));
+        cb = sv_apply_candle_round(cb, rd);
         let c2 = match cb.build() {
             Ok(c) => c,
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
@@ -31002,7 +30989,7 @@ pub(super) fn sv_cdlrisefall3methods(core: &Core, params: &Value) -> String {
     for rd in 0..rounds {
         let _ = rd;
         let mut cb = core.to_builder();
-        cb = sv_apply_candles(cb, &sv_candle_settings(rd));
+        cb = sv_apply_candle_round(cb, rd);
         let c2 = match cb.build() {
             Ok(c) => c,
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
@@ -31401,7 +31388,7 @@ pub(super) fn sv_cdlseparatinglines(core: &Core, params: &Value) -> String {
     for rd in 0..rounds {
         let _ = rd;
         let mut cb = core.to_builder();
-        cb = sv_apply_candles(cb, &sv_candle_settings(rd));
+        cb = sv_apply_candle_round(cb, rd);
         let c2 = match cb.build() {
             Ok(c) => c,
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
@@ -31800,7 +31787,7 @@ pub(super) fn sv_cdlshootingstar(core: &Core, params: &Value) -> String {
     for rd in 0..rounds {
         let _ = rd;
         let mut cb = core.to_builder();
-        cb = sv_apply_candles(cb, &sv_candle_settings(rd));
+        cb = sv_apply_candle_round(cb, rd);
         let c2 = match cb.build() {
             Ok(c) => c,
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
@@ -32199,7 +32186,7 @@ pub(super) fn sv_cdlshortline(core: &Core, params: &Value) -> String {
     for rd in 0..rounds {
         let _ = rd;
         let mut cb = core.to_builder();
-        cb = sv_apply_candles(cb, &sv_candle_settings(rd));
+        cb = sv_apply_candle_round(cb, rd);
         let c2 = match cb.build() {
             Ok(c) => c,
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
@@ -32598,7 +32585,7 @@ pub(super) fn sv_cdlspinningtop(core: &Core, params: &Value) -> String {
     for rd in 0..rounds {
         let _ = rd;
         let mut cb = core.to_builder();
-        cb = sv_apply_candles(cb, &sv_candle_settings(rd));
+        cb = sv_apply_candle_round(cb, rd);
         let c2 = match cb.build() {
             Ok(c) => c,
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
@@ -32997,7 +32984,7 @@ pub(super) fn sv_cdlstalledpattern(core: &Core, params: &Value) -> String {
     for rd in 0..rounds {
         let _ = rd;
         let mut cb = core.to_builder();
-        cb = sv_apply_candles(cb, &sv_candle_settings(rd));
+        cb = sv_apply_candle_round(cb, rd);
         let c2 = match cb.build() {
             Ok(c) => c,
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
@@ -33396,7 +33383,7 @@ pub(super) fn sv_cdlsticksandwich(core: &Core, params: &Value) -> String {
     for rd in 0..rounds {
         let _ = rd;
         let mut cb = core.to_builder();
-        cb = sv_apply_candles(cb, &sv_candle_settings(rd));
+        cb = sv_apply_candle_round(cb, rd);
         let c2 = match cb.build() {
             Ok(c) => c,
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
@@ -33795,7 +33782,7 @@ pub(super) fn sv_cdltakuri(core: &Core, params: &Value) -> String {
     for rd in 0..rounds {
         let _ = rd;
         let mut cb = core.to_builder();
-        cb = sv_apply_candles(cb, &sv_candle_settings(rd));
+        cb = sv_apply_candle_round(cb, rd);
         let c2 = match cb.build() {
             Ok(c) => c,
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
@@ -34194,7 +34181,7 @@ pub(super) fn sv_cdltasukigap(core: &Core, params: &Value) -> String {
     for rd in 0..rounds {
         let _ = rd;
         let mut cb = core.to_builder();
-        cb = sv_apply_candles(cb, &sv_candle_settings(rd));
+        cb = sv_apply_candle_round(cb, rd);
         let c2 = match cb.build() {
             Ok(c) => c,
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
@@ -34593,7 +34580,7 @@ pub(super) fn sv_cdlthrusting(core: &Core, params: &Value) -> String {
     for rd in 0..rounds {
         let _ = rd;
         let mut cb = core.to_builder();
-        cb = sv_apply_candles(cb, &sv_candle_settings(rd));
+        cb = sv_apply_candle_round(cb, rd);
         let c2 = match cb.build() {
             Ok(c) => c,
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
@@ -34992,7 +34979,7 @@ pub(super) fn sv_cdltristar(core: &Core, params: &Value) -> String {
     for rd in 0..rounds {
         let _ = rd;
         let mut cb = core.to_builder();
-        cb = sv_apply_candles(cb, &sv_candle_settings(rd));
+        cb = sv_apply_candle_round(cb, rd);
         let c2 = match cb.build() {
             Ok(c) => c,
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
@@ -35391,7 +35378,7 @@ pub(super) fn sv_cdlunique3river(core: &Core, params: &Value) -> String {
     for rd in 0..rounds {
         let _ = rd;
         let mut cb = core.to_builder();
-        cb = sv_apply_candles(cb, &sv_candle_settings(rd));
+        cb = sv_apply_candle_round(cb, rd);
         let c2 = match cb.build() {
             Ok(c) => c,
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
@@ -35790,7 +35777,7 @@ pub(super) fn sv_cdlupsidegap2crows(core: &Core, params: &Value) -> String {
     for rd in 0..rounds {
         let _ = rd;
         let mut cb = core.to_builder();
-        cb = sv_apply_candles(cb, &sv_candle_settings(rd));
+        cb = sv_apply_candle_round(cb, rd);
         let c2 = match cb.build() {
             Ok(c) => c,
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
@@ -36189,7 +36176,7 @@ pub(super) fn sv_cdlxsidegap3methods(core: &Core, params: &Value) -> String {
     for rd in 0..rounds {
         let _ = rd;
         let mut cb = core.to_builder();
-        cb = sv_apply_candles(cb, &sv_candle_settings(rd));
+        cb = sv_apply_candle_round(cb, rd);
         let c2 = match cb.build() {
             Ok(c) => c,
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),

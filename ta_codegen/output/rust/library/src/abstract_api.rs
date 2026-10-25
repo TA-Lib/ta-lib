@@ -3778,12 +3778,9 @@ pub fn for_each_func<F: FnMut(&'static FuncInfo)>(mut f: F) { for fi in FUNCS.it
 /// All function groups (no allocation, unlike C's `TA_GroupTableAlloc`).
 #[inline] pub fn groups() -> &'static [Group] { Group::ALL }
 
-/// Widest input arity in the corpus — the holder's slots are sized from it.
-pub const MAX_INPUTS: usize = 2;
-/// Widest optional-parameter arity in the corpus.
-pub const MAX_OPT_INPUTS: usize = 11;
-/// Widest output arity in the corpus.
-pub const MAX_OUTPUTS: usize = 4;
+const MAX_INPUTS: usize = 2;
+const MAX_OPT_INPUTS: usize = 11;
+const MAX_OUTPUTS: usize = 4;
 
 
 use crate::{Core, OutRange, RetCode};

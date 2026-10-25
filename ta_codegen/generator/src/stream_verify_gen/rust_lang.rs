@@ -221,7 +221,7 @@ pub(crate) fn emit_rust_sv_func(func: &FuncDef, funcs: &[FuncDef], enums: &HashM
         );
     }
     if candle {
-        s.push_str("        cb = sv_apply_candles(cb, &sv_candle_settings(rd));\n");
+        s.push_str("        cb = sv_apply_candle_round(cb, rd);\n");
     }
     // Reported, never unwrapped: this runs in a subprocess ta_regtest drives over
     // a pipe, so a panic here would surface as a dead pipe rather than a
@@ -608,8 +608,24 @@ pub(crate) fn generate_rust_stream_verify(funcs: &[FuncDef]) -> String {
     s.push_str("}\n\n");
     // Candle-settings rounds (mirror the C sweep): defaults / avgPeriod+3 /
     // avgPeriod=0 (instant candle) / rangeType=Shadows.
-    s.push_str("fn sv_candle_settings(rd: i32) -> CandleSettings {\n    let mut s = CandleSettings::default_settings();\n    let all = |s: &mut CandleSettings, f: &dyn Fn(&mut CandleSetting)| {\n        for cs in [&mut s.body_long, &mut s.body_very_long, &mut s.body_short, &mut s.body_doji,\n                   &mut s.shadow_long, &mut s.shadow_very_long, &mut s.shadow_short,\n                   &mut s.shadow_very_short, &mut s.near, &mut s.far, &mut s.equal] {\n            f(cs);\n        }\n    };\n    match rd {\n        1 => all(&mut s, &|c| c.avg_period += 3),\n        2 => all(&mut s, &|c| c.avg_period = 0),\n        3 => all(&mut s, &|c| c.range_type = RangeType::Shadows),\n        _ => {}\n    }\n    s\n}\n\n");
-    s.push_str("fn sv_apply_candles(b: CoreBuilder, s: &CandleSettings) -> CoreBuilder {\n    b.candle_setting(CandleSettingType::BodyLong, s.body_long)\n     .candle_setting(CandleSettingType::BodyVeryLong, s.body_very_long)\n     .candle_setting(CandleSettingType::BodyShort, s.body_short)\n     .candle_setting(CandleSettingType::BodyDoji, s.body_doji)\n     .candle_setting(CandleSettingType::ShadowLong, s.shadow_long)\n     .candle_setting(CandleSettingType::ShadowVeryLong, s.shadow_very_long)\n     .candle_setting(CandleSettingType::ShadowShort, s.shadow_short)\n     .candle_setting(CandleSettingType::ShadowVeryShort, s.shadow_very_short)\n     .candle_setting(CandleSettingType::Near, s.near)\n     .candle_setting(CandleSettingType::Far, s.far)\n     .candle_setting(CandleSettingType::Equal, s.equal)\n}\n\n");
+    s.push_str("fn sv_apply_candle_round(mut b: CoreBuilder, rd: i32) -> CoreBuilder {\n");
+    s.push_str("    let defaults = Core::new();\n");
+    s.push_str("    for t in [CandleSettingType::BodyLong, CandleSettingType::BodyVeryLong,\n");
+    s.push_str("              CandleSettingType::BodyShort, CandleSettingType::BodyDoji,\n");
+    s.push_str("              CandleSettingType::ShadowLong, CandleSettingType::ShadowVeryLong,\n");
+    s.push_str("              CandleSettingType::ShadowShort, CandleSettingType::ShadowVeryShort,\n");
+    s.push_str("              CandleSettingType::Near, CandleSettingType::Far, CandleSettingType::Equal] {\n");
+    s.push_str("        let mut c = defaults.get_candle_setting(t).expect(\"a single candle setting\");\n");
+    s.push_str("        match rd {\n");
+    s.push_str("            1 => c.avg_period += 3,\n");
+    s.push_str("            2 => c.avg_period = 0,\n");
+    s.push_str("            3 => c.range_type = RangeType::Shadows,\n");
+    s.push_str("            _ => {}\n");
+    s.push_str("        }\n");
+    s.push_str("        b = b.candle_setting(t, c);\n");
+    s.push_str("    }\n");
+    s.push_str("    b\n");
+    s.push_str("}\n\n");
 
     let lookup = crate::streaming::FuncsLookup(funcs);
     let emitted: Vec<&FuncDef> = funcs

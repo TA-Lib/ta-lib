@@ -3509,7 +3509,7 @@ pub fn generate_rust_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
     s.push_str("use std::io::{self, BufRead, Write};\n");
     s.push_str("use std::time::Instant;\n");
     s.push_str("use ta_lib::{Core, CoreBuilder, RetCode, FuncUnstId};\n");
-    s.push_str("use ta_lib::{CandleSetting, CandleSettings, CandleSettingType, RangeType};\n");
+    s.push_str("use ta_lib::{CandleSetting, CandleSettingType, RangeType};\n");
     s.push_str("use ta_lib::abstract_api::{self, InputType, OutputType, OptInputType};\n");
     // The enum types the handlers convert wire ints into, from what the
     // definitions actually declare rather than a name spelled here.

@@ -1009,9 +1009,9 @@ fn emit_binder(
 
     let _ = writeln!(
         o,
-        "\n/// Widest input arity in the corpus — the holder's slots are sized from it.\npub const MAX_INPUTS: usize = {widest_input};\n\
-         /// Widest optional-parameter arity in the corpus.\npub const MAX_OPT_INPUTS: usize = {widest_opt};\n\
-         /// Widest output arity in the corpus.\npub const MAX_OUTPUTS: usize = {widest_output};\n"
+        "\nconst MAX_INPUTS: usize = {widest_input};\n\
+         const MAX_OPT_INPUTS: usize = {widest_opt};\n\
+         const MAX_OUTPUTS: usize = {widest_output};\n"
     );
 
     o.push_str(BINDER_SCAFFOLDING);

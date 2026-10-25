@@ -239,34 +239,23 @@ pub struct CandleSetting {
 /// All candlestick settings used by CDL* pattern indicators.
 #[derive(Debug, Clone, Copy, PartialEq)]
 #[allow(non_snake_case)]
-pub struct CandleSettings {
-    /// When a real body counts as long. [`CandleSettingType::BodyLong`].
+pub(crate) struct CandleSettings {
     pub body_long: CandleSetting,
-    /// When a real body counts as very long. [`CandleSettingType::BodyVeryLong`].
     pub body_very_long: CandleSetting,
-    /// When a real body counts as short. [`CandleSettingType::BodyShort`].
     pub body_short: CandleSetting,
-    /// When a real body is small enough to be a doji. [`CandleSettingType::BodyDoji`].
     pub body_doji: CandleSetting,
-    /// When a shadow counts as long. [`CandleSettingType::ShadowLong`].
     pub shadow_long: CandleSetting,
-    /// When a shadow counts as very long. [`CandleSettingType::ShadowVeryLong`].
     pub shadow_very_long: CandleSetting,
-    /// When a shadow counts as short. [`CandleSettingType::ShadowShort`].
     pub shadow_short: CandleSetting,
-    /// When a shadow counts as very short. [`CandleSettingType::ShadowVeryShort`].
     pub shadow_very_short: CandleSetting,
-    /// How close two prices must be to count as near. [`CandleSettingType::Near`].
     pub near: CandleSetting,
-    /// How far apart two prices must be to count as far. [`CandleSettingType::Far`].
     pub far: CandleSetting,
-    /// How close two prices must be to count as equal. [`CandleSettingType::Equal`].
     pub equal: CandleSetting,
 }
 
 impl CandleSettings {
     /// Default candle settings matching TA-Lib C defaults.
-    pub fn default_settings() -> Self {
+    pub(crate) fn default_settings() -> Self {
         Self {
             body_long:         CandleSetting { range_type: RangeType::RealBody, avg_period: 10, factor: 1.0 },
             body_very_long:    CandleSetting { range_type: RangeType::RealBody, avg_period: 10, factor: 3.0 },
@@ -288,27 +277,27 @@ impl CandleSettings {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord)]
 #[non_exhaustive]
 pub enum CandleSettingType {
-    /// Selects [`CandleSettings::body_long`].
+    /// When a real body counts as long.
     BodyLong = 0,
-    /// Selects [`CandleSettings::body_very_long`].
+    /// When a real body counts as very long.
     BodyVeryLong = 1,
-    /// Selects [`CandleSettings::body_short`].
+    /// When a real body counts as short.
     BodyShort = 2,
-    /// Selects [`CandleSettings::body_doji`].
+    /// When a real body is small enough to be a doji.
     BodyDoji = 3,
-    /// Selects [`CandleSettings::shadow_long`].
+    /// When a shadow counts as long.
     ShadowLong = 4,
-    /// Selects [`CandleSettings::shadow_very_long`].
+    /// When a shadow counts as very long.
     ShadowVeryLong = 5,
-    /// Selects [`CandleSettings::shadow_short`].
+    /// When a shadow counts as short.
     ShadowShort = 6,
-    /// Selects [`CandleSettings::shadow_very_short`].
+    /// When a shadow counts as very short.
     ShadowVeryShort = 7,
-    /// Selects [`CandleSettings::near`].
+    /// How close two prices must be to count as near.
     Near = 8,
-    /// Selects [`CandleSettings::far`].
+    /// How far apart two prices must be to count as far.
     Far = 9,
-    /// Selects [`CandleSettings::equal`].
+    /// How close two prices must be to count as equal.
     Equal = 10,
     /// Selects every setting; not a valid target for a single setting. Pinned
     /// at 11 like C's `TA_AllCandleSettings`, and not a count: a setting added
@@ -461,6 +450,30 @@ impl Core {
         // (a count in `0..=INDEX_MAX`, or an Auto level), so the conversion
         // cannot fail.
         Ok(self.unstable_period[id as usize] as u32)
+    }
+
+    /// Get one candlestick setting.
+    ///
+    /// # Errors
+    ///
+    /// [`RetCode::BadParam`] if `setting_type` is
+    /// [`CandleSettingType::AllCandleSettings`], which names no single setting.
+    pub fn get_candle_setting(&self, setting_type: CandleSettingType) -> Result<CandleSetting, RetCode> {
+        let s = &self.candle_settings;
+        Ok(match setting_type {
+            CandleSettingType::BodyLong => s.body_long,
+            CandleSettingType::BodyVeryLong => s.body_very_long,
+            CandleSettingType::BodyShort => s.body_short,
+            CandleSettingType::BodyDoji => s.body_doji,
+            CandleSettingType::ShadowLong => s.shadow_long,
+            CandleSettingType::ShadowVeryLong => s.shadow_very_long,
+            CandleSettingType::ShadowShort => s.shadow_short,
+            CandleSettingType::ShadowVeryShort => s.shadow_very_short,
+            CandleSettingType::Near => s.near,
+            CandleSettingType::Far => s.far,
+            CandleSettingType::Equal => s.equal,
+            CandleSettingType::AllCandleSettings => return Err(RetCode::BadParam),
+        })
     }
 }
 
@@ -1036,6 +1049,29 @@ mod tests {
             .build()
             .unwrap_err();
         assert_eq!(err, RetCode::BadParam);
+    }
+
+    #[test]
+    fn get_candle_setting_reads_each_slot_and_rejects_the_wildcard() {
+        const ALL: [CandleSettingType; 11] = [
+            CandleSettingType::BodyLong, CandleSettingType::BodyVeryLong,
+            CandleSettingType::BodyShort, CandleSettingType::BodyDoji,
+            CandleSettingType::ShadowLong, CandleSettingType::ShadowVeryLong,
+            CandleSettingType::ShadowShort, CandleSettingType::ShadowVeryShort,
+            CandleSettingType::Near, CandleSettingType::Far, CandleSettingType::Equal,
+        ];
+        let mut builder = Core::builder();
+        for (i, t) in ALL.iter().enumerate() {
+            builder = builder.candle_setting(
+                *t,
+                CandleSetting { range_type: RangeType::Shadows, avg_period: i as i32 + 1, factor: 0.5 },
+            );
+        }
+        let core = builder.build().unwrap();
+        for (i, t) in ALL.iter().enumerate() {
+            assert_eq!(core.get_candle_setting(*t).unwrap().avg_period, i as i32 + 1);
+        }
+        assert_eq!(core.get_candle_setting(CandleSettingType::AllCandleSettings), Err(RetCode::BadParam));
     }
 
     #[test]
