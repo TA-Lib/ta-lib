@@ -67,7 +67,7 @@ The nightly runs the C# jobs, including the ones a local machine cannot. Confirm
 run is green on the commit being tagged, then run these anyway: the nightly can predate that
 commit.
 
-From the repo root:
+From a clean worktree detached at the release tag `v<version>`:
 
 ```bash
 python3 scripts/build.py generate          # output/csharp must be regenerated, not stale
@@ -98,11 +98,6 @@ with NativeAOT and `TrimMode=full`. Both runs must print the same thing. It ends
 `=== PACKAGE GATE PASSED ===`, and **the `.nupkg` and `.snupkg` it leaves in that directory
 are the files to push**, not a later, separate pack.
 
-It also prints the sha256 of `TALib.dll` and `TALib.pdb`. One commit gives the same two on
-any path, so when the nightly ran on this commit, compare them with the ones its
-`ubuntu-latest` `csharp` leg printed. A difference is a different SDK patch or an input the
-tree does not show: explain it before publishing.
-
 (NP2) **Decide here.** nuget.org has no delete. It has unlist, which still serves the package
 to anyone asking for that exact version, and deprecate, which leaves it installable with a
 warning. The pre-push steps above are the last point at which anything is reversible.
@@ -127,18 +122,19 @@ you pushed:
 python3 scripts/csharp_package_check.py --from-source https://api.nuget.org/v3/index.json
 ```
 
-(NP6) On the published commit, record the public API:
+(NP6) Record the public API, in the worktree at the published commit:
 
 ```bash
 python3 scripts/csharp_public_api.py
 ```
 
 It **rewrites** `ta_codegen/output/csharp/library/PublicAPI.Shipped.txt` and prints what it
-did (`N member(s) added, M listed`). Commit the result. Without this, members added since the
-last publish ship unguarded. The file is only refreshed here, so the count it prints is every
-member added since the previous publish.
+did (`N member(s) added, M listed`). Copy that file to dev and commit it there: run on dev,
+it would also mark members added since the release as shipped. Without this, members added
+since the last publish ship unguarded. The file is only refreshed here, so the count it prints
+is every member added since the previous publish.
 
-(NP7) Tag `csharp-v<version>`.
+(NP7) Tag the published commit `csharp-v<version>` and push the tag.
 
 (NP8) **Flip the website** (#444 D1) and update `README.md` in this directory: C# is listed
 there as "not published yet".

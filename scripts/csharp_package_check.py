@@ -12,9 +12,6 @@
   2. Contents. The .nupkg and .snupkg hold exactly the expected entries; the
      packed LICENSE, README and icon are byte-identical to their sources; the
      nuspec's version is VERSION and its repository is TA-Lib/ta-lib at HEAD.
-     The DLL's and PDB's sha256 are printed: a clean checkout of one commit
-     gives the same two on any path, so a release pack can be compared with
-     the nightly's.
      The id is whatever the csproj evaluates to: nothing here knows which id
      the project owns. The PDB's SourceLink must map /_/
      to that same commit: a fork's clone packs a SourceLink to the fork, with
@@ -33,7 +30,6 @@ Run:  python3 scripts/csharp_package_check.py [--allow-dirty] [--output DIR]
 """
 
 import argparse
-import hashlib
 import json
 import os
 import re
@@ -200,8 +196,6 @@ def check_package(out_dir, pkg_id, asm, tfms, ver, head):
     for t in tfms:
         dll = nupkg["lib/%s/%s.dll" % (t, asm)]
         pdb = snupkg["lib/%s/%s.pdb" % (t, asm)]
-        for ext, data in (("dll", dll), ("pdb", pdb)):
-            print("--- sha256 %s  lib/%s/%s.%s" % (hashlib.sha256(data).hexdigest(), t, asm, ext))
         if local_path in dll or local_path in pdb:
             failures.append("%s: the DLL or PDB embeds the build path %s" % (t, ROOT))
         docs = sourcelink(pdb)
