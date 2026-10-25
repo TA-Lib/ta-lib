@@ -13,6 +13,9 @@ See [github commits](https://github.com/TA-Lib/ta-lib/commits) for complete list
   target. An autotools install still provides `ta-lib.pc` only. (#422)
 - Display shift: `TA_<NAME>_DisplayShift` and `TA_GetDisplayShift` tell a charting app how many bars
   ahead of or behind its own bar to draw an output (e.g. DPO). Output values are not shifted. (#489)
+- Auto-Stabilization: pass `TA_UNSTABLE_AUTO_PREC_4` (or `TA_UNSTABLE_AUTO_PREC_8`) to `TA_SetUnstablePeriod`
+  and each function discards its leading output until its first 4 (or 8) significant digits no longer
+  depend on where the data starts. See https://ta-lib.org/api/unstable-period/ (#492)
 - New TA Functions:
   - ALMA: Arnaud Legoux Moving Average, a Gaussian-weighted window with adjustable peak (#475)
   - ASI: Wilder Accumulative Swing Index, the running total of SI (#451)
