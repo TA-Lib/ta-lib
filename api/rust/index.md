@@ -218,6 +218,7 @@ let core = Core::builder()
         CandleSetting { range_type: RangeType::RealBody, avg_period: 10, factor: 1.2 },
     )
     .build()?;
+let body_long = core.get_candle_setting(CandleSettingType::BodyLong)?;
 ```
 
 The setters are infallible so that they chain; `build()` reports a rejected

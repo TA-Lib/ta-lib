@@ -3,7 +3,7 @@ url: 'https://ta-lib.org/api/unstable-period/index.md'
 description: >-
   Why recursive indicators such as EMA, RSI and ADX start out unstable, and how
   TA-Lib discards those bars for you: Auto-Stabilization for every function, or
-  a setting per function, in C, Rust, Java and C#.
+  a setting per function, in C, Rust, Java, C# and Python.
 ---
 # Unstable Period
 
@@ -119,9 +119,18 @@ Core core = Core.Builder()
     .Build();
 ```
 
+@tab Python
+
+```python
+import talib
+
+# Once, after import:
+talib.set_unstable_period('ALL', talib.UNSTABLE_AUTO_PREC_4)
+```
+
 :::
 
-In C the setting is process-wide. In Rust, Java and C# it belongs to `core`: make your calls on that object.
+In C and Python the setting is process-wide. In Rust, Java and C# it belongs to `core`: make your calls on that object.
 
 The number of bars comes from the parameters of each call: a 200-bar EMA drops more than a 30-bar one. Indicators built on another, such as MACD on EMA, follow along.
 
@@ -214,12 +223,26 @@ Core core = Core.Builder()
 int v = core.UnstablePeriod(FuncUnstId.RSI);   // Core.UnstableAutoPrec8
 ```
 
+@tab Python
+
+```python
+import talib
+
+# Every affected function on Auto, to 4 significant digits;
+# then one exception at a stricter level, and one at a fixed 30 bars:
+talib.set_unstable_period('ALL', talib.UNSTABLE_AUTO_PREC_4)
+talib.set_unstable_period('RSI', talib.UNSTABLE_AUTO_PREC_8)
+talib.set_unstable_period('EMA', 30)
+
+v = talib.get_unstable_period('RSI')   # talib.UNSTABLE_AUTO_PREC_8
+```
+
 :::
 
 The value is one of:
 
 * **An Auto level**, `TA_UNSTABLE_AUTO_PREC_4` or `TA_UNSTABLE_AUTO_PREC_8` (a constant
-  on `Core` in Rust, Java and C#): the function works out the number of bars from the
+  on `Core` in Rust, Java and C#, and on `talib` in Python): the function works out the number of bars from the
   call's parameters. `PREC_8` targets eight significant digits and needs more bars
   (EMA(30): 314 instead of 179); some outputs cannot show that many, so start with `PREC_4`.
 * **A count**, from `0` to `TA_INDEX_MAX`: a fixed number of bars that is yours to choose.
@@ -239,7 +262,8 @@ number of bars than EMA.
 
 In C, the unstable period and the candle settings are process-wide. Change them
 only while no TA function is running and no stream is open
-([specification](/spec/settings-threads/#idle-settings)).
+([specification](/spec/settings-threads/#idle-settings)). Python raises
+`RuntimeError` on a change while a call runs or a stream object is alive.
 
 ### Functions with an unstable period
 
@@ -255,6 +279,7 @@ only while no TA function is running and no stream is open
 | Rust | `FuncUnstId::<NAME>` | [types.rs](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/types.rs) |
 | Java | `FuncUnstId.<NAME>` | [FuncUnstId.java](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/library/src/main/java/io/github/talib/FuncUnstId.java) |
 | C# | `FuncUnstId.<NAME>` | [FuncUnstId.cs](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/FuncUnstId.cs) |
+| Python | `'<NAME>'` | [\_common.pxi](https://github.com/TA-Lib/ta-lib-python/blob/master/talib/_common.pxi) |
 
 `<NAME>` may also be `ALL`, which selects every function above at once.
 
