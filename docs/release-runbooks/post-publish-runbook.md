@@ -13,11 +13,13 @@ reason it is separate rather than the C runbook's last section is below.
 bindings are still publishing from. A binding built after the bump carries the
 next version number, and every registry it publishes to is immutable.
 
-This is not hypothetical. `79a013707` had to set `VERSION` back to 0.8.1 by hand
-so that ta-lib-python could finish its own 0.8.1 release against `dev`.
-
 **So do not start here until every backend shipping this version is public**: the
 C release, and each language publish in `README.md`'s order.
+
+ta-lib-python is not one of them. Its release lane builds the released C tarball named by
+`TALIB_C_VERSION` in its `setup.py`, which this bump does not touch, and its `dev` lane
+follows C `dev` with a `>=` version check. Its release can come before or after this
+runbook.
 
 ## Steps
 
