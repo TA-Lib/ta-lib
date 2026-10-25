@@ -13,6 +13,8 @@ See [github commits](https://github.com/TA-Lib/ta-lib/commits) for complete list
   target. An autotools install still provides `ta-lib.pc` only. (#422)
 - Display shift: `TA_<NAME>_DisplayShift` and `TA_GetDisplayShift` tell a charting app how many bars
   ahead of or behind its own bar to draw an output (e.g. DPO). Output values are not shifted. (#489)
+- `TA_GetRuntimeInfo` reports which optional code path the library is using, e.g. whether
+  the macOS vForce path below is active. (#527)
 - Auto-Stabilization: pass `TA_UNSTABLE_AUTO_PREC_4` (or `TA_UNSTABLE_AUTO_PREC_8`) to `TA_SetUnstablePeriod`
   and each function discards its leading output until its first 4 (or 8) significant digits no longer
   depend on where the data starts. See https://ta-lib.org/api/unstable-period/ (#492)
@@ -31,6 +33,7 @@ See [github commits](https://github.com/TA-Lib/ta-lib/commits) for complete list
   - FISHER: Ehlers' Fisher Transform (#485)
   - FRAMA: Fractal Adaptive Moving Average, Ehlers' adaptive EMA (#464)
   - IBS: Internal Bar Strength, where the close sits inside its own bar range (#468)
+  - ICHIMOKU: Ichimoku Kinko Hyo: Tenkan-sen, Kijun-sen and the two Senkou spans (#490)
   - KST: Know Sure Thing (#472)
   - KSTEXT: Know Sure Thing with selectable MA types (#491)
   - KURTOSIS: Rolling Excess Kurtosis (#433)
@@ -73,6 +76,9 @@ See [github commits](https://github.com/TA-Lib/ta-lib/commits) for complete list
   second-largest value. Pass the period explicitly to keep the old output.
 - PERCENTILE and PERCENTRANK accept periods up to 10000, down from 100000. A longer period is now rejected (and would be useless and a performance drag).
 - MAVP accepts periods up to 10000, down from 100000. Also for practical purposes.
+- macOS on Apple Silicon: batch SIN, COS, TAN, ASIN, ACOS, ATAN, SINH, COSH, TANH, EXP, LN
+  and LOG10 use Apple's vForce. Results may differ from other platforms, and from streaming,
+  in the last bits (below 1e-9). (#521)
 - The i386 `.deb` now uses SSE2 instead of x87, so its values match the other packages. It
   needs an SSE2 CPU. (#443)
 - Java: `FuncUnstId.COUNT` is no longer public. javac copied its value into every caller, so

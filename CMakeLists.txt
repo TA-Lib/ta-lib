@@ -654,9 +654,8 @@ if(BUILD_STATIC_LIBS)
 
 	if(WIN32)
 		# Note: WIN32 is defined regardless of 32 or 64 bits host.
-		# Keep the -static suffix so it does not collide with the shared import
-		# library ta-lib.lib; the vcpkg port renames it to ta-lib.lib for the
-		# static triplet.
+		# Keep the -static suffix so it does not collide with the shared build's
+		# import library.
 		set_target_properties(ta-lib-static PROPERTIES OUTPUT_NAME ta-lib-static)
 	endif(WIN32)
 
