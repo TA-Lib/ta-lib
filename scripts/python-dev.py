@@ -128,7 +128,8 @@ def ensure_packages(modules, requirements=()):
     is reported, never installed into a system Python."""
     probe = ("import importlib.util, sys\n"
              "print(' '.join(m for m in sys.argv[1:] if importlib.util.find_spec(m) is None))")
-    missing = run([sys.executable, "-c", probe] + list(modules)).stdout.split()
+    # Not from this repo: its cmake/ directory would pass for the package.
+    missing = run([sys.executable, "-c", probe] + list(modules), cwd=CACHE).stdout.split()
     if not missing:
         return
     if sys.prefix == sys.base_prefix:
