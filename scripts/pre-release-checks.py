@@ -4,8 +4,8 @@
 #  - Detect VERSION inconsistenties among the files.
 #  - Detect if some release candidate assets are missing in dist/
 #  - Detect if a top entry for VERSION is missing in CHANGELOG.md
-#  - Verify the top entry in CHANGELOG.md has a valid YYYY-MM-DD date within
-#    one day of wallclock.
+#  - Verify the top entry in CHANGELOG.md is dated today (UTC) or at most
+#    MAX_CHANGELOG_AGE_DAYS earlier.
 #  - Verify that all dist/digests files match the current source digests. This
 #    is to ensure that various packagings and tests were all performed with the
 #    current source code.
@@ -28,7 +28,9 @@ from utilities.versions import check_sources_digest, check_versions
 from utilities.package_digest import PackageDigest
 from utilities.website import latest_release_version
 import abi
-from datetime import datetime
+from datetime import date as date_type, datetime, timedelta, timezone
+
+MAX_CHANGELOG_AGE_DAYS = 2
 
 if __name__ == "__main__":
 
@@ -171,16 +173,20 @@ if __name__ == "__main__":
                     top_version_found = True
                     # Extract the YYYY-MM-DD part of the pattern.
                     date = line.split(']')[1].strip()
-                    if not re.match(r'\d{4}-\d{2}-\d{2}', date):
+                    try:
+                        if not re.fullmatch(r'\d{4}-\d{2}-\d{2}', date):
+                            raise ValueError
+                        dated = date_type.fromisoformat(date)
+                    except ValueError:
                         print(f"Error: Invalid date found in top entry of CHANGELOG.md: {date}")
                         exit(1)
-                    # Verify date is within one day of wallclock.
-                    # This is to ensure the release notes are up-to-date.
-                    # We allow a small margin of error to account for timezone differences.
-                    today = datetime.today().strftime('%Y-%m-%d')
-                    if date != today:
-                        print(f"Error: Invalid date found in top entry of CHANGELOG.md: {date}")
-                        print(f"Expected date to be within one day from: {today}")
+                    # A stale date usually means stale release notes; the slack lets
+                    # the release steps run a day or two after the entry was dated.
+                    today = datetime.now(timezone.utc).date()
+                    age = (today - dated).days
+                    if not 0 <= age <= MAX_CHANGELOG_AGE_DAYS:
+                        print(f"Error: CHANGELOG.md top entry is dated {date}; today is {today} (UTC).")
+                        print(f"Expected a date from {today - timedelta(days=MAX_CHANGELOG_AGE_DAYS)} to {today}.")
                         exit(1)
                     print(f"Found valid CHANGELOG.md entry: [{version}] {date}")
 

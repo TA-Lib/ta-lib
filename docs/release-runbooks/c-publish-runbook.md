@@ -11,7 +11,7 @@ in this directory holds the order.
 
 Any dev with permission to merge to main branch can do a release.
 
-(CP1) On the dev branch, edit the VERSION file in the root of the repos.
+(CP1) On the dev branch, edit the VERSION file in the root of the repos, and date its CHANGELOG.md entry `## [X.Y.Z] YYYY-MM-DD` with the planned release day. CP7 and CP9 refuse to run before that date, or more than two days after it (UTC).
 
 (CP2) Run "./scripts/sync.py". This ensures your dev branch is up-to-date (among other things).
 
