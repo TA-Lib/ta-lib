@@ -85,7 +85,7 @@ machine cannot: the debug-profile overflow sweep, the MSRV floor, arm64, Windows
 Confirm its latest run is green on the commit being tagged. Run the gates below anyway: the
 nightly can predate that commit, and the release path itself compiles no Rust.
 
-From the repo root:
+From a clean worktree detached at the release tag `v<version>`:
 
 ```bash
 scripts/build.py generate        # output/rust must be regenerated, not stale
@@ -114,8 +114,9 @@ fix after the fact:
 
 ```bash
 tar tzf target/package/ta-lib-<VERSION>.crate | grep -Ev '^ta-lib-[^/]+/src/ta_func/'
-# expect: Cargo.toml, Cargo.lock, LICENSE, README.md, src/lib.rs,
-#         src/abstract_api.rs, src/ta_func_api.xml
+# expect: Cargo.toml, Cargo.toml.orig, Cargo.lock, .cargo_vcs_info.json, LICENSE,
+#         README.md, clippy.toml, src/lib.rs, src/abstract_api.rs, src/ta_func_api.xml,
+#         and the integration tests under tests/
 ```
 
 (RP2) Publish `ta-lib-dispatch`, only when it changed, then (RP3) `ta-lib`.
@@ -140,6 +141,8 @@ lag — retry in a minute. It is not a manifest problem.
   on crate *name*; they report the registry's newest version and know nothing about the
   tree. Nothing to update.
 (RP5) **`cargo owner --list`** on both crates if the maintainer set changed.
+
+(RP6) Tag the published commit `rust-v<version>` and push the tag.
 
 ## Versions 0.1.x
 

@@ -85,8 +85,7 @@ def get_version_string(root_dir: str) -> str:
     even if the change that motivated the release was a C patch. Cargo reads 0.x
     minor as the breaking position, so `ta-lib = "0.8"` silently accepts every
     0.8.x — a break shipped in a patch upgrades itself into consumers' builds
-    with no signal. `cargo-semver-checks` in the dev nightly is the mechanical
-    guard, once a published version exists to compare against.
+    with no signal. Nothing checks the Rust crate's API mechanically yet.
 
     Exit on any error.
     """
