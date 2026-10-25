@@ -148,7 +148,7 @@ The `fabs` form adds `+0.0` where the branch added nothing, which is exact only
 into a sum that is never `-0.0`: check that before relying on it.
 
 A max that includes an absolute value, such as a true range, is never negative
-on NaN-free input, so it goes into the masked counter as itself: through `fabs`,
+on finite input, so it goes into the masked counter as itself: through `fabs`,
 gcc 13 turns that max back into a branch (`ultosc.c`).
 
 The exception is a pick of a value against `0.0` on a strict comparison
