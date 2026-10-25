@@ -6,7 +6,7 @@ Just re-install to upgrade. Older versions are automatically removed.
 
 See [github commits](https://github.com/TA-Lib/ta-lib/commits) for complete list of changes
 
-## [0.8.3] Not Released Yet
+## [0.8.3] 2026-10-25
 ### Added
 - Rust: the `ta-lib` crate is on crates.io (`cargo add ta-lib`) (#179)
 - `find_package(ta-lib CONFIG)` now works against a CMake install and provides the `ta-lib::ta-lib`
