@@ -1,9 +1,11 @@
 #!/usr/bin/env python3
 """Record the C# library's public surface in PublicAPI.Shipped.txt.
 
-Run it once per NuGet publish, on the commit being published, and commit the
-result. It adds every public member the file lacks and never removes a line: a
-removed or changed member makes it stop, until its line is deleted by hand.
+Run it once per NuGet publish, on the commit being published, then carry the
+two files' change to dev as a patch, so whatever dev changed in them since the
+release survives. It adds every public member the file lacks, moves
+PublicAPI.Unshipped.txt's entries into it (they shipped too), and never removes a
+line: a removed or changed member makes it stop, until its line is deleted by hand.
 
 Run:  python3 scripts/csharp_public_api.py
 """
@@ -16,6 +18,7 @@ import sys
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 LIB = os.path.join(ROOT, "ta_codegen", "output", "csharp", "library")
 SHIPPED = os.path.join(LIB, "PublicAPI.Shipped.txt")
+UNSHIPPED = os.path.join(LIB, "PublicAPI.Unshipped.txt")
 HEADER = "#nullable enable"
 
 
@@ -50,17 +53,31 @@ def main():
         print("FAILED: the build failed with no diagnostic this script reads")
         return 1
 
-    with open(SHIPPED) as f:
-        lines = [l.rstrip("\n") for l in f if l.strip() and l.strip() != HEADER]
-    merged = sorted(set(lines) | added, key=lambda l: (l.lower(), l))
+    def entries(path):
+        with open(path) as f:
+            return {l.rstrip("\n") for l in f if l.strip() and l.strip() != HEADER}
+
+    moved = entries(UNSHIPPED)
+    removed = sorted(l for l in moved if l.startswith("*REMOVED*"))
+    if removed:
+        print("\n".join(removed))
+        print("FAILED: %s records %d removal(s). Delete those lines and their members' lines "
+              "from %s by hand, then run this again."
+              % (os.path.basename(UNSHIPPED), len(removed), os.path.relpath(SHIPPED, ROOT)))
+        return 1
+    merged = sorted(entries(SHIPPED) | moved | added, key=lambda l: (l.lower(), l))
     with open(SHIPPED, "w", newline="\n") as f:
         f.write(HEADER + "\n" + "".join(l + "\n" for l in merged))
+    with open(UNSHIPPED, "w", newline="\n") as f:
+        f.write(HEADER + "\n")
 
     added_again, gone_again, other_again, code = diagnostics()
     if added_again or gone_again or other_again or code != 0:
         print("FAILED: the build still disagrees with the file after the update")
         return 1
-    print("%s: %d member(s) added, %d listed" % (os.path.relpath(SHIPPED, ROOT), len(added), len(merged)))
+    print("%s: %d member(s) added, %d moved from %s, %d listed"
+          % (os.path.relpath(SHIPPED, ROOT), len(added), len(moved),
+             os.path.basename(UNSHIPPED), len(merged)))
     return 0
 
 
