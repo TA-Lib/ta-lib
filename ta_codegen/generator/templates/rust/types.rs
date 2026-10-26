@@ -318,14 +318,7 @@ pub enum CandleSettingType {
 /// Construct one with [`Core::new()`] for all-defaults, or with
 /// [`Core::builder()`] to configure settings up front:
 ///
-/// ```
-/// use ta_lib::{Core, FuncUnstId};
-///
-/// let core = Core::builder()
-///     .unstable_period(FuncUnstId::EMA, 10)
-///     .build()?;
-/// # Ok::<(), ta_lib::RetCode>(())
-/// ```
+$EX_CONFIGURATION_ITEM_DOC
 ///
 /// To change a setting, build a new `Core` — cloning it copies bytes and never
 /// allocates, but there are enough of them (an `[i32; N]` array and eleven
@@ -490,14 +483,7 @@ impl Default for Core {
 /// (seeded from an existing `Core`), configure the value-affecting globals, then
 /// call [`build`](CoreBuilder::build):
 ///
-/// ```
-/// use ta_lib::{Core, FuncUnstId};
-///
-/// let core = Core::builder()
-///     .unstable_period(FuncUnstId::EMA, 10)
-///     .build()?;
-/// # Ok::<(), ta_lib::RetCode>(())
-/// ```
+$EX_CONFIGURATION_ITEM_DOC
 ///
 /// The setters are infallible so that they chain; a rejected argument is
 /// reported once, by [`build`](CoreBuilder::build).

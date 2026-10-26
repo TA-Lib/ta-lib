@@ -1044,7 +1044,7 @@ const X86_GCC_FLAGS: &[&str] = if cfg!(any(target_arch = "x86_64", target_arch =
 /// enums.yaml is the source of truth for `FuncUnstId`; the C enum (`ta_defs.h`)
 /// and the shipped Java enum are regenerated from it, but the Rust crate enum
 /// lives in the hand-written template `ta_codegen/generator/templates/rust/types.rs`
-/// and is copied verbatim. If it drifts, the Rust server references a variant that no
+/// and is copied with its code unchanged. If it drifts, the Rust server references a variant that no
 /// longer exists (build failure) and the shipped Rust crate's enum diverges from the C
 /// header. Fail loudly at generate time rather than let a rename half-propagate.
 fn verify_hand_maintained_funcunstid(
@@ -1099,8 +1099,8 @@ fn verify_hand_maintained_funcunstid(
         .filter(|s| !s.is_empty())
         .collect();
 
-    // FuncUnstId::COUNT sizes the crate's unstable-period array. The template is
-    // copied verbatim, so the literal cannot be interpolated -- check it here
+    // FuncUnstId::COUNT sizes the crate's unstable-period array. Nothing
+    // interpolates the template's code, so the literal cannot be -- check it here
     // instead, or adding an indicator would leave the array one slot short. The
     // needle is anchored on the impl block, not on the declaration alone, which
     // other types in the crate also spell.
@@ -2635,7 +2635,8 @@ fn csharp_tfms(csproj: &Path) -> Vec<String> {
 }
 
 /// The hand-written Rust library sources that ship inside the generated crate,
-/// copied verbatim from `ta_codegen/generator/templates/rust/`. `types.rs` holds
+/// copied from `ta_codegen/generator/templates/rust/` (verbatim, except the builder
+/// sample `types.rs` takes from [`EXAMPLE_CONFIGURATION`]). `types.rs` holds
 /// `Core`/`CoreBuilder` and its API tests (issue #144); `c_math.rs` the C-exact
 /// `max`/`min`/`floor`/`ceil` the bodies call (issue #438); the rest are
 /// `#[cfg(test)]`-only modules — DIV's zero-divisor result (issue #249), the
@@ -2674,7 +2675,8 @@ const RUST_GENERATED_TEST_MODULES: &[&str] = &["no_phantom_io"];
 const DISPATCH_VERSION: &str = "0.1.2";
 
 /// A Rust sample that both crate front pages carry -- the `lib.rs` crate docs
-/// and `README.md`.
+/// and `README.md` -- and, for the builder, the `Core` and `CoreBuilder` item
+/// docs in `types.rs`.
 struct FrontPageExample {
     /// The crate items the body names. The README rendering appends `RetCode`
     /// for its `fn main` signature, so leave it out unless the body itself
@@ -2695,22 +2697,24 @@ impl FrontPageExample {
         }
     }
 
-    /// The `//!`-prefixed doctest for `lib.rs`.
-    fn as_doc(&self) -> String {
-        let mut out = String::from("//! ```\n");
+    /// The doctest as doc-comment lines: `//!` for `lib.rs`, `///` for an item.
+    fn as_doc(&self, prefix: &str) -> String {
+        let mut out = format!("{prefix} ```\n");
         for line in [Self::use_line(self.uses), String::new()]
             .into_iter()
             .chain(self.body.lines().map(str::to_string))
         {
             if line.is_empty() {
-                out.push_str("//!\n");
+                out.push_str(prefix);
+                out.push('\n');
             } else {
-                out.push_str("//! ");
+                out.push_str(prefix);
+                out.push(' ');
                 out.push_str(&line);
                 out.push('\n');
             }
         }
-        out.push_str("//! # Ok::<(), ta_lib::RetCode>(())\n//! ```");
+        out.push_str(&format!("{prefix} # Ok::<(), ta_lib::RetCode>(())\n{prefix} ```"));
         out
     }
 
@@ -2838,11 +2842,11 @@ fn generate_rust_crate_scaffolding(
         text.replace("$N_CANDLES", &n_candles.to_string())
             .replace("$INSTALL_REQ", &install_req)
             .replace("$FUNC_INDEX", &func_index)
-            .replace("$EX_QUICK_START_DOC", &EXAMPLE_QUICK_START.as_doc())
+            .replace("$EX_QUICK_START_DOC", &EXAMPLE_QUICK_START.as_doc("//!"))
             .replace("$EX_QUICK_START_MD", &EXAMPLE_QUICK_START.as_readme())
-            .replace("$EX_CONFIGURATION_DOC", &EXAMPLE_CONFIGURATION.as_doc())
+            .replace("$EX_CONFIGURATION_DOC", &EXAMPLE_CONFIGURATION.as_doc("//!"))
             .replace("$EX_CONFIGURATION_MD", &EXAMPLE_CONFIGURATION.as_readme())
-            .replace("$EX_LIVE_DATA_DOC", &EXAMPLE_LIVE_DATA.as_doc())
+            .replace("$EX_LIVE_DATA_DOC", &EXAMPLE_LIVE_DATA.as_doc("//!"))
             .replace("$EX_LIVE_DATA_MD", &EXAMPLE_LIVE_DATA.as_readme())
     };
     // Two-crate Cargo workspace: `library/` is the published `ta-lib` crate;
@@ -3287,7 +3291,15 @@ BSD-3-Clause — see [LICENSE](https://github.com/TA-Lib/ta-lib/blob/main/LICENS
         let src = templates.join(format!("{module}.rs"));
         if src.exists() {
             let dest = ta_func_dir.join(format!("{module}.rs"));
-            copy_if_changed(&src, &dest).unwrap();
+            if *module == "types" {
+                let text = std::fs::read_to_string(&src).unwrap().replace(
+                    "$EX_CONFIGURATION_ITEM_DOC",
+                    &EXAMPLE_CONFIGURATION.as_doc("///"),
+                );
+                write_if_changed(&dest, text).unwrap();
+            } else {
+                copy_if_changed(&src, &dest).unwrap();
+            }
             println!("  Copied {module}.rs -> {}", dest.display());
         }
     }

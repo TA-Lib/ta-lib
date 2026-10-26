@@ -36,7 +36,9 @@ assets, kept out of `input/` (indicator definitions only) and out of `output/`
 (100% generated):
 
 - `templates/rust/types.rs` — the `Core` / `RetCode` / `CoreBuilder` /
-  `CandleSettings` scaffolding, copied verbatim into the crate.
+  `CandleSettings` scaffolding, copied into the crate with only its
+  `$EX_CONFIGURATION_ITEM_DOC` builder sample filled in, from the one the crate
+  front pages carry.
 - Four more, copied verbatim and declared `#[cfg(test)]` in the generated
   `mod.rs`, so none ships in a release build: the scratch-buffer election value
   gate, the streaming tier's non-finite input rejection, a handle's `OutRange`

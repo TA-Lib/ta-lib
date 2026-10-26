@@ -324,6 +324,8 @@ pub enum CandleSettingType {
 /// let core = Core::builder()
 ///     .unstable_period(FuncUnstId::EMA, 10)
 ///     .build()?;
+///
+/// assert_eq!(core.get_unstable_period(FuncUnstId::EMA)?, 10);
 /// # Ok::<(), ta_lib::RetCode>(())
 /// ```
 ///
@@ -496,6 +498,8 @@ impl Default for Core {
 /// let core = Core::builder()
 ///     .unstable_period(FuncUnstId::EMA, 10)
 ///     .build()?;
+///
+/// assert_eq!(core.get_unstable_period(FuncUnstId::EMA)?, 10);
 /// # Ok::<(), ta_lib::RetCode>(())
 /// ```
 ///
