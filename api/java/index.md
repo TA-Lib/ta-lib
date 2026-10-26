@@ -56,7 +56,7 @@ There is no initialization step and nothing to shut down. Where C requires `TA_I
 <dependency>
     <groupId>io.github.ta-lib</groupId>
     <artifactId>ta-lib</artifactId>
-    <version>0.8.1</version>
+    <version>0.8.3</version>
 </dependency>
 ```
 

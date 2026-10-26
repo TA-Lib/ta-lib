@@ -7,10 +7,6 @@ description: >-
 ---
 # Rust Core API
 
-::: warning Not yet released
-The Rust API is not yet released. Estimated release: **Q1 2027**.
-:::
-
 <p><a href="#intro">1.0 Introduction</a></p>
 
 <p><a href="#build">2.0 Add it to your project</a></p>
@@ -57,6 +53,11 @@ There is no initialization step and nothing to shut down. Where C requires `TA_I
 [dependencies]
 ta-lib = "0.8"
 ```
+
+Or run `cargo add ta-lib`.
+
+Every released version is listed on [crates.io](https://crates.io/crates/ta-lib); the 0.1.x
+versions there are an unrelated earlier crate.
 
 ## 3.0 Calling into TA-Lib {#ta_func}
 

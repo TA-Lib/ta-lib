@@ -7,10 +7,6 @@ description: >-
 ---
 # C# Core API
 
-::: warning Not yet released
-The C# API is not yet released. Estimated release: **Q1 2027**.
-:::
-
 <p><a href="#intro">1.0 Introduction</a></p>
 
 <p><a href="#build">2.0 Add it to your project</a></p>
@@ -55,15 +51,15 @@ There is no initialization step and nothing to shut down. Where C requires `TA_I
 
 ## 2.0 Add it to your project {#build}
 
-The package is not on NuGet yet. Until it is, reference the `TALib` project directly:
-
 ```xml
 <ItemGroup>
-  <ProjectReference Include="path/to/ta_codegen/output/csharp/library/TALib.csproj" />
+  <PackageReference Include="TA-Lib" Version="0.8.3" />
 </ItemGroup>
 ```
 
-It targets `net10.0`.
+Or run `dotnet add package TA-Lib`. It targets `net10.0`, so it needs the .NET 10 SDK or later.
+
+Every released version is listed on [NuGet](https://www.nuget.org/packages/TA-Lib).
 
 ## 3.0 Calling into TA-Lib {#ta_func}
 
