@@ -99,7 +99,15 @@ cargo clippy --all-targets -- -D warnings
 cargo test --lib -p ta-lib
 cargo test --doc -p ta-lib
 RUSTDOCFLAGS="-D warnings" cargo doc --no-deps -p ta-lib
-cargo package -p ta-lib-dispatch -p ta-lib      # packages AND verify-builds both
+```
+
+Then the package gate, from the repo root. It packages and verify-builds both crates, checks
+that each tarball holds exactly its tracked files, and compares `dispatch/` with the published
+`ta-lib-dispatch`. It reports when the pinned dispatch version is not on crates.io yet:
+that is the only case RP2 publishes it.
+
+```bash
+python3 scripts/rust_package_check.py
 ```
 
 And the cross-language gate, from `bin/`:
@@ -109,22 +117,13 @@ And the cross-language gate, from `bin/`:
 ./ta_regtest --xlang-hash --language=c,rust
 ```
 
-Sanity-check the tarball contents once — the file list is easy to break and impossible to
-fix after the fact:
-
-```bash
-tar tzf target/package/ta-lib-<VERSION>.crate | grep -Ev '^ta-lib-[^/]+/src/ta_func/'
-# expect: Cargo.toml, Cargo.toml.orig, Cargo.lock, .cargo_vcs_info.json, LICENSE,
-#         README.md, clippy.toml, src/lib.rs, src/abstract_api.rs, src/ta_func_api.xml,
-#         and the integration tests under tests/
-```
-
-(RP2) Publish `ta-lib-dispatch`, only when it changed, then (RP3) `ta-lib`.
+(RP2) Publish `ta-lib-dispatch` only when the package gate said its version is not on
+crates.io yet, then (RP3) `ta-lib`.
 
 ```bash
 cd ta_codegen/output/rust
 
-cargo publish -p ta-lib-dispatch --dry-run     # only if dispatch changed
+cargo publish -p ta-lib-dispatch --dry-run     # only if not on crates.io yet
 cargo publish -p ta-lib-dispatch               # permanent
 
 cargo publish -p ta-lib --dry-run              # if dispatch changed, resolves only once it is live

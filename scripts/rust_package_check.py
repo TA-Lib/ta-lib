@@ -29,9 +29,7 @@ This gate runs the real packaging step and then checks the tarball itself:
 
      Deriving the expectation from git rather than from a recorded count is the
      point: it needs no update when a function is added, and it still fails when
-     one goes missing. As of this commit that is 191 tracked files for ta-lib
-     (183 of them `src/ta_func/*.rs`) and 4 for ta-lib-dispatch -- 194 and 7
-     entries in the two tarballs once the three generated files are counted.
+     one goes missing.
 
   3. Anti-vacuity. An empty or near-empty expectation would make check 2 pass
      for the wrong reason (`git ls-files` outside a checkout returns nothing,
@@ -40,6 +38,14 @@ This gate runs the real packaging step and then checks the tarball itself:
      packaged `src/ta_func/*.rs` count must clear a floor well below the real
      one. The floor is deliberately crude -- check 2 is what makes the count
      exact; this only refuses to run on nothing.
+
+  4. Published dispatch. ta-lib pins ta-lib-dispatch exactly, and users build
+     against the registry's copy while every gate here builds the tree's. So
+     when the pinned version is already on crates.io, each tracked dispatch
+     file must equal the published one (the manifest against its
+     Cargo.toml.orig). A difference means dispatch changed without a new
+     version. A version not on crates.io yet passes: it is the one RP2
+     publishes. Not reaching crates.io fails, since it is not a match.
 
 Run:  python3 scripts/rust_package_check.py [--allow-dirty]
 
@@ -50,11 +56,15 @@ itself a failure there.
 
 import argparse
 import glob
+import hashlib
+import io
 import json
 import os
 import subprocess
 import sys
 import tarfile
+import urllib.error
+import urllib.request
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 WORKSPACE = os.path.join(ROOT, "ta_codegen/output/rust")
@@ -78,6 +88,9 @@ REQUIRED_IN_LIBRARY = ["Cargo.toml", "LICENSE", "README.md", "src/lib.rs"]
 # Anti-vacuity floor only -- see the module docstring. The real count is pinned
 # exactly by the git-tracked comparison.
 MIN_TA_FUNC_FILES = 100
+
+CRATES_IO = "https://crates.io/api/v1/crates"
+USER_AGENT = "ta-lib rust_package_check (github.com/TA-Lib/ta-lib)"
 
 _PACKAGE_DIR = None
 
@@ -132,8 +145,7 @@ def run_cargo_package(allow_dirty):
     return True
 
 
-def packaged_entries(name):
-    """Paths inside the crate's tarball, relative to the crate root."""
+def crate_path(name):
     # `[0-9]*` and not `*`: the latter would make "ta-lib" also match
     # ta-lib-dispatch-0.1.2.crate, and the two would check each other.
     found = glob.glob(os.path.join(package_dir(), "%s-[0-9]*.crate" % name))
@@ -142,7 +154,12 @@ def packaged_entries(name):
             "FAIL: expected exactly one %s-<version>.crate in %s, found %d"
             % (name, package_dir(), len(found))
         )
-    path = found[0]
+    return found[0]
+
+
+def packaged_entries(name):
+    """Paths inside the crate's tarball, relative to the crate root."""
+    path = crate_path(name)
     prefix = os.path.basename(path)[: -len(".crate")] + "/"
     entries = set()
     with tarfile.open(path, "r:gz") as tar:
@@ -204,6 +221,67 @@ def check_crate(name, subdir):
     return failures
 
 
+def fetch(url):
+    request = urllib.request.Request(url, headers={"User-Agent": USER_AGENT})
+    with urllib.request.urlopen(request, timeout=60) as response:
+        return response.read()
+
+
+def check_published_dispatch():
+    """Returns a list of failure strings (empty when the tree matches)."""
+    name, subdir = CRATES[0]
+    version = os.path.basename(crate_path(name))[len(name) + 1: -len(".crate")]
+
+    def not_compared(why):
+        return ["%s %s: %s, so the tree was NOT compared with the published crate"
+                % (name, version, why)]
+
+    try:
+        meta = json.loads(fetch("%s/%s/%s" % (CRATES_IO, name, version)))["version"]
+    except urllib.error.HTTPError as error:
+        if error.code == 404:
+            print("--- %s %s is not on crates.io yet: publish it before ta-lib"
+                  % (name, version))
+            return []
+        return not_compared("crates.io answered HTTP %d" % error.code)
+    except urllib.error.URLError as error:
+        return not_compared("crates.io could not be reached (%s)" % error.reason)
+    if meta["yanked"]:
+        return ["%s %s is yanked, so a new ta-lib cannot resolve its exact pin"
+                % (name, version)]
+    try:
+        tarball = fetch("https://crates.io" + meta["dl_path"])
+    except urllib.error.HTTPError as error:
+        return not_compared("crates.io answered HTTP %d" % error.code)
+    except urllib.error.URLError as error:
+        return not_compared("crates.io could not be reached (%s)" % error.reason)
+
+    if hashlib.sha256(tarball).hexdigest() != meta["checksum"]:
+        return not_compared("the download does not match crates.io's checksum")
+
+    prefix = "%s-%s/" % (name, version)
+    published = {}
+    with tarfile.open(fileobj=io.BytesIO(tarball), mode="r:gz") as tar:
+        for member in tar.getmembers():
+            if member.isfile() and member.name.startswith(prefix):
+                published[member.name[len(prefix):]] = tar.extractfile(member).read()
+
+    tracked = tracked_files(subdir)
+    differ = []
+    for rel in sorted(tracked):
+        with open(os.path.join(WORKSPACE, subdir, rel), "rb") as handle:
+            local = handle.read()
+        if published.get("Cargo.toml.orig" if rel == "Cargo.toml" else rel) != local:
+            differ.append(rel)
+    print("--- %s %s: %d tracked file(s) compared with the published crate"
+          % (name, version, len(tracked)))
+    if differ:
+        return ["%s: %s differ(s) from the published %s, which can never change. "
+                "Bump DISPATCH_VERSION in ta_codegen/generator/src/main.rs, "
+                "regenerate, and publish it before ta-lib (RP2)" % (name, ", ".join(differ), version)]
+    return []
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
@@ -236,6 +314,8 @@ def main():
             % (len(ta_func), MIN_TA_FUNC_FILES)
         )
 
+    failures.extend(check_published_dispatch())
+
     if failures:
         print("\n=== PACKAGE GATE FAILED ===")
         for failure in failures:
@@ -243,7 +323,7 @@ def main():
         return 1
 
     print("\n=== PACKAGE GATE PASSED: both crates package, verify-build, and "
-          "ship exactly their tracked files ===")
+          "ship exactly their tracked files, and dispatch matches crates.io ===")
     return 0
 
 
