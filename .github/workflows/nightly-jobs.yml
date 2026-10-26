@@ -866,9 +866,9 @@ jobs:
       # linted, documented and tested and still be absent from what crates.io
       # receives, with a published release that does not build as the first sign.
       #
-      # The script packages the pair (the library pins an =0.1.2 dispatch that is
-      # not on crates.io yet, so it cannot resolve alone), which makes cargo
-      # verification-BUILD each crate from its own unpacked tarball, and then
+      # The script packages the pair (so a pinned dispatch not on crates.io yet
+      # still resolves), which makes cargo verification-BUILD each crate from its
+      # own unpacked tarball, and then
       # checks the tarball contents against `git ls-files` -- derived, so adding a
       # function needs no edit here, and exact, so losing one fails. Measured
       # against the four steps above by excluding LICENSE from the manifest: all
@@ -882,6 +882,19 @@ jobs:
       - name: Package the publishable crates and check what ships
         shell: bash
         run: python3 scripts/rust_package_check.py
+
+      # A break shipped in a 0.x patch upgrades itself into every `ta-lib = "0.8"`
+      # build, so a break must bump VERSION's minor (#179 B1). This compares the
+      # tree with the last published crate and fails on a break the version
+      # number does not allow.
+      - name: Install cargo-semver-checks
+        shell: bash
+        run: cargo install cargo-semver-checks --locked --version 0.51.0
+
+      - name: API compatibility with the last published crate
+        shell: bash
+        working-directory: ta_codegen/output/rust
+        run: cargo semver-checks -p ta-lib
 
   # No other job runs the crate's own tests off Linux, and none compiles it
   # on Windows (#179 E6). `--lib --doc` together
