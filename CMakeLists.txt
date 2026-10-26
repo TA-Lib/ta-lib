@@ -8,7 +8,7 @@ project(ta-lib)
 # Written by scripts/sync.py from VERSION; do not edit.
 set(TA_LIB_VERSION_MAJOR 0)
 set(TA_LIB_VERSION_MINOR 8)
-set(TA_LIB_VERSION_PATCH 3)
+set(TA_LIB_VERSION_PATCH 4)
 
 set(PROJECT_VERSION "${TA_LIB_VERSION_MAJOR}.${TA_LIB_VERSION_MINOR}.${TA_LIB_VERSION_PATCH}")
 

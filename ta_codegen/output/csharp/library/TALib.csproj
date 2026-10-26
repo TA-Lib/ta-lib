@@ -42,7 +42,7 @@
     <IsPackable>true</IsPackable>
     <!-- Written by scripts/sync.py from the VERSION file, like the pom and the
          Cargo manifests. Never hand-edit it. -->
-    <Version>0.8.3</Version>
+    <Version>0.8.4</Version>
     <Authors>Mario Fortier</Authors>
     <!-- Claims a floor, not a count: a published version is immutable, and
          scripts/pre-release-checks.py verifies the corpus still meets it. -->
