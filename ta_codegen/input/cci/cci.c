@@ -30,6 +30,9 @@
  *  092826 MF,CC  Sum the window around the slot just stored, taking it from
  *                lastValue: a wide load over that slot waited for the store
  *                (#455). Same order, same values.
+ *  102626 MF,CC  The window average is a running sum, rebuilt every period
+ *                and whenever it falls well below its peak or an
+ *                identical-price window holds a changed sum (#560).
  */
 
 int cci_lookback(int optInTimePeriod)
@@ -46,7 +49,8 @@ TA_RetCode cci(int startIdx, int endIdx,
    double outReal[])
 {
    double tempReal, tempReal2, tempReal3, theAverage, lastValue;
-   int i, j, outIdx, lookbackTotal;
+   double periodTotal, periodPeak, prevValue;
+   int i, j, k, outIdx, lookbackTotal, sumDirty, flatRun;
 
    /* This ptr will points on a circular buffer of
     * at least "optInTimePeriod" element.
@@ -93,28 +97,69 @@ TA_RetCode cci(int startIdx, int endIdx,
       }
    }
 
+   /* The run of bars equal to the one before them, ending on the last bar
+    * filled above.
+    */
+   prevValue = (inHigh[startIdx-1]+inLow[startIdx-1]+inClose[startIdx-1])/3;
+   flatRun = 0;
+   k = startIdx-1;
+   while( k > startIdx-lookbackTotal
+      && (inHigh[k-1]+inLow[k-1]+inClose[k-1])/3 == prevValue )
+   {
+      flatRun++;
+      k--;
+   }
+
    /* Proceed with the calculation for the requested range.
     * Note that this algorithm allows the inReal and
     * outReal to be the same buffer.
     */
    outIdx = 0;
+   periodTotal = 0.0;
+   periodPeak = 0.0;
+   sumDirty = 0;
    do
    {
       lastValue = (inHigh[i]+inLow[i]+inClose[i])/3;
-      circBuffer[circBuffer_Idx] = lastValue;
+      if( lastValue == prevValue )
+      {
+         if( flatRun < optInTimePeriod )
+            flatRun++;
+      }
+      else
+         flatRun = 0;
+      prevValue = lastValue;
 
-      /* Calculate the average for the whole period. Both sums take the
-       * slot just stored from lastValue, in the same order, so no load reads
-       * it back: a vector load spanning that slot stalls until the store
-       * commits.
+      /* A running sum carries the rounding of every bar it took and gave
+       * back, at the scale of the sum when it did. The full pass on the bar
+       * that stores into the last slot, and whenever the sum falls below 2/3
+       * of the largest it held since the last pass, keeps that rounding at the
+       * scale of the current window. An identical-price window must still
+       * average to its own value, so it takes the full pass too unless the
+       * sum took no change since its last one.
        */
-      theAverage = 0;
-      for( j=0; j < circBuffer_Idx; j++ )
-         theAverage += circBuffer[j];
-      theAverage += lastValue;
-      for( j=circBuffer_Idx+1; j < optInTimePeriod; j++ )
-         theAverage += circBuffer[j];
-      theAverage /= optInTimePeriod;
+      if( circBuffer_Idx != optInTimePeriod-1 && lastValue != circBuffer[circBuffer_Idx] )
+      {
+         periodTotal += lastValue - circBuffer[circBuffer_Idx];
+         sumDirty = 1;
+      }
+      circBuffer[circBuffer_Idx] = lastValue;
+      tempReal = fabs(periodTotal);
+      periodPeak = ( tempReal > periodPeak ) ? tempReal : periodPeak;
+      if( circBuffer_Idx == optInTimePeriod-1 || periodPeak > 1.5*tempReal
+         || (sumDirty != 0 && flatRun >= optInTimePeriod-1) )
+      {
+         tempReal = 0;
+         for( j=0; j < circBuffer_Idx; j++ )
+            tempReal += circBuffer[j];
+         tempReal += lastValue;
+         for( j=circBuffer_Idx+1; j < optInTimePeriod; j++ )
+            tempReal += circBuffer[j];
+         periodTotal = tempReal;
+         periodPeak = fabs(tempReal);
+         sumDirty = 0;
+      }
+      theAverage = periodTotal / optInTimePeriod;
 
       /* Do the summation of the ABS(TypePrice-average)
        * for the whole period, then its mean.

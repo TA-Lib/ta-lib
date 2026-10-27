@@ -74,6 +74,9 @@
  *  092826 MF,CC  Sum the window around the slot just stored, taking it from
  *                lastValue: a wide load over that slot waited for the store
  *                (#455). Same order, same values.
+ *  102626 MF,CC  The window average is a running sum, rebuilt every period
+ *                and whenever it falls well below its peak or an
+ *                identical-price window holds a changed sum (#560).
  */
 
 TA_LIB_API int TA_CCI_Lookback( int optInTimePeriod )
@@ -109,10 +112,16 @@ TA_LIB_API TA_RetCode TA_CCI( int    startIdx,
    double tempReal3;
    double theAverage;
    double lastValue;
+   double periodTotal;
+   double periodPeak;
+   double prevValue;
    int i;
    int j;
+   int k;
    int outIdx;
    int lookbackTotal;
+   int sumDirty;
+   int flatRun;
    double local_circBuffer[30];
    double *circBuffer = &local_circBuffer[0];
    int circBuffer_Idx;
@@ -192,31 +201,72 @@ TA_LIB_API TA_RetCode TA_CCI( int    startIdx,
          if( circBuffer_Idx > maxIdx_circBuffer ) circBuffer_Idx = 0;
       }
    }
+   /* The run of bars equal to the one before them, ending on the last bar
+    * filled above.
+    */
+   prevValue = (inHigh[startIdx - 1] + inLow[startIdx - 1] + inClose[startIdx - 1]) / 3;
+   flatRun = 0;
+   k = startIdx - 1;
+   while( k > startIdx - lookbackTotal && (inHigh[k - 1] + inLow[k - 1] + inClose[k - 1]) / 3 == prevValue )
+   {
+      flatRun += 1;
+      k -= 1;
+   }
    /* Proceed with the calculation for the requested range.
     * Note that this algorithm allows the inReal and
     * outReal to be the same buffer.
     */
    outIdx = 0;
+   periodTotal = 0.0;
+   periodPeak = 0.0;
+   sumDirty = 0;
    do
    {
       lastValue = (inHigh[i] + inLow[i] + inClose[i]) / 3;
-      circBuffer[circBuffer_Idx] = lastValue;
-      /* Calculate the average for the whole period. Both sums take the
-       * slot just stored from lastValue, in the same order, so no load reads
-       * it back: a vector load spanning that slot stalls until the store
-       * commits.
+      if( lastValue == prevValue )
+      {
+         if( flatRun < optInTimePeriod )
+         {
+            flatRun += 1;
+         }
+      } else 
+      {
+         flatRun = 0;
+      }
+      prevValue = lastValue;
+      /* A running sum carries the rounding of every bar it took and gave
+       * back, at the scale of the sum when it did. The full pass on the bar
+       * that stores into the last slot, and whenever the sum falls below 2/3
+       * of the largest it held since the last pass, keeps that rounding at the
+       * scale of the current window. An identical-price window must still
+       * average to its own value, so it takes the full pass too unless the
+       * sum took no change since its last one.
        */
-      theAverage = 0;
-      for( j = 0; j < circBuffer_Idx; j += 1 )
+      if( circBuffer_Idx != optInTimePeriod - 1 && lastValue != circBuffer[circBuffer_Idx] )
       {
-         theAverage += circBuffer[j];
+         periodTotal += lastValue - circBuffer[circBuffer_Idx];
+         sumDirty = 1;
       }
-      theAverage += lastValue;
-      for( j = circBuffer_Idx + 1; j < optInTimePeriod; j += 1 )
+      circBuffer[circBuffer_Idx] = lastValue;
+      tempReal = fabs(periodTotal);
+      periodPeak = (tempReal > periodPeak) ? tempReal : periodPeak;
+      if( circBuffer_Idx == optInTimePeriod - 1 || periodPeak > 1.5 * tempReal || (sumDirty != 0 && flatRun >= optInTimePeriod - 1) )
       {
-         theAverage += circBuffer[j];
+         tempReal = 0;
+         for( j = 0; j < circBuffer_Idx; j += 1 )
+         {
+            tempReal += circBuffer[j];
+         }
+         tempReal += lastValue;
+         for( j = circBuffer_Idx + 1; j < optInTimePeriod; j += 1 )
+         {
+            tempReal += circBuffer[j];
+         }
+         periodTotal = tempReal;
+         periodPeak = fabs(tempReal);
+         sumDirty = 0;
       }
-      theAverage /= optInTimePeriod;
+      theAverage = periodTotal / optInTimePeriod;
       /* Do the summation of the ABS(TypePrice-average)
        * for the whole period, then its mean.
        */
@@ -285,10 +335,16 @@ TA_RetCode TA_S_CCI( int    startIdx,
    double tempReal3;
    double theAverage;
    double lastValue;
+   double periodTotal;
+   double periodPeak;
+   double prevValue;
    int i;
    int j;
+   int k;
    int outIdx;
    int lookbackTotal;
+   int sumDirty;
+   int flatRun;
    double local_circBuffer[30];
    double *circBuffer = &local_circBuffer[0];
    int circBuffer_Idx;
@@ -351,22 +407,57 @@ TA_RetCode TA_S_CCI( int    startIdx,
          if( circBuffer_Idx > maxIdx_circBuffer ) circBuffer_Idx = 0;
       }
    }
+   prevValue = ((double)inHigh[startIdx - 1] + (double)inLow[startIdx - 1] + (double)inClose[startIdx - 1]) / 3;
+   flatRun = 0;
+   k = startIdx - 1;
+   while( k > startIdx - lookbackTotal && ((double)inHigh[k - 1] + (double)inLow[k - 1] + (double)inClose[k - 1]) / 3 == prevValue )
+   {
+      flatRun += 1;
+      k -= 1;
+   }
    outIdx = 0;
+   periodTotal = 0.0;
+   periodPeak = 0.0;
+   sumDirty = 0;
    do
    {
       lastValue = ((double)inHigh[i] + (double)inLow[i] + (double)inClose[i]) / 3;
+      if( lastValue == prevValue )
+      {
+         if( flatRun < optInTimePeriod )
+         {
+            flatRun += 1;
+         }
+      } else 
+      {
+         flatRun = 0;
+      }
+      prevValue = lastValue;
+      if( circBuffer_Idx != optInTimePeriod - 1 && lastValue != circBuffer[circBuffer_Idx] )
+      {
+         periodTotal += lastValue - circBuffer[circBuffer_Idx];
+         sumDirty = 1;
+      }
       circBuffer[circBuffer_Idx] = lastValue;
-      theAverage = 0;
-      for( j = 0; j < circBuffer_Idx; j += 1 )
+      tempReal = fabs(periodTotal);
+      periodPeak = (tempReal > periodPeak) ? tempReal : periodPeak;
+      if( circBuffer_Idx == optInTimePeriod - 1 || periodPeak > 1.5 * tempReal || (sumDirty != 0 && flatRun >= optInTimePeriod - 1) )
       {
-         theAverage += circBuffer[j];
+         tempReal = 0;
+         for( j = 0; j < circBuffer_Idx; j += 1 )
+         {
+            tempReal += circBuffer[j];
+         }
+         tempReal += lastValue;
+         for( j = circBuffer_Idx + 1; j < optInTimePeriod; j += 1 )
+         {
+            tempReal += circBuffer[j];
+         }
+         periodTotal = tempReal;
+         periodPeak = fabs(tempReal);
+         sumDirty = 0;
       }
-      theAverage += lastValue;
-      for( j = circBuffer_Idx + 1; j < optInTimePeriod; j += 1 )
-      {
-         theAverage += circBuffer[j];
-      }
-      theAverage /= optInTimePeriod;
+      theAverage = periodTotal / optInTimePeriod;
       tempReal2 = 0;
       for( j = 0; j < circBuffer_Idx; j += 1 )
       {
@@ -406,6 +497,11 @@ struct TA_CCI_Stream {
    /* The value(s) at the last bar the stream counted (see TA_CCI_Value). */
    double cur_outReal;
    int optInTimePeriod;
+   double periodTotal;
+   double periodPeak;
+   double prevValue;
+   int sumDirty;
+   int flatRun;
    int circBuffer_Idx;
    int maxIdx_circBuffer;
    int cbSize_circBuffer;
@@ -429,25 +525,54 @@ static void TA_CCI_StepImpl( struct TA_CCI_Stream *sp, double inHigh, double inL
    double theAverage;
    double lastValue;
    int j;
+   double periodTotal;
 
+   periodTotal = sp->periodTotal;
    lastValue = (inHigh + inLow + inClose) / 3;
-   sp->cb_circBuffer[sp->circBuffer_Idx] = lastValue;
-   /* Calculate the average for the whole period. Both sums take the
-    * slot just stored from lastValue, in the same order, so no load reads
-    * it back: a vector load spanning that slot stalls until the store
-    * commits.
+   if( lastValue == sp->prevValue )
+   {
+      if( sp->flatRun < sp->optInTimePeriod )
+      {
+         sp->flatRun += 1;
+      }
+   } else 
+   {
+      sp->flatRun = 0;
+   }
+   sp->prevValue = lastValue;
+   /* A running sum carries the rounding of every bar it took and gave
+    * back, at the scale of the sum when it did. The full pass on the bar
+    * that stores into the last slot, and whenever the sum falls below 2/3
+    * of the largest it held since the last pass, keeps that rounding at the
+    * scale of the current window. An identical-price window must still
+    * average to its own value, so it takes the full pass too unless the
+    * sum took no change since its last one.
     */
-   theAverage = 0;
-   for( j = 0; j < sp->circBuffer_Idx; j += 1 )
+   if( sp->circBuffer_Idx != sp->optInTimePeriod - 1 && lastValue != sp->cb_circBuffer[sp->circBuffer_Idx] )
    {
-      theAverage += sp->cb_circBuffer[j];
+      periodTotal += lastValue - sp->cb_circBuffer[sp->circBuffer_Idx];
+      sp->sumDirty = 1;
    }
-   theAverage += lastValue;
-   for( j = sp->circBuffer_Idx + 1; j < sp->optInTimePeriod; j += 1 )
+   sp->cb_circBuffer[sp->circBuffer_Idx] = lastValue;
+   tempReal = fabs(periodTotal);
+   sp->periodPeak = (tempReal > sp->periodPeak) ? tempReal : sp->periodPeak;
+   if( sp->circBuffer_Idx == sp->optInTimePeriod - 1 || sp->periodPeak > 1.5 * tempReal || (sp->sumDirty != 0 && sp->flatRun >= sp->optInTimePeriod - 1) )
    {
-      theAverage += sp->cb_circBuffer[j];
+      tempReal = 0;
+      for( j = 0; j < sp->circBuffer_Idx; j += 1 )
+      {
+         tempReal += sp->cb_circBuffer[j];
+      }
+      tempReal += lastValue;
+      for( j = sp->circBuffer_Idx + 1; j < sp->optInTimePeriod; j += 1 )
+      {
+         tempReal += sp->cb_circBuffer[j];
+      }
+      periodTotal = tempReal;
+      sp->periodPeak = fabs(tempReal);
+      sp->sumDirty = 0;
    }
-   theAverage /= sp->optInTimePeriod;
+   theAverage = periodTotal / sp->optInTimePeriod;
    /* Do the summation of the ABS(TypePrice-average)
     * for the whole period, then its mean.
     */
@@ -495,6 +620,7 @@ static void TA_CCI_StepImpl( struct TA_CCI_Stream *sp, double inHigh, double inL
       sp->circBuffer_Idx = 0;
    }
    sp->cur_outReal = *outReal;
+   sp->periodTotal = periodTotal;
 }
 
 static TA_RetCode TA_CCI_OpenImpl( struct TA_CCI_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, int optInTimePeriod, int *outBegIdx, int *outNBElement, double outReal[], int outStride )
@@ -530,10 +656,16 @@ static TA_RetCode TA_CCI_OpenImpl( struct TA_CCI_Stream **stream, const double i
       double tempReal3;
       double theAverage;
       double lastValue;
+      double periodTotal = 0.0;
+      double periodPeak = 0.0;
+      double prevValue = 0.0;
       int i;
       int j;
+      int k;
       int outIdx;
       int lookbackTotal;
+      int sumDirty = 0;
+      int flatRun = 0;
       /* This ptr will points on a circular buffer of
        * at least "optInTimePeriod" element.
        */
@@ -588,31 +720,72 @@ static TA_RetCode TA_CCI_OpenImpl( struct TA_CCI_Stream **stream, const double i
             if( circBuffer_Idx > maxIdx_circBuffer ) circBuffer_Idx = 0;
          }
       }
+      /* The run of bars equal to the one before them, ending on the last bar
+       * filled above.
+       */
+      prevValue = (inHigh[startIdx - 1] + inLow[startIdx - 1] + inClose[startIdx - 1]) / 3;
+      flatRun = 0;
+      k = startIdx - 1;
+      while( k > startIdx - lookbackTotal && (inHigh[k - 1] + inLow[k - 1] + inClose[k - 1]) / 3 == prevValue )
+      {
+         flatRun += 1;
+         k -= 1;
+      }
       /* Proceed with the calculation for the requested range.
        * Note that this algorithm allows the inReal and
        * outReal to be the same buffer.
        */
       outIdx = 0;
+      periodTotal = 0.0;
+      periodPeak = 0.0;
+      sumDirty = 0;
       do
       {
          lastValue = (inHigh[i] + inLow[i] + inClose[i]) / 3;
-         circBuffer[circBuffer_Idx] = lastValue;
-         /* Calculate the average for the whole period. Both sums take the
-          * slot just stored from lastValue, in the same order, so no load reads
-          * it back: a vector load spanning that slot stalls until the store
-          * commits.
+         if( lastValue == prevValue )
+         {
+            if( flatRun < optInTimePeriod )
+            {
+               flatRun += 1;
+            }
+         } else 
+         {
+            flatRun = 0;
+         }
+         prevValue = lastValue;
+         /* A running sum carries the rounding of every bar it took and gave
+          * back, at the scale of the sum when it did. The full pass on the bar
+          * that stores into the last slot, and whenever the sum falls below 2/3
+          * of the largest it held since the last pass, keeps that rounding at the
+          * scale of the current window. An identical-price window must still
+          * average to its own value, so it takes the full pass too unless the
+          * sum took no change since its last one.
           */
-         theAverage = 0;
-         for( j = 0; j < circBuffer_Idx; j += 1 )
+         if( circBuffer_Idx != optInTimePeriod - 1 && lastValue != circBuffer[circBuffer_Idx] )
          {
-            theAverage += circBuffer[j];
+            periodTotal += lastValue - circBuffer[circBuffer_Idx];
+            sumDirty = 1;
          }
-         theAverage += lastValue;
-         for( j = circBuffer_Idx + 1; j < optInTimePeriod; j += 1 )
+         circBuffer[circBuffer_Idx] = lastValue;
+         tempReal = fabs(periodTotal);
+         periodPeak = (tempReal > periodPeak) ? tempReal : periodPeak;
+         if( circBuffer_Idx == optInTimePeriod - 1 || periodPeak > 1.5 * tempReal || (sumDirty != 0 && flatRun >= optInTimePeriod - 1) )
          {
-            theAverage += circBuffer[j];
+            tempReal = 0;
+            for( j = 0; j < circBuffer_Idx; j += 1 )
+            {
+               tempReal += circBuffer[j];
+            }
+            tempReal += lastValue;
+            for( j = circBuffer_Idx + 1; j < optInTimePeriod; j += 1 )
+            {
+               tempReal += circBuffer[j];
+            }
+            periodTotal = tempReal;
+            periodPeak = fabs(tempReal);
+            sumDirty = 0;
          }
-         theAverage /= optInTimePeriod;
+         theAverage = periodTotal / optInTimePeriod;
          /* Do the summation of the ABS(TypePrice-average)
           * for the whole period, then its mean.
           */
@@ -668,6 +841,11 @@ static TA_RetCode TA_CCI_OpenImpl( struct TA_CCI_Stream **stream, const double i
       if( !sp ) { if( circBuffer != &local_circBuffer[0] ) { TA_Free( circBuffer ); } return TA_ALLOC_ERR; }
       memset( sp, 0, sizeof(*sp) );
       sp->optInTimePeriod = optInTimePeriod;
+      sp->periodTotal = periodTotal;
+      sp->periodPeak = periodPeak;
+      sp->prevValue = prevValue;
+      sp->sumDirty = sumDirty;
+      sp->flatRun = flatRun;
       sp->circBuffer_Idx = circBuffer_Idx;
       sp->maxIdx_circBuffer = maxIdx_circBuffer;
       sp->cbSize_circBuffer = maxIdx_circBuffer + 1;
@@ -747,28 +925,65 @@ TA_LIB_API TA_RetCode TA_CCI_Peek( const TA_CCI_Stream *stream, double inHigh, d
    double theAverage;
    double lastValue;
    int j;
+   int flatRun;
+   double periodPeak;
+   double periodTotal;
+   double prevValue;
+   int sumDirty;
    double *cb_circBuffer;
 
    if( !stream || !outReal ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inHigh ) || !TA_IS_FINITE( inLow ) || !TA_IS_FINITE( inClose ) ) return TA_BAD_PARAM;
+   flatRun = sp->flatRun;
+   periodPeak = sp->periodPeak;
+   periodTotal = sp->periodTotal;
+   prevValue = sp->prevValue;
+   sumDirty = sp->sumDirty;
    cb_circBuffer = sp->cb_circBuffer;
    lastValue = (inHigh + inLow + inClose) / 3;
-   /* Calculate the average for the whole period. Both sums take the
-    * slot just stored from lastValue, in the same order, so no load reads
-    * it back: a vector load spanning that slot stalls until the store
-    * commits.
+   if( lastValue == prevValue )
+   {
+      if( flatRun < sp->optInTimePeriod )
+      {
+         flatRun += 1;
+      }
+   } else 
+   {
+      flatRun = 0;
+   }
+   prevValue = lastValue;
+   /* A running sum carries the rounding of every bar it took and gave
+    * back, at the scale of the sum when it did. The full pass on the bar
+    * that stores into the last slot, and whenever the sum falls below 2/3
+    * of the largest it held since the last pass, keeps that rounding at the
+    * scale of the current window. An identical-price window must still
+    * average to its own value, so it takes the full pass too unless the
+    * sum took no change since its last one.
     */
-   theAverage = 0;
-   for( j = 0; j < sp->circBuffer_Idx; j += 1 )
+   if( sp->circBuffer_Idx != sp->optInTimePeriod - 1 && lastValue != cb_circBuffer[sp->circBuffer_Idx] )
    {
-      theAverage += cb_circBuffer[j];
+      periodTotal += lastValue - cb_circBuffer[sp->circBuffer_Idx];
+      sumDirty = 1;
    }
-   theAverage += lastValue;
-   for( j = sp->circBuffer_Idx + 1; j < sp->optInTimePeriod; j += 1 )
+   tempReal = fabs(periodTotal);
+   periodPeak = (tempReal > periodPeak) ? tempReal : periodPeak;
+   if( sp->circBuffer_Idx == sp->optInTimePeriod - 1 || periodPeak > 1.5 * tempReal || (sumDirty != 0 && flatRun >= sp->optInTimePeriod - 1) )
    {
-      theAverage += cb_circBuffer[j];
+      tempReal = 0;
+      for( j = 0; j < sp->circBuffer_Idx; j += 1 )
+      {
+         tempReal += cb_circBuffer[j];
+      }
+      tempReal += lastValue;
+      for( j = sp->circBuffer_Idx + 1; j < sp->optInTimePeriod; j += 1 )
+      {
+         tempReal += cb_circBuffer[j];
+      }
+      periodTotal = tempReal;
+      periodPeak = fabs(tempReal);
+      sumDirty = 0;
    }
-   theAverage /= sp->optInTimePeriod;
+   theAverage = periodTotal / sp->optInTimePeriod;
    /* Do the summation of the ABS(TypePrice-average)
     * for the whole period, then its mean.
     */

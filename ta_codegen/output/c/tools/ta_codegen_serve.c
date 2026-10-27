@@ -1334,6 +1334,11 @@ static int sv_steq_TA_CCI( const struct TA_CCI_Stream *a, const struct TA_CCI_St
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
    if( sv_xtier_ne(a->cur_outReal, b->cur_outReal, z) ) { *w = "cur_outReal"; return 1; }
    if( a->optInTimePeriod != b->optInTimePeriod ) { *w = "optInTimePeriod"; return 1; }
+   if( sv_xtier_ne(a->periodTotal, b->periodTotal, z) ) { *w = "periodTotal"; return 1; }
+   if( sv_xtier_ne(a->periodPeak, b->periodPeak, z) ) { *w = "periodPeak"; return 1; }
+   if( sv_xtier_ne(a->prevValue, b->prevValue, z) ) { *w = "prevValue"; return 1; }
+   if( a->sumDirty != b->sumDirty ) { *w = "sumDirty"; return 1; }
+   if( a->flatRun != b->flatRun ) { *w = "flatRun"; return 1; }
    if( a->circBuffer_Idx != b->circBuffer_Idx ) { *w = "circBuffer_Idx"; return 1; }
    if( a->maxIdx_circBuffer != b->maxIdx_circBuffer ) { *w = "maxIdx_circBuffer"; return 1; }
    if( a->cbSize_circBuffer != b->cbSize_circBuffer ) { *w = "cbSize_circBuffer"; return 1; }

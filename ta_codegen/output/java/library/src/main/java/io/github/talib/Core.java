@@ -21228,6 +21228,9 @@ public final class Core {
  *  092826 MF,CC  Sum the window around the slot just stored, taking it from
  *                lastValue: a wide load over that slot waited for the store
  *                (#455). Same order, same values.
+ *  102626 MF,CC  The window average is a running sum, rebuilt every period
+ *                and whenever it falls well below its peak or an
+ *                identical-price window holds a changed sum (#560).
  */
 
    /**
@@ -21290,10 +21293,16 @@ public final class Core {
       double tempReal3 = 0;
       double theAverage = 0;
       double lastValue = 0;
+      double periodTotal = 0;
+      double periodPeak = 0;
+      double prevValue = 0;
       int i = 0;
       int j = 0;
+      int k = 0;
       int outIdx = 0;
       int lookbackTotal = 0;
+      int sumDirty = 0;
+      int flatRun = 0;
       double[] circBuffer;
       int circBuffer_Idx = 0;
       int maxIdx_circBuffer = (30)-1;
@@ -21347,28 +21356,63 @@ public final class Core {
             if( circBuffer_Idx > maxIdx_circBuffer ) { circBuffer_Idx = 0; }
          }
       }
+      /* The run of bars equal to the one before them, ending on the last bar
+       * filled above.
+       */
+      prevValue = (inHigh[startIdx - 1] + inLow[startIdx - 1] + inClose[startIdx - 1]) / 3;
+      flatRun = 0;
+      k = startIdx - 1;
+      while( k > startIdx - lookbackTotal && (inHigh[k - 1] + inLow[k - 1] + inClose[k - 1]) / 3 == prevValue ) {
+         flatRun += 1;
+         k -= 1;
+      }
       /* Proceed with the calculation for the requested range.
        * Note that this algorithm allows the inReal and
        * outReal to be the same buffer.
        */
       outIdx = 0;
+      periodTotal = 0.0;
+      periodPeak = 0.0;
+      sumDirty = 0;
       do {
          lastValue = (inHigh[i] + inLow[i] + inClose[i]) / 3;
-         circBuffer[circBuffer_Idx] = lastValue;
-         /* Calculate the average for the whole period. Both sums take the
-          * slot just stored from lastValue, in the same order, so no load reads
-          * it back: a vector load spanning that slot stalls until the store
-          * commits.
+         if( lastValue == prevValue ) {
+            if( flatRun < optInTimePeriod ) {
+               flatRun += 1;
+            }
+         } else {
+            flatRun = 0;
+         }
+         prevValue = lastValue;
+         /* A running sum carries the rounding of every bar it took and gave
+          * back, at the scale of the sum when it did. The full pass on the bar
+          * that stores into the last slot, and whenever the sum falls below 2/3
+          * of the largest it held since the last pass, keeps that rounding at the
+          * scale of the current window. An identical-price window must still
+          * average to its own value, so it takes the full pass too unless the
+          * sum took no change since its last one.
           */
-         theAverage = 0;
-         for( j = 0; j < circBuffer_Idx; j += 1 ) {
-            theAverage += circBuffer[j];
+         if( circBuffer_Idx != optInTimePeriod - 1 && lastValue != circBuffer[circBuffer_Idx] ) {
+            periodTotal += lastValue - circBuffer[circBuffer_Idx];
+            sumDirty = 1;
          }
-         theAverage += lastValue;
-         for( j = circBuffer_Idx + 1; j < optInTimePeriod; j += 1 ) {
-            theAverage += circBuffer[j];
+         circBuffer[circBuffer_Idx] = lastValue;
+         tempReal = Math.abs(periodTotal);
+         periodPeak = (tempReal > periodPeak) ? tempReal : periodPeak;
+         if( circBuffer_Idx == optInTimePeriod - 1 || periodPeak > 1.5 * tempReal || sumDirty != 0 && flatRun >= optInTimePeriod - 1 ) {
+            tempReal = 0;
+            for( j = 0; j < circBuffer_Idx; j += 1 ) {
+               tempReal += circBuffer[j];
+            }
+            tempReal += lastValue;
+            for( j = circBuffer_Idx + 1; j < optInTimePeriod; j += 1 ) {
+               tempReal += circBuffer[j];
+            }
+            periodTotal = tempReal;
+            periodPeak = Math.abs(tempReal);
+            sumDirty = 0;
          }
-         theAverage /= optInTimePeriod;
+         theAverage = periodTotal / optInTimePeriod;
          /* Do the summation of the ABS(TypePrice-average)
           * for the whole period, then its mean.
           */
@@ -21431,10 +21475,16 @@ public final class Core {
       double tempReal3 = 0;
       double theAverage = 0;
       double lastValue = 0;
+      double periodTotal = 0;
+      double periodPeak = 0;
+      double prevValue = 0;
       int i = 0;
       int j = 0;
+      int k = 0;
       int outIdx = 0;
       int lookbackTotal = 0;
+      int sumDirty = 0;
+      int flatRun = 0;
       double[] circBuffer;
       int circBuffer_Idx = 0;
       int maxIdx_circBuffer = (30)-1;
@@ -21471,19 +21521,48 @@ public final class Core {
             if( circBuffer_Idx > maxIdx_circBuffer ) { circBuffer_Idx = 0; }
          }
       }
+      prevValue = ((double)inHigh[startIdx - 1] + (double)inLow[startIdx - 1] + (double)inClose[startIdx - 1]) / 3;
+      flatRun = 0;
+      k = startIdx - 1;
+      while( k > startIdx - lookbackTotal && ((double)inHigh[k - 1] + (double)inLow[k - 1] + (double)inClose[k - 1]) / 3 == prevValue ) {
+         flatRun += 1;
+         k -= 1;
+      }
       outIdx = 0;
+      periodTotal = 0.0;
+      periodPeak = 0.0;
+      sumDirty = 0;
       do {
          lastValue = ((double)inHigh[i] + (double)inLow[i] + (double)inClose[i]) / 3;
+         if( lastValue == prevValue ) {
+            if( flatRun < optInTimePeriod ) {
+               flatRun += 1;
+            }
+         } else {
+            flatRun = 0;
+         }
+         prevValue = lastValue;
+         if( circBuffer_Idx != optInTimePeriod - 1 && lastValue != circBuffer[circBuffer_Idx] ) {
+            periodTotal += lastValue - circBuffer[circBuffer_Idx];
+            sumDirty = 1;
+         }
          circBuffer[circBuffer_Idx] = lastValue;
-         theAverage = 0;
-         for( j = 0; j < circBuffer_Idx; j += 1 ) {
-            theAverage += circBuffer[j];
+         tempReal = Math.abs(periodTotal);
+         periodPeak = (tempReal > periodPeak) ? tempReal : periodPeak;
+         if( circBuffer_Idx == optInTimePeriod - 1 || periodPeak > 1.5 * tempReal || sumDirty != 0 && flatRun >= optInTimePeriod - 1 ) {
+            tempReal = 0;
+            for( j = 0; j < circBuffer_Idx; j += 1 ) {
+               tempReal += circBuffer[j];
+            }
+            tempReal += lastValue;
+            for( j = circBuffer_Idx + 1; j < optInTimePeriod; j += 1 ) {
+               tempReal += circBuffer[j];
+            }
+            periodTotal = tempReal;
+            periodPeak = Math.abs(tempReal);
+            sumDirty = 0;
          }
-         theAverage += lastValue;
-         for( j = circBuffer_Idx + 1; j < optInTimePeriod; j += 1 ) {
-            theAverage += circBuffer[j];
-         }
-         theAverage /= optInTimePeriod;
+         theAverage = periodTotal / optInTimePeriod;
          tempReal2 = 0;
          for( j = 0; j < circBuffer_Idx; j += 1 ) {
             tempReal2 += Math.abs(circBuffer[j] - theAverage);
@@ -21658,6 +21737,11 @@ public final class Core {
    public static final class CciStream {
       private Core core;
       private int optInTimePeriod;
+      private double periodTotal;
+      private double periodPeak;
+      private double prevValue;
+      private int sumDirty;
+      private int flatRun;
       private int circBuffer_Idx;
       private int maxIdx_circBuffer;
       private int cbSize_circBuffer;
@@ -21705,6 +21789,11 @@ public final class Core {
       private CciStream( CciStream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
+         this.periodTotal = other.periodTotal;
+         this.periodPeak = other.periodPeak;
+         this.prevValue = other.prevValue;
+         this.sumDirty = other.sumDirty;
+         this.flatRun = other.flatRun;
          this.circBuffer_Idx = other.circBuffer_Idx;
          this.maxIdx_circBuffer = other.maxIdx_circBuffer;
          this.cbSize_circBuffer = other.cbSize_circBuffer;
@@ -21761,21 +21850,48 @@ public final class Core {
          double lastValue = 0.0;
          int j = 0;
          double cur_outReal = 0.0;
+         int flatRun = sp.flatRun;
+         double periodPeak = sp.periodPeak;
+         double periodTotal = sp.periodTotal;
+         double prevValue = sp.prevValue;
+         int sumDirty = sp.sumDirty;
          lastValue = (inHigh + inLow + inClose) / 3;
-         /* Calculate the average for the whole period. Both sums take the
-          * slot just stored from lastValue, in the same order, so no load reads
-          * it back: a vector load spanning that slot stalls until the store
-          * commits.
+         if( lastValue == prevValue ) {
+            if( flatRun < sp.optInTimePeriod ) {
+               flatRun += 1;
+            }
+         } else {
+            flatRun = 0;
+         }
+         prevValue = lastValue;
+         /* A running sum carries the rounding of every bar it took and gave
+          * back, at the scale of the sum when it did. The full pass on the bar
+          * that stores into the last slot, and whenever the sum falls below 2/3
+          * of the largest it held since the last pass, keeps that rounding at the
+          * scale of the current window. An identical-price window must still
+          * average to its own value, so it takes the full pass too unless the
+          * sum took no change since its last one.
           */
-         theAverage = 0;
-         for( j = 0; j < sp.circBuffer_Idx; j += 1 ) {
-            theAverage += sp.cb_circBuffer[j];
+         if( sp.circBuffer_Idx != sp.optInTimePeriod - 1 && lastValue != sp.cb_circBuffer[sp.circBuffer_Idx] ) {
+            periodTotal += lastValue - sp.cb_circBuffer[sp.circBuffer_Idx];
+            sumDirty = 1;
          }
-         theAverage += lastValue;
-         for( j = sp.circBuffer_Idx + 1; j < sp.optInTimePeriod; j += 1 ) {
-            theAverage += sp.cb_circBuffer[j];
+         tempReal = Math.abs(periodTotal);
+         periodPeak = (tempReal > periodPeak) ? tempReal : periodPeak;
+         if( sp.circBuffer_Idx == sp.optInTimePeriod - 1 || periodPeak > 1.5 * tempReal || sumDirty != 0 && flatRun >= sp.optInTimePeriod - 1 ) {
+            tempReal = 0;
+            for( j = 0; j < sp.circBuffer_Idx; j += 1 ) {
+               tempReal += sp.cb_circBuffer[j];
+            }
+            tempReal += lastValue;
+            for( j = sp.circBuffer_Idx + 1; j < sp.optInTimePeriod; j += 1 ) {
+               tempReal += sp.cb_circBuffer[j];
+            }
+            periodTotal = tempReal;
+            periodPeak = Math.abs(tempReal);
+            sumDirty = 0;
          }
-         theAverage /= sp.optInTimePeriod;
+         theAverage = periodTotal / sp.optInTimePeriod;
          /* Do the summation of the ABS(TypePrice-average)
           * for the whole period, then its mean.
           */
@@ -21850,21 +21966,43 @@ public final class Core {
       double lastValue = 0.0;
       int j = 0;
       lastValue = (inHigh + inLow + inClose) / 3;
-      sp.cb_circBuffer[sp.circBuffer_Idx] = lastValue;
-      /* Calculate the average for the whole period. Both sums take the
-       * slot just stored from lastValue, in the same order, so no load reads
-       * it back: a vector load spanning that slot stalls until the store
-       * commits.
+      if( lastValue == sp.prevValue ) {
+         if( sp.flatRun < sp.optInTimePeriod ) {
+            sp.flatRun += 1;
+         }
+      } else {
+         sp.flatRun = 0;
+      }
+      sp.prevValue = lastValue;
+      /* A running sum carries the rounding of every bar it took and gave
+       * back, at the scale of the sum when it did. The full pass on the bar
+       * that stores into the last slot, and whenever the sum falls below 2/3
+       * of the largest it held since the last pass, keeps that rounding at the
+       * scale of the current window. An identical-price window must still
+       * average to its own value, so it takes the full pass too unless the
+       * sum took no change since its last one.
        */
-      theAverage = 0;
-      for( j = 0; j < sp.circBuffer_Idx; j += 1 ) {
-         theAverage += sp.cb_circBuffer[j];
+      if( sp.circBuffer_Idx != sp.optInTimePeriod - 1 && lastValue != sp.cb_circBuffer[sp.circBuffer_Idx] ) {
+         sp.periodTotal += lastValue - sp.cb_circBuffer[sp.circBuffer_Idx];
+         sp.sumDirty = 1;
       }
-      theAverage += lastValue;
-      for( j = sp.circBuffer_Idx + 1; j < sp.optInTimePeriod; j += 1 ) {
-         theAverage += sp.cb_circBuffer[j];
+      sp.cb_circBuffer[sp.circBuffer_Idx] = lastValue;
+      tempReal = Math.abs(sp.periodTotal);
+      sp.periodPeak = (tempReal > sp.periodPeak) ? tempReal : sp.periodPeak;
+      if( sp.circBuffer_Idx == sp.optInTimePeriod - 1 || sp.periodPeak > 1.5 * tempReal || sp.sumDirty != 0 && sp.flatRun >= sp.optInTimePeriod - 1 ) {
+         tempReal = 0;
+         for( j = 0; j < sp.circBuffer_Idx; j += 1 ) {
+            tempReal += sp.cb_circBuffer[j];
+         }
+         tempReal += lastValue;
+         for( j = sp.circBuffer_Idx + 1; j < sp.optInTimePeriod; j += 1 ) {
+            tempReal += sp.cb_circBuffer[j];
+         }
+         sp.periodTotal = tempReal;
+         sp.periodPeak = Math.abs(tempReal);
+         sp.sumDirty = 0;
       }
-      theAverage /= sp.optInTimePeriod;
+      theAverage = sp.periodTotal / sp.optInTimePeriod;
       /* Do the summation of the ABS(TypePrice-average)
        * for the whole period, then its mean.
        */
@@ -21914,10 +22052,16 @@ public final class Core {
       double tempReal3 = 0;
       double theAverage = 0;
       double lastValue = 0;
+      double periodTotal = 0;
+      double periodPeak = 0;
+      double prevValue = 0;
       int i = 0;
       int j = 0;
+      int k = 0;
       int outIdx = 0;
       int lookbackTotal = 0;
+      int sumDirty = 0;
+      int flatRun = 0;
       double[] circBuffer;
       int circBuffer_Idx = 0;
       int maxIdx_circBuffer = (30)-1;
@@ -21981,28 +22125,63 @@ public final class Core {
             if( circBuffer_Idx > maxIdx_circBuffer ) { circBuffer_Idx = 0; }
          }
       }
+      /* The run of bars equal to the one before them, ending on the last bar
+       * filled above.
+       */
+      prevValue = (inHigh[startIdx - 1] + inLow[startIdx - 1] + inClose[startIdx - 1]) / 3;
+      flatRun = 0;
+      k = startIdx - 1;
+      while( k > startIdx - lookbackTotal && (inHigh[k - 1] + inLow[k - 1] + inClose[k - 1]) / 3 == prevValue ) {
+         flatRun += 1;
+         k -= 1;
+      }
       /* Proceed with the calculation for the requested range.
        * Note that this algorithm allows the inReal and
        * outReal to be the same buffer.
        */
       outIdx = 0;
+      periodTotal = 0.0;
+      periodPeak = 0.0;
+      sumDirty = 0;
       do {
          lastValue = (inHigh[i] + inLow[i] + inClose[i]) / 3;
-         circBuffer[circBuffer_Idx] = lastValue;
-         /* Calculate the average for the whole period. Both sums take the
-          * slot just stored from lastValue, in the same order, so no load reads
-          * it back: a vector load spanning that slot stalls until the store
-          * commits.
+         if( lastValue == prevValue ) {
+            if( flatRun < optInTimePeriod ) {
+               flatRun += 1;
+            }
+         } else {
+            flatRun = 0;
+         }
+         prevValue = lastValue;
+         /* A running sum carries the rounding of every bar it took and gave
+          * back, at the scale of the sum when it did. The full pass on the bar
+          * that stores into the last slot, and whenever the sum falls below 2/3
+          * of the largest it held since the last pass, keeps that rounding at the
+          * scale of the current window. An identical-price window must still
+          * average to its own value, so it takes the full pass too unless the
+          * sum took no change since its last one.
           */
-         theAverage = 0;
-         for( j = 0; j < circBuffer_Idx; j += 1 ) {
-            theAverage += circBuffer[j];
+         if( circBuffer_Idx != optInTimePeriod - 1 && lastValue != circBuffer[circBuffer_Idx] ) {
+            periodTotal += lastValue - circBuffer[circBuffer_Idx];
+            sumDirty = 1;
          }
-         theAverage += lastValue;
-         for( j = circBuffer_Idx + 1; j < optInTimePeriod; j += 1 ) {
-            theAverage += circBuffer[j];
+         circBuffer[circBuffer_Idx] = lastValue;
+         tempReal = Math.abs(periodTotal);
+         periodPeak = (tempReal > periodPeak) ? tempReal : periodPeak;
+         if( circBuffer_Idx == optInTimePeriod - 1 || periodPeak > 1.5 * tempReal || sumDirty != 0 && flatRun >= optInTimePeriod - 1 ) {
+            tempReal = 0;
+            for( j = 0; j < circBuffer_Idx; j += 1 ) {
+               tempReal += circBuffer[j];
+            }
+            tempReal += lastValue;
+            for( j = circBuffer_Idx + 1; j < optInTimePeriod; j += 1 ) {
+               tempReal += circBuffer[j];
+            }
+            periodTotal = tempReal;
+            periodPeak = Math.abs(tempReal);
+            sumDirty = 0;
          }
-         theAverage /= optInTimePeriod;
+         theAverage = periodTotal / optInTimePeriod;
          /* Do the summation of the ABS(TypePrice-average)
           * for the whole period, then its mean.
           */
@@ -22054,6 +22233,11 @@ public final class Core {
          return RetCode.INTERNAL_ERROR;
       }
       sp.optInTimePeriod = optInTimePeriod;
+      sp.periodTotal = periodTotal;
+      sp.periodPeak = periodPeak;
+      sp.prevValue = prevValue;
+      sp.sumDirty = sumDirty;
+      sp.flatRun = flatRun;
       sp.circBuffer_Idx = circBuffer_Idx;
       sp.maxIdx_circBuffer = maxIdx_circBuffer;
       sp.cbSize_circBuffer = capCb_circBuffer;

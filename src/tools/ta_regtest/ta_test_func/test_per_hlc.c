@@ -173,7 +173,7 @@ static TA_Test tableTest[] =
    /****************/
 
    /* KNOWN AND DELIBERATELY UNCOVERED: none of the CCI rows below can see which
-    * KIND of zero guard cci.c:127 uses. Degrading both TA_IS_ZERO_SCALED calls
+    * KIND of zero guard cci.c uses. Degrading both TA_IS_ZERO_SCALED calls
     * there to the fixed-band TA_IS_ZERO leaves `ta_regtest --function=CCI`
     * entirely green -- measured, and the green was sabotage-proved (perturbing
     * cci.c's own 0.015 to 0.0151 turns this same invocation red at index 0,
@@ -266,24 +266,38 @@ static TA_Test tableTest[] =
 /* Issue #7 / SF bug 107: with identical prices over the period, CCI is 0/0.
  * Sub-epsilon FP residue used to slip past the exact "!= 0.0" guard and divide
  * into a spurious ~66.67; TA_IS_ZERO now returns 0.0. Cross-checks all backends
- * under --codegen. */
+ * under --codegen.
+ *
+ * The window average is a running sum (#560): a flat window must still answer
+ * 0.0 after a bar orders of magnitude larger has left it, through a spike or a
+ * level drop, in batch and through Update. */
 static ErrorNumber test_cci_uniform_zero( void )
 {
    static const int periods[] = { 5, 8, 14, 30 };
-   const int nbBars = 40;
-   TA_Real high[40], low[40], close[40], out[40];
+   enum { NB_BARS = 100, NB_SHAPES = 3 };
+   TA_Real high[NB_BARS], low[NB_BARS], close[NB_BARS], out[NB_BARS];
    TA_Integer outBegIdx, outNbElement;
    TA_RetCode retCode;
-   int k, i;
+   int k, i, shape, flatFrom;
 
-   for( i = 0; i < nbBars; i++ )
-      high[i] = low[i] = close[i] = 1.1;
-
+   for( shape = 0; shape < NB_SHAPES; shape++ )
    for( k = 0; k < (int)(sizeof(periods)/sizeof(periods[0])); k++ )
    {
       int period = periods[k];
 
-      retCode = TA_CCI( 0, nbBars-1, high, low, close, period,
+      /* 0: flat throughout. 1: one tick 1e5x the level. 2: a choppy stretch
+       * near 1000, then flat at 1.01. flatFrom is the first bar whose whole
+       * window is flat. */
+      for( i = 0; i < NB_BARS; i++ )
+      {
+         if( shape == 0 )      close[i] = 1.1;
+         else if( shape == 1 ) close[i] = (i == 14) ? 101.37*1e5 : 101.37;
+         else                  close[i] = (i < 42) ? 1000.0 + (double)((i*37)%101) : 1.01;
+         high[i] = low[i] = close[i];
+      }
+      flatFrom = (shape == 0) ? period-1 : (shape == 1) ? 14+period : 42+period-1;
+
+      retCode = TA_CCI( 0, NB_BARS-1, high, low, close, period,
                         &outBegIdx, &outNbElement, out );
       if( retCode != TA_SUCCESS )
       {
@@ -292,25 +306,126 @@ static ErrorNumber test_cci_uniform_zero( void )
          return TA_TESTUTIL_TFRR_BAD_RETCODE;
       }
 
-      for( i = 0; i < outNbElement; i++ )
+      for( i = flatFrom-outBegIdx; i < outNbElement; i++ )
       {
          if( out[i] != 0.0 )
          {
-            printf( "Fail: CCI uniform input period %d out[%d]=%.17g, expected 0.0 "
-                    "(issue #7 / SF bug #107)\n", period, i, out[i] );
+            printf( "Fail: CCI flat window shape %d period %d out[%d]=%.17g, expected 0.0 "
+                    "(issue #7 / SF bug #107)\n", shape, period, i, out[i] );
             return TA_TESTUTIL_TFRR_BAD_CALCULATION;
          }
       }
 
+      {
+         TA_CCI_Stream *stream;
+         TA_Real v;
+         retCode = TA_CCI_Open( &stream, high, low, close, period, period, &v );
+         if( retCode != TA_SUCCESS )
+         {
+            printf( "Fail: CCI_Open returned retCode=%d (period %d)\n", (int)retCode, period );
+            return TA_TESTUTIL_TFRR_BAD_RETCODE;
+         }
+         for( i = period; i < NB_BARS; i++ )
+         {
+            retCode = TA_CCI_Update( stream, high[i], low[i], close[i], &v );
+            if( retCode != TA_SUCCESS )
+            {
+               printf( "Fail: CCI_Update returned retCode=%d (period %d bar %d)\n",
+                       (int)retCode, period, i );
+               TA_CCI_Close( stream );
+               return TA_TESTUTIL_TFRR_BAD_RETCODE;
+            }
+            if( i >= flatFrom && v != 0.0 )
+            {
+               printf( "Fail: CCI_Update flat window shape %d period %d bar %d = %.17g, "
+                       "expected 0.0\n", shape, period, i, v );
+               TA_CCI_Close( stream );
+               return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+            }
+         }
+         TA_CCI_Close( stream );
+      }
+
       if( server_verify_active() )
       {
-         ErrorNumber errNb = server_verify( "CCI", 0, nbBars-1, nbBars,
+         ErrorNumber errNb = server_verify( "CCI", 0, NB_BARS-1, NB_BARS,
                                 retCode, outBegIdx, outNbElement,
                                 (const TA_Real*[]){ high, low, close, NULL },
                                 (double[]){ (double)period }, 1,
                                 (const TA_Real*[]){ out, NULL }, NULL );
          if( errNb != TA_TEST_PASS )
             return errNb;
+      }
+   }
+
+   return TA_TEST_PASS;
+}
+
+
+/* The running sum's two safeguards, each by a shape only it handles (#560).
+ * A drop too shallow to rebuild on the sum's peak, over a long period, leaves
+ * enough rounding that an identical-price window reads as a spread unless the
+ * sum is rebuilt once the window is flat. A spike far above the level leaves
+ * rounding that skews the ordinary windows after it unless the sum is rebuilt
+ * once it falls from its peak: there, a call started after the spike must
+ * agree. */
+static ErrorNumber test_cci_running_sum( void )
+{
+   enum { P_LONG = 1000, PRE = 1865, NB_LONG = PRE+P_LONG+20, NB_SPIKE = 200 };
+   static const int periods[] = { 5, 14, 30 };
+   static TA_Real price[NB_LONG], out[NB_LONG], out2[NB_LONG];
+   TA_Integer outBegIdx, outNbElement, outBegIdx2, outNbElement2;
+   TA_RetCode retCode;
+   int i, k;
+
+   for( i = 0; i < NB_LONG; i++ )
+      price[i] = (i < PRE) ? 1.25 + (double)((i*7)%17)*0.01 : 1.0;
+
+   retCode = TA_CCI( 0, NB_LONG-1, price, price, price, P_LONG,
+                     &outBegIdx, &outNbElement, out );
+   if( retCode != TA_SUCCESS )
+   {
+      printf( "Fail: CCI long period returned retCode=%d\n", (int)retCode );
+      return TA_TESTUTIL_TFRR_BAD_RETCODE;
+   }
+   for( i = PRE+P_LONG-1-outBegIdx; i < outNbElement; i++ )
+   {
+      if( out[i] != 0.0 )
+      {
+         printf( "Fail: CCI period %d flat window out[%d]=%.17g, expected 0.0\n",
+                 P_LONG, i, out[i] );
+         return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+      }
+   }
+
+   for( k = 0; k < (int)(sizeof(periods)/sizeof(periods[0])); k++ )
+   {
+      int period = periods[k];
+      int start = 20+period;
+
+      for( i = 0; i < NB_SPIKE; i++ )
+         price[i] = 100.0 + (double)((i*37)%101)*0.01;
+      price[20] *= 1e7;
+
+      retCode = TA_CCI( 0, NB_SPIKE-1, price, price, price, period,
+                        &outBegIdx, &outNbElement, out );
+      if( retCode == TA_SUCCESS )
+         retCode = TA_CCI( start, NB_SPIKE-1, price, price, price, period,
+                           &outBegIdx2, &outNbElement2, out2 );
+      if( retCode != TA_SUCCESS )
+      {
+         printf( "Fail: CCI spike returned retCode=%d (period %d)\n", (int)retCode, period );
+         return TA_TESTUTIL_TFRR_BAD_RETCODE;
+      }
+      for( i = 0; i < outNbElement2; i++ )
+      {
+         double a = out[outBegIdx2-outBegIdx+i];
+         if( fabs(a-out2[i]) > 1e-9 )
+         {
+            printf( "Fail: CCI period %d bar %d after a spike: %.17g from bar 0, "
+                    "%.17g from bar %d\n", period, outBegIdx2+i, a, out2[i], start );
+            return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+         }
       }
    }
 
@@ -660,6 +775,13 @@ ErrorNumber test_func_per_hlc( TA_History *history )
    if( retValue != TA_TEST_PASS )
    {
       printf( "Failed CCI uniform-input test (Code=%d)\n", retValue );
+      return retValue;
+   }
+
+   retValue = test_cci_running_sum();
+   if( retValue != TA_TEST_PASS )
+   {
+      printf( "Failed CCI running-sum test (Code=%d)\n", retValue );
       return retValue;
    }
 

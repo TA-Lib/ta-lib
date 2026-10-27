@@ -105,9 +105,10 @@
  *       power-of-two period re-measures this row as unnecessary.
  *       #411 gives CMO and the DM/DI/DX/ADX family the same hoist; ADX, ADXR
  *       and CMO also change the step's form, so only DM, DI and DX share RSI's
- *       power-of-two exactness.
+ *       power-of-two exactness. CCI's window average is a running sum
+ *       (#560), which rounds in a different order.
  *
- * A blanket contract bound would buy unearned slack: CCI, IMI and KAMA are all
+ * A blanket contract bound would buy unearned slack: IMI and KAMA are both
  * bit-exact against v0.6.4 on this series, their divergences needing the fuzz
  * corpus's extreme magnitudes to appear.
  *
@@ -171,6 +172,7 @@ static const TA_LegacyTol LEGACY_TOL[] =
    { "MINUS_DM",            2e-14 },  /* #411  measured 3.55e-15             */
    { "ATR",                 3e-15 },  /* #338  measured 8.88e-16             */
    { "NATR",                2e-15 },  /* #338  measured 4.44e-16             */
+   { "CCI",                 1e-12 },  /* #560  measured 3.41e-13             */
 
    /* --- (a) explicit fma() adoption, PR #96 ------------------------------
     * Verified per row: ADOSC, T3, TEMA, DEMA, SAREXT, SAR, MACD, MACDFIX and

@@ -72,6 +72,9 @@
  *  092826 MF,CC  Sum the window around the slot just stored, taking it from
  *                lastValue: a wide load over that slot waited for the store
  *                (#455). Same order, same values.
+ *  102626 MF,CC  The window average is a running sum, rebuilt every period
+ *                and whenever it falls well below its peak or an
+ *                identical-price window holds a changed sum (#560).
  */
 
 // Import types from parent module
@@ -168,10 +171,16 @@ impl Core {
         let mut tempReal3: f64 = 0.0_f64;
         let mut theAverage: f64 = 0.0_f64;
         let mut lastValue: f64 = 0.0_f64;
+        let mut periodTotal: f64 = 0.0_f64;
+        let mut periodPeak: f64 = 0.0_f64;
+        let mut prevValue: f64 = 0.0_f64;
         let mut i: usize = 0_usize;
         let mut j: usize = 0_usize;
+        let mut k: usize = 0_usize;
         let mut outIdx: usize = 0_usize;
         let mut lookbackTotal: usize = 0_usize;
+        let mut sumDirty: usize = 0_usize;
+        let mut flatRun: usize = 0_usize;
         let mut local_circBuffer: [f64; 30] = [0.0_f64; 30];
         let mut heap_circBuffer: Vec<f64> = Vec::new();
         let mut circBuffer: &mut [f64] = &mut [];
@@ -217,38 +226,72 @@ impl Core {
                 if circBuffer_Idx >= circBuffer.len() { circBuffer_Idx = 0; }
             }
         }
+        // The run of bars equal to the one before them, ending on the last bar
+        // filled above.
+        prevValue = (inHigh[startIdx - 1] + inLow[startIdx - 1] + inClose[startIdx - 1]) / 3_f64;
+        flatRun = 0;
+        k = startIdx - 1;
+        while k > startIdx - lookbackTotal && (inHigh[k - 1] + inLow[k - 1] + inClose[k - 1]) / 3_f64 == prevValue {
+            flatRun += 1;
+            k -= 1;
+        }
         // Proceed with the calculation for the requested range.
         // Note that this algorithm allows the inReal and
         // outReal to be the same buffer.
         outIdx = 0;
+        periodTotal = 0.0;
+        periodPeak = 0.0;
+        sumDirty = 0;
         loop {
             lastValue = (inHigh[i] + inLow[i] + inClose[i]) / 3_f64;
+            if lastValue == prevValue {
+                if flatRun < ((optInTimePeriod) as usize) {
+                    flatRun += 1;
+                }
+            } else {
+                flatRun = 0;
+            }
+            prevValue = lastValue;
+            // A running sum carries the rounding of every bar it took and gave
+            // back, at the scale of the sum when it did. The full pass on the bar
+            // that stores into the last slot, and whenever the sum falls below 2/3
+            // of the largest it held since the last pass, keeps that rounding at the
+            // scale of the current window. An identical-price window must still
+            // average to its own value, so it takes the full pass too unless the
+            // sum took no change since its last one.
+            if circBuffer_Idx != ((optInTimePeriod - 1) as usize) && lastValue != circBuffer[circBuffer_Idx] {
+                periodTotal += lastValue - circBuffer[circBuffer_Idx];
+                sumDirty = 1;
+            }
             circBuffer[circBuffer_Idx] = lastValue;
-            // Calculate the average for the whole period. Both sums take the
-            // slot just stored from lastValue, in the same order, so no load reads
-            // it back: a vector load spanning that slot stalls until the store
-            // commits.
-            theAverage = 0.0;
-            j = 0;
-            if j < circBuffer_Idx {
-                let _wn: usize = circBuffer_Idx - j;
-                let _w0 = &circBuffer[j..][.._wn];
-                for _wk in 0.._wn {
-                    theAverage += _w0[_wk];
-                    j += 1;
+            tempReal = (periodTotal).abs();
+            periodPeak = (if tempReal > periodPeak { tempReal } else { periodPeak });
+            if circBuffer_Idx == ((optInTimePeriod - 1) as usize) || periodPeak > 1.5 * tempReal || sumDirty != 0 && flatRun >= ((optInTimePeriod - 1) as usize) {
+                tempReal = 0.0;
+                j = 0;
+                if j < circBuffer_Idx {
+                    let _wn: usize = circBuffer_Idx - j;
+                    let _w0 = &circBuffer[j..][.._wn];
+                    for _wk in 0.._wn {
+                        tempReal += _w0[_wk];
+                        j += 1;
+                    }
                 }
-            }
-            theAverage += lastValue;
-            j = circBuffer_Idx + 1;
-            if j < ((optInTimePeriod) as usize) {
-                let _wn: usize = (optInTimePeriod as usize) - j;
-                let _w0 = &circBuffer[j..][.._wn];
-                for _wk in 0.._wn {
-                    theAverage += _w0[_wk];
-                    j += 1;
+                tempReal += lastValue;
+                j = circBuffer_Idx + 1;
+                if j < ((optInTimePeriod) as usize) {
+                    let _wn: usize = (optInTimePeriod as usize) - j;
+                    let _w0 = &circBuffer[j..][.._wn];
+                    for _wk in 0.._wn {
+                        tempReal += _w0[_wk];
+                        j += 1;
+                    }
                 }
+                periodTotal = tempReal;
+                periodPeak = (tempReal).abs();
+                sumDirty = 0;
             }
-            theAverage /= ((optInTimePeriod) as f64);
+            theAverage = periodTotal / ((optInTimePeriod) as f64);
             // Do the summation of the ABS(TypePrice-average)
             // for the whole period, then its mean.
             tempReal2 = 0.0;
@@ -447,6 +490,11 @@ pub struct CciStream {
 #[allow(non_snake_case, dead_code)]
 struct CciStreamState {
     optInTimePeriod: i32,
+    periodTotal: f64,
+    periodPeak: f64,
+    prevValue: f64,
+    sumDirty: usize,
+    flatRun: usize,
     circBuffer_Idx: usize,
     maxIdx_circBuffer: usize,
     cbSize_circBuffer: usize,
@@ -468,26 +516,48 @@ impl Core {
         let mut lastValue: f64 = 0.0_f64;
         let mut j: usize = 0_usize;
         lastValue = (inHigh + inLow + inClose) / 3_f64;
+        if lastValue == sp.prevValue {
+            if sp.flatRun < ((sp.optInTimePeriod) as usize) {
+                sp.flatRun += 1;
+            }
+        } else {
+            sp.flatRun = 0;
+        }
+        sp.prevValue = lastValue;
+        // A running sum carries the rounding of every bar it took and gave
+        // back, at the scale of the sum when it did. The full pass on the bar
+        // that stores into the last slot, and whenever the sum falls below 2/3
+        // of the largest it held since the last pass, keeps that rounding at the
+        // scale of the current window. An identical-price window must still
+        // average to its own value, so it takes the full pass too unless the
+        // sum took no change since its last one.
+        if sp.circBuffer_Idx != ((sp.optInTimePeriod - 1) as usize) && lastValue != sp.cb_circBuffer[sp.circBuffer_Idx] {
+            sp.periodTotal += lastValue - sp.cb_circBuffer[sp.circBuffer_Idx];
+            sp.sumDirty = 1;
+        }
         sp.cb_circBuffer[sp.circBuffer_Idx] = lastValue;
-        // Calculate the average for the whole period. Both sums take the
-        // slot just stored from lastValue, in the same order, so no load reads
-        // it back: a vector load spanning that slot stalls until the store
-        // commits.
-        theAverage = 0.0;
-        // for( j = 0; j < sp.circBuffer_Idx; j += 1 )
-        j = 0;
-        while j < sp.circBuffer_Idx {
-            theAverage += sp.cb_circBuffer[j];
-            j += 1;
+        tempReal = (sp.periodTotal).abs();
+        sp.periodPeak = (if tempReal > sp.periodPeak { tempReal } else { sp.periodPeak });
+        if sp.circBuffer_Idx == ((sp.optInTimePeriod - 1) as usize) || sp.periodPeak > 1.5 * tempReal || sp.sumDirty != 0 && sp.flatRun >= ((sp.optInTimePeriod - 1) as usize) {
+            tempReal = 0.0;
+            // for( j = 0; j < sp.circBuffer_Idx; j += 1 )
+            j = 0;
+            while j < sp.circBuffer_Idx {
+                tempReal += sp.cb_circBuffer[j];
+                j += 1;
+            }
+            tempReal += lastValue;
+            // for( j = sp.circBuffer_Idx + 1; j < ((sp.optInTimePeriod) as usize); j += 1 )
+            j = sp.circBuffer_Idx + 1;
+            while j < ((sp.optInTimePeriod) as usize) {
+                tempReal += sp.cb_circBuffer[j];
+                j += 1;
+            }
+            sp.periodTotal = tempReal;
+            sp.periodPeak = (tempReal).abs();
+            sp.sumDirty = 0;
         }
-        theAverage += lastValue;
-        // for( j = sp.circBuffer_Idx + 1; j < ((sp.optInTimePeriod) as usize); j += 1 )
-        j = sp.circBuffer_Idx + 1;
-        while j < ((sp.optInTimePeriod) as usize) {
-            theAverage += sp.cb_circBuffer[j];
-            j += 1;
-        }
-        theAverage /= ((sp.optInTimePeriod) as f64);
+        theAverage = sp.periodTotal / ((sp.optInTimePeriod) as f64);
         // Do the summation of the ABS(TypePrice-average)
         // for the whole period, then its mean.
         tempReal2 = 0.0;
@@ -570,10 +640,16 @@ impl Core {
         let mut tempReal3: f64 = 0.0_f64;
         let mut theAverage: f64 = 0.0_f64;
         let mut lastValue: f64 = 0.0_f64;
+        let mut periodTotal: f64 = 0.0_f64;
+        let mut periodPeak: f64 = 0.0_f64;
+        let mut prevValue: f64 = 0.0_f64;
         let mut i: usize = 0_usize;
         let mut j: usize = 0_usize;
+        let mut k: usize = 0_usize;
         let mut outIdx: usize = 0_usize;
         let mut lookbackTotal: usize = 0_usize;
+        let mut sumDirty: usize = 0_usize;
+        let mut flatRun: usize = 0_usize;
         let mut circBuffer: Vec<f64> = Vec::new();
         let mut circBuffer_Idx: usize = 0;
         let mut maxIdx_circBuffer: usize = 29;
@@ -611,32 +687,66 @@ impl Core {
                 if circBuffer_Idx > maxIdx_circBuffer { circBuffer_Idx = 0; }
             }
         }
+        // The run of bars equal to the one before them, ending on the last bar
+        // filled above.
+        prevValue = (inHigh[startIdx - 1] + inLow[startIdx - 1] + inClose[startIdx - 1]) / 3_f64;
+        flatRun = 0;
+        k = startIdx - 1;
+        while k > startIdx - lookbackTotal && (inHigh[k - 1] + inLow[k - 1] + inClose[k - 1]) / 3_f64 == prevValue {
+            flatRun += 1;
+            k -= 1;
+        }
         // Proceed with the calculation for the requested range.
         // Note that this algorithm allows the inReal and
         // outReal to be the same buffer.
         outIdx = 0;
+        periodTotal = 0.0;
+        periodPeak = 0.0;
+        sumDirty = 0;
         loop {
             lastValue = (inHigh[i] + inLow[i] + inClose[i]) / 3_f64;
+            if lastValue == prevValue {
+                if flatRun < ((optInTimePeriod) as usize) {
+                    flatRun += 1;
+                }
+            } else {
+                flatRun = 0;
+            }
+            prevValue = lastValue;
+            // A running sum carries the rounding of every bar it took and gave
+            // back, at the scale of the sum when it did. The full pass on the bar
+            // that stores into the last slot, and whenever the sum falls below 2/3
+            // of the largest it held since the last pass, keeps that rounding at the
+            // scale of the current window. An identical-price window must still
+            // average to its own value, so it takes the full pass too unless the
+            // sum took no change since its last one.
+            if circBuffer_Idx != ((optInTimePeriod - 1) as usize) && lastValue != circBuffer[circBuffer_Idx] {
+                periodTotal += lastValue - circBuffer[circBuffer_Idx];
+                sumDirty = 1;
+            }
             circBuffer[circBuffer_Idx] = lastValue;
-            // Calculate the average for the whole period. Both sums take the
-            // slot just stored from lastValue, in the same order, so no load reads
-            // it back: a vector load spanning that slot stalls until the store
-            // commits.
-            theAverage = 0.0;
-            // for( j = 0; j < circBuffer_Idx; j += 1 )
-            j = 0;
-            while j < circBuffer_Idx {
-                theAverage += circBuffer[j];
-                j += 1;
+            tempReal = (periodTotal).abs();
+            periodPeak = (if tempReal > periodPeak { tempReal } else { periodPeak });
+            if circBuffer_Idx == ((optInTimePeriod - 1) as usize) || periodPeak > 1.5 * tempReal || sumDirty != 0 && flatRun >= ((optInTimePeriod - 1) as usize) {
+                tempReal = 0.0;
+                // for( j = 0; j < circBuffer_Idx; j += 1 )
+                j = 0;
+                while j < circBuffer_Idx {
+                    tempReal += circBuffer[j];
+                    j += 1;
+                }
+                tempReal += lastValue;
+                // for( j = circBuffer_Idx + 1; j < ((optInTimePeriod) as usize); j += 1 )
+                j = circBuffer_Idx + 1;
+                while j < ((optInTimePeriod) as usize) {
+                    tempReal += circBuffer[j];
+                    j += 1;
+                }
+                periodTotal = tempReal;
+                periodPeak = (tempReal).abs();
+                sumDirty = 0;
             }
-            theAverage += lastValue;
-            // for( j = circBuffer_Idx + 1; j < ((optInTimePeriod) as usize); j += 1 )
-            j = circBuffer_Idx + 1;
-            while j < ((optInTimePeriod) as usize) {
-                theAverage += circBuffer[j];
-                j += 1;
-            }
-            theAverage /= ((optInTimePeriod) as f64);
+            theAverage = periodTotal / ((optInTimePeriod) as f64);
             // Do the summation of the ABS(TypePrice-average)
             // for the whole period, then its mean.
             tempReal2 = 0.0;
@@ -695,6 +805,11 @@ impl Core {
         }
         let state = CciStreamState {
             optInTimePeriod,
+            periodTotal,
+            periodPeak,
+            prevValue,
+            sumDirty,
+            flatRun,
             circBuffer_Idx,
             maxIdx_circBuffer,
             cur_outReal: outReal[(*outNBElement - 1) * outStride],
@@ -882,26 +997,53 @@ impl CciStream {
             let mut theAverage: f64 = 0.0_f64;
             let mut lastValue: f64 = 0.0_f64;
             let mut j: usize = 0_usize;
+            let mut flatRun = sp.flatRun;
+            let mut periodPeak = sp.periodPeak;
+            let mut periodTotal = sp.periodTotal;
+            let mut prevValue = sp.prevValue;
+            let mut sumDirty = sp.sumDirty;
             lastValue = (inHigh + inLow + inClose) / 3_f64;
-            // Calculate the average for the whole period. Both sums take the
-            // slot just stored from lastValue, in the same order, so no load reads
-            // it back: a vector load spanning that slot stalls until the store
-            // commits.
-            theAverage = 0.0;
-            // for( j = 0; j < sp.circBuffer_Idx; j += 1 )
-            j = 0;
-            while j < sp.circBuffer_Idx {
-                theAverage += sp.cb_circBuffer[j];
-                j += 1;
+            if lastValue == prevValue {
+                if flatRun < ((sp.optInTimePeriod) as usize) {
+                    flatRun += 1;
+                }
+            } else {
+                flatRun = 0;
             }
-            theAverage += lastValue;
-            // for( j = sp.circBuffer_Idx + 1; j < ((sp.optInTimePeriod) as usize); j += 1 )
-            j = sp.circBuffer_Idx + 1;
-            while j < ((sp.optInTimePeriod) as usize) {
-                theAverage += sp.cb_circBuffer[j];
-                j += 1;
+            prevValue = lastValue;
+            // A running sum carries the rounding of every bar it took and gave
+            // back, at the scale of the sum when it did. The full pass on the bar
+            // that stores into the last slot, and whenever the sum falls below 2/3
+            // of the largest it held since the last pass, keeps that rounding at the
+            // scale of the current window. An identical-price window must still
+            // average to its own value, so it takes the full pass too unless the
+            // sum took no change since its last one.
+            if sp.circBuffer_Idx != ((sp.optInTimePeriod - 1) as usize) && lastValue != sp.cb_circBuffer[sp.circBuffer_Idx] {
+                periodTotal += lastValue - sp.cb_circBuffer[sp.circBuffer_Idx];
+                sumDirty = 1;
             }
-            theAverage /= ((sp.optInTimePeriod) as f64);
+            tempReal = (periodTotal).abs();
+            periodPeak = (if tempReal > periodPeak { tempReal } else { periodPeak });
+            if sp.circBuffer_Idx == ((sp.optInTimePeriod - 1) as usize) || periodPeak > 1.5 * tempReal || sumDirty != 0 && flatRun >= ((sp.optInTimePeriod - 1) as usize) {
+                tempReal = 0.0;
+                // for( j = 0; j < sp.circBuffer_Idx; j += 1 )
+                j = 0;
+                while j < sp.circBuffer_Idx {
+                    tempReal += sp.cb_circBuffer[j];
+                    j += 1;
+                }
+                tempReal += lastValue;
+                // for( j = sp.circBuffer_Idx + 1; j < ((sp.optInTimePeriod) as usize); j += 1 )
+                j = sp.circBuffer_Idx + 1;
+                while j < ((sp.optInTimePeriod) as usize) {
+                    tempReal += sp.cb_circBuffer[j];
+                    j += 1;
+                }
+                periodTotal = tempReal;
+                periodPeak = (tempReal).abs();
+                sumDirty = 0;
+            }
+            theAverage = periodTotal / ((sp.optInTimePeriod) as f64);
             // Do the summation of the ABS(TypePrice-average)
             // for the whole period, then its mean.
             tempReal2 = 0.0;
