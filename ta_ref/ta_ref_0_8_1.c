@@ -64,6 +64,9 @@ static const TaRefTol TOL[] = {
     * not scale with price, so no input floor applies, and the row is sized by
     * its zero crossings. */
    { "ADOSC",    TA_REF_TOL_REL_OUT,         2e-9,  0.0 }, /* measured 5.77e-10 */
+   /* #560 CCI's window average as a running sum. Floored at 1: the largest move
+    * is a period-2 window of two near-equal prices, all cancellation. */
+   { "CCI",      TA_REF_TOL_REL_OUT_FLOOR1,  3e-10, 0.0 }, /* measured 7.34e-11 */
 };
 
 /* Each ceiling sits halfway between the largest share measured on one function

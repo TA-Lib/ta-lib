@@ -28,7 +28,8 @@
 static const char *const EXCLUDED[] = { "STOCHRSI", NULL };
 
 static const TaRefTol TOL[] = {
-   { "CCI",                 TA_REF_TOL_ABS,     1e-9,  0.0 }, /* #7   near-zero identical-price fix */
+   /* #7 near-zero identical-price fix; #560 the window average as a running sum. */
+   { "CCI",                 TA_REF_TOL_REL_OUT_FLOOR1, 3e-10, 0.0 }, /* measured 7.34e-11 */
    /* #118 cancellation-free variance, output-relative because VAR's output is a
     * squared quantity. Only well-conditioned windows reach here (variance_condition). */
    { "VAR",                 TA_REF_TOL_REL_OUT, 1e-9,  0.0 },
