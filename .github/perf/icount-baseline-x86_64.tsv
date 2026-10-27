@@ -6,8 +6,8 @@
 #policy	monotone
 #toolchain	x86_64/x86_64-linux-gnu/13.3.0
 #corpus	points=20000 regime_period=14 seed=42 shape=randwalk stream_iters=1024 trend_strength=0.500000
-#commit	e00e8a6c325e36f665b7e3b6898be8910fc6c9e7
-#generated	2026-10-25T09:30:43Z
+#commit	3352721188672f4daf7ff1b0b1fa0eaba755a196
+#generated	2026-10-27T18:04:39Z
 AC	batch	0	703438
 AC	open	0	704171
 AC	openfill	0	692624
@@ -128,11 +128,11 @@ BOP	open	0	220112
 BOP	openfill	0	220134
 BOP	peek	0	55309
 BOP	update	0	67597
-CCI	batch	0	4144754
-CCI	open	0	4182183
-CCI	openfill	0	4182180
-CCI	peek	0	251918
-CCI	update	0	269047
+CCI	batch	0	3560160
+CCI	open	0	3576229
+CCI	openfill	0	3576226
+CCI	peek	0	213006
+CCI	update	0	237069
 CDL2CROWS	batch	0	633945
 CDL2CROWS	open	0	636846
 CDL2CROWS	openfill	0	636842
