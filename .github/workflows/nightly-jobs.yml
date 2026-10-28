@@ -345,9 +345,10 @@ jobs:
           cmake .. -DCMAKE_BUILD_TYPE=Release -DBUILD_DEV_TOOLS=ON
           cmake --build . -j 3
 
+      # Through ctest, the hook a packager runs: proves the registration too.
       - name: Run C regression suite
         shell: bash
-        run: cd cmake-build/bin && ./ta_regtest
+        run: ctest --test-dir cmake-build --output-on-failure --no-tests=error
 
       # scripts/abi.py measures the export table with `nm -D` over the ELF
       # `cmake-build/libta-lib.so`, so it reads NOTHING here and says so. Mach-O is the
@@ -407,7 +408,9 @@ jobs:
           mkdir at-build && cd at-build
           ../configure
           make -j 3
-          make -j 3 distcheck
+          # distcheck runs `make check`; a lost TESTS line would pass untested.
+          make -j 3 distcheck VERBOSE=1 2>&1 | tee distcheck.log
+          grep -q '^# PASS: *1$' distcheck.log
 
       # The install name is what a Mach-O program records at link time, so it
       # carries the ABI generation here the way DT_SONAME does on ELF.

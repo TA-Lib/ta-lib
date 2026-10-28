@@ -184,14 +184,14 @@ def package_windows_zip(root_dir: str, asset_file_name: str, version: str, sourc
     build_dir = do_cmake_reconfigure(root_dir, '-G Ninja -DBUILD_DEV_TOOLS=ON -DCMAKE_BUILD_TYPE=Release')
     do_cmake_build(build_dir)
 
-    # Run the C regression suite against the exact binaries being packaged.
-    # Plain mode only: the C reference tests run in-process. --codegen (the
-    # cross-language server verification) is POSIX-only — codegen_pipe.c has
-    # Windows stubs precisely so plain ta_regtest builds and runs here.
-    ta_regtest_exe = path_join(build_dir, 'bin',
-                               'ta_regtest.exe' if sys.platform == 'win32' else 'ta_regtest')
-    print(f"Running C regression tests: {ta_regtest_exe}")
-    run_command_term([ta_regtest_exe])
+    # Run the C regression suite against the exact binaries being packaged,
+    # through ctest: the hook a packager building from source runs. Plain mode
+    # only: --codegen (the cross-language server verification) is POSIX-only —
+    # codegen_pipe.c has Windows stubs precisely so plain ta_regtest builds and
+    # runs here.
+    print(f"Running C regression tests: ctest in {build_dir}")
+    run_command_term(['ctest', '--test-dir', build_dir, '--output-on-failure',
+                      '--no-tests=error'])
 
     # Create a temporary zip package to test before copying to dist.
     package_temp_dir = path_join(temp_dir, file_name_prefix)
@@ -669,7 +669,7 @@ def test_autotool_src(configure_dir: str, sudo_pwd: str) -> bool:
     # In specified configure_dir do:
     # - './configure'
     # - 'make' (verify returning zero)
-    # - Run './src/tools/ta_regtest/ta_regtest' (verify returning zero)
+    # - 'make check' (verify returning zero, and that ta_regtest ran)
     # - Verify the build did not modify any generated/committed files
     # - 'sudo make install' (verify returning zero)
 
@@ -689,8 +689,19 @@ def test_autotool_src(configure_dir: str, sudo_pwd: str) -> bool:
         subprocess.run(['./configure'], check=True)
         subprocess.run(['make'], check=True)
 
-        # Run its src/tools/ta_regtest/ta_regtest
-        subprocess.run(['src/tools/ta_regtest/ta_regtest'], check=True)
+        # `make check` is the hook packagers run. Assert the suite ran: a
+        # Makefile.am that lost its TESTS line passes with nothing tested.
+        # VERBOSE=1: on a failure the harness prints ta_regtest's own log,
+        # which is all this ephemeral runner leaves behind.
+        check = subprocess.run(['make', 'check', 'VERBOSE=1'], stdout=subprocess.PIPE,
+                               stderr=subprocess.STDOUT, text=True)
+        print(check.stdout)
+        if check.returncode != 0:
+            print("Error: 'make check' failed")
+            return False
+        if not re.search(r'^# PASS: +1$', check.stdout, re.MULTILINE):
+            print("Error: 'make check' did not report '# PASS:  1' for ta_regtest")
+            return False
 
         # Building the package must not modify any generated/committed files in the
         # root repository — a sanity check that configure/make/install do not
