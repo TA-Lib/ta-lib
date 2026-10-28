@@ -34,16 +34,11 @@ static int  g_floatCapableLangTested = 0;
 #if defined(WIN32) || defined(_WIN32)
 #include <windows.h>
 /* Portability shims for the report-writing paths (MSVC has the same
- * functionality under different names; PATH_MAX is POSIX-only). */
+ * functionality under different names). */
 #define popen  _popen
 #define pclose _pclose
-#ifndef PATH_MAX
-#define PATH_MAX MAX_PATH
-#endif
-/* realpath(rel, abs) and _fullpath(abs, rel, size) swap their arguments. */
-#define realpath(rel, abs) _fullpath((abs), (rel), PATH_MAX)
-#else
-#include <limits.h> /* PATH_MAX */
+/* Only the allocating form: realpath(rel, NULL) is _fullpath(NULL, rel, 0). */
+#define realpath(rel, abs) _fullpath((abs), (rel), 0)
 #endif
 
 #include "ta_libc.h"
@@ -10473,16 +10468,13 @@ ErrorNumber test_codegen(const TA_History *history,
 
     /* Print absolute paths */
     {
-        char jsonl_path[PATH_MAX];
-        char md_path[PATH_MAX];
-        if( realpath("ta_regtest_timing.jsonl", jsonl_path) )
-            printf("\nJSONL: %s\n", jsonl_path);
-        else
-            printf("\nJSONL: ta_regtest_timing.jsonl\n");
-        if( realpath("ta_regtest_report.md", md_path) )
-            printf("Report: %s\n", md_path);
-        else
-            printf("Report: ta_regtest_report.md\n");
+        /* The allocating form: GNU Hurd defines no PATH_MAX. */
+        char *jsonl_path = realpath("ta_regtest_timing.jsonl", NULL);
+        char *md_path = realpath("ta_regtest_report.md", NULL);
+        printf("\nJSONL: %s\n", jsonl_path ? jsonl_path : "ta_regtest_timing.jsonl");
+        printf("Report: %s\n", md_path ? md_path : "ta_regtest_report.md");
+        free(jsonl_path);
+        free(md_path);
     }
 
     /* Print summary chart to stdout */
