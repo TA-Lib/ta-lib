@@ -455,8 +455,6 @@ ErrorNumber checkForNAN( const TA_Real *buffer,
          printf( "Fail: Out of range writing in suffix buffer (%d,%f)\n", idx, theBuffer[idx] );
          return TA_TEST_TFRR_OVERLAP_OR_NAN_5;
       }
-
-      idx++;
    }
 
    /* Make sure the global memory guard are untouch. */
