@@ -22,10 +22,14 @@ configure
 compile
 autom4te.cache
 ar-lib
+test-driver
 **/.history/
 
 # TA-Lib tools (must be built by devs on its own platform)
 src/tools/ta_regtest/ta_regtest
+src/tools/ta_regtest/ta_regtest.log
+src/tools/ta_regtest/ta_regtest.trs
+src/tools/ta_regtest/test-suite.log
 bin/*
 !bin/HOLDER
 

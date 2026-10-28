@@ -14,14 +14,23 @@ set(PROJECT_VERSION "${TA_LIB_VERSION_MAJOR}.${TA_LIB_VERSION_MINOR}.${TA_LIB_VE
 
 set(CMAKE_C_STANDARD 11)
 
-# Option to build development tools (enabled by default)
-option(BUILD_DEV_TOOLS "Build ta_regtest (verifies the library on a given setup; packagers run it)" ON)
-message(STATUS "BUILD_DEV_TOOLS: ${BUILD_DEV_TOOLS}")
-# Separate from BUILD_DEV_TOOLS on purpose. ta_regtest has a user-facing job, so
-# it is ON; the benchmarks are for people working ON TA-Lib and nobody else, so
-# they are OFF and a plain `cmake ..` from a clone does not compile them.
-option(BUILD_BENCHMARKS "Build ta_bench/ta_bench_direct/ta_bench_icount (TA-Lib developers only)" OFF)
-message(STATUS "BUILD_BENCHMARKS: ${BUILD_BENCHMARKS}")
+# ta_regtest (BUILD_TESTING, declared once the library selection is known) and
+# the benchmarks are top-level only: a project embedding TA-Lib through
+# add_subdirectory/FetchContent compiles neither, and its own BUILD_TESTING or
+# BUILD_BENCHMARKS never turns ours on. PROJECT_IS_TOP_LEVEL needs CMake 3.21.
+if(CMAKE_SOURCE_DIR STREQUAL PROJECT_SOURCE_DIR)
+	set(_TA_TOP_LEVEL ON)
+	# For people working on TA-Lib only; the release tarball has no benchmark sources.
+	option(BUILD_BENCHMARKS "Build ta_bench/ta_bench_direct/ta_bench_icount (TA-Lib developers only)" OFF)
+	message(STATUS "BUILD_BENCHMARKS: ${BUILD_BENCHMARKS}")
+else()
+	set(_TA_TOP_LEVEL OFF)
+endif()
+# Under the 3.18 minimum, CMP0158 is OLD: a set CROSSCOMPILING_EMULATOR would
+# also wrap the test on a native build.
+if(POLICY CMP0158)
+	cmake_policy(SET CMP0158 NEW)
+endif()
 
 # Optional AddressSanitizer + UndefinedBehaviorSanitizer instrumentation (issue
 # #94). Builds the library and the C tools so that out-of-bounds / uninitialized
@@ -758,17 +767,33 @@ if(UNIX)
     install(FILES ${CMAKE_BINARY_DIR}/ta-lib.pc DESTINATION lib/pkgconfig)
 endif()
 
-# The dev tools reach TA_Globals, which no installed header declares. The
+# The tools reach TA_Globals, which no installed header declares. The
 # ELF/Mach-O library still exports it (src/ta_common/ta_global.h says why), so
-# the tools can fall back to the shared library there; on Windows the DLL never
-# has, so a shared-only build cannot link them -- skip them (a shared-only build
-# is a packaging request; the dev tools are not needed).
-set(_TA_BUILD_TOOLS ${BUILD_DEV_TOOLS})
-if(BUILD_DEV_TOOLS AND WIN32 AND NOT BUILD_STATIC_LIBS)
-	message(WARNING "BUILD_DEV_TOOLS is ON but the dev tools require the static library "
-		"on Windows (BUILD_STATIC_LIBS=OFF); skipping ta_regtest and the benchmarks. "
-		"Set BUILD_STATIC_LIBS=ON to build them.")
-	set(_TA_BUILD_TOOLS OFF)
+# the tools can fall back to the shared library there; the Windows DLL never
+# has, so a Windows shared-only build cannot link them and tests nothing by
+# default.
+if(WIN32 AND NOT BUILD_STATIC_LIBS)
+	set(_TA_TOOLS_LINKABLE OFF)
+else()
+	set(_TA_TOOLS_LINKABLE ON)
+endif()
+set(_TA_BUILD_TOOLS OFF)
+if(_TA_TOP_LEVEL)
+	set(_TA_TESTING_DEFAULT ${_TA_TOOLS_LINKABLE})
+	# Deprecated alias. OFF only seeds the default, so an explicit BUILD_TESTING wins.
+	if(DEFINED BUILD_DEV_TOOLS AND NOT BUILD_DEV_TOOLS)
+		message(DEPRECATION "BUILD_DEV_TOOLS is deprecated; use -DBUILD_TESTING=OFF instead.")
+		set(_TA_TESTING_DEFAULT OFF)
+	endif()
+	option(BUILD_TESTING "Build ta_regtest and register it with CTest" ${_TA_TESTING_DEFAULT})
+	message(STATUS "BUILD_TESTING: ${BUILD_TESTING}")
+	if(NOT _TA_TOOLS_LINKABLE AND (BUILD_TESTING OR BUILD_BENCHMARKS))
+		message(FATAL_ERROR "ta_regtest and the benchmarks need the static library on "
+			"Windows: set BUILD_STATIC_LIBS=ON, or BUILD_TESTING=OFF and BUILD_BENCHMARKS=OFF.")
+	endif()
+	if(BUILD_TESTING OR BUILD_BENCHMARKS)
+		set(_TA_BUILD_TOOLS ON)
+	endif()
 endif()
 
 if(_TA_BUILD_TOOLS)
@@ -892,13 +917,14 @@ if(_TA_BUILD_TOOLS)
 	# Link the static lib (built alongside by default); on a non-Windows
 	# shared-only build fall back to the shared lib, which still exports the one
 	# internal these tools need.
-	# (The Windows shared-only case never reaches here -- see _TA_BUILD_TOOLS.)
+	# (A Windows shared-only build never gets here.)
 	if(BUILD_STATIC_LIBS)
 		set(TA_LIB_TOOL_TARGET ta-lib-static)
 	else()
 		set(TA_LIB_TOOL_TARGET ta-lib)
 	endif()
 
+	if(BUILD_TESTING)
 	add_executable(ta_regtest ${TA_REGTEST_SOURCES})
 
 	# Set the include directories for ta_regtest
@@ -921,6 +947,7 @@ if(_TA_BUILD_TOOLS)
 	set_target_properties(ta_regtest PROPERTIES
 		RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/bin"
 	)
+	endif() # BUILD_TESTING
 
 	############
 	# ta_bench #
@@ -1032,6 +1059,7 @@ if(_TA_BUILD_TOOLS)
 	)
 	endif() # BUILD_BENCHMARKS
 
+	if(BUILD_TESTING)
 	# Add a custom target to ensure ta_regtest is copied to ta-lib/bin directory
 	# ta_regtest is a USER-facing tool — downstream packagers (brew) run it to
 	# verify the library behaves on their setup — so it is an ALL target and is
@@ -1045,35 +1073,26 @@ if(_TA_BUILD_TOOLS)
 		DEPENDS ta_regtest
 	)
 
-endif()
-
-# --- Convenience test targets (run the C ta_regtest binary) ---
-# make test           - C reference tests only
-# make regtest        - cross-language codegen verification (C, Java, C#, Rust)
-#
-# These run the already-built C ta_regtest binary; building ta_codegen and the
-# language servers is the developer build script's job (scripts/build.py — run
-# `scripts/build.py servers` first). CMake itself never invokes cargo.
-#
-# Pass extra args: cmake --build . --target regtest -- REGTEST_ARGS="--function=SMA"
-
-if(_TA_BUILD_TOOLS)
-	# C reference tests only
-	add_custom_target(test
-		COMMAND ${CMAKE_COMMAND} -E chdir "${CMAKE_CURRENT_SOURCE_DIR}/bin"
-			./ta_regtest
-		DEPENDS ensure_ta_regtest_in_bin
-		COMMENT "Running C reference regression tests"
-	)
-
-	# Cross-language codegen verification (requires the servers to be pre-built
-	# via `scripts/build.py servers`).
+	# Cross-language codegen verification; needs the servers from
+	# `scripts/build.py servers` (CMake itself never invokes cargo).
 	add_custom_target(regtest
 		COMMAND ${CMAKE_COMMAND} -E chdir "${CMAKE_CURRENT_SOURCE_DIR}/bin"
 			./ta_regtest --codegen --language=c,java,csharp,rust
 		DEPENDS ensure_ta_regtest_in_bin
 		COMMENT "Running cross-language regression tests (C, Java, C#, Rust)"
 	)
+	endif() # BUILD_TESTING
+
+endif()
+
+# Keep enable_testing() in this top-level file: called from a subdirectory, a
+# ctest run at the build root finds no test and exits 0.
+if(_TA_TOP_LEVEL AND BUILD_TESTING)
+	enable_testing()
+	# The target name, not a path: it resolves the per-config output and takes
+	# the cross-compiling emulator. No TIMEOUT: a packager's --timeout must win
+	# on slow or emulated hosts.
+	add_test(NAME ta_regtest COMMAND ta_regtest)
 endif()
 
 #############
