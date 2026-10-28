@@ -18,6 +18,7 @@
 #                make_install macros, _libdir (fixes x86_64 lib64
 #                packaging), build from shipped configure, drop Buildroot
 #                and clean sections, keep debuginfo, split -devel subpackage.
+#  102726 MF,CC  Add a %%check section: `make check` runs ta_regtest.
 
 # Written by scripts/sync.py from VERSION; do not edit.
 %define ta_ver 0.8.4
@@ -63,6 +64,9 @@ applications against TA-Lib.
 %make_install
 # Drop the libtool archive; nothing packaged needs it.
 find %{buildroot} -name '*.la' -delete
+
+%check
+make check
 
 %post -p /sbin/ldconfig
 %postun -p /sbin/ldconfig
