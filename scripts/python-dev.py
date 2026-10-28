@@ -82,7 +82,7 @@ def require_branches(any_branch):
 def build_c():
     """This worktree's C library, installed into a private prefix."""
     run(["cmake", "-S", str(TA_LIB), "-B", str(CBUILD), "-DCMAKE_BUILD_TYPE=Release",
-         "-DBUILD_DEV_TOOLS=OFF", "-DCMAKE_INSTALL_PREFIX=" + str(PREFIX)])
+         "-DBUILD_TESTING=OFF", "-DCMAKE_INSTALL_PREFIX=" + str(PREFIX)])
     run(["cmake", "--build", str(CBUILD), "-j", str(os.cpu_count() or 4)])
     run(["cmake", "--install", str(CBUILD)])
     lib = next(PREFIX.glob("lib/libta-lib.so.*"), None)

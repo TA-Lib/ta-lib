@@ -44,7 +44,7 @@ class TaLibConan(ConanFile):
 
     def generate(self):
         tc = CMakeToolchain(self)
-        tc.variables["BUILD_DEV_TOOLS"] = False
+        tc.variables["BUILD_TESTING"] = False
         tc.generate()
 
     def build(self):

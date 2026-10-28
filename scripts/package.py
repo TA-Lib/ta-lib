@@ -177,11 +177,10 @@ def package_windows_zip(root_dir: str, asset_file_name: str, version: str, sourc
         result["copied"] = False
         return result
 
-    # Build the libraries + the regression test runner. BUILD_DEV_TOOLS=ON is
-    # safe here: the zip content below is assembled by hand (lib/bin/include
-    # copies), so dev tools never leak into the package. The MSI path keeps
-    # dev tools OFF because its content is install-rule driven.
-    build_dir = do_cmake_reconfigure(root_dir, '-G Ninja -DBUILD_DEV_TOOLS=ON -DCMAKE_BUILD_TYPE=Release')
+    # Build the libraries + the regression test runner (BUILD_TESTING is on by
+    # default). The zip content below is assembled by hand (lib/bin/include
+    # copies), so ta_regtest never leaks into the package.
+    build_dir = do_cmake_reconfigure(root_dir, '-G Ninja -DCMAKE_BUILD_TYPE=Release')
     do_cmake_build(build_dir)
 
     # Run the C regression suite against the exact binaries being packaged,
@@ -308,7 +307,7 @@ def package_windows_msi(root_dir: str, asset_file_name: str, version: str, sourc
     license_rtf = path_join(root_dir,"LICENSE.rtf")
     create_rtf_from_txt(license_txt,license_rtf)
 
-    build_dir = do_cmake_reconfigure(root_dir, '-G Ninja -DCPACK_GENERATOR=WIX -DBUILD_DEV_TOOLS=OFF -DCMAKE_BUILD_TYPE=Release')
+    build_dir = do_cmake_reconfigure(root_dir, '-G Ninja -DCPACK_GENERATOR=WIX -DBUILD_TESTING=OFF -DCMAKE_BUILD_TYPE=Release')
     do_cmake_build(build_dir) # Build the libraries
     do_cpack_build(build_dir) # Create the .msi
 
@@ -458,7 +457,7 @@ def package_deb(root_dir: str, asset_file_name: str, version: str, sources_diges
     # CMAKE_INSTALL_PREFIX must match where CPack stages the payload (/usr for
     # DEB), because ta-lib.pc is generated from it. Left at its /usr/local
     # default the .deb shipped a .pc naming a prefix it never populated.
-    configure_options = '-DCPACK_GENERATOR=DEB -DBUILD_DEV_TOOLS=OFF -DCMAKE_INSTALL_PREFIX=/usr'
+    configure_options = '-DCPACK_GENERATOR=DEB -DBUILD_TESTING=OFF -DCMAKE_INSTALL_PREFIX=/usr'
 
     if toolchain:
         cmake_dir = path_join(root_dir, 'cmake')

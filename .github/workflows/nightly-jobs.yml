@@ -342,7 +342,7 @@ jobs:
         shell: bash
         run: |
           mkdir -p cmake-build && cd cmake-build
-          cmake .. -DCMAKE_BUILD_TYPE=Release -DBUILD_DEV_TOOLS=ON
+          cmake .. -DCMAKE_BUILD_TYPE=Release
           cmake --build . -j 3
 
       # Through ctest, the hook a packager runs: proves the registration too.
@@ -1515,7 +1515,7 @@ jobs:
         run: python3 scripts/thread_sanitize.py
 
   # Conan packaging (#86) was never exercised by CI: build the package
-  # recipe end to end (library-only; BUILD_DEV_TOOLS stays off in the
+  # recipe end to end (library-only; BUILD_TESTING stays off in the
   # recipe). Gated on the C hero job like the other non-hero jobs.
   conan:
     name: Conan package build
@@ -1589,7 +1589,7 @@ jobs:
         run: |
           set -euo pipefail
           cmake -S . -B _wrapper/c-build -DCMAKE_BUILD_TYPE=Release \
-                -DBUILD_DEV_TOOLS=OFF -DCMAKE_INSTALL_PREFIX="$PWD/_wrapper/c"
+                -DBUILD_TESTING=OFF -DCMAKE_INSTALL_PREFIX="$PWD/_wrapper/c"
           cmake --build _wrapper/c-build -j"$(nproc)"
           cmake --install _wrapper/c-build
 
