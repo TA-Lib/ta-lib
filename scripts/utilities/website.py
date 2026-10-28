@@ -21,8 +21,9 @@ NUGET_REGISTRATION_URL = "https://api.nuget.org/v3/registration5-gz-semver2/ta-l
 # so a pattern may match as much surrounding text as it needs to be unambiguous.
 
 # Delimited on both sides so only release-version tokens are rewritten (download
-# URLs, filenames, the pip `version: "x.y.z"` snippet). Every x.y.z on the page
-# becomes the release, so a page that ever needs another x.y.z must change this.
+# URLs, filenames, the pip `version: "x.y.z"` snippet). Every other x.y.z on the
+# page becomes the release, silently: a fixed version must sit right after '(',
+# as in "(0.8.4 and later)".
 VERSION_PATTERN = r'(?<=[v/\["\'\-_\s])(?P<ver>\d+\.\d+\.\d+)(?=[/\]"\'\-_\s])'
 
 # Anchored on the coordinate, not on `<version>` alone: that page is prose around
