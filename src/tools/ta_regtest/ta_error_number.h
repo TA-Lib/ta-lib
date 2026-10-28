@@ -424,9 +424,7 @@ typedef enum
   TA_REGTEST_ROLLING_EXTREMUM_INPLACE = 1554,
   TA_REGTEST_ROLLING_EXTREMUM_VACUOUS = 1555,
 
-  /* Frozen v0.6.4 reference values (issue #188). Note none of these is a
-   * multiple of 256: main() returns the ErrorNumber and POSIX truncates the
-   * exit status to its low 8 bits, so 1536/1792/... would exit 0. */
+  /* Frozen v0.6.4 reference values (issue #188). */
   TA_REGTEST_LEGACY_UNKNOWN_FUNC     = 1560,
   TA_REGTEST_LEGACY_PARAM_MISMATCH   = 1561,
   TA_REGTEST_LEGACY_TOO_MANY_OUTPUTS = 1562,

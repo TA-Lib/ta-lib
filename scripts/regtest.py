@@ -263,9 +263,8 @@ def main():
         print("\n" + "=" * 60)
         print("REGTEST — C reference tests + cross-language codegen verification")
         print("=" * 60)
-        # Allowlist, not passthrough: ta_regtest exits with BAD_USER_PARAM on any
-        # argv it does not know (ta_regtest.c, the trailing else of the option
-        # chain). Forwarding the perftest/bench-only flags — --points=, --iters=
+        # Allowlist, not passthrough: ta_regtest fails on any argv it does not
+        # know (ta_regtest.c, the trailing else of the option chain). Forwarding the perftest/bench-only flags — --points=, --iters=
         # and the corpus selectors — aborted this step before the bench in step
         # 6/7 ever ran. An allowlist keeps a future bench flag from breaking it.
         REGTEST_FLAGS = ("--function=", "--language=", "--codegen", "--codegen=",
