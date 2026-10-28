@@ -1214,11 +1214,15 @@ jobs:
           fi
 
       # First execution of the C suite on arm64 Linux + real GCC anywhere in CI.
+      # The allocation-failure check skips where the address-space limit does
+      # not hold; this runner enforces it, so a skip here is a regression.
       - name: Run the C regression suite
         shell: bash
         run: |
+          set -o pipefail
           python3 scripts/build.py ta_regtest
-          cd bin && ./ta_regtest
+          cd bin && ./ta_regtest | tee regtest.log
+          ! grep -q 'allocation failure: not tested' regtest.log
 
       # Half (1) and half (2): a release whose own build fused is built from
       # source here instead of taken from its package, and every member's

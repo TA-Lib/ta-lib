@@ -613,7 +613,6 @@ typedef enum
 
   /* rB7 and rB8: a failed allocation and an internal error reach the caller. */
   TA_REGTEST_ALLOC_FAIL_NOT_REPORTED = 1724,
-  TA_REGTEST_ALLOC_FAIL_UNARMED      = 1725,
   TA_REGTEST_INTERNAL_ERROR_NOT_REPORTED = 1726,
 
   /* The zero-pick macros against the ternary they stand for. */
