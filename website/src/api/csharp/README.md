@@ -33,7 +33,7 @@ toc: false
 
 ## 1.0 Introduction {#intro}
 
-The .NET library is a native port of TA-Lib in the `TALib` namespace — no P/Invoke, no native dependency, pure managed C# targeting `net10.0`. Every indicator is a method on a `Core` instance, takes its series as spans, and is **bit-identical** to the reference C library over the same inputs, with one exception beyond TA-Lib's control: where a calculation calls a transcendental math function (such as `exp`, `log`, `sin` or `atan`), .NET's math library can round the result differently from the C library in the last bit. That difference can grow through the rest of the calculation. Details: [Versions and Determinism](/spec/versions/).
+The .NET library is a native port of TA-Lib in the `TALib` namespace — no P/Invoke, no native dependency, pure managed C# targeting `net10.0`. Every indicator is a method on a `Core` instance, takes its series as spans, and is **bit-identical** to the reference C library over the same inputs, with one exception beyond TA-Lib's control: where a calculation calls a transcendental math function (such as `exp`, `log`, `sin` or `atan`), .NET's math library can round the result differently from the C library in the last bit.
 
 The **Core API** provides:
 
@@ -112,7 +112,7 @@ for (int i = 0; i &lt; r.Count; i++)
 
 After the call, read `r` to learn what was produced. Even though we requested the whole range (`0` to `close.Length - 1`), a 30-day average is not defined until the 30th day. Consequently `r.BegIdx` will be 29 (zero-based) and `r.Count` will be `close.Length - 29`. In other words, only that many elements of `outReal` are written, corresponding to input elements 29 through the end.
 
-Arrays convert to spans implicitly, so the call above and a call passed a slice of a larger buffer (`close.AsSpan(start, count)`) are both ordinary code — no copy either way. `startIdx` and `endIdx` index the span you pass, not the array it came from: a slice holds no bars before its first element, so `Sma(0, n - 1, close.AsSpan(100, n), ...)` takes its lookback from inside the slice and produces fewer, possibly different, values than `Sma(100, 100 + n - 1, close, ...)`. Both calls succeed. A span is never null, so passing `null` arrives as an empty span and is rejected by the length check as one (`ArgumentException` naming the parameter). Every input an indicator declares is checked, including the OHLC series a few candlestick patterns never read.
+Arrays convert to spans implicitly, so you can also pass a slice of a larger buffer (`close.AsSpan(start, count)`) without copying it. `startIdx` and `endIdx` then index the slice, not the array it came from.
 
 If the range ends before the lookback, so no value can be calculated, the call still succeeds and `r.Count` is 0 (`r.IsEmpty`).
 
