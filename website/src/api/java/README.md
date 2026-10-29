@@ -115,11 +115,9 @@ If you do not provide enough data to calculate even one value, the call still su
 
 `OutRange` is an immutable record with two components, `begIdx()` and `count()` (C's `outBegIdx` and `outNBElement`), plus the conveniences `isEmpty()` and `EMPTY`.
 
-Every indicator is overloaded for `float[]` inputs as well as `double[]` — see [4.4](#input_type).
-
 ### 3.2 Output Size and Lookback {#output_size}
 
-Size the output array to at least `endIdx - startIdx + 1`, or exactly with the lookback:
+Size the output array to at least `endIdx - startIdx + 1`, or exactly with the lookback (see the [three sizing methods](/api/#output_size)):
 
 ```java
 int lookback = Core.DEFAULT.smaLookback(30);    // 29 for a 30-period SMA

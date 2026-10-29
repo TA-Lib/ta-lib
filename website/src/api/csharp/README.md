@@ -118,11 +118,9 @@ If you do not provide enough data to calculate even one value, the call still su
 
 `OutRange` is a `readonly record struct` with two components, `BegIdx` and `Count` (C's `outBegIdx` and `outNBElement`), plus the conveniences `IsEmpty` and `Empty`.
 
-Every indicator also has a `ReadOnlySpan<float>` overload — see [4.4](#input_type).
-
 ### 3.2 Output Size and Lookback {#output_size}
 
-Size the output span to at least `endIdx - startIdx + 1`, or exactly with the lookback:
+Size the output span to at least `endIdx - startIdx + 1`, or exactly with the lookback (see the [three sizing methods](/api/#output_size)):
 
 ```csharp
 int lookback = core.SmaLookback(30);   // 29 for a 30-period SMA
@@ -151,7 +149,7 @@ The public methods throw rather than return a status code:
 | An input span that does not reach `endIdx`, or an output span shorter than the values produced | `TALibArgumentException` naming the span |
 | Two outputs that are the same buffer ([rB6](/spec/errors/#rb6)) | `TALibArgumentException` |
 
-Each extends the framework type you would reach for, so `catch (ArgumentException)` still works, and carries its `RetCode`.
+Each extends the framework type you would reach for, so `catch (ArgumentException)` still works, and each carries its `RetCode`.
 
 You can pass the same buffer as an input and an output to compute in place. Avoid a partial overlap: its result is [unspecified](/spec/inputs-outputs/#no-overlap).
 
@@ -163,7 +161,7 @@ A `NaN` or `±Inf` inside an input series is not detected. Clean the series befo
 
 `TALib.Metadata.FunctionCatalog` describes every function at run time and calls it without naming it at compile time. See the [Abstract API](/api/abstract/) page.
 
-`Core.Functions` implements `IReadOnlyList<FuncInfo>`, so it is enumerable, LINQ-able, and indexable by position or by name.
+`Core.Functions` is an `IReadOnlyList<FuncInfo>`, so it is enumerable, LINQ-able, and indexable by position or by name.
 
 ### 4.2 Numerical Stability {#numerical_stability}
 
@@ -187,7 +185,7 @@ Each setter throws `ArgumentOutOfRangeException` at once if an argument is out o
 
 ### 4.4 Input Type: float vs. double {#input_type}
 
-Every indicator also has a `ReadOnlySpan<float>` overload (`float[]` converts implicitly). It converts each element to `double` when read, so both overloads produce the same output, bit-for-bit. Use it to feed price data already stored as `float` without a conversion copy.
+Every indicator also has a `ReadOnlySpan<float>` overload (`float[]` converts implicitly). The overload converts each element to `double` when read, so both overloads produce the same output, bit-for-bit. Use it to feed price data already stored as `float` without a conversion copy.
 
 ### 4.5 Index Range {#index_range}
 
@@ -201,7 +199,7 @@ A `Core` is immutable once built, so one instance is safe to share across any nu
 
 The library is annotated `IsAotCompatible`, uses no reflection, and publishes clean under `PublishAot` with `TrimMode=full`.
 
-At ILC's default instruction-set baseline, some indicators (EMA, DEMA, TRIX among them) run slower; values are unaffected. If you publish AOT and care about throughput, raise the baseline:
+At ILC's default instruction-set baseline, some indicators (EMA, DEMA, TRIX among them) run slower than under the JIT; values are unaffected. If you publish AOT and care about throughput, raise the baseline:
 
 ```xml
 <IlcInstructionSet>x86-64-v3</IlcInstructionSet>
