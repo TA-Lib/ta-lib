@@ -154,7 +154,6 @@ impl Core {
         let mut today: usize = 0_usize;
         let mut outIdx: usize = 0_usize;
         let mut i: usize = 0_usize;
-        let mut w: usize = 0_usize;
         let mut dividerFull: f64 = 0.0_f64;
         let mut dividerHalf: f64 = 0.0_f64;
         let mut dividerSqrt: f64 = 0.0_f64;
@@ -176,7 +175,6 @@ impl Core {
         let mut jFull: usize = 0_usize;
         let mut jHalf: usize = 0_usize;
         let mut q: usize = 0_usize;
-        let mut rw: usize = 0_usize;
         let mut ringWalk: usize = 0_usize;
         let mut lookbackFull: usize = 0_usize;
         let mut lookbackHalf: usize = 0_usize;
@@ -184,10 +182,15 @@ impl Core {
         let mut barsSinceReseedHalf: usize = 0_usize;
         let mut barsSinceReseedSqrt: usize = 0_usize;
         let mut tempReal2: f64 = 0.0_f64;
+        let mut w: f64 = 0.0_f64;
+        let mut rw: f64 = 0.0_f64;
         let mut local_dRing: [f64; 50] = [0.0_f64; 50];
         let mut heap_dRing: Vec<f64> = Vec::new();
         let mut dRing: &mut [f64] = &mut [];
         let mut dRing_Idx: usize = 0;
+        // Weights are exact integers no larger than the period (100000). Keeping
+        // them in double avoids repeated integer conversions in the reseed loops
+        // without changing any product or accumulation order.
         // The de-lagged series needs only its last sqrt(n) values, so the whole
         // computation runs in one pass over a single window into the input:
         // three interleaved WMA rolling sums plus this small ring. The ring has
@@ -248,13 +251,13 @@ impl Core {
         periodSumFull = 0.0;
         trailingIdxFull = wmaStartIdx - lookbackFull;
         i = trailingIdxFull;
-        w = 1;
+        w = 1.0;
         while i < wmaStartIdx {
             tempReal = inReal[i];
             i += 1;
             periodSubFull += tempReal;
-            periodSumFull += tempReal * ((w) as f64);
-            w += 1;
+            periodSumFull += tempReal * w;
+            w += ((1) as f64);
         }
         barsSinceReseedFull = (8 * optInTimePeriod) as usize;
         trailingFull = 0.0;
@@ -279,12 +282,12 @@ impl Core {
                     barsSinceReseedFull = (8 * optInTimePeriod) as usize;
                     periodSubFull = 0.0;
                     periodSumFull = 0.0;
-                    rw = 1;
+                    rw = 1.0;
                     for jFull in (today - lookbackFull as usize)..(today as usize) + 1 {
                         tempReal2 = inReal[jFull];
                         periodSubFull += tempReal2;
-                        periodSumFull += tempReal2 * ((rw) as f64);
-                        rw += 1;
+                        periodSumFull += tempReal2 * rw;
+                        rw += ((1) as f64);
                     }
                     jFull = (today as usize) + 1;
                 }
@@ -307,13 +310,13 @@ impl Core {
             periodSumHalf = 0.0;
             trailingIdxHalf = wmaStartIdx - lookbackHalf;
             i = trailingIdxHalf;
-            w = 1;
+            w = 1.0;
             while i < wmaStartIdx {
                 tempReal = inReal[i];
                 i += 1;
                 periodSubHalf += tempReal;
-                periodSumHalf += tempReal * ((w) as f64);
-                w += 1;
+                periodSumHalf += tempReal * w;
+                w += ((1) as f64);
             }
             barsSinceReseedHalf = 8 * halfPeriod;
             trailingHalf = 0.0;
@@ -335,7 +338,7 @@ impl Core {
             periodSubSqrt = 0.0;
             periodSumSqrt = 0.0;
             trailingSqrt = 0.0;
-            w = 1;
+            w = 1.0;
             // for( today = wmaStartIdx; today < startIdx; today += 1 )
             today = wmaStartIdx;
             while today < startIdx {
@@ -348,12 +351,12 @@ impl Core {
                     barsSinceReseedFull = (8 * optInTimePeriod) as usize;
                     periodSubFull = 0.0;
                     periodSumFull = 0.0;
-                    rw = 1;
+                    rw = 1.0;
                     for jFull in (today - lookbackFull as usize)..(today as usize) + 1 {
                         tempReal2 = inReal[jFull];
                         periodSubFull += tempReal2;
-                        periodSumFull += tempReal2 * ((rw) as f64);
-                        rw += 1;
+                        periodSumFull += tempReal2 * rw;
+                        rw += ((1) as f64);
                     }
                     jFull = (today as usize) + 1;
                 }
@@ -369,12 +372,12 @@ impl Core {
                     barsSinceReseedHalf = 8 * halfPeriod;
                     periodSubHalf = 0.0;
                     periodSumHalf = 0.0;
-                    rw = 1;
+                    rw = 1.0;
                     for jHalf in (today - lookbackHalf as usize)..(today as usize) + 1 {
                         tempReal2 = inReal[jHalf];
                         periodSubHalf += tempReal2;
-                        periodSumHalf += tempReal2 * ((rw) as f64);
-                        rw += 1;
+                        periodSumHalf += tempReal2 * rw;
+                        rw += ((1) as f64);
                     }
                     jHalf = (today as usize) + 1;
                 }
@@ -384,8 +387,8 @@ impl Core {
                 periodSumHalf -= periodSubHalf;
                 diffReal = 2.0 * halfOut - fullOut;
                 periodSubSqrt += diffReal;
-                periodSumSqrt += diffReal * ((w) as f64);
-                w += 1;
+                periodSumSqrt += diffReal * w;
+                w += ((1) as f64);
                 dRing[dRing_Idx] = diffReal;
                 dRing_Idx += 1;
                 if dRing_Idx >= dRing.len() { dRing_Idx = 0; }
@@ -405,12 +408,12 @@ impl Core {
                     barsSinceReseedFull = (8 * optInTimePeriod) as usize;
                     periodSubFull = 0.0;
                     periodSumFull = 0.0;
-                    rw = 1;
+                    rw = 1.0;
                     for jFull in (today - lookbackFull as usize)..(today as usize) + 1 {
                         tempReal2 = inReal[jFull];
                         periodSubFull += tempReal2;
-                        periodSumFull += tempReal2 * ((rw) as f64);
-                        rw += 1;
+                        periodSumFull += tempReal2 * rw;
+                        rw += ((1) as f64);
                     }
                     jFull = (today as usize) + 1;
                 }
@@ -426,12 +429,12 @@ impl Core {
                     barsSinceReseedHalf = 8 * halfPeriod;
                     periodSubHalf = 0.0;
                     periodSumHalf = 0.0;
-                    rw = 1;
+                    rw = 1.0;
                     for jHalf in (today - lookbackHalf as usize)..(today as usize) + 1 {
                         tempReal2 = inReal[jHalf];
                         periodSubHalf += tempReal2;
-                        periodSumHalf += tempReal2 * ((rw) as f64);
-                        rw += 1;
+                        periodSumHalf += tempReal2 * rw;
+                        rw += ((1) as f64);
                     }
                     jHalf = (today as usize) + 1;
                 }
@@ -453,15 +456,15 @@ impl Core {
                     barsSinceReseedSqrt = 8 * sqrtPeriod;
                     periodSubSqrt = 0.0;
                     periodSumSqrt = 0.0;
-                    rw = 1;
+                    rw = 1.0;
                     ringWalk = dRing_Idx;
                     // for( q = 0; q < ringSize; q += 1 )
                     q = 0;
                     while q < ringSize {
                         tempReal2 = dRing[ringWalk];
                         periodSubSqrt += tempReal2;
-                        periodSumSqrt += tempReal2 * ((rw) as f64);
-                        rw += 1;
+                        periodSumSqrt += tempReal2 * rw;
+                        rw += ((1) as f64);
                         ringWalk += 1;
                         if ringWalk >= ringSize {
                             ringWalk = 0;
@@ -672,8 +675,8 @@ impl Core {
             let mut tempReal: f64 = 0.0_f64;
             let mut fullOut: f64 = 0.0_f64;
             let mut jFull: usize = 0_usize;
-            let mut rw: usize = 0_usize;
             let mut tempReal2: f64 = 0.0_f64;
+            let mut rw: f64 = 0.0_f64;
             let mut ringCapL_trailingIdxFull: usize = 0_usize;
             sp.win_jFull_inReal[sp.winPos_jFull] = inReal;
             tempReal = inReal;
@@ -685,14 +688,14 @@ impl Core {
                 sp.barsSinceReseedFull = (8 * sp.optInTimePeriod) as usize;
                 sp.periodSubFull = 0.0;
                 sp.periodSumFull = 0.0;
-                rw = 1;
+                rw = 1.0;
                 // for( jFull = sp.lookbackFull; jFull >= 0; jFull -= 1 )
                 jFull = sp.lookbackFull;
                 loop {
                     tempReal2 = sp.win_jFull_inReal[((if sp.winPos_jFull + sp.winCap_jFull - jFull >= sp.winCap_jFull { sp.winPos_jFull + sp.winCap_jFull - jFull - sp.winCap_jFull } else { sp.winPos_jFull + sp.winCap_jFull - jFull })) as usize];
                     sp.periodSubFull += tempReal2;
-                    sp.periodSumFull += tempReal2 * ((rw) as f64);
-                    rw += 1;
+                    sp.periodSumFull += tempReal2 * rw;
+                    rw += ((1) as f64);
                     if jFull == 0 { break; }
                     jFull -= 1;
                 }
@@ -720,9 +723,9 @@ impl Core {
             let mut jFull: usize = 0_usize;
             let mut jHalf: usize = 0_usize;
             let mut q: usize = 0_usize;
-            let mut rw: usize = 0_usize;
             let mut ringWalk: usize = 0_usize;
             let mut tempReal2: f64 = 0.0_f64;
+            let mut rw: f64 = 0.0_f64;
             let mut ringCapL_trailingIdxFull: usize = 0_usize;
             let mut ringCapL_trailingIdxHalf: usize = 0_usize;
             sp.win_jFull_inReal[sp.winPos_jFull] = inReal;
@@ -736,14 +739,14 @@ impl Core {
                 sp.barsSinceReseedFull = (8 * sp.optInTimePeriod) as usize;
                 sp.periodSubFull = 0.0;
                 sp.periodSumFull = 0.0;
-                rw = 1;
+                rw = 1.0;
                 // for( jFull = sp.lookbackFull; jFull >= 0; jFull -= 1 )
                 jFull = sp.lookbackFull;
                 loop {
                     tempReal2 = sp.win_jFull_inReal[((if sp.winPos_jFull + sp.winCap_jFull - jFull >= sp.winCap_jFull { sp.winPos_jFull + sp.winCap_jFull - jFull - sp.winCap_jFull } else { sp.winPos_jFull + sp.winCap_jFull - jFull })) as usize];
                     sp.periodSubFull += tempReal2;
-                    sp.periodSumFull += tempReal2 * ((rw) as f64);
-                    rw += 1;
+                    sp.periodSumFull += tempReal2 * rw;
+                    rw += ((1) as f64);
                     if jFull == 0 { break; }
                     jFull -= 1;
                 }
@@ -759,14 +762,14 @@ impl Core {
                 sp.barsSinceReseedHalf = 8 * sp.halfPeriod;
                 sp.periodSubHalf = 0.0;
                 sp.periodSumHalf = 0.0;
-                rw = 1;
+                rw = 1.0;
                 // for( jHalf = sp.lookbackHalf; jHalf >= 0; jHalf -= 1 )
                 jHalf = sp.lookbackHalf;
                 loop {
                     tempReal2 = sp.win_jHalf_inReal[((if sp.winPos_jHalf + sp.winCap_jHalf - jHalf >= sp.winCap_jHalf { sp.winPos_jHalf + sp.winCap_jHalf - jHalf - sp.winCap_jHalf } else { sp.winPos_jHalf + sp.winCap_jHalf - jHalf })) as usize];
                     sp.periodSubHalf += tempReal2;
-                    sp.periodSumHalf += tempReal2 * ((rw) as f64);
-                    rw += 1;
+                    sp.periodSumHalf += tempReal2 * rw;
+                    rw += ((1) as f64);
                     if jHalf == 0 { break; }
                     jHalf -= 1;
                 }
@@ -788,15 +791,15 @@ impl Core {
                 sp.barsSinceReseedSqrt = 8 * sp.sqrtPeriod;
                 sp.periodSubSqrt = 0.0;
                 sp.periodSumSqrt = 0.0;
-                rw = 1;
+                rw = 1.0;
                 ringWalk = sp.dRing_Idx;
                 // for( q = 0; q < sp.ringSize; q += 1 )
                 q = 0;
                 while q < sp.ringSize {
                     tempReal2 = sp.cb_dRing[ringWalk];
                     sp.periodSubSqrt += tempReal2;
-                    sp.periodSumSqrt += tempReal2 * ((rw) as f64);
-                    rw += 1;
+                    sp.periodSumSqrt += tempReal2 * rw;
+                    rw += ((1) as f64);
                     ringWalk += 1;
                     if ringWalk >= sp.ringSize {
                         ringWalk = 0;
@@ -843,8 +846,8 @@ impl Core {
             let mut tempReal: f64 = 0.0_f64;
             let mut fullOut: f64 = 0.0_f64;
             let mut jFull: usize = 0_usize;
-            let mut rw: usize = 0_usize;
             let mut tempReal2: f64 = 0.0_f64;
+            let mut rw: f64 = 0.0_f64;
             tempReal = inReal;
             sp.periodSubFull += tempReal;
             sp.periodSubFull -= sp.trailingFull;
@@ -854,14 +857,14 @@ impl Core {
                 sp.barsSinceReseedFull = (8 * sp.optInTimePeriod) as usize;
                 sp.periodSubFull = 0.0;
                 sp.periodSumFull = 0.0;
-                rw = 1;
+                rw = 1.0;
                 // for( jFull = sp.lookbackFull; jFull >= 0; jFull -= 1 )
                 jFull = sp.lookbackFull;
                 loop {
                     tempReal2 = tape[(tapeBase - jFull & tapeMask) as usize];
                     sp.periodSubFull += tempReal2;
-                    sp.periodSumFull += tempReal2 * ((rw) as f64);
-                    rw += 1;
+                    sp.periodSumFull += tempReal2 * rw;
+                    rw += ((1) as f64);
                     if jFull == 0 { break; }
                     jFull -= 1;
                 }
@@ -879,9 +882,9 @@ impl Core {
             let mut jFull: usize = 0_usize;
             let mut jHalf: usize = 0_usize;
             let mut q: usize = 0_usize;
-            let mut rw: usize = 0_usize;
             let mut ringWalk: usize = 0_usize;
             let mut tempReal2: f64 = 0.0_f64;
+            let mut rw: f64 = 0.0_f64;
             tempReal = inReal;
             sp.periodSubFull += tempReal;
             sp.periodSubFull -= sp.trailingFull;
@@ -891,14 +894,14 @@ impl Core {
                 sp.barsSinceReseedFull = (8 * sp.optInTimePeriod) as usize;
                 sp.periodSubFull = 0.0;
                 sp.periodSumFull = 0.0;
-                rw = 1;
+                rw = 1.0;
                 // for( jFull = sp.lookbackFull; jFull >= 0; jFull -= 1 )
                 jFull = sp.lookbackFull;
                 loop {
                     tempReal2 = tape[(tapeBase - jFull & tapeMask) as usize];
                     sp.periodSubFull += tempReal2;
-                    sp.periodSumFull += tempReal2 * ((rw) as f64);
-                    rw += 1;
+                    sp.periodSumFull += tempReal2 * rw;
+                    rw += ((1) as f64);
                     if jFull == 0 { break; }
                     jFull -= 1;
                 }
@@ -914,14 +917,14 @@ impl Core {
                 sp.barsSinceReseedHalf = 8 * sp.halfPeriod;
                 sp.periodSubHalf = 0.0;
                 sp.periodSumHalf = 0.0;
-                rw = 1;
+                rw = 1.0;
                 // for( jHalf = sp.lookbackHalf; jHalf >= 0; jHalf -= 1 )
                 jHalf = sp.lookbackHalf;
                 loop {
                     tempReal2 = tape[(tapeBase - jHalf & tapeMask) as usize];
                     sp.periodSubHalf += tempReal2;
-                    sp.periodSumHalf += tempReal2 * ((rw) as f64);
-                    rw += 1;
+                    sp.periodSumHalf += tempReal2 * rw;
+                    rw += ((1) as f64);
                     if jHalf == 0 { break; }
                     jHalf -= 1;
                 }
@@ -943,15 +946,15 @@ impl Core {
                 sp.barsSinceReseedSqrt = 8 * sp.sqrtPeriod;
                 sp.periodSubSqrt = 0.0;
                 sp.periodSumSqrt = 0.0;
-                rw = 1;
+                rw = 1.0;
                 ringWalk = sp.dRing_Idx;
                 // for( q = 0; q < sp.ringSize; q += 1 )
                 q = 0;
                 while q < sp.ringSize {
                     tempReal2 = sp.cb_dRing[ringWalk];
                     sp.periodSubSqrt += tempReal2;
-                    sp.periodSumSqrt += tempReal2 * ((rw) as f64);
-                    rw += 1;
+                    sp.periodSumSqrt += tempReal2 * rw;
+                    rw += ((1) as f64);
                     ringWalk += 1;
                     if ringWalk >= sp.ringSize {
                         ringWalk = 0;
@@ -1068,7 +1071,6 @@ impl Core {
             let mut today: usize = 0_usize;
             let mut outIdx: usize = 0_usize;
             let mut i: usize = 0_usize;
-            let mut w: usize = 0_usize;
             let mut dividerFull: f64 = 0.0_f64;
             let mut dividerHalf: f64 = 0.0_f64;
             let mut dividerSqrt: f64 = 0.0_f64;
@@ -1090,7 +1092,6 @@ impl Core {
             let mut jFull: usize = 0_usize;
             let mut jHalf: usize = 0_usize;
             let mut q: usize = 0_usize;
-            let mut rw: usize = 0_usize;
             let mut ringWalk: usize = 0_usize;
             let mut lookbackFull: usize = 0_usize;
             let mut lookbackHalf: usize = 0_usize;
@@ -1098,9 +1099,14 @@ impl Core {
             let mut barsSinceReseedHalf: usize = 0_usize;
             let mut barsSinceReseedSqrt: usize = 0_usize;
             let mut tempReal2: f64 = 0.0_f64;
+            let mut w: f64 = 0.0_f64;
+            let mut rw: f64 = 0.0_f64;
             let mut dRing: Vec<f64> = Vec::new();
             let mut dRing_Idx: usize = 0;
             let mut maxIdx_dRing: usize = 49;
+            // Weights are exact integers no larger than the period (100000). Keeping
+            // them in double avoids repeated integer conversions in the reseed loops
+            // without changing any product or accumulation order.
             // The de-lagged series needs only its last sqrt(n) values, so the whole
             // computation runs in one pass over a single window into the input:
             // three interleaved WMA rolling sums plus this small ring. The ring has
@@ -1145,13 +1151,13 @@ impl Core {
             periodSumFull = 0.0;
             trailingIdxFull = wmaStartIdx - lookbackFull;
             i = trailingIdxFull;
-            w = 1;
+            w = 1.0;
             while i < wmaStartIdx {
                 tempReal = inReal[i];
                 i += 1;
                 periodSubFull += tempReal;
-                periodSumFull += tempReal * ((w) as f64);
-                w += 1;
+                periodSumFull += tempReal * w;
+                w += ((1) as f64);
             }
             barsSinceReseedFull = (8 * optInTimePeriod) as usize;
             trailingFull = 0.0;
@@ -1175,12 +1181,12 @@ impl Core {
                     barsSinceReseedFull = (8 * optInTimePeriod) as usize;
                     periodSubFull = 0.0;
                     periodSumFull = 0.0;
-                    rw = 1;
+                    rw = 1.0;
                     for jFull in (today - lookbackFull as usize)..(today as usize) + 1 {
                         tempReal2 = inReal[jFull];
                         periodSubFull += tempReal2;
-                        periodSumFull += tempReal2 * ((rw) as f64);
-                        rw += 1;
+                        periodSumFull += tempReal2 * rw;
+                        rw += ((1) as f64);
                     }
                     jFull = (today as usize) + 1;
                 }
@@ -1260,7 +1266,6 @@ impl Core {
             let mut today: usize = 0_usize;
             let mut outIdx: usize = 0_usize;
             let mut i: usize = 0_usize;
-            let mut w: usize = 0_usize;
             let mut dividerFull: f64 = 0.0_f64;
             let mut dividerHalf: f64 = 0.0_f64;
             let mut dividerSqrt: f64 = 0.0_f64;
@@ -1282,7 +1287,6 @@ impl Core {
             let mut jFull: usize = 0_usize;
             let mut jHalf: usize = 0_usize;
             let mut q: usize = 0_usize;
-            let mut rw: usize = 0_usize;
             let mut ringWalk: usize = 0_usize;
             let mut lookbackFull: usize = 0_usize;
             let mut lookbackHalf: usize = 0_usize;
@@ -1290,9 +1294,14 @@ impl Core {
             let mut barsSinceReseedHalf: usize = 0_usize;
             let mut barsSinceReseedSqrt: usize = 0_usize;
             let mut tempReal2: f64 = 0.0_f64;
+            let mut w: f64 = 0.0_f64;
+            let mut rw: f64 = 0.0_f64;
             let mut dRing: Vec<f64> = Vec::new();
             let mut dRing_Idx: usize = 0;
             let mut maxIdx_dRing: usize = 49;
+            // Weights are exact integers no larger than the period (100000). Keeping
+            // them in double avoids repeated integer conversions in the reseed loops
+            // without changing any product or accumulation order.
             // The de-lagged series needs only its last sqrt(n) values, so the whole
             // computation runs in one pass over a single window into the input:
             // three interleaved WMA rolling sums plus this small ring. The ring has
@@ -1337,13 +1346,13 @@ impl Core {
             periodSumFull = 0.0;
             trailingIdxFull = wmaStartIdx - lookbackFull;
             i = trailingIdxFull;
-            w = 1;
+            w = 1.0;
             while i < wmaStartIdx {
                 tempReal = inReal[i];
                 i += 1;
                 periodSubFull += tempReal;
-                periodSumFull += tempReal * ((w) as f64);
-                w += 1;
+                periodSumFull += tempReal * w;
+                w += ((1) as f64);
             }
             barsSinceReseedFull = (8 * optInTimePeriod) as usize;
             trailingFull = 0.0;
@@ -1360,13 +1369,13 @@ impl Core {
             periodSumHalf = 0.0;
             trailingIdxHalf = wmaStartIdx - lookbackHalf;
             i = trailingIdxHalf;
-            w = 1;
+            w = 1.0;
             while i < wmaStartIdx {
                 tempReal = inReal[i];
                 i += 1;
                 periodSubHalf += tempReal;
-                periodSumHalf += tempReal * ((w) as f64);
-                w += 1;
+                periodSumHalf += tempReal * w;
+                w += ((1) as f64);
             }
             barsSinceReseedHalf = 8 * halfPeriod;
             trailingHalf = 0.0;
@@ -1384,7 +1393,7 @@ impl Core {
             periodSubSqrt = 0.0;
             periodSumSqrt = 0.0;
             trailingSqrt = 0.0;
-            w = 1;
+            w = 1.0;
             // for( today = wmaStartIdx; today < startIdx; today += 1 )
             today = wmaStartIdx;
             while today < startIdx {
@@ -1397,12 +1406,12 @@ impl Core {
                     barsSinceReseedFull = (8 * optInTimePeriod) as usize;
                     periodSubFull = 0.0;
                     periodSumFull = 0.0;
-                    rw = 1;
+                    rw = 1.0;
                     for jFull in (today - lookbackFull as usize)..(today as usize) + 1 {
                         tempReal2 = inReal[jFull];
                         periodSubFull += tempReal2;
-                        periodSumFull += tempReal2 * ((rw) as f64);
-                        rw += 1;
+                        periodSumFull += tempReal2 * rw;
+                        rw += ((1) as f64);
                     }
                     jFull = (today as usize) + 1;
                 }
@@ -1418,12 +1427,12 @@ impl Core {
                     barsSinceReseedHalf = 8 * halfPeriod;
                     periodSubHalf = 0.0;
                     periodSumHalf = 0.0;
-                    rw = 1;
+                    rw = 1.0;
                     for jHalf in (today - lookbackHalf as usize)..(today as usize) + 1 {
                         tempReal2 = inReal[jHalf];
                         periodSubHalf += tempReal2;
-                        periodSumHalf += tempReal2 * ((rw) as f64);
-                        rw += 1;
+                        periodSumHalf += tempReal2 * rw;
+                        rw += ((1) as f64);
                     }
                     jHalf = (today as usize) + 1;
                 }
@@ -1433,8 +1442,8 @@ impl Core {
                 periodSumHalf -= periodSubHalf;
                 diffReal = 2.0 * halfOut - fullOut;
                 periodSubSqrt += diffReal;
-                periodSumSqrt += diffReal * ((w) as f64);
-                w += 1;
+                periodSumSqrt += diffReal * w;
+                w += ((1) as f64);
                 dRing[dRing_Idx] = diffReal;
                 dRing_Idx += 1;
                 if dRing_Idx > maxIdx_dRing { dRing_Idx = 0; }
@@ -1454,12 +1463,12 @@ impl Core {
                     barsSinceReseedFull = (8 * optInTimePeriod) as usize;
                     periodSubFull = 0.0;
                     periodSumFull = 0.0;
-                    rw = 1;
+                    rw = 1.0;
                     for jFull in (today - lookbackFull as usize)..(today as usize) + 1 {
                         tempReal2 = inReal[jFull];
                         periodSubFull += tempReal2;
-                        periodSumFull += tempReal2 * ((rw) as f64);
-                        rw += 1;
+                        periodSumFull += tempReal2 * rw;
+                        rw += ((1) as f64);
                     }
                     jFull = (today as usize) + 1;
                 }
@@ -1475,12 +1484,12 @@ impl Core {
                     barsSinceReseedHalf = 8 * halfPeriod;
                     periodSubHalf = 0.0;
                     periodSumHalf = 0.0;
-                    rw = 1;
+                    rw = 1.0;
                     for jHalf in (today - lookbackHalf as usize)..(today as usize) + 1 {
                         tempReal2 = inReal[jHalf];
                         periodSubHalf += tempReal2;
-                        periodSumHalf += tempReal2 * ((rw) as f64);
-                        rw += 1;
+                        periodSumHalf += tempReal2 * rw;
+                        rw += ((1) as f64);
                     }
                     jHalf = (today as usize) + 1;
                 }
@@ -1502,15 +1511,15 @@ impl Core {
                     barsSinceReseedSqrt = 8 * sqrtPeriod;
                     periodSubSqrt = 0.0;
                     periodSumSqrt = 0.0;
-                    rw = 1;
+                    rw = 1.0;
                     ringWalk = dRing_Idx;
                     // for( q = 0; q < ringSize; q += 1 )
                     q = 0;
                     while q < ringSize {
                         tempReal2 = dRing[ringWalk];
                         periodSubSqrt += tempReal2;
-                        periodSumSqrt += tempReal2 * ((rw) as f64);
-                        rw += 1;
+                        periodSumSqrt += tempReal2 * rw;
+                        rw += ((1) as f64);
                         ringWalk += 1;
                         if ringWalk >= ringSize {
                             ringWalk = 0;
@@ -1777,8 +1786,8 @@ impl HmaStream {
                 let mut tempReal: f64 = 0.0_f64;
                 let mut fullOut: f64 = 0.0_f64;
                 let mut jFull: usize = 0_usize;
-                let mut rw: usize = 0_usize;
                 let mut tempReal2: f64 = 0.0_f64;
+                let mut rw: f64 = 0.0_f64;
                 let mut barsSinceReseedFull = sp.barsSinceReseedFull;
                 let mut periodSubFull = sp.periodSubFull;
                 let mut periodSumFull = sp.periodSumFull;
@@ -1796,14 +1805,14 @@ impl HmaStream {
                     barsSinceReseedFull = (8 * sp.optInTimePeriod) as usize;
                     periodSubFull = 0.0;
                     periodSumFull = 0.0;
-                    rw = 1;
+                    rw = 1.0;
                     // for( jFull = sp.lookbackFull; jFull >= 0; jFull -= 1 )
                     jFull = sp.lookbackFull;
                     loop {
                         tempReal2 = (if ((if sp.winPos_jFull + sp.winCap_jFull - jFull >= sp.winCap_jFull { sp.winPos_jFull + sp.winCap_jFull - jFull - sp.winCap_jFull } else { sp.winPos_jFull + sp.winCap_jFull - jFull }) as usize) != pkSlot0 { sp.win_jFull_inReal[((if sp.winPos_jFull + sp.winCap_jFull - jFull >= sp.winCap_jFull { sp.winPos_jFull + sp.winCap_jFull - jFull - sp.winCap_jFull } else { sp.winPos_jFull + sp.winCap_jFull - jFull })) as usize] } else { pkVal0 });
                         periodSubFull += tempReal2;
-                        periodSumFull += tempReal2 * ((rw) as f64);
-                        rw += 1;
+                        periodSumFull += tempReal2 * rw;
+                        rw += ((1) as f64);
                         if jFull == 0 { break; }
                         jFull -= 1;
                     }
@@ -1820,9 +1829,9 @@ impl HmaStream {
                 let mut jFull: usize = 0_usize;
                 let mut jHalf: usize = 0_usize;
                 let mut q: usize = 0_usize;
-                let mut rw: usize = 0_usize;
                 let mut ringWalk: usize = 0_usize;
                 let mut tempReal2: f64 = 0.0_f64;
+                let mut rw: f64 = 0.0_f64;
                 let mut barsSinceReseedFull = sp.barsSinceReseedFull;
                 let mut barsSinceReseedHalf = sp.barsSinceReseedHalf;
                 let mut barsSinceReseedSqrt = sp.barsSinceReseedSqrt;
@@ -1853,14 +1862,14 @@ impl HmaStream {
                     barsSinceReseedFull = (8 * sp.optInTimePeriod) as usize;
                     periodSubFull = 0.0;
                     periodSumFull = 0.0;
-                    rw = 1;
+                    rw = 1.0;
                     // for( jFull = sp.lookbackFull; jFull >= 0; jFull -= 1 )
                     jFull = sp.lookbackFull;
                     loop {
                         tempReal2 = (if ((if sp.winPos_jFull + sp.winCap_jFull - jFull >= sp.winCap_jFull { sp.winPos_jFull + sp.winCap_jFull - jFull - sp.winCap_jFull } else { sp.winPos_jFull + sp.winCap_jFull - jFull }) as usize) != pkSlot0 { sp.win_jFull_inReal[((if sp.winPos_jFull + sp.winCap_jFull - jFull >= sp.winCap_jFull { sp.winPos_jFull + sp.winCap_jFull - jFull - sp.winCap_jFull } else { sp.winPos_jFull + sp.winCap_jFull - jFull })) as usize] } else { pkVal0 });
                         periodSubFull += tempReal2;
-                        periodSumFull += tempReal2 * ((rw) as f64);
-                        rw += 1;
+                        periodSumFull += tempReal2 * rw;
+                        rw += ((1) as f64);
                         if jFull == 0 { break; }
                         jFull -= 1;
                     }
@@ -1876,14 +1885,14 @@ impl HmaStream {
                     barsSinceReseedHalf = 8 * sp.halfPeriod;
                     periodSubHalf = 0.0;
                     periodSumHalf = 0.0;
-                    rw = 1;
+                    rw = 1.0;
                     // for( jHalf = sp.lookbackHalf; jHalf >= 0; jHalf -= 1 )
                     jHalf = sp.lookbackHalf;
                     loop {
                         tempReal2 = (if ((if sp.winPos_jHalf + sp.winCap_jHalf - jHalf >= sp.winCap_jHalf { sp.winPos_jHalf + sp.winCap_jHalf - jHalf - sp.winCap_jHalf } else { sp.winPos_jHalf + sp.winCap_jHalf - jHalf }) as usize) != pkSlot1 { sp.win_jHalf_inReal[((if sp.winPos_jHalf + sp.winCap_jHalf - jHalf >= sp.winCap_jHalf { sp.winPos_jHalf + sp.winCap_jHalf - jHalf - sp.winCap_jHalf } else { sp.winPos_jHalf + sp.winCap_jHalf - jHalf })) as usize] } else { pkVal1 });
                         periodSubHalf += tempReal2;
-                        periodSumHalf += tempReal2 * ((rw) as f64);
-                        rw += 1;
+                        periodSumHalf += tempReal2 * rw;
+                        rw += ((1) as f64);
                         if jHalf == 0 { break; }
                         jHalf -= 1;
                     }
@@ -1905,15 +1914,15 @@ impl HmaStream {
                     barsSinceReseedSqrt = 8 * sp.sqrtPeriod;
                     periodSubSqrt = 0.0;
                     periodSumSqrt = 0.0;
-                    rw = 1;
+                    rw = 1.0;
                     ringWalk = dRing_Idx;
                     // for( q = 0; q < sp.ringSize; q += 1 )
                     q = 0;
                     while q < sp.ringSize {
                         tempReal2 = sp.cb_dRing[ringWalk];
                         periodSubSqrt += tempReal2;
-                        periodSumSqrt += tempReal2 * ((rw) as f64);
-                        rw += 1;
+                        periodSumSqrt += tempReal2 * rw;
+                        rw += ((1) as f64);
                         ringWalk += 1;
                         if ringWalk >= sp.ringSize {
                             ringWalk = 0;
@@ -2009,8 +2018,8 @@ impl HmaStream {
                 let mut tempReal: f64 = 0.0_f64;
                 let mut fullOut: f64 = 0.0_f64;
                 let mut jFull: usize = 0_usize;
-                let mut rw: usize = 0_usize;
                 let mut tempReal2: f64 = 0.0_f64;
+                let mut rw: f64 = 0.0_f64;
                 let mut barsSinceReseedFull = sp.barsSinceReseedFull;
                 let mut periodSubFull = sp.periodSubFull;
                 let mut periodSumFull = sp.periodSumFull;
@@ -2028,14 +2037,14 @@ impl HmaStream {
                     barsSinceReseedFull = (8 * sp.optInTimePeriod) as usize;
                     periodSubFull = 0.0;
                     periodSumFull = 0.0;
-                    rw = 1;
+                    rw = 1.0;
                     // for( jFull = sp.lookbackFull; jFull >= 0; jFull -= 1 )
                     jFull = sp.lookbackFull;
                     loop {
                         tempReal2 = (if ((tapeBase - jFull & tapeMask) as usize) != pkSlot0 { tape[(tapeBase - jFull & tapeMask) as usize] } else { pkVal0 });
                         periodSubFull += tempReal2;
-                        periodSumFull += tempReal2 * ((rw) as f64);
-                        rw += 1;
+                        periodSumFull += tempReal2 * rw;
+                        rw += ((1) as f64);
                         if jFull == 0 { break; }
                         jFull -= 1;
                     }
@@ -2052,9 +2061,9 @@ impl HmaStream {
                 let mut jFull: usize = 0_usize;
                 let mut jHalf: usize = 0_usize;
                 let mut q: usize = 0_usize;
-                let mut rw: usize = 0_usize;
                 let mut ringWalk: usize = 0_usize;
                 let mut tempReal2: f64 = 0.0_f64;
+                let mut rw: f64 = 0.0_f64;
                 let mut barsSinceReseedFull = sp.barsSinceReseedFull;
                 let mut barsSinceReseedHalf = sp.barsSinceReseedHalf;
                 let mut barsSinceReseedSqrt = sp.barsSinceReseedSqrt;
@@ -2081,14 +2090,14 @@ impl HmaStream {
                     barsSinceReseedFull = (8 * sp.optInTimePeriod) as usize;
                     periodSubFull = 0.0;
                     periodSumFull = 0.0;
-                    rw = 1;
+                    rw = 1.0;
                     // for( jFull = sp.lookbackFull; jFull >= 0; jFull -= 1 )
                     jFull = sp.lookbackFull;
                     loop {
                         tempReal2 = (if ((tapeBase - jFull & tapeMask) as usize) != pkSlot0 { tape[(tapeBase - jFull & tapeMask) as usize] } else { pkVal0 });
                         periodSubFull += tempReal2;
-                        periodSumFull += tempReal2 * ((rw) as f64);
-                        rw += 1;
+                        periodSumFull += tempReal2 * rw;
+                        rw += ((1) as f64);
                         if jFull == 0 { break; }
                         jFull -= 1;
                     }
@@ -2104,14 +2113,14 @@ impl HmaStream {
                     barsSinceReseedHalf = 8 * sp.halfPeriod;
                     periodSubHalf = 0.0;
                     periodSumHalf = 0.0;
-                    rw = 1;
+                    rw = 1.0;
                     // for( jHalf = sp.lookbackHalf; jHalf >= 0; jHalf -= 1 )
                     jHalf = sp.lookbackHalf;
                     loop {
                         tempReal2 = (if ((tapeBase - jHalf & tapeMask) as usize) != pkSlot0 { tape[(tapeBase - jHalf & tapeMask) as usize] } else { pkVal0 });
                         periodSubHalf += tempReal2;
-                        periodSumHalf += tempReal2 * ((rw) as f64);
-                        rw += 1;
+                        periodSumHalf += tempReal2 * rw;
+                        rw += ((1) as f64);
                         if jHalf == 0 { break; }
                         jHalf -= 1;
                     }
@@ -2133,15 +2142,15 @@ impl HmaStream {
                     barsSinceReseedSqrt = 8 * sp.sqrtPeriod;
                     periodSubSqrt = 0.0;
                     periodSumSqrt = 0.0;
-                    rw = 1;
+                    rw = 1.0;
                     ringWalk = dRing_Idx;
                     // for( q = 0; q < sp.ringSize; q += 1 )
                     q = 0;
                     while q < sp.ringSize {
                         tempReal2 = sp.cb_dRing[ringWalk];
                         periodSubSqrt += tempReal2;
-                        periodSumSqrt += tempReal2 * ((rw) as f64);
-                        rw += 1;
+                        periodSumSqrt += tempReal2 * rw;
+                        rw += ((1) as f64);
                         ringWalk += 1;
                         if ringWalk >= sp.ringSize {
                             ringWalk = 0;

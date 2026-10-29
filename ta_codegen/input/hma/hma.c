@@ -34,16 +34,20 @@ TA_RetCode hma(int startIdx, int endIdx,
 {
    int lookbackTotal, lookbackSqrt;
    int halfPeriod, sqrtPeriod, ringSize;
-   int wmaStartIdx, today, outIdx, i, w;
+   int wmaStartIdx, today, outIdx, i;
    double dividerFull, dividerHalf, dividerSqrt;
    int trailingIdxFull, trailingIdxHalf;
    double periodSubFull, periodSumFull, trailingFull;
    double periodSubHalf, periodSumHalf, trailingHalf;
    double periodSubSqrt, periodSumSqrt, trailingSqrt;
    double tempReal, fullOut, halfOut, diffReal;
-   int jFull, jHalf, q, rw, ringWalk, lookbackFull, lookbackHalf;
+   int jFull, jHalf, q, ringWalk, lookbackFull, lookbackHalf;
    int barsSinceReseedFull, barsSinceReseedHalf, barsSinceReseedSqrt;
    double tempReal2;
+   /* Weights are exact integers no larger than the period (100000). Keeping
+    * them in double avoids repeated integer conversions in the reseed loops
+    * without changing any product or accumulation order. */
+   double w, rw;
 
    /* The de-lagged series needs only its last sqrt(n) values, so the whole
     * computation runs in one pass over a single window into the input:
@@ -119,7 +123,7 @@ TA_RetCode hma(int startIdx, int endIdx,
    periodSumFull = 0.0;
    trailingIdxFull = wmaStartIdx - lookbackFull;
    i = trailingIdxFull;
-   w = 1;
+   w = 1.0;
    while( i < wmaStartIdx )
    {
       tempReal = inReal[i];
@@ -157,7 +161,7 @@ TA_RetCode hma(int startIdx, int endIdx,
             barsSinceReseedFull = 8 * optInTimePeriod;
             periodSubFull = 0.0;
             periodSumFull = 0.0;
-            rw = 1;
+            rw = 1.0;
             for( jFull = today - lookbackFull; jFull <= today; jFull++ )
             {
                tempReal2 = inReal[jFull];
@@ -187,7 +191,7 @@ TA_RetCode hma(int startIdx, int endIdx,
       periodSumHalf = 0.0;
       trailingIdxHalf = wmaStartIdx - lookbackHalf;
       i = trailingIdxHalf;
-      w = 1;
+      w = 1.0;
       while( i < wmaStartIdx )
       {
          tempReal = inReal[i];
@@ -213,7 +217,7 @@ TA_RetCode hma(int startIdx, int endIdx,
       periodSubSqrt = 0.0;
       periodSumSqrt = 0.0;
       trailingSqrt = 0.0;
-      w = 1;
+      w = 1.0;
       for( today = wmaStartIdx; today < startIdx; today++ )
       {
          tempReal = inReal[today];
@@ -226,7 +230,7 @@ TA_RetCode hma(int startIdx, int endIdx,
             barsSinceReseedFull = 8 * optInTimePeriod;
             periodSubFull = 0.0;
             periodSumFull = 0.0;
-            rw = 1;
+            rw = 1.0;
             for( jFull = today - lookbackFull; jFull <= today; jFull++ )
             {
                tempReal2 = inReal[jFull];
@@ -249,7 +253,7 @@ TA_RetCode hma(int startIdx, int endIdx,
             barsSinceReseedHalf = 8 * halfPeriod;
             periodSubHalf = 0.0;
             periodSumHalf = 0.0;
-            rw = 1;
+            rw = 1.0;
             for( jHalf = today - lookbackHalf; jHalf <= today; jHalf++ )
             {
                tempReal2 = inReal[jHalf];
@@ -288,7 +292,7 @@ TA_RetCode hma(int startIdx, int endIdx,
             barsSinceReseedFull = 8 * optInTimePeriod;
             periodSubFull = 0.0;
             periodSumFull = 0.0;
-            rw = 1;
+            rw = 1.0;
             for( jFull = today - lookbackFull; jFull <= today; jFull++ )
             {
                tempReal2 = inReal[jFull];
@@ -311,7 +315,7 @@ TA_RetCode hma(int startIdx, int endIdx,
             barsSinceReseedHalf = 8 * halfPeriod;
             periodSubHalf = 0.0;
             periodSumHalf = 0.0;
-            rw = 1;
+            rw = 1.0;
             for( jHalf = today - lookbackHalf; jHalf <= today; jHalf++ )
             {
                tempReal2 = inReal[jHalf];
@@ -342,7 +346,7 @@ TA_RetCode hma(int startIdx, int endIdx,
             barsSinceReseedSqrt = 8 * sqrtPeriod;
             periodSubSqrt = 0.0;
             periodSumSqrt = 0.0;
-            rw = 1;
+            rw = 1.0;
             ringWalk = dRing_Idx;
             for( q = 0; q < ringSize; q++ )
             {

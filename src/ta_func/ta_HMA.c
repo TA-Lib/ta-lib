@@ -97,7 +97,6 @@ TA_LIB_API TA_RetCode TA_HMA( int    startIdx,
    int today;
    int outIdx;
    int i;
-   int w;
    double dividerFull;
    double dividerHalf;
    double dividerSqrt;
@@ -119,7 +118,6 @@ TA_LIB_API TA_RetCode TA_HMA( int    startIdx,
    int jFull;
    int jHalf;
    int q;
-   int rw;
    int ringWalk;
    int lookbackFull;
    int lookbackHalf;
@@ -127,6 +125,8 @@ TA_LIB_API TA_RetCode TA_HMA( int    startIdx,
    int barsSinceReseedHalf;
    int barsSinceReseedSqrt;
    double tempReal2;
+   double w;
+   double rw;
    double local_dRing[50];
    double *dRing = &local_dRing[0];
    int dRing_Idx;
@@ -148,6 +148,10 @@ TA_LIB_API TA_RetCode TA_HMA( int    startIdx,
    if( !outReal )
       return TA_BAD_PARAM;
 
+   /* Weights are exact integers no larger than the period (100000). Keeping
+    * them in double avoids repeated integer conversions in the reseed loops
+    * without changing any product or accumulation order.
+    */
    /* The de-lagged series needs only its last sqrt(n) values, so the whole
     * computation runs in one pass over a single window into the input:
     * three interleaved WMA rolling sums plus this small ring. The ring has
@@ -216,7 +220,7 @@ TA_LIB_API TA_RetCode TA_HMA( int    startIdx,
    periodSumFull = 0.0;
    trailingIdxFull = wmaStartIdx - lookbackFull;
    i = trailingIdxFull;
-   w = 1;
+   w = 1.0;
    while( i < wmaStartIdx )
    {
       tempReal = inReal[i];
@@ -253,7 +257,7 @@ TA_LIB_API TA_RetCode TA_HMA( int    startIdx,
             barsSinceReseedFull = 8 * optInTimePeriod;
             periodSubFull = 0.0;
             periodSumFull = 0.0;
-            rw = 1;
+            rw = 1.0;
             for( jFull = today - lookbackFull; jFull <= today; jFull += 1 )
             {
                tempReal2 = inReal[jFull];
@@ -281,7 +285,7 @@ TA_LIB_API TA_RetCode TA_HMA( int    startIdx,
       periodSumHalf = 0.0;
       trailingIdxHalf = wmaStartIdx - lookbackHalf;
       i = trailingIdxHalf;
-      w = 1;
+      w = 1.0;
       while( i < wmaStartIdx )
       {
          tempReal = inReal[i];
@@ -319,7 +323,7 @@ TA_LIB_API TA_RetCode TA_HMA( int    startIdx,
       periodSubSqrt = 0.0;
       periodSumSqrt = 0.0;
       trailingSqrt = 0.0;
-      w = 1;
+      w = 1.0;
       for( today = wmaStartIdx; today < startIdx; today += 1 )
       {
          tempReal = inReal[today];
@@ -332,7 +336,7 @@ TA_LIB_API TA_RetCode TA_HMA( int    startIdx,
             barsSinceReseedFull = 8 * optInTimePeriod;
             periodSubFull = 0.0;
             periodSumFull = 0.0;
-            rw = 1;
+            rw = 1.0;
             for( jFull = today - lookbackFull; jFull <= today; jFull += 1 )
             {
                tempReal2 = inReal[jFull];
@@ -354,7 +358,7 @@ TA_LIB_API TA_RetCode TA_HMA( int    startIdx,
             barsSinceReseedHalf = 8 * halfPeriod;
             periodSubHalf = 0.0;
             periodSumHalf = 0.0;
-            rw = 1;
+            rw = 1.0;
             for( jHalf = today - lookbackHalf; jHalf <= today; jHalf += 1 )
             {
                tempReal2 = inReal[jHalf];
@@ -392,7 +396,7 @@ TA_LIB_API TA_RetCode TA_HMA( int    startIdx,
             barsSinceReseedFull = 8 * optInTimePeriod;
             periodSubFull = 0.0;
             periodSumFull = 0.0;
-            rw = 1;
+            rw = 1.0;
             for( jFull = today - lookbackFull; jFull <= today; jFull += 1 )
             {
                tempReal2 = inReal[jFull];
@@ -414,7 +418,7 @@ TA_LIB_API TA_RetCode TA_HMA( int    startIdx,
             barsSinceReseedHalf = 8 * halfPeriod;
             periodSubHalf = 0.0;
             periodSumHalf = 0.0;
-            rw = 1;
+            rw = 1.0;
             for( jHalf = today - lookbackHalf; jHalf <= today; jHalf += 1 )
             {
                tempReal2 = inReal[jHalf];
@@ -443,7 +447,7 @@ TA_LIB_API TA_RetCode TA_HMA( int    startIdx,
             barsSinceReseedSqrt = 8 * sqrtPeriod;
             periodSubSqrt = 0.0;
             periodSumSqrt = 0.0;
-            rw = 1;
+            rw = 1.0;
             ringWalk = dRing_Idx;
             for( q = 0; q < ringSize; q += 1 )
             {
@@ -491,7 +495,6 @@ TA_RetCode TA_S_HMA( int    startIdx,
    int today;
    int outIdx;
    int i;
-   int w;
    double dividerFull;
    double dividerHalf;
    double dividerSqrt;
@@ -513,7 +516,6 @@ TA_RetCode TA_S_HMA( int    startIdx,
    int jFull;
    int jHalf;
    int q;
-   int rw;
    int ringWalk;
    int lookbackFull;
    int lookbackHalf;
@@ -521,6 +523,8 @@ TA_RetCode TA_S_HMA( int    startIdx,
    int barsSinceReseedHalf;
    int barsSinceReseedSqrt;
    double tempReal2;
+   double w;
+   double rw;
    double local_dRing[50];
    double *dRing = &local_dRing[0];
    int dRing_Idx;
@@ -575,7 +579,7 @@ TA_RetCode TA_S_HMA( int    startIdx,
    periodSumFull = 0.0;
    trailingIdxFull = wmaStartIdx - lookbackFull;
    i = trailingIdxFull;
-   w = 1;
+   w = 1.0;
    while( i < wmaStartIdx )
    {
       tempReal = (double)inReal[i];
@@ -601,7 +605,7 @@ TA_RetCode TA_S_HMA( int    startIdx,
             barsSinceReseedFull = 8 * optInTimePeriod;
             periodSubFull = 0.0;
             periodSumFull = 0.0;
-            rw = 1;
+            rw = 1.0;
             for( jFull = today - lookbackFull; jFull <= today; jFull += 1 )
             {
                tempReal2 = (double)inReal[jFull];
@@ -625,7 +629,7 @@ TA_RetCode TA_S_HMA( int    startIdx,
       periodSumHalf = 0.0;
       trailingIdxHalf = wmaStartIdx - lookbackHalf;
       i = trailingIdxHalf;
-      w = 1;
+      w = 1.0;
       while( i < wmaStartIdx )
       {
          tempReal = (double)inReal[i];
@@ -655,7 +659,7 @@ TA_RetCode TA_S_HMA( int    startIdx,
       periodSubSqrt = 0.0;
       periodSumSqrt = 0.0;
       trailingSqrt = 0.0;
-      w = 1;
+      w = 1.0;
       for( today = wmaStartIdx; today < startIdx; today += 1 )
       {
          tempReal = (double)inReal[today];
@@ -668,7 +672,7 @@ TA_RetCode TA_S_HMA( int    startIdx,
             barsSinceReseedFull = 8 * optInTimePeriod;
             periodSubFull = 0.0;
             periodSumFull = 0.0;
-            rw = 1;
+            rw = 1.0;
             for( jFull = today - lookbackFull; jFull <= today; jFull += 1 )
             {
                tempReal2 = (double)inReal[jFull];
@@ -690,7 +694,7 @@ TA_RetCode TA_S_HMA( int    startIdx,
             barsSinceReseedHalf = 8 * halfPeriod;
             periodSubHalf = 0.0;
             periodSumHalf = 0.0;
-            rw = 1;
+            rw = 1.0;
             for( jHalf = today - lookbackHalf; jHalf <= today; jHalf += 1 )
             {
                tempReal2 = (double)inReal[jHalf];
@@ -724,7 +728,7 @@ TA_RetCode TA_S_HMA( int    startIdx,
             barsSinceReseedFull = 8 * optInTimePeriod;
             periodSubFull = 0.0;
             periodSumFull = 0.0;
-            rw = 1;
+            rw = 1.0;
             for( jFull = today - lookbackFull; jFull <= today; jFull += 1 )
             {
                tempReal2 = (double)inReal[jFull];
@@ -746,7 +750,7 @@ TA_RetCode TA_S_HMA( int    startIdx,
             barsSinceReseedHalf = 8 * halfPeriod;
             periodSubHalf = 0.0;
             periodSumHalf = 0.0;
-            rw = 1;
+            rw = 1.0;
             for( jHalf = today - lookbackHalf; jHalf <= today; jHalf += 1 )
             {
                tempReal2 = (double)inReal[jHalf];
@@ -769,7 +773,7 @@ TA_RetCode TA_S_HMA( int    startIdx,
             barsSinceReseedSqrt = 8 * sqrtPeriod;
             periodSubSqrt = 0.0;
             periodSumSqrt = 0.0;
-            rw = 1;
+            rw = 1.0;
             ringWalk = dRing_Idx;
             for( q = 0; q < ringSize; q += 1 )
             {
@@ -875,8 +879,8 @@ static void TA_HMA_StepImpl( struct TA_HMA_Stream *sp, double inReal, double *ou
       double tempReal;
       double fullOut;
       int jFull;
-      int rw;
       double tempReal2;
+      double rw;
       int ringCapL_trailingIdxFull;
 
       sp->win_jFull_inReal[sp->winPos_jFull] = inReal;
@@ -890,7 +894,7 @@ static void TA_HMA_StepImpl( struct TA_HMA_Stream *sp, double inReal, double *ou
          sp->barsSinceReseedFull = 8 * sp->optInTimePeriod;
          sp->periodSubFull = 0.0;
          sp->periodSumFull = 0.0;
-         rw = 1;
+         rw = 1.0;
          for( jFull = sp->lookbackFull; jFull >= 0; jFull -= 1 )
          {
             tempReal2 = sp->win_jFull_inReal[(sp->winPos_jFull + sp->winCap_jFull - jFull >= sp->winCap_jFull) ? sp->winPos_jFull + sp->winCap_jFull - jFull - sp->winCap_jFull : sp->winPos_jFull + sp->winCap_jFull - jFull];
@@ -926,9 +930,9 @@ static void TA_HMA_StepImpl( struct TA_HMA_Stream *sp, double inReal, double *ou
       int jFull;
       int jHalf;
       int q;
-      int rw;
       int ringWalk;
       double tempReal2;
+      double rw;
       int ringCapL_trailingIdxFull;
       int ringCapL_trailingIdxHalf;
       double periodSubSqrt;
@@ -948,7 +952,7 @@ static void TA_HMA_StepImpl( struct TA_HMA_Stream *sp, double inReal, double *ou
          sp->barsSinceReseedFull = 8 * sp->optInTimePeriod;
          sp->periodSubFull = 0.0;
          sp->periodSumFull = 0.0;
-         rw = 1;
+         rw = 1.0;
          for( jFull = sp->lookbackFull; jFull >= 0; jFull -= 1 )
          {
             tempReal2 = sp->win_jFull_inReal[(sp->winPos_jFull + sp->winCap_jFull - jFull >= sp->winCap_jFull) ? sp->winPos_jFull + sp->winCap_jFull - jFull - sp->winCap_jFull : sp->winPos_jFull + sp->winCap_jFull - jFull];
@@ -969,7 +973,7 @@ static void TA_HMA_StepImpl( struct TA_HMA_Stream *sp, double inReal, double *ou
          sp->barsSinceReseedHalf = 8 * sp->halfPeriod;
          sp->periodSubHalf = 0.0;
          sp->periodSumHalf = 0.0;
-         rw = 1;
+         rw = 1.0;
          for( jHalf = sp->lookbackHalf; jHalf >= 0; jHalf -= 1 )
          {
             tempReal2 = sp->win_jHalf_inReal[(sp->winPos_jHalf + sp->winCap_jHalf - jHalf >= sp->winCap_jHalf) ? sp->winPos_jHalf + sp->winCap_jHalf - jHalf - sp->winCap_jHalf : sp->winPos_jHalf + sp->winCap_jHalf - jHalf];
@@ -997,7 +1001,7 @@ static void TA_HMA_StepImpl( struct TA_HMA_Stream *sp, double inReal, double *ou
          sp->barsSinceReseedSqrt = 8 * sp->sqrtPeriod;
          periodSubSqrt = 0.0;
          periodSumSqrt = 0.0;
-         rw = 1;
+         rw = 1.0;
          ringWalk = sp->dRing_Idx;
          for( q = 0; q < sp->ringSize; q += 1 )
          {
@@ -1141,7 +1145,6 @@ static TA_RetCode TA_HMA_OpenImpl( struct TA_HMA_Stream **stream, const double i
       int today;
       int outIdx;
       int i;
-      int w;
       double dividerFull = 0.0;
       int trailingIdxFull;
       double periodSubFull = 0.0;
@@ -1150,10 +1153,15 @@ static TA_RetCode TA_HMA_OpenImpl( struct TA_HMA_Stream **stream, const double i
       double tempReal;
       double fullOut;
       int jFull;
-      int rw;
       int lookbackFull = 0;
       int barsSinceReseedFull = 0;
       double tempReal2;
+      /* Weights are exact integers no larger than the period (100000). Keeping
+       * them in double avoids repeated integer conversions in the reseed loops
+       * without changing any product or accumulation order.
+       */
+      double w;
+      double rw;
       /* The de-lagged series needs only its last sqrt(n) values, so the whole
        * computation runs in one pass over a single window into the input:
        * three interleaved WMA rolling sums plus this small ring. The ring has
@@ -1204,7 +1212,7 @@ static TA_RetCode TA_HMA_OpenImpl( struct TA_HMA_Stream **stream, const double i
       periodSumFull = 0.0;
       trailingIdxFull = wmaStartIdx - lookbackFull;
       i = trailingIdxFull;
-      w = 1;
+      w = 1.0;
       while( i < wmaStartIdx )
       {
          tempReal = inReal[i];
@@ -1239,7 +1247,7 @@ static TA_RetCode TA_HMA_OpenImpl( struct TA_HMA_Stream **stream, const double i
             barsSinceReseedFull = 8 * optInTimePeriod;
             periodSubFull = 0.0;
             periodSumFull = 0.0;
-            rw = 1;
+            rw = 1.0;
             for( jFull = today - lookbackFull; jFull <= today; jFull += 1 )
             {
                tempReal2 = inReal[jFull];
@@ -1302,7 +1310,6 @@ static TA_RetCode TA_HMA_OpenImpl( struct TA_HMA_Stream **stream, const double i
       int today;
       int outIdx;
       int i;
-      int w;
       double dividerFull = 0.0;
       double dividerHalf = 0.0;
       double dividerSqrt = 0.0;
@@ -1324,7 +1331,6 @@ static TA_RetCode TA_HMA_OpenImpl( struct TA_HMA_Stream **stream, const double i
       int jFull;
       int jHalf;
       int q;
-      int rw;
       int ringWalk;
       int lookbackFull = 0;
       int lookbackHalf = 0;
@@ -1332,6 +1338,12 @@ static TA_RetCode TA_HMA_OpenImpl( struct TA_HMA_Stream **stream, const double i
       int barsSinceReseedHalf = 0;
       int barsSinceReseedSqrt = 0;
       double tempReal2;
+      /* Weights are exact integers no larger than the period (100000). Keeping
+       * them in double avoids repeated integer conversions in the reseed loops
+       * without changing any product or accumulation order.
+       */
+      double w;
+      double rw;
       /* The de-lagged series needs only its last sqrt(n) values, so the whole
        * computation runs in one pass over a single window into the input:
        * three interleaved WMA rolling sums plus this small ring. The ring has
@@ -1383,7 +1395,7 @@ static TA_RetCode TA_HMA_OpenImpl( struct TA_HMA_Stream **stream, const double i
       periodSumFull = 0.0;
       trailingIdxFull = wmaStartIdx - lookbackFull;
       i = trailingIdxFull;
-      w = 1;
+      w = 1.0;
       while( i < wmaStartIdx )
       {
          tempReal = inReal[i];
@@ -1409,7 +1421,7 @@ static TA_RetCode TA_HMA_OpenImpl( struct TA_HMA_Stream **stream, const double i
       periodSumHalf = 0.0;
       trailingIdxHalf = wmaStartIdx - lookbackHalf;
       i = trailingIdxHalf;
-      w = 1;
+      w = 1.0;
       while( i < wmaStartIdx )
       {
          tempReal = inReal[i];
@@ -1447,7 +1459,7 @@ static TA_RetCode TA_HMA_OpenImpl( struct TA_HMA_Stream **stream, const double i
       periodSubSqrt = 0.0;
       periodSumSqrt = 0.0;
       trailingSqrt = 0.0;
-      w = 1;
+      w = 1.0;
       for( today = wmaStartIdx; today < startIdx; today += 1 )
       {
          tempReal = inReal[today];
@@ -1460,7 +1472,7 @@ static TA_RetCode TA_HMA_OpenImpl( struct TA_HMA_Stream **stream, const double i
             barsSinceReseedFull = 8 * optInTimePeriod;
             periodSubFull = 0.0;
             periodSumFull = 0.0;
-            rw = 1;
+            rw = 1.0;
             for( jFull = today - lookbackFull; jFull <= today; jFull += 1 )
             {
                tempReal2 = inReal[jFull];
@@ -1482,7 +1494,7 @@ static TA_RetCode TA_HMA_OpenImpl( struct TA_HMA_Stream **stream, const double i
             barsSinceReseedHalf = 8 * halfPeriod;
             periodSubHalf = 0.0;
             periodSumHalf = 0.0;
-            rw = 1;
+            rw = 1.0;
             for( jHalf = today - lookbackHalf; jHalf <= today; jHalf += 1 )
             {
                tempReal2 = inReal[jHalf];
@@ -1520,7 +1532,7 @@ static TA_RetCode TA_HMA_OpenImpl( struct TA_HMA_Stream **stream, const double i
             barsSinceReseedFull = 8 * optInTimePeriod;
             periodSubFull = 0.0;
             periodSumFull = 0.0;
-            rw = 1;
+            rw = 1.0;
             for( jFull = today - lookbackFull; jFull <= today; jFull += 1 )
             {
                tempReal2 = inReal[jFull];
@@ -1542,7 +1554,7 @@ static TA_RetCode TA_HMA_OpenImpl( struct TA_HMA_Stream **stream, const double i
             barsSinceReseedHalf = 8 * halfPeriod;
             periodSubHalf = 0.0;
             periodSumHalf = 0.0;
-            rw = 1;
+            rw = 1.0;
             for( jHalf = today - lookbackHalf; jHalf <= today; jHalf += 1 )
             {
                tempReal2 = inReal[jHalf];
@@ -1571,7 +1583,7 @@ static TA_RetCode TA_HMA_OpenImpl( struct TA_HMA_Stream **stream, const double i
             barsSinceReseedSqrt = 8 * sqrtPeriod;
             periodSubSqrt = 0.0;
             periodSumSqrt = 0.0;
-            rw = 1;
+            rw = 1.0;
             ringWalk = dRing_Idx;
             for( q = 0; q < ringSize; q += 1 )
             {
@@ -1740,8 +1752,8 @@ TA_LIB_API TA_RetCode TA_HMA_Peek( const TA_HMA_Stream *stream, double inReal, d
       double tempReal;
       double fullOut;
       int jFull;
-      int rw;
       double tempReal2;
+      double rw;
       int barsSinceReseedFull;
       double periodSubFull;
       double periodSumFull;
@@ -1769,7 +1781,7 @@ TA_LIB_API TA_RetCode TA_HMA_Peek( const TA_HMA_Stream *stream, double inReal, d
          barsSinceReseedFull = 8 * sp->optInTimePeriod;
          periodSubFull = 0.0;
          periodSumFull = 0.0;
-         rw = 1;
+         rw = 1.0;
          for( jFull = sp->lookbackFull; jFull >= 0; jFull -= 1 )
          {
             tempReal2 = (((sp->winPos_jFull + sp->winCap_jFull - jFull >= sp->winCap_jFull) ? sp->winPos_jFull + sp->winCap_jFull - jFull - sp->winCap_jFull : sp->winPos_jFull + sp->winCap_jFull - jFull) != pkSlot0) ? win_jFull_inReal[(sp->winPos_jFull + sp->winCap_jFull - jFull >= sp->winCap_jFull) ? sp->winPos_jFull + sp->winCap_jFull - jFull - sp->winCap_jFull : sp->winPos_jFull + sp->winCap_jFull - jFull] : pkVal0;
@@ -1792,9 +1804,9 @@ TA_LIB_API TA_RetCode TA_HMA_Peek( const TA_HMA_Stream *stream, double inReal, d
       int jFull;
       int jHalf;
       int q;
-      int rw;
       int ringWalk;
       double tempReal2;
+      double rw;
       int barsSinceReseedFull;
       int barsSinceReseedHalf;
       int barsSinceReseedSqrt;
@@ -1846,7 +1858,7 @@ TA_LIB_API TA_RetCode TA_HMA_Peek( const TA_HMA_Stream *stream, double inReal, d
          barsSinceReseedFull = 8 * sp->optInTimePeriod;
          periodSubFull = 0.0;
          periodSumFull = 0.0;
-         rw = 1;
+         rw = 1.0;
          for( jFull = sp->lookbackFull; jFull >= 0; jFull -= 1 )
          {
             tempReal2 = (((sp->winPos_jFull + sp->winCap_jFull - jFull >= sp->winCap_jFull) ? sp->winPos_jFull + sp->winCap_jFull - jFull - sp->winCap_jFull : sp->winPos_jFull + sp->winCap_jFull - jFull) != pkSlot0) ? win_jFull_inReal[(sp->winPos_jFull + sp->winCap_jFull - jFull >= sp->winCap_jFull) ? sp->winPos_jFull + sp->winCap_jFull - jFull - sp->winCap_jFull : sp->winPos_jFull + sp->winCap_jFull - jFull] : pkVal0;
@@ -1867,7 +1879,7 @@ TA_LIB_API TA_RetCode TA_HMA_Peek( const TA_HMA_Stream *stream, double inReal, d
          barsSinceReseedHalf = 8 * sp->halfPeriod;
          periodSubHalf = 0.0;
          periodSumHalf = 0.0;
-         rw = 1;
+         rw = 1.0;
          for( jHalf = sp->lookbackHalf; jHalf >= 0; jHalf -= 1 )
          {
             tempReal2 = (((sp->winPos_jHalf + sp->winCap_jHalf - jHalf >= sp->winCap_jHalf) ? sp->winPos_jHalf + sp->winCap_jHalf - jHalf - sp->winCap_jHalf : sp->winPos_jHalf + sp->winCap_jHalf - jHalf) != pkSlot1) ? win_jHalf_inReal[(sp->winPos_jHalf + sp->winCap_jHalf - jHalf >= sp->winCap_jHalf) ? sp->winPos_jHalf + sp->winCap_jHalf - jHalf - sp->winCap_jHalf : sp->winPos_jHalf + sp->winCap_jHalf - jHalf] : pkVal1;
@@ -1892,7 +1904,7 @@ TA_LIB_API TA_RetCode TA_HMA_Peek( const TA_HMA_Stream *stream, double inReal, d
       {
          barsSinceReseedSqrt = 8 * sp->sqrtPeriod;
          periodSumSqrt = 0.0;
-         rw = 1;
+         rw = 1.0;
          ringWalk = dRing_Idx;
          for( q = 0; q < sp->ringSize; q += 1 )
          {
@@ -1931,8 +1943,8 @@ void TA_HMA_StepTape( struct TA_HMA_Stream *sp, const double tape[], int tapeBas
       double tempReal;
       double fullOut;
       int jFull;
-      int rw;
       double tempReal2;
+      double rw;
 
       tempReal = inReal;
       sp->periodSubFull += tempReal;
@@ -1944,7 +1956,7 @@ void TA_HMA_StepTape( struct TA_HMA_Stream *sp, const double tape[], int tapeBas
          sp->barsSinceReseedFull = 8 * sp->optInTimePeriod;
          sp->periodSubFull = 0.0;
          sp->periodSumFull = 0.0;
-         rw = 1;
+         rw = 1.0;
          for( jFull = sp->lookbackFull; jFull >= 0; jFull -= 1 )
          {
             tempReal2 = tape[(tapeBase - jFull) & tapeMask];
@@ -1968,9 +1980,9 @@ void TA_HMA_StepTape( struct TA_HMA_Stream *sp, const double tape[], int tapeBas
       int jFull;
       int jHalf;
       int q;
-      int rw;
       int ringWalk;
       double tempReal2;
+      double rw;
       double periodSubSqrt;
       double periodSumSqrt;
 
@@ -1986,7 +1998,7 @@ void TA_HMA_StepTape( struct TA_HMA_Stream *sp, const double tape[], int tapeBas
          sp->barsSinceReseedFull = 8 * sp->optInTimePeriod;
          sp->periodSubFull = 0.0;
          sp->periodSumFull = 0.0;
-         rw = 1;
+         rw = 1.0;
          for( jFull = sp->lookbackFull; jFull >= 0; jFull -= 1 )
          {
             tempReal2 = tape[(tapeBase - jFull) & tapeMask];
@@ -2007,7 +2019,7 @@ void TA_HMA_StepTape( struct TA_HMA_Stream *sp, const double tape[], int tapeBas
          sp->barsSinceReseedHalf = 8 * sp->halfPeriod;
          sp->periodSubHalf = 0.0;
          sp->periodSumHalf = 0.0;
-         rw = 1;
+         rw = 1.0;
          for( jHalf = sp->lookbackHalf; jHalf >= 0; jHalf -= 1 )
          {
             tempReal2 = tape[(tapeBase - jHalf) & tapeMask];
@@ -2035,7 +2047,7 @@ void TA_HMA_StepTape( struct TA_HMA_Stream *sp, const double tape[], int tapeBas
          sp->barsSinceReseedSqrt = 8 * sp->sqrtPeriod;
          periodSubSqrt = 0.0;
          periodSumSqrt = 0.0;
-         rw = 1;
+         rw = 1.0;
          ringWalk = sp->dRing_Idx;
          for( q = 0; q < sp->ringSize; q += 1 )
          {
@@ -2076,8 +2088,8 @@ void TA_HMA_PeekTape( const struct TA_HMA_Stream *sp, const double tape[], int t
       double tempReal;
       double fullOut;
       int jFull;
-      int rw;
       double tempReal2;
+      double rw;
       int barsSinceReseedFull;
       double periodSubFull;
       double periodSumFull;
@@ -2101,7 +2113,7 @@ void TA_HMA_PeekTape( const struct TA_HMA_Stream *sp, const double tape[], int t
          barsSinceReseedFull = 8 * sp->optInTimePeriod;
          periodSubFull = 0.0;
          periodSumFull = 0.0;
-         rw = 1;
+         rw = 1.0;
          for( jFull = sp->lookbackFull; jFull >= 0; jFull -= 1 )
          {
             tempReal2 = (((tapeBase - jFull) & tapeMask) != pkSlot0) ? tape[(tapeBase - jFull) & tapeMask] : pkVal0;
@@ -2124,9 +2136,9 @@ void TA_HMA_PeekTape( const struct TA_HMA_Stream *sp, const double tape[], int t
       int jFull;
       int jHalf;
       int q;
-      int rw;
       int ringWalk;
       double tempReal2;
+      double rw;
       int barsSinceReseedFull;
       int barsSinceReseedHalf;
       int barsSinceReseedSqrt;
@@ -2166,7 +2178,7 @@ void TA_HMA_PeekTape( const struct TA_HMA_Stream *sp, const double tape[], int t
          barsSinceReseedFull = 8 * sp->optInTimePeriod;
          periodSubFull = 0.0;
          periodSumFull = 0.0;
-         rw = 1;
+         rw = 1.0;
          for( jFull = sp->lookbackFull; jFull >= 0; jFull -= 1 )
          {
             tempReal2 = (((tapeBase - jFull) & tapeMask) != pkSlot0) ? tape[(tapeBase - jFull) & tapeMask] : pkVal0;
@@ -2187,7 +2199,7 @@ void TA_HMA_PeekTape( const struct TA_HMA_Stream *sp, const double tape[], int t
          barsSinceReseedHalf = 8 * sp->halfPeriod;
          periodSubHalf = 0.0;
          periodSumHalf = 0.0;
-         rw = 1;
+         rw = 1.0;
          for( jHalf = sp->lookbackHalf; jHalf >= 0; jHalf -= 1 )
          {
             tempReal2 = (((tapeBase - jHalf) & tapeMask) != pkSlot0) ? tape[(tapeBase - jHalf) & tapeMask] : pkVal0;
@@ -2212,7 +2224,7 @@ void TA_HMA_PeekTape( const struct TA_HMA_Stream *sp, const double tape[], int t
       {
          barsSinceReseedSqrt = 8 * sp->sqrtPeriod;
          periodSumSqrt = 0.0;
-         rw = 1;
+         rw = 1.0;
          ringWalk = dRing_Idx;
          for( q = 0; q < sp->ringSize; q += 1 )
          {

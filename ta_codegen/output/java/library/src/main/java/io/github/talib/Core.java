@@ -107058,7 +107058,6 @@ public final class Core {
       int today = 0;
       int outIdx = 0;
       int i = 0;
-      int w = 0;
       double dividerFull = 0;
       double dividerHalf = 0;
       double dividerSqrt = 0;
@@ -107080,7 +107079,6 @@ public final class Core {
       int jFull = 0;
       int jHalf = 0;
       int q = 0;
-      int rw = 0;
       int ringWalk = 0;
       int lookbackFull = 0;
       int lookbackHalf = 0;
@@ -107088,6 +107086,8 @@ public final class Core {
       int barsSinceReseedHalf = 0;
       int barsSinceReseedSqrt = 0;
       double tempReal2 = 0;
+      double w = 0;
+      double rw = 0;
       double[] dRing;
       int dRing_Idx = 0;
       int maxIdx_dRing = (50)-1;
@@ -107102,6 +107102,10 @@ public final class Core {
       } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
          return RetCode.BAD_PARAM;
       }
+      /* Weights are exact integers no larger than the period (100000). Keeping
+       * them in double avoids repeated integer conversions in the reseed loops
+       * without changing any product or accumulation order.
+       */
       /* The de-lagged series needs only its last sqrt(n) values, so the whole
        * computation runs in one pass over a single window into the input:
        * three interleaved WMA rolling sums plus this small ring. The ring has
@@ -107166,7 +107170,7 @@ public final class Core {
       periodSumFull = 0.0;
       trailingIdxFull = wmaStartIdx - lookbackFull;
       i = trailingIdxFull;
-      w = 1;
+      w = 1.0;
       while( i < wmaStartIdx ) {
          tempReal = inReal[i];
          i += 1;
@@ -107199,7 +107203,7 @@ public final class Core {
                barsSinceReseedFull = 8 * optInTimePeriod;
                periodSubFull = 0.0;
                periodSumFull = 0.0;
-               rw = 1;
+               rw = 1.0;
                for( jFull = today - lookbackFull; jFull <= today; jFull += 1 ) {
                   tempReal2 = inReal[jFull];
                   periodSubFull += tempReal2;
@@ -107225,7 +107229,7 @@ public final class Core {
          periodSumHalf = 0.0;
          trailingIdxHalf = wmaStartIdx - lookbackHalf;
          i = trailingIdxHalf;
-         w = 1;
+         w = 1.0;
          while( i < wmaStartIdx ) {
             tempReal = inReal[i];
             i += 1;
@@ -107251,7 +107255,7 @@ public final class Core {
          periodSubSqrt = 0.0;
          periodSumSqrt = 0.0;
          trailingSqrt = 0.0;
-         w = 1;
+         w = 1.0;
          for( today = wmaStartIdx; today < startIdx; today += 1 ) {
             tempReal = inReal[today];
             periodSubFull += tempReal;
@@ -107262,7 +107266,7 @@ public final class Core {
                barsSinceReseedFull = 8 * optInTimePeriod;
                periodSubFull = 0.0;
                periodSumFull = 0.0;
-               rw = 1;
+               rw = 1.0;
                for( jFull = today - lookbackFull; jFull <= today; jFull += 1 ) {
                   tempReal2 = inReal[jFull];
                   periodSubFull += tempReal2;
@@ -107282,7 +107286,7 @@ public final class Core {
                barsSinceReseedHalf = 8 * halfPeriod;
                periodSubHalf = 0.0;
                periodSumHalf = 0.0;
-               rw = 1;
+               rw = 1.0;
                for( jHalf = today - lookbackHalf; jHalf <= today; jHalf += 1 ) {
                   tempReal2 = inReal[jHalf];
                   periodSubHalf += tempReal2;
@@ -107317,7 +107321,7 @@ public final class Core {
                barsSinceReseedFull = 8 * optInTimePeriod;
                periodSubFull = 0.0;
                periodSumFull = 0.0;
-               rw = 1;
+               rw = 1.0;
                for( jFull = today - lookbackFull; jFull <= today; jFull += 1 ) {
                   tempReal2 = inReal[jFull];
                   periodSubFull += tempReal2;
@@ -107337,7 +107341,7 @@ public final class Core {
                barsSinceReseedHalf = 8 * halfPeriod;
                periodSubHalf = 0.0;
                periodSumHalf = 0.0;
-               rw = 1;
+               rw = 1.0;
                for( jHalf = today - lookbackHalf; jHalf <= today; jHalf += 1 ) {
                   tempReal2 = inReal[jHalf];
                   periodSubHalf += tempReal2;
@@ -107364,7 +107368,7 @@ public final class Core {
                barsSinceReseedSqrt = 8 * sqrtPeriod;
                periodSubSqrt = 0.0;
                periodSumSqrt = 0.0;
-               rw = 1;
+               rw = 1.0;
                ringWalk = dRing_Idx;
                for( q = 0; q < ringSize; q += 1 ) {
                   tempReal2 = dRing[ringWalk];
@@ -107408,7 +107412,6 @@ public final class Core {
       int today = 0;
       int outIdx = 0;
       int i = 0;
-      int w = 0;
       double dividerFull = 0;
       double dividerHalf = 0;
       double dividerSqrt = 0;
@@ -107430,7 +107433,6 @@ public final class Core {
       int jFull = 0;
       int jHalf = 0;
       int q = 0;
-      int rw = 0;
       int ringWalk = 0;
       int lookbackFull = 0;
       int lookbackHalf = 0;
@@ -107438,6 +107440,8 @@ public final class Core {
       int barsSinceReseedHalf = 0;
       int barsSinceReseedSqrt = 0;
       double tempReal2 = 0;
+      double w = 0;
+      double rw = 0;
       double[] dRing;
       int dRing_Idx = 0;
       int maxIdx_dRing = (50)-1;
@@ -107481,7 +107485,7 @@ public final class Core {
       periodSumFull = 0.0;
       trailingIdxFull = wmaStartIdx - lookbackFull;
       i = trailingIdxFull;
-      w = 1;
+      w = 1.0;
       while( i < wmaStartIdx ) {
          tempReal = (double)inReal[i];
          i += 1;
@@ -107503,7 +107507,7 @@ public final class Core {
                barsSinceReseedFull = 8 * optInTimePeriod;
                periodSubFull = 0.0;
                periodSumFull = 0.0;
-               rw = 1;
+               rw = 1.0;
                for( jFull = today - lookbackFull; jFull <= today; jFull += 1 ) {
                   tempReal2 = (double)inReal[jFull];
                   periodSubFull += tempReal2;
@@ -107525,7 +107529,7 @@ public final class Core {
          periodSumHalf = 0.0;
          trailingIdxHalf = wmaStartIdx - lookbackHalf;
          i = trailingIdxHalf;
-         w = 1;
+         w = 1.0;
          while( i < wmaStartIdx ) {
             tempReal = (double)inReal[i];
             i += 1;
@@ -107543,7 +107547,7 @@ public final class Core {
          periodSubSqrt = 0.0;
          periodSumSqrt = 0.0;
          trailingSqrt = 0.0;
-         w = 1;
+         w = 1.0;
          for( today = wmaStartIdx; today < startIdx; today += 1 ) {
             tempReal = (double)inReal[today];
             periodSubFull += tempReal;
@@ -107554,7 +107558,7 @@ public final class Core {
                barsSinceReseedFull = 8 * optInTimePeriod;
                periodSubFull = 0.0;
                periodSumFull = 0.0;
-               rw = 1;
+               rw = 1.0;
                for( jFull = today - lookbackFull; jFull <= today; jFull += 1 ) {
                   tempReal2 = (double)inReal[jFull];
                   periodSubFull += tempReal2;
@@ -107574,7 +107578,7 @@ public final class Core {
                barsSinceReseedHalf = 8 * halfPeriod;
                periodSubHalf = 0.0;
                periodSumHalf = 0.0;
-               rw = 1;
+               rw = 1.0;
                for( jHalf = today - lookbackHalf; jHalf <= today; jHalf += 1 ) {
                   tempReal2 = (double)inReal[jHalf];
                   periodSubHalf += tempReal2;
@@ -107605,7 +107609,7 @@ public final class Core {
                barsSinceReseedFull = 8 * optInTimePeriod;
                periodSubFull = 0.0;
                periodSumFull = 0.0;
-               rw = 1;
+               rw = 1.0;
                for( jFull = today - lookbackFull; jFull <= today; jFull += 1 ) {
                   tempReal2 = (double)inReal[jFull];
                   periodSubFull += tempReal2;
@@ -107625,7 +107629,7 @@ public final class Core {
                barsSinceReseedHalf = 8 * halfPeriod;
                periodSubHalf = 0.0;
                periodSumHalf = 0.0;
-               rw = 1;
+               rw = 1.0;
                for( jHalf = today - lookbackHalf; jHalf <= today; jHalf += 1 ) {
                   tempReal2 = (double)inReal[jHalf];
                   periodSubHalf += tempReal2;
@@ -107646,7 +107650,7 @@ public final class Core {
                barsSinceReseedSqrt = 8 * sqrtPeriod;
                periodSubSqrt = 0.0;
                periodSumSqrt = 0.0;
-               rw = 1;
+               rw = 1.0;
                ringWalk = dRing_Idx;
                for( q = 0; q < ringSize; q += 1 ) {
                   tempReal2 = dRing[ringWalk];
@@ -108018,8 +108022,8 @@ public final class Core {
             double tempReal = 0.0;
             double fullOut = 0.0;
             int jFull = 0;
-            int rw = 0;
             double tempReal2 = 0.0;
+            double rw = 0.0;
             int barsSinceReseedFull = sp.barsSinceReseedFull;
             double periodSubFull = sp.periodSubFull;
             double periodSumFull = sp.periodSumFull;
@@ -108037,7 +108041,7 @@ public final class Core {
                barsSinceReseedFull = 8 * sp.optInTimePeriod;
                periodSubFull = 0.0;
                periodSumFull = 0.0;
-               rw = 1;
+               rw = 1.0;
                for( jFull = sp.lookbackFull; jFull >= 0; jFull -= 1 ) {
                   tempReal2 = (((sp.winPos_jFull + sp.winCap_jFull - jFull >= sp.winCap_jFull) ? sp.winPos_jFull + sp.winCap_jFull - jFull - sp.winCap_jFull : sp.winPos_jFull + sp.winCap_jFull - jFull) != pkSlot0) ? sp.win_jFull_inReal[(sp.winPos_jFull + sp.winCap_jFull - jFull >= sp.winCap_jFull) ? sp.winPos_jFull + sp.winCap_jFull - jFull - sp.winCap_jFull : sp.winPos_jFull + sp.winCap_jFull - jFull] : pkVal0;
                   periodSubFull += tempReal2;
@@ -108057,9 +108061,9 @@ public final class Core {
             int jFull = 0;
             int jHalf = 0;
             int q = 0;
-            int rw = 0;
             int ringWalk = 0;
             double tempReal2 = 0.0;
+            double rw = 0.0;
             int barsSinceReseedFull = sp.barsSinceReseedFull;
             int barsSinceReseedHalf = sp.barsSinceReseedHalf;
             int barsSinceReseedSqrt = sp.barsSinceReseedSqrt;
@@ -108090,7 +108094,7 @@ public final class Core {
                barsSinceReseedFull = 8 * sp.optInTimePeriod;
                periodSubFull = 0.0;
                periodSumFull = 0.0;
-               rw = 1;
+               rw = 1.0;
                for( jFull = sp.lookbackFull; jFull >= 0; jFull -= 1 ) {
                   tempReal2 = (((sp.winPos_jFull + sp.winCap_jFull - jFull >= sp.winCap_jFull) ? sp.winPos_jFull + sp.winCap_jFull - jFull - sp.winCap_jFull : sp.winPos_jFull + sp.winCap_jFull - jFull) != pkSlot0) ? sp.win_jFull_inReal[(sp.winPos_jFull + sp.winCap_jFull - jFull >= sp.winCap_jFull) ? sp.winPos_jFull + sp.winCap_jFull - jFull - sp.winCap_jFull : sp.winPos_jFull + sp.winCap_jFull - jFull] : pkVal0;
                   periodSubFull += tempReal2;
@@ -108109,7 +108113,7 @@ public final class Core {
                barsSinceReseedHalf = 8 * sp.halfPeriod;
                periodSubHalf = 0.0;
                periodSumHalf = 0.0;
-               rw = 1;
+               rw = 1.0;
                for( jHalf = sp.lookbackHalf; jHalf >= 0; jHalf -= 1 ) {
                   tempReal2 = (((sp.winPos_jHalf + sp.winCap_jHalf - jHalf >= sp.winCap_jHalf) ? sp.winPos_jHalf + sp.winCap_jHalf - jHalf - sp.winCap_jHalf : sp.winPos_jHalf + sp.winCap_jHalf - jHalf) != pkSlot1) ? sp.win_jHalf_inReal[(sp.winPos_jHalf + sp.winCap_jHalf - jHalf >= sp.winCap_jHalf) ? sp.winPos_jHalf + sp.winCap_jHalf - jHalf - sp.winCap_jHalf : sp.winPos_jHalf + sp.winCap_jHalf - jHalf] : pkVal1;
                   periodSubHalf += tempReal2;
@@ -108135,7 +108139,7 @@ public final class Core {
                barsSinceReseedSqrt = 8 * sp.sqrtPeriod;
                periodSubSqrt = 0.0;
                periodSumSqrt = 0.0;
-               rw = 1;
+               rw = 1.0;
                ringWalk = dRing_Idx;
                for( q = 0; q < sp.ringSize; q += 1 ) {
                   tempReal2 = sp.cb_dRing[ringWalk];
@@ -108196,8 +108200,8 @@ public final class Core {
          double tempReal = 0.0;
          double fullOut = 0.0;
          int jFull = 0;
-         int rw = 0;
          double tempReal2 = 0.0;
+         double rw = 0.0;
          int ringCapL_trailingIdxFull = 0;
          sp.win_jFull_inReal[sp.winPos_jFull] = inReal;
          tempReal = inReal;
@@ -108209,7 +108213,7 @@ public final class Core {
             sp.barsSinceReseedFull = 8 * sp.optInTimePeriod;
             sp.periodSubFull = 0.0;
             sp.periodSumFull = 0.0;
-            rw = 1;
+            rw = 1.0;
             for( jFull = sp.lookbackFull; jFull >= 0; jFull -= 1 ) {
                tempReal2 = sp.win_jFull_inReal[(sp.winPos_jFull + sp.winCap_jFull - jFull >= sp.winCap_jFull) ? sp.winPos_jFull + sp.winCap_jFull - jFull - sp.winCap_jFull : sp.winPos_jFull + sp.winCap_jFull - jFull];
                sp.periodSubFull += tempReal2;
@@ -108239,9 +108243,9 @@ public final class Core {
          int jFull = 0;
          int jHalf = 0;
          int q = 0;
-         int rw = 0;
          int ringWalk = 0;
          double tempReal2 = 0.0;
+         double rw = 0.0;
          int ringCapL_trailingIdxFull = 0;
          int ringCapL_trailingIdxHalf = 0;
          sp.win_jFull_inReal[sp.winPos_jFull] = inReal;
@@ -108255,7 +108259,7 @@ public final class Core {
             sp.barsSinceReseedFull = 8 * sp.optInTimePeriod;
             sp.periodSubFull = 0.0;
             sp.periodSumFull = 0.0;
-            rw = 1;
+            rw = 1.0;
             for( jFull = sp.lookbackFull; jFull >= 0; jFull -= 1 ) {
                tempReal2 = sp.win_jFull_inReal[(sp.winPos_jFull + sp.winCap_jFull - jFull >= sp.winCap_jFull) ? sp.winPos_jFull + sp.winCap_jFull - jFull - sp.winCap_jFull : sp.winPos_jFull + sp.winCap_jFull - jFull];
                sp.periodSubFull += tempReal2;
@@ -108274,7 +108278,7 @@ public final class Core {
             sp.barsSinceReseedHalf = 8 * sp.halfPeriod;
             sp.periodSubHalf = 0.0;
             sp.periodSumHalf = 0.0;
-            rw = 1;
+            rw = 1.0;
             for( jHalf = sp.lookbackHalf; jHalf >= 0; jHalf -= 1 ) {
                tempReal2 = sp.win_jHalf_inReal[(sp.winPos_jHalf + sp.winCap_jHalf - jHalf >= sp.winCap_jHalf) ? sp.winPos_jHalf + sp.winCap_jHalf - jHalf - sp.winCap_jHalf : sp.winPos_jHalf + sp.winCap_jHalf - jHalf];
                sp.periodSubHalf += tempReal2;
@@ -108300,7 +108304,7 @@ public final class Core {
             sp.barsSinceReseedSqrt = 8 * sp.sqrtPeriod;
             sp.periodSubSqrt = 0.0;
             sp.periodSumSqrt = 0.0;
-            rw = 1;
+            rw = 1.0;
             ringWalk = sp.dRing_Idx;
             for( q = 0; q < sp.ringSize; q += 1 ) {
                tempReal2 = sp.cb_dRing[ringWalk];
@@ -108425,7 +108429,6 @@ public final class Core {
          int today = 0;
          int outIdx = 0;
          int i = 0;
-         int w = 0;
          double dividerFull = 0;
          double dividerHalf = 0;
          double dividerSqrt = 0;
@@ -108447,7 +108450,6 @@ public final class Core {
          int jFull = 0;
          int jHalf = 0;
          int q = 0;
-         int rw = 0;
          int ringWalk = 0;
          int lookbackFull = 0;
          int lookbackHalf = 0;
@@ -108455,9 +108457,15 @@ public final class Core {
          int barsSinceReseedHalf = 0;
          int barsSinceReseedSqrt = 0;
          double tempReal2 = 0;
+         double w = 0;
+         double rw = 0;
          double[] dRing;
          int dRing_Idx = 0;
          int maxIdx_dRing = (50)-1;
+         /* Weights are exact integers no larger than the period (100000). Keeping
+          * them in double avoids repeated integer conversions in the reseed loops
+          * without changing any product or accumulation order.
+          */
          /* The de-lagged series needs only its last sqrt(n) values, so the whole
           * computation runs in one pass over a single window into the input:
           * three interleaved WMA rolling sums plus this small ring. The ring has
@@ -108507,7 +108515,7 @@ public final class Core {
          periodSumFull = 0.0;
          trailingIdxFull = wmaStartIdx - lookbackFull;
          i = trailingIdxFull;
-         w = 1;
+         w = 1.0;
          while( i < wmaStartIdx ) {
             tempReal = inReal[i];
             i += 1;
@@ -108539,7 +108547,7 @@ public final class Core {
                barsSinceReseedFull = 8 * optInTimePeriod;
                periodSubFull = 0.0;
                periodSumFull = 0.0;
-               rw = 1;
+               rw = 1.0;
                for( jFull = today - lookbackFull; jFull <= today; jFull += 1 ) {
                   tempReal2 = inReal[jFull];
                   periodSubFull += tempReal2;
@@ -108613,7 +108621,6 @@ public final class Core {
          int today = 0;
          int outIdx = 0;
          int i = 0;
-         int w = 0;
          double dividerFull = 0;
          double dividerHalf = 0;
          double dividerSqrt = 0;
@@ -108635,7 +108642,6 @@ public final class Core {
          int jFull = 0;
          int jHalf = 0;
          int q = 0;
-         int rw = 0;
          int ringWalk = 0;
          int lookbackFull = 0;
          int lookbackHalf = 0;
@@ -108643,9 +108649,15 @@ public final class Core {
          int barsSinceReseedHalf = 0;
          int barsSinceReseedSqrt = 0;
          double tempReal2 = 0;
+         double w = 0;
+         double rw = 0;
          double[] dRing;
          int dRing_Idx = 0;
          int maxIdx_dRing = (50)-1;
+         /* Weights are exact integers no larger than the period (100000). Keeping
+          * them in double avoids repeated integer conversions in the reseed loops
+          * without changing any product or accumulation order.
+          */
          /* The de-lagged series needs only its last sqrt(n) values, so the whole
           * computation runs in one pass over a single window into the input:
           * three interleaved WMA rolling sums plus this small ring. The ring has
@@ -108695,7 +108707,7 @@ public final class Core {
          periodSumFull = 0.0;
          trailingIdxFull = wmaStartIdx - lookbackFull;
          i = trailingIdxFull;
-         w = 1;
+         w = 1.0;
          while( i < wmaStartIdx ) {
             tempReal = inReal[i];
             i += 1;
@@ -108720,7 +108732,7 @@ public final class Core {
          periodSumHalf = 0.0;
          trailingIdxHalf = wmaStartIdx - lookbackHalf;
          i = trailingIdxHalf;
-         w = 1;
+         w = 1.0;
          while( i < wmaStartIdx ) {
             tempReal = inReal[i];
             i += 1;
@@ -108746,7 +108758,7 @@ public final class Core {
          periodSubSqrt = 0.0;
          periodSumSqrt = 0.0;
          trailingSqrt = 0.0;
-         w = 1;
+         w = 1.0;
          for( today = wmaStartIdx; today < startIdx; today += 1 ) {
             tempReal = inReal[today];
             periodSubFull += tempReal;
@@ -108757,7 +108769,7 @@ public final class Core {
                barsSinceReseedFull = 8 * optInTimePeriod;
                periodSubFull = 0.0;
                periodSumFull = 0.0;
-               rw = 1;
+               rw = 1.0;
                for( jFull = today - lookbackFull; jFull <= today; jFull += 1 ) {
                   tempReal2 = inReal[jFull];
                   periodSubFull += tempReal2;
@@ -108777,7 +108789,7 @@ public final class Core {
                barsSinceReseedHalf = 8 * halfPeriod;
                periodSubHalf = 0.0;
                periodSumHalf = 0.0;
-               rw = 1;
+               rw = 1.0;
                for( jHalf = today - lookbackHalf; jHalf <= today; jHalf += 1 ) {
                   tempReal2 = inReal[jHalf];
                   periodSubHalf += tempReal2;
@@ -108812,7 +108824,7 @@ public final class Core {
                barsSinceReseedFull = 8 * optInTimePeriod;
                periodSubFull = 0.0;
                periodSumFull = 0.0;
-               rw = 1;
+               rw = 1.0;
                for( jFull = today - lookbackFull; jFull <= today; jFull += 1 ) {
                   tempReal2 = inReal[jFull];
                   periodSubFull += tempReal2;
@@ -108832,7 +108844,7 @@ public final class Core {
                barsSinceReseedHalf = 8 * halfPeriod;
                periodSubHalf = 0.0;
                periodSumHalf = 0.0;
-               rw = 1;
+               rw = 1.0;
                for( jHalf = today - lookbackHalf; jHalf <= today; jHalf += 1 ) {
                   tempReal2 = inReal[jHalf];
                   periodSubHalf += tempReal2;
@@ -108859,7 +108871,7 @@ public final class Core {
                barsSinceReseedSqrt = 8 * sqrtPeriod;
                periodSubSqrt = 0.0;
                periodSumSqrt = 0.0;
-               rw = 1;
+               rw = 1.0;
                ringWalk = dRing_Idx;
                for( q = 0; q < ringSize; q += 1 ) {
                   tempReal2 = dRing[ringWalk];
@@ -109037,8 +109049,8 @@ public final class Core {
          double tempReal = 0.0;
          double fullOut = 0.0;
          int jFull = 0;
-         int rw = 0;
          double tempReal2 = 0.0;
+         double rw = 0.0;
          tempReal = inReal;
          sp.periodSubFull += tempReal;
          sp.periodSubFull -= sp.trailingFull;
@@ -109048,7 +109060,7 @@ public final class Core {
             sp.barsSinceReseedFull = 8 * sp.optInTimePeriod;
             sp.periodSubFull = 0.0;
             sp.periodSumFull = 0.0;
-            rw = 1;
+            rw = 1.0;
             for( jFull = sp.lookbackFull; jFull >= 0; jFull -= 1 ) {
                tempReal2 = tape[(tapeBase - jFull) & tapeMask];
                sp.periodSubFull += tempReal2;
@@ -109068,9 +109080,9 @@ public final class Core {
          int jFull = 0;
          int jHalf = 0;
          int q = 0;
-         int rw = 0;
          int ringWalk = 0;
          double tempReal2 = 0.0;
+         double rw = 0.0;
          tempReal = inReal;
          sp.periodSubFull += tempReal;
          sp.periodSubFull -= sp.trailingFull;
@@ -109080,7 +109092,7 @@ public final class Core {
             sp.barsSinceReseedFull = 8 * sp.optInTimePeriod;
             sp.periodSubFull = 0.0;
             sp.periodSumFull = 0.0;
-            rw = 1;
+            rw = 1.0;
             for( jFull = sp.lookbackFull; jFull >= 0; jFull -= 1 ) {
                tempReal2 = tape[(tapeBase - jFull) & tapeMask];
                sp.periodSubFull += tempReal2;
@@ -109099,7 +109111,7 @@ public final class Core {
             sp.barsSinceReseedHalf = 8 * sp.halfPeriod;
             sp.periodSubHalf = 0.0;
             sp.periodSumHalf = 0.0;
-            rw = 1;
+            rw = 1.0;
             for( jHalf = sp.lookbackHalf; jHalf >= 0; jHalf -= 1 ) {
                tempReal2 = tape[(tapeBase - jHalf) & tapeMask];
                sp.periodSubHalf += tempReal2;
@@ -109125,7 +109137,7 @@ public final class Core {
             sp.barsSinceReseedSqrt = 8 * sp.sqrtPeriod;
             sp.periodSubSqrt = 0.0;
             sp.periodSumSqrt = 0.0;
-            rw = 1;
+            rw = 1.0;
             ringWalk = sp.dRing_Idx;
             for( q = 0; q < sp.ringSize; q += 1 ) {
                tempReal2 = sp.cb_dRing[ringWalk];
@@ -109159,8 +109171,8 @@ public final class Core {
          double tempReal = 0.0;
          double fullOut = 0.0;
          int jFull = 0;
-         int rw = 0;
          double tempReal2 = 0.0;
+         double rw = 0.0;
          int barsSinceReseedFull = sp.barsSinceReseedFull;
          double periodSubFull = sp.periodSubFull;
          double periodSumFull = sp.periodSumFull;
@@ -109178,7 +109190,7 @@ public final class Core {
             barsSinceReseedFull = 8 * sp.optInTimePeriod;
             periodSubFull = 0.0;
             periodSumFull = 0.0;
-            rw = 1;
+            rw = 1.0;
             for( jFull = sp.lookbackFull; jFull >= 0; jFull -= 1 ) {
                tempReal2 = (((tapeBase - jFull) & tapeMask) != pkSlot0) ? tape[(tapeBase - jFull) & tapeMask] : pkVal0;
                periodSubFull += tempReal2;
@@ -109198,9 +109210,9 @@ public final class Core {
          int jFull = 0;
          int jHalf = 0;
          int q = 0;
-         int rw = 0;
          int ringWalk = 0;
          double tempReal2 = 0.0;
+         double rw = 0.0;
          int barsSinceReseedFull = sp.barsSinceReseedFull;
          int barsSinceReseedHalf = sp.barsSinceReseedHalf;
          int barsSinceReseedSqrt = sp.barsSinceReseedSqrt;
@@ -109227,7 +109239,7 @@ public final class Core {
             barsSinceReseedFull = 8 * sp.optInTimePeriod;
             periodSubFull = 0.0;
             periodSumFull = 0.0;
-            rw = 1;
+            rw = 1.0;
             for( jFull = sp.lookbackFull; jFull >= 0; jFull -= 1 ) {
                tempReal2 = (((tapeBase - jFull) & tapeMask) != pkSlot0) ? tape[(tapeBase - jFull) & tapeMask] : pkVal0;
                periodSubFull += tempReal2;
@@ -109246,7 +109258,7 @@ public final class Core {
             barsSinceReseedHalf = 8 * sp.halfPeriod;
             periodSubHalf = 0.0;
             periodSumHalf = 0.0;
-            rw = 1;
+            rw = 1.0;
             for( jHalf = sp.lookbackHalf; jHalf >= 0; jHalf -= 1 ) {
                tempReal2 = (((tapeBase - jHalf) & tapeMask) != pkSlot0) ? tape[(tapeBase - jHalf) & tapeMask] : pkVal0;
                periodSubHalf += tempReal2;
@@ -109272,7 +109284,7 @@ public final class Core {
             barsSinceReseedSqrt = 8 * sp.sqrtPeriod;
             periodSubSqrt = 0.0;
             periodSumSqrt = 0.0;
-            rw = 1;
+            rw = 1.0;
             ringWalk = dRing_Idx;
             for( q = 0; q < sp.ringSize; q += 1 ) {
                tempReal2 = sp.cb_dRing[ringWalk];
