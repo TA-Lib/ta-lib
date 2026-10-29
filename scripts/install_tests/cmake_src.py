@@ -1,9 +1,8 @@
 import os
-import subprocess
 import sys
 import tarfile
 
-from install_tests.python import run_or_die
+from install_tests.consumer import CONSUMER_C, consumer_linux, run_consumer, run_or_die
 
 # The release tarball, built the way vcpkg builds it. Nothing else covers this:
 # the autotools leg passes whether or not the CMake build system reached
@@ -25,40 +24,7 @@ EXPECTED_INSTALLED = (
     "lib/cmake/ta-lib/ta-lib-config-version.cmake",
 )
 
-CONSUMER_C = r'''
-#include <ta-lib/ta_libc.h>
-#include <stdio.h>
-#include <string.h>
-
-int main( int argc, char **argv )
-{
-   double in[10] = {1,2,3,4,5,6,7,8,9,10}, out[10];
-   int begIdx, nbElement;
-   const char *version;
-
-   if( TA_Initialize() != TA_SUCCESS ) { printf("FAIL: TA_Initialize\n"); return 1; }
-   if( TA_SMA(0,9,in,3,&begIdx,&nbElement,out) != TA_SUCCESS ) { printf("FAIL: TA_SMA\n"); return 1; }
-   if( begIdx != 2 || nbElement != 8 || out[0] != 2.0 )
-   {
-      printf("FAIL: SMA begIdx=%d nbElement=%d out[0]=%f\n", begIdx, nbElement, out[0]);
-      return 1;
-   }
-
-   version = TA_GetVersionString();
-   if( argc > 1 && strncmp(version, argv[1], strlen(argv[1])) != 0 )
-   {
-      printf("FAIL: linked TA-Lib %s, expected %s*\n", version, argv[1]);
-      return 1;
-   }
-   printf("consumer ok: %s\n", version);
-
-   TA_Shutdown();
-   return 0;
-}
-'''
-
-
-# CONSUMER_C above uses <ta-lib/ta_libc.h>; this is the other supported
+# CONSUMER_C uses <ta-lib/ta_libc.h>; this is the other supported
 # spelling, so the two together compile one include directory each.
 CONSUMER_FLAT_C = r"""
 #include <ta_libc.h>
@@ -100,15 +66,6 @@ target_link_libraries(consumer PRIVATE ta-lib::ta-lib)
 """
 
 
-def _run_consumer(exe: str, version: str, step: str):
-    print(f"  [{step}] {exe} {version}")
-    result = subprocess.run([exe, version], capture_output=True, text=True)
-    print(result.stdout.strip() or result.stderr.strip())
-    if result.returncode != 0:
-        print(f"FAIL: {step} exited with {result.returncode}")
-        sys.exit(1)
-
-
 def test_cmake_src_linux(package_file_path: str, temp_dir: str, version: str):
     print("Testing the vcpkg build path (CMake) on Linux")
     print(f"  package_file_path={package_file_path}")
@@ -146,23 +103,10 @@ def test_cmake_src_linux(package_file_path: str, temp_dir: str, version: str):
 
     # Compile against the staged prefix the way each triplet linkage does. The
     # explicit -I/-L keep this off any system-wide TA-Lib the other legs install.
-    consumer_c = os.path.join(temp_dir, "cmake_consumer.c")
-    with open(consumer_c, "w") as f:
-        f.write(CONSUMER_C)
-
-    include_dir = os.path.join(prefix_dir, "include")
-    lib_dir = os.path.join(prefix_dir, "lib")
-
-    shared_exe = os.path.join(temp_dir, "cmake_consumer_shared")
-    run_or_die(["gcc", consumer_c, "-I", include_dir, "-L", lib_dir, "-lta-lib",
-                f"-Wl,-rpath,{lib_dir}", "-o", shared_exe], "compile consumer (shared)")
-    _run_consumer(shared_exe, version, "run consumer (shared)")
-
-    static_exe = os.path.join(temp_dir, "cmake_consumer_static")
-    run_or_die(["gcc", consumer_c, "-I", include_dir,
-                os.path.join(lib_dir, "libta-lib.a"), "-lm", "-o", static_exe],
-               "compile consumer (static)")
-    _run_consumer(static_exe, version, "run consumer (static)")
+    consumer_linux(temp_dir, version, "cmake",
+                   include_dir=os.path.join(prefix_dir, "include"),
+                   lib_dir=os.path.join(prefix_dir, "lib"),
+                   search_paths=True)
 
     # Nothing above reaches the installed package config.
     _find_package_consumer(temp_dir, prefix_dir, version, "SHARED_LIBRARY", "both")
@@ -208,5 +152,5 @@ def _find_package_consumer(temp_dir: str, prefix_dir: str, version: str,
                 f"-DCMAKE_PREFIX_PATH={prefix_dir}"],
                f"find_package configure ({tag})")
     run_or_die(["cmake", "--build", build], f"find_package build ({tag})")
-    _run_consumer(os.path.join(build, "consumer"), version,
-                  f"run find_package consumer ({tag})")
+    run_consumer(os.path.join(build, "consumer"), version,
+                 f"run find_package consumer ({tag})")
