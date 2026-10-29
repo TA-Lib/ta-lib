@@ -36,7 +36,7 @@ description: >-
 
 ## 1.0 Introduction {#intro}
 
-The .NET library is a native port of TA-Lib in the `TALib` namespace — no P/Invoke, no native dependency, pure managed C# targeting `net10.0`. Every indicator is a method on a `Core` instance, takes its series as spans, and is **bit-identical** to the reference C library over the same inputs, with one exception beyond TA-Lib's control: where a calculation calls a transcendental math function (such as `exp`, `log`, `sin` or `atan`), .NET's math library can round the result differently from the C library in the last bit. That difference can grow through the rest of the calculation. Details: [Versions and Determinism](/spec/versions/).
+The .NET library is a native port of TA-Lib in the `TALib` namespace — no P/Invoke, no native dependency, pure managed C# targeting `net10.0`. Every indicator is a method on a `Core` instance, takes its series as spans, and is **bit-identical** to the reference C library over the same inputs, with one exception beyond TA-Lib's control: where a calculation calls a transcendental math function (such as `exp`, `log`, `sin` or `atan`), .NET's math library can round the result differently from the C library in the last bit ([rD1](/spec/versions/#rd1)).
 
 The **Core API** provides:
 
@@ -85,7 +85,7 @@ All TA methods use the same calling pattern, divided into four groups:
 <ul>
 <li><span class="ta-arg-range">The output will be calculated only for the range specified by startIdx and endIdx. These are zero-based indices into the input spans.</span></li>
 <li><span class="ta-arg-in">One or more input spans are then specified. Typically, these are the "price" data. In this example there is only one input. All input parameter names start with "in".</span></li>
-<li><span class="ta-arg-opt">Zero or more optional inputs are then specified. In this example there is one optional input. These parameters give finer control specific to each function. Passing <code>int.MinValue</code> for an integer parameter, the real-default sentinel <code>-4e37</code> for a <code>double</code> parameter, or <code>MAType.DEFAULT</code> for an MA-type parameter selects that parameter's documented default.</span></li>
+<li><span class="ta-arg-opt">Zero or more optional inputs are then specified. In this example there is one optional input. These parameters give finer control specific to each function. If you do not care about a particular optIn, just pass <code>Core.IntegerDefault</code> or <code>Core.RealDefault</code> (depending on the type). For a moving-average type, use <code>MAType.DEFAULT</code>.</span></li>
 <li><span class="ta-arg-out">One or more output spans come last. In this example there is only one output (outReal). Where the values landed is the return value, not a parameter: on success you get an <code>OutRange</code>.</span></li>
 </ul>
 
@@ -115,23 +115,21 @@ for (int i = 0; i &lt; r.Count; i++)
 
 After the call, read `r` to learn what was produced. Even though we requested the whole range (`0` to `close.Length - 1`), a 30-day average is not defined until the 30th day. Consequently `r.BegIdx` will be 29 (zero-based) and `r.Count` will be `close.Length - 29`. In other words, only that many elements of `outReal` are written, corresponding to input elements 29 through the end.
 
-Arrays convert to spans implicitly, so the call above and a call passed a slice of a larger buffer (`close.AsSpan(start, count)`) are both ordinary code — no copy either way. `startIdx` and `endIdx` index the span you pass, not the array it came from: a slice holds no bars before its first element, so `Sma(0, n - 1, close.AsSpan(100, n), ...)` takes its lookback from inside the slice and produces fewer, possibly different, values than `Sma(100, 100 + n - 1, close, ...)`. Both calls succeed. A span is never null, so passing `null` arrives as an empty span and is rejected by the length check as one (`ArgumentException` naming the parameter). Every input an indicator declares is checked, including the OHLC series a few candlestick patterns never read.
+Arrays convert to spans implicitly, so you can also pass a slice of a larger buffer (`close.AsSpan(start, count)`) without copying it. `startIdx` and `endIdx` then index the slice, not the array it came from: a slice holds no bars before its first element ([rP1](/spec/inputs-outputs/#rp1)).
 
-If the range ends before the lookback, so no value can be calculated, the call still succeeds and `r.Count` is 0 (`r.IsEmpty`).
+If you do not provide enough data to calculate even one value, the call still succeeds and `r.Count` is 0 (`r.IsEmpty`).
 
-`OutRange` is a `readonly record struct` with two components — `BegIdx` and `Count` — plus the conveniences `IsEmpty` and `Empty`. They are C's `outBegIdx` / `outNBElement`, Java's `begIdx` / `count` and Rust's `beg_idx` / `count`.
-
-Every indicator also has a `ReadOnlySpan<float>` overload — see [4.4](#input_type).
+`OutRange` is a `readonly record struct` with two components, `BegIdx` and `Count` (C's `outBegIdx` and `outNBElement`), plus the conveniences `IsEmpty` and `Empty`.
 
 ### 3.2 Output Size and Lookback {#output_size}
 
-An indicator consumes a number of leading bars — its **lookback** — before it can produce anything. Query it with the matching `*Lookback` method:
+Size the output span to at least `endIdx - startIdx + 1`, or exactly with the lookback (see the [three sizing methods](/api/#output_size)):
 
 ```csharp
-int lookback = core.SmaLookback(30);   // 29
+int lookback = core.SmaLookback(30);   // 29 for a 30-period SMA
 ```
 
-Output is written only where the indicator is defined: `outReal[0]` corresponds to input bar `r.BegIdx`. The library never pads with `NaN`. A range that ends before the lookback is a **success with no values** (`r.Count == 0`), not an error.
+Each TA method has a matching `<Name>Lookback` method, taking the same optional parameters as the method itself. The lookback is how many inputs are consumed before the first output.
 
 ### 3.3 Display Shift {#display_shift}
 
@@ -153,25 +151,20 @@ The public methods throw rather than return a status code:
 | An optional parameter outside its documented range | `TALibArgumentException` |
 | An input span that does not reach `endIdx`, or an output span shorter than the values produced | `TALibArgumentException` naming the span |
 | Two outputs that are the same buffer ([rB6](/spec/errors/#rb6)) | `TALibArgumentException` |
-| An inconsistency in the library's own state: a bug, please report it | `TALibInvalidOperationException` carrying `RetCode.InternalError` |
 
-Each extends the framework type you would reach for and implements
-`ITALibFailure`, so `catch (ArgumentException)` still works and the `RetCode` is
-there when you want it.
+Each extends the framework type you would reach for, so `catch (ArgumentException)` still works, and each carries its `RetCode`.
 
-Computing wholly in place is allowed and stays supported — passing the same buffer as both an input and an output is how several indicators are meant to be used. Avoid partial overlap, which only spans can express: what it does is unspecified ([specification](/spec/inputs-outputs/#no-overlap)).
+You can pass the same buffer as an input and an output to compute in place. Avoid a partial overlap: its result is [unspecified](/spec/inputs-outputs/#no-overlap).
 
-A `NaN` or `±Inf` inside an input series is not detected, and nothing is promised about the output: a running sum or a recursion carries it into every later value, not only the bars whose window holds it. Clean or split the series before calling.
-
-A batch call may allocate managed scratch, sized by a period (MFI, ULTOSC) or, for some functions built from other functions such as STOCHRSI, by the range. An allocation of 85,000 bytes or more (about 10,600 doubles) lands on the large object heap.
+A `NaN` or `±Inf` inside an input series is not detected. Clean the series before calling.
 
 ## 4.0 Advanced Features {#advanced}
 
 ### 4.1 Abstract API {#abstract}
 
-`TALib.Metadata.FunctionCatalog` describes every function at run time and calls it without naming it at compile time. A span cannot be boxed, so the API cannot be invoked through `MethodInfo.Invoke`: calling a function chosen at run time needs this typed path instead of reflection. See the [Abstract API](/api/abstract/) page.
+`TALib.Metadata.FunctionCatalog` describes every function at run time and calls it without naming it at compile time. See the [Abstract API](/api/abstract/) page.
 
-`Core.Functions` implements `IReadOnlyList<FuncInfo>`, so it is enumerable, LINQ-able, and indexable by position or by name. A misused holder (an index out of range, a mismatched type, an unbound input or output at call time) throws `TALibArgumentException`, an `ArgumentException` that carries a return code ([rA3](/spec/abstract/#ra3)).
+`Core.Functions` is an `IReadOnlyList<FuncInfo>`, so it is enumerable, LINQ-able, and indexable by position or by name.
 
 ### 4.2 Numerical Stability {#numerical_stability}
 
@@ -191,11 +184,11 @@ var core = Core.Builder()
     .Build();
 ```
 
-Each setter throws `ArgumentOutOfRangeException` immediately if an argument is out of range, so the rejection names the call that caused it. `Build()` cannot fail. Rust is the one backend that defers: a setter there cannot throw, so `build()` returns a `Result`.
+Each setter throws `ArgumentOutOfRangeException` at once if an argument is out of range, so `Build()` cannot fail.
 
 ### 4.4 Input Type: float vs. double {#input_type}
 
-Every indicator also has a `ReadOnlySpan<float>` overload (`float[]` converts implicitly), for callers who store series at single precision; the arithmetic is `double` either way, so both overloads produce the same output, bit-for-bit.
+Every indicator also has a `ReadOnlySpan<float>` overload (`float[]` converts implicitly). The overload converts each element to `double` when read, so both overloads produce the same output, bit-for-bit. Use it to feed price data already stored as `float` without a conversion copy.
 
 ### 4.5 Index Range {#index_range}
 
@@ -203,13 +196,13 @@ Every indicator also has a `ReadOnlySpan<float>` overload (`float[]` converts im
 
 ### 4.6 Threading {#multithreading}
 
-A `Core` is immutable once built, so it is safe to share read-only across threads and call any indicator concurrently — no locking, and no setup ordering to respect. `Core.Default` is the all-defaults instance. To change a setting, build another `Core` with `Core.Builder()`.
+A `Core` is immutable once built, so one instance is safe to share across any number of threads with no synchronization. `Core.Default` is the all-defaults instance. To change a setting, build another `Core` with `Core.Builder()`.
 
 ### 4.7 Trimming and NativeAOT {#aot}
 
 The library is annotated `IsAotCompatible`, uses no reflection, and publishes clean under `PublishAot` with `TrimMode=full`.
 
-One publishing note worth knowing: at ILC's **default** instruction-set baseline, `Math.FusedMultiplyAdd` is compiled to a library call rather than the hardware FMA instruction. Values are unaffected — output is bit-identical across the JIT and both AOT baselines — but the indicators that lean on it are measurably slower (TRIX ~3.7x, DEMA ~2.3x, EMA ~1.5x, with SMA flat as a control). If you publish AOT and care about throughput, raise the baseline:
+At ILC's default instruction-set baseline, some indicators (EMA, DEMA, TRIX among them) run slower than under the JIT; values are unaffected. If you publish AOT and care about throughput, raise the baseline:
 
 ```xml
 <IlcInstructionSet>x86-64-v3</IlcInstructionSet>
@@ -217,4 +210,4 @@ One publishing note worth knowing: at ILC's **default** instruction-set baseline
 
 ## 5.0 Documentation {#docs}
 
-Every function ships XML doc comments rendered from the same canonical description as every other backend's docs, so your IDE's tooltips and IntelliSense are populated without a separate doc build. `GenerateDocumentationFile` is on and `CS1591` (a public member missing its doc comment) is an error, so the assembly can never ship undocumented.
+Every function ships XML doc comments, so your IDE's tooltips and IntelliSense are populated without a separate doc build.

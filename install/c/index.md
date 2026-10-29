@@ -78,6 +78,7 @@ Recommended for all debian-based distributions (e.g. Ubuntu, Mint...)
    ```bash
    ./configure
    make
+   make check        # optional: runs the test suite, a few minutes (0.8.4 and later)
    sudo make install
    sudo ldconfig     # refresh the shared-library cache so the linker finds libta-lib.so
    ```
@@ -120,6 +121,7 @@ Ensure you have the required dependencies: `brew install automake && brew instal
    autoreconf -fi       # regenerate the configure file for macOS
    ./configure
    make
+   make check           # optional: runs the test suite, a few minutes (0.8.4 and later)
    sudo make install
    ```
 
@@ -167,10 +169,11 @@ C:\ta-lib> "C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Auxiliary
 C:\ta-lib> mkdir build
 C:\ta-lib> cd build
 C:\ta-lib\build> cmake ..
-C:\ta-lib\build> cmake --build .
+C:\ta-lib\build> cmake --build . --config Release
+C:\ta-lib\build> ctest -C Release --output-on-failure
 ```
 
-You might need to adjust the `vcvarsall.bat` command depending on your Visual Studio installation and platform.
+You might need to adjust the `vcvarsall.bat` command depending on your Visual Studio installation and platform. `ctest` runs the test suite (0.8.4 and later); with CMake it tests the static library.
 
 ## vcpkg
 
