@@ -1736,7 +1736,7 @@ static TA_RetCode codegen_range_generic(
     CodegenRangeTestParam *p = (CodegenRangeTestParam *)opaqueData;
 
     /* Unstable integer outputs (HT_TRENDMODE) go through the real-path
-     * comparator, like the hand tests' FREE_INT_BUFFER conversion. */
+     * comparator. */
     *isOutputInteger = (unsigned int)p->outputIsInteger[outputNb];
     if( p->outputIsInteger[outputNb] && p->unstId != TA_TEST_UNST_NONE )
         *isOutputInteger = 0;
@@ -1749,41 +1749,34 @@ static TA_RetCode codegen_range_generic(
      * output 1, etc. — so the startIdx/endIdx differ between outputNb calls
      * and we cannot cache across them. */
 
-    /* Re-point all output buffers (TA_CallFunc writes into these) */
+    /* The requested output is written straight into the sweep's buffer, so
+     * its out-of-bound checks see every slot the call writes. */
     for( unsigned int i = 0; i < p->funcInfo->nbOutput; i++ )
     {
         if( p->outputIsInteger[i] )
-            TA_SetOutputParamIntegerPtr(p->paramHolder, i, p->outIntBufs[i]);
+            TA_SetOutputParamIntegerPtr(p->paramHolder, i,
+                                        i == outputNb ? outputBufferInt : p->outIntBufs[i]);
         else
-            TA_SetOutputParamRealPtr(p->paramHolder, i, p->outRealBufs[i]);
+            TA_SetOutputParamRealPtr(p->paramHolder, i,
+                                     i == outputNb ? outputBuffer : p->outRealBufs[i]);
     }
 
-    /* Call the C reference function via ta_abstract */
     p->lastRetCode = TA_CallFunc(p->paramHolder, startIdx, endIdx,
                                   &p->lastBegIdx, &p->lastNbElement);
 
+    /* The sweep's buffer is freed when it returns: leave the holder on its own. */
+    if( p->outputIsInteger[outputNb] )
+        TA_SetOutputParamIntegerPtr(p->paramHolder, outputNb, p->outIntBufs[outputNb]);
+    else
+        TA_SetOutputParamRealPtr(p->paramHolder, outputNb, p->outRealBufs[outputNb]);
 
     *outBegIdx = p->lastBegIdx;
     *outNbElement = p->lastNbElement;
 
-    /* Copy the requested output into the doRangeTest buffer */
-    if( p->lastRetCode == TA_SUCCESS && p->lastNbElement > 0 )
+    if( p->lastRetCode == TA_SUCCESS && p->outputIsInteger[outputNb] && !*isOutputInteger )
     {
-        if( *isOutputInteger )
-        {
-            for( int i = 0; i < p->lastNbElement; i++ )
-                outputBufferInt[i] = p->outIntBufs[outputNb][i];
-        }
-        else if( p->outputIsInteger[outputNb] )
-        {
-            for( int i = 0; i < p->lastNbElement; i++ )
-                outputBuffer[i] = (TA_Real)p->outIntBufs[outputNb][i];
-        }
-        else
-        {
-            for( int i = 0; i < p->lastNbElement; i++ )
-                outputBuffer[i] = p->outRealBufs[outputNb][i];
-        }
+        for( int i = 0; i < p->lastNbElement; i++ )
+            outputBuffer[i] = (TA_Real)outputBufferInt[i];
     }
 
     /* Codegen comparison is done once in test_one_function (full range).

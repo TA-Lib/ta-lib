@@ -1357,16 +1357,12 @@ static ErrorNumber doRangeTestFixSize( RangeTestFunction testFunction,
             return TA_TESTUTIL_DRT_BAD_SUFFIX;
          }
 
-         /* Clean-up for next test. */
-         if( outputIsInteger )
+         /* Reset both: a slot left over from the previous call would hide one
+          * this call failed to write. */
+         for( i=1; i <= fixSize; i++ )
          {
-            for( i=1; i <= fixSize; i++ )
-               outputBufferInt[i] = RESV_PATTERN_IMPROBABLE_INT;
-         }
-         else
-         {
-            for( i=1; i <= fixSize; i++ )
-               outputBuffer[i] = RESV_PATTERN_IMPROBABLE;
+            outputBuffer[i] = RESV_PATTERN_IMPROBABLE;
+            outputBufferInt[i] = RESV_PATTERN_IMPROBABLE_INT;
          }
 
          /* Skip some startIdx at random. Limit case are still
