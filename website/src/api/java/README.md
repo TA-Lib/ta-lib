@@ -34,7 +34,7 @@ toc: false
 
 ## 1.0 Introduction {#intro}
 
-The Java library is a native port of TA-Lib in the `io.github.talib` package — no JNI, pure Java. Every indicator is a method on a `Core` instance, operates on `double[]` arrays (or `float[]`, see [4.4](#input_type)), and is **bit-identical** to the reference C library over the same inputs, with one exception beyond TA-Lib's control: where a calculation calls a transcendental math function (such as `exp`, `log`, `sin` or `atan`), Java's math library can round the result differently from the C library in the last bit.
+The Java library is a native port of TA-Lib in the `io.github.talib` package — no JNI, pure Java. Every indicator is a method on a `Core` instance, operates on `double[]` arrays (or `float[]`, see [4.4](#input_type)), and is **bit-identical** to the reference C library over the same inputs, with one exception beyond TA-Lib's control: where a calculation calls a transcendental math function (such as `exp`, `log`, `sin` or `atan`), Java's math library can round the result differently from the C library in the last bit ([rD1](/spec/versions/#rd1)).
 
 The **Core API** provides:
 
@@ -83,7 +83,7 @@ All TA methods use the same calling pattern, divided into four groups:
 <ul>
 <li><span class="ta-arg-range">The output will be calculated only for the range specified by startIdx and endIdx. These are zero-based indices into the input arrays.</span></li>
 <li><span class="ta-arg-in">One or more input arrays are then specified. Typically, these are the "price" data. In this example there is only one input. All input parameter names start with "in".</span></li>
-<li><span class="ta-arg-opt">Zero or more optional inputs are then specified. In this example there is one optional input. These parameters give finer control specific to each function. Passing <code>Integer.MIN_VALUE</code> for an integer parameter, the real-default sentinel <code>-4e37</code> for a <code>double</code> parameter, or <code>MAType.DEFAULT</code> for an MA-type parameter selects that parameter's documented default.</span></li>
+<li><span class="ta-arg-opt">Zero or more optional inputs are then specified. In this example there is one optional input. These parameters give finer control specific to each function. If you do not care about a particular optIn, just pass <code>Core.INTEGER_DEFAULT</code> or <code>Core.REAL_DEFAULT</code> (depending on the type). For a moving-average type, use <code>MAType.DEFAULT</code>.</span></li>
 <li><span class="ta-arg-out">One or more output arrays come last. In this example there is only one output (outReal). Where the values landed is the return value, not a parameter: on success you get an <code>OutRange</code>.</span></li>
 </ul>
 
@@ -111,23 +111,21 @@ for (int i = 0; i &lt; r.count(); i++) {
 
 After the call, read `r` to learn what was produced. Even though we requested the whole range (`0` to `close.length - 1`), a 30-day average is not defined until the 30th day. Consequently `r.begIdx()` will be 29 (zero-based) and `r.count()` will be `close.length - 29`. In other words, only that many elements of `out` are written, corresponding to input elements 29 through the end.
 
-If you do not provide enough data to calculate even one value, the call still succeeds and `r.count()` is 0 — `r.isEmpty()` says so directly.
+If you do not provide enough data to calculate even one value, the call still succeeds and `r.count()` is 0 (`r.isEmpty()`).
 
-`OutRange` is an immutable record with two components — `begIdx()` and `count()` — plus the conveniences `isEmpty()` and `EMPTY`. The component names match the C, Rust and C# surfaces (`outBegIdx` / `outNBElement`), so the same concept reads the same way in every backend.
+`OutRange` is an immutable record with two components, `begIdx()` and `count()` (C's `outBegIdx` and `outNBElement`), plus the conveniences `isEmpty()` and `EMPTY`.
 
 Every indicator is overloaded for `float[]` inputs as well as `double[]` — see [4.4](#input_type).
 
 ### 3.2 Output Size and Lookback {#output_size}
 
-An output is written only where the indicator is defined — a 30-period SMA has no value until the 30th bar. `begIdx()` is the first valid bar and `count()` is the number written; the array is never padded with NaN. Size the output array to at least `endIdx - startIdx + 1`, or exactly with the lookback:
+Size the output array to at least `endIdx - startIdx + 1`, or exactly with the lookback:
 
 ```java
 int lookback = Core.DEFAULT.smaLookback(30);    // 29 for a 30-period SMA
 ```
 
 Each TA method has a matching `<name>Lookback` method, taking the same optional parameters as the method itself. The lookback is how many inputs are consumed before the first output.
-
-**Too little data is a success, not an error.** A valid range that ends before the lookback simply produces no values: `count()` is 0 and `isEmpty()` is true. No exception is thrown — this matches the C library's `TA_SUCCESS` with `outNBElement == 0`.
 
 ### 3.3 Display Shift {#display_shift}
 
@@ -155,17 +153,15 @@ Each extends the platform type you would reach for — `TALibIndexException` an
 `IndexOutOfBoundsException`, the rest an `IllegalArgumentException` — so catching
 either shape works, and every one carries its `RetCode`.
 
-Array lengths are checked before anything is written, so a rejected call leaves every buffer untouched. An input must reach `endIdx`; an output must hold the values actually produced, `endIdx - max(startIdx, lookback) + 1`. The message names the array and both sizes — `SMA: outReal has length 3, needs 191`.
+A rejected call leaves every array untouched.
 
-A `NaN` or `±Inf` inside an input series is not detected, and nothing is promised about the output: a running sum or a recursion carries it into every later value, not only the bars whose window holds it. Clean or split the series before calling.
+A `NaN` or `±Inf` inside an input series is not detected. Clean the series before calling.
 
 ## 4.0 Advanced Features {#advanced}
 
 ### 4.1 Abstract API {#abstract}
 
 The `io.github.talib.metadata` package describes every function at run time and calls it without naming it at compile time. Useful for a UI, a scripting bridge, or anything that enumerates indicators. See the [Abstract API](/api/abstract/) page.
-
-A misused holder (an index out of bounds, a type that does not match the declared parameter, an unbound input or output at `call()` time) throws `TALibArgumentException`, an `IllegalArgumentException` that carries a return code ([rA3](/spec/abstract/#ra3)).
 
 ### 4.2 Numerical Stability {#numerical_stability}
 
@@ -189,13 +185,11 @@ Core core = Core.builder()
     .build();
 ```
 
-Each setter throws immediately (`IllegalArgumentException`) if an argument is out of range, so the rejection names the call that caused it, and `build()` cannot fail. C# behaves the same way; Rust is the one backend that defers, because a setter there cannot throw.
+Each setter throws `IllegalArgumentException` at once if an argument is out of range, so `build()` cannot fail.
 
 ### 4.4 Input Type: float vs. double {#input_type}
 
-Every indicator is overloaded for `float[]` inputs as well as `double[]` — the `float` overload widens each element to `double` before computing, so a result beyond `float` range still lands correctly in the `double` output. Both overloads produce the same output, bit-for-bit. Use it to feed price data already stored as `float` without copying.
-
-Because the two overloads differ only in the input array type, a bare `null` argument is ambiguous; cast it (`(double[]) null`) if you ever need to pass one.
+Every indicator is overloaded for `float[]` inputs as well as `double[]`. The `float` overload converts each element to `double` when read, so both produce the same output, bit-for-bit. Use it to feed price data already stored as `float` without a conversion copy.
 
 ### 4.5 Index Range {#index_range}
 
@@ -203,10 +197,10 @@ Because the two overloads differ only in the input array type, a bare `null` arg
 
 ### 4.6 Threading {#multithreading}
 
-**`Core` is immutable.** Every field is final and the settings it carries are deeply immutable, so one instance is safe to share across any number of threads with no synchronization — even when published racily (JLS 17.5 final-field semantics). There are no locks on any call path.
+**`Core` is immutable**, so one instance is safe to share across any number of threads with no synchronization.
 
-Use `Core.DEFAULT` for the all-defaults instance. There are no setters: to change a setting, derive a new instance with `core.toBuilder()`. Read a configured unstable period back with `core.unstablePeriod(FuncUnstId.EMA)` — the same name the builder writes it under, since a `Core` is immutable and has no writer to distinguish it from.
+Use `Core.DEFAULT` for the all-defaults instance. There are no setters: to change a setting, derive a new instance with `core.toBuilder()`. Read a configured unstable period back with `core.unstablePeriod(FuncUnstId.EMA)`.
 
 ## 5.0 Documentation {#docs}
 
-Every function's Javadoc is rendered from the same canonical description as every other backend's docs. It is published to Maven Central as the artifact's `javadoc` jar, which an IDE fetches alongside the library; build it locally with `./mvnw clean javadoc:javadoc` in `ta_codegen/output/java/library`.
+Every function has Javadoc, published to Maven Central as the artifact's `javadoc` jar, which an IDE fetches alongside the library.
